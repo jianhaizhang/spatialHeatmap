@@ -83,7 +83,6 @@ ins.net3 <- "After choosing a similarity threshold, the app will compute the net
 	    allows users to highlight a particular gene/node along with its associated 
 	    genes, while \"Select by group\" highlights a particular module."
 
-
 shinyUI(dashboardPage(
 
   dashboardHeader(title="Integrated Tissue Heatmap (updated: 2017-12-30)", 
@@ -95,8 +94,8 @@ shinyUI(dashboardPage(
 
       menuItem("Instruction", tabName="instruction", icon=icon("dashboard")),
       menuItem("Input", icon=icon("dashboard"),
-      selectInput("fileIn", "Use default or your own files?", c("None", "Default", 
-      "Your own"), "Your own"),
+      selectInput("fileIn", "Select a mode", c("None", "Default", 
+      "Compute locally", "Compute online"), "Compute locally"),
       fileInput("svgInpath", "Step 1: upload an svg file", accept=".svg", multiple=F),
       fileInput("geneInpath", "Step 2: upload a gene expression file", accept=c(".txt", 
       ".csv"), multiple=F),
@@ -104,8 +103,19 @@ shinyUI(dashboardPage(
       "Column")),
       selectInput('sep', 'Step 4: separator', c("None", "Tab", "Comma", "Semicolon"), 
       "None"),
-      fileInput("subset", "Step 5 (optional): gene ids for subsetting(separated by tab, space, 
-      comma or semicolon):")
+      h4(strong("Compute locally")),
+      fileInput("adj.modInpath", "Upload the adjacency matrix and module definition file.",
+      accept=".txt", multiple=T),
+      h4(strong("Compute online")),
+      numericInput("A", "The value A to be exceeded (filter genes):", 0, min=0, max=10000),
+      numericInput("p", "The proportion that need to exceed A (filter genes):", 0, min=0, max=1),
+      numericInput("cv1", "Lower bound of coefficient of variation (CV) (filter genes):", 
+      0, min=0, max=1),
+      numericInput("cv2", "Upper bound of coefficient of variation (CV) (filter genes):", 
+      10000, min=0, max=10000),
+      numericInput("min.size", "Minmum module size:", 15, min=15, max=10000),
+      radioButtons("net.type", "Network type", c("Signed"="S", "Unsigned"="U"), "S", inline=T)
+
       ),
 
       menuItem("Heatmap & network", icon=icon("dashboard"), 
@@ -122,14 +132,14 @@ shinyUI(dashboardPage(
       "Go", icon=icon("refresh"), style="padding:7px; font-size:90%; margin-left: 0px")),
       selectInput("mat.scale", "Scale:", c("No", "By column/sample", "By row/gene"), 
       "No", width=167),
+      textOutput("but"),
       radioButtons("gen.con", "Display by:", c("Gene"="gene", "Condition"="con"), "gene", 
       inline=T),
       h4(strong("Matrix heatmap & network")), 
-      selectInput("gen_sel","Select a gene to display matrix heatmap & network.", c("None"),
+      selectInput("gen.sel","Select a gene to display matrix heatmap & network.", c("None"),
       selected="None"),
-
-      selectInput("clus.lim", "Upper limit for displaying genes in matrix heatmap:", 
-      seq(0, 1000, 50), "0", width=190),
+      selectInput("ds","Select a module splitting sensitivity level", 0:3, selected="0", 
+      width=190),
 
       selectInput("TOM.in", "Input a similarity threshold to display the similarity 
       network.", c("none", sort(seq(0, 1, 0.002), decreasing=T)), "none"), 
