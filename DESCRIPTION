@@ -1,0 +1,9 @@
+Package: spatialHeatmap
+Type: Package
+Title: Interactive table matrix, interactive spatial heatmap, interactive matrix heatmap, interactive network.
+Version: 1.0
+Date: 2018-09-07
+Author: Jianhai Zhang
+Maintainer: Jianhai Zhang <jzhan067@ucr.edu> <zhang.jianhai@hotmail.com>
+Description: Given a data matrix and an associated SVG image, this app generates interactive table matrix, interactive spatial heatmap, interactive matrix heatmap, interactive network.
+License: What license is it under?
