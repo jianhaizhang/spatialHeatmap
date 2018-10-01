@@ -1,1 +1,1 @@
-# tissue_heatmap6
+# spatialHeatmap
