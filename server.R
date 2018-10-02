@@ -15,19 +15,18 @@
 library(shiny); library(shinydashboard); library(grImport); library(rsvg); library(ggplot2)
 library(DT); library(gridExtra); library(ggdendro); library(WGCNA); library(Cairo)
 library(grid); library(XML); library(plotly); library(data.table); library(genefilter)
-library(flashClust)
+library(flashClust); library(visNetwork)
 
-options(shiny.maxRequestSize=1000*1024^2) 
+options(shiny.maxRequestSize=5000*1024^2) 
 # enableWGCNAThreads()
-inter.svg <- readLines("interdata/test_final.svg")
-inter.data <- read.table("interdata/gene_expr_test.txt", header=T, row.names=1, sep="\t")
-inter.sub <- readLines("interdata/subset.txt")
+inter.svg <- readLines("example/root_cross.svg")
+inter.data <- read.table("example/gene_expr_test.txt", header=T, row.names=1, sep="\t")
 
 shinyServer(function(input, output, session) {
 
   output$dld.svg <- downloadHandler(
 
-    filename=function(){ "test_final.svg"}, 
+    filename=function(){ "root_cross.svg"}, 
     content=function(file){ writeLines(inter.svg, file) }
 
   )
@@ -40,18 +39,11 @@ shinyServer(function(input, output, session) {
 
   )
 
- output$dld.sub <- downloadHandler(
-
-    filename=function(){ "subset.txt"}, 
-    content=function(file){ writeLines(inter.sub, file) }
-
-  )
-
   observe({
 
-    input$geneInpath
-    updateSelectInput(session, "dimName", label="Step 3: is column or row gene?", 
-    c("None", "Row", "Column"), "None")
+    input$fileIn; input$geneInpath
+    updateRadioButtons(session, "dimName", label="Step 3: is column or row gene?", 
+    c("None", "Row", "Column"), "None", inline=T)
     updateSelectInput(session, 'sep', 'Step 4: separator', c("None", "Tab", "Comma", 
     "Semicolon"), "None")
 
@@ -60,29 +52,11 @@ shinyServer(function(input, output, session) {
   geneIn <- reactive({
     
     if (input$fileIn=="None") return(NULL) 
-    if (input$fileIn=="Default") { 
-      
+    if (grepl("^Default_", input$fileIn)) { 
       withProgress(message="Loading data: ", value = 0, {
- 
         incProgress(0.5, detail="Loading matrix. Please wait.")
-
-        if (is.null(input$subset)) {
-
-          if (input$mat.scale=="No") { load("precompute/gene") } 
-          else if (input$mat.scale=="By column/gene") { load("precompute/sc.gen")
-          gene <- sc.gen } else if (input$mat.scale=="By row/sample") { 
-          load("precompute/sc.sam"); gene <- sc.sam }
-
-        } else { 
-        
-          load("precompute/gene")
-          sub <- unlist(strsplit(readLines(input$subset$datapath), ",|;|\\s+|\t"))
-          idx <- colnames(gene) %in% sub; gene <- gene[ , idx] 
-
-        }; return(gene)
-
-      }); return(gene)
-
+        load("precompute/gen.lis")
+      }); return(gen.lis)
     }
 
     if ((input$fileIn=="Compute locally"|input$fileIn=="Compute online") & 
@@ -96,151 +70,45 @@ shinyServer(function(input, output, session) {
         geneInpath <- input$geneInpath; if (input$sep=="Tab") sep <- "\t" else if (
         input$sep=="Comma") sep <- "," else if (input$sep=="Semicolon") sep <- ";"
         gene.f <- fread(geneInpath$datapath, header=T, sep=sep, fill=T)
-        if (input$dimName=="Row") { 
- 
-          c.na <- colnames(gene.f)[1:(ncol(gene.f)-1)]
-          gene1 <- data.frame(gene.f[, -1], stringsAsFactors=F); idx <- grep("__", c.na)
-          idx1 <- setdiff(1:length(c.na), idx)  
-          gene2 <- gene1[, idx, drop=F]; gene3 <- gene1[, idx1, drop=F]
-          rownames(gene2) <- rownames(gene3) <- as.data.frame(gene.f[, 1], 
-          stringsAsFactors=F)[, 1]; colnames(gene2) <- c.na[idx] 
-          colnames(gene3) <- c.na[idx1]
+        c.na <- colnames(gene.f)[-ncol(gene.f)]; r.na <- as.data.frame(gene.f[, 1])[, 1]
+        df <- as.data.frame(gene.f, stringsAsFactors=F)[, -1]
+        rownames(df) <- r.na; colnames(df) <- c.na
 
-        } else if (input$dimName=="Column") {
+        if(input$dimName=="Column") df <- t(df)
+        idx <- grep("__", colnames(df)); idx1 <- setdiff(1:length(colnames(df)), idx)
+        gene2 <- df[, idx, drop=F]; gene3 <- df[, idx1, drop=F]
+        gene2 <- apply(gene2, 2, as.numeric) # This step removes rownames of gene2.
+        rownames(gene2) <- rownames(gene3)
 
-          gene.f1 <- as.data.frame(gene.f); c.na <- colnames(gene.f1)[-ncol(gene.f1)] 
-          r.na <- gene.f1[, 1]; gene <- gene.f1[, -1]
-          colnames(gene) <- c.na; rownames(gene) <- r.na
-          idx <- grep("__", r.na); gene1 <- t(gene[idx, , drop=F])
-          gene2 <- apply(gene1, 2, as.numeric); rownames(gene2) <- c.na
-          idx1 <- setdiff(1:length(r.na), idx); gene3 <- t(gene[idx1, , drop=F])
+        if (input$fileIn=="Compute online") {
 
-        }
+          pOverA <- pOverA(input$p, input$A); cv <- cv(input$cv1, input$cv2)
+          ffun <- filterfun(pOverA, cv); filtered <- genefilter(gene2, ffun)
+          gene2 <- gene2[filtered, ]; gene3 <- gene3[filtered, , drop=F]
 
-        if (!is.null(input$subset)) { 
-        
-          sub <- unlist(strsplit(readLines(input$subset$datapath), ",|;|\\s+|\t"))
-          idx <- rownames(gene2) %in% sub; gene2 <- gene2[idx, , drop=F]
-          gene3 <- gene3[idx, , drop=F] 
-
-        }; 
-
-  if (input$fileIn=="Compute online") {
-
-    pOverA <- pOverA(input$p, input$A); cv <- cv(input$cv1, input$cv2)
-    ffun <- filterfun(pOverA, cv); filtered <- genefilter(gene2, ffun)
-    gene2 <- gene2[filtered, ]; gene3 <- gene3[filtered, ]
-
-  }; return(list(gene2=gene2, gene3=gene3)) 
+        }; return(list(gene2=gene2, gene3=gene3)) 
 
       })
 
     }
   
   })
-
-  geneSub.sc.c <- reactive({
-
-    if (input$fileIn=="None"|input$fileIn=="Default"|is.null(geneIn())) return(NULL) 
-    gene <- geneIn()
-    if (input$mat.scale=="By column/sample") {
-
-      withProgress(message="Scaling data: ", value = 0, {
-
-        incProgress(0.5, detail="column/sample scaling.")
-        gene2 <- scale(gene[["gene2"]])
-        return(list(gene2=gene2, gene3=gene[["gene3"]]))
-  
-      })
-
-    }
-
-  })
-
-  geneSub.sc.r <- reactive({
-
-    if (input$fileIn=="None"|input$fileIn=="Default"|is.null(geneIn())) return(NULL) 
-    gene <- geneIn()
-    if (input$mat.scale=="By row/gene") {
-
-      withProgress(message="Scaling data: ", value = 0, {
-
-        incProgress(0.25, detail="row/gene scaling.")
-        gene2 <- t(scale(t(gene[["gene2"]])))
-        return(list(gene2=gene2, gene3=gene[["gene3"]])) 
-
-      })
-
-    }
-
-  })
-
-  geneIn.sc.c <- reactive({
-
-    if (input$fileIn=="None"|input$fileIn=="Default"|is.null(geneIn())) return(NULL) 
-    gene <- geneIn()
-    if (input$mat.scale=="By column/sample") {
-
-      withProgress(message="Scaling data: ", value = 0, {
-
-        incProgress(0.5, detail="column/sample scaling.")
-        gene2 <- scale(gene[["gene2"]])
-        return(list(gene2=gene2, gene3=gene[["gene3"]]))
-  
-     })
-
-    }
-
-  })
-
-  geneIn.sc.r <- reactive({
-
-    if (input$fileIn=="None"|input$fileIn=="Default"|is.null(geneIn())) return(NULL) 
-    gene <- geneIn()
-    if (input$mat.scale=="By row/gene") {
-
-      withProgress(message="Scaling data: ", value = 0, {
-
-        incProgress(0.25, detail="row/gene scaling.")
-        gene2 <- t(scale(t(gene[["gene2"]])))
-        return(list(gene2=gene2, gene3=gene[["gene3"]])) 
-
-      })
-
-    }
-
-  })
-
 
   output$dt <- renderDataTable({
    
     if (((input$fileIn=="Compute locally"|input$fileIn=="Compute online") & 
     is.null(geneIn()))|input$fileIn=="None") return(NULL)
+
     withProgress(message="Data table: ", value = 0, {
  
-      incProgress(0.5, detail="Ploting. Please wait.")
- 
-    if (input$fileIn=="Default") { 
+      incProgress(0.5, detail="Displaying. Please wait.")
+      if (input$fileIn!="None") {
 
-      if (is.null(input$subset)) gene <- geneIn() else {
-
-        if (input$mat.scale=="By row/gene") gene <- geneSub.sc.r() else if 
-        (input$mat.scale=="By column/sample") gene <- geneSub.sc.c() else if 
-        (input$mat.scale=="No") gene <- geneIn()
-
-      }
-
-    } else if (input$fileIn=="Compute online"|input$fileIn=="Compute locally") {
-
-        if (input$mat.scale=="By row/gene") gene <- geneIn.sc.r() else if 
-        (input$mat.scale=="By column/sample") gene <- geneIn.sc.c() else if 
-        (input$mat.scale=="No") gene <- geneIn()
-
-        gene.dt <- cbind.data.frame(gene[["gene2"]], gene[["gene3"]], 
-        stringsAsFactors=F) 
+      gene <- geneIn(); gene.dt <- cbind.data.frame(gene[["gene2"]][, , drop=F], 
+      gene[["gene3"]][, , drop=F], stringsAsFactors=F) 
 
    }
-    
+
     datatable(gene.dt, selection=list(mode="multiple", target="row"),
     filter="top", extensions='Scroller', options=list(autoWidth=T, scrollCollapse=T, 
     deferRender=T, scrollX=T, scrollY=200, scroller=T), class='cell-border strip hover') %>% 
@@ -248,46 +116,30 @@ shinyServer(function(input, output, session) {
     formatRound(colnames(geneIn()[["gene2"]]), 3)
 
     })
-   
+ 
   })
 
   gID <- reactiveValues(geneID="none", new=NULL, all=NULL)
-  observe({ input$geneInpath; input$subset; input$fileIn; input$mat.scale; 
-  gID$geneID <- "none" })
+  observe({ input$geneInpath; input$fileIn; gID$geneID <- "none" })
 
   geneV <- reactive({
  
     if (is.null(geneIn())) return(NULL)
-    if (input$fileIn=="Compute locally"|input$fileIn=="Compute online") {
-
-        if (input$mat.scale=="By row/gene") gene <- geneIn.sc.r()[["gene2"]] else if 
-        (input$mat.scale=="By column/sample") gene <- geneIn.sc.c()[["gene2"]] else if 
-        (input$mat.scale=="No") gene <- geneIn()[["gene2"]]
-
-    } else if (input$fileIn=="Default" & !is.null(input$subset)) {
- 
-      if (input$mat.scale=="By row/sample") gene <- geneSub.sc.r() else if 
-      (input$mat.scale=="By column/gene") gene <- geneSub.sc.c() else if 
-      (input$mat.scale=="No") gene <- geneIn() 
-
-    } else if (input$fileIn=="Default" & is.null(input$subset)) { gene <- geneIn() } 
-
+    if (input$fileIn!="None") { gene <- geneIn()[["gene2"]] } 
     seq(min(gene), max(gene), len=1000)
 
   })
 
   col.sch <- reactive({ if(input$color=="") { return(NULL) }
-  unlist(strsplit(input$color, ","))})
-  color <- reactiveValues(col="none")
+  unlist(strsplit(input$color, ",")) }); color <- reactiveValues(col="none")
 
   observeEvent(input$col.but, {
 
     if (is.null(col.sch())) return (NULL)
-    if ((input$fileIn=="Compute locally"|input$fileIn=="Compute online")|(input$fileIn==
-    "Default")) {
+    if ((input$fileIn=="Compute locally"|input$fileIn=="Compute online")) {
 
-      color$col <- colorRampPalette(col.sch())(length(geneV())) 
-
+      color$col <- colorRampPalette(col.sch())(length(geneV()))
+      col <- color$col; save(col, file="col")
     }
 
   })
@@ -295,26 +147,17 @@ shinyServer(function(input, output, session) {
   observeEvent(input$dt_rows_selected, {
     
     if (is.null(input$dt_rows_selected)) return()
-    r.na <- rownames(geneIn()[["gene3"]]); gID$geneID <- r.na[input$dt_rows_selected]
-    gID$new <- setdiff(gID$geneID, gID$all)
-    
-    gID$all <- c(gID$all, gID$new)
+    r.na <- rownames(geneIn()[["gene2"]]); gID$geneID <- r.na[input$dt_rows_selected]
+    save(r.na, file="r.na"); g0 <- gID$geneID; save(g0, file="g0")
+    gID$new <- setdiff(gID$geneID, gID$all); gID$all <- c(gID$all, gID$new)
 
     })
 
   output$bar <- renderPlot({  
 
-    if (input$fileIn=="Default" & is.null(input$subset)) {
-
-      if (input$mat.scale=="No") { load("precompute/cs.g"); return(cs.g) } 
-      else if (input$mat.scale=="By column/gene") { load("precompute/cs.scale.gen")
-      return(cs.scale.gen) } else if (input$mat.scale=="By row/sample") { 
-      load("precompute/cs.scale.sam"); return(cs.scale.sam) }
-
-    } 
-
+    if (grepl("^Default_", input$fileIn)) { load("precompute/cs.g"); return(cs.g) }
     if (((input$fileIn=="Compute locally"|input$fileIn=="Compute online") & 
-    !is.null(geneIn()) & !is.null(input$svgInpath))|(input$fileIn=="Default")) {
+    !is.null(geneIn()) & !is.null(input$svgInpath))|(input$fileIn=="Default_root_cross")) {
     if (length(color$col=="none")==0) return(NULL)
 
     if(input$col.but==0) color$col <- colorRampPalette(c("green", "blue", "purple", 
@@ -324,7 +167,7 @@ shinyServer(function(input, output, session) {
 
         incProgress(0.25, detail="Fetching data. Please wait.")
         cs.df <- data.frame(color_scale=geneV(), y=1)
-
+        save(cs.df, file="cs.df"); col <- color$col; save(col, file="col")
         incProgress(0.75, detail="Plotting. Please wait.")
         cs.g <- ggplot()+geom_bar(data=cs.df, aes(x=color_scale, y=y), fill=color$col, 
         stat="identity", width=0.2)+theme(axis.title.x=element_blank(), axis.text.x=
@@ -341,7 +184,7 @@ shinyServer(function(input, output, session) {
 
   observe({
 
-    geneIn(); input$ds; input$adj.modInpath; input$A; input$p; input$cv1
+    geneIn(); input$adj.modInpath; input$A; input$p; input$cv1
     input$cv2; input$min.size; input$net.type
     r.na <- rownames(geneIn()[["gene2"]]); gen.sel <- r.na[input$dt_rows_selected]
     updateSelectInput(session, "gen.sel", choices=c("None", gen.sel), selected="None")
@@ -350,7 +193,11 @@ shinyServer(function(input, output, session) {
 
   svg.df <- reactive({ 
 
-    if (input$fileIn=="Default") { load("precompute/df.path"); return(df.path) }
+    if (input$fileIn=="Default_root_cross") { load("precompute/df.path"); return(df.path) }
+    if (input$fileIn=="Default_arab") { load("precompute/df.path.arab"); return(df.path.arab) }
+    if (input$fileIn=="Default_root_vertical") { load("precompute/df.path.rt.vertical"); return(df.path.rt.vertical) }
+    if (input$fileIn=="Default_brain") { load("precompute/df.path.brain"); return(df.path.brain) }
+    if (input$fileIn=="Default_elegans") { load("precompute/df.path.elegans"); return(df.path.elegans) }
     if ((input$fileIn=="Compute locally"|input$fileIn=="Compute online") & 
     !is.null(input$svgInpath)) {
 
@@ -432,7 +279,9 @@ shinyServer(function(input, output, session) {
 
           df <- rbind(df, df0)
 
-        }; return(list(df=df, tis.path=tis.path))
+        }; save(df, file="df"); save(tis.path, file="tis.path")
+
+  return(list(df=df, tis.path=tis.path))
 
       })
 
@@ -446,10 +295,11 @@ shinyServer(function(input, output, session) {
     cname <- colnames(geneIn()[["gene2"]]); idx <- grep("__", cname); c.na <- cname[idx]
     if (length(grep("__", c.na))>=1) gsub("(.*)(__)(\\w+$)", "\\3", c.na) else 
     return(NULL) 
-       
+
   })
 
 grob <- reactiveValues(all=NULL)
+observeEvent(input$fileIn, { gID$all <- grob$all <- NULL })
 
   gs <- reactive({ 
 
@@ -458,34 +308,13 @@ grob <- reactiveValues(all=NULL)
 
       incProgress(0.25, detail="preparing data.")
 
-      if (input$fileIn=="Default" & is.null(input$subset)) {
-
-        if (input$mat.scale=="By row/sample") { load("precompute/color.scale.r")
-        color$col <- color.scale.r } else if (input$mat.scale=="By column/gene") { 
-        load("precompute/color.scale.c"); color$col <- color.scale.c } else if 
-        (input$mat.scale=="No") { load("precompute/color"); color$col <- color}
-        gene <- geneIn()
-
-      }
-
-      if (input$fileIn=="Compute locally"|input$fileIn=="Compute online") {
- 
-          if (input$mat.scale=="By row/gene") gene <- geneIn.sc.r()[["gene2"]] else if 
-          (input$mat.scale=="By column/sample") gene <- geneIn.sc.c()[["gene2"]] else if 
-          (input$mat.scale=="No") gene <- geneIn()[["gene2"]]
-
-      } else if (input$fileIn=="Default" & !is.null(input$subset)) {
- 
-        if (input$mat.scale=="By row/sample") gene <- geneSub.sc.r() else if 
-        (input$mat.scale=="By column/gene") gene <- geneSub.sc.c() else if 
-        (input$mat.scale=="No") gene <- geneIn() 
-
-     }
+      if (grepl("^Default_", input$fileIn)) { load("precompute/color"); color$col <- color }
+      gene <- geneIn()[["gene2"]]
 
       g.df <- svg.df()[["df"]]; tis.path <- svg.df()[["tis.path"]]
       # Assign colors to paths in svg.
 
-      g.list <- function(j) { 
+      g.list <- function(j) {
 
         withProgress(message="Tissue heatmap: ", value=0, {
 
@@ -498,7 +327,7 @@ grob <- reactiveValues(all=NULL)
         for (i in tis.path) {
 
           tis.idx <- which(tis.col1 %in% i)
-          if (length(tis.idx)==1) { g.col <- c(g.col, scol1[tis.idx]) 
+          if (length(tis.idx)==1) { g.col <- c(g.col, scol1[tis.idx])
           } else if (length(tis.idx)==0) { g.col <- c(g.col, "white") }
 
         }
@@ -513,7 +342,7 @@ grob <- reactiveValues(all=NULL)
      plot.title=element_text(hjust=0.5, size=20))+labs(x="", y="")+
      scale_y_continuous(expand=c(0.01,0.01))+scale_x_continuous(expand=c(0.01,0.01))+
      ggtitle(paste0(k, "_", j)); return(g)
-   
+ 
       })
 
     }
@@ -543,7 +372,6 @@ grob <- reactiveValues(all=NULL)
      con <- con(); con.uni <- unique(con); grob.na0 <- paste0(k, "_", con.uni)
      g.lis <- lapply(con.uni, g.list); grob <- lapply(g.lis, ggplotGrob)
      names(grob) <- grob.na0; grob.lis <- c(grob.lis, grob) 
-
     } else {
 
       withProgress(message="Tissue heatmap: ", value=0, {
@@ -578,7 +406,7 @@ grob <- reactiveValues(all=NULL)
 
   }; return(grob.lis)
 
- }
+  }
 
     })
 
@@ -592,7 +420,7 @@ grob <- reactiveValues(all=NULL)
                    height=as.numeric(input$height), {
 
     if (is.null(input$dt_rows_selected)|is.null(svg.df())|gID$geneID[1]==
-    "none") return(NULL)
+    "none"|is.null(grob$all)) return(NULL)
     r.na <- rownames(geneIn()[["gene2"]]); gID$geneID <- r.na[input$dt_rows_selected]
     idx <- NULL; for (i in gID$geneID) idx <- c(idx, grep(i, names(grob$all)))
     grob.lis.p <- grob$all[idx]
@@ -608,7 +436,7 @@ grob <- reactiveValues(all=NULL)
       grid.arrange(grobs=grob.lis.p, layout_matrix=lay)
 
     } else if (input$gen.con=="con") {
-     
+
       grob.p.na <- names(grob.lis.p); grob.p.idx <- NULL
       for (i in unique(con())) {
 
@@ -624,7 +452,7 @@ grob <- reactiveValues(all=NULL)
       lay <- NULL
       for (i in 1:length(unique(con()))) { lay <- rbind(lay, m+(i-1)*length(gID$geneID)) }
       grid.arrange(grobs=grob.lis.p.con, layout_matrix=lay)
-      
+
     }
 
     do.call(file.remove, list(list.files(".", "capture.*.ps")))
@@ -637,17 +465,37 @@ grob <- reactiveValues(all=NULL)
 
   output$ori.svg <- renderImage({
 
-    if ((is.null(input$svgInpath) & input$fileIn!="Default")|input$fileIn==
+    if ((is.null(input$svgInpath) & !grepl("^Default_", input$fileIn))|input$fileIn==
     "None") return(list(src="precompute/blank.png", contentType="image/png"))
 
     w <- as.numeric(input$width); h <- as.numeric(input$height); con.n <- length(con())
     W <- w/as.numeric(input$col.n); H <- h/(ceiling(con.n/as.numeric(input$col.n)))
-    if (input$fileIn=="Default") {
+    if (input$fileIn=="Default_root_cross") {
 
       list(src="precompute/default.png", contentType="image/png", width=W, height=H*3.7, 
       alt=NULL)
 
-    } else if ((input$fileIn=="Compute locally"|input$fileIn=="Compute online")|
+    }  else if (input$fileIn=="Default_arab") {
+
+      list(src="precompute/arab.png", contentType="image/png", width=W, height=H*3.7,
+      alt=NULL)
+
+    }  else if (input$fileIn=="Default_root_vertical") {
+
+      list(src="precompute/root_vertical.png", contentType="image/png", width=W, height=H*3.7,
+      alt=NULL)
+
+    }  else if (input$fileIn=="Default_brain") {
+
+      list(src="precompute/brain.png", contentType="image/png", width=W, height=H*3.7,
+      alt=NULL)
+
+    }  else if (input$fileIn=="Default_elegans") {
+
+      list(src="precompute/elegans.png", contentType="image/png", width=W, height=H*3.7,
+      alt=NULL)
+
+    }  else if ((input$fileIn=="Compute locally"|input$fileIn=="Compute online")|
     !is.null(input$svgInpath)) {
 
        svg.path <- input$svgInpath$datapath; rsvg_png(svg.path, "tmp/user.png")
@@ -656,15 +504,16 @@ grob <- reactiveValues(all=NULL)
 
     }
 
-  }, deleteFile=T)
+  }, deleteFile=F)
+
+  if (file.exists("./tmp/user.png")) file.remove("./tmp/user.png")
 
   adj.mod <- reactive({ 
 
-    if(input$gen.sel=="None") return(NULL)
     if (input$fileIn=="Compute locally") {
 
       name <- input$adj.modInpath$name; path <- input$adj.modInpath$datapath
-      path1 <- path[name=="adj.txt"]; path2 <- path[name=="mcol.txt"]
+      path1 <- path[name=="adj.txt"]; path2 <- path[name=="mod.txt"]
       adj <- fread(path1, sep="\t", header=T, fill=T); c.na <- colnames(adj)[-ncol(adj)]
       r.na <- as.data.frame(adj[, 1])[, 1];  adj <- as.data.frame(adj)[, -1] 
       rownames(adj) <- r.na; colnames(adj) <- c.na
@@ -673,7 +522,14 @@ grob <- reactiveValues(all=NULL)
       r.na <- as.data.frame(mcol[, 1])[, 1]; mcol <- as.data.frame(mcol)[, -1] 
       rownames(mcol) <- r.na; colnames(mcol) <- c.na
 
-    } else if (input$fileIn=="Compute online") {
+    }; return(list(adj=adj, mcol=mcol))
+
+  })
+
+
+  adj.tree <- reactive({ 
+
+    if (input$fileIn=="Compute online") {
 
       if (input$net.type=="S") { sft <- 12; type <- "signed" } else if 
       (input$net.type=="U") { sft <- 6; type <- "unsigned" }
@@ -686,35 +542,71 @@ grob <- reactiveValues(all=NULL)
         incProgress(0.5, detail="topological overlap matrix.")
         tom <- TOMsimilarity(adj, TOMType=type)
         dissTOM=1-tom; tree.hclust=flashClust(as.dist(dissTOM), method="average")
-        mcol <- NULL; ds <- as.numeric(input$ds)
-
-        incProgress(0.5, detail="dynamic tree cutting.")
-        for (ds in 0:3) {
-
-          tree <- cutreeHybrid(dendro=tree.hclust, pamStage=F, minClusterSize=
-          (input$min.size-3*ds), cutHeight=0.99, deepSplit=ds, distM=dissTOM)
-          mcol <- cbind(mcol, tree$labels)
-
-         }; colnames(mcol) <- as.character(0:3); rownames(mcol) <- 1:nrow(mcol)
 
       })
 
-    }; return(list(adj=adj, mcol=mcol))
+    }; save(adj, file="adj")
+
+  return(list(adj=adj, tree=tree.hclust, disTOM=dissTOM))
+
+  })
+
+  observe({
+    
+    input$gen.sel
+    updateSelectInput(session, 'ds', "Select a module splitting sensitivity level", 3:2, 
+    selected="3")
+
+  })
+
+  mcol <- reactive({
+
+    if (input$fileIn=="Compute online") {
+
+      withProgress(message="Computing: ", value = 0, {
+      mcol <- NULL; ds <- as.numeric(input$ds); tree.hclust <- adj.tree()[["tree"]]
+      dissTOM <- adj.tree()[["disTOM"]]
+      incProgress(0.6, detail="dynamic tree cutting.")
+      for (ds in 0:3) {
+
+        tree <- cutreeHybrid(dendro=tree.hclust, pamStage=F, minClusterSize=
+        (input$min.size-3*ds), cutHeight=0.99, deepSplit=ds, distM=dissTOM)
+        mcol <- cbind(mcol, tree$labels)
+
+       }; colnames(mcol) <- as.character(0:3); rownames(mcol) <- 1:nrow(mcol)
+
+      })
+ 
+    }; save(mcol, file="mcol")
+  return(mcol)
+
+  })
+
+  observe({
+
+    geneIn(); input$adj.modInpath; input$A; input$p; input$cv1
+    input$cv2; input$min.size; input$net.type
+    updateSelectInput(session, "mat.scale", "Scale matrix heatmap", c("No", 
+    "By column/gene", "By row/sample"), "No")
 
   })
 
   output$HMly <- renderPlotly({
 
     if (input$gen.sel=="None") return(NULL)
-    adj <- adj.mod()[[1]]; mods <- adj.mod()[[2]]; gene <- geneIn()[[1]]
-    lab <- mods[, input$ds][rownames(gene)==input$gen.sel]
-    if (lab=="0") { showModal(modalDialog(title="Module", "The selected gene is not assigned 
-    to any module. Please select a different gene.")); return() }
-    mod <- gene[mods[, input$ds]==lab, ]
 
     withProgress(message="Computing dendrogram:", value=0, {
 
       incProgress(0.7, detail="hierarchical clustering.")
+      if (grepl("^Default_", input$fileIn)) { load("precompute/adj"); load("precompute/mcol")
+      mods <- mcol } else if (input$fileIn=="Compute locally") { adj <- adj.mod()[[1]]
+      mods <- adj.mod()[[2]] } else if (input$fileIn=="Compute online") { 
+      adj <- adj.tree()[[1]]; mods <- mcol() }
+
+      gene <- geneIn()[["gene2"]]; lab <- mods[, input$ds][rownames(gene)==input$gen.sel]
+      if (lab=="0") { showModal(modalDialog(title="Module", "The selected gene is not 
+      assigned to any module. Please select a different gene.")); return() }
+      mod <- gene[mods[, input$ds]==lab, ]
       dd.gen <- as.dendrogram(hclust(dist(mod))); dd.sam <- as.dendrogram(hclust(dist(t(mod))))
       d.sam <- dendro_data(dd.sam); d.gen <- dendro_data(dd.gen)
   
@@ -740,7 +632,10 @@ grob <- reactiveValues(all=NULL)
       gene.clus <- rbind(Y=0, cbind(X=0, gene[gen.ord, sam.ord]))
 
       incProgress(0.2, detail="plotting.")
-      ply <- plot_ly(z=t(as.matrix(gene.clus)), type="heatmap") %>% layout(yaxis=
+      z <- t(as.matrix(gene.clus)); if (input$mat.scale=="By column/gene") z <- scale(z)
+      if (input$mat.scale=="By row/sample") z <- t(scale(t(z)))
+      
+      ply <- plot_ly(z=z, type="heatmap") %>% layout(yaxis=
       list(domain=c(0, 1), showticklabels=F, showgrid=F, ticks="", zeroline=F), 
       xaxis=list(domain=c(0, 1), showticklabels=F, showgrid=F, ticks="", zeroline=F))
 
@@ -753,9 +648,8 @@ grob <- reactiveValues(all=NULL)
 
   observe({
   
-    geneIn(); gID$geneID; geneIn.sc.r(); geneIn.sc.c(); input$gen.sel; input$ds
-    input$adj.modInpath; input$A; input$p; input$cv1; input$cv2; input$min.size
-    input$net.type
+    geneIn(); gID$geneID; input$gen.sel; input$ds; input$adj.modInpath; input$A; input$p
+    input$cv1; input$cv2; input$min.size; input$net.type
     updateSelectInput(session, "TOM.in", label="Input a similarity threshold to display the 
     similarity network.", choices=c("None", sort(seq(0, 1, 0.002), decreasing=T)), 
     selected="None")
@@ -764,10 +658,9 @@ grob <- reactiveValues(all=NULL)
 
   observe({
   
-    geneIn(); gID$geneID; input$TOM.in; input$gen.sel; input$ds; geneIn.sc.r()
-    geneIn.sc.c(); input$adj.modInpath; input$A; input$p; input$cv1; input$cv2
-    input$min.size; input$net.type
-    updateRadioButtons(session, "cpt.nw", label="Compute or not?", c("Yes"="Y", "No"="N"),
+    geneIn(); gID$geneID; input$TOM.in; input$gen.sel; input$ds; input$adj.modInpath
+    input$A; input$p; input$cv1; input$cv2; input$min.size; input$net.type
+    updateRadioButtons(session, "cpt.nw", label="Display or not?", c("Yes"="Y", "No"="N"),
     "N", inline=T, selected="N")
 
   })
@@ -787,16 +680,20 @@ grob <- reactiveValues(all=NULL)
   visNet <- reactive({
 
     if (input$TOM.in=="None") return(NULL)
-    adj <- adj.mod()[["adj"]]; mods <- adj.mod()[[2]]; gene <- geneIn()[[1]]
-    lab <- mods[, input$ds][rownames(gene)==input$gen.sel]
+
+    if (input$fileIn=="Compute locally") { adj <- adj.mod()[[1]]; mods <- adj.mod()[[2]]
+    } else if (input$fileIn=="Compute online") { adj <- adj.tree()[[1]]
+    mods <- mcol() } else if (grepl("^Default_", input$fileIn)) { load("precompute/mcol")
+    mods <- mcol; load("precompute/adj") }
+
+    gene <- geneIn()[[1]]; lab <- mods[, input$ds][rownames(gene)==input$gen.sel]
     if (lab=="0") { showModal(modalDialog(title="Module", "The selected gene is not assigned 
     to any module. Please select a different gene.")); return() }
     idx.m <- mods[, input$ds]==lab; adj.m <- adj[idx.m, idx.m]
-    save(adj.m, file="adj.m")
     withProgress(message="Computing network:", value=0, {
    
       incProgress(0.8, detail="making network data frame")
-      idx = adj.m > input$TOM.in
+      idx = adj.m > as.numeric(input$TOM.in)
       link <- data.frame(from=rownames(adj.m)[row(adj.m)[idx]], 
       to=colnames(adj.m)[col(adj.m)[idx]], length=adj.m[idx])
       # Should not exclude duplicate rows by "length".
@@ -804,9 +701,11 @@ grob <- reactiveValues(all=NULL)
 
       node <- data.frame(id=colnames(adj.m), group=paste0("Module_", lab), 
       value=colMeans(adj.m), color=NA, stringsAsFactors=F)
-      col <- colorRampPalette(c("blue", "green", "red"))(ncol(adj.m))
-      node <- node[order(node$value), ]; node$color <- col
-      net.lis <- list(node=node, link=link1); save(node, file="node")
+      idx.sel <- grep(paste0("^", input$gen.sel, "$"), node$id)
+      rownames(node)[idx.sel] <- node$id[idx.sel] <- paste0(input$gen.sel, "_selected")
+      col <- colorRampPalette(c("red", "green", "blue"))(ncol(adj.m))
+      node <- node[order(-node$value), ]; node$color <- col
+      net.lis <- list(node=node, link=link1)
 
     }); net.lis
 
@@ -819,8 +718,8 @@ grob <- reactiveValues(all=NULL)
     if (input$fileIn=="None"|(input$fileIn=="Your own" & is.null(geneIn()))|
     input$gen.sel=="None") return(NULL)
 
-    HTML(paste0("&nbsp&nbsp&nbsp&nbsp Edges (If > 300, the App can get <br/> &nbsp&nbsp
-    &nbsp stuck easily.): ", dim((visNet()[["link"]]))[1]))
+    HTML(paste0("&nbsp&nbsp&nbsp&nbsp Total edges to display (If > 300, the <br/> 
+    &nbsp&nbsp&nbsp App can possibly get stuck.): ", dim((visNet()[["link"]]))[1]))
 
   })
 

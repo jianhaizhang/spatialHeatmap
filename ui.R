@@ -1,87 +1,126 @@
 library(shiny); library(shinydashboard); library(plotly); library(visNetwork); library(DT)
 
-ins <- "This shiny app has three main functionalities. First, it generates spatial tissue 
-       heatmaps where user defined tissue regions are colored by the expression profile 
-       of a gene of interest. The gene expression information is uploaded as a table matrix
-       and the tissue image is uploaded as an SVG format. Second, the app allows to 
-       visualize the expression of a chosen gene in the context of many other genes in the 
-       form of a matrix heatmap where the rows and columns have been sorted by pre-computed 
-       hierarchical clustering dendrograms. To explore the results, the matrix heatmap has 
-       several interactive features. For instance, users can zoom in and out by drawing a 
-       rectangle or by double clicking the image, respectively. To identify a query gene 
-       in the matrix heatmap, it is tagged by a red rectangle. Third, the app can compute 
-       gene network modules across tissue samples, and display them as interactive network 
-       graphs." 
+ins <- "This Shiny App based Spatial Heatmap can be used for interactive visualisation as 
+       long as a data matrix and an associated SVG image are provided. In the following the
+       instructions are given with a gene expression matrix and an associated root tissue 
+       image in SVG format. This app has three main functionalities. First, it generates 
+       spatial tissue heatmaps where user defined tissue regions are coloured by the 
+       expression profile of a gene of interest. The gene expression information is uploaded
+       as a table matrix and the associated tissue image is uploaded as an SVG format. 
+       Second, the app computes gene network modules based on gene expression profiles 
+       across tissue samples. It uses a matrix heatmap to visualize the expression of a 
+       chosen gene in the context of the corresponding gene network module the chosen gene 
+       belongs to. Third, the app dispalys the network module from the second section in the
+       form of an interactive network graph. The network module identification is 
+       computationally demanding for large gene expression matrix (e.g.: > 10,000 genes), so
+       to make this app more widely applicable the \"Compute locally\" mode is developed for 
+       processing large data matrix. If the data matrix is small (e.g.: < 10,000 genes), the
+       \"Compute online\" mode can be used. If the app times out at some time, then users 
+       want to refresh the page in their web browser."
 
-ins.input1 <- "For testing purposes, the app includes pre-uploaded SVG image files and gene
-              expression tables. They can be viewed by selecting \"Default\" in \"Use 
-              default or your own files?\" in the left \"Input\" menu and clicking a gene 
-              ID of interest in the matrix table. Subsequently, the spatial tissue heatmap 
-              will show the expression of the chosen gene and it is also highlighted in the
-              matrix heatmap. Alternatively, users can upload custom SVG image files and 
-              expression tables. Details about how to properly format and associate custom 
-              SVG images with expression tables are provided here: "
+ins.input1 <- "At first, users need to select a mode under \"Select a work mode\" in the 
+              left \"Input\" menu. The \"Default\" is most convenient for users to test the
+              app, since this option relies on pre-uploaded files and users do not need to 
+              upload any files at all. The \"Compute locally\" should be selected if users 
+              have a large gene expression file (e.g.: > 10,000 genes) while the \"Compute 
+              online\" can be selected if users have a small gene expression file (e.g.: < 
+              10,000 genes). In \"Step 1: upload an svg file\" and \"Step 2: upload a gene 
+              expression file\", users are asked to upload the svg file and associated gene
+              expression file respectively. Details about how to properly format and 
+              associate custom SVG images with expression tables are provided here: "
 
-ins.input2 <- "The test SVG image, the expression matrix, and the file of subsetting gene 
-              IDs can be downloaded here:"
+ins.input2 <- "The \"Step 3: is column or row gene?\" option specifies if column or row is gene in 
+             the gene expression table, and \"Step 4: separator\" specifies the separator among 
+             the expression values. \"Step 5: Color scheme\" allows users to input colour components
+             to construct colour scale for gene expression levels. Colours must be sepatated by 
+             comma, e.g. the default is \"green,blue,purple,yellow,red\"."
 
-ins.input3 <- "In the gene matrix, if there are multiple conditions, the sample names MUST 
-              be fomatted this way: a sample name is followed by double underscore and 
-              then the condition, such as \"S1__con1\". In the sample/condition description,
-              only letters, digits, single underscore, dots are allowed. When upload gene 
-              expression table, users need to specify the dimension names (Step 3: is 
-              column or row gene?) and the seperator. Users can also subset the gene table 
-              by uploading a file of gene IDs, which can be separated by comma, space, tab 
-              or semicolon."
+ins.input3 <- "In the gene matrix, if there are multiple conditions the sample names MUST 
+              be fomatted this way: a sample name is followed by double underscore and then the 
+              condition, such as \"S1__con1\". In the sample/condition description, only letters, 
+              digits, single underscore, dots are allowed. The example SVG image and 
+              associated gene expression matrix can be downloaded below, which can be 
+              uploaded directly for testing: "
 
-ins.tis <- "The app displays the gene expression matrix as an interactive table where gene 
-           IDs are in the first column. Users can sort the gene values for a sample or 
-           search for a particular gene by its ID. Once users click on a specific gene ID, 
-           the corresponding spatial tissue heatmap and matrix heatmap will be displayed."
+ins.input3 <- "In the gene matrix, the dimension names are gene IDs and sample/conditions. 
+              The sample/condition names MUST be fomatted this way: a sample name is 
+              followed by double underscore then the condition, such as \"sample 
+              name__condition name\". The meta data (e.g. gene annotation) can also be 
+              included in parallel with sample/condition. In the names of sample/condition 
+              and meta data, only letters, digits, single underscore, dots are allowed. The
+              example SVG image and associated gene expression matrix can be downloaded in 
+              the instruction page of this app, which can be uploaded directly for testing
+              in \"Compute online\" mode: "
 
-ins.tis1 <- "For the tissue heatmap, users can customize the width/height, image 
-            organization, color scheme. In the color scheme, colors must be sepatated by 
-            comma, such as \"green,yellow,red\". The \"Scale\" option allows to scale the 
-            data by gene or sample. In the matrix heatmap, the chosen gene is shown in the
-            context of its related genes. Their dendrogram clustering is exactly exrtacted 
-            from the original clustering of the complete gene table rather than 
-            re-clustering among themself. The chosen gene is labeled with a red rectangle."
+ins.input4 <- "The \"Compute locally\" option is designed for large gene expression data 
+             (e.g.: > 10,000 genes), since gene network modules are identified with the R 
+             package WGCNA and the computation of topological overlap matrix (TOM) is time 
+             comsuming for large expression matrix. To maintain good performance, this 
+             process is expected to be performed on user's local computer. The tutorial of 
+             how to compute locally is provided in the R package \"spatialHeatmap\"."
 
-ins.tis2 <- "If the complete gene table contains a whole genome such as 30 thousand genes,
-            it may take several mins to display heatmaps for the first time when a gene is 
-            chosen in the table, since the app needs to cluster all the genes, which is time
-            consuming. From the second time onward, it only takes 6-8 seconds to display
-            all the heatmaps."
+ins.input5 <- "The \"Compute online\" option is designed for small gene expression 
+             data (e.g.: < 10,000 genes). The first two items filter genes according to a
+             proportion that a gene's expression values exceed a threthold A across all 
+             samples. Only the genes exceeding the proportion will be maintained. The third 
+             and fourth items filter genes according to the coefficient of variation (CV). 
+             Only the genes with CV between the two specified values are maintained. The 
+             genes passing all these criteria are retained for downstream analysis. To save 
+             time, the TOM computation is only performed once when the matrix heatmap is 
+             displayed for the first time, but if the gene expression martix or its filter 
+             parameters are changed, the TOM will be re-computed."
 
-ins.tis3 <- "The upper limit for matrix heatmap controls the gene group size included. If 
-            users are not interested in the matrix heatmap, it can be disabled by selecting 
-            0 for the upper limit, and this can seed up the generation of the tissue heatmap." 
+ins.input6 <- "The \"Minmum module size\" sets the minimum module size in gene module indentification. 
+             In \"Network type\", \"Signed\" means both positive and negative adjacency between 
+             genes are maintained in network module identification while \"Unsigned\" takes the 
+             absolute values of negative adjacency."
 
-ins.net1 <- "The network feature is computationally demanding, especially for large data 
-            matrices. If the app times out then users want to refresh the page in their web
-            browser. The network is computed among the same group of genes in the matrix 
-            heatmap. If no modules are identified, a message will pop up, then users can 
-            either increase the upper limit for gene group or change the gene ID."
+ins.mat <- "The gene expression data is represented as an interactive table under 
+           \"Expression Matrix\", where row names are gene IDs and column names are 
+           samples/conditions and meta data (the dimension names of the original table are 
+           adjusted internally in \"Step 3: is column or row gene?\"). Users can sort the 
+           expression values for a sample or search for a particular gene by its ID. Users 
+           can select multiple genes in the table to display corresponding spatial tissue 
+           heatmaps. In each such spatial heatmap, the gene expression levels are 
+           represented by colours for each sample under each condition. In the \"Spatial 
+           Heatmap\" section, users can customise the dimension and layout of the spatial 
+           tissue heatmaps, or scale the expression values by gene or sample. The scaled 
+           values are only used for matrix heatmap display, not for downstream module 
+           identifications."
 
-ins.net2 <- "Gene network modules are computed with the R package WGCNA. In the 
-            visualization result each module is assigned a unique color. The similarity 
-	    among gene expression profiles is calculated and represented by similarity 
-	    values internally. A similarity threshold can be used to restrict the network 
-            edges to genes with similar expression profiles. The length of the edges is 
-	    proportional to the expression similarity among genes, while the size of the 
-	    nodes is proportional to the average expressions of the corresponding genes."
+ins.mat_hm <- "In the \"Matrix Heatmap & Network\" section, all gene IDs chosen in 
+              \"Expression Matrix\" are listed under \"Select a gene to display matrix 
+              heatmap & network.\". After a gene is selected from this list, the gene module
+              containing the selected gene would be displayed in the form of interactive 
+              matrix heatmap, where the rows and columns are sorted by hierarchical 
+              clustering dendrograms and the chosen gene is tagged by a red rectangle. To 
+              explore the results, the matrix heatmap has several interactive features. For 
+              instance, users can zoom in and out by drawing a rectangle and by double 
+              clicking the image, respectively."
 
-ins.net4 <- "The number of edges to display in the network is shown. It tells how possible 
-            the network is going to get stuck. If it exceeds 300, then the network may not 
-            be well responsive and more possibly get stuck, in this case, users may not 
-            choose \"Yes\"(Compute or not?). To maintain acceptable performance, users are 
-            advised to choose a stringent similarity threshold (e.g. 0.9) initially, then 
-            decrease the value gradually."
+ins.net <- "The gene network modules are identified at two alternative sensitivities 
+           levels (3, 2). From 3 to 2, the sensitivity decreases and results in more modules
+           with smaller sizes. The \"Select a module splitting sensitivity level\" option 
+           allows users to choose which level to use for displaying the iteractive matrix 
+           heatmap and network."
 
-ins.net3 <- "After choosing a similarity threshold, the app will compute the network. The 
-            network result can be accessed by clicking \"View network\". \"Select by id\" 
-	    allows users to highlight a particular gene/node along with its associated 
-	    genes, while \"Select by group\" highlights a particular module."
+ins.net2 <- "The module in \"Matrix Heatmap\" is displayed as an interactive network. Nodes
+            and edges mean genes and adjacency between genes respectively. Gene colours from
+            blue, green to red mean gene connectivity is increasing while the edge length is
+            inversely proportional to gene adjacency. If too many edges (e.g.: > 300) are 
+            displayed in this network, the app can possibly get stuck. So the \"Input an 
+            adjacency threshold to display the adjacency network.\" option sets a threthold
+            to filer out some edges. Only edges above the threthold are displayed in the 
+            network. The app outputs the total number of remaining edges resulting from each
+            input adjacency threthold. If it is not too large (e.g.: < 300), users can check
+            \"Yes\" under \"Display or not?\", then the network can be displayed smoothly. 
+            To maintain acceptable performance, users are advised to choose a stringent 
+            threshold (e.g. 0.9) initially, then decrease the value gradually. The 
+            interactive feature allows users to zoom in and out, or drag a gene around. All
+            the gene IDs in the network module are listed in \"Select by id\" according to 
+            gene connectivity in decreasing order. The selected gene ID is appended 
+            \"_selected\", which can be easily identified from the list. By clicking an ID 
+            in this list, users can identify the corresponding gene in the network."
 
 shinyUI(dashboardPage(
 
@@ -94,15 +133,22 @@ shinyUI(dashboardPage(
 
       menuItem("Instruction", tabName="instruction", icon=icon("dashboard")),
       menuItem("Input", icon=icon("dashboard"),
-      selectInput("fileIn", "Select a mode", c("None", "Default", 
+      menuSubItem("View", tabName="hm_net"), br(),
+      selectInput("fileIn", "Select a work mode", c("None", "Default_arab", 
+      "Default_root_cross", "Default_root_vertical", "Default_brain", "Default_elegans", 
       "Compute locally", "Compute online"), "Compute locally"),
       fileInput("svgInpath", "Step 1: upload an svg file", accept=".svg", multiple=F),
       fileInput("geneInpath", "Step 2: upload a gene expression file", accept=c(".txt", 
       ".csv"), multiple=F),
-      selectInput('dimName', 'Step 3: is column or row gene?', c("None", "Row", 
-      "Column")),
+      radioButtons('dimName', 'Step 3: is column or row gene?', c("None", "Row", "Column"),
+      inline=T),
       selectInput('sep', 'Step 4: separator', c("None", "Tab", "Comma", "Semicolon"), 
       "None"),
+      div(style="display:inline-block;width:65%;text-align:left;",textInput("color", 
+      "Step 5: Color scheme", "green,blue,purple,yellow,red", placeholder="Eg: green,yellow,red",
+      width=150)),
+      div(style="display:inline-block;width:35%;text-align:left;", actionButton("col.but", 
+      "Go", icon=icon("refresh"), style="padding:7px; font-size:90%; margin-left: 0px")),
       h4(strong("Compute locally")),
       fileInput("adj.modInpath", "Upload the adjacency matrix and module definition file.",
       accept=".txt", multiple=T),
@@ -119,35 +165,29 @@ shinyUI(dashboardPage(
       ),
 
       menuItem("Heatmap & network", icon=icon("dashboard"), 
-      h4(strong("Tissue heatmap")),
+      h4(strong("Spatial tissue heatmap")),
       selectInput("height", "Overall height of tissue heatmap:", seq(100, 1500, 50), "800",
       width=150), 
       selectInput("width", "Overall width of tissue heatmap:", seq(100, 1500, 50), "800",
       width=150),
       selectInput("col.n", "No. of columns for sub-plots", seq(1, 15, 1), "3", width=150), 
-      div(style="display:inline-block;width:65%;text-align:left;",textInput("color", 
-      "Color scheme:", "green,blue,purple,yellow,red", placeholder="Eg: green,yellow,red",
-      width=150)),
-      div(style="display:inline-block;width:35%;text-align:left;", actionButton("col.but", 
-      "Go", icon=icon("refresh"), style="padding:7px; font-size:90%; margin-left: 0px")),
-      selectInput("mat.scale", "Scale:", c("No", "By column/sample", "By row/gene"), 
-      "No", width=167),
-      textOutput("but"),
       radioButtons("gen.con", "Display by:", c("Gene"="gene", "Condition"="con"), "gene", 
       inline=T),
       h4(strong("Matrix heatmap & network")), 
       selectInput("gen.sel","Select a gene to display matrix heatmap & network.", c("None"),
-      selected="None"),
-      selectInput("ds","Select a module splitting sensitivity level", 0:3, selected="0", 
+      selected="None", width=190),
+      selectInput("mat.scale", "Scale matrix heatmap", c("No", "By column/gene", 
+      "By row/sample"), "No", width=190),
+      selectInput("ds","Select a module splitting sensitivity level", 3:2, selected="3", 
       width=190),
 
-      selectInput("TOM.in", "Input a similarity threshold to display the similarity 
-      network.", c("none", sort(seq(0, 1, 0.002), decreasing=T)), "none"), 
+      selectInput("TOM.in", "Input an adjcency threshold to display the adjacency network.",
+      c("None", sort(seq(0, 1, 0.002), decreasing=T)), "None", width=190), 
       htmlOutput("edge"),
-      radioButtons("cpt.nw", "Compute or not?", c("Yes"="Y", "No"="N"), "N", inline=T),
+      radioButtons("cpt.nw", "Display or not?", c("Yes"="Y", "No"="N"), "N", inline=T),
       #menuSubItem("View network", tabName="network")
 
-      menuSubItem("Display", tabName="hm_net"), br()
+      menuSubItem("View", tabName="hm_net"), br()
       )
 
      )
@@ -164,22 +204,22 @@ shinyUI(dashboardPage(
       box(title="Input instruction", status="primary", solidHeader=T, collapsible=T, 
       p(ins.input1, HTML("<a href=
       http://biocluster.ucr.edu/~jzhan067/shiny_HM_tutorial/shiny_heatmap_tutorial.html>
-      Shiny Heatmap Tutorial</a>"), "."), p(ins.input3), ins.input2, HTML("&nbsp"), 
+      Shiny Heatmap Tutorial</a>"), "."), p(ins.input2), ins.input3, HTML("&nbsp"), 
       downloadButton("dld.svg", "Download svg file"), downloadButton("dld.data", "Download 
-      gene matrix"), downloadButton("dld.sub", "Download subsetting IDs"), width=12), 
-      box(title="Heatmap instruction", status="primary", solidHeader=T, collapsible=T, 
-      p(ins.tis), p(ins.tis1), p(ins.tis2), p(ins.tis3), width=12),
-      box(title="Network instruction", status="primary", solidHeader=T, collapsible=T, 
-      p(ins.net1), p(ins.net2), p(ins.net4), p(ins.net3), width=12)
+      gene matrix"), p(ins.input4), p(ins.input5), p(ins.input6), width=12), 
+      box(title="Spatial tissue heatmap instruction", status="primary", solidHeader=T, 
+      collapsible=T, p(ins.mat), width=12),
+      box(title="Matrix heatmap & network instruction", status="primary", solidHeader=T, 
+      collapsible=T, p(ins.mat_hm), p(ins.net), p(ins.net2), width=12)
       ),
       
       tabItem(tabName="hm_net", 
 
-      box(title="Expr matrix", status="primary", solidHeader=T, collapsible=T, 
+      box(title="Expression Matrix", status="primary", solidHeader=T, collapsible=T, 
       fluidRow(splitLayout(cellWidths=c("1%", "98%", "1%"), "", dataTableOutput("dt"), 
       "")), width=12),
 
-      box(title="Tissue heatmap", status="primary", solidHeader=T, collapsible=T, 
+      box(title="Tissue Heatmap", status="primary", solidHeader=T, collapsible=T, 
       fluidRow(splitLayout(cellWidths=c("1%", "6%", "91%", "2%"), "", plotOutput("bar"), 
       plotOutput("tissue"), "")), width=9),
       
@@ -187,10 +227,10 @@ shinyUI(dashboardPage(
       splitLayout(cellWidths=c("1%", "98%", "1%"), "", plotOutput("ori.svg"), ""), 
       width=3), br(),
 
-      box(title="Matrix heatmap", status="primary", solidHeader=T, collapsible=T,
+      box(title="Matrix Heatmap", status="primary", solidHeader=T, collapsible=T,
       plotlyOutput("HMly"), width=12), br(),
 
-      box(title="Interactive network", status="primary", solidHeader=T, collapsible=T, 
+      box(title="Interactive Network", status="primary", solidHeader=T, collapsible=T, 
       visNetworkOutput("vis"), width=12)
       )
 
