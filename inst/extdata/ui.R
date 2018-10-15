@@ -122,7 +122,6 @@ ins.net2 <- "The module in \"Matrix Heatmap\" is displayed as an interactive net
             \"_selected\", which can be easily identified from the list. By clicking an ID 
             in this list, users can identify the corresponding gene in the network."
 
-
 shinyUI(dashboardPage(
 
   dashboardHeader(title="Integrated Tissue Heatmap (updated: 2017-12-30)", 
