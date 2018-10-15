@@ -139,7 +139,7 @@ shinyServer(function(input, output, session) {
     if ((input$fileIn=="Compute locally"|input$fileIn=="Compute online")) {
 
       color$col <- colorRampPalette(col.sch())(length(geneV()))
-      col <- color$col; save(col, file="col")
+      col <- color$col; #save(col, file="col")
     }
 
   })
@@ -148,7 +148,6 @@ shinyServer(function(input, output, session) {
     
     if (is.null(input$dt_rows_selected)) return()
     r.na <- rownames(geneIn()[["gene2"]]); gID$geneID <- r.na[input$dt_rows_selected]
-    save(r.na, file="r.na"); g0 <- gID$geneID; save(g0, file="g0")
     gID$new <- setdiff(gID$geneID, gID$all); gID$all <- c(gID$all, gID$new)
 
     })
@@ -166,8 +165,8 @@ shinyServer(function(input, output, session) {
       withProgress(message="Color scale: ", value = 0, {
 
         incProgress(0.25, detail="Fetching data. Please wait.")
-        cs.df <- data.frame(color_scale=geneV(), y=1)
-        save(cs.df, file="cs.df"); col <- color$col; save(col, file="col")
+        cs.df <- data.frame(color_scale=geneV(), y=1); #save(cs.df, file="cs.df")
+        col <- color$col; #save(col, file="col")
         incProgress(0.75, detail="Plotting. Please wait.")
         cs.g <- ggplot()+geom_bar(data=cs.df, aes(x=color_scale, y=y), fill=color$col, 
         stat="identity", width=0.2)+theme(axis.title.x=element_blank(), axis.text.x=
@@ -279,7 +278,7 @@ shinyServer(function(input, output, session) {
 
           df <- rbind(df, df0)
 
-        }; save(df, file="df"); save(tis.path, file="tis.path")
+        }; #save(df, file="df"); save(tis.path, file="tis.path")
 
   return(list(df=df, tis.path=tis.path))
 
@@ -545,7 +544,7 @@ observeEvent(input$fileIn, { gID$all <- grob$all <- NULL })
 
       })
 
-    }; save(adj, file="adj")
+    }; #save(adj, file="adj")
 
   return(list(adj=adj, tree=tree.hclust, disTOM=dissTOM))
 
@@ -577,7 +576,7 @@ observeEvent(input$fileIn, { gID$all <- grob$all <- NULL })
 
       })
  
-    }; save(mcol, file="mcol")
+    }; #save(mcol, file="mcol")
   return(mcol)
 
   })
@@ -587,25 +586,25 @@ observeEvent(input$fileIn, { gID$all <- grob$all <- NULL })
     geneIn(); input$adj.modInpath; input$A; input$p; input$cv1
     input$cv2; input$min.size; input$net.type
     updateSelectInput(session, "mat.scale", "Scale matrix heatmap", c("No", 
-    "By column/gene", "By row/sample"), "No")
+    "By column/sample", "By row/gene"), "No")
 
   })
 
   output$HMly <- renderPlotly({
 
     if (input$gen.sel=="None") return(NULL)
+    if (grepl("^Default_", input$fileIn)) { load("precompute/adj"); load("precompute/mcol")
+    mods <- mcol } else if (input$fileIn=="Compute locally") { adj <- adj.mod()[[1]]
+    mods <- adj.mod()[[2]] } else if (input$fileIn=="Compute online") { 
+    adj <- adj.tree()[[1]]; mods <- mcol() }
+
+    gene <- geneIn()[["gene2"]]; lab <- mods[, input$ds][rownames(gene)==input$gen.sel]
+    if (lab=="0") { showModal(modalDialog(title="Module", "The selected gene is not 
+    assigned to any module. Please select a different one.")); return() }
 
     withProgress(message="Computing dendrogram:", value=0, {
 
       incProgress(0.7, detail="hierarchical clustering.")
-      if (grepl("^Default_", input$fileIn)) { load("precompute/adj"); load("precompute/mcol")
-      mods <- mcol } else if (input$fileIn=="Compute locally") { adj <- adj.mod()[[1]]
-      mods <- adj.mod()[[2]] } else if (input$fileIn=="Compute online") { 
-      adj <- adj.tree()[[1]]; mods <- mcol() }
-
-      gene <- geneIn()[["gene2"]]; lab <- mods[, input$ds][rownames(gene)==input$gen.sel]
-      if (lab=="0") { showModal(modalDialog(title="Module", "The selected gene is not 
-      assigned to any module. Please select a different gene.")); return() }
       mod <- gene[mods[, input$ds]==lab, ]
       dd.gen <- as.dendrogram(hclust(dist(mod))); dd.sam <- as.dendrogram(hclust(dist(t(mod))))
       d.sam <- dendro_data(dd.sam); d.gen <- dendro_data(dd.gen)
@@ -618,7 +617,7 @@ observeEvent(input$fileIn, { gID$all <- grob$all <- NULL })
   
       }
 
-      p.gen <- g.dengra(d.gen$segments); p.sam <- g.dengra(d.sam$segments)+coord_flip()
+      p.gen <- g.dengra(d.gen$segments)+coord_flip(); p.sam <- g.dengra(d.sam$segments)
       df.gen <- data.frame(x=1:length(labels(dd.gen)), y=0, lab=labels(dd.gen))
       gen.idx <- which(labels(dd.gen)==input$gen.sel)
       df.rec <- data.frame(x1=gen.idx-0.5, x2=gen.idx+0.5, y1=-1, y2=8)
@@ -629,17 +628,16 @@ observeEvent(input$fileIn, { gID$all <- grob$all <- NULL })
       p.sam1 <- p.sam+geom_text(data=df.sam, aes(x=x, y=y, label=lab), 
       position=position_dodge(0.9), vjust=1, hjust=0, size=2, angle=0) 
       gen.ord <- order.dendrogram(dd.gen); sam.ord <- order.dendrogram(dd.sam)
-      gene.clus <- rbind(Y=0, cbind(X=0, gene[gen.ord, sam.ord]))
+      gene.clus <- rbind(Y=0, cbind(X=0, mod[gen.ord, sam.ord]))
 
       incProgress(0.2, detail="plotting.")
-      z <- t(as.matrix(gene.clus)); if (input$mat.scale=="By column/gene") z <- scale(z)
-      if (input$mat.scale=="By row/sample") z <- t(scale(t(z)))
-      
+      z <- as.matrix(gene.clus); if (input$mat.scale=="By column/sample") z <- scale(z)
+      if (input$mat.scale=="By row/gene") z <- t(scale(t(z)))
       ply <- plot_ly(z=z, type="heatmap") %>% layout(yaxis=
       list(domain=c(0, 1), showticklabels=F, showgrid=F, ticks="", zeroline=F), 
       xaxis=list(domain=c(0, 1), showticklabels=F, showgrid=F, ticks="", zeroline=F))
 
-      subplot(p.gen1, plot_ly(), ply, p.sam1, nrows=2, shareX=T, shareY=T, margin=0, heights=
+      subplot(p.sam1, plot_ly(), ply, p.gen1, nrows=2, shareX=T, shareY=T, margin=0, heights=
       c(0.2, 0.8), widths=c(0.8, 0.2))
 
     })

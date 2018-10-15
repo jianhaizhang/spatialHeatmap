@@ -176,8 +176,8 @@ shinyUI(dashboardPage(
       h4(strong("Matrix heatmap & network")), 
       selectInput("gen.sel","Select a gene to display matrix heatmap & network.", c("None"),
       selected="None", width=190),
-      selectInput("mat.scale", "Scale matrix heatmap", c("No", "By column/gene", 
-      "By row/sample"), "No", width=190),
+      selectInput("mat.scale", "Scale matrix heatmap", c("No", "By column/sample", 
+      "By row/gene"), "No", width=190),
       selectInput("ds","Select a module splitting sensitivity level", 3:2, selected="3", 
       width=190),
 
