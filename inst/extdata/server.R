@@ -1,7 +1,6 @@
 # Gene value is mapped to color bar in an approximate way.
 
-# The order of paths is not necessarily to be the same with tissues in expr matrix. And 
-# multiple polygons can stand for the same tissue. 
+# The order of paths is not necessarily to be the same with tissues in expr matrix. And multiple polygons can stand for the same tissue. 
 
 # Show tissue heatmap of different conditions.
 
@@ -12,15 +11,12 @@
 # Display plots for multiple genes. 
 
 
-library(shiny); library(shinydashboard); library(grImport); library(rsvg); library(ggplot2)
-library(DT); library(gridExtra); library(ggdendro); library(WGCNA); library(Cairo)
-library(grid); library(XML); library(plotly); library(data.table); library(genefilter)
-library(flashClust); library(visNetwork)
+library(shiny); library(shinydashboard); library(grImport); library(rsvg); library(ggplot2); library(DT); library(gridExtra); library(ggdendro); library(WGCNA); library(Cairo); library(grid); library(XML); library(plotly); library(data.table); library(genefilter); library(flashClust); library(visNetwork)
 
 options(shiny.maxRequestSize=5000*1024^2) 
 # enableWGCNAThreads()
 inter.svg <- readLines("example/root_cross.svg")
-inter.data <- read.table("example/gene_expr_test.txt", header=T, row.names=1, sep="\t")
+inter.data <- read.table("example/gene_expr_row_gen.txt", header=T, row.names=1, sep="\t")
 
 shinyServer(function(input, output, session) {
 
@@ -33,9 +29,8 @@ shinyServer(function(input, output, session) {
 
   output$dld.data <- downloadHandler(
 
-    filename=function(){ "gene_expr_test.txt" },
-    content=function(file){ write.table(inter.data, file, col.names=T, row.names=T, 
-    quote=F, sep="\t") }
+    filename=function(){ "gene_expr_row_gen.txt" },
+    content=function(file){ write.table(inter.data, file, col.names=T, row.names=T, quote=F, sep="\t") }
 
   )
 
@@ -44,8 +39,7 @@ shinyServer(function(input, output, session) {
     input$fileIn; input$geneInpath
     updateRadioButtons(session, "dimName", label="Step 3: is column or row gene?", 
     c("None", "Row", "Column"), "None", inline=T)
-    updateSelectInput(session, 'sep', 'Step 4: separator', c("None", "Tab", "Comma", 
-    "Semicolon"), "None")
+    updateSelectInput(session, 'sep', 'Step 4: separator', c("None", "Tab", "Comma", "Semicolon"), "None")
 
   })
 
@@ -139,7 +133,7 @@ shinyServer(function(input, output, session) {
     if ((input$fileIn=="Compute locally"|input$fileIn=="Compute online")) {
 
       color$col <- colorRampPalette(col.sch())(length(geneV()))
-      col <- color$col; #save(col, file="col")
+      #col <- color$col; save(col, file="col")
     }
 
   })
@@ -159,14 +153,13 @@ shinyServer(function(input, output, session) {
     !is.null(geneIn()) & !is.null(input$svgInpath))|(input$fileIn=="Default_root_cross")) {
     if (length(color$col=="none")==0) return(NULL)
 
-    if(input$col.but==0) color$col <- colorRampPalette(c("green", "blue", "purple", 
-    "yellow", "red"))(length(geneV()))
+    if(input$col.but==0) color$col <- colorRampPalette(c("green", "blue", "purple", "yellow", "red"))(length(geneV()))
      
       withProgress(message="Color scale: ", value = 0, {
 
         incProgress(0.25, detail="Fetching data. Please wait.")
         cs.df <- data.frame(color_scale=geneV(), y=1); #save(cs.df, file="cs.df")
-        col <- color$col; #save(col, file="col")
+        #col <- color$col; save(col, file="col")
         incProgress(0.75, detail="Plotting. Please wait.")
         cs.g <- ggplot()+geom_bar(data=cs.df, aes(x=color_scale, y=y), fill=color$col, 
         stat="identity", width=0.2)+theme(axis.title.x=element_blank(), axis.text.x=
@@ -333,14 +326,9 @@ observeEvent(input$fileIn, { gID$all <- grob$all <- NULL })
 
       }
 
-     g <- ggplot()+geom_polygon(data=g.df, aes(x=x, y=y, fill=tissue), color="black")+
-     scale_fill_manual(values=g.col, guide=F)+theme(axis.text=element_blank(), 
-     axis.ticks=element_blank(), panel.grid=element_blank(), panel.background=
-     element_rect(fill="white", colour="grey80"), plot.margin=
-     margin(0.1, 0.1, 0.1, 0.3, "cm"), axis.title.x=element_text(size=16,face="bold"), 
-     plot.title=element_text(hjust=0.5, size=20))+labs(x="", y="")+
-     scale_y_continuous(expand=c(0.01,0.01))+scale_x_continuous(expand=c(0.01,0.01))+
-     ggtitle(paste0(k, "_", j)); return(g)
+     g <- ggplot()+geom_polygon(data=g.df, aes(x=x, y=y, fill=tissue), color="black")+scale_fill_manual(values=g.col, guide=F)+theme(axis.text=element_blank(), axis.ticks=element_blank(), panel.grid=element_blank(), panel.background=element_rect(fill="white", colour="grey80"), plot.margin=
+     margin(0.1, 0.1, 0.1, 0.3, "cm"), axis.title.x=element_text(size=16,face="bold"), plot.title=element_text(hjust=0.5, size=20))+labs(x="", y="")+
+     scale_y_continuous(expand=c(0.01,0.01))+scale_x_continuous(expand=c(0.01,0.01))+ggtitle(paste0(k, "_", j)); return(g)
  
       })
 
@@ -363,15 +351,15 @@ observeEvent(input$fileIn, { gID$all <- grob$all <- NULL })
 
         }
 
-      cname <- colnames(geneIn()[["gene2"]]); idx <- grep("__", cname); c.na <- cname[idx]
-      tis.col <- gsub("(.*)(__)(\\w+$)", "\\1", c.na); g.lis <- NULL
+      cname <- colnames(geneIn()[["gene2"]]); idx <- grep("__", cname); c.na <- cname[idx]; tis.col <- gsub("(.*)(__)(\\w+$)", "\\1", c.na); g.lis <- NULL
 
      if (!is.null(con())) {
 
-     con <- con(); con.uni <- unique(con); grob.na0 <- paste0(k, "_", con.uni)
-     g.lis <- lapply(con.uni, g.list); grob <- lapply(g.lis, ggplotGrob)
-     names(grob) <- grob.na0; grob.lis <- c(grob.lis, grob) 
-    } else {
+       con <- con(); con.uni <- unique(con); grob.na0 <- paste0(k, "_", con.uni)
+       g.lis <- lapply(con.uni, g.list); grob <- lapply(g.lis, ggplotGrob); dev.off()
+       names(grob) <- grob.na0; grob.lis <- c(grob.lis, grob) 
+
+     } else {
 
       withProgress(message="Tissue heatmap: ", value=0, {
 
@@ -390,14 +378,9 @@ observeEvent(input$fileIn, { gID$all <- grob$all <- NULL })
 
       }
 
-     g <- ggplot()+geom_polygon(data=g.df, aes(x=x, y=y, fill=tissue), color="black")+
-     scale_fill_manual(values=g.col, guide=F)+theme(axis.text=element_blank(), 
-     axis.ticks=element_blank(), panel.grid=element_blank(), panel.background=
-     element_rect(fill="white", colour="grey80"), plot.margin=
-     margin(0.1, 0.1, 0.1, 0.3, "cm"), axis.title.x=element_text(size=16,face="bold"), 
-     plot.title=element_text(hjust=0.5, size=20))+labs(x="", y="")+
-     scale_y_continuous(expand=c(0.01,0.01))+scale_x_continuous(expand=c(0.01,0.01))+
-     ggtitle(paste0(k, "_Tissue Heatmap")); g.grob <- ggplotGrob(g); return(list(g.grob))
+     g <- ggplot()+geom_polygon(data=g.df, aes(x=x, y=y, fill=tissue), color="black")+scale_fill_manual(values=g.col, guide=F)+theme(axis.text=element_blank(), axis.ticks=element_blank(), panel.grid=element_blank(), panel.background=element_rect(fill="white", colour="grey80"), plot.margin=
+     margin(0.1, 0.1, 0.1, 0.3, "cm"), axis.title.x=element_text(size=16,face="bold"), plot.title=element_text(hjust=0.5, size=20))+labs(x="", y="")+
+     scale_y_continuous(expand=c(0.01,0.01))+scale_x_continuous(expand=c(0.01,0.01))+ggtitle(paste0(k, "_Tissue Heatmap")); g.grob <- ggplotGrob(g); return(list(g.grob))
    
       })
 
@@ -432,7 +415,7 @@ observeEvent(input$fileIn, { gID$all <- grob$all <- NULL })
       m <- matrix(cell.idx, ncol=as.numeric(input$col.n), byrow=T)
       lay <- NULL
       for (i in 1:length(gID$geneID)) { lay <- rbind(lay, m+(i-1)*length(unique(con()))) }
-      grid.arrange(grobs=grob.lis.p, layout_matrix=lay)
+      grid.arrange(grobs=grob.lis.p, layout_matrix=lay, newpage=T)
 
     } else if (input$gen.con=="con") {
 
@@ -450,7 +433,7 @@ observeEvent(input$fileIn, { gID$all <- grob$all <- NULL })
       m <- matrix(cell.idx, ncol=as.numeric(input$col.n), byrow=T)
       lay <- NULL
       for (i in 1:length(unique(con()))) { lay <- rbind(lay, m+(i-1)*length(gID$geneID)) }
-      grid.arrange(grobs=grob.lis.p.con, layout_matrix=lay)
+      grid.arrange(grobs=grob.lis.p.con, layout_matrix=lay, newpage=T)
 
     }
 
@@ -539,7 +522,7 @@ observeEvent(input$fileIn, { gID$all <- grob$all <- NULL })
         gene <- geneIn()[["gene2"]]
         adj=adjacency(t(gene), power=sft, type=type); diag(adj)=0
         incProgress(0.5, detail="topological overlap matrix.")
-        tom <- TOMsimilarity(adj, TOMType=type)
+        tom <- TOMsimilarity(adj, TOMType=type); diag(adj)=0
         dissTOM=1-tom; tree.hclust=flashClust(as.dist(dissTOM), method="average")
 
       })
@@ -611,9 +594,7 @@ observeEvent(input$fileIn, { gID$all <- grob$all <- NULL })
   
       g.dengra <- function(df) {
     
-        ggplot()+geom_segment(data = df, aes(x=x, y=y, xend=xend, yend=yend))+labs(x = "", 
-        y = "") + theme_minimal()+ theme(axis.text = element_blank(), axis.ticks=
-        element_blank(), panel.grid = element_blank())
+        ggplot()+geom_segment(data = df, aes(x=x, y=y, xend=xend, yend=yend))+labs(x = "", y = "") + theme_minimal()+ theme(axis.text = element_blank(), axis.ticks=element_blank(), panel.grid = element_blank())
   
       }
 
@@ -622,23 +603,19 @@ observeEvent(input$fileIn, { gID$all <- grob$all <- NULL })
       gen.idx <- which(labels(dd.gen)==input$gen.sel)
       df.rec <- data.frame(x1=gen.idx-0.5, x2=gen.idx+0.5, y1=-1, y2=8)
       df.sam <- data.frame(x=1:length(labels(dd.sam)), y=0, lab=labels(dd.sam)) 
-      p.gen1 <- p.gen+geom_text(data=df.gen, aes(x=x, y=y, label=lab), position=position_dodge(0.9),
-      vjust=1, hjust=0, size=2, angle=90)+geom_rect(data=df.rec, aes(xmin=x1, xmax=x2, 
-      ymin=y1, ymax=y2), fill=NA, color="red", size=1, alpha=1)
+      p.gen1 <- p.gen+geom_text(data=df.gen, aes(x=x, y=y, label=lab), position=position_dodge(0.9), vjust=0, hjust=-1, size=2, angle=0)+geom_rect(data=df.rec, aes(xmin=x1, xmax=x2, ymin=y1, ymax=y2), fill=NA, color="red", size=1, alpha=1)
       p.sam1 <- p.sam+geom_text(data=df.sam, aes(x=x, y=y, label=lab), 
-      position=position_dodge(0.9), vjust=1, hjust=0, size=2, angle=0) 
+      position=position_dodge(0.9), vjust=1, hjust=0, size=2, angle=90) 
       gen.ord <- order.dendrogram(dd.gen); sam.ord <- order.dendrogram(dd.sam)
       gene.clus <- rbind(Y=0, cbind(X=0, mod[gen.ord, sam.ord]))
 
       incProgress(0.2, detail="plotting.")
-      z <- as.matrix(gene.clus); if (input$mat.scale=="By column/sample") z <- scale(z)
-      if (input$mat.scale=="By row/gene") z <- t(scale(t(z)))
+      z <- as.matrix(gene.clus); if (input$mat.scale=="By column/sample") z <- scale(z); if (input$mat.scale=="By row/gene") z <- t(scale(t(z)))
       ply <- plot_ly(z=z, type="heatmap") %>% layout(yaxis=
       list(domain=c(0, 1), showticklabels=F, showgrid=F, ticks="", zeroline=F), 
       xaxis=list(domain=c(0, 1), showticklabels=F, showgrid=F, ticks="", zeroline=F))
 
-      subplot(p.sam1, plot_ly(), ply, p.gen1, nrows=2, shareX=T, shareY=T, margin=0, heights=
-      c(0.2, 0.8), widths=c(0.8, 0.2))
+      subplot(p.sam1, plot_ly(), ply, p.gen1, nrows=2, shareX=T, shareY=T, margin=0, heights=c(0.2, 0.8), widths=c(0.8, 0.2))
 
     })
 
@@ -658,35 +635,32 @@ observeEvent(input$fileIn, { gID$all <- grob$all <- NULL })
   
     geneIn(); gID$geneID; input$TOM.in; input$gen.sel; input$ds; input$adj.modInpath
     input$A; input$p; input$cv1; input$cv2; input$min.size; input$net.type
-    updateRadioButtons(session, "cpt.nw", label="Display or not?", c("Yes"="Y", "No"="N"),
-    "N", inline=T, selected="N")
+    updateRadioButtons(session, "cpt.nw", label="Display or not?", c("Yes"="Y", "No"="N"), "N", inline=T, selected="N")
 
   })
 
-  gID.idx <- reactive({ if (input$gen.sel=="None") return(0) else return(1) })
-  tom <- reactiveValues(idx=0)
-  observeEvent(input$TOM.in, {
+  col.sch.net <- reactive({ if(input$color.net=="") { return(NULL) }
+  unlist(strsplit(input$color.net, ",")) }); color.net <- reactiveValues(col.net="none")
 
-    if (tom$idx==1) return(NULL)
-    if (input$TOM.in!="None") tom$idx <- 1
+  observeEvent(input$col.but.net, {
+
+    if (is.null(col.sch.net())) return (NULL)
+
+      color.net$col.net <- colorRampPalette(col.sch.net())(len.cs.net)
+      #col <- color$col; save(col, file="col")
 
   })
-
-  observeEvent(input$gen.sel, { tom$idx <- 0 })
-
-
+  
+  len.cs.net <- 500
   visNet <- reactive({
 
     if (input$TOM.in=="None") return(NULL)
-
     if (input$fileIn=="Compute locally") { adj <- adj.mod()[[1]]; mods <- adj.mod()[[2]]
     } else if (input$fileIn=="Compute online") { adj <- adj.tree()[[1]]
-    mods <- mcol() } else if (grepl("^Default_", input$fileIn)) { load("precompute/mcol")
-    mods <- mcol; load("precompute/adj") }
+    mods <- mcol() } else if (grepl("^Default_", input$fileIn)) { load("precompute/mcol"); mods <- mcol; load("precompute/adj") }
 
     gene <- geneIn()[[1]]; lab <- mods[, input$ds][rownames(gene)==input$gen.sel]
-    if (lab=="0") { showModal(modalDialog(title="Module", "The selected gene is not assigned 
-    to any module. Please select a different gene.")); return() }
+    if (lab=="0") { showModal(modalDialog(title="Module", "The selected gene is not assigned to any module. Please select a different gene.")); return() }
     idx.m <- mods[, input$ds]==lab; adj.m <- adj[idx.m, idx.m]
     withProgress(message="Computing network:", value=0, {
    
@@ -696,19 +670,43 @@ observeEvent(input$fileIn, { gID$all <- grob$all <- NULL })
       to=colnames(adj.m)[col(adj.m)[idx]], length=adj.m[idx])
       # Should not exclude duplicate rows by "length".
       link1 <- subset(link, length!=1 & !duplicated(link[, "length"]))
-
-      node <- data.frame(id=colnames(adj.m), group=paste0("Module_", lab), 
-      value=colMeans(adj.m), color=NA, stringsAsFactors=F)
+      node <- data.frame(id=colnames(adj.m),  
+      value=colSums(adj.m), title=geneIn()[[2]][colnames(adj.m), ], borderWidth=2, color.border="black", color.highlight.background="orange", color.highlight.border="darkred", color=NA, stringsAsFactors=F)
+      
       idx.sel <- grep(paste0("^", input$gen.sel, "$"), node$id)
       rownames(node)[idx.sel] <- node$id[idx.sel] <- paste0(input$gen.sel, "_selected")
-      col <- colorRampPalette(c("red", "green", "blue"))(ncol(adj.m))
-      node <- node[order(-node$value), ]; node$color <- col
-      net.lis <- list(node=node, link=link1)
+
+      # Match colours with gene connectivity by approximation.
+      node <- node[order(-node$value), ]; col <- color.net$col.net; col.nod <- NULL
+      node.v <- node$value; v.net <- seq(min(node.v), max(node.v), len=len.cs.net)
+      for (i in node$value) {
+
+        ab <- abs(i-v.net); col.nod <- c(col.nod, col[which(ab==min(ab))[1]])
+
+      }; node$color <- col.nod; net.lis <- list(node=node, link=link1, v.net=v.net)
 
     }); net.lis
 
   })
 
+  output$bar.net <- renderPlot({  
+
+    if (input$TOM.in=="None"|input$cpt.nw=="N") return(NULL)
+    if (length(color.net$col.net=="none")==0) return(NULL)
+    v.net <- visNet()[["v.net"]]
+    if(input$col.but.net==0) color.net$col.net <- colorRampPalette(c("green", "blue", "red"))(length(v.net))
+     
+      withProgress(message="Color scale: ", value = 0, {
+
+        incProgress(0.25, detail="Preparing data. Please wait.")
+        cs.df.net <- data.frame(color_scale=v.net, y=1); #save(cs.df, file="cs.df")
+        #col <- color$col; save(col, file="col")
+        incProgress(0.75, detail="Plotting. Please wait.")
+        cs.g.net <- ggplot()+geom_bar(data=cs.df.net, aes(x=color_scale, y=y), fill=color.net$col.net, stat="identity", width=0.2)+theme(axis.title.x=element_blank(), axis.text.x=element_blank(), axis.ticks.x=element_blank(), plot.margin=margin(3, 0.1, 3, 0.1, "cm"), panel.grid=element_blank(), panel.background=element_rect(fill="white", colour="grey80"))+coord_flip()+scale_y_continuous(expand=c(0,0))+scale_x_continuous(expand = c(0,0)); return(cs.g.net)
+
+      })
+
+  })
 
   output$edge <- renderUI({ 
 
@@ -721,7 +719,6 @@ observeEvent(input$fileIn, { gID$all <- grob$all <- NULL })
 
   })
 
-
   vis.net <- reactive({ 
 
     if (input$TOM.in=="None"|input$cpt.nw=="N") return(NULL)
@@ -729,7 +726,7 @@ observeEvent(input$fileIn, { gID$all <- grob$all <- NULL })
     withProgress(message="Network:", value=0.5, {
 
       incProgress(0.3, detail="prepare for plotting.")
-      visNetwork(visNet()[["node"]], visNet()[["link"]]) %>% 
+      visNetwork(visNet()[["node"]], visNet()[["link"]], height="300px", width="100%", background="", main=paste0("Network Module Containing ",  input$gen.sel), submain="", footer= "") %>% 
       visOptions(highlightNearest=T, nodesIdSelection=T, selectedBy="group")
 
     })

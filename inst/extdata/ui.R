@@ -124,7 +124,7 @@ ins.net2 <- "The module in \"Matrix Heatmap\" is displayed as an interactive net
 
 shinyUI(dashboardPage(
 
-  dashboardHeader(title="Integrated Tissue Heatmap (updated: 2017-12-30)", 
+  dashboardHeader(title="Integrated Spatial Heatmap (updated: 2018-11-15)", 
   titleWidth=480),
 
   dashboardSidebar(
@@ -144,21 +144,14 @@ shinyUI(dashboardPage(
       inline=T),
       selectInput('sep', 'Step 4: separator', c("None", "Tab", "Comma", "Semicolon"), 
       "None"),
-      div(style="display:inline-block;width:65%;text-align:left;",textInput("color", 
-      "Step 5: Color scheme", "green,blue,purple,yellow,red", placeholder="Eg: green,yellow,red",
-      width=150)),
-      div(style="display:inline-block;width:35%;text-align:left;", actionButton("col.but", 
-      "Go", icon=icon("refresh"), style="padding:7px; font-size:90%; margin-left: 0px")),
+      div(style="display:inline-block;width:75%;text-align:left;",textInput("color", "Step 5: Color scheme of Spatial Heatmap", "green,blue,purple,yellow,red", placeholder="Eg: green,yellow,red", width=200)),
+      div(style="display:inline-block;width:25%;text-align:left;", actionButton("col.but", "Go", icon=icon("refresh"), style="padding:7px; font-size:90%; margin-left: 0px")),
       h4(strong("Compute locally")),
-      fileInput("adj.modInpath", "Upload the adjacency matrix and module definition file.",
-      accept=".txt", multiple=T),
+      fileInput("adj.modInpath", "Upload the adjacency matrix and module definition file.", accept=".txt", multiple=T),
       h4(strong("Compute online")),
-      numericInput("A", "The value A to be exceeded (filter genes):", 0, min=0, max=10000),
-      numericInput("p", "The proportion that need to exceed A (filter genes):", 0, min=0, max=1),
-      numericInput("cv1", "Lower bound of coefficient of variation (CV) (filter genes):", 
-      0, min=0, max=1),
-      numericInput("cv2", "Upper bound of coefficient of variation (CV) (filter genes):", 
-      10000, min=0, max=10000),
+      numericInput("A", "The value A to be exceeded (filter genes):", 0, min=0, max=10000), numericInput("p", "The proportion that need to exceed A (filter genes):", 0, min=0, max=1),
+      numericInput("cv1", "Lower bound of coefficient of variation (CV) (filter genes):", 0, min=0, max=1),
+      numericInput("cv2", "Upper bound of coefficient of variation (CV) (filter genes):", 10000, min=0, max=10000),
       numericInput("min.size", "Minmum module size:", 15, min=15, max=10000),
       radioButtons("net.type", "Network type", c("Signed"="S", "Unsigned"="U"), "S", inline=T)
 
@@ -166,24 +159,21 @@ shinyUI(dashboardPage(
 
       menuItem("Heatmap & network", icon=icon("dashboard"), 
       h4(strong("Spatial tissue heatmap")),
-      selectInput("height", "Overall height of tissue heatmap:", seq(100, 1500, 50), "800",
-      width=150), 
-      selectInput("width", "Overall width of tissue heatmap:", seq(100, 1500, 50), "800",
-      width=150),
+      selectInput("height", "Overall height of tissue heatmap:", seq(100, 1500, 50), "800", width=150), 
+      selectInput("width", "Overall width of tissue heatmap:", seq(100, 1500, 50), "800", width=150),
       selectInput("col.n", "No. of columns for sub-plots", seq(1, 15, 1), "3", width=150), 
-      radioButtons("gen.con", "Display by:", c("Gene"="gene", "Condition"="con"), "gene", 
-      inline=T),
+      radioButtons("gen.con", "Display by:", c("Gene"="gene", "Condition"="con"), "gene", inline=T),
       h4(strong("Matrix heatmap & network")), 
       selectInput("gen.sel","Select a gene to display matrix heatmap & network.", c("None"),
       selected="None", width=190),
       selectInput("mat.scale", "Scale matrix heatmap", c("No", "By column/sample", 
       "By row/gene"), "No", width=190),
-      selectInput("ds","Select a module splitting sensitivity level", 3:2, selected="3", 
-      width=190),
+      selectInput("ds","Select a module splitting sensitivity level", 3:2, selected="3", width=190),
 
-      selectInput("TOM.in", "Input an adjcency threshold to display the adjacency network.",
-      c("None", sort(seq(0, 1, 0.002), decreasing=T)), "None", width=190), 
+      selectInput("TOM.in", "Input an adjcency threshold to display the adjacency network.", c("None", sort(seq(0, 1, 0.002), decreasing=T)), "None", width=190), 
       htmlOutput("edge"),
+      div(style="display:inline-block;width:75%;text-align:left;",textInput("color.net", "Color scheme of Interactive Network", "green,blue,red", placeholder="Eg: green,yellow,red", width=200)),
+      div(style="display:inline-block;width:25%;text-align:left;", actionButton("col.but.net", "Go", icon=icon("refresh"), style="padding:7px; font-size:90%; margin-left: 0px")),
       radioButtons("cpt.nw", "Display or not?", c("Yes"="Y", "No"="N"), "N", inline=T),
       #menuSubItem("View network", tabName="network")
 
@@ -199,8 +189,7 @@ shinyUI(dashboardPage(
     tabItems(
 
       tabItem(tabName="instruction", 
-      box(title="General instruction", status="primary", solidHeader=T, collapsible=T, ins,
-      width=12),
+      box(title="General instruction", status="primary", solidHeader=T, collapsible=T, ins, width=12),
       box(title="Input instruction", status="primary", solidHeader=T, collapsible=T, 
       p(ins.input1, HTML("<a href=
       http://biocluster.ucr.edu/~jzhan067/shiny_HM_tutorial/shiny_heatmap_tutorial.html>
@@ -215,23 +204,19 @@ shinyUI(dashboardPage(
       
       tabItem(tabName="hm_net", 
 
-      box(title="Expression Matrix", status="primary", solidHeader=T, collapsible=T, 
-      fluidRow(splitLayout(cellWidths=c("1%", "98%", "1%"), "", dataTableOutput("dt"), 
-      "")), width=12),
+      box(title="Expression Matrix", status="primary", solidHeader=T, collapsible=T, fluidRow(splitLayout(cellWidths=c("1%", "98%", "1%"), "", dataTableOutput("dt"), "")), width=12),
 
-      box(title="Tissue Heatmap", status="primary", solidHeader=T, collapsible=T, 
-      fluidRow(splitLayout(cellWidths=c("1%", "6%", "91%", "2%"), "", plotOutput("bar"), 
-      plotOutput("tissue"), "")), width=9),
+      box(title="Spatial Heatmap", status="primary", solidHeader=T, collapsible=T, 
+      fluidRow(splitLayout(cellWidths=c("1%", "6%", "91%", "2%"), "", plotOutput("bar"), plotOutput("tissue"), "")), width=9),
       
       box(title="Original image", status="primary", solidHeader=T, collapsible=T,
       splitLayout(cellWidths=c("1%", "98%", "1%"), "", plotOutput("ori.svg"), ""), 
       width=3), br(),
 
       box(title="Matrix Heatmap", status="primary", solidHeader=T, collapsible=T,
-      plotlyOutput("HMly"), width=12), br(),
+      plotlyOutput("HMly"), width=12, height=NULL), br(),
 
-      box(title="Interactive Network", status="primary", solidHeader=T, collapsible=T, 
-      visNetworkOutput("vis"), width=12)
+      box(title="Interactive Network", status="primary", solidHeader=T, collapsible=T, fluidRow(splitLayout(cellWidths=c("1%", "6%", "91%", "2%"), "", plotOutput("bar.net"), visNetworkOutput("vis"), "")), width=12)
       )
 
       )
