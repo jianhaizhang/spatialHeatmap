@@ -108,15 +108,7 @@ spatial.hm.all()
 %% ~~objects to See Also as \code{\link{help}}, ~~~
 }
 \examples{
- spatial.heatmap.all()
-
-## The function is currently defined as
-function () 
-{
-    library(shiny)
-    path <- system.file("extdata", package = "spatialHeatmap")
-    runApp(path)
-  }
+ spatial.hm.all()
 }
 % Add one or more standard keywords, see file 'KEYWORDS' in the
 % R documentation directory.

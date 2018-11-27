@@ -1,4 +1,4 @@
-filter.data <- function(data, sep, isRowGene, pOA, CV, name) {
+filter.data <- function(data, sep, isRowGene, pOA=c(0, 0), CV=c(0, 10000), name) {
 
   library(data.table); library(genefilter)
   if (!dir.exists("local_mode_result")) dir.create("local_mode_result")
@@ -11,7 +11,6 @@ filter.data <- function(data, sep, isRowGene, pOA, CV, name) {
   gene2 <- df[, idx, drop=F]; gene3 <- df[, idx1, drop=F]
   gene2 <- apply(gene2, 2, as.numeric) # This step removes rownames of gene2.
 
-  if (missing(pOA)) pOA <- c(0, 0); if (missing(CV)) CV <- c(0, 10000)
   ffun <- filterfun(pOverA(pOA[1], pOA[2]), cv(CV[1], CV[2]))
   filtered <- genefilter(gene2, ffun)
   gene2 <- gene2[filtered, ]; gene3 <- gene3[filtered, , drop=F]

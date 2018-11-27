@@ -1,44 +1,30 @@
 \name{adj.mod}
 \alias{adj.mod}
 \title{
- Compute adjacency matrix and identify modules.
+Compute adjacency matrix and identify modules
 }
 \description{
- This function is designed for large data matrix (e.g.: > 10,000 rows), which cannot be 
- processed using online version of the app. It computes the adjacency matrix and identifies 
- moudles for the input data matrix by using functions from the R package "WGCNA".
+  This function is designed for large data matrix (e.g.: > 10,000 rows), which cannot be processed using online version of the app. It computes the adjacency matrix and identifies moudles for the input data matrix by using functions from the R package "WGCNA".
 }
 \usage{
-adj.mod(data, type, minSize)
+  adj.mod(data, type, minSize)
 }
 \arguments{
   \item{data}{
-   The processed data matrix resulting from the function "filter.data()". }
+   The processed data matrix resulting from the function "filter.data()". 
 }
-  \item{type}{
-   There are two options in this argument, "signed" and "unsigned". "signed" means both 
-   positive and negative adjacency between genes are maintained in network module 
-   identification while "unsigned" takes the absolute values of negative adjacency. Refer to
-   "WGCNA" for more details.
+\item{type}{
+ There are two options in this argument, "signed" and "unsigned". "signed" means both positive and negative adjacency between genes are maintained in network module identification while "unsigned" takes the absolute values of negative adjacency. Refer to "WGCNA" for more details.
 }
   \item{minSize}{
-   The minimum module size in module identification. The default value is 15. Refer to 
-   "WGCNA" for more details.
+   The minimum module size in module identification. The default value is 15. Refer to "WGCNA" for more details.
 }
 }
 \details{
- This function relies on "WGCNA". First, it computes the adjacency matrix based on the input
- data matrix, then converts the resulting adjacency matrix to a scale-free topology using a
- soft threshold (sft). If the type is "signed" sft=12, if the type is "unsigned" sft=6. 
- Next, the modules are identified using dynamic tree cutting algorithm at four sensitivity 
- levels 0, 1, 2, 3. From 0 to 3, more modules are identified but module sizes are 
- decreasing. In order to enhance the performance of this Spatial Heatmap, modules are only
- identified at level 2 and 3, since the interactive network functionality of this app works
- better on smaller modules. Refer to "WGCNA" for more details.
+ This function relies on "WGCNA". First, it computes the adjacency matrix based on the input data matrix, then converts the resulting adjacency matrix to a scale-free topology using a soft threshold (sft). If the type is "signed" sft=12, if the type is "unsigned" sft=6. Next, the modules are identified using dynamic tree cutting algorithm at four sensitivity levels 0, 1, 2, 3. From 0 to 3, more modules are identified but module sizes are decreasing. In order to enhance the performance of this Spatial Heatmap, modules are only identified at level 2 and 3, since the interactive network functionality of this app works better on smaller modules. Refer to "WGCNA" for more details.
 }
 \value{
- The adjacency matrix file "adj.txt" and module assignment file "mod.txt", which are all 
- automatically saved in the directory "local_mode_result."
+ The adjacency matrix file "adj.txt" and module assignment file "mod.txt", which are all automatically saved in the directory "local_mode_result."
 }
 \references{
  Langfelder P and Horvath S, WGCNA: an R package for weighted correlation
@@ -65,9 +51,8 @@ adj.mod(data, type, minSize)
 %% ~~objects to See Also as \code{\link{help}}, ~~~
 }
 \examples{
- data.path <- system.file("extdata/exmaple", "gene_expr_test.txt", package = "spatialHeatmap")
- exp <- filter.data(data=data.path, sep="\t", isRowGen=T, c(0, 0), cv(0.1, 10000),
- "processed_data")
+ data.path <- system.file("extdata/example", "gene_expr_ann_row_gen.txt", package = "spatialHeatmap")
+ exp <- filter.data(data=data.path, sep="\t", isRowGen=TRUE, c(0, 0), c(0.1, 10000), "processed_data")
  adj_mod <- adj.mod(data=exp, type="signed", minSize=20)
 
 ## The function is currently defined as

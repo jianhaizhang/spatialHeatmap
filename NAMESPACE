@@ -1,1 +1,10 @@
 exportPattern("^[[:alpha:]]+")
+export("adjacency", "TOMsimilarity", "as.dist", "flashClust", "write.table", "fread", "filterfun", "pOverA")
+importFrom(WGCNA, "adjacency", "TOMsimilarity")
+importFrom(stats, "as.dist")
+importFrom(flashClust, "flashClust")
+importFrom(dynamicTreeCut, "cutreeHybrid")
+importFrom(utils, "write.table")
+importFrom(data.table, "fread")
+importFrom(genefilter, "filterfun", "pOverA")
+

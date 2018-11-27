@@ -1,9 +1,7 @@
 
-spatial.hm <- function(svg, data, sep, isRowGene, pOA, CV, ID, colour, width, height,
-sub.title.size, layout, ncol) {
+spatial.hm <- function(svg, data, sep, isRowGene, pOA=c(0, 0), CV=c(0, 10000), ID, colour=c("green", "blue", "purple", "yellow", "red"), width=1, height=1, sub.title.size=11, layout, ncol) {
 
-  library(grImport); library(rsvg); library(ggplot2); library(gridExtra); library(Cairo)
-  library(grid); library(XML); library(data.table); library(genefilter)
+  library(grImport); library(rsvg); library(ggplot2); library(gridExtra); library(Cairo); library(grid); library(XML); library(data.table); library(genefilter)
 
   # Data import and filter.
   gene.f <- fread(data, header=T, sep=sep, fill=T)
@@ -16,21 +14,14 @@ sub.title.size, layout, ncol) {
   gene2 <- apply(gene2, 2, as.numeric) # This step removes rownames of gene2.
   rownames(gene2) <- r.na
 
-  if (missing(pOA)) pOA <- pOverA(0, 0); if (missing(CV)) CV <- cv(0, 10000)
   ffun <- filterfun(pOverA(pOA[1], pOA[2]), cv(CV[1], CV[2]))
   filtered <- genefilter(gene2, ffun); gene2 <- gene2[filtered, ]
 
   # Color bar.
   geneV <- seq(min(gene2), max(gene2), len=1000)
-  if (missing(colour)) colour <- c("green", "blue", "purple", "yellow", "red")
   col <- colorRampPalette(colour)(length(geneV))
   cs.df <- data.frame(color_scale=geneV, y=1)
-  cs.g <- ggplot()+geom_bar(data=cs.df, aes(x=color_scale, y=y), fill=col, stat="identity",
-          width=0.2)+theme(axis.title.x=element_blank(), axis.text.x=element_blank(), 
-          axis.ticks.x=element_blank(), plot.margin=margin(3, 0.1, 3, 0.1, "cm"), 
-          panel.grid=element_blank(), panel.background=element_rect(fill="white", colour=
-          "grey80"))+coord_flip()+scale_y_continuous(expand=c(0,0))+scale_x_continuous(
-          expand = c(0,0)); cs.grob <- ggplotGrob(cs.g)
+  cs.g <- ggplot()+geom_bar(data=cs.df, aes(x=color_scale, y=y), fill=col, stat="identity", width=0.2)+theme(axis.title.x=element_blank(), axis.text.x=element_blank(), axis.ticks.x=element_blank(), plot.margin=margin(3, 0.1, 3, 0.1, "cm"), panel.grid=element_blank(), panel.background=element_rect(fill="white", colour="grey80"))+coord_flip()+scale_y_continuous(expand=c(0,0))+scale_x_continuous(expand = c(0,0)); cs.grob <- ggplotGrob(cs.g)
 
   # SVG file conversion.
   rsvg_ps(svg, file=sub("svg$", "ps", svg))
@@ -118,7 +109,6 @@ sub.title.size, layout, ncol) {
   # Map colours to samples according to expression level.
   cname <- colnames(gene2); con <- gsub("(.*)(__)(\\w+$)", "\\3", cname)
 
-      if (missing(sub.title.size)) sub.title.size <- 11
       g.list <- function(j) {
 
         g.col <- NULL; con.idx <- grep(paste0("^", j, "$"), con)
@@ -162,11 +152,9 @@ sub.title.size, layout, ncol) {
 
         }; grob.all <- c(list(cs=cs.grob), grob.lis)
 
-    cs.arr <- arrangeGrob(grobs=list(grobTree(grob.all[[1]])), layout_matrix=cbind(1), 
-    widths=unit(15, "mm"))
+    cs.arr <- arrangeGrob(grobs=list(grobTree(grob.all[[1]])), layout_matrix=cbind(1), widths=unit(15, "mm"))
 
     # Organise layout.
-    if (missing(width)) width <- 1; if (missing(height)) height <- 1
     if (layout=="gene") {
 
       all.cell <- ceiling(length(unique(con))/as.numeric(ncol))*as.numeric(ncol)
@@ -176,8 +164,7 @@ sub.title.size, layout, ncol) {
       for (i in 1:length(ID)) { lay <- rbind(lay, m+(i-1)*length(unique(con))) }
       g.tr <- lapply(grob.all[2:length(grob.all)], grobTree)
       n.col <- ncol(lay); n.row <- nrow(lay)
-      g.arr <- arrangeGrob(grobs=g.tr, layout_matrix=lay, widths=unit(rep(width/n.col, 
-      n.col), "npc"), heights=unit(rep(height/n.row, n.row), "npc"))
+      g.arr <- arrangeGrob(grobs=g.tr, layout_matrix=lay, widths=unit(rep(width/n.col, n.col), "npc"), heights=unit(rep(height/n.row, n.row), "npc"))
       grid.arrange(cs.arr, g.arr, ncol=2, widths=c(1.5, 8)) 
 
     } else if (layout=="con") {
@@ -197,14 +184,13 @@ sub.title.size, layout, ncol) {
       for (i in 1:length(unique(con))) { lay <- rbind(lay, m+(i-1)*length(ID)) }
       g.tr <- lapply(grob.all.con, grobTree); g.tr <- g.tr[names(grob.all.con)]
       n.col <- ncol(lay); n.row <- nrow(lay)
-      g.arr <- arrangeGrob(grobs=g.tr, layout_matrix=lay, widths=unit(rep(width/n.col, 
-      n.col), "npc"), heights=unit(rep(height/n.row, n.row), "npc"))
+      g.arr <- arrangeGrob(grobs=g.tr, layout_matrix=lay, widths=unit(rep(width/n.col, n.col), "npc"), heights=unit(rep(height/n.row, n.row), "npc"))
       grid.arrange(cs.arr, g.arr, ncol=2, widths=c(1.5, 8)) 
 
     }
 
     do.call(file.remove, list(list.files(".", "capture.*.ps")))
-    do.call(file.remove, list(list.files("./tmp", ".ps$", full.name=T)))
-    do.call(file.remove, list(list.files("./tmp", ".ps.xml$", full.name=T)))
+    do.call(file.remove, list(list.files("./tmp", ".ps$", full.names=T)))
+    do.call(file.remove, list(list.files("./tmp", ".ps.xml$", full.names=T)))
 
   }

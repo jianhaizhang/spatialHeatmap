@@ -4,7 +4,7 @@
 \docType{package}
 \title{
 \packageTitle{spatialHeatmap}
- Interactive data matrix, spatial heatmap, matrix heatmap, and network.
+ Interactive data matrix, spatial heatmap, matrix heatmap, and network
 }
 \description{
 \packageDescription{spatialHeatmap}
@@ -16,28 +16,10 @@
 The DESCRIPTION file:
 \packageDESCRIPTION{spatialHeatmap}
 \packageIndices{spatialHeatmap}
- This package can generate interactive table matrix, interactive spatial heatmap, interactive 
- matrix heatmap, interactive network based on given a data matrix and an associated SVG 
- image. It requires the following packages pre-installed: shiny, grImport, XML, rsvg, 
- ggplot2, DT, data.table, grid.Extra, plotly, ggdendro, WGCNA, visNetwork, flashClust,
- genefilter.
+ This package can generate interactive table matrix, interactive spatial heatmap, interactive matrix heatmap, interactive network based on given a data matrix and an associated SVG image. It requires the following packages pre-installed: shiny, grImport, XML, rsvg, ggplot2, DT, data.table, grid.Extra, plotly, ggdendro, WGCNA, visNetwork, flashClust, genefilter.
 
-  This Shiny App based Spatial Heatmap can be used for interactive visualisation as long as
-  a data matrix and an associated SVG image are provided. In the following the instructions 
-  are given with a gene expression matrix and an associated root tissue image in SVG format.
-  This app has three main functionalities. First, it generates spatial tissue heatmaps 
-  where user defined tissue regions are coloured by the expression profile of a gene of 
-  interest. The gene expression information is uploaded as a table matrix and the 
-  associated tissue image is uploaded as an SVG format. Second, the app computes gene 
-  network modules based on gene expression profiles across tissue samples. It uses a matrix
-  heatmap to visualize the expression of a chosen gene in the context of the corresponding 
-  gene network module the chosen gene belongs to. Third, the app dispalys the network module
-  from the second section in the form of an interactive network graph. The network module 
-  identification is computationally demanding for large gene expression matrix (e.g.: > 
-  10,000 genes), so to make this app more widely applicable the "local mode" is developed for 
-  processing large data matrix. If the data matrix is small (e.g.: < 10,000 genes), the 
-  "online mode" can be used. If the app times out at some time, then users want to refresh 
-  the page in their web browser.
+  This Shiny App based Spatial Heatmap can be used for interactive visualisation as long as a data matrix and an associated SVG image are provided. In the following the instructions are given with a gene expression matrix and an associated root tissue image in SVG format.
+  This app has three main functionalities. First, it generates spatial tissue heatmaps where user defined tissue regions are coloured by the expression profile of a gene of interest. The gene expression information is uploaded as a table matrix and the associated tissue image is uploaded as an SVG format. Second, the app computes gene network modules based on gene expression profiles across tissue samples. It uses a matrix heatmap to visualize the expression of a chosen gene in the context of the corresponding gene network module the chosen gene belongs to. Third, the app dispalys the network module from the second section in the form of an interactive network graph. The network module identification is computationally demanding for large gene expression matrix (e.g.: > 10,000 genes), so to make this app more widely applicable the "local mode" is developed for processing large data matrix. If the data matrix is small (e.g.: < 10,000 genes), the "online mode" can be used. If the app times out at some time, then users want to refresh the page in their web browser.
 }
 \author{
 \packageAuthor{spatialHeatmap}
@@ -124,8 +106,8 @@ Maintainer: \packageMaintainer{spatialHeatmap}
   Visualization using 'vis.js' Library. R package version 2.0.1.
   https://CRAN.R-project.org/package=visNetwork
 }
-~~ Optionally other standard keywords, one per line, from file KEYWORDS in the R ~~
-~~ documentation directory ~~
+%%~~ Optionally other standard keywords, one per line, from file KEYWORDS in the R ~~
+%%~~ documentation directory ~~
 \keyword{ package }
 \seealso{
 ~~ Optional links to other man pages, e.g. ~~
@@ -134,7 +116,7 @@ Maintainer: \packageMaintainer{spatialHeatmap}
 \examples{
  #Get the path of SVG file and data matrix.   
  svg.path <- system.file("extdata/example", "test_final.svg", package = "spatialHeatmap")  
- data.path <- system.file("extdata/example", "gene_expr_test.txt", package = "spatialHeatmap")
+ data.path <- system.file("extdata/example", "gene_expr_ann_row_gen.txt", package = "spatialHeatmap")
 
  #Local work mode for large data matrix.  
 
@@ -154,7 +136,6 @@ Maintainer: \packageMaintainer{spatialHeatmap}
 
  # Plot the spatial heatmaps on R console.  
  spatial.hm(svg=svg.path, data=data.path, sep="\t", isRowGene=T, pOA=c(0.1, 3), 
- CV=c(0.1, 1000), ID=c("ATMG00580", "ATCG01060"), colour=c("green", "blue", "purple", 
- "yellow", "red"), width=1, height=1, sub.title.size=11, layout="gene", ncol=3)
+ CV=c(0.05, 1000), ID=c("244902_at", "244903_at"), colour=c("green", "blue", "purple", "yellow", "red"), width=1, height=1, sub.title.size=11, layout="gene", ncol=3)
 
 }
