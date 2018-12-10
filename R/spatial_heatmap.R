@@ -1,8 +1,65 @@
+#' Spatial Heatmap
+#'
+#' It takes a data matrix and an associated svg image to display corresponding spatial heatmaps. Take the gene expression matrix and an associated tissue svg image as an example. It can display spatial tissue heatmaps for mutltiple genes under multiple conditions. In each such tissue heatmap, the gene expression levels are represented by colours for each sample under each condition.
 
+#' @param svg The path of the svg image, where different regions (e.g. tissues) are labeled with different colors. \cr E.g.: system.file("extdata/example", "test_final.svg", package = "spatialHeatmap")
+
+#' @param data The path of the data matrix. In the example of gene expression matrix, the dimension names are gene IDs and sample/conditions. The sample/condition names MUST be fomatted this way: a sample name is followed by double underscore then the condition, such as "sample name__condition name". The meta data (e.g. gene annotation) can also be included in parallel with sample/condition. In the names of sample/condition and meta data, only letters, digits, single underscore, dots are allowed. \cr E.g.: system.file("extdata/example", "gene_expr_ann_row_gen.txt", package = "spatialHeatmap")
+
+#' @param sep The seprator of the data matrix, e.g. ",", "\\t", ";".
+
+#' @param isRowGene It specifies if the row names are used to display spatial heatmaps. The options are "TRUE" or "FALSE". For example, in a gene expression matrix genes are used to display heatmaps and the gene IDs are rows names, then the option is "TRUE".
+
+#' @param pOA It specifies parameters of a filter function that filters according to the proportion of elements exceeding a threshold A. The input is a two-component vector, where the first one is the proportion and the second one is A, e.g.: c(0.1, 2). The default is c(0, 0), which means no filter is applied. Refer to "pOverA" from the package "genefilter". 
+
+#' @param CV It specifies parameters of a filter function that filters according to the coefficient of variation (CV). The input is a two-component vector, where the first and second mean the lower and upper bound of CVs used to filter, e.g.: cv(0.1, 5). The default is cv(0, 10000), which tries to aviod filtering.  Refer to "cv" from the package "genefilter".
+
+#' @param ID The IDs used to display the spatial heatmaps, e.g. gene IDs.
+
+#' @param colour The colour components used to make the colour scale, which must be separated with comma and no space. The default is "green,blue,purple,yellow,red".
+
+#' @param width The width of each subplot, relative to height. The default is 1.
+
+#' @param height The height of each subplot, relative to width. The default is 1.
+
+#' @param sub.title.size The size of each subtitle. The default is 11.
+
+#' @param layout The layout of the subplots. The options are "gene" or "con" (condition). For example, in gene expression matrix the spatial tissue heatmaps can be organised by gene or condition (con).
+
+#' @param ncol Number of columns to organise the subplots.
+
+#' @return It generates an image of spatial heatmap(s) along with a colour key.
+
+#' @section Details:
+#' Details about how to properly format and associate custom SVG images with data matrices are provided here: http://biocluster.ucr.edu/~jzhan067/shiny_HM_tutorial/shiny_heatmap_tutorial.html.
+
+#' @examples
+
+#' data.path <- system.file("extdata/example", "gene_expr_ann_row_gen.txt", package = "spatialHeatmap")
+#' svg.path <- system.file("extdata/example", "test_final.svg", package = "spatialHeatmap")
+#' spatial.hm(svg=svg.path, data=data.path, sep="\t", isRowGene=TRUE, pOA=c(0.1, 3), 
+#' CV=c(0.05, 1000), ID=c("244902_at", "244903_at"), colour=c("green", "blue", "purple", "yellow", "red"), width=1, height=1, sub.title.size=11, layout="gene", ncol=3)
+
+#' @author Jianhai Zhang \email{jzhan067@@ucr.edu; zhang.jianhai@@hotmail.com} \cr Dr. Thomas Girke \email{thomas.girke@@ucr.edu}
+
+#' @references
+#' https://www.gimp.org/tutorials/ \cr https://inkscape.org/en/doc/tutorials/advanced/tutorial-advanced.en.html \cr http://www.microugly.com/inkscape-quickguide/.
+
+#' @export
+#' @importFrom ggplot2 ggplot geom_bar aes theme element_blank margin element_rect coord_flip scale_y_continuous scale_x_continuous ggplotGrob geom_polygon scale_fill_manual theme element_blank ggtitle  element_rect margin element_text labs 
+#' @importFrom rsvg rsvg_ps 
+#' @importFrom grImport PostScriptTrace 
+#' @importFrom XML xmlParse xmlRoot xmlSize xmlSApply xmlAttrs xmlName xmlChildren 
+#' @importFrom gridExtra arrangeGrob grid.arrange
+#' @importFrom grid grobTree unit
+#' @importFrom shiny runApp
+#' @importFrom grDevices colorRampPalette
+#' @importFrom Cairo Cairo
+ 
 spatial.hm <- function(svg, data, sep, isRowGene, pOA=c(0, 0), CV=c(0, 10000), ID, colour=c("green", "blue", "purple", "yellow", "red"), width=1, height=1, sub.title.size=11, layout, ncol) {
 
-  library(grImport); library(rsvg); library(ggplot2); library(gridExtra); library(Cairo); library(grid); library(XML); library(data.table); library(genefilter)
-
+  # require(grImport); require(rsvg); require(ggplot2); require(gridExtra); require(Cairo); require(grid); require(XML); require(data.table); require(genefilter)
+  x <- y <- color_scale <- tissue <- NULL
   # Data import and filter.
   gene.f <- fread(data, header=T, sep=sep, fill=T)
   c.na <- colnames(gene.f)[-ncol(gene.f)]; r.na <- as.data.frame(gene.f[, 1])[, 1]

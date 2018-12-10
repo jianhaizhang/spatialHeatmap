@@ -262,9 +262,7 @@ shinyServer(function(input, output, session) {
 
             df0 <- cbind(tissue=id.xml[k], data.frame(coor), stringsAsFactors=T)
 
-          } 
-
-          df <- rbind(df, df0)
+          }; df <- rbind(df, df0)
 
         }; #save(df, file="df"); save(tis.path, file="tis.path")
 
@@ -504,23 +502,19 @@ shinyServer(function(input, output, session) {
     W <- w/as.numeric(input$col.n); H <- h/(ceiling(con.n/as.numeric(input$col.n)))
     if (input$fileIn=="Default_root_cross") {
 
-      list(src="precompute/default.png", contentType="image/png", width=W, height=H*3.7, 
-      alt=NULL)
+      list(src="precompute/default.png", contentType="image/png", width=W, height=H*3.7, alt=NULL)
 
     }  else if (input$fileIn=="Default_arab") {
 
-      list(src="precompute/arab.png", contentType="image/png", width=W, height=H*3.7,
-      alt=NULL)
+      list(src="precompute/arab.png", contentType="image/png", width=W, height=H*3.7, alt=NULL)
 
     }  else if (input$fileIn=="Default_root_vertical") {
 
-      list(src="precompute/root_vertical.png", contentType="image/png", width=W, height=H*3.7,
-      alt=NULL)
+      list(src="precompute/root_vertical.png", contentType="image/png", width=W, height=H*3.7, alt=NULL)
 
     }  else if (input$fileIn=="Default_brain") {
 
-      list(src="precompute/brain.png", contentType="image/png", width=W, height=H*3.7,
-      alt=NULL)
+      list(src="precompute/brain.png", contentType="image/png", width=W, height=H*3.7, alt=NULL)
 
     }  else if (input$fileIn=="Default_elegans") {
 

@@ -6,33 +6,24 @@ Date: 2018-09-07
 Author: Jianhai Zhang
 Maintainer: Jianhai Zhang <jzhan067@ucr.edu> <zhang.jianhai@hotmail.com>
 Description: Given a data matrix and an associated SVG image, this app generates interactive table matrix, interactive spatial heatmap, interactive matrix heatmap, interactive network.
-License: What license is it under?
+License: Artistic-2.0
+Encoding: UTF-8
+VignetteBuilder: knitr
+Suggests: knitr, rmarkdown
 Depends:
-    R (>= 3.3.0),
-    Cairo, 
-    WGCNA, 
-    XML, 
-    data.table, 
-    flashClust, 
-    genefilter, 
-    ggplot2, 
-    grImport,
-    grid, 
-    gridExtra, 
-    rsvg, 
-    shiny,
-    dynamicTreeCut 
+    R (>= 3.3.0)
 Imports:
-    Cairo, 
-    WGCNA, 
-    XML, 
-    data.table, 
-    flashClust, 
-    genefilter, 
-    ggplot2, 
-    grImport,
-    grid, 
-    gridExtra, 
-    rsvg, 
-    shiny,
-    dynamicTreeCut 
+   Cairo, 
+   WGCNA, 
+   XML, 
+   data.table, 
+   flashClust, 
+   genefilter, 
+   ggplot2, 
+   grImport,
+   grid, 
+   gridExtra, 
+   rsvg, 
+   shiny,
+   dynamicTreeCut
+RoxygenNote: 6.1.1
