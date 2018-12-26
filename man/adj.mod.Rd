@@ -26,7 +26,7 @@ This function relies on "WGCNA". First, it computes the adjacency matrix based o
 
 \examples{
  
-data.path <- system.file("extdata/example", "gene_expr_ann_row_gen.txt", package = "spatialHeatmap")
+data.path <- system.file("extdata/example", "root_expr_ann_row_gen.txt", package = "spatialHeatmap")
 exp <- filter.data(data=data.path, sep="\\t", isRowGen=TRUE, c(0, 0), c(0.1, 10000), "processed_data")
 adj_mod <- adj.mod(data=exp, type="signed", minSize=15)
 }

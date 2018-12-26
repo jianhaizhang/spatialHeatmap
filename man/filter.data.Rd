@@ -8,7 +8,7 @@ filter.data(data, sep, isRowGene, pOA = c(0, 0), CV = c(0, 10000),
   name)
 }
 \arguments{
-\item{data}{The path of the data matrix. In the example of gene expression matrix, the dimension names are gene IDs and sample/conditions. The sample/condition names MUST be fomatted this way: a sample name is followed by double underscore then the condition, such as "sample name__condition name". The meta data (e.g. gene annotation) can also be included in parallel with sample/condition. In the names of sample/condition and meta data, only letters, digits, single underscore, dots are allowed. \cr E.g.: system.file("extdata/example", "gene_expr_ann_row_gen.txt", package = "spatialHeatmap").}
+\item{data}{The path of the data matrix. In the example of gene expression matrix, the dimension names are gene IDs and sample/conditions. The sample/condition names MUST be fomatted this way: a sample name is followed by double underscore then the condition, such as "sample__condition". The meta data (e.g. gene annotation) can also be included in parallel with sample/condition. In the names of sample/condition and meta data, only letters, digits, single underscore, dots are allowed. \cr E.g.: system.file("extdata/example", "root_expr_ann_row_gen.txt", package = "spatialHeatmap").}
 
 \item{sep}{The seprator of the data matrix, e.g. ",", "\\t", ";".}
 
@@ -27,7 +27,7 @@ A data matrix filtered by "pOverA" and "cv" from the R package "genefilter", whi
 It designed to filter large data matrix (e.g.: > 10,000 rows) locally. The two main filter functions are "pOverA" and "cv", which are from the package "genefilter". The processed data matrix (processed_data.txt) is saved in the directory "local_mode_result", which should be uploaded to "Step 2: upload a gene expression file" in the Shiny app, which is launched by running "spatial.hm.all()".
 }
 \examples{
-data.path <- system.file("extdata/example", "gene_expr_ann_row_gen.txt", package = "spatialHeatmap")
+data.path <- system.file("extdata/example", "root_expr_ann_row_gen.txt", package = "spatialHeatmap")
 exp <- filter.data(data=data.path, sep="\\t", isRowGene=TRUE, pOA=c(0, 0), CV=c(0.1, 10000), "processed_data")
 }
 \references{

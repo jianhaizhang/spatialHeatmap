@@ -47,10 +47,10 @@ Details about how to properly format and associate custom SVG images with data m
 }
 
 \examples{
-data.path <- system.file("extdata/example", "gene_expr_ann_row_gen.txt", package = "spatialHeatmap")
-svg.path <- system.file("extdata/example", "test_final.svg", package = "spatialHeatmap")
+data.path <- system.file("extdata/example", "root_expr_ann_row_gen.txt", package = "spatialHeatmap")
+svg.path <- system.file("extdata/example", "root_cross_final.svg", package = "spatialHeatmap")
 spatial.hm(svg=svg.path, data=data.path, sep="\\t", isRowGene=TRUE, pOA=c(0.1, 3), 
-CV=c(0.05, 1000), ID=c("244902_at", "244903_at"), colour=c("green", "blue", "purple", "yellow", "red"), width=1, height=1, sub.title.size=11, layout="gene", ncol=3)
+CV=c(0.05, 1000), ID=c("PSAC", "NDHE"), colour=c("green", "blue", "purple", "yellow", "red"), width=1, height=1, sub.title.size=11, layout="gene", ncol=3)
 }
 \references{
 https://www.gimp.org/tutorials/ \cr https://inkscape.org/en/doc/tutorials/advanced/tutorial-advanced.en.html \cr http://www.microugly.com/inkscape-quickguide/.
