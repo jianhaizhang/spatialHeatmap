@@ -483,7 +483,6 @@ shinyServer(function(input, output, session) {
     w <- as.numeric(input$width); h <- as.numeric(input$height); con.n <- length(con())
     W <- w/as.numeric(input$col.n); H <- h/(ceiling(con.n/as.numeric(input$col.n)))
 
-
     if (((input$fileIn=="Compute locally"|input$fileIn=="Compute online")|
     !is.null(input$svgInpath))|grepl("^Default_", input$fileIn)) {
 
