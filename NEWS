@@ -1,0 +1,6 @@
+FIRST VERSION
+----------------------
+
+OVERVIEW
+
+    o This Shiny App based spatialHeatmap can be used for interactive visualisation as long as a data matrix and an associated SVG image are available, This tool has three main functionality, which makes it informative, interactive, and versatile in visualizing large-scale data. First, it generates spatial heatmaps where user defined tissue regions are coloured by the expression profile of a gene of interest. The gene expression information is uploaded as a table matrix and the associated tissue image is uploaded as an SVG format. Second, the app computes gene network modules based on gene expression profiles across tissue samples. It uses a matrix heatmap to visualize the expression of a chosen gene in the context of the corresponding gene network module where the chosen gene is contained. Third, the app displays the same network module in the matrix heatmap in the form of an interactive network graph. The network module identification is computationally intense. To maintain performance, the large gene expression matrix (e.g.: $>$ 10,000 genes) should be computed by the ``Compute locally" mode, while small ones (e.g.: $<$ 10,000 genes) can be computed by the ``Compute online" mode. If the app times out at some time, then users want to refresh the page in their web browser 

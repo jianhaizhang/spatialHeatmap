@@ -16,7 +16,7 @@ library(shiny); library(shinydashboard); library(grImport); library(rsvg); libra
 options(shiny.maxRequestSize=5*1024^3) 
 # enableWGCNAThreads()
 inter.svg <- readLines("example/root_cross_final.svg")
-inter.data <- read.table("example/root_expr_ann_row_gen.txt", header=T, row.names=1, sep="\t")
+inter.data <- read.table("example/root_expr_ann_row_gen.txt", header=TRUE, row.names=1, sep="\t")
 
 shinyServer(function(input, output, session) {
 
@@ -30,7 +30,7 @@ shinyServer(function(input, output, session) {
   output$dld.data <- downloadHandler(
 
     filename=function(){ "root_expr_ann_row_gen.txt" },
-    content=function(file){ write.table(inter.data, file, col.names=T, row.names=T, quote=F, sep="\t") }
+    content=function(file){ write.table(inter.data, file, col.names=TRUE, row.names=TRUE, quote=FALSE, sep="\t") }
 
   )
 
@@ -38,7 +38,7 @@ shinyServer(function(input, output, session) {
 
     input$fileIn; input$geneInpath
     updateRadioButtons(session, "dimName", label="Step 3: is column or row gene?", 
-    c("None", "Row", "Column"), "None", inline=T)
+    c("None", "Row", "Column"), "None", inline=TRUE)
     updateSelectInput(session, 'sep', 'Step 4: separator', c("None", "Tab", "Comma", "Semicolon"), "None")
 
   })
@@ -51,17 +51,17 @@ shinyServer(function(input, output, session) {
     if (grepl("^Default_", input$fileIn)) { 
 
         incProgress(0.5, detail="Loading matrix. Please wait.")
-        if (input$fileIn=="Default_brain") df.te <- fread("example/brain_expr_ann_row_gen.txt", header=T, sep="\t", fill=T)
-        if (input$fileIn=="Default_root_cross") df.te <- fread("example/root_expr_ann_row_gen.txt", header=T, sep="\t", fill=T)
-        if (input$fileIn=="Default_map") df.te <- fread("example/us_population.txt", header=T, sep="\t", fill=T)
+        if (input$fileIn=="Default_brain") df.te <- fread("example/brain_expr_ann_row_gen.txt", header=TRUE, sep="\t", fill=TRUE)
+        if (input$fileIn=="Default_root_cross") df.te <- fread("example/root_expr_ann_row_gen.txt", header=TRUE, sep="\t", fill=TRUE)
+        if (input$fileIn=="Default_map") df.te <- fread("example/us_population2018.txt", header=TRUE, sep="\t", fill=TRUE)
 
 	df.te1 <- as.data.frame(df.te); rownames(df.te1) <- df.te1[, 1]
 	df.te1 <- df.te1[, -1]; colnames(df.te1) <- colnames(df.te)[-ncol(df.te)]
         idx <- grep("__", colnames(df.te1)); idx1 <- setdiff(1:length(colnames(df.te1)), idx)
-        gene2 <- df.te1[, idx, drop=F]; gene3 <- df.te1[, idx1, drop=F]
+        gene2 <- df.te1[, idx, drop=FALSE]; gene3 <- df.te1[, idx1, drop=FALSE]
 	pOverA <- pOverA(input$p, input$A); cv <- cv(input$cv1, input$cv2)
 	ffun <- filterfun(pOverA, cv); filtered <- genefilter(gene2, ffun)
-	gene2 <- gene2[filtered, ]; gene3 <- gene3[filtered, , drop=F]
+	gene2 <- gene2[filtered, ]; gene3 <- gene3[filtered, , drop=FALSE]
 
 	return(list(gene2=gene2, gene3=gene3))
 
@@ -75,14 +75,14 @@ shinyServer(function(input, output, session) {
       incProgress(0.25, detail="Reading matrix. Please wait.")
       geneInpath <- input$geneInpath; if (input$sep=="Tab") sep <- "\t" else if (
       input$sep=="Comma") sep <- "," else if (input$sep=="Semicolon") sep <- ";"
-      gene.f <- fread(geneInpath$datapath, header=T, sep=sep, fill=T)
+      gene.f <- fread(geneInpath$datapath, header=TRUE, sep=sep, fill=TRUE)
       c.na <- colnames(gene.f)[-ncol(gene.f)]; r.na <- as.data.frame(gene.f[, 1])[, 1]
-      df <- as.data.frame(gene.f, stringsAsFactors=F)[, -1]
+      df <- as.data.frame(gene.f, stringsAsFactors=FALSE)[, -1]
       rownames(df) <- r.na; colnames(df) <- c.na
 
       if(input$dimName=="Column") df <- t(df)
       idx <- grep("__", colnames(df)); idx1 <- setdiff(1:length(colnames(df)), idx)
-      gene2 <- df[, idx, drop=F]; gene3 <- df[, idx1, drop=F]
+      gene2 <- df[, idx, drop=FALSE]; gene3 <- df[, idx1, drop=FALSE]
       gene2 <- apply(gene2, 2, as.numeric) # This step removes rownames of gene2.
       rownames(gene2) <- rownames(gene3)
 
@@ -90,7 +90,7 @@ shinyServer(function(input, output, session) {
 
         pOverA <- pOverA(input$p, input$A); cv <- cv(input$cv1, input$cv2)
         ffun <- filterfun(pOverA, cv); filtered <- genefilter(gene2, ffun)
-        gene2 <- gene2[filtered, ]; gene3 <- gene3[filtered, , drop=F]
+        gene2 <- gene2[filtered, ]; gene3 <- gene3[filtered, , drop=FALSE]
 
       }; return(list(gene2=gene2, gene3=gene3)) 
 
@@ -110,13 +110,13 @@ shinyServer(function(input, output, session) {
       incProgress(0.5, detail="Displaying. Please wait.")
       if (input$fileIn!="None") {
 
-      gene <- geneIn(); gene.dt <- cbind.data.frame(gene[["gene2"]][, , drop=F], 
-      gene[["gene3"]][, , drop=F], stringsAsFactors=F) 
+      gene <- geneIn(); gene.dt <- cbind.data.frame(gene[["gene2"]][, , drop=FALSE], 
+      gene[["gene3"]][, , drop=FALSE], stringsAsFactors=FALSE) 
 
    }
 
     datatable(gene.dt, selection=list(mode="multiple", target="row"),
-    filter="top", extensions='Scroller', options=list(autoWidth=T, scrollCollapse=T, deferRender=T, scrollX=T, scrollY=200, scroller=T), class='cell-border strip hover') %>% 
+    filter="top", extensions='Scroller', options=list(autoWidth=TRUE, scrollCollapse=TRUE, deferRender=TRUE, scrollX=TRUE, scrollY=200, scroller=TRUE), class='cell-border strip hover') %>% 
     formatStyle(0, backgroundColor="orange", cursor='pointer') %>% 
     formatRound(colnames(geneIn()[["gene2"]]), 3)
 
@@ -174,7 +174,7 @@ shinyServer(function(input, output, session) {
         #col <- color$col; save(col, file="col")
         incProgress(0.75, detail="Plotting. Please wait.")
         cs.g <- ggplot()+geom_bar(data=cs.df, aes(x=color_scale, y=y), fill=color$col, stat="identity", width=0.2)+theme(axis.title.x=element_blank(), axis.text.x=element_blank(), axis.ticks.x=element_blank(), plot.margin=margin(3, 0.1, 3, 0.1, "cm"), panel.grid=element_blank(), panel.background=element_blank())+coord_flip()+scale_y_continuous(expand=c(0,0))+scale_x_continuous(expand = c(0,0))
-	if (max(geneV())>10000) cs.g <- cs.g+scale_x_continuous(labels=function(x) format(x, scientific=T))
+	if (max(geneV())>10000) cs.g <- cs.g+scale_x_continuous(labels=function(x) format(x, scientific=TRUE))
 	return(cs.g)
 
       })
@@ -212,7 +212,7 @@ shinyServer(function(input, output, session) {
         xml <- xmlParse(svg.path); xmltop <- xmlRoot(xml); size <- xmlSize(xmltop)
         # Alternative way to get all ids in svg xml.
 	lis.ma <- xmlSApply(xmltop[[size]], xmlAttrs)
-        if (class(lis.ma)=="matrix") { id.xml <- lis.ma["id", ] } else if (class(lis.ma)=="list") {
+        if (is(lis.ma, "matrix")) { id.xml <- lis.ma["id", ] } else if (is(lis.ma, "list")) {
 
           id.xml <- NULL
           for (i in 1:length(lis.ma)) { id.xml <- c(id.xml, lis.ma[[i]][["id"]]) }
@@ -222,7 +222,7 @@ shinyServer(function(input, output, session) {
         id.xml1 <- NULL; for (i in 1:xmlSize(xmltop[[size]])) {
 
           grp.path <- xmlSApply(xmltop[[size]][[i]], xmlAttrs)
-          if (class(grp.path)=="matrix") id.xml1 <- c(id.xml1, paste0(id.xml[i], "_", 1:ncol(grp.path))) else if (class(grp.path)=="list") id.xml1 <- c(id.xml1, xmlAttrs(xmltop[[size]][[i]])[["id"]]) 
+          if (is(grp.path, "matrix")) id.xml1 <- c(id.xml1, paste0(id.xml[i], "_", 1:ncol(grp.path))) else if (is(grp.path, "list")) id.xml1 <- c(id.xml1, xmlAttrs(xmltop[[size]][[i]])[["id"]]) 
 
 	}
 
@@ -244,7 +244,7 @@ shinyServer(function(input, output, session) {
 
             }
 
-          df0 <- cbind(tissue=id.xml1[k], data.frame(coor), stringsAsFactors=T)
+          df0 <- cbind(tissue=id.xml1[k], data.frame(coor), stringsAsFactors=TRUE)
           df <- rbind(df, df0) # Bug: if xmlAttrs(top[[1]])[1] is "stroke", "error: df0 is not found" will happen.
 
 	  }
@@ -303,7 +303,7 @@ shinyServer(function(input, output, session) {
 
       }
      
-      g <- ggplot()+geom_polygon(data=g.df, aes(x=x, y=y, fill=tissue), color="black")+scale_fill_manual(values=g.col, guide=F)+theme(axis.text=element_blank(), axis.ticks=element_blank(), panel.grid=element_blank(), panel.background=element_rect(fill="white", colour="grey80"), plot.margin=
+      g <- ggplot()+geom_polygon(data=g.df, aes(x=x, y=y, fill=tissue), color="black")+scale_fill_manual(values=g.col, guide=FALSE)+theme(axis.text=element_blank(), axis.ticks=element_blank(), panel.grid=element_blank(), panel.background=element_rect(fill="white", colour="grey80"), plot.margin=
      margin(0.1, 0.1, 0.1, 0.3, "cm"), axis.title.x=element_text(size=16,face="bold"), plot.title=element_text(hjust=0.5, size=20))+labs(x="", y="")+
      scale_y_continuous(expand=c(0.01,0.01))+scale_x_continuous(expand=c(0.01,0.01))+ggtitle(paste0(k, "_", j)); return(g)
  
@@ -378,7 +378,7 @@ shinyServer(function(input, output, session) {
 
       }
 
-     g <- ggplot()+geom_polygon(data=g.df, aes(x=x, y=y, fill=tissue), color="black")+scale_fill_manual(values=g.col, guide=F)+theme(axis.text=element_blank(), axis.ticks=element_blank(), panel.grid=element_blank(), panel.background=element_rect(fill="white", colour="grey80"), plot.margin=
+     g <- ggplot()+geom_polygon(data=g.df, aes(x=x, y=y, fill=tissue), color="black")+scale_fill_manual(values=g.col, guide=FALSE)+theme(axis.text=element_blank(), axis.ticks=element_blank(), panel.grid=element_blank(), panel.background=element_rect(fill="white", colour="grey80"), plot.margin=
      margin(0.1, 0.1, 0.1, 0.3, "cm"), axis.title.x=element_text(size=16,face="bold"), plot.title=element_text(hjust=0.5, size=20))+labs(x="", y="")+
      scale_y_continuous(expand=c(0.01,0.01))+scale_x_continuous(expand=c(0.01,0.01))+ggtitle(paste0(k, "_", j)); return(g)
  
@@ -442,10 +442,10 @@ shinyServer(function(input, output, session) {
       all.cell <- ceiling(length(unique(con()))/as.numeric(input$col.n)) * 
       as.numeric(input$col.n)
       cell.idx <- c(1:length(unique(con())), rep(NA, all.cell-length(unique(con()))))
-      m <- matrix(cell.idx, ncol=as.numeric(input$col.n), byrow=T)
+      m <- matrix(cell.idx, ncol=as.numeric(input$col.n), byrow=TRUE)
       lay <- NULL
       for (i in 1:length(gID$geneID)) { lay <- rbind(lay, m+(i-1)*length(unique(con()))) }
-      grid.arrange(grobs=grob.lis.p, layout_matrix=lay, newpage=T)
+      grid.arrange(grobs=grob.lis.p, layout_matrix=lay, newpage=TRUE)
 
     } else if (input$gen.con=="con") {
 
@@ -460,16 +460,16 @@ shinyServer(function(input, output, session) {
       all.cell <- ceiling(length(gID$geneID)/as.numeric(input$col.n)) * 
       as.numeric(input$col.n)
       cell.idx <- c(1:length(gID$geneID), rep(NA, all.cell-length(gID$geneID)))
-      m <- matrix(cell.idx, ncol=as.numeric(input$col.n), byrow=T)
+      m <- matrix(cell.idx, ncol=as.numeric(input$col.n), byrow=TRUE)
       lay <- NULL
       for (i in 1:length(unique(con()))) { lay <- rbind(lay, m+(i-1)*length(gID$geneID)) }
-      grid.arrange(grobs=grob.lis.p.con, layout_matrix=lay, newpage=T)
+      grid.arrange(grobs=grob.lis.p.con, layout_matrix=lay, newpage=TRUE)
 
     }
 
     do.call(file.remove, list(list.files(".", "capture.*.ps")))
-    do.call(file.remove, list(list.files("./tmp", ".ps$", full.name=T)))
-    do.call(file.remove, list(list.files("./tmp", ".ps.xml$", full.name=T)))
+    do.call(file.remove, list(list.files("./tmp", ".ps$", full.name=TRUE)))
+    do.call(file.remove, list(list.files("./tmp", ".ps.xml$", full.name=TRUE)))
 
   })
 
@@ -492,7 +492,7 @@ shinyServer(function(input, output, session) {
 
     }
 
-  }, deleteFile=F)
+  }, deleteFile=FALSE)
 
   if (file.exists("./tmp/user.png")) file.remove("./tmp/user.png")
 
@@ -502,11 +502,11 @@ shinyServer(function(input, output, session) {
 
       name <- input$adj.modInpath$name; path <- input$adj.modInpath$datapath
       path1 <- path[name=="adj.txt"]; path2 <- path[name=="mod.txt"]
-      adj <- fread(path1, sep="\t", header=T, fill=T); c.na <- colnames(adj)[-ncol(adj)]
+      adj <- fread(path1, sep="\t", header=TRUE, fill=TRUE); c.na <- colnames(adj)[-ncol(adj)]
       r.na <- as.data.frame(adj[, 1])[, 1];  adj <- as.data.frame(adj)[, -1] 
       rownames(adj) <- r.na; colnames(adj) <- c.na
 
-      mcol <- fread(path2, sep="\t", header=T, fill=T); c.na <- colnames(mcol)[-ncol(mcol)]
+      mcol <- fread(path2, sep="\t", header=TRUE, fill=TRUE); c.na <- colnames(mcol)[-ncol(mcol)]
       r.na <- as.data.frame(mcol[, 1])[, 1]; mcol <- as.data.frame(mcol)[, -1] 
       rownames(mcol) <- r.na; colnames(mcol) <- c.na
 
@@ -557,7 +557,7 @@ shinyServer(function(input, output, session) {
       for (ds in 2:3) {
          
         minSize <- input$min.size-3*ds; if (minSize < 3) minSize <- 3
-        tree <- cutreeHybrid(dendro=tree.hclust, pamStage=F, minClusterSize=
+        tree <- cutreeHybrid(dendro=tree.hclust, pamStage=FALSE, minClusterSize=
         minSize, cutHeight=0.99, deepSplit=ds, distM=dissTOM)
         mcol <- cbind(mcol, tree$labels)
 
@@ -617,10 +617,10 @@ shinyServer(function(input, output, session) {
       incProgress(0.2, detail="plotting.")
       z <- as.matrix(gene.clus); if (input$mat.scale=="By column/sample") z <- scale(z); if (input$mat.scale=="By row/gene") z <- t(scale(t(z)))
       ply <- plot_ly(z=z, type="heatmap") %>% layout(yaxis=
-      list(domain=c(0, 1), showticklabels=F, showgrid=F, ticks="", zeroline=F), 
-      xaxis=list(domain=c(0, 1), showticklabels=F, showgrid=F, ticks="", zeroline=F))
+      list(domain=c(0, 1), showticklabels=FALSE, showgrid=FALSE, ticks="", zeroline=FALSE), 
+      xaxis=list(domain=c(0, 1), showticklabels=FALSE, showgrid=FALSE, ticks="", zeroline=FALSE))
 
-      subplot(p.sam1, plot_ly(), ply, p.gen1, nrows=2, shareX=T, shareY=T, margin=0, heights=c(0.2, 0.8), widths=c(0.8, 0.2))
+      subplot(p.sam1, plot_ly(), ply, p.gen1, nrows=2, shareX=TRUE, shareY=TRUE, margin=0, heights=c(0.2, 0.8), widths=c(0.8, 0.2))
 
     })
 
@@ -629,14 +629,14 @@ shinyServer(function(input, output, session) {
   observe({
   
     geneIn(); gID$geneID; input$gen.sel; input$ds; input$adj.modInpath; input$A; input$p; input$cv1; input$cv2; input$min.size; input$net.type
-    updateSelectInput(session, "TOM.in", label="Input a similarity threshold to display the similarity network.", choices=c("None", sort(seq(0, 1, 0.002), decreasing=T)), selected="None")
+    updateSelectInput(session, "TOM.in", label="Input a similarity threshold to display the similarity network.", choices=c("None", sort(seq(0, 1, 0.002), decreasing=TRUE)), selected="None")
 
   })
 
   observe({
   
     geneIn(); gID$geneID; input$TOM.in; input$gen.sel; input$ds; input$adj.modInpath; input$A; input$p; input$cv1; input$cv2; input$min.size; input$net.type
-    updateRadioButtons(session, "cpt.nw", label="Display or not?", c("Yes"="Y", "No"="N"), "N", inline=T, selected="N")
+    updateRadioButtons(session, "cpt.nw", label="Display or not?", c("Yes"="Y", "No"="N"), "N", inline=TRUE, selected="N")
 
   })
 
@@ -670,7 +670,7 @@ shinyServer(function(input, output, session) {
       # Should not exclude duplicate rows by "length".
       link1 <- subset(link, length!=1 & !duplicated(link[, "length"]))
       node <- data.frame(id=colnames(adj.m),  
-      value=colSums(adj.m), title=geneIn()[[2]][colnames(adj.m), ], borderWidth=2, color.border="black", color.highlight.background="orange", color.highlight.border="darkred", color=NA, stringsAsFactors=F)
+      value=colSums(adj.m), title=geneIn()[[2]][colnames(adj.m), ], borderWidth=2, color.border="black", color.highlight.background="orange", color.highlight.border="darkred", color=NA, stringsAsFactors=FALSE)
       
       idx.sel <- grep(paste0("^", input$gen.sel, "$"), node$id)
       rownames(node)[idx.sel] <- node$id[idx.sel] <- paste0(input$gen.sel, "_selected")
@@ -726,7 +726,7 @@ shinyServer(function(input, output, session) {
 
       incProgress(0.3, detail="prepare for plotting.")
       visNetwork(visNet()[["node"]], visNet()[["link"]], height="300px", width="100%", background="", main=paste0("Network Module Containing ",  input$gen.sel), submain="", footer= "") %>% 
-      visOptions(highlightNearest=T, nodesIdSelection=T, selectedBy="group")
+      visOptions(highlightNearest=TRUE, nodesIdSelection=TRUE, selectedBy="group")
 
     })
     

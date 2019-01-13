@@ -1,17 +1,18 @@
 Package: spatialHeatmap
 Type: Package
 Title: spatialHeatmap
-Version: 1.0
+Version: 0.99.0
 Date: 2018-09-07
 Author: Jianhai Zhang
 Maintainer: Jianhai Zhang <jzhan067@ucr.edu> <zhang.jianhai@hotmail.com>
 Description: Given a data matrix and an associated SVG image, this app generates interactive table matrix, interactive spatial heatmap, interactive matrix heatmap, interactive network.
 License: Artistic-2.0
 Encoding: UTF-8
+biocViews: Visualization, Microarray, Sequencing, GeneExpression, DataRepresentation, Network, Clustering, GraphAndNetwork
 VignetteBuilder: knitr
-Suggests: knitr, rmarkdown
+Suggests: knitr, rmarkdown, RUnit, BiocGenerics
 Depends:
-    R (>= 3.3.0)
+    R (>= 3.5)
 Imports:
    Cairo, 
    WGCNA, 
@@ -25,5 +26,9 @@ Imports:
    gridExtra, 
    rsvg, 
    shiny,
-   dynamicTreeCut
+   dynamicTreeCut,
+   grDevices,
+   stats,
+   utils,
+   methods
 RoxygenNote: 6.1.1

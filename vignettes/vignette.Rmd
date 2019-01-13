@@ -1,6 +1,6 @@
 ---
 title: "spatialHeatmap Vignette"
-author: "Jianhai Zhang (<jzhan067@ucr.edu>; <zhang.jianhai@hotmail.com>) <p/> PI: Prof. Dr. Thomas Girke (<thomas.girke@ucr.edu>)"
+author: "Jianhai Zhang, PhD student at Genetics, Genomics and Bioinformatics, University of California, Riverside (<jzhan068@ucr.edu>; <zhang.jianhai@hotmail.com>) <p/> PI: Dr. Thomas Girke, professor at Department of Botany and Plant Sciences, University of California, Riverside (<thomas.girke@ucr.edu>)"
 date: "Last update: `r format(Sys.time(), '%d %B, %Y')`"
 output:
   html_document:
@@ -25,21 +25,139 @@ vignette: >
 
 <style>body { text-align: justify }</style>
 
+```{r, numbering_ref, eval=TRUE, echo=FALSE}
+
+# A function for generating captions and cross-references
+
+fig <- local({
+    i <- 0; list(cap=function(refName, text, center=FALSE, col="black", inline=FALSE) {
+            i <<- i + 1; ref[[refName]] <<- i; css_ctr <- ""
+            if (center) css_ctr <- "text-align:center; display:inline-block; width:100%;"
+            cap_txt <- paste0("<span style=\"color:", col, "; ", css_ctr, "\">Figure ", i, ": ", text , "</span>"); anchor <- paste0("<a name=\"", refName, "\"></a>")
+            if (inline) { paste0(anchor, cap_txt) } else { list(anchor=anchor, cap_txt=cap_txt) } }, ref=function(refName, link=FALSE, checkRef=TRUE) {
+            ## This function puts in a cross reference to a caption. You refer to the
+            ## caption with the refName that was passed to fig$cap() (not the code chunk name).
+            ## The cross reference can be hyperlinked.
+
+            if (checkRef && !refName %in% names(ref)) stop(paste0("fig$ref() error: ", refName, " not found"))
+            if (link) { paste0("<A HREF=\"#", refName, "\">Figure ", ref[[refName]], "</A>") } else { paste0("Figure ", ref[[refName]]) } }, ref_all=function(){
+            ## For debugging
+            ref
+        })
+})
+
+## This chunk replaces the default hook for processing plots. It achieves the purposes, of laying out auto-numbered captions, but other functionality may be gone.
+
+library(knitr)
+knit_hooks$set(plot = function(x, options) {
+    sty <- ""; if (options$fig.align == 'default') { sty <- "" } else {
+        sty <- paste0(" style=\"text-align:", options$fig.align, ";\"")
+    }
+
+    if (is.list(options$fig.cap)) {
+        ## options$fig.cap is a list returned by the function fig$cap()
+        str_caption <- options$fig.cap$cap_txt; str_anchr <- options$fig.cap$anchor
+    } else {
+        ## options$fig.cap is a character object (hard coded, no anchor)
+        str_caption <- options$fig.cap; str_anchr <- ""
+    }
+
+    paste('<figure', sty, '>', str_anchr, '<img src="', opts_knit$get('base.url'), paste(x, collapse = '.'), '"><figcaption>', str_caption, '</figcaption></figure>', sep = '')
+
+})
+
+## This chucnk will read through *this* Rmd file, and attempt to extract all of the labels (not caption text) used for Figure captions. These labels are used as anchors, so scanning through the document now will allow us to create cross references before the caption actually appears. 
+
+## Get the name of this Rmd file
+rmdFn <- knitr::current_input()  # filename of input document
+
+## Read lines and close connection
+rmdCon <- file(rmdFn, open = "r"); rmdLines <- readLines(rmdCon); close(rmdCon)
+
+## Pull out all occurences of at least one back tick, followed by any number of characters, followed by fig$cap (all on one line)
+figscap_idx <- grep("`+(.*)fig\\$cap", rmdLines); rmdLines <- rmdLines[figscap_idx]
+
+## Get rid of everything up until the start of the caption label. This presumes the caption label is the first argument of fig$cap(). E.g., fig.cap = fig$cap("my_label", ...)
+rmdLinesSansPre <- sub("(.*)fig\\$cap(.*?)[\"']", "", rmdLines)
+
+## Identify everything up until the first quote
+match_data <- regexpr("(.*?)[\"']", rmdLinesSansPre)
+
+## Reduce the length by one, because we're not interested in the final quote
+attr(match_data, "match.length") <- attr(match_data, "match.length") - 1
+
+## Extract
+fig_labels <- regmatches(rmdLinesSansPre, match_data, invert=FALSE)
+
+if (length(fig_labels) > 0) {
+
+    ## Test for duplicates
+    if (anyDuplicated(fig_labels) > 0) stop("Duplicate caption labels detected")
+ 
+    ## Create a named list of Figure numbers
+    ref <- as.list(1:length(fig_labels)); names(ref) <- fig_labels
+}
+
+```
+
+```{r rmd_fun, eval=FALSE, echo=FALSE, message=FALSE, warning=FALSE} 
+
+# Extract all functions to a file ending with "_rmd_fun.R" so that the large functions in this Rmd file can be sourced easily.
+rmd.fun <- function(infile){
+  # read the file
+  flIn <- readLines(infile)
+  # identify the start of code blocks
+  cdStrt <- which(grepl(flIn, pattern = "<- function\\(", perl = TRUE))-1
+  # identify the end of code blocks
+  cdEnd <- sapply(cdStrt, function(x){
+    preidx <- which(grepl(flIn[-(1:x)], pattern = "\\};1", perl = TRUE))[1]+1
+    return(preidx + x)
+  })
+  # define an expansion function
+  # strip code block indacators
+  flIn[c(cdStrt, cdEnd)] <- ""
+  expFun <- function(strt, End){
+    strt <- strt+1
+    End <- End-1
+    return(strt:End)
+  }
+  idx <- unlist(mapply(FUN = expFun, strt = cdStrt, End = cdEnd, 
+                SIMPLIFY = FALSE))
+  # add comments to all lines except code blocks
+  comIdx <- 1:length(flIn)
+  comIdx <- comIdx[-idx]
+  for(i in comIdx){
+    flIn[i] <- paste("#' ", flIn[i], sep = "")
+  }
+  # create an output file
+  nm <- strsplit(infile, split = "\\.")[[1]][1]
+  flOut <- file(paste(nm, "_rmd_fun.R", sep = ""), "w")
+  for(i in 1:length(flIn)){
+    cat(flIn[i], "\n", file = flOut, sep = "\t")
+  }
+  close(flOut)
+}
+
+```
+```{r setup0, echo=FALSE, message=FALSE, warning=FALSE}
+library(knitr); opts_chunk$set(message=FALSE, warning=FALSE)
+```
+
 # Package Description
 
-This Shiny App based Spatial Heatmap can be used for interactive visualisation as long as a data matrix and an associated svg image are provided. In the following the instructions are given with a gene expression matrix and an associated root tissue image in svg format as an example. This app has three main functionalities: spatial heatmap, interactive matrix heatmap, interactive network module.
+This Shiny App based Spatial Heatmap can be used for interactive visualisation as long as a data matrix and an associated SVG image are provided, such as microarray or sequencing data generated on different tissues under different conditions, population data generated in different years across different cities. In the following the instructions are given with a gene expression matrix and an associated root tissue image in SVG format as an example. This app has three main functionality: spatial heatmap, interactive matrix heatmap, interactive network module.
 
 # Details
 
-In the first functionality it generates spatial heatmaps where user defined tissue regions are coloured by the expression profile of a gene of interest. The gene expression information is uploaded as a table matrix and the associated tissue image is uploaded as an SVG format. Second, in the interactive matrix heatmap the app computes gene network modules based on gene expression profiles across tissue samples. It uses a matrix heatmap to visualize the expression of a chosen gene in the context of the corresponding gene network module the chosen gene belongs to. Third, in the interactive network the app dispalys the same network module in the matrix heatmap in the form of an interactive network graph. The network module identification is computationally demanding for large gene expression matrix (e.g.: > 10,000 genes), so to make this app more widely applicable the "Compute locally" mode is developed for processing large data matrix. If the data matrix is small (e.g.: < 10,000 genes), the "Compute online" mode can be used. If the app times out at some time, then users want to refresh the page in their web browser.
+In the first functionality it generates spatial heatmaps where user defined tissue regions are coloured by the expression profile of a gene of interest. The gene expression information is uploaded as a table matrix and the associated tissue image is uploaded as an SVG format. Second, in the interactive matrix heatmap the app computes gene network modules based on gene expression profiles across tissue samples. It uses a matrix heatmap to visualize the expression of a chosen gene in the context of the corresponding gene network module the chosen gene belongs to. Third, in the interactive network the app dispalys the same network module in the matrix heatmap in the form of an interactive network graph. The network module identification is computationally demanding for large gene expression matrix (e.g.: > 11,000 genes), so to make this app more widely applicable the "Compute locally" mode is developed for processing large data matrix. If the data matrix is small (e.g.: < 10,000 genes), the "Compute online" mode can be used. If the app times out at some time, then users want to refresh the page in their web browser.
 
 ## Input
 
-At first, users need to select a mode under "Select a work mode" in the left "Input" menu. The "Default" is most convenient for users to test the app, since this option relies on pre-uploaded files and users do not need to upload any files at all. The "Compute locally" should be selected if users have a large gene expression file (e.g.: > 10,000 genes) while the "Compute online" can be selected if users have a small gene expression file (e.g.: < 10,000 genes). In "Step 1: upload an svg file" and "Step 2: upload a gene expression file", users are asked to upload the svg file and associated gene expression file respectively. Details about how to properly format and associate custom SVG images with expression tables are provided [here](http://biocluster.ucr.edu/~jzhan067/shiny_HM_tutorial/tutorial/shiny_heatmap_tutorial.html).
+At first, users need to select a mode under "Select a work mode" in the left "Input" menu. The "Default" is most convenient for users to test the app, since this option relies on pre-uploaded files and users do not need to upload any files at all. The "Compute locally" should be selected if users have a large gene expression file (e.g.: > 10,000 genes) while the "Compute online" can be selected if users have a small gene expression file (e.g.: < 10,000 genes). In "Step 1: upload an SVG file" and "Step 2: upload a gene expression file", users are asked to upload the SVG file and associated gene expression file respectively. Details about how to properly format and associate custom SVG images with expression tables are provided [here](http://biocluster.ucr.edu/~jzhan067/shiny_HM_tutorial/tutorial/shiny_heatmap_tutorial.html).
 
 The "Step 3: is column or row gene?" option specifies if column or row is gene in the gene expression table, and "Step 4: separator" specifies the separator among the expression values. "Step 5: Color scheme" allows users to input colour components to construct colour scale for gene expression levels. Colours must be only sepatated by comma, e.g. the default is "green,blue,purple,yellow,red".
 
-<b>In the gene matrix, the dimension names are gene IDs and sample/conditions. The sample/condition names MUST be fomatted this way: a sample name is followed by double underscore then the condition, such as "epidermis__standard_1h" [@Geng2013-ek], where epidermis is the tissue and standard_1h is the condition</b>. One column or row of meta data (e.g. gene annotation) can also be included in parallel with sample/condition. <b>In the names of sample/condition and meta data, only letters, digits, single underscore, dots are allowed</b>. The example SVG image and associated gene expression matrix are shown in the Example section below or can be downloaded in the instruction page of this app.
+<b>In the gene matrix, the dimension names are gene IDs and sample/conditions. The sample/condition names MUST be fomatted this way: a sample name is followed by double underscore then the condition, such as "epidermis__standard_2h" [@Geng2013-ek], where epidermis is the tissue and standard_2h is the condition</b> (`r fig$ref("expr", link=TRUE)`). One column or row of meta data (e.g. gene annotation) can also be included in parallel with sample/condition. <b>In the names of sample/condition and meta data, only letters, digits, single underscore, dots are allowed</b>. The example SVG image and associated gene expression matrix are shown in the Example section below or can be downloaded in the instruction page of this app.
 
 The "Compute locally" option is designed for large gene expression data (e.g.: > 10,000 genes), since gene network modules are identified using the R package WGCNA and the computation of topological overlap matrix (TOM) is time comsuming for large expression matrix [@Langfelder2008-sg]. To maintain good performance, this process is expected to be performed on user's local computer. The tutorial of how to compute locally is provided in the documentation of the function "filter.data" and "adj.mod" in this package "spatialHeatmap".
 
@@ -49,20 +167,48 @@ The "Minmum module size" sets the minimum module size in gene module indentifica
 
 ## Expression Matrix & Spatial Heatmap 
 
-The gene expression data is represented as an interactive table under "Expression Matrix", where row names are gene IDs and column names are samples/conditions and meta data (the dimension names of the original table are adjusted internally in "Step 3: is column or row gene?"). Users can sort the expression values for a sample or search for a particular gene by its ID. Users can select multiple genes by clicking IDs in the table to display corresponding spatial heatmaps. In each such spatial heatmap, the gene expression levels are represented by colours for each sample under each condition. In the "Spatial heatmap" section, users can customise the dimension and layout of the spatial heatmaps.
+The gene expression data is represented as an interactive table under "Expression Matrix", where row names are gene IDs and column names are samples/conditions and meta data (the dimension names of the original table are adjusted internally by "Step 3: is column or row gene?"). Users can sort the expression values for a sample or search for a particular gene by its ID. Users can select multiple genes by clicking IDs in the table to display corresponding spatial heatmaps. `r fig$ref("expr", link=TRUE)` is an example of root expression matrix. In each such spatial heatmap, the gene expression levels are represented by colours for each sample under each condition (`r fig$ref("SH", link=TRUE)`). In the "Spatial Heatmap" section, users can customise the dimension and layout of the spatial heatmaps. <br/><br/>
+```{r expr, echo=FALSE, fig.cap=fig$cap("expr", center=FALSE, inline=TRUE, text="Root expression matrix. Rows are genes and columns are tissue samples under different conditions. The gene \"NDHE\" is selected here."), out.width='100%'}
+
+include_graphics("./img/expression_matrix_root.png")
+
+```
+<br/>
+
+```{r SH, echo=FALSE, fig.cap=fig$cap("SH", center=FALSE, inline=TRUE, text="Root spatial heatmap. The spatial heatmaps of the selected gene \"NDHE\". The expression values of \"NDHE\" are presented as colours across tissues under each condition."), out.width='100%'}
+
+include_graphics("./img/spatial_heatmap_root.png")
+
+```
+
 
 ## Matrix Heatmap & Network
 
-In the "Matrix heatmap & network" section, all gene IDs chosen in "Expression Matrix" are listed under "Select a gene to display matrix heatmap & network.". After a gene is selected from this list, the gene module containing the selected gene would be displayed in the form of interactive matrix heatmap, where the rows and columns are sorted by hierarchical clustering dendrograms and the chosen gene is tagged by a red rectangle. To explore the results, the matrix heatmap has several interactive features. For instance, users can zoom in and out by drawing a rectangle and by double clicking the image, respectively. Users can scale the expression values by gene or sample. The scaled values are only used for matrix heatmap display, not for downstream module identifications.
+In the "Matrix heatmap & network" section, all gene IDs chosen in "Expression Matrix" are listed under "Select a gene to display matrix heatmap & network.". After a gene is selected from this list, the gene module containing the selected gene would be displayed in the form of interactive matrix heatmap, where the rows and columns are sorted by hierarchical clustering dendrograms and the chosen gene is tagged by a red rectangle (`r fig$ref("MH", link=TRUE)`). To explore the results, the matrix heatmap has several interactive features. For instance, users can zoom in and out by drawing a rectangle and by double clicking the image, respectively. Users can scale the expression values by gene or sample. The scaled values are only used for matrix heatmap display, not for downstream module identifications. <br/> <br/> 
 
-The gene network modules are identified at two alternative sensitivities levels (3, 2). From 3 to 2, the sensitivity decreases and results in more modules with smaller sizes [@Langfelder2011-qk]. The "Select a module splitting sensitivity level" option allows users to choose which level to use for displaying the iteractive matrix heatmap and network.
+```{r MH, echo=FALSE, fig.cap=fig$cap("MH", center=FALSE, inline=TRUE, text="Root matrix heatmap. The matrix heatmap of the selected gene \"NDHE\", where rows are genes and columns are tissue samples. \"NDHE\" is labelled by a red rectangle."), out.width='100%'}
 
-The module in "Matrix Heatmap" is displayed as an interactive network. Nodes and edges mean genes and adjacency between genes respectively. There is an interactive colour bar to denote gene connectivity (sum of a gene's adjacency with all its direct neighbours). The colour ingredients must only be separated by comma, e.g. the default are "blue,green,red", which means gene connectivity increases from blue to red. The edge length is inversely proportional to gene adjacency. If too many edges (e.g.: > 300) are displayed in this network, the app can possibly get stuck. So the "Input an adjacency threshold to display the adjacency network." option sets a threthold to filter out some weak edges. Only edges above the threthold are displayed in the network. The app outputs the total number of remaining edges resulting from each input adjacency threthold. If it is not too large (e.g.: < 300), users can check "Yes" under "Display or not?", then the network can be responsive smoothly. To maintain acceptable performance, users are advised to choose a stringent threshold (e.g. 0.9) initially, then decrease the value gradually. The interactive feature allows users to zoom in and out, or drag a gene around. All the gene IDs in the network module are listed in "Select by id" in decreasing order according to gene connectivity. The selected gene ID is appended "_selected", which can be easily identified from the list. By clicking an ID in this list, users can identify the corresponding gene in the network.
+include_graphics("./img/matrix_heatmap_root.png")
+
+```
+<br/>
+
+The gene network modules are identified at two alternative sensitivities levels (3, 2). From 3 to 2, the sensitivity decreases and results in less modules with larger sizes [@Langfelder2011-qk]. The "Select a module splitting sensitivity level" option allows users to choose which level to use for displaying the iteractive matrix heatmap and network.
+
+The module in "Matrix Heatmap" is displayed as an interactive network (`r fig$ref("net", link=TRUE)`). Nodes and edges mean genes and adjacency between genes respectively. There is an interactive colour bar to denote gene connectivity (sum of a gene's adjacency with all its direct neighbours). The colour ingredients must only be separated by comma, e.g. the default are "blue,green,red", which means gene connectivity increases from blue to red. The edge length is inversely proportional to gene adjacency. If too many edges (e.g.: > 300) are displayed in this network, the app can possibly get stuck. So the "Input an adjacency threshold to display the adjacency network." option sets a threthold to filter out some weak edges. Only edges above the threthold are displayed in the network. The app outputs the total number of remaining edges resulting from each input adjacency threthold. If it is not too large (e.g.: < 300), users can check "Yes" under "Display or not?", then the network can be responsive smoothly. To maintain acceptable performance, users are advised to choose a stringent threshold (e.g. 0.9) initially, then decrease the value gradually. The interactive feature allows users to zoom in and out, or drag a gene around. All the gene IDs in the network module are listed in "Select by id" in decreasing order according to gene connectivity. The selected gene ID is appended "_selected", which can be easily identified from the list. By clicking an ID in this list, users can identify the corresponding gene in the network.
+
+```{r net, echo=FALSE, fig.cap=fig$cap("net", center=FALSE, inline=TRUE, text="Network. The same network module containing \"NDHE\" is presented as an interactive network. Nodes and edges mean genes and adjacency between genes respectively. Node size is gene connectivity, i.e. the sum of a gene's adjacency with all its direct neighbours, which increases from blue to red. The edge length is inversely proportional to gene adjacency. \"NDHE\" is appended \"_selected\" for easier identification. "), out.width='100%'}
+
+include_graphics("./img/interactive_network_root.png")
+
+```
+<br/>
+
 
 # Example
 
-  1. Get the path of the svg image and data matrix.   
-```{r, eval=F, echo=T, warnings=F}
+  1. Get the path of the SVG image and data matrix.   
+```{r, eval=FALSE, echo=TRUE, warnings=FALSE}
 
   svg.path <- system.file("extdata/example", "root_cross_final.svg", package = "spatialHeatmap")  
   data.path <- system.file("extdata/example", "root_expr_ann_row_gen.txt", package = "spatialHeatmap")
@@ -70,7 +216,7 @@ The module in "Matrix Heatmap" is displayed as an interactive network. Nodes and
 ```
 
   2. Local work mode for large data matrix.  
-```{r, eval=F, echo=T, warnings=F}
+```{r, eval=FALSE, echo=TRUE, warnings=FALSE}
 
   # Filter the data matrix. The resulting data matrix "processed_data.txt" is automatically saved in the directory "local_mode_result", which should be uploaded to the app on web browser.  
 
@@ -84,14 +230,14 @@ The module in "Matrix Heatmap" is displayed as an interactive network. Nodes and
 
   3. Lauch of the app.  
 
-```{r, eval=F, echo=T, warnings=F}
+```{r, eval=FALSE, echo=TRUE, warnings=FALSE}
 
   spatial.hm.all()
 
 ```
 
   4. Plot the spatial heatmaps on R console.  
-```{r, eval=F, echo=T, warnings=F}
+```{r, eval=FALSE, echo=TRUE, warnings=FALSE}
 
   spatial.hm(svg=svg.path, data=data.path, sep="\t", isRowGene=TRUE, pOA=c(0.1, 3), CV=c(0.1, 1000), ID=c("PSAC", "NDHE"), colour=c("green", "blue", "purple", "yellow", "red"), width=1, height=1, sub.title.size=11, layout="gene", ncol=3)
 
@@ -136,9 +282,6 @@ The module in "Matrix Heatmap" is displayed as an interactive network. Nodes and
   Andrie de Vries and Brian D. Ripley (2016). ggdendro: Create Dendrograms and
   Tree Diagrams Using 'ggplot2'. R package version 0.1-20.
   https://CRAN.R-project.org/package=ggdendro
-
-  Langfelder P and Horvath S, WGCNA: an R package for weighted correlation
-  network analysis. BMC Bioinformatics 2008, 9:559 doi:10.1186/1471-2105-9-559
 
   Peter Langfelder, Steve Horvath (2012). Fast R Functions for Robust
   Correlations and Hierarchical Clustering. Journal of Statistical Software,

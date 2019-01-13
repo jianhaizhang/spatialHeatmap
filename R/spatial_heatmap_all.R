@@ -8,7 +8,11 @@
 #' No argument is required, this function launches the Spatial Heatmap directly. 
 
 #' @examples
-#' \donttest{ spatial.hm.all() } 
+#' \donttest{ spatial.hm.all() }
+#' data.path <- system.file("extdata/example", "root_expr_ann_row_gen.txt", package = "spatialHeatmap")
+#' svg.path <- system.file("extdata/example", "root_cross_final.svg", package = "spatialHeatmap")
+#' spatial.hm(svg=svg.path, data=data.path, sep="\t", isRowGene=TRUE, pOA=c(0.1, 3), 
+#' CV=c(0.05, 1000), ID=c("PSAC", "NDHE"), colour=c("green", "blue", "purple", "yellow", "red"), width=1, height=1, sub.title.size=11, layout="gene", ncol=3) 
 
 #' @author Jianhai Zhang \email{jzhan067@@ucr.edu; zhang.jianhai@@hotmail.com} \cr Dr. Thomas Girke \email{thomas.girke@@ucr.edu}
 
@@ -47,9 +51,9 @@
 
 spatial.hm.all <- function() {
 
-  # library(shiny)
-  path <- system.file("extdata", package = "spatialHeatmap")
-  runApp(path)
+    # library(shiny)
+    path <- system.file("extdata", package = "spatialHeatmap")
+    runApp(path)
 
 }
 
