@@ -214,21 +214,22 @@ shinyServer(function(input, output, session) {
 	lis.ma <- xmlSApply(xmltop[[size]], xmlAttrs)
         if (is(lis.ma, "matrix")) { id.xml <- lis.ma["id", ] } else if (is(lis.ma, "list")) {
 
-          id.xml <- NULL
-          for (i in 1:length(lis.ma)) { id.xml <- c(id.xml, lis.ma[[i]][["id"]]) }
+          id.xml <- NULL; for (i in seq_len(length(lis.ma))) { id.xml <- c(id.xml, lis.ma[[i]][["id"]]) }
 
         }
 
-        id.xml1 <- NULL; for (i in 1:xmlSize(xmltop[[size]])) {
+        id.xml1 <- NULL; for (i in seq_len(xmlSize(xmltop[[size]]))) {
 
           grp.path <- xmlSApply(xmltop[[size]][[i]], xmlAttrs)
-          if (is(grp.path, "matrix")) id.xml1 <- c(id.xml1, paste0(id.xml[i], "_", 1:ncol(grp.path))) else if (is(grp.path, "list")) id.xml1 <- c(id.xml1, xmlAttrs(xmltop[[size]][[i]])[["id"]]) 
+          if (is(grp.path, "matrix")) id.xml1 <- c(id.xml1, paste0(id.xml[i], "_", seq_len(ncol(grp.path)))) else if (is(grp.path, "list")) { 
 
-	}
+          if (length(grp.path)==0) id.xml1 <- c(id.xml1, xmlAttrs(xmltop[[size]][[i]])[["id"]]) else if (length(grp.path)>=1) id.xml1 <- c(id.xml1, paste0(id.xml[i], "_", seq_len(length(grp.path)))) }
+
+	} # In a group, if a polygon serves as the first layer, on which other polygons are stacked, then "grp.path" is a list. Otherwise, it is a matrix. If a single path, length(grp.path)==0.
 
 	# Map ids to coordinates.
         k <-0; df <- NULL; 
-        for (i in 1:((xmlSize(top)-1))) {
+        for (i in seq_len((xmlSize(top)-1))) {
   
           if (xmlAttrs(top[[i]])[1]=="fill") { # This step avoids "strokes", so in the uploaded svg strokes can be kept.
 
@@ -249,9 +250,9 @@ shinyServer(function(input, output, session) {
 
 	  }
 
-        }; #save(df, file="df"); save(tis.path, file="tis.path")
+        }
 
-      tis.path <- gsub("_\\d+$", "", id.xml1)
+      tis.path <- gsub("_\\d+$", "", id.xml1); # save(df, file="df"); save(tis.path, file="tis.path")
       return(list(df=df, tis.path=tis.path))
 
       })

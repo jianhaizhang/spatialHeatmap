@@ -1,3 +1,6 @@
 *~
 *.swp
-inst/extdata/tmp/*
+tmp/*
+*.ps$
+*.ps.xml$
+user.png
