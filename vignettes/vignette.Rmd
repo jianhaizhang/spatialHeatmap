@@ -145,7 +145,9 @@ library(knitr); opts_chunk$set(message=FALSE, warning=FALSE)
 
 # Package Description
 
-This Shiny App based Spatial Heatmap can be used for interactive visualisation as long as a data matrix and an associated SVG image are provided, such as microarray or sequencing data generated on different tissues under different conditions, population data generated in different years across different cities. In the following the instructions are given with a gene expression matrix and an associated root tissue image in SVG format as an example. This app has three main functionality: spatial heatmap, interactive matrix heatmap, interactive network module.
+This Shiny App based spatialHeatmap can be used for interactive visualisation as long as a data matrix and an associated SVG image are provided, such as microarray or sequencing data generated on different tissues under different conditions, population data generated in different years across different cities. In the following the instructions are given with a gene expression matrix and an associated root tissue image in SVG format as an example. This app has three main functionality: spatial heatmap, interactive matrix heatmap, interactive network module.  
+
+<b> For quick start up, users can either select the default examples from the left menu or download the example data matrix and svg image in the insturction page of this app </b>.
 
 # Details
 
@@ -180,7 +182,6 @@ include_graphics("./img/expression_matrix_root.png")
 include_graphics("./img/spatial_heatmap_root.png")
 
 ```
-
 
 ## Matrix Heatmap & Network
 

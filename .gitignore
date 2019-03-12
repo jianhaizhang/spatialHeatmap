@@ -1,6 +1,6 @@
 *~
 *.swp
-tmp/*
+tmp/user.png
 *.ps$
 *.ps.xml$
-user.png
+

@@ -26,23 +26,23 @@ ins.net2 <- "The module in \"Matrix Heatmap\" is displayed as an interactive net
 
 shinyUI(dashboardPage(
 
-  dashboardHeader(title="Integrated Spatial Heatmap (updated: 2019-01-07)", 
-  titleWidth=480),
+  dashboardHeader(title="spatialHeatmap (updated: 2019-03-01)", 
+  titleWidth=380),
 
   dashboardSidebar(
   
     sidebarMenu(
 
-      menuItem("Instruction", tabName="instruction", icon=icon("dashboard")),
       menuItem("Input", icon=icon("dashboard"),
       menuSubItem("View", tabName="hm_net"), br(),
-      selectInput("fileIn", "Select a work mode", c("None", "Default_root_cross", "Default_brain", "Default_map", "Compute locally", "Compute online"), "Compute locally"),
+      selectInput("fileIn", "Select a work mode", c("None", "Default_organ", "Default_shoot_root", "Default_root_roottip", "Default_shoot", "Default_brain", "Default_map", "Compute locally", "Compute online"), "Default_shoot"),
       fileInput("svgInpath", "Step 1: upload an svg file", accept=".svg", multiple=FALSE),
       fileInput("geneInpath", "Step 2: upload a gene expression file", accept=c(".txt", ".csv"), multiple=FALSE),
       radioButtons('dimName', 'Step 3: is column or row gene?', c("None", "Row", "Column"), inline=TRUE),
       selectInput('sep', 'Step 4: separator', c("None", "Tab", "Comma", "Semicolon"), "None"),
       div(style="display:inline-block;width:75%;text-align:left;",textInput("color", "Step 5: Color scheme of Spatial Heatmap", "green,blue,purple,yellow,red", placeholder="Eg: green,yellow,red", width=200)),
       div(style="display:inline-block;width:25%;text-align:left;", actionButton("col.but", "Go", icon=icon("refresh"), style="padding:7px; font-size:90%; margin-left: 0px")),
+      radioButtons('cs.v', 'Colour scale based on:', c("Selected genes"="sel.gen", "Whole matrix"="w.mat"), inline=TRUE),
       h4(strong("Compute locally")),
       fileInput("adj.modInpath", "Upload the adjacency matrix and module definition file", accept=".txt", multiple=TRUE),
       h4(strong("Compute online")),
@@ -56,9 +56,9 @@ shinyUI(dashboardPage(
 
       menuItem("Heatmap & network", icon=icon("dashboard"), 
       h4(strong("Spatial heatmap")),
-      selectInput("height", "Overall height of tissue heatmap:", seq(100, 15000, 50), "800", width=150), 
-      selectInput("width", "Overall width of tissue heatmap:", seq(100, 15000, 50), "800", width=150),
-      selectInput("col.n", "No. of columns for sub-plots", seq(1, 15, 1), "3", width=150), 
+      selectInput("height", "Overall canvas height:", seq(100, 15000, 20), "400", width=170), 
+      selectInput("width", "Overall canvas width:", seq(100, 15000, 20), "820", width=170),
+      selectInput("col.n", "No. of columns for sub-plots", seq(1, 15, 1), "2", width=210), 
       radioButtons("gen.con", "Display by:", c("Gene"="gene", "Condition"="con"), "gene", inline=TRUE),
       h4(strong("Matrix heatmap & network")), 
       selectInput("gen.sel","Select a gene to display matrix heatmap & network.", c("None"),
@@ -75,7 +75,9 @@ shinyUI(dashboardPage(
       #menuSubItem("View network", tabName="network")
 
       menuSubItem("View", tabName="hm_net"), br()
-      )
+      ),
+
+      menuItem("Instruction", tabName="instruction", icon=icon("dashboard"))
 
      )
 
@@ -98,15 +100,11 @@ shinyUI(dashboardPage(
 
       box(title="Expression Matrix", status="primary", solidHeader=TRUE, collapsible=TRUE, fluidRow(splitLayout(cellWidths=c("1%", "98%", "1%"), "", dataTableOutput("dt"), "")), width=12),
 
-      box(title="Spatial Heatmap", status="primary", solidHeader=TRUE, collapsible=TRUE, 
-      fluidRow(splitLayout(cellWidths=c("1%", "7%", "91%", "1%"), "", plotOutput("bar"), plotOutput("tissue"), "")), width=9),
-      
-      box(title="Original image", status="primary", solidHeader=TRUE, collapsible=TRUE,
-      splitLayout(cellWidths=c("1%", "98%", "1%"), "", plotOutput("ori.svg"), ""), 
-      width=3), br(),
+      box(title="Spatial Heatmap", status="primary", solidHeader=TRUE, collapsible=TRUE, fluidRow(splitLayout(cellWidths=c("1%", "7%", "91%", "1%"), "", plotOutput("bar"), plotOutput("tissue"), "")), width=9),
 
-      box(title="Matrix Heatmap", status="primary", solidHeader=TRUE, collapsible=TRUE,
-      plotlyOutput("HMly"), width=12, height=NULL), br(),
+      box(title="Original image", status="primary", solidHeader=TRUE, collapsible=TRUE, splitLayout(cellWidths=c("1%", "98%", "1%"), "", plotOutput("ori.svg"), ""), width=3), br(),
+
+      box(title="Matrix Heatmap", status="primary", solidHeader=TRUE, collapsible=TRUE, plotlyOutput("HMly"), width=12, height=NULL), br(),
 
       box(title="Interactive Network", status="primary", solidHeader=TRUE, collapsible=TRUE, fluidRow(splitLayout(cellWidths=c("1%", "6%", "91%", "2%"), "", plotOutput("bar.net"), visNetworkOutput("vis"), "")), width=12)
       )

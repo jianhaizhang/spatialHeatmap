@@ -13,7 +13,7 @@
 
 library(shiny); library(shinydashboard); library(grImport); library(rsvg); library(ggplot2); library(DT); library(gridExtra); library(ggdendro); library(WGCNA); library(Cairo); library(grid); library(XML); library(plotly); library(data.table); library(genefilter); library(flashClust); library(visNetwork)
 
-options(shiny.maxRequestSize=5*1024^3) 
+options(shiny.maxRequestSize=7*1024^3) 
 # enableWGCNAThreads()
 inter.svg <- readLines("example/root_cross_final.svg")
 inter.data <- read.table("example/root_expr_ann_row_gen.txt", header=TRUE, row.names=1, sep="\t")
@@ -40,19 +40,26 @@ shinyServer(function(input, output, session) {
     updateRadioButtons(session, "dimName", label="Step 3: is column or row gene?", 
     c("None", "Row", "Column"), "None", inline=TRUE)
     updateSelectInput(session, 'sep', 'Step 4: separator', c("None", "Tab", "Comma", "Semicolon"), "None")
+    updateRadioButtons(session, 'cs.v', 'Colour scale based on:', c("Selected genes"="sel.gen", "Whole matrix"="w.mat"), "sel.gen", inline=TRUE)
+    updateSelectInput(session, "height", "Overall canvas height:", seq(100, 15000, 20), "400")
+    updateSelectInput(session, "width", "Overall canvas width:", seq(100, 15000, 20), "820")
+    updateSelectInput(session, "col.n", "No. of columns for sub-plots", seq(1, 15, 1), "2")
 
   })
 
   geneIn <- reactive({
-    
+
     if (input$fileIn=="None") return(NULL) 
 
-      withProgress(message="Loading data: ", value = 0, {
-    if (grepl("^Default_", input$fileIn)) { 
+    withProgress(message="Loading data: ", value = 0, {
+    if (grepl("^Default_", input$fileIn)) {
 
         incProgress(0.5, detail="Loading matrix. Please wait.")
+        if (input$fileIn=="Default_organ") df.te <- fread("example/ucr_efp_expr_ann_row_gen.txt", header=TRUE, sep="\t", fill=TRUE)
+        if (input$fileIn=="Default_shoot_root") df.te <- fread("example/ucr_efp_expr_ann_row_gen.txt", header=TRUE, sep="\t", fill=TRUE)
+        if (input$fileIn=="Default_root_roottip") df.te <- fread("example/ucr_efp_expr_ann_row_gen.txt", header=TRUE, sep="\t", fill=TRUE)
+        if (input$fileIn=="Default_shoot") df.te <- fread("example/ucr_efp_expr_ann_row_gen.txt", header=TRUE, sep="\t", fill=TRUE)
         if (input$fileIn=="Default_brain") df.te <- fread("example/brain_expr_ann_row_gen.txt", header=TRUE, sep="\t", fill=TRUE)
-        if (input$fileIn=="Default_root_cross") df.te <- fread("example/root_expr_ann_row_gen.txt", header=TRUE, sep="\t", fill=TRUE)
         if (input$fileIn=="Default_map") df.te <- fread("example/us_population2018.txt", header=TRUE, sep="\t", fill=TRUE)
 
 	df.te1 <- as.data.frame(df.te); rownames(df.te1) <- df.te1[, 1]
@@ -62,7 +69,6 @@ shinyServer(function(input, output, session) {
 	pOverA <- pOverA(input$p, input$A); cv <- cv(input$cv1, input$cv2)
 	ffun <- filterfun(pOverA, cv); filtered <- genefilter(gene2, ffun)
 	gene2 <- gene2[filtered, ]; gene3 <- gene3[filtered, , drop=FALSE]
-
 	return(list(gene2=gene2, gene3=gene3))
 
     }
@@ -92,7 +98,7 @@ shinyServer(function(input, output, session) {
         ffun <- filterfun(pOverA, cv); filtered <- genefilter(gene2, ffun)
         gene2 <- gene2[filtered, ]; gene3 <- gene3[filtered, , drop=FALSE]
 
-      }; return(list(gene2=gene2, gene3=gene3)) 
+      }; return(list(gene2=as.data.frame(gene2), gene3=gene3))
 
     }
 
@@ -101,42 +107,44 @@ shinyServer(function(input, output, session) {
   })
 
   output$dt <- renderDataTable({
-   
+
     if (((input$fileIn=="Compute locally"|input$fileIn=="Compute online") & 
     is.null(geneIn()))|input$fileIn=="None") return(NULL)
 
     withProgress(message="Data table: ", value = 0, {
- 
+
       incProgress(0.5, detail="Displaying. Please wait.")
       if (input$fileIn!="None") {
 
-      gene <- geneIn(); gene.dt <- cbind.data.frame(gene[["gene2"]][, , drop=FALSE], 
-      gene[["gene3"]][, , drop=FALSE], stringsAsFactors=FALSE) 
+      gene <- geneIn()
+      gene.dt <- cbind.data.frame(gene[["gene2"]][, , drop=FALSE], gene[["gene3"]][, , drop=FALSE], stringsAsFactors=FALSE) 
 
    }
 
-    datatable(gene.dt, selection=list(mode="multiple", target="row"),
+    datatable(gene.dt, selection=list(mode="multiple", target="row", selected=c(3)),
     filter="top", extensions='Scroller', options=list(autoWidth=TRUE, scrollCollapse=TRUE, deferRender=TRUE, scrollX=TRUE, scrollY=200, scroller=TRUE), class='cell-border strip hover') %>% 
     formatStyle(0, backgroundColor="orange", cursor='pointer') %>% 
-    formatRound(colnames(geneIn()[["gene2"]]), 3)
+    formatRound(colnames(geneIn()[["gene2"]]), 2)
 
     })
- 
+
   })
 
   gID <- reactiveValues(geneID="none", new=NULL, all=NULL)
   observe({ input$geneInpath; input$fileIn; gID$geneID <- "none" })
 
   geneV <- reactive({
- 
+
     if (is.null(geneIn())) return(NULL)
-    if (input$fileIn!="None") { gene <- geneIn()[["gene2"]] } 
+    if (input$cs.v=="sel.gen" & is.null(input$dt_rows_selected)) return(NULL)
+    if (input$fileIn!="None") { if (input$cs.v=="sel.gen" & !is.null(input$dt_rows_selected)) gene <- geneIn()[["gene2"]][input$dt_rows_selected, ]
+    if (input$cs.v=="w.mat") gene <- geneIn()[["gene2"]] } 
     seq(min(gene), max(gene), len=1000)
 
   })
 
   col.sch <- reactive({ 
- 
+
     if(input$color=="") return(NULL); unlist(strsplit(input$color, ","))
 
   }); color <- reactiveValues(col="none")
@@ -147,31 +155,31 @@ shinyServer(function(input, output, session) {
     if (input$fileIn!="None") {
 
       color$col <- colorRampPalette(col.sch())(length(geneV()))
-      #col <- color$col; save(col, file="col")
+
     }
 
   })
 
   observeEvent(input$dt_rows_selected, {
-    
+
     if (is.null(input$dt_rows_selected)) return()
     r.na <- rownames(geneIn()[["gene2"]]); gID$geneID <- r.na[input$dt_rows_selected]
     gID$new <- setdiff(gID$geneID, gID$all); gID$all <- c(gID$all, gID$new)
 
     })
 
-  output$bar <- renderPlot({  
+  output$bar <- renderPlot({
 
     if ((grepl("^Default_", input$fileIn) & !is.null(geneIn()))|((input$fileIn=="Compute locally"|input$fileIn=="Compute online") & !is.null(input$svgInpath) & !is.null(geneIn()))) {
 
-      if (length(color$col=="none")==0|input$color=="") return(NULL)
+      if (length(color$col=="none")==0|input$color==""|is.null(geneV())) return(NULL)
+
       if(input$col.but==0) color$col <- colorRampPalette(c("green", "blue", "purple", "yellow", "red"))(length(geneV()))
-     
+
       withProgress(message="Color scale: ", value = 0, {
 
         incProgress(0.25, detail="Fetching data. Please wait.")
-        cs.df <- data.frame(color_scale=geneV(), y=1); #save(cs.df, file="cs.df")
-        #col <- color$col; save(col, file="col")
+        cs.df <- data.frame(color_scale=geneV(), y=1)
         incProgress(0.75, detail="Plotting. Please wait.")
         cs.g <- ggplot()+geom_bar(data=cs.df, aes(x=color_scale, y=y), fill=color$col, stat="identity", width=0.2)+theme(axis.title.x=element_blank(), axis.text.x=element_blank(), axis.ticks.x=element_blank(), plot.margin=margin(3, 0.1, 3, 0.1, "cm"), panel.grid=element_blank(), panel.background=element_blank())+coord_flip()+scale_y_continuous(expand=c(0,0))+scale_x_continuous(expand = c(0,0))
 	if (max(geneV())>10000) cs.g <- cs.g+scale_x_continuous(labels=function(x) format(x, scientific=TRUE))
@@ -201,7 +209,8 @@ shinyServer(function(input, output, session) {
     
         incProgress(0.5, detail="Extracting coordinates. Please wait.") 
 
-	if (input$fileIn=="Compute locally"|input$fileIn=="Compute online") { svg.path <- input$svgInpath$datapath; svg.na <- input$svgInpath$name } else if (input$fileIn=="Default_brain") { svg.path <- "example/brain_final.svg"; svg.na <- "brain_final.svg" } else if (input$fileIn=="Default_root_cross") { svg.path <- "example/root_cross_final.svg"; svg.na <- "root_cross_final.svg" } else if (input$fileIn=="Default_map") { svg.path <- "example/us_map_final.svg"; svg.na <- "us_map_final.svg" }
+	if (input$fileIn=="Compute locally"|input$fileIn=="Compute online") { svg.path <- input$svgInpath$datapath; svg.na <- input$svgInpath$name } else if     
+(input$fileIn=="Default_organ") { svg.path <- "example/organ_final.svg"; svg.na <- "organ_final.svg" } else if (input$fileIn=="Default_shoot_root") { svg.path <- "example/shoot_root_final.svg"; svg.na <- "shoot_root_final.svg" } else if (input$fileIn=="Default_root_roottip") { svg.path <- "example/root_roottip_final.svg"; svg.na <- "root_roottip_final.svg" } else if (input$fileIn=="Default_shoot") { svg.path <- "example/shoot_final.svg"; svg.na <- "shoot_final.svg" } else if (input$fileIn=="Default_brain") { svg.path <- "example/brain_final.svg"; svg.na <- "brain_final.svg" } else if (input$fileIn=="Default_map") { svg.path <- "example/us_map_final.svg"; svg.na <- "us_map_final.svg" }
 
 	ps.path <- paste0("tmp/", sub(".svg$", ".ps", svg.na))
         xml.path <- paste0(ps.path, ".xml"); rsvg_ps(svg.path, ps.path)
@@ -230,7 +239,7 @@ shinyServer(function(input, output, session) {
 	# Map ids to coordinates.
         k <-0; df <- NULL; 
         for (i in seq_len((xmlSize(top)-1))) {
-  
+
           if (xmlAttrs(top[[i]])[1]=="fill") { # This step avoids "strokes", so in the uploaded svg strokes can be kept.
 
             k <- k+1
@@ -280,10 +289,11 @@ shinyServer(function(input, output, session) {
 
       incProgress(0.25, detail="preparing data.")
 
-      gene <- geneIn()[["gene2"]]
+      if (input$cs.v=="sel.gen") gene <- geneIn()[["gene2"]][input$dt_rows_selected, ]
+      if (input$cs.v=="w.mat") gene <- geneIn()[["gene2"]]
       g.df <- svg.df()[["df"]]; tis.path <- svg.df()[["tis.path"]]
-      # Assign colors to paths in svg.
 
+      # Assign colors to paths in svg.
       g.list <- function(j) {
 
         withProgress(message="Spatial heatmap: ", value=0, {
@@ -303,7 +313,7 @@ shinyServer(function(input, output, session) {
         }
 
       }
-     
+
       g <- ggplot()+geom_polygon(data=g.df, aes(x=x, y=y, fill=tissue), color="black")+scale_fill_manual(values=g.col, guide=FALSE)+theme(axis.text=element_blank(), axis.ticks=element_blank(), panel.grid=element_blank(), panel.background=element_rect(fill="white", colour="grey80"), plot.margin=
      margin(0.1, 0.1, 0.1, 0.3, "cm"), axis.title.x=element_text(size=16,face="bold"), plot.title=element_text(hjust=0.5, size=20))+labs(x="", y="")+
      scale_y_continuous(expand=c(0.01,0.01))+scale_x_continuous(expand=c(0.01,0.01))+ggtitle(paste0(k, "_", j)); return(g)
@@ -355,7 +365,9 @@ shinyServer(function(input, output, session) {
 
       incProgress(0.25, detail="preparing data.")
 
-      gene <- geneIn()[["gene2"]]
+      if (input$cs.v=="sel.gen") gene <- geneIn()[["gene2"]][input$dt_rows_selected, ]
+      if (input$cs.v=="w.mat") gene <- geneIn()[["gene2"]]
+
       g.df <- svg.df()[["df"]]; tis.path <- svg.df()[["tis.path"]]
  
       # Assign colors to paths in svg.
@@ -424,16 +436,99 @@ shinyServer(function(input, output, session) {
 
   })
 
+
+  observeEvent(input$cs.v, {
+
+  grob$all <- NULL
+  gs <- reactive({ 
+
+    if (is.null(svg.df())) return(NULL)
+    withProgress(message="Spatial heatmap: ", value=0, {
+
+      incProgress(0.25, detail="preparing data.")
+
+      if (input$cs.v=="sel.gen") gene <- geneIn()[["gene2"]][input$dt_rows_selected, ]
+      if (input$cs.v=="w.mat") gene <- geneIn()[["gene2"]]
+      g.df <- svg.df()[["df"]]; tis.path <- svg.df()[["tis.path"]]
+
+      # Assign colors to paths in svg.
+      g.list <- function(j) {
+
+        withProgress(message="Spatial heatmap: ", value=0, {
+
+        incProgress(0.25, detail=paste0("plotting ", j))
+        g.col <- NULL; con.idx <- grep(paste0("^", j, "$"), con)
+        tis.col1 <- tis.col[con.idx]; scol1 <- scol[con.idx]
+
+      if (k=="none") g.col <- rep("white", length(unique(g.df[, "tissue"]))) else {
+
+        for (i in tis.path) {
+
+          tis.idx <- which(tis.col1 %in% i)
+          if (length(tis.idx)==1) { g.col <- c(g.col, scol1[tis.idx])
+          } else if (length(tis.idx)==0) { g.col <- c(g.col, "white") }
+
+        }
+
+      }
+
+     g <- ggplot()+geom_polygon(data=g.df, aes(x=x, y=y, fill=tissue), color="black")+scale_fill_manual(values=g.col, guide=FALSE)+theme(axis.text=element_blank(), axis.ticks=element_blank(), panel.grid=element_blank(), panel.background=element_rect(fill="white", colour="grey80"), plot.margin=
+     margin(0.1, 0.1, 0.1, 0.3, "cm"), axis.title.x=element_text(size=16,face="bold"), plot.title=element_text(hjust=0.5, size=20))+labs(x="", y="")+
+     scale_y_continuous(expand=c(0.01,0.01))+scale_x_continuous(expand=c(0.01,0.01))+ggtitle(paste0(k, "_", j)); return(g)
+ 
+      })
+
+    }
+
+      grob.na <- grob.lis <- NULL
+      if(!is.null(gID$all)) for (k in gID$all) {
+
+        if (k=="none") scol <- NULL else {
+
+          scol <- NULL
+          for (i in gene[k, ]) { 
+
+            ab <- abs(i-geneV()); col.ind <- which(ab==min(ab))[1]
+            scol <- c(scol, color$col[col.ind])
+
+          }
+
+        }
+
+      cname <- colnames(geneIn()[["gene2"]]); idx <- grep("__", cname); c.na <- cname[idx]; tis.col <- gsub("(.*)(__)(\\w+$)", "\\1", c.na); g.lis <- NULL
+
+     if (!is.null(con())) {
+
+       con <- con(); con.uni <- unique(con); grob.na0 <- paste0(k, "_", con.uni)
+       g.lis <- lapply(con.uni, g.list)
+       # Repress popups by saving it to a png file, then delete it.
+       png("delete.png"); grob <- lapply(g.lis, ggplotGrob); dev.off()
+       do.call(file.remove, list(list.files(".", "delete.png")))
+
+       names(grob) <- grob.na0; grob.lis <- c(grob.lis, grob) 
+
+     }
+
+  }; return(grob.lis)
+
+    })
+
+  }); grob$all <- gs()
+
+  })
+
+
   observeEvent(gID$new, { grob$all <- c(grob$all, gs()) })
 
   observe({
 
-  output$tissue <- renderPlot(width=as.numeric(input$width), 
-                   height=as.numeric(input$height), {
+    if (is.null(input$dt_rows_selected)|is.null(svg.df())|gID$geneID[1]=="none"|is.null(grob$all)) return(NULL)
 
-    if (is.null(input$dt_rows_selected)|is.null(svg.df())|gID$geneID[1]==
-    "none"|is.null(grob$all)) return(NULL)
+  output$tissue <- renderPlot(width=as.numeric(input$width)/2*as.numeric(input$col.n), height=as.numeric(input$height)*length(input$dt_rows_selected), {
+
+    if (is.null(input$dt_rows_selected)|is.null(svg.df())|gID$geneID[1]=="none"|is.null(grob$all)) return(NULL)
     if (length(color$col=="none")==0|input$color=="") return(NULL)
+
     r.na <- rownames(geneIn()[["gene2"]]); gID$geneID <- r.na[input$dt_rows_selected]
     idx <- NULL; for (i in gID$geneID) idx <- c(idx, grep(paste0("^", i, "_"), names(grob$all)))
     grob.lis.p <- grob$all[idx]
@@ -444,8 +539,9 @@ shinyServer(function(input, output, session) {
       as.numeric(input$col.n)
       cell.idx <- c(1:length(unique(con())), rep(NA, all.cell-length(unique(con()))))
       m <- matrix(cell.idx, ncol=as.numeric(input$col.n), byrow=TRUE)
-      lay <- NULL
-      for (i in 1:length(gID$geneID)) { lay <- rbind(lay, m+(i-1)*length(unique(con()))) }
+
+      lay <- NULL; for (i in 1:length(gID$geneID)) { lay <- rbind(lay, m+(i-1)*length(unique(con()))) }
+
       grid.arrange(grobs=grob.lis.p, layout_matrix=lay, newpage=TRUE)
 
     } else if (input$gen.con=="con") {
@@ -487,8 +583,12 @@ shinyServer(function(input, output, session) {
     if (((input$fileIn=="Compute locally"|input$fileIn=="Compute online")|
     !is.null(input$svgInpath))|grepl("^Default_", input$fileIn)) {
 
-      if (input$fileIn=="Compute locally"|input$fileIn=="Compute online") { svg.path <- input$svgInpath$datapath } else if (input$fileIn=="Default_brain") { svg.path <- "example/brain_final.svg" } else if (input$fileIn=="Default_root_cross") { svg.path <- "example/root_cross_final.svg" } else if (input$fileIn=="Default_map") { svg.path <- "example/us_map_final.svg" }; rsvg_png(svg.path, "tmp/user.png")
-      list(src="tmp/user.png", contentType="image/png", width=W, height=H, 
+      if (input$fileIn=="Compute locally"|input$fileIn=="Compute online") { svg.path <- input$svgInpath$datapath } else if (input$fileIn=="Default_organ") { svg.path <- "example/organ_final.svg" } else if (input$fileIn=="Default_shoot_root") { svg.path <- "example/shoot_root_final.svg" } else if (input$fileIn=="Default_root_roottip") { svg.path <- "example/root_roottip_final.svg" } else if (input$fileIn=="Default_shoot") { svg.path <- "example/shoot_final.svg" } else if (input$fileIn=="Default_brain") { svg.path <- "example/brain_final.svg" } else if (input$fileIn=="Default_map") { svg.path <- "example/us_map_final.svg" }; rsvg_png(svg.path, "tmp/user.png")
+
+      svg.ln <- readLines(svg.path, 200)
+      w.h <- svg.ln[grep(" width| height", svg.ln)]
+      w.h <- as.numeric(gsub(".*\"(\\d+\\.\\d+).*", "\\1", w.h)); r <- w.h[1]/w.h[2]
+      list(src="tmp/user.png", contentType="image/png", width=250, height=250/r,
        alt=NULL)
 
     }
@@ -503,6 +603,10 @@ shinyServer(function(input, output, session) {
 
       name <- input$adj.modInpath$name; path <- input$adj.modInpath$datapath
       path1 <- path[name=="adj.txt"]; path2 <- path[name=="mod.txt"]
+
+  #    withProgress(message="Loading: ", value = 0, {
+   #     incProgress(0.5, detail="adjacency matrix and module definition.")
+
       adj <- fread(path1, sep="\t", header=TRUE, fill=TRUE); c.na <- colnames(adj)[-ncol(adj)]
       r.na <- as.data.frame(adj[, 1])[, 1];  adj <- as.data.frame(adj)[, -1] 
       rownames(adj) <- r.na; colnames(adj) <- c.na
@@ -511,14 +615,29 @@ shinyServer(function(input, output, session) {
       r.na <- as.data.frame(mcol[, 1])[, 1]; mcol <- as.data.frame(mcol)[, -1] 
       rownames(mcol) <- r.na; colnames(mcol) <- c.na
 
+    #  })
+
+    } else if (grepl("organ|shoot|root", input$fileIn)) {
+
+      withProgress(message="Loading: ", value = 0, {
+        incProgress(0.5, detail="adjacency matrix and module definition.")
+        adj <- fread("./example/adj.txt", sep="\t", header=TRUE, fill=TRUE)
+	c.na <- colnames(adj)[-ncol(adj)]; r.na <- as.data.frame(adj[, 1])[, 1]
+	adj <- as.data.frame(adj)[, -1]; rownames(adj) <- r.na; colnames(adj) <- c.na
+
+        mcol <- fread("./example/mod.txt", sep="\t", header=TRUE, fill=TRUE)
+	c.na <- colnames(mcol)[-ncol(mcol)]; r.na <- as.data.frame(mcol[, 1])[, 1]
+	mcol <- as.data.frame(mcol)[, -1]; rownames(mcol) <- r.na; colnames(mcol) <- c.na
+
+      })
+
     }; return(list(adj=adj, mcol=mcol))
 
   })
 
-
   adj.tree <- reactive({ 
 
-    if (input$fileIn=="Compute online"|grepl("Default_", input$fileIn)) {
+    if (input$fileIn=="Compute online"|grepl("brain|map", input$fileIn)) {
 
       if (input$net.type=="S") { sft <- 12; type <- "signed" } else if 
       (input$net.type=="U") { sft <- 6; type <- "unsigned" }
@@ -536,7 +655,7 @@ shinyServer(function(input, output, session) {
 
     }; #save(adj, file="adj")
 
-  return(list(adj=adj, tree=tree.hclust, disTOM=dissTOM))
+    return(list(adj=adj, tree=tree.hclust, disTOM=dissTOM))
 
   })
 
@@ -549,7 +668,7 @@ shinyServer(function(input, output, session) {
 
   mcol <- reactive({
 
-    if (input$fileIn=="Compute online"|grepl("Default_", input$fileIn)) {
+    if (input$fileIn=="Compute online"|grepl("brain|map", input$fileIn)) {
 
       withProgress(message="Computing: ", value = 0, {
       mcol <- NULL; tree.hclust <- adj.tree()[["tree"]]
@@ -567,7 +686,8 @@ shinyServer(function(input, output, session) {
       })
  
     }; #save(mcol, file="mcol")
-  return(mcol)
+    
+    return(mcol)
 
   })
 
@@ -582,14 +702,12 @@ shinyServer(function(input, output, session) {
 
   output$HMly <- renderPlotly({
 
+    if (grepl("organ|shoot|root", input$fileIn)) return(NULL)
     if (input$gen.sel=="None") return(NULL)
-    if (input$fileIn=="Compute locally") { adj <- adj.mod()[[1]]
-    mods <- adj.mod()[[2]] } else if (input$fileIn=="Compute online"|grepl("Default_", input$fileIn)) { 
-    adj <- adj.tree()[[1]]; mods <- mcol() }
+    if (input$fileIn=="Compute locally"|grepl("organ|shoot|root", input$fileIn)) { adj <- adj.mod()[[1]]; mods <- adj.mod()[[2]] } else if (input$fileIn=="Compute online"|grepl("brain|map", input$fileIn)) { adj <- adj.tree()[[1]]; mods <- mcol() }
 
     gene <- geneIn()[["gene2"]]; lab <- mods[, input$ds][rownames(gene)==input$gen.sel]
-    if (lab=="0") { showModal(modalDialog(title="Module", "The selected gene is not 
-    assigned to any module. Please select a different one.")); return() }
+    if (lab=="0") { showModal(modalDialog(title="Module", "The selected gene is not assigned to any module. Please select a different one.")); return() }
 
     withProgress(message="Computing dendrogram:", value=0, {
 
@@ -597,11 +715,11 @@ shinyServer(function(input, output, session) {
       mod <- gene[mods[, input$ds]==lab, ]
       dd.gen <- as.dendrogram(hclust(dist(mod))); dd.sam <- as.dendrogram(hclust(dist(t(mod))))
       d.sam <- dendro_data(dd.sam); d.gen <- dendro_data(dd.gen)
-  
+
       g.dengra <- function(df) {
-    
+
         ggplot()+geom_segment(data = df, aes(x=x, y=y, xend=xend, yend=yend))+labs(x = "", y = "") + theme_minimal()+ theme(axis.text = element_blank(), axis.ticks=element_blank(), panel.grid = element_blank())
-  
+
       }
 
       p.gen <- g.dengra(d.gen$segments)+coord_flip(); p.sam <- g.dengra(d.sam$segments)
@@ -657,7 +775,7 @@ shinyServer(function(input, output, session) {
   visNet <- reactive({
 
     if (input$TOM.in=="None") return(NULL)
-    if (input$fileIn=="Compute locally") { adj <- adj.mod()[[1]]; mods <- adj.mod()[[2]] } else if (input$fileIn=="Compute online"|grepl("Default_", input$fileIn)) { adj <- adj.tree()[[1]]; mods <- mcol() }
+    if (input$fileIn=="Compute locally"|grepl("organ|shoot|root", input$fileIn)) { adj <- adj.mod()[[1]]; mods <- adj.mod()[[2]] } else if (input$fileIn=="Compute online"|grepl("brain|map", input$fileIn)) { adj <- adj.tree()[[1]]; mods <- mcol() }
 
     gene <- geneIn()[[1]]; lab <- mods[, input$ds][rownames(gene)==input$gen.sel]
     if (lab=="0") { showModal(modalDialog(title="Module", "The selected gene is not assigned to any module. Please select a different gene.")); return() }
@@ -700,7 +818,6 @@ shinyServer(function(input, output, session) {
 
         incProgress(0.25, detail="Preparing data. Please wait.")
         cs.df.net <- data.frame(color_scale=v.net, y=1); #save(cs.df, file="cs.df")
-        #col <- color$col; save(col, file="col")
         incProgress(0.75, detail="Plotting. Please wait.")
         cs.g.net <- ggplot()+geom_bar(data=cs.df.net, aes(x=color_scale, y=y), fill=color.net$col.net, stat="identity", width=0.2)+theme(axis.title.x=element_blank(), axis.text.x=element_blank(), axis.ticks.x=element_blank(), plot.margin=margin(3, 0.1, 3, 0.1, "cm"), panel.grid=element_blank(), panel.background=element_rect(fill="white", colour="grey80"))+coord_flip()+scale_y_continuous(expand=c(0,0))+scale_x_continuous(expand = c(0,0)); return(cs.g.net)
 
@@ -734,7 +851,8 @@ shinyServer(function(input, output, session) {
   })
 
   output$vis <- renderVisNetwork({
-  
+
+    if (grepl("organ|shoot|root", input$fileIn)) return(NULL)
     if (input$fileIn=="None"|(input$fileIn=="Your own" & is.null(geneIn()))|input$TOM.in=="None"|input$gen.sel=="None") return(NULL)
     if (input$cpt.nw=="N") return(NULL)
 
