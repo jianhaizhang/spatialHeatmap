@@ -4,7 +4,7 @@ ins <- "This Shiny App based Spatial Heatmap can be used for interactive visuali
 
 ins.input1 <- "At first, users need to select a mode under \"Select a work mode\" in the left \"Input\" menu. The \"Default\" is most convenient for users to test the app, since this option relies on pre-uploaded files and users do not need to upload any files at all. The \"Compute locally\" should be selected if users have a large gene expression file (e.g.: > 10,000 genes) while the \"Compute online\" can be selected if users have a small gene expression file (e.g.: < 10,000 genes). In \"Step 1: upload an svg file\" and \"Step 2: upload a gene expression file\", users are asked to upload the svg file and associated gene expression file respectively. Details about how to properly format and associate custom SVG images with expression tables are provided "
 
-ins.input2 <- "The \"Step 3: is column or row gene?\" option specifies if column or row is gene in the gene expression table, and \"Step 4: separator\" specifies the separator among the expression values. \"Step 5: Color scheme\" allows users to input colour components to construct colour scale for gene expression levels. Colours must be only sepatated by comma, e.g. the default is \"green,blue,purple,yellow,red\"."
+ins.input2 <- "The \"Step 3: is column or row gene?\" option specifies if column or row is gene in the gene expression table, and \"Step 4: separator\" specifies the separator among the expression values. \"Step 5: Color scheme\" allows users to input colour components to construct colour scale for gene expression levels. Colours must only be sepatated by comma, e.g. the default is \"green,blue,purple,yellow,red\"."
 
 ins.input3 <- "In the gene matrix, the dimension names are gene IDs and sample/conditions. The sample/condition names MUST be fomatted this way: a sample name is followed by double underscore then the condition, such as \"epidermis__standard_1h\", where epidermis is the tissue and standard_1h is the condition. One column or row of meta data (e.g. gene annotation) can also be included in parallel with sample/condition. In the names of sample/condition and meta data, only letters, digits, single underscore, dots are allowed. The example SVG image and associated gene expression matrix can be downloaded in the instruction page of this app, which can be uploaded directly for testing in \"Compute online\" mode: "
 
@@ -35,7 +35,7 @@ shinyUI(dashboardPage(
 
       menuItem("Input", icon=icon("dashboard"),
       menuSubItem("View", tabName="hm_net"), br(),
-      selectInput("fileIn", "Select a work mode", c("None", "Default_organ", "Default_shoot_root", "Default_root_roottip", "Default_shoot", "Default_brain", "Default_map", "Compute locally", "Compute online"), "Default_shoot"),
+      selectInput("fileIn", "Select a work mode", c("None", "Default_organ", "Default_shoot_root", "Default_root_roottip", "Default_shoot", "Default_root", "Default_brain", "Default_map", "Compute locally", "Compute online"), "Default_shoot"),
       fileInput("svgInpath", "Step 1: upload an svg file", accept=".svg", multiple=FALSE),
       fileInput("geneInpath", "Step 2: upload a gene expression file", accept=c(".txt", ".csv"), multiple=FALSE),
       radioButtons('dimName', 'Step 3: is column or row gene?', c("None", "Row", "Column"), inline=TRUE),
