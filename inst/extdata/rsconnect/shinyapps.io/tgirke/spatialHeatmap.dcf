@@ -1,0 +1,10 @@
+name: spatialHeatmap
+title:
+username:
+account: tgirke
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 793205
+bundleId: 1959361
+url: https://tgirke.shinyapps.io/spatialHeatmap/
+when: 1553299143.97924

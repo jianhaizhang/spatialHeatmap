@@ -1,5 +1,7 @@
 library(shiny); library(shinydashboard); library(plotly); library(visNetwork); library(DT)
 
+ins0 <- "For a quick experience, the default examples under the \"Select a work mode\" menu can be selected. Alternatively, the pre-uploaded svg image and expression matrix can be downloaded from below and uploaded to the \"Compute online\" work mode."
+
 ins <- "This Shiny App based Spatial Heatmap can be used for interactive visualisation as long as a data matrix and an associated SVG image are provided. In the following the instructions are given with a gene expression matrix and an associated root tissue image in SVG format. This app has three main functionalities. First, it generates spatial heatmaps where user defined tissue regions are coloured by the expression profile of a gene of interest. The gene expression information is uploaded as a table matrix and the associated tissue image is uploaded as an SVG format. Second, the app computes gene network modules based on gene expression profiles across tissue samples. It uses a matrix heatmap to visualize the expression of a chosen gene in the context of the corresponding gene network module the chosen gene belongs to. Third, the app displays the same network module in the matrix heatmap in the form of an interactive network graph. The network module identification is computationally demanding for large gene expression matrix (e.g.: > 10,000 genes), so to make this app more widely applicable the \"Compute locally\" mode is developed for processing large data matrix. If the data matrix is small (e.g.: < 10,000 genes), the \"Compute online\" mode can be used. If the app times out at some time, then users want to refresh the page in their web browser."
 
 ins.input1 <- "At first, users need to select a mode under \"Select a work mode\" in the left \"Input\" menu. The \"Default\" is most convenient for users to test the app, since this option relies on pre-uploaded files and users do not need to upload any files at all. The \"Compute locally\" should be selected if users have a large gene expression file (e.g.: > 10,000 genes) while the \"Compute online\" can be selected if users have a small gene expression file (e.g.: < 10,000 genes). In \"Step 1: upload an svg file\" and \"Step 2: upload a gene expression file\", users are asked to upload the svg file and associated gene expression file respectively. Details about how to properly format and associate custom SVG images with expression tables are provided "
@@ -88,7 +90,7 @@ shinyUI(dashboardPage(
     tabItems(
 
       tabItem(tabName="instruction", 
-      box(title="General Instruction", status="primary", solidHeader=TRUE, collapsible=TRUE, ins, width=12),
+      box(title="General Instruction", status="primary", solidHeader=TRUE, collapsible=TRUE, p(strong(ins0)), p(ins), width=12),
       box(title="Input Instruction", status="primary", solidHeader=TRUE, collapsible=TRUE, p(ins.input1, HTML("<a href=
       http://biocluster.ucr.edu/~jzhan067/shiny_HM_tutorial/tutorial/shiny_heatmap_tutorial.html>here</a>"), "."), p(ins.input2), ins.input3, HTML("&nbsp"), downloadButton("dld.svg", "Download svg file"), downloadButton("dld.data", "Download gene matrix"), p(ins.input4), p(ins.input5), p(ins.input6), width=12), 
       box(title="Spatial Heatmap Instruction", status="primary", solidHeader=TRUE, 

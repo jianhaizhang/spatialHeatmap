@@ -1,0 +1,10 @@
+name: spatialHeatmap
+title:
+username:
+account: jianhaizhang
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 776634
+bundleId: 1943327
+url: https://jianhaizhang.shinyapps.io/spatialHeatmap/
+when: 1552681175.53399
