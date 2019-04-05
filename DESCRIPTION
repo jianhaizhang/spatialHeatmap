@@ -12,7 +12,7 @@ biocViews: Visualization, Microarray, Sequencing, GeneExpression, DataRepresenta
 VignetteBuilder: knitr
 Suggests: knitr, rmarkdown, RUnit, BiocGenerics
 Depends:
-    R (>= 3.5)
+    R (>= 3.5.1)
 Imports:
    Cairo, 
    WGCNA, 
@@ -20,7 +20,8 @@ Imports:
    data.table, 
    flashClust, 
    genefilter, 
-   ggplot2, 
+   ggplot2,
+   ggdendro, 
    grImport,
    grid, 
    gridExtra, 
@@ -28,7 +29,10 @@ Imports:
    shiny,
    dynamicTreeCut,
    grDevices,
+   plotly,
    stats,
+   shinydashboard,
    utils,
+   visNetwork,
    methods
 RoxygenNote: 6.1.1

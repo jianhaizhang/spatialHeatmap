@@ -770,6 +770,7 @@ shinyServer(function(input, output, session) {
   col.sch.net <- reactive({ if(input$color.net=="") { return(NULL) }
   unlist(strsplit(input$color.net, ",")) }); color.net <- reactiveValues(col.net="none")
 
+  len.cs.net <- 500
   observeEvent(input$col.but.net, {
 
     if (is.null(col.sch.net())) return (NULL)
@@ -779,7 +780,6 @@ shinyServer(function(input, output, session) {
 
   })
 
-  len.cs.net <- 500
   visNet <- reactive({
 
     if (input$TOM.in=="None") return(NULL)
