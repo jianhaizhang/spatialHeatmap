@@ -4,26 +4,27 @@
 \alias{network}
 \title{Network}
 \usage{
-network(geneID, expr.table, adj.mod)
+network(geneID, data, adj.mod)
 }
 \arguments{
 \item{geneID}{A gene ID from the expression matrix.}
 
-\item{expr.table}{The gene expression table, where rows are gene IDs and columns are samples. If annotation is included, it must be in the last column.}
+\item{data}{The gene expression matrix, where rows are gene IDs and columns are samples. If annotation is included, it must be in the last column.}
 
-\item{adj.mod}{The "adjacency matrix" and "modules" definitions resulting from the function "adj.mod".}
+\item{adj.mod}{The "adjacency matrix" and "modules" definitions returned by the function "adj.mod".}
 }
 \value{
 An interactive network interface lauched on the web browser.
 }
 \description{
-The gene network modules are identified at two alternative sensitivities levels (3, 2). From 3 to 2, the sensitivity decreases and results in less modules with larger sizes. The "Select a module splitting sensitivity level" option allows users to choose which level to use for displaying the iteractive network. \cr Nodes and edges mean genes and adjacency between genes respectively. There is an interactive colour bar to denote gene connectivity (sum of a gene's adjacency with all its direct neighbours). The colour ingredients must only be separated by comma, e.g. the default are "blue,green,red", which means gene connectivity increases from blue to red. The edge length is inversely proportional to gene adjacency. If too many edges (e.g.: > 300) are displayed in this network, the app can possibly get stuck. So the "Input an adjacency threshold to display the adjacency network." option sets a threthold to filter out some weak edges. Only edges above the threshold are displayed in the network. The app outputs the total number of remaining edges resulting from each input adjacency threshold. If it is not too large (e.g.: < 300), users can check "Yes" under "Display or not?", then the network can be responsive smoothly. To maintain acceptable performance, users are advised to choose a stringent threshold (e.g. 0.9) initially, then decrease the value gradually. The interactive feature allows users to zoom in and out, or drag a gene around. All the gene IDs in the network module are listed in "Select by id" in decreasing order according to gene connectivity. The selected gene ID is appended "_selected", which can be easily identified from the list. By clicking an ID in this list, users can identify the corresponding gene in the network. If the input expression matrix has an annotation column, then the annotation can be seen by hovering the cursor over a node. \cr The same module can also be displayed in the form of an interactive matrix heatmap with the function "matrix.heatmap". \cr The network can seen by clicking the "View" button at the bottom of the side menu.
+This function represents the input gene in the context of corresponding gene network module as a web-browser based interactive netowrk, where nodes are genes and edges are adjacencies between genes. \cr The gene network modules are identified at two alternative sensitivities levels (3, 2). See function "adj.mod" for details. The "Select a module splitting sensitivity level" option allows users to choose which level to use for displaying the network. \cr There is an interactive colour bar to denote gene connectivity (sum of a gene's adjacency with all its direct neighbours). The colour ingredients must only be separated by comma, e.g. the default are "blue,green,red", which means gene connectivity increases from blue to red. \cr The edge length is inversely proportional to gene adjacency. If too many edges (e.g.: > 300) are displayed, the network can possibly get stuck. So the "Input an adjacency threshold to display the adjacency network." option sets a threthold to filter out some weak edges. Only edges above the threshold are displayed. The network outputs all remaining edges resulting from each input adjacency threshold. If it is not too large (e.g.: < 300), users can check "Yes" under "Display or not?", then the network can be responsive smoothly. To maintain acceptable performance, users are advised to choose a stringent threshold (e.g. 0.9) initially, then decrease the value gradually. \cr The interactive feature allows users to zoom in and out, or drag a gene around. All the gene IDs in the network module are listed in "Select by id" in decreasing order according to gene connectivity. The selected gene ID is appended "_selected" as a label. By clicking an ID in this list, users can identify the corresponding gene in the network. If the input expression matrix has an annotation column, then the annotation can be seen by hovering the cursor over a node. \cr The same module can also be displayed in the form of an interactive matrix heatmap with the function "matrix.heatmap". \cr The network can be seen by clicking the "View" button at the bottom of the side menu.
 }
 \examples{
 data.path <- system.file("extdata/example", "root_expr_ann_row_gen.txt", package = "spatialHeatmap")
-exp <- filter.data(data=data.path, sep="\\t", isRowGen=TRUE, c(0, 0), c(0.1, 10000), "processed_data")
-adj_mod <- adj.mod(data=exp, type="signed", minSize=15)
-\donttest{ network("PSAC", exp, adj_mod) }
+exp <- filter.data(data=data.path, sep="\\t", isRowGen=TRUE, pOA=c(0, 0), CV=c(0.1, 10000), dir="./")
+adj_mod <- adj.mod(data=exp, type="signed", minSize=15, dir="./")
+# The gene "PSAC" is represented in the context of its network module in the form of an interactive network.
+\donttest{ network(geneID="PSAC", data=exp, adj.mod=adj_mod) }
 }
 \references{
 Winston Chang, Joe Cheng, JJ Allaire, Yihui Xie and Jonathan McPherson (2018). shiny: Web Application Framework for R. R package version 1.1.0. https://CRAN.R-project.org/package=shiny \cr Winston Chang and Barbara Borges Ribeiro (2018). shinydashboard: Create Dashboards with 'Shiny'. R package version 0.7.1. https://CRAN.R-project.org/package=shinydashboard \cr Almende B.V., Benoit Thieurmel and Titouan Robert (2018). visNetwork: Network Visualization using 'vis.js' Library. R package version 2.0.4. https://CRAN.R-project.org/package=visNetwork

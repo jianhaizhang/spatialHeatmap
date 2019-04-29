@@ -10,19 +10,15 @@ spatial.hm.all()
 A web browser based Shiny app.
 }
 \description{
-The Spatial Heatmap is an integrated app, which includes interactive data matrix, interactive spatial heatmap, interactive matrix heatmap, and interactive network.
+This function combines all functionality in this package in an integrated mode (interactive data matrix, interactive spatial heatmap, interactive matrix heatmap, interactive network), which is a web-browser based Shiny app.
 }
 \section{Details}{
 
-No argument is required, this function launches the Spatial Heatmap directly.
+No argument is required, this function launches the Shiny app directly.
 }
 
 \examples{
 \donttest{ spatial.hm.all() }
-data.path <- system.file("extdata/example", "root_expr_ann_row_gen.txt", package = "spatialHeatmap")
-svg.path <- system.file("extdata/example", "root_cross_final.svg", package = "spatialHeatmap")
-spatial.hm(svg=svg.path, data=data.path, sep="\\t", isRowGene=TRUE, pOA=c(0.1, 3), 
-CV=c(0.05, 1000), ID=c("PSAC", "NDHE"), colour=c("green", "blue", "purple", "yellow", "red"), width=1, height=1, sub.title.size=11, layout="gene", ncol=3) 
 }
 \references{
 https://www.w3schools.com/graphics/svg_intro.asp  

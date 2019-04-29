@@ -3,9 +3,9 @@ Type: Package
 Title: spatialHeatmap
 Version: 0.99.0
 Date: 2018-09-07
-Author: Jianhai Zhang
+Author: Jianhai Zhang (PhD student at Genetics, Genomics and Bioinformatics, University of California, Riverside), Dr. Thomas Girke (professor at Department of Botany and Plant Sciences, University of California, Riverside)
 Maintainer: Jianhai Zhang <jzhan067@ucr.edu> <zhang.jianhai@hotmail.com>
-Description: Given a data matrix and an associated SVG image, this app generates interactive table matrix, interactive spatial heatmap, interactive matrix heatmap, interactive network.
+Description: Given a data matrix and an associated svg image, this package is able to generate spatial heatmaps, interactive matrix heatmap, and interactive network.
 License: Artistic-2.0
 Encoding: UTF-8
 biocViews: Visualization, Microarray, Sequencing, GeneExpression, DataRepresentation, Network, Clustering, GraphAndNetwork
@@ -34,5 +34,7 @@ Imports:
    shinydashboard,
    utils,
    visNetwork,
+   kableExtra, 
+   knitr,
    methods
 RoxygenNote: 6.1.1

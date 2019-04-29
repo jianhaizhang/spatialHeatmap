@@ -52,16 +52,16 @@ shinyServer(function(input, output, session) {
     if (input$fileIn=="None") return(NULL) 
 
     withProgress(message="Loading data: ", value = 0, {
-    if (grepl("^Default_", input$fileIn)) {
+    if (grepl("_Mustroph$|_Geng$|_Chen$|_Census$", input$fileIn)) {
 
         incProgress(0.5, detail="Loading matrix. Please wait.")
-        if (input$fileIn=="Default_organ") df.te <- fread("example/ucr_efp_expr_ann_row_gen.txt", header=TRUE, sep="\t", fill=TRUE)
-        if (input$fileIn=="Default_shoot_root") df.te <- fread("example/ucr_efp_expr_ann_row_gen.txt", header=TRUE, sep="\t", fill=TRUE)
-        if (input$fileIn=="Default_root_roottip") df.te <- fread("example/ucr_efp_expr_ann_row_gen.txt", header=TRUE, sep="\t", fill=TRUE)
-        if (input$fileIn=="Default_shoot") df.te <- fread("example/ucr_efp_expr_ann_row_gen.txt", header=TRUE, sep="\t", fill=TRUE)
-        if (input$fileIn=="Default_root") df.te <- fread("example/root_expr_ann_row_gen.txt", header=TRUE, sep="\t", fill=TRUE)
-        if (input$fileIn=="Default_brain") df.te <- fread("example/brain_expr_ann_row_gen.txt", header=TRUE, sep="\t", fill=TRUE)
-        if (input$fileIn=="Default_map") df.te <- fread("example/us_population2018.txt", header=TRUE, sep="\t", fill=TRUE)
+        if (input$fileIn=="organ_Mustroph") df.te <- fread("example/ucr_efp_expr_ann_row_gen.txt", header=TRUE, sep="\t", fill=TRUE)
+        if (input$fileIn=="shoot_root_Mustroph") df.te <- fread("example/ucr_efp_expr_ann_row_gen.txt", header=TRUE, sep="\t", fill=TRUE)
+        if (input$fileIn=="root_roottip_Mustroph") df.te <- fread("example/ucr_efp_expr_ann_row_gen.txt", header=TRUE, sep="\t", fill=TRUE)
+        if (input$fileIn=="shoot_Mustroph") df.te <- fread("example/ucr_efp_expr_ann_row_gen.txt", header=TRUE, sep="\t", fill=TRUE)
+        if (input$fileIn=="root_Geng") df.te <- fread("example/root_expr_ann_row_gen.txt", header=TRUE, sep="\t", fill=TRUE)
+        if (input$fileIn=="brain_Chen") df.te <- fread("example/brain_expr_ann_row_gen.txt", header=TRUE, sep="\t", fill=TRUE)
+        if (input$fileIn=="map_Census") df.te <- fread("example/us_population2018.txt", header=TRUE, sep="\t", fill=TRUE)
 
 	df.te1 <- as.data.frame(df.te); rownames(df.te1) <- df.te1[, 1]
 	df.te1 <- df.te1[, -1]; colnames(df.te1) <- colnames(df.te)[-ncol(df.te)]
@@ -123,7 +123,7 @@ shinyServer(function(input, output, session) {
    }
 
     datatable(gene.dt, selection=list(mode="multiple", target="row", selected=c(3)),
-    filter="top", extensions='Scroller', options=list(autoWidth=TRUE, scrollCollapse=TRUE, deferRender=TRUE, scrollX=TRUE, scrollY=200, scroller=TRUE), class='cell-border strip hover') %>% formatStyle(0, backgroundColor="orange", cursor='pointer') %>% 
+    filter="top", extensions='Scroller', options=list(pageLength=5, lengthMenu=c(5, 15, 20), autoWidth=TRUE, scrollCollapse=TRUE, deferRender=TRUE, scrollX=TRUE, scrollY=200, scroller=TRUE), class='cell-border strip hover') %>% formatStyle(0, backgroundColor="orange", cursor='pointer') %>% 
     formatRound(colnames(geneIn()[["gene2"]]), 2)
 
     })
@@ -172,7 +172,7 @@ shinyServer(function(input, output, session) {
   # To make the "gID$new" and "gID$all" updated with the new "input$fileIn", since the selected row is fixed (3rd row), the "gID$new" is not updated when "input$fileIn" is changed, and the downstream is not updated either. The shoot/root examples use the same data matrix, so the "gID$all" is the same (pre-selected 3rd row) when change from the default "shoot" to others like "organ". As a result, the "gene$new" is null and downstream is not updated. Also the "gene$new" is the same when change from shoot to organ, and downstream is not updated, thus "gene$new" and "gene$all" are both set null above upon new "input$fileIn".
   observeEvent(input$fileIn, {
 
-    if (!grepl("Default_", input$fileIn)) return()
+    if (!grepl("_Mustroph$|_Geng$|_Chen$|_Census$", input$fileIn)) return()
     r.na <- rownames(geneIn()[["gene2"]]); gID$geneID <- r.na[input$dt_rows_selected]
     gID$new <- setdiff(gID$geneID, gID$all); gID$all <- c(gID$all, gID$new)
 
@@ -180,7 +180,7 @@ shinyServer(function(input, output, session) {
 
   output$bar <- renderPlot({
 
-    if ((grepl("^Default_", input$fileIn) & !is.null(geneIn()))|((input$fileIn=="Compute locally"|input$fileIn=="Compute online") & !is.null(input$svgInpath) & !is.null(geneIn()))) {
+    if ((grepl("_Mustroph$|_Geng$|_Chen$|_Census$", input$fileIn) & !is.null(geneIn()))|((input$fileIn=="Compute locally"|input$fileIn=="Compute online") & !is.null(input$svgInpath) & !is.null(geneIn()))) {
 
       if (length(color$col=="none")==0|input$color==""|is.null(geneV())) return(NULL)
 
@@ -213,14 +213,14 @@ shinyServer(function(input, output, session) {
   svg.df <- reactive({ 
 
     if (((input$fileIn=="Compute locally"|input$fileIn=="Compute online") & 
-    !is.null(input$svgInpath))|(grepl("^Default_", input$fileIn) & is.null(input$svgInpath))) {
+    !is.null(input$svgInpath))|(grepl("_Mustroph$|_Geng$|_Chen$|_Census$", input$fileIn) & is.null(input$svgInpath))) {
 
       withProgress(message="Tissue heatmap: ", value=0, {
     
         incProgress(0.5, detail="Extracting coordinates. Please wait.") 
 
 	if (input$fileIn=="Compute locally"|input$fileIn=="Compute online") { svg.path <- input$svgInpath$datapath; svg.na <- input$svgInpath$name } else if     
-(input$fileIn=="Default_organ") { svg.path <- "example/organ_final.svg"; svg.na <- "organ_final.svg" } else if (input$fileIn=="Default_shoot_root") { svg.path <- "example/shoot_root_final.svg"; svg.na <- "shoot_root_final.svg" } else if (input$fileIn=="Default_root_roottip") { svg.path <- "example/root_roottip_final.svg"; svg.na <- "root_roottip_final.svg" } else if (input$fileIn=="Default_shoot") { svg.path <- "example/shoot_final.svg"; svg.na <- "shoot_final.svg" } else if (input$fileIn=="Default_root") { svg.path <- "example/root_cross_final.svg"; svg.na <- "root_cross_final.svg" } else if (input$fileIn=="Default_brain") { svg.path <- "example/brain_final.svg"; svg.na <- "brain_final.svg" } else if (input$fileIn=="Default_map") { svg.path <- "example/us_map_final.svg"; svg.na <- "us_map_final.svg" }
+(input$fileIn=="organ_Mustroph") { svg.path <- "example/organ_final.svg"; svg.na <- "organ_final.svg" } else if (input$fileIn=="shoot_root_Mustroph") { svg.path <- "example/shoot_root_final.svg"; svg.na <- "shoot_root_final.svg" } else if (input$fileIn=="root_roottip_Mustroph") { svg.path <- "example/root_roottip_final.svg"; svg.na <- "root_roottip_final.svg" } else if (input$fileIn=="shoot_Mustroph") { svg.path <- "example/shoot_final.svg"; svg.na <- "shoot_final.svg" } else if (input$fileIn=="root_Geng") { svg.path <- "example/root_cross_final.svg"; svg.na <- "root_cross_final.svg" } else if (input$fileIn=="brain_Chen") { svg.path <- "example/brain_final.svg"; svg.na <- "brain_final.svg" } else if (input$fileIn=="map_Census") { svg.path <- "example/us_map_final.svg"; svg.na <- "us_map_final.svg" }
 
 	ps.path <- paste0("tmp/", sub(".svg$", ".ps", svg.na))
         xml.path <- paste0(ps.path, ".xml"); rsvg_ps(svg.path, ps.path)
@@ -583,16 +583,16 @@ shinyServer(function(input, output, session) {
 
   output$ori.svg <- renderImage({
 
-    if ((is.null(input$svgInpath) & !grepl("^Default_", input$fileIn))|input$fileIn==
+    if ((is.null(input$svgInpath) & !grepl("_Mustroph$|_Geng$|_Chen$|_Census$", input$fileIn))|input$fileIn==
     "None") return(list(src="precompute/blank.png", contentType="image/png"))
 
     w <- as.numeric(input$width); h <- as.numeric(input$height); con.n <- length(con())
     W <- w/as.numeric(input$col.n); H <- h/(ceiling(con.n/as.numeric(input$col.n)))
 
     if (((input$fileIn=="Compute locally"|input$fileIn=="Compute online")|
-    !is.null(input$svgInpath))|grepl("^Default_", input$fileIn)) {
+    !is.null(input$svgInpath))|grepl("_Mustroph$|_Geng$|_Chen$|_Census$", input$fileIn)) {
 
-      if (input$fileIn=="Compute locally"|input$fileIn=="Compute online") { svg.path <- input$svgInpath$datapath } else if (input$fileIn=="Default_organ") { svg.path <- "example/organ_final.svg" } else if (input$fileIn=="Default_shoot_root") { svg.path <- "example/shoot_root_final.svg" } else if (input$fileIn=="Default_root_roottip") { svg.path <- "example/root_roottip_final.svg" } else if (input$fileIn=="Default_shoot") { svg.path <- "example/shoot_final.svg" } else if (input$fileIn=="Default_root") { svg.path <- "example/root_cross_final.svg" } else if (input$fileIn=="Default_brain") { svg.path <- "example/brain_final.svg" } else if (input$fileIn=="Default_map") { svg.path <- "example/us_map_final.svg" }; rsvg_png(svg.path, "tmp/user.png")
+      if (input$fileIn=="Compute locally"|input$fileIn=="Compute online") { svg.path <- input$svgInpath$datapath } else if (input$fileIn=="organ_Mustroph") { svg.path <- "example/organ_final.svg" } else if (input$fileIn=="shoot_root_Mustroph") { svg.path <- "example/shoot_root_final.svg" } else if (input$fileIn=="root_roottip_Mustroph") { svg.path <- "example/root_roottip_final.svg" } else if (input$fileIn=="shoot_Mustroph") { svg.path <- "example/shoot_final.svg" } else if (input$fileIn=="root_Geng") { svg.path <- "example/root_cross_final.svg" } else if (input$fileIn=="brain_Chen") { svg.path <- "example/brain_final.svg" } else if (input$fileIn=="map_Census") { svg.path <- "example/us_map_final.svg" }; rsvg_png(svg.path, "tmp/user.png")
 
       svg.ln <- readLines(svg.path, 200)
       w.h <- svg.ln[grep(" width| height", svg.ln)]
@@ -645,7 +645,7 @@ shinyServer(function(input, output, session) {
 
   adj.tree <- reactive({ 
 
-    if (input$fileIn=="Compute online"|grepl("Default_", input$fileIn)) {
+    if (input$fileIn=="Compute online"|grepl("_Mustroph$|_Geng$|_Chen$|_Census$", input$fileIn)) {
 
       if (input$net.type=="S") { sft <- 12; type <- "signed" } else if 
       (input$net.type=="U") { sft <- 6; type <- "unsigned" }
@@ -676,7 +676,7 @@ shinyServer(function(input, output, session) {
 
   mcol <- reactive({
 
-    if (input$fileIn=="Compute online"|grepl("Default_", input$fileIn)) {
+    if (input$fileIn=="Compute online"|grepl("_Mustroph$|_Geng$|_Chen$|_Census$", input$fileIn)) {
 
       withProgress(message="Computing: ", value = 0, {
       mcol <- NULL; tree.hclust <- adj.tree()[["tree"]]
@@ -711,7 +711,7 @@ shinyServer(function(input, output, session) {
   output$HMly <- renderPlotly({
 
     if (input$gen.sel=="None") return(NULL)
-    if (input$fileIn=="Compute locally") { adj <- adj.mod()[[1]]; mods <- adj.mod()[[2]] } else if (input$fileIn=="Compute online"|grepl("Default_", input$fileIn)) { 
+    if (input$fileIn=="Compute locally") { adj <- adj.mod()[[1]]; mods <- adj.mod()[[2]] } else if (input$fileIn=="Compute online"|grepl("_Mustroph$|_Geng$|_Chen$|_Census$", input$fileIn)) { 
     adj <- adj.tree()[[1]]; mods <- mcol() }
 
     gene <- geneIn()[["gene2"]]; lab <- mods[, input$ds][rownames(gene)==input$gen.sel]
@@ -783,7 +783,7 @@ shinyServer(function(input, output, session) {
   visNet <- reactive({
 
     if (input$TOM.in=="None") return(NULL)
-    if (input$fileIn=="Compute locally") { adj <- adj.mod()[[1]]; mods <- adj.mod()[[2]] } else if (input$fileIn=="Compute online"|grepl("Default_", input$fileIn)) { adj <- adj.tree()[[1]]; mods <- mcol() }
+    if (input$fileIn=="Compute locally") { adj <- adj.mod()[[1]]; mods <- adj.mod()[[2]] } else if (input$fileIn=="Compute online"|grepl("_Mustroph$|_Geng$|_Chen$|_Census$", input$fileIn)) { adj <- adj.tree()[[1]]; mods <- mcol() }
 
     gene <- geneIn()[[1]]; lab <- mods[, input$ds][rownames(gene)==input$gen.sel]
     if (lab=="0") { showModal(modalDialog(title="Module", "The selected gene is not assigned to any module. Please select a different gene.")); return() }

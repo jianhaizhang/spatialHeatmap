@@ -5,55 +5,62 @@
 \title{Spatial Heatmap}
 \usage{
 spatial.hm(svg, data, sep, isRowGene, pOA = c(0, 0), CV = c(0, 10000),
-  ID, colour = c("green", "blue", "purple", "yellow", "red"),
-  width = 1, height = 1, sub.title.size = 11, layout, ncol)
+  ID, col.com = c("green", "blue", "purple", "yellow", "red"),
+  col.bar = "selected", width = 1, height = 1, sub.title.size = 11,
+  layout, ncol)
 }
 \arguments{
-\item{svg}{The path of the svg image, where different regions (e.g. tissues) are labeled with different colors. \cr E.g.: system.file("extdata/example", "test_final.svg", package = "spatialHeatmap")}
+\item{svg}{The path of the svg image, where different tissues are defined and can be labeled with different colors. \cr E.g.: system.file("extdata/example", "test_final.svg", package = "spatialHeatmap")}
 
-\item{data}{The path of the data matrix. In the example of gene expression matrix, the dimension names are gene IDs and sample/conditions. The sample/condition names MUST be fomatted this way: a sample name is followed by double underscore then the condition, such as "sample name__condition name". The meta data (e.g. gene annotation) can also be included in parallel with sample/condition. In the names of sample/condition and meta data, only letters, digits, single underscore, dots are allowed. \cr E.g.: system.file("extdata/example", "gene_expr_ann_row_gen.txt", package = "spatialHeatmap")}
+\item{data}{The path of the data matrix. In the gene expression matrix, the row and column names are usually gene IDs and sample/conditions, respectively. The sample/condition names MUST be fomatted this way: a sample name is followed by double underscore then the condition, such as “stele__140mM_48h" (Mustroph et al. 2009), where stele is the sample and 140mM_48h is the condition. One column of meta data (e.g. gene annotation) can also be included in parallel with sample/condition at the end. In the column names of sample/condition and meta data, only letters, digits, single underscore, dots are allowed. Not all samples in the matrix necessarily need to be present in the svg image, and vice versa. Only samples present in the svg image are recognised and coloured. The rows and columns can be swaped and the function identifies gene IDs by "isRowGen". \cr E.g.: system.file("extdata/example", "root_expr_ann_row_gen.txt", package = "spatialHeatmap").}
 
 \item{sep}{The seprator of the data matrix, e.g. ",", "\\t", ";".}
 
-\item{isRowGene}{It specifies if the row names are used to display spatial heatmaps. The options are "TRUE" or "FALSE". For example, in a gene expression matrix genes are used to display heatmaps and the gene IDs are rows names, then the option is "TRUE".}
+\item{isRowGene}{If row names are gene IDs it is "TRUE", otherwise it is "FALSE". If the data matrix is not gene expression, this argument is set according to if the row is equivalent to gene ID.}
 
-\item{pOA}{It specifies parameters of a filter function that filters according to the proportion of elements exceeding a threshold A. The input is a two-component vector, where the first one is the proportion and the second one is A, e.g.: c(0.1, 2). The default is c(0, 0), which means no filter is applied. Refer to "pOverA" from the package "genefilter".}
+\item{pOA}{It specifies parameters of the filter function "pOverA" from the package "genefilter" (Gentleman et al. 2018). It filters genes according to the proportion "p" of samples where the expression values exceeding a threshold "A". The input is a two-component vector, where the first one is the "p" and the second one is "A". The default is c(0, 0), which means no filter is applied. \cr E.g. c(0.1, 2) means genes whose expression values over 2 in at least 10\% of all samples are kept.}
 
-\item{CV}{It specifies parameters of a filter function that filters according to the coefficient of variation (CV). The input is a two-component vector, where the first and second mean the lower and upper bound of CVs used to filter, e.g.: cv(0.1, 5). The default is cv(0, 10000), which tries to aviod filtering.  Refer to "cv" from the package "genefilter".}
+\item{CV}{It specifies parameters of the filter function "cv" from the package "genefilter" (Gentleman et al. 2018), which filters genes according to the coefficient of variation (CV). The input is a two-component vector, specifying the CV range. The default is c(0, 10000), where the range is set from very samll (0) to very large (10000) so as to not apply filtering. \cr E.g. c(0.1, 5) means genes with CV between 0.1 and 5 are kept.}
 
-\item{ID}{The IDs used to display the spatial heatmaps, e.g. gene IDs.}
+\item{ID}{The gene IDs used to display the spatial heatmaps.}
 
-\item{colour}{The colour components used to make the colour scale, which must be separated with comma and no space. The default is "green,blue,purple,yellow,red".}
+\item{col.com}{The colour components used to build the colour scale, which must be separated with comma and no space, e.g. the default is "green,blue,purple,yellow,red".}
 
-\item{width}{The width of each subplot, relative to height. The default is 1.}
+\item{col.bar}{It has two values "selected" and "all", which specifies whether the colour scale is built using the input genes ("selected") or whole data matrix ("all"). The default is "selected".}
 
-\item{height}{The height of each subplot, relative to width. The default is 1.}
+\item{width}{The width, relative to height, of each subplot. The default is 1.}
+
+\item{height}{The height, relative to width, of each subplot. The default is 1.}
 
 \item{sub.title.size}{The size of each subtitle. The default is 11.}
 
-\item{layout}{The layout of the subplots. The options are "gene" or "con" (condition). For example, in gene expression matrix the spatial tissue heatmaps can be organised by gene or condition (con).}
+\item{layout}{The layout of the subplots. The options are "gene" or "con" (condition). For example, in gene expression matrix the spatial tissue heatmaps can be displayed by gene or condition (con).}
 
-\item{ncol}{Number of columns to organise the subplots.}
+\item{ncol}{Number of columns to display the subplots.}
 }
 \value{
 It generates an image of spatial heatmap(s) along with a colour key.
 }
 \description{
-It takes a data matrix and an associated svg image to display corresponding spatial heatmaps. Take the gene expression matrix and an associated tissue svg image as an example. It can display spatial tissue heatmaps for mutltiple genes under multiple conditions. In each such tissue heatmap, the gene expression levels are represented by colours for each sample under each condition.
+It takes a gene expression matrix and an associated svg image as input, where each tissue region is defined. The expression profiles of the input gene(s) under each condition are mapped to each tissue in the form of different colours. Its application is not limited to gene expression data, since it can be used as long as a data matrix and an associated svg image are provided, such as population data generated in different years across different cities.
 }
 \section{Details}{
 
-Details about how to properly format and associate custom SVG images with data matrices are provided here: http://biocluster.ucr.edu/~jzhan067/shiny_HM_tutorial/shiny_heatmap_tutorial.html.
+Details about how to properly format and associate a custom svg image with a data matrix are provided in the vignette "SVG_tutorial.html". \cr The data matrix can be first filtered with the function "filter.data" then provide the resulting matrix path to this function.
 }
 
 \examples{
+# The expression matrix path.
 data.path <- system.file("extdata/example", "root_expr_ann_row_gen.txt", package = "spatialHeatmap")
+# The svg image path.
 svg.path <- system.file("extdata/example", "root_cross_final.svg", package = "spatialHeatmap")
-spatial.hm(svg=svg.path, data=data.path, sep="\\t", isRowGene=TRUE, pOA=c(0.1, 3), 
-CV=c(0.05, 1000), ID=c("PSAC", "NDHE"), colour=c("green", "blue", "purple", "yellow", "red"), width=1, height=1, sub.title.size=11, layout="gene", ncol=3)
+# The expression profiles of gene "PSAC" and "NDHE" under different conditions are mapped to tissues defined in the svg image in the form of different colours. 
+spatial.hm(svg=svg.path, data=data.path, sep="\\t", isRowGene=TRUE, pOA=c(0.1, 3), CV=c(0.05, 1000), ID=c("PSAC", "NDHE"), col.com=c("green", "blue", "purple", "yellow", "red"), width=1, height=1, sub.title.size=11, layout="gene", ncol=3)
 }
 \references{
-https://www.gimp.org/tutorials/ \cr https://inkscape.org/en/doc/tutorials/advanced/tutorial-advanced.en.html \cr http://www.microugly.com/inkscape-quickguide/.
+https://www.gimp.org/tutorials/ \cr https://inkscape.org/en/doc/tutorials/advanced/tutorial-advanced.en.html \cr http://www.microugly.com/inkscape-quickguide/
+Mustroph, Angelika, M Eugenia Zanetti, Charles J H Jang, Hans E Holtan, Peter P Repetti, David W Galbraith, Thomas Girke, and Julia Bailey-Serres. 2009. “Profiling Translatomes of Discrete Cell Populations Resolves Altered Cellular Priorities During Hypoxia in Arabidopsis.” Proc Natl Acad Sci U S A 106 (44): 18843–8
+R. Gentleman, V. Carey, W. Huber and F. Hahne (2017). genefilter: genefilter: methods for filtering genes from high-throughput experiments. R package version 1.58.1
 }
 \author{
 Jianhai Zhang \email{jzhan067@ucr.edu; zhang.jianhai@hotmail.com} \cr Dr. Thomas Girke \email{thomas.girke@ucr.edu}

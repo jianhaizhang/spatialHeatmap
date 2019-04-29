@@ -4,22 +4,27 @@
 \docType{package}
 \title{
 \packageTitle{spatialHeatmap}
- Interactive data matrix, spatial heatmap, matrix heatmap, and network
+ Spatial heatmap, matrix heatmap, network
 }
 \description{
 \packageDescription{spatialHeatmap}
- The Spatial Heatmap is an integrated app, which includes interactive data matrix, interactive spatial heatmap, interactive matrix heatmap, and interactive network.
 }
 \details{
 
 The DESCRIPTION file:
 \packageDESCRIPTION{spatialHeatmap}
 \packageIndices{spatialHeatmap}
- This Shiny App based spatialHeatmap can be used for interactive visualisation as long as a data matrix and an associated SVG image are available, This tool has three main functionality, which makes it informative, interactive, and versatile in visualizing large-scale data. First, it generates spatial heatmaps where user defined tissue regions are coloured by the expression profile of a gene of interest. The gene expression information is uploaded as a table matrix and the associated tissue image is uploaded as an SVG format. Second, the app computes gene network modules based on gene expression profiles across tissue samples. It uses a matrix heatmap to visualize the expression of a chosen gene in the context of the corresponding gene network module where the chosen gene is contained. Third, the app displays the same network module in the matrix heatmap in the form of an interactive network graph. The network module identification is computationally intense. To maintain performance, the large gene expression matrix (e.g.: > 10,000 genes) should be computed by the "Compute locally" mode, while small ones (e.g.: < 10,000 genes) can be computed by the "Compute online" mode. If the app times out at some time, then users want to refresh the page in their web browser.
+
+ This spatialHeatmap is designed for visualising gene expression data such as sequencing, microarray, etc.. The core feature is to map expression values of target genes under different conditions to different tissues, which are called spatial heatmaps. To make it more versatile, the matrix heatmap and network features were also developed, which display the target gene in the context of corresponding gene module. All the utilities implemented in this R package are also combined as a web-browser based Shiny app (Chang et al., n.d.; Chang and Borges Ribeiro 2018).
+
+The application of this package is not limited to gene expression data. It can be used as long as a data matrix and an associated SVG image are provided, such as population data generated in different years across different cities. The tutorial of how to properly format and associate a custom SVG image with a data matrix is provided in an independent vignette “SVG_tutorial.html”.
+
+For a quick test, users can launch the combined Shiny app then either select the default examples from the left menu or download the example data matrix and svg image in the insturction page.
 }
 \author{
 \packageAuthor{spatialHeatmap}
-
+Author: \packageAuthor{spatialHeatmap}
+  Jianhai Zhang (PhD student at Genetics, Genomics and Bioinformatics, University of California, Riverside), Dr. Thomas Girke (professor at Department of Botany and Plant Sciences, University of California, Riverside)
 Maintainer: \packageMaintainer{spatialHeatmap}
   Jianhai Zhang <jzhan067@ucr.edu; zhang.jianhai@hotmail.com>.
 }
@@ -104,29 +109,31 @@ Maintainer: \packageMaintainer{spatialHeatmap}
 }
 %%~~ Optionally other standard keywords, one per line, from file KEYWORDS in the R ~~
 %%~~ documentation directory ~~
-\keyword{ package }
+\keyword{ spatial heatmap}
 \seealso{
- \code{\link{filter.data}}, \code{\link{adj.mod}}, \code{\link{spatial.hm.all}}, \code{\link{spatial.hm}}
+ \code{\link{filter.data}}, \code{\link{adj.mod}}, \code{\link{spatial.hm.all}}, \code{\link{spatial.hm}}, \code{\link{matrix.heatmap}}, \code{\link{network}}
 }
 \examples{
-#Get the path of SVG file and data matrix.
+# Get the path of svg image and associated data matrix.
 svg.path <- system.file("extdata/example", "root_cross_final.svg", package = "spatialHeatmap")
 data.path <- system.file("extdata/example", "root_expr_ann_row_gen.txt", package = "spatialHeatmap")
 
-#Local work mode for large data matrix.
+# Filter the data matrix. The directory "local_mode_result/" is automatically created in the location specified by "dir" and is used to save filtered data matrix "processed_data.txt".
+exp <- filter.data(data=data.path, sep="\t", isRowGen=TRUE, pOA=c(0, 0), CV=c(0.1, 10000), dir="./") 
 
-## Filter the data matrix. The resulting data matrix "processed_data.txt" is automatically saved in the directory "local_mode_result", which should be uploaded to the app on web browser.
-exp <- filter.data(data=data.path, sep="\t", isRowGen=TRUE, c(0, 0), c(0.1, 10000),
- "processed_data") 
+# Plot the spatial heatmaps for gene "PSAC" and "NDHE".
+spatial.hm(svg=svg.path, data=data.path, sep="\t", isRowGene=TRUE, pOA=c(0.1, 3), CV=c(0.05, 1000), ID=c("PSAC", "NDHE"), col.com=c("green", "blue", "purple", "yellow", "red"), width=1, height=1, sub.title.size=11, layout="gene", ncol=3)
 
-## Compute the adjacency matrix and identify modules. The resulting adjacency file "adj.txt" and "mod.txt" are also automatically saved in "local_mode_result", which should be uploaded to the app on web browser.
-adj_mod <- adj.mod(data=exp, type="signed", minSize=20)
+# Compute the adjacency matrix and identify modules. The directory "local_mode_result/" is automatically created in the location specified by "dir" and is used to save the resulting adjacency file "adj.txt" and module definition file "mod.txt".
+adj_mod <- adj.mod(data=exp, type="signed", minSize=20, dir="./")
 
-# Lauch of the app.
+# The gene "PSAC" is represented in the context of its network module in the form of an interactive matrix heatmap.
+\donttest{ matrix.heatmap(geneID="PSAC", data=exp, adj.mod=adj_mod, ds="2", scale="row") }
+
+# The gene "PSAC" is represented in the context of its network module in the form of an interactive network.
+\donttest{ network(geneID="PSAC", data=exp, adj.mod=adj_mod) }
+
+# Lauch of the integrated Shiny app.
 \donttest{ spatial.hm.all() }
-
-# Plot the spatial heatmaps on R console.
-spatial.hm(svg=svg.path, data=data.path, sep="\t", isRowGene=TRUE, pOA=c(0.1, 3), 
-CV=c(0.05, 1000), ID=c("PSAC", "NDHE"), colour=c("green", "blue", "purple", "yellow", "red"), width=1, height=1, sub.title.size=11, layout="gene", ncol=3)
 
 }
