@@ -54,7 +54,7 @@ BiocManager::install("spatialHeatmap")
 
 To run the following functions and use the Shiny app, the pacakge should be loaded first.
 
-```{r, eval=TRUE, echo=TRUE, warnings=FALSE}
+```{r, eval=FALSE, echo=TRUE, warnings=FALSE}
 
  library(spatialHeatmap)
 
@@ -75,17 +75,16 @@ In the gene expression matrix, the row and column names are usually gene IDs and
 The example of partial gene expression matrix and how to use this function is shown [below](#filter) [@Mustroph2009-nu; @knitr; @kableExtra; @data.table]. The complete matrix (root_expr_ann_row_gen.txt) is accessible in this package as shown below or can be downloaded from the web-browser based Shiny app.  
 
 <a name="filter"></a>
-```{r, eval=TRUE, echo=TRUE, warnings=FALSE}
+```{r, eval=FALSE, echo=TRUE, warnings=FALSE}
 
-  library(knitr);library(kableExtra)
   # The example complete data matrix.
   data.path <- system.file("extdata/example", "root_expr_ann_row_gen.txt", package = "spatialHeatmap")
   # Filter genes. In "pOA", genes with expression value A >= 1 in at least p=0.03 (3%) of all samples are retained; in "CV", genes with coefficient of variance (cv) between 0.1 and 10000 are retained, where the upper limit is set to very high (10000) so as to keep all genes with cv over 0.1. 
   exp <- filter.data(data=data.path, sep="\t", isRowGen=TRUE, pOA=c(0.03, 1), CV=c(0.1, 10000), dir="./")
-  # Example of the partial filtered matrix.
-  kable(exp[c(1:4), 26:29], caption="Table 1. Partial gene expression matrix of root. Rows are genes and columns are tissue samples under different conditions.") %>% kable_styling(bootstrap_options=c("striped", "hover", "condensed", "responsive"), full_width=FALSE) 
-
+  
 ```   
+Example of the partial filtered matrix.  
+![](image/matrix1.png)
 
 ## Spatial Heatmap
 
