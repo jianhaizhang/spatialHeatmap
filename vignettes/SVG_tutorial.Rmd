@@ -1,21 +1,19 @@
 --- 
 title: "SVG Tutorial for spatialHeatmap"
-author: 
-- Jianhai Zhang, PhD student at Genetics, Genomics and Bioinformatics, University of California, Riverside (<jzhan067@ucr.edu>; <zhang.jianhai@hotmail.com>)
-- Prof. Dr. Thomas Girke, professor at Department of Botany and Plant Sciences, University of California, Riverside (<thomas.girke@ucr.edu>)
+author: "Jianhai Zhang, PhD student at Genetics, Genomics and Bioinformatics, University of California, Riverside (<jzhan067@ucr.edu>; <zhang.jianhai@hotmail.com>) <p/> PI: Dr. Thomas Girke, professor at Department of Botany and Plant Sciences, University of California, Riverside (<thomas.girke@ucr.edu>)"
 date: "Last update: `r format(Sys.time(), '%d %B, %Y')`"
 output:
-  pdf_document:
+  html_document:
     toc: true
+    toc_float:
+        collapsed: true
+        smooth_scroll: true
     toc_depth: 3
+    fig_caption: yes
+    code_folding: show
     number_sections: true
-    fig_caption: true
-    df_print: kable
-    highlight: tango
-  html_notebook: default
-urlcolor: blue
+    self_contained: true
 fontsize: 14pt
-geometry: margin=1in
 bibliography: bibtex.bib
 package: spatialHeatmap
 vignette: |
@@ -32,95 +30,69 @@ vignette: |
 library(knitr); opts_chunk$set(message=FALSE, warning=FALSE)
 ```
 
-```{r, eval=TRUE, echo=FALSE, warnings=FALSE}
-url <- "https://raw.githubusercontent.com/jianhaizhang/SVG_tutorial_file/master/image/"
-```
-
 # Summary
 
 This R package spatialHeatmap is used for interactive visualisation as long as a data matrix and an associated SVG image are provided. This tutorial is specifically designed for how to make an SVG image and link it with the data matrix. The tutorial requires a png image, where regions can be painted by different colours, a data matrix, the SVG editor [Inkscape](https://inkscape.org/), and optionally the image editor [GIMP](https://www.gimp.org/). The png image is the template to make the SVG image while the data matrix is used to fill different regions in the image. Inkscape is used to associate the SVG image with the data matrix and GIMP is optionally used to facilitate making the SVG image. 
 
 In the following, the tutorial is given with a gene expression matrix and an associated root tissue image in SVG format as an example, which is just a basic example for users to start. All the files used in this tutorial can be downloaded [here](https://github.com/jianhaizhang/SVG_tutorial_file/tree/master/download) (download an SVG image: click the image, right-click, select "Save image as..."; download a PNG image: click the image, click "Download", right-click, select "Save image as..."; download a TXT file: click the file, click "Raw", right-click, select "Save as...".).
 
-**Users are advised to pay enough attention to the bold text below, because it can prevent common errors when creating the SVG images.**
+<b>Users are advised to pay enough attention to the bold text below, because it can prevent common errors when creating the SVG images. </b>
 
 # Procedure
 
+```{r, eval=TRUE, echo=FALSE, warnings=FALSE}
+
+url <- "https://raw.githubusercontent.com/jianhaizhang/SVG_tutorial_file/master/image/"
+
+```
 ## Gene Expression Matrix
 
-In the gene expression matrix, the row and column names are usually gene IDs and sample/conditions, respectively. <b>The sample/condition names MUST be fomatted this way: a sample name is followed by double underscore then the condition, such as “stele__140mM_48h" [@Geng2013-ek], where stele is the sample and 140mM_48h is the condition</b>. One column of meta data (e.g. gene annotation) can also be included in parallel with sample/condition at the end. <b>In the column names of sample/condition and meta data, only letters, digits, single underscore, dots are allowed</b>. Not all samples in the matrix necessarily need to be present in the svg image, and vice versa. Only samples present in the svg image are recognised and coloured. The example of partial gene expression matrix is shown in Table 1 [@knitr; @kableExtra; @data.table].  
+In the gene expression matrix, the row and column names are usually gene IDs and sample/conditions, respectively. <b>The sample/condition names MUST be fomatted this way: a sample name is followed by double underscore then the condition, such as “stele__140mM_48h" [@Geng2013-ek], where stele is the sample and 140mM_48h is the condition</b>. One column of meta data (e.g. gene annotation) can also be included in parallel with sample/condition at the end. <b>In the column names of sample/condition and meta data, only letters, digits, single underscore, dots are allowed</b>. Not all samples in the matrix necessarily need to be present in the svg image, and vice versa. Only samples present in the svg image are recognised and coloured. The example of partial gene expression matrix is shown [below](#table) [@knitr; @kableExtra; @data.table].  
 
-```{r table, echo=FALSE, fig.cap="", out.width="80%", fig.align="center"}
-include_graphics("image/matrix1.png")
-```
+<a name="table"></a>
+  <p/><center><img src="`r paste0(url, "matrix1.png")`"></center> <p/>
 
-## Make SVG Images
+## Make SVG Images 
 
-### Make Blank SVG Images by Drawing 
+### <a name="draw"></a> Make Blank SVG Images by Drawing 
 
 If the contour in the png image is not clear, GIMP can generate low-quality SVG images, so in this case one can draw the blank SVG image with Inkscape by using the png as a template. Below is an example of drawing only two polygons.
 
   1. Draw polygons <p/><p/> 
   Open the root png image [@Mustroph2009-nu] in Inkscape. The image can be zoomed by press "-" or "+" on the keyboard. Select the "Draw freeahnd lines (F6)" at the left tool bar. Left click once at the first corner of the polygon, and move to the second corner and double left click, and so on. Lastly, when drawing the last line click at the first corner to seal the polygon.
-
-\begin{center}
-\includegraphics{image/open.png}\hspace{0.2cm}\includegraphics{image/draw_freehand_line.png}\hspace{0.2cm}\includegraphics{image/draw_first_line.png}\hspace{0.2cm}\includegraphics{image/double_click.png}\hspace{0.2cm}\includegraphics{image/draw_second_line.png}\hspace{0.2cm}\includegraphics{image/draw_last_line.png}
-\end{center}
+  <p/><center><img src="`r paste0(url, "open.png")`" width="100" hspace=20><img src="`r paste0(url, "draw_freehand_line.png")`" hspace=20>)<img src="`r paste0(url, "double_click.png")`"><img src="`r paste0(url, "draw_second_line.png")`"><img src="`r paste0(url, "draw_last_line.png")`"></center><p/>
 
   2. Align polygons <p/><p/> 
   Select "Edit path by nodes (F2)" from the left tool bar. Draw a large rectangle to select the whole sealed polygon and draw another large rectangle to select all nodes.
-
-\begin{center}
-\includegraphics{image/edit_path_tool.png}\hspace{0.2cm}\includegraphics{image/select_path.png}\hspace{0.2cm}\includegraphics{image/select_path1.png}\hspace{0.2cm}\includegraphics{image/select_node1.png}
-\end{center}
+  <p/><center><img src="`r paste0(url, "edit_path_tool.png")`"><img src="`r paste0(url, "select_path.png")`"><img src="`r paste0(url, "select_path1.png")`" ><img src="`r paste0(url, "select_node.png")`"><img src="`r paste0(url, "select_node1.png")`"></center><p/>
 
     Click the "Make selected nodes smooth" in the top tool bar. Drag the edges and handles to make the sealed polygon aligned with the template, then the first polygon is finished. <p/>
-
-\begin{center}
-\includegraphics{image/make_selected_nodes_smooth.png}\hspace{0.2cm}\includegraphics{image/node_smooth.png}\hspace{0.2cm}\includegraphics{image/drag_edge.png}\hspace{0.2cm}\includegraphics{image/drag_handle.png}\hspace{0.2cm}\includegraphics{image/first_polygon.png}
-\end{center}
+  <center><img src="`r paste0(url, "make_selected_nodes_smooth.png")`"><img src="`r paste0(url, "drag_handle.png")`"><img src="`r paste0(url, "first_polygon.png")`"></center><p/>
 
   3. <a name="shape"></a> Make polygons with shapes <p/><p/>
-  Alternatively, the polygons can be made with rectangles. Click "Create rectangles and squares (F4)" at the left tool bar and draw a rectangle in the second template polygon. Select the rectangle and click "Object to Path" under the "Path" tab at the top, then the rectangle becomes an SVG path, which can be edited. Switch cursor to "Select and Transform Objects (F1)" and rotate the rectangle. <p/>
+  Alternatively, the polygons can be made with rectangles. Click "Create rectangles and squares (F4)" at the left tool bar and draw a rectangle in the second template polygon. Select the rectangle and click "Object to Path" under the "Path" tab at the top, then the rectangle becomes an SVG path, which can be edited. Switch cursor to "Select and Transform Objects (F1)" and rotate the rectangle as expected. <p/>
 
-\begin{center}
-\includegraphics{image/create_rectangle.png}\hspace{0.2cm}\includegraphics{image/draw_rectangle1.png}\hspace{0.2cm}\includegraphics{image/object_to_path1.png}
-\end{center}
-
-\begin{center}
-\includegraphics{image/select_tool.png}\hspace{0.2cm}\includegraphics{image/rotate_rectangle.png}
-\end{center}
+  <p/><center><img src="`r paste0(url, "create_rectangle.png")`" hspace=15><img src="`r paste0(url, "draw_rectangle1.png")`" hspace=15><img src="`r paste0(url, "object_to_path1.png")`"></center><p/>
+  <center><img src="`r paste0(url, "select_tool.png")`" hspace=15></center><p/>
 
   &nbsp; &nbsp; Switch the cursor to "Edit path by nodes (F2)" and select all nodes of the rectangle. Click "Make selected nodes corner" at the top tool bar. Drag the edges and handles to overlay the rectangle path on the template, then the second polygon is finished. <p/>
 
-\begin{center}
-\includegraphics{image/select_rectangle_node.png}\hspace{0.2cm}\includegraphics{image/make_node_corner.png}\hspace{0.2cm}\includegraphics{image/drag_rectangle.png}\hspace{0.2cm}\includegraphics{image/second_polygon.png}
-\end{center}
+  <p/><center><img src="`r paste0(url, "select_rectangle_node.png")`" hspace=10><img src="`r paste0(url, "make_node_corner.png")`" hspace=10><img src="`r paste0(url, "drag_rectangle.png")`" hspace=10><img src="`r paste0(url, "second_polygon.png")`"></center><p/>
 
   In this root image there are many polygons, so it takes too much time to draw them individually. However, GIMP can be used to extract the polygons automatically. <p/>
-
 
 ### Make Blank SVG Images with GIMP
 
 If the png image contains many polygons and their contour is clear (e.g. the root image), GIMP can be used to automatically extract the polygons. <p/>
 
   4. Open the root png image with GIMP. There are five coloured tissues (skyblue, green, red, yellow, blue). The skyblue is not present in the gene matrix while the green, red, yellow, blue correspond to epidermis, cortex, endodermis, stele in the gene matrix respectively. Enable the "Paths" panel under the "Windows" tab at the top. Right click and select "By Color" under "Select". <p/>
-
-\begin{center}
-\includegraphics{image/open1.png}\hspace{0.2cm}\includegraphics{image/path_panel.png}\hspace{0.2cm}\includegraphics{image/by_color.png}
-\end{center}
+  <p/><center><img src="`r paste0(url, "open1.png")`" hspace=10><img src="`r paste0(url, "path_panel.png")`" hspace=10><img src="`r paste0(url, "by_color.png")`"></center> <p/>
 
   5. Click on the skyblue tissue, then right click, select "To Path" under "Select", and the paths of all skyblue tissues are extracted in the "Paths" panel. <p/>
-
-\begin{center}
-\includegraphics{image/click_first_color.png}\hspace{0.2cm}\includegraphics{image/to_path.png}\hspace{0.2cm}\includegraphics{image/first_path.png}
-\end{center}
+     <center><img src="`r paste0(url, "click_first_color.png")`" hspace=10><img src="`r paste0(url, "to_path.png")`" hspace=10><img src="`r paste0(url, "first_path.png")`"></center><p/>
 
   6. Similarly, exrtact paths of other tissues. In the "Paths" panel set paths visible by enabling the eye symbol, then right click and merge visible paths. Right click and export merged paths, which is a blank SVG image. <p/>
-
-\begin{center}
-\includegraphics{image/eye.png}\hspace{0.2cm}\includegraphics{image/merge.png}\hspace{0.2cm}\includegraphics{image/export.png}
-\end{center}
+  <center><img src="`r paste0(url, "eye.png")`" hspace="10"><img src="`r paste0(url, "merge.png")`" hspace="10"><img src="`r paste0(url, "export.png")`"></center> <p/>
 
 ### Make Blank SVG Images with GIMP and Drawing
 
@@ -128,36 +100,32 @@ The drawing method creates accurate SVG images but it is time-consuming, while t
 
   7. <a name="layer"></a> Place all SVG paths inside a layer <p/><p/>
   Open the blank fused SVG image in Inkscape (the image can be zoomed by press "-" or "+" on the keyboard). Under the "Layers" tab at the top click "Layers", the "Layers" panel will come out on the right, then click "+" at the bottom left corner of the panel to add "Layer 1". 
-
-\begin{center}
-\includegraphics{image/layer1.png}\hspace{0.2cm}\includegraphics{image/layer2.png}\hspace{0.2cm}\includegraphics{image/add_layer.png}
-\end{center}
+  <p/><center><img src="`r paste0(url, "layer1.png")`" hspace=10><img src="`r paste0(url, "layer2.png")`" hspace=10><img src="`r paste0(url, "add_layer.png")`"></center><p/>
 
     Draw a rectangle over the fused SVG graph and cut. Then click on "Layer 1" and paste the fused SVG to "Layer 1" (make sure the "Layer 1" is unlocked by refering to the lock symbol). Open the "XML Editor" from the "Edit" tab at the top, if "\<svg:path id="path 77"\>" is under "\<svg:g id="layer1" inkscape:label="Layer 1"\>", then the fused SVG is inside \"Layer 1\" for sure. 
      <p/><center><img src="`r paste0(url, "draw_rectangle.png")`"><img src="`r paste0(url, "click_layer.png")`" hspace="10"><img src="`r paste0(url, "paste_layer.png")`"><img src="`r paste0(url, "to_layer.png")`"><img src="`r paste0(url, "in_layer.png")`"></center> <p/>
 
   8. Refine and modify the SVG image <p/><p/>
   Draw a ractangle over the image, click "Break Apart" under the "Path" tag, then select the outer noisy rectangle by clicking on its edge. Press "delete" on the keyboard to delete it. <p/>
-  <center><img src="`r paste0(url, "break_apart1.png")`" hspace="15"><img src="`r paste0(url, "remove_outer_frame.png")`" hspace="15"><img src="`r paste0(url, "removed.png")`" ></center> <p/> 
+  <center><img src="`r paste0(url, "break_apart1.png")`" hspace="15"><img src="`r paste0(url, "remove_outer_frame.png")`" hspace="15"></center> <p/> 
 
-    Click the edge of the large fused polygon and move. Use the [drawing method](#draw) to make new polygons (blue) with the fused ones as templates. Place back the new polygons to make the tissue complete. <p/>
+    Click the edge of the large fused polygon and move. Use the [drawing method](#draw) to make new polygons (blue) with the fused ones as templates. Delete the fused polygons and move back the new polygons to make the tissue complete. <p/>
 
-  <center><img src="`r paste0(url, "move_path.png")`" hspace=10><img src="`r paste0(url, "aligned_3_polygons.png")`" hspace="10"><img src="`r paste0(url, "remove_outer_polygon.png")`"><img src="`r paste0(url, "new_polygon.png")`"></center><p/>
+  <center><img src="`r paste0(url, "move_path.png")`" hspace=10><img src="`r paste0(url, "aligned_3_polygons.png")`" hspace="10"><img src="`r paste0(url, "new_polygon.png")`"></center><p/>
 
 If a large fused polygon needs to be separated, one can use the eraser tool. Drag the fused polygon away from the tissue, select the eraser tool from the left tool bar, then use the eraser to cut the fused polygon into three independent polygons. Select the cut polygons and click "Break Apart" under the "Path" tab at the top, then the three polygons are entirely separated. Place back the three polygons to make the tissue complete.  
 
-  <center><img src="`r paste0(url, "linked_polygon.png")`" hspace="10"><img src="`r paste0(url, "eraser.png")`" hspace=10><img src="`r paste0(url, "erase1.png")`"></center><p/>
-  <center><img src="`r paste0(url, "erase2.png")`" hspace="10"><img src="`r paste0(url, "erase3.png")`"></center><p/>
+  <center><img src="`r paste0(url, "linked_polygon.png")`" hspace="10"><img src="`r paste0(url, "eraser.png")`" hspace=10><img src="`r paste0(url, "erase1.png")`"><img src="`r paste0(url, "erase3.png")`"></center><p/>
 
   9. Fill and stroke <p/><p/>
   Under "Object" tab at the top, select "Fill and Stroke...", then the "Fill and Stroke (Shift+Ctrl+F)" panel will come out on the right. Select all polygons by drawing a large rectangle over them. <p/>
   <center><img src="`r paste0(url, "fill_tab.png")`" hspace=10><img src="`r paste0(url, "select_all1.png")`"></center><p/>
 
-    Under the "Stroke paint" tab in the fill and stroke panel, select "Flat color". <b> Must make sure the “Alpha (opacity)” is 255, “Opacity(%)” is 100.0, and “Blur(%)” is 0.0 </b>. Under the "Stroke style" tab, set the stroke width, e.g.: 1.5 px. <p/>
+    <a name="opacity"></a> Under the "Stroke paint" tab in the fill and stroke panel, select "Flat color". <b> Must make sure the “Alpha (opacity)” is 255, “Opacity(%)” is 100.0, and “Blur(%)” is 0.0 for both Fill and Stroke</b>. Under the "Stroke style" tab, set the stroke width, e.g.: 1.5 px. <p/>
   <center><img src="`r paste0(url, "stroke_flat_color.png")`" width="250" hspace=10><img src="`r paste0(url, "stroke_opacity.png")`" width="250" hspace=10><img src="`r paste0(url, "stroke_width.png")`" width="200"></center><p/>
 
     Under the "Fill" tab, click "No paint" to get a blank SVG image, which is ready to use in next section. <p/>
-  <center><img src="`r paste0(url, "fill_no_paint.png")`" hspace=10><img src="`r paste0(url, "blank.png")`"></center><p/>
+  <center><img src="`r paste0(url, "fill_no_paint.png")`" hspace=10></center><p/>
 
 ## Link the SVG Image with Gene Matrix
 
@@ -171,8 +139,7 @@ If a large fused polygon needs to be separated, one can use the eraser tool. Dra
   The corresponding epidermis group \<svg:g id="987"\> shows up in the XML panel. Click "id", change "g987" to "epidermis", and click "Set", then the new group id is set. This means all the polygons in this group correspond to epidermis.
   <p/><center><img src="`r paste0(url, "click_id.png")`" height="250" width="250" hspace="20"><img src="`r paste0(url, "set_id.png")`" height="250" width="250"></center><p/> 
 
-    In the "Fill and Stroke (Shift+Ctrl+F)" panel, select "Flat color" under the "Fill" tag, then specify a color for epidermis (e.g. green). <b> Must make sure the “Alpha (opacity)” is 255, “Opacity(%)” is 100.0, and “Blur(%)” is 0.0 </b>. <p/>
-  <center><img src="`r paste0(url, "flat_color.png")`" hspace=10><img src="`r paste0(url, "epi_opacity.png")`" hspace="10"><img src="`r paste0(url, "fill_epidermis.png")`"></center><p/>
+    In the "Fill and Stroke (Shift+Ctrl+F)" panel, select "Flat color" under the "Fill" tag, then specify a color for epidermis (e.g. green). [<b> Must make sure the “Alpha (opacity)” is 255, “Opacity(%)” is 100.0, and “Blur(%)” is 0.0 for both Fill and Stroke</b>.](#opacity) <p/>
 
     Group other tissues, set ids and colours. <p/>
   <center><img src="`r paste0(url, "colored.png")`"></center><p/>
@@ -188,45 +155,41 @@ If a large fused polygon needs to be separated, one can use the eraser tool. Dra
 
 ## Add Text to Label Tissues
 
-  Users can add text to label tissues. Basically, the text is first typed in with the text tool and then the text object is coverted to paths. Next paths are added into the polygon group of target tissue and filled with the same tissue colour.
+  Users can add text to label tissues. Basically, the text is first typed in with the text tool and then the text object is coverted to paths. Next paths are added into the polygon group of target tissue and filled with the same tissue colour. Below is the example of adding text label to epidermis tissue.
 
   14. Creat text paths <p/><p/>
-  Select "Creat and select text objects (F8)" from the left tool bar, drag a text box, and type (epidermis). Click on the text object and convert it to path. 
+  Select "Creat and select text objects (F8)" from the left tool bar, drag a text box, and type epidermis. **Click on the text object and convert it to path**. 
   <center><img src="`r paste0(url, "creat_text.png")`" hspace=10><img src="`r paste0(url, "text_box.png")`" hspace=10><img src="`r paste0(url, "type.png")`" hspace=10><img src="`r paste0(url, "object_to_path1.png")`"></center><p/>
 
   15. Text fill and stroke <p/><p/>
-  Click on the text paths and fill them with the same colour of target tissue using "Pick colors from image (F7)" from the left tool bar. In the "Fill and Stroke" panel, set the stroke style and make sure <b> the “Alpha (opacity)” is 255, “Opacity(%)” is 100.0, and “Blur(%)” is 0.0 for both fill and stroke </b>.  
-  <center><img src="`r paste0(url, "pick_color_tool.png")`" hspace=10><img src="`r paste0(url, "epidermis_green.png")`" hspace=20><img src="`r paste0(url, "stroke_style.png")`"></center><p/>
+  Click on the text paths and fill them with the same colour of epidermis using "Pick colors from image (F7)" from the left tool bar. In the "Fill and Stroke" panel, set the stroke style and make sure [<b> the “Alpha (opacity)” is 255, “Opacity(%)” is 100.0, and “Blur(%)” is 0.0 for both Fill and Stroke</b>](#opacity).  
+  <center><img src="`r paste0(url, "pick_color_tool.png")`" hspace=10><img src="`r paste0(url, "epidermis_green.png")`" hspace=20></center><p/>
 
   16. Add text paths to tissue group <p/><p/>
-  Click and cut the text, then double click the target tissue (epidermis, green) to enter the group.  
-  <center><img src="`r paste0(url, "click_group.png")`"></center><p/>
+  Click and cut the text, then **double click epidermis (green) to enter the group.**  
   <center><img src="`r paste0(url, "enter_group.png")`"></center><p/>
 
-    Paste the text anywhere and move/resize it, then right click the text and ungroup it.  
-  <center><img src="`r paste0(url, "paste_text1.png")`" hspace=5><img src="`r paste0(url, "paste_text2.png")`" hspace=5><img src="`r paste0(url, "ungroup_text.png")`" hspace=5></center><p/>
+    Paste the text anywhere then **the text is inside the epidermis group as a text group**. Move/resize the text group as expected. Right click and ungroup the text.  
+  <center><img src="`r paste0(url, "ungroup_text.png")`" hspace=5></center><p/>
 
-    All the text paths are in the target tissue group (epidermis).  
+    **All the letters are in the epidermis group as individual paths**, which can be seen in the XML Editor.  
   <center><img src="`r paste0(url, "ungroup_text1.png")`"></center><p/>
 
-  To add a pointer, [draw a rectangle](#shape) and convert it to path, fill it with the same style as the target tissue, then move, rotate and resize it.  
+  To add a pointer, [draw a rectangle](#shape) and convert it to path, fill it with the same style as epidermis. Move, rotate and resize it as expected.  
 
   <center><img src="`r paste0(url, "drag_pointer.png")`" height="150" width="150"></center><p/>
 
-  Clicking anyone of other tissues will group the text, pointer, and epidermis together, which can be confirmed by dragging epidermis to see they are moving together.  
+  Clicking anyone of other tissues will group the text, pointer, and epidermis together, which can be confirmed by dragging epidermis to see they are moving as a whole.  
 
-  <center><img src="`r paste0(url, "click_other_group.png")`" hspace=5><img src="`r paste0(url, "drag_new_group.png")`"></center><p/>
+  <center><img src="`r paste0(url, "drag_new_group.png")`"></center><p/>
 
-  Similarly, add text to other tissues.  
-  <center><img src="`r paste0(url, "all_text_added.png")`"></center><p/> 
+  Similarly, add text to label other tissues.  
 
-  17. Save the final SVG graph, which is ready to use in the spatialHeatmap. The name of saved SVG image can only consists of letters, digits, underscores. E.g. "root_cross_final.svg" is acceptable while "root_cross_final(copy).svg" will give errors. <p/>
+  17. Save the final SVG image, which is ready to use in the spatialHeatmap. The name of saved SVG image can only consists of letters, digits, underscores. E.g. "root_cross_final.svg" is acceptable while "root_cross_final(copy).svg" will give errors. <p/>
 
 ## Troubleshooting
 
-  The process of making SVG image and linking it with data matrix is error-prone, if errors arise in the Shiny app, such as some tissues are missing, then users are advised to double check the bold text above, which can prevent most common errors.
-
-
+  The process of making SVG image and linking it with data matrix is error-prone. If errors occur, such as some tissues are missing, then users are advised to double check the bold text above, which can prevent most common errors.
 
 
 # Reference
