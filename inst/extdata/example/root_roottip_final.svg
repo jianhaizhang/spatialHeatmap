@@ -7,9 +7,9 @@
    xmlns="http://www.w3.org/2000/svg"
    xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
    xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
-   width="6.9722199in"
-   height="8.625in"
-   viewBox="0 0 501.99998 621"
+   width="6.6999998in"
+   height="7.5999999in"
+   viewBox="0 0 482.40012 547.2"
    version="1.1"
    id="svg3"
    sodipodi:docname="root_roottip_final.svg"
@@ -42,7 +42,7 @@
      id="namedview5"
      showgrid="false"
      inkscape:zoom="0.93292714"
-     inkscape:cx="354.74926"
+     inkscape:cx="175.20684"
      inkscape:cy="383.53259"
      inkscape:window-x="65"
      inkscape:window-y="24"
@@ -52,11 +52,11 @@
      inkscape:groupmode="layer"
      id="layer1"
      inkscape:label="Layer 1"
-     transform="translate(0,288.00004)">
+     transform="translate(0,214.20006)">
     <g
        id="g4683"
-       transform="translate(432.55705,71.530746)"
-       style="stroke:#070000;stroke-opacity:1;fill:#eef4ee;fill-opacity:1">
+       transform="translate(428.05705,103.03075)"
+       style="fill:#eef4ee;fill-opacity:1;stroke:#070000;stroke-opacity:1">
       <path
          sodipodi:nodetypes="cccccc"
          inkscape:connector-curvature="0"
@@ -1199,7 +1199,7 @@
     </g>
     <g
        id="g1988"
-       transform="translate(421.18788,269.92268)"
+       transform="translate(416.68788,301.42268)"
        style="fill:#eef4ee;fill-opacity:1">
       <path
          inkscape:connector-curvature="0"
@@ -1245,7 +1245,8 @@
          d="m -221.01946,-395.33095 c 1.24416,-4.67834 9.72635,-3.50503 13.42753,-3.92832 1.68235,-0.0594 4.38975,-0.73517 5.93908,0 2.70742,1.0322 5.2818,5.54718 2.42572,9.12649 -0.85292,1.06191 -2.53527,2.59908 -3.66987,3.39366 -1.8858,1.32924 -3.93592,2.04213 -6.25991,2.3169 -2.62916,0.3119 -5.82172,-0.39358 -8.6074,-0.5124 0,0 -3.25515,-10.39633 -3.25515,-10.39633 z" />
     </g>
     <g
-       id="RTSCR">
+       id="RTSCR"
+       transform="translate(-4.5000006,31.500001)">
       <path
          sodipodi:nodetypes="ccccccc"
          inkscape:connector-curvature="0"
@@ -1636,7 +1637,8 @@
          d="m 396.52461,-155.01003 c 6.53323,2.32693 -0.003,8.02669 -3.80289,8.4433 l -13.23189,-3.25999 0.78249,-5.94077 c 3.12996,0 14.10045,-0.51238 16.25229,0.75746 z" />
     </g>
     <g
-       id="g2787">
+       id="g2787"
+       transform="translate(-4.5000006,31.500001)">
       <path
          inkscape:connector-curvature="0"
          style="fill:#eef4ee;fill-opacity:1;stroke:#000000;stroke-width:0.37500006;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
@@ -1811,7 +1813,8 @@
          style="opacity:1;fill:#eef4ee;fill-opacity:1;stroke:#000000;stroke-width:0.37500006;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" />
     </g>
     <g
-       id="RTWOL">
+       id="RTWOL"
+       transform="translate(-4.5000006,31.500001)">
       <path
          sodipodi:nodetypes="ccccccccccccccccccccccccccccccc"
          inkscape:connector-curvature="0"
@@ -1945,7 +1948,8 @@
          d="m 385.5478,-184.74744 -3.02947,2.35044 c -2.3056,-2.19314 -1.26008,-4.37617 0.682,-4.57821 2.56443,-0.70523 1.68317,1.38915 2.34747,2.22777 z" />
     </g>
     <g
-       id="RTSHR">
+       id="RTSHR"
+       transform="translate(-4.5000006,31.500001)">
       <path
          inkscape:connector-curvature="0"
          id="path2123-6"
@@ -2064,7 +2068,7 @@
     </g>
     <g
        id="RL11C"
-       transform="translate(-27.285997,98.864075)">
+       transform="translate(-31.785997,130.36408)">
       <path
          sodipodi:nodetypes="ccccccccc"
          inkscape:connector-curvature="0"
@@ -2133,7 +2137,7 @@
     </g>
     <g
        id="R35S"
-       transform="translate(-27.285997,98.864075)">
+       transform="translate(-31.785997,130.36408)">
       <path
          sodipodi:nodetypes="cccccccccccccccccccccccccccccc"
          inkscape:connector-curvature="0"
@@ -2172,7 +2176,7 @@
     </g>
     <g
        id="RT35S"
-       transform="translate(-27.285997,98.864075)">
+       transform="translate(-31.785997,130.36408)">
       <path
          sodipodi:nodetypes="cccccccccccccccccccccccccccccc"
          inkscape:connector-curvature="0"
@@ -2211,7 +2215,7 @@
     </g>
     <g
        id="g5507"
-       transform="translate(-226.0945,-123.82568)">
+       transform="translate(-230.5945,-92.32568)">
       <path
          sodipodi:nodetypes="cccccc"
          inkscape:connector-curvature="0"
@@ -3107,7 +3111,8 @@
          d="m 429.73373,64.099777 c -1.07497,1.389856 -6.22963,1.132726 -8.34405,-1.324996 -0.727,-4.217429 -0.66001,-16.080411 1.57012,-19.292274 15.48492,-5.345776 7.64748,18.522147 6.77393,20.61727 z" />
     </g>
     <g
-       id="RGL2">
+       id="RGL2"
+       transform="translate(-4.5000006,31.500001)">
       <path
          d="m 196.39534,-231.07694 c 2.3767,-7.18193 11.39717,-5.36667 14.1381,-1.40276 0.92333,0.9134 1.82722,3.36859 2.49234,4.8315 l -4.6915,10.08009 -11.52675,-1.8409 c -0.13302,-2.73275 -1.34335,-9.6555 -0.41219,-11.66793 z"
          id="path1505-6"
@@ -3330,7 +3335,8 @@
          sodipodi:nodetypes="cccsc" />
     </g>
     <g
-       id="RCO2">
+       id="RCO2"
+       transform="translate(-4.5000006,31.500001)">
       <path
          inkscape:connector-curvature="0"
          id="path1444-3"
@@ -3511,7 +3517,8 @@
          style="opacity:1;fill:#b6b567;fill-opacity:1;stroke:#000000;stroke-width:0.37500006;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" />
     </g>
     <g
-       id="RWOL">
+       id="RWOL"
+       transform="translate(-4.5000006,31.500001)">
       <path
          inkscape:connector-curvature="0"
          style="opacity:1;fill:#8016ea;fill-opacity:1;stroke:#000000;stroke-width:0.37500006;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
@@ -3862,7 +3869,8 @@
          style="opacity:1;fill:#4be526;fill-opacity:1;stroke:#000000;stroke-width:0.37500006;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" />
     </g>
     <g
-       id="RSHR">
+       id="RSHR"
+       transform="translate(-4.5000006,31.500001)">
       <path
          sodipodi:nodetypes="cccc"
          inkscape:connector-curvature="0"
@@ -4035,7 +4043,8 @@
          style="opacity:1;fill:#0816ee;fill-opacity:1;stroke:#000000;stroke-width:0.37500006;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" />
     </g>
     <g
-       id="RSUC">
+       id="RSUC"
+       transform="translate(-4.5000006,31.500001)">
       <path
          sodipodi:nodetypes="cccc"
          inkscape:connector-curvature="0"
@@ -4150,7 +4159,8 @@
          style="opacity:1;fill:#4bd0ea;fill-opacity:1;stroke:#000000;stroke-width:0.37500006;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" />
     </g>
     <g
-       id="RPEP">
+       id="RPEP"
+       transform="translate(-4.5000006,31.500001)">
       <path
          inkscape:connector-curvature="0"
          style="fill:#eef4ee;fill-opacity:1;stroke:#000000;stroke-width:0.37500006;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
@@ -4359,7 +4369,8 @@
          style="opacity:1;fill:#4b6027;fill-opacity:1;stroke:#000000;stroke-width:0.37500006;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" />
     </g>
     <g
-       id="RSCR">
+       id="RSCR"
+       transform="translate(-4.5000006,31.500001)">
       <path
          inkscape:connector-curvature="0"
          style="opacity:1;fill:#b54a2f;fill-opacity:1;stroke:#000000;stroke-width:0.37500006;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"

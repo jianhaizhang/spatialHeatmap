@@ -121,8 +121,8 @@ data.path <- system.file("extdata/example", "root_expr_ann_row_gen.txt", package
 # Filter the data matrix. The directory "local_mode_result/" is automatically created in the location specified by "dir" and is used to save filtered data matrix "processed_data.txt".
 exp <- filter.data(data=data.path, sep="\t", isRowGen=TRUE, pOA=c(0, 0), CV=c(0.1, 10000), dir="./") 
 
-# Plot the spatial heatmaps for gene "PSAC" and "NDHE".
-spatial.hm(svg=svg.path, data=data.path, sep="\t", isRowGene=TRUE, pOA=c(0.1, 3), CV=c(0.05, 1000), ID=c("PSAC", "NDHE"), col.com=c("green", "blue", "purple", "yellow", "red"), width=1, height=1, sub.title.size=11, layout="gene", ncol=3)
+# Plot the spatial heatmaps for gene "PSAC" and "NDHG".
+spatial.hm(svg=svg.path, data=data.path, sep="\t", isRowGene=TRUE, pOA=c(0.1, 3), CV=c(0.05, 1000), ID=c("PSAC", "NDHG"), col.com=c("green", "blue", "purple", "yellow", "red"), width=1, height=1, sub.title.size=11, layout="gene", ncol=3)
 
 # Compute the adjacency matrix and identify modules. The directory "local_mode_result/" is automatically created in the location specified by "dir" and is used to save the resulting adjacency file "adj.txt" and module definition file "mod.txt".
 adj_mod <- adj.mod(data=exp, type="signed", minSize=20, dir="./")

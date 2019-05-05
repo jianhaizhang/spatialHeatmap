@@ -7,12 +7,12 @@
    xmlns="http://www.w3.org/2000/svg"
    xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
    xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
-   width="7.9722199in"
-   height="10.625in"
-   viewBox="0 0 574 765"
+   width="6.1722202in"
+   height="9.625in"
+   viewBox="0 0 444.39998 693"
    version="1.1"
    id="svg3"
-   sodipodi:docname="root_final.svg"
+   sodipodi:docname="shoot_root_final.svg"
    inkscape:version="0.92.3 (unknown)">
   <metadata
      id="metadata9">
@@ -41,9 +41,9 @@
      inkscape:window-height="1056"
      id="namedview5"
      showgrid="false"
-     inkscape:zoom="0.9329271"
-     inkscape:cx="434.99425"
-     inkscape:cy="429.52663"
+     inkscape:zoom="0.65967908"
+     inkscape:cx="255.45182"
+     inkscape:cy="515.27824"
      inkscape:window-x="65"
      inkscape:window-y="24"
      inkscape:window-maximized="1"
@@ -52,11 +52,11 @@
      inkscape:groupmode="layer"
      id="layer1"
      inkscape:label="Layer 1"
-     transform="translate(0,432.00006)">
+     transform="translate(0,360.00005)">
     <g
        id="g1539"
        style="fill:#eef4ee;fill-opacity:1"
-       transform="translate(-15.000001,-7.5000006)">
+       transform="translate(-63.000004,37.500001)">
       <path
          inkscape:connector-curvature="0"
          style="fill:#eef4ee;fill-opacity:1;stroke:#000000;stroke-width:0.37500006;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
@@ -1025,7 +1025,7 @@
     <g
        id="RPEP"
        style="fill:#4b6027;fill-opacity:1;stroke:#000000;stroke-width:0.37500006;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
-       transform="translate(819.78948,21.623481)">
+       transform="translate(771.78948,66.623481)">
       <path
          sodipodi:nodetypes="ccccccccccccccccccc"
          inkscape:connector-curvature="0"
@@ -1165,7 +1165,7 @@
     <g
        id="RSCR"
        style="fill:#b54a2f;fill-opacity:1;stroke:#000000;stroke-width:0.37500006;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
-       transform="translate(819.78948,21.623481)">
+       transform="translate(771.78948,66.623481)">
       <path
          inkscape:connector-curvature="0"
          style="opacity:1;fill:#b54a2f;fill-opacity:1;stroke:#000000;stroke-width:0.37500006;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
@@ -1602,7 +1602,7 @@
     <g
        id="RGL2"
        style="fill:#a7a700;fill-opacity:1;stroke:#000000;stroke-width:0.37500006;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
-       transform="translate(819.78948,21.623481)">
+       transform="translate(771.78948,66.623481)">
       <path
          d="m -674.30697,77.442617 c 2.3767,-7.181932 11.39717,-5.366666 14.1381,-1.40276 0.92333,0.9134 1.82722,3.36859 2.49234,4.8315 l -4.6915,10.08009 -11.52675,-1.8409 c -0.13302,-2.73275 -1.34335,-9.6555 -0.41219,-11.66793 z"
          id="path1505"
@@ -1799,7 +1799,7 @@
     <g
        id="RCO2"
        style="fill:#b6b567;fill-opacity:1;stroke:#000000;stroke-width:0.37500006;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
-       transform="translate(819.78948,21.623481)">
+       transform="translate(771.78948,66.623481)">
       <path
          inkscape:connector-curvature="0"
          id="path1444"
@@ -1953,7 +1953,7 @@
     <g
        id="RSHR"
        style="fill:#0816ee;fill-opacity:1;stroke:#000000;stroke-width:0.37500006;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
-       transform="translate(819.78948,21.623481)">
+       transform="translate(771.78948,66.623481)">
       <path
          sodipodi:nodetypes="cccc"
          inkscape:connector-curvature="0"
@@ -2090,7 +2090,7 @@
     <g
        id="RWOL"
        style="fill:#8016ea;fill-opacity:1;stroke:#000000;stroke-width:0.37500006;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
-       transform="translate(819.78948,21.623481)">
+       transform="translate(771.78948,66.623481)">
       <path
          inkscape:connector-curvature="0"
          style="opacity:1;fill:#8016ea;fill-opacity:1;stroke:#000000;stroke-width:0.37500006;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
@@ -2247,7 +2247,7 @@
     <g
        id="RSUC"
        style="fill:#4bd0ea;fill-opacity:1;stroke:#000000;stroke-width:0.37500006;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
-       transform="translate(819.78948,21.623481)">
+       transform="translate(771.78948,66.623481)">
       <path
          sodipodi:nodetypes="cccc"
          inkscape:connector-curvature="0"
@@ -2328,7 +2328,7 @@
     <g
        id="RS22"
        style="fill:#4be526;fill-opacity:1;stroke:#000000;stroke-width:0.37500006;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
-       transform="translate(819.78948,21.623481)">
+       transform="translate(771.78948,66.623481)">
       <path
          sodipodi:nodetypes="cccc"
          inkscape:connector-curvature="0"
@@ -2436,7 +2436,7 @@
          style="opacity:1;fill:#4be526;fill-opacity:1;stroke:#000000;stroke-width:0.37500006;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" />
     </g>
     <g
-       transform="translate(25.258879,-453.17404)"
+       transform="translate(-52.741124,-408.17404)"
        id="g258"
        style="opacity:1;fill:#f7fcf5;fill-opacity:1;stroke:#000000;stroke-width:0.37500015;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1">
       <path
@@ -2676,7 +2676,7 @@
          style="fill:#f7fcf5;fill-opacity:1;stroke:#000000;stroke-width:0.37500015;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" />
     </g>
     <g
-       transform="translate(13.555569,-454.41214)"
+       transform="translate(-64.444435,-409.41214)"
        id="SGL2"
        style="opacity:1;fill:#ff00b9;fill-opacity:1;stroke:#000000;stroke-width:0.37500015;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1">
       <path
@@ -2755,7 +2755,7 @@
          style="opacity:1;fill:#ff00b9;fill-opacity:1;stroke:#000000;stroke-width:0.37500015;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" />
     </g>
     <g
-       transform="translate(13.555569,-454.41214)"
+       transform="translate(-64.444435,-409.41214)"
        id="SRB"
        style="fill:#89d31c;fill-opacity:1;stroke:#000000;stroke-width:0.37500015;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1">
       <path
@@ -2986,7 +2986,8 @@
          style="opacity:1;fill:#89d31c;fill-opacity:1;stroke:#000000;stroke-width:0.37500015;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" />
     </g>
     <g
-       id="SCER">
+       id="SCER"
+       transform="translate(-78.000004,45.000001)">
       <path
          sodipodi:nodetypes="ccccccccc"
          style="opacity:1;fill:#7d441c;fill-opacity:1;stroke:#000000;stroke-width:0.37500006;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
@@ -3139,7 +3140,7 @@
          inkscape:connector-curvature="0" />
     </g>
     <g
-       transform="translate(13.555569,-454.41214)"
+       transform="translate(-64.444435,-409.41214)"
        id="SS22"
        style="opacity:1;fill:#f7ea5a;fill-opacity:1;stroke:#000000;stroke-width:0.37500015;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1">
       <path
@@ -3310,7 +3311,7 @@
          style="opacity:1;fill:#f7ea5a;fill-opacity:1;stroke:#000000;stroke-width:0.37500015;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" />
     </g>
     <g
-       transform="translate(13.555569,-454.41214)"
+       transform="translate(-64.444435,-409.41214)"
        id="SSUC"
        style="opacity:1;fill:#f8a40d;fill-opacity:1;stroke:#000000;stroke-width:0.37500015;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1">
       <path
@@ -3446,7 +3447,7 @@
          style="opacity:1;fill:#f8a40d;fill-opacity:1;stroke:#000000;stroke-width:0.37500015;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" />
     </g>
     <g
-       transform="translate(13.555569,-454.41214)"
+       transform="translate(-64.444435,-409.41214)"
        id="SKAT"
        style="opacity:1;fill:#5e76e1;fill-opacity:1;stroke:#000000;stroke-width:0.37500015;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1">
       <path
