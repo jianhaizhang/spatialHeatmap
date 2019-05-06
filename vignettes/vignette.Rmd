@@ -186,7 +186,7 @@ include_graphics(paste0(url, "network_R.png"))
 ## The Integrated spatialHeatmap
 
 <a name="shiny"></a>
-All the above functionality is also combined into a web-browser based Shiny app. Running the following command will lauch the app. In addition, the Shiny app is also hosted [online](https://tgirke.shinyapps.io/spatialHeatmap/).
+All the above functionality is also combined into a web-browser based Shiny app. Running the following command will lauch the app. In addition, the Shiny app is also hosted [online](https://tgirke.shinyapps.io/spatialHeatmap/) at the Shiny server.
 
 ```{r, eval=FALSE, echo=TRUE, warnings=FALSE}
  
