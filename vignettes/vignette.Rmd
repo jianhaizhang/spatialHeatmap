@@ -32,11 +32,12 @@ library(knitr); opts_chunk$set(message=FALSE, warning=FALSE)
 
 # Introduction 
 
-The spatialHeatmap is designed for visualising gene expression data (sequencing, microarray, etc.). The core feature is to map expression values of target genes under different conditions to different tissues, which are called spatial heatmaps. To make it more versatile, the matrix heatmap and network features were also developed, which display the target gene in the context of corresponding gene module. All the utilities implemented in this R package are also combined as a web-browser based Shiny app [@shiny; @shinydashboard]. 
+This R package spatialHeatmap is able to visualise various gene expression data as long as the data is formatted in a matrix where rows are genes and columns are samples/conditions or vice versa. Examples include but not limit to RNA-seq, microarray, qPCR, etc., regardless of species. The core feature is to map expression values of target genes under different conditions to different tissues/cells/organs, which are called spatial heatmaps. In addition, the accessory features of matrix heatmap and network make this package more versatile, which display the target gene in the context of corresponding gene module. All the utilities implemented in this R package are also combined as a web-browser based Shiny app [@shiny; @shinydashboard], which can be used locally or [online](https://tgirke.shinyapps.io/spatialHeatmap/) on the Shiny server. 
 
-The application of this package is not limited to gene expression data. It can be used as long as a data matrix and an associated SVG image are provided, such as population data generated in different years across different cities. The tutorial of how to properly format and associate a custom SVG image with a data matrix is provided in an independent vignette "SVG_tutorial.html". In the following the instructions are given with a gene expression matrix and an associated root tissue image in SVG format as an example. This vignette describes the R functions and instruction on how to use the web-browser based Shiny app.  
 
-<b> For a quick test, users can launch the [combined Shiny app](#shiny) then either select the top 7 examples from the left menu or download the example data matrix and SVG image in the insturction page.</b>  
+The application of this package is not limited to gene expression data. It can be used as long as a data matrix and an associated SVG image are provided, such as population data collected in different years across different cities, health data of an individual under different conditions, ect. The tutorial of how to properly format and associate a custom SVG image with a data matrix is provided in an independent vignette "SVG_tutorial.html". In the following the vignette is given with a gene expression matrix and an associated root tissue image in SVG format as an example. Usage on other cases is in the same way. This vignette describes the R functions and instruction on how to use the web-browser based Shiny app.  
+
+<b> For a quick test, users can use the example code below or the [online](https://tgirke.shinyapps.io/spatialHeatmap/) Shiny app. On the online app, users can either select the top 7 examples from the left menu or download the example data matrix and SVG image in the insturction page.</b>  
 
 # Installation
 
@@ -118,7 +119,7 @@ include_graphics(paste0(url, "root_R.png"))
 
 <a name="shm_R"></a>
 <center><img src="`r paste0(url, "spatial_heatmap_R1.png")`" hspce=20/><img src="`r paste0(url, "spatial_heatmap_R2.png")`"/></center>
-<p class="caption">Figure 2. Spatial Heatmaps of gene \"PSAC\". User defined tissue regions are coloured by the expression profile of a gene of interest."</p>
+<p class="caption">Figure 2. Spatial Heatmaps of gene \"PSAC\". User defined tissue regions are coloured by the expression profile of the target gene.</p>
 
 ## Adjacency matrix and module identification
 <a name="ds"></a>
