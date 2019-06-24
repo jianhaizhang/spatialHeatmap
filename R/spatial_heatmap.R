@@ -1,22 +1,22 @@
 #' Spatial Heatmap
 #'
-#'It takes a gene expression matrix and an associated svg image as input, where each tissue region is defined. The expression profiles of the input gene(s) under each condition are mapped to each tissue in the form of different colours. Its application is not limited to gene expression data, since it can be used as long as a data matrix and an associated svg image are provided, such as population data generated in different years across different cities. 
+#'It takes a gene expression matrix and an associated svg image as input, where each tissue region is pre-defined. The expression profiles of the input gene(s) under each condition are mapped to each tissue in the form of different colours. Its application is not limited to gene expression data, since it can be used as long as a data matrix and an associated svg image are provided, such as population data generated in different years across different cities. 
 
-#' @param svg The path of the svg image, where different tissues are defined and can be labeled with different colors. \cr E.g.: system.file("extdata/example", "test_final.svg", package = "spatialHeatmap")
+#' @param svg The path of the svg image, where different tissues are pre-defined and can be labeled with different colours. \cr E.g.: system.file("extdata/example", "test_final.svg", package = "spatialHeatmap")
 
 #' @param data The path of the data matrix. In the gene expression matrix, the row and column names are usually gene IDs and sample/conditions, respectively. The sample/condition names MUST be fomatted this way: a sample name is followed by double underscore then the condition, such as “stele__140mM_48h" (Mustroph et al. 2009), where stele is the sample and 140mM_48h is the condition. One column of meta data (e.g. gene annotation) can also be included in parallel with sample/condition at the end. In the column names of sample/condition and meta data, only letters, digits, single underscore, dots are allowed. Not all samples in the matrix necessarily need to be present in the svg image, and vice versa. Only samples present in the svg image are recognised and coloured. The rows and columns can be swaped and the function identifies gene IDs by "isRowGen". \cr E.g.: system.file("extdata/example", "root_expr_ann_row_gen.txt", package = "spatialHeatmap").
 
 #' @param sep The seprator of the data matrix, e.g. ",", "\\t", ";".
 
-#' @param isRowGene If row names are gene IDs it is "TRUE", otherwise it is "FALSE". If the data matrix is not gene expression, this argument is set according to if the row is equivalent to gene ID.
+#' @param isRowGene If row names are gene IDs it is "TRUE", otherwise it is "FALSE". If the data matrix is not gene expression, this argument is set according to if the row is equivalent to gene IDs.
 
-#' @param pOA It specifies parameters of the filter function "pOverA" from the package "genefilter" (Gentleman et al. 2018). It filters genes according to the proportion "p" of samples where the expression values exceeding a threshold "A". The input is a two-component vector, where the first one is the "p" and the second one is "A". The default is c(0, 0), which means no filter is applied. \cr E.g. c(0.1, 2) means genes whose expression values over 2 in at least 10\% of all samples are kept.                           
+#' @param pOA It specifies parameters of the filter function "pOverA" from the package "genefilter" (Gentleman et al. 2018). It filters genes according to the proportion "p" of samples where the expression values exceeding a threshold "A". The input is a two-component vector, where the first one is the "p" and the second one is "A". The default is c(0, 0), which means no filter is applied. \cr E.g. c(0.1, 2) means genes whose expression values over 2 in at least 10\% of all samples will remain.                           
 
-#' @param CV It specifies parameters of the filter function "cv" from the package "genefilter" (Gentleman et al. 2018), which filters genes according to the coefficient of variation (CV). The input is a two-component vector, specifying the CV range. The default is c(0, 10000), where the range is set from very samll (0) to very large (10000) so as to not apply filtering. \cr E.g. c(0.1, 5) means genes with CV between 0.1 and 5 are kept.
+#' @param CV It specifies parameters of the filter function "cv" from the package "genefilter" (Gentleman et al. 2018), which filters genes according to the coefficient of variation (CV). The input is a two-component vector, specifying the CV range. The default is c(0, 10000), where the range is set from very small (0) to very large (10000) so as not to apply filtering. \cr E.g. c(0.1, 5) means genes with CV between 0.1 and 5 will remain.
 
 #' @param ID The gene IDs used to display the spatial heatmaps.
 
-#' @param col.com The colour components used to build the colour scale, which must be separated with comma and no space, e.g. the default is "green,blue,purple,yellow,red".
+#' @param col.com A character vector of the colour components used to build the colour scale, e.g. the default is c("green", "blue", "purple", "yellow", "red").
 
 #' @param col.bar It has two values "selected" and "all", which specifies whether the colour scale is built using the input genes ("selected") or whole data matrix ("all"). The default is "selected".
 
@@ -33,7 +33,7 @@
 #' @return It generates an image of spatial heatmap(s) along with a colour key.
 
 #' @section Details:
-#' Details about how to properly format and associate a custom svg image with a data matrix are provided in the vignette "SVG_tutorial.html". \cr The data matrix can be first filtered with the function "filter.data" then provide the resulting matrix path to this function.
+#' Details about how to properly format and associate a custom svg image with a data matrix are provided in the vignette "SVG_tutorial.html". \cr If the data matrix is filtered with the function "filter.data" then the path of resulting matrix should be provided to this function.
 
 #' @examples
 #' # The expression matrix path.

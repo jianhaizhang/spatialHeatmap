@@ -3,7 +3,7 @@
 #' This function represents the input gene in the context of corresponding gene network module as a web-browser based interactive matrix heatmap, where the rows and columns are sorted by hierarchical clustering dendrograms and the input gene is tagged by a red rectangle. To explore the results, users can zoom in and out by drawing a rectangle and by double clicking the image, respectively. Users can scale the expression values by gene or sample. \cr The network modules are identified at two alternative sensitivities levels (3, 2) by the function "adj.mod". From 3 to 2, the sensitivity decreases and results in less modules with larger sizes. The same module can also be displayed as an interactive network by the "network" function.
 
 #' @param geneID A gene ID from the expression matrix. 
-#' @param data The gene expression matrix, where rows are gene IDs and columns are samples. If annotation is included, it must be in the last column.
+#' @param data The gene expression matrix, where rows are gene IDs and columns are samples/conditions. If annotation is included, it must be in the last column in parallel with samples/conditions.
 
 #' @param adj.mod The "adjacency matrix" and "module" definition retured by the function "adj.mod".
 
