@@ -48,11 +48,11 @@ shinyUI(dashboardPage(
       selectInput("fileIn", "Select a work mode", c("None", "organ_Mustroph", "shoot_root_Mustroph", "root_roottip_Mustroph", "shoot_Mustroph", "root_Geng", "brain_Chen", "map_Census", "Compute locally", "Compute online"), "shoot_Mustroph"),
       fileInput("svgInpath", "Step 1: upload an svg file", accept=".svg", multiple=FALSE),
       fileInput("geneInpath", "Step 2: upload a gene expression file", accept=c(".txt", ".csv"), multiple=FALSE),
-      radioButtons('dimName', 'Step 3: is column or row gene?', c("None", "Row", "Column"), inline=TRUE),
+      radioButtons(inputId='dimName', label='Step 3: is column or row gene?', choices=c("None", "Row", "Column"), selected="None", inline=TRUE),
       selectInput('sep', 'Step 4: separator', c("None", "Tab", "Comma", "Semicolon"), "None"),
-      div(style="display:inline-block;width:75%;text-align:left;",textInput("color", "Step 5: Color scheme of Spatial Heatmap", "green,blue,purple,yellow,red", placeholder="Eg: green,yellow,red", width=200)),
+      div(style="display:inline-block;width:75%;text-align:left;",textInput("color", "Step 5: Color scheme of Spatial Heatmap", "yellow,purple,blue", placeholder="Eg: yellow,purple,blue", width=200)),
       div(style="display:inline-block;width:25%;text-align:left;", actionButton("col.but", "Go", icon=icon("refresh"), style="padding:7px; font-size:90%; margin-left: 0px")),
-      radioButtons('cs.v', 'Colour scale based on:', c("Selected genes"="sel.gen", "Whole matrix"="w.mat"), inline=TRUE),
+      radioButtons(inputId='cs.v', label='Colour scale based on:', choices=c("Selected genes"="sel.gen", "Whole matrix"="w.mat"), selected="sel.gen", inline=TRUE),
       h4(strong("Compute locally")),
       fileInput("adj.modInpath", "Upload the adjacency matrix and module definition file", accept=".txt", multiple=TRUE),
       h4(strong("Compute online")),
@@ -60,7 +60,7 @@ shinyUI(dashboardPage(
       numericInput("cv1", "Lower bound of coefficient of variation (CV) (filter genes):", 0, min=0, max=1),
       numericInput("cv2", "Upper bound of coefficient of variation (CV) (filter genes):", 10000, min=0, max=10000),
       numericInput("min.size", "Minmum module size:", 5, min=3, max=10000),
-      radioButtons("net.type", "Network type", c("Signed"="S", "Unsigned"="U"), "S", inline=TRUE)
+      radioButtons(inputId="net.type", label="Network type", choices=c("Signed"="S", "Unsigned"="U"), selected="S", inline=TRUE)
 
       ),
 
@@ -69,19 +69,19 @@ shinyUI(dashboardPage(
       selectInput("height", "Overall canvas height:", seq(100, 15000, 20), "400", width=170), 
       selectInput("width", "Overall canvas width:", seq(100, 15000, 20), "820", width=170),
       selectInput("col.n", "No. of columns for sub-plots", seq(1, 15, 1), "2", width=210), 
-      radioButtons("gen.con", "Display by:", c("Gene"="gene", "Condition"="con"), "gene", inline=TRUE),
+      radioButtons(inputId="gen.con", label="Display by:", choices=c("Gene"="gene", "Condition"="con"), selected="gene", inline=TRUE),
       h4(strong("Matrix Heatmap & Network")), 
       selectInput("gen.sel","Select a gene to display matrix heatmap & network.", c("None"),
       selected="None", width=190),
       selectInput("mat.scale", "Scale matrix heatmap", c("No", "By column/sample", 
-      "By row/gene"), "No", width=190),
+      "By row/gene"), "By row/gene", width=190),
       selectInput("ds","Select a module splitting sensitivity level", 3:2, selected="3", width=190),
 
       selectInput("TOM.in", "Input an adjcency threshold to display the adjacency network.", c("None", sort(seq(0, 1, 0.002), decreasing=TRUE)), "None", width=190), 
       htmlOutput("edge"),
-      div(style="display:inline-block;width:75%;text-align:left;",textInput("color.net", "Color scheme of Interactive Network", "green,blue,red", placeholder="Eg: green,yellow,red", width=200)),
+      div(style="display:inline-block;width:75%;text-align:left;",textInput("color.net", "Color scheme of Interactive Network", "green,blue,red", placeholder="Eg: yellow,black,blue", width=200)),
       div(style="display:inline-block;width:25%;text-align:left;", actionButton("col.but.net", "Go", icon=icon("refresh"), style="padding:7px; font-size:90%; margin-left: 0px")),
-      radioButtons("cpt.nw", "Display or not?", c("Yes"="Y", "No"="N"), "N", inline=TRUE),
+      radioButtons(inputId="cpt.nw", label="Display or not?", choices=c("Yes"="Y", "No"="N"), selected="N", inline=TRUE),
       #menuSubItem("View network", tabName="network")
 
       menuSubItem("View", tabName="hm_net"), br()

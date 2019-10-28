@@ -37,10 +37,10 @@ shinyServer(function(input, output, session) {
   observe({
 
     input$fileIn; input$geneInpath
-    updateRadioButtons(session, "dimName", label="Step 3: is column or row gene?", 
-    c("None", "Row", "Column"), "None", inline=TRUE)
+    updateRadioButtons(session, inputId="dimName", label="Step 3: is column or row gene?", 
+    inline=TRUE, choices=c("None", "Row", "Column"), selected="None")
     updateSelectInput(session, 'sep', 'Step 4: separator', c("None", "Tab", "Comma", "Semicolon"), "None")
-    updateRadioButtons(session, 'cs.v', 'Colour scale based on:', c("Selected genes"="sel.gen", "Whole matrix"="w.mat"), "sel.gen", inline=TRUE)
+    updateRadioButtons(session, inputId='cs.v', label='Colour scale based on:', choices=c("Selected genes"="sel.gen", "Whole matrix"="w.mat"), selected="sel.gen", inline=TRUE)
     updateSelectInput(session, "height", "Overall canvas height:", seq(100, 15000, 20), "400")
     updateSelectInput(session, "width", "Overall canvas width:", seq(100, 15000, 20), "820")
     updateSelectInput(session, "col.n", "No. of columns for sub-plots", seq(1, 15, 1), "2")
@@ -69,7 +69,7 @@ shinyServer(function(input, output, session) {
         gene2 <- df.te1[, idx, drop=FALSE]; gene3 <- df.te1[, idx1, drop=FALSE]
 	pOverA <- pOverA(input$p, input$A); cv <- cv(input$cv1, input$cv2)
 	ffun <- filterfun(pOverA, cv); filtered <- genefilter(gene2, ffun)
-	gene2 <- gene2[filtered, ]; gene3 <- gene3[filtered, , drop=FALSE]
+	gene2 <- gene2[filtered, ]; colnames(gene2) <- make.names(colnames(gene2)); gene3 <- gene3[filtered, , drop=FALSE]
 	return(list(gene2=gene2, gene3=gene3))
 
     }
@@ -97,7 +97,7 @@ shinyServer(function(input, output, session) {
 
         pOverA <- pOverA(input$p, input$A); cv <- cv(input$cv1, input$cv2)
         ffun <- filterfun(pOverA, cv); filtered <- genefilter(gene2, ffun)
-        gene2 <- gene2[filtered, ]; gene3 <- gene3[filtered, , drop=FALSE]
+        gene2 <- gene2[filtered, ]; colnames(gene2) <- make.names(colnames(gene2)); gene3 <- gene3[filtered, , drop=FALSE]
 
       }; return(list(gene2=as.data.frame(gene2), gene3=gene3))
 
@@ -109,8 +109,7 @@ shinyServer(function(input, output, session) {
 
   output$dt <- renderDataTable({
 
-    if (((input$fileIn=="Compute locally"|input$fileIn=="Compute online") & 
-    is.null(geneIn()))|input$fileIn=="None") return(NULL)
+    if (((input$fileIn=="Compute locally"|input$fileIn=="Compute online") & is.null(geneIn()))|input$fileIn=="None") return(NULL)
 
     withProgress(message="Data table: ", value = 0, {
 
@@ -184,15 +183,16 @@ shinyServer(function(input, output, session) {
 
       if (length(color$col=="none")==0|input$color==""|is.null(geneV())) return(NULL)
 
-      if(input$col.but==0) color$col <- colorRampPalette(c("green", "blue", "purple", "yellow", "red"))(length(geneV()))
+      if(input$col.but==0) color$col <- colorRampPalette(c("yellow", "purple", "blue"))(length(geneV()))
 
       withProgress(message="Color scale: ", value = 0, {
 
         incProgress(0.25, detail="Fetching data. Please wait.")
-        cs.df <- data.frame(color_scale=geneV(), y=1)
+        cs.df <- data.frame(color_scale=geneV(), y=1); # save(cs.df, file='cs.df')
         incProgress(0.75, detail="Plotting. Please wait.")
-        cs.g <- ggplot()+geom_bar(data=cs.df, aes(x=color_scale, y=y), fill=color$col, stat="identity", width=0.2)+theme(axis.title.x=element_blank(), axis.text.x=element_blank(), axis.ticks.x=element_blank(), plot.margin=margin(3, 0.1, 3, 0.1, "cm"), panel.grid=element_blank(), panel.background=element_blank())+coord_flip()+scale_y_continuous(expand=c(0,0))+scale_x_continuous(expand = c(0,0))
-	if (max(geneV())>10000) cs.g <- cs.g+scale_x_continuous(labels=function(x) format(x, scientific=TRUE))
+	cs.g <- ggplot()+geom_bar(data=cs.df, aes(x=color_scale, y=y), fill=color$col, stat="identity", width=((max(geneV())-min(geneV()))/length(geneV()))*0.7)+theme(axis.title.x=element_blank(), axis.text.x=element_blank(), axis.ticks.x=element_blank(), plot.margin=margin(3, 0.1, 3, 0.1, "cm"), panel.grid=element_blank(), panel.background=element_blank())+coord_flip(); # save(cs.g, file='cs.g')
+	if (max(geneV())<=10000) cs.g <- cs.g+scale_x_continuous(expand=c(0,0))+scale_y_continuous(expand=c(0,0))
+	if (max(geneV())>10000) cs.g <- cs.g+scale_x_continuous(expand=c(0,0), labels=function(x) format(x, scientific=TRUE))+scale_y_continuous(expand=c(0,0))
 	return(cs.g)
 
       })
@@ -203,8 +203,7 @@ shinyServer(function(input, output, session) {
 
   observe({
 
-    geneIn(); input$adj.modInpath; input$A; input$p; input$cv1
-    input$cv2; input$min.size; input$net.type
+    input$fileIn; geneIn(); input$adj.modInpath; input$A; input$p; input$cv1; input$cv2; input$min.size; input$net.type
     r.na <- rownames(geneIn()[["gene2"]]); gen.sel <- r.na[input$dt_rows_selected]
     updateSelectInput(session, "gen.sel", choices=c("None", gen.sel), selected="None")
 
@@ -263,8 +262,8 @@ shinyServer(function(input, output, session) {
 
             }
 
-          df0 <- cbind(tissue=id.xml1[k], data.frame(coor), stringsAsFactors=TRUE)
-          df <- rbind(df, df0) # Bug: if xmlAttrs(top[[1]])[1] is "stroke", "error: df0 is not found" will happen.
+          df0 <- cbind(tissue=id.xml1[k], data.frame(coor, stringsAsFactors=FALSE), stringsAsFactors=TRUE) # 'geom_polygon' add polygons in the order of a factor. If 'stringsAsFactors=FALSE', some target polygons can be buried.
+          df <- rbind(df, df0, stringsAsFactors=TRUE) # Bug: if xmlAttrs(top[[1]])[1] is "stroke", "error: df0 is not found" will happen.
 
 	  }
 
@@ -283,7 +282,7 @@ shinyServer(function(input, output, session) {
   con <- reactive({ 
 
     cname <- colnames(geneIn()[["gene2"]]); idx <- grep("__", cname); c.na <- cname[idx]
-    if (length(grep("__", c.na))>=1) gsub("(.*)(__)(\\w+$)", "\\3", c.na) else 
+    if (length(grep("__", c.na))>=1) gsub("(.*)(__)(.*$)", "\\3", c.na) else 
     return(NULL) 
 
   })
@@ -321,9 +320,8 @@ shinyServer(function(input, output, session) {
         }
 
       }
-
-      g <- ggplot()+geom_polygon(data=g.df, aes(x=x, y=y, fill=tissue), color="black")+scale_fill_manual(values=g.col, guide=FALSE)+theme(axis.text=element_blank(), axis.ticks=element_blank(), panel.grid=element_blank(), panel.background=element_rect(fill="white", colour="grey80"), plot.margin=
-     margin(0.1, 0.1, 0.1, 0.3, "cm"), axis.title.x=element_text(size=16,face="bold"), plot.title=element_text(hjust=0.5, size=20))+labs(x="", y="")+
+      names(g.col) <- unique(g.df[, 'tissue']) # The colors might be internally re-ordered alphabetically during mapping, so give them names to fix the match with tissues. E.g. c('yellow', 'blue') can be re-ordered to c('blue', 'yellow'), which makes tissue mapping wrong. Correct: colours are not re-ordered. The 'tissue' in 'data=g.df' are internally re-ordered according to a factor. Therfore, 'tissue' should be a factor with the right order. Otherwise, disordered mapping can happen.
+      g <- ggplot()+geom_polygon(data=g.df, aes(x=x, y=y, fill=tissue), color="black")+scale_fill_manual(values=g.col, guide=FALSE)+theme(axis.text=element_blank(), axis.ticks=element_blank(), panel.grid=element_blank(), panel.background=element_rect(fill="white", colour="grey80"), plot.margin=margin(0.1, 0.1, 0.1, 0.3, "cm"), axis.title.x=element_text(size=16,face="bold"), plot.title=element_text(hjust=0.5, size=20))+labs(x="", y="")+
      scale_y_continuous(expand=c(0.01, 0.01))+scale_x_continuous(expand=c(0.01, 0.01))+ggtitle(paste0(k, "_", j)); return(g)
 
       })
@@ -345,7 +343,7 @@ shinyServer(function(input, output, session) {
 
         }
 
-      cname <- colnames(geneIn()[["gene2"]]); idx <- grep("__", cname); c.na <- cname[idx]; tis.col <- gsub("(.*)(__)(\\w+$)", "\\1", c.na); g.lis <- NULL
+      cname <- colnames(geneIn()[["gene2"]]); idx <- grep("__", cname); c.na <- cname[idx]; tis.col <- gsub("(.*)(__)(.*$)", "\\1", c.na); g.lis <- NULL
      if (!is.null(con())) {
 
        con <- con(); con.uni <- unique(con); grob.na0 <- paste0(k, "_", con.uni)
@@ -398,9 +396,8 @@ shinyServer(function(input, output, session) {
         }
 
       }
-
-     g <- ggplot()+geom_polygon(data=g.df, aes(x=x, y=y, fill=tissue), color="black")+scale_fill_manual(values=g.col, guide=FALSE)+theme(axis.text=element_blank(), axis.ticks=element_blank(), panel.grid=element_blank(), panel.background=element_rect(fill="white", colour="grey80"), plot.margin=
-     margin(0.1, 0.1, 0.1, 0.3, "cm"), axis.title.x=element_text(size=16,face="bold"), plot.title=element_text(hjust=0.5, size=20))+labs(x="", y="")+
+      names(g.col) <- unique(g.df[, 'tissue'])
+      g <- ggplot()+geom_polygon(data=g.df, aes(x=x, y=y, fill=tissue), color="black")+scale_fill_manual(values=g.col, guide=FALSE)+theme(axis.text=element_blank(), axis.ticks=element_blank(), panel.grid=element_blank(), panel.background=element_rect(fill="white", colour="grey80"), plot.margin=margin(0.1, 0.1, 0.1, 0.3, "cm"), axis.title.x=element_text(size=16,face="bold"), plot.title=element_text(hjust=0.5, size=20))+labs(x="", y="")+
      scale_y_continuous(expand=c(0.01,0.01))+scale_x_continuous(expand=c(0.01,0.01))+ggtitle(paste0(k, "_", j)); return(g)
  
       })
@@ -422,7 +419,7 @@ shinyServer(function(input, output, session) {
 
         }
 
-      cname <- colnames(geneIn()[["gene2"]]); idx <- grep("__", cname); c.na <- cname[idx]; tis.col <- gsub("(.*)(__)(\\w+$)", "\\1", c.na); g.lis <- NULL
+      cname <- colnames(geneIn()[["gene2"]]); idx <- grep("__", cname); c.na <- cname[idx]; tis.col <- gsub("(.*)(__)(.*$)", "\\1", c.na); g.lis <- NULL
 
      if (!is.null(con())) {
 
@@ -479,9 +476,8 @@ shinyServer(function(input, output, session) {
         }
 
       }
-
-     g <- ggplot()+geom_polygon(data=g.df, aes(x=x, y=y, fill=tissue), color="black")+scale_fill_manual(values=g.col, guide=FALSE)+theme(axis.text=element_blank(), axis.ticks=element_blank(), panel.grid=element_blank(), panel.background=element_rect(fill="white", colour="grey80"), plot.margin=
-     margin(0.1, 0.1, 0.1, 0.3, "cm"), axis.title.x=element_text(size=16,face="bold"), plot.title=element_text(hjust=0.5, size=20))+labs(x="", y="")+
+     names(g.col) <- unique(g.df[, 'tissue'])
+     g <- ggplot()+geom_polygon(data=g.df, aes(x=x, y=y, fill=tissue), color="black")+scale_fill_manual(values=g.col, guide=FALSE)+theme(axis.text=element_blank(), axis.ticks=element_blank(), panel.grid=element_blank(), panel.background=element_rect(fill="white", colour="grey80"), plot.margin=margin(0.1, 0.1, 0.1, 0.3, "cm"), axis.title.x=element_text(size=16,face="bold"), plot.title=element_text(hjust=0.5, size=20))+labs(x="", y="")+
      scale_y_continuous(expand=c(0.01,0.01))+scale_x_continuous(expand=c(0.01,0.01))+ggtitle(paste0(k, "_", j)); return(g)
  
       })
@@ -503,7 +499,7 @@ shinyServer(function(input, output, session) {
 
         }
 
-      cname <- colnames(geneIn()[["gene2"]]); idx <- grep("__", cname); c.na <- cname[idx]; tis.col <- gsub("(.*)(__)(\\w+$)", "\\1", c.na); g.lis <- NULL
+      cname <- colnames(geneIn()[["gene2"]]); idx <- grep("__", cname); c.na <- cname[idx]; tis.col <- gsub("(.*)(__)(.*$)", "\\1", c.na); g.lis <- NULL
 
      if (!is.null(con())) {
 
@@ -525,7 +521,6 @@ shinyServer(function(input, output, session) {
 
   })
 
-
   observeEvent(gID$new, { grob$all <- c(grob$all, gs()) })
 
   # The code chunks in "observe" run independently, e.g. if last code return (NULL), the next code still runs, while if the same case in "observeEvent", all the remaining code stops.
@@ -540,18 +535,15 @@ shinyServer(function(input, output, session) {
 
     r.na <- rownames(geneIn()[["gene2"]]); gID$geneID <- r.na[input$dt_rows_selected]
     idx <- NULL; for (i in gID$geneID) idx <- c(idx, grep(paste0("^", i, "_"), names(grob$all)))
-    grob.lis.p <- grob$all[idx]
-    #grob.lis.p <- grob.lis.p[unique(names(grob.lis.p))]
+    grob.lis.p <- grob$all[idx] #grob.lis.p <- grob.lis.p[unique(names(grob.lis.p))]
 
     if (input$gen.con=="gene") {
 
       all.cell <- ceiling(length(unique(con()))/as.numeric(input$col.n)) * as.numeric(input$col.n)
       cell.idx <- c(seq_len(length(unique(con()))), rep(NA, all.cell-length(unique(con()))))
       m <- matrix(cell.idx, ncol=as.numeric(input$col.n), byrow=TRUE)
-
       lay <- NULL; for (i in seq_len(length(gID$geneID))) { lay <- rbind(lay, m+(i-1)*length(unique(con()))) }
-
-      grid.arrange(grobs=grob.lis.p, layout_matrix=lay, newpage=TRUE)
+      if (length(grob.lis.p)>=1) grid.arrange(grobs=grob.lis.p, layout_matrix=lay, newpage=TRUE)
 
     } else if (input$gen.con=="con") {
 
@@ -562,14 +554,14 @@ shinyServer(function(input, output, session) {
 
       } 
 
+
       grob.lis.p.con <- grob.lis.p[grob.p.idx]
       all.cell <- ceiling(length(gID$geneID)/as.numeric(input$col.n)) * 
       as.numeric(input$col.n)
       cell.idx <- c(seq_len(length(gID$geneID)), rep(NA, all.cell-length(gID$geneID)))
       m <- matrix(cell.idx, ncol=as.numeric(input$col.n), byrow=TRUE)
-      lay <- NULL
-      for (i in seq_len(length(unique(con())))) { lay <- rbind(lay, m+(i-1)*length(gID$geneID)) }
-      grid.arrange(grobs=grob.lis.p.con, layout_matrix=lay, newpage=TRUE)
+      lay <- NULL; for (i in seq_len(length(unique(con())))) { lay <- rbind(lay, m+(i-1)*length(gID$geneID)) }
+      if (length(grob.lis.p.con)>=1) grid.arrange(grobs=grob.lis.p.con, layout_matrix=lay, newpage=TRUE)
 
     }
 
@@ -585,7 +577,6 @@ shinyServer(function(input, output, session) {
 
     if ((is.null(input$svgInpath) & !grepl("_Mustroph$|_Geng$|_Chen$|_Census$", input$fileIn))|input$fileIn==
     "None") return(list(src="precompute/blank.png", contentType="image/png"))
-
     w <- as.numeric(input$width); h <- as.numeric(input$height); con.n <- length(con())
     W <- w/as.numeric(input$col.n); H <- h/(ceiling(con.n/as.numeric(input$col.n)))
 
@@ -593,10 +584,13 @@ shinyServer(function(input, output, session) {
     !is.null(input$svgInpath))|grepl("_Mustroph$|_Geng$|_Chen$|_Census$", input$fileIn)) {
 
       if (input$fileIn=="Compute locally"|input$fileIn=="Compute online") { svg.path <- input$svgInpath$datapath } else if (input$fileIn=="organ_Mustroph") { svg.path <- "example/organ_final.svg" } else if (input$fileIn=="shoot_root_Mustroph") { svg.path <- "example/shoot_root_final.svg" } else if (input$fileIn=="root_roottip_Mustroph") { svg.path <- "example/root_roottip_final.svg" } else if (input$fileIn=="shoot_Mustroph") { svg.path <- "example/shoot_final.svg" } else if (input$fileIn=="root_Geng") { svg.path <- "example/root_cross_final.svg" } else if (input$fileIn=="brain_Chen") { svg.path <- "example/brain_final.svg" } else if (input$fileIn=="map_Census") { svg.path <- "example/us_map_final.svg" }; rsvg_png(svg.path, "tmp/user.png")
+      # svg.ln <- readLines(svg.path, 200); w.h <- svg.ln[grep(" width| height", svg.ln)]
+      na <- c('width', 'height'); lis <- xmlToList(svg.path)
+      for (i in seq_len(length(lis))) {
 
-      svg.ln <- readLines(svg.path, 200)
-      w.h <- svg.ln[grep(" width| height", svg.ln)]
-      w.h <- as.numeric(gsub(".*\"(\\d+\\.\\d+).*", "\\1", w.h)); r <- w.h[1]/w.h[2]
+        if (sum(na %in% names(lis[[i]]))==2) w.h <- as.character(xmlToList(svg.path)[[i]][na])
+
+      }; w.h <- as.numeric(gsub("^(\\d+\\.\\d+|\\d+).*", "\\1", w.h)); r <- w.h[1]/w.h[2]
       list(src="tmp/user.png", contentType="image/png", width=250, height=250/r, alt=NULL)
 
     }
@@ -645,15 +639,14 @@ shinyServer(function(input, output, session) {
 
   adj.tree <- reactive({ 
 
-    if (input$fileIn=="Compute online"|grepl("_Mustroph$|_Geng$|_Chen$|_Census$", input$fileIn)) {
+    gene <- geneIn()[["gene2"]]; if (!(input$gen.sel %in% rownames(gene))) return() # Avoid unnecessary computing of 'adj', since 'input$gen.sel' is a cerain true gene id of an irrelevant expression matrix, not 'None', when switching from one defaul example's matrix heatmap to another example.
+    if (input$gen.sel!="None" & (input$fileIn=="Compute online"|grepl("_Mustroph$|_Geng$|_Chen$|_Census$", input$fileIn))) {
 
-      if (input$net.type=="S") { sft <- 12; type <- "signed" } else if 
-      (input$net.type=="U") { sft <- 6; type <- "unsigned" }
+      if (input$net.type=="S") { sft <- 12; type <- "signed" } else if (input$net.type=="U") { sft <- 6; type <- "unsigned" }
 
       withProgress(message="Computing: ", value = 0, {
 
         incProgress(0.3, detail="adjacency matrix.")
-        gene <- geneIn()[["gene2"]]
         adj=adjacency(t(gene), power=sft, type=type); diag(adj)=0
         incProgress(0.5, detail="topological overlap matrix.")
         tom <- TOMsimilarity(adj, TOMType=type); diag(adj)=0
@@ -662,7 +655,6 @@ shinyServer(function(input, output, session) {
       })
 
     }; #save(adj, file="adj")
-
     return(list(adj=adj, tree=tree.hclust, disTOM=dissTOM))
 
   })
@@ -676,11 +668,10 @@ shinyServer(function(input, output, session) {
 
   mcol <- reactive({
 
-    if (input$fileIn=="Compute online"|grepl("_Mustroph$|_Geng$|_Chen$|_Census$", input$fileIn)) {
+    if (input$gen.sel!='None' & !is.null(adj.tree()) & (input$fileIn=="Compute online"|grepl("_Mustroph$|_Geng$|_Chen$|_Census$", input$fileIn))) {
 
       withProgress(message="Computing: ", value = 0, {
-      mcol <- NULL; tree.hclust <- adj.tree()[["tree"]]
-      dissTOM <- adj.tree()[["disTOM"]]
+      mcol <- NULL; tree.hclust <- adj.tree()[["tree"]]; dissTOM <- adj.tree()[["disTOM"]]
       incProgress(0.6, detail="dynamic tree cutting.")
       for (ds in 2:3) {
          
@@ -703,19 +694,18 @@ shinyServer(function(input, output, session) {
 
     geneIn(); input$adj.modInpath; input$A; input$p; input$cv1
     input$cv2; input$min.size; input$net.type
-    updateSelectInput(session, "mat.scale", "Scale matrix heatmap", c("No", 
-    "By column/sample", "By row/gene"), "No")
+    updateSelectInput(session, "mat.scale", "Scale matrix heatmap", c("No", "By column/sample", "By row/gene"), "By row/gene")
 
   })
 
   output$HMly <- renderPlotly({
-
-    if (input$gen.sel=="None") return(NULL)
+    
+    gene <- geneIn()[["gene2"]]; if (!(input$gen.sel %in% rownames(gene))) return() # Avoid unnecessary computing of 'adj', since 'input$gen.sel' is a cerain true gene id of an irrelevant expression matrix, not 'None', when switching from one defaul example's matrix heatmap to another example.
+    if (is.null(adj.tree())|input$gen.sel=="None") return(NULL)
     if (input$fileIn=="Compute locally") { adj <- adj.mod()[[1]]; mods <- adj.mod()[[2]] } else if (input$fileIn=="Compute online"|grepl("_Mustroph$|_Geng$|_Chen$|_Census$", input$fileIn)) { 
     adj <- adj.tree()[[1]]; mods <- mcol() }
-
     gene <- geneIn()[["gene2"]]; lab <- mods[, input$ds][rownames(gene)==input$gen.sel]
-    if (lab=="0") { showModal(modalDialog(title="Module", "The selected gene is not assigned to any module. Please select a different one.")); return() }
+    if (!is.null(lab)) if (lab=="0") { showModal(modalDialog(title="Module", "The selected gene is not assigned to any module. Please select a different one.")); return() } # All the arguments in 'if' statement are evaluated, regardless of the order. Therefore a 'NULL' object should not be compared with others (e.g. >, <) in 'if' statement. But it can be evaluated exclusively in a separate 'if' statement, e.g. 'if (!is.null(lab))'.
 
     withProgress(message="Computing dendrogram:", value=0, {
 
@@ -731,23 +721,21 @@ shinyServer(function(input, output, session) {
       }
 
       p.gen <- g.dengra(d.gen$segments)+coord_flip(); p.sam <- g.dengra(d.sam$segments)
-      df.gen <- data.frame(x=seq_len(length(labels(dd.gen))), y=0, lab=labels(dd.gen))
-      gen.idx <- which(labels(dd.gen)==input$gen.sel)
-      df.rec <- data.frame(x1=gen.idx-0.5, x2=gen.idx+0.5, y1=-1, y2=8)
-      df.sam <- data.frame(x=seq_len(length(labels(dd.sam))), y=0, lab=labels(dd.sam)) 
-      p.gen1 <- p.gen+geom_text(data=df.gen, aes(x=x, y=y, label=lab), position=position_dodge(0.9), vjust=0, hjust=-1, size=2, angle=0)+geom_rect(data=df.rec, aes(xmin=x1, xmax=x2, ymin=y1, ymax=y2), fill=NA, color="red", size=1, alpha=1)
-      p.sam1 <- p.sam+geom_text(data=df.sam, aes(x=x, y=y, label=lab), 
-      position=position_dodge(0.9), vjust=1, hjust=0, size=2, angle=90) 
-      gen.ord <- order.dendrogram(dd.gen); sam.ord <- order.dendrogram(dd.sam)
-      gene.clus <- rbind(Y=0, cbind(X=0, mod[gen.ord, sam.ord]))
-
+      gen.ord <- order.dendrogram(dd.gen); sam.ord <- order.dendrogram(dd.sam); mod.cl <- mod[gen.ord, sam.ord]
+   
       incProgress(0.2, detail="plotting.")
-      z <- as.matrix(gene.clus); if (input$mat.scale=="By column/sample") z <- scale(z); if (input$mat.scale=="By row/gene") z <- t(scale(t(z)))
-      ply <- plot_ly(z=z, type="heatmap") %>% layout(yaxis=
-      list(domain=c(0, 1), showticklabels=FALSE, showgrid=FALSE, ticks="", zeroline=FALSE), 
-      xaxis=list(domain=c(0, 1), showticklabels=FALSE, showgrid=FALSE, ticks="", zeroline=FALSE))
+      if (input$mat.scale=="By column/sample") mod.cl <- data.frame(scale(mod.cl), stringsAsFactors=FALSE); if (input$mat.scale=="By row/gene") mod.cl <- data.frame(t(scale(t(mod.cl))), stringsAsFactors=FALSE)
+      mod.cl$gene <- rownames(mod.cl)
+      mod.m <- melt(mod.cl, id.vars='gene', measure.vars=colnames(mod)); colnames(mod.m) <- c('gene', 'sample', 'value')
+      # Use "factor" to re-order rows and columns as specified in dendrograms.
+      mod.m$gene <- factor(mod.m$gene, levels=rownames(mod.cl)); mod.m$sample <- factor(mod.m$sample, levels=colnames(mod.cl))
+      # Plot the re-ordered heatmap.
+      g <- ggplot(mod.m, aes(x=sample, y=gene))+geom_tile(aes(fill=value), colour="white")+scale_fill_gradient(low="yellow", high="blue")+theme(axis.text=element_text(angle=45))
+      g.idx <- which(rownames(mod.cl)==input$gen.sel)
+      # Label target row/gene. 
+      g <- g+geom_hline(yintercept=c(g.idx-0.5, g.idx+0.5), linetype="solid", color="black", size=0.5) 
+      subplot(p.sam, ggplot(), g, p.gen, nrows=2, shareX=TRUE, shareY=TRUE, margin=0, heights=c(0.2, 0.8), widths=c(0.8, 0.2)) %>% layout(title=paste0('Network module containing ', input$gen.sel))
 
-      subplot(p.sam1, plot_ly(), ply, p.gen1, nrows=2, shareX=TRUE, shareY=TRUE, margin=0, heights=c(0.2, 0.8), widths=c(0.8, 0.2))
 
     })
 
@@ -763,14 +751,14 @@ shinyServer(function(input, output, session) {
   observe({
   
     geneIn(); gID$geneID; input$TOM.in; input$gen.sel; input$ds; input$adj.modInpath; input$A; input$p; input$cv1; input$cv2; input$min.size; input$net.type
-    updateRadioButtons(session, "cpt.nw", label="Display or not?", c("Yes"="Y", "No"="N"), "N", inline=TRUE, selected="N")
+    updateRadioButtons(session, inputId="cpt.nw", label="Display or not?", choices=c("Yes"="Y", "No"="N"), selected="N", inline=TRUE)
 
   })
 
   col.sch.net <- reactive({ if(input$color.net=="") { return(NULL) }
   unlist(strsplit(input$color.net, ",")) }); color.net <- reactiveValues(col.net="none")
 
-  len.cs.net <- 500
+  len.cs.net <- 350
   observeEvent(input$col.but.net, {
 
     if (is.null(col.sch.net())) return (NULL)
@@ -784,23 +772,24 @@ shinyServer(function(input, output, session) {
 
     if (input$TOM.in=="None") return(NULL)
     if (input$fileIn=="Compute locally") { adj <- adj.mod()[[1]]; mods <- adj.mod()[[2]] } else if (input$fileIn=="Compute online"|grepl("_Mustroph$|_Geng$|_Chen$|_Census$", input$fileIn)) { adj <- adj.tree()[[1]]; mods <- mcol() }
-
-    gene <- geneIn()[[1]]; lab <- mods[, input$ds][rownames(gene)==input$gen.sel]
+    gene <- geneIn()[["gene2"]]; if (!(input$gen.sel %in% rownames(gene))) return() # Avoid unnecessary computing of 'adj', since 'input$gen.sel' is a cerain true gene id of an irrelevant expression matrix, not 'None', when switching from one defaul example's network to another example.
+    lab <- mods[, input$ds][rownames(gene)==input$gen.sel]
     if (lab=="0") { showModal(modalDialog(title="Module", "The selected gene is not assigned to any module. Please select a different gene.")); return() }
-    idx.m <- mods[, input$ds]==lab; adj.m <- adj[idx.m, idx.m]
+    idx.m <- mods[, input$ds]==lab; adj.m <- adj[idx.m, idx.m]; gen.na <- colnames(adj.m) 
+    idx.sel <- grep(paste0("^", input$gen.sel, "$"), gen.na); gen.na[idx.sel] <- paste0(input$gen.sel, "_selected")
+    colnames(adj.m) <- rownames(adj.m) <- gen.na
     withProgress(message="Computing network:", value=0, {
    
       incProgress(0.8, detail="making network data frame")
       idx = adj.m > as.numeric(input$TOM.in)
       link <- data.frame(from=rownames(adj.m)[row(adj.m)[idx]], 
-      to=colnames(adj.m)[col(adj.m)[idx]], length=adj.m[idx])
+      to=colnames(adj.m)[col(adj.m)[idx]], value=adj.m[idx], stringsAsFactors=FALSE)
       # Should not exclude duplicate rows by "length".
-      link1 <- subset(link, length!=1 & !duplicated(link[, "length"]))
+      node.pas <- NULL; for (i in seq_len(nrow(link))) { node.pas <- c(node.pas, paste0(sort(c(link[i, 'from'], link[i, 'to'])), collapse='')) }
+      w <- which(duplicated(node.pas)); link <- link[-w, ]; link1 <- subset(link, from!=to, stringsAsFactors=FALSE)
+      link1$title <- link1$value # 'length' is not well indicative of adjacency value, so replaced by 'value'.
       node <- data.frame(id=colnames(adj.m),  
       value=colSums(adj.m), title=geneIn()[[2]][colnames(adj.m), ], borderWidth=2, color.border="black", color.highlight.background="orange", color.highlight.border="darkred", color=NA, stringsAsFactors=FALSE)
-      
-      idx.sel <- grep(paste0("^", input$gen.sel, "$"), node$id)
-      rownames(node)[idx.sel] <- node$id[idx.sel] <- paste0(input$gen.sel, "_selected")
 
       # Match colours with gene connectivity by approximation.
       node <- node[order(-node$value), ]; col <- color.net$col.net; col.nod <- NULL
@@ -819,15 +808,16 @@ shinyServer(function(input, output, session) {
 
     if (input$TOM.in=="None"|input$cpt.nw=="N") return(NULL)
     if (length(color.net$col.net=="none")==0) return(NULL)
+    gene <- geneIn()[["gene2"]]; if (!(input$gen.sel %in% rownames(gene))) return() # Avoid unnecessary computing of 'adj', since 'input$gen.sel' is a cerain true gene id of an irrelevant expression matrix, not 'None', when switching from one defaul example's network to another example.
     v.net <- visNet()[["v.net"]]
-    if(input$col.but.net==0) color.net$col.net <- colorRampPalette(c("green", "blue", "red"))(length(v.net))
+    if(input$col.but.net==0) color.net$col.net <- colorRampPalette(c("yellow", "black", "blue"))(length(v.net))
      
       withProgress(message="Color scale: ", value = 0, {
 
         incProgress(0.25, detail="Preparing data. Please wait.")
-        cs.df.net <- data.frame(color_scale=v.net, y=1); #save(cs.df, file="cs.df")
+        cs.df.net <- data.frame(color_scale=v.net, y=1); # save(cs.df.net, file="cs.df.net")
         incProgress(0.75, detail="Plotting. Please wait.")
-        cs.g.net <- ggplot()+geom_bar(data=cs.df.net, aes(x=color_scale, y=y), fill=color.net$col.net, stat="identity", width=0.2)+theme(axis.title.x=element_blank(), axis.text.x=element_blank(), axis.ticks.x=element_blank(), plot.margin=margin(3, 0.1, 3, 0.1, "cm"), panel.grid=element_blank(), panel.background=element_rect(fill="white", colour="grey80"))+coord_flip()+scale_y_continuous(expand=c(0,0))+scale_x_continuous(expand = c(0,0)); return(cs.g.net)
+        cs.g.net <- ggplot()+geom_bar(data=cs.df.net, aes(x=color_scale, y=y), fill=color.net$col.net, stat="identity", width=((max(v.net)-min(v.net))/len.cs.net)*0.7)+theme(axis.title.x=element_blank(), axis.text.x=element_blank(), axis.ticks.x=element_blank(), plot.margin=margin(3, 0.1, 3, 0.1, "cm"), panel.grid=element_blank(), panel.background=element_rect(fill="white", colour="grey80"))+coord_flip()+scale_y_continuous(expand=c(0,0))+scale_x_continuous(expand = c(0,0)); return(cs.g.net) # '((max(v.net)-min(v.net))/len.cs.net)*0.7' avoids bar overlap.
 
       })
 
@@ -845,14 +835,14 @@ shinyServer(function(input, output, session) {
   })
 
   vis.net <- reactive({ 
-
+    
     if (input$TOM.in=="None"|input$cpt.nw=="N") return(NULL)
+    gene <- geneIn()[["gene2"]]; if (!(input$gen.sel %in% rownames(gene))) return() # Avoid unnecessary computing of 'adj', since 'input$gen.sel' is a cerain true gene id of an irrelevant expression matrix, not 'None', when switching from one defaul example's network to another example.
 
     withProgress(message="Network:", value=0.5, {
 
       incProgress(0.3, detail="prepare for plotting.")
-      visNetwork(visNet()[["node"]], visNet()[["link"]], height="300px", width="100%", background="", main=paste0("Network Module Containing ",  input$gen.sel), submain="", footer= "") %>% 
-      visOptions(highlightNearest=TRUE, nodesIdSelection=TRUE, selectedBy="group")
+      visNetwork(visNet()[["node"]], visNet()[["link"]], height="300px", width="100%", background="", main=paste0("Network Module Containing ", input$gen.sel), submain="", footer= "") %>% visIgraphLayout(physics=FALSE, smooth=TRUE) %>% visOptions(highlightNearest=list(enabled=TRUE, hover=TRUE), nodesIdSelection=TRUE)
 
     })
     
