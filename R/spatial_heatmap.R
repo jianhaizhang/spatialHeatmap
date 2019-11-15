@@ -41,7 +41,7 @@
 #' # The svg image path.
 #' svg.path <- system.file("extdata/example", "root_cross_final.svg", package = "spatialHeatmap")
 #' # The expression profiles of gene "PSAC" and "NDHG" under different conditions are mapped to tissues defined in the svg image in the form of different colours. 
-#' spatial.hm(svg=svg.path, data=data.path, sep="\t", isRowGene=TRUE, pOA=c(0.1, 3), CV=c(0.05, 1000), ID=c("PSAC", "NDHG"), col.com=c("green", "blue", "purple", "yellow", "red"), width=1, height=1, sub.title.size=11, layout="gene", ncol=3)
+#' spatial.hm(svg=svg.path, data=data.path, sep="\t", isRowGene=TRUE, pOA=c(0, 0), CV=c(0, 10000), ID=c("PSAC", "NDHG"), col.com=c("yellow", "blue", "purple"), width=1, height=1, sub.title.size=11, layout="gene", ncol=3)
 
 #' @author Jianhai Zhang \email{jzhan067@@ucr.edu; zhang.jianhai@@hotmail.com} \cr Dr. Thomas Girke \email{thomas.girke@@ucr.edu}
 
@@ -60,8 +60,10 @@
 #' @importFrom grDevices colorRampPalette
 #' @importFrom Cairo Cairo
 #' @importFrom methods is
+#' @importFrom data.table fread
+#' @importFrom genefilter filterfun genefilter
 
-spatial.hm <- function(svg, data, sep, isRowGene, pOA=c(0, 0), CV=c(0, 10000), ID, col.com=c("green", "blue", "purple", "yellow", "red"), col.bar="selected", width=1, height=1, sub.title.size=11, layout, ncol) {
+spatial.hm <- function(svg, data, sep, isRowGene, pOA=c(0, 0), CV=c(0, 10000), ID, col.com=c("yellow", "blue", "purple"), col.bar="selected", tis.trans=NULL, width=1, height=1, sub.title.size=11, layout="gene", ncol=3, ...) {
 
     # require(grImport); require(rsvg); require(ggplot2); require(gridExtra); require(Cairo); require(grid); require(XML); require(data.table); require(genefilter)
     x <- y <- color_scale <- tissue <- NULL
@@ -82,13 +84,26 @@ spatial.hm <- function(svg, data, sep, isRowGene, pOA=c(0, 0), CV=c(0, 10000), I
     if (!all(id.in)) stop(paste0(ID[!id.in], " is filtered.")) 
 
     # Color bar.
-    if (col.bar=="all") geneV <- seq(min(gene2), max(gene2), len=1000) else if (col.bar=="selected") geneV <- seq(min(gene2[ID, , drop=FALSE]), max(gene2[ID, , drop=FALSE]), len=1000)
+    bar.len=1000
+    if (col.bar=="all") geneV <- seq(min(gene2), max(gene2), len=bar.len) else if (col.bar=="selected") geneV <- seq(min(gene2[ID, , drop=FALSE]), max(gene2[ID, , drop=FALSE]), len=bar.len)
     col <- colorRampPalette(col.com)(length(geneV))
     cs.df <- data.frame(color_scale=geneV, y=1)
-    cs.g <- ggplot()+geom_bar(data=cs.df, aes(x=color_scale, y=y), fill=col, stat="identity", width=0.2)+theme(axis.title.x=element_blank(), axis.text.x=element_blank(), axis.ticks.x=element_blank(), plot.margin=margin(3, 0.1, 3, 0.1, "cm"), panel.grid=element_blank(), panel.background=element_rect(fill="white", colour="grey80"))+coord_flip()+scale_y_continuous(expand=c(0,0))+scale_x_continuous(expand = c(0,0)); cs.grob <- ggplotGrob(cs.g)
+    cs.g <- ggplot()+geom_bar(data=cs.df, aes(x=color_scale, y=y), fill=col, stat="identity", width=((max(geneV)-min(geneV))/bar.len)*1)+theme(axis.title.x=element_blank(), axis.text.x=element_blank(), axis.ticks.x=element_blank(), plot.margin=margin(3, 0.1, 3, 0.1, "cm"), panel.grid=element_blank(), panel.background=element_rect(fill="white", colour="grey80"))+coord_flip()
+    if (max(geneV)<10000) cs.g <- cs.g+scale_y_continuous(expand=c(0,0))+scale_x_continuous(expand = c(0,0))
+    if (max(geneV)>=10000) cs.g <- cs.g+scale_y_continuous(expand=c(0,0))+scale_x_continuous(labels=function(x) format(x, scientific=TRUE)); cs.grob <- ggplotGrob(cs.g)
 
-    # SVG file conversion.
-    rsvg_ps(svg, file=sub("svg$", "ps", svg))
+    # Make sure the style is correct. If the stroke width is not the same across polygons such as '0.0002px', '0.216px', some stroke outlines cannot be recognised by 'PostScriptTrace'. Then some polygons are missing. Since the ggplot is based on 'stroke' not 'fill'.
+    xmlfile <- xmlParse(svg); xmltop <- xmlRoot(xmlfile); ply <- xmltop[[xmlSize(xmltop)]]
+    style <- 'stroke:#000000;stroke-width:5.216;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1' # 'fill' is not necessary.
+    # Change 'style' of all polygons.
+    for (i in seq_len(xmlSize(ply))) {                      
+         
+      addAttributes(ply[[i]], style=style) 
+      if (xmlSize(ply[[i]])>=1) for (j in seq_len(xmlSize(ply[[i]]))) { addAttributes(ply[[i]][[j]], style=style) }
+        
+    }; saveXML(doc=xmlfile, file='internal.svg')
+    # SVG file conversion. 
+    rsvg_ps('internal.svg', file=sub("svg$", "ps", svg)); do.call(file.remove, list(list.files(".", "internal.svg")))
     p1 <- sub("svg$", "ps", svg); p2 <- paste0(sub("svg$", "ps", svg), ".xml")  
     if (length(grep("~", svg))) {
 
@@ -96,14 +111,14 @@ spatial.hm <- function(svg, data, sep, isRowGene, pOA=c(0, 0), CV=c(0, 10000), I
         p1 <- sub("~", hm, p1); p2 <- sub("~", hm, p2)
 
     }; PostScriptTrace(p1, p2) 
-
     grml <- xmlParse(paste0(sub("svg$", "ps", svg), ".xml")); top <- xmlRoot(grml)
-
+    do.call(file.remove, list(list.files(".", "capture.*.ps")))
+    do.call(file.remove, list(list.files(".", ".ps$", full.name=TRUE)))
+    do.call(file.remove, list(list.files(".", ".ps.xml$", full.name=TRUE)))
     xml <- xmlParse(svg); xmltop <- xmlRoot(xml); size <- xmlSize(xmltop)
 
         lis.ma <- xmlSApply(xmltop[[size]], xmlAttrs)
-        if (is(lis.ma, "matrix")) { id.xml <- lis.ma["id", ] } 
-        else if (is(lis.ma, "list")) {
+        if (is(lis.ma, "matrix")) { id.xml <- lis.ma["id", ] } else if (is(lis.ma, "list")) {
 
             id.xml <- NULL
             for (i in seq_len(length(lis.ma))) { id.xml <- c(id.xml, lis.ma[[i]][["id"]]) }
@@ -148,7 +163,7 @@ spatial.hm <- function(svg, data, sep, isRowGene, pOA=c(0, 0), CV=c(0, 10000), I
         k <-0; df <- NULL; 
         for (i in seq_len(xmlSize(top)-1)) {
 
-            if (xmlAttrs(top[[i]])[1]=="fill") {
+            if (xmlAttrs(top[[i]])['type']=='stroke') {
 
                 k <- k+1; chil <- xmlChildren(top[[i]])
                 xy <- chil[grep("move|line", names(chil))]
@@ -161,16 +176,15 @@ spatial.hm <- function(svg, data, sep, isRowGene, pOA=c(0, 0), CV=c(0, 10000), I
 
             }
 
-            df0 <- cbind(tissue=id.xml[k], data.frame(coor), stringsAsFactors=TRUE)
+            df0 <- cbind(tissue=id.xml[k], data.frame(coor, stringsAsFactors=FALSE), stringsAsFactors=TRUE)
+            df <- rbind(df, df0, stringsAsFactors=TRUE)
 
             }
-
-            df <- rbind(df, df0)
 
         }; g.df <- df
 
     # Map colours to samples according to expression level.
-    cname <- colnames(gene2); con <- gsub("(.*)(__)(\\w+$)", "\\3", cname)
+    cname <- colnames(gene2); con <- gsub("(.*)(__)(.*)", "\\3", cname)
 
         g.list <- function(j) {
 
@@ -184,38 +198,30 @@ spatial.hm <- function(svg, data, sep, isRowGene, pOA=c(0, 0), CV=c(0, 10000), I
                 } else if (length(tis.idx)==0) { g.col <- c(g.col, "white") }
 
             }
-
-        g <- ggplot()+geom_polygon(data=g.df, aes(x=x, y=y, fill=tissue), color="black")+
-        scale_fill_manual(values=g.col, guide=FALSE)+theme(axis.text=element_blank(), 
-        axis.ticks=element_blank(), panel.grid=element_blank(), panel.background=
-        element_rect(fill="white", colour="grey80"), plot.margin=
-        margin(0.1, 0.1, 0.1, 0.3, "cm"), axis.title.x=element_text(size=16,face="bold"), 
-        plot.title=element_text(hjust=0.5, size=sub.title.size))+labs(x="", y="")+
-        scale_y_continuous(expand=c(0.01,0.01))+scale_x_continuous(expand=c(0.01,0.01))+
-        ggtitle(paste0(k, "_", j)); return(g)
+            names(g.col) <- tis.df <- unique(g.df[, 'tissue']) # The colors might be internally re-ordered alphabetically during mapping, so give them names to fix the match with tissues. E.g. c('yellow', 'blue') can be re-ordered to c('blue', 'yellow'), which makes tissue mapping wrong. Correct: colours are not re-ordered. The 'tissue' in 'data=g.df' are internally re-ordered according to a factor. Therfore, 'tissue' should be a factor with the right order. Otherwise, disordered mapping can happen.
+            # Make selected tissues transparent by setting their colours as NA.
+            if (!is.null(tis.trans)) for (i in tis.df) { if (sub('_\\d+$', '', i) %in% tis.trans) g.col[i] <- NA }
+            g <- ggplot()+geom_polygon(data=g.df, aes(x=x, y=y, fill=tissue), color="black")+scale_fill_manual(values=g.col, guide=FALSE)+theme(axis.text=element_blank(), axis.ticks=element_blank(), panel.grid=element_blank(), panel.background=element_rect(fill="white", colour="grey80"), plot.margin=margin(0.1, 0.1, 0.1, 0.3, "cm"), axis.title.x=element_text(size=16,face="bold"), plot.title=element_text(hjust=0.5, size=sub.title.size))+labs(x="", y="")+scale_y_continuous(expand=c(0.01, 0.01))+scale_x_continuous(expand=c(0.01, 0.01))+ggtitle(paste0(k, "_", j)); return(g)
 
         }
 
-        grob.na <- grob.lis <- NULL
-        for (k in ID) {
+        grob.na <- grob.lis <- NULL; for (k in ID) {
 
-            scol <- NULL
-            for (i in gene2[k, ]) { 
+            scol <- NULL; for (i in gene2[k, ]) { 
 
-                ab <- abs(i-geneV); col.ind <- which(ab==min(ab))[1]
-                scol <- c(scol, col[col.ind])
+                ab <- abs(i-geneV); col.ind <- which(ab==min(ab))[1]; scol <- c(scol, col[col.ind])
 
             }
 
             idx <- grep("__", cname); c.na <- cname[idx]
-            tis.col <- gsub("(.*)(__)(\\w+$)", "\\1", c.na); g.lis <- NULL
+            tis.col <- gsub("(.*)(__)(.*)", "\\1", c.na); g.lis <- NULL
             con.uni <- unique(con); grob.na0 <- paste0(k, "_", con.uni)
             g.lis <- lapply(con.uni, g.list); grob <- lapply(g.lis, ggplotGrob)
             names(grob) <- grob.na0; grob.lis <- c(grob.lis, grob) 
 
         }; grob.all <- c(list(cs=cs.grob), grob.lis)
 
-    cs.arr <- arrangeGrob(grobs=list(grobTree(grob.all[[1]])), layout_matrix=cbind(1), widths=unit(15, "mm"))
+    cs.arr <- arrangeGrob(grobs=list(grobTree(grob.all[[1]])), layout_matrix=cbind(1), widths=unit(25, "mm"))
 
     # Organise layout.
     if (layout=="gene") {
@@ -250,8 +256,4 @@ spatial.hm <- function(svg, data, sep, isRowGene, pOA=c(0, 0), CV=c(0, 10000), I
 
     }
 
-    do.call(file.remove, list(list.files(".", "capture.*.ps")))
-    do.call(file.remove, list(list.files("./tmp", ".ps$", full.names=TRUE)))
-    do.call(file.remove, list(list.files("./tmp", ".ps.xml$", full.names=TRUE)))
-
-    }
+}
