@@ -4,8 +4,7 @@
 \alias{filter.data}
 \title{Filter the Data Matrix}
 \usage{
-\method{filter}{data}(data, pOA = c(0, 0), CV = c(0, 10000),
-  dir = NULL)
+filter.data(data, pOA = c(0, 0), CV = c(0, 10000), dir = NULL)
 }
 \arguments{
 \item{data}{The gene expression matrix and metadata (optional) in the form of the "SummarizedExperiment" class. In the expression matrix, the row and column names should be gene IDs and sample/conditions, respectively. The sample/condition names MUST be fomatted this way: a sample name is followed by double underscore then the condition, such as “stele__140mM_48h" (Geng et al. 2013), where stele is the sample and 140mM_48h is the condition. In the column names of sample/condition, only letters, digits, single underscore, dots, single space are allowed. Not all samples in the matrix need to be present in the SVG image, and vice versa. Only samples present in the SVG image are recognised and coloured in the spatial heatmap. \cr Example expression matrix: system.file("extdata/example", "root_expr_row_gen.txt", package = "spatialHeatmap").}
