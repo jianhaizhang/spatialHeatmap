@@ -4,7 +4,7 @@
 \docType{package}
 \title{
 \packageTitle{spatialHeatmap}
- Spatial heatmap, matrix heatmap, network
+ Spatial Heatmap, Matrix Heatmap, Network
 }
 \description{
 \packageDescription{spatialHeatmap}
@@ -15,11 +15,12 @@ The DESCRIPTION file:
 \packageDESCRIPTION{spatialHeatmap}
 \packageIndices{spatialHeatmap}
 
- This spatialHeatmap is designed for visualising gene expression data such as sequencing, microarray, etc.. The core feature is to map expression values of target genes under different conditions to different tissues, which are called spatial heatmaps. To make it more versatile, the matrix heatmap and network features were also developed, which display the target gene in the context of corresponding gene module. All the utilities implemented in this R package are also combined as a web-browser based Shiny app (Chang et al., n.d.; Chang and Borges Ribeiro 2018).
+This R package spatialHeatmap is designed to intuitively visualise gene expression data on images where the data come from and promote hypothesis generation. Examples include but not limit to RNA-seq, microarray, qPCR, subcellular localisation of proteins, etc., regardless of species.
 
-The application of this package is not limited to gene expression data. It can be used as long as a data matrix and an associated SVG image are provided, such as population data generated in different years across different cities. The tutorial of how to properly format and associate a custom SVG image with a data matrix is provided in an independent vignette “SVG_tutorial.html”.
+The core feature “Spatial Heatmap” is to map expression profile of a target gene under different conditions to different cells/tissues/organs (samples) on an associated SVG image, where different samples are predefined. After mapping, the expression profile is represented as different colours across samples in the image, which are called spatial heatmaps. In addition, the accessory features of “Matrix Heatmap” and “Network” display the target gene in the context of corresponding gene module, which make this package more versatile. All the utilities implemented in this R package are also combined as a web-browser based Shiny app, which can be used locally or online on the Shiny server.
 
-For a quick test, users can launch the combined Shiny app then either select the default examples from the left menu or download the example data matrix and svg image in the insturction page.
+The application of this package is not limited to gene expression data. It can be used as long as a data matrix and a configured SVG image are provided. Other exmaples include population data collected in different years across different cities, health data of an individual under different conditions, ect.
+
 }
 \author{
 \packageAuthor{spatialHeatmap}
@@ -114,26 +115,38 @@ Maintainer: \packageMaintainer{spatialHeatmap}
  \code{\link{filter.data}}, \code{\link{adj.mod}}, \code{\link{spatial.hm.all}}, \code{\link{spatial.hm}}, \code{\link{matrix.heatmap}}, \code{\link{network}}
 }
 \examples{
-# Get the path of svg image and associated data matrix.
-svg.path <- system.file("extdata/example", "root_cross_final.svg", package = "spatialHeatmap")
-data.path <- system.file("extdata/example", "root_expr_ann_row_gen.txt", package = "spatialHeatmap")
+# Creat the "SummarizedExperiment" class. Refer to the R package "SummarizedExperiment" for more details.
+data.path <- system.file("extdata/example", "root_expr_row_gen.txt", package = "spatialHeatmap")   
+## The expression matrix, where the row and column names should be gene IDs and sample/conditions, respectively.
+library(data.table); expr <- fread(data.path, sep='\t', header=TRUE, fill=TRUE)
+col.na <- colnames(expr)[-ncol(expr)]; row.na <- as.data.frame(expr[, 1])[, 1]
+expr <- as.matrix(as.data.frame(expr, stringsAsFactors=FALSE)[, -1])
+rownames(expr) <- row.na; colnames(expr) <- col.na
+con.path <- system.file("extdata/example", "root_con.txt", package = "spatialHeatmap") 
+## Condition is a single column data frame.
+con <- read.table(con.path, header=TRUE, row.names=NULL, sep='\t', stringsAsFactors=FALSE)
+ann.path <- system.file("extdata/example", "root_ann.txt", package = "spatialHeatmap")
+## Gene annotation is a single column data frame.
+ann <- read.table(ann.path, header=TRUE, row.names=1, sep='\t', stringsAsFactors=FALSE)
+## The expression matrix, gene annotation, and condition are stored in a "SummarizedExperiment" object. Gene annotation and condition are optional.
+library(SummarizedExperiment); expr <- SummarizedExperiment(assays=list(expr=expr), rowData=ann, colData=con)  
+exp <- filter.data(data=expr, pOA=c(0, 0), CV=c(0.1, 10000), dir=NULL) 
 
-# Filter the data matrix. The directory "local_mode_result/" is automatically created in the location specified by "dir" and is used to save filtered data matrix "processed_data.txt".
-exp <- filter.data(data=data.path, sep="\t", isRowGen=TRUE, pOA=c(0, 0), CV=c(0.1, 10000), dir="./") 
+# The svg image path.
+svg.path <- system.file("extdata/example", "root_cross_final.svg", package="spatialHeatmap")
+# The expression profiles of gene "PSAC" and "NDHG" under different conditions are mapped to tissues defined in the SVG image in the form of different colours. 
+spatial.hm(svg=svg.path, data=expr, pOA=c(0, 0), CV=c(0, 10000), ID=c("PSAC", "NDHG"), col.com=c("yellow", "blue", "purple"), width=1, height=1, sub.title.size=11, layout="gene", ncol=3)
 
-# Plot the spatial heatmaps for gene "PSAC" and "NDHG".
-spatial.hm(svg=svg.path, data=data.path, sep="\t", isRowGene=TRUE, pOA=c(0.1, 3), CV=c(0.05, 1000), ID=c("PSAC", "NDHG"), col.com=c("green", "blue", "purple", "yellow", "red"), width=1, height=1, sub.title.size=11, layout="gene", ncol=3)
+# Compute adjacency matrix and identify modules
+adj_mod <- adj.mod(data=exp, type="signed", minSize=15, dir=NULL)
 
-# Compute the adjacency matrix and identify modules. The directory "local_mode_result/" is automatically created in the location specified by "dir" and is used to save the resulting adjacency file "adj.txt" and module definition file "mod.txt".
-adj_mod <- adj.mod(data=exp, type="signed", minSize=20, dir="./")
-
-# The gene "PSAC" is represented in the context of its network module in the form of an interactive matrix heatmap.
-\donttest{ matrix.heatmap(geneID="PSAC", data=exp, adj.mod=adj_mod, ds="2", scale="row") }
+# The gene "PSAC" is represented in the context of its gene module in the form of a static matrix heatmap.
+matrix.heatmap(geneID="PSAC", data=exp, adj.mod=adj_mod, ds="2", scale="row", static=TRUE)
 
 # The gene "PSAC" is represented in the context of its network module in the form of an interactive network.
-\donttest{ network(geneID="PSAC", data=exp, adj.mod=adj_mod) }
+network(geneID="PSAC", data=exp, adj.mod=adj_mod, static=TRUE)
 
-# Lauch of the integrated Shiny app.
+# Launch the integrated Shiny app.
 \donttest{ spatial.hm.all() }
 
 }

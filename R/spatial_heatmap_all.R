@@ -1,11 +1,11 @@
 #' Launch the Integrated Spatial Heatmap
 #' 
-#' This function combines all functionality in this package in an integrated mode (interactive data matrix, interactive spatial heatmap, interactive matrix heatmap, interactive network), which is a web-browser based Shiny app.
+#' This function combines all functionality in this package in an integrated mode (data matrix, spatial heatmap, matrix heatmap, network), which is a web-browser based Shiny app.
 
 #' @return A web browser based Shiny app.
 
 #' @section Details:
-#' No argument is required, this function launches the Shiny app directly. 
+#' No argument is required, this function launches the Shiny-app based Spatial Heatmap directly. 
 
 #' @examples
 #' \donttest{ spatial.hm.all() }

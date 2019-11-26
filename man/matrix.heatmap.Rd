@@ -4,34 +4,64 @@
 \alias{matrix.heatmap}
 \title{Matrix Heatmap}
 \usage{
-matrix.heatmap(geneID, data, adj.mod, ds, scale)
+matrix.heatmap(geneID, data, adj.mod, ds, scale, col = c("yellow",
+  "blue"), main = NULL, angleCol = 45, angleRow = 45,
+  sepcolor = "black", sep.width = 0.02, static = TRUE,
+  margin = c(10, 10), arg.lis1 = list(), arg.lis2 = list())
 }
 \arguments{
 \item{geneID}{A gene ID from the expression matrix.}
 
-\item{data}{The gene expression matrix, where rows are gene IDs and columns are samples. If annotation is included, it must be in the last column.}
+\item{data}{The gene expression matrix and metadata (optional) in the form of the "SummarizedExperiment" object. In the expression matrix, rows are gene IDs and columns are samples/conditions.}
 
-\item{adj.mod}{The "adjacency matrix" and "module" definition retured by the function "adj.mod".}
+\item{adj.mod}{The list of "adjacency matrix" and "module" definition retured by the function "adj.mod".}
 
 \item{ds}{The module identification sensitivity, either 2 or 3. See function "adj.mod" for details.}
 
 \item{scale}{It specifies whether to scale the heatmap. There are three options: "row" means scale by row, "column" means scale by column, and "no" means no scale.}
+
+\item{col}{A vector of two colours. It is used for constructing the colour scale. The default is c('yellow', 'blue').}
+
+\item{main}{The title of the matrix heatmap.}
+
+\item{angleCol}{The angle of column names. The default is 45.}
+
+\item{angleRow}{The angle of row names. The default is 45.}
+
+\item{sepcolor}{The colour of the two lines labelling the target gene. The default is "black".}
+
+\item{sep.width}{The width of two indicator lines of the input gene.}
+
+\item{static}{"TRUE" gives the static mode and "FALSE" interactive mode.}
+
+\item{margin}{A vector of two numbers, specifying bottom and right margins respectively. The default is c(10, 10).}
+
+\item{arg.lis1}{A list of additional arguments passed to the "heatmap.2" function from "gplots" package. E.g. list(xlab='sample', ylab='gene'). The default is an empty list.}
+
+\item{arg.lis2}{A list of additional arguments passed to the "ggplot" function from "gglot2" package. The default is an empty list.}
 }
 \value{
-An interactive matrix lauched on the web browser.
+A static image or an interactive application lauched on the web browser.
 }
 \description{
-This function represents the input gene in the context of corresponding gene network module as a web-browser based interactive matrix heatmap, where the rows and columns are sorted by hierarchical clustering dendrograms and the input gene is tagged by a red rectangle. To explore the results, users can zoom in and out by drawing a rectangle and by double clicking the image, respectively. Users can scale the expression values by gene or sample. \cr The network modules are identified at two alternative sensitivities levels (3, 2) by the function "adj.mod". From 3 to 2, the sensitivity decreases and results in less modules with larger sizes. The same module can also be displayed as an interactive network by the "network" function.
+This function represents the input gene in the context of corresponding gene network module, where the rows and columns are sorted by hierarchical clustering dendrograms and the row of input gene is tagged by two lines. The matrix heatmap can be dispalyed in static or a web-browser based interactive mode. If the latter, users can zoom in and out by drawing a rectangle and by double clicking the image, respectively. Users can scale the expression values by gene or sample. \cr The network modules are identified at two alternative sensitivities levels (3, 2) by the function "adj.mod". From 3 to 2, the sensitivity decreases and results in less modules with larger sizes. The same module can also be displayed as an interactive form of a network through the "network" function.
 }
 \examples{
-data.path <- system.file("extdata/example", "root_expr_ann_row_gen.txt", package = "spatialHeatmap")
-exp <- filter.data(data=data.path, sep="\\t", isRowGen=TRUE, pOA=c(0, 0), CV=c(0.1, 10000), dir="./")
-adj_mod <- adj.mod(data=exp, type="signed", minSize=15, dir="./")
-# The gene "PSAC" is represented in the context of its network module in the form of an interactive matrix heatmap.
-\donttest{ matrix.heatmap(geneID="PSAC", data=exp, adj.mod=adj_mod, ds="2", scale="row") }
+# Creat the "SummarizedExperiment" class. Refer to the R package "SummarizedExperiment" for more details.
+data.path <- system.file("extdata/example", "root_expr_row_gen.txt", package = "spatialHeatmap")   
+## The expression matrix, where the row and column names should be gene IDs and sample/conditions respectively.
+library(data.table); expr <- fread(data.path, sep='\\t', header=TRUE, fill=TRUE)
+col.na <- colnames(expr)[-ncol(expr)]; row.na <- as.data.frame(expr[, 1])[, 1]
+expr <- as.matrix(as.data.frame(expr, stringsAsFactors=FALSE)[, -1])
+rownames(expr) <- row.na; colnames(expr) <- col.na
+library(SummarizedExperiment); expr <- SummarizedExperiment(assays=list(expr=expr)) # Metadata is not necessary.  
+exp <- filter.data(data=expr, pOA=c(0, 0), CV=c(0.1, 10000), dir=NULL) 
+adj_mod <- adj.mod(data=exp, type="signed", minSize=15, dir=NULL)
+# The gene "PSAC" is represented in the context of its gene module in the form of a static matrix heatmap.
+matrix.heatmap(geneID="PSAC", data=exp, adj.mod=adj_mod, ds="2", scale="row", static=TRUE)
 }
 \references{
-Andrie de Vries and Brian D. Ripley (2016). ggdendro: Create Dendrograms and Tree Diagrams Using 'ggplot2'. R package version 0.1-20. https://CRAN.R-project.org/package=ggdendro \cr H. Wickham. ggplot2: Elegant Graphics for Data Analysis. Springer-Verlag New York, 2016. \cr Carson Sievert (2018) plotly for R. https://plotly-book.cpsievert.me \cr Langfelder P and Horvath S, WGCNA: an R package for weighted correlation network analysis. BMC Bioinformatics 2008, 9:559 doi:10.1186/1471-2105-9-559 \cr Peter Langfelder, Steve Horvath (2012). Fast R Functions for Robust Correlations and Hierarchical Clustering. Journal of Statistical Software, 46(11), 1-17. URL http://www.jstatsoft.org/v46/i11/ \cr R Core Team (2018). R: A language and environment for statistical computing. R Foundation for Statistical Computing, Vienna, Austria. URL https://www.R-project.org/ \cr Carson Sievert (2018) plotly for R. https://plotly-book.cpsievert.me
+Martin Morgan, Valerie Obenchain, Jim Hester and Hervé Pagès (2018). SummarizedExperiment: SummarizedExperiment container. R package version 1.10.1 \cr Andrie de Vries and Brian D. Ripley (2016). ggdendro: Create Dendrograms and Tree Diagrams Using 'ggplot2'. R package version 0.1-20. https://CRAN.R-project.org/package=ggdendro \cr H. Wickham. ggplot2: Elegant Graphics for Data Analysis. Springer-Verlag New York, 2016. \cr Carson Sievert (2018) plotly for R. https://plotly-book.cpsievert.me \cr Langfelder P and Horvath S, WGCNA: an R package for weighted correlation network analysis. BMC Bioinformatics 2008, 9:559 doi:10.1186/1471-2105-9-559 \cr R Core Team (2018). R: A language and environment for statistical computing. R Foundation for Statistical Computing, Vienna, Austria. URL https://www.R-project.org/ \cr Gregory R. Warnes, Ben Bolker, Lodewijk Bonebakker, Robert Gentleman, Wolfgang Huber Andy Liaw, Thomas Lumley, Martin Maechler, Arni Magnusson, Steffen Moeller, Marc Schwartz and Bill Venables (2019). gplots: Various R Programming Tools for Plotting Data. R package version 3.0.1.1.  https://CRAN.R-project.org/package=gplots \cr Hadley Wickham (2007). Reshaping Data with the reshape Package. Journal of Statistical Software, 21(12), 1-20. URL http://www.jstatsoft.org/v21/i12/
 }
 \author{
 Jianhai Zhang \email{jzhan067@ucr.edu; zhang.jianhai@hotmail.com} \cr Dr. Thomas Girke \email{thomas.girke@ucr.edu}

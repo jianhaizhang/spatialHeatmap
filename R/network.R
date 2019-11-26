@@ -1,193 +1,264 @@
 #' Network
 #'
-#' This function represents the input gene in the context of corresponding gene network module as a web-browser based interactive netowrk, where nodes are genes and edges are adjacencies between genes. \cr The gene network modules are identified at two alternative sensitivity levels (3, 2). See function "adj.mod" for details. The "Select a module splitting sensitivity level" option allows users to choose which level to use for displaying the network. \cr There is an interactive colour bar to denote gene connectivity (sum of a gene's adjacency with all its direct neighbours). The colour ingredients must only be separated by comma, e.g. the default are "green,blue,red", which means gene connectivity increases from blue to red. \cr The edge length is inversely proportional to gene adjacency. If too many edges (e.g.: > 300) are displayed, the network can possibly get stuck. So the "Input an adjacency threshold to display the adjacency network." option sets a threthold to filter out weak edges. Only edges above the threshold are displayed. The network outputs all remaining edges resulting from each input adjacency threshold. If it is not too large (e.g.: < 300), users can check "Yes" under "Display or not?", then the network will be plotted and can be responsive smoothly. To maintain acceptable performance, users are advised to choose a stringent threshold (e.g. 0.9) initially, then decrease the value gradually. \cr The interactive feature allows users to zoom in and out, or drag a gene around. All the gene IDs in the network module are listed in "Select by id" in decreasing order according to gene connectivity. The selected gene ID is appended "_selected" as a label. By clicking an ID in this list, users can identify the corresponding gene in the network. If the input expression matrix has an annotation column, then the annotation can be seen by hovering the cursor over a node. \cr The same module can also be displayed in the form of an interactive matrix heatmap with the function "matrix.heatmap". \cr The network can be seen by clicking the "View" button at the bottom of the side menu.
+#' This function represents the input gene in the context of corresponding gene network module, where nodes are genes and edges are adjacencies between genes. The network can be dispayed in static or interactive mode. \cr The gene modules are identified at two alternative sensitivity levels (3, 2). See function "adj.mod" for details. The thicker edge denotes higher adjacency (coexpression similarity) between genes while larger node indicates higher gene connectivity (sum of a gene's adjacency with all its direct neighbours). \cr In the interactive mode, there is an interactive colour bar to denote gene connectivity. The colour ingredients must only be separated by comma, e.g. "yellow,purple,blue", which means gene connectivity increases from yellow to blue. If too many edges (e.g.: > 300) are displayed, the network could get stuck. So the "Input an adjacency threshold to display the adjacency network." option sets a threthold to filter out weak edges and all remaining edges are displayed. If not too many (e.g.: < 300), users can check "Yes" under "Display or not?", then the network will be displayed and would be responsive smoothly. To maintain acceptable performance, users are advised to choose a stringent threshold (e.g. 0.9) initially, then decrease the value gradually. The interactive feature allows users to zoom in and out, or drag a gene around. All the gene IDs in the network module are listed in "Select by id" in decreasing order according to gene connectivity. The selected gene ID is appended "_selected" as a label. By clicking an ID in this list, users can identify the corresponding gene in the network. If the input has gene annotations, then the annotation can be seen by hovering the cursor over a node. \cr The same module can also be displayed in the form of a matrix heatmap with the function "matrix.heatmap". 
 
 #' @param geneID A gene ID from the expression matrix. 
-#' @param data The gene expression matrix, where rows are gene IDs and columns are samples/conditions. If annotation is included, it must be in the last column in parallel with samples/conditions.
-
-#' @param adj.mod The "adjacency matrix" and "modules" definitions returned by the function "adj.mod".
-
-#' @return An interactive network interface lauched on the web browser. 
+#' @param data The processed data matrix and metadata (optional) resulting from the function "filter.data", which is a "SummarizedExperiment" object.
+#' @param adj.mod A list of "adjacency matrix" and "modules" definitions returned by the function "adj.mod".
+#' @param ds The module identification sensitivity, either 2 or 3. See function "adj.mod" for details. Used for static network.
+#' @param adj.min Minimum adjacency between genes, edges with adjacency below which will be removed. Used for static network.
+#' @param con.min Minimun connectivity of a gene, genes with connectivity below which will be removed. Used for static network.
+#' @param node.col A vector of colour ingredients for constructing node colour scale in the static image. The default is c("mediumorchid1", "chocolate4").
+#' @param edge.col A vector of colour ingredients for constructing edge colour scale in the static image. The default is c("yellow", "blue").
+#' @param vertex.label.cex The size of node label in the static image. The default is 1.
+#' @param vertex.cex The size of node in the static image. The default is 3.
+#' @param edge.cex The size of edge in the static image. The default is 10.
+#' @param layout The layout of the network in static image, either "circle" or "fr". The "fr" stands for force-directed layout algorithm by Fruchterman and Reingold. The default is "circle".
+#' @param main The title in the static image.
+#' @param static Either "TRUE" or "FALSE", which displays static or interactive network respectively.
+#' @param ... Other arguments passed to the generic function "plot", e.g: "asp=1". 
+#' @return A static or interactive network display.
 
 #' @examples
-
-#' data.path <- system.file("extdata/example", "root_expr_ann_row_gen.txt", package = "spatialHeatmap")
-#' exp <- filter.data(data=data.path, sep="\t", isRowGen=TRUE, pOA=c(0, 0), CV=c(0.1, 10000), dir="./")
-#' adj_mod <- adj.mod(data=exp, type="signed", minSize=15, dir="./")
+#' # Creat the "SummarizedExperiment" class. Refer to the R package "SummarizedExperiment" for more details.
+#' data.path <- system.file("extdata/example", "root_expr_row_gen.txt", package = "spatialHeatmap")   
+#' ## The expression matrix, where the row and column names should be gene IDs and sample/conditions respectively.
+#' library(data.table); expr <- fread(data.path, sep='\t', header=TRUE, fill=TRUE)
+#' col.na <- colnames(expr)[-ncol(expr)]; row.na <- as.data.frame(expr[, 1])[, 1]
+#' expr <- as.matrix(as.data.frame(expr, stringsAsFactors=FALSE)[, -1])
+#' rownames(expr) <- row.na; colnames(expr) <- col.na
+#' library(SummarizedExperiment); expr <- SummarizedExperiment(assays=list(expr=expr)) # Metadata is not necessary.  
+#' exp <- filter.data(data=expr, pOA=c(0, 0), CV=c(0.1, 10000), dir=NULL) 
+#' adj_mod <- adj.mod(data=exp, type="signed", minSize=15, dir=NULL)
 #' # The gene "PSAC" is represented in the context of its network module in the form of an interactive network.
-#' \donttest{ network(geneID="PSAC", data=exp, adj.mod=adj_mod) }
+#' network(geneID="PSAC", data=exp, adj.mod=adj_mod, static=TRUE)
 
 #' @author Jianhai Zhang \email{jzhan067@@ucr.edu; zhang.jianhai@@hotmail.com} \cr Dr. Thomas Girke \email{thomas.girke@@ucr.edu}
 
 #' @references
-#' Winston Chang, Joe Cheng, JJ Allaire, Yihui Xie and Jonathan McPherson (2018). shiny: Web Application Framework for R. R package version 1.1.0. https://CRAN.R-project.org/package=shiny \cr Winston Chang and Barbara Borges Ribeiro (2018). shinydashboard: Create Dashboards with 'Shiny'. R package version 0.7.1. https://CRAN.R-project.org/package=shinydashboard \cr Almende B.V., Benoit Thieurmel and Titouan Robert (2018). visNetwork: Network Visualization using 'vis.js' Library. R package version 2.0.4. https://CRAN.R-project.org/package=visNetwork
+#' Martin Morgan, Valerie Obenchain, Jim Hester and Hervé Pagès (2018). SummarizedExperiment: SummarizedExperiment container. R package version 1.10.1 \cr Csardi G, Nepusz T: The igraph software package for complex network research, InterJournal, Complex Systems 1695. 2006. http://igraph.org \cr R Core Team (2018). R: A language and environment for statistical computing. R Foundation for Statistical Computing, Vienna, Austria. URL https://www.R-project.org/ \cr Winston Chang, Joe Cheng, JJ Allaire, Yihui Xie and Jonathan McPherson (2018). shiny: Web Application Framework for R. R package version 1.1.0. https://CRAN.R-project.org/package=shiny \cr Winston Chang and Barbara Borges Ribeiro (2018). shinydashboard: Create Dashboards with 'Shiny'. R package version 0.7.1. https://CRAN.R-project.org/package=shinydashboard \cr Almende B.V., Benoit Thieurmel and Titouan Robert (2018). visNetwork: Network Visualization using 'vis.js' Library. R package version 2.0.4. https://CRAN.R-project.org/package=visNetwork
 
 #' @export
+#' @importFrom SummarizedExperiment assay
+#' @importFrom igraph V E graph_from_data_frame delete_edges delete_vertices as_data_frame layout_in_circle layout_with_fr
 #' @importFrom shiny shinyApp shinyUI selectInput htmlOutput div textInput icon actionButton radioButtons fluidRow splitLayout plotOutput shinyServer reactive reactiveValues observeEvent showModal modalDialog withProgress incProgress renderPlot renderUI HTML observe updateSelectInput updateRadioButtons 
 #' @importFrom shinydashboard dashboardSidebar dashboardPage dashboardHeader sidebarMenu menuItem menuSubItem dashboardBody tabItems tabItem box
-#' @importFrom visNetwork visNetworkOutput visNetwork visOptions renderVisNetwork
+#' @importFrom visNetwork visNetworkOutput visNetwork visOptions renderVisNetwork visIgraphLayout
 
+network <- function(geneID, data, adj.mod, ds="3", adj.min=0, con.min=0, node.col=c("mediumorchid1", "chocolate4"), edge.col=c("yellow", "blue"), vertex.label.cex=1, vertex.cex=3, edge.cex=10, layout="circle", main=NULL, static=TRUE, ...) {
 
-network <- function(geneID, data, adj.mod) {
-
-ui <- shinyUI(dashboardPage(
-
-  dashboardHeader(),
-
-  dashboardSidebar(
+  from <- to <- width <- size <- NULL 
+  adj <- adj.mod[["adj"]]; mods <- adj.mod[["mod"]]
+  gene <- assay(data); if (ncol(rowData(data))>=1) ann <- rowData(data)[, , drop=FALSE]  else ann <- NULL
+  ds <- as.character(ds); lab <- mods[, ds][rownames(gene)==geneID]
+  if (lab=="0") { return('The selected gene is not assigned to any module. Please select a different one') }
+  idx.m <- mods[, ds]==lab; adj.m <- adj[idx.m, idx.m]; gen.na <- colnames(adj.m) 
+  idx.sel <- grep(paste0("^", geneID, "$"), gen.na); gen.na[idx.sel] <- paste0(geneID, "_selected")
+  colnames(adj.m) <- rownames(adj.m) <- gen.na
   
-    sidebarMenu(
+  if (static==TRUE) { 
 
-      menuItem("Network", icon=icon("dashboard"), 
-      selectInput("ds","Select a module splitting sensitivity level", 3:2, selected="3", width=190),
-      selectInput("TOM.in", "Input an adjcency threshold to display the adjacency network.", c("None", sort(seq(0, 1, 0.002), decreasing=TRUE)), "None", width=190), 
-      htmlOutput("edge"),
-      div(style="display:inline-block;width:75%;text-align:left;",textInput("color.net", "Color scheme of Interactive Network", "green,blue,red", placeholder="Eg: green,yellow,red", width=200)),
-      div(style="display:inline-block;width:25%;text-align:left;", actionButton("col.but.net", "Go", icon=icon("refresh"), style="padding:7px; font-size:90%; margin-left: 0px")),
-      radioButtons("cpt.nw", "Display or not?", c("Yes"="Y", "No"="N"), "N", inline=TRUE),
-      menuSubItem("View", tabName="net")
+  idx = adj.m > as.numeric(adj.min)
+  link <- data.frame(from=rownames(adj.m)[row(adj.m)[idx]], to=colnames(adj.m)[col(adj.m)[idx]], width=adj.m[idx], stringsAsFactors=FALSE)
+  # Should not exclude duplicate rows by "length".
+  node.pas <- NULL; for (i in seq_len(nrow(link))) { node.pas <- c(node.pas, paste0(sort(c(link[i, 'from'], link[i, 'to'])), collapse='')) }
+  w <- which(duplicated(node.pas)); link <- link[-w, ]
+  link1 <- subset(link, from!=to, stringsAsFactors=FALSE)
+  link1 <- link1[order(-link1$width), ]
+  node <- data.frame(label=colnames(adj.m), size=colSums(adj.m), stringsAsFactors=FALSE)
+  node <- node[order(-node$size), ]
+  net <- graph_from_data_frame(d=link1, vertices=node, directed=FALSE)
+  # Delete edges and nodes.
+  edg.del <- delete_edges(net, E(net)[width <= adj.min])
+  net <- delete_vertices(edg.del, igraph::V(edg.del)[size <= con.min])
+  # Remaining nodes and edges.
+  node <- as_data_frame(net, what="vertices"); link1 <- as_data_frame(net, what="edges")
+  
+  # Match colours with gene connectivity by approximation.
+  col.len <- 350; col.nod <- colorRampPalette(node.col)(col.len)
+  # Assign node colours.
+  col.node <- NULL; node.v <- node$size; v.nod <- seq(min(node.v), max(node.v), len=col.len)
+      for (i in node$size) {
 
-      )
+        ab <- abs(i-v.nod); col.node <- c(col.node, col.nod[which(ab==min(ab))[1]])
+
+      }; igraph::V(net)$color <- col.node
+  # Match colours with gene adjacency by approximation.
+  col.lin <- colorRampPalette(edge.col)(col.len)
+  # Assign edge colours.
+  col.link <- NULL; link.v <- link1$width; v.link <- seq(min(link.v), max(link.v), len=col.len)
+      for (i in link1$width) {
+
+        ab <- abs(i-v.link); col.link <- c(col.link, col.lin[which(ab==min(ab))[1]])
+
+      }; igraph::E(net)$color <- col.link
+  
+  if (layout=="circle") lay <- layout_in_circle(net); if (layout=="fr") lay <- layout_with_fr(net)
+  
+  # Network.
+  graphics::layout(mat=matrix(c(1, 2, 1, 3), nrow=2, ncol=2), height=c(6, 1))
+  par(mar=c(2, 2.5, 2, 2.5), new=FALSE); plot(net, edge.width=igraph::E(net)$width*edge.cex, vertex.size=igraph::V(net)$size*vertex.cex, vertex.label.cex=vertex.label.cex, layout=lay, ...)
+  # Node colour bar.
+  mat1 <- matrix(v.nod, ncol=1, nrow=length(v.nod)) 
+  par(mar=c(2.2, 3, 1, 2.5), new=FALSE); image(x=seq_len(length(v.nod)), y=1, mat1, col=col.nod, xlab="", ylab="", axes=FALSE)
+  title(xlab="Node colour scale", line=1, cex.lab=1)
+  mtext(text=round(seq(min(node.v), max(node.v), len=5), 1), side=1, line=0.3, at=seq(1, col.len, len=5), las=0, cex=0.8)
+  mat2 <- matrix(v.link, ncol=1, nrow=length(v.link)) 
+  par(mar=c(2.2, 2.5, 1, 3), new=FALSE); image(x=seq_len(length(v.link)), y=1, mat2, col=col.lin, xlab="", ylab="", axes=FALSE)
+  title(xlab="Edge colour scale", line=1, cex.lab=1)
+  mtext(text=round(seq(min(link.v), max(link.v), len=5), 1), side=1, line=0.3, at=seq(1, col.len, len=5), las=0, cex=0.8)
+
+  } else if (static==FALSE) {
+
+
+    ui <- shinyUI(dashboardPage(
+
+      dashboardHeader(),
+
+      dashboardSidebar(
+  
+      sidebarMenu(
+
+        menuItem("Network", icon=icon("dashboard"), 
+        selectInput("ds","Select a module splitting sensitivity level", 3:2, selected="3", width=190),
+        selectInput("adj.in", "Input an adjcency threshold to display the adjacency network.", c("None", sort(seq(0, 1, 0.002), decreasing=TRUE)), "None", width=190), 
+        htmlOutput("edge"),
+        div(style="display:inline-block;width:75%;text-align:left;",textInput("color.net", "Color scheme of Interactive Network", "yellow,purple,blue", placeholder="Eg: yellow,purple,blue", width=200)),
+        div(style="display:inline-block;width:25%;text-align:left;", actionButton("col.but.net", "Go", icon=icon("refresh"), style="padding:7px; font-size:90%; margin-left: 0px")),
+        radioButtons("cpt.nw", "Display or not?", c("Yes"="Y", "No"="N"), "N", inline=TRUE),
+        menuSubItem("View", tabName="net")
+
+        )
 
      )
 
-  ),
+     ),
 
-  dashboardBody(
+     dashboardBody(
  
-    tabItems(
+       tabItems(
 
-      tabItem(tabName="net", 
-      box(title="Interactive Network", status="primary", solidHeader=TRUE, collapsible=TRUE, fluidRow(splitLayout(cellWidths=c("1%", "6%", "91%", "2%"), "", plotOutput("bar.net"), visNetworkOutput("vis"), "")), width=12)
-      )
+        tabItem(tabName="net", 
+        box(title="Interactive Network", status="primary", solidHeader=TRUE, collapsible=TRUE, fluidRow(splitLayout(cellWidths=c("1%", "6%", "91%", "2%"), "", plotOutput("bar.net"), visNetworkOutput("vis"), "")), width=12)
+        )
 
-      )
+        )
 
-    )
+     )
 
-))
+  ))
 
-server <- shinyServer(function(input, output, session) {
+  server <- shinyServer(function(input, output, session) {
 
-  observe({
+    observe({
 
-    input$ds
-    updateSelectInput(session, "TOM.in", "Input an adjcency threshold to display the adjacency network.", c("None", sort(seq(0, 1, 0.002), decreasing=TRUE)), "None")
-    updateRadioButtons(session, "cpt.nw", "Display or not?", c("Yes"="Y", "No"="N"), "N", inline=TRUE)
+      input$ds
+      updateSelectInput(session, "adj.in", "Input an adjcency threshold to display the adjacency network.", c("None", sort(seq(0, 1, 0.002), decreasing=TRUE)), "None")
+      updateRadioButtons(session, "cpt.nw", "Display or not?", c("Yes"="Y", "No"="N"), "N", inline=TRUE)
 
-  })
+    })
 
-  observe({
+    observe({
 
-    input$TOM.in; updateRadioButtons(session, "cpt.nw", "Display or not?", c("Yes"="Y", "No"="N"), "N", inline=TRUE)
+      input$adj.in; updateRadioButtons(session, "cpt.nw", "Display or not?", c("Yes"="Y", "No"="N"), "N", inline=TRUE)
 
-  })
+    })
 
-  color_scale <- y <- NULL 
-  col.sch.net <- reactive({ if(input$color.net=="") { return(NULL) }
-  unlist(strsplit(input$color.net, ",")) }); color.net <- reactiveValues(col.net="none")
+    color_scale <- y <- NULL 
+    col.sch.net <- reactive({ if(input$color.net=="") { return(NULL) }
+    unlist(strsplit(input$color.net, ",")) }); color.net <- reactiveValues(col.net="none")
 
-  len.cs.net <- 500
-  observeEvent(input$col.but.net, {
+    len.cs.net <- 350
+    observeEvent(input$col.but.net, {
 
-    if (is.null(col.sch.net())) return (NULL)
+      if (is.null(col.sch.net())) return (NULL)
 
       color.net$col.net <- colorRampPalette(col.sch.net())(len.cs.net)
 
-  })
+    })
 
-  visNet <- reactive({
+    visNet <- reactive({
 
-    if (input$TOM.in=="None") return(NULL)
-
-    adj <- adj.mod[["adj"]]; mods <- adj.mod[["mod"]]; col.len <- ncol(data)
-  if (!is.numeric(data[, col.len])) { gene <- data[, -col.len]; ann <- data[, col.len, drop=FALSE] } else { gene <- data; ann <- NULL }
-  lab <- mods[, input$ds][rownames(gene)==geneID]
-
-    if (lab=="0") { showModal(modalDialog(title="Module", "The selected gene is not assigned to any module. Please select a different gene.")); return() }
-    idx.m <- mods[, input$ds]==lab; adj.m <- adj[idx.m, idx.m]
-    withProgress(message="Computing network:", value=0, {
+      if (input$adj.in=="None") return(NULL)
+      withProgress(message="Computing network:", value=0, {
    
-      incProgress(0.8, detail="making network data frame")
-      idx = adj.m > as.numeric(input$TOM.in)
-      link <- data.frame(from=rownames(adj.m)[row(adj.m)[idx]], 
-      to=colnames(adj.m)[col(adj.m)[idx]], length=adj.m[idx])
-      # Should not exclude duplicate rows by "length".
-      link1 <- subset(link, length!=1 & !duplicated(link[, "length"]))
-      node <- data.frame(id=colnames(adj.m),  
-      value=colSums(adj.m), title=ann[colnames(adj.m), ], borderWidth=2, color.border="black", color.highlight.background="orange", color.highlight.border="darkred", color=NA, stringsAsFactors=FALSE)
-      
-      idx.sel <- grep(paste0("^", geneID, "$"), node$id)
-      rownames(node)[idx.sel] <- node$id[idx.sel] <- paste0(geneID, "_selected")
+        incProgress(0.8, detail="making network data frame")
+        idx = adj.m > as.numeric(input$adj.in)
+        link <- data.frame(from=rownames(adj.m)[row(adj.m)[idx]], to=colnames(adj.m)[col(adj.m)[idx]], value=adj.m[idx], stringsAsFactors=FALSE)
+        # Should not exclude duplicate rows by "length".
+        node.pas <- NULL; for (i in seq_len(nrow(link))) { node.pas <- c(node.pas, paste0(sort(c(link[i, 'from'], link[i, 'to'])), collapse='')) }
+        w <- which(duplicated(node.pas)); link <- link[-w, ]; link1 <- subset(link, from!=to, stringsAsFactors=FALSE)
+        link1$title <- link1$value # 'length' is not well indicative of adjacency value, so replaced by 'value'.
+        if (!is.null(ann)) node <- data.frame(id=colnames(adj.m), value=colSums(adj.m), title=ann[colnames(adj.m), ], borderWidth=2, color.border="black", color.highlight.background="orange", color.highlight.border="darkred", color=NA, stringsAsFactors=FALSE)
+        if (is.null(ann)) node <- data.frame(id=colnames(adj.m), value=colSums(adj.m), borderWidth=2, color.border="black", color.highlight.background="orange", color.highlight.border="darkred", color=NA, stringsAsFactors=FALSE)
+        # Match colours with gene connectivity by approximation.
+        node <- node[order(-node$value), ]; col <- color.net$col.net; col.nod <- NULL
+        node.v <- node$value; v.net <- seq(min(node.v), max(node.v), len=len.cs.net)
+        for (i in node$value) {
 
-      # Match colours with gene connectivity by approximation.
-      node <- node[order(-node$value), ]; col <- color.net$col.net; col.nod <- NULL
-      node.v <- node$value; v.net <- seq(min(node.v), max(node.v), len=len.cs.net)
-      for (i in node$value) {
+          ab <- abs(i-v.net); col.nod <- c(col.nod, col[which(ab==min(ab))[1]])
 
-        ab <- abs(i-v.net); col.nod <- c(col.nod, col[which(ab==min(ab))[1]])
+        }; node$color <- col.nod; net.lis <- list(node=node, link=link1, v.net=v.net)
 
-      }; node$color <- col.nod; net.lis <- list(node=node, link=link1, v.net=v.net)
+      }); net.lis
 
-    }); net.lis
+    })
 
-  })
+    output$bar.net <- renderPlot({  
 
-  output$bar.net <- renderPlot({  
-
-    if (input$TOM.in=="None"|input$cpt.nw=="N") return(NULL)
-    if (length(color.net$col.net=="none")==0) return(NULL)
-    v.net <- visNet()[["v.net"]]
-    if(input$col.but.net==0) color.net$col.net <- colorRampPalette(c("green", "blue", "red"))(length(v.net))
+      if (input$adj.in=="None"|input$cpt.nw=="N") return(NULL)
+      if (length(color.net$col.net=="none")==0) return(NULL)
+      v.net <- visNet()[["v.net"]]
+      if(input$col.but.net==0) color.net$col.net <- colorRampPalette(c("yellow", "purple", "blue"))(length(v.net))
      
-      withProgress(message="Color scale: ", value = 0, {
+        withProgress(message="Color scale: ", value = 0, {
 
-        incProgress(0.25, detail="Preparing data. Please wait.")
-        cs.df.net <- data.frame(color_scale=v.net, y=1); #save(cs.df, file="cs.df")
-        incProgress(0.75, detail="Plotting. Please wait.")
-        cs.g.net <- ggplot()+geom_bar(data=cs.df.net, aes(x=color_scale, y=y), fill=color.net$col.net, stat="identity", width=0.2)+theme(axis.title.x=element_blank(), axis.text.x=element_blank(), axis.ticks.x=element_blank(), plot.margin=margin(3, 0.1, 3, 0.1, "cm"), panel.grid=element_blank(), panel.background=element_rect(fill="white", colour="grey80"))+coord_flip()+scale_y_continuous(expand=c(0,0))+scale_x_continuous(expand = c(0,0)); return(cs.g.net)
+          incProgress(0.25, detail="Preparing data. Please wait.")
+          cs.df.net <- data.frame(color_scale=v.net, y=1); #save(cs.df, file="cs.df")
+          incProgress(0.75, detail="Plotting. Please wait.")
+          cs.g.net <- ggplot()+geom_bar(data=cs.df.net, aes(x=color_scale, y=y), fill=color.net$col.net, stat="identity", width=((max(v.net)-min(v.net))/len.cs.net)*0.7)+theme(axis.title.x=element_blank(), axis.text.x=element_blank(), axis.ticks.x=element_blank(), plot.margin=margin(3, 0.1, 3, 0.1, "cm"), panel.grid=element_blank(), panel.background=element_rect(fill="white", colour="grey80"))+coord_flip()+scale_y_continuous(expand=c(0,0))+scale_x_continuous(expand = c(0,0)); return(cs.g.net)
+
+        })
+
+    })
+
+    output$edge <- renderUI({ 
+
+      if (input$adj.in=="None") return(NULL)
+      HTML(paste0("&nbsp&nbsp&nbsp&nbsp Total edges to display (If > 300, the <br/> 
+      &nbsp&nbsp&nbsp App can possibly get stuck.): ", dim((visNet()[["link"]]))[1]))
+
+    })
+
+    vis.net <- reactive({ 
+
+      if (input$adj.in=="None"|input$cpt.nw=="N") return(NULL)
+
+      withProgress(message="Network:", value=0.5, {
+
+        incProgress(0.3, detail="prepare for plotting.")
+        visNetwork(visNet()[["node"]], visNet()[["link"]], height="300px", width="100%", background="", main=paste0("Network Module Containing ", geneID), submain="", footer= "") %>% visIgraphLayout(physics=FALSE, smooth=TRUE) %>%
+        visOptions(highlightNearest=list(enabled=TRUE, hover=TRUE), nodesIdSelection=TRUE)
+
+      })
+    
+    })
+
+    output$vis <- renderVisNetwork({
+
+      if (input$adj.in=="None"|input$cpt.nw=="N") return(NULL)
+      withProgress(message="Network:", value=0.5, {
+
+        incProgress(0.3, detail="plotting.")
+        vis.net()
 
       })
 
-  })
-
-  output$edge <- renderUI({ 
-
-    if (input$TOM.in=="None") return(NULL)
-    HTML(paste0("&nbsp&nbsp&nbsp&nbsp Total edges to display (If > 300, the <br/> 
-    &nbsp&nbsp&nbsp App can possibly get stuck.): ", dim((visNet()[["link"]]))[1]))
-
-  })
-
-  vis.net <- reactive({ 
-
-    if (input$TOM.in=="None"|input$cpt.nw=="N") return(NULL)
-
-    withProgress(message="Network:", value=0.5, {
-
-      incProgress(0.3, detail="prepare for plotting.")
-      visNetwork(visNet()[["node"]], visNet()[["link"]], height="300px", width="100%", background="", main=paste0("Network Module Containing ", geneID), submain="", footer= "") %>% 
-      visOptions(highlightNearest=TRUE, nodesIdSelection=TRUE)
-
-    })
-    
-  })
-
-  output$vis <- renderVisNetwork({
-
-    if (input$TOM.in=="None"|input$cpt.nw=="N") return(NULL)
-    withProgress(message="Network:", value=0.5, {
-
-      incProgress(0.3, detail="plotting.")
-      vis.net()
-
     })
 
-  })
+  }); shinyApp(ui, server) 
 
-})
-
-shinyApp(ui, server) 
+  }
 
 }
 

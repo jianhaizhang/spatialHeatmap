@@ -5,12 +5,12 @@ Version: 0.99.0
 Date: 2018-09-07
 Author: Jianhai Zhang (PhD student at Genetics, Genomics and Bioinformatics, University of California, Riverside), Dr. Thomas Girke (professor at Department of Botany and Plant Sciences, University of California, Riverside)
 Maintainer: Jianhai Zhang <jzhan067@ucr.edu> <zhang.jianhai@hotmail.com>
-Description: Given a data matrix and an associated svg image, this package is able to generate spatial heatmaps, interactive matrix heatmap, and interactive network.
+Description: This package is designed to intuitively visualise large-scale data matrix on spatial heatmaps and promote hypothesis generation.
 License: Artistic-2.0
 Encoding: UTF-8
 biocViews: Visualization, Microarray, Sequencing, GeneExpression, DataRepresentation, Network, Clustering, GraphAndNetwork
 VignetteBuilder: knitr
-Suggests: knitr, rmarkdown, RUnit, BiocGenerics
+Suggests: knitr, rmarkdown, RUnit, BiocGenerics, DESeq2, ExpressionAtlas
 Depends:
     R (>= 3.5.1)
 Imports:
@@ -24,17 +24,20 @@ Imports:
    ggdendro, 
    grImport,
    grid, 
-   gridExtra, 
+   gridExtra,
+   gplots,
+   igraph,
+   reshape2,
    rsvg, 
    shiny,
    dynamicTreeCut,
    grDevices,
+   graphics,
    plotly,
-   stats,
+   stats,  
+   SummarizedExperiment,
    shinydashboard,
    utils,
    visNetwork,
-   kableExtra, 
-   knitr,
    methods
 RoxygenNote: 6.1.1

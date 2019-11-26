@@ -24,23 +24,30 @@ vignette: |
 
   Maintainer: Jianhai Zhang (<jzhan067@ucr.edu>; <zhang.jianhai@hotmail.com>)
 
+<style type="text/css">
+.main-container { max-width: 1800px; margin-left: 5px; margin-right: auto; }
+</style>
+
 <style>body { text-align: justify }</style>
 
-```{r setup0, echo=FALSE, message=FALSE, warning=FALSE}
-library(knitr); opts_chunk$set(message=FALSE, warning=FALSE)
+```{r setup0, eval=TRUE, echo=FALSE, message=FALSE, warning=FALSE}
+
+  library(knitr); opts_chunk$set(message=FALSE, warning=FALSE)
+  url <- "https://raw.githubusercontent.com/jianhaizhang/SVG_tutorial_file/master/image/"
+
 ```
 
 # Introduction 
 
-This R package spatialHeatmap is able to visualise various gene expression data as long as the data is formatted in a matrix where rows are genes and columns are samples/conditions or vice versa. Examples include but not limit to RNA-seq, microarray, qPCR, etc., regardless of species. 
+This R package spatialHeatmap is designed to intuitively visualise gene expression data on images where the data come from and promote hypothesis generation. Examples include but not limit to RNA-seq, microarray, qPCR, subcellular localisation of proteins, etc., regardless of species. 
 
-The core feature is to map expression profile of a target gene under different conditions to different cells/tissues/organs (samples) in an associated svg image, where different regions correspond to different samples. After mapping, the expression profile is represented as different colours across regions in the image, which is called spatial heatmaps. The tutorial of how to properly format and associate a custom svg image with a data matrix is provided in an independent vignette "SVG_tutorial.html". Not all samples in the expression matrix need to be defined in the svg image, and only those defined will be mapped, vice versa. This feature allows to input multiple genes. If so, the spatial heatmaps of different genes are generated sequentially on the same page, and there is also an option to display these spatial heatmaps by genes or by conditions, which makes it flexible for users to compare expression profiles of the same gene across conditions or different genes across the same condition.  
+The core feature "Spatial Heatmap" is to map expression profile of a target gene under different conditions to different cells/tissues/organs (samples) on an associated SVG image, where different samples are predefined. After mapping, the expression profile is represented as different colours across samples in the image, which are called spatial heatmaps. The tutorial of how to properly format and associate a custom SVG image with a data matrix is provided in the [SVG tutorial](https://jianhaizhang.github.io/SVG_tutorial_file/). Not all samples in the expression matrix need to be defined in the SVG image and only those defined will be mapped, vice versa. This feature allows to input multiple genes. If so, the spatial heatmaps of different genes are generated sequentially on the same page, and there is also an option to display these spatial heatmaps by genes or by conditions, which makes it flexible for users to compare expression profiles of the same gene across conditions or different genes across the same condition.  
 
-In addition, the accessory features of matrix heatmap and network make this package more versatile, which display the target gene in the context of corresponding gene module. All the utilities implemented in this R package are also combined as a web-browser based Shiny app [@shiny; @shinydashboard], which can be used locally or [online](https://tgirke.shinyapps.io/spatialHeatmap/) on the Shiny server. 
+In addition, the accessory features of "Matrix Heatmap" and "Network" display the target gene in the context of corresponding gene module, which make this package more versatile. All the utilities implemented in this R package are also combined as a web-browser based Shiny app [@shiny; @shinydashboard]. It can be used locally or [online](https://tgirke.shinyapps.io/spatialHeatmap/) on the Shiny server. 
 
-The application of this package is not limited to gene expression data. It can be used as long as a data matrix and an associated svg image are provided. Other exmaples include population data collected in different years across different cities, health data of an individual under different conditions, ect. In the following the vignette is given with a gene expression matrix and an associated root tissue image in svg format as an example. Usage on other cases is in the same way. This vignette describes the R functions and instruction on how to use the web-browser based Shiny app.  
+The application of this package is not limited to gene expression data. It can be used as long as a data matrix and an associated SVG image are provided. Other exmaples include population data collected in different years across different cities, health data of an individual under different conditions, ect. In the following, the vignette is given with a gene expression matrix and an associated root tissue image in SVG format as an example. Usage on other cases is in the same way. This vignette describes the R functions and instruction on how to use the web-browser based Shiny app.  
 
-<b> For a quick test, users can use the example code below or the [online](https://tgirke.shinyapps.io/spatialHeatmap/) Shiny app. On the online app, users can either select the top 7 examples from the left menu or download the example data matrix and svg image in the insturction page.</b>  
+For a quick test, users can use the example code below or the [online](https://tgirke.shinyapps.io/spatialHeatmap/) Shiny app. On the online app, users can either select the pre-configured examples from the left menu or download the example data matrix and SVG image in the insturction page.
 
 # Installation
 
@@ -56,11 +63,11 @@ BiocManager::install("spatialHeatmap")
 
 # Functionality and Corresponding R Functions
 
-To run the following functions and use the Shiny app, the pacakge should be loaded first.
+Load the required packages.
 
-```{r, eval=FALSE, echo=TRUE, warnings=FALSE}
+```{r, eval=TRUE, echo=TRUE, warnings=FALSE}
 
- library(spatialHeatmap)
+ library(spatialHeatmap); library(data.table); library(SummarizedExperiment); library(XML); library(igraph); library(ExpressionAtlas); library(genefilter); library(DESeq2)
 
 ```   
 
@@ -71,169 +78,211 @@ To run the following functions and use the Shiny app, the pacakge should be load
 url <- "https://raw.githubusercontent.com/jianhaizhang/SVG_tutorial_file/master/image/"
 
 ```
-The gene expression matrix usually contains noise and needs to be filtered at the beginning. The function `filter.data` has two filter arguments `pOA` and `CV`, corresponding to "pOverA" and "cv" in the package "genefilter" [@Gentleman2018-xj], respectively. When running this function, a directory "local_mode_result" is created in the location specified by `dir` (default is `./`), and the processed matrix (processed_data.txt) is saved in this directory.  
+The gene expression matrix usually contains noise and needs to be filtered at the beginning. The function `filter.data` [@SummarizedExperiment; @data.table; @utils] has two filter arguments `pOA` and `CV`, corresponding to `pOverA` and `cv` in the package "genefilter" [@Gentleman2018-xj], respectively.   
 
 <a name="name_format"></a>
-In the gene expression matrix, the row and column names are usually gene IDs and sample/conditions, respectively. <b>The sample/condition names MUST be fomatted this way: a sample name is followed by double underscore then the condition, such as “stele__140mM_48h" [@Geng2013-ek], where stele is the sample and 140mM_48h is the condition</b>. One column of meta data (e.g. gene annotation) can also be included in parallel with sample/condition at the end. <b>In the column names of sample/condition and meta data, only letters, digits, single underscore, dots are allowed</b>. Not all samples in the matrix necessarily need to be present in the svg image, vice versa. Only samples present in the svg image are recognised and coloured. The rows and columns can be swaped and the function identifies gene IDs by `isRowGen`.
+In the gene expression matrix, the row and column names should be gene IDs and sample/conditions respectively. The sample/condition names MUST be fomatted this way: a sample name is followed by double underscore then the condition, such as “epidermis__140mM_1h" in [Table 1](#table) [@Geng2013-ek], where epidermis is the sample and 140mM_1h is the condition. In the column names of sample/condition, only letters, digits, single underscore, single space, or dots are allowed. Not all samples in the matrix necessarily need to be present in the SVG image, vice versa. Only samples present in the SVG image are recognised and coloured.
 
-The example of partial gene expression matrix and how to use this function is shown [below](#filter) [@Mustroph2009-nu; @knitr; @kableExtra; @data.table]. The complete matrix (root_expr_ann_row_gen.txt) is accessible in this package as shown below or can be downloaded from the web-browser based Shiny app.  
+The expression matrix is stored as an "SummarizedExperiment" object. Metadata of genes and sample/conditions can be optionally added. Refer to the R package "SummarizedExperiment" for more details [@SummarizedExperiment].
+
+The example of gene expression matrix and how to use this function is shown [below](#filter) [@Geng2013-ek; @knitr; @kableExtra; @data.table]. The complete matrix (root_expr_row_gen.txt) is accessible in this package as shown below or can be downloaded from the web-browser based Shiny app.  
 
 <a name="filter"></a>
-```{r, eval=FALSE, echo=TRUE, warnings=FALSE}
+```{r, filter, eval=TRUE, echo=TRUE, warnings=FALSE}
 
-  # The example complete data matrix.
-  data.path <- system.file("extdata/example", "root_expr_ann_row_gen.txt", package = "spatialHeatmap")
+  # Creat the "SummarizedExperiment" class.
+  ## The expression matrix, where the row and column names should be gene IDs and sample/conditions, respectively.
+  data.path <- system.file("extdata/example", "root_expr_row_gen.txt", package = "spatialHeatmap")
+  expr <- fread(data.path, sep='\t', header=TRUE, fill=TRUE)
+  col.na <- colnames(expr)[-ncol(expr)]; row.na <- as.data.frame(expr[, 1])[, 1]
+  expr <- as.matrix(as.data.frame(expr, stringsAsFactors=FALSE)[, -1])
+  rownames(expr) <- row.na; colnames(expr) <- col.na
+  con.path <- system.file("extdata/example", "root_con.txt", package = "spatialHeatmap") 
+  ## Condition is a single column data frame.
+  con <- read.table(con.path, header=TRUE, row.names=NULL, sep='\t', stringsAsFactors=FALSE)
+  ann.path <- system.file("extdata/example", "root_ann.txt", package = "spatialHeatmap")
+  ## Gene annotation is a single column data frame.
+  ann <- read.table(ann.path, header=TRUE, row.names=1, sep='\t', stringsAsFactors=FALSE)
+  ## The expression matrix, gene annotation, and condition are stored in a "SummarizedExperiment" object. Gene annotation and condition are optional.
+  expr <- SummarizedExperiment(assays=list(expr=expr), rowData=ann, colData=con)
+
   # Filter genes. In "pOA", genes with expression value A >= 1 in at least p=0.03 (3%) of all samples are retained; in "CV", genes with coefficient of variance (cv) between 0.1 and 10000 are retained, where the upper limit is set to very high (10000) so as to keep all genes with cv over 0.1. 
-  exp <- filter.data(data=data.path, sep="\t", isRowGen=TRUE, pOA=c(0.03, 1), CV=c(0.1, 10000), dir="./")
-  
+  exp <- filter.data(data=expr, pOA=c(1, 0.03), CV=c(0.1, 10000), dir=NULL)
+
+  # Get the filtered matrix. "filter.data" returns a "SummarizedExperiment" object.
+  df <- assay(exp)
+
 ```   
-Example of the partial filtered matrix.  
 
-```{r table, echo=FALSE, fig.align="center", fig.cap=(""), out.width="700"}
+<a name="table"></a>
+```{r, table, eval=TRUE, echo=FALSE, warnings=FALSE}
 
-include_graphics(paste0(url, "matrix1.png"))
+  kable(df[1:3, 1:4], caption='Table 1. Gene expression matrix. Rows and columns are genes and sample/conditions respectively.')
 
-```
+``` 
 
 ## Spatial Heatmap
 
-This is the core functionality of this package and is implemented by the function `spatial.hm` [@Murrell2009-zf; @rsvg; @ggplot2; @gridExtra; @XML]. It maps values of the target genes in the data matrix onto an associated svg image ([Figure 1](#root_R)) and shows as spatial heatmaps ([Figure 2](#shm_R)). The data matrix (root_expr_ann_row_gen.txt) and svg image (root_cross_final.svg) are accessible in this package as shown below or can be downloaded from the web-browser based Shiny app.  
+### How does it work?
 
-In Figure 1, the colours are only used to distinguish different tissues, while in Figure 2 user defined tissue regions are coloured by the expression profile of a gene of interest under different contidions. For example, in [Table 1](#filter) the expression value of gene "PSAC" in "stele" (the blue tissue in Figure 1) under the condition "140mM_48h" is 2.3604120, after mapping the "stele" is coloured green, corresponsing to 2.3604120 in the color scale. The code of this example is provided below.  
+This is the core functionality of this package and is implemented by the function `spatial.hm` [@SummarizedExperiment; @grImport; @rsvg; @ggplot2; @gridExtra; @XML; @grid; @Cairo; @Gentleman2018-xj]. It maps expression profiles of target genes in the data matrix onto the associated SVG image ([Figure 1](#root_R), @Mustroph2009-nu) and displays as spatial heatmaps ([Figure 2](#shm_R)). The SVG image (root_cross_final.svg) is accessible in this package as shown below or can be downloaded from the web-browser based Shiny app.  
 
-The tutorial of how to properly format and associate custom svg images with expression tables are provided in an independent vignette “SVG_tutorial.html”.
+In Figure 1, the colours are only used to distinguish different tissues, while in Figure 2 user defined tissue regions are coloured by the expression profile of a target gene under different contidions. For example, in [Table 1](#table) the expression value of gene "PSAC" in "epidermis" under the condition "140mM_1h" is "2.457910", after mapping the "epidermis" is coloured "dark yellow", corresponsing to "2.457910" in the colour scale.   
 
-```{r, eval=FALSE, echo=TRUE, warnings=FALSE}
-
-  # Path of the expression matrix.
-  data.path <- system.file("extdata/example", "root_expr_ann_row_gen.txt", package = "spatialHeatmap")
-  # Path of the original svg image.
-  svg.path <- system.file("extdata/example", "root_cross_final.svg", package = "spatialHeatmap")
-  # Mapping of the target gene "PSAC" to the svg image. Multiple target genes can be mapped at the same time. Here only one is mapped.
-  spatial.hm(svg=svg.path, data=data.path, sep="\t", isRowGene=TRUE, pOA=c(0.1, 3), CV=c(0.05, 1000), ID="PSAC", col.com=c("green", "blue", "purple", "yellow", "red"), col.bar="selected", width=1, height=1, sub.title.size=11, layout="gene", ncol=4)
-
-```   
 <a name="root_R"></a>
-```{r root_R, echo=FALSE, fig.align="center", fig.cap=("Figure 1. Original root. Tissues are coloured differently."), out.width="150"}
+```{r root_R, echo=FALSE, dev='svg', fig.align="center", fig.cap=("Figure 1. Original root. Tissues are labelled by different colours for easy identification."), out.width="60%"}
 
-include_graphics(paste0(url, "root_R.png"))
+include_graphics('../inst/extdata/example/root_cross_final.svg')
 
 ```
 
+```{r, shm, eval=TRUE, echo=TRUE, warnings=FALSE, fig.align="center", fig.cap=('Figure 2. Spatial Heatmaps of the target gene \"PSAC\". User defined tissue regions are coloured by the expression profile of the target gene.')}
+
+  # Path of the original svg image.
+  svg.path <- system.file("extdata/example", "root_cross_final.svg", package = "spatialHeatmap")
+  # Mapping of the target gene "PSAC" to the SVG image. Multiple target genes can be mapped at the same time. Here only one is mapped. Save the spatial heatmaps as "sh_root.png" in the current directory.
+png("./sh_root.png", width=380, height=380)
+spatial.hm(svg=svg.path, data=exp, pOA=c(0, 0), CV=c(0, 10000), ID="PSAC", col.com=c("yellow", "blue", "purple"), width=1, height=1, sub.title.size=9.5, layout="gene", ncol=3)
+dev.off()
+
+```   
+
 <a name="shm_R"></a>
-<center><img src="`r paste0(url, "spatial_heatmap_R1.png")`" hspce=20/><img src="`r paste0(url, "spatial_heatmap_R2.png")`"/></center>
-<p class="caption">Figure 2. Spatial Heatmaps of gene \"PSAC\". User defined tissue regions are coloured by the expression profile of the target gene.</p>
+```{r shm1, echo=TRUE, fig.align="center", fig.cap=('Figure 2. Spatial Heatmaps of the target gene \"PSAC\". User defined tissue regions are coloured by the expression profile of the target gene.'), out.width="60%" }
+
+include_graphics('./sh_root.png')
+
+```
+
+### SVG templates
+
+To make it easy for users, a [repository](https://github.com/jianhaizhang/SVG_tutorial_file/tree/master/anatomogram/src/svg/svg_trans) of SVG templates across different species is created. This repository is modified from [EBI Gene Expression Group](https://github.com/ebi-gene-expression-group/anatomogram/tree/master/src/svg), since the SVG images from EBI cannot be directly used in this package because of the format. To use this repository, users should download an SVG template of interest and configure it with a gene expression matrix according to the [SVG tutorial](https://jianhaizhang.github.io/SVG_tutorial_file/), which is also accessible by `vignette(topic="SVG_tutorial", package="spatialHeatmap")`. Then input the configured SVG and expression data to `spatial.hm` as described above. More SVG templates will be added to this repository in the future. If users cannot find an SVG template of interest in this repository, they can follow the "SVG tutorial" to create their custom SVG images.
+
+The [Expression Atlas-EMBL-EBI](https://www.ebi.ac.uk/gxa/home) is a rich resource of gene expression data, which includes many conditions and species. Below is an example of how to plot the EBI expression data on the SVG template.
+
+**Download SVG template and find tissue names:** download "homo_sapiens.brain.svg" from the SVG repository (mouse over the image and right click, then select “Save image as…”) and open it in Inkscape (https://inkscape.org/), which is an SVG editor and should be pre-installed. In the Inkscape, as shown in Figure 3 find the "Edit" tab at the top left corner then click "XML Editor...". In the "XML Editor" panel, click the small black triangle at the bottom, then all the tissue names (id) are shown. These tissue names must be exactly the same with that in the expression matrix. Otherwise, the tissues would not be coloured in the spatial heatmaps.
+
+<p/><center><img src="`r paste0(url, 'edit.png')`" hspace=10><img src="`r paste0(url, 'xml.png')`"></center> <p/>
+<p/><center><img src="`r paste0(url, 'xml_panel.png')`" hspace=10><img src="`r paste0(url, 'xml_id.png')`"></center> <p/>
+<figcaption>Figure 3 Snapshots of finding tissue names in Inkscape.</figcaption>  
+
+<br/>Format the expression matrix and plot the spatial heatmaps:
+
+```{r ebi, eval=TRUE, echo=TRUE, warnings=FALSE }
+
+# Search for human samples related to brain.
+all.res <- searchAtlasExperiments(properties="brain", species="Homo sapiens")
+# Select "E-GEOD-67196", which is RNA-seq data of cerebellum and frontal cortex in brain.
+sl <- getAtlasData('E-GEOD-67196')[[1]][[1]]
+# Raw count matrix.
+df.exp <- assay(sl); df.exp[1:3, 1:5]
+# Tissue/condition metadata.
+df.con <- as.data.frame(colData(sl)); df.con[1:3, ]
+
+# The matching tissues in the SVG template are "cerebellum" and "frontal_cortex" while in the expression data are "cerebellum" and "frontal cortex". The tissue names must be exactly same between the SVG and the expression matrix, so change "frontal cortex" to "frontal_cortex".
+df.con$organism_part <- sub(' ', '_', df.con$organism_part)
+# Use abbreviations of the conditions ("individual", "disease", "genotype").
+df.con$individual <- sub('individual', 'indi', df.con$individual)
+df.con$individual <- sub('Individual ', 'indi', df.con$individual)
+df.con$disease <- sub('amyotrophic lateral sclerosis', 'ALS', df.con$disease)
+df.con$genotype <- sub('presence of a C9orf72 repeat expansion', 'pre.C9orf72', df.con$genotype)
+df.con$genotype <- sub('absence of a C9orf72 repeat expansion', 'ab.C9orf72', df.con$genotype)
+df.con$genotype <- sub('not applicable', 'NA', df.con$genotype)
+
+# The condition can be "individual", "disease", "genotype", or combinations of them. If use combined conditions, just paste the selected contitions together. 
+con1 <- paste0(df.con$organism_part, '__', df.con$genotype); con1[1:4] # Single condition of "genotype".
+con2 <- paste0(df.con$organism_part, '__', df.con$individual, '.', df.con$genotype); con2[1:4] # Combined conditions of "individual" and "genotype".
+# Use "individual" and "genotype" as the condition.
+colnames(df.exp) <- con2
+
+# Normalise the raw counts.
+se <- SummarizedExperiment(assays=list(expr=df.exp), rowData=rownames(df.exp), colData=con2)
+dds <- DESeqDataSet(se, design=~1); dds <- estimateSizeFactors(dds)
+# Use log2 unit.
+log.df <- log2(counts(dds, normalized=TRUE)+1)
+# Summary of the expression matrix.
+quantile(log.df, probs=seq(0, 1, 0.25))
+
+# Filter the expression matrix.
+ffun <- filterfun(pOverA(1/ncol(log.df), 5), cv(0.6, 1000))
+filtered <- genefilter(log.df, ffun); log.df <- log.df[filtered, ]; dim(log.df)
+
+# Subset the columns to make a toy example.
+log.df <- log.df[, c(1:2, 17:18, 37:38)]; con2 <- con2[c(1:2, 17:18, 37:38)]; log.df[1:3, ]
+# Store the filtered expression matrix as a "SummarizedExperiment" object.
+exp.ebi <- SummarizedExperiment(assays=list(expr=log.df), rowData=rownames(log.df), colData=con2)
+# Set "cerebral_cortex" as transparent, since it covers "frontal_cortex". Pass the path of downloaded SVG image to the argument "svg". Save the spatial heatmaps as "ebi_brain.png" in current directory.
+png('./ebi_brain.png', width=680, height=350)
+spatial.hm(svg='./homo_sapiens.brain.svg', data=exp.ebi, pOA=c(0, 0), CV=c(0, 10000), ID=rownames(log.df)[6], col.com=c("yellow", "blue", "purple"), width=1, height=0.5, sub.title.size=10, layout="gene", ncol=3, tis.trans='cerebral_cortex')
+dev.off()
+
+```
+
+```{r ebi_sh, echo=TRUE, fig.align="center", fig.cap=("Figure 4 Example of plotting EBI data on the SVG template. Cerebellum and frontal cortex are coloured, since they are the only 2 common tissues between the SVG and the expression matrix."), out.width="100%"}
+
+include_graphics('./ebi_brain.png')
+
+```
 
 ## Adjacency matrix and module identification
 <a name="ds"></a>
 
-To supplement the core feature of spatial heatmap, the interactive matrix heatmap and network features are developed, which are used to display the target gene in the conext of corresponding gene network module. The function `adj.mod` is designed to compute adjacency matrix and identify modules. Similar with `filter.data`, the directory "local_mode_result/" is automatically created in the location specified by `dir`, and is used to save resulting adjacency matrix (adj.txt) and module definition (mod.txt). The modules are identified using WGCNA [@Langfelder2008-sg] and flashClust [@flashClust] at two alternative sensitivity levels (3, 2). From 3 to 2, the sensitivity decreases and results in less modules with larger sizes. There are two additional options for module identification: signed and unsinged. The "signed" means both positive and negative adjacency between genes are used while the "unsigned" takes the absolute values of negative adjacency [@Langfelder2008-sg].
+The `matrix.heatmap` [@SummarizedExperiment; @ggdendro; @ggplot2; @plotly; @stats; @gplots; @reshape2] and `network` [@SummarizedExperiment; @igraph; @graphics; @shiny; @shinydashboard; @visNetwork] function are used to supplement the core feature of spatial heatmap, which are designed to display the target gene in the context of corresponding gene network module. The function `adj.mod` is designed to compute adjacency matrix and identify modules. The modules are identified using WGCNA [@Langfelder2008-sg] and flashClust [@flashClust] at two alternative sensitivity levels (3, 2). From 3 to 2, the sensitivity decreases and results in less modules with larger sizes. There are two additional options for module identification: signed and unsinged. The "signed" means both positive and negative adjacency between genes are used while the "unsigned" takes the absolute values of negative adjacency [@Langfelder2008-sg].
 
-```{r, eval=FALSE, echo=TRUE, warnings=FALSE}
+```{r, eval=TRUE, echo=TRUE, warnings=FALSE}
 
-  data.path <- system.file("extdata/example", "root_expr_ann_row_gen.txt", package = "spatialHeatmap")
-  exp <- filter.data(data=data.path, sep="\t", isRowGen=TRUE, pOA=c(0.03, 1), CV=c(0.1, 10000), dir="./")
-  adj_mod <- adj.mod(data=exp, type="signed", minSize=15, dir="./")
+  adj_mod <- adj.mod(data=exp, type="signed", minSize=15, dir=NULL)
 
 ```   
 ## Matrix Heatmap
 
 <a name="mhm1"></a>
-The function `matrix.heatmap` displays the target gene in the context of corresponding gene module as an [interactive matrix heatmap](#mhm_R), where the rows and columns are sorted by hierarchical clustering dendrograms and the target gene is tagged by a red rectangle [@ggdendro; @plotly]. To explore the results, users can zoom in and out by drawing a rectangle and by double clicking the heatmap, respectively. Users can scale the expression values by gene or sample. The same module can also represented as an interactive network by the `network` function.
+The function `matrix.heatmap` displays the target gene in the context of corresponding gene module as a [matrix heatmap](#mhm_R), where the rows and columns are sorted by hierarchical clustering dendrograms and the target gene is tagged by 2 black lines [@ggdendro; @plotly]. The matrix heatmap has 2 modes: static or interactive. If interactive, users can zoom in and out by drawing a rectangle and by double clicking the heatmap, respectively. Users can scale the expression matrix by gene or sample.
 
-```{r, eval=FALSE, echo=TRUE, warnings=FALSE}
+<a name="mhm_R"></a>
+```{r, eval=TRUE, echo=TRUE, warnings=FALSE, fig.height=5, fig.width=5, fig.cap=("Figure 5. Matrix Heatmap. Rows are genes and columns are samples. The input gene is tagged by 2 black lines."), out.width='100%'}
 
-  # Path of the example data matrix.
-  data.path <- system.file("extdata/example", "root_expr_ann_row_gen.txt", package = "spatialHeatmap")
-  # Filter the matrix.
-  exp <- filter.data(data=data.path, sep="\t", isRowGen=TRUE, pOA=c(0.03, 1), CV=c(0.1, 10000), dir="./")
-  # Compute adjacency matrix and identify modules. This step is very computationally intensive on large data matrix, e.g. more than 15,000 genes.
-  adj_mod <- adj.mod(data=exp, type="signed", minSize=15)
-  # Launch the web-browser based matrix heatmap, where the target gene is "PSAC". 
-  matrix.heatmap(geneID="PSAC", data=exp, adj.mod=adj_mod, ds="2", scale="row")
+  # Static mode. For interactive mode, set "static=FALSE"
+  matrix.heatmap(geneID="PSAC", data=exp, adj.mod=adj_mod, ds="2", scale="row", static=TRUE, arg.lis1=list(cexRow=0.4, cexCol=0.4, offsetRow=0.1, offsetCol=0.1))
 
 ```   
-<a name="mhm_R"></a>
-```{r mhm_R, echo=FALSE, fig.height=5, fig.width=5, fig.cap=("Figure 3. Matrix Heatmap. Rows are genes and columns are samples. The input gene is tagged by a redrectangle."), out.width='100%'}
-
-include_graphics(paste0(url, "matrix_heatmap_R.png"))
-
-```
 
 ## Network
 
 <a name="net1"></a>
-The function `network` launches an [interactive interface](#net_R) to display the gene module containing the target gene [@visNetwork]. The gene network modules are identified at [two alternative sensitivities levels](#ds) (3, 2). The "Select a module splitting sensitivity level" option allows users to choose which level to use. Nodes and edges mean genes and adjacency between genes respectively. There is an interactive colour bar to denote gene connectivity (sum of a gene's adjacency with all its direct neighbours). The colour ingredients must only be separated by comma, e.g. "blue,green,red", which means gene connectivity increases from blue to red. The edge length is inversely proportional to gene adjacency. If too many edges (e.g.: > 300) are displayed, the app can possibly get stuck. So the "Input an adjacency threshold to display the adjacency network." option sets a threthold to filter out some weak edges. Only edges above the threshold are displayed. The app outputs the total number of remaining edges resulting from each input adjacency threshold. If it is not too large (e.g.: < 300), users can check "Yes" under "Display or not?", then the network can be responsive smoothly. To maintain acceptable performance, users are advised to choose a stringent threshold (e.g. 0.9) initially, then decrease the value gradually. The interactive feature allows users to zoom in and out, or drag a gene around. All the gene IDs in the network module are listed in "Select by id" in decreasing order according to gene connectivity, where the selected gene ID is appended "_selected". By clicking an ID in this list, the corresponding gene is highlighted in the network. If the input expression matrix has an annotation column, then the annotation can be seen by hovering the cursor over a node.  
+The function `network` returns a [network graph](#net_R) to display the target gene in the context of the corresponding gene module, where nodes are genes and edges are adjacencies between genes. The gene module is the same with that in `matrix.heatmap`. The network can be dispayed in static or interactive mode. The thicker edge denotes higher adjacency (coexpression similarity) between genes while larger node indicates higher gene connectivity (sum of a gene's adjacency with all its direct neighbours). In the interactive mode, there is an interactive colour bar to denote gene connectivity. The colour ingredients must only be separated by comma, e.g. "yellow,black,purple", which means gene connectivity increases from yellow to purple. If too many edges (e.g.: > 300) are displayed, the network could get stuck. So the "Input an adjacency threshold to display the adjacency network." option sets a threthold to filter out weak edges and all remaining edges are displayed. If not too many (e.g.: < 300), users can check "Yes" under "Display or not?", then the network will be displayed and would be responsive smoothly. To maintain acceptable performance, users are advised to choose a stringent threshold (e.g. 0.9) initially, then decrease the value gradually. The interactive feature allows users to zoom in and out, or drag a gene around. All the gene IDs in the network module are listed in "Select by id" in decreasing order according to gene connectivity. The selected gene ID is appended "_selected" as a label. By clicking an ID in this list, users can identify the corresponding gene in the network. If the input contains gene annotation, then the annotation can be seen by hovering the cursor over a node.
 
-The same module can also be displayed in the form of an interactive matrix heatmap with the function `matrix.heatmap`. The network can be seen by clicking the "View" button at the bottom of the side menu.
-
-```{r, eval=FALSE, echo=TRUE, warnings=FALSE}
-
-  # Path of the example data matrix.
-  data.path <- system.file("extdata/example", "root_expr_ann_row_gen.txt", package = "spatialHeatmap")
-  # Filter the matrix.
-  exp <- filter.data(data=data.path, sep="\t", isRowGen=TRUE, pOA=c(0.03, 1), CV=c(0.1, 10000), dir="./")
-  # Compute adjacency matrix and identify modules. This step is very computationally intensive on large data matrix, e.g. more than 15,000 genes.
-  adj_mod <- adj.mod(data=exp, type="signed", minSize=15)
-  # Launch the web-browser based network.
-  network(geneID="PSAC", data=exp, adj.mod=adj_mod)
+<a name="net_R"></a>
+```{r, eval=TRUE, echo=TRUE, warnings=FALSE, fig.cap=("Figure 6 Network. Node size denotes gene connectivity while edge thickness stands for coexpression similarity.") }
+  
+  # Static mode. For interactive mode, set "static=FALSE" 
+  network(geneID="PSAC", data=exp, adj.mod=adj_mod, adj.min=0.3, con.min=0, static=TRUE)
 
 ```   
-<a name="net_R"></a>
-```{r net_R, echo=FALSE,  fig.cap=("Figure 4. Network module. Nodes are genes and edges are similarity between genes."), out.width='100%'}
-
-include_graphics(paste0(url, "network_R.png"))
-
-```
 
 ## The Integrated spatialHeatmap
 
 <a name="shiny"></a>
-All the above functionality is also combined into a web-browser based Shiny app. Running the following command will lauch the app. In addition, the Shiny app is also hosted [online](https://tgirke.shinyapps.io/spatialHeatmap/) at the Shiny server.
+All the above functionality is also combined into a web-browser based [Shiny app](https://shiny.rstudio.com/), which takes advantage of the computational power of R and interactivity of the web. This app can run locally by the function `spatial.hm.all` [@shiny] or [online](https://tgirke.shinyapps.io/spatialHeatmap/) on the Shiny server.
 
 ```{r, eval=FALSE, echo=TRUE, warnings=FALSE}
- 
+
+  # Lauch the Shiny app.
   spatial.hm.all()
 
 ```   
 
-# Instruction of the Shiny App
+<iframe width="1100" height="2000" src="https://tgirke.shinyapps.io/spatialHeatmap/" frameborder="0" style="overflow-y:hidden; overflow-x:scroll;"></iframe>
 
-The integrated web-browser based spatialHeatmap includes all the features listed above, which is more convenient. The network module identification is computationally demanding for large gene expression matrix (e.g.: > 10,000 genes), so to make this app more widely applicable the "Compute locally" mode is developed for processing large data matrix. If the data matrix is small (e.g.: < 10,000 genes), the "Compute online" mode can be used. If the app times out at some time, then users want to refresh the page in their web browser. 
 
-## Input
+<br/>
 
-At first, users need to select a mode under "Select a work mode" in the left "Input" menu. The top 7 examples are most convenient for users to test the app, since this option relies on pre-uploaded files and users do not need to upload any files at all. The "Compute locally" should be selected if users have a large gene expression file (e.g.: > 10,000 genes) while the "Compute online" can be selected if users have a small gene expression file (e.g.: < 10,000 genes). In "Step 1: upload an SVG file" and "Step 2: upload a gene expression file", users are asked to upload the svg file and associated gene expression file respectively. Details about how to properly format and associate custom svg images with [expression tables](#name_format) are provided in a separated vignette "SVG_tutorial.html". The example svg image and associated gene expression matrix can be downloaded in the instruction page of this app. Clicking the "View" button under the "Input" will dispay the complete interface. No matter using the top 7 examples or custom files, the app will automatically select the 3rd row to display spatial heatmaps. 
+```{r session, eval=TRUE, echo=TRUE}
 
-The source of expression data and svg templates of "organ_Mustroph", "shoot_root_Mustroph", "root_roottip_Mustroph", "shoot_Mustroph" was from @Mustroph2009-nu and Dr. Julia Bailey-Serres lab at University of California, Riverside, respectively. The exression data of "root_Geng" and svg template was from @Geng2013-ek and Dr. Julia Bailey-Serres lab at University of California, Riverside, respectively. The expression data and svg templates of "brain_Chen" was from @Chen-Plotkin2008-qn, @hipp and @brain, respectively. The data matrix and svg template of "map_Census" was from @US_Census_Bureau and @Trip8.Co, respectively.
-
-The "Step 3: is column or row gene?" option specifies if column or row is gene in the gene expression table, and "Step 4: separator" specifies the separator in the table. "Step 5: Color scheme" allows users to input colour components to construct colour scale for gene expression levels. Colours must only be sepatated by comma, e.g. the default is "green,blue,purple,yellow,red". The colour scale can be constructed based on the selected genes or whole matrix.
-
-The "Compute locally" option is designed for large expression matrix (e.g.: > 10,000 genes), since gene network modules are identified using the R package WGCNA and the computation is intensive for large data matrix [@Langfelder2008-sg]. To maintain good performance, large data is expected to be processed on user's local computer using functions [`filter.data`](#filter) and [`adj.mod`](#ds) in this package. The resulting files are saved in the directory "local_mode_result" and should be uploaded at "Upload the adjacency matrix and module definition file".
-
-The "Compute online" option is designed for small gene expression data (e.g.: < 10,000 genes). The first 4 items [filter genes](#filter) according to `pOverA` and `cv` [@Gentleman2018-xj]. The genes passing all these criteria are retained for downstream analysis. To save time, the app is designed to internally compute network only once when the matrix heatmap is displayed for the first time, but if filter parameters are changed, the network will be re-computed.
-
-The "Minmum module size" sets the minimum module size in gene module indentification. In "Network type", "Signed" means both positive and negative adjacency between genes are used in module identification while "Unsigned" takes the absolute values of negative adjacency [@Langfelder2008-sg].
-
-## Expression Matrix & Spatial Heatmap 
-
-The expression matrix is represented as an interactive table under "Expression Matrix", where row names are gene IDs and column names are samples/conditions and meta data [@DT]. Users can sort the expression values for a sample or search for a particular gene by its ID. Users can select multiple genes by clicking IDs in the [table](#matrix) to display corresponding spatial heatmaps. In each spatial heatmap, the gene expression levels are represented by colours for each tissue region under each condition, which is same with the spatial heatmaps generated by [`spatial.hm`](#shm_R). In the "Spatial Heatmap" menu, users can customise the dimension and layout of the spatial heatmaps.  
-
-<a name="matrix"></a>
-```{r matrix, echo=FALSE, fig.cap=("Figure 5. Expression matrix. Rows are genes and columns are samples/conditions and metadata. The gene \"PSAC\" is selected."), width='100%'}
-
-include_graphics(paste0(url, "matrix.png"))
+# Session informaion.
+sessionInfo()
 
 ```
-<br/>
-
-## Matrix Heatmap & Network
-
-In the "Matrix Heatmap & Network" menu, all gene IDs chosen in "Expression Matrix" are listed under "Select a gene to display matrix heatmap & network.". After a gene is selected from this list, the gene module containing the selected gene would be displayed in the form of interactive matrix heatmap, which has same features with the heatmap lauched by [`matrix.heatmap`](#mhm1). If expression values are scales, the scaled values are only used for matrix heatmap display, not for module identifications. <br/>
-
-In the network section, the module in "Matrix Heatmap" is displayed as an interactive network, which is the same with the network lauched by the function [`network`](#net1).
-
-<br/>
 
 # Reference
 

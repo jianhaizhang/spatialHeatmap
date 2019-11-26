@@ -1,76 +1,104 @@
 #' Matrix Heatmap
 #'
-#' This function represents the input gene in the context of corresponding gene network module as a web-browser based interactive matrix heatmap, where the rows and columns are sorted by hierarchical clustering dendrograms and the input gene is tagged by a red rectangle. To explore the results, users can zoom in and out by drawing a rectangle and by double clicking the image, respectively. Users can scale the expression values by gene or sample. \cr The network modules are identified at two alternative sensitivities levels (3, 2) by the function "adj.mod". From 3 to 2, the sensitivity decreases and results in less modules with larger sizes. The same module can also be displayed as an interactive network by the "network" function.
+#' This function represents the input gene in the context of corresponding gene network module, where the rows and columns are sorted by hierarchical clustering dendrograms and the row of input gene is tagged by two lines. The matrix heatmap can be dispalyed in static or a web-browser based interactive mode. If the latter, users can zoom in and out by drawing a rectangle and by double clicking the image, respectively. Users can scale the expression values by gene or sample. \cr The network modules are identified at two alternative sensitivities levels (3, 2) by the function "adj.mod". From 3 to 2, the sensitivity decreases and results in less modules with larger sizes. The same module can also be displayed as an interactive form of a network through the "network" function.
 
 #' @param geneID A gene ID from the expression matrix. 
-#' @param data The gene expression matrix, where rows are gene IDs and columns are samples/conditions. If annotation is included, it must be in the last column in parallel with samples/conditions.
-
-#' @param adj.mod The "adjacency matrix" and "module" definition retured by the function "adj.mod".
-
+#' @param data The gene expression matrix and metadata (optional) in the form of the "SummarizedExperiment" object. In the expression matrix, rows are gene IDs and columns are samples/conditions.
+#' @param adj.mod The list of "adjacency matrix" and "module" definition retured by the function "adj.mod".
 #' @param ds The module identification sensitivity, either 2 or 3. See function "adj.mod" for details.
-
 #' @param scale It specifies whether to scale the heatmap. There are three options: "row" means scale by row, "column" means scale by column, and "no" means no scale. 
-
-#' @return An interactive matrix lauched on the web browser. 
-
+#' @param col A vector of two colours. It is used for constructing the colour scale. The default is c('yellow', 'blue').
+#' @param main The title of the matrix heatmap.
+#' @param angleCol The angle of column names. The default is 45.
+#' @param angleRow The angle of row names. The default is 45.
+#' @param sepcolor The colour of the two lines labelling the target gene. The default is "black".
+#' @param sep.width The width of two indicator lines of the input gene.
+#' @param static "TRUE" gives the static mode and "FALSE" interactive mode.
+#' @param margin A vector of two numbers, specifying bottom and right margins respectively. The default is c(10, 10).
+#' @param arg.lis1 A list of additional arguments passed to the "heatmap.2" function from "gplots" package. E.g. list(xlab='sample', ylab='gene'). The default is an empty list.
+#' @param arg.lis2 A list of additional arguments passed to the "ggplot" function from "gglot2" package. The default is an empty list. 
+#' @return A static image or an interactive application lauched on the web browser. 
 #' @examples
-
-#' data.path <- system.file("extdata/example", "root_expr_ann_row_gen.txt", package = "spatialHeatmap")
-#' exp <- filter.data(data=data.path, sep="\t", isRowGen=TRUE, pOA=c(0, 0), CV=c(0.1, 10000), dir="./")
-#' adj_mod <- adj.mod(data=exp, type="signed", minSize=15, dir="./")
-#' # The gene "PSAC" is represented in the context of its network module in the form of an interactive matrix heatmap.
-#' \donttest{ matrix.heatmap(geneID="PSAC", data=exp, adj.mod=adj_mod, ds="2", scale="row") }
+#' # Creat the "SummarizedExperiment" class. Refer to the R package "SummarizedExperiment" for more details.
+#' data.path <- system.file("extdata/example", "root_expr_row_gen.txt", package = "spatialHeatmap")   
+#' ## The expression matrix, where the row and column names should be gene IDs and sample/conditions respectively.
+#' library(data.table); expr <- fread(data.path, sep='\t', header=TRUE, fill=TRUE)
+#' col.na <- colnames(expr)[-ncol(expr)]; row.na <- as.data.frame(expr[, 1])[, 1]
+#' expr <- as.matrix(as.data.frame(expr, stringsAsFactors=FALSE)[, -1])
+#' rownames(expr) <- row.na; colnames(expr) <- col.na
+#' library(SummarizedExperiment); expr <- SummarizedExperiment(assays=list(expr=expr)) # Metadata is not necessary.  
+#' exp <- filter.data(data=expr, pOA=c(0, 0), CV=c(0.1, 10000), dir=NULL) 
+#' adj_mod <- adj.mod(data=exp, type="signed", minSize=15, dir=NULL)
+#' # The gene "PSAC" is represented in the context of its gene module in the form of a static matrix heatmap.
+#' matrix.heatmap(geneID="PSAC", data=exp, adj.mod=adj_mod, ds="2", scale="row", static=TRUE)
 #' @author Jianhai Zhang \email{jzhan067@@ucr.edu; zhang.jianhai@@hotmail.com} \cr Dr. Thomas Girke \email{thomas.girke@@ucr.edu}
-
 #' @references
-#' Andrie de Vries and Brian D. Ripley (2016). ggdendro: Create Dendrograms and Tree Diagrams Using 'ggplot2'. R package version 0.1-20. https://CRAN.R-project.org/package=ggdendro \cr H. Wickham. ggplot2: Elegant Graphics for Data Analysis. Springer-Verlag New York, 2016. \cr Carson Sievert (2018) plotly for R. https://plotly-book.cpsievert.me \cr Langfelder P and Horvath S, WGCNA: an R package for weighted correlation network analysis. BMC Bioinformatics 2008, 9:559 doi:10.1186/1471-2105-9-559 \cr Peter Langfelder, Steve Horvath (2012). Fast R Functions for Robust Correlations and Hierarchical Clustering. Journal of Statistical Software, 46(11), 1-17. URL http://www.jstatsoft.org/v46/i11/ \cr R Core Team (2018). R: A language and environment for statistical computing. R Foundation for Statistical Computing, Vienna, Austria. URL https://www.R-project.org/ \cr Carson Sievert (2018) plotly for R. https://plotly-book.cpsievert.me
+#' Martin Morgan, Valerie Obenchain, Jim Hester and Hervé Pagès (2018). SummarizedExperiment: SummarizedExperiment container. R package version 1.10.1 \cr Andrie de Vries and Brian D. Ripley (2016). ggdendro: Create Dendrograms and Tree Diagrams Using 'ggplot2'. R package version 0.1-20. https://CRAN.R-project.org/package=ggdendro \cr H. Wickham. ggplot2: Elegant Graphics for Data Analysis. Springer-Verlag New York, 2016. \cr Carson Sievert (2018) plotly for R. https://plotly-book.cpsievert.me \cr Langfelder P and Horvath S, WGCNA: an R package for weighted correlation network analysis. BMC Bioinformatics 2008, 9:559 doi:10.1186/1471-2105-9-559 \cr R Core Team (2018). R: A language and environment for statistical computing. R Foundation for Statistical Computing, Vienna, Austria. URL https://www.R-project.org/ \cr Gregory R. Warnes, Ben Bolker, Lodewijk Bonebakker, Robert Gentleman, Wolfgang Huber Andy Liaw, Thomas Lumley, Martin Maechler, Arni Magnusson, Steffen Moeller, Marc Schwartz and Bill Venables (2019). gplots: Various R Programming Tools for Plotting Data. R package version 3.0.1.1.  https://CRAN.R-project.org/package=gplots \cr Hadley Wickham (2007). Reshaping Data with the reshape Package. Journal of Statistical Software, 21(12), 1-20. URL http://www.jstatsoft.org/v21/i12/ 
 
 #' @export
+#' @importFrom SummarizedExperiment assay
 #' @importFrom ggdendro dendro_data
-#' @importFrom ggplot2 ggplot geom_segment geom_text position_dodge geom_rect theme theme_minimal
-#' @importFrom plotly plot_ly layout subplot %>%
+#' @importFrom ggplot2 ggplot geom_segment geom_text position_dodge geom_rect theme theme_minimal geom_tile scale_fill_gradient geom_hline
+#' @importFrom plotly layout subplot %>%
 #' @importFrom stats hclust order.dendrogram as.dendrogram
+#' @importFrom gplots heatmap.2
+#' @importFrom reshape2 melt 
+#' @importFrom graphics image mtext par plot title
+#' @importFrom grDevices dev.off png
 
+matrix.heatmap <- function(geneID, data, adj.mod, ds, scale, col=c('yellow', 'blue'), main=NULL, angleCol=45, angleRow=45, sepcolor="black", sep.width=0.02, static=TRUE, margin=c(10, 10), arg.lis1=list(), arg.lis2=list()) {
 
-matrix.heatmap <- function(geneID, data, adj.mod, ds, scale) {
+  mods <- adj.mod[["mod"]]; ds <- as.character(ds); gene <- assay(data)
+  lab <- mods[, ds][rownames(gene)==geneID]
+  if (lab=="0") stop("The input gene is not assigned to any module. Please input a different one.")
+  mod <- as.matrix(gene[mods[, ds]==lab, ])
+  
+  if (static==TRUE) {
 
-   x <- x1 <- x2 <- y <- y1 <- y2 <- xend <- yend <- NULL 
-   adj <- adj.mod[["adj"]]; mods <- adj.mod[["mod"]]
+    tmp <- system.file("extdata/tmp", package = "spatialHeatmap"); pa <- paste0(tmp, '/delete_hm.png')
+    png(pa); hm <- heatmap.2(x=mod, scale=scale, main=main, trace="none"); dev.off()
+    do.call(file.remove, list(pa))
+    # Logical matrix with the same dimensions as module matrix.
+    selection <- matrix(rep(FALSE, nrow(mod)*ncol(mod)), nrow=nrow(mod))
+    # Select the row of target gene.  
+    idx <- which(rev(colnames(hm$carpet) %in% geneID))
+    lis1 <- c(arg.lis1, list(x=mod, scale=scale, main=main, margin=margin, col=colorRampPalette(col)(nrow(mod)*ncol(mod)), rowsep=c(idx-1, idx), srtRow=angleRow, srtCol=angleCol, dendrogram='both', sepcolor="black", sepwidth=c(sep.width, sep.width), key=TRUE, trace="none", density.info="none", Rowv=TRUE, Colv=TRUE))
+    do.call(heatmap.2, lis1)
 
-   # The last column of data is expected to be annotation.
-   col.len <- ncol(data)
-   if (!is.numeric(data[, col.len])) gene <- data[, -col.len] else gene <- data
-   lab <- mods[, ds][rownames(gene)==geneID]
-    if (lab=="0") stop("The input gene is not assigned to any module. Please input a different one.")
+  } else if (static==FALSE) {
 
-      mod <- gene[mods[, ds]==lab, ]
-      dd.gen <- as.dendrogram(hclust(dist(mod))); dd.sam <- as.dendrogram(hclust(dist(t(mod))))
-      d.sam <- dendro_data(dd.sam); d.gen <- dendro_data(dd.gen)
+     x <- x1 <- x2 <- y <- y1 <- y2 <- xend <- yend <- value <- NULL 
+     dd.gen <- as.dendrogram(hclust(dist(mod))); dd.sam <- as.dendrogram(hclust(dist(t(mod))))
+     d.sam <- dendro_data(dd.sam); d.gen <- dendro_data(dd.gen)
 
-      g.dengra <- function(df) {
+     g.dengra <- function(df) {
 
-        ggplot()+geom_segment(data = df, aes(x=x, y=y, xend=xend, yend=yend))+labs(x = "", y = "") + theme_minimal()+ theme(axis.text = element_blank(), axis.ticks=element_blank(), panel.grid = element_blank())
+       ggplot()+geom_segment(data=df, aes(x=x, y=y, xend=xend, yend=yend))+labs(x="", y="")+theme_minimal()+theme(axis.text= element_blank(), axis.ticks=element_blank(), panel.grid=element_blank())
 
-      }
+     }
 
-      p.gen <- g.dengra(d.gen$segments)+coord_flip(); p.sam <- g.dengra(d.sam$segments)
-      df.gen <- data.frame(x=seq_len(length(labels(dd.gen))), y=0, lab=labels(dd.gen))
-      gen.idx <- which(labels(dd.gen)==geneID)
-      df.rec <- data.frame(x1=gen.idx-0.5, x2=gen.idx+0.5, y1=-1, y2=8)
-      df.sam <- data.frame(x=seq_len(length(labels(dd.sam))), y=0, lab=labels(dd.sam)) 
-      p.gen1 <- p.gen+geom_text(data=df.gen, aes(x=x, y=y, label=lab), position=position_dodge(0.9), vjust=0, hjust=-1, size=2, angle=0)+geom_rect(data=df.rec, aes(xmin=x1, xmax=x2, ymin=y1, ymax=y2), fill=NA, color="red", size=1, alpha=1)
-      p.sam1 <- p.sam+geom_text(data=df.sam, aes(x=x, y=y, label=lab), 
-      position=position_dodge(0.9), vjust=1, hjust=0, size=2, angle=90) 
-      gen.ord <- order.dendrogram(dd.gen); sam.ord <- order.dendrogram(dd.sam)
-      gene.clus <- rbind(Y=0, cbind(X=0, mod[gen.ord, sam.ord]))
+     p.gen <- g.dengra(d.gen$segments)+coord_flip(); p.sam <- g.dengra(d.sam$segments)
+     gen.ord <- order.dendrogram(dd.gen); sam.ord <- order.dendrogram(dd.sam); mod.cl <- mod[gen.ord, sam.ord]
+     if (scale=="column") mod.cl <- data.frame(scale(mod.cl), stringsAsFactors=FALSE); if (scale=="row") mod.cl <- data.frame(t(scale(t(mod.cl))), stringsAsFactors=FALSE)
+     mod.cl$gene <- rownames(mod.cl)
+     mod.m <- melt(mod.cl, id.vars='gene', measure.vars=colnames(mod)); colnames(mod.m) <- c('gene', 'sample', 'value')
+     # Use "factor" to re-order rows and columns as specified in dendrograms. 
+     mod.m$gene <- factor(mod.m$gene, levels=rownames(mod.cl)); mod.m$sample <- factor(mod.m$sample, levels=colnames(mod.cl))
+     # Plot the re-ordered heatmap.
+     lis2 <- c(arg.lis2, list(data=mod.m, mapping=aes(x=sample, y=gene))) 
+     g <- do.call(ggplot, lis2)+geom_tile(aes(fill=value), colour="white")+scale_fill_gradient(low=col[1], high=col[2])+theme(axis.text.x=element_text(angle=angleRow), axis.text.y=element_text(angle=angleCol))
+     # Label target row/gene.
+     g.idx <- which(rownames(mod.cl)==geneID)
+     g <- g+geom_hline(yintercept=c(g.idx-0.5, g.idx+0.5), linetype="solid", color=sepcolor, size=sep.width*25)
 
-      z <- as.matrix(gene.clus); if (scale=="column") z <- scale(z); if (scale=="row") z <- t(scale(t(z)))
-      ply <- plot_ly(z=z, type="heatmap") %>% layout(yaxis=
-      list(domain=c(0, 1), showticklabels=FALSE, showgrid=FALSE, ticks="", zeroline=FALSE), 
-      xaxis=list(domain=c(0, 1), showticklabels=FALSE, showgrid=FALSE, ticks="", zeroline=FALSE))
+     subplot(p.sam, ggplot(), g, p.gen, nrows=2, shareX=TRUE, shareY=TRUE, margin=0, heights=c(0.2, 0.8), widths=c(0.8, 0.2)) %>% plotly::layout(title=main)
 
-      subplot(p.sam1, plot_ly(), ply, p.gen1, nrows=2, shareX=TRUE, shareY=TRUE, margin=0, heights=c(0.2, 0.8), widths=c(0.8, 0.2))
+   }
 
 }
+
+
+
+
 
 
