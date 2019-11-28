@@ -1,17 +1,5 @@
-# Gene value is mapped to color bar in an approximate way.
 
-# The order of paths is not necessarily to be the same with tissues in expr matrix. And multiple polygons can stand for the same tissue. 
-
-# Show tissue heatmap of different conditions.
-
-# Organize multiple condition plots in a single image not through renderUI.
-
-# Append annotation columns to matrix table.
-
-# Display plots for multiple genes. 
-
-
-library(shiny); library(shinydashboard); library(grImport); library(rsvg); library(ggplot2); library(DT); library(gridExtra); library(ggdendro); library(WGCNA); library(Cairo); library(grid); library(XML); library(plotly); library(data.table); library(genefilter); library(flashClust); library(visNetwork)
+library(shiny); library(shinydashboard); library(grImport); library(rsvg); library(ggplot2); library(DT); library(gridExtra); library(ggdendro); library(WGCNA); library(Cairo); library(grid); library(XML); library(plotly); library(data.table); library(genefilter); library(flashClust); library(visNetwork); library(reshape2)
 
 options(shiny.maxRequestSize=7*1024^3) 
 # enableWGCNAThreads()
@@ -121,7 +109,7 @@ shinyServer(function(input, output, session) {
 
    }
 
-    datatable(gene.dt, selection=list(mode="multiple", target="row", selected=c(3)),
+    datatable(gene.dt, selection=list(mode="multiple", target="row", selected=c(2)),
     filter="top", extensions='Scroller', options=list(pageLength=5, lengthMenu=c(5, 15, 20), autoWidth=TRUE, scrollCollapse=TRUE, deferRender=TRUE, scrollX=TRUE, scrollY=200, scroller=TRUE), class='cell-border strip hover') %>% formatStyle(0, backgroundColor="orange", cursor='pointer') %>% 
     formatRound(colnames(geneIn()[["gene2"]]), 2)
 
@@ -818,7 +806,7 @@ shinyServer(function(input, output, session) {
       incProgress(0.2, detail="plotting.")
       if (input$mat.scale=="By column/sample") mod.cl <- data.frame(scale(mod.cl), stringsAsFactors=FALSE); if (input$mat.scale=="By row/gene") mod.cl <- data.frame(t(scale(t(mod.cl))), stringsAsFactors=FALSE)
       mod.cl$gene <- rownames(mod.cl)
-      mod.m <- melt(mod.cl, id.vars='gene', measure.vars=colnames(mod)); colnames(mod.m) <- c('gene', 'sample', 'value')
+      mod.m <- reshape2::melt(mod.cl, id.vars='gene', measure.vars=colnames(mod)); colnames(mod.m) <- c('gene', 'sample', 'value')
       # Use "factor" to re-order rows and columns as specified in dendrograms.
       mod.m$gene <- factor(mod.m$gene, levels=rownames(mod.cl)); mod.m$sample <- factor(mod.m$sample, levels=colnames(mod.cl))
       # Plot the re-ordered heatmap.

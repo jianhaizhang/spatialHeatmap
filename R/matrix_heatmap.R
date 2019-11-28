@@ -81,7 +81,7 @@ matrix.heatmap <- function(geneID, data, adj.mod, ds, scale, col=c('yellow', 'bl
      gen.ord <- order.dendrogram(dd.gen); sam.ord <- order.dendrogram(dd.sam); mod.cl <- mod[gen.ord, sam.ord]
      if (scale=="column") mod.cl <- data.frame(scale(mod.cl), stringsAsFactors=FALSE); if (scale=="row") mod.cl <- data.frame(t(scale(t(mod.cl))), stringsAsFactors=FALSE)
      mod.cl$gene <- rownames(mod.cl)
-     mod.m <- melt(mod.cl, id.vars='gene', measure.vars=colnames(mod)); colnames(mod.m) <- c('gene', 'sample', 'value')
+     mod.m <- reshape2::melt(mod.cl, id.vars='gene', measure.vars=colnames(mod)); colnames(mod.m) <- c('gene', 'sample', 'value')
      # Use "factor" to re-order rows and columns as specified in dendrograms. 
      mod.m$gene <- factor(mod.m$gene, levels=rownames(mod.cl)); mod.m$sample <- factor(mod.m$sample, levels=colnames(mod.cl))
      # Plot the re-ordered heatmap.

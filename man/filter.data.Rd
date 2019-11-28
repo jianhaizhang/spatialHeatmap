@@ -24,7 +24,7 @@ It is designed to filter the gene expression matrix. The filtering is based on t
 \examples{
 # Creat the "SummarizedExperiment" class. Refer to the R package "SummarizedExperiment" for more details.
 data.path <- system.file("extdata/example", "root_expr_row_gen.txt", package = "spatialHeatmap")   
-## The expression matrix, where the row and column names should be gene IDs and sample/conditions, respectively.
+## The expression matrix, where the row and column names should be gene IDs and sample/conditions respectively. This data matrix is truncated from a GEO dataset (https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE46205), which is already normalised.
 library(data.table); expr <- fread(data.path, sep='\\t', header=TRUE, fill=TRUE)
 col.na <- colnames(expr)[-ncol(expr)]; row.na <- as.data.frame(expr[, 1])[, 1]
 expr <- as.matrix(as.data.frame(expr, stringsAsFactors=FALSE)[, -1])
