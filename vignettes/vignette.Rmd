@@ -143,19 +143,19 @@ spatial.hm(svg=svg.path, data=exp, pOA=c(0, 0), CV=c(0, 10000), ID="PSAC", col.c
 
 ### Format the SVG image
 
-The SVG image is an XML file. To use this spatialHeatmap package, it must be formatted in the following way:  
+The SVG image is an XML file as shown below. To use this spatialHeatmap package, it must be formatted in the following way:  
 
-1. If a tissue contains multiple shapes, all the shapes must be combined as a group. The group "id" is the tissue name and must be exactly the same with that from the data matrix. Otherwise, this tissue group will not be coloured in the spatial heatmaps. However, there is no need to change path ids in this group.
+1. If a tissue contains multiple shapes (e.g. tissue1), all the shapes must be combined as a group. The group "id" is the tissue name and must be exactly the same with that from the data matrix. Otherwise, this tissue group will not be coloured in the spatial heatmaps. However, there is no need to change path ids in this group.
 
-2. If a tissue only has one shape, it does not need to be formatted as a group, but its "id" must be exactly the same with that from the data matrix. Otherwise, this tissue will not be coloured in the spatial heatmaps.  
+2. If a tissue only has one shape (e.g. tissue2), it does not need to be formatted as a group, but its "id" must be exactly the same with that from the data matrix. Otherwise, this tissue will not be coloured in the spatial heatmaps.  
 
 3. A group should not include another group, which means all elements in a group should be single paths.  
 
-4. If a multiple-shape tissue is not present in the data matrix, and therefore not expected to be coloured, there is no need to group its shapes and change their ids.
+4. If a multiple-shape tissue is not present in the data matrix, and therefore not expected to be coloured, there is no need to group its shapes or change their ids.
 
-5. All the tissues (groups or single paths) must be placed in another large group as a whole, and this large group must be the last element in the SVG/XML file.
+5. All the tissues (groups or single paths) must be placed in another large group (e.g. large) as a whole, and this large group must be the last element in the SVG/XML file.
 
-The SVG image can be formatted with [Inkscape](https://inkscape.org/). The step-by-step SVG tutorial is available [here](https://jianhaizhang.github.io/SVG_tutorial_file/). [Figure 3](#svg_root) is the formatted root SVG image opened in Inkscape. The first group (id="g341") is not present in the data matrix and has a random id. The other groups such as "cortex" have multiple shapes and will be coloured in the spatial heatmaps, since they are present in the data matrix. Below is a simple example of formatted SVG/XML file in a text editor.
+The SVG image can be formatted with [Inkscape](https://inkscape.org/). Refer to the step-by-step [SVG tutorial](https://jianhaizhang.github.io/SVG_tutorial_file/) for details. [Figure 3](#svg_root) is the formatted root SVG image opened in Inkscape. The first group (id="g341") is not present in the data matrix and has a random id. The other groups such as "cortex" have multiple shapes and will be coloured in the spatial heatmaps, since they are present in the data matrix ([Table 1](#table)). Below is a simple example of formatted SVG/XML file viewed in a text editor.
 
 ```{r svg_format, eval=FALSE, echo=TRUE }
 
@@ -168,7 +168,7 @@ The SVG image can be formatted with [Inkscape](https://inkscape.org/). The step-
   <defs .../>
   <sodipodi:namedview .../>
   
-  <g ...>
+  <g id="large" ...>
     <g id="tissue1" ...>
       <path .../>
       <path .../>
@@ -183,7 +183,7 @@ The SVG image can be formatted with [Inkscape](https://inkscape.org/). The step-
 ```
 
 <a name="svg_root"></a>
-```{r svg_root, echo=FALSE, fig.align="center", fig.cap=("Figure 3: Root SVG image formatted in Inkscape. The first group (id=\"g341\") are not present in the data matrix and has a random id while all other groups have ids of exactly the same tissue names in the data matrix."), out.width="100%"}
+```{r svg_root, echo=FALSE, fig.align="center", fig.cap=("Figure 3: Root SVG image formatted in Inkscape. The first group (id=\"g341\") are not present in the data matrix and has a random id while all other groups have ids of exactly the same tissue names in the data matrix (Table 1)."), out.width="100%"}
 
 include_graphics('img/svg_format.png')
 

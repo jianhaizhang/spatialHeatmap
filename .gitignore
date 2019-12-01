@@ -3,4 +3,5 @@
 tmp/user.png
 *.ps$
 *.ps.xml$
-
+rsconnect/
+local_mode_result/
