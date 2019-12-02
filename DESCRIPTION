@@ -10,14 +10,13 @@ License: Artistic-2.0
 Encoding: UTF-8
 biocViews: Visualization, Microarray, Sequencing, GeneExpression, DataRepresentation, Network, Clustering, GraphAndNetwork
 VignetteBuilder: knitr
-Suggests: knitr, rmarkdown, RUnit, BiocGenerics, DESeq2, ExpressionAtlas
+Suggests: knitr, rmarkdown, RUnit, BiocGenerics, DESeq2, data.table, ExpressionAtlas
 Depends:
     R (>= 3.5.1)
 Imports:
    Cairo, 
    WGCNA, 
    XML, 
-   data.table, 
    flashClust, 
    genefilter, 
    ggplot2,

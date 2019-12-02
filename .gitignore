@@ -3,5 +3,6 @@
 tmp/user.png
 *.ps$
 *.ps.xml$
+*.html
 rsconnect/
 local_mode_result/

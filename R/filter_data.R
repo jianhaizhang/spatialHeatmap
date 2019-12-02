@@ -39,7 +39,6 @@
 
 #' @export filter.data
 #' @importFrom SummarizedExperiment assay rowData colData SummarizedExperiment
-#' @importFrom data.table fread
 #' @importFrom genefilter filterfun pOverA cv genefilter
 #' @importFrom utils write.table
 
