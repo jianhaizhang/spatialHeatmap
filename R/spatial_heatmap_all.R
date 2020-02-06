@@ -45,10 +45,10 @@
 #' @export
 #' @importFrom shiny runApp
 
-spatial.hm.all <- function() {
+spatial_hm_all <- function() {
 
     # library(shiny)
-    path <- system.file("extdata", package = "spatialHeatmap")
+    path <- system.file("extdata/shinyApp", package = "spatialHeatmap")
     runApp(path)
 
 }

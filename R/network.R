@@ -1,6 +1,6 @@
 #' Network
 #'
-#' This function represents the input gene in the context of corresponding gene network module, where nodes are genes and edges are adjacencies between genes. The network can be dispayed in static or interactive mode. \cr The gene modules are identified at two alternative sensitivity levels (3, 2). See function "adj.mod" for details. The thicker edge denotes higher adjacency (coexpression similarity) between genes while larger node indicates higher gene connectivity (sum of a gene's adjacency with all its direct neighbours). \cr In the interactive mode, there is an interactive colour bar to denote gene connectivity. The colour ingredients must only be separated by comma, e.g. "yellow,purple,blue", which means gene connectivity increases from yellow to blue. If too many edges (e.g.: > 300) are displayed, the network could get stuck. So the "Input an adjacency threshold to display the adjacency network." option sets a threthold to filter out weak edges and all remaining edges are displayed. If not too many (e.g.: < 300), users can check "Yes" under "Display or not?", then the network will be displayed and would be responsive smoothly. To maintain acceptable performance, users are advised to choose a stringent threshold (e.g. 0.9) initially, then decrease the value gradually. The interactive feature allows users to zoom in and out, or drag a gene around. All the gene IDs in the network module are listed in "Select by id" in decreasing order according to gene connectivity. The selected gene ID is appended "_selected" as a label. By clicking an ID in this list, users can identify the corresponding gene in the network. If the input has gene annotations, then the annotation can be seen by hovering the cursor over a node. \cr The same module can also be displayed in the form of a matrix heatmap with the function "matrix.heatmap". 
+#' This function represents the input gene in the context of corresponding gene network module, where nodes are genes and edges are adjacencies between genes. The network can be dispayed in static or interactive mode. \cr The gene modules are identified at two alternative sensitivity levels (3, 2). See function "adj_mod" for details. The thicker edge denotes higher adjacency (coexpression similarity) between genes while larger node indicates higher gene connectivity (sum of a gene's adjacency with all its direct neighbours). \cr In the interactive mode, there is an interactive colour bar to denote gene connectivity. The colour ingredients must only be separated by comma, e.g. "yellow,purple,blue", which means gene connectivity increases from yellow to blue. If too many edges (e.g.: > 300) are displayed, the network could get stuck. So the "Input an adjacency threshold to display the adjacency network." option sets a threthold to filter out weak edges and all remaining edges are displayed. If not too many (e.g.: < 300), users can check "Yes" under "Display or not?", then the network will be displayed and would be responsive smoothly. To maintain acceptable performance, users are advised to choose a stringent threshold (e.g. 0.9) initially, then decrease the value gradually. The interactive feature allows users to zoom in and out, or drag a gene around. All the gene IDs in the network module are listed in "Select by id" in decreasing order according to gene connectivity. The selected gene ID is appended "_selected" as a label. By clicking an ID in this list, users can identify the corresponding gene in the network. If the input has gene annotations, then the annotation can be seen by hovering the cursor over a node. \cr The same module can also be displayed in the form of a matrix heatmap with the function "matrix.heatmap". 
 
 #' @param geneID A gene ID from the expression matrix. 
 #' @param data The processed data matrix and metadata (optional) resulting from the function "filter.data", which is a "SummarizedExperiment" object.
@@ -21,17 +21,17 @@
 
 #' @examples
 #' # Creat the "SummarizedExperiment" class. Refer to the R package "SummarizedExperiment" for more details.
-#' data.path <- system.file("extdata/example", "root_expr_row_gen.txt", package = "spatialHeatmap")   
+#' data.path <- system.file("extdata/shinyApp/example", "root_expr_row_gen.txt", package="spatialHeatmap")   
 #' ## The expression matrix, where the row and column names should be gene IDs and sample/conditions respectively.
 #' library(data.table); expr <- fread(data.path, sep='\t', header=TRUE, fill=TRUE)
 #' col.na <- colnames(expr)[-ncol(expr)]; row.na <- as.data.frame(expr[, 1])[, 1]
 #' expr <- as.matrix(as.data.frame(expr, stringsAsFactors=FALSE)[, -1])
 #' rownames(expr) <- row.na; colnames(expr) <- col.na
 #' library(SummarizedExperiment); expr <- SummarizedExperiment(assays=list(expr=expr)) # Metadata is not necessary.  
-#' exp <- filter.data(data=expr, pOA=c(0, 0), CV=c(0.1, 10000), dir=NULL) 
-#' adj_mod <- adj.mod(data=exp, type="signed", minSize=15, dir=NULL)
+#' exp <- filter_data(data=expr, pOA=c(0, 0), CV=c(0.1, 100), dir=NULL) 
+#' adj.mod <- adj_mod(data=exp, type="signed", minSize=15, dir=NULL)
 #' # The gene "PSAC" is represented in the context of its network module in the form of an interactive network.
-#' network(geneID="PSAC", data=exp, adj.mod=adj_mod, static=TRUE)
+#' network(geneID="PSAC", data=exp, adj.mod=adj.mod, static=TRUE)
 
 #' @author Jianhai Zhang \email{jzhan067@@ucr.edu; zhang.jianhai@@hotmail.com} \cr Dr. Thomas Girke \email{thomas.girke@@ucr.edu}
 
@@ -52,21 +52,11 @@ network <- function(geneID, data, adj.mod, ds="3", adj.min=0, con.min=0, node.co
   gene <- assay(data); if (ncol(rowData(data))>=1) ann <- rowData(data)[, , drop=FALSE]  else ann <- NULL
   ds <- as.character(ds); lab <- mods[, ds][rownames(gene)==geneID]
   if (lab=="0") { return('The selected gene is not assigned to any module. Please select a different one') }
-  idx.m <- mods[, ds]==lab; adj.m <- adj[idx.m, idx.m]; gen.na <- colnames(adj.m) 
-  idx.sel <- grep(paste0("^", geneID, "$"), gen.na); gen.na[idx.sel] <- paste0(geneID, "_selected")
-  colnames(adj.m) <- rownames(adj.m) <- gen.na
   
   if (static==TRUE) { 
 
-  idx = adj.m > as.numeric(adj.min)
-  link <- data.frame(from=rownames(adj.m)[row(adj.m)[idx]], to=colnames(adj.m)[col(adj.m)[idx]], width=adj.m[idx], stringsAsFactors=FALSE)
-  # Should not exclude duplicate rows by "length".
-  node.pas <- NULL; for (i in seq_len(nrow(link))) { node.pas <- c(node.pas, paste0(sort(c(link[i, 'from'], link[i, 'to'])), collapse='')) }
-  w <- which(duplicated(node.pas)); link <- link[-w, ]
-  link1 <- subset(link, from!=to, stringsAsFactors=FALSE)
-  link1 <- link1[order(-link1$width), ]
-  node <- data.frame(label=colnames(adj.m), size=colSums(adj.m), stringsAsFactors=FALSE)
-  node <- node[order(-node$size), ]
+  nod.lin <- nod_lin(ds=ds, lab=lab, mods=mods, adj=adj, geneID=geneID, adj.min=adj.min)
+  node <- nod.lin[['node']]; link1 <- nod.lin[['link']]
   net <- graph_from_data_frame(d=link1, vertices=node, directed=FALSE)
   # Delete edges and nodes.
   edg.del <- delete_edges(net, E(net)[width <= adj.min])
@@ -168,37 +158,28 @@ network <- function(geneID, data, adj.mod, ds="3", adj.min=0, con.min=0, node.co
     col.sch.net <- reactive({ if(input$color.net=="") { return(NULL) }
     unlist(strsplit(input$color.net, ",")) }); color.net <- reactiveValues(col.net="none")
 
-    len.cs.net <- 350
+    len <- 350
     observeEvent(input$col.but.net, {
 
       if (is.null(col.sch.net())) return (NULL)
-
-      color.net$col.net <- colorRampPalette(col.sch.net())(len.cs.net)
+      color.net$col.net <- colorRampPalette(col.sch.net())(len)
 
     })
-
+    
     visNet <- reactive({
 
       if (input$adj.in=="None") return(NULL)
       withProgress(message="Computing network:", value=0, {
    
         incProgress(0.8, detail="making network data frame")
-        idx = adj.m > as.numeric(input$adj.in)
-        link <- data.frame(from=rownames(adj.m)[row(adj.m)[idx]], to=colnames(adj.m)[col(adj.m)[idx]], value=adj.m[idx], stringsAsFactors=FALSE)
-        # Should not exclude duplicate rows by "length".
-        node.pas <- NULL; for (i in seq_len(nrow(link))) { node.pas <- c(node.pas, paste0(sort(c(link[i, 'from'], link[i, 'to'])), collapse='')) }
-        w <- which(duplicated(node.pas)); link <- link[-w, ]; link1 <- subset(link, from!=to, stringsAsFactors=FALSE)
+        nod.lin <- nod_lin(ds=ds, lab=lab, mods=mods, adj=adj, geneID=geneID, adj.min=input$adj.in)
+        node <- nod.lin[['node']]; colnames(node) <- c('id', 'value')
+        link1 <- nod.lin[['link']]; colnames(link1)[3] <- 'value'
         link1$title <- link1$value # 'length' is not well indicative of adjacency value, so replaced by 'value'.
-        if (!is.null(ann)) node <- data.frame(id=colnames(adj.m), value=colSums(adj.m), title=ann[colnames(adj.m), ], borderWidth=2, color.border="black", color.highlight.background="orange", color.highlight.border="darkred", color=NA, stringsAsFactors=FALSE)
-        if (is.null(ann)) node <- data.frame(id=colnames(adj.m), value=colSums(adj.m), borderWidth=2, color.border="black", color.highlight.background="orange", color.highlight.border="darkred", color=NA, stringsAsFactors=FALSE)
-        # Match colours with gene connectivity by approximation.
-        node <- node[order(-node$value), ]; col <- color.net$col.net; col.nod <- NULL
-        node.v <- node$value; v.net <- seq(min(node.v), max(node.v), len=len.cs.net)
-        for (i in node$value) {
-
-          ab <- abs(i-v.net); col.nod <- c(col.nod, col[which(ab==min(ab))[1]])
-
-        }; node$color <- col.nod; net.lis <- list(node=node, link=link1, v.net=v.net)
+        link1$color <- 'lightblue'
+        if (!is.null(ann)) node <- cbind(node, title=ann[node$id, ], borderWidth=2, color.border="black", color.highlight.background="orange", color.highlight.border="darkred", color=NA, stringsAsFactors=FALSE)
+        if (is.null(ann)) node <- cbind(node, borderWidth=2, color.border="black", color.highlight.background="orange", color.highlight.border="darkred", color=NA, stringsAsFactors=FALSE)
+        net.lis <- list(node=node, link=link1)
 
       }); net.lis
 
@@ -208,15 +189,14 @@ network <- function(geneID, data, adj.mod, ds="3", adj.min=0, con.min=0, node.co
 
       if (input$adj.in=="None"|input$cpt.nw=="N") return(NULL)
       if (length(color.net$col.net=="none")==0) return(NULL)
-      v.net <- visNet()[["v.net"]]
-      if(input$col.but.net==0) color.net$col.net <- colorRampPalette(c("yellow", "purple", "blue"))(length(v.net))
+      if(input$col.but.net==0) color.net$col.net <- colorRampPalette(c("yellow", "purple", "blue"))(len)
      
         withProgress(message="Color scale: ", value = 0, {
 
           incProgress(0.25, detail="Preparing data. Please wait.")
-          cs.df.net <- data.frame(color_scale=v.net, y=1); #save(cs.df, file="cs.df")
           incProgress(0.75, detail="Plotting. Please wait.")
-          cs.g.net <- ggplot()+geom_bar(data=cs.df.net, aes(x=color_scale, y=y), fill=color.net$col.net, stat="identity", width=((max(v.net)-min(v.net))/len.cs.net)*0.7)+theme(axis.title.x=element_blank(), axis.text.x=element_blank(), axis.ticks.x=element_blank(), plot.margin=margin(3, 0.1, 3, 0.1, "cm"), panel.grid=element_blank(), panel.background=element_rect(fill="white", colour="grey80"))+coord_flip()+scale_y_continuous(expand=c(0,0))+scale_x_continuous(expand = c(0,0)); return(cs.g.net)
+          node.v <- visNet()[["node"]]$value; v.net <- seq(min(node.v), max(node.v), len=len)
+          cs.net <- col_bar(geneV=v.net, cols=color.net$col.net, width=0.7, mar=c(3, 0.1, 3, 0.1)); return(cs.net)
 
         })
 
@@ -226,18 +206,25 @@ network <- function(geneID, data, adj.mod, ds="3", adj.min=0, con.min=0, node.co
 
       if (input$adj.in=="None") return(NULL)
       HTML(paste0("&nbsp&nbsp&nbsp&nbsp Total edges to display (If > 300, the <br/> 
-      &nbsp&nbsp&nbsp App can possibly get stuck.): ", dim((visNet()[["link"]]))[1]))
+      &nbsp&nbsp&nbsp App can possibly get stuck.): ", nrow((visNet()[["link"]]))))
 
     })
 
     vis.net <- reactive({ 
 
       if (input$adj.in=="None"|input$cpt.nw=="N") return(NULL)
-
       withProgress(message="Network:", value=0.5, {
 
         incProgress(0.3, detail="prepare for plotting.")
-        visNetwork(visNet()[["node"]], visNet()[["link"]], height="300px", width="100%", background="", main=paste0("Network Module Containing ", geneID), submain="", footer= "") %>% visIgraphLayout(physics=FALSE, smooth=TRUE) %>%
+        # Match colours with gene connectivity by approximation.
+        node <- visNet()[["node"]]; node.v <- node$value; v.net <- seq(min(node.v), max(node.v), len=len)
+        col.nod <- NULL; for (i in node$value) {
+
+          ab <- abs(i-v.net); col.nod <- c(col.nod, color.net$col.net[which(ab==min(ab))[1]])
+
+        }; node$color <- col.nod
+
+        visNetwork(node, visNet()[["link"]], height="300px", width="100%", background="", main=paste0("Network Module Containing ", geneID), submain="", footer= "") %>% visIgraphLayout(physics=FALSE, smooth=TRUE) %>%
         visOptions(highlightNearest=list(enabled=TRUE, hover=TRUE), nodesIdSelection=TRUE)
 
       })

@@ -10,11 +10,8 @@ License: Artistic-2.0
 Encoding: UTF-8
 biocViews: Visualization, Microarray, Sequencing, GeneExpression, DataRepresentation, Network, Clustering, GraphAndNetwork
 VignetteBuilder: knitr
-Suggests: knitr, rmarkdown, RUnit, BiocGenerics, DESeq2, data.table, ExpressionAtlas
-Depends:
-    R (>= 3.5.1)
+Suggests: knitr, rmarkdown, RUnit, BiocGenerics, DESeq2, data.table, ExpressionAtlas, DT, reshape2
 Imports:
-   Cairo, 
    WGCNA, 
    XML, 
    flashClust, 
@@ -39,4 +36,7 @@ Imports:
    utils,
    visNetwork,
    methods
+BugReports: https://github.com/jianhaizhang/spatialHeatmap/issues
+URL: https://github.com/jianhaizhang/spatialHeatmap
+Video: NA
 RoxygenNote: 6.1.1

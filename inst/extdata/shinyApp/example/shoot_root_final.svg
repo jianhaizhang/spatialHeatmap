@@ -37,12 +37,12 @@
      guidetolerance="10"
      inkscape:pageopacity="0"
      inkscape:pageshadow="2"
-     inkscape:window-width="1855"
-     inkscape:window-height="1056"
+     inkscape:window-width="3375"
+     inkscape:window-height="1416"
      id="namedview5"
      showgrid="false"
      inkscape:zoom="0.9329271"
-     inkscape:cx="304.7182"
+     inkscape:cx="-180.85029"
      inkscape:cy="472.40244"
      inkscape:window-x="65"
      inkscape:window-y="24"
@@ -1023,7 +1023,7 @@
          d="m 444.73373,71.599778 c -1.07497,1.389856 -6.22963,1.132726 -8.34405,-1.324996 -0.727,-4.217429 -0.66001,-16.080411 1.57012,-19.292274 15.48492,-5.345776 7.64748,18.522147 6.77393,20.61727 z" />
     </g>
     <g
-       id="RPEP"
+       id="rootPEP"
        style="fill:#4b6027;fill-opacity:1;stroke:#000000;stroke-width:0.37500006;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
        transform="translate(771.78948,66.623481)">
       <path
@@ -1163,7 +1163,7 @@
          style="opacity:1;fill:#4b6027;fill-opacity:1;stroke:#000000;stroke-width:0.37500006;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" />
     </g>
     <g
-       id="RSCR"
+       id="rootSCR"
        style="fill:#b54a2f;fill-opacity:1;stroke:#000000;stroke-width:0.37500006;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
        transform="translate(771.78948,66.623481)">
       <path
@@ -1600,7 +1600,7 @@
          style="opacity:1;fill:#b54a2f;fill-opacity:1;stroke:#000000;stroke-width:0.37500006;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" />
     </g>
     <g
-       id="RGL2"
+       id="rootGL2"
        style="fill:#a7a700;fill-opacity:1;stroke:#000000;stroke-width:0.37500006;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
        transform="translate(771.78948,66.623481)">
       <path
@@ -1797,7 +1797,7 @@
          sodipodi:nodetypes="cccsc" />
     </g>
     <g
-       id="RCO2"
+       id="rootCO2"
        style="fill:#b6b567;fill-opacity:1;stroke:#000000;stroke-width:0.37500006;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
        transform="translate(771.78948,66.623481)">
       <path
@@ -1951,7 +1951,7 @@
          style="opacity:1;fill:#b6b567;fill-opacity:1;stroke:#000000;stroke-width:0.37500006;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" />
     </g>
     <g
-       id="RSHR"
+       id="rootSHR"
        style="fill:#0816ee;fill-opacity:1;stroke:#000000;stroke-width:0.37500006;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
        transform="translate(771.78948,66.623481)">
       <path
@@ -2088,7 +2088,7 @@
          style="opacity:1;fill:#0816ee;fill-opacity:1;stroke:#000000;stroke-width:0.37500006;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" />
     </g>
     <g
-       id="RWOL"
+       id="rootWOL"
        style="fill:#8016ea;fill-opacity:1;stroke:#000000;stroke-width:0.37500006;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
        transform="translate(771.78948,66.623481)">
       <path
@@ -2245,7 +2245,7 @@
          style="opacity:1;fill:#8016ea;fill-opacity:1;stroke:#000000;stroke-width:0.37500006;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" />
     </g>
     <g
-       id="RSUC"
+       id="rootSUC"
        style="fill:#4bd0ea;fill-opacity:1;stroke:#000000;stroke-width:0.37500006;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
        transform="translate(771.78948,66.623481)">
       <path
@@ -2326,7 +2326,7 @@
          style="opacity:1;fill:#4bd0ea;fill-opacity:1;stroke:#000000;stroke-width:0.37500006;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" />
     </g>
     <g
-       id="RS22"
+       id="rootS22"
        style="fill:#4be526;fill-opacity:1;stroke:#000000;stroke-width:0.37500006;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
        transform="translate(771.78948,66.623481)">
       <path
@@ -2677,7 +2677,7 @@
     </g>
     <g
        transform="translate(-64.444435,-409.41214)"
-       id="SGL2"
+       id="shootGL2"
        style="opacity:1;fill:#edafdd;fill-opacity:1;stroke:#000000;stroke-width:0.37500015;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1">
       <path
          id="path1859"
@@ -2756,7 +2756,7 @@
     </g>
     <g
        transform="translate(-64.444435,-409.41214)"
-       id="SRB"
+       id="shootRB"
        style="fill:#dc9e75;fill-opacity:1;stroke:#000000;stroke-width:0.37500015;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1">
       <path
          sodipodi:nodetypes="ccccccccc"
@@ -2986,7 +2986,7 @@
          style="opacity:1;fill:#dc9e75;fill-opacity:1;stroke:#000000;stroke-width:0.37500015;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" />
     </g>
     <g
-       id="SCER"
+       id="shootCER"
        transform="translate(-78.000004,45.000001)">
       <path
          sodipodi:nodetypes="ccccccccc"
@@ -3141,7 +3141,7 @@
     </g>
     <g
        transform="translate(-64.444435,-409.41214)"
-       id="SS22"
+       id="shootS22"
        style="opacity:1;fill:#f7ea5a;fill-opacity:1;stroke:#000000;stroke-width:0.37500015;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1">
       <path
          style="opacity:1;fill:#f7ef5f;fill-opacity:1;stroke:#000000;stroke-width:0.37500015;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
@@ -3312,7 +3312,7 @@
     </g>
     <g
        transform="translate(-64.444435,-409.41214)"
-       id="SSUC"
+       id="shootSUC"
        style="opacity:1;fill:#f8a42f;fill-opacity:1;stroke:#000000;stroke-width:0.37500015;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1">
       <path
          sodipodi:nodetypes="cccccccccc"
@@ -3448,7 +3448,7 @@
     </g>
     <g
        transform="translate(-64.444435,-409.41214)"
-       id="SKAT"
+       id="shootKAT"
        style="opacity:1;fill:#5e76e1;fill-opacity:1;stroke:#000000;stroke-width:0.37500015;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1">
       <path
          inkscape:connector-curvature="0"

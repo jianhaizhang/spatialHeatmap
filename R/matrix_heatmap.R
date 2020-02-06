@@ -9,6 +9,7 @@
 #' @param scale It specifies whether to scale the heatmap. There are three options: "row" means scale by row, "column" means scale by column, and "no" means no scale. 
 #' @param col A vector of two colours. It is used for constructing the colour scale. The default is c('yellow', 'blue').
 #' @param main The title of the matrix heatmap.
+#' @param title.size A numeric, the size of the title font.
 #' @param angleCol The angle of column names. The default is 45.
 #' @param angleRow The angle of row names. The default is 45.
 #' @param sepcolor The colour of the two lines labelling the target gene. The default is "black".
@@ -20,17 +21,17 @@
 #' @return A static image or an interactive application lauched on the web browser. 
 #' @examples
 #' # Creat the "SummarizedExperiment" class. Refer to the R package "SummarizedExperiment" for more details.
-#' data.path <- system.file("extdata/example", "root_expr_row_gen.txt", package = "spatialHeatmap")   
+#' data.path <- system.file("extdata/shinyApp/example", "root_expr_row_gen.txt", package = "spatialHeatmap")   
 #' ## The expression matrix, where the row and column names should be gene IDs and sample/conditions respectively.
 #' library(data.table); expr <- fread(data.path, sep='\t', header=TRUE, fill=TRUE)
 #' col.na <- colnames(expr)[-ncol(expr)]; row.na <- as.data.frame(expr[, 1])[, 1]
 #' expr <- as.matrix(as.data.frame(expr, stringsAsFactors=FALSE)[, -1])
 #' rownames(expr) <- row.na; colnames(expr) <- col.na
 #' library(SummarizedExperiment); expr <- SummarizedExperiment(assays=list(expr=expr)) # Metadata is not necessary.  
-#' exp <- filter.data(data=expr, pOA=c(0, 0), CV=c(0.1, 10000), dir=NULL) 
-#' adj_mod <- adj.mod(data=exp, type="signed", minSize=15, dir=NULL)
+#' exp <- filter_data(data=expr, pOA=c(0, 0), CV=c(0.1, 10000), dir=NULL) 
+#' adj_mod <- adj_mod(data=exp, type="signed", minSize=15, dir=NULL)
 #' # The gene "PSAC" is represented in the context of its gene module in the form of a static matrix heatmap.
-#' matrix.heatmap(geneID="PSAC", data=exp, adj.mod=adj_mod, ds="2", scale="row", static=TRUE)
+#' matrix_heatmap(geneID="PSAC", data=exp, adj.mod=adj_mod, ds="2", scale="row", static=TRUE)
 #' @author Jianhai Zhang \email{jzhan067@@ucr.edu; zhang.jianhai@@hotmail.com} \cr Dr. Thomas Girke \email{thomas.girke@@ucr.edu}
 #' @references
 #' Martin Morgan, Valerie Obenchain, Jim Hester and Hervé Pagès (2018). SummarizedExperiment: SummarizedExperiment container. R package version 1.10.1 \cr Andrie de Vries and Brian D. Ripley (2016). ggdendro: Create Dendrograms and Tree Diagrams Using 'ggplot2'. R package version 0.1-20. https://CRAN.R-project.org/package=ggdendro \cr H. Wickham. ggplot2: Elegant Graphics for Data Analysis. Springer-Verlag New York, 2016. \cr Carson Sievert (2018) plotly for R. https://plotly-book.cpsievert.me \cr Langfelder P and Horvath S, WGCNA: an R package for weighted correlation network analysis. BMC Bioinformatics 2008, 9:559 doi:10.1186/1471-2105-9-559 \cr R Core Team (2018). R: A language and environment for statistical computing. R Foundation for Statistical Computing, Vienna, Austria. URL https://www.R-project.org/ \cr Gregory R. Warnes, Ben Bolker, Lodewijk Bonebakker, Robert Gentleman, Wolfgang Huber Andy Liaw, Thomas Lumley, Martin Maechler, Arni Magnusson, Steffen Moeller, Marc Schwartz and Bill Venables (2019). gplots: Various R Programming Tools for Plotting Data. R package version 3.0.1.1.  https://CRAN.R-project.org/package=gplots \cr Hadley Wickham (2007). Reshaping Data with the reshape Package. Journal of Statistical Software, 21(12), 1-20. URL http://www.jstatsoft.org/v21/i12/ 
@@ -46,7 +47,7 @@
 #' @importFrom graphics image mtext par plot title
 #' @importFrom grDevices dev.off png
 
-matrix.heatmap <- function(geneID, data, adj.mod, ds, scale, col=c('yellow', 'blue'), main=NULL, angleCol=45, angleRow=45, sepcolor="black", sep.width=0.02, static=TRUE, margin=c(10, 10), arg.lis1=list(), arg.lis2=list()) {
+matrix_heatmap <- function(geneID, data, adj.mod, ds, scale, col=c('yellow', 'blue'), main=NULL, title.size=10, angleCol=45, angleRow=45, sepcolor="black", sep.width=0.02, static=TRUE, margin=c(10, 10), arg.lis1=list(), arg.lis2=list()) {
 
   mods <- adj.mod[["mod"]]; ds <- as.character(ds); gene <- assay(data)
   lab <- mods[, ds][rownames(gene)==geneID]
@@ -55,7 +56,7 @@ matrix.heatmap <- function(geneID, data, adj.mod, ds, scale, col=c('yellow', 'bl
   
   if (static==TRUE) {
 
-    tmp <- system.file("extdata/tmp", package = "spatialHeatmap"); pa <- paste0(tmp, '/delete_hm.png')
+    tmp <- system.file("extdata/shinyApp/tmp", package="spatialHeatmap"); pa <- paste0(tmp, '/delete_hm.png')
     png(pa); hm <- heatmap.2(x=mod, scale=scale, main=main, trace="none"); dev.off()
     do.call(file.remove, list(pa))
     # Logical matrix with the same dimensions as module matrix.
@@ -90,8 +91,8 @@ matrix.heatmap <- function(geneID, data, adj.mod, ds, scale, col=c('yellow', 'bl
      # Label target row/gene.
      g.idx <- which(rownames(mod.cl)==geneID)
      g <- g+geom_hline(yintercept=c(g.idx-0.5, g.idx+0.5), linetype="solid", color=sepcolor, size=sep.width*25)
-
-     subplot(p.sam, ggplot(), g, p.gen, nrows=2, shareX=TRUE, shareY=TRUE, margin=0, heights=c(0.2, 0.8), widths=c(0.8, 0.2)) %>% plotly::layout(title=main)
+     ft <- list(family = "sans serif", size=title.size, color='black')
+     subplot(p.sam, ggplot(), g, p.gen, nrows=2, shareX=TRUE, shareY=TRUE, margin=0, heights=c(0.2, 0.8), widths=c(0.8, 0.2)) %>% plotly::layout(title=main, font=ft)
 
    }
 

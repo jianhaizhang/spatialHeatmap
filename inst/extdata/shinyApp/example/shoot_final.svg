@@ -37,12 +37,12 @@
      guidetolerance="10"
      inkscape:pageopacity="0"
      inkscape:pageshadow="2"
-     inkscape:window-width="1855"
-     inkscape:window-height="1056"
+     inkscape:window-width="3375"
+     inkscape:window-height="1416"
      id="namedview5"
      showgrid="false"
      inkscape:zoom="0.91859061"
-     inkscape:cx="291.64361"
+     inkscape:cx="-182.99656"
      inkscape:cy="140.15694"
      inkscape:window-x="65"
      inkscape:window-y="24"
@@ -294,9 +294,9 @@
          style="fill:#f7fcf5;fill-opacity:1;stroke:#000000;stroke-width:0.37500018;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" />
     </g>
     <g
-       id="SGL2"
+       id="shootGL2"
        transform="translate(-27.75993,41.639894)"
-       style="stroke-width:0.37500018;stroke-miterlimit:4;stroke-dasharray:none;stroke:#000000;stroke-opacity:1;fill:#10ddeb;fill-opacity:1">
+       style="fill:#10ddeb;fill-opacity:1;stroke:#000000;stroke-width:0.37500018;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1">
       <path
          id="path1859"
          d="m 165.52208,131.31076 c 2.00421,3.70287 3.48227,4.71367 7.96016,5.06676 0,-0.0284 -1.3e-4,-0.0568 0,-0.0852 v -0.54013 c 0.006,-0.13832 0.006,-0.27598 -0.0166,-0.41335 0,-0.0918 0.0185,-0.17225 0.0579,-0.25887 0.006,-0.0134 0.0141,-0.0281 0.0277,-0.0362 0.007,-0.004 0.0265,0.0118 0.0215,0.006 -0.0135,-0.0142 -0.0326,-0.0235 -0.0492,-0.0352 -0.0511,-0.009 -0.1048,-0.0114 -0.15385,-0.0277 -0.13685,-0.0454 -0.13162,-0.0731 -0.23439,-0.14702 -0.2371,-0.17043 0.12603,0.10442 -0.12498,-0.0607 -0.0332,-0.0218 -0.0591,-0.0494 -0.0889,-0.0746 -0.0154,-0.0257 -0.0252,-0.0557 -0.0468,-0.0778 0,-0.002 -0.009,-0.0115 -0.0135,-0.0139 l 0.0468,0.33452 z"
@@ -366,7 +366,7 @@
     </g>
     <g
        transform="translate(-39.463242,40.401801)"
-       id="SRB"
+       id="shootRB"
        style="fill:#534aeb;fill-opacity:1;stroke:#000000;stroke-width:0.37500018;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1">
       <path
          inkscape:connector-curvature="0"
@@ -574,7 +574,7 @@
     </g>
     <g
        transform="translate(-39.463242,40.401801)"
-       id="SCER"
+       id="shootCER"
        style="opacity:1;fill:#7d441c;fill-opacity:1;stroke:#000000;stroke-width:0.37500018;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1">
       <path
          inkscape:connector-curvature="0"
@@ -712,7 +712,7 @@
     </g>
     <g
        transform="translate(-39.463242,40.401801)"
-       id="SS22"
+       id="shootS22"
        style="opacity:1;fill:#f7ea5a;fill-opacity:1;stroke:#000000;stroke-width:0.37500018;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1">
       <path
          inkscape:connector-curvature="0"
@@ -863,7 +863,7 @@
     </g>
     <g
        transform="translate(-39.463242,40.401801)"
-       id="SSUC"
+       id="shootSUC"
        style="opacity:1;fill:#f8a40d;fill-opacity:1;stroke:#000000;stroke-width:0.37500018;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1">
       <path
          inkscape:connector-curvature="0"
@@ -988,7 +988,7 @@
     </g>
     <g
        transform="translate(-39.463242,40.401801)"
-       id="SKAT"
+       id="shootKAT"
        style="opacity:1;fill:#5e76e1;fill-opacity:1;stroke:#000000;stroke-width:0.37500018;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1">
       <path
          inkscape:connector-curvature="0"
