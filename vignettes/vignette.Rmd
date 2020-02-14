@@ -72,7 +72,7 @@ library(spatialHeatmap); library(data.table); library(SummarizedExperiment); lib
 
 ## Spatial Heatmap
 
-This is the core functionality of this package and is implemented by the function `spatial_hm()` [@SummarizedExperiment; @grImport; @rsvg; @ggplot2; @gridExtra; @XML; @grid; @Gentleman2018-xj]. It maps expression profiles of target genes from the [data matrix](#table) [@Mustroph2009-nu] onto the configured SVG image ([Figure 2](#root_R), @Mustroph2009-nu) and displays as spatial heatmaps ([Figure 3](#shm_R)).   
+This is the core functionality of this package and is implemented by the function `spatial_hm` [@SummarizedExperiment; @grImport; @rsvg; @ggplot2; @gridExtra; @XML; @grid; @Gentleman2018-xj]. It maps expression profiles of target genes from the [data matrix](#table) [@Mustroph2009-nu] onto the configured SVG image ([Figure 2](#root_R), @Mustroph2009-nu) and displays as spatial heatmaps ([Figure 3](#shm_R)).   
 
 ### Format the Data Matrix {#svg_mat}
 
@@ -81,7 +81,7 @@ To plot the spatial heatmaps, the gene expression matrix must be formatted in th
 
 1. The row and column names should be gene IDs and sample/conditions respectively. 
 
-2. In sample/condition names, a sample name is followed by double underscore "__" then the condition. For example, in the column name "epidermis__140mM_1h" in [Table 1](#table), "epidermis" is the sample and "140mM_1h" is the condition. 
+2. In sample/condition names, a sample name is followed by double underscore "__" then the condition. For example, in the column name "shoot_pRBCS__control" in [Table 1](#table), "shoot_pRBCS" is the sample and "control" is the condition. 
 
 3. The column names of sample/condition can only consist of letters, digits, dots, single space, or single underscore. 
 
