@@ -40,7 +40,7 @@ ack4 <- "<p/> Mustroph, Angelika, M Eugenia Zanetti, Charles J H Jang, Hans E Ho
 
 shinyUI(dashboardPage(
 
-  dashboardHeader(title="spatialHeatmap (updated: 2019-11-27)", 
+  dashboardHeader(title="spatialHeatmap (updated: 2020-02-14)", 
   titleWidth=380),
 
   dashboardSidebar(

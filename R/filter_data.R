@@ -4,7 +4,7 @@
 
 #' @param data The gene expression matrix and metadata (optional) in the form of the "SummarizedExperiment" class. In the expression matrix, the row and column names should be gene IDs and sample/conditions, respectively. The sample/condition names MUST be fomatted this way: a sample name is followed by double underscore then the condition, such as “stele__140mM_48h" (Geng et al. 2013), where stele is the sample and 140mM_48h is the condition. In the column names of sample/condition, only letters, digits, single underscore, dots, single space are allowed. Not all samples in the matrix need to be present in the SVG image, and vice versa. Only samples present in the SVG image are recognised and coloured in the spatial heatmap. \cr Example expression matrix: system.file("extdata/example", "root_expr_row_gen.txt", package = "spatialHeatmap").
 
-#' @param pOA It specifies parameters of the filter function "pOverA" from the package "genefilter" (Gentleman et al. 2018). It filters genes according to the proportion "p" of samples where the expression values exceeding a threshold "A". The input is a vector of two numbers, where the first one is the "p" and the second one is "A". The default is c(0, 0), which means no filter is applied. \cr E.g. c(0.1, 2) means genes whose expression values over 2 in at least 10\% of all samples are kept. 
+#' @param pOA It specifies parameters of the filter function "pOverA" from the package "genefilter" (Gentleman et al. 2018). It filters genes according to the proportion "p" of samples where the expression values exceed a threshold "A". The input is a vector of two numbers, where the first one is the "p" and the second one is "A". The default is c(0, 0), which means no filter is applied. \cr E.g. c(0.1, 2) means genes whose expression values over 2 in at least 10\% of all samples are kept. 
 
 #' @param CV It specifies parameters of the filter function "cv" from the package "genefilter" (Gentleman et al. 2018), which filters genes according to the coefficient of variation (CV). The input is a vector of two numbers, specifying the CV range. The default is c(0, Inf), where the range is set from 0 to Inf so as not to apply filtering. \cr E.g. c(0.1, 5) means genes with CV between 0.1 and 5 are kept.
 
@@ -55,7 +55,7 @@ filter_data <- function(data, pOA=c(0, 0), CV=c(0, Inf), dir=NULL) {
     
     }
     if (!is.null(dir)) write.table(df1, paste0(path, "processed_data.txt"), sep="\t", row.names=TRUE, col.names=TRUE)
-    if (ncol(rowData(data))>=1 & ncol(colData(data))>=1) { expr <- SummarizedExperiment(assays=list(expr=df), rowData=ann, colData=colData(data)) } else if (ncol(rowData(data))>=1 & ncol(colData(data))==0) { expr <- SummarizedExperiment(assays=list(expr=df),rowData=ann) } else if (ncol(rowData(data))==0 & ncol(colData(data))>=1) { expr <- SummarizedExperiment(assays=list(expr=df), colData=colData(data)) }
+    if (ncol(rowData(data))>=1 & ncol(colData(data))>=1) { expr <- SummarizedExperiment(assays=list(expr=df), rowData=ann, colData=colData(data)) } else if (ncol(rowData(data))>=1 & ncol(colData(data))==0) { expr <- SummarizedExperiment(assays=list(expr=df),rowData=ann) } else if (ncol(rowData(data))==0 & ncol(colData(data))>=1) { expr <- SummarizedExperiment(assays=list(expr=df), colData=colData(data)) } else { expr <- SummarizedExperiment(assays=list(expr=df)) }
     return(expr)
 
 }

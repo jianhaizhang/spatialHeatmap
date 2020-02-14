@@ -26,7 +26,7 @@ network(geneID, data, adj.mod, ds = "3", adj.min = 0, con.min = 0,
 
 \item{edge.col}{A vector of colour ingredients for constructing edge colour scale in the static image. The default is c("yellow", "blue").}
 
-\item{vertex.label.cex}{The size of node label in the static image. The default is 1.}
+\item{vertex.label.cex}{The size of node label. The default is 1.}
 
 \item{vertex.cex}{The size of node in the static image. The default is 3.}
 

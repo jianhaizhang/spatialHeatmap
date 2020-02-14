@@ -5,10 +5,10 @@
 \title{Matrix Heatmap}
 \usage{
 matrix_heatmap(geneID, data, adj.mod, ds, scale, col = c("yellow",
-  "blue"), main = NULL, title.size = 10, angleCol = 45,
-  angleRow = 45, sepcolor = "black", sep.width = 0.02,
-  static = TRUE, margin = c(10, 10), arg.lis1 = list(),
-  arg.lis2 = list())
+  "blue"), main = NULL, title.size = 10, cexCol = 1, cexRow = 1,
+  angleCol = 45, angleRow = 45, sepcolor = "black",
+  sep.width = 0.02, static = TRUE, margin = c(10, 10),
+  arg.lis1 = list(), arg.lis2 = list())
 }
 \arguments{
 \item{geneID}{A gene ID from the expression matrix.}
@@ -26,6 +26,10 @@ matrix_heatmap(geneID, data, adj.mod, ds, scale, col = c("yellow",
 \item{main}{The title of the matrix heatmap.}
 
 \item{title.size}{A numeric, the size of the title font.}
+
+\item{cexCol}{A numeric value, the size of column names. Default is 1.}
+
+\item{cexRow}{A numeric value, the size of row names. Default is 1.}
 
 \item{angleCol}{The angle of column names. The default is 45.}
 

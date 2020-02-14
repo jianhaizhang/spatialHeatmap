@@ -10,7 +10,7 @@
 #' @param con.min Minimun connectivity of a gene, genes with connectivity below which will be removed. Used for static network.
 #' @param node.col A vector of colour ingredients for constructing node colour scale in the static image. The default is c("mediumorchid1", "chocolate4").
 #' @param edge.col A vector of colour ingredients for constructing edge colour scale in the static image. The default is c("yellow", "blue").
-#' @param vertex.label.cex The size of node label in the static image. The default is 1.
+#' @param vertex.label.cex The size of node label. The default is 1.
 #' @param vertex.cex The size of node in the static image. The default is 3.
 #' @param edge.cex The size of edge in the static image. The default is 10.
 #' @param layout The layout of the network in static image, either "circle" or "fr". The "fr" stands for force-directed layout algorithm by Fruchterman and Reingold. The default is "circle".
@@ -49,7 +49,7 @@ network <- function(geneID, data, adj.mod, ds="3", adj.min=0, con.min=0, node.co
 
   from <- to <- width <- size <- NULL 
   adj <- adj.mod[["adj"]]; mods <- adj.mod[["mod"]]
-  gene <- assay(data); if (ncol(rowData(data))>=1) ann <- rowData(data)[, , drop=FALSE]  else ann <- NULL
+  gene <- assay(data); if (ncol(rowData(data))>=1) { ann <- rowData(data)[, , drop=FALSE]; rownames(ann) <- rownames(gene) } else ann <- NULL
   ds <- as.character(ds); lab <- mods[, ds][rownames(gene)==geneID]
   if (lab=="0") { return('The selected gene is not assigned to any module. Please select a different one') }
   
@@ -175,10 +175,13 @@ network <- function(geneID, data, adj.mod, ds="3", adj.min=0, con.min=0, node.co
         nod.lin <- nod_lin(ds=ds, lab=lab, mods=mods, adj=adj, geneID=geneID, adj.min=input$adj.in)
         node <- nod.lin[['node']]; colnames(node) <- c('id', 'value')
         link1 <- nod.lin[['link']]; colnames(link1)[3] <- 'value'
-        link1$title <- link1$value # 'length' is not well indicative of adjacency value, so replaced by 'value'.
-        link1$color <- 'lightblue'
-        if (!is.null(ann)) node <- cbind(node, title=ann[node$id, ], borderWidth=2, color.border="black", color.highlight.background="orange", color.highlight.border="darkred", color=NA, stringsAsFactors=FALSE)
-        if (is.null(ann)) node <- cbind(node, borderWidth=2, color.border="black", color.highlight.background="orange", color.highlight.border="darkred", color=NA, stringsAsFactors=FALSE)
+        if (nrow(link1)!=0) { 
+        
+          link1$title <- link1$value # 'length' is not well indicative of adjacency value, so replaced by 'value'.
+          link1$color <- 'lightblue'
+        
+        }; node <- cbind(node, label=node$id, font.size=vertex.label.cex*20, borderWidth=2, color.border="black", color.highlight.background="orange", color.highlight.border="darkred", color=NA, stringsAsFactors=FALSE)
+        if (!is.null(ann)) node <- cbind(node, title=ann[node$id, ], stringsAsFactors=FALSE)
         net.lis <- list(node=node, link=link1)
 
       }); net.lis

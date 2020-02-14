@@ -10,6 +10,8 @@
 #' @param col A vector of two colours. It is used for constructing the colour scale. The default is c('yellow', 'blue').
 #' @param main The title of the matrix heatmap.
 #' @param title.size A numeric, the size of the title font.
+#' @param cexCol A numeric value, the size of column names. Default is 1.
+#' @param cexRow A numeric value, the size of row names. Default is 1.
 #' @param angleCol The angle of column names. The default is 45.
 #' @param angleRow The angle of row names. The default is 45.
 #' @param sepcolor The colour of the two lines labelling the target gene. The default is "black".
@@ -47,7 +49,7 @@
 #' @importFrom graphics image mtext par plot title
 #' @importFrom grDevices dev.off png
 
-matrix_heatmap <- function(geneID, data, adj.mod, ds, scale, col=c('yellow', 'blue'), main=NULL, title.size=10, angleCol=45, angleRow=45, sepcolor="black", sep.width=0.02, static=TRUE, margin=c(10, 10), arg.lis1=list(), arg.lis2=list()) {
+matrix_heatmap <- function(geneID, data, adj.mod, ds, scale, col=c('yellow', 'blue'), main=NULL, title.size=10, cexCol=1, cexRow=1, angleCol=45, angleRow=45, sepcolor="black", sep.width=0.02, static=TRUE, margin=c(10, 10), arg.lis1=list(), arg.lis2=list()) {
 
   mods <- adj.mod[["mod"]]; ds <- as.character(ds); gene <- assay(data)
   lab <- mods[, ds][rownames(gene)==geneID]
@@ -63,7 +65,7 @@ matrix_heatmap <- function(geneID, data, adj.mod, ds, scale, col=c('yellow', 'bl
     selection <- matrix(rep(FALSE, nrow(mod)*ncol(mod)), nrow=nrow(mod))
     # Select the row of target gene.  
     idx <- which(rev(colnames(hm$carpet) %in% geneID))
-    lis1 <- c(arg.lis1, list(x=mod, scale=scale, main=main, margin=margin, col=colorRampPalette(col)(nrow(mod)*ncol(mod)), rowsep=c(idx-1, idx), srtRow=angleRow, srtCol=angleCol, dendrogram='both', sepcolor="black", sepwidth=c(sep.width, sep.width), key=TRUE, trace="none", density.info="none", Rowv=TRUE, Colv=TRUE))
+    lis1 <- c(arg.lis1, list(x=mod, scale=scale, main=main, margin=margin, col=colorRampPalette(col)(nrow(mod)*ncol(mod)), rowsep=c(idx-1, idx), cexCol=cexCol, cexRow=cexRow, srtRow=angleRow, srtCol=angleCol, dendrogram='both', sepcolor="black", sepwidth=c(sep.width, sep.width), key=TRUE, trace="none", density.info="none", Rowv=TRUE, Colv=TRUE))
     do.call(heatmap.2, lis1)
 
   } else if (static==FALSE) {
@@ -87,7 +89,7 @@ matrix_heatmap <- function(geneID, data, adj.mod, ds, scale, col=c('yellow', 'bl
      mod.m$gene <- factor(mod.m$gene, levels=rownames(mod.cl)); mod.m$sample <- factor(mod.m$sample, levels=colnames(mod.cl))
      # Plot the re-ordered heatmap.
      lis2 <- c(arg.lis2, list(data=mod.m, mapping=aes(x=sample, y=gene))) 
-     g <- do.call(ggplot, lis2)+geom_tile(aes(fill=value), colour="white")+scale_fill_gradient(low=col[1], high=col[2])+theme(axis.text.x=element_text(angle=angleRow), axis.text.y=element_text(angle=angleCol))
+     g <- do.call(ggplot, lis2)+geom_tile(aes(fill=value), colour="white")+scale_fill_gradient(low=col[1], high=col[2])+theme(axis.text.x=element_text(size=cexRow*10, angle=angleCol), axis.text.y=element_text(size=cexCol*10, angle=angleRow))
      # Label target row/gene.
      g.idx <- which(rownames(mod.cl)==geneID)
      g <- g+geom_hline(yintercept=c(g.idx-0.5, g.idx+0.5), linetype="solid", color=sepcolor, size=sep.width*25)

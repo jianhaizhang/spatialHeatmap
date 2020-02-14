@@ -15,7 +15,7 @@ The DESCRIPTION file:
 \packageDESCRIPTION{spatialHeatmap}
 \packageIndices{spatialHeatmap}
 
-This R package spatialHeatmap is designed to intuitively visualise gene expression data on images where the data come from and promote hypothesis generation. Examples include but not limit to RNA-seq, microarray, qPCR, subcellular localisation of proteins, etc., regardless of species.
+This R package spatialHeatmap is designed to allow users to visualise custom data matrix on SVG images in an intuitive way, and therefore promote hypothesis generation. In biological research, examples include but not limit to gene expression profiling by RNA-seq or microarray, qPCR, protein subcellular localisation, etc., regardless of species.
 
 The core feature “Spatial Heatmap” is to map expression profile of a target gene under different conditions to different cells/tissues/organs (samples) on an associated SVG image, where different samples are predefined. After mapping, the expression profile is represented as different colours across samples in the image, which are called spatial heatmaps. In addition, the accessory features of “Matrix Heatmap” and “Network” display the target gene in the context of corresponding gene module, which make this package more versatile. All the utilities implemented in this R package are also combined as a web-browser based Shiny app, which can be used locally or online on the Shiny server.
 

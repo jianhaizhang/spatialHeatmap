@@ -78,7 +78,7 @@ spatial_hm <- function(svg.path, data, pOA=c(0, 0), CV=c(0, 10000), ID, col.com=
 
     df_tis <- svg_df(svg.path=svg.path); g.df <- df_tis[['df']]; tis.path <- df_tis[['tis.path']]
     cname <- colnames(gene); con <- gsub("(.*)(__)(.*)", "\\3", cname); con.uni <- unique(con) 
-    grob.lis <- grob_list(gene=gene, geneV=geneV, coord=g.df, ID=ID, cols=col, tis.path=tis.path, tis.trans=tis.trans, sub.title.size=11)
+    grob.lis <- grob_list(gene=gene, geneV=geneV, coord=g.df, ID=ID, cols=col, tis.path=tis.path, tis.trans=tis.trans, sub.title.size=sub.title.size)
     g.arr <- lay_shm(lay.shm=lay.shm, con=con, ncol=ncol, ID.sel=ID, grob.list=grob.lis, width=width, height=height, shiny=FALSE)
     cs.arr <- arrangeGrob(grobs=list(grobTree(cs.grob)), layout_matrix=cbind(1), widths=unit(25, "mm"))
     grid.arrange(cs.arr, g.arr, ncol=2, widths=c(1.5, 8))
