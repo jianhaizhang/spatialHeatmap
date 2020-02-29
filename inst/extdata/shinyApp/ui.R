@@ -115,8 +115,9 @@ shinyUI(dashboardPage(
       tabItem(tabName="hm_net", 
 
       box(title="Expression Matrix", status="primary", solidHeader=TRUE, collapsible=TRUE, fluidRow(splitLayout(cellWidths=c("1%", "98%", "1%"), "", dataTableOutput("dt"), "")), height=430, width=12),
-      column(12, fluidRow(splitLayout(cellWidths=c('1%', "6%", "93%"), '', actionButton("tis.but", "Submit", icon=icon("refresh"), style="padding:7px; font-size:90%; margin-left:0px", style="color:blue; background-color:lightblue; border-color: #2e6da4", inline=TRUE), checkboxGroupInput(inputId="tis", label="All tissues in the image:", choices='', selected='', inline=TRUE)))),
-      box(title="Spatial Heatmap", status="primary", solidHeader=TRUE, collapsible=TRUE, fluidRow(splitLayout(cellWidths=c("1%", "7%", "91%", "1%"), "", plotOutput("bar"), plotOutput("tissue"), "")), width=9),
+      box(title="Spatial Heatmap", status="primary", solidHeader=TRUE, collapsible=TRUE, 
+      fluidRow(splitLayout(cellWidths=c('1%', "6%", "93%"), '', actionButton("tis.but", "Submit", icon=icon("refresh"), style="padding:7px; font-size:90%; margin-left:0px", style="color:blue; background-color:lightblue; border-color: #2e6da4", inline=TRUE), checkboxGroupInput(inputId="tis", label="Select tissues to be transparent:", choices='', selected='', inline=TRUE))),
+      fluidRow(splitLayout(cellWidths=c("1%", "7%", "91%", "1%"), "", plotOutput("bar"), plotOutput("tissue"), "")), width=9),
       box(title="Original Image", status="primary", solidHeader=TRUE, collapsible=TRUE, splitLayout(cellWidths=c("1%", "98%", "1%"), "", plotOutput("ori.svg"), ""), width=3), br(),
       box(title="Matrix Heatmap", status="primary", solidHeader=TRUE, collapsible=TRUE, plotlyOutput("HMly"), width=12, height=460), br(),
       box(title="Interactive Network", status="primary", solidHeader=TRUE, collapsible=TRUE, fluidRow(splitLayout(cellWidths=c("1%", "6%", "91%", "2%"), "", plotOutput("bar.net"), visNetworkOutput("vis"), "")), width=12)

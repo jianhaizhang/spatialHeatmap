@@ -40,6 +40,8 @@ shinyServer(function(input, output, session) {
     content=function(file){ write.table(inter.data, file, col.names=TRUE, row.names=TRUE, quote=FALSE, sep="\t") }
 
   )
+  # Filter parameters.
+  fil <- reactiveValues(P=0, A=-Inf, CV1=-Inf, CV2=Inf)
 
   observe({
 
@@ -51,11 +53,14 @@ shinyServer(function(input, output, session) {
     updateSelectInput(session, "height", "Overall canvas height:", seq(100, 15000, 20), "400")
     updateSelectInput(session, "width", "Overall canvas width:", seq(100, 15000, 20), "820")
     updateSelectInput(session, "col.n", "No. of columns for sub-plots", seq(1, 15, 1), "2")
+    updateTextInput(session, inputId="P", label="Filter genes: the proportion (P) of samples whose values exceed A:", value=0, placeholder='a numeric: 0-1')                                                                                    
+    updateTextInput(session, inputId="A", label="Filter genes: the value (A) to be exceeded:", value='-Inf', placeholder='a numeric')                                                                                                           
+    updateTextInput(session, inputId="CV1", label="Filter genes: lower bound of coefficient of variation (CV1):", value='-Inf', placeholder='a numeric')                                                                                        
+    updateTextInput(session, inputId="CV2", label="Filter genes: upper bound of coefficient of variation (CV2):", value='Inf', placeholder='a numeric') 
 
   })
 
-  # Filter parameters.
-  fil <- reactiveValues(P=0, A=-Inf, CV1=-Inf, CV2=Inf)
+
   observeEvent(input$P.but, { fil$P <- as.numeric(input$P) }) # As long as an button is used, observeEvent should be used.
   observeEvent(input$A.but, { fil$A <- as.numeric(input$A) })
   observeEvent(input$CV1.but, { fil$CV1 <- as.numeric(input$CV1) })
@@ -195,7 +200,7 @@ shinyServer(function(input, output, session) {
       withProgress(message="Color scale: ", value = 0, {
 
         incProgress(0.75, detail="Plotting. Please wait.")
-        cs.g <- col_bar(geneV=geneV(), cols=color$col, width=0.7, mar=c(3, 0.1, 3, 0.1)); return(cs.g)
+        cs.g <- col_bar(geneV=geneV(), cols=color$col, width=1, mar=c(3, 0.1, 3, 0.1)); return(cs.g)
 
       })
 
@@ -209,15 +214,9 @@ shinyServer(function(input, output, session) {
     input$fileIn; geneIn(); input$adj.modInpath; input$A; input$p; input$cv1; input$cv2; input$min.size; input$net.type
     r.na <- rownames(geneIn()[["gene2"]]); gen.sel <- r.na[input$dt_rows_selected]
     updateSelectInput(session, "gen.sel", choices=c("None", gen.sel), selected="None")
-    updateCheckboxGroupInput(session, inputId="tis", label='All tissues in the image:', choices=c(unique(svg.df()[['tis.path']])), selected='', inline=TRUE)
 
   })
 
-  observeEvent(input$fileIn, {
-
-    updateCheckboxGroupInput(session, inputId="tis", label='All tissues in the image:', choices='', selected='', inline=TRUE)
-
-  })
 
   svg.df <- reactive({ 
 
@@ -237,6 +236,12 @@ shinyServer(function(input, output, session) {
 
   })
 
+  observe({
+
+    input$fileIn; geneIn(); input$adj.modInpath; input$A; input$p; input$cv1; input$cv2; svg.df()
+    updateCheckboxGroupInput(session, inputId="tis", label='Select tissues to be transparent:', choices=unique(svg.df()[['tis.path']]), selected='', inline=TRUE)
+
+  })
 
   con <- reactive({ 
 
@@ -329,8 +334,7 @@ shinyServer(function(input, output, session) {
   })
 
   observeEvent(gID$new, { grob$all <- c(grob$all, gs()) })
-
-  # The code chunks in "observe" run independently, e.g. if previous code return (NULL), the next code still runs, while if the same case in "observeEvent", all the remaining code stops.
+  # In "observe" and "observeEvent", if one code return (NULL), then all the following code stops.
   observe({
     
     if (is.null(geneIn())|is.null(input$dt_rows_selected)|is.null(svg.df())|gID$geneID[1]=="none"|is.null(grob$all)) return(NULL)
@@ -341,9 +345,10 @@ shinyServer(function(input, output, session) {
     if (length(color$col=="none")==0|input$color=="") return(NULL)
 
     r.na <- rownames(geneIn()[["gene2"]]); gID$geneID <- r.na[input$dt_rows_selected]
-    idx <- NULL; for (i in gID$geneID) idx <- c(idx, grep(paste0("^", i, "_"), names(grob$all)))
-    grob.lis.p <- grob$all[idx] #grob.lis.p <- grob.lis.p[unique(names(grob.lis.p))]
-    lay_shm(lay.shm=input$gen.con, con=con(), ncol=input$col.n, ID.sel=gID$geneID, grob.list=grob.lis.p, width=width, height=height, shiny=TRUE) 
+    grob.na <- names(grob$all); con <- unique(con())
+    idx <- NULL; for (i in gID$geneID) { idx <- c(idx, grob.na[grob.na %in% paste0(i, '_', con)]) } 
+    grob.lis.p <- grob$all[sort(idx)] #grob.lis.p <- grob.lis.p[unique(names(grob.lis.p))]
+    lay_shm(lay.shm=input$gen.con, con=con, ncol=input$col.n, ID.sel=gID$geneID, grob.list=grob.lis.p, width=width, height=height, shiny=TRUE) 
 
     })
 
@@ -536,7 +541,7 @@ shinyServer(function(input, output, session) {
       incProgress(0.25, detail="Preparing data. Please wait.")
       incProgress(0.75, detail="Plotting. Please wait.")
       node <- visNet()[["node"]]; node.v <- node$value; v.net <- seq(min(node.v), max(node.v), len=len.cs.net)
-        cs.net <- col_bar(geneV=v.net, cols=color.net$col.net, width=0.7, mar=c(3, 0.1, 3, 0.1)); return(cs.net) # '((max(v.net)-min(v.net))/len.cs.net)*0.7' avoids bar overlap.
+        cs.net <- col_bar(geneV=v.net, cols=color.net$col.net, width=1, mar=c(3, 0.1, 3, 0.1)); return(cs.net) # '((max(v.net)-min(v.net))/len.cs.net)*0.7' avoids bar overlap.
 
       })
 

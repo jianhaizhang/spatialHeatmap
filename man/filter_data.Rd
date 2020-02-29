@@ -25,16 +25,16 @@ It is designed to filter the gene expression matrix. The filtering is based on t
 # Creat the "SummarizedExperiment" class. Refer to the R package "SummarizedExperiment" for more details.
 data.path <- system.file("extdata/shinyApp/example", "root_expr_row_gen.txt", package = "spatialHeatmap")   
 ## The expression matrix, where the row and column names should be gene IDs and sample/conditions respectively. This data matrix is truncated from a GEO dataset (https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE46205), which is already normalised.
-library(data.table); expr <- fread(data.path, sep='\\t', header=TRUE, fill=TRUE)
+library(data.table); expr <- fread(data.path, sep='\t', header=TRUE, fill=TRUE)
 col.na <- colnames(expr)[-ncol(expr)]; row.na <- as.data.frame(expr[, 1])[, 1]
 expr <- as.matrix(as.data.frame(expr, stringsAsFactors=FALSE)[, -1])
 rownames(expr) <- row.na; colnames(expr) <- col.na
 con.path <- system.file("extdata/shinyApp/example", "root_con.txt", package = "spatialHeatmap") 
 ## Condition is a single column data frame.
-con <- read.table(con.path, header=TRUE, row.names=NULL, sep='\\t', stringsAsFactors=FALSE)
+con <- read.table(con.path, header=TRUE, row.names=NULL, sep='\t', stringsAsFactors=FALSE)
 ann.path <- system.file("extdata/shinyApp/example", "root_ann.txt", package = "spatialHeatmap")
 ## Gene annotation is a single column data frame.
-ann <- read.table(ann.path, header=TRUE, row.names=1, sep='\\t', stringsAsFactors=FALSE)
+ann <- read.table(ann.path, header=TRUE, row.names=1, sep='\t', stringsAsFactors=FALSE)
 ## The expression matrix, gene annotation, and condition are stored in a "SummarizedExperiment" object. Gene annotation and condition are optional.
 library(SummarizedExperiment); expr <- as.matrix(expr); expr <- SummarizedExperiment(assays=list(expr=expr), rowData=ann, colData=con)  
 exp <- filter_data(data=expr, pOA=c(0, 0), CV=c(0.1, Inf), dir=NULL) 

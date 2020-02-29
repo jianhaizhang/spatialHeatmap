@@ -28,12 +28,13 @@
 
 lay_shm <- function(lay.shm, con, ncol, ID.sel, grob.list, width, height, shiny) {
 
+    width <- as.numeric(width); height <- as.numeric(height); ncol <- as.numeric(ncol); con <- unique(con)
     if (lay.shm=="gene") {
 
-        all.cell <- ceiling(length(unique(con))/as.numeric(ncol))*as.numeric(ncol)
-        cell.idx <- c(seq_len(length(unique(con))), rep(NA, all.cell-length(unique(con))))
+        all.cell <- ceiling(length(con)/ncol)*ncol
+        cell.idx <- c(seq_len(length(con)), rep(NA, all.cell-length(con)))
         m <- matrix(cell.idx, ncol=as.numeric(ncol), byrow=TRUE)
-        lay <- NULL; for (i in seq_len(length(ID.sel))) { lay <- rbind(lay, m+(i-1)*length(unique(con))) }
+        lay <- NULL; for (i in seq_len(length(ID.sel))) { lay <- rbind(lay, m+(i-1)*length(con)) }
       if (shiny==TRUE & length(grob.list)>=1) return(grid.arrange(grobs=grob.list, layout_matrix=lay, newpage=TRUE))
        
       g.tr <- lapply(grob.list[seq_len(length(grob.list))], grobTree)
@@ -42,23 +43,19 @@ lay_shm <- function(lay.shm, con, ncol, ID.sel, grob.list, width, height, shiny)
 
     } else if (lay.shm=="con") {
 
-        grob.all.na <- names(grob.list); grob.all.idx <- NULL
-        for (i in unique(con)) {
-
-            grob.all.idx <- c(grob.all.idx, grep(paste0(i, "$"), grob.all.na))
-
-        }
-
-        grob.all.con <- grob.list[grob.all.idx]
-        all.cell <- ceiling(length(ID.sel)/as.numeric(ncol))*as.numeric(ncol)
-        cell.idx <- c(seq_len(length(ID.sel)), rep(NA, all.cell-length(ID.sel)))
-        m <- matrix(cell.idx, ncol=as.numeric(ncol), byrow=TRUE)
-        lay <- NULL; for (i in seq_len(length(unique(con)))) { lay <- rbind(lay, m+(i-1)*length(ID.sel)) }
+      grob.all.na <- names(grob.list); na.rev <- NULL
+      # Reverse the "gene_condition" names, and re-oder them.
+      for (i in grob.all.na) { na.rev <- c(na.rev, paste0(rev(strsplit(i, NULL)[[1]]), collapse='')) }
+      grob.all.con <- grob.list[order(na.rev)]
+      all.cell <- ceiling(length(ID.sel)/ncol)*ncol
+      cell.idx <- c(seq_len(length(ID.sel)), rep(NA, all.cell-length(ID.sel)))
+      m <- matrix(cell.idx, ncol=ncol, byrow=TRUE)
+      lay <- NULL; for (i in seq_len(length(con))) { lay <- rbind(lay, m+(i-1)*length(ID.sel)) }
  
-        if (shiny==TRUE & length(grob.all.con)>=1) return(grid.arrange(grobs=grob.all.con, layout_matrix=lay, newpage=TRUE))
-        g.tr <- lapply(grob.all.con, grobTree); g.tr <- g.tr[names(grob.all.con)]
-        n.col <- ncol(lay); n.row <- nrow(lay)
-        g.arr <- arrangeGrob(grobs=g.tr, layout_matrix=lay, widths=unit(rep(width/n.col, n.col), "npc"), heights=unit(rep(height/n.row, n.row), "npc")) 
+      if (shiny==TRUE & length(grob.all.con)>=1) return(grid.arrange(grobs=grob.all.con, layout_matrix=lay, newpage=TRUE))
+      g.tr <- lapply(grob.all.con, grobTree); g.tr <- g.tr[names(grob.all.con)]
+      n.col <- ncol(lay); n.row <- nrow(lay)
+      g.arr <- arrangeGrob(grobs=g.tr, layout_matrix=lay, widths=unit(rep(width/n.col, n.col), "npc"), heights=unit(rep(height/n.row, n.row), "npc")) 
 
     }; return(g.arr)
 

@@ -4,8 +4,17 @@
 \alias{grob_list}
 \title{Draw each spatial heatmap and convert them to ggplot2 plot grob}
 \usage{
-grob_list(gene, geneV, coord, ID, cols, tis.path, tis.trans = NULL,
-  sub.title.size, ...)
+grob_list(
+  gene,
+  geneV,
+  coord,
+  ID,
+  cols,
+  tis.path,
+  tis.trans = NULL,
+  sub.title.size,
+  ...
+)
 }
 \arguments{
 \item{gene}{The gene expession matrix, where rows are genes and columns are tissue/conditions.}

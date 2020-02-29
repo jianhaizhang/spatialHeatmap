@@ -4,10 +4,22 @@
 \alias{spatial_hm}
 \title{Spatial Heatmap}
 \usage{
-spatial_hm(svg.path, data, pOA = c(0, 0), CV = c(0, 10000), ID,
-  col.com = c("yellow", "purple", "blue"), col.bar = "selected",
-  tis.trans = NULL, width = 1, height = 1, sub.title.size = 11,
-  lay.shm = "gene", ncol = 3, ...)
+spatial_hm(
+  svg.path,
+  data,
+  pOA = c(0, 0),
+  CV = c(0, 10000),
+  ID,
+  col.com = c("yellow", "purple", "blue"),
+  col.bar = "selected",
+  tis.trans = NULL,
+  width = 1,
+  height = 1,
+  sub.title.size = 11,
+  lay.shm = "gene",
+  ncol = 3,
+  ...
+)
 }
 \arguments{
 \item{svg.path}{The path of the SVG image, where different tissues are pre-defined and associated with expression pfofiles through tissue names. \cr E.g.: system.file("extdata/example", "test_final.svg", package = "spatialHeatmap") (Mustroph et al. 2009).}
@@ -53,7 +65,7 @@ Details about how to properly format and associate a custom SVG image with a dat
 # Creat the "SummarizedExperiment" class. Refer to the R package "SummarizedExperiment" for more details.
 data.path <- system.file("extdata/shinyApp/example", "root_expr_row_gen.txt", package = "spatialHeatmap")   
 ## The expression matrix, where the row and column names should be gene IDs and sample/conditions, respectively.
-library(data.table); expr <- fread(data.path, sep='\\t', header=TRUE, fill=TRUE)
+library(data.table); expr <- fread(data.path, sep='\t', header=TRUE, fill=TRUE)
 col.na <- colnames(expr)[-ncol(expr)]; row.na <- as.data.frame(expr[, 1])[, 1]
 expr <- as.matrix(as.data.frame(expr, stringsAsFactors=FALSE)[, -1])
 rownames(expr) <- row.na; colnames(expr) <- col.na

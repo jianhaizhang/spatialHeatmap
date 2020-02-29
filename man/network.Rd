@@ -4,10 +4,23 @@
 \alias{network}
 \title{Network}
 \usage{
-network(geneID, data, adj.mod, ds = "3", adj.min = 0, con.min = 0,
-  node.col = c("mediumorchid1", "chocolate4"), edge.col = c("yellow",
-  "blue"), vertex.label.cex = 1, vertex.cex = 3, edge.cex = 10,
-  layout = "circle", main = NULL, static = TRUE, ...)
+network(
+  geneID,
+  data,
+  adj.mod,
+  ds = "3",
+  adj.min = 0,
+  con.min = 0,
+  node.col = c("mediumorchid1", "chocolate4"),
+  edge.col = c("yellow", "blue"),
+  vertex.label.cex = 1,
+  vertex.cex = 3,
+  edge.cex = 10,
+  layout = "circle",
+  main = NULL,
+  static = TRUE,
+  ...
+)
 }
 \arguments{
 \item{geneID}{A gene ID from the expression matrix.}
@@ -50,7 +63,7 @@ This function represents the input gene in the context of corresponding gene net
 # Creat the "SummarizedExperiment" class. Refer to the R package "SummarizedExperiment" for more details.
 data.path <- system.file("extdata/shinyApp/example", "root_expr_row_gen.txt", package="spatialHeatmap")   
 ## The expression matrix, where the row and column names should be gene IDs and sample/conditions respectively.
-library(data.table); expr <- fread(data.path, sep='\\t', header=TRUE, fill=TRUE)
+library(data.table); expr <- fread(data.path, sep='\t', header=TRUE, fill=TRUE)
 col.na <- colnames(expr)[-ncol(expr)]; row.na <- as.data.frame(expr[, 1])[, 1]
 expr <- as.matrix(as.data.frame(expr, stringsAsFactors=FALSE)[, -1])
 rownames(expr) <- row.na; colnames(expr) <- col.na
