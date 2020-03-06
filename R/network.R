@@ -3,7 +3,8 @@
 #' This function represents the input gene in the context of corresponding gene network module, where nodes are genes and edges are adjacencies between genes. The network can be dispayed in static or interactive mode. \cr The gene modules are identified at two alternative sensitivity levels (3, 2). See function "adj_mod" for details. The thicker edge denotes higher adjacency (coexpression similarity) between genes while larger node indicates higher gene connectivity (sum of a gene's adjacency with all its direct neighbours). \cr In the interactive mode, there is an interactive colour bar to denote gene connectivity. The colour ingredients must only be separated by comma, e.g. "yellow,purple,blue", which means gene connectivity increases from yellow to blue. If too many edges (e.g.: > 300) are displayed, the network could get stuck. So the "Input an adjacency threshold to display the adjacency network." option sets a threthold to filter out weak edges and all remaining edges are displayed. If not too many (e.g.: < 300), users can check "Yes" under "Display or not?", then the network will be displayed and would be responsive smoothly. To maintain acceptable performance, users are advised to choose a stringent threshold (e.g. 0.9) initially, then decrease the value gradually. The interactive feature allows users to zoom in and out, or drag a gene around. All the gene IDs in the network module are listed in "Select by id" in decreasing order according to gene connectivity. The selected gene ID is appended "_selected" as a label. By clicking an ID in this list, users can identify the corresponding gene in the network. If the input has gene annotations, then the annotation can be seen by hovering the cursor over a node. \cr The same module can also be displayed in the form of a matrix heatmap with the function "matrix.heatmap". 
 
 #' @param geneID A gene ID from the expression matrix. 
-#' @param data The processed data matrix and metadata (optional) resulting from the function "filter.data", which is a "SummarizedExperiment" object.
+#' @param data A "SummarizedExperiment" object containing the processed data matrix and metadata returned by the function \code{\link{filter_data}}.
+#' @param ann A character. The column name corresponding to row (gene) annotation in the "rowData" of "data" argument.
 #' @param adj.mod A list of "adjacency matrix" and "modules" definitions returned by the function "adj.mod".
 #' @param ds The module identification sensitivity, either 2 or 3. See function "adj.mod" for details. Used for static network.
 #' @param adj.min Minimum adjacency between genes, edges with adjacency below which will be removed. Used for static network.
@@ -21,17 +22,25 @@
 
 #' @examples
 #' # Creat the "SummarizedExperiment" class. Refer to the R package "SummarizedExperiment" for more details.
-#' data.path <- system.file("extdata/shinyApp/example", "root_expr_row_gen.txt", package="spatialHeatmap")   
-#' ## The expression matrix, where the row and column names should be gene IDs and sample/conditions respectively.
+#' data.path <- system.file("extdata/shinyApp/example", "root_expr_row_gen.txt", package = "spatialHeatmap")   
+#' ## The expression matrix, where the row and column names should be gene IDs and sample/conditions respectively. This data matrix is truncated from a GEO dataset (https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE46205), which is already normalised.
 #' library(data.table); expr <- fread(data.path, sep='\t', header=TRUE, fill=TRUE)
 #' col.na <- colnames(expr)[-ncol(expr)]; row.na <- as.data.frame(expr[, 1])[, 1]
 #' expr <- as.matrix(as.data.frame(expr, stringsAsFactors=FALSE)[, -1])
 #' rownames(expr) <- row.na; colnames(expr) <- col.na
-#' library(SummarizedExperiment); expr <- SummarizedExperiment(assays=list(expr=expr)) # Metadata is not necessary.  
-#' exp <- filter_data(data=expr, pOA=c(0, 0), CV=c(0.1, 100), dir=NULL) 
+#' col.met.path <- system.file("extdata/shinyApp/example", "col_metadata.txt", package = "spatialHeatmap") 
+#' ## Condition metadata is data frame. It has a column of tissues and a column of contidions, which correspond to columns of the data matrix "expr".
+#' col.metadata <- read.table(col.met.path, header=TRUE, row.names=NULL, sep='\t', stringsAsFactors=FALSE)
+#' row.met.path <- system.file("extdata/shinyApp/example", "row_metadata.txt", package = "spatialHeatmap")
+#' ## Row metadata is a data frame. It has a column of row (gene) annotations, which correspond to rows of the data matrix "expr".
+#' row.metadata <- read.table(row.met.path, header=TRUE, row.names=1, sep='\t', stringsAsFactors=FALSE)
+#' ## The expression matrix, row metadata, and column metadata are stored in a "SummarizedExperiment" object. The row metadata is optional while column metadata is mandatory. The column names in the expression matrix are not important, since they are ultimately renewed by column metadata.
+#' library(SummarizedExperiment); expr <- as.matrix(expr); se <- SummarizedExperiment(assays=list(expr=expr), rowData=row.metadata, colData=col.metadata)  
+#' exp <- filter_data(data=se, pOA=c(0, 0), CV=c(0.1, Inf), ann='ann', samples='sample', conditions='condition', dir=NULL) 
+
 #' adj.mod <- adj_mod(data=exp, type="signed", minSize=15, dir=NULL)
 #' # The gene "PSAC" is represented in the context of its network module in the form of an interactive network.
-#' network(geneID="PSAC", data=exp, adj.mod=adj.mod, static=TRUE)
+#' network(geneID="PSAC", data=exp, ann='ann', adj.mod=adj.mod, static=TRUE)
 
 #' @author Jianhai Zhang \email{jzhan067@@ucr.edu; zhang.jianhai@@hotmail.com} \cr Dr. Thomas Girke \email{thomas.girke@@ucr.edu}
 
@@ -45,11 +54,11 @@
 #' @importFrom shinydashboard dashboardSidebar dashboardPage dashboardHeader sidebarMenu menuItem menuSubItem dashboardBody tabItems tabItem box
 #' @importFrom visNetwork visNetworkOutput visNetwork visOptions renderVisNetwork visIgraphLayout
 
-network <- function(geneID, data, adj.mod, ds="3", adj.min=0, con.min=0, node.col=c("mediumorchid1", "chocolate4"), edge.col=c("yellow", "blue"), vertex.label.cex=1, vertex.cex=3, edge.cex=10, layout="circle", main=NULL, static=TRUE, ...) {
+network <- function(geneID, data, ann, adj.mod, ds="3", adj.min=0, con.min=0, node.col=c("mediumorchid1", "chocolate4"), edge.col=c("yellow", "blue"), vertex.label.cex=1, vertex.cex=3, edge.cex=10, layout="circle", main=NULL, static=TRUE, ...) {
 
   from <- to <- width <- size <- NULL 
   adj <- adj.mod[["adj"]]; mods <- adj.mod[["mod"]]
-  gene <- assay(data); if (ncol(rowData(data))>=1) { ann <- rowData(data)[, , drop=FALSE]; rownames(ann) <- rownames(gene) } else ann <- NULL
+  gene <- assay(data); if (!is.null(rowData(data)) & !is.null(ann)) { ann <- rowData(data)[, ann, drop=FALSE]; rownames(ann) <- rownames(gene) } else ann <- NULL
   ds <- as.character(ds); lab <- mods[, ds][rownames(gene)==geneID]
   if (lab=="0") { return('The selected gene is not assigned to any module. Please select a different one') }
   
@@ -199,7 +208,7 @@ network <- function(geneID, data, adj.mod, ds="3", adj.min=0, con.min=0, node.co
           incProgress(0.25, detail="Preparing data. Please wait.")
           incProgress(0.75, detail="Plotting. Please wait.")
           node.v <- visNet()[["node"]]$value; v.net <- seq(min(node.v), max(node.v), len=len)
-          cs.net <- col_bar(geneV=v.net, cols=color.net$col.net, width=0.7, mar=c(3, 0.1, 3, 0.1)); return(cs.net)
+          cs.net <- col_bar(geneV=v.net, cols=color.net$col.net, width=1, mar=c(3, 0.1, 3, 0.1)); return(cs.net)
 
         })
 

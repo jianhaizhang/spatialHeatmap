@@ -117,25 +117,25 @@ Maintainer: \packageMaintainer{spatialHeatmap}
 \examples{
 # Creat the "SummarizedExperiment" class. Refer to the R package "SummarizedExperiment" for more details.
 data.path <- system.file("extdata/shinyApp/example", "root_expr_row_gen.txt", package = "spatialHeatmap")   
-## The expression matrix, where the row and column names should be gene IDs and sample/conditions, respectively.
+## The expression matrix, where the row and column names should be gene IDs and sample/conditions respectively. This data matrix is truncated from a GEO dataset (https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE46205), which is already normalised.
 library(data.table); expr <- fread(data.path, sep='\t', header=TRUE, fill=TRUE)
 col.na <- colnames(expr)[-ncol(expr)]; row.na <- as.data.frame(expr[, 1])[, 1]
 expr <- as.matrix(as.data.frame(expr, stringsAsFactors=FALSE)[, -1])
 rownames(expr) <- row.na; colnames(expr) <- col.na
-con.path <- system.file("extdata/shinyApp/example", "root_con.txt", package = "spatialHeatmap") 
-## Condition is a single column data frame.
-con <- read.table(con.path, header=TRUE, row.names=NULL, sep='\t', stringsAsFactors=FALSE)
-ann.path <- system.file("extdata/shinyApp/example", "root_ann.txt", package = "spatialHeatmap")
-## Gene annotation is a single column data frame.
-ann <- read.table(ann.path, header=TRUE, row.names=1, sep='\t', stringsAsFactors=FALSE)
-## The expression matrix, gene annotation, and condition are stored in a "SummarizedExperiment" object. Gene annotation and condition are optional.
-library(SummarizedExperiment); expr <- SummarizedExperiment(assays=list(expr=expr), rowData=ann, colData=con)  
-exp <- filter_data(data=expr, pOA=c(0, 0), CV=c(0.1, 10000), dir=NULL) 
+col.met.path <- system.file("extdata/shinyApp/example", "col_metadata.txt", package = "spatialHeatmap") 
+## Condition metadata is data frame. It has a column of tissues and a column of contidions, which correspond to columns of the data matrix "expr".
+col.metadata <- read.table(col.met.path, header=TRUE, row.names=NULL, sep='\t', stringsAsFactors=FALSE)
+row.met.path <- system.file("extdata/shinyApp/example", "row_metadata.txt", package = "spatialHeatmap")
+## Row metadata is a data frame. It has a column of row (gene) annotations, which correspond to rows of the data matrix "expr".
+row.metadata <- read.table(row.met.path, header=TRUE, row.names=1, sep='\t', stringsAsFactors=FALSE)
+## The expression matrix, row metadata, and column metadata are stored in a "SummarizedExperiment" object. The row metadata is optional while column metadata is mandatory. The column names in the expression matrix are not important, since they are ultimately renewed by column metadata.
+library(SummarizedExperiment); expr <- as.matrix(expr); se <- SummarizedExperiment(assays=list(expr=expr), rowData=row.metadata, colData=col.metadata)  
+exp <- filter_data(data=se, pOA=c(0, 0), CV=c(0.1, Inf), ann='ann', samples='sample', conditions='condition', dir=NULL) 
 
 # The svg image path.
 svg.path <- system.file("extdata/shinyApp/example", "root_cross_final.svg", package="spatialHeatmap")
 # The expression profiles of gene "PSAC" and "NDHG" under different conditions are mapped to tissues defined in the SVG image in the form of different colours. 
-spatial_hm(svg=svg.path, data=expr, pOA=c(0, 0), CV=c(0, 10000), ID=c("PSAC", "NDHG"), col.com=c("yellow", "blue", "purple"), width=1, height=1, sub.title.size=11, layout="gene", ncol=3)
+spatial_hm(svg=svg.path, data=exp, samples='sample', conditions='condition', pOA=c(0, 0), CV=c(0, 10000), ID=c("PSAC", "NDHG"), col.com=c("yellow", "blue", "purple"), width=1, height=1, sub.title.size=11, layout="gene", ncol=3)
 
 # Compute adjacency matrix and identify modules
 adj.mod <- adj_mod(data=exp, type="signed", minSize=15, dir=NULL)
@@ -144,7 +144,7 @@ adj.mod <- adj_mod(data=exp, type="signed", minSize=15, dir=NULL)
 matrix_heatmap(geneID="PSAC", data=exp, adj.mod=adj.mod, ds="2", scale="row", static=TRUE)
 
 # The gene "PSAC" is represented in the context of its network module in the form of an interactive network.
-network(geneID="PSAC", data=exp, adj.mod=adj.mod, static=TRUE)
+network(geneID="PSAC", data=exp, ann='ann', adj.mod=adj.mod, static=TRUE)
 
 # Launch the integrated Shiny app.
 \donttest{ spatial_hm_all() }

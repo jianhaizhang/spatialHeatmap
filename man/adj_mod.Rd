@@ -7,7 +7,7 @@
 adj_mod(data, type, minSize = 15, dir = NULL)
 }
 \arguments{
-\item{data}{The processed data matrix and metadata (optional) resulting from the function "filter_data", which is a "SummarizedExperiment" object.}
+\item{data}{A "SummarizedExperiment" object containing the processed data matrix and metadata returned by the function "filter_data".}
 
 \item{type}{There are two options in this argument, "signed" and "unsigned". "signed" means both positive and negative adjacency between genes are maintained in network module identification while "unsigned" takes the absolute values of negative adjacency. Refer to "WGCNA" (Langfelder and Horvath 2008) for more details.}
 
@@ -29,14 +29,20 @@ This function builds on "WGCNA" (Langfelder and Horvath 2008) and flashClust (La
 \examples{
 # Creat the "SummarizedExperiment" class. Refer to the R package "SummarizedExperiment" for more details.
 data.path <- system.file("extdata/shinyApp/example", "root_expr_row_gen.txt", package = "spatialHeatmap")   
-## The expression matrix.
+## The expression matrix, where the row and column names should be gene IDs and sample/conditions respectively. This data matrix is truncated from a GEO dataset (https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE46205), which is already normalised.
 library(data.table); expr <- fread(data.path, sep='\t', header=TRUE, fill=TRUE)
 col.na <- colnames(expr)[-ncol(expr)]; row.na <- as.data.frame(expr[, 1])[, 1]
 expr <- as.matrix(as.data.frame(expr, stringsAsFactors=FALSE)[, -1])
 rownames(expr) <- row.na; colnames(expr) <- col.na
-## The expression matrix is stored in a "SummarizedExperiment" object.
-library(SummarizedExperiment); expr <- SummarizedExperiment(assays=list(expr=expr))  
-exp <- filter_data(data=expr, pOA=c(0, 0), CV=c(0.1, Inf), dir=NULL) 
+col.met.path <- system.file("extdata/shinyApp/example", "col_metadata.txt", package = "spatialHeatmap") 
+## Condition metadata is data frame. It has a column of tissues and a column of contidions, which correspond to columns of the data matrix "expr".
+col.metadata <- read.table(col.met.path, header=TRUE, row.names=NULL, sep='\t', stringsAsFactors=FALSE)
+row.met.path <- system.file("extdata/shinyApp/example", "row_metadata.txt", package = "spatialHeatmap")
+## Row metadata is a data frame. It has a column of row (gene) annotations, which correspond to rows of the data matrix "expr".
+row.metadata <- read.table(row.met.path, header=TRUE, row.names=1, sep='\t', stringsAsFactors=FALSE)
+## The expression matrix, row metadata, and column metadata are stored in a "SummarizedExperiment" object. The row metadata is optional while column metadata is mandatory. The column names in the expression matrix are not important, since they are ultimately renewed by column metadata.
+library(SummarizedExperiment); expr <- as.matrix(expr); se <- SummarizedExperiment(assays=list(expr=expr), rowData=row.metadata, colData=col.metadata)  
+exp <- filter_data(data=se, pOA=c(0, 0), CV=c(0.1, Inf), ann='ann', samples='sample', conditions='condition', dir=NULL) 
 adj_mod <- adj_mod(data=exp, type="signed", minSize=15, dir=NULL)
 }
 \references{

@@ -22,7 +22,7 @@ vignette: |
   %\VignetteEncoding{UTF-8}
 ---
 
-  Maintainer: Jianhai Zhang (<jzhan067@ucr.edu>; <zhang.jianhai@hotmail.com>)
+  Maintainer: Jianhai Zhang
 
 <style type="text/css">
 .main-container { max-width: 1800px; margin-left: 5px; margin-right: auto; }
@@ -66,7 +66,7 @@ Load the required packages.
 
 ```{r, eval=TRUE, echo=TRUE, warnings=FALSE}
 
-library(spatialHeatmap); library(data.table); library(SummarizedExperiment); library(XML); library(igraph); library(ExpressionAtlas); library(genefilter); library(DESeq2); library(Biobase); library(GEOquery)
+library(spatialHeatmap); library(data.table); library(SummarizedExperiment); library(XML); library(igraph); library(ExpressionAtlas); library(genefilter); library(DESeq2); library(Biobase); library(GEOquery); library(ath1121501.db); library(knitr)
 
 ```   
 
@@ -77,9 +77,21 @@ This is the core functionality of this package and is implemented by the functio
 ### Format the Data Matrix {#svg_mat}
 
 <a name="name_format"></a>
-To plot the spatial heatmaps, the gene expression matrix must be formatted in the following way:
+To plot the spatial heatmaps, the gene expression matrix (replicates should be aggregated in advance) must be formatted in the following way:
 
-1. The row and column names should be gene IDs and sample/conditions respectively. 
+**Alternative 1: format the sample/condition names using `filter_data.`**
+
+1. Row and column names of the gene expression matrix (expr) should be gene IDs and sample/conditions respectively.
+
+2. Create a data frame (col.metadata) for the metadata of sample/condition of the gene expression matrix. One column is sample and one column is condition, corresponding to column names of the expression matrix. The description of samples and conditions can only consist of letters, digits, dots, single space, or single underscore. Each sample and condition should be unique.
+
+3. Optional: create a data frame (row.metadata) for the metadata of genes. One column is the gene annotation and one column is the gene, corresponding to row names of the expression matrix.
+
+4. Store the 3 data frames in "SummarizedExperiment" and apply to 'filter_data'. se <- SummarizedExperiment(assays=list(expr=as.matrix(expr)), rowData=row.metadata, colData=col.metadata). See `filter_data` for details.
+
+**Alternative 2: format the sample/condition names without using `filter_data`.**
+
+1. Row and column names of the gene expression matrix should be gene IDs and sample/conditions respectively. 
 
 2. In sample/condition names, a sample name is followed by double underscore "__" then the condition. For example, in the column name "shoot_pRBCS__control" in [Table 1](#table), "shoot_pRBCS" is the sample and "control" is the condition. 
 
@@ -152,14 +164,14 @@ To make it easy for users, a [repository](https://github.com/jianhaizhang/SVG_tu
 
 ### Application on GEO Data
 
-To demonstrate the use of this tool, the GEO dataset GSE14502 [@Mustroph2009-nu] is used as the first example. As a convention, the gene expression matrix should be normalised and filtered before downstream processing [@edgeR; @DESeq2; @affy; @gcrma]. Since the normalisation is not relavant in this vignette, and the dataset GSE14502 is already normalised by "RMA", normalisation is not covered in this vignette. The gene expression matrix of GSE14502 is filtered by function `filter_data` [@SummarizedExperiment; @utils], which builds on `pOverA` and `cv` in the package "genefilter" [@Gentleman2018-xj]. The filtered matrix ([Table 1](#table)) is stored as an "SummarizedExperiment" object [@SummarizedExperiment], where metadata of genes and sample/conditions can be optionally added.  
+To demonstrate the use of this tool, the GEO dataset GSE14502 [@Mustroph2009-nu] is used as the first example. As a convention, the gene expression matrix should be normalised and filtered before downstream processing [@edgeR; @DESeq2; @affy; @gcrma]. This package is specialised in data visualisation, so normalisation is not relavant and not covered in this vignette. The gene expression matrix of GSE14502 is filtered by function `filter_data` [@SummarizedExperiment; @utils], which builds on `pOverA` and `cv` in the package "genefilter" [@Gentleman2018-xj]. The filtered matrix ([Table 1](#table)) is stored as an "SummarizedExperiment" object [@SummarizedExperiment].
 
-**Format the data matrix:**
+**Format the data matrix using [Alternative 1](#name_format)**
 
 <a name="filter"></a>
 ```{r, geo, eval=TRUE, echo=TRUE, warnings=FALSE}
 
-  # Download GEO dataset GSE14502.
+  # Download GEO dataset GSE14502 (normalised by RMA).
   gset <- getGEO("GSE14502", GSEMatrix =TRUE, getGPL=FALSE)[[1]]
   # Assign tissue/condition names.
   mat <- exprs(gset); titles <- gset$title
@@ -172,25 +184,36 @@ To demonstrate the use of this tool, the GEO dataset GSE14502 [@Mustroph2009-nu]
   # Transpose the matrix.
   mat <- t(mat[, -1]); colnames(mat) <- sam.var; mat[1:3, grep('shoot', sam.var)[1:3]]
 
-  # Format tissue/condition names: use a double underscore to separate tissue and condition. E.g. in "shoot_control_pCER5", "shoot" and "pCER5" stands for the tissue "cotyledon and leaf epidermis", and "control" is the condition, so this column name is changed to "shoot_pCER5__control".
-  sam.var <- gsub('(root|shoot)(_)(control|hypoxia)(_.*)', '\\1\\4\\2\\2\\3', sam.var)
-  colnames(mat) <- sam.var; mat[1:3, grep('shoot', sam.var)[1:3]]
-  
-  # Store the gene expression matix in "SummarizedExperiment" class.
-  se <- SummarizedExperiment(assays=list(expr=mat))
+  # Data frame for sample/condition metadata.
+  sam <- gsub('(root|shoot)(_)(control|hypoxia)(_.*)', '\\1\\4', sam.var) 
+  con <- gsub('(root|shoot)(_)(control|hypoxia)(_.*)', '\\3', sam.var) 
+  col.metadata <- data.frame(sample=sam, condition=con, stringsAsFactors=FALSE)
+
+  # Gene annotation.
+  ann <- data.frame(ACCNUM=sapply(contents(ath1121501ACCNUM), paste, collapse=", "), DESC=sapply(contents(ath1121501GENENAME), paste, collapse=", "), stringsAsFactors=FALSE)
+  rm1 <- grep("AFFX|s_at|a_at|x_at|r_at", rownames(ann)); rm2 <- which(ann$DESC=="NA")
+  ann <- ann[-c(rm1, rm2), ]
+
+  # Optional: data frame for gene metadata.
+  int <- intersect(rownames(mat), rownames(ann))
+  mat <- mat[int, ]; ann <- ann[int, ]
+  row.metadata <- data.frame(gene=int, annotation=ann$DESC, stringsAsFactors=FALSE)
+
+  # "SummarizedExperiment" class.
+  se <- SummarizedExperiment(assays=list(expr=mat), rowData=row.metadata, colData=col.metadata)
 
   # Filter genes. In "pOA", genes with expression value A >= 6 in at least P=0.02 (2%) of all samples are retained; in "CV", genes with coefficient of variance (CV) between 0.25 and 100 are retained. 
-  exp <- filter_data(data=se, pOA=c(0.02, 6), CV=c(0.30, 100), dir=NULL)
+  exp <- filter_data(data=se, ann='annotation', samples='sample', conditions='condition', pOA=c(0.02, 6), CV=c(0.20, 100), dir=NULL)
 
-  # Get the filtered matrix. "filter_data" returns a "SummarizedExperiment" object.
-  df <- assay(exp)
+  # The sample/condition names are formatted: a double underscore connects tissue and condition. E.g. in "shoot_control_pGL2", "shoot" and "pGL2" stands for the tissue "shoot trichomes", and "control" is the condition, so this column name is changed to "shoot_pGL2__control".
+  df <- assay(exp); df[1:3, 1:4]
 
 ```
 
 <a name="table"></a>
 ```{r, table, eval=TRUE, echo=FALSE, warnings=FALSE}
 
-  kable(df[7:9, grep('shoot', colnames(df))[c(5, 13, 3, 11)]], caption='Table 1. Gene expression matrix. Rows and columns are genes and sample/conditions respectively.')
+  kable(df[70:72, grep('shoot', colnames(df))[c(3, 11, 5, 13)]], caption='Table 1. Gene expression matrix. Rows and columns are genes and sample/conditions respectively.')
 
 ``` 
 
@@ -209,11 +232,11 @@ include_graphics('../inst/extdata/shinyApp/example/shoot_final_vignette.svg')
   # Path of the original svg image.
   svg.path <- system.file("extdata/shinyApp/example", "shoot_final_vignette.svg", package = "spatialHeatmap")
   # Mapping of the target gene "245173_at" to the SVG image. Multiple target genes can be mapped at the same time. Here only one is mapped. 
-spatial_hm(svg=svg.path, data=exp, pOA=c(0, 0), CV=c(0, 100), ID="245173_at", col.com=c('purple', 'cyan', "brown"), width=1, height=1, sub.title.size=15, layout="gene", ncol=2)
+spatial_hm(svg=svg.path, data=exp, samples=NULL, conditions=NULL, pOA=c(0, 0), CV=c(0, 100), ID="245947_at", col.com=c('purple', 'cyan', "brown"), width=1, height=1, sub.title.size=15, layout="gene", ncol=2)
 
 ```   
 
-In Figure 2, the colours are only used to distinguish different tissues, while in Figure 3 user defined tissue regions are coloured by the expression profile of a target gene under different contidions. For example, in [Table 1](#table) the expression value of gene "245173_at" in "shoot_pRBCS" under "control" is "7.631643". After mapping the "shoot_pRBCS" is coloured "sky blue", corresponsing to "7.631643" in the colour scale.  
+In Figure 2, the colours are only used to distinguish different tissues, while in Figure 3 user defined tissue regions are coloured by the expression profile of a target gene under different contidions. For example, in [Table 1](#table) the expression value of gene "245947_at" in "shoot_pGL2" under "control" is "6.195536". After mapping the "shoot_pGL2" is coloured "light blue", corresponsing to "6.195536" in colour scale.  
 
 
 ### Application on Expression Atlas-EMBL-EBI Data
@@ -226,7 +249,7 @@ Download SVG template and find tissue names: download "homo_sapiens.brain.svg" f
 <p/><center><img src="img/xml_panel.png" hspace=10><img src="img/xml_id.png"></center> <p/>
 <figcaption>Figure 4 Snapshots of finding tissue names in Inkscape.</figcaption>  
 
-<br/>Format the expression matrix and plot the spatial heatmaps:
+<br/>**Format the data matrix using [Alternative 2](#name_format)**
 
 ```{r ebi, eval=TRUE, echo=TRUE, warnings=FALSE, fig.align="center", fig.cap=("Figure 5 Example of plotting EBI data on the SVG template. Cerebellum and frontal cortex are coloured, since they are the only 2 common tissues between the SVG and the expression matrix."), out.width="100%" }
 
@@ -255,28 +278,30 @@ con2 <- paste0(df.con$organism_part, '__', df.con$individual, '.', df.con$genoty
 # Use "individual" and "genotype" as the condition.
 colnames(df.exp) <- con2
 
+# SummarizedExperiment. Since the sample/condition names are already formatted, metadata is not needed.
+se <- SummarizedExperiment(assays=list(expr=df.exp))
+
 # Normalise the raw counts.
-se <- SummarizedExperiment(assays=list(expr=df.exp), rowData=rownames(df.exp), colData=con2)
 dds <- DESeqDataSet(se, design=~1); dds <- estimateSizeFactors(dds)
 # Use log2 unit.
 log.df <- log2(counts(dds, normalized=TRUE)+1)
 # Summary of the expression matrix.
 quantile(log.df, probs=seq(0, 1, 0.25))
 
+assay(se) <- log.df
+
 # Filter the expression matrix.
-ffun <- filterfun(pOverA(1/ncol(log.df), 5), cv(0.6, 1000))
-filtered <- genefilter(log.df, ffun); log.df <- log.df[filtered, ]; dim(log.df)
+exp.ebi <- filter_data(data=se, ann=NULL, samples=NULL, conditions=NULL, pOA=c(1/ncol(se), 5), CV=c(0.6, 1000), dir=NULL)
 
 # Subset the columns to make a toy example.
-log.df <- log.df[, c(1:2, 17:18, 37:38)]; con2 <- con2[c(1:2, 17:18, 37:38)]; log.df[1:3, ]
-# Store the filtered expression matrix as a "SummarizedExperiment" object.
-exp.ebi <- SummarizedExperiment(assays=list(expr=log.df), rowData=rownames(log.df), colData=con2)
-# Set "cerebral_cortex" as transparent, since it covers "frontal_cortex". Pass the path of downloaded SVG image to the argument "svg".
+exp.toy <- exp.ebi[, c(1:2, 17:18, 37:38)]; assay(exp.toy)[1:3, ]
+
+# Set "cerebral_cortex" as transparent, since it covers "frontal_cortex". Pass the path of downloaded SVG image to the argument "svg". Sample/condition names are already formatted, so "samples" and "conditions" are set NULL.  
 svg.path <- system.file("extdata/shinyApp/example", "homo_sapiens.brain.svg", package="spatialHeatmap")
-spatial_hm(svg=svg.path, data=exp.ebi, pOA=c(0, 0), CV=c(0, 10000), ID=rownames(log.df)[6], col.com=c("yellow", "blue", "purple"), width=1, height=0.5, sub.title.size=7, layout="gene", ncol=3, tis.trans='cerebral_cortex')
+
+spatial_hm(svg=svg.path, data=exp.toy, samples=NULL, conditions=NULL, pOA=c(0, 0), CV=c(0, 10000), ID='ENSG00000007908', col.com=c("yellow", "blue", "purple"), width=1, height=0.5, sub.title.size=7, layout="gene", ncol=3, tis.trans='cerebral_cortex')
 
 ```
-
 
 ## Adjacency Matrix and Module Identification
 <a name="ds"></a>
@@ -299,7 +324,7 @@ The function `matrix_heatmap` displays the target gene in the context of corresp
 ```{r, eval=TRUE, echo=TRUE, warnings=FALSE, fig.cap=("Figure 6. Matrix Heatmap. Rows are genes and columns are samples. The input gene is tagged by 2 black lines."), fig.width=8, fig.height=6, out.width='100%'}
 
   # Static mode. For interactive mode, set "static=FALSE"
-  matrix_heatmap(geneID="245173_at", data=exp, adj.mod=adj.mod, ds="2", scale="row", angleCol=80, angleRow=35, cexRow=0.8, cexCol=0.8, margin=c(10, 6), static=TRUE, arg.lis1=list(offsetRow=0.1, offsetCol=0.1))
+  matrix_heatmap(geneID="245947_at", data=exp, adj.mod=adj.mod, ds="3", scale="row", angleCol=80, angleRow=35, cexRow=0.8, cexCol=0.8, margin=c(10, 6), static=TRUE, arg.lis1=list(offsetRow=0.1, offsetCol=0.1))
 
 ```   
 
@@ -312,7 +337,7 @@ The function `network` returns a [network graph](#net_R) to display the target g
 ```{r, eval=TRUE, echo=TRUE, warnings=FALSE, fig.cap=("Figure 7 Network. Node size denotes gene connectivity while edge thickness stands for coexpression similarity.") }
   
   # Static mode. For interactive mode, set "static=FALSE" 
-  network(geneID="245173_at", data=exp, adj.mod=adj.mod, adj.min=0.85, con.min=0, vertex.label.cex=1, vertex.cex=1.5, static=TRUE)
+  network(geneID="245947_at", data=exp, ann='annotation', adj.mod=adj.mod, adj.min=0.7, con.min=0, vertex.label.cex=1, vertex.cex=1.5, static=TRUE)
 
 ```   
 

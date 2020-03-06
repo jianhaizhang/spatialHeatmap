@@ -53,7 +53,7 @@ grob_list <- function(gene, geneV, coord, ID, cols, tis.path, tis.trans=NULL, su
     tis.col <- gsub("(.*)(__)(.*)", "\\1", c.na); g.lis <- NULL
     grob.na0 <- paste0(k, "_", con.uni); g.lis <- lapply(con.uni, g.list)
     # Repress popups by saving it to a png file, then delete it.
-    tmp <- system.file("extdata/shinyApp/tmp", package = "spatialHeatmap"); pa <- paste0(tmp, '/delete.png')
+    tmp <- tempdir(); pa <- paste0(tmp, '/delete.png')
     png(pa); grob <- lapply(g.lis, ggplotGrob); dev.off(); if (file.exists(pa)) do.call(file.remove, list(pa))
     names(grob) <- grob.na0; grob.lis <- c(grob.lis, grob) 
 

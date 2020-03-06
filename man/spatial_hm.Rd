@@ -7,11 +7,14 @@
 spatial_hm(
   svg.path,
   data,
+  samples,
+  conditions,
   pOA = c(0, 0),
   CV = c(0, 10000),
   ID,
   col.com = c("yellow", "purple", "blue"),
   col.bar = "selected",
+  data.trans = NULL,
   tis.trans = NULL,
   width = 1,
   height = 1,
@@ -24,7 +27,11 @@ spatial_hm(
 \arguments{
 \item{svg.path}{The path of the SVG image, where different tissues are pre-defined and associated with expression pfofiles through tissue names. \cr E.g.: system.file("extdata/example", "test_final.svg", package = "spatialHeatmap") (Mustroph et al. 2009).}
 
-\item{data}{The gene expression matrix and metadata (optional) in the form of the "SummarizedExperiment" object. In the expression matrix, the row and column names should be gene IDs and sample/conditions, respectively. The sample/condition names MUST be fomatted this way: a sample name is followed by double underscore then the condition, such as "epidermis__140mM_1h", where "epidermis" is the sample and "140mM_1h" is the condition (Geng et al. 2013). In the column names of sample/condition, only letters, digits, single underscore, dots, single space are allowed. Not all samples in the matrix need to be present in the SVG image, and vice versa. Only samples present in the SVG image are recognised and coloured in the spatial heatmap. \cr Example expression matrix: system.file("extdata/example", "root_expr_row_gen.txt", package = "spatialHeatmap").}
+\item{data}{A "SummarizedExperiment" storing a gene expression matrix and metadata. The "assays" slot stores a expression matrix with row and column names being gene IDs and sample/conditions, respectively. The "rowData" is optional. It can store a data frame with a column being row (gene) anntation. \cr The "colData" slot contains a data frame with a column being sample (tissue) and a column being condition. The 2 columns are ultimately concatenated by double underscore "__" to replace the original column names in the expression matrix. Thus the syntax of the column names in the final expression matrix is sample__condition. E.g. "stele__140mM_48h" (Geng et al. 2013), where stele is the sample and 140mM_48h is the condition. In the 2 column names of sample and condition in "colData", only letters, digits, single underscore, dots, single space are allowed. Not all samples in the expression matrix need to be present in the SVG image, and vice versa. Only samples identical between the matrix and the SVG image are recognised and coloured in the spatial heatmap. If the original column names in the expression matrix are already formatted as sample__condition, such as the value returned by the function \code{\link{filter_data}}, then "samples" and "conditions" input can be NULL.}
+
+\item{samples}{A character. The column name corresponding to tissues in the "colData" of "data" argument. Can be NULL if column names of expression matrix in "data" argument are already formatted as sample__condition.}
+
+\item{conditions}{A character. The column name corresponding to conditions in the "colData" of "data" argument. Can be NULL if column names of expression matrix in "data" argument are already formatted as sample__condition.}
 
 \item{pOA}{It specifies parameters of the filter function "pOverA" from the package "genefilter" (Gentleman et al. 2018). It filters genes according to the proportion "p" of samples where the expression values exceeding a threshold "A". The input is a vector of two numbers, where the first one is the "p" and the second one is "A". The default is c(0, 0), which means no filter is applied. \cr E.g. c(0.1, 2) means genes whose expression values over 2 in at least 10\% of all samples are kept.}
 
@@ -35,6 +42,8 @@ spatial_hm(
 \item{col.com}{A character vector of the colour components used to build the colour scale, e.g. the default is c("yellow", "purple", "blue").}
 
 \item{col.bar}{It has two values "selected" and "all", which specifies whether the colour scale is built using the input genes ("selected") or whole data matrix ("all"). The default is "selected".}
+
+\item{data.trans}{"log2" or "exp.2". Default is NULL. If colours across tissues cannot distinguish due to low variance or outliers, transform the data matrix by log2 or 2-base expoent (exp.2).}
 
 \item{tis.trans}{A vector of tissue names. These tissues cover other tissues and should be set transparent. E.g c("epidermis", "cortex").}
 
@@ -64,16 +73,20 @@ Details about how to properly format and associate a custom SVG image with a dat
 \examples{
 # Creat the "SummarizedExperiment" class. Refer to the R package "SummarizedExperiment" for more details.
 data.path <- system.file("extdata/shinyApp/example", "root_expr_row_gen.txt", package = "spatialHeatmap")   
-## The expression matrix, where the row and column names should be gene IDs and sample/conditions, respectively.
+## The expression matrix, where the row and column names should be gene IDs and sample/conditions respectively. This data matrix is truncated from a GEO dataset (https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE46205), which is already normalised.
 library(data.table); expr <- fread(data.path, sep='\t', header=TRUE, fill=TRUE)
 col.na <- colnames(expr)[-ncol(expr)]; row.na <- as.data.frame(expr[, 1])[, 1]
 expr <- as.matrix(as.data.frame(expr, stringsAsFactors=FALSE)[, -1])
 rownames(expr) <- row.na; colnames(expr) <- col.na
-library(SummarizedExperiment); expr <- SummarizedExperiment(assays=list(expr=expr)) # Metadata is not necessary.  
+col.met.path <- system.file("extdata/shinyApp/example", "col_metadata.txt", package = "spatialHeatmap") 
+## Condition metadata is data frame. It has a column of tissues and a column of contidions, which correspond to columns of the data matrix "expr".
+col.metadata <- read.table(col.met.path, header=TRUE, row.names=NULL, sep='\t', stringsAsFactors=FALSE)
+## The expression matrix, and column metadata are stored in a "SummarizedExperiment" object. The column names in the expression matrix are not important, since they are ultimately renewed by column metadata.
+library(SummarizedExperiment); expr <- as.matrix(expr); se <- SummarizedExperiment(assays=list(expr=expr), colData=col.metadata)  
 # The svg image path.
 svg.path <- system.file("extdata/shinyApp/example", "root_cross_final.svg", package="spatialHeatmap")
-# The expression profiles of gene "PSAC" and "NDHG" under different conditions are mapped to tissues defined in the SVG image in the form of different colours. 
-spatial_hm(svg.path=svg.path, data=expr, pOA=c(0, 0), CV=c(0, 100), ID=c("PSAC", "NDHG"), col.com=c("yellow", "blue", "purple"), width=1, height=1, sub.title.size=11, layout="gene", ncol=3)
+# The expression profiles of gene "PSAC" and "NDHG" under different conditions are mapped to tissues defined in the SVG image in the form of different colours. The returned value of function "filter_data" can be directly input to "data".
+spatial_hm(svg.path=svg.path, data=se, samples='sample', conditions='condition', pOA=c(0, 0), CV=c(0, 100), ID=c("PSAC", "NDHG"), col.com=c("yellow", "blue", "purple"), width=1, height=1, sub.title.size=11, layout="gene", ncol=3)
 }
 \references{
 https://www.gimp.org/tutorials/ \cr https://inkscape.org/en/doc/tutorials/advanced/tutorial-advanced.en.html \cr http://www.microugly.com/inkscape-quickguide/

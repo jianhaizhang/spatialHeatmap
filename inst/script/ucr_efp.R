@@ -26,7 +26,7 @@ rownames(mean.mas) <- mean.mas[, 1]; mean.mas <- mean.mas[, -1, drop=FALSE]
 # Log-2 transform the intensity and filter genes.
 mean.mas <- log2(mean.mas); dim(mean.mas)
 
-cna <- colnames(mean.mas); cna <- sub('^RT', 'rootTip', cna); cna <- sub('^R', 'root', cna); cna <- sub('^S', 'shoot', cna)
+cna <- colnames(mean.mas); cna <- sub('^RT(?!ot)', 'rootTip', cna); cna <- sub('^R', 'root', cna); cna <- sub('^S', 'shoot', cna)
 colnames(mean.mas) <- cna; df <- mean.mas  
 
 quantile(as.matrix(df), probs=seq(0, 1, 0.25))
