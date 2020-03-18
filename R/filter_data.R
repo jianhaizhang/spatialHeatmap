@@ -51,28 +51,26 @@
 filter_data <- function(data, pOA=c(0, 0), CV=c(-Inf, Inf), ann=NULL, samples, conditions,  dir=NULL) {
 
     if (!is.null(dir)) { path <- paste0(dir, "/local_mode_result/"); if (!dir.exists(path)) dir.create(path) }
-    df <- assay(data); col.met <- as.data.frame(colData(data)); if (!is.null(samples) & !is.null(conditions)) { colnames(df) <- rownames(col.met) <- paste(col.met[, samples], col.met[, conditions], sep='__') }
+    df <- assay(data); col.met <- as.data.frame(colData(data), stringsAsFactors=FALSE)
+    if (!is.null(samples) & !is.null(conditions)) { colnames(df) <- paste(col.met[, samples], col.met[, conditions], sep='__') }
     ffun <- filterfun(pOverA(pOA[1], pOA[2]), cv(CV[1], CV[2]))
     filtered <- genefilter(df, ffun); df <- df[filtered, ]
-    df1 <- NULL; if (!is.null(rowData(data))) { 
-      
-      ann1 <- rowData(data)[filtered, , drop=FALSE]
-      if (!is.null(ann) & ncol(rowData(data))>0) { 
-        
-        ann <- as.data.frame(rowData(data)[, ann, drop=FALSE]); ann <- ann[filtered, , drop=FALSE]
-        df1 <- cbind.data.frame(df, ann, stringsAsFactors=FALSE) 
-    
-      }
+    row.met <- as.data.frame(rowData(data), stringsAsFactors=FALSE)[filtered, , drop=FALSE]
+
+    df1 <- NULL; if (!is.null(dir) & !is.null(ann) & ncol(row.met)>0) { 
+
+      df1 <- cbind.data.frame(df, row.met[ann, ], stringsAsFactors=FALSE)
+      colnames(df1)[ncol(df1)] <- ann
 
     }
+
     if (!is.null(dir)) {
       
       if (!is.null(df1)) write.table(df1, paste0(path, "processed_data.txt"), sep="\t", row.names=TRUE, col.names=TRUE) else write.table(df, paste0(path, "processed_data.txt"), sep="\t", row.names=TRUE, col.names=TRUE)
       
     }
-
-    if (!is.null(rowData(data))) { expr <- SummarizedExperiment(assays=list(expr=df), rowData=ann1, colData=col.met) } else expr <- SummarizedExperiment(assays=list(expr=df), colData=col.met)
-    return(expr)
+    rownames(col.met) <- NULL
+    expr <- SummarizedExperiment(assays=list(expr=df), rowData=row.met, colData=col.met); return(expr)
 
 }
 
