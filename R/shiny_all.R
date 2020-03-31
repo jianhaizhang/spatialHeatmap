@@ -1,6 +1,6 @@
 #' Launch the Integrated Spatial Heatmap
 #' 
-#' This function combines all functionality in this package in an integrated mode (data matrix, spatial heatmap, matrix heatmap, network), which is a web-browser based Shiny app.
+#' This function combines essential functionalities (spatial heatmap, matrix heatmap, network) in this package in an integrated mode, which is a web-browser based Shiny app. To use this app, a pair of configured data matrix and SVG image is required. The former can be obtained by assigning a directory path to "dir" in the function "filter_data", and the latter can be made with Inkscape or downloaded from the SVG repository. See the package vignette for details.
 
 #' @return A web browser based Shiny app.
 
@@ -8,7 +8,7 @@
 #' No argument is required, this function launches the Shiny-app based Spatial Heatmap directly. 
 
 #' @examples
-#' \donttest{ spatial.hm.all() }
+#' \donttest{ shiny_all() }
 
 #' @author Jianhai Zhang \email{jzhan067@@ucr.edu; zhang.jianhai@@hotmail.com} \cr Dr. Thomas Girke \email{thomas.girke@@ucr.edu}
 
@@ -45,9 +45,8 @@
 #' @export
 #' @importFrom shiny runApp
 
-spatial_hm_all <- function() {
+shiny_all <- function() {
 
-    # library(shiny)
     path <- system.file("extdata/shinyApp", package = "spatialHeatmap")
     runApp(path)
 

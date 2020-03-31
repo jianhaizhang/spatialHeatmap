@@ -1,3 +1,6 @@
+source('~/tissue_specific_gene/function/fun.R')
+options(shiny.maxRequestSize=7*1024^3, stringsAsFactors=FALSE) 
+
 # Import internal functions.
 # svg_df <- get('svg_df', envir=asNamespace('spatialHeatmap'), inherits=FALSE)
 # nod_lin <- get('nod_lin', envir=asNamespace('spatialHeatmap'), inherits=FALSE)
@@ -8,32 +11,27 @@
 filter_data <- function(data, pOA=c(0, 0), CV=c(-Inf, Inf), ann=NULL, samples, conditions,  dir=NULL) {
 
     if (!is.null(dir)) { path <- paste0(dir, "/local_mode_result/"); if (!dir.exists(path)) dir.create(path) }
-    df <- assay(data); col.met <- as.data.frame(colData(data)); if (!is.null(samples) & !is.null(conditions)) { colnames(df) <- rownames(col.met) <- paste(col.met[, samples], col.met[, conditions], sep='__') }
+    df <- assay(data); col.met <- as.data.frame(colData(data), stringsAsFactors=FALSE)
+    if (!is.null(samples) & !is.null(conditions)) { colnames(df) <- paste(col.met[, samples], col.met[, conditions], sep='__') }
     ffun <- filterfun(pOverA(pOA[1], pOA[2]), cv(CV[1], CV[2]))
     filtered <- genefilter(df, ffun); df <- df[filtered, ]
-    df1 <- NULL; if (!is.null(rowData(data))) { 
-      
-      ann1 <- rowData(data)[filtered, , drop=FALSE]
-      if (!is.null(ann) & ncol(rowData(data))>0) { 
-        
-        ann <- as.data.frame(rowData(data)[, ann, drop=FALSE]); ann <- ann[filtered, , drop=FALSE]
-        df1 <- cbind.data.frame(df, ann, stringsAsFactors=FALSE) 
-    
-      }
+    row.met <- as.data.frame(rowData(data), stringsAsFactors=FALSE)[filtered, , drop=FALSE]
+
+    df1 <- NULL; if (!is.null(dir) & !is.null(ann) & ncol(row.met)>0) { 
+
+      df1 <- cbind.data.frame(df, row.met[ann, ], stringsAsFactors=FALSE)
+      colnames(df1)[ncol(df1)] <- ann
 
     }
+
     if (!is.null(dir)) {
       
       if (!is.null(df1)) write.table(df1, paste0(path, "processed_data.txt"), sep="\t", row.names=TRUE, col.names=TRUE) else write.table(df, paste0(path, "processed_data.txt"), sep="\t", row.names=TRUE, col.names=TRUE)
       
-    }
-
-    if (!is.null(rowData(data))) { expr <- SummarizedExperiment(assays=list(expr=df), rowData=ann1, colData=col.met) } else expr <- SummarizedExperiment(assays=list(expr=df), colData=col.met)
-    return(expr)
+    }; rownames(col.met) <- NULL
+    expr <- SummarizedExperiment(assays=list(expr=df), rowData=row.met, colData=col.met); return(expr)
 
 }
-
-
 
 
 svg_df <- function(svg.path) {
@@ -97,6 +95,11 @@ svg_df <- function(svg.path) {
 
   }; tis.path <- gsub("_\\d+$", "", id.xml)
 
+  # Detect groups that use relative coordinates ("transform", "matrix" in Inkscape.), which leads to some plygons missed in ".ps.xml" file.
+  fil.stk <- sapply(seq_len(xmlSize(top)-1), function (i) xmlAttrs(top[[i]])['type'])
+  w <- which(fil.stk=='fill')%%2==0
+  if (any(w)) { w1 <- which(w)[1]; tis.wrg <- tis.path[c(w1-1, w1)]; return(paste0('Error detected in "', paste0(tis.wrg, collapse='; '), '" in SVG image. If they are grouped tissues, please ungroup and regroup them respectively.')) }
+
   k <-0; df <- NULL; for (i in seq_len(xmlSize(top)-1)) {
 
     if (xmlAttrs(top[[i]])['type']=='stroke') {
@@ -157,8 +160,8 @@ lay_shm <- function(lay.shm, con, ncol, ID.sel, grob.list, width, height, shiny)
 }
 
 
-grob_list <- function(gene, geneV, coord, ID, cols, tis.path, tis.trans=NULL, sub.title.size, ...) {
-
+grob_list <- function(gene, geneV, coord, ID, cols, tis.path, tis.trans=NULL, sub.title.size, sam.legend='identical', title.legend='Sample', ncol.legend=NULL, nrow.legend=NULL, pos.legend='right', legend.key.size=0.5, legend.label.size=8, legend.title.size=8, line.size=0.2, line.color='grey70', ...) {
+  
   x <- y <- tissue <- NULL
   # Map colours to samples according to expression level.
   g.list <- function(j) {
@@ -169,13 +172,17 @@ grob_list <- function(gene, geneV, coord, ID, cols, tis.path, tis.trans=NULL, su
     for (i in tis.path) {
 
       tis.idx <- which(tis.col1 %in% i); if (length(tis.idx)==1) { g.col <- c(g.col, scol1[tis.idx])
-      } else if (length(tis.idx)==0) { g.col <- c(g.col, "white") }
+      } else if (length(tis.idx)==0) { g.col <- c(g.col, NA) }
 
     }
     names(g.col) <- tis.df <- unique(coord[, 'tissue']) # The colors might be internally re-ordered alphabetically during mapping, so give them names to fix the match with tissues. E.g. c('yellow', 'blue') can be re-ordered to c('blue', 'yellow'), which makes tissue mapping wrong. Correct: colours are not re-ordered. The 'tissue' in 'data=coord' are internally re-ordered according to a factor. Therfore, 'tissue' should be a factor with the right order. Otherwise, disordered mapping can happen.
     # Make selected tissues transparent by setting their colours as NA.
     if (!is.null(tis.trans)) for (i in tis.df) { if (sub('_\\d+$', '', i) %in% tis.trans) g.col[i] <- NA }
-    g <- ggplot(...)+geom_polygon(data=coord, aes(x=x, y=y, fill=tissue), color="black")+scale_fill_manual(values=g.col, guide=FALSE)+theme(axis.text=element_blank(), axis.ticks=element_blank(), panel.grid=element_blank(), panel.background=element_rect(fill="white", colour="grey80"), plot.margin=margin(0.1, 0.1, 0.1, 0.3, "cm"), axis.title.x=element_text(size=16,face="bold"), plot.title=element_text(hjust=0.5, size=sub.title.size))+labs(x="", y="")+scale_y_continuous(expand=c(0.01, 0.01))+scale_x_continuous(expand=c(0.01, 0.01))+ggtitle(paste0(k, "_", j)); return(g)
+    # Show selected or all samples in legend.
+    if (length(sam.legend)==1) if (sam.legend=='identical') sam.legend <- unique(tis.path[!is.na(g.col)]) else if (sam.legend=='all') sam.legend <- unique(tis.path)
+    leg.idx <- !duplicated(tis.path) & (tis.path %in% sam.legend)
+    g <- ggplot()+geom_polygon(data=coord, aes(x=x, y=y, fill=tissue), color=line.color, size=line.size, linetype='solid')+scale_fill_manual(values=g.col, breaks=tis.df[leg.idx], labels=tis.path[leg.idx], guide=guide_legend(title=title.legend, ncol=ncol.legend, nrow=nrow.legend))+theme(axis.text=element_blank(), axis.ticks=element_blank(), panel.grid=element_blank(), panel.background=element_rect(fill="white", colour="grey80"), plot.margin=margin(0.1, 0.1, 0.1, 0.3, "cm"), axis.title.x=element_text(size=16,face="bold"), plot.title=element_text(hjust=0.5, size=sub.title.size), legend.position=pos.legend, legend.key.size=unit(legend.key.size, "cm"), legend.text=element_text(size=legend.label.size), legend.title=element_text(size=legend.title.size))+labs(x="", y="")+scale_y_continuous(expand=c(0.01, 0.01))+scale_x_continuous(expand=c(0.01, 0.01))+ggtitle(paste0(k, "_", j)); return(g)
+
 
   }
   cname <- colnames(gene); con <- gsub("(.*)(__)(.*)", "\\3", cname); con.uni <- unique(con)
@@ -225,23 +232,33 @@ col_bar <- function(geneV, cols, width, mar=c(3, 0.1, 3, 0.1)) {
 }
 
 
-
 library(SummarizedExperiment); library(shiny); library(shinydashboard); library(grImport); library(rsvg); library(ggplot2); library(DT); library(gridExtra); library(ggdendro); library(WGCNA); library(grid); library(XML); library(plotly); library(data.table); library(genefilter); library(flashClust); library(visNetwork); library(reshape2); library(igraph)
 
-
 # Import input matrix.
-fread.df <- function(input, isRowGene, header, sep, fill) {
+fread.df <- function(input, isRowGene, header, sep, fill, rep.aggr='mean') {
         
-  df0 <- fread(input=input, header=header, sep=sep, fill=fill); df1 <- as.data.frame(df0); rownames(df1) <- df1[, 1]
-  df1 <- df1[, -1]; colnames(df1) <- colnames(df0)[-ncol(df0)]
+  df0 <- fread(input=input, header=header, sep=sep, fill=fill)
+  cna <- colnames(df0)[-ncol(df0)]
+  df1 <- as.data.frame(df0); rownames(df1) <- df1[, 1]
+  # Subsetting identical column names in a matrix will not trigger appending numbers.
+  df1 <- as.matrix(df1[, -1]); colnames(df1) <- cna
   if(isRowGene==FALSE) df1 <- t(df1)
-  idx <- grep("__", colnames(df1)); idx1 <- setdiff(seq_len(length(colnames(df1))), idx)
-  gene2 <- df1[, idx, drop=FALSE]; gene3 <- df1[, idx1, drop=FALSE]; if (ncol(gene3)>0) colnames(gene3) <- 'ann'; gene2 <- as.data.frame(apply(gene2, 2, as.numeric)) # This step removes rownames of gene2.
-  rownames(gene2) <- rownames(gene3); return(list(gene2=gene2, gene3=gene3))
+  cna <- colnames(df1)
+  idx <- grep("__", cna); idx1 <- setdiff(seq_len(length(cna)), idx)
+  gene2 <- df1[, idx, drop=FALSE]; gene3 <- df1[, idx1, drop=FALSE]; if (ncol(gene3)>0) colnames(gene3) <- 'ann'
+  if(sum(is.na(as.numeric(gene2)))>=1) return('Make sure all values in data matrix are numeric.')
+  gen.rep <- gene2; rna <- rownames(gen.rep); gen.rep <-apply(gen.rep, 2, as.numeric); rownames(gen.rep) <- rna
+  # Aggregate replicates.
+  if (any(duplicated(cna)) & !is.null(rep.aggr)) {
+
+    gene2 <- aggregate(x=t(gene2), by=list(sam.var=cna), FUN=rep.aggr)
+    sam.var <- gene2[, 1]; gene2 <- t(gene2[, -1]); colnames(gene2) <- sam.var
+
+  }; rna <- rownames(gene2); gene2 <-apply(gene2, 2, as.numeric); rownames(gene2) <- rna 
+  return(list(gene2=as.data.frame(gene2), gene3=as.data.frame(gene3), gen.rep=as.data.frame(gen.rep)))
 
 }
 
-options(shiny.maxRequestSize=7*1024^3) 
 # enableWGCNAThreads()
 inter.svg <- readLines("example/root_cross_final.svg")
 inter.data <- read.table("example/root_expr_ann_row_gen.txt", header=TRUE, row.names=1, sep="\t")
@@ -318,7 +335,7 @@ shinyServer(function(input, output, session) {
         if (input$fileIn=="root_Geng") df.te <- fread.df(input="example/root_expr_ann_row_gen.txt", isRowGene=TRUE, header=TRUE, sep="\t", fill=TRUE)
         if (input$fileIn=="brain_Chen") df.te <- fread.df(input="example/brain_expr_ann_row_gen.txt", isRowGene=TRUE, header=TRUE, sep="\t", fill=TRUE)
         if (input$fileIn=="map_Census") df.te <- fread.df(input="example/us_population2018.txt", isRowGene=TRUE, header=TRUE, sep="\t", fill=TRUE)
-
+        gen.rep <- df.te[['gen.rep']]
         gene2 <- df.te[['gene2']]; if (input$log=='log2') { 
           
           g.min <- min(gene2) 
@@ -326,29 +343,27 @@ shinyServer(function(input, output, session) {
 
         }; if (input$log=='exp.2') gene2 <- 2^gene2
         gene3 <- df.te[['gene3']][, , drop=FALSE]
-	    return(list(gene2=gene2, gene3=gene3))
 
     }
 
     if ((input$fileIn=="Compute locally"|input$fileIn=="Compute online") & 
-    (is.null(input$geneInpath)|input$dimName=="None")) return(NULL)
+    (is.null(input$geneInpath)|input$dimName=="None"|input$sep=="None")) return(NULL)
     if ((input$fileIn=="Compute locally"|input$fileIn=="Compute online") & 
     !is.null(input$geneInpath) & input$dimName!="None" & input$sep!="None") {
 
       incProgress(0.25, detail="Importing matrix. Please wait.")
       geneInpath <- input$geneInpath; if (input$sep=="Tab") sep <- "\t" else if (
       input$sep=="Comma") sep <- "," else if (input$sep=="Semicolon") sep <- ";"
-      df.upl <- fread.df(input=geneInpath$datapath, isRowGene=(input$dimName=='Row'), header=TRUE, sep="\t", fill=TRUE)
-      gene2 <- df.upl[['gene2']]; 
-      if (input$log=='log2') {
-        
-        g.min <- min(gene2)                                                                                                      
-        if (g.min<0) gene2 <- gene2-g.min+1; if (g.min==0) gene2 <- gene2+1; gene2 <- log2(gene2)                                 
-                                                                                                                                   
+      df.upl <- fread.df(input=geneInpath$datapath, isRowGene=(input$dimName=='Row'), header=TRUE, sep=sep, fill=TRUE, rep.aggr='mean'); gen.rep <- df.upl[['gen.rep']]
+      gene2 <- df.upl[['gene2']]; if (input$log=='log2') {
+             
+        g.min <- min(gene2)
+        if (g.min<0) gene2 <- gene2-g.min+1; if (g.min==0) gene2 <- gene2+1; gene2 <- log2(gene2)
+      
       }; if (input$log=='exp.2') gene2 <- 2^gene2 
       gene3 <- df.upl[['gene3']]
 
-      }; return(list(gene2=gene2, gene3=gene3))
+      }; return(list(gene2=gene2, gene3=gene3, gen.rep=gen.rep))
 
     })
 
@@ -479,7 +494,9 @@ shinyServer(function(input, output, session) {
         incProgress(0.5, detail="Extracting coordinates. Please wait.") 
 	if (input$fileIn=="Compute locally"|input$fileIn=="Compute online") { svg.path <- input$svgInpath$datapath; svg.na <- input$svgInpath$name } else if     
 (input$fileIn=="organ_Mustroph") { svg.path <- "example/organ_final.svg"; svg.na <- "organ_final.svg" } else if (input$fileIn=="shoot_root_Mustroph") { svg.path <- "example/shoot_root_final.svg"; svg.na <- "shoot_root_final.svg" } else if (input$fileIn=="root_roottip_Mustroph") { svg.path <- "example/root_roottip_final.svg"; svg.na <- "root_roottip_final.svg" } else if (input$fileIn=="shoot_Mustroph") { svg.path <- "example/shoot_final.svg"; svg.na <- "shoot_final.svg" } else if (input$fileIn=="root_Geng") { svg.path <- "example/root_cross_final.svg"; svg.na <- "root_cross_final.svg" } else if (input$fileIn=="brain_Chen") { svg.path <- "example/brain_final.svg"; svg.na <- "brain_final.svg" } else if (input$fileIn=="map_Census") { svg.path <- "example/us_map_final.svg"; svg.na <- "us_map_final.svg" }   
-       df_tis <- svg_df(svg.path=svg.path); return(df_tis)
+       df_tis <- svg_df(svg.path=svg.path)
+       validate(need(!is.character(df_tis), df_tis))
+       return(df_tis)
 
       })
 
@@ -585,6 +602,101 @@ shinyServer(function(input, output, session) {
     }
 
   }, deleteFile=FALSE)
+
+  edg <- reactive({
+
+    if (input$fileIn!="Compute online") return(NULL)
+    if (is.null(geneIn0())) return(NULL)
+    gen.rep <- geneIn0()[['gen.rep']]
+    log2.fc=1; fdr=0.5
+    se <- SummarizedExperiment(assays=list(expr=as.matrix(gen.rep)), colData=data.frame(fct=colnames(gen.rep)))
+    edgeR(se=se, method.norm='TMM', sample.factor='fct', method.adjust='BH', log2.fc=log2.fc, fdr=fdr)
+
+  })
+
+  dsq <- reactive({
+
+    if (input$fileIn!="Compute online") return(NULL)
+    if (is.null(geneIn0())) return(NULL)
+    gen.rep <- geneIn0()[['gen.rep']]
+    log2.fc=1; fdr=0.5
+    se <- SummarizedExperiment(assays=list(expr=as.matrix(gen.rep)), colData=data.frame(fct=colnames(gen.rep)))
+    deseq2(se=se, sample.factor='fct', method.adjust='BH', log2.fc=log2.fc, fdr=fdr)
+
+  })
+
+  output$ssg.sep <- renderPlot({ 
+
+    if (is.null(geneIn0())|is.null(edg())|is.null(dsq())) return(NULL)
+    width=0.85
+    lis.all <- list(edg=edg(), dsq=dsq()); sam.all <- names(lis.all[[1]])
+    sam <- sam.all[1:3]
+    ssg_sep(lis.all=lis.all, sam=sam, width=width)
+
+  })
+ 
+  
+  output$w.table <- renderDataTable({
+    
+    if (is.null(geneIn0())|is.null(edg())|is.null(dsq())) return(NULL)
+    if (is.null(geneIn0())) return(NULL)
+    sam.con <- unique(colnames(geneIn()))[1:3]
+    lis.all <- list(edg=edg(), dsq=dsq()); sam.all <- names(lis.all[[1]])
+    sam <- sam.all[1:3]; sam.tar <- sam.all[2]; sam.vs <- sam.all[c(1, 3)]
+    meth <- 'edg'
+    df.up <- lis.all[[meth]][[sam[2]]][[1]]
+    df.dn <- lis.all[[meth]][[sam[2]]][[2]]
+    df.up.dn <- rbind(df.up, df.dn)
+    if (nrow(df.up.dn)==0) return("No SSGs detected.")
+    print(df.up.dn)
+    pat <- c(paste0('^', sam.tar, '_VS_', sam.vs, '_'), paste0('^', sam.vs, '_VS_', sam.tar, '_'))
+    df.up.dn <- df.up.dn[, c(1, grep(paste0(pat, collapse='|'), colnames(df.up.dn)))]
+    datatable(df.up.dn, selection=list(mode="multiple", target="row", selected=NULL), filter="top", extensions='Scroller', options=list(pageLength=5, lengthMenu=c(5, 15, 20), autoWidth=TRUE, scrollCollapse=TRUE, deferRender=TRUE, scrollX=TRUE, scrollY=200, scroller=TRUE), class='cell-border strip hover') %>% formatStyle(0, backgroundColor="orange", cursor='pointer')
+ 
+  })
+ 
+  output$ssg.sum <- renderPlot({ 
+
+    if (is.null(geneIn0())|is.null(edg())|is.null(dsq())) return(NULL)
+    if (input$fileIn!="Compute online") return(NULL)
+    if (is.null(geneIn0())) return(NULL)
+    per=0.5; width=0.85
+    lis.all <- list(edg(), dsq()); sam.all <- names(lis.all[[1]])
+    sam <- sam.all[1:3]
+    lis.aggr <- sig_frq(lis.all=lis.all, per=per, sam=sam)
+    ssg_sum(lis.aggr=lis.aggr, width=width)
+
+  })
+
+
+  output$a.table <- renderDataTable({
+    
+    if (is.null(geneIn0())|is.null(edg())|is.null(dsq())) return(NULL)
+    if (is.null(geneIn0())) return(NULL)
+    per=0.5
+    sam.con <- unique(colnames(geneIn()))[1:3]
+    lis.all <- list(edg=edg(), dsq=dsq()); sam.all <- names(lis.all[[1]])
+    lis.aggr.r <- sig_frq(lis.all=lis.all, per=per)
+    df.sum <- as.data.frame(lis.aggr.r[[1]][[1]][[2]])
+    datatable(df.sum, selection=list(mode="multiple", target="row", selected=NULL), filter="top", extensions='Scroller', options=list(pageLength=5, lengthMenu=c(5, 15, 20), autoWidth=TRUE, scrollCollapse=TRUE, deferRender=TRUE, scrollX=TRUE, scrollY=200, scroller=TRUE), class='cell-border strip hover') %>% formatStyle(0, backgroundColor="orange", cursor='pointer')
+
+  })
+
+    expr.nor <- reactive({
+
+    if (is.null(geneIn0())|is.null(edg())|is.null(dsq())) return(NULL)
+      if (is.null(geneIn0())) return(NULL)
+      gen.rep <- geneIn0()[['gen.rep']]
+      se <- SummarizedExperiment(assays=list(expr=as.matrix(gen.rep)), colData=data.frame(fct=colnames(gen.rep)))
+      norm_aggr(se=se, method.norm='TMM', data.trans='log2', sample.factor='fct', rep.aggr='mean')
+
+    })
+
+
+    #id.r <- rownames(se)[1]
+
+    #plot_gen(se=se.nor, id=id.r)
+
 
   adj.mod <- reactive({ 
 

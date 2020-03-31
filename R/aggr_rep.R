@@ -1,48 +1,58 @@
 #' Aggregate Sample Replicates in Data Matrix
 #'
-#' This function averages sample replicates. It inputs the gene expression matrix and sample metadata in form of "SummarizedExperiment". In "colData" slot, at least "sample" and "condition" information should be included.
+#' This function averages sample/condition replicates. It inputs the gene expression matrix and sample metadata (targets file) in form of "SummarizedExperiment". In "colData" slot, at least replicates of samples and conditions should be included.
 
-#' @param se A "SummarizedExperiment" storing a gene expression matrix and metadata. The "assays" slot stores a expression matrix with row and column names being gene IDs and sample/conditions, respectively. The "rowData" can store a data frame of row (gene) anntation, but is optional. \cr The "colData" slot is required and contains a data frame with at least 2 columns corresponding sample and condition information respectively. It is important that only letters, digits, single underscore, dots, single space are allowed in the 2 columns. The 2 columns are ultimately concatenated by double underscore "__" to replace the original column names in the expression matrix. Thus the syntax of the column names in the output expression matrix is "sample__condition". E.g. "shoot_pGL2__hypoxia" (Mustroph et al. 2009), where "shoot_pGL2" is the sample and "hypoxia" is the condition. If the original column names in the expression matrix are already formatted as "sample__condition", then the "colData" slot is optional.  
+#' @param aggr Aggregate concatenated "sample__condition" replicates by "mean" or "median". Default is "mean". The 2 replicate columns in "colData" slot of "se" parameter are concatenated by double underscore "__" to form "sample__condition" replicates. E.g. In "cerebellum__normal" (Prudencio et al. 2015), "cerebellum" is the sample and "normal" is the condition. The concatenated replicates are used for aggregating and then replacing the original column names in the data matrix ("assay" slot).  If the original column names in the data matrix are already formatted in the syntax "sample__condition", then the "colData" slot is not required in the "se" parameter. 
 
-#' @param samples A character. The column name corresponding to samples in the "colData" of "se" argument. Can be NULL if column names of expression matrix in "se" argument are already formatted as "sample__condition".
-
-#' @param conditions A character. The column name corresponding to conditions in the "colData" of "se" argument. Can be NULL if column names of expression matrix in "se" argument are already formatted as "sample__condition".
-
-#' @param aggr Aggregate the replicates by "mean" or "median". Default is "mean".
+#' @inheritParams filter_data
 
 #' @return A "SummarizedExperiment" object containing averaged expression matrix and metadata. The column names of the expression matrix are formatted as "sample__condition". 
 
 #' @examples
-#' ## The toy data below is truncated from GEO dataset GSE14502.
-#' # Targets file.
-#' path1 <- system.file('extdata/example_data/target_geo.txt', package='spatialHeatmap')
-#' target.geo <- read.table(path1, header=TRUE, row.names=1, sep='\t',  stringsAsFactors=F); target.geo[1:3, ]
 
-#' # Gene expression matrix.
-#' path2 <- system.file('extdata/example_data/arab_geo.txt', package='spatialHeatmap')
-#' expr <- read.table(path2, header=TRUE, row.names=1, sep='\t'); expr[1:3, 1:5]
-
-#' library(SummarizedExperiment)
-#' se <- SummarizedExperiment(assays=list(expr=expr), colData=target.geo)
-#' se <- aggr_rep(se=se, samples='samples', conditions='conditions')
+#' # The example data (E-GEOD-67196) is an RNA-seq data measured in cerebellum and frontal cortex of human brain across normal and amyotrophic lateral sclerosis (ALS) subjects (Prudencio et al. 2015). 
+#' library(ExpressionAtlas)
+#' rse.hum <- getAtlasData('E-GEOD-67196')[[1]][[1]]; assay(rse.hum)[1:3, 1:3]
+#'
+#' # A targets file describing replicates of samples and conditions is required, which should be made based on the "colData" slot in "RangedSummarizedExperiment". See the "se" parameter for details. This targets file is available in spatialHeatmap.
+#' brain.pa <- system.file('extdata/example_data/target_brain.txt', package='spatialHeatmap')
+#' target.hum <- read.table(brain.pa, header=TRUE, row.names=1, sep='\t')
+#' # The "organism_part" and "disease" column describes tissue and condition replicates respectively. Note that the replicates of the same tissue or condition should have the identical name.
+#' target.hum[c(1:3, 41:42), 4:5]
+#' # Place the targets file into "colData" slot. 
+#' colData(rse.hum) <- DataFrame(target.hum)
+#' 
+#' # For users with little R expertise, if the gene expression matrix comes as a data frame, it should be placed into "SummarizedExperiment" before proceeding to next step. An example is shown below by borrowing a data frame from the brain data.
+#' # Borrow a data matrix.
+#' df <- assays(rse.hum)[[1]]; df[1:2, 1:3]
+#' # Place the data matrix and targets file (target.hum) into "SummarizedExperiment".
+#' rse.hum <- SummarizedExperiment(assays=list(counts=df), colData=target.hum, rowData=NULL)
+#' 
+#' # The count matrix is normalised with estimateSizeFactors (type=‘ratio’).
+#' se.nor.hum <- norm_data(se=rse.hum, method.norm='ratio', data.trans='log2')
+#'
+#' # Average replicates of concatenated sample__condition.
+#' se.aggr.hum <- aggr_rep(se=se.nor.hum, sam.factor='organism_part', con.factor='disease', aggr='mean')
+#' assay(se.aggr.hum)[49939:49942, ] # The concatenated tissue__conditions are the column names of the output data matrix.
 
 #' @author Jianhai Zhang \email{jzhan067@@ucr.edu; zhang.jianhai@@hotmail.com} \cr Dr. Thomas Girke \email{thomas.girke@@ucr.edu}
 
 #' @references
 #' SummarizedExperiment: SummarizedExperiment container. R package version 1.10.1 \cr R Core Team (2018). R: A language and environment for statistical computing. R Foundation for Statistical Computing, Vienna, Austria. URL https://www.R-project.org/
-#' Mustroph, Angelika, M Eugenia Zanetti, Charles J H Jang, Hans E Holtan, Peter P Repetti, David W Galbraith, Thomas Girke, and Julia Bailey-Serres. 2009. “Profiling Translatomes of Discrete Cell Populations Resolves Altered Cellular Priorities During Hypoxia in Arabidopsis.” Proc Natl Acad Sci U S A 106 (44): 18843–8
+#' Prudencio, Mercedes, Veronique V Belzil, Ranjan Batra, Christian A Ross, Tania F Gendron, Luc J Pregent, Melissa E Murray, et al. 2015. “Distinct Brain Transcriptome Profiles in C9orf72-Associated and Sporadic ALS.” Nat. Neurosci. 18 (8): 1175–82
+#' Keays, Maria. 2019. ExpressionAtlas: Download Datasets from EMBL-EBI Expression Atlas
+#' Love, Michael I., Wolfgang Huber, and Simon Anders. 2014. “Moderated Estimation of Fold Change and Dispersion for RNA-Seq Data with DESeq2.” Genome Biology 15 (12): 550. doi:10.1186/s13059-014-0550-8
 
 #' @export aggr_rep
 #' @importFrom SummarizedExperiment assay rowData colData SummarizedExperiment
 
-
-aggr_rep <- function(se, samples, conditions, aggr='mean') {
+aggr_rep <- function(se, sam.factor, con.factor, aggr='mean', dir=NULL) {
 
   mat <- assay(se); col.meta <- as.data.frame(colData(se))
-  fct <- colnames(mat) <- paste0(make.names(col.meta[, samples]), '__', make.names(col.meta[, conditions]))
+  fct <- colnames(mat) <- paste0(make.names(col.meta[, sam.factor]), '__', make.names(col.meta[, con.factor]))
   # To keep colnames, "X" should be a character, not a factor.
   if (aggr=='mean') mat <- sapply(X=unique(fct), function(x) rowMeans(mat[, fct==x, drop=FALSE]))
-  if (aggr=='median') { 
+  if (aggr=='median') {
   
     mat <- sapply(X=unique(fct), function(x) Biobase::rowMedians(mat[, fct==x, drop=FALSE]))
     rownames(mat) <- rownames(se)

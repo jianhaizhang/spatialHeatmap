@@ -3,7 +3,7 @@
 #' This function represents the input gene in the context of corresponding gene network module, where the rows and columns are sorted by hierarchical clustering dendrograms and the row of input gene is tagged by two lines. The matrix heatmap can be dispalyed in static or a web-browser based interactive mode. If the latter, users can zoom in and out by drawing a rectangle and by double clicking the image, respectively. Users can scale the expression values by gene or sample. \cr The network modules are identified at two alternative sensitivities levels (3, 2) by the function "adj.mod". From 3 to 2, the sensitivity decreases and results in less modules with larger sizes. The same module can also be displayed as an interactive form of a network through the "network" function.
 
 #' @param geneID A gene ID from the expression matrix. 
-#' @param data A "SummarizedExperiment" object containing the processed data matrix and metadata returned by the function \code{\link{filter_data}}. In the data matrix, rows are gene IDs and columns are samples/conditions.
+#' @param se A "SummarizedExperiment" object containing the processed data matrix and metadata returned by the function \code{\link{filter_data}}. In the data matrix, rows are gene IDs and columns are samples/conditions.
 #' @param adj.mod The list of "adjacency matrix" and "module" definition retured by the function "adj.mod".
 #' @param ds The module identification sensitivity, either 2 or 3. See function "adj.mod" for details.
 #' @param scale It specifies whether to scale the heatmap. There are three options: "row" means scale by row, "column" means scale by column, and "no" means no scale. 
@@ -57,9 +57,9 @@
 #' @importFrom graphics image mtext par plot title
 #' @importFrom grDevices dev.off png
 
-matrix_heatmap <- function(geneID, data, adj.mod, ds, scale, col=c('yellow', 'blue'), main=NULL, title.size=10, cexCol=1, cexRow=1, angleCol=45, angleRow=45, sepcolor="black", sep.width=0.02, static=TRUE, margin=c(10, 10), arg.lis1=list(), arg.lis2=list()) {
+matrix_hm <- function(geneID, se, adj.mod, ds, scale, col=c('yellow', 'blue'), main=NULL, title.size=10, cexCol=1, cexRow=1, angleCol=45, angleRow=45, sepcolor="black", sep.width=0.02, static=TRUE, margin=c(10, 10), arg.lis1=list(), arg.lis2=list()) {
 
-  mods <- adj.mod[["mod"]]; ds <- as.character(ds); gene <- assay(data)
+  mods <- adj.mod[["mod"]]; ds <- as.character(ds); gene <- assay(se)
   lab <- mods[, ds][rownames(gene)==geneID]
   if (lab=="0") stop("The input gene is not assigned to any module. Please input a different one.")
   mod <- as.matrix(gene[mods[, ds]==lab, ])

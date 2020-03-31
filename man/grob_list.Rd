@@ -13,6 +13,16 @@ grob_list(
   tis.path,
   tis.trans = NULL,
   sub.title.size,
+  sam.legend = "identical",
+  title.legend = NULL,
+  ncol.legend = NULL,
+  nrow.legend = NULL,
+  pos.legend = "right",
+  legend.key.size = 0.5,
+  legend.label.size = 8,
+  legend.title.size = 8,
+  line.size = 0.2,
+  line.color = "grey70",
   ...
 )
 }
@@ -29,9 +39,29 @@ grob_list(
 
 \item{tis.path}{All the tissues/paths extracted from the SVG.}
 
-\item{tis.trans}{The tissues selected by users that are expected to be transparent.}
+\item{tis.trans}{A character vector of tissue names. These tissues cover other tissues and should be set transparent. E.g c("epidermis", "cortex").}
 
-\item{sub.title.size}{The subtitle font size of each individual spatial heatmap.}
+\item{sub.title.size}{A numeric. The subtitle font size of each individual spatial heatmap. Default is 11.}
+
+\item{sam.legend}{A character vector of tissue names in the SVG image. These tissues are shown in the legend. Default is "identical", meaning all the identical tissues between the data matrix and SVG image. Another value is 'all', meaning all tissues in the SVG image.}
+
+\item{title.legend}{A character, the legend title. Default is NULL.}
+
+\item{ncol.legend}{An integer, the column number of the items in the legend. Default is NULL.}
+
+\item{nrow.legend}{An integer, the row number of the items in the legend. Default is NULL.}
+
+\item{pos.legend}{Legend position. One of "none", "top", "right", "bottom", "left". "None" meaning remove the legend. Default is "right".}
+
+\item{legend.key.size}{A numeric (in "cm"). Default is 0.5. Size of the legend key.}
+
+\item{legend.label.size}{A numeric. Default is 8. Size of the legend label.}
+
+\item{legend.title.size}{A numeric. Default is 8. Size of the legend title.}
+
+\item{line.size}{A numeric. The size of the polygon outline. Default is 0.2.}
+
+\item{line.color}{A character. The color of polygon outline. Default is "grey70".}
 
 \item{...}{Other arguments passed to ggplot().}
 }

@@ -77,6 +77,12 @@ svg_df <- function(svg.path) {
 
   }; tis.path <- gsub("_\\d+$", "", id.xml)
 
+  # Detect groups that use relative coordinates ("transform", "matrix" in Inkscape.), which leads to some plygons missed in ".ps.xml" file.
+  fil.stk <- sapply(seq_len(xmlSize(top)-1), function (i) xmlAttrs(top[[i]])['type'])
+  w <- which(fil.stk=='fill')%%2==0
+  if (any(w)) { w1 <- which(w)[1]; tis.wrg <- tis.path[c(w1-1, w1)]; return(paste0('Error detected in "', paste0(tis.wrg, collapse='; '), '" in SVG image. If they are grouped tissues, please ungroup and regroup them respectively.')) }
+   
+
   k <-0; df <- NULL; for (i in seq_len(xmlSize(top)-1)) {
 
     if (xmlAttrs(top[[i]])['type']=='stroke') {

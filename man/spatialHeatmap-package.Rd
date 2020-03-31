@@ -130,12 +130,12 @@ row.met.path <- system.file("extdata/shinyApp/example", "row_metadata.txt", pack
 row.metadata <- read.table(row.met.path, header=TRUE, row.names=1, sep='\t', stringsAsFactors=FALSE)
 ## The expression matrix, row metadata, and column metadata are stored in a "SummarizedExperiment" object. The row metadata is optional while column metadata is mandatory. The column names in the expression matrix are not important, since they are ultimately renewed by column metadata.
 library(SummarizedExperiment); expr <- as.matrix(expr); se <- SummarizedExperiment(assays=list(expr=expr), rowData=row.metadata, colData=col.metadata)  
-exp <- filter_data(data=se, pOA=c(0, 0), CV=c(0.1, Inf), ann='ann', samples='sample', conditions='condition', dir=NULL) 
+exp <- filter_data(data=se, pOA=c(0, 0), CV=c(0.1, Inf), ann='ann', sam.factor='sample', con.factor='condition', dir=NULL) 
 
 # The svg image path.
 svg.path <- system.file("extdata/shinyApp/example", "root_cross_final.svg", package="spatialHeatmap")
 # The expression profiles of gene "PSAC" and "NDHG" under different conditions are mapped to tissues defined in the SVG image in the form of different colours. 
-spatial_hm(svg=svg.path, data=exp, samples='sample', conditions='condition', pOA=c(0, 0), CV=c(0, 10000), ID=c("PSAC", "NDHG"), col.com=c("yellow", "blue", "purple"), width=1, height=1, sub.title.size=11, layout="gene", ncol=3)
+spatial_hm(svg=svg.path, data=exp, sam.factor='sample', con.factor='condition', ID=c("PSAC", "NDHG"), col.com=c("yellow", "blue", "purple"), width=1, height=1, sub.title.size=11, layout="gene", ncol=3)
 
 # Compute adjacency matrix and identify modules
 adj.mod <- adj_mod(data=exp, type="signed", minSize=15, dir=NULL)

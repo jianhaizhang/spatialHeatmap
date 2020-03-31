@@ -1,61 +1,77 @@
 #' Filter the Data Matrix
-#'
-#' It is designed to filter the gene expression matrix. The filtering is based on two functions "pOverA" and "cv" from the package "genefilter"(Gentleman et al. 2018). \cr When using the web-browser based integreted spatialHeatmap, the expression matrix can optionally be first processed with this function, saved locally, then uploaded to "Step 2: upload a gene expression file".
+#' 
+#' It is designed to filter the gene expression matrix. The filtering is based on two functions \code{\link[genefilter]{pOverA}} and \code{\link[genefilter]{cv}} from the package "genefilter"(Gentleman et al. 2018). \cr When using the web-browser based integreted spatialHeatmap, the expression matrix can optionally be first processed with this function, saved locally, then uploaded to "Step 2: upload a gene expression file". It is optional to filter the data matrix for plotting spatial heatmaps as long as the format is right. However, as a convention the transcriptome data matrix is always pre-processed before downstream analysis, including normalising, filtering.
 
-#' @param data A "SummarizedExperiment" storing a gene expression matrix and metadata. The "assays" slot stores a expression matrix with row and column names being gene IDs and sample/conditions, respectively. The "rowData" is optional. It can store a data frame with a column being row (gene) anntation. \cr The "colData" slot contains a data frame with a column being sample (tissue) and a column being condition. The 2 columns are ultimately concatenated by double underscore "__" to replace the original column names in the expression matrix. Thus the syntax of the column names in the final expression matrix is sample__condition. E.g. "stele__140mM_48h" (Geng et al. 2013), where stele is the sample and 140mM_48h is the condition. In the 2 column names of sample and condition in "colData", only letters, digits, single underscore, dots, single space are allowed. Not all samples in the expression matrix need to be present in the SVG image, and vice versa. Only samples identical between the matrix and the SVG image are recognised and coloured in the spatial heatmap. If the original column names in the expression matrix are already formatted as sample__condition, "samples" and "conditions" input can be NULL.
+#' @param se A "SummarizedExperiment" storing a gene expression matrix and metadata. The "assays" slot stores a expression matrix with row and column names being gene IDs and sample/conditions, respectively. The "rowData" can store a data frame of row (gene) anntation, but is optional. \cr The "colData" slot is required and contains a data frame with at least 2 columns corresponding to replicates of samples and conditions respectively. It is important that only letters, digits, single underscore, dots, single space are allowed in the 2 columns. 
 
-#' @param pOA It specifies parameters of the filter function "pOverA" from the package "genefilter" (Gentleman et al. 2018). It filters genes according to the proportion "p" of samples where the expression values exceed a threshold "A". The input is a vector of two numbers, where the first one is the "p" and the second one is "A". The default is c(0, 0), which means no filter is applied. \cr E.g. c(0.1, 2) means genes whose expression values over 2 in at least 10\% of all samples are kept. 
+#' @param pOA It specifies parameters of the filter function \code{\link[genefilter]{pOverA}} from the package "genefilter" (Gentleman et al. 2018). Genes with expression values larger than "A" in at least the proportion of "P" samples are retained. The input is a vector of two numbers with the first being the "p" and the second being "A". The default is c(0, 0), which means no filter is applied. \cr E.g. c(0.1, 2) means genes whose expression values over 2 in at least 10\% of all samples are kept. 
 
-#' @param CV It specifies parameters of the filter function "cv" from the package "genefilter" (Gentleman et al. 2018), which filters genes according to the coefficient of variation (CV). The input is a vector of two numbers, specifying the CV range. The default is c(-Inf, Inf), where the range is set from -Inf to Inf so as not to apply filtering. \cr E.g. c(0.1, 5) means genes with CV between 0.1 and 5 are kept.
+#' @param CV It specifies parameters of the filter function \code{\link[genefilter]{cv}} from the package "genefilter" (Gentleman et al. 2018), which filters genes according to the coefficient of variation (CV). The input is a vector of two numbers, specifying the CV range. The default is c(-Inf, Inf) so as not to apply filtering. \cr E.g. c(0.1, 5) means genes with CV between 0.1 and 5 are kept.
 
-#' @param ann A character. The column name corresponding to row (gene) annotation in the "rowData" of "data" argument. The default is NULL.
+#' @param ann A character. The column name corresponding to row (gene) annotation in the "rowData" of "se" parameter. The default is NULL.
 
-#' @param samples A character. The column name corresponding to tissues in the "colData" of "data" argument. Can be NULL if column names of expression matrix in "data" argument are already formatted as sample__condition.
+#' @param sam.factor A character. The column name corresponding to tissues in the "colData" of "se" parameter. Can be NULL if column names of expression matrix in "se" parameter are already formatted as sample__condition.
 
-#' @param conditions A character. The column name corresponding to conditions in the "colData" of "data" argument. Can be NULL if column names of expression matrix in "data" argument are already formatted as sample__condition.
+#' @param con.factor A character. The column name corresponding to conditions in the "colData" of "se" parameter. Can be NULL if column names of expression matrix in "se" parameter are already formatted as sample__condition.
 
-#' @param dir The path where the directory "local_mode_result/" is created automatically to save the processed data matrix "processed_data.txt". In the "processed_data.txt", the rows and columns are genes and sample/conditions respectively and the last column is annotation of genes. This argument should be the same with that from the function "adj.mod" so that the files "adj.txt" and "mod.txt" generated by "adj.mod" are saved in the same directory. The default is NULL. 
+#' @param dir The path where the directory "local_mode_result/" is created automatically to save the processed data matrix "processed_data.txt". In the "processed_data.txt", the rows are genes and column names are in the syntax "sample__condition". If gene annotation is provided to \code{\link{ann}}, it is appended to the last column of "processed_data.txt". This argument should be the same with that from the function "adj.mod" so that the files "adj.txt" and "mod.txt" generated by "adj.mod" are saved in the same directory. The default is NULL. 
 
-#' @return A "SummarizedExperiment" object containing filtered expression matrix and metadata. The column names of the expression matrix are formatted as sample__condition. If "dir" is not NULL, the filtered expression matrix is saved in a "\\t" separated "txt" file (processed_data.txt).
+#' @return A "SummarizedExperiment" object containing filtered expression matrix and sample/condition metadata. The 2 replicate columns in "colData" slot of "se" parameter are concatenated by double underscore "__" to form "sample__condition" replicates. E.g. In "cerebellum__normal" (Prudencio et al. 2015), "cerebellum" is the sample and "normal" is the condition. The concatenated replicates are used for replacing the original column names in the data matrix ("assay" slot).  If the original column names in the data matrix are already formatted in the syntax "sample__condition", then the "colData" slot is not required in the "se" parameter.  If "dir" is not NULL, the filtered expression matrix is saved in a "\\t" separated "txt" file (processed_data.txt). 
 
 #' @examples
 
-#' # Creat the "SummarizedExperiment" class. Refer to the R package "SummarizedExperiment" for more details.
-#' data.path <- system.file("extdata/shinyApp/example", "root_expr_row_gen.txt", package = "spatialHeatmap")   
-#' ## The expression matrix, where the row and column names should be gene IDs and sample/conditions respectively. This data matrix is truncated from a GEO dataset (https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE46205), which is already normalised.
-#' library(data.table); expr <- fread(data.path, sep='\t', header=TRUE, fill=TRUE)
-#' col.na <- colnames(expr)[-ncol(expr)]; row.na <- as.data.frame(expr[, 1])[, 1]
-#' expr <- as.matrix(as.data.frame(expr, stringsAsFactors=FALSE)[, -1])
-#' rownames(expr) <- row.na; colnames(expr) <- col.na
-#' col.met.path <- system.file("extdata/shinyApp/example", "col_metadata.txt", package = "spatialHeatmap") 
-#' ## Condition metadata is data frame. It has a column of tissues and a column of contidions, which correspond to columns of the data matrix "expr".
-#' col.metadata <- read.table(col.met.path, header=TRUE, row.names=NULL, sep='\t', stringsAsFactors=FALSE)
-#' row.met.path <- system.file("extdata/shinyApp/example", "row_metadata.txt", package = "spatialHeatmap")
-#' ## Row metadata is a data frame. It has a column of row (gene) annotations, which correspond to rows of the data matrix "expr".
-#' row.metadata <- read.table(row.met.path, header=TRUE, row.names=1, sep='\t', stringsAsFactors=FALSE)
-#' ## The expression matrix, row metadata, and column metadata are stored in a "SummarizedExperiment" object. The row metadata is optional while column metadata is mandatory. The column names in the expression matrix are not important, since they are ultimately renewed by column metadata.
-#' library(SummarizedExperiment); expr <- as.matrix(expr); se <- SummarizedExperiment(assays=list(expr=expr), rowData=row.metadata, colData=col.metadata)  
-#' exp <- filter_data(data=se, pOA=c(0, 0), CV=c(0.1, Inf), ann='ann', samples='sample', conditions='condition', dir=NULL) 
+#' # The example data is an RNA-seq data measured in cerebellum and frontal cortex of human brain across normal and amyotrophic lateral sclerosis (ALS) subjects (Prudencio et al. 2015). 
+#' library(ExpressionAtlas)
+#' rse.hum <- getAtlasData('E-GEOD-67196')[[1]][[1]] # Access the RNA-seq raw count matrix.  
+#' assay(rse.hum)[1:3, 1:3] # The raw count matrix is in form of "RangedSummarizedExperiment".
+#' # A targets file describing replicates of samples and conditions is required, which should be made based on the "colData" slot in "RangedSummarizedExperiment". See the "se" parameter for details. This targets file is available in spatialHeatmap.
+#' brain.pa <- system.file('extdata/example_data/target_brain.txt', package='spatialHeatmap')
+#' target.hum <- read.table(brain.pa, header=TRUE, row.names=1, sep='\t')
+#' The “organism_part” and “disease” column describes tissue and condition replicates respectively. The former includes 2 tissues cerebellum and frontal cortex. They should be identical with respective tissue ids in the SVG image for plotting spatial heatmaps. Note that the replicates of the same tissue or condition should have the identical name.
+#' target.hum[c(1:3, 41:42), 4:5]
+
+#' # Place the targets file into "colData" slot. 
+#' colData(rse.hum) <- DataFrame(target.hum)
+
+#' # For users with little R expertise, if the gene expression matrix comes as a data frame, it should be placed into "SummarizedExperiment" before proceeding to next step. An example is shown below by borrowing a data frame from the brain data.
+#' # Borrow a data matrix.
+#' df <- assays(rse.hum)[[1]]; df[1:2, 1:3]
+#' # Place the data matrix and targets file (target.brain) into "SummarizedExperiment". The "rowData" slot is optional.
+#' rse.hum <- SummarizedExperiment(assays=list(counts=df), colData=target.hum, rowData=NULL)
+
+#' # The count matrix is normalised with estimateSizeFactors (type=‘ratio’) from DESeq2 (Love, Huber, and Anders 2014) and converted to log2 unit.
+#' se.nor.hum <- norm_data(se=rse.hum, method.norm='ratio', data.trans='log2')
+#' # To aggregate replicates, the tissue and condition column in “colData” slot need to be specified in function aggr_rep. This function concatenates tissue and condition replicates in the targets file with a "double underscore" and treated them as tissue-condition replicates for aggregating. For example, in the above targets file, each of cerebellum and frontal_cortex are concatenated with each of ALS and normal by "__" and cerebellum__ALS, cerebellum__normal, frontal_cortex__ALS, frontal_cortex__normal are used as the replicates for aggregating. The concatenated replicates can be aggregated by mean or median. Here mean is chosen.
+#' # In downstream spatial heatmap plotting, the "double underscore" is indispensable as it is the separator when the algorithm recognises tissues and conditions.
+#' se.aggr.hum <- aggr_rep(se=se.nor.hum, sam.factor='organism_part', con.factor='disease', aggr='mean')
+#' # The concatenated tissue__conditions are the column names of the output data matrix.
+#' assay(se.aggr.hum)[49939:49942, ]
+
+#' # Genes with low expression level and low variantion are always filtered. In this example, genes with expression values larger than 5 in at least 1% of all samples (pOA=c(0.01, 5)), and with coefficient of variance (CV) between 0.60 and 100 (CV=c(0.60, 100)) are retained.
+#' se.fil.hum <- filter_data(data=se.aggr.hum, sam.factor='organism_part', con.factor='disease', pOA=c(0.01, 5), CV=c(0.6, 100), dir=NULL)
 
 #' @author Jianhai Zhang \email{jzhan067@@ucr.edu; zhang.jianhai@@hotmail.com} \cr Dr. Thomas Girke \email{thomas.girke@@ucr.edu}
 
 #' @references
 #' Gentleman, R, V Carey, W Huber, and F Hahne. 2018. “Genefilter: Methods for Filtering Genes from High-Throughput Experiments.” http://bioconductor.uib.no/2.7/bioc/html/genefilter.html \cr Matt Dowle and Arun Srinivasan (2017). data.table: Extension of `data.frame`. R package version 1.10.4. https://CRAN.R-project.org/package=data.table \cr Martin Morgan, Valerie Obenchain, Jim Hester and Hervé Pagès (2018). SummarizedExperiment: SummarizedExperiment container. R package version 1.10.1 \cr R Core Team (2018). R: A language and environment for statistical computing. R Foundation for Statistical Computing, Vienna, Austria. URL https://www.R-project.org/
-#' Geng Y, Wu R, Wee CW, Xie F et al. A spatio-temporal understanding of growth regulation during the salt stress response in Arabidopsis. Plant Cell 2013 Jun;25(6):2132-54. PMID: 23898029
+#' Prudencio, Mercedes, Veronique V Belzil, Ranjan Batra, Christian A Ross, Tania F Gendron, Luc J Pregent, Melissa E Murray, et al. 2015. “Distinct Brain Transcriptome Profiles in C9orf72-Associated and Sporadic ALS.” Nat. Neurosci. 18 (8): 1175–82
+#' Keays, Maria. 2019. ExpressionAtlas: Download Datasets from EMBL-EBI Expression Atlas
+#' Love, Michael I., Wolfgang Huber, and Simon Anders. 2014. “Moderated Estimation of Fold Change and Dispersion for RNA-Seq Data with DESeq2.” Genome Biology 15 (12): 550. doi:10.1186/s13059-014-0550-8
+
 
 #' @export filter_data
 #' @importFrom SummarizedExperiment assay rowData colData SummarizedExperiment
 #' @importFrom genefilter filterfun pOverA cv genefilter
 #' @importFrom utils write.table
 
-filter_data <- function(data, pOA=c(0, 0), CV=c(-Inf, Inf), ann=NULL, samples, conditions,  dir=NULL) {
+filter_data <- function(se, pOA=c(0, 0), CV=c(-Inf, Inf), ann=NULL, sam.factor, con.factor,  dir=NULL) {
 
     if (!is.null(dir)) { path <- paste0(dir, "/local_mode_result/"); if (!dir.exists(path)) dir.create(path) }
-    df <- assay(data); col.met <- as.data.frame(colData(data), stringsAsFactors=FALSE)
-    if (!is.null(samples) & !is.null(conditions)) { colnames(df) <- paste(col.met[, samples], col.met[, conditions], sep='__') }
-    ffun <- filterfun(pOverA(pOA[1], pOA[2]), cv(CV[1], CV[2]))
+    df <- assay(se); col.met <- as.data.frame(colData(se), stringsAsFactors=FALSE)
+    if (!is.null(sam.factor) & !is.null(con.factor)) { colnames(df) <- paste(col.met[, sam.factor], col.met[, con.factor], sep='__') }
+    ffun <- filterfun(pOverA(p=pOA[1], A=pOA[2]), cv(CV[1], CV[2]))
     filtered <- genefilter(df, ffun); df <- df[filtered, ]
-    row.met <- as.data.frame(rowData(data), stringsAsFactors=FALSE)[filtered, , drop=FALSE]
+    row.met <- as.data.frame(rowData(se), stringsAsFactors=FALSE)[filtered, , drop=FALSE]
 
     df1 <- NULL; if (!is.null(dir) & !is.null(ann) & ncol(row.met)>0) { 
 
@@ -68,8 +84,7 @@ filter_data <- function(data, pOA=c(0, 0), CV=c(-Inf, Inf), ann=NULL, samples, c
       
       if (!is.null(df1)) write.table(df1, paste0(path, "processed_data.txt"), sep="\t", row.names=TRUE, col.names=TRUE) else write.table(df, paste0(path, "processed_data.txt"), sep="\t", row.names=TRUE, col.names=TRUE)
       
-    }
-    rownames(col.met) <- NULL
+    }; rownames(col.met) <- NULL # If row names present in colData(se), if will become column names of assay(se).
     expr <- SummarizedExperiment(assays=list(expr=df), rowData=row.met, colData=col.met); return(expr)
 
 }

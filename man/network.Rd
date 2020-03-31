@@ -6,7 +6,7 @@
 \usage{
 network(
   geneID,
-  data,
+  se,
   ann,
   adj.mod,
   ds = "3",
@@ -26,9 +26,9 @@ network(
 \arguments{
 \item{geneID}{A gene ID from the expression matrix.}
 
-\item{data}{A "SummarizedExperiment" object containing the processed data matrix and metadata returned by the function \code{\link{filter_data}}.}
+\item{se}{A "SummarizedExperiment" object containing the processed data matrix and metadata returned by the function \code{\link{filter_data}} or \code{\link{aggr_rep}}.}
 
-\item{ann}{A character. The column name corresponding to row (gene) annotation in the "rowData" of "data" argument.}
+\item{ann}{A character. The column name corresponding to row (gene) annotation in the "rowData" of "se" parameter.}
 
 \item{adj.mod}{A list of "adjacency matrix" and "modules" definitions returned by the function "adj.mod".}
 

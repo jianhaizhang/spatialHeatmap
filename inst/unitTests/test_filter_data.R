@@ -16,7 +16,7 @@ test_filter_data <- function() {
   row.metadata <- read.table(row.met.path, header=TRUE, row.names=1, sep='\t', stringsAsFactors=FALSE)
   ## The expression matrix, row metadata, and column metadata are stored in a "SummarizedExperiment" object. The row metadata is optional while column metadata is mandatory. The column names in the expression matrix are not important, since they are ultimately renewed by column metadata.
   expr <- as.matrix(expr); se <- SummarizedExperiment(assays=list(expr=expr), rowData=row.metadata, colData=col.metadata)  
-  exp <- filter_data(data=se, pOA=c(0, 0), CV=c(0.1, Inf), ann='ann', samples='sample', conditions='condition', dir=NULL) 
+  exp <- filter_data(data=se, pOA=c(0, 0), CV=c(0.1, Inf), ann='ann', sam.factor='sample', con.factor='condition', dir=NULL) 
 
   checkTrue(is(exp, "SummarizedExperiment"))
 }
