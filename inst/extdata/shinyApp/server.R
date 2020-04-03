@@ -98,7 +98,7 @@ svg_df <- function(svg.path) {
   # Detect groups that use relative coordinates ("transform", "matrix" in Inkscape.), which leads to some plygons missed in ".ps.xml" file.
   fil.stk <- sapply(seq_len(xmlSize(top)-1), function (i) xmlAttrs(top[[i]])['type']); tab <- table(fil.stk)
   w <- which(fil.stk=='fill')%%2==0
-  if (any(w)) { 
+  if (any(w) & tab['fill'] > tab['stroke']) { 
 
     # All path ids in original SVG.
     id.svg <- NULL; for (i in seq_len(xmlSize(xmltop[[size]]))) {
@@ -110,11 +110,9 @@ svg_df <- function(svg.path) {
     
     # Index of wrong path.
     w1 <- which(w)[1]
-    # Wrong path and related group. 
-    tis.wrg <- paste0(id.svg[c(w1-1, w1)], tis.wrg <- paste0(" (", tis.path[c(w1-1, w1)], ")"), collapse='; ')
-    mg1 <- paste0("Error detected in ",  "'", tis.wrg, "'", " in SVG image", collapse='')
-    mg2 <- "Possible solutions: 1. If they belong to a group, ungroup and regroup it; 2. If they are tiny polygons, remove them."
-    return(paste0(mg1, '. ', mg2)) 
+    # Wrong path and related group.
+    tis.wrg <- paste0(tis.path[c(w1-1, w1)], collapse='; ')
+    return(paste0("Error detected in '", tis.wrg, "' in SVG image. Please ungroup and regroup related groups.")) 
 
   }
 
