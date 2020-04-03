@@ -96,9 +96,27 @@ svg_df <- function(svg.path) {
   }; tis.path <- gsub("_\\d+$", "", id.xml)
 
   # Detect groups that use relative coordinates ("transform", "matrix" in Inkscape.), which leads to some plygons missed in ".ps.xml" file.
-  fil.stk <- sapply(seq_len(xmlSize(top)-1), function (i) xmlAttrs(top[[i]])['type'])
+  fil.stk <- sapply(seq_len(xmlSize(top)-1), function (i) xmlAttrs(top[[i]])['type']); tab <- table(fil.stk)
   w <- which(fil.stk=='fill')%%2==0
-  if (any(w)) { w1 <- which(w)[1]; tis.wrg <- tis.path[c(w1-1, w1)]; return(paste0('Error detected in "', paste0(tis.wrg, collapse='; '), '" in SVG image. If they are grouped tissues, please ungroup and regroup them respectively.')) }
+  if (any(w)) { 
+
+    # All path ids in original SVG.
+    id.svg <- NULL; for (i in seq_len(xmlSize(xmltop[[size]]))) {
+
+     node <- xmltop[[size]][[i]] 
+     if (xmlName(node)=='g') for (j in seq_len(xmlSize(node))) { id.svg <- c(id.svg, xmlAttrs(node[[j]])[['id']]) } else id.svg <- c(id.svg, xmlAttrs(node)[['id']])  
+
+    }
+    
+    # Index of wrong path.
+    w1 <- which(w)[1]
+    # Wrong path and related group. 
+    tis.wrg <- paste0(id.svg[c(w1-1, w1)], tis.wrg <- paste0(" (", tis.path[c(w1-1, w1)], ")"), collapse='; ')
+    mg1 <- paste0("Error detected in ",  "'", tis.wrg, "'", " in SVG image", collapse='')
+    mg2 <- "Possible solutions: 1. If they belong to a group, ungroup and regroup it; 2. If they are tiny polygons, remove them."
+    return(paste0(mg1, '. ', mg2)) 
+
+  }
 
   k <-0; df <- NULL; for (i in seq_len(xmlSize(top)-1)) {
 
@@ -160,7 +178,7 @@ lay_shm <- function(lay.shm, con, ncol, ID.sel, grob.list, width, height, shiny)
 }
 
 
-grob_list <- function(gene, geneV, coord, ID, cols, tis.path, tis.trans=NULL, sub.title.size, sam.legend='identical', title.legend='Sample', ncol.legend=NULL, nrow.legend=NULL, pos.legend='right', legend.key.size=0.5, legend.label.size=8, legend.title.size=8, line.size=0.2, line.color='grey70', ...) {
+grob_list <- function(gene, geneV, coord, ID, cols, tis.path, tis.trans=NULL, sub.title.size, sam.legend='identical', legend.title=NULL, legend.ncol=NULL, legend.nrow=NULL, legend.position='right', legend.direction='vertical', legend.key.size=0.5, legend.label.size=8, legend.title.size=8, line.size=0.2, line.color='grey70', ...) {
   
   x <- y <- tissue <- NULL
   # Map colours to samples according to expression level.
@@ -181,7 +199,7 @@ grob_list <- function(gene, geneV, coord, ID, cols, tis.path, tis.trans=NULL, su
     # Show selected or all samples in legend.
     if (length(sam.legend)==1) if (sam.legend=='identical') sam.legend <- unique(tis.path[!is.na(g.col)]) else if (sam.legend=='all') sam.legend <- unique(tis.path)
     leg.idx <- !duplicated(tis.path) & (tis.path %in% sam.legend)
-    g <- ggplot()+geom_polygon(data=coord, aes(x=x, y=y, fill=tissue), color=line.color, size=line.size, linetype='solid')+scale_fill_manual(values=g.col, breaks=tis.df[leg.idx], labels=tis.path[leg.idx], guide=guide_legend(title=title.legend, ncol=ncol.legend, nrow=nrow.legend))+theme(axis.text=element_blank(), axis.ticks=element_blank(), panel.grid=element_blank(), panel.background=element_rect(fill="white", colour="grey80"), plot.margin=margin(0.1, 0.1, 0.1, 0.3, "cm"), axis.title.x=element_text(size=16,face="bold"), plot.title=element_text(hjust=0.5, size=sub.title.size), legend.position=pos.legend, legend.key.size=unit(legend.key.size, "cm"), legend.text=element_text(size=legend.label.size), legend.title=element_text(size=legend.title.size))+labs(x="", y="")+scale_y_continuous(expand=c(0.01, 0.01))+scale_x_continuous(expand=c(0.01, 0.01))+ggtitle(paste0(k, "_", j)); return(g)
+    g <- ggplot()+geom_polygon(data=coord, aes(x=x, y=y, fill=tissue), color=line.color, size=line.size, linetype='solid')+scale_fill_manual(values=g.col, breaks=tis.df[leg.idx], labels=tis.path[leg.idx], guide=guide_legend(title=legend.title, ncol=legend.ncol, nrow=legend.nrow))+theme(axis.text=element_blank(), axis.ticks=element_blank(), panel.grid=element_blank(), panel.background=element_rect(fill="white", colour="grey80"), plot.margin=margin(0.1, 0.1, 0.1, 0.3, "cm"), axis.title.x=element_text(size=16,face="bold"), plot.title=element_text(hjust=0.5, size=sub.title.size), legend.position=legend.position, legend.background = element_rect(fill=alpha(NA, 0)), legend.direction=legend.direction, legend.key.size=unit(legend.key.size, "cm"), legend.text=element_text(size=legend.label.size), legend.title=element_text(size=legend.title.size))+labs(x="", y="")+scale_y_continuous(expand=c(0.01, 0.01))+scale_x_continuous(expand=c(0.01, 0.01))+ggtitle(paste0(k, "_", j)); return(g)
 
 
   }
