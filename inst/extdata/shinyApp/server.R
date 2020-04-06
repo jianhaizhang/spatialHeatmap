@@ -112,7 +112,7 @@ svg_df <- function(svg.path) {
     w1 <- which(w)[1]
     # Wrong path and related group.
     tis.wrg <- paste0(tis.path[c(w1-1, w1)], collapse='; ')
-    return(paste0("Error detected in '", tis.wrg, "' in SVG image. Please ungroup and regroup related groups.")) 
+    return(paste0("Error detected in '", tis.wrg, "' in SVG image. Please ungroup and regroup the group they belong to.")) 
 
   }
 
