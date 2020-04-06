@@ -2,7 +2,7 @@
 % Please edit documentation in R/spatial_hm.R
 \name{spatial_hm}
 \alias{spatial_hm}
-\title{Spatial Heatmap}
+\title{Plot Spatial Heatmap}
 \usage{
 spatial_hm(
   svg.path,
@@ -20,10 +20,11 @@ spatial_hm(
   lay.shm = "gene",
   ncol = 3,
   sam.legend = "identical",
-  title.legend = NULL,
-  ncol.legend = NULL,
-  nrow.legend = NULL,
-  pos.legend = "right",
+  legend.title = NULL,
+  legend.ncol = NULL,
+  legend.nrow = NULL,
+  legend.position = "right",
+  legend.direction = "vertical",
   legend.key.size = 0.5,
   legend.label.size = 8,
   legend.title.size = 8,
@@ -33,43 +34,47 @@ spatial_hm(
 )
 }
 \arguments{
-\item{svg.path}{The path of the SVG image, where different tissues are pre-defined and associated with expression pfofiles through tissue names. \cr E.g.: system.file("extdata/example", "test_final.svg", package = "spatialHeatmap") (Mustroph et al. 2009).}
+\item{svg.path}{The path of the SVG image. Target tissues to be coloured in spaial heatmaps must have identical tissue names with corresponding tissues in the data matrix. \cr E.g.: system.file("extdata/example", "homo_sapiens.brain.svg", package = "spatialHeatmap") (https://www.ebi.ac.uk/gxa/home).}
 
-\item{se}{A "SummarizedExperiment" storing a gene expression matrix and metadata. The "assays" slot stores a expression matrix with row and column names being gene IDs and sample/conditions, respectively. The "rowData" can store a data frame of row (gene) anntation, but is optional. \cr The "colData" slot is required and contains a data frame with at least 2 columns corresponding to replicates of samples and conditions respectively. It is important that only letters, digits, single underscore, dots, single space are allowed in the 2 columns.}
+\item{se}{A "SummarizedExperiment". The "assays" slot stores an gene expression data matrix with row and column names being gene IDs and sample/conditions, respectively. The "rowData" can store a data frame of row (gene) anntation, but is optional. \cr The "colData" slot is required and contains a data frame with at least 2 columns corresponding to replicates of samples and conditions respectively. Only letters, digits, single underscore, dots, single space are allowed in the 2 columns. It is crucial that replicate names of the same sample or condition must be identical. E.g. If sample A has 3 replicates, "sampleA", "sampleA", "sampleA" is right while "sampleA1", "sampleA2", "sampleA3" is wrong.}
 
-\item{sam.factor}{A character. The column name corresponding to tissues in the "colData" of "se" parameter. Can be NULL if column names of expression matrix in "se" parameter are already formatted as sample__condition.}
+\item{sam.factor}{A character of the column name corresponding to samples in the "colData" of "se" parameter. The 2 columns describing sample and condition replicates in "colData" slot of "se" parameter are concatenated by double underscore "__" to form "sample__condition" replicates. E.g. In "cerebellum__normal" (Prudencio et al. 2015), "cerebellum" is the sample and "normal" is the condition. The concatenated replicates are used for replacing the original column names of the data matrix in "assay" slot.  If the original column names in the data matrix are already formatted in the syntax "sample__condition", then the "colData" slot is not required in the "se" parameter and this parameter can be NULL.}
 
-\item{con.factor}{A character. The column name corresponding to conditions in the "colData" of "se" parameter. Can be NULL if column names of expression matrix in "se" parameter are already formatted as sample__condition.}
+\item{con.factor}{A character. The column name corresponding to conditions in the "colData" of "se" parameter. Can be NULL if column names of expression matrix in "se" parameter are already formatted as "sample__condition".}
 
-\item{ID}{The gene IDs used to colour the spatial heatmaps. It can be a single gene or a vector of multiple genes.}
+\item{ID}{A character of gene ID(s) whose expression values are used to colour the spatial heatmaps. It can be a single gene or a vector of multiple genes.}
 
-\item{col.com}{A character vector of the colour components used to build the colour scale, e.g. the default is c("yellow", "purple", "blue").}
+\item{col.com}{A character vector of the colour components used to build the colour scale, e.g. the default is c("yellow", "blue", "purple").}
 
-\item{col.bar}{It has two values "selected" and "all", which specifies whether the colour scale is built using the input genes ("selected") or whole data matrix ("all"). The default is "selected".}
+\item{col.bar}{"selected" or "all", meaning use input genes or whole data matrix to build the colour scale respectively. The default is "selected".}
 
-\item{data.trans}{"log2" or "exp.2". Default is NULL. If colours across tissues cannot distinguish due to low variance or outliers, transform the data matrix by log2 or 2-base expoent (exp.2).}
+\item{data.trans}{"log2", "exp2", or NULL. If colours across tissues cannot distinguish due to low variance or outliers, transform the data matrix by log2 or 2-base expoent (exp2). Default is NULL (data will not be transformed).}
 
 \item{tis.trans}{A character vector of tissue names. These tissues cover other tissues and should be set transparent. E.g c("epidermis", "cortex").}
 
-\item{width}{The width, relative to height, of each subplot. The default is 1.}
+\item{width}{A numeric of each subplot width, relative to height. The default is 1.}
 
-\item{height}{The height, relative to width, of each subplot. The default is 1.}
+\item{height}{A numeric of each subplot height, relative to width. The default is 1.}
 
 \item{sub.title.size}{A numeric. The subtitle font size of each individual spatial heatmap. Default is 11.}
 
-\item{lay.shm}{The organisation of the subplots. The options are "gene" or "con" (condition).}
+\item{lay.shm}{"gene" or "con" (condition), the organisation of the subplots.}
 
 \item{ncol}{Number of columns to display the subplots.}
 
 \item{sam.legend}{A character vector of tissue names in the SVG image. These tissues are shown in the legend. Default is "identical", meaning all the identical tissues between the data matrix and SVG image. Another value is 'all', meaning all tissues in the SVG image.}
 
-\item{title.legend}{A character, the legend title. Default is NULL.}
+\item{legend.title}{A character, the legend title. Default is NULL.}
 
-\item{ncol.legend}{An integer, the column number of the items in the legend. Default is NULL.}
+\item{legend.ncol}{An integer, the column number of the items in the legend. Default is NULL.}
 
-\item{nrow.legend}{An integer, the row number of the items in the legend. Default is NULL.}
+\item{legend.nrow}{An integer, the row number of the items in the legend. Default is NULL.}
 
-\item{pos.legend}{Legend position. One of "none", "top", "right", "bottom", "left". "None" meaning remove the legend. Default is "right".}
+\item{legend.position}{the position of legends ("none", "left", "right",
+"bottom", "top", or two-element numeric vector)}
+
+\item{legend.direction}{layout of items in legends ("horizontal" or
+"vertical")}
 
 \item{legend.key.size}{A numeric (in "cm"). Default is 0.5. Size of the legend key.}
 
@@ -87,50 +92,52 @@ spatial_hm(
 It generates an image of spatial heatmap(s) along with a colour key.
 }
 \description{
-It takes gene expression profiles and an associated SVG image as input. In the SVG image, tissue regions are pre-defined and associated with expression pfofiles through tissue names. The expression profiles of the input gene(s) under each condition are mapped to each tissue in the form of different colours. Its application is not limited to gene expression data. It can be used as long as a data matrix and an associated SVG image are provided, such as population data generated in different years across different cities.
+It takes a pair of formatted gene expression data matrix ("SummarizedExperiment") and SVG image as input. In the SVG image, tissue regions are pre-defined and linked with data matrix through tissue names. The expression profiles of the input gene(s) under each condition are mapped to each tissue in the form of different colours. The application is not limited to gene expression data. It is applicable as long as a pair of formatted data matrix and SVG image are provided, such as population data generated in different years across different cities.
 }
 \section{Details}{
 
-Details about how to properly format and associate a custom SVG image with a data matrix are provided in a separate SVG_tutorial.html. The "se" parameter can be the value returned by the function "filter_data" or built on the expression matrix. See examples blow.
+Details about how to format an SVG image and a data matrix are provided in the package vignette (\code{browseVignettes('spatialHeatmap')}). The "se" parameter can be the value returned by the function \code{\link{filter_data}}, or built on an expression matrix and a targets file. See examples blow.
 }
 
 \examples{
-# The example data is an RNA-seq data measured in cerebellum and frontal cortex of human brain across normal and amyotrophic lateral sclerosis (ALS) subjects (Prudencio et al. 2015). 
+# The example data (E-GEOD-67196) is an RNA-seq data measured in cerebellum and frontal cortex of human brain across normal and amyotrophic lateral sclerosis (ALS) subjects (Prudencio et al. 2015). 
 library(ExpressionAtlas)
-rse.hum <- getAtlasData('E-GEOD-67196')[[1]][[1]] # Access the RNA-seq raw count matrix.  
-assay(rse.hum)[1:3, 1:3] # The raw count matrix is in form of "RangedSummarizedExperiment".
-# A targets file describing replicates of samples and conditions is required, which should be made based on the "colData" slot in "RangedSummarizedExperiment". See the "se" parameter for details. This targets file is available in spatialHeatmap.
+rse.hum <- getAtlasData('E-GEOD-67196')[[1]][[1]]; assay(rse.hum)[1:3, 1:3]
+
+# A targets file describing replicates of samples and conditions is required, which is made based on the "colData" slot in the downloaded "RangedSummarizedExperiment" and available in spatialHeatmap. See the "se" parameter for details. 
 brain.pa <- system.file('extdata/example_data/target_brain.txt', package='spatialHeatmap')
 target.hum <- read.table(brain.pa, header=TRUE, row.names=1, sep='\t')
-The “organism_part” and “disease” column describes tissue and condition replicates respectively. The former includes 2 tissues cerebellum and frontal cortex. They should be identical with respective tissue ids in the SVG image for plotting spatial heatmaps. Note that the replicates of the same tissue or condition should have the identical name.
+# The "organism_part" and "disease" column describes tissue and condition replicates respectively.  
 target.hum[c(1:3, 41:42), 4:5]
-# Place the targets file into "colData" slot. 
+# Place the targets file into "colData" slot as a DataFrame class. 
 colData(rse.hum) <- DataFrame(target.hum)
-# For users with little R expertise, if the gene expression matrix comes as a data frame, it should be placed into "SummarizedExperiment" before proceeding to next step. An example is shown below by borrowing a data frame from the brain data.
+
+# For users with little R expertise, if the gene expression matrix comes as a data frame, it should be placed into "SummarizedExperiment" before proceeding to next step. An example is shown below by borrowing a data matrix from the brain data.
 # Borrow a data matrix.
-df <- assays(rse.hum)[[1]]; df[1:2, 1:3]
-# Place the data matrix and targets file (target.brain) into "SummarizedExperiment". The "rowData" slot is optional.
-rse.hum <- SummarizedExperiment(assays=list(counts=df), colData=target.hum, rowData=NULL)
-# The count matrix is normalised with estimateSizeFactors (type=‘ratio’) from DESeq2 (Love, Huber, and Anders 2014) and converted to log2 unit.
+df <- assay(rse.hum); df[1:2, 1:3]
+# Place the data matrix and targets file (target.hum) into "SummarizedExperiment".
+rse.hum <- SummarizedExperiment(assay=df, colData=target.hum, rowData=NULL)
+
+# The count matrix is normalised with estimateSizeFactors (type=‘ratio’).
 se.nor.hum <- norm_data(se=rse.hum, method.norm='ratio', data.trans='log2')
-# To aggregate replicates, the tissue and condition column in “colData” slot need to be specified in function aggr_rep. This function concatenates tissue and condition replicates in the targets file with a "double underscore" and treated them as tissue-condition replicates for aggregating. For example, in the above targets file, each of cerebellum and frontal_cortex are concatenated with each of ALS and normal by "__" and cerebellum__ALS, cerebellum__normal, frontal_cortex__ALS, frontal_cortex__normal are used as the replicates for aggregating. The concatenated replicates can be aggregated by mean or median. Here mean is chosen.
-# In downstream spatial heatmap plotting, the "double underscore" is indispensable as it is the separator when the algorithm recognises tissues and conditions.
+
+# Average replicates of concatenated sample__condition.
 se.aggr.hum <- aggr_rep(se=se.nor.hum, sam.factor='organism_part', con.factor='disease', aggr='mean')
-# The concatenated tissue__conditions are the column names of the output data matrix.
-assay(se.aggr.hum)[49939:49942, ]
-# Filter genes.
-se.fil.hum <- filter_data(data=se.aggr.hum, sam.factor='organism_part', con.factor='disease', pOA=c(0.01, 5), CV=c(0.6, 100), dir=NULL)
+assay(se.aggr.hum)[49939:49942, ] # The concatenated tissue__conditions are the column names of the output data matrix.
+
+# Genes with low expression level and low variantion are always filtered. 
+se.fil.hum <- filter_data(se=se.aggr.hum, sam.factor='organism_part', con.factor='disease', pOA=c(0.01, 5), CV=c(0.3, 100), dir=NULL)
 # Formatted SVG image.
 svg.hum <- system.file("extdata/shinyApp/example", "homo_sapiens.brain.svg", package="spatialHeatmap")
 # Plot spatial heatmaps of gene ENSG00000268433.
-spatial_hm(svg=svg.hum, se=se.fil.hum, ID='ENSG00000268433', col.com=c("yellow", "blue", "purple"), width=1, height=0.5, sub.title.size=11, layout="gene", ncol=2, tis.trans=NULL)
+spatial_hm(svg=svg.hum, se=se.fil.hum, ID='ENSG00000268433', col.com=c("yellow", "blue", "purple"), width=1, height=0.5, sub.title.size=11, layout="gene", ncol=2, tis.trans=NULL, legend.position=c(0.5, -0.15), legend.nrow=1)
 }
 \references{
 https://www.gimp.org/tutorials/ \cr https://inkscape.org/en/doc/tutorials/advanced/tutorial-advanced.en.html \cr http://www.microugly.com/inkscape-quickguide/
-Martin Morgan, Valerie Obenchain, Jim Hester and Hervé Pagès (2018). SummarizedExperiment: SummarizedExperiment container. R package version 1.10.1 \cr H. Wickham. ggplot2: Elegant Graphics for Data Analysis. Springer-Verlag New York, 2016. \cr Jeroen Ooms (2018). rsvg: Render SVG Images into PDF, PNG, PostScript, or Bitmap Arrays. R package version 1.3. https://CRAN.R-project.org/package=rsvg \cr R. Gentleman, V. Carey, W. Huber and F. Hahne (2017). genefilter: genefilter: methods for filtering genes from high-throughput experiments. R package version 1.58.1 \cr Paul Murrell (2009). Importing Vector Graphics: The grImport Package for R. Journal of Statistical Software, 30(4), 1-37. URL http://www.jstatsoft.org/v30/i04/ \cr Duncan Temple Lang and the CRAN Team (2018). XML: Tools for Parsing and Generating XML Within R and S-Plus. R package version 3.98-1.16. https://CRAN.R-project.org/package=XML \cr Baptiste Auguie (2017). gridExtra: Miscellaneous Functions for "Grid" Graphics. R package version 2.3. https://CRAN.R-project.org/package=gridExtra \cr R Core Team (2018). R: A language and environment for statistical computing. R Foundation for Statistical Computing, Vienna, Austria. RL https://www.R-project.org/ \cr    
-Prudencio, Mercedes, Veronique V Belzil, Ranjan Batra, Christian A Ross, Tania F Gendron, Luc J Pregent, Melissa E Murray, et al. 2015. “Distinct Brain Transcriptome Profiles in C9orf72-Associated and Sporadic ALS.” Nat. Neurosci. 18 (8): 1175–82
+Martin Morgan, Valerie Obenchain, Jim Hester and Hervé Pagès (2018). SummarizedExperiment: SummarizedExperiment container. R package version 1.10.1 \cr H. Wickham. ggplot2: Elegant Graphics for Data Analysis. Springer-Verlag New York, 2016. \cr Jeroen Ooms (2018). rsvg: Render SVG Images into PDF, PNG, PostScript, or Bitmap Arrays. R package version 1.3. https://CRAN.R-project.org/package=rsvg \cr R. Gentleman, V. Carey, W. Huber and F. Hahne (2017). genefilter: genefilter: methods for filtering genes from high-throughput experiments. R package version 1.58.1 \cr Paul Murrell (2009). Importing Vector Graphics: The grImport Package for R. Journal of Statistical Software, 30(4), 1-37. URL http://www.jstatsoft.org/v30/i04/ \cr Duncan Temple Lang and the CRAN Team (2018). XML: Tools for Parsing and Generating XML Within R and S-Plus. R package version 3.98-1.16. https://CRAN.R-project.org/package=XML \cr Baptiste Auguie (2017). gridExtra: Miscellaneous Functions for "Grid" Graphics. R package version 2.3. https://CRAN.R-project.org/package=gridExtra \cr R Core Team (2018). R: A language and environment for statistical computing. R Foundation for Statistical Computing, Vienna, Austria. RL https://www.R-project.org/ \cr https://github.com/ebi-gene-expression-group/anatomogram/tree/master/src/svg 
+Prudencio, Mercedes, Veronique V Belzil, Ranjan Batra, Christian A Ross, Tania F Gendron, Luc J Pregent, Melissa E Murray, et al. 2015. "Distinct Brain Transcriptome Profiles in C9orf72-Associated and Sporadic ALS." Nat. Neurosci. 18 (8): 1175–82
 Keays, Maria. 2019. ExpressionAtlas: Download Datasets from EMBL-EBI Expression Atlas
-Love, Michael I., Wolfgang Huber, and Simon Anders. 2014. “Moderated Estimation of Fold Change and Dispersion for RNA-Seq Data with DESeq2.” Genome Biology 15 (12): 550. doi:10.1186/s13059-014-0550-8
+Love, Michael I., Wolfgang Huber, and Simon Anders. 2014. "Moderated Estimation of Fold Change and Dispersion for RNA-Seq Data with DESeq2." Genome Biology 15 (12): 550. doi:10.1186/s13059-014-0550-8
 }
 \author{
 Jianhai Zhang \email{jzhan067@ucr.edu; zhang.jianhai@hotmail.com} \cr Dr. Thomas Girke \email{thomas.girke@ucr.edu}

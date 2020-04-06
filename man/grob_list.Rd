@@ -14,10 +14,11 @@ grob_list(
   tis.trans = NULL,
   sub.title.size,
   sam.legend = "identical",
-  title.legend = NULL,
-  ncol.legend = NULL,
-  nrow.legend = NULL,
-  pos.legend = "right",
+  legend.title = NULL,
+  legend.ncol = NULL,
+  legend.nrow = NULL,
+  legend.position = "right",
+  legend.direction = "vertical",
   legend.key.size = 0.5,
   legend.label.size = 8,
   legend.title.size = 8,
@@ -45,13 +46,17 @@ grob_list(
 
 \item{sam.legend}{A character vector of tissue names in the SVG image. These tissues are shown in the legend. Default is "identical", meaning all the identical tissues between the data matrix and SVG image. Another value is 'all', meaning all tissues in the SVG image.}
 
-\item{title.legend}{A character, the legend title. Default is NULL.}
+\item{legend.title}{A character, the legend title. Default is NULL.}
 
-\item{ncol.legend}{An integer, the column number of the items in the legend. Default is NULL.}
+\item{legend.ncol}{An integer, the column number of the items in the legend. Default is NULL.}
 
-\item{nrow.legend}{An integer, the row number of the items in the legend. Default is NULL.}
+\item{legend.nrow}{An integer, the row number of the items in the legend. Default is NULL.}
 
-\item{pos.legend}{Legend position. One of "none", "top", "right", "bottom", "left". "None" meaning remove the legend. Default is "right".}
+\item{legend.position}{the position of legends ("none", "left", "right",
+"bottom", "top", or two-element numeric vector)}
+
+\item{legend.direction}{layout of items in legends ("horizontal" or
+"vertical")}
 
 \item{legend.key.size}{A numeric (in "cm"). Default is 0.5. Size of the legend key.}
 

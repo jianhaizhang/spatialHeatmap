@@ -1,6 +1,6 @@
-#' Launch the Integrated Spatial Heatmap
+#' Launch the Integrated Shiny App
 #' 
-#' This function combines essential functionalities (spatial heatmap, matrix heatmap, network) in this package in an integrated mode, which is a web-browser based Shiny app. To use this app, a pair of configured data matrix and SVG image is required. The former can be obtained by assigning a directory path to "dir" in the function "filter_data", and the latter can be made with Inkscape or downloaded from the SVG repository. See the package vignette for details.
+#' This function combines essential functionalities (spatial heatmap, matrix heatmap, network) in this package in an integrated Shiny app. To use this app, a pair of formatted data matrix and SVG image is required. The former can be obtained by assigning a directory path to "dir" in the function \code{\link{filter_data}}, and the latter can be made with Inkscape or downloaded from the SVG repository. See the package vignette for details (\code{browseVignettes('spatialHeatmap')}). The computation of adjacency matrix and module identification is intensive for large data matrix (e.g. >10,000 rows), so to avoid repetitive computation the adjacency matrix and module assignment can be save in \code{\link{adj_mod}} (adj.txt and mod.txt) and uploaded to the Shiny app at later time. Note: the filtered data matix (processed_data.txt) from \code{\link{filter_data}} is used to compute the adjacency matrix and should also be uploaded. See the instruction page for how to use this Shiny app. 
 
 #' @return A web browser based Shiny app.
 

@@ -157,4 +157,29 @@ all <- data.frame(y2010, y2011, y2012, Annotation=c("Numeric change in resident 
 write.table(all, "us_population2018.txt", col.names=TRUE, row.names=TRUE, sep="\t")
 
 
+# Human brain data. 
+# Access data.
+library(ExpressionAtlas)
+rse.hum <- getAtlasData('E-GEOD-67196')[[1]][[1]]
+# Targets file.
+brain.pa <- system.file('extdata/example_data/target_brain.txt', package='spatialHeatmap')
+target.hum <- read.table(brain.pa, header=TRUE, row.names=1, sep='\t')
+colData(rse.hum) <- DataFrame(target.hum)
+# Normalise.
+capture.output(se.nor.hum <- norm_data(se=rse.hum, method.norm='ratio', data.trans='log2'), file=tempfile())
+# Aggregate.
+se.aggr.hum <- aggr_rep(se=se.nor.hum, sam.factor='organism_part', con.factor='disease', aggr='mean')
+# Filter.
+se.fil.hum <- filter_data(se=se.aggr.hum, sam.factor='organism_part', con.factor='disease', pOA=c(0.01, 5), CV=c(0.55, 100), dir=NULL)
+
+# Data matrix.
+expr.hum <- assay(se.fil.hum)
+colnames(expr.hum) <- sub("__", "_", colnames(expr.hum))
+
+write.table(expr.hum, 'expr_hum.txt', col.names=TRUE, row.names=TRUE, sep='\t')
+
+
+
+
+
 

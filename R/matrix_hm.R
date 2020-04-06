@@ -1,13 +1,13 @@
 #' Matrix Heatmap
 #'
-#' This function represents the input gene in the context of corresponding gene network module, where the rows and columns are sorted by hierarchical clustering dendrograms and the row of input gene is tagged by two lines. The matrix heatmap can be dispalyed in static or a web-browser based interactive mode. If the latter, users can zoom in and out by drawing a rectangle and by double clicking the image, respectively. Users can scale the expression values by gene or sample. \cr The network modules are identified at two alternative sensitivities levels (3, 2) by the function "adj.mod". From 3 to 2, the sensitivity decreases and results in less modules with larger sizes. The same module can also be displayed as an interactive form of a network through the "network" function.
+#' This function displays the input gene in the context of corresponding gene network module, where the rows and columns are sorted by hierarchical clustering dendrograms and the row of input gene is tagged by two lines. The matrix heatmap can be dispalyed in static or a web-browser based interactive mode. If the latter, users can zoom in and out by drawing a rectangle and by double clicking the image, respectively. Users can scale the data matrix by gene or sample. The same module can also be displayed in form of a network through the \code{\link{network}} function.
 
-#' @param geneID A gene ID from the expression matrix. 
+#' @param geneID A gene ID from the expression data matrix. 
 #' @param se A "SummarizedExperiment" object containing the processed data matrix and metadata returned by the function \code{\link{filter_data}}. In the data matrix, rows are gene IDs and columns are samples/conditions.
-#' @param adj.mod The list of "adjacency matrix" and "module" definition retured by the function "adj.mod".
-#' @param ds The module identification sensitivity, either 2 or 3. See function "adj.mod" for details.
-#' @param scale It specifies whether to scale the heatmap. There are three options: "row" means scale by row, "column" means scale by column, and "no" means no scale. 
-#' @param col A vector of two colours. It is used for constructing the colour scale. The default is c('yellow', 'blue').
+#' @param adj.mod The list of "adjacency matrix" and "module" definition retured by the function \code{\link{adj_mod}}.
+#' @param ds The module identification sensitivity ds, either 2 or 3. See function \code{\link{adj_mod}} for details.
+#' @param scale "row", "column", or "no", meaing scale the data matrix by row, column, or no scale. 
+#' @param col A character vector of two colours. It is used for constructing the colour scale. The default is c('yellow', 'blue').
 #' @param main The title of the matrix heatmap.
 #' @param title.size A numeric, the size of the title font.
 #' @param cexCol A numeric value, the size of column names. Default is 1.
@@ -18,33 +18,54 @@
 #' @param sep.width The width of two indicator lines of the input gene.
 #' @param static "TRUE" gives the static mode and "FALSE" interactive mode.
 #' @param margin A vector of two numbers, specifying bottom and right margins respectively. The default is c(10, 10).
-#' @param arg.lis1 A list of additional arguments passed to the "heatmap.2" function from "gplots" package. E.g. list(xlab='sample', ylab='gene'). The default is an empty list.
-#' @param arg.lis2 A list of additional arguments passed to the "ggplot" function from "gglot2" package. The default is an empty list. 
+#' @param arg.lis1 A list of additional arguments passed to the \code{\link[gplots]{heatmap.2}} function from "gplots" package. E.g. list(xlab='sample', ylab='gene'). The default is an empty list.
+#' @param arg.lis2 A list of additional arguments passed to the \code{\link[ggplot2]{ggplot}} function from "ggplot2" package. The default is an empty list. 
 #' @return A static image or an interactive application lauched on the web browser. 
 #' @examples
-#' # Creat the "SummarizedExperiment" class. Refer to the R package "SummarizedExperiment" for more details.
-#' data.path <- system.file("extdata/shinyApp/example", "root_expr_row_gen.txt", package = "spatialHeatmap")   
-#' ## The expression matrix, where the row and column names should be gene IDs and sample/conditions respectively. This data matrix is truncated from a GEO dataset (https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE46205), which is already normalised.
-#' library(data.table); expr <- fread(data.path, sep='\t', header=TRUE, fill=TRUE)
-#' col.na <- colnames(expr)[-ncol(expr)]; row.na <- as.data.frame(expr[, 1])[, 1]
-#' expr <- as.matrix(as.data.frame(expr, stringsAsFactors=FALSE)[, -1])
-#' rownames(expr) <- row.na; colnames(expr) <- col.na
-#' col.met.path <- system.file("extdata/shinyApp/example", "col_metadata.txt", package = "spatialHeatmap") 
-#' ## Condition metadata is data frame. It has a column of tissues and a column of contidions, which correspond to columns of the data matrix "expr".
-#' col.metadata <- read.table(col.met.path, header=TRUE, row.names=NULL, sep='\t', stringsAsFactors=FALSE)
-#' row.met.path <- system.file("extdata/shinyApp/example", "row_metadata.txt", package = "spatialHeatmap")
-#' ## Row metadata is a data frame. It has a column of row (gene) annotations, which correspond to rows of the data matrix "expr".
-#' row.metadata <- read.table(row.met.path, header=TRUE, row.names=1, sep='\t', stringsAsFactors=FALSE)
-#' ## The expression matrix, row metadata, and column metadata are stored in a "SummarizedExperiment" object. The row metadata is optional while column metadata is mandatory. The column names in the expression matrix are not important, since they are ultimately renewed by column metadata.
-#' library(SummarizedExperiment); expr <- as.matrix(expr); se <- SummarizedExperiment(assays=list(expr=expr), rowData=row.metadata, colData=col.metadata)  
-#' exp <- filter_data(data=se, pOA=c(0, 0), CV=c(0.1, Inf), ann='ann', samples='sample', conditions='condition', dir=NULL) 
 
-#' adj_mod <- adj_mod(data=exp, type="signed", minSize=15, dir=NULL)
-#' # The gene "PSAC" is represented in the context of its gene module in the form of a static matrix heatmap.
-#' matrix_heatmap(geneID="PSAC", data=exp, adj.mod=adj_mod, ds="2", scale="row", static=TRUE)
+#' # The example data (E-GEOD-67196) is an RNA-seq data measured in cerebellum and frontal cortex of human brain across normal and amyotrophic lateral sclerosis (ALS) subjects (Prudencio et al. 2015). 
+#' library(ExpressionAtlas); library(SummarizedExperiment)
+#' rse.hum <- getAtlasData('E-GEOD-67196')[[1]][[1]]; assay(rse.hum)[1:3, 1:3]
+#'
+#' # A targets file describing replicates of samples and conditions is required, which is made based on the "colData" slot in the downloaded "RangedSummarizedExperiment" and available in spatialHeatmap. See the "se" parameter for details. 
+#' brain.pa <- system.file('extdata/example_data/target_brain.txt', package='spatialHeatmap')
+#' target.hum <- read.table(brain.pa, header=TRUE, row.names=1, sep='\t')
+#' # The "organism_part" and "disease" column describes tissue and condition replicates respectively.  
+#' target.hum[c(1:3, 41:42), 4:5]
+#' # Place the targets file into "colData" slot as a DataFrame class. 
+#' colData(rse.hum) <- DataFrame(target.hum)
+#' 
+#' # For users with little R expertise, if the gene expression matrix comes as a data frame, it should be placed into "SummarizedExperiment" before proceeding to next step. An example is shown below by borrowing a data matrix from the brain data.
+#' # Borrow a data matrix.
+#' df <- assay(rse.hum); df[1:2, 1:3]
+#' # Place the data matrix and targets file (target.hum) into "SummarizedExperiment".
+#' rse.hum <- SummarizedExperiment(assay=df, colData=target.hum, rowData=NULL)
+#' 
+#' # The count matrix is normalised with estimateSizeFactors (type=‘ratio’).
+#' se.nor.hum <- norm_data(se=rse.hum, method.norm='ratio', data.trans='log2')
+#'
+#' # Average replicates of concatenated sample__condition.
+#' se.aggr.hum <- aggr_rep(se=se.nor.hum, sam.factor='organism_part', con.factor='disease', aggr='mean')
+#' assay(se.aggr.hum)[49939:49942, ] # The concatenated tissue__conditions are the column names of the output data matrix.
+#' 
+#' # Genes with low expression level and low variantion are always filtered. 
+#' se.fil.hum <- filter_data(se=se.aggr.hum, sam.factor='organism_part', con.factor='disease', pOA=c(0.01, 5), CV=c(0.3, 100), dir=NULL)
+
+#' # Detect modules. 
+#' adj.mod <- adj_mod(se=se.fil.hum, type="signed", minSize=15, dir=NULL)
+#' # The first column is ds=2 while the second is ds=3. The numbers in each column are module labels with "0" meaning genes not assigned to any modules.
+#' adj.mod[['mod']][1:3, ]
+
+#' # Plot matrix heatmap on gene ENSG00000008196 with ds='3'. Set "static=TRUE" to launch the interactive mode. 
+#' matrix_hm(geneID="ENSG00000008196", se=se.fil.hum, adj.mod=adj.mod, ds="3", scale="no", angleCol=80, angleRow=35, cexRow=0.8, cexCol=0.8, margin=c(10, 6), static=TRUE, arg.lis1=list(offsetRow=0.1, offsetCol=0.1))
+
 #' @author Jianhai Zhang \email{jzhan067@@ucr.edu; zhang.jianhai@@hotmail.com} \cr Dr. Thomas Girke \email{thomas.girke@@ucr.edu}
 #' @references
 #' Martin Morgan, Valerie Obenchain, Jim Hester and Hervé Pagès (2018). SummarizedExperiment: SummarizedExperiment container. R package version 1.10.1 \cr Andrie de Vries and Brian D. Ripley (2016). ggdendro: Create Dendrograms and Tree Diagrams Using 'ggplot2'. R package version 0.1-20. https://CRAN.R-project.org/package=ggdendro \cr H. Wickham. ggplot2: Elegant Graphics for Data Analysis. Springer-Verlag New York, 2016. \cr Carson Sievert (2018) plotly for R. https://plotly-book.cpsievert.me \cr Langfelder P and Horvath S, WGCNA: an R package for weighted correlation network analysis. BMC Bioinformatics 2008, 9:559 doi:10.1186/1471-2105-9-559 \cr R Core Team (2018). R: A language and environment for statistical computing. R Foundation for Statistical Computing, Vienna, Austria. URL https://www.R-project.org/ \cr Gregory R. Warnes, Ben Bolker, Lodewijk Bonebakker, Robert Gentleman, Wolfgang Huber Andy Liaw, Thomas Lumley, Martin Maechler, Arni Magnusson, Steffen Moeller, Marc Schwartz and Bill Venables (2019). gplots: Various R Programming Tools for Plotting Data. R package version 3.0.1.1.  https://CRAN.R-project.org/package=gplots \cr Hadley Wickham (2007). Reshaping Data with the reshape Package. Journal of Statistical Software, 21(12), 1-20. URL http://www.jstatsoft.org/v21/i12/ 
+#' Prudencio, Mercedes, Veronique V Belzil, Ranjan Batra, Christian A Ross, Tania F Gendron, Luc J Pregent, Melissa E Murray, et al. 2015. "Distinct Brain Transcriptome Profiles in C9orf72-Associated and Sporadic ALS." Nat. Neurosci. 18 (8): 1175–82
+#' Keays, Maria. 2019. ExpressionAtlas: Download Datasets from EMBL-EBI Expression Atlas
+#' Love, Michael I., Wolfgang Huber, and Simon Anders. 2014. "Moderated Estimation of Fold Change and Dispersion for RNA-Seq Data with DESeq2." Genome Biology 15 (12): 550. doi:10.1186/s13059-014-0550-8
+
 
 #' @export
 #' @importFrom SummarizedExperiment assay
@@ -52,8 +73,7 @@
 #' @importFrom ggplot2 ggplot geom_segment geom_text position_dodge geom_rect theme theme_minimal geom_tile scale_fill_gradient geom_hline
 #' @importFrom plotly layout subplot %>%
 #' @importFrom stats hclust order.dendrogram as.dendrogram
-#' @importFrom gplots heatmap.2
-#' @importFrom reshape2 melt 
+#' @importFrom gplots heatmap.2 
 #' @importFrom graphics image mtext par plot title
 #' @importFrom grDevices dev.off png
 

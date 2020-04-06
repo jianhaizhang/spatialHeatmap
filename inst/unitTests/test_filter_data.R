@@ -1,23 +1,27 @@
-library(data.table); library(SummarizedExperiment)
-data.path <- system.file("extdata/shinyApp/example", "root_expr_row_gen.txt", package = "spatialHeatmap")  
 
 test_filter_data <- function() {
-  # Creat the "SummarizedExperiment" class. Refer to the R package "SummarizedExperiment" for more details. 
-  ## The expression matrix, where the row and column names should be gene IDs and sample/conditions respectively. This data matrix is truncated from a GEO dataset (https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE46205), which is already normalised.
-  expr <- fread(data.path, sep='\t', header=TRUE, fill=TRUE)
-  col.na <- colnames(expr)[-ncol(expr)]; row.na <- as.data.frame(expr[, 1])[, 1]
-  expr <- as.matrix(as.data.frame(expr, stringsAsFactors=FALSE)[, -1])
-  rownames(expr) <- row.na; colnames(expr) <- col.na
-  col.met.path <- system.file("extdata/shinyApp/example", "col_metadata.txt", package = "spatialHeatmap") 
-  ## Condition metadata is data frame. It has a column of tissues and a column of contidions, which correspond to columns of the data matrix "expr".
-  col.metadata <- read.table(col.met.path, header=TRUE, row.names=NULL, sep='\t', stringsAsFactors=FALSE)
-  row.met.path <- system.file("extdata/shinyApp/example", "row_metadata.txt", package = "spatialHeatmap")
-  ## Row metadata is a data frame. It has a column of row (gene) annotations, which correspond to rows of the data matrix "expr".
-  row.metadata <- read.table(row.met.path, header=TRUE, row.names=1, sep='\t', stringsAsFactors=FALSE)
-  ## The expression matrix, row metadata, and column metadata are stored in a "SummarizedExperiment" object. The row metadata is optional while column metadata is mandatory. The column names in the expression matrix are not important, since they are ultimately renewed by column metadata.
-  expr <- as.matrix(expr); se <- SummarizedExperiment(assays=list(expr=expr), rowData=row.metadata, colData=col.metadata)  
-  exp <- filter_data(data=se, pOA=c(0, 0), CV=c(0.1, Inf), ann='ann', sam.factor='sample', con.factor='condition', dir=NULL) 
+# The example data (E-GEOD-67196) is an RNA-seq data measured in cerebellum and frontal cortex of human brain across normal and amyotrophic lateral sclerosis (ALS) subjects (Prudencio et al. 2015). 
+library(ExpressionAtlas); library(SummarizedExperiment) 
+rse.hum <- getAtlasData('E-GEOD-67196')[[1]][[1]]; assay(rse.hum)[1:3, 1:3]
 
-  checkTrue(is(exp, "SummarizedExperiment"))
+# A targets file describing replicates of samples and conditions is required, which is made based on the "colData" slot in the downloaded "RangedSummarizedExperiment" and available in spatialHeatmap. See the "se" parameter for details. 
+brain.pa <- system.file('extdata/example_data/target_brain.txt', package='spatialHeatmap')
+target.hum <- read.table(brain.pa, header=TRUE, row.names=1, sep='\t')
+# The "organism_part" and "disease" column describes tissue and condition replicates respectively.  
+target.hum[c(1:3, 41:42), 4:5]
+# Place the targets file into "colData" slot as a DataFrame class. 
+colData(rse.hum) <- DataFrame(target.hum)
+
+# The count matrix is normalised with estimateSizeFactors (type="ratio").
+se.nor.hum <- norm_data(se=rse.hum, method.norm='ratio', data.trans='log2')
+# Average replicates of concatenated sample__condition.
+se.aggr.hum <- aggr_rep(se=se.nor.hum, sam.factor='organism_part', con.factor='disease', aggr='mean')
+assay(se.aggr.hum)[49939:49942, ] # The concatenated tissue__conditions are the column names of the output data matrix.
+
+# Genes with low expression level and low variantion are always filtered. 
+se.fil.hum <- filter_data(se=se.aggr.hum, sam.factor='organism_part', con.factor='disease', pOA=c(0.01, 5), CV=c(0.3, 100), dir=NULL)
+
+checkTrue(is(se.fil.hum, "SummarizedExperiment"))
+
 }
 

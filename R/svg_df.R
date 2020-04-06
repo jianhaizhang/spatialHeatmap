@@ -78,10 +78,25 @@ svg_df <- function(svg.path) {
   }; tis.path <- gsub("_\\d+$", "", id.xml)
 
   # Detect groups that use relative coordinates ("transform", "matrix" in Inkscape.), which leads to some plygons missed in ".ps.xml" file.
-  fil.stk <- sapply(seq_len(xmlSize(top)-1), function (i) xmlAttrs(top[[i]])['type'])
+  fil.stk <- sapply(seq_len(xmlSize(top)-1), function (i) xmlAttrs(top[[i]])['type']); tab <- table(fil.stk)
   w <- which(fil.stk=='fill')%%2==0
-  if (any(w)) { w1 <- which(w)[1]; tis.wrg <- tis.path[c(w1-1, w1)]; return(paste0('Error detected in "', paste0(tis.wrg, collapse='; '), '" in SVG image. If they are grouped tissues, please ungroup and regroup them respectively.')) }
-   
+  if (any(w) & tab['fill'] > tab['stroke']) { 
+
+    # All path ids in original SVG.
+    id.svg <- NULL; for (i in seq_len(xmlSize(xmltop[[size]]))) {
+
+     node <- xmltop[[size]][[i]] 
+     if (xmlName(node)=='g') for (j in seq_len(xmlSize(node))) { id.svg <- c(id.svg, xmlAttrs(node[[j]])[['id']]) } else id.svg <- c(id.svg, xmlAttrs(node)[['id']])  
+
+    }
+    
+    # Index of wrong path.
+    w1 <- which(w)[1]
+    # Wrong path and related group.
+    tis.wrg <- paste0(tis.path[c(w1-1, w1)], collapse='; ')
+    return(paste0("Error detected in '", tis.wrg, "' in SVG image. Please ungroup and regroup the respective group they belong to.")) 
+
+  }
 
   k <-0; df <- NULL; for (i in seq_len(xmlSize(top)-1)) {
 

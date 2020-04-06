@@ -1,4 +1,4 @@
-library(shiny); library(shinydashboard); library(shinyWidgets); library(plotly); library(visNetwork); library(DT)
+library(shiny); library(shinydashboard); library(plotly); library(visNetwork); library(DT)
 
 ins0 <- "For a quick test, select 1 of the 7 examples under \"Select a work mode\", or select \"Compute online\" work mode and download the pre-configured SVG image and expression matrix from below."
 
@@ -115,12 +115,10 @@ shinyUI(dashboardPage(
       tabItem(tabName="hm_net", 
 
       box(title="Expression Matrix", status="primary", solidHeader=TRUE, collapsible=TRUE, fluidRow(splitLayout(cellWidths=c("1%", "98%", "1%"), "", dataTableOutput("dt"), "")), height=430, width=12),
-      tags$head(tags$style(HTML(".shiny-output-error-validation { color: red; }"))),
       box(title="Spatial Heatmap", status="primary", solidHeader=TRUE, collapsible=TRUE, 
       fluidRow(splitLayout(cellWidths=c('1%', "99%"), '', checkboxGroupInput(inputId="tis", label="Select tissues to be transparent:", choices='', selected='', inline=TRUE))),
       fluidRow(splitLayout(cellWidths=c("1%", "7%", "91%", "1%"), "", plotOutput("bar"), plotOutput("tissue"), "")), width=9),
-      box(title="Original Image", status="primary", solidHeader=TRUE, collapsible=TRUE, splitLayout(cellWidths=c("1%", "98%", "1%"), "", plotOutput("ori.svg"), ""), width=3),
-      box(title='SSG', status="primary", solidHeader=TRUE, collapsible=TRUE, width=12, tabBox(title="", width=12, id="ssg", selected='w.meth', side='right',tabPanel(title="Across methods table", dataTableOutput("a.table"), value='a.table'), tabPanel(title="Across methods", plotOutput("ssg.sum"), value='a.meth'), tabPanel(title="Within method table", dataTableOutput("w.table"), value='w.table'), tabPanel(title="Within methods", plotOutput("ssg.sep"), value='w.meth'))),
+      box(title="Original Image", status="primary", solidHeader=TRUE, collapsible=TRUE, splitLayout(cellWidths=c("1%", "98%", "1%"), "", plotOutput("ori.svg"), ""), width=3), br(),
       box(title="Matrix Heatmap", status="primary", solidHeader=TRUE, collapsible=TRUE, plotlyOutput("HMly"), width=12, height=460), br(),
       box(title="Interactive Network", status="primary", solidHeader=TRUE, collapsible=TRUE, fluidRow(splitLayout(cellWidths=c("1%", "6%", "91%", "2%"), "", plotOutput("bar.net"), visNetworkOutput("vis"), "")), width=12)
       ),
