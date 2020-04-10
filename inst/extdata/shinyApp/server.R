@@ -13,6 +13,10 @@ matrix_hm <- get('matrix_hm', envir=asNamespace('spatialHeatmap'), inherits=FALS
 network <- get('network', envir=asNamespace('spatialHeatmap'), inherits=FALSE)
 
 
+
+
+
+
 library(SummarizedExperiment); library(shiny); library(shinydashboard); library(grImport); library(rsvg); library(ggplot2); library(DT); library(gridExtra); library(ggdendro); library(WGCNA); library(grid); library(XML); library(plotly); library(data.table); library(genefilter); library(flashClust); library(visNetwork); library(reshape2); library(igraph)
 
 # Import input matrix.
@@ -66,7 +70,11 @@ shinyServer(function(input, output, session) {
 
   )
   # Instruction.
-  output$ins <-renderUI({ includeHTML("file/instruction.html") })
+  output$sum <-renderUI({ includeHTML("file/summary.html") })
+  output$input <-renderUI({ includeHTML("file/input.html") })
+  output$input1 <-renderUI({ includeHTML("file/input1.html") })
+  output$shm.ins <-renderUI({ includeHTML("file/shm.html") })
+  output$matrix_net <-renderUI({ includeHTML("file/matrix_net.html") })
   # Acknowledgement.
   output$ack <-renderUI({ includeHTML("file/acknowledgement.html") })
 

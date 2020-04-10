@@ -74,7 +74,12 @@ shinyUI(dashboardPage(
       box(title="Interactive Network", status="primary", solidHeader=TRUE, collapsible=TRUE, fluidRow(splitLayout(cellWidths=c("1%", "6%", "91%", "2%"), "", plotOutput("bar.net"), visNetworkOutput("vis"), "")), width=12)
       ),
 
-      tabItem(tabName='ins', htmlOutput("ins")),
+      tabItem(tabName="ins", 
+      box(title="Summary", status="primary", solidHeader=TRUE, collapsible=TRUE, htmlOutput("sum"), width=12),
+      box(title="Input", status="primary", solidHeader=TRUE, collapsible=TRUE, htmlOutput("input"), downloadButton("dld.svg", "Download SVG image"), downloadButton("dld.data", "Download data matrix"), htmlOutput("input1"), width=12), 
+      box(title="Spatial Heatmap", status="primary", solidHeader=TRUE, collapsible=TRUE, htmlOutput("shm.ins"), width=12),
+      box(title="Matrix Heatmap & Network", status="primary", solidHeader=TRUE, collapsible=TRUE, htmlOutput("matrix_net"), width=12)
+      ),
       tabItem(tabName="ack", htmlOutput("ack")) 
 
       )

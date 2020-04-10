@@ -141,8 +141,8 @@ capture.output(se.nor.mus <- norm_data(se=rse.mus, method.norm='ratio', data.tra
 se.aggr.mus <- aggr_rep(se=se.nor.mus, sam.factor='organism_part', con.factor='strain', aggr='mean')
 se.fil.mus <- filter_data(se=se.aggr.mus, sam.factor='organism_part', con.factor='strain', pOA=c(0.03, 5), CV=c(0.6, 100), dir=NULL)
 
-svg.pa.mus <- system.file("extdata/shinyApp/example", "mus_musculus.male.svg", package="spatialHeatmap")
-spatial_hm(svg.path=svg.pa.mus, se=se.fil.mus, ID='ENSMUSG00000000263', col.com=c("yellow", "blue", "purple"), width=1, height=0.5, legend.r=0.6, sub.title.size=7, layout="gene", ncol=3, tis.trans='skeletal.muscle', sam.legend='identical', legend.key.size=0.4, legend.nrow=4, legend.position=c(0.5, -0.15))
+svg.mus <- system.file("extdata/shinyApp/example", "mus_musculus.male.svg", package="spatialHeatmap")
+spatial_hm(svg.path=svg.mus, se=se.fil.mus, ID='ENSMUSG00000000263', col.com=c("yellow", "blue", "purple"), width=1, height=0.5, legend.r=0.6, sub.title.size=7, layout="gene", ncol=3, tis.trans='skeletal.muscle', sam.legend='identical', legend.key.size=0.4, legend.nrow=4, legend.position=c(0.5, -0.15))
 
 ```
 
@@ -163,9 +163,9 @@ capture.output(se.nor.chk <- norm_data(se=rse.chk, method.norm='ratio', data.tra
 # Average the tissue-condition replicates.
 se.aggr.chk <- aggr_rep(se=se.nor.chk, sam.factor='organism_part', con.factor='age', aggr='mean')
 se.fil.chk <- filter_data(se=se.aggr.chk, sam.factor='organism_part', con.factor='age', pOA=c(0.01, 5), CV=c(0.6, 100), dir=NULL)
-svg.pa.chk <- system.file("extdata/shinyApp/example", "gallus_gallus.svg", package="spatialHeatmap")
+svg.chk <- system.file("extdata/shinyApp/example", "gallus_gallus.svg", package="spatialHeatmap")
 
-spatial_hm(svg.path=svg.pa.chk, se=se.fil.chk, ID='ENSGALG00000006346', col.com=c("yellow", "blue", "purple"), bar.width=0.7, width=1, height=0.8, legend.r=0.35, sub.title.size=7, layout="gene", ncol=3, legend.key.size=0.2, legend.label.size=7, legend.position=c(0.5, -0.05), legend.nrow=2)
+spatial_hm(svg.path=svg.chk, se=se.fil.chk, ID='ENSGALG00000006346', col.com=c("yellow", "blue", "purple"), bar.width=0.7, width=1, height=0.9, legend.r=0.4, sub.title.size=7, layout="gene", ncol=3, legend.key.size=0.2, legend.label.size=7, legend.position=c(0.5, -0.06), legend.nrow=2)
 
 ```
 
@@ -190,10 +190,12 @@ colData(se.sh) <- DataFrame(target.sh)
 se.aggr.sh <- aggr_rep(se=se.sh, sam.factor='samples', con.factor='conditions', aggr='mean')
 se.fil.sh <- filter_data(se=se.aggr.sh, sam.factor='samples', con.factor='conditions', pOA=c(0.03, 6), CV=c(0.30, 100), dir=NULL)
 
-svg.pa.sh <- system.file("extdata/shinyApp/example", "shoot_final.svg", package="spatialHeatmap")
-spatial_hm(svg.path=svg.pa.sh, se=se.fil.sh, ID="HRE2", col.com=c('purple', 'cyan', "brown"), width=1, height=0.4, layout="gene", ncol=2, legend.position='bottom', legend.nrow=3, legend.r=0.6)
+svg.sh <- system.file("extdata/shinyApp/example", "shoot_final.svg", package="spatialHeatmap")
+spatial_hm(svg.path=svg.sh, se=se.fil.sh, ID="HRE2", col.com=c('purple', 'cyan', "brown"), width=1, height=0.5, layout="gene", ncol=2, legend.position='bottom', legend.nrow=3, legend.r=0.8, legend.key.size=0.3, legend.label.size=7)
 
 ```   
+
+<!-- The following code of each example is duplicate with respective example above, so "eval=FALSE" is set if the code chunk is not neccessary to run. --> 
 
 ## Procedures to Plot Spatial Heatmaps {#how}
 
@@ -428,7 +430,7 @@ Formatted SVG image.
 
 ```{r eval=FALSE, echo=TRUE, warnings=FALSE}
 
-svg.pa.mus <- system.file("extdata/shinyApp/example", "mus_musculus.male.svg", package="spatialHeatmap")
+svg.mus <- system.file("extdata/shinyApp/example", "mus_musculus.male.svg", package="spatialHeatmap")
 
 ```
 
@@ -437,7 +439,7 @@ Plot spatial heatmaps ([Figure 2](#mus_shm)).
 
 ```{r eval=FALSE, echo=TRUE, warnings=FALSE, fig.align="center", fig.cap=("Figure 5 Mouse organ spatial heatmap. This is a multiple-layer image and skeletal.muscle is set transparent to exposed lung and heart."), out.width="100%" }
 
-spatial_hm(svg.path=svg.pa.mus, se=se.fil.mus, ID='ENSMUSG00000000263', col.com=c("yellow", "blue", "purple"), width=1, height=0.5, sub.title.size=7, layout="gene", ncol=3, tis.trans='skeletal.muscle', sam.legend='identical', legend.key.size=0.4, legend.nrow=3, legend.position=c(0.5, -0.15))
+spatial_hm(svg.path=svg.mus, se=se.fil.mus, ID='ENSMUSG00000000263', col.com=c("yellow", "blue", "purple"), width=1, height=0.5, legend.r=0.6, sub.title.size=7, layout="gene", ncol=3, tis.trans='skeletal.muscle', sam.legend='identical', legend.key.size=0.4, legend.nrow=4, legend.position=c(0.5, -0.15))
 
 ```
 
@@ -478,7 +480,7 @@ Formatted SVG image.
 
 ```{r eval=FALSE, echo=TRUE, warnings=FALSE}
 
-svg.pa.chk <- system.file("extdata/shinyApp/example", "gallus_gallus.svg", package="spatialHeatmap")
+svg.chk <- system.file("extdata/shinyApp/example", "gallus_gallus.svg", package="spatialHeatmap")
 
 ```
 
@@ -486,7 +488,7 @@ Plot spatial heatmaps ([Figure 3](#chk_shm)).
 
 ```{r eval=FALSE, echo=TRUE, warnings=FALSE, fig.align="center", fig.cap=("Figure 8 Example of plotting chicken organ spatial heatmaps. Liver in day10 is not plotted since this tissue in day10 in not available in the data matrix."), out.width="100%" }
 
-spatial_hm(svg.path=svg.pa.chk, se=se.fil.chk, ID='ENSGALG00000006346', col.com=c("yellow", "blue", "purple"), width=1, height=1, sub.title.size=7, layout="gene", ncol=3, legend.key.size=0.2, legend.label.size=7, legend.position=c(0.5, -0.05), legend.nrow=1)
+spatial_hm(svg.path=svg.chk, se=se.fil.chk, ID='ENSGALG00000006346', col.com=c("yellow", "blue", "purple"), bar.width=0.7, width=1, height=0.9, legend.r=0.4, sub.title.size=7, layout="gene", ncol=3, legend.key.size=0.2, legend.label.size=7, legend.position=c(0.5, -0.06), legend.nrow=2)
 
 ```
 
@@ -533,7 +535,7 @@ Formatted SVG image.
 
 ```{r eval=TRUE, echo=TRUE, warnings=FALSE }
 
-svg.pa.sh <- system.file("extdata/shinyApp/example", "shoot_final.svg", package="spatialHeatmap")
+svg.sh <- system.file("extdata/shinyApp/example", "shoot_final.svg", package="spatialHeatmap")
 
 ```
 
@@ -542,7 +544,7 @@ Plot spatial heatmaps ([Figure 4](#sh_shm)).
 <a name="sh_shm1"></a>
 ```{r eval=FALSE, echo=TRUE, warnings=FALSE, fig.align="center", fig.cap=('Figure 9 Spatial Heatmaps of Arabidopsis shoot. Pre-defined tissue regions are coloured by the expression profile of the target gene.'), out.width="80%"}
 
-spatial_hm(svg.path=svg.pa.sh, se=se.fil.sh, ID="HRE2", col.com=c('purple', 'cyan', "brown"), width=1, height=1, layout="gene", ncol=2)
+spatial_hm(svg.path=svg.sh, se=se.fil.sh, ID="HRE2", col.com=c('purple', 'cyan', "brown"), width=1, height=0.5, layout="gene", ncol=2, legend.position='bottom', legend.nrow=3, legend.r=0.8, legend.key.size=0.3, legend.label.size=7)
 
 ```   
 
