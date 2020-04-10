@@ -32,7 +32,7 @@ vignette: |
 
 ```{r setup0, eval=TRUE, echo=FALSE, message=FALSE, warning=FALSE}
 
-  library(knitr); opts_chunk$set(message=FALSE, warning=FALSE)
+library(knitr); opts_chunk$set(message=FALSE, warning=FALSE)
 
 ```
 
@@ -82,7 +82,7 @@ browseVignettes('spatialHeatmap')
 
 ## Spatial Heatmap {#shm}
 
-This is the core functionality of this package and is implemented by the function `spatial_hm`. It maps expression profiles of target genes from the data matrix onto the paired SVG image and displays as spatial heatmaps ([Figure 1](#brain_shm)). This featured is presented with 4 examples: Human Brain, Mouse Organ, Chicken Organ, Arabidopsis Shoot. The first 3 are RNA-seq data from [Expression Atlas-EMBL-EBI](https://www.ebi.ac.uk/gxa/home) and the last one is microarray data from [GEO](https://www.ncbi.nlm.nih.gov/geo/). Successful plotting of spatial heatmaps requires a pair of formatted data matrix and SVG image, as explained in format requirements on [data matrix](#mat_form) and [SVG image](#svg_form). The plotting details of the 4 examples are presented in [Procedures to Plot Spatial Heatmaps](#how).  
+This is the core functionality of this package and is implemented by the function `spatial_hm`. It maps expression profiles of target genes from the data matrix onto the paired SVG image and displays as spatial heatmaps ([Figure 1](#brain_shm)). This featured is presented with 4 examples: Human Brain, Mouse Organ, Chicken Organ, Arabidopsis Shoot. The first 3 are RNA-seq data from [Expression Atlas-EMBL-EBI](https://www.ebi.ac.uk/gxa/home) and the last one is microarray data from [GEO](https://www.ncbi.nlm.nih.gov/geo/). Successful plotting of spatial heatmaps requires a pair of formatted data matrix and SVG image, as explained in format requirements on [data matrix](#mat_form) and [SVG image](#svg_form).   
 
 The Expression Atlas-EMBL-EBI is a rich resource of gene and protein expression. It contains gene expression data measured from diverse origins such as different species, biological conditions, tissues, cell types, developmental stages, and diseases. Moreover, Expression Atlas also provides a rich resource of SVG images, which convers many species from animals to plants. The format of these SVG images are slightly modified to be compatible with the spatialHeatmap, which are available in the [SVG repository](#svg_tmp). The GEO is another rich repository of public genomics data covering a wide range of species, which accepts array- and sequence-based data in MIAME-compliant format. To demonstrate the wide usage of spatialHeatmap, example data are chosen from the 2 popular repositories.     
 
@@ -96,6 +96,7 @@ If multiples target genes are input, a set of spatial heatmaps for each gene are
 
 If tissues exist in multiple layers, some tissues might be covered and invisible in the spatial heatmaps. In this case, the `tis.trans` parameter can be used to set the front tissues transparent. Then the covered tissues will be visible, a representative example of which is shown in [Figure 2](#mus_shm). In this example, users can set `tis.trans='frontal_cortex'` in the [script](#brain_shm1) to check this feature. If too many tissues are included in the plot, the legend might occupy too much space. The `sam.legend` parameter allows users to only show selected tissues in the legend, and the default "identical" only shows the coloured tissues. Moreover, too many tissues might affect the visual effects due to the messy polygon outlines. The `line.size` and `line.color` parameters are used to adjust the thickness and colour of polygon outlines respectively and thus can enhance the visualisation.  
   
+Refer to the [script](#how) for plotting details.  
 
 <a name="brain_shm"></a>
 ```{r eval=TRUE, echo=FALSE, warnings=FALSE, fig.align="center", fig.cap=("Figure 1 Example of plotting EBI data matrix on the SVG template. Cerebellum and frontal cortex are coloured, since they are the only 2 common tissues between the SVG image and the data matrix."), out.width="100%" }
@@ -103,7 +104,7 @@ If tissues exist in multiple layers, some tissues might be covered and invisible
 # Access data.
 rse.hum <- getAtlasData('E-GEOD-67196')[[1]][[1]]
 # Targets file.
-brain.pa <- system.file('extdata/example_data/target_brain.txt', package='spatialHeatmap')
+brain.pa <- system.file('extdata/shinyApp/example/target_brain.txt', package='spatialHeatmap')
 target.hum <- read.table(brain.pa, header=TRUE, row.names=1, sep='\t')
 colData(rse.hum) <- DataFrame(target.hum)
 # Normalise.
@@ -117,7 +118,7 @@ se.fil.hum <- filter_data(se=se.aggr.hum, sam.factor='organism_part', con.factor
 svg.hum <- system.file("extdata/shinyApp/example", "homo_sapiens.brain.svg", package="spatialHeatmap")
 
 # Plot.
-spatial_hm(svg=svg.hum, se=se.fil.hum, ID='ENSG00000268433', col.com=c("yellow", "blue", "purple"), width=1, height=0.5, sub.title.size=11, layout="gene", ncol=2, tis.trans=NULL, sam.legend='identical', line.size=0.2, line.color='grey70', legend.position=c(0.5, -0.15), legend.nrow=1)
+spatial_hm(svg.path=svg.hum, se=se.fil.hum, ID='ENSG00000268433', col.com=c("yellow", "blue", "purple"), width=1, height=0.4, legend.r=0.5, sub.title.size=11, layout="gene", ncol=2, tis.trans=NULL, sam.legend='identical', line.size=0.2, line.color='grey70', legend.position=c(0.5, -0.15), legend.nrow=1)
 
 ```
 
@@ -131,17 +132,17 @@ This is a typical example to demonstrate the usage of `tis.trans` parameter, sin
 ```{r eval=TRUE, echo=FALSE, warnings=FALSE, fig.align="center", fig.cap=("Figure 2 Mouse organ spatial heatmap. This is a multiple-layer image and skeletal.muscle is set transparent to exposed lung and heart."), out.width="100%" }
 
 rse.mus <- getAtlasData('E-MTAB-2801')[[1]][[1]]
-pa.mus <- system.file('extdata/example_data/target_mouse.txt', package='spatialHeatmap')
+pa.mus <- system.file('extdata/shinyApp/example/target_mouse.txt', package='spatialHeatmap')
 target.mus <- read.table(pa.mus, header=TRUE, row.names=1, sep='\t')
 colData(rse.mus) <- DataFrame(target.mus)
 
 capture.output(se.nor.mus <- norm_data(se=rse.mus, method.norm='ratio', data.trans='log2'), file=tempfile())
 # Average the tissue-condition replicates.
 se.aggr.mus <- aggr_rep(se=se.nor.mus, sam.factor='organism_part', con.factor='strain', aggr='mean')
-se.fil.mus <- filter_data(se=se.aggr.mus, sam.factor='organism_part', con.factor='strain', pOA=c(0.01, 5), CV=c(0.6, 100), dir=NULL)
+se.fil.mus <- filter_data(se=se.aggr.mus, sam.factor='organism_part', con.factor='strain', pOA=c(0.03, 5), CV=c(0.6, 100), dir=NULL)
 
 svg.pa.mus <- system.file("extdata/shinyApp/example", "mus_musculus.male.svg", package="spatialHeatmap")
-spatial_hm(svg=svg.pa.mus, se=se.fil.mus, ID='ENSMUSG00000000263', col.com=c("yellow", "blue", "purple"), width=1, height=0.5, sub.title.size=7, layout="gene", ncol=3, tis.trans='skeletal.muscle', sam.legend='identical', legend.key.size=0.4, legend.nrow=3, legend.position=c(0.5, -0.15))
+spatial_hm(svg.path=svg.pa.mus, se=se.fil.mus, ID='ENSMUSG00000000263', col.com=c("yellow", "blue", "purple"), width=1, height=0.5, legend.r=0.6, sub.title.size=7, layout="gene", ncol=3, tis.trans='skeletal.muscle', sam.legend='identical', legend.key.size=0.4, legend.nrow=4, legend.position=c(0.5, -0.15))
 
 ```
 
@@ -149,11 +150,13 @@ spatial_hm(svg=svg.pa.mus, se=se.fil.mus, ID='ENSMUSG00000000263', col.com=c("ye
 
 In this example, the data come from developments of 7 chicken organs under 9 time points [@Cardoso-Moreira2019-yq], which is accessed from Expression Atlas. The spatial heatmap of gene ENSGALG00000006346 is plotted. It is intuitive that the profiles of liver, heart, and kidney are all higher in day17 than other days. Therefore, the important role of this gene in day10 is worth futher exploration. In day10 liver is blank, because in the expression matrix liver data is not availble for day10. This reflects the plotting algorithm that only identical samples between the data matrix and SVG image are plotted.    
 
+Refer to the [script](#plot_chk) for plotting details.  
+
 <a name="chk_shm"></a>
 ```{r eval=TRUE, echo=FALSE, warnings=FALSE, fig.align="center", fig.cap=("Figure 3 Example of plotting chicken organ spatial heatmaps. Liver in day10 is not plotted since this tissue in day10 in not available in the data matrix."), out.width="100%" }
 
 rse.chk <- getAtlasData('E-MTAB-6769')[[1]][[1]]
-pa.chk <- system.file('extdata/example_data/target_chicken.txt', package='spatialHeatmap')
+pa.chk <- system.file('extdata/shinyApp/example/target_chicken.txt', package='spatialHeatmap')
 target.chk <- read.table(pa.chk, header=TRUE, row.names=1, sep='\t')
 colData(rse.chk) <- DataFrame(target.chk)
 capture.output(se.nor.chk <- norm_data(se=rse.chk, method.norm='ratio', data.trans='log2'), file=tempfile())
@@ -162,15 +165,17 @@ se.aggr.chk <- aggr_rep(se=se.nor.chk, sam.factor='organism_part', con.factor='a
 se.fil.chk <- filter_data(se=se.aggr.chk, sam.factor='organism_part', con.factor='age', pOA=c(0.01, 5), CV=c(0.6, 100), dir=NULL)
 svg.pa.chk <- system.file("extdata/shinyApp/example", "gallus_gallus.svg", package="spatialHeatmap")
 
-spatial_hm(svg=svg.pa.chk, se=se.fil.chk, ID='ENSGALG00000006346', col.com=c("yellow", "blue", "purple"), width=1, height=1, sub.title.size=7, layout="gene", ncol=3, legend.key.size=0.2, legend.label.size=7, legend.position=c(0.5, -0.05), legend.nrow=1)
+spatial_hm(svg.path=svg.pa.chk, se=se.fil.chk, ID='ENSGALG00000006346', col.com=c("yellow", "blue", "purple"), bar.width=0.7, width=1, height=0.8, legend.r=0.35, sub.title.size=7, layout="gene", ncol=3, legend.key.size=0.2, legend.label.size=7, legend.position=c(0.5, -0.05), legend.nrow=2)
 
 ```
 
 ### Arabidopsis Shoot {#shoot}
 
-[GEO](https://www.ncbi.nlm.nih.gov/geo/) is a another well-known public repository of array- and sequence-based data. To demonstrate the use of spatialHeatmap on this resource, the dataset GSE14502 is plotted on a shoot SVG image. This a microarray data from a study of translatome variation of *Arabidopsis thaliana* (Arabidopsis) shoot and root tissues under control and hypoxia conditions [@Mustroph2009-nu].  
+[GEO](https://www.ncbi.nlm.nih.gov/geo/) is a another well-known public repository of array- and sequence-based data. To demonstrate the use of spatialHeatmap on this resource, the dataset GSE14502 is plotted on a shoot SVG image. This a microarray data from a study of translatome variation of *Arabidopsis thaliana* (Arabidopsis) shoot and root tissues under control and hypoxia conditions [@Mustroph2009-nu], which is accessed through GEOquery [@geo].   
 
 Figure 4 is the spatial heatmap of gene "HRE2" under control and hypoxia. It is clear that this gene's exression profiles under control are lower than hypoxia across all the 5 tissues (pGL2, pRBCS, pCER5, pSUC2, pKAT1). Therefore, it can be hypothesised that hypoxia induces over-expression of "HRE2" across the 5 tissues and thus "HRE2" might be an important factor for Arabidopsis shoot to cope with hypoxia stress. The tissue pSultr2.2 is blank under hypoxia due to unavailability of its data under hypoxia in the data matrix.    
+
+Refer to the [script](#plot_sh) for plotting details.  
 
 <a name="sh_shm"></a>
 ```{r eval=TRUE, echo=FALSE, warnings=FALSE, fig.align="center", fig.cap=('Figure 4 Spatial heatmaps of Arabidopsis shoot. Pre-defined tissue regions are coloured by the expression profile of the target gene. The promoter pGL2, pRBCS, pCER5, pSultr2.2, pSUC2, pKAT1 label shoot trichomes, shoot photosynthetic cell, cotyledon and leaf epidermis, shootbundle sheath, shoot phloem companion cells, Cotyledon and leaf guard cells, respectively.'), out.width="100%"}
@@ -178,15 +183,15 @@ Figure 4 is the spatial heatmap of gene "HRE2" under control and hypoxia. It is 
 gset <- getGEO("GSE14502", GSEMatrix=TRUE, getGPL=TRUE)[[1]]
 se.sh <- as(gset, "SummarizedExperiment")
 rownames(se.sh) <- make.names(rowData(se.sh)[, 'Gene.Symbol'])
-pa.sh <- system.file('extdata/example_data/target_shoot.txt', package='spatialHeatmap')
+pa.sh <- system.file('extdata/shinyApp/example/target_arab.txt', package='spatialHeatmap')
 target.sh <- read.table(pa.sh, header=TRUE, row.names=1, sep='\t')
 colData(se.sh) <- DataFrame(target.sh)
 # Average the sample-condition replicates.
 se.aggr.sh <- aggr_rep(se=se.sh, sam.factor='samples', con.factor='conditions', aggr='mean')
 se.fil.sh <- filter_data(se=se.aggr.sh, sam.factor='samples', con.factor='conditions', pOA=c(0.03, 6), CV=c(0.30, 100), dir=NULL)
 
-svg.pa.sh <- system.file("extdata/shinyApp/example", "shoot_final_vignette.svg", package="spatialHeatmap")
-spatial_hm(svg=svg.pa.sh, se=se.fil.sh, ID="HRE2", col.com=c('purple', 'cyan', "brown"), width=1, height=0.6, layout="gene", ncol=2, legend.position='none')
+svg.pa.sh <- system.file("extdata/shinyApp/example", "shoot_final.svg", package="spatialHeatmap")
+spatial_hm(svg.path=svg.pa.sh, se=se.fil.sh, ID="HRE2", col.com=c('purple', 'cyan', "brown"), width=1, height=0.4, layout="gene", ncol=2, legend.position='bottom', legend.nrow=3, legend.r=0.6)
 
 ```   
 
@@ -250,7 +255,7 @@ The formatted targets file is available in this package. The "organism_part" and
 
 ```{r eval=TRUE, echo=TRUE, warnings=FALSE }
 
-brain.pa <- system.file('extdata/example_data/target_brain.txt', package='spatialHeatmap')
+brain.pa <- system.file('extdata/shinyApp/example/target_brain.txt', package='spatialHeatmap')
 target.hum <- read.table(brain.pa, header=TRUE, row.names=1, sep='\t')
 
 ```
@@ -380,7 +385,7 @@ With the formatted data matrix and SVG image, the spatial heatmap is plotted wit
 <a name='brain_shm1'></a>
 ```{r eval=FALSE, echo=TRUE, warnings=FALSE, fig.align="center", fig.cap=("Figure 3 Example of plotting EBI data on the SVG template. Cerebellum and frontal cortex are coloured, since they are the only 2 common tissues between the SVG and the expression matrix."), out.width="100%" }
 
-spatial_hm(svg=svg.hum, se=se.fil.hum, ID='ENSG00000268433', col.com=c("yellow", "blue", "purple"), width=1, height=0.5, sub.title.size=11, layout="gene", ncol=2, tis.trans=NULL, sam.legend='identical', line.size=0.2, line.color='grey70', legend.position=c(0.5, -0.15), legend.nrow=1)
+spatial_hm(svg.path=svg.hum, se=se.fil.hum, ID='ENSG00000268433', col.com=c("yellow", "blue", "purple"), width=1, height=0.5, sub.title.size=11, layout="gene", ncol=2, tis.trans=NULL, sam.legend='identical', line.size=0.2, line.color='grey70', legend.position=c(0.5, -0.15), legend.nrow=1)
 
 ```
 
@@ -402,7 +407,7 @@ Add the formatted targets file to "colData" slot as a "DataFrame" class.
 
 ```{r eval=TRUE, echo=TRUE, warnings=FALSE }
 
-pa.mus <- system.file('extdata/example_data/target_mouse.txt', package='spatialHeatmap')
+pa.mus <- system.file('extdata/shinyApp/example/target_mouse.txt', package='spatialHeatmap')
 target.mus <- read.table(pa.mus, header=TRUE, row.names=1, sep='\t')
 colData(rse.mus) <- DataFrame(target.mus)
 
@@ -427,12 +432,12 @@ svg.pa.mus <- system.file("extdata/shinyApp/example", "mus_musculus.male.svg", p
 
 ```
 
+<a name='mus_shm1'></a>
 Plot spatial heatmaps ([Figure 2](#mus_shm)).  
 
-<a name='mus_shm1'></a>
 ```{r eval=FALSE, echo=TRUE, warnings=FALSE, fig.align="center", fig.cap=("Figure 5 Mouse organ spatial heatmap. This is a multiple-layer image and skeletal.muscle is set transparent to exposed lung and heart."), out.width="100%" }
 
-spatial_hm(svg=svg.pa.mus, se=se.fil.mus, ID='ENSMUSG00000000263', col.com=c("yellow", "blue", "purple"), width=1, height=0.5, sub.title.size=7, layout="gene", ncol=3, tis.trans='skeletal.muscle', sam.legend='identical', legend.key.size=0.4, legend.nrow=3, legend.position=c(0.5, -0.15))
+spatial_hm(svg.path=svg.pa.mus, se=se.fil.mus, ID='ENSMUSG00000000263', col.com=c("yellow", "blue", "purple"), width=1, height=0.5, sub.title.size=7, layout="gene", ncol=3, tis.trans='skeletal.muscle', sam.legend='identical', legend.key.size=0.4, legend.nrow=3, legend.position=c(0.5, -0.15))
 
 ```
 
@@ -453,12 +458,11 @@ Add the formatted targets file to "colData" slot as a "DataFrame" class.
 
 ```{r eval=TRUE, echo=TRUE, warnings=FALSE }
 
-pa.chk <- system.file('extdata/example_data/target_chicken.txt', package='spatialHeatmap')
+pa.chk <- system.file('extdata/shinyApp/example/target_chicken.txt', package='spatialHeatmap')
 target.chk <- read.table(pa.chk, header=TRUE, row.names=1, sep='\t')
 colData(rse.chk) <- DataFrame(target.chk)
 
 ```
-
 
 Pro-process data matrix: normalise, aggregate, filter.    
 
@@ -482,7 +486,7 @@ Plot spatial heatmaps ([Figure 3](#chk_shm)).
 
 ```{r eval=FALSE, echo=TRUE, warnings=FALSE, fig.align="center", fig.cap=("Figure 8 Example of plotting chicken organ spatial heatmaps. Liver in day10 is not plotted since this tissue in day10 in not available in the data matrix."), out.width="100%" }
 
-spatial_hm(svg=svg.pa.chk, se=se.fil.chk, ID='ENSGALG00000006346', col.com=c("yellow", "blue", "purple"), width=1, height=1, sub.title.size=7, layout="gene", ncol=3, legend.key.size=0.2, legend.label.size=7, legend.position=c(0.5, -0.05), legend.nrow=1)
+spatial_hm(svg.path=svg.pa.chk, se=se.fil.chk, ID='ENSGALG00000006346', col.com=c("yellow", "blue", "purple"), width=1, height=1, sub.title.size=7, layout="gene", ncol=3, legend.key.size=0.2, legend.label.size=7, legend.position=c(0.5, -0.05), legend.nrow=1)
 
 ```
 
@@ -510,7 +514,7 @@ Add the formatted targets file to "colData" slot as a "DataFrame" class.
 
 ```{r, eval=TRUE, echo=TRUE, warnings=FALSE}
 
-pa.sh <- system.file('extdata/example_data/target_shoot.txt', package='spatialHeatmap')
+pa.sh <- system.file('extdata/shinyApp/example/target_arab.txt', package='spatialHeatmap')
 target.sh <- read.table(pa.sh, header=TRUE, row.names=1, sep='\t')
 colData(se.sh) <- DataFrame(target.sh)
 
@@ -529,7 +533,7 @@ Formatted SVG image.
 
 ```{r eval=TRUE, echo=TRUE, warnings=FALSE }
 
-svg.pa.sh <- system.file("extdata/shinyApp/example", "shoot_final_vignette.svg", package="spatialHeatmap")
+svg.pa.sh <- system.file("extdata/shinyApp/example", "shoot_final.svg", package="spatialHeatmap")
 
 ```
 
@@ -538,7 +542,7 @@ Plot spatial heatmaps ([Figure 4](#sh_shm)).
 <a name="sh_shm1"></a>
 ```{r eval=FALSE, echo=TRUE, warnings=FALSE, fig.align="center", fig.cap=('Figure 9 Spatial Heatmaps of Arabidopsis shoot. Pre-defined tissue regions are coloured by the expression profile of the target gene.'), out.width="80%"}
 
-spatial_hm(svg=svg.pa.sh, se=se.fil.sh, ID="HRE2", col.com=c('purple', 'cyan', "brown"), width=1, height=1, layout="gene", ncol=2)
+spatial_hm(svg.path=svg.pa.sh, se=se.fil.sh, ID="HRE2", col.com=c('purple', 'cyan', "brown"), width=1, height=1, layout="gene", ncol=2)
 
 ```   
 

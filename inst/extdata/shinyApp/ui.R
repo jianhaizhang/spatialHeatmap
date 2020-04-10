@@ -1,43 +1,5 @@
 library(shiny); library(shinydashboard); library(plotly); library(visNetwork); library(DT)
 
-ins0 <- "For a quick test, select 1 of the 7 examples under \"Select a work mode\", or select \"Compute online\" work mode and download the pre-configured SVG image and expression matrix from below."
-
-ins <- "This Shiny app is an integrated implementation of the R/Bioconductor package \"spatialHeatmap\". It is primarily designed for interactively visualising large-scale gene expression matrix (e.g. RNA-seq, microarray, qPCR, etc.) on a configured SVG image, but is also applicable for other data as long as a data matrix and a configured SVG image are provided. In the following the instructions are given with a gene expression matrix and a configured SVG image of root tissues. This app has 3 functionality. First, the core feature \"Spatial Heatmap\" is to map expression profile of a target gene under different conditions to different cells/tissues/organs (samples) on a configured SVG image, where different samples are pre-defined. After mapping, the expression profile is represented as different colours across samples, which are called spatial heatmaps. Second, the app computes gene network modules internally. It uses an interactive matrix heatmap to display the expression of a chosen gene in the context of the corresponding gene module. Third, the app exhibits the same network module in the matrix heatmap as an interactive network. The network module identification is computationally intensive for large expression matrix (e.g. > 10,000 genes). Therefore, the \"Compute locally\" mode is developed specifically for large data matrix. Small data matrix (e.g. < 10,000 genes) can be used in the \"Compute online\" mode." 
-
-ins1 <- "When switch among different modes, users should refresh the webpage before selecting the new mode. Operation on this app is expected to follow the order on the left menu. Otherwise, errors would arise. If so, refresh the webpage."
-
-ins.input1 <- "First, users need to select a mode under \"Select a work mode\" in the left \"Input\" menu. The top 7 examples are ready-to-use. The \"Compute locally\" should be selected if users have a large gene expression matrix(e.g. > 10,000 genes) while the \"Compute online\" can be selected if users have a small gene expression matrix(e.g. < 10,000 genes). In \"Step 1: upload configured svg image\" and \"Step 2: upload configured data matrix\", users are asked to upload the configured SVG image and gene expression file respectively. Details about how to configure SVG images with data matrix are provided in the package vignette and the "
-
-ins.input2 <- "The \"Step 3: is column or row gene?\" option specifies if column or row is gene in the expression table, and \"Step 4: separator\" specifies the separator in the table. \"Data transform\": if colours across tissues cannot distinguish due to low variance or outliers, transform the data matrix by log2 or 2-base expoent (exp.2). \"Step 5: Color scheme\" allows users to input colour components to construct a colour scale for gene expression profiles. Colours MUST only be sepatated by comma, e.g. the default is \"yellow,purple,blue\"."
-
-ins.input3.1 <- "In the expression matrix, the row and column names are usually gene IDs and sample/conditions, respectively. " 
-ins.input3.2 <- "The sample/condition names MUST be fomatted this way: a sample name is followed by double underscore then the condition such as \"stele__140mM_48h\", where \"stele\" is the sample and \"140mM_48h\" is the condition. "
-ins.input3.3 <- "One column of metadata (e.g. gene annotation) can also be included in parallel with sample/condition at the end. "
-ins.input3.4 <- "In the column names of sample/condition and metadata, only letters, digits, dots, single underscore, or single space are allowed. Each column name must be unique. "
-ins.input3.5 <- "Not all samples in the matrix need to be present in the SVG image, and vice versa. Only samples common between the SVG image and data matrix are recognised and coloured. The example of configured SVG image and gene expression matrix can be downloaded and uploaded directly for testing after selecting \"Compute online\" mode: "
-
-ins.col <- "\"Step 5: Color scheme of Spatial Heatmap\" inputs the colour ingredients for the colour scale, which must only be separated by \",\" (no space allowed). The default is \"yellow,purple,blue\". The colour scale can be build on either \"Selected genes\" or the \"Whole matrix\"."
-
-ins.input4 <- "The \"Compute locally\" option uplods the adjacency matrix \"adj.txt\" and module definition \"mod.txt\". It is designed for large gene expression matrix (e.g. > 10,000 genes), since gene network modules are identified using the R package WGCNA and the computation is intensive for large expression matrix. To maintain good performance on large matrices, this process is expected to be performed on user's computer. The instruction on how to compute locally is provided in the documentation of the function \"filter_data\" and \"adj_mod\" in the R package \"spatialHeatmap\"."
-
-ins.input5 <- "The \"Compute online\" option is designed for small gene expression matrix (e.g. < 10,000 genes). The first two items filter genes according to a proportion (P) of samples where a gene's expression values exceed a threthold A. Only the genes exceeding the proportion are maintained. The third and fourth items filter genes according to the coefficient of variation (CV). Only the genes with CV between the two specified values are kept. To save time, the app is designed to compute network modules only once when the matrix heatmap is displayed for the first time, since module assignments are save in memory. So displaying matrix heatmap of another gene will not trigger re-computation. But if the gene expression martix or filter parameters are changed, the modules are computated again."
-
-ins.input6 <- "The \"Minmum module size\" sets the minimum module size in gene module identification. In \"Network type\", \"Signed\" means both positive and negative gene-pair adjacency are used in network module identification while \"Unsigned\" takes the absolute values of negative adjacency."
-
-ins.mat <- "The gene expression data is represented as an interactive table under \"Expression Matrix\", where rows are gene IDs and columns are samples/conditions and meta data. Users can sort the expression values for a sample or search for a particular gene by its ID. Users can click multiple gene IDs in the table to display spatial heatmaps. In each spatial heatmap, the gene expression profiles are represented by colours for each sample under each condition. In the \"Spatial Heatmap\" section, users can customise the dimension and layout of the spatial heatmaps."
-
-ins.hm_net <- "In the \"Matrix Heatmap & Network\" section, all gene IDs chosen in \"Expression Matrix\" are listed under \"Select a gene to display matrix heatmap & network.\". Once a gene is selected in this list, the network modules are identified at two alternative sensitivities levels (3, 2). From 3 to 2, the sensitivity decreases and results in less modules with larger sizes. The \"Select a module splitting sensitivity level\" option allows users to choose which level to use for displaying the iteractive matrix heatmap and network."
-
-ins.mhm <- "The selected gene in the list is displayed in the context of its network module as an interactive matrix heatmap, where the rows and columns are sorted by hierarchical clustering dendrograms and the chosen gene is tagged by two black lines. To explore the results, users can zoom in and out by drawing a rectangle and by double clicking the image, respectively. Users can scale the expression values by gene or sample. The scaled values are only used for matrix heatmap display, not for module identification."
-
-ins.net <- "The same module in \"Matrix Heatmap\" is shown as an interactive network. Nodes and edges are genes and adjacency between genes respectively. There is an interactive colour bar to denote gene connectivity (sum of a gene's adjacency with all its direct neighbours). The colour ingredients MUST only be separated by comma, e.g. the default are \"yellow,purple,blue\", which means gene connectivity increases from yellow to blue. If too many edges (e.g. > 300) are displayed, the app can possibly get stuck. So the \"Input an adjacency threshold to display the adjacency network.\" option sets a threthold to filter out some weak edges. The number of total remaining edges is output below this option. If not too large (e.g. < 300), users can check \"Yes\" under \"Display or not?\" to display the network. To maintain acceptable performance, users are advised to choose a stringent threshold (e.g. 0.9) initially, then decrease the value gradually. The interactive feature allows users to zoom in and out, or drag a gene around. All the gene IDs in the gene module are listed in \"Select by id\" in decreasing order according to gene connectivity. The selected gene ID is appended \"_selected\" for easy identification."
-ack1 <- "<b>Fund source:</b> NSF (https://www.nsf.gov/) award PGRP-1810468. <p/>"
-ack2 <- "<b>Authors:</b> Jianhai Zhang, PhD student at Girke Lab, University of California, Riverside; PI: Prof. Dr. Thomas Girke at University of California, Riverside. <p/>"
-ack3 <- "<b>Data and image source:</b> the expression data (MAS5-normalised array in log2 unit) and SVG templates of \"organ_Mustroph\", \"shoot_root_Mustroph\", \"root_roottip_Mustroph\", \"shoot_Mustroph\" are from Mustroph et al. (2009) and Dr. Julia Bailey-Serres Lab at University of California, Riverside, respectively. The exression data (MAS5-normalised array in log2 unit) and SVG template of \"root_Geng\" are from Geng et al. (2013) and Mustroph et al. (2009), respectively. The expression data (MAS5-normalised array in log2 unit) and SVG templates of \"brain_Chen\" are from Chen-Plotkin et al. (2008), epilepsyresearch (2017) and anatomybodysystem.com (2017), respectively. The data matrix and SVG template of \"map_Census\" are from Bureau (2018) and Trip8.Co (2018), respectively. <p/>"
-
-ack4 <- "<p/> Mustroph, Angelika, M Eugenia Zanetti, Charles J H Jang, Hans E Holtan, Peter P Repetti, David W Galbraith, Thomas Girke, and Julia Bailey-Serres. 2009. \"Profiling Translatomes of Discrete Cell Populations Resolves Altered Cellular Priorities During Hypoxia in Arabidopsis.\" Proc Natl Acad Sci U S A 106 (44): 18843–8. <br/> Geng, Yu, Rui Wu, Choon Wei Wee, Fei Xie, Xueliang Wei, Penny Mei Yeen Chan, Cliff Tham, Lina Duan, and José R Dinneny. 2013. \"A Spatio-Temporal Understanding of Growth Regulation During the Salt Stress Response in Arabidopsis.\" Plant Cell 25 (6): 2132–54. <br/> Chen-Plotkin, Alice S, Felix Geser, Joshua B Plotkin, Chris M Clark, Linda K Kwong, Wuxing Yuan, Murray Grossman, Vivianna M Van Deerlin, John Q Trojanowski, and Virginia M-Y Lee. 2008. \"Variations in the Progranulin Gene Affect Global Gene Expression in Frontotemporal Lobar Degeneration.\" Hum. Mol. Genet. 17 (10): 1349–62. <br/> epilepsyresearch. 2017. \"The Hippocampus: What Is It?\" https://www.epilepsyresearch.org.uk/the-hippocampus-what-is-it/. <br/> anatomybodysystem.com. 2017. \"HEAD ANATOMY.\" http://anatomybodysystem.com/lateral-view-of-the-brain-labeled/lateral-view-of-the-brain-labeled-brain-diagram-and-label-anatomy-body-list/. <br/> Bureau, U.S. Census. 2018. \"Annual Population Estimates, Estimated Components of Resident Population Change, and Rates of the Components of Resident Population Change for the United States, States, and Puerto Rico: April 1, 2010 to July 1, 2018.\" https://www.census.gov/data/datasets/time-series/demo/popest/2010s-state-total.html. <br/> Trip8.Co. 2018. \"Us Map States.\" http://trip8.co/interactive-map-of-us-states-us-map-states-interactive-us-map/interactive-map-of-us-states-us-map-states-interactive-us-map-new-united-states-map-interactive-detail-color-usa-with-name-inside/."
-
-
 shinyUI(dashboardPage(
 
   dashboardHeader(title="spatialHeatmap (2020-03-05)", titleWidth=300),
@@ -48,12 +10,12 @@ shinyUI(dashboardPage(
 
       menuItem("Input", icon=icon("dashboard"),
       menuSubItem("View", tabName="hm_net"), br(),
-      selectInput("fileIn", "Select a work mode", c("None", "organ_Mustroph", "shoot_root_Mustroph", "root_roottip_Mustroph", "shoot_Mustroph", "root_Geng", "brain_Chen", "map_Census", "Compute locally", "Compute online"), "shoot_Mustroph"),
-      fileInput("svgInpath", "Step 1: upload configured svg image", accept=".svg", multiple=FALSE),
-      fileInput("geneInpath", "Step 2: upload configured data matrix", accept=c(".txt", ".csv"), multiple=FALSE),
+      selectInput("fileIn", "Select a work mode", c("None", "Compute online", "Compute locally", "brain_Prudencio", "mouse_Merkin", "chicken_Cardoso.Moreira", "shoot_Mustroph", "organ_Mustroph", "root_Mustroph", "shoot_root_Mustroph", "root_roottip_Mustroph", "map_Census"), "organ_Mustroph"),
+      fileInput("svgInpath", "Step 1: upload formatted SVG image", accept=".svg", multiple=FALSE),
+      fileInput("geneInpath", "Step 2: upload formatted data matrix", accept=c(".txt", ".csv"), multiple=FALSE),
       radioButtons(inputId='dimName', label='Step 3: is column or row gene?', choices=c("None", "Row", "Column"), selected="None", inline=TRUE),
       selectInput('sep', 'Step 4: separator', c("None", "Tab", "Comma", "Semicolon"), "None"),
-      radioButtons(inputId='log', label='Data transform', choices=c("No", "log2", "exp.2"), selected="No", inline=TRUE),
+      radioButtons(inputId='log', label='Data transform', choices=c("No", "log2", "exp2"), selected="No", inline=TRUE),
       div(style="display:inline-block;width:75%;text-align:left;",textInput("color", "Step 5: Color scheme of Spatial Heatmap", "yellow,purple,blue", placeholder="Eg: yellow,purple,blue", width=200)),
       div(style="display:inline-block;width:25%;text-align:left;", actionButton("col.but", "Go", icon=icon("refresh"), style="padding:7px; font-size:90%; margin-left: 0px")),
       radioButtons(inputId='cs.v', label='Colour scale based on:', choices=c("Selected genes"="sel.gen", "Whole matrix"="w.mat"), selected="sel.gen", inline=TRUE),
@@ -88,11 +50,9 @@ shinyUI(dashboardPage(
       div(style="display:inline-block;width:25%;text-align:left;", actionButton("col.but.net", "Go", icon=icon("refresh"), style="padding:7px; font-size:90%; margin-left: 0px")),
       radioButtons(inputId="cpt.nw", label="Display or not?", choices=c("Yes"="Y", "No"="N"), selected="N", inline=TRUE),
       #menuSubItem("View network", tabName="network")
-
       menuSubItem("View", tabName="hm_net"), br()
       ),
-
-      menuItem("Instruction", tabName="instruction", icon=icon("dashboard")),
+      menuItem("Instruction", tabName="ins", icon=icon("dashboard")),
       menuItem("Acknowledgement", tabName="ack", icon=icon("dashboard"))
 
      )
@@ -102,28 +62,20 @@ shinyUI(dashboardPage(
   dashboardBody(
  
     tabItems(
-
-      tabItem(tabName="instruction", 
-      box(title="General Instruction", status="primary", solidHeader=TRUE, collapsible=TRUE, p(strong(ins0), align="justify"), p(ins, align="justify"), p(strong(ins1), align="justify"), width=12),
-      box(title="Input Instruction", status="primary", solidHeader=TRUE, collapsible=TRUE, p(ins.input1, HTML("<a href=
-      https://jianhaizhang.github.io/SVG_tutorial_file/SVG_tutorial.html>SVG tutorial</a>"), ".", align="justify"), p(ins.input2, align="justify"), p(ins.input3.1, strong(ins.input3.2), ins.input3.3, strong(ins.input3.4), ins.input3.5, HTML("&nbsp"), downloadButton("dld.svg", "Download SVG image"), downloadButton("dld.data", "Download gene expression matrix"), align="justify"), p(ins.col, align="justify"), p(ins.input4, align="justify"), p(ins.input5, align="justify"), p(ins.input6, align="justify"), width=12), 
-      box(title="Spatial Heatmap Instruction", status="primary", solidHeader=TRUE, 
-      collapsible=TRUE, p(ins.mat, align="justify"), width=12),
-      box(title="Matrix Heatmap & Network Instruction", status="primary", solidHeader=TRUE, collapsible=TRUE, p(ins.hm_net, align="justify"), p(ins.mhm, align="justify"), p(ins.net, align="justify"), width=12)
-      ),
-      
+ 
       tabItem(tabName="hm_net", 
 
       box(title="Expression Matrix", status="primary", solidHeader=TRUE, collapsible=TRUE, fluidRow(splitLayout(cellWidths=c("1%", "98%", "1%"), "", dataTableOutput("dt"), "")), height=430, width=12),
       box(title="Spatial Heatmap", status="primary", solidHeader=TRUE, collapsible=TRUE, 
       fluidRow(splitLayout(cellWidths=c('1%', "99%"), '', checkboxGroupInput(inputId="tis", label="Select tissues to be transparent:", choices='', selected='', inline=TRUE))),
-      fluidRow(splitLayout(cellWidths=c("1%", "7%", "91%", "1%"), "", plotOutput("bar"), plotOutput("tissue"), "")), width=9),
-      box(title="Original Image", status="primary", solidHeader=TRUE, collapsible=TRUE, splitLayout(cellWidths=c("1%", "98%", "1%"), "", plotOutput("ori.svg"), ""), width=3), br(),
+      fluidRow(splitLayout(cellWidths=c("1%", "7%", "91%", "1%"), "", plotOutput("bar"), plotOutput("shm"), "")), width=9),
+      box(title="Original Image", status="primary", solidHeader=TRUE, collapsible=TRUE, splitLayout(cellWidths=c("1%", "98%", "1%"), "", plotOutput("lgd"), ""), width=3), br(),
       box(title="Matrix Heatmap", status="primary", solidHeader=TRUE, collapsible=TRUE, plotlyOutput("HMly"), width=12, height=460), br(),
       box(title="Interactive Network", status="primary", solidHeader=TRUE, collapsible=TRUE, fluidRow(splitLayout(cellWidths=c("1%", "6%", "91%", "2%"), "", plotOutput("bar.net"), visNetworkOutput("vis"), "")), width=12)
       ),
 
-      tabItem(tabName="ack", HTML(ack1), HTML(ack2), HTML(ack3), HTML(ack4))
+      tabItem(tabName='ins', htmlOutput("ins")),
+      tabItem(tabName="ack", htmlOutput("ack")) 
 
       )
 

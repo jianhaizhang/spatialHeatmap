@@ -33,7 +33,7 @@ for the type of fitting of dispersions to the mean intensity.
 }}
 
 \item{blind}{logical, whether to blind the transformation to the experimental
-design. blind=TRUE should be used for comparing samples in an manner unbiased by
+design. blind=TRUE should be used for comparing samples in a manner unbiased by
 prior information on samples, for example to perform sample QA (quality assurance).
 blind=FALSE should be used for transforming data for downstream analysis,
 where the full use of the design information should be made.
@@ -56,7 +56,7 @@ library(ExpressionAtlas); library(SummarizedExperiment)
 rse.hum <- getAtlasData('E-GEOD-67196')[[1]][[1]]; assay(rse.hum)[1:3, 1:3]
 
 # A targets file describing replicates of samples and conditions is required, which is made based on the "colData" slot in the downloaded "RangedSummarizedExperiment" and available in spatialHeatmap. See the "se" parameter for details. 
-brain.pa <- system.file('extdata/example_data/target_brain.txt', package='spatialHeatmap')
+brain.pa <- system.file('extdata/shinyApp/example/target_brain.txt', package='spatialHeatmap')
 target.hum <- read.table(brain.pa, header=TRUE, row.names=1, sep='\t')
 # The "organism_part" and "disease" column describes tissue and condition replicates respectively.  
 target.hum[c(1:3, 41:42), 4:5]
@@ -74,7 +74,6 @@ se.nor.hum <- norm_data(se=rse.hum, method.norm='ratio', data.trans='log2')
 }
 \references{
 SummarizedExperiment: SummarizedExperiment container. R package version 1.10.1 \cr R Core Team (2018). R: A language and environment for statistical computing. R Foundation for Statistical Computing, Vienna, Austria. URL https://www.R-project.org/
-Love, Michael I., Wolfgang Huber, and Simon Anders. 2014. "Moderated Estimation of Fold Change and Dispersion for RNA-Seq Data with DESeq2." Genome Biology 15 (12): 550. doi:10.1186/s13059-014-0550-8
 McCarthy, Davis J., Chen, Yunshun, Smyth, and Gordon K. 2012. "Differential Expression Analysis of Multifactor RNA-Seq Experiments with Respect to Biological Variation." Nucleic Acids Research 40 (10): 4288–97
 Prudencio, Mercedes, Veronique V Belzil, Ranjan Batra, Christian A Ross, Tania F Gendron, Luc J Pregent, Melissa E Murray, et al. 2015. "Distinct Brain Transcriptome Profiles in C9orf72-Associated and Sporadic ALS." Nat. Neurosci. 18 (8): 1175–82
 Keays, Maria. 2019. ExpressionAtlas: Download Datasets from EMBL-EBI Expression Atlas

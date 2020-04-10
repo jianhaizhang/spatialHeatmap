@@ -13,8 +13,10 @@
 
 #' @param col.bar "selected" or "all", meaning use input genes or whole data matrix to build the colour scale respectively. The default is "selected".
 #' @param data.trans "log2", "exp2", or NULL. If colours across tissues cannot distinguish due to low variance or outliers, transform the data matrix by log2 or 2-base expoent (exp2). Default is NULL (data will not be transformed).
+#' @param bar.width The width of colour bar. Default if 0.7.
 #' @param width A numeric of each subplot width, relative to height. The default is 1.
 #' @param height A numeric of each subplot height, relative to width. The default is 1.
+#' @param legend.r The ratio of height to width of the legend plot. Default is 1.
 #' @param lay.shm "gene" or "con" (condition), the organisation of the subplots.
 #' @param ncol Number of columns to display the subplots.
 #' @return It generates an image of spatial heatmap(s) along with a colour key.
@@ -28,7 +30,7 @@
 #' rse.hum <- getAtlasData('E-GEOD-67196')[[1]][[1]]; assay(rse.hum)[1:3, 1:3]
 #'
 #' # A targets file describing replicates of samples and conditions is required, which is made based on the "colData" slot in the downloaded "RangedSummarizedExperiment" and available in spatialHeatmap. See the "se" parameter for details. 
-#' brain.pa <- system.file('extdata/example_data/target_brain.txt', package='spatialHeatmap')
+#' brain.pa <- system.file('extdata/shinyApp/example/target_brain.txt', package='spatialHeatmap')
 #' target.hum <- read.table(brain.pa, header=TRUE, row.names=1, sep='\t')
 #' # The "organism_part" and "disease" column describes tissue and condition replicates respectively.  
 #' target.hum[c(1:3, 41:42), 4:5]
@@ -69,7 +71,7 @@
 #' @export
 #' @importFrom SummarizedExperiment assay
 #' @importFrom genefilter filterfun genefilter
-#' @importFrom ggplot2 ggplot geom_bar aes theme element_blank margin element_rect coord_flip scale_y_continuous scale_x_continuous ggplotGrob geom_polygon scale_fill_manual ggtitle element_text labs 
+#' @importFrom ggplot2 ggplot geom_bar aes theme element_blank margin element_rect coord_flip scale_y_continuous scale_x_continuous ggplotGrob geom_polygon scale_fill_manual ggtitle element_text labs
 #' @importFrom rsvg rsvg_ps 
 #' @importFrom grImport PostScriptTrace 
 #' @importFrom XML addAttributes xmlParse xmlRoot xmlSize xmlSApply xmlAttrs xmlName xmlChildren saveXML xmlApply
@@ -78,7 +80,7 @@
 #' @importFrom grDevices colorRampPalette
 #' @importFrom methods is
 
-spatial_hm <- function(svg.path, se, sam.factor=NULL, con.factor=NULL, ID, col.com=c("yellow", "purple", "blue"), col.bar="selected", data.trans=NULL, tis.trans=NULL, width=1, height=1, sub.title.size=11, lay.shm="gene", ncol=3, sam.legend='identical', legend.title=NULL, legend.ncol=NULL, legend.nrow=NULL, legend.position='right', legend.direction='vertical', legend.key.size=0.5, legend.label.size=8, legend.title.size=8, line.size=0.2, line.color='grey70', ...) {
+spatial_hm <- function(svg.path, se, sam.factor=NULL, con.factor=NULL, ID, col.com=c("yellow", "purple", "blue"), col.bar="selected", bar.width=0.7, data.trans=NULL, tis.trans=NULL, width=1, height=1, legend.r=1, sub.title.size=11, lay.shm="gene", ncol=3, sam.legend='identical', legend.title=NULL, legend.ncol=NULL, legend.nrow=NULL, legend.position='bottom', legend.direction=NULL, legend.key.size=0.5, legend.label.size=8, legend.title.size=8, line.size=0.2, line.color='grey70', ...) {
 
     x <- y <- color_scale <- tissue <- line.type <- NULL
     # Extract and filter data.
@@ -105,8 +107,13 @@ spatial_hm <- function(svg.path, se, sam.factor=NULL, con.factor=NULL, ID, col.c
     g.df <- df_tis[['df']]; tis.path <- df_tis[['tis.path']]
     cname <- colnames(gene); con <- gsub("(.*)(__)(.*)", "\\3", cname); con.uni <- unique(con) 
     grob.lis <- grob_list(gene=gene, geneV=geneV, coord=g.df, ID=ID, cols=col, tis.path=tis.path, tis.trans=tis.trans, sub.title.size=sub.title.size, sam.legend=sam.legend, legend.title=legend.title, legend.ncol=legend.ncol, legend.nrow=legend.nrow, legend.position=legend.position, legend.direction=legend.direction, legend.key.size=legend.key.size, legend.label.size=legend.label.size, legend.title.size=legend.title.size, line.size=line.size, line.color=line.color, line.type=line.type, ...)
-    g.arr <- lay_shm(lay.shm=lay.shm, con=con, ncol=ncol, ID.sel=ID, grob.list=grob.lis, width=width, height=height, shiny=FALSE)
-    cs.arr <- arrangeGrob(grobs=list(grobTree(cs.grob)), layout_matrix=cbind(1), widths=unit(25, "mm"))
-    grid.arrange(cs.arr, g.arr, ncol=2, widths=c(1.5, 8))
+    g.arr <- lay_shm(lay.shm=lay.shm, con=con, ncol=ncol, ID.sel=ID, grob.list=grob.lis[['grob.lis']], width=width, height=height, shiny=FALSE)
+    cs.arr <- arrangeGrob(grobs=list(grobTree(cs.grob)), layout_matrix=cbind(1), widths=unit(1, "npc")) # "mm" is fixed, "npc" is scalable.
+    g.lgd <- grob.lis[['g.lgd']]; grob.lgd <- ggplotGrob(g.lgd)
+    # Layout matrix of legend.
+    if (lay.shm=='gene') lay.lgd <- matrix(seq_len(ceiling(length(con.uni)/ncol)), byrow=FALSE)
+    if (lay.shm=='con') lay.lgd <- matrix(seq_len(ceiling(length(ID)/ncol)), byrow=FALSE)
+    lgd.arr <- arrangeGrob(grobs=list(grobTree(grob.lgd)), layout_matrix=lay.lgd, widths=unit(width, "npc"), heights=unit(legend.r, "npc"))
+    grid.arrange(cs.arr, g.arr, lgd.arr, ncol=3, widths=c(bar.width, 10/(ncol+1)*ncol, 10/(ncol+1)))
 
 }

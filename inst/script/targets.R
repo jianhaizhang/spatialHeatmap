@@ -26,7 +26,7 @@
 
  ffun <- filterfun(pOverA(0.03, 6), cv(0.25, 100))
  filtered <- genefilter(mat, ffun); mat <- mat[filtered, ]
- write.table(mat, 'arab_geo.txt', col.names=TRUE, row.names=TRUE, sep='\t')
+ write.table(mat, 'target_arab.txt', col.names=TRUE, row.names=TRUE, sep='\t')
 
 
 ## Make target file-human brain example.

@@ -17,7 +17,7 @@
 #' rse.hum <- getAtlasData('E-GEOD-67196')[[1]][[1]]; assay(rse.hum)[1:3, 1:3]
 #'
 #' # A targets file describing replicates of samples and conditions is required, which should be made based on the "colData" slot in "RangedSummarizedExperiment". See the "se" parameter for details. This targets file is available in spatialHeatmap.
-#' brain.pa <- system.file('extdata/example_data/target_brain.txt', package='spatialHeatmap')
+#' brain.pa <- system.file('extdata/shinyApp/example/target_brain.txt', package='spatialHeatmap')
 #' target.hum <- read.table(brain.pa, header=TRUE, row.names=1, sep='\t')
 #' # The "organism_part" and "disease" column describes tissue and condition replicates respectively. Note that the replicates of the same tissue or condition should have the identical name.
 #' target.hum[c(1:3, 41:42), 4:5]

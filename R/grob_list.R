@@ -10,6 +10,7 @@
 #' @param tis.trans A character vector of tissue names. These tissues cover other tissues and should be set transparent. E.g c("epidermis", "cortex").
 #' @param sub.title.size A numeric. The subtitle font size of each individual spatial heatmap. Default is 11.
 #' @param sam.legend A character vector of tissue names in the SVG image. These tissues are shown in the legend. Default is "identical", meaning all the identical tissues between the data matrix and SVG image. Another value is 'all', meaning all tissues in the SVG image.
+#' @param legend.col A character vector of colours provided by users for the legend keys. The lenght must be equal to the number of target samples shown in the legend. Default is NULL, which means colours are chosen automatically. 
 #' @param legend.title A character, the legend title. Default is NULL.
 #' @param legend.ncol An integer, the column number of the items in the legend. Default is NULL.
 #' @param legend.nrow An integer, the row number of the items in the legend. Default is NULL. 
@@ -30,34 +31,67 @@
 #' @references
 #' H. Wickham. ggplot2: Elegant Graphics for Data Analysis. Springer-Verlag New York, 2016. \cr R Core Team (2018). R: A language and environment for statistical computing. R Foundation for Statistical Computing, Vienna, Austria. RL https://www.R-project.org/ \cr Mustroph, Angelika, M Eugenia Zanetti, Charles J H Jang, Hans E Holtan, Peter P Repetti, David W Galbraith, Thomas Girke, and Julia Bailey-Serres. 2009. “Profiling Translatomes of Discrete Cell Populations Resolves Altered Cellular Priorities During Hypoxia in Arabidopsis.” Proc Natl Acad Sci U S A 106 (44): 18843–8
 
-#' @importFrom ggplot2 ggplot aes theme element_blank margin element_rect scale_y_continuous scale_x_continuous ggplotGrob geom_polygon scale_fill_manual ggtitle element_text labs guide_legend alpha
+#' @importFrom ggplot2 ggplot aes theme element_blank margin element_rect scale_y_continuous scale_x_continuous ggplotGrob geom_polygon scale_fill_manual ggtitle element_text labs guide_legend alpha coord_fixed
 
-grob_list <- function(gene, geneV, coord, ID, cols, tis.path, tis.trans=NULL, sub.title.size, sam.legend='identical', legend.title=NULL, legend.ncol=NULL, legend.nrow=NULL, legend.position='right', legend.direction='vertical', legend.key.size=0.5, legend.label.size=8, legend.title.size=8, line.size=0.2, line.color='grey70', ...) {
+grob_list <- function(gene, geneV, coord, ID, cols, tis.path, tis.trans=NULL, sub.title.size, sam.legend='identical', legend.col=NULL, legend.title=NULL, legend.ncol=NULL, legend.nrow=NULL, legend.position='bottom', legend.direction=NULL, legend.key.size=0.5, legend.label.size=8, legend.title.size=8, line.size=0.2, line.color='grey70', ...) {
   
-  x <- y <- tissue <- NULL
-  # Map colours to samples according to expression level.
-  g.list <- function(j) {
+  g_list <- function(con, lgd=FALSE, ...) {
 
-    g.col <- NULL; con.idx <- grep(paste0("^", j, "$"), con)
-    tis.col1 <- tis.col[con.idx]; scol1 <- scol[con.idx]
+    x <- y <- tissue <- NULL; tis.df <- unique(coord[, 'tissue'])
+    if (lgd==FALSE) { 
 
-    for (i in tis.path) {
+      g.col <- NULL; con.idx <- grep(paste0("^", con, "$"), cons)
+      tis.col1 <- tis.col[con.idx]; scol1 <- scol[con.idx]
 
-      tis.idx <- which(tis.col1 %in% i); if (length(tis.idx)==1) { g.col <- c(g.col, scol1[tis.idx])
-      } else if (length(tis.idx)==0) { g.col <- c(g.col, NA) }
+      for (i in tis.path) {
 
-    }
-    names(g.col) <- tis.df <- unique(coord[, 'tissue']) # The colors might be internally re-ordered alphabetically during mapping, so give them names to fix the match with tissues. E.g. c('yellow', 'blue') can be re-ordered to c('blue', 'yellow'), which makes tissue mapping wrong. Correct: colours are not re-ordered. The 'tissue' in 'data=coord' are internally re-ordered according to a factor. Therfore, 'tissue' should be a factor with the right order. Otherwise, disordered mapping can happen.
+        tis.idx <- which(tis.col1 %in% i); if (length(tis.idx)==1) { g.col <- c(g.col, scol1[tis.idx])
+        } else if (length(tis.idx)==0) { g.col <- c(g.col, NA) }
+
+      }; names(g.col) <- tis.df
     # Make selected tissues transparent by setting their colours as NA.
     if (!is.null(tis.trans)) for (i in tis.df) { if (sub('_\\d+$', '', i) %in% tis.trans) g.col[i] <- NA }
-    # Show selected or all samples in legend.
-    if (length(sam.legend)==1) if (sam.legend=='identical') sam.legend <- unique(tis.path[!is.na(g.col)]) else if (sam.legend=='all') sam.legend <- unique(tis.path)
-    leg.idx <- !duplicated(tis.path) & (tis.path %in% sam.legend)
-    g <- ggplot()+geom_polygon(data=coord, aes(x=x, y=y, fill=tissue), color=line.color, size=line.size, linetype='solid')+scale_fill_manual(values=g.col, breaks=tis.df[leg.idx], labels=tis.path[leg.idx], guide=guide_legend(title=legend.title, ncol=legend.ncol, nrow=legend.nrow))+theme(axis.text=element_blank(), axis.ticks=element_blank(), panel.grid=element_blank(), panel.background=element_rect(fill="white", colour="grey80"), plot.margin=margin(0.1, 0.1, 0.1, 0.3, "cm"), axis.title.x=element_text(size=16,face="bold"), plot.title=element_text(hjust=0.5, size=sub.title.size), legend.position=legend.position, legend.direction=legend.direction, legend.background = element_rect(fill=alpha(NA, 0)), legend.key.size=unit(legend.key.size, "cm"), legend.text=element_text(size=legend.label.size), legend.title=element_text(size=legend.title.size))+labs(x="", y="")+scale_y_continuous(expand=c(0.01, 0.01))+scale_x_continuous(expand=c(0.01, 0.01))+ggtitle(paste0(k, "_", j)); return(g)
+    
+    } else g.col <- rep(NA, length(tis.path))
+    names(g.col) <- tis.df # The colors might be internally re-ordered alphabetically during mapping, so give them names to fix the match with tissues. E.g. c('yellow', 'blue') can be re-ordered to c('blue', 'yellow'), which makes tissue mapping wrong. Correct: colours are not re-ordered. The 'tissue' in 'data=coord' are internally re-ordered according to a factor. Therfore, 'tissue' should be a factor with the right order. Otherwise, disordered mapping can happen.
 
+    if (lgd==FALSE) scl.fil <- scale_fill_manual(values=g.col, guide=FALSE) else { 
+
+      # Show selected or all samples in legend.
+      if (length(sam.legend)==1) if (sam.legend=='identical') sam.legend <- intersect(sam.uni, unique(tis.path)) else if (sam.legend=='all') sam.legend <- unique(tis.path)
+      sam.legend <- setdiff(sam.legend, tis.trans) 
+      leg.idx <- !duplicated(tis.path) & (tis.path %in% sam.legend)
+      # Select legend key colours. 
+      if (is.null(legend.col)) {
+       
+         n <- length(sam.legend); col.all <- grDevices::colors()[grep('honeydew|aliceblue|white|gr(a|e)y', grDevices::colors(), invert=TRUE)]
+         legend.col <- col.all[seq(from=1, to=length(col.all), by=floor(length(col.all)/n))]
+         legend.col <- legend.col[seq_len(sum(leg.idx))]
+
+       }
+       # Map legend colours to tissues.
+       names(legend.col) <- sam.legend 
+       for (i in seq_along(g.col)) {
+
+         g.col0 <- legend.col[sub('_\\d+', '', names(g.col)[i])]
+         if (!is.na(g.col0)) g.col[i] <- g.col0
+
+       }; scl.fil <- scale_fill_manual(values=g.col, breaks=tis.df[leg.idx], labels=tis.path[leg.idx], guide=guide_legend(title=legend.title, ncol=legend.ncol, nrow=legend.nrow)) 
+
+    }
+
+    g <- ggplot(...)+geom_polygon(data=coord, aes(x=x, y=y, fill=tissue), color=line.color, size=line.size, linetype='solid')+scl.fil+theme(axis.text=element_blank(), axis.ticks=element_blank(), panel.grid=element_blank(), panel.background=element_rect(fill="white", colour="grey80"), plot.margin=margin(0.1, 0.1, 0.1, 0.3, "cm"), axis.title.x=element_text(size=16,face="bold"), plot.title=element_text(hjust=0.5, size=sub.title.size))+labs(x="", y="")+scale_y_continuous(expand=c(0.01, 0.01))+scale_x_continuous(expand=c(0.01, 0.01))+ggtitle(paste0(k, "_", con))
+
+    if (lgd==TRUE) {
+
+      g <- g+theme(axis.text=element_blank(), axis.ticks=element_blank(), panel.grid=element_blank(), panel.background=element_rect(fill="white", colour="grey80"), plot.margin=margin(0.01, 0.01, 0.2, 0, "npc"), axis.title.x=element_text(size=16,face="bold"), plot.title=element_text(hjust=0.5, size=15, face="bold"), legend.position=legend.position, legend.direction=legend.direction, legend.background = element_rect(fill=alpha(NA, 0)), legend.key.size=unit(legend.key.size, "cm"), legend.text=element_text(size=legend.label.size), legend.title=element_text(size=legend.title.size), legend.margin=margin(l=0.1, r=0.1, unit='cm'))+ggtitle('Legend')
+
+    }; return(g)
 
   }
-  cname <- colnames(gene); con <- gsub("(.*)(__)(.*)", "\\3", cname); con.uni <- unique(con)
+  # Map colours to samples according to expression level.
+  cname <- colnames(gene); cons <- gsub("(.*)(__)(.*)", "\\3", cname); con.uni <- unique(cons)
+  sam.uni <- unique(gsub("(.*)(__)(.*)", "\\1", cname))
   grob.na <- grob.lis <- NULL; for (k in ID) {
 
     scol <- NULL; for (i in gene[k, ]) { 
@@ -66,12 +100,13 @@ grob_list <- function(gene, geneV, coord, ID, cols, tis.path, tis.trans=NULL, su
 
     idx <- grep("__", cname); c.na <- cname[idx]
     tis.col <- gsub("(.*)(__)(.*)", "\\1", c.na); g.lis <- NULL
-    grob.na0 <- paste0(k, "_", con.uni); g.lis <- lapply(con.uni, g.list)
+    grob.na0 <- paste0(k, "_", con.uni); g.lis <- lapply(con.uni, g_list)
     # Repress popups by saving it to a png file, then delete it.
-    tmp <- tempdir(); pa <- paste0(tmp, '/delete.png')
-    png(pa); grob <- lapply(g.lis, ggplotGrob); dev.off(); if (file.exists(pa)) do.call(file.remove, list(pa))
+    tmp <- tempfile()
+    png(tmp); grob <- lapply(g.lis, ggplotGrob); dev.off(); if (file.exists(tmp)) do.call(file.remove, list(tmp))
     names(grob) <- grob.na0; grob.lis <- c(grob.lis, grob) 
 
-  }; return(grob.lis)
+  }; g.lgd <- g_list(con=NULL, lgd=TRUE)
+  return(list(grob.lis=grob.lis, g.lgd=g.lgd))
 
 }

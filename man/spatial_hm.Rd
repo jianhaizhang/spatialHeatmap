@@ -12,10 +12,12 @@ spatial_hm(
   ID,
   col.com = c("yellow", "purple", "blue"),
   col.bar = "selected",
+  bar.width = 0.7,
   data.trans = NULL,
   tis.trans = NULL,
   width = 1,
   height = 1,
+  legend.r = 1,
   sub.title.size = 11,
   lay.shm = "gene",
   ncol = 3,
@@ -23,8 +25,8 @@ spatial_hm(
   legend.title = NULL,
   legend.ncol = NULL,
   legend.nrow = NULL,
-  legend.position = "right",
-  legend.direction = "vertical",
+  legend.position = "bottom",
+  legend.direction = NULL,
   legend.key.size = 0.5,
   legend.label.size = 8,
   legend.title.size = 8,
@@ -48,6 +50,8 @@ spatial_hm(
 
 \item{col.bar}{"selected" or "all", meaning use input genes or whole data matrix to build the colour scale respectively. The default is "selected".}
 
+\item{bar.width}{The width of colour bar. Default if 0.7.}
+
 \item{data.trans}{"log2", "exp2", or NULL. If colours across tissues cannot distinguish due to low variance or outliers, transform the data matrix by log2 or 2-base expoent (exp2). Default is NULL (data will not be transformed).}
 
 \item{tis.trans}{A character vector of tissue names. These tissues cover other tissues and should be set transparent. E.g c("epidermis", "cortex").}
@@ -55,6 +59,8 @@ spatial_hm(
 \item{width}{A numeric of each subplot width, relative to height. The default is 1.}
 
 \item{height}{A numeric of each subplot height, relative to width. The default is 1.}
+
+\item{legend.r}{The ratio of height to width of the legend plot. Default is 1.}
 
 \item{sub.title.size}{A numeric. The subtitle font size of each individual spatial heatmap. Default is 11.}
 
@@ -105,7 +111,7 @@ library(ExpressionAtlas)
 rse.hum <- getAtlasData('E-GEOD-67196')[[1]][[1]]; assay(rse.hum)[1:3, 1:3]
 
 # A targets file describing replicates of samples and conditions is required, which is made based on the "colData" slot in the downloaded "RangedSummarizedExperiment" and available in spatialHeatmap. See the "se" parameter for details. 
-brain.pa <- system.file('extdata/example_data/target_brain.txt', package='spatialHeatmap')
+brain.pa <- system.file('extdata/shinyApp/example/target_brain.txt', package='spatialHeatmap')
 target.hum <- read.table(brain.pa, header=TRUE, row.names=1, sep='\t')
 # The "organism_part" and "disease" column describes tissue and condition replicates respectively.  
 target.hum[c(1:3, 41:42), 4:5]

@@ -1,33 +1,54 @@
+source('~/tissue_specific_gene/function/fun.R')
+options(shiny.maxRequestSize=7*1024^3, stringsAsFactors=FALSE) 
+
 # Import internal functions.
+filter_data <- get('filter_data', envir=asNamespace('spatialHeatmap'), inherits=FALSE)
 svg_df <- get('svg_df', envir=asNamespace('spatialHeatmap'), inherits=FALSE)
 nod_lin <- get('nod_lin', envir=asNamespace('spatialHeatmap'), inherits=FALSE)
 grob_list <- get('grob_list', envir=asNamespace('spatialHeatmap'), inherits=FALSE)
 col_bar <- get('col_bar', envir=asNamespace('spatialHeatmap'), inherits=FALSE)
 lay_shm <- get('lay_shm', envir=asNamespace('spatialHeatmap'), inherits=FALSE)
-
-
-
+adj_mod <- get('adj_mod', envir=asNamespace('spatialHeatmap'), inherits=FALSE)
+matrix_hm <- get('matrix_hm', envir=asNamespace('spatialHeatmap'), inherits=FALSE)
+network <- get('network', envir=asNamespace('spatialHeatmap'), inherits=FALSE)
 
 
 library(SummarizedExperiment); library(shiny); library(shinydashboard); library(grImport); library(rsvg); library(ggplot2); library(DT); library(gridExtra); library(ggdendro); library(WGCNA); library(grid); library(XML); library(plotly); library(data.table); library(genefilter); library(flashClust); library(visNetwork); library(reshape2); library(igraph)
 
-
 # Import input matrix.
-fread.df <- function(input, isRowGene, header, sep, fill) {
+fread.df <- function(input, isRowGene, header, sep, fill, rep.aggr='mean') {
         
-  df0 <- fread(input=input, header=header, sep=sep, fill=fill); df1 <- as.data.frame(df0); rownames(df1) <- df1[, 1]
-  df1 <- df1[, -1]; colnames(df1) <- colnames(df0)[-ncol(df0)]
+  df0 <- fread(input=input, header=header, sep=sep, fill=fill)
+  cna <- colnames(df0)[-ncol(df0)]
+  df1 <- as.data.frame(df0); rownames(df1) <- df1[, 1]
+  # Subsetting identical column names in a matrix will not trigger appending numbers.
+  df1 <- as.matrix(df1[, -1]); colnames(df1) <- cna
   if(isRowGene==FALSE) df1 <- t(df1)
-  idx <- grep("__", colnames(df1)); idx1 <- setdiff(seq_len(length(colnames(df1))), idx)
-  gene2 <- df1[, idx, drop=FALSE]; gene3 <- df1[, idx1, drop=FALSE]; if (ncol(gene3)>0) colnames(gene3) <- 'ann'; gene2 <- as.data.frame(apply(gene2, 2, as.numeric)) # This step removes rownames of gene2.
-  rownames(gene2) <- rownames(gene3); return(list(gene2=gene2, gene3=gene3))
+  cna <- colnames(df1)
+  idx <- grep("__", cna); idx1 <- setdiff(seq_len(length(cna)), idx)
+  gene2 <- df1[, idx, drop=FALSE]; gene3 <- df1[, idx1, drop=FALSE]; if (ncol(gene3)>0) colnames(gene3) <- 'ann'
+  if(sum(is.na(as.numeric(gene2)))>=1) return('Make sure all values in data matrix are numeric.')
+  gen.rep <- gene2; rna <- rownames(gen.rep); gen.rep <-apply(gen.rep, 2, as.numeric); rownames(gen.rep) <- rna
+  # Aggregate replicates.
+  if (any(duplicated(cna)) & !is.null(rep.aggr)) {
+
+    # To keep colnames, "X" should be a character, not a factor.
+    if (rep.aggr=='mean') gene2 <- sapply(X=unique(cna), function(x) rowMeans(gene2[, cna==x, drop=FALSE]))
+    if (aggr=='median') {
+
+      gene2 <- sapply(X=unique(cna), function(x) Biobase::rowMedians(gene2[, cna==x, drop=FALSE]))
+      rownames(gene2) <- rna
+
+    }
+
+  }; gene2 <-apply(gene2, 2, as.numeric); rownames(gene2) <- rna 
+  return(list(gene2=as.data.frame(gene2), gene3=as.data.frame(gene3), gen.rep=as.data.frame(gen.rep)))
 
 }
 
-options(shiny.maxRequestSize=7*1024^3) 
 # enableWGCNAThreads()
 inter.svg <- readLines("example/root_cross_final.svg")
-inter.data <- read.table("example/root_expr_ann_row_gen.txt", header=TRUE, row.names=1, sep="\t")
+inter.data <- read.table("example/expr_arab.txt", header=TRUE, row.names=1, sep="\t")
 
 shinyServer(function(input, output, session) {
 
@@ -40,10 +61,15 @@ shinyServer(function(input, output, session) {
 
   output$dld.data <- downloadHandler(
 
-    filename=function(){ "root_expr_ann_row_gen.txt" },
+    filename=function(){ "expr_arab.txt" },
     content=function(file){ write.table(inter.data, file, col.names=TRUE, row.names=TRUE, quote=FALSE, sep="\t") }
 
   )
+  # Instruction.
+  output$ins <-renderUI({ includeHTML("file/instruction.html") })
+  # Acknowledgement.
+  output$ack <-renderUI({ includeHTML("file/acknowledgement.html") })
+
   # Filter parameters.
   fil <- reactiveValues(P=0, A=-Inf, CV1=-Inf, CV2=Inf)
 
@@ -53,7 +79,7 @@ shinyServer(function(input, output, session) {
     updateRadioButtons(session, inputId="dimName", label="Step 3: is column or row gene?", 
     inline=TRUE, choices=c("None", "Row", "Column"), selected="None")
     updateSelectInput(session, 'sep', 'Step 4: separator', c("None", "Tab", "Comma", "Semicolon"), "None")
-    updateRadioButtons(session, inputId='log', label='Data transform', choices=c("No", "log2", "exp.2"), selected="No", inline=TRUE)
+    updateRadioButtons(session, inputId='log', label='Data transform', choices=c("No", "log2", "exp2"), selected="No", inline=TRUE)
     updateRadioButtons(session, inputId='cs.v', label='Colour scale based on:', choices=c("Selected genes"="sel.gen", "Whole matrix"="w.mat"), selected="sel.gen", inline=TRUE)
     updateSelectInput(session, "height", "Overall canvas height:", seq(100, 15000, 20), "400")
     updateSelectInput(session, "width", "Overall canvas width:", seq(100, 15000, 20), "820")
@@ -91,47 +117,47 @@ shinyServer(function(input, output, session) {
 
     if (input$fileIn=="None") return(NULL)  
     withProgress(message="Loading data: ", value = 0, {
-    if (grepl("_Mustroph$|_Geng$|_Chen$|_Census$", input$fileIn)) {
+    if (grepl("_Mustroph$|_Prudencio$|_Merkin$|_Cardoso.Moreira$|_Census$", input$fileIn)) {
 
         incProgress(0.5, detail="Loading matrix. Please wait.")
-        if (input$fileIn=="organ_Mustroph") df.te <- fread.df(input="example/ucr_efp_expr_ann_row_gen.txt", isRowGene=TRUE, header=TRUE, sep="\t", fill=TRUE)
-        if (input$fileIn=="shoot_root_Mustroph") df.te <- fread.df(input="example/ucr_efp_expr_ann_row_gen.txt", isRowGene=TRUE, header=TRUE, sep="\t", fill=TRUE)
-        if (input$fileIn=="root_roottip_Mustroph") df.te <- fread.df(input="example/ucr_efp_expr_ann_row_gen.txt", isRowGene=TRUE, header=TRUE, sep="\t", fill=TRUE)
-        if (input$fileIn=="shoot_Mustroph") df.te <- fread.df(input="example/ucr_efp_expr_ann_row_gen.txt", isRowGene=TRUE, header=TRUE, sep="\t", fill=TRUE)
-        if (input$fileIn=="root_Geng") df.te <- fread.df(input="example/root_expr_ann_row_gen.txt", isRowGene=TRUE, header=TRUE, sep="\t", fill=TRUE)
-        if (input$fileIn=="brain_Chen") df.te <- fread.df(input="example/brain_expr_ann_row_gen.txt", isRowGene=TRUE, header=TRUE, sep="\t", fill=TRUE)
+        if (input$fileIn=="brain_Prudencio") { df.te <- fread.df(input="example/expr_human.txt", isRowGene=TRUE, header=TRUE, sep="\t", fill=TRUE) }
+        if (input$fileIn=="mouse_Merkin") df.te <- fread.df(input="example/expr_mouse.txt", isRowGene=TRUE, header=TRUE, sep="\t", fill=TRUE)
+        if (input$fileIn=="chicken_Cardoso.Moreira") df.te <- fread.df(input="example/expr_chicken.txt", isRowGene=TRUE, header=TRUE, sep="\t", fill=TRUE)
+        if (input$fileIn=="shoot_Mustroph") df.te <- fread.df(input="example/expr_arab.txt", isRowGene=TRUE, header=TRUE, sep="\t", fill=TRUE)
+        if (input$fileIn=="organ_Mustroph") df.te <- fread.df(input="example/expr_arab.txt", isRowGene=TRUE, header=TRUE, sep="\t", fill=TRUE)
+        if (input$fileIn=="root_Mustroph") df.te <- fread.df(input="example/expr_arab.txt", isRowGene=TRUE, header=TRUE, sep="\t", fill=TRUE)
+        if (input$fileIn=="shoot_root_Mustroph") df.te <- fread.df(input="example/expr_arab.txt", isRowGene=TRUE, header=TRUE, sep="\t", fill=TRUE)
+        if (input$fileIn=="root_roottip_Mustroph") df.te <- fread.df(input="example/expr_arab.txt", isRowGene=TRUE, header=TRUE, sep="\t", fill=TRUE)
         if (input$fileIn=="map_Census") df.te <- fread.df(input="example/us_population2018.txt", isRowGene=TRUE, header=TRUE, sep="\t", fill=TRUE)
-
+        gen.rep <- df.te[['gen.rep']]
         gene2 <- df.te[['gene2']]; if (input$log=='log2') { 
           
           g.min <- min(gene2) 
           if (g.min<0) gene2 <- gene2-g.min+1; if (g.min==0) gene2 <- gene2+1; gene2 <- log2(gene2)  
 
-        }; if (input$log=='exp.2') gene2 <- 2^gene2
+        }; if (input$log=='exp2') gene2 <- 2^gene2
         gene3 <- df.te[['gene3']][, , drop=FALSE]
-	    return(list(gene2=gene2, gene3=gene3))
 
     }
 
     if ((input$fileIn=="Compute locally"|input$fileIn=="Compute online") & 
-    (is.null(input$geneInpath)|input$dimName=="None")) return(NULL)
+    (is.null(input$geneInpath)|input$dimName=="None"|input$sep=="None")) return(NULL)
     if ((input$fileIn=="Compute locally"|input$fileIn=="Compute online") & 
     !is.null(input$geneInpath) & input$dimName!="None" & input$sep!="None") {
 
       incProgress(0.25, detail="Importing matrix. Please wait.")
       geneInpath <- input$geneInpath; if (input$sep=="Tab") sep <- "\t" else if (
       input$sep=="Comma") sep <- "," else if (input$sep=="Semicolon") sep <- ";"
-      df.upl <- fread.df(input=geneInpath$datapath, isRowGene=(input$dimName=='Row'), header=TRUE, sep="\t", fill=TRUE)
-      gene2 <- df.upl[['gene2']]; 
-      if (input$log=='log2') {
-        
-        g.min <- min(gene2)                                                                                                      
-        if (g.min<0) gene2 <- gene2-g.min+1; if (g.min==0) gene2 <- gene2+1; gene2 <- log2(gene2)                                 
-                                                                                                                                   
-      }; if (input$log=='exp.2') gene2 <- 2^gene2 
+      df.upl <- fread.df(input=geneInpath$datapath, isRowGene=(input$dimName=='Row'), header=TRUE, sep=sep, fill=TRUE, rep.aggr='mean'); gen.rep <- df.upl[['gen.rep']]
+      gene2 <- df.upl[['gene2']]; if (input$log=='log2') {
+             
+        g.min <- min(gene2)
+        if (g.min<0) gene2 <- gene2-g.min+1; if (g.min==0) gene2 <- gene2+1; gene2 <- log2(gene2)
+      
+      }; if (input$log=='exp2') gene2 <- 2^gene2 
       gene3 <- df.upl[['gene3']]
 
-      }; return(list(gene2=gene2, gene3=gene3))
+      }; return(list(gene2=gene2, gene3=gene3, gen.rep=gen.rep))
 
     })
 
@@ -217,7 +243,7 @@ shinyServer(function(input, output, session) {
   # To make the "gID$new" and "gID$all" updated with the new "input$fileIn", since the selected row is fixed (3rd row), the "gID$new" is not updated when "input$fileIn" is changed, and the downstream is not updated either. The shoot/root examples use the same data matrix, so the "gID$all" is the same (pre-selected 3rd row) when change from the default "shoot" to others like "organ". As a result, the "gene$new" is null and downstream is not updated. Also the "gene$new" is the same when change from shoot to organ, and downstream is not updated, thus "gene$new" and "gene$all" are both set null above upon new "input$fileIn".
   observeEvent(input$fileIn, {
 
-    if (!grepl("_Mustroph$|_Geng$|_Chen$|_Census$", input$fileIn)) return()
+    if (!grepl("_Mustroph$|_Merkin$|_Cardoso.Moreira$|_Prudencio$|_Census$", input$fileIn)) return()
     r.na <- rownames(geneIn()[["gene2"]]); gID$geneID <- r.na[input$dt_rows_selected]
     gID$new <- setdiff(gID$geneID, gID$all); gID$all <- c(gID$all, gID$new)
 
@@ -225,7 +251,7 @@ shinyServer(function(input, output, session) {
 
   output$bar <- renderPlot({
 
-    if ((grepl("_Mustroph$|_Geng$|_Chen$|_Census$", input$fileIn) & !is.null(geneIn()))|((input$fileIn=="Compute locally"|input$fileIn=="Compute online") & !is.null(input$svgInpath) & !is.null(geneIn()))) {
+    if ((grepl("_Mustroph$|_Merkin$|_Cardoso.Moreira$|_Prudencio$|_Census$", input$fileIn) & !is.null(geneIn()))|((input$fileIn=="Compute locally"|input$fileIn=="Compute online") & !is.null(input$svgInpath) & !is.null(geneIn()))) {
 
       if (length(color$col=="none")==0|input$color==""|is.null(geneV())) return(NULL)
 
@@ -251,18 +277,24 @@ shinyServer(function(input, output, session) {
 
   })
 
+  svg.path <- reactive({
+
+    if (input$fileIn=="Compute locally"|input$fileIn=="Compute online") { svg.path <- input$svgInpath$datapath; svg.na <- input$svgInpath$name } else if (input$fileIn=="brain_Prudencio") { svg.path <- "example/homo_sapiens.brain.svg"; svg.na <- "homo_sapiens.brain.svg" } else if (input$fileIn=="mouse_Merkin") { svg.path <- "example/mus_musculus.male.svg"; svg.na <- "mus_musculus.male.svg" } else if (input$fileIn=="chicken_Cardoso.Moreira") { svg.path <- "example/gallus_gallus.svg"; svg.na <- "gallus_gallus.svg" } else if (input$fileIn=="shoot_Mustroph") { svg.path <- "example/shoot_final.svg"; svg.na <- "shoot_final.svg" } else if (input$fileIn=="organ_Mustroph") { svg.path <- "example/organ_final.svg"; svg.na <- "organ_final.svg" } else if (input$fileIn=="root_Mustroph") { svg.path <- "example/root_cross_final.svg"; svg.na <- "root_cross_final.svg" } else if (input$fileIn=="shoot_root_Mustroph") { svg.path <- "example/shoot_root_final.svg"; svg.na <- "shoot_root_final.svg" } else if (input$fileIn=="root_roottip_Mustroph") { svg.path <- "example/root_roottip_final.svg"; svg.na <- "root_roottip_final.svg" } else if (input$fileIn=="map_Census") { svg.path <- "example/us_map_final.svg"; svg.na <- "us_map_final.svg" } else return(NULL)
+    return(list(svg.path=svg.path, svg.na=svg.na))
+
+  })
 
   svg.df <- reactive({ 
 
     if (((input$fileIn=="Compute locally"|input$fileIn=="Compute online") & 
-    !is.null(input$svgInpath))|(grepl("_Mustroph$|_Geng$|_Chen$|_Census$", input$fileIn) & is.null(input$svgInpath))) {
+    !is.null(input$svgInpath))|(grepl("_Mustroph$|_Merkin$|_Cardoso.Moreira$|_Prudencio$|_Census$", input$fileIn) & is.null(input$svgInpath))) {
 
       withProgress(message="Tissue heatmap: ", value=0, {
     
         incProgress(0.5, detail="Extracting coordinates. Please wait.") 
-	if (input$fileIn=="Compute locally"|input$fileIn=="Compute online") { svg.path <- input$svgInpath$datapath; svg.na <- input$svgInpath$name } else if     
-(input$fileIn=="organ_Mustroph") { svg.path <- "example/organ_final.svg"; svg.na <- "organ_final.svg" } else if (input$fileIn=="shoot_root_Mustroph") { svg.path <- "example/shoot_root_final.svg"; svg.na <- "shoot_root_final.svg" } else if (input$fileIn=="root_roottip_Mustroph") { svg.path <- "example/root_roottip_final.svg"; svg.na <- "root_roottip_final.svg" } else if (input$fileIn=="shoot_Mustroph") { svg.path <- "example/shoot_final.svg"; svg.na <- "shoot_final.svg" } else if (input$fileIn=="root_Geng") { svg.path <- "example/root_cross_final.svg"; svg.na <- "root_cross_final.svg" } else if (input$fileIn=="brain_Chen") { svg.path <- "example/brain_final.svg"; svg.na <- "brain_final.svg" } else if (input$fileIn=="map_Census") { svg.path <- "example/us_map_final.svg"; svg.na <- "us_map_final.svg" }   
-       df_tis <- svg_df(svg.path=svg.path); return(df_tis)
+        df_tis <- svg_df(svg.path=svg.path()[['svg.path']])
+        validate(need(!is.character(df_tis), df_tis))
+        return(df_tis)
 
       })
 
@@ -270,10 +302,17 @@ shinyServer(function(input, output, session) {
 
   })
 
+  sam <- reactive({ 
+
+    cname <- colnames(geneIn()[["gene2"]]); idx <- grep("__", cname); c.na <- cname[idx]
+    if (length(grep("__", c.na))>=1) gsub("(.*)(__)(.*$)", "\\1", c.na) else return(NULL) 
+
+  })
+
   observe({
 
     input$fileIn; geneIn(); input$adj.modInpath; input$A; input$p; input$cv1; input$cv2; svg.df()
-    updateCheckboxGroupInput(session, inputId="tis", label='Select tissues to be transparent:', choices=unique(svg.df()[['tis.path']]), selected='', inline=TRUE)
+    updateCheckboxGroupInput(session, inputId="tis", label='Select tissues to be transparent:', choices=intersect(unique(sam()), unique(svg.df()[['tis.path']])), selected='', inline=TRUE)
 
   })
 
@@ -319,17 +358,17 @@ shinyServer(function(input, output, session) {
 
       })
 
-    }); grob$all <- gs()
+    }); grob$all <- gs()[['grob.lis']]
 
   })
 
-  observeEvent(gID$new, { grob.all <- c(grob$all, gs()); grob$all <- grob.all[unique(names(grob.all))] })
+  observeEvent(gID$new, { grob.all <- c(grob$all, gs()[['grob.lis']]); grob$all <- grob.all[unique(names(grob.all))] })
   # In "observe" and "observeEvent", if one code return (NULL), then all the following code stops. If one code changes, all the code renews.
   observe({
     
     if (is.null(geneIn())|is.null(input$dt_rows_selected)|is.null(svg.df())|gID$geneID[1]=="none"|is.null(grob$all)) return(NULL)
 
-    output$tissue <- renderPlot(width=as.numeric(input$width)/2*as.numeric(input$col.n), height=as.numeric(input$height)*length(input$dt_rows_selected), {
+    output$shm <- renderPlot(width=as.numeric(input$width)/2*as.numeric(input$col.n), height=as.numeric(input$height)*length(input$dt_rows_selected), {
 
     if (is.null(input$dt_rows_selected)|is.null(svg.df())|gID$geneID[1]=="none"|is.null(grob$all)) return(NULL)
     if (length(color$col=="none")==0|input$color=="") return(NULL)
@@ -344,30 +383,21 @@ shinyServer(function(input, output, session) {
 
   })
 
-  output$ori.svg <- renderImage({
+  output$lgd <- renderPlot(width=260, {
 
-    if ((is.null(input$svgInpath) & !grepl("_Mustroph$|_Geng$|_Chen$|_Census$", input$fileIn))|input$fileIn==
-    "None") return(list(src="precompute/blank.png", contentType="image/png"))
-    w <- as.numeric(input$width); h <- as.numeric(input$height); con.n <- length(con())
-    W <- w/as.numeric(input$col.n); H <- h/(ceiling(con.n/as.numeric(input$col.n)))
+    if (is.null(svg.path())|is.null(gs())) return(ggplot())
 
-    if (((input$fileIn=="Compute locally"|input$fileIn=="Compute online")|
-    !is.null(input$svgInpath))|grepl("_Mustroph$|_Geng$|_Chen$|_Census$", input$fileIn)) {
-
-      if (input$fileIn=="Compute locally"|input$fileIn=="Compute online") { svg.path <- input$svgInpath$datapath } else if (input$fileIn=="organ_Mustroph") { svg.path <- "example/organ_final.svg" } else if (input$fileIn=="shoot_root_Mustroph") { svg.path <- "example/shoot_root_final.svg" } else if (input$fileIn=="root_roottip_Mustroph") { svg.path <- "example/root_roottip_final.svg" } else if (input$fileIn=="shoot_Mustroph") { svg.path <- "example/shoot_final.svg" } else if (input$fileIn=="root_Geng") { svg.path <- "example/root_cross_final.svg" } else if (input$fileIn=="brain_Chen") { svg.path <- "example/brain_final.svg" } else if (input$fileIn=="map_Census") { svg.path <- "example/us_map_final.svg" }
-      # svg.ln <- readLines(svg.path, 200); w.h <- svg.ln[grep(" width| height", svg.ln)]
-      xmlfile <- xmlParse(svg.path); saveXML(doc=xmlfile, file='tmp/original.svg')
+      svg.path <- svg.path()[['svg.path']]
+      # Width and height in original SVG.
       na <- c('width', 'height'); lis <- xmlToList(svg.path)
       for (i in seq_len(length(lis))) {
 
         if (sum(na %in% names(lis[[i]]))==2) w.h <- as.character(xmlToList(svg.path)[[i]][na])
 
       }; w.h <- as.numeric(gsub("^(\\d+\\.\\d+|\\d+).*", "\\1", w.h)); r <- w.h[1]/w.h[2]
-      list(src="tmp/original.svg", contentType="image/svg+xml", width=250, height=250/r, alt=NULL)
+      g.lgd <- gs()[['g.lgd']]; g.lgd <- g.lgd+coord_fixed(ratio =r); return(g.lgd)
 
-    }
-
-  }, deleteFile=FALSE)
+  })
 
   adj.mod <- reactive({ 
 
@@ -394,7 +424,7 @@ shinyServer(function(input, output, session) {
   
   adj.tree <- reactive({ 
     #gene <- geneIn()[["gene2"]]; if (!(input$gen.sel %in% rownames(gene))) return() # Avoid unnecessary computing of 'adj', since 'input$gen.sel' is a cerain true gene id of an irrelevant expression matrix, not 'None', when switching from one defaul example's matrix heatmap to another example.
-    if (input$fileIn=="Compute online"|grepl("_Mustroph$|_Geng$|_Chen$|_Census$", input$fileIn)) {
+    if (input$fileIn=="Compute online"|grepl("_Mustroph$|_Merkin$|_Cardoso.Moreira$|_Prudencio$|_Census$", input$fileIn)) {
 
       gene <- geneIn()[["gene2"]]; if (is.null(gene)) return()
       if (input$net.type=="S") { sft <- 12; type <- "signed" } else if (input$net.type=="U") { sft <- 6; type <- "unsigned" }
@@ -421,7 +451,7 @@ shinyServer(function(input, output, session) {
 
   mcol <- reactive({
 
-    if (!is.null(adj.tree()) & (input$fileIn=="Compute online"|grepl("_Mustroph$|_Geng$|_Chen$|_Census$", input$fileIn))) { 
+    if (!is.null(adj.tree()) & (input$fileIn=="Compute online"|grepl("_Mustroph$|_Merkin$|_Cardoso.Moreira$|_Prudencio$|_Census$", input$fileIn))) { 
       
     withProgress(message="Computing dendrogram:", value=0, {
       incProgress(0.7, detail="hierarchical clustering.")
@@ -448,7 +478,7 @@ shinyServer(function(input, output, session) {
 
       if (is.null(adj.mod())|input$gen.sel=="None") return(NULL); adj <- adj.mod()[[1]]; mods <- adj.mod()[[2]] 
 
-    } else if (input$fileIn=="Compute online"|grepl("_Mustroph$|_Geng$|_Chen$|_Census$", input$fileIn)) { 
+    } else if (input$fileIn=="Compute online"|grepl("_Mustroph$|_Merkin$|_Cardoso.Moreira$|_Prudencio$|_Census$", input$fileIn)) { 
 
       if (is.null(adj.tree())|input$gen.sel=="None") return(NULL); adj <- adj.tree()[['adj']]; mods <- mcol() 
 
@@ -459,7 +489,7 @@ shinyServer(function(input, output, session) {
     withProgress(message="Matrix heatmap:", value=0, {
       incProgress(0.7, detail="Plotting...")
       se <- SummarizedExperiment(assays=list(expr=as.matrix(gene))); mods <- list(mod=mods); if (input$mat.scale=="By column/sample") scale.hm <- 'column' else if (input$mat.scale=="By row/gene") scale.hm <- 'row'
-      matrix_heatmap(geneID=input$gen.sel, se=se, adj.mod=mods, ds=input$ds, scale=scale.hm, main=paste0('Network module containing ', input$gen.sel), title.size=10, static=FALSE)
+      matrix_hm(geneID=input$gen.sel, se=se, adj.mod=mods, ds=input$ds, scale=scale.hm, main=paste0('Network module containing ', input$gen.sel), title.size=10, static=FALSE)
 
     })
 
@@ -494,7 +524,7 @@ shinyServer(function(input, output, session) {
   visNet <- reactive({
 
     if (input$TOM.in=="None") return(NULL)
-    if (input$fileIn=="Compute locally") { adj <- adj.mod()[[1]]; mods <- adj.mod()[[2]] } else if (input$fileIn=="Compute online"|grepl("_Mustroph$|_Geng$|_Chen$|_Census$", input$fileIn)) { adj <- adj.tree()[[1]]; mods <- mcol() }
+    if (input$fileIn=="Compute locally") { adj <- adj.mod()[[1]]; mods <- adj.mod()[[2]] } else if (input$fileIn=="Compute online"|grepl("_Mustroph$|_Merkin$|_Cardoso.Moreira$|_Prudencio$|_Census$", input$fileIn)) { adj <- adj.tree()[[1]]; mods <- mcol() }
     gene <- geneIn()[["gene2"]]; if (!(input$gen.sel %in% rownames(gene))) return() # Avoid unnecessary computing of 'adj', since 'input$gen.sel' is a cerain true gene id of an irrelevant expression matrix, not 'None', when switching from one defaul example's network to another example.
     lab <- mods[, input$ds][rownames(gene)==input$gen.sel]
     if (lab=="0") { showModal(modalDialog(title="Module", "The selected gene is not assigned to any module. Please select a different gene.")); return() }

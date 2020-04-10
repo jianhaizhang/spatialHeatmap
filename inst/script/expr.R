@@ -1,133 +1,73 @@
-library(affy); library(genefilter)
 
-# Brain data.
-library(hgu133a2.db)
+# Human brain data. 
+# Access data.
+library(ExpressionAtlas)
+rse.hum <- getAtlasData('E-GEOD-67196')[[1]][[1]]
+# Targets file.
+brain.pa <- system.file('extdata/shinyApp/example/target_brain.txt', package='spatialHeatmap')
+target.hum <- read.table(brain.pa, header=TRUE, row.names=1, sep='\t')
+colData(rse.hum) <- DataFrame(target.hum)
+# Normalise.
+capture.output(se.nor.hum <- norm_data(se=rse.hum, method.norm='ratio', data.trans='log2'), file=tempfile())
+# Aggregate.
+se.aggr.hum <- aggr_rep(se=se.nor.hum, sam.factor='organism_part', con.factor='disease', aggr='mean')
+# Filter.
+se.fil.hum <- filter_data(se=se.aggr.hum, sam.factor='organism_part', con.factor='disease', pOA=c(0.01, 5), CV=c(0.55, 100), dir=NULL)
+# Data matrix.
+expr.hum <- assay(se.fil.hum)
+# colnames(expr.hum) <- gsub("_", ".", colnames(expr.hum))
+write.table(expr.hum, 'expr_human.txt', col.names=TRUE, row.names=TRUE, sep='\t')
 
-# Data source GSE13162: https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi
-data <- ReadAffy(celfile.path="GSE13162_RAW")
-mas5 <- mas5(data); exp0 <- exprs(mas5); pma0 <- mas5calls(data)
-exp <- log2(exp0); pma <- exprs(pma0)
+# Mouse organ.
+rse.mus <- getAtlasData('E-MTAB-2801')[[1]][[1]]
+pa.mus <- system.file('extdata/shinyApp/example/target_mouse.txt', package='spatialHeatmap')
+# target.mus <- read.table(pa.mus, header=TRUE, row.names=1, sep='\t')
+colData(rse.mus) <- DataFrame(target.mus)
 
-# Sample title.
-sam.title <- system("zcat GSE13162_series_matrix.txt.gz | grep Sample_title", intern=TRUE)
-sam.title.sep <- unlist(strsplit(sam.title, "\"\t\""))
-sam.title.sep[1] <- "N1A Normal-frontal"; sam.title.sep[56] <- "S10B Sporadic-cerebellum"
-sam.title.sep[6] <- "N5B Normal-cerebellum"
-colnames(pma) <- colnames(exp) <- gsub("(.*)( )(.*)", "\\3", sam.title.sep)
+capture.output(se.nor.mus <- norm_data(se=rse.mus, method.norm='ratio', data.trans='log2'), file=tempfile())
+# Average the tissue-condition replicates.
+se.aggr.mus <- aggr_rep(se=se.nor.mus, sam.factor='organism_part', con.factor='strain', aggr='mean')
+se.fil.mus <- filter_data(se=se.aggr.mus, sam.factor='organism_part', con.factor='strain', pOA=c(0.15, 5), CV=c(1.7, 100), dir=NULL)
+# Data matrix.
+expr.mus <- assay(se.fil.mus)
+# colnames(expr.mus) <- gsub("_", ".", colnames(expr.mus))
+write.table(expr.mus, 'expr_mouse.txt', col.names=TRUE, row.names=TRUE, sep='\t')
 
-# Annotation.
-keys <- keys(hgu133a2.db)
-ann <- select(hgu133a2.db, keys=keys, columns = c("SYMBOL", "GENENAME"))
-ann1 <- subset(ann, !grepl("AFFX|s_at|a_at|x_at|r_at", PROBEID))
-# Remove duplicated probes and genes.
-dup <- ann1[, 1][which(duplicated(ann1[, 1]))]
-ann1 <- subset(ann1, !(ann1[, 1] %in% dup))
-dup1 <- ann1[, 2][which(duplicated(ann1[, 2]))]
-ann1 <- subset(ann1, !(ann1[, 2] %in% dup1))
-rownames(ann1) <- ann1[, 1]
-# Only keep probes with valid gene symbols.
-ann1 <- subset(ann1, !is.na(SYMBOL))
 
-# Only keep probes with annotations.
-int <- intersect(rownames(exp), ann1[, 1])
-# Use gene symbols as rownames.
-rna <- make.names(ann1[int, ][, 2])
-exp <- exp[int, ];  pma <- pma[int, ]; rownames(exp) <- rownames(pma) <- rna
+# Chicken organ.
+rse.chk <- getAtlasData('E-MTAB-6769')[[1]][[1]]
+pa.chk <- system.file('extdata/shinyApp/example/target_chicken.txt', package='spatialHeatmap')
+target.chk <- read.table(pa.chk, header=TRUE, row.names=1, sep='\t')
+colData(rse.chk) <- DataFrame(target.chk)
+capture.output(se.nor.chk <- norm_data(se=rse.chk, method.norm='ratio', data.trans='log2'), file=tempfile())
+# Average the tissue-condition replicates.
+se.aggr.chk <- aggr_rep(se=se.nor.chk, sam.factor='organism_part', con.factor='age', aggr='mean')
+se.fil.chk <- filter_data(se=se.aggr.chk, sam.factor='organism_part', con.factor='age', pOA=c(0.05, 5), CV=c(1.5, 100), dir=NULL)
+# Data matrix.
+expr.chk <- assay(se.fil.chk)
+# colnames(expr.chk) <- gsub("_", ".", colnames(expr.chk))
+write.table(expr.chk, 'expr_chicken.txt', col.names=TRUE, row.names=TRUE, sep='\t')
 
-# Keep genes having "P" in at least one sample.
-pma[pma=="P"] <- 2; pma[pma=="M"] <- 1; pma[pma=="A"] <- 0
-pma <- apply(pma, 2, as.numeric) 
-pma.ag <- aggregate(t(pma), by=list(colnames(pma)), FUN=mean)
-pma.ag <- t(pma.ag); colnames(pma.ag) <- pma.ag[1, ]; pma.ag <- pma.ag[-1, ]
-pma.ag <- apply(pma.ag, 2, as.numeric); rownames(pma.ag) <- rna
-ffun <- filterfun(pOverA(0.11, 1)); filtered <- genefilter(pma.ag, ffun)
-pma.ag <- pma.ag[filtered, ]
+# Arabidopsis shoot. 
+library(GEOquery)
+gset <- getGEO("GSE14502", GSEMatrix=TRUE, getGPL=TRUE)[[1]]
+se.sh <- as(gset, "SummarizedExperiment")
+rownames(se.sh) <- make.names(rowData(se.sh)[, 'Gene.Symbol'])
+pa.sh <- system.file('extdata/shinyApp/example/target_shoot.txt', package='spatialHeatmap')
+target.sh <- read.table(pa.sh, header=TRUE, row.names=1, sep='\t')
+colData(se.sh) <- DataFrame(target.sh)
+# Average the sample-condition replicates.
+se.aggr.sh <- aggr_rep(se=se.sh, sam.factor='samples', con.factor='conditions', aggr='mean')
+se.fil.sh <- filter_data(se=se.aggr.sh, sam.factor='samples', con.factor='conditions', pOA=c(0.03, 6), CV=c(0.29, 100), dir=NULL)
+# Data matrix.
+expr.sh <- assay(se.fil.sh)
+# colnames(expr.sh) <- gsub("_", ".", colnames(expr.sh))
+expr.sh <- cbind.data.frame(expr.sh, ann=rowData(se.fil.sh)[, 'Target.Description'], stringsAsFactors=FALSE)
+expr.sh <- expr.sh <- expr.sh[c(9, 1:8, 10:372), ]
+write.table(expr.sh, 'expr_arab.txt', col.names=TRUE, row.names=TRUE, sep='\t')
 
-# Filter genes according to CV.
-exp1 <- exp[rownames(pma.ag), ]
-exp.ag <- aggregate(t(exp1), by=list(colnames(exp1)), FUN=mean)
-exp.ag <- t(exp.ag); colnames(exp.ag) <- exp.ag[1, ]
-exp.ag <- exp.ag[-1, ]; exp.ag <- apply(exp.ag, 2, as.numeric)
-rownames(exp.ag) <- rownames(exp1)
-ffun <- filterfun(cv(0.15, 10000)); filtered <- genefilter(exp.ag, ffun)
-exp.ag <- exp.ag[filtered, ]; dim(exp.ag)
-cna<- sub("-", "__", colnames(exp.ag))
-colnames(exp.ag) <- gsub("(.*)(__)(.*)", "\\3\\2\\1", cna)
-
-# Append annotation.
-rownames(ann1) <- make.names(ann1$SYMBOL)
-int1 <- intersect(rownames(ann1), rownames(exp.ag))
-ann1 <- ann1[int1, ]; exp.ag <- exp.ag[int1, ]
-exp.ag <- as.data.frame(exp.ag)
-exp.ag1 <- cbind(exp.ag, Annotation=ann1$GENENAME, stringsAsFactors=FALSE)
-write.table(exp.ag1, "brain_expr_ann_row_gen.txt", col.names=TRUE, row.names=TRUE, sep="\t")
-
-# Arabidopsis thaliana root data.
-library(ath1121501.db)
-
-# Data source GSE46205: https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi
-
-data <- ReadAffy(celfile.path="GSE46205_RAW")
-mas5 <- mas5(data); exp0 <- exprs(mas5); pma0 <- mas5calls(data)
-exp <- log2(exp0); pma <- exprs(pma0)
-
-# Sample title.
-sam.title <- system("zcat GSE46205_series_matrix.txt.gz | grep Sample_title", intern=TRUE)
-sam.title.sep <- unlist(strsplit(sam.title, "\"\t\""))
-sam.title.sep[1] <- "Arabidopsis, root cells, epidermis, standard conditions for 1 hour, replicate 1"; sam.title.sep[96] <- "Arabidopsis, root cells, epidermis, standard conditions for 1 hour, replicate 2"
-sam.title.sep <- gsub("\\,", "", sam.title.sep)
-sam.title.sep <- sub("Arabidopsis root cells ", "", sam.title.sep)
-sam.title.sep <- gsub(" conditions for | NaCl for ", "\\_", sam.title.sep)
-sam.title.sep <- gsub(" hour replicate [0-9]| hours replicate [0-9]", "h", sam.title.sep)
-sam.title.sep <- gsub(" ", "__", sam.title.sep)
-colnames(pma) <- colnames(exp) <- sam.title.sep
-idx <- grep("__standard_48h$", sam.title.sep)
-pma <- pma[, -idx]; exp <- exp[, -idx]
-
-# Annotation.
-ann <- data.frame(ACCNUM=sapply(contents(ath1121501ACCNUM), paste, collapse=", "), SYMBOL=sapply(contents(ath1121501SYMBOL), paste, collapse=", "), DESC=sapply(contents(ath1121501GENENAME), paste, collapse=", "), stringsAsFactors=FALSE)
-rm1 <- grep("AFFX|s_at|a_at|x_at|r_at", rownames(ann)); rm2 <- which(ann[, "SYMBOL"]=="NA"); rm3 <- which(ann$DESC=="NA")
-ann1 <- ann[-c(rm1, rm2, rm3), ]
-# Remove duplicated probes and genes.
-dup <- rownames(ann1)[which(duplicated(rownames(ann1)))]
-ann1 <- subset(ann1, !(rownames(ann1) %in% dup))
-dup1 <- ann1[, 2][which(duplicated(ann1[, 2]))]
-ann1 <- subset(ann1, !(ann1[, 2] %in% dup1))
-
-# Only keep probes with annotations.
-int <- intersect(rownames(exp), rownames(ann1))
-# Use gene symbols as rownames.
-rna <- make.names(ann1[int, ][, 2]); cna <- unique(colnames(exp))
-exp <- exp[int, ]; pma <- pma[int, ]; rownames(exp) <- rownames(pma) <- rna
-
-# Keep genes having "P" in at least one sample.
-pma[pma=="P"] <- 2; pma[pma=="M"] <- 1; pma[pma=="A"] <- 0
-pma <- apply(pma, 2, as.numeric) 
-pma.ag <- aggregate(t(pma), by=list(colnames(pma)), FUN=mean)
-pma.ag <- t(pma.ag); colnames(pma.ag) <- pma.ag[1, ]; pma.ag <- pma.ag[-1, ]
-pma.ag <- apply(pma.ag, 2, as.numeric); rownames(pma.ag) <- rna
-ffun <- filterfun(pOverA(0.03, 1)); filtered <- genefilter(pma.ag, ffun)
-pma.ag <- pma.ag[filtered, ]
-
-# Filter genes according to CV.
-exp1 <- exp[rownames(pma.ag), ]
-exp.ag <- aggregate(t(exp1), by=list(colnames(exp1)), FUN=mean)
-exp.ag <- t(exp.ag); colnames(exp.ag) <- exp.ag[1, ]; exp.ag <- exp.ag[, cna]
-exp.ag <- exp.ag[-1, ]; exp.ag <- apply(exp.ag, 2, as.numeric)
-rownames(exp.ag) <- rownames(exp1)
-ffun <- filterfun(cv(0.23, 10000)); filtered <- genefilter(exp.ag, ffun)
-exp.ag <- exp.ag[filtered, ]; dim(exp.ag)
-
-# Append annotation.
-rownames(ann1) <- make.names(ann1$SYMBOL)
-int1 <- intersect(rownames(ann1), rownames(exp.ag))
-ann1 <- ann1[int1, ]; exp.ag <- exp.ag[int1, ]
-exp.ag <- as.data.frame(exp.ag)
-exp.ag1 <- cbind(exp.ag, Annotation=ann1$DESC, stringsAsFactors=FALSE)
-write.table(exp.ag1, "root_expr_ann_row_gen.txt", col.names=TRUE, row.names=TRUE, sep="\t")
 
 # US map
-
 # Data source "National, State, and Puerto Rico Commonwealth Totals Datasets: Population, population change, and estimated components of population change: April 1, 2010 to July 1, 2017" (nst-est2017-alldata.csv): https://www.census.gov/content/census/en/data/tables/2017/demo/popest/state-total.html; "Population, population change, and estimated components of population change: April 1, 2010 to July 1, 2018 (NST-EST2018-alldata)" (nst-est2018-alldata.csv): https://www.census.gov/data/datasets/time-series/demo/popest/2010s-state-total.html.
 
 df <- read.table("nst-est2018-alldata1.txt", header=TRUE, row.names=NULL, sep="\t", fill=TRUE); rownames(df) <- df$NAME
@@ -155,31 +95,5 @@ y2012 <- year(2012)
 
 all <- data.frame(y2010, y2011, y2012, Annotation=c("Numeric change in resident total population", "Births", "Deaths", "Natural increase", "Net international migration", "Net domestic migration", "Net migration"), stringsAsFactors=FALSE)
 write.table(all, "us_population2018.txt", col.names=TRUE, row.names=TRUE, sep="\t")
-
-
-# Human brain data. 
-# Access data.
-library(ExpressionAtlas)
-rse.hum <- getAtlasData('E-GEOD-67196')[[1]][[1]]
-# Targets file.
-brain.pa <- system.file('extdata/example_data/target_brain.txt', package='spatialHeatmap')
-target.hum <- read.table(brain.pa, header=TRUE, row.names=1, sep='\t')
-colData(rse.hum) <- DataFrame(target.hum)
-# Normalise.
-capture.output(se.nor.hum <- norm_data(se=rse.hum, method.norm='ratio', data.trans='log2'), file=tempfile())
-# Aggregate.
-se.aggr.hum <- aggr_rep(se=se.nor.hum, sam.factor='organism_part', con.factor='disease', aggr='mean')
-# Filter.
-se.fil.hum <- filter_data(se=se.aggr.hum, sam.factor='organism_part', con.factor='disease', pOA=c(0.01, 5), CV=c(0.55, 100), dir=NULL)
-
-# Data matrix.
-expr.hum <- assay(se.fil.hum)
-colnames(expr.hum) <- sub("__", "_", colnames(expr.hum))
-
-write.table(expr.hum, 'expr_hum.txt', col.names=TRUE, row.names=TRUE, sep='\t')
-
-
-
-
 
 

@@ -43,9 +43,10 @@ lay_shm <- function(lay.shm, con, ncol, ID.sel, grob.list, width, height, shiny)
 
     } else if (lay.shm=="con") {
 
-      grob.all.na <- names(grob.list); na.rev <- NULL
+      grob.all.na <- names(grob.list)
       # Reverse the "gene_condition" names, and re-oder them.
-      for (i in grob.all.na) { na.rev <- c(na.rev, paste0(rev(strsplit(i, NULL)[[1]]), collapse='')) }
+      na.rev <- NULL; for (i in grob.all.na) { na.rev <- c(na.rev, paste0(rev(strsplit(i, NULL)[[1]]), collapse='')) }
+      # Put legend plot at the end.
       grob.all.con <- grob.list[order(na.rev)]
       all.cell <- ceiling(length(ID.sel)/ncol)*ncol
       cell.idx <- c(seq_len(length(ID.sel)), rep(NA, all.cell-length(ID.sel)))

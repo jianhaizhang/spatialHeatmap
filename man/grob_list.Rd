@@ -14,11 +14,12 @@ grob_list(
   tis.trans = NULL,
   sub.title.size,
   sam.legend = "identical",
+  legend.col = NULL,
   legend.title = NULL,
   legend.ncol = NULL,
   legend.nrow = NULL,
-  legend.position = "right",
-  legend.direction = "vertical",
+  legend.position = "bottom",
+  legend.direction = NULL,
   legend.key.size = 0.5,
   legend.label.size = 8,
   legend.title.size = 8,
@@ -45,6 +46,8 @@ grob_list(
 \item{sub.title.size}{A numeric. The subtitle font size of each individual spatial heatmap. Default is 11.}
 
 \item{sam.legend}{A character vector of tissue names in the SVG image. These tissues are shown in the legend. Default is "identical", meaning all the identical tissues between the data matrix and SVG image. Another value is 'all', meaning all tissues in the SVG image.}
+
+\item{legend.col}{A character vector of colours provided by users for the legend keys. The lenght must be equal to the number of target samples shown in the legend. Default is NULL, which means colours are chosen automatically.}
 
 \item{legend.title}{A character, the legend title. Default is NULL.}
 
