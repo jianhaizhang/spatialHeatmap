@@ -142,7 +142,8 @@ se.aggr.mus <- aggr_rep(se=se.nor.mus, sam.factor='organism_part', con.factor='s
 se.fil.mus <- filter_data(se=se.aggr.mus, sam.factor='organism_part', con.factor='strain', pOA=c(0.03, 5), CV=c(0.6, 100), dir=NULL)
 
 svg.mus <- system.file("extdata/shinyApp/example", "mus_musculus.male.svg", package="spatialHeatmap")
-spatial_hm(svg.path=svg.mus, se=se.fil.mus, ID='ENSMUSG00000000263', col.com=c("yellow", "blue", "purple"), width=1, height=0.5, legend.r=0.6, sub.title.size=7, layout="gene", ncol=3, tis.trans='skeletal.muscle', sam.legend='identical', legend.key.size=0.4, legend.nrow=4, legend.position=c(0.5, -0.15))
+
+spatial_hm(svg.path=svg.mus, se=se.fil.mus, ID='ENSMUSG00000000263', col.com=c("yellow", "blue", "purple"), width=1, height=0.5, legend.r=0.6, sub.title.size=7, layout="gene", ncol=3, tis.trans='skeletal.muscle', sam.legend='identical', legend.key.size=0.3, legend.nrow=4, legend.position=c(0.5, -0.15))
 
 ```
 
@@ -165,7 +166,7 @@ se.aggr.chk <- aggr_rep(se=se.nor.chk, sam.factor='organism_part', con.factor='a
 se.fil.chk <- filter_data(se=se.aggr.chk, sam.factor='organism_part', con.factor='age', pOA=c(0.01, 5), CV=c(0.6, 100), dir=NULL)
 svg.chk <- system.file("extdata/shinyApp/example", "gallus_gallus.svg", package="spatialHeatmap")
 
-spatial_hm(svg.path=svg.chk, se=se.fil.chk, ID='ENSGALG00000006346', col.com=c("yellow", "blue", "purple"), bar.width=0.7, width=1, height=0.9, legend.r=0.4, sub.title.size=7, layout="gene", ncol=3, legend.key.size=0.2, legend.label.size=7, legend.position=c(0.5, -0.06), legend.nrow=2)
+spatial_hm(svg.path=svg.chk, se=se.fil.chk, ID='ENSGALG00000006346', col.com=c("yellow", "blue", "purple"), bar.width=0.7, width=1, height=0.9, legend.r=0.4, sub.title.size=7, layout="gene", ncol=3, legend.key.size=0.4, legend.label.size=7.5, legend.position=c(0.5, -0.15), legend.nrow=2)
 
 ```
 
@@ -191,7 +192,8 @@ se.aggr.sh <- aggr_rep(se=se.sh, sam.factor='samples', con.factor='conditions', 
 se.fil.sh <- filter_data(se=se.aggr.sh, sam.factor='samples', con.factor='conditions', pOA=c(0.03, 6), CV=c(0.30, 100), dir=NULL)
 
 svg.sh <- system.file("extdata/shinyApp/example", "shoot_final.svg", package="spatialHeatmap")
-spatial_hm(svg.path=svg.sh, se=se.fil.sh, ID="HRE2", col.com=c('purple', 'cyan', "brown"), width=1, height=0.5, layout="gene", ncol=2, legend.position='bottom', legend.nrow=3, legend.r=0.8, legend.key.size=0.3, legend.label.size=7)
+
+spatial_hm(svg.path=svg.sh, se=se.fil.sh, ID="HRE2", col.com=c('purple', 'cyan', "brown"), width=1, height=0.5, layout="gene", ncol=2, legend.nrow=3, legend.r=0.8, legend.key.size=0.3, legend.label.size=7, legend.position=c(0.5, -0.07))
 
 ```   
 
@@ -214,7 +216,7 @@ To make it user-friendly, an [SVG repository](https://github.com/jianhaizhang/SV
 
 Download "homo_sapiens.brain.svg" from the [repository](https://github.com/jianhaizhang/SVG_tutorial_file/tree/master/svg_repo/ebi_trans) (click an image, mouse over the image and right click, then select "Save image as…"). Open the dowloaded SVG image in [Inkscape](https://inkscape.org/) and check tissue ids in the "XML Editor (Shift+Ctrl+X)" ([Figure 5](#brain)). These ids are preferred key words for searching the expression data. Take the id "cerebellum" for instance. Use function `searchAtlasExperiments` from the package ExpressionAtlas [@ebi] to search for human data with key words "cerebellum" and "Homo sapiens".    
 
-```{r eval=TRUE, echo=TRUE, warnings=FALSE }
+```{r eval=FALSE, echo=TRUE, warnings=FALSE }
 
 all.hum <- searchAtlasExperiments(properties="cerebellum", species="Homo sapiens")
 
@@ -439,7 +441,7 @@ Plot spatial heatmaps ([Figure 2](#mus_shm)).
 
 ```{r eval=FALSE, echo=TRUE, warnings=FALSE, fig.align="center", fig.cap=("Figure 5 Mouse organ spatial heatmap. This is a multiple-layer image and skeletal.muscle is set transparent to exposed lung and heart."), out.width="100%" }
 
-spatial_hm(svg.path=svg.mus, se=se.fil.mus, ID='ENSMUSG00000000263', col.com=c("yellow", "blue", "purple"), width=1, height=0.5, legend.r=0.6, sub.title.size=7, layout="gene", ncol=3, tis.trans='skeletal.muscle', sam.legend='identical', legend.key.size=0.4, legend.nrow=4, legend.position=c(0.5, -0.15))
+spatial_hm(svg.path=svg.mus, se=se.fil.mus, ID='ENSMUSG00000000263', col.com=c("yellow", "blue", "purple"), width=1, height=0.5, legend.r=0.6, sub.title.size=7, layout="gene", ncol=3, tis.trans='skeletal.muscle', sam.legend='identical', legend.key.size=0.3, legend.nrow=4, legend.position=c(0.5, -0.15))
 
 ```
 
@@ -488,7 +490,7 @@ Plot spatial heatmaps ([Figure 3](#chk_shm)).
 
 ```{r eval=FALSE, echo=TRUE, warnings=FALSE, fig.align="center", fig.cap=("Figure 8 Example of plotting chicken organ spatial heatmaps. Liver in day10 is not plotted since this tissue in day10 in not available in the data matrix."), out.width="100%" }
 
-spatial_hm(svg.path=svg.chk, se=se.fil.chk, ID='ENSGALG00000006346', col.com=c("yellow", "blue", "purple"), bar.width=0.7, width=1, height=0.9, legend.r=0.4, sub.title.size=7, layout="gene", ncol=3, legend.key.size=0.2, legend.label.size=7, legend.position=c(0.5, -0.06), legend.nrow=2)
+spatial_hm(svg.path=svg.chk, se=se.fil.chk, ID='ENSGALG00000006346', col.com=c("yellow", "blue", "purple"), bar.width=0.7, width=1, height=0.9, legend.r=0.4, sub.title.size=7, layout="gene", ncol=3, legend.key.size=0.4, legend.label.size=7.5, legend.position=c(0.5, -0.15), legend.nrow=2)
 
 ```
 
@@ -524,7 +526,7 @@ colData(se.sh) <- DataFrame(target.sh)
 
 Pro-process data matrix: aggregate, filter. 
 
-```{r eval=TRUE, echo=TRUE, warnings=FALSE }
+```{r eval=FALSE, echo=TRUE, warnings=FALSE }
 
 se.aggr.sh <- aggr_rep(se=se.sh, sam.factor='samples', con.factor='conditions', aggr='mean')
 se.fil.sh <- filter_data(se=se.aggr.sh, sam.factor='samples', con.factor='conditions', pOA=c(0.03, 6), CV=c(0.30, 100), dir=NULL)
@@ -544,7 +546,7 @@ Plot spatial heatmaps ([Figure 4](#sh_shm)).
 <a name="sh_shm1"></a>
 ```{r eval=FALSE, echo=TRUE, warnings=FALSE, fig.align="center", fig.cap=('Figure 9 Spatial Heatmaps of Arabidopsis shoot. Pre-defined tissue regions are coloured by the expression profile of the target gene.'), out.width="80%"}
 
-spatial_hm(svg.path=svg.sh, se=se.fil.sh, ID="HRE2", col.com=c('purple', 'cyan', "brown"), width=1, height=0.5, layout="gene", ncol=2, legend.position='bottom', legend.nrow=3, legend.r=0.8, legend.key.size=0.3, legend.label.size=7)
+spatial_hm(svg.path=svg.sh, se=se.fil.sh, ID="HRE2", col.com=c('purple', 'cyan', "brown"), width=1, height=0.5, layout="gene", ncol=2, legend.nrow=3, legend.r=0.8, legend.key.size=0.3, legend.label.size=7, legend.position=c(0.5, -0.07))
 
 ```   
 

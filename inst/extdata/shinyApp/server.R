@@ -14,9 +14,6 @@ network <- get('network', envir=asNamespace('spatialHeatmap'), inherits=FALSE)
 
 
 
-
-
-
 library(SummarizedExperiment); library(shiny); library(shinydashboard); library(grImport); library(rsvg); library(ggplot2); library(DT); library(gridExtra); library(ggdendro); library(WGCNA); library(grid); library(XML); library(plotly); library(data.table); library(genefilter); library(flashClust); library(visNetwork); library(reshape2); library(igraph)
 
 # Import input matrix.
@@ -340,8 +337,8 @@ shinyServer(function(input, output, session) {
       incProgress(0.25, detail="preparing data.")
       if (input$cs.v=="sel.gen") gene <- geneIn()[["gene2"]][input$dt_rows_selected, ]
       if (input$cs.v=="w.mat") gene <- geneIn()[["gene2"]]
-      g.df <- svg.df()[["df"]]; tis.path <- svg.df()[["tis.path"]]
-      grob.lis <- grob_list(gene=gene, geneV=geneV(), coord=g.df, ID=gID$new, cols=color$col, tis.path=tis.path, tis.trans=input$tis, sub.title.size=21) # Only gID$new is used.
+      g.df <- svg.df()[["df"]]; tis.path <- svg.df()[["tis.path"]]; fil.cols <- svg.df()[['fil.cols']]
+      grob.lis <- grob_list(gene=gene, geneV=geneV(), coord=g.df, ID=gID$new, legend.col=fil.cols, cols=color$col, tis.path=tis.path, tis.trans=input$tis, sub.title.size=21) # Only gID$new is used.
       return(grob.lis)
 
     })
@@ -360,8 +357,8 @@ shinyServer(function(input, output, session) {
         g.df <- svg.df()[["df"]]; tis.path <- svg.df()[["tis.path"]]
         if (input$cs.v=="sel.gen") gene <- geneIn()[["gene2"]][input$dt_rows_selected, ]
         if (input$cs.v=="w.mat") gene <- geneIn()[["gene2"]]
-        g.df <- svg.df()[["df"]]; tis.path <- svg.df()[["tis.path"]]
-        grob.lis <- grob_list(gene=gene, geneV=geneV(), coord=g.df, ID=gID$all, cols=color$col, tis.path=tis.path, tis.trans=input$tis, sub.title.size=20) # All gene IDs are used.
+        g.df <- svg.df()[["df"]]; tis.path <- svg.df()[["tis.path"]]; fil.cols <- svg.df()[['fil.cols']]
+        grob.lis <- grob_list(gene=gene, geneV=geneV(), coord=g.df, ID=gID$all, legend.col=fil.cols, cols=color$col, tis.path=tis.path, tis.trans=input$tis, sub.title.size=20) # All gene IDs are used.
         return(grob.lis)
 
       })

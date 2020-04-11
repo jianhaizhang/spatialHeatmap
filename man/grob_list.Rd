@@ -14,7 +14,7 @@ grob_list(
   tis.trans = NULL,
   sub.title.size,
   sam.legend = "identical",
-  legend.col = NULL,
+  legend.col,
   legend.title = NULL,
   legend.ncol = NULL,
   legend.nrow = NULL,
@@ -47,7 +47,7 @@ grob_list(
 
 \item{sam.legend}{A character vector of tissue names in the SVG image. These tissues are shown in the legend. Default is "identical", meaning all the identical tissues between the data matrix and SVG image. Another value is 'all', meaning all tissues in the SVG image.}
 
-\item{legend.col}{A character vector of colours provided by users for the legend keys. The lenght must be equal to the number of target samples shown in the legend. Default is NULL, which means colours are chosen automatically.}
+\item{legend.col}{A character vector of colours for the legend keys. The lenght must be equal to the number of target samples shown in the legend.}
 
 \item{legend.title}{A character, the legend title. Default is NULL.}
 

@@ -21,6 +21,15 @@ svg_df <- function(svg.path) {
   # Make sure the style is correct. If the stroke width is not the same across polygons such as '0.0002px', '0.216px', some stroke outlines cannot be recognised by 'PostScriptTrace'. Then some polygons are missing. Since the ggplot is based on 'stroke' not 'fill'.
   tmp <- tempdir()
   xmlfile <- xmlParse(svg.path); xmltop <- xmlRoot(xmlfile); ply <- xmltop[[xmlSize(xmltop)]]
+  # All original colours of each tissue.
+  fil.cols <- NULL; for (i in seq_len(xmlSize(ply))) {
+
+    ply0 <- ply[[i]]; na <- xmlName(ply0); id <- xmlAttrs(ply0)[['id']]
+    if (na=='g') sty <- xmlAttrs(ply0[[1]])[['style']] else sty <- xmlAttrs(ply0)[['style']]
+    sp <- strsplit(sty, ';')[[1]]; fil.col <- sp[grep('fill:', sp)]; fil.col <- sub('fill:', '', fil.col)
+    names(fil.col) <- id; fil.cols <- c(fil.cols, fil.col)
+
+  }
   style <- 'stroke:#000000;stroke-width:5.216;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1' # 'fill' is not necessary. In Inkscape, "group" or move an object adds transforms (relative positions), and this can lead to related polygons uncolored in the spatial heatmaps. Solution: ungroup and regroup to get rid of transforms and get absolute positions.
   # Change 'style' of all polygons.
   for (i in seq_len(xmlSize(ply))) {                      
@@ -117,7 +126,7 @@ svg_df <- function(svg.path) {
 
      }
 
-    }; g.df <- df; return(list(df=df, tis.path=tis.path))
+    }; g.df <- df; lis <- list(df=df, tis.path=tis.path, fil.cols=fil.cols); return(lis)
 
 }
 

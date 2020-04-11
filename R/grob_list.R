@@ -10,7 +10,7 @@
 #' @param tis.trans A character vector of tissue names. These tissues cover other tissues and should be set transparent. E.g c("epidermis", "cortex").
 #' @param sub.title.size A numeric. The subtitle font size of each individual spatial heatmap. Default is 11.
 #' @param sam.legend A character vector of tissue names in the SVG image. These tissues are shown in the legend. Default is "identical", meaning all the identical tissues between the data matrix and SVG image. Another value is 'all', meaning all tissues in the SVG image.
-#' @param legend.col A character vector of colours provided by users for the legend keys. The lenght must be equal to the number of target samples shown in the legend. Default is NULL, which means colours are chosen automatically. 
+#' @param legend.col A character vector of colours for the legend keys. The lenght must be equal to the number of target samples shown in the legend. 
 #' @param legend.title A character, the legend title. Default is NULL.
 #' @param legend.ncol An integer, the column number of the items in the legend. Default is NULL.
 #' @param legend.nrow An integer, the row number of the items in the legend. Default is NULL. 
@@ -33,8 +33,8 @@
 
 #' @importFrom ggplot2 ggplot aes theme element_blank margin element_rect scale_y_continuous scale_x_continuous ggplotGrob geom_polygon scale_fill_manual ggtitle element_text labs guide_legend alpha coord_fixed
 
-grob_list <- function(gene, geneV, coord, ID, cols, tis.path, tis.trans=NULL, sub.title.size, sam.legend='identical', legend.col=NULL, legend.title=NULL, legend.ncol=NULL, legend.nrow=NULL, legend.position='bottom', legend.direction=NULL, legend.key.size=0.5, legend.label.size=8, legend.title.size=8, line.size=0.2, line.color='grey70', ...) {
-  
+grob_list <- function(gene, geneV, coord, ID, cols, tis.path, tis.trans=NULL, sub.title.size, sam.legend='identical', legend.col, legend.title=NULL, legend.ncol=NULL, legend.nrow=NULL, legend.position='bottom', legend.direction=NULL, legend.key.size=0.5, legend.label.size=8, legend.title.size=8, line.size=0.2, line.color='grey70', ...) {
+ 
   g_list <- function(con, lgd=FALSE, ...) {
 
     x <- y <- tissue <- NULL; tis.df <- unique(coord[, 'tissue'])
@@ -59,18 +59,19 @@ grob_list <- function(gene, geneV, coord, ID, cols, tis.path, tis.trans=NULL, su
 
       # Show selected or all samples in legend.
       if (length(sam.legend)==1) if (sam.legend=='identical') sam.legend <- intersect(sam.uni, unique(tis.path)) else if (sam.legend=='all') sam.legend <- unique(tis.path)
-      sam.legend <- setdiff(sam.legend, tis.trans) 
-      leg.idx <- !duplicated(tis.path) & (tis.path %in% sam.legend)
-      # Select legend key colours. 
-      if (is.null(legend.col)) {
+      # Select legend key colours if identical samples between SVG and matrix have colors of "none".
+      legend.col <- legend.col[sam.legend] 
+      if (any(legend.col=='none')) {
        
-         n <- length(sam.legend); col.all <- grDevices::colors()[grep('honeydew|aliceblue|white|gr(a|e)y', grDevices::colors(), invert=TRUE)]
-         legend.col <- col.all[seq(from=1, to=length(col.all), by=floor(length(col.all)/n))]
-         legend.col <- legend.col[seq_len(sum(leg.idx))]
+         n <- sum(legend.col=='none'); col.all <- grDevices::colors()[grep('honeydew|aliceblue|white|gr(a|e)y', grDevices::colors(), invert=TRUE)]
+         col.none <- col.all[seq(from=1, to=length(col.all), by=floor(length(col.all)/n))]
+         legend.col[legend.col=='none'] <- col.none[seq_len(n)]
 
        }
        # Map legend colours to tissues.
-       names(legend.col) <- sam.legend 
+       sam.legend <- setdiff(sam.legend, tis.trans) 
+       leg.idx <- !duplicated(tis.path) & (tis.path %in% sam.legend)
+       legend.col <- legend.col[sam.legend] # Exclude transparent tissues. 
        for (i in seq_along(g.col)) {
 
          g.col0 <- legend.col[sub('_\\d+', '', names(g.col)[i])]
