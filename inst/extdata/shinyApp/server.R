@@ -1,4 +1,3 @@
-source('~/tissue_specific_gene/function/fun.R')
 options(shiny.maxRequestSize=7*1024^3, stringsAsFactors=FALSE) 
 
 # Import internal functions.
