@@ -15,7 +15,7 @@ The application is not limited to biological data. It is applicable as long as a
 
 # Installation 
 
-To install the package, start R (version "3.5") and use the BiocManager::install command:
+To install the package, start R (version "3.6") and use the BiocManager::install command:
 
 ```{r, eval=FALSE, echo=TRUE, warnings=FALSE} 
 

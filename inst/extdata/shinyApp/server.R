@@ -1,15 +1,18 @@
 options(shiny.maxRequestSize=7*1024^3, stringsAsFactors=FALSE) 
 
 # Import internal functions.
-filter_data <- get('filter_data', envir=asNamespace('spatialHeatmap'), inherits=FALSE)
-svg_df <- get('svg_df', envir=asNamespace('spatialHeatmap'), inherits=FALSE)
-nod_lin <- get('nod_lin', envir=asNamespace('spatialHeatmap'), inherits=FALSE)
-grob_list <- get('grob_list', envir=asNamespace('spatialHeatmap'), inherits=FALSE)
-col_bar <- get('col_bar', envir=asNamespace('spatialHeatmap'), inherits=FALSE)
-lay_shm <- get('lay_shm', envir=asNamespace('spatialHeatmap'), inherits=FALSE)
-adj_mod <- get('adj_mod', envir=asNamespace('spatialHeatmap'), inherits=FALSE)
-matrix_hm <- get('matrix_hm', envir=asNamespace('spatialHeatmap'), inherits=FALSE)
-network <- get('network', envir=asNamespace('spatialHeatmap'), inherits=FALSE)
+#filter_data <- get('filter_data', envir=asNamespace('spatialHeatmap'), inherits=FALSE)
+#svg_df <- get('svg_df', envir=asNamespace('spatialHeatmap'), inherits=FALSE)
+#nod_lin <- get('nod_lin', envir=asNamespace('spatialHeatmap'), inherits=FALSE)
+#grob_list <- get('grob_list', envir=asNamespace('spatialHeatmap'), inherits=FALSE)
+#col_bar <- get('col_bar', envir=asNamespace('spatialHeatmap'), inherits=FALSE)
+#lay_shm <- get('lay_shm', envir=asNamespace('spatialHeatmap'), inherits=FALSE)
+#adj_mod <- get('adj_mod', envir=asNamespace('spatialHeatmap'), inherits=FALSE)
+#matrix_hm <- get('matrix_hm', envir=asNamespace('spatialHeatmap'), inherits=FALSE)
+#network <- get('network', envir=asNamespace('spatialHeatmap'), inherits=FALSE)
+
+#source('~/tissue_specific_gene/function/fun.R')
+
 
 
 

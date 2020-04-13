@@ -1,5 +1,5 @@
 ---
-title: "spatialHeatmap Vignette"
+title: "spatialHeatmap: Intuitively Visualise Data Matrix on SVG Image"
 author: "Jianhai Zhang, PhD student at Genetics, Genomics and Bioinformatics, University of California, Riverside (<jzhan067@ucr.edu>; <zhang.jianhai@hotmail.com>) <p/> PI: Dr. Thomas Girke, professor at Department of Botany and Plant Sciences, University of California, Riverside (<thomas.girke@ucr.edu>)"
 date: "Last update: `r format(Sys.time(), '%d %B, %Y')`"
 output:
@@ -48,7 +48,7 @@ In addition, the accessory features of [Matrix Heatmap](#mhm) and [Network](#net
 
 The application is not limited to biological data. It is applicable as long as a pair of formatted data matrix in "SummariaedExperiment" and SVG image are provided. Other exmaples include population data collected in different years across different cities, health data of an individual under different conditions, ect.   
 
-In this vignette, firstly the Spatial Heatmap is exhibited with 4 gene expression (RNA-seq and microarray) examples, i.e. [Human Brain](#hum), [Mouse Organ](#mus), [Chicken Organ](#chk), [Arabidopsis Shoot](#shoot). Usage on other data type is in a similar way. Then the format requirements on data matrix and SVG image are explained. Next, the Matrix Heatmap, Network, and Shiny app are presented.
+In this vignette, firstly the Spatial Heatmap is exhibited with 4 gene expression (RNA-seq and microarray) examples, i.e. [Human Brain](#hum), [Mouse Organ](#mus), [Chicken Organ](#chk), [Arabidopsis Shoot](#shoot). Usage on other data type is in a similar way. Then the Matrix Heatmap, Network, and  Shiny app are presented. Next, the details of plotting spatial heatmaps are explained on the Human Brain example.  
 
 # Installation
 
@@ -62,9 +62,9 @@ BiocManager::install("spatialHeatmap")
 
 ```
 
-# Functionality
+# Load Packages and Vignette
 
-Load the required packages.
+Load packages.  
 
 ```{r, eval=TRUE, echo=TRUE, warnings=FALSE}
 
@@ -80,150 +80,39 @@ browseVignettes('spatialHeatmap')
 
 ```
 
+# Functionality
+
+The core functionality is spatial heatmap. It is designed to intuitively visualise the expression profile of target gene in a data matrix on an SVG image and promote hypothesis generation. As enhancements to the core functionality, the matrix heatmap and network explores a target gene in the background of the gene module it belongs to, which makes the visualisation in this package more informative. In addition, all the 3 functionality is combined into a Shiny app so that this package can be used interactively.  
+
 ## Spatial Heatmap {#shm}
 
-This is the core functionality of this package and is implemented by the function `spatial_hm`. It maps expression profiles of target genes from the data matrix onto the paired SVG image and displays as spatial heatmaps ([Figure 1](#brain_shm)). This featured is presented with 4 examples: Human Brain, Mouse Organ, Chicken Organ, Arabidopsis Shoot. The first 3 are RNA-seq data from [Expression Atlas-EMBL-EBI](https://www.ebi.ac.uk/gxa/home) and the last one is microarray data from [GEO](https://www.ncbi.nlm.nih.gov/geo/). Successful plotting of spatial heatmaps requires a pair of formatted data matrix and SVG image, as explained in format requirements on [data matrix](#mat_form) and [SVG image](#svg_form).   
+This is the core functionality of this package and is implemented by the function `spatial_hm`. Given a pair of formatted data matrix and SVG image, it maps the expression profile of a target gene under different conditions onto different tissues defined in the SVG image, and the resulting plots are spaial heatmaps. This functionality is designed to be flexible so as to achieve optimal display under different circumstances. The main features are introduced below.   
 
-The Expression Atlas-EMBL-EBI is a rich resource of gene and protein expression. It contains gene expression data measured from diverse origins such as different species, biological conditions, tissues, cell types, developmental stages, and diseases. Moreover, Expression Atlas also provides a rich resource of SVG images, which convers many species from animals to plants. The format of these SVG images are slightly modified to be compatible with the spatialHeatmap, which are available in the [SVG repository](#svg_tmp). The GEO is another rich repository of public genomics data covering a wide range of species, which accepts array- and sequence-based data in MIAME-compliant format. To demonstrate the wide usage of spatialHeatmap, example data are chosen from the 2 popular repositories.     
+It is able to take mutiple target genes as input. If so, a set of spatial heatmaps for each gene are plotted sequentially and organised on the same page. The `layout` parameter specifies display these spatial heatmaps by genes or by conditions. This feature makes it flexible for users to compare expression profiles of the same gene across conditions or different genes across the same condition. If many conditions are displayed, the `ncol` parameter can be used to adjust the column number in the layout to achieve optimal dispaly.     
 
-### Human Brain {#hum}
+In the case of tissues existing in multiple layers, some tissues might be covered and invisible in the spatial heatmaps. In this case, the `tis.trans` parameter can be used to set the front tissues transparent. Then the covered tissues will be visible, a representative example of which is shown in [Figure 2](#mus_shm). 
 
-The first example is plotting an EBI RNA-seq data matrix of human brain tissues onto a human brain SVG image from the [SVG repository](#svg_tmp). The data come from a transcriptome study of frontal cortex and cerebellum between normal and amyotrophic lateral sclerosis (ALS) subjects [@Prudencio2015-wd].  
+In the legend plot, if too many tissues are included, the legends might occupy too much space and lead to main plot squeezed. To overcome this issue, the `sam.legend` parameter is developed to allows users to only show selected tissues in the legend, and the default "identical" only shows the coloured tissues.   
 
-In this example, the expression profile of gene ENSG00000268433 in frontal cortex and cerebellum is plotted under ALS and normal conditions ([Figure 1](#brain_shm)). For example, in [Table 1](#brain_table) its expression value in cerebellum under ALS is 5.3240638. After mapping, this tissue is coloured purple corresponding to 5.3240638 in the colour scale. By contrast, this gene's expression profile is blue in the same tissue under normal condition. On the other hand, the expression profile (yellow) in frontal cortex is similar across ALS and normal. Therefore, it is intuitive that this gene's higher activity in cerebellum is potentially associated with ALS and could contribute to hypothesis generation.  
+Moreover, too many tissues might affect the visual effects due to the messy polygon outlines. The `line.size` and `line.color` parameters are used to adjust the thickness and colour of polygon outlines respectively and thus can enhance the visualisation.  
 
-If multiples target genes are input, a set of spatial heatmaps for each gene are plotted sequentially and organised on the same page. The `layout` parameter specifies display these spatial heatmaps by genes or by conditions. This feature makes it flexible for users to compare expression profiles of the same gene across conditions or different genes across the same condition. If many conditions are displayed, the 'ncol' parameter can be used to set optimal layout by assigning a column number in the layout. In this example, there are 2 conditions, ALS and normal, so `ncol=2` is set.   
+This core functionality is presented with 4 examples: Human Brain, Mouse Organ, Chicken Organ, Arabidopsis Shoot. The first 3 are RNA-seq data from [Expression Atlas-EMBL-EBI](https://www.ebi.ac.uk/gxa/home) and the last one is microarray data from [GEO](https://www.ncbi.nlm.nih.gov/geo/). Successful plotting of spatial heatmaps requires a pair of formatted data matrix and SVG image, as explained in format requirements on [data matrix](#mat_form) and [SVG image](#svg_form).   
 
-If tissues exist in multiple layers, some tissues might be covered and invisible in the spatial heatmaps. In this case, the `tis.trans` parameter can be used to set the front tissues transparent. Then the covered tissues will be visible, a representative example of which is shown in [Figure 2](#mus_shm). In this example, users can set `tis.trans='frontal_cortex'` in the [script](#brain_shm1) to check this feature. If too many tissues are included in the plot, the legend might occupy too much space. The `sam.legend` parameter allows users to only show selected tissues in the legend, and the default "identical" only shows the coloured tissues. Moreover, too many tissues might affect the visual effects due to the messy polygon outlines. The `line.size` and `line.color` parameters are used to adjust the thickness and colour of polygon outlines respectively and thus can enhance the visualisation.  
-  
-Refer to the [script](#how) for plotting details.  
+The Expression Atlas-EMBL-EBI is a rich resource of gene and protein expression. It contains gene expression data measured from diverse origins such as different species, biological conditions, tissues, cell types, developmental stages, and diseases. Moreover, Expression Atlas also provides a rich resource of SVG images, which convers many species from animals to plants. The format of these SVG images are slightly modified to be compatible with the spatialHeatmap, which are available in the [SVG repository](#svg_tmp). The GEO is another rich repository of public genomics data covering a wide range of species, which accepts array- and sequence-based data in MIAME-compliant format. To demonstrate the wide usage of spatialHeatmap, example data are chosen from the 2 popular databases.     
 
-<a name="brain_shm"></a>
-```{r eval=TRUE, echo=FALSE, warnings=FALSE, fig.align="center", fig.cap=("Figure 1 Example of plotting EBI data matrix on the SVG template. Cerebellum and frontal cortex are coloured, since they are the only 2 common tissues between the SVG image and the data matrix."), out.width="100%" }
+### Human Brain 
 
-# Access data.
-rse.hum <- getAtlasData('E-GEOD-67196')[[1]][[1]]
-# Targets file.
-brain.pa <- system.file('extdata/shinyApp/example/target_brain.txt', package='spatialHeatmap')
-target.hum <- read.table(brain.pa, header=TRUE, row.names=1, sep='\t')
-colData(rse.hum) <- DataFrame(target.hum)
-# Normalise.
-capture.output(se.nor.hum <- norm_data(se=rse.hum, method.norm='ratio', data.trans='log2'), file=tempfile())
-# Aggregate.
-se.aggr.hum <- aggr_rep(se=se.nor.hum, sam.factor='organism_part', con.factor='disease', aggr='mean')
-# Filter.
-se.fil.hum <- filter_data(se=se.aggr.hum, sam.factor='organism_part', con.factor='disease', pOA=c(0.01, 5), CV=c(0.3, 100), dir=NULL)
+The first example is plotting an EBI RNA-seq data matrix of human brain tissues onto a human brain SVG image from the [SVG repository](#svg_tmp). The data come from a transcriptome study of frontal cortex and cerebellum between normal and amyotrophic lateral sclerosis (ALS) subjects [@Prudencio2015-wd]. Below is the simplified plotting process, and details are explained in the [Supplement](#sup) section.  
 
-# SVG image.
-svg.hum <- system.file("extdata/shinyApp/example", "homo_sapiens.brain.svg", package="spatialHeatmap")
+Download the SVG image "homo_sapiens.brain.svg" from the [repository](https://github.com/jianhaizhang/SVG_tutorial_file/tree/master/svg_repo/ebi_trans) and check tissue ids in [Inkscape](https://inkscape.org/). Use a tissues id as key word to search for gene expression data. Take "cerebellum" for instance. Use function `searchAtlasExperiments` from the package ExpressionAtlas [@ebi] to search for human data with key words "cerebellum" and "Homo sapiens".    
 
-# Plot.
-spatial_hm(svg.path=svg.hum, se=se.fil.hum, ID='ENSG00000268433', col.com=c("yellow", "blue", "purple"), width=1, height=0.4, legend.r=0.5, sub.title.size=11, layout="gene", ncol=2, tis.trans=NULL, sam.legend='identical', line.size=0.2, line.color='grey70', legend.position=c(0.5, -0.15), legend.nrow=1)
-
-```
-
-### Mouse Organ {#mus}
-
-This example is based on the mouse data from a study aiming at assessing tissue-specific transcriptome variation across mammals [@Merkin2012-ak], which is from Expression Atlas. The spatial heatmap of gene ENSMUSG00000000263 is plotted in 8 tissues across 3 strains. It is manifest that only brain exhibits obvious difference across the 3 strains with DBA.2J, C57BL.6, and CD1 being highest, medium, and lowest respectively. In contrast, all the other 8 tissues display similar profile across strains. Thus this gene is potentially strain-specific. Moreover, the expression levels of all the other 8 tissues are all lower than brain.   
-
-This is a typical example to demonstrate the usage of `tis.trans` parameter, since this mouse organ image includes tissues in multiple layers and skelectal muscle covers lung and heart. In Figure 2, skelectal muscle is set transparent by `tis.trans='skeletal.muscle'` so that lung and heart are exposed. Users can try setting `tis.trans=NULL` in the [script](#mus_shm1) to see the difference.   
-
-<a name="mus_shm"></a>
-```{r eval=TRUE, echo=FALSE, warnings=FALSE, fig.align="center", fig.cap=("Figure 2 Mouse organ spatial heatmap. This is a multiple-layer image and skeletal.muscle is set transparent to exposed lung and heart."), out.width="100%" }
-
-rse.mus <- getAtlasData('E-MTAB-2801')[[1]][[1]]
-pa.mus <- system.file('extdata/shinyApp/example/target_mouse.txt', package='spatialHeatmap')
-target.mus <- read.table(pa.mus, header=TRUE, row.names=1, sep='\t')
-colData(rse.mus) <- DataFrame(target.mus)
-
-capture.output(se.nor.mus <- norm_data(se=rse.mus, method.norm='ratio', data.trans='log2'), file=tempfile())
-# Average the tissue-condition replicates.
-se.aggr.mus <- aggr_rep(se=se.nor.mus, sam.factor='organism_part', con.factor='strain', aggr='mean')
-se.fil.mus <- filter_data(se=se.aggr.mus, sam.factor='organism_part', con.factor='strain', pOA=c(0.03, 5), CV=c(0.6, 100), dir=NULL)
-
-svg.mus <- system.file("extdata/shinyApp/example", "mus_musculus.male.svg", package="spatialHeatmap")
-
-spatial_hm(svg.path=svg.mus, se=se.fil.mus, ID='ENSMUSG00000000263', col.com=c("yellow", "blue", "purple"), width=1, height=0.5, legend.r=0.6, sub.title.size=7, layout="gene", ncol=3, tis.trans='skeletal.muscle', sam.legend='identical', legend.key.size=0.3, legend.nrow=4, legend.position=c(0.5, -0.15))
-
-```
-
-### Chicken Organ {#chk}
-
-In this example, the data come from developments of 7 chicken organs under 9 time points [@Cardoso-Moreira2019-yq], which is accessed from Expression Atlas. The spatial heatmap of gene ENSGALG00000006346 is plotted. It is intuitive that the profiles of liver, heart, and kidney are all higher in day17 than other days. Therefore, the important role of this gene in day10 is worth futher exploration. In day10 liver is blank, because in the expression matrix liver data is not availble for day10. This reflects the plotting algorithm that only identical samples between the data matrix and SVG image are plotted.    
-
-Refer to the [script](#plot_chk) for plotting details.  
-
-<a name="chk_shm"></a>
-```{r eval=TRUE, echo=FALSE, warnings=FALSE, fig.align="center", fig.cap=("Figure 3 Example of plotting chicken organ spatial heatmaps. Liver in day10 is not plotted since this tissue in day10 in not available in the data matrix."), out.width="100%" }
-
-rse.chk <- getAtlasData('E-MTAB-6769')[[1]][[1]]
-pa.chk <- system.file('extdata/shinyApp/example/target_chicken.txt', package='spatialHeatmap')
-target.chk <- read.table(pa.chk, header=TRUE, row.names=1, sep='\t')
-colData(rse.chk) <- DataFrame(target.chk)
-capture.output(se.nor.chk <- norm_data(se=rse.chk, method.norm='ratio', data.trans='log2'), file=tempfile())
-# Average the tissue-condition replicates.
-se.aggr.chk <- aggr_rep(se=se.nor.chk, sam.factor='organism_part', con.factor='age', aggr='mean')
-se.fil.chk <- filter_data(se=se.aggr.chk, sam.factor='organism_part', con.factor='age', pOA=c(0.01, 5), CV=c(0.6, 100), dir=NULL)
-svg.chk <- system.file("extdata/shinyApp/example", "gallus_gallus.svg", package="spatialHeatmap")
-
-spatial_hm(svg.path=svg.chk, se=se.fil.chk, ID='ENSGALG00000006346', col.com=c("yellow", "blue", "purple"), bar.width=0.7, width=1, height=0.9, legend.r=0.4, sub.title.size=7, layout="gene", ncol=3, legend.key.size=0.4, legend.label.size=7.5, legend.position=c(0.5, -0.15), legend.nrow=2)
-
-```
-
-### Arabidopsis Shoot {#shoot}
-
-[GEO](https://www.ncbi.nlm.nih.gov/geo/) is a another well-known public repository of array- and sequence-based data. To demonstrate the use of spatialHeatmap on this resource, the dataset GSE14502 is plotted on a shoot SVG image. This a microarray data from a study of translatome variation of *Arabidopsis thaliana* (Arabidopsis) shoot and root tissues under control and hypoxia conditions [@Mustroph2009-nu], which is accessed through GEOquery [@geo].   
-
-Figure 4 is the spatial heatmap of gene "HRE2" under control and hypoxia. It is clear that this gene's exression profiles under control are lower than hypoxia across all the 5 tissues (pGL2, pRBCS, pCER5, pSUC2, pKAT1). Therefore, it can be hypothesised that hypoxia induces over-expression of "HRE2" across the 5 tissues and thus "HRE2" might be an important factor for Arabidopsis shoot to cope with hypoxia stress. The tissue pSultr2.2 is blank under hypoxia due to unavailability of its data under hypoxia in the data matrix.    
-
-Refer to the [script](#plot_sh) for plotting details.  
-
-<a name="sh_shm"></a>
-```{r eval=TRUE, echo=FALSE, warnings=FALSE, fig.align="center", fig.cap=('Figure 4 Spatial heatmaps of Arabidopsis shoot. Pre-defined tissue regions are coloured by the expression profile of the target gene. The promoter pGL2, pRBCS, pCER5, pSultr2.2, pSUC2, pKAT1 label shoot trichomes, shoot photosynthetic cell, cotyledon and leaf epidermis, shootbundle sheath, shoot phloem companion cells, Cotyledon and leaf guard cells, respectively.'), out.width="100%"}
-
-gset <- getGEO("GSE14502", GSEMatrix=TRUE, getGPL=TRUE)[[1]]
-se.sh <- as(gset, "SummarizedExperiment")
-rownames(se.sh) <- make.names(rowData(se.sh)[, 'Gene.Symbol'])
-pa.sh <- system.file('extdata/shinyApp/example/target_arab.txt', package='spatialHeatmap')
-target.sh <- read.table(pa.sh, header=TRUE, row.names=1, sep='\t')
-colData(se.sh) <- DataFrame(target.sh)
-# Average the sample-condition replicates.
-se.aggr.sh <- aggr_rep(se=se.sh, sam.factor='samples', con.factor='conditions', aggr='mean')
-se.fil.sh <- filter_data(se=se.aggr.sh, sam.factor='samples', con.factor='conditions', pOA=c(0.03, 6), CV=c(0.30, 100), dir=NULL)
-
-svg.sh <- system.file("extdata/shinyApp/example", "shoot_final.svg", package="spatialHeatmap")
-
-spatial_hm(svg.path=svg.sh, se=se.fil.sh, ID="HRE2", col.com=c('purple', 'cyan', "brown"), width=1, height=0.5, layout="gene", ncol=2, legend.nrow=3, legend.r=0.8, legend.key.size=0.3, legend.label.size=7, legend.position=c(0.5, -0.07))
-
-```   
-
-<!-- The following code of each example is duplicate with respective example above, so "eval=FALSE" is set if the code chunk is not neccessary to run. --> 
-
-## Procedures to Plot Spatial Heatmaps {#how}
-
-To plot spatial heatmaps, a pair of formatted data matrix and SVG images are required. The most important step is to format data matrix and SVG image so that the values in data matrix are mapped to polygons in SVG image as expected. The plotting algorithm mapps values from the data matrix onto SVG image according to sample names, so only samples with identcial names between the matrix and SVG are coloured. The SVG images can be downloaded from the [SVG repository](#svg_tmp) or created by following the step-by-step [SVG tutorial](https://jianhaizhang.github.io/SVG_tutorial_file/), which is based on [Inkscape](https://inkscape.org/).     
-
-To plot spatial heatmaps using data from the [Expression Atlas-EMBL-EBI](https://www.ebi.ac.uk/gxa/home) or [GEO](https://www.ncbi.nlm.nih.gov/geo/), first download an SVG image from the SVG repository and a gene exppression data acquired from at least one tissue in the SVG image, then format the data matrix and SVG image.  
-
-In the following, the detailed plotting procedure is explained on the Human Brain example. Other examples are plotted similarly.  
-
-### Download SVG Image and Data Matrix {#plot_hum} 
-
-<a name='svg_tmp'></a>
-**SVG repository**  
-
-To make it user-friendly, an [SVG repository](https://github.com/jianhaizhang/SVG_tutorial_file/tree/master/svg_repo/ebi_trans) across different species is created, where more SVG images will be added in future. These SVG templates are modified from [EBI Gene Expression Group](https://github.com/ebi-gene-expression-group/anatomogram/tree/master/src/svg) to be compatible with spatialHeatmap and are ready to use. If the target SVG image is available in this reposiroty, users only need to download it and set tissue ids. Otherwise, users can follow the step-by-step [SVG tutorial](https://jianhaizhang.github.io/SVG_tutorial_file/) to create custom SVG images. 
-
-Download "homo_sapiens.brain.svg" from the [repository](https://github.com/jianhaizhang/SVG_tutorial_file/tree/master/svg_repo/ebi_trans) (click an image, mouse over the image and right click, then select "Save image as…"). Open the dowloaded SVG image in [Inkscape](https://inkscape.org/) and check tissue ids in the "XML Editor (Shift+Ctrl+X)" ([Figure 5](#brain)). These ids are preferred key words for searching the expression data. Take the id "cerebellum" for instance. Use function `searchAtlasExperiments` from the package ExpressionAtlas [@ebi] to search for human data with key words "cerebellum" and "Homo sapiens".    
-
-```{r eval=FALSE, echo=TRUE, warnings=FALSE }
+```{r eval=TRUE, echo=TRUE, warnings=FALSE }
 
 all.hum <- searchAtlasExperiments(properties="cerebellum", species="Homo sapiens")
 
 ```
 
-Check the results and select one study conducted in at least one tissue in the downloaded SVG image. In this example, the experiment "E-GEOD-67196" is selected, since the data is measured in cerebellum and frontal cortex that are represented in the SVG image, which is an RNA-seq analysis of the 2 tissues from normal and amyotrophic lateral sclerosis (ALS) disease [@Prudencio2015-wd].  
-
+Check the results and select one study conducted in at least one tissue in the downloaded SVG image. In this example, the experiment "E-GEOD-67196" is selected, since the data is measured in cerebellum and frontal cortex that are represented in the SVG image.   
 
 ```{r eval=TRUE, echo=TRUE, warnings=FALSE }
 
@@ -231,40 +120,25 @@ all.hum[2, ]
 
 ```
 
+Access the selected data automatically from EBI Expression Atlas.  
+
 ```{r eval=TRUE, echo=TRUE, warnings=FALSE }
 
 rse.hum <- getAtlasData('E-GEOD-67196')[[1]][[1]]
-assay(rse.hum)[1:3, 1:3]
 
 ```
 
-### Format the Data Matrix {#mat_form}
-
-Formatting the data matrix is essentially define replicates of tissues and conditions, and this is carried out by a targets file (a data frame of column metadata) with at least 2 columns specifying sample and condition replicates respectively. The data matrix with rows and columns being genes and sample/conditions respectively should be in the form of "SummarizedExperiment" [@SummarizedExperiment]. The "colData" slot contains the a targetes file, while the "rowData" slot is not required for plotting spatial heatmaps. 
-
-**Requirements on the targets file**  
-
-1. It is a data frame with at least 2 columns. The rows corresponds with columns in the data matrix.
- 
-2. The sample column specifies sample replicates. It is crucial that replicate names of the same sample must be identical. E.g. In [Table 1](#tar_hum), "organism_part" is the sample column, and replicate names of both "cerebellum" and "frontal_cortex" are identical.
-
-3. The condition column has the same requirement with the sample column. E.g. In [Table 1](#tar_hum), "disease" is the condition column, and the replicate names of "ALS" and "normal" are identical.
-
-4. The name of sample and condition replicates should only consist of letters, digits, dots, single space, or single underscore ([Table 1](#tar_hum)).  
-
-  
-The data accessed with function `getAtlasData` is raw count matrix is in form of "RangedSummarizedExperiment". The "colData" slot contains replicates of tissues and conditions and should be used to make a targets file, which mainly involves using abbreviations to replace long phrases, using preffered tissue or condition names.  
-
-The formatted targets file is available in this package. The "organism_part" and "disease" column describes tissue and condition replicates respectively. For successful plotting, the 2 tissues cerebellum and frontal_cortex must be identical with respective tissue ids in the downloaded "homo_sapiens.brain.svg".    
+Make a targets file (a data frame describing replicates of tissues and conditions) for the data matrix, which is available in this package.   
 
 ```{r eval=TRUE, echo=TRUE, warnings=FALSE }
 
 brain.pa <- system.file('extdata/shinyApp/example/target_brain.txt', package='spatialHeatmap')
 target.hum <- read.table(brain.pa, header=TRUE, row.names=1, sep='\t')
+colData(rse.hum) <- DataFrame(target.hum)
 
 ```
 
-```{r, eval=FALSE, echo=TRUE, warnings=FALSE}
+```{r eval=FALSE, echo=TRUE, warnings=FALSE}
 
 target.hum[c(1:3, 41:42), 4:5]
 
@@ -273,141 +147,69 @@ target.hum[c(1:3, 41:42), 4:5]
 <a name='tar_hum'></a>
 ```{r, eval=TRUE, echo=FALSE, warnings=FALSE}
 
-kable(target.hum[c(1:3, 41:42), 4:5], caption='Table 1 Targets file (metadata of data matrix column) of the human brain count matrix.')
+kable(target.hum[c(1:3, 41:42), 4:5], caption='Table 1 Targets file (metadata of replicates of tissues and conditions) of the human brain count matrix, which describes replicates of tissues and conditions.')
 
 ``` 
 
-The targets file needs to be added to "colData" slot as a "DataFrame" class.  
+The data from EBI is raw RNA-seq count matrix, so there is process of normalisation, replicates aggregation, and filtering. In this example, genes with expression values larger than 5 in at least 1% of all samples (pOA=c(0.01, 5)), and with coefficient of variance (CV) between 0.30 and 100 (CV=c(0.30, 100)) are retained.  
 
 ```{r eval=TRUE, echo=TRUE, warnings=FALSE }
 
-colData(rse.hum) <- DataFrame(target.hum)
-
-```
-
-For users with little R expertise, if the gene expression matrix comes as a data frame, it should be placed into "SummarizedExperiment" before proceeding to next step. An example is shown below by borrowing a data frame from the brain data. 
-
-Borrow a data matrix.
-
-```{r eval=TRUE, echo=TRUE, warnings=FALSE }
-
-df <- assay(rse.hum); df[1:2, 1:3]
-
-```
-
-Place the data matrix and targets file (target.hum) into "SummarizedExperiment". The "rowData" slot is optional.
-
-```{r eval=TRUE, echo=TRUE, warnings=FALSE }
-
-rse.hum <- SummarizedExperiment(assay=df, colData=target.hum, rowData=NULL)
-
-```
-
-
-**Pre-process the data matrix**  
-
-It is optional to pre-process the data matrix for plotting spatial heatmaps as long as the format is right. However, as a convention the transcriptome data matrix is always pre-processed before downstream analysis, including normalising, replicates aggregating, filtering. The normalising function `norm_data` builds on normalisation methods of `calcNormFactors` in edgeR [@edgeR], and `estimateSizeFactors`, `varianceStabilizingTransformation`, `rlog` in DESeq2 [@DESeq2]. In this example, the raw count matrix is normalised with `estimateSizeFactors` (type='ratio') and converted to log2 unit.   
-
-```{r, eval=FALSE, echo=TRUE, warnings=FALSE }
-
+# Normalise.
 se.nor.hum <- norm_data(se=rse.hum, method.norm='ratio', data.trans='log2')
-
-```
-
-To aggregate replicates, the sample (organism_part) and condition (disease) column in "colData" slot need to be specified in function `aggr_rep`. This function concatenates sample and condition replicates in the targets file with a "double underscore" and treat them as sample__condition replicates for aggregating. For example, in the above [targets file](#tar_hum), each of the 2 samples cerebellum and frontal_cortex is concatenated with each of the 2 conditions ALS and normal by "__" to make 4 sample__condition replicates cerebellum__ALS, cerebellum__normal, frontal_cortex__ALS, frontal_cortex__normal. The sample__condition replicates can be aggregated by mean or median. Here mean is chosen.    
-
-```{r eval=FALSE, echo=TRUE, warnings=FALSE }
-
+# Aggregate replicates.
 se.aggr.hum <- aggr_rep(se=se.nor.hum, sam.factor='organism_part', con.factor='disease', aggr='mean')
-
-```
-
-The concatenated sample__conditions are the column names of the output data matrix. In downstream spatial heatmap plotting, the "double underscore" is indispensable as it is the separator for the algorithm to recognise samples and conditions.  
-
-```{r eval=FALSE, echo=TRUE, warnings=FALSE }
-
-assay(se.aggr.hum)[49939:49941, ]
-
-```
-
-<a name='brain_table'></a>
-```{r, eval=TRUE, echo=FALSE, warnings=FALSE}
-
-kable(assay(se.aggr.hum)[49939:49941, ], caption='Table 2 Aggregated data matrix in Human Brain example. The column names are concatenated tissues and conditions by a "__".')
-
-``` 
-
-Genes with low expression level and low variantion are always filtered. In this example, genes with expression values larger than 5 in at least 1% of all samples (pOA=c(0.01, 5)), and with coefficient of variance (CV) between 0.30 and 100 (CV=c(0.30, 100)) are retained. 
-
-```{r eval=FALSE, echo=TRUE, warnings=FALSE }
-
+# Filter genes with low variance and low counts.
 se.fil.hum <- filter_data(se=se.aggr.hum, sam.factor='organism_part', con.factor='disease', pOA=c(0.01, 5), CV=c(0.3, 100), dir=NULL)
 
 ```
 
-### Format The SVG Image {#svg_form}
+```{r eval=FALSE, echo=TRUE, warnings=FALSE }
 
-Spatial heatmap plotting also requires the SVG image is formatted in a specific way by using [Inkscape](https://inkscape.org/). [Figure 5](#brain) the downloaded SVG image opened in Inkscape, tissues are represented by paths and labeled by ids.
+assay(se.fil.hum)[733:735, ]
 
-**SVG format requirements**
+```
 
-1. A path represents a shape. If a tissue consists of multiple paths and is expected to be colured in the spatial heatmap, all its paths must be grouped as a whole (labeled by tag "g", e.g. "bottom_right_outline" in [Figure 5](#brain)). The group id is the tissue id and the inside path ids are useless. A group should not include another group, which means all elements in a group should be single paths. However, if a multiple-path tissue is not expected to coloured in the spatial heatmap, there is no need to group them and the paths can keep random ids.
+<a name='hum_table'></a> 
+```{r, eval=TRUE, echo=FALSE, warnings=FALSE}
 
-2. If a tissue has only one path, it can stay as an individual path, no need to be formatted as a group (e.g. "frontal_cortex"). 
+kable(assay(se.fil.hum)[733:735, ], caption='Table 2 Pre-processed data matrix in Human Brain example.')
 
-3. If a tissue is expected to be coloured in the spatial heatmaps, its "id" must be identical with corresponding tissue name from the targets file. It means even a difference of dot, space, underscore, uppercase, or lowercase matters.  
-   E.g. In [Figure 5](#brain), the tissue "frontal_cortex" is identical with corresponding tissue in [Table 1](#tar_hum), and thus frontal_cortex is coloured in [Figure 1](#brain_shm). By contrast, the group with id "bottom_right_outline" does not correspond with any identical tissue in [Table 1](#tar_hum) and are not coloured.  
+``` 
 
-4. All the tissues (groups and single paths) must be placed in another container group (id="container" in Figure 5) as a whole, and this group must be the last element in the "XML Editor".  
+The downloaded SVG image is formatted and is available in this package.   
 
-<a name="brain"></a>
-```{r echo=FALSE, fig.align="center", fig.cap=("Figure 5 The human brain SVG image opened in Inkscape. Every tissue is labeled by a unique \"id\". "), out.width="100%"}
-
-include_graphics('img/brain.png')
-
-```   
-
-The formatted SVG image is accessible in this package and shown in [Figure 6](#brain_svg). Colours are only used to label target tissues for easy identification.  
-
-```{r eval=TRUE, echo=TRUE, warnings=FALSE}
+```{r eval=TRUE, echo=TRUE, warnings=FALSE }
 
 svg.hum <- system.file("extdata/shinyApp/example", "homo_sapiens.brain.svg", package="spatialHeatmap")
 
 ```
 
-<a name="brain_svg"></a>
-```{r echo=FALSE, dev='svg', fig.align="center", fig.cap=("Figure 6 Formatted brain SVG image. Target tissues \"frontal cortex\" and \"cerebellum\" are labelled by lightblue and yellow for easy identification."), out.width="40%"}
+Plot spatial heatmaps.   
 
-include_graphics(svg.hum)
+<a name="brain_shm"></a>
+```{r eval=TRUE, echo=TRUE, warnings=FALSE, fig.align="center", fig.cap=("Figure 1 Example of plotting EBI data matrix on the SVG template. Cerebellum and frontal cortex are coloured, since they are the only 2 identical tissues between the SVG image and the data matrix."), out.width="100%" }
 
-```
-
-### Plot spatial heatmaps 
-
-With the formatted data matrix and SVG image, the spatial heatmap is plotted with function `spatial_hm`, which is shown in [Figure 1](#brain_shm).
-
-<a name='brain_shm1'></a>
-```{r eval=FALSE, echo=TRUE, warnings=FALSE, fig.align="center", fig.cap=("Figure 3 Example of plotting EBI data on the SVG template. Cerebellum and frontal cortex are coloured, since they are the only 2 common tissues between the SVG and the expression matrix."), out.width="100%" }
-
-spatial_hm(svg.path=svg.hum, se=se.fil.hum, ID='ENSG00000268433', col.com=c("yellow", "blue", "purple"), width=1, height=0.5, sub.title.size=11, layout="gene", ncol=2, tis.trans=NULL, sam.legend='identical', line.size=0.2, line.color='grey70', legend.position=c(0.5, -0.15), legend.nrow=1)
+spatial_hm(svg.path=svg.hum, se=se.fil.hum, ID='ENSG00000268433', col.com=c("yellow", "blue", "purple"), width=1, height=0.4, legend.r=0.5, sub.title.size=11, layout="gene", ncol=2, tis.trans=NULL, sam.legend='identical', line.size=0.2, line.color='grey70', legend.position=c(0.5, -0.15), legend.nrow=1)
 
 ```
 
-Procedures for plotting other example spatial heatmaps are similar with Human Brain and the respective code is shown below.  
+In this example, the expression profile of gene ENSG00000268433 in frontal cortex and cerebellum is plotted under ALS and normal conditions ([Figure 1](#brain_shm)) with the legend plot on the right. For example, in [Table 2](#hum_table) its expression value in cerebellum under ALS is 5.3240638. After mapping, this tissue is coloured purple corresponding to 5.3240638 in the colour scale. By contrast, this gene's expression profile is blue in the same tissue under normal condition. On the other hand, the expression profile (yellow) in frontal cortex is similar across ALS and normal. Therefore, it is intuitive that this gene's higher activity in cerebellum is potentially associated with ALS and could contribute to hypothesis generation. Note that only frontal cortex and cerebellum are coloured while others are blank in the spatial heatmaps, since they are the only 2 identical tissues between the data matrix and SVG image.  
 
-<a name='plot_mus'></a>
-**Mouse Organ**  
+### Mouse Organ {#mus}
 
-Download "mus_musculus.male.svg" from the [SVG repository](#svg_tmp), search for related gene expression matrix, and select "E-MTAB-2801".   
+This example is based on a mouse data from an RNA-seq study aiming at assessing tissue-specific transcriptome variation across mammals [@Merkin2012-ak], which is from EBI Expression Atlas.   
 
-```{r eval=FALSE, echo=TRUE, warnings=FALSE }
+Download "mus_musculus.male.svg" from the [SVG repository](#svg_tmp), and check tissue ids in [Inkscape](https://inkscape.org/). Search for related gene expression matrix with tissue id "heart" and "Mus musculus", and select "E-MTAB-2801".   
+
+```{r eval=TRUE, echo=TRUE, warnings=FALSE }
 
 all.mus <- searchAtlasExperiments(properties="heart", species="Mus musculus")
 rse.mus <- getAtlasData('E-MTAB-2801')[[1]][[1]]
 
 ```
 
-Add the formatted targets file to "colData" slot as a "DataFrame" class.  
+Make a targets file (metadata of replicates of tissues and conditions) for the data matrix, which is available in this package.  
 
 ```{r eval=TRUE, echo=TRUE, warnings=FALSE }
 
@@ -417,48 +219,62 @@ colData(rse.mus) <- DataFrame(target.mus)
 
 ```
 
+Pro-process the raw count matrix: normalise, aggregate, filter. Genes with expression values larger than 5 in at least 1% of all samples (pOA=c(0.01, 5)), and with coefficient of variance (CV) between 0.60 and 100 (CV=c(0.6, 100)) are retained.    
 
-Pro-process data matrix: normalise, aggregate, filter.    
+```{r eval=TRUE, echo=TRUE, warnings=FALSE }
 
-```{r eval=FALSE, echo=TRUE, warnings=FALSE }
-
+# Normalise.
 se.nor.mus <- norm_data(se=rse.mus, method.norm='ratio', data.trans='log2')
+# Aggregate replicates.
 se.aggr.mus <- aggr_rep(se=se.nor.mus, sam.factor='organism_part', con.factor='strain', aggr='mean')
+# Filter genes with low variance and low counts.
 se.fil.mus <- filter_data(se=se.aggr.mus, sam.factor='organism_part', con.factor='strain', pOA=c(0.01, 5), CV=c(0.6, 100), dir=NULL)
 
 ```
 
-Formatted SVG image.  
+The SVG image is formatted and is available in this package.  
 
-```{r eval=FALSE, echo=TRUE, warnings=FALSE}
+```{r eval=TRUE, echo=TRUE, warnings=FALSE}
 
 svg.mus <- system.file("extdata/shinyApp/example", "mus_musculus.male.svg", package="spatialHeatmap")
 
 ```
 
-<a name='mus_shm1'></a>
-Plot spatial heatmaps ([Figure 2](#mus_shm)).  
+<a name='mus_shm'></a>
+Plot spatial heatmaps.    
 
-```{r eval=FALSE, echo=TRUE, warnings=FALSE, fig.align="center", fig.cap=("Figure 5 Mouse organ spatial heatmap. This is a multiple-layer image and skeletal.muscle is set transparent to exposed lung and heart."), out.width="100%" }
+```{r eval=TRUE, echo=FALSE, warnings=FALSE, fig.align="center", fig.cap=("Figure 2 Mouse organ spatial heatmap. This is a multiple-layer image and skeletal.muscle is set transparent to exposed lung and heart."), out.width="100%" }
 
 spatial_hm(svg.path=svg.mus, se=se.fil.mus, ID='ENSMUSG00000000263', col.com=c("yellow", "blue", "purple"), width=1, height=0.5, legend.r=0.6, sub.title.size=7, layout="gene", ncol=3, tis.trans='skeletal.muscle', sam.legend='identical', legend.key.size=0.3, legend.nrow=4, legend.position=c(0.5, -0.15))
 
 ```
 
+The spatial heatmap of gene ENSMUSG00000000263 is plotted in 8 tissues across 3 strains. It is manifest that only brain exhibits obvious difference across the 3 strains with DBA.2J, C57BL.6, and CD1 being highest, medium, and lowest respectively. In contrast, all the other 8 tissues display similar profile across strains. Thus this gene is potentially strain-specific. Moreover, the expression levels of all the other 8 tissues are all lower than brain.   
 
-<a name='plot_chk'></a>
-**Chicken Organ**  
+This is a typical example to demonstrate the usage of `tis.trans` parameter, since this mouse organ image includes tissues in multiple layers and skelectal muscle covers lung and heart. In Figure 2, skelectal muscle is set transparent by `tis.trans='skeletal.muscle'` so that lung and heart are exposed. Users can try setting `tis.trans=NULL` to see the difference.   
 
-Download "gallus_gallus.svg" from the [SVG repository](#svg_tmp), search for related gene expression matrix, and select "E-MTAB-6769".   
+### Chicken Organ {#chk}
 
-```{r eval=FALSE, echo=TRUE, warnings=FALSE }
+In this example, the data come from developments of 7 chicken organs under 9 time points [@Cardoso-Moreira2019-yq], which is an RNA-seq analysis and available in EBI Expression Atlas.  
+
+Download "gallus_gallus.svg" from the [SVG repository](#svg_tmp) and check tissue ids in [Inkscape](https://inkscape.org/). Search for related gene expression matrix with key word "gallus", and select "E-MTAB-6769".  
+
+```{r eval=TRUE, echo=TRUE, warnings=FALSE }
 
 all.chk <- searchAtlasExperiments(properties="", species="gallus")
 rse.chk <- getAtlasData('E-MTAB-6769')[[1]][[1]]
 
 ```
 
-Add the formatted targets file to "colData" slot as a "DataFrame" class.  
+Access the selected data automatically from EBI.  
+
+```{r eval=TRUE, echo=TRUE, warnings=FALSE }
+
+rse.chk <- getAtlasData('E-MTAB-6769')[[1]][[1]]
+
+```
+
+Make a targets file (metadata of replicates of tissues and conditions) for the data matrix, which is available in this package.  
 
 ```{r eval=TRUE, echo=TRUE, warnings=FALSE }
 
@@ -468,38 +284,46 @@ colData(rse.chk) <- DataFrame(target.chk)
 
 ```
 
-Pro-process data matrix: normalise, aggregate, filter.    
+Pro-process data matrix: normalise, aggregate, filter. Genes with expression values larger than 5 in at least 1% of all samples (pOA=c(0.01, 5)), and with coefficient of variance (CV) between 0.6 and 100 (CV=c(0.6, 100)) are retained.  
 
-```{r eval=FALSE, echo=TRUE, warnings=FALSE }
+```{r eval=TRUE, echo=TRUE, warnings=FALSE }
 
+# Normalise.
 se.nor.chk <- norm_data(se=rse.chk, method.norm='ratio', data.trans='log2')
-se.aggr.chk <- aggr_rep(se=se.nor.chk, sam.factor='organism_part', con.factor='strain', aggr='mean')
-se.fil.chk <- filter_data(se=se.aggr.chk, sam.factor='organism_part', con.factor='strain', pOA=c(0.01, 5), CV=c(0.6, 100), dir=NULL)
+# Aggregate replicates. 
+se.aggr.chk <- aggr_rep(se=se.nor.chk, sam.factor='organism_part', con.factor='age', aggr='mean')
+# Filter genes with low variance and low counts.
+se.fil.chk <- filter_data(se=se.aggr.chk, sam.factor='organism_part', con.factor='age', pOA=c(0.01, 5), CV=c(0.6, 100), dir=NULL)
 
 ```
 
-Formatted SVG image.  
+The SVG image is formatted and is available in this package.  
 
-```{r eval=FALSE, echo=TRUE, warnings=FALSE}
+```{r eval=TRUE, echo=TRUE, warnings=FALSE}
 
 svg.chk <- system.file("extdata/shinyApp/example", "gallus_gallus.svg", package="spatialHeatmap")
 
 ```
 
-Plot spatial heatmaps ([Figure 3](#chk_shm)).
+Plot spatial heatmaps.  
 
-```{r eval=FALSE, echo=TRUE, warnings=FALSE, fig.align="center", fig.cap=("Figure 8 Example of plotting chicken organ spatial heatmaps. Liver in day10 is not plotted since this tissue in day10 in not available in the data matrix."), out.width="100%" }
+<a name="chk_shm"></a>
+```{r eval=TRUE, echo=FALSE, warnings=FALSE, fig.align="center", fig.cap=("Figure 3 Example of plotting chicken organ spatial heatmaps. Liver in day10 is not plotted since this tissue in day10 in not available in the data matrix."), out.width="100%" }
 
 spatial_hm(svg.path=svg.chk, se=se.fil.chk, ID='ENSGALG00000006346', col.com=c("yellow", "blue", "purple"), bar.width=0.7, width=1, height=0.9, legend.r=0.4, sub.title.size=7, layout="gene", ncol=3, legend.key.size=0.4, legend.label.size=7.5, legend.position=c(0.5, -0.15), legend.nrow=2)
 
 ```
 
-<a name='plot_sh'></a>
-**Arabidopsis Shoot**   
+The spatial heatmap of gene ENSGALG00000006346 is plotted. It is intuitive that the profiles of liver, heart, and kidney are all higher in day17 than other days. Therefore, the important role of this gene in day10 is worth futher exploration. In day10 liver is blank, because in the expression matrix liver data is not availble for day10. This reflects the plotting algorithm that only identical samples between the data matrix and SVG image are plotted.    
 
-Download "shoot_final.svg" from the [SVG repository](https://github.com/jianhaizhang/SVG_tutorial_file/tree/master/svg_repo/ucr). Access the GEO microarray dataset GSE14502, which is already normalised by RMA [@affy], and convert it to "SummarizedExperiment".    
 
-```{r eval=FALSE, echo=TRUE, warnings=FALSE}
+### Arabidopsis Shoot {#shoot}
+
+[GEO](https://www.ncbi.nlm.nih.gov/geo/) is a another well-known public repository of array- and sequence-based data. To demonstrate the use of spatialHeatmap on this resource, the dataset GSE14502 is plotted on a shoot SVG image. This a microarray data from a study of translatome variation of *Arabidopsis thaliana* (Arabidopsis) shoot and root tissues under control and hypoxia conditions [@Mustroph2009-nu], which is accessed through GEOquery [@geo].  
+
+Download "shoot_final.svg" from the [SVG repository](https://github.com/jianhaizhang/SVG_tutorial_file/tree/master/svg_repo/ucr). Access the GEO dataset GSE14502 and convert it to "SummarizedExperiment".
+
+```{r eval=TRUE, echo=TRUE, warnings=FALSE}
 
 gset <- getGEO("GSE14502", GSEMatrix=TRUE, getGPL=TRUE)[[1]]
 se.sh <- as(gset, "SummarizedExperiment")
@@ -514,7 +338,7 @@ rownames(se.sh) <- make.names(rowData(se.sh)[, 'Gene.Symbol'])
 
 ```
 
-Add the formatted targets file to "colData" slot as a "DataFrame" class.   
+Make a targets file (metadata of replicates of tissues and conditions) for the data matrix, which is available in this package.  
 
 ```{r, eval=TRUE, echo=TRUE, warnings=FALSE}
 
@@ -524,16 +348,18 @@ colData(se.sh) <- DataFrame(target.sh)
 
 ```
 
-Pro-process data matrix: aggregate, filter. 
+The dataset GSE14502 is already normalised by RMA [@affy], so the pro-processing includes aggregate and filter. Genes with expression values larger than 6 in at least 3% of all samples (pOA=c(0.03, 6)), and with coefficient of variance (CV) between 0.30 and 100 (CV=c(0.30, 100)) are retained.   
 
-```{r eval=FALSE, echo=TRUE, warnings=FALSE }
+```{r eval=TRUE, echo=TRUE, warnings=FALSE }
 
+# Aggregate replicates. 
 se.aggr.sh <- aggr_rep(se=se.sh, sam.factor='samples', con.factor='conditions', aggr='mean')
+# Filter genes with low variance and low intensity.
 se.fil.sh <- filter_data(se=se.aggr.sh, sam.factor='samples', con.factor='conditions', pOA=c(0.03, 6), CV=c(0.30, 100), dir=NULL)
 
 ```
 
-Formatted SVG image.   
+The SVG image is formatted and is available in this package.  
 
 ```{r eval=TRUE, echo=TRUE, warnings=FALSE }
 
@@ -541,14 +367,16 @@ svg.sh <- system.file("extdata/shinyApp/example", "shoot_final.svg", package="sp
 
 ```
 
-Plot spatial heatmaps ([Figure 4](#sh_shm)).
+Plot spatial heatmaps.   
 
-<a name="sh_shm1"></a>
-```{r eval=FALSE, echo=TRUE, warnings=FALSE, fig.align="center", fig.cap=('Figure 9 Spatial Heatmaps of Arabidopsis shoot. Pre-defined tissue regions are coloured by the expression profile of the target gene.'), out.width="80%"}
+<a name="sh_shm"></a>
+```{r eval=TRUE, echo=FALSE, warnings=FALSE, fig.align="center", fig.cap=('Figure 4 Spatial heatmaps of Arabidopsis shoot. Pre-defined tissue regions are coloured by the expression profile of the target gene. The promoter pGL2, pRBCS, pCER5, pSultr2.2, pSUC2, pKAT1 label shoot trichomes, shoot photosynthetic cell, cotyledon and leaf epidermis, shootbundle sheath, shoot phloem companion cells, Cotyledon and leaf guard cells, respectively.'), out.width="100%"}
 
 spatial_hm(svg.path=svg.sh, se=se.fil.sh, ID="HRE2", col.com=c('purple', 'cyan', "brown"), width=1, height=0.5, layout="gene", ncol=2, legend.nrow=3, legend.r=0.8, legend.key.size=0.3, legend.label.size=7, legend.position=c(0.5, -0.07))
 
 ```   
+
+Figure 4 is the spatial heatmap of gene "HRE2" under control and hypoxia. It is clear that this gene's exression profiles under control are lower than hypoxia across all the 5 tissues (pGL2, pRBCS, pCER5, pSUC2, pKAT1). Therefore, it can be hypothesised that hypoxia induces over-expression of "HRE2" across the 5 tissues and thus "HRE2" might be an important factor for Arabidopsis shoot to cope with hypoxia stress. The tissue pSultr2.2 is blank under hypoxia due to unavailability of its data under hypoxia in the data matrix.    
 
 ## Matrix Heatmap {#mhm}
 
@@ -586,21 +414,21 @@ adj.mod[['mod']][1:3, ]
 <a name="mhm1"></a>
 The matrix heatmap is implemented in function `matrix_hm` with 2 modes provided: static or interactive. Figure 7 is the static mode on gene "HRE2". Setting "static=FALSE" launches the interactive mode, where users can zoom in and out by drawing a rectangle and by double clicking the heatmap, respectively.
 
-```{r eval=TRUE, echo=TRUE, warnings=FALSE, fig.cap=("Figure 7 Matrix Heatmap. Rows are genes and columns are samples. The input gene is tagged by 2 black lines."), out.width='100%'}
+```{r eval=TRUE, echo=TRUE, warnings=FALSE, fig.cap=("Figure 5 Matrix Heatmap. Rows are genes and columns are samples. The input gene is tagged by 2 black lines."), out.width='100%'}
 
 matrix_hm(geneID="HRE2", se=se.fil.sh, adj.mod=adj.mod, ds="3", scale="no", angleCol=80, angleRow=35, cexRow=0.8, cexCol=0.8, margin=c(10, 6), static=TRUE, arg.lis1=list(offsetRow=0.1, offsetCol=0.1))
 
 ```   
 
-In Figure 7, the target gene is displayed in the gene module it belongs to, which is indicated by 2 black lines. The rows and columns are sorted by hierarchical clustering dendrograms. The expression matrix of this module is visualised without being scaled (`scale="no"`). It can be seen that the expression levels of this module is overall much higher in hypoxia than control, and therefore it could potentially be used to infer the hypoxia response mechanism in Arabidopsis.   
+In Figure 5, the target gene is displayed in the gene module it belongs to, which is indicated by 2 black lines. The rows and columns are sorted by hierarchical clustering dendrograms. The expression matrix of this module is visualised without being scaled (`scale="no"`). It can be seen that the expression levels of this module is overall much higher in hypoxia than control, and therefore it could potentially be used to infer the hypoxia response mechanism in Arabidopsis.   
 
 ## Network {#net}
 
 The same target gene and module from matrix heatmap can also be displayed as a network. Similarly, the network can be dispayed in static or interactive mode.  
 
-Setting `static=TRUE` launches the static network. In Figure 8 Nodes are genes and edges are adjacencies between genes. The thicker edge denotes higher adjacency (co-expression similarity) while larger node indicates higher gene connectivity (sum of a gene's adjacency with all its direct neighbours). The target gene is labeled by "_selected".  
+Setting `static=TRUE` launches the static network. In Figure 6 Nodes are genes and edges are adjacencies between genes. The thicker edge denotes higher adjacency (co-expression similarity) while larger node indicates higher gene connectivity (sum of a gene's adjacency with all its direct neighbours). The target gene is labeled by "_selected".  
 
-```{r eval=TRUE, echo=TRUE, warnings=FALSE, fig.cap=("Figure 8 Static network. Node size denotes gene connectivity while edge thickness stands for co-expression similarity.") }
+```{r eval=TRUE, echo=TRUE, warnings=FALSE, fig.cap=("Figure 6 Static network. Node size denotes gene connectivity while edge thickness stands for co-expression similarity.") }
 
 network(geneID="HRE2", se=se.fil.sh, ann=NULL, adj.mod=adj.mod, ds="3", adj.min=0.75, con.min=0, vertex.label.cex=1.2, vertex.cex=2, static=TRUE)
 
@@ -621,7 +449,7 @@ network(geneID="HRE2", se=se.fil.sh, ann='Target.Description', adj.mod=adj.mod, 
 
 All the above functionality (spatial heatmap, interactive matrix heatmap, interactive network) is also combined into a web-browser based [Shiny App](https://shiny.rstudio.com/), which takes advantage of the computational power of R and interactivity of the web. The main benefits of the Shiny App is combine all the utities in one interface and increase interactivity. On the left of this app is the menu. It includes pre-formatted ready-to-use examples, options to upload formatted data matrix and SVG images, and instruction to use this app. On the right is the interactive interfacce, including Data Matrix, Spatial Heatmap, Matrix Heatmap, and Network. To use interactive features, there are paramters on the left menu to operate. Upon launched, the app automatically displays a pre-formatted example. A good practice to use this app is to follow steps in the menu rather than skipping steps. If unexpectation happens, the app webpage should be refreshed.
 
-This app is launched by the function `shiny_all` without any parameters. Figure 9 is the screenshot of Spatial Heatmap.  
+This app is launched by the function `shiny_all` without any parameters. Figure 7 is the screenshot of Spatial Heatmap.  
 
 ```{r eval=FALSE, echo=TRUE, warnings=FALSE}
 
@@ -629,15 +457,14 @@ shiny_all()
 
 ```   
 
-
 <a name="shiny_shm"></a>
-```{r echo=FALSE, fig.align="center", fig.cap=("Figure 9 The snapshot of Shiny App. Left is the menu and right is the Spatial Heatmap."), out.width="100%"}
+```{r echo=FALSE, fig.align="center", fig.cap=("Figure 7 The snapshot of Shiny App. Left is the menu and right is the Spatial Heatmap."), out.width="100%"}
 
 include_graphics('img/shiny.png')
 
 ```  
 
-The data matrix to upload is a data frame and can be obtained by setting a directory path to `dir` in function `filter_data`. A directory "local_mode_result/" is automatically created in the provided path, and the aggragated or filtered data matrix is written to "local_mode_result/processed_data.txt" with column names in the syntax ["sample__condition"](#brain_table). If users want to see annotation by mousing over a node in the network, then the column of gene annotation in "rowData" slot should be provided to `ann`, and the annotation is appended to the last column in "processed_data.txt".  
+The data matrix to upload is a data frame and can be obtained by setting a directory path to `dir` in function `filter_data`. A directory "local_mode_result/" is automatically created in the provided path, and the filtered data matrix is written to "local_mode_result/processed_data.txt" with column names in the syntax ["sample__condition"](#hum_table), which is a tab-separated file. If users want to see annotation by mousing over a node in the network, then the column of gene annotation in "rowData" slot should be provided to `ann`, and the annotation is appended to the last column in "processed_data.txt".  
 
 For example, in `filter_data`, setting `dir='./'` (current working directory) will output the filtered data matrix in "./local_mode_result/processed_data.txt", and setting `ann="Target.Description"` appends the annotation from `rowData` slot to the last column of "processed_data.txt", which is ready to upload to the app.
 
@@ -647,14 +474,197 @@ se.fil.sh <- filter_data(se=se.aggr.sh, ann="Target.Description", sam.factor='sa
 
 ```
 
+<!-- The following code is duplicate with respective example above, so "eval=FALSE" is set if the code chunk is not neccessary to run. --> 
+
+# Supplement {#sup} 
+
+To plot spatial heatmaps, a pair of formatted data matrix and SVG images are required. The most important step is to format data matrix and SVG image so that the values in data matrix are mapped to polygons in SVG image as expected. The plotting algorithm maps values from the data matrix onto SVG image according to sample names, so only samples with identcial names between the matrix and SVG are coloured. The SVG images can be downloaded from the SVG repository or created by following the step-by-step [SVG tutorial](https://jianhaizhang.github.io/SVG_tutorial_file/), which is based on [Inkscape](https://inkscape.org/).     
+
+<a name='svg_tmp'></a>
+**SVG repository**  
+
+To make it user-friendly, an [SVG repository](https://github.com/jianhaizhang/SVG_tutorial_file/tree/master/svg_repo/ebi_trans) across different species is created, where more SVG images will be added in future. These SVG templates are modified from [EBI Gene Expression Group](https://github.com/ebi-gene-expression-group/anatomogram/tree/master/src/svg) to be compatible with spatialHeatmap and are ready to use. If the target SVG image is available in this reposiroty, users only need to download it and set tissue ids. Otherwise, users can follow the step-by-step [SVG tutorial](https://jianhaizhang.github.io/SVG_tutorial_file/) to create custom SVG images. 
+
+To plot spatial heatmaps using data from the [Expression Atlas-EMBL-EBI](https://www.ebi.ac.uk/gxa/home) or [GEO](https://www.ncbi.nlm.nih.gov/geo/), first download an SVG image from the SVG repository and a gene exppression data acquired from at least one tissue in the SVG image, then format the data matrix and SVG image.  
+
+In the following, the detailed plotting procedure is explained on the Human Brain example only, since other examples are plotted similarly.  
+
+### Download SVG Image and Data Matrix {#plot_hum} 
+
+Download "homo_sapiens.brain.svg" from the [repository](https://github.com/jianhaizhang/SVG_tutorial_file/tree/master/svg_repo/ebi_trans) (click an image, mouse over the image and right click, then select "Save image as…"). Open the dowloaded SVG image in [Inkscape](https://inkscape.org/) and check tissue ids in the "XML Editor (Shift+Ctrl+X)" ([Figure 5](#brain)). These ids are preferred key words for searching the expression data. Take the id "cerebellum" for instance. Use function `searchAtlasExperiments` from the package ExpressionAtlas [@ebi] to search for human data with key words "cerebellum" and "Homo sapiens".    
+
+```{r eval=FALSE, echo=TRUE, warnings=FALSE }
+
+all.hum <- searchAtlasExperiments(properties="cerebellum", species="Homo sapiens")
+
+```
+
+Check the results and select one study conducted in at least one tissue in the downloaded SVG image. In this example, the experiment "E-GEOD-67196" is selected, since the data is measured in cerebellum and frontal cortex that are represented in the SVG image, which is an RNA-seq analysis of the 2 tissues from normal and amyotrophic lateral sclerosis (ALS) disease [@Prudencio2015-wd].  
+
+```{r eval=TRUE, echo=TRUE, warnings=FALSE }
+
+all.hum[2, ]
+
+```
+
+```{r eval=TRUE, echo=TRUE, warnings=FALSE }
+
+rse.hum <- getAtlasData('E-GEOD-67196')[[1]][[1]]
+assay(rse.hum)[1:3, 1:3]
+
+```
+
+### Format the Data Matrix {#mat_form}
+
+Formatting the data matrix is essentially define replicates of tissues and conditions, and this is carried out by a targets file (a data frame of column metadata) with at least 2 columns specifying sample and condition replicates respectively. The data matrix with rows and columns being genes and sample/conditions respectively should be in the form of "SummarizedExperiment" [@SummarizedExperiment]. The "colData" slot contains the a targetes file, while the "rowData" slot is not required for plotting spatial heatmaps. 
+
+**Requirements on the targets file**  
+
+1. It is a data frame with at least 2 columns. The rows corresponds with columns in the data matrix.
+ 
+2. The sample column specifies sample replicates. It is crucial that replicate names of the same sample must be identical. E.g. In [Table 1](#tar_hum), "organism_part" is the sample column, and replicate names of both "cerebellum" and "frontal_cortex" are identical.
+
+3. The condition column has the same requirement with the sample column. E.g. In [Table 1](#tar_hum), "disease" is the condition column, and the replicate names of "ALS" and "normal" are identical.
+
+4. The name of sample and condition replicates should only consist of letters, digits, dots, single space, or single underscore ([Table 1](#tar_hum)).  
+ 
+The data accessed with function `getAtlasData` is raw count matrix is in form of "RangedSummarizedExperiment". The "colData" slot contains replicates of tissues and conditions and should be used to make a targets file, which mainly involves using abbreviations to replace long phrases, using preffered tissue or condition names.  
+
+The formatted targets file is available in this package. The "organism_part" and "disease" column describes tissue and condition replicates respectively. For successful plotting, the 2 tissues cerebellum and frontal_cortex must be identical with respective tissue ids in the downloaded "homo_sapiens.brain.svg".    
+
+```{r eval=TRUE, echo=TRUE, warnings=FALSE }
+
+brain.pa <- system.file('extdata/shinyApp/example/target_brain.txt', package='spatialHeatmap')
+target.hum <- read.table(brain.pa, header=TRUE, row.names=1, sep='\t')
+
+```
+
+```{r, eval=TRUE, echo=TRUE, warnings=FALSE}
+
+target.hum[c(1:3, 41:42), 4:5]
+
+```
+
+The targets file needs to be added to "colData" slot as a "DataFrame" class.  
+
+```{r eval=TRUE, echo=TRUE, warnings=FALSE }
+
+colData(rse.hum) <- DataFrame(target.hum)
+
+```
+
+For users with little R expertise, if the gene expression matrix comes as a data frame, it should be placed into "SummarizedExperiment" before proceeding to next step. An example is shown below by borrowing a data frame from the brain data. 
+
+Borrow a data matrix.
+
+```{r eval=TRUE, echo=TRUE, warnings=FALSE }
+
+df <- assay(rse.hum); df[1:2, 1:3]
+
+```
+
+Place the data matrix and targets file (target.hum) into "SummarizedExperiment". The "rowData" slot is optional.
+
+```{r eval=TRUE, echo=TRUE, warnings=FALSE }
+
+rse.hum <- SummarizedExperiment(assay=df, colData=target.hum, rowData=NULL)
+
+```
+
+
+**Pre-process the data matrix**  
+
+It is optional to pre-process the data matrix for plotting spatial heatmaps as long as the format is right. However, as a convention the transcriptome data matrix is always pre-processed before downstream analysis, including normalising, replicates aggregating, filtering. The normalising function `norm_data` builds on normalisation methods of `calcNormFactors` in edgeR [@edgeR], and `estimateSizeFactors`, `varianceStabilizingTransformation`, `rlog` in DESeq2 [@DESeq2]. In this example, the raw count matrix is normalised with `estimateSizeFactors` (type='ratio') and converted to log2 unit.   
+
+```{r eval=FALSE, echo=TRUE, warnings=FALSE }
+
+se.nor.hum <- norm_data(se=rse.hum, method.norm='ratio', data.trans='log2')
+
+```
+
+To aggregate replicates, the sample (organism_part) and condition (disease) column in "colData" slot need to be specified in function `aggr_rep`. This function concatenates sample and condition replicates in the targets file with a "double underscore" and treat them as sample__condition replicates for aggregating. For example, in the above [targets file](#tar_hum), each of the 2 samples cerebellum and frontal_cortex is concatenated with each of the 2 conditions ALS and normal by "__" to make 4 sample__condition replicates cerebellum__ALS, cerebellum__normal, frontal_cortex__ALS, frontal_cortex__normal. The sample__condition replicates can be aggregated by mean or median. Here mean is chosen.    
+
+```{r eval=FALSE, echo=TRUE, warnings=FALSE }
+
+se.aggr.hum <- aggr_rep(se=se.nor.hum, sam.factor='organism_part', con.factor='disease', aggr='mean')
+
+```
+
+The concatenated sample__conditions are the column names of the output data matrix. In downstream spatial heatmap plotting, the "double underscore" is indispensable as it is the separator for the algorithm to recognise samples and conditions.  
+
+```{r eval=FALSE, echo=TRUE, warnings=FALSE }
+
+assay(se.aggr.hum)[49939:49941, ]
+
+```
+
+```{r eval=TRUE, echo=FALSE, warnings=FALSE}
+
+kable(assay(se.aggr.hum)[49939:49941, ], caption='Table 3 Aggregated data matrix in Human Brain example. The column names are concatenated tissues and conditions by a "__".')
+
+``` 
+
+Genes with low expression level and low variantion are always filtered. In this example, genes with expression values larger than 5 in at least 1% of all samples (pOA=c(0.01, 5)), and with coefficient of variance (CV) between 0.30 and 100 (CV=c(0.30, 100)) are retained. 
+
+```{r eval=FALSE, echo=TRUE, warnings=FALSE }
+
+se.fil.hum <- filter_data(se=se.aggr.hum, sam.factor='organism_part', con.factor='disease', pOA=c(0.01, 5), CV=c(0.3, 100), dir=NULL)
+
+```
+
+### Format The SVG Image {#svg_form}
+
+Spatial heatmap plotting also requires the SVG image is formatted in a specific way by using [Inkscape](https://inkscape.org/). [Figure 8](#brain) the downloaded SVG image opened in Inkscape, tissues are represented by paths and labeled by ids.
+
+**SVG format requirements**
+
+1. A path represents a shape. If a tissue consists of multiple paths and is expected to be colured in the spatial heatmap, all its paths must be grouped as a whole (labeled by tag "g", e.g. "bottom_right_outline" in [Figure 8](#brain)). The group id is the tissue id and the inside path ids are useless. A group should not include another group, which means all elements in a group should be single paths. However, if a multiple-path tissue is not expected to coloured in the spatial heatmap, there is no need to group them and the paths can keep random ids.
+
+2. If a tissue has only one path, it can stay as an individual path, no need to be formatted as a group (e.g. "frontal_cortex"). 
+
+3. If a tissue is expected to be coloured in the spatial heatmaps, its "id" must be identical with corresponding tissue name from the targets file. It means even a difference of dot, space, underscore, uppercase, or lowercase matters.  
+   E.g. In [Figure 8](#brain), the tissue "frontal_cortex" is identical with corresponding tissue in [Table 1](#tar_hum), and thus frontal_cortex is coloured in [Figure 1](#brain_shm). By contrast, the group with id "bottom_right_outline" does not correspond with any identical tissue in [Table 1](#tar_hum) and are not coloured.  
+
+4. All the tissues (groups and single paths) must be placed in another container group (id="container" in Figure 8) as a whole, and this group must be the last element in the "XML Editor".  
+
+<a name="brain"></a>
+```{r echo=FALSE, fig.align="center", fig.cap=("Figure 8 The human brain SVG image opened in Inkscape. Every tissue is labeled by a unique \"id\". "), out.width="100%"}
+
+include_graphics('img/brain.png')
+
+```   
+
+The formatted SVG image is accessible in this package and shown in [Figure 9](#brain_svg). Colours are only used to label target tissues for easy identification.  
+
+```{r eval=TRUE, echo=TRUE, warnings=FALSE}
+
+svg.hum <- system.file("extdata/shinyApp/example", "homo_sapiens.brain.svg", package="spatialHeatmap")
+
+```
+
+<a name="brain_svg"></a>
+```{r echo=FALSE, dev='svg', fig.align="center", fig.cap=("Figure 9 Formatted brain SVG image. Target tissues \"frontal cortex\" and \"cerebellum\" are labelled by lightblue and yellow for easy identification."), out.width="40%"}
+
+include_graphics(svg.hum)
+
+```
+
+### Plot spatial heatmaps 
+
+With the formatted data matrix and SVG image, the spatial heatmap is plotted with function `spatial_hm`, which is shown in [Figure 1](#brain_shm).
+
+```{r eval=FALSE, echo=TRUE, warnings=FALSE, fig.align="center", fig.cap=("Figure 3 Example of plotting EBI data on the SVG template. Cerebellum and frontal cortex are coloured, since they are the only 2 common tissues between the SVG and the expression matrix."), out.width="100%" }
+
+spatial_hm(svg.path=svg.hum, se=se.fil.hum, ID='ENSG00000268433', col.com=c("yellow", "blue", "purple"), width=1, height=0.5, sub.title.size=11, layout="gene", ncol=2, tis.trans=NULL, sam.legend='identical', line.size=0.2, line.color='grey70', legend.position=c(0.5, -0.15), legend.nrow=1)
+
+```
 
 <br/>
 
-Session informaion.  
 
-```{r session, eval=TRUE, echo=TRUE}
+```{r eval=TRUE, echo=TRUE}
 
-
+# Session informaion.  
 sessionInfo()
 
 ```

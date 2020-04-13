@@ -30,6 +30,7 @@ svg_df <- function(svg.path) {
     names(fil.col) <- id; fil.cols <- c(fil.cols, fil.col)
 
   }
+
   style <- 'stroke:#000000;stroke-width:5.216;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1' # 'fill' is not necessary. In Inkscape, "group" or move an object adds transforms (relative positions), and this can lead to related polygons uncolored in the spatial heatmaps. Solution: ungroup and regroup to get rid of transforms and get absolute positions.
   # Change 'style' of all polygons.
   for (i in seq_len(xmlSize(ply))) {                      
@@ -37,16 +38,12 @@ svg_df <- function(svg.path) {
     addAttributes(ply[[i]], style=style) 
     if (xmlSize(ply[[i]])>=1) for (j in seq_len(xmlSize(ply[[i]]))) { addAttributes(ply[[i]][[j]], style=style) }
         
-  }; svg.inter <- paste0(tmp, '/internal.svg'); saveXML(doc=xmlfile, file=svg.inter)
+  }; svg.inter <- paste0(tmp, '/internal.svg')
+  if (grepl("~", svg.inter)) svg.inter <- normalizePath(svg.inter)
+  saveXML(doc=xmlfile, file=svg.inter)
   # SVG file conversion. 
   rsvg_ps(svg.inter, file=sub("svg$", "ps", svg.inter))
-  p1 <- sub("svg$", "ps", svg.inter); p2 <- paste0(sub("svg$", "ps", svg.inter), ".xml")  
-  if (length(grep("~", svg.inter))) {
-
-    wd1 <- getwd(); setwd("~"); hm <- getwd(); setwd(wd1)
-    p1 <- sub("~", hm, p1); p2 <- sub("~", hm, p2)
-
-  }; PostScriptTrace(p1, p2) 
+  p1 <- sub("svg$", "ps", svg.inter); p2 <- paste0(sub("svg$", "ps", svg.inter), ".xml"); PostScriptTrace(p1, p2) 
   grml <- xmlParse(p2); top <- xmlRoot(grml) # Use internal svg to get coordinates.
   xml <- xmlParse(svg.path); xmltop <- xmlRoot(xml); size <- xmlSize(xmltop) # Use original not internal svg to get path ids. Otherwise, errors can come up.
   do.call(file.remove, list(svg.inter, p1, p2))
