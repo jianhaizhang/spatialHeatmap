@@ -1,5 +1,5 @@
 ---
-title: "_spatialHeatmap_: Visualizing Spatial Gene Expression in Annatomical Images and Network Graphs"
+title: "_spatialHeatmap_: Visualizing Spatial Gene Expression in Anatomical Images and Network Graphs"
 author: "Authors: Jianhai Zhang and Thomas Girke"
 date: "Last update: `r format(Sys.time(), '%d %B, %Y')`"
 output:
@@ -40,7 +40,7 @@ library(knitr); opts_chunk$set(message=FALSE, warning=FALSE)
 
 The _spatialHeatmap_ package provides functionalities for visualizing tissue-
 and cell-specific gene expression values in form of colors plotted onto the
-corresponding spatial features of an annatomical map. Via a user definable
+corresponding spatial features of an anatomical map. Via a user definable
 color gradient, the gene expression values are represented by characteristic
 colors and plotted onto the corresponding tissue or cell samples profiled in an
 assay. This core functionality is called spatial heatmap. It is enhanced with
@@ -53,7 +53,7 @@ automate analysis routines, the Shiny App includes a variety of convenience
 features that will appeal to many biologists. The Shiny App has been designed
 to work on both local systems as well as server-based deployments.
 
-As annatomical images the package supports both tissue maps from public
+As anatomical images the package supports both tissue maps from public
 repositories (_e.g._ EMBL-EBI's Expression Atlas) or custom images provided by
 the user, as long as they are available in SVG (Scalable Vector Graphics)
 format. The numeric values plotted onto a spatial heatmap are usually gene or
@@ -64,11 +64,11 @@ support the usage of raw and/or preprocessed data. Currently, the main
 application domains of the _spatialHeatmap_ package are numeric data sets and
 spatially mapped images from biological and biomedical areas. However, the
 package has been designed to also work with many other spatial data types, such
-a population data plotted onto geographic maps. This level of flexitility is
+a population data plotted onto geographic maps. This level of flexibility is
 one of the unique features of _spatialHeatmap_.  Existing software in this
 field is largely based on pure web applications [@Winter2007-bq; @Waese2017-fx]
 or local tools [@Maag2018-gi; @Muschelli2014-av] that typically lack
-customation functionalities by restricting users to utilizing pre-exisiting
+customization functionalities by restricting users to utilizing pre-existing
 expression data and/or fixed sets of anatomical image collections. To close this 
 gap in the gene expression field, we have developed _spatialHeatmap_ as a generic 
 R/Bioconductor package for plotting quantitative values onto any type of spatially 
