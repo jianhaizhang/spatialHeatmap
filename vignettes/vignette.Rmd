@@ -40,10 +40,10 @@ library(knitr); opts_chunk$set(message=FALSE, warning=FALSE)
 
 The _spatialHeatmap_ package provides functionalities for visualizing tissue-
 and cell-specific gene expression values in form of colors plotted onto the
-corresponding spatial features of an anatomical map. Via a user definable
-color gradient, the gene expression values are represented by characteristic
-colors and plotted onto the corresponding tissue or cell samples profiled in an
-assay. This core functionality is called spatial heatmap. It is enhanced with
+corresponding spatial features of an anatomical map. Via a user definable color
+gradient, the gene expression values are represented by characteristic colors
+and plotted onto the corresponding tissue or cell samples profiled in an assay. 
+This core functionality is called spatial heatmap. It is enhanced with
 gene network visualization tools, including matrix heatmaps and network
 representations of groups of genes (_e.g._ gene modules) sharing related
 expression patterns. The functionalies of _spatialHeatmap_ can be used
