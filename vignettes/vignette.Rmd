@@ -1,5 +1,5 @@
 ---
-title: "_spatialHeatmap_: Visualizing Cell-specific Gene Expression in Annatomical Images and Network Graphs"
+title: "_spatialHeatmap_: Visualizing Spatial Gene Expression in Annatomical Images and Network Graphs"
 author: "Authors: Jianhai Zhang and Thomas Girke"
 date: "Last update: `r format(Sys.time(), '%d %B, %Y')`"
 output:
