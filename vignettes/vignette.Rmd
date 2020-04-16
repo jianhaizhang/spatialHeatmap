@@ -40,10 +40,10 @@ library(knitr); opts_chunk$set(message=FALSE, warning=FALSE)
 
 The _spatialHeatmap_ package provides functionalities for visualizing tissue-
 and cell-specific gene expression data by coloring the corresponding spatial
-features mapped in anatomical images according to a numeric color key. The color
-scheme used to represent the gene expression values can be customized by the
-user. This core functionality is called spatial heatmap. It is enhanced with
-gene network visualization tools, including matrix heatmaps combined with
+features, defined in anatomical images, according to a numeric color key. The
+color scheme used to represent the gene expression values can be customized by
+the user. This core functionality is called _spatial heatmap_. It is enhanced
+with gene network visualization tools, including matrix heatmaps combined with
 hierarchical clustering dendrograms and network representations of groups of
 genes (_e.g._ gene modules) sharing related expression patterns. The
 functionalities of _spatialHeatmap_ can be used either in a command-driven mode
@@ -127,18 +127,19 @@ expression data are provided in the [Formatting Requirements](#form) section
 of this vignette.
 
 The following sections of this vignette highlight the most important
-functionalities of the `spatialHeatmap` package. First, spatial heatmap plots 
-are generated for four gene expression data sets including both RNA-seq and 
-microarray experiments from [Human Brain](#hum), [Mouse Organs](#mus), [Chicken Organs](#chk), and
-[Arabidopsis Shoots](#shoot). Second, gene context visualization features
-are introduced, which facilitate the visualization of gene modules sharing
-similar expression patterns. This includes the visualization of hierarchical
-clustering results with traditional matrix heatmaps ([Matrix Heatmap](#mhm)) 
-as well co-expression network plots ([Network](#net)). Third, an overview of the 
-corresponding [Shiny App](#shiny) is presented providing access to the same 
-functionalities in interactive mode [@shiny; @shinydashboard]. Fourth, more 
-advanced features for plotting customized spatial heatmaps are introduced using 
-the Human Brain data set as an example.  
+functionalities of the `spatialHeatmap` package. First, spatial heatmap plots
+are generated for four gene expression data sets including both RNA-seq and
+microarray experiments from [Human Brain](#hum), [Mouse Organs](#mus), [Chicken
+Organs](#chk), and [Arabidopsis Shoots](#shoot). Second, gene context
+visualization features are introduced, which facilitate the visualization of
+gene modules sharing similar expression patterns. This includes the
+visualization of hierarchical clustering results with traditional matrix
+heatmaps ([Matrix Heatmap](#mhm)) as well co-expression network plots
+([Network](#net)). Third, an overview of the corresponding [Shiny App](#shiny)
+is presented providing access to the same functionalities as the R functions,
+but executing them in an interactive environment [@shiny; @shinydashboard].
+Fourth, more advanced features for plotting customized spatial heatmaps are
+introduced using the Human Brain data set as an example.  
 
 # Installation
 
