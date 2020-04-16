@@ -75,23 +75,24 @@ repositories (_e.g._ EMBL-EBI's Expression Atlas) and custom images provided by
 the user. In general any type of image can be used as long as it can be
 provided in SVG (Scalable Vector Graphics) format, where the corresponding
 spatial features have been defined. The numeric values plotted onto a spatial
-heatmap are usually gene or protein expression values from a wide range of
-profiling technologies, such as microarray, RNA-Seq, proteomics and metabolomics
+heatmap are usually quantitative measurements from a wide range of profiling
+technologies, such as microarrays, next generation sequencing (_e.g._ RNA-Seq
+and scRNA-Seq), proteomics, metabolomics, or many other small- or large-scale
 experiments. For convenience, several preprocessing and normalization methods
-are included that support the usage of raw and/or preprocessed data. Currently,
-the main application domains of the _spatialHeatmap_ package are numeric data
-sets and spatially mapped images from biological and biomedical areas. However,
-the package has been designed to also work with many other spatial data types,
-such a population data plotted onto geographic maps. This level of flexibility
-is one of the unique features of _spatialHeatmap_.  Existing software in this
-field is largely based on pure web applications [@Winter2007-bq; @Waese2017-fx]
-or local tools [@Maag2018-gi; @Muschelli2014-av] that typically lack
-customization functionalities by restricting users to utilizing pre-existing
-expression data and/or fixed sets of anatomical image collections. To close
-this gap in the gene expression field, we have developed _spatialHeatmap_ as a
-generic R/Bioconductor package for plotting quantitative values onto any type
-of spatially mapped images in a programmable manner and/or in an intuitive to
-use GUI application.
+for the most common use cases are included that support raw and/or preprocessed
+data. Currently, the main application domains of the _spatialHeatmap_ package
+are numeric data sets and spatially mapped images from biological and
+biomedical areas. However, the package has been designed to also work with many
+other spatial data types, such a population data plotted onto geographic maps.
+This high level of flexibility is one of the unique features of _spatialHeatmap_.
+Existing software in this field is largely based on pure web applications
+[@Winter2007-bq; @Waese2017-fx] or local tools [@Maag2018-gi;
+@Muschelli2014-av] that typically lack customization functionalities by
+restricting users to utilizing pre-existing expression data and/or fixed sets
+of anatomical image collections. To close this gap in the gene expression
+field, we have developed _spatialHeatmap_ as a generic R/Bioconductor package
+for plotting quantitative values onto any type of spatially mapped images in a
+programmable manner and/or in an intuitive to use GUI application.
 
 ## Design
 
