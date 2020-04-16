@@ -43,7 +43,7 @@ and cell-specific gene expression data by coloring the corresponding spatial
 features, defined in anatomical images, according to a numeric color key. The
 color scheme used to represent the gene expression values can be customized by
 the user. This core functionality is called a _spatial heatmap_ plot. It is
-enhanced with gene network visualization tools for groups of genes (_e.g._ gene
+enhanced with nearest neighbor visualization tools for groups of genes (_e.g._ gene
 modules) sharing related expression patterns, including matrix heatmaps
 combined with hierarchical clustering dendrograms and network representations.
 The functionalities of _spatialHeatmap_ can be used either in a command-driven
