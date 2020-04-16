@@ -1,5 +1,5 @@
 ---
-title: "_spatialHeatmap_: Visualizing Spatial Gene Expression in Anatomical Images and Network Graphs"
+title: "_spatialHeatmap_: Visualizing Spatial Assay Data in Anatomical Images and Network Graphs"
 author: "Authors: Jianhai Zhang and Thomas Girke"
 date: "Last update: `r format(Sys.time(), '%d %B, %Y')`"
 output:
@@ -39,7 +39,7 @@ library(knitr); opts_chunk$set(message=FALSE, warning=FALSE)
 ## Motivation
 
 The _spatialHeatmap_ package provides functionalities for visualizing tissue-
-and cell-specific gene expression data by coloring the corresponding spatial
+and cell-specific data of biological assays by coloring the corresponding spatial
 features, defined in anatomical images, according to a numeric color key. The
 color scheme used to represent the gene expression values can be customized by
 the user. This core functionality is called a _spatial heatmap_ plot. It is
@@ -92,7 +92,7 @@ restricting users to utilizing pre-existing expression data and/or fixed sets
 of anatomical image collections. To close this gap in the gene expression
 field, we have developed _spatialHeatmap_ as a generic R/Bioconductor package
 for plotting quantitative values onto any type of spatially mapped images in a
-programmable manner and/or in an intuitive to use GUI application.
+programmable environment and/or in an intuitive to use GUI application.
 
 ## Design
 
