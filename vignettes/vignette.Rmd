@@ -140,8 +140,8 @@ the visualization of gene modules sharing similar expression patterns. This
 includes the visualization of hierarchical clustering results with traditional
 matrix heatmaps ([Matrix Heatmap](#mhm)) as well co-expression network plots
 ([Network](#net)). Third, an overview of the corresponding [Shiny App](#shiny)
-is presented providing access to the same functionalities as the R functions,
-but executing them in an interactive environment [@shiny; @shinydashboard].
+is presented that provides access to the same functionalities as the R functions,
+but executes them in an interactive environment [@shiny; @shinydashboard].
 Fourth, more advanced features for plotting customized spatial heatmaps are
 introduced using the Human Brain data set as an example.  
 
