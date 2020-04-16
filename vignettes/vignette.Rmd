@@ -44,7 +44,7 @@ features, defined in anatomical images, according to a numeric color key. The
 color scheme used to represent the assay values can be customized by
 the user. This core functionality is called a _spatial heatmap_ plot. It is
 enhanced with nearest neighbor visualization tools for groups of measured items 
-(_e.g._ gene modules) sharing related expression patterns, including matrix heatmaps
+(_e.g._ gene modules) sharing related abundance profiles, including matrix heatmaps
 combined with hierarchical clustering dendrograms and network representations.
 The functionalities of _spatialHeatmap_ can be used either in a command-driven
 mode from within R or a graphical user interface (GUI) provided by a Shiny App
