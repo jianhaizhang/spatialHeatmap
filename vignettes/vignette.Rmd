@@ -76,7 +76,7 @@ the user. In general any type of image can be used as long as it can be
 provided in SVG (Scalable Vector Graphics) format, where the corresponding
 spatial features have been defined. The numeric values plotted onto a spatial
 heatmap are usually gene or protein expression values from a wide range of
-expression profiling technologies, such as microarray, RNA-Seq or proteomics
+profiling technologies, such as microarray, RNA-Seq, proteomics and metabolomics
 experiments. For convenience, several preprocessing and normalization methods
 are included that support the usage of raw and/or preprocessed data. Currently,
 the main application domains of the _spatialHeatmap_ package are numeric data
