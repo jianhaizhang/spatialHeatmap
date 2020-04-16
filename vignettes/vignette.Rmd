@@ -41,10 +41,10 @@ library(knitr); opts_chunk$set(message=FALSE, warning=FALSE)
 The _spatialHeatmap_ package provides functionalities for visualizing tissue-
 and cell-specific data of biological assays by coloring the corresponding spatial
 features, defined in anatomical images, according to a numeric color key. The
-color scheme used to represent the gene expression values can be customized by
+color scheme used to represent the assay values can be customized by
 the user. This core functionality is called a _spatial heatmap_ plot. It is
-enhanced with nearest neighbor visualization tools for groups of genes (_e.g._ gene
-modules) sharing related expression patterns, including matrix heatmaps
+enhanced with nearest neighbor visualization tools for groups of measured items 
+(_e.g._ gene modules) sharing related expression patterns, including matrix heatmaps
 combined with hierarchical clustering dendrograms and network representations.
 The functionalities of _spatialHeatmap_ can be used either in a command-driven
 mode from within R or a graphical user interface (GUI) provided by a Shiny App
@@ -89,54 +89,56 @@ Existing software in this field is largely based on pure web applications
 [@Winter2007-bq; @Waese2017-fx] or local tools [@Maag2018-gi;
 @Muschelli2014-av] that typically lack customization functionalities by
 restricting users to utilizing pre-existing expression data and/or fixed sets
-of anatomical image collections. To close this gap in the gene expression
+of anatomical image collections. To close this gap in the cellular profiling
 field, we have developed _spatialHeatmap_ as a generic R/Bioconductor package
 for plotting quantitative values onto any type of spatially mapped images in a
 programmable environment and/or in an intuitive to use GUI application.
 
 ## Design
 
-The core feature [Spatial Heatmap](#shm) is to map the expression values of one or
-many genes assayed under different conditions in form of spatial heatmaps onto the
-corresponding cell types or tissues represented in a chosen SVG image. 
-This feature supports comparisons of the expression values among multiple genes by 
-plotting their spatial heatmap representations next to each other. 
-Similarly, one can display the expression values of a single or multiple genes 
-across multiple conditions in the same plot. This level of flexibility is very 
-efficient for visualizing complicated expression patterns across genes, cell types
-and conditions. In case of more complex anatomical images composed of multiple
-layer tissues, it is important to visually expose the tissue layer of interest in 
-the plots. To address this, several default and customizable layer viewing options 
-are provided. They allow to hide features in the top layers by making them 
-transparent in order to expose features below them. This transparency viewing 
-feature is highlighted below in the [mouse example](#mus_shm).
+The core feature [Spatial Heatmap](#shm) is to map the assay values (_e.g._
+gene expression data) of one or many items (_e.g._ genes) assayed under
+different conditions in form of spatial heatmaps onto the corresponding cell
+types or tissues represented in a chosen SVG image. In the gene profiling
+field, this feature supports comparisons of the expression values among
+multiple genes by plotting their spatial heatmap representations next to each
+other. Similarly, one can display the expression values of a single or multiple
+genes across multiple conditions in the same plot. This level of flexibility is
+very efficient for visualizing complicated expression patterns across genes,
+cell types and conditions. In case of more complex anatomical images composed
+of multiple layer tissues, it is important to visually expose the tissue layer
+of interest in the plots. To address this, several default and customizable
+layer viewing options are provided. They allow to hide features in the top
+layers by making them transparent in order to expose features below them. This
+transparency viewing feature is highlighted below in the [mouse
+example](#mus_shm).
 
 To maximize reusability and extensibility, the package organizes all numeric
-gene expression data along with the associated experimental design information
-in a `SummarizedExperiment` object. The latter is one of the core S4 classes
-within the Bioconductor ecosystem that has been widely adapted by many other
-software packages dealing with gene and protein expression data
-[@SummarizedExperiment]. The `assays` slot of the `SummarizedExperiment`
-container is populated with the gene expression matrix, where the rows and
-columns represent the genes and tissue/conditions, respectively, while the
-`colData` slot contains replicate information. The tissues and/or cell type
-information in the object maps via `colData` to the corresponding features in
-the SVG images using unique identifiers for the spatial features (_e.g._ tissues or
-cell types). This allows to color the features of interest in an SVG image
-according to the numeric data stored in a `SummarizedExperiment` object. More
-details about properly formatting both the SVG images and the associated
-expression data are provided in the [Formatting Requirements](#form) section
-of this vignette.
+assay data along with the associated experimental design information in a
+`SummarizedExperiment` object. The latter is one of the core S4 classes within
+the Bioconductor ecosystem that has been widely adapted by many other software
+packages dealing with gene-, protein- and metabolite-level profiling data
+[@SummarizedExperiment]. In case of gene expression data, the `assays` slot of
+the `SummarizedExperiment` container is populated with the gene expression
+matrix, where the rows and columns represent the genes and tissue/conditions,
+respectively, while the `colData` slot contains replicate information. The
+tissues and/or cell type information in the object maps via `colData` to the
+corresponding features in the SVG images using unique identifiers for the
+spatial features (_e.g._ tissues or cell types). This allows to color the
+features of interest in an SVG image according to the numeric data stored in a
+`SummarizedExperiment` object. More details about properly formatting both the
+SVG images and the associated expression data are provided in the [Formatting
+Requirements](#form) section of this vignette.
 
 The following sections of this vignette highlight the most important
-functionalities of the `spatialHeatmap` package. First, spatial heatmap plots
-are generated for four gene expression data sets including both RNA-seq and
-microarray experiments from [Human Brain](#hum), [Mouse Organs](#mus), [Chicken
-Organs](#chk), and [Arabidopsis Shoots](#shoot). Second, gene context
-visualization features are introduced, which facilitate the visualization of
-gene modules sharing similar expression patterns. This includes the
-visualization of hierarchical clustering results with traditional matrix
-heatmaps ([Matrix Heatmap](#mhm)) as well co-expression network plots
+functionalities of the `spatialHeatmap` package using mRNA profiling data.
+First, spatial heatmap plots are generated for four gene expression data sets
+including both RNA-seq and microarray experiments from [Human Brain](#hum),
+[Mouse Organs](#mus), [Chicken Organs](#chk), and [Arabidopsis Shoots](#shoot).
+Second, gene context visualization features are introduced, which facilitate
+the visualization of gene modules sharing similar expression patterns. This
+includes the visualization of hierarchical clustering results with traditional
+matrix heatmaps ([Matrix Heatmap](#mhm)) as well co-expression network plots
 ([Network](#net)). Third, an overview of the corresponding [Shiny App](#shiny)
 is presented providing access to the same functionalities as the R functions,
 but executing them in an interactive environment [@shiny; @shinydashboard].
