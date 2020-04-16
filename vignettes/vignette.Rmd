@@ -39,11 +39,11 @@ library(knitr); opts_chunk$set(message=FALSE, warning=FALSE)
 ## Motivation
 
 The _spatialHeatmap_ package provides functionalities for visualizing tissue-
-and cell-specific gene expression data in form of colors plotted onto the
-corresponding spatial features mapped in anatomical images. The color scheme
-used to represent the gene expression values can be customized by the user.
-This core functionality is called spatial heatmap. It is enhanced with gene
-network visualization tools, including matrix heatmaps combined with
+and cell-specific gene expression data by coloring the corresponding spatial
+features mapped in anatomical images according to a numeric color key. The color
+scheme used to represent the gene expression values can be customized by the
+user. This core functionality is called spatial heatmap. It is enhanced with
+gene network visualization tools, including matrix heatmaps combined with
 hierarchical clustering dendrograms and network representations of groups of
 genes (_e.g._ gene modules) sharing related expression patterns. The
 functionalities of _spatialHeatmap_ can be used either in a command-driven mode
@@ -52,7 +52,7 @@ is also part of this package. While the R-based mode provides flexibility to
 customize and automate analysis routines, the Shiny App includes a variety of
 convenience features that will appeal to many biologists. Moreover, the Shiny
 App has been designed to work on both local computers as well as server-based
-deployments (_e.g._ cloud-based or custom server) that can be access remotely 
+deployments (_e.g._ cloud-based or custom server) that can be access remotely
 as a centralized community web service.
 
 <font color="red">
