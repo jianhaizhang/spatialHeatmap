@@ -53,7 +53,7 @@ to customize and automate analysis routines, the Shiny App includes a variety
 of convenience features that will appeal to many biologists. Moreover, the
 Shiny App has been designed to work on both local computers as well as
 server-based deployments (_e.g._ cloud-based or custom server) that can be
-access remotely as a centralized community web service.
+accessed remotely as a centralized community web service.
 
 <font color="red">
 Please add here an overview illustration ("visual abstract") of the entire
