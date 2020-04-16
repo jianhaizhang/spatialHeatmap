@@ -119,7 +119,7 @@ assay data along with the associated experimental design information in a
 the Bioconductor ecosystem that has been widely adapted by many other software
 packages dealing with gene-, protein- and metabolite-level profiling data
 [@SummarizedExperiment]. In case of gene expression data, the `assays` slot of
-the `SummarizedExperiment` container is populated with the gene expression
+the `SummarizedExperiment` container is populated with a gene expression
 matrix, where the rows and columns represent the genes and tissue/conditions,
 respectively, while the `colData` slot contains replicate information. The
 tissues and/or cell type information in the object maps via `colData` to the
