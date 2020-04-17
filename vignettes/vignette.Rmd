@@ -177,29 +177,84 @@ browseVignettes('spatialHeatmap')
 
 # Functionality
 
-The core functionality is spatial heatmap. It is designed to intuitively visualise the expression profile of target gene in a data matrix on an SVG image and promote hypothesis generation. As enhancements to the core functionality, the matrix heatmap and network explores a target gene in the background of the gene module it belongs to, which makes the visualisation in this package more informative. In addition, all the 3 functionality is combined into a Shiny app so that this package can be used interactively.  
+The core functionality is spatial heatmap. It is designed to intuitively
+visualise the expression profile of target gene in a data matrix on an SVG
+image and promote hypothesis generation. As enhancements to the core
+functionality, the matrix heatmap and network explores a target gene in the
+background of the gene module it belongs to, which makes the visualisation in
+this package more informative. In addition, all the 3 functionality is combined
+into a Shiny app so that this package can be used interactively.  
 
 ## Spatial Heatmap {#shm}
 
-This is the core functionality of this package and is implemented by the function `spatial_hm`. Given a pair of formatted data matrix and SVG image, it maps the expression profile of a target gene under different conditions onto different tissues defined in the SVG image, and the resulting plots are spaial heatmaps. This functionality is designed to be flexible so as to achieve optimal display under different circumstances. The main features are introduced below.   
+This is the core functionality of this package and is implemented by the
+function `spatial_hm`. Given a pair of formatted data matrix and SVG image, it
+maps the expression profile of a target gene under different conditions onto
+different tissues defined in the SVG image, and the resulting plots are spaial
+heatmaps. This functionality is designed to be flexible so as to achieve
+optimal display under different circumstances. The main features are introduced
+below.   
 
-It is able to take mutiple target genes as input. If so, a set of spatial heatmaps for each gene are plotted sequentially and organised on the same page. The `layout` parameter specifies display these spatial heatmaps by genes or by conditions. This feature makes it flexible for users to compare expression profiles of the same gene across conditions or different genes across the same condition. If many conditions are displayed, the `ncol` parameter can be used to adjust the column number in the layout to achieve optimal dispaly.     
+It is able to take mutiple target genes as input. If so, a set of spatial
+heatmaps for each gene are plotted sequentially and organised on the same page.
+The `layout` parameter specifies display these spatial heatmaps by genes or by
+conditions. This feature makes it flexible for users to compare expression
+profiles of the same gene across conditions or different genes across the same
+condition. If many conditions are displayed, the `ncol` parameter can be used
+to adjust the column number in the layout to achieve optimal dispaly.     
 
-In the case of tissues existing in multiple layers, some tissues might be covered and invisible in the spatial heatmaps. In this case, the `tis.trans` parameter can be used to set the front tissues transparent. Then the covered tissues will be visible, a representative example of which is shown in [Figure 2](#mus_shm). 
+In the case of tissues existing in multiple layers, some tissues might be
+covered and invisible in the spatial heatmaps. In this case, the `tis.trans`
+parameter can be used to set the front tissues transparent. Then the covered
+tissues will be visible, a representative example of which is shown in [Figure
+2](#mus_shm). 
 
-In the legend plot, if too many tissues are included, the legends might occupy too much space and lead to main plot squeezed. To overcome this issue, the `sam.legend` parameter is developed to allows users to only show selected tissues in the legend, and the default "identical" only shows the coloured tissues.   
+In the legend plot, if too many tissues are included, the legends might occupy
+too much space and lead to main plot squeezed. To overcome this issue, the
+`sam.legend` parameter is developed to allows users to only show selected
+tissues in the legend, and the default "identical" only shows the coloured
+tissues.   
 
-Moreover, too many tissues might affect the visual effects due to the messy polygon outlines. The `line.size` and `line.color` parameters are used to adjust the thickness and colour of polygon outlines respectively and thus can enhance the visualisation.  
+Moreover, too many tissues might affect the visual effects due to the messy
+polygon outlines. The `line.size` and `line.color` parameters are used to
+adjust the thickness and colour of polygon outlines respectively and thus can
+enhance the visualisation.  
 
-This core functionality is presented with 4 examples: Human Brain, Mouse Organ, Chicken Organ, Arabidopsis Shoot. The first 3 are RNA-seq data from [Expression Atlas-EMBL-EBI](https://www.ebi.ac.uk/gxa/home) and the last one is microarray data from [GEO](https://www.ncbi.nlm.nih.gov/geo/). Successful plotting of spatial heatmaps requires a pair of formatted data matrix and SVG image, as explained in format requirements on [data matrix](#mat_form) and [SVG image](#svg_form).   
+This core functionality is presented with 4 examples: Human Brain, Mouse Organ,
+Chicken Organ, Arabidopsis Shoot. The first 3 are RNA-seq data from [Expression
+Atlas-EMBL-EBI](https://www.ebi.ac.uk/gxa/home) and the last one is microarray
+data from [GEO](https://www.ncbi.nlm.nih.gov/geo/). Successful plotting of
+spatial heatmaps requires a pair of formatted data matrix and SVG image, as
+explained in format requirements on [data matrix](#mat_form) and [SVG
+image](#svg_form).   
 
-The Expression Atlas-EMBL-EBI is a rich resource of gene and protein expression. It contains gene expression data measured from diverse origins such as different species, biological conditions, tissues, cell types, developmental stages, and diseases. Moreover, Expression Atlas also provides a rich resource of SVG images, which convers many species from animals to plants. The format of these SVG images are slightly modified to be compatible with the spatialHeatmap, which are available in the [SVG repository](#svg_tmp). The GEO is another rich repository of public genomics data covering a wide range of species, which accepts array- and sequence-based data in MIAME-compliant format. To demonstrate the wide usage of spatialHeatmap, example data are chosen from the 2 popular databases.     
+The Expression Atlas-EMBL-EBI is a rich resource of gene and protein
+expression. It contains gene expression data measured from diverse origins such
+as different species, biological conditions, tissues, cell types, developmental
+stages, and diseases. Moreover, Expression Atlas also provides a rich resource
+of SVG images, which convers many species from animals to plants. The format of
+these SVG images are slightly modified to be compatible with the
+spatialHeatmap, which are available in the [SVG repository](#svg_tmp). The GEO
+is another rich repository of public genomics data covering a wide range of
+species, which accepts array- and sequence-based data in MIAME-compliant
+format. To demonstrate the wide usage of spatialHeatmap, example data are
+chosen from the 2 popular databases.     
 
 ### Human Brain 
 
-The first example is plotting an EBI RNA-seq data matrix of human brain tissues onto a human brain SVG image from the [SVG repository](#svg_tmp). The data come from a transcriptome study of frontal cortex and cerebellum between normal and amyotrophic lateral sclerosis (ALS) subjects [@Prudencio2015-wd]. Below is the simplified plotting process, and details are explained in the [Supplement](#sup) section.  
+The first example is plotting an EBI RNA-seq data matrix of human brain tissues
+onto a human brain SVG image from the [SVG repository](#svg_tmp). The data come
+from a transcriptome study of frontal cortex and cerebellum between normal and
+amyotrophic lateral sclerosis (ALS) subjects [@Prudencio2015-wd]. Below is the
+simplified plotting process, and details are explained in the
+[Supplement](#sup) section.  
 
-Download the SVG image "homo_sapiens.brain.svg" from the [repository](https://github.com/jianhaizhang/SVG_tutorial_file/tree/master/svg_repo/ebi_trans) and check tissue ids in [Inkscape](https://inkscape.org/). Use a tissues id as key word to search for gene expression data. Take "cerebellum" for instance. Use function `searchAtlasExperiments` from the package ExpressionAtlas [@ebi] to search for human data with key words "cerebellum" and "Homo sapiens".    
+Download the SVG image "homo_sapiens.brain.svg" from the
+[repository](https://github.com/jianhaizhang/SVG_tutorial_file/tree/master/svg_repo/ebi_trans)
+and check tissue ids in [Inkscape](https://inkscape.org/). Use a tissues id as
+key word to search for gene expression data. Take "cerebellum" for instance.
+Use function `searchAtlasExperiments` from the package ExpressionAtlas [@ebi]
+to search for human data with key words "cerebellum" and "Homo sapiens".    
 
 ```{r eval=TRUE, echo=TRUE, warnings=FALSE }
 
@@ -207,7 +262,10 @@ all.hum <- searchAtlasExperiments(properties="cerebellum", species="Homo sapiens
 
 ```
 
-Check the results and select one study conducted in at least one tissue in the downloaded SVG image. In this example, the experiment "E-GEOD-67196" is selected, since the data is measured in cerebellum and frontal cortex that are represented in the SVG image.   
+Check the results and select one study conducted in at least one tissue in the
+downloaded SVG image. In this example, the experiment "E-GEOD-67196" is
+selected, since the data is measured in cerebellum and frontal cortex that are
+represented in the SVG image.   
 
 ```{r eval=TRUE, echo=TRUE, warnings=FALSE }
 
@@ -223,7 +281,8 @@ rse.hum <- getAtlasData('E-GEOD-67196')[[1]][[1]]
 
 ```
 
-Make a targets file (a data frame describing replicates of tissues and conditions) for the data matrix, which is available in this package.   
+Make a targets file (a data frame describing replicates of tissues and
+conditions) for the data matrix, which is available in this package.   
 
 ```{r eval=TRUE, echo=TRUE, warnings=FALSE }
 
@@ -246,7 +305,11 @@ kable(target.hum[c(1:3, 41:42), 4:5], caption='Table 1 Targets file (metadata of
 
 ``` 
 
-The data from EBI is raw RNA-seq count matrix, so there is process of normalisation, replicates aggregation, and filtering. In this example, genes with expression values larger than 5 in at least 1% of all samples (pOA=c(0.01, 5)), and with coefficient of variance (CV) between 0.30 and 100 (CV=c(0.30, 100)) are retained.  
+The data from EBI is raw RNA-seq count matrix, so there is process of
+normalisation, replicates aggregation, and filtering. In this example, genes
+with expression values larger than 5 in at least 1% of all samples (pOA=c(0.01, 5)),
+and with coefficient of variance (CV) between 0.30 and 100 (CV=c(0.30, 100))
+are retained.  
 
 ```{r eval=TRUE, echo=TRUE, warnings=FALSE }
 
