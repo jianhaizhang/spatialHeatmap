@@ -1,6 +1,6 @@
 ---
 title: "_spatialHeatmap_: Visualizing Spatial Assays in Anatomical Images and Network Graphs"
-author: "Authors: Jianhai Zhang and Thomas Girke"
+author: "Authors: Jianhai Zhang, Bing Yang, Wolf B. Frommer, Julia Bailey-Serres and Thomas Girke"
 date: "Last update: `r format(Sys.time(), '%d %B, %Y')`"
 output:
   html_document:
@@ -894,6 +894,7 @@ sessionInfo()
 
 # Funding
 
+This project has been funded by NSF awards: [PGRP-1546879](https://www.nsf.gov/awardsearch/showAward?AWD_ID=1546879&HistoricalAwards=false), [PGRP-1810468](https://www.nsf.gov/awardsearch/showAward?AWD_ID=1810468), [PGRP-1936492](https://www.nsf.gov/awardsearch/showAward?AWD_ID=1936492&HistoricalAwards=false).
 
 # References
 
