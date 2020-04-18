@@ -1,5 +1,5 @@
 ---
-title: "_spatialHeatmap_: Visualizing Spatial Assay Data in Anatomical Images and Network Graphs"
+title: "_spatialHeatmap_: Visualizing Spatial Assays in Anatomical Images and Network Graphs"
 author: "Authors: Jianhai Zhang and Thomas Girke"
 date: "Last update: `r format(Sys.time(), '%d %B, %Y')`"
 output:
@@ -21,6 +21,12 @@ vignette: |
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
+
+```{r global_options, include=FALSE}
+## ThG: chunk added to enable global knitr options. The below turns on
+## caching for faster vignette re-build during text editing.
+knitr::opts_chunk$set(cache=TRUE)
+```
 
 <style type="text/css">
 .main-container { max-width: 1800px; margin-left: 5px; margin-right: auto; }
@@ -89,29 +95,29 @@ Existing software in this field is largely based on pure web applications
 [@Winter2007-bq; @Waese2017-fx] or local tools [@Maag2018-gi;
 @Muschelli2014-av] that typically lack customization functionalities by
 restricting users to utilizing pre-existing expression data and/or fixed sets
-of anatomical image collections. To close this gap in the cellular profiling
-field, we have developed _spatialHeatmap_ as a generic R/Bioconductor package
+of anatomical image collections. To close this gap for biological use cases, 
+we have developed _spatialHeatmap_ as a generic R/Bioconductor package
 for plotting quantitative values onto any type of spatially mapped images in a
 programmable environment and/or in an intuitive to use GUI application.
 
 ## Design
 
 The core feature [Spatial Heatmap](#shm) is to map the assay values (_e.g._
-gene expression data) of one or many items (_e.g._ genes) assayed under
-different conditions in form of spatial heatmaps onto the corresponding cell
-types or tissues represented in a chosen SVG image. In the gene profiling
-field, this feature supports comparisons of the expression values among
-multiple genes by plotting their spatial heatmap representations next to each
-other. Similarly, one can display the expression values of a single or multiple
-genes across multiple conditions in the same plot. This level of flexibility is
-very efficient for visualizing complicated expression patterns across genes,
-cell types and conditions. In case of more complex anatomical images composed
-of multiple layer tissues, it is important to visually expose the tissue layer
-of interest in the plots. To address this, several default and customizable
-layer viewing options are provided. They allow to hide features in the top
-layers by making them transparent in order to expose features below them. This
-transparency viewing feature is highlighted below in the [mouse
-example](#mus_shm).
+gene expression data) of one or many items (_e.g._ genes) measured under
+different conditions in form of numerically graded colors onto the
+corresponding cell types or tissues represented in a chosen SVG image. In the
+gene profiling field, this feature supports comparisons of the expression
+values among multiple genes by plotting their spatial heatmap representations
+next to each other. Similarly, one can display the expression values of a
+single or multiple genes across multiple conditions in the same plot. This
+level of flexibility is very efficient for visualizing complicated expression
+patterns across genes, cell types and conditions. In case of more complex
+anatomical images composed of multiple layer tissues, it is important to
+visually expose the tissue layer of interest in the plots. To address this,
+several default and customizable layer viewing options are provided. They allow
+to hide features in the top layers by making them transparent in order to
+expose features below them. This transparency viewing feature is highlighted
+below in the [mouse example](#mus_shm).
 
 To maximize reusability and extensibility, the package organizes all numeric
 assay data along with the associated experimental design information in a
@@ -126,28 +132,32 @@ tissues and/or cell type information in the object maps via `colData` to the
 corresponding features in the SVG images using unique identifiers for the
 spatial features (_e.g._ tissues or cell types). This allows to color the
 features of interest in an SVG image according to the numeric data stored in a
-`SummarizedExperiment` object. More details about properly formatting both the
+`SummarizedExperiment` object. Details about how to properly format both the
 SVG images and the associated expression data are provided in the [Formatting
 Requirements](#form) section of this vignette.
 
 The following sections of this vignette highlight the most important
-functionalities of the `spatialHeatmap` package using mRNA profiling data.
-First, spatial heatmap plots are generated for four gene expression data sets
-including both RNA-seq and microarray experiments from [Human Brain](#hum),
-[Mouse Organs](#mus), [Chicken Organs](#chk), and [Arabidopsis Shoots](#shoot).
-Second, gene context visualization features are introduced, which facilitate
-the visualization of gene modules sharing similar expression patterns. This
-includes the visualization of hierarchical clustering results with traditional
-matrix heatmaps ([Matrix Heatmap](#mhm)) as well co-expression network plots
-([Network](#net)). Third, an overview of the corresponding [Shiny App](#shiny)
-is presented that provides access to the same functionalities as the R functions,
-but executes them in an interactive environment [@shiny; @shinydashboard].
-Fourth, more advanced features for plotting customized spatial heatmaps are
-introduced using the Human Brain data set as an example.  
+functionalities of the `spatialHeatmap` package using mRNA profiling data as
+an example. First, spatial heatmap plots are generated for four gene
+expression data sets including both RNA-seq and microarray experiments from
+[Human Brain](#hum), [Mouse Organs](#mus), [Chicken Organs](#chk), and
+[Arabidopsis Shoots](#shoot).  Second, gene context visualization features are
+introduced, which facilitate the visualization of gene modules sharing similar
+expression patterns. This includes the visualization of hierarchical clustering
+results with traditional matrix heatmaps ([Matrix Heatmap](#mhm)) as well
+co-expression network plots ([Network](#net)). Third, an overview of the
+corresponding [Shiny App](#shiny) is presented that provides access to the same
+functionalities as the R functions, but executes them in an interactive
+environment [@shiny; @shinydashboard].  Fourth, more advanced features for
+plotting customized spatial heatmaps are introduced using the Human Brain data
+set as an example.  
 
-# Installation
+# Getting Started
 
-The 'spatialHeatmap' package can be installed from R (version 3.6 or higher) as follows. 
+## Installation
+
+The `spatialHeatmap` package should be installed from R (version $\ge$ 3.6) 
+with the `BiocManager::install` command.
 
 ```{r, eval=FALSE, echo=TRUE, warnings=FALSE} 
 
@@ -157,9 +167,10 @@ BiocManager::install("spatialHeatmap")
 
 ```
 
-# Load Packages and Vignette
+## Load Packages and Documentation
 
-The following loads the packages required for running the sample code in this vignette.  
+Next, the packages required for running the sample code in this vignette need to be 
+loaded.  
 
 ```{r, eval=TRUE, echo=TRUE, warnings=FALSE}
 
@@ -167,15 +178,14 @@ library(spatialHeatmap); library(SummarizedExperiment); library(ExpressionAtlas)
 
 ```   
 
-The vignette of `spatialHeatmap` can be opened from R with the `browseVignette` function.
+The following lists the vignette(s) of this package in an HTML browser. Clicking the
+corresponding name will open this vignette. 
 
 ```{r, eval=FALSE, echo=TRUE, warnings=FALSE}
 
 browseVignettes('spatialHeatmap')
 
 ```
-
-# Functionality
 
 <font color="red">
 [ThG-Comment 2: how can the user find out what features are defined (mapped) in
@@ -192,6 +202,10 @@ supposed to provide a high level of flexibilty and reusability, and I don't thin
 it would be hard to address this important need.]
 </font>
 
+
+# Spatial Heatmaps {#shm}
+
+<!--
 The core functionality is spatial heatmap. It is designed to intuitively
 visualise the expression profile of target gene in a data matrix on an SVG
 image and promote hypothesis generation. As enhancements to the core
@@ -200,15 +214,47 @@ background of the gene module it belongs to, which makes the visualisation in
 this package more informative. In addition, all the 3 functionality is combined
 into a Shiny app so that this package can be used interactively.  
 
-## Spatial Heatmap {#shm}
-
+[ThG-Comment: this duplicates content of intro and can be deleted.]
 This is the core functionality of this package and is implemented by the
 function `spatial_hm`. Given a pair of formatted data matrix and SVG image, it
 maps the expression profile of a target gene under different conditions onto
 different tissues defined in the SVG image, and the resulting plots are spaial
 heatmaps. This functionality is designed to be flexible so as to achieve
 optimal display under different circumstances. The main features are introduced
-below.   
+below.
+-->
+
+## Toy Example
+
+Spatial heatmaps are plotted with the `spatial_hm` function. To illustrate how
+these plots are generated, the following uses a generalized toy example where
+a vector of random numeric values is generated that are used to color the
+corresponding features in a pre-annotated SVG image. The image chosen for this
+example is an pre-annotated SVG of the human brain. To map the numbers to the
+correct features in the image they are paired by a name matching approach between
+the name slot of the numeric vector and features names of the image. To obtain
+the feature names present in the annotated SVG, the `returnSVGFeatures()` function 
+can be used. The obtained names of the image are stored in a character vector and
+then assigned to the name slot in the numeric vector provided by the user. Next, 
+the numbers are translated to colors based on a user definable color key and then 
+painted onto the corresponding named features in the image.
+
+<font color="red">
+[ThG-Comment 3: Jianhai, please add a code section that accomplishes what is described
+in the above text. This will help to give the user a quick code-based intro into the
+functionalities of the spatial_hm function without requiring too much knowledge about
+expression data and other details. This section also overlaps with the comment #2, since
+it requires some basic functionality to extract feature names from pre-annotated SVGs.]
+</font>
+
+
+## Human Brain 
+
+<font color="red">
+The first paragraphs below have been moved here. There is a lot of duplication in this
+text that needs to be deleted (or hidden via comment tags) and/or merged into other 
+sections where appropriate. 
+</font>
 
 It is able to take mutiple target genes as input. If so, a set of spatial
 heatmaps for each gene are plotted sequentially and organised on the same page.
@@ -254,8 +300,6 @@ is another rich repository of public genomics data covering a wide range of
 species, which accepts array- and sequence-based data in MIAME-compliant
 format. To demonstrate the wide usage of spatialHeatmap, example data are
 chosen from the 2 popular databases.     
-
-### Human Brain 
 
 The first example is plotting an EBI RNA-seq data matrix of human brain tissues
 onto a human brain SVG image from the [SVG repository](#svg_tmp). The data come
@@ -369,7 +413,7 @@ spatial_hm(svg.path=svg.hum, se=se.fil.hum, ID=c('ENSG00000268433'), col.com=c("
 
 In this example, the expression profile of gene ENSG00000268433 in frontal cortex and cerebellum is plotted under ALS and normal conditions ([Figure 1](#brain_shm)) with the legend plot on the right. For example, in [Table 2](#hum_table) its expression value in cerebellum under ALS is 5.3240638. After mapping, this tissue is coloured purple corresponding to 5.3240638 in the colour scale. By contrast, this gene's expression profile is blue in the same tissue under normal condition. On the other hand, the expression profile (yellow) in frontal cortex is similar across ALS and normal. Therefore, it is intuitive that this gene's higher activity in cerebellum is potentially associated with ALS and could contribute to hypothesis generation. Note that only frontal cortex and cerebellum are coloured while others are blank in the spatial heatmaps, since they are the only 2 identical tissues between the data matrix and SVG image.  
 
-### Mouse Organ {#mus}
+## Mouse Organ {#mus}
 
 This example is based on a mouse data from an RNA-seq study aiming at assessing tissue-specific transcriptome variation across mammals [@Merkin2012-ak], which is from EBI Expression Atlas.   
 
@@ -426,7 +470,7 @@ The spatial heatmap of gene ENSMUSG00000000263 is plotted in 8 tissues across 3 
 
 This is a typical example to demonstrate the usage of `tis.trans` parameter, since this mouse organ image includes tissues in multiple layers and skelectal muscle covers lung and heart. In Figure 2, skelectal muscle is set transparent by `tis.trans='skeletal.muscle'` so that lung and heart are exposed. Users can try setting `tis.trans=NULL` to see the difference.   
 
-### Chicken Organ {#chk}
+## Chicken Organ {#chk}
 
 In this example, the data come from developments of 7 chicken organs under 9 time points [@Cardoso-Moreira2019-yq], which is an RNA-seq analysis and available in EBI Expression Atlas.  
 
@@ -490,7 +534,7 @@ spatial_hm(svg.path=svg.chk, se=se.fil.chk, ID='ENSGALG00000006346', col.com=c("
 The spatial heatmap of gene ENSGALG00000006346 is plotted. It is intuitive that the profiles of liver, heart, and kidney are all higher in day17 than other days. Therefore, the important role of this gene in day10 is worth futher exploration. In day10 liver is blank, because in the expression matrix liver data is not availble for day10. This reflects the plotting algorithm that only identical samples between the data matrix and SVG image are plotted.    
 
 
-### Arabidopsis Shoot {#shoot}
+## Arabidopsis Shoot {#shoot}
 
 [GEO](https://www.ncbi.nlm.nih.gov/geo/) is a another well-known public repository of array- and sequence-based data. To demonstrate the use of spatialHeatmap on this resource, the dataset GSE14502 is plotted on a shoot SVG image. This a microarray data from a study of translatome variation of *Arabidopsis thaliana* (Arabidopsis) shoot and root tissues under control and hypoxia conditions [@Mustroph2009-nu], which is accessed through GEOquery [@geo].  
 
@@ -551,7 +595,7 @@ spatial_hm(svg.path=svg.sh, se=se.fil.sh, ID="HRE2", col.com=c('purple', 'cyan',
 
 Figure 4 is the spatial heatmap of gene "HRE2" under control and hypoxia. It is clear that this gene's exression profiles under control are lower than hypoxia across all the 5 tissues (pGL2, pRBCS, pCER5, pSUC2, pKAT1). Therefore, it can be hypothesised that hypoxia induces over-expression of "HRE2" across the 5 tissues and thus "HRE2" might be an important factor for Arabidopsis shoot to cope with hypoxia stress. The tissue pSultr2.2 is blank under hypoxia due to unavailability of its data under hypoxia in the data matrix.    
 
-## Matrix Heatmap {#mhm}
+# Matrix Heatmaps {#mhm}
 
 The Matrix Heatmap is designed to supplement the core feature of spatial heatmap. It displays the target gene in the context of corresponding gene network module, so there is a process of gene modules identification.
 
@@ -595,7 +639,7 @@ matrix_hm(geneID="HRE2", se=se.fil.sh, adj.mod=adj.mod, ds="3", scale="no", angl
 
 In Figure 5, the target gene is displayed in the gene module it belongs to, which is indicated by 2 black lines. The rows and columns are sorted by hierarchical clustering dendrograms. The expression matrix of this module is visualised without being scaled (`scale="no"`). It can be seen that the expression levels of this module is overall much higher in hypoxia than control, and therefore it could potentially be used to infer the hypoxia response mechanism in Arabidopsis.   
 
-## Network {#net}
+# Network Graphs {#net}
 
 The same target gene and module from matrix heatmap can also be displayed as a network. Similarly, the network can be dispayed in static or interactive mode.  
 
@@ -618,7 +662,7 @@ network(geneID="HRE2", se=se.fil.sh, ann='Target.Description', adj.mod=adj.mod, 
 
 ```
 
-## The Integrated Shiny App {#shiny}
+# Shiny App {#shiny}
 
 All the above functionality (spatial heatmap, interactive matrix heatmap, interactive network) is also combined into a web-browser based [Shiny App](https://shiny.rstudio.com/), which takes advantage of the computational power of R and interactivity of the web. The main benefits of the Shiny App is combine all the utities in one interface and increase interactivity. On the left of this app is the menu. It includes pre-formatted ready-to-use examples, options to upload formatted data matrix and SVG images, and instruction to use this app. On the right is the interactive interfacce, including Data Matrix, Spatial Heatmap, Matrix Heatmap, and Network. To use interactive features, there are paramters on the left menu to operate. Upon launched, the app automatically displays a pre-formatted example. A good practice to use this app is to follow steps in the menu rather than skipping steps. If unexpectation happens, the app webpage should be refreshed.
 
@@ -662,7 +706,7 @@ To plot spatial heatmaps using data from the [Expression Atlas-EMBL-EBI](https:/
 
 In the following, the detailed plotting procedure is explained on the Human Brain example only, since other examples are plotted similarly.  
 
-### Download SVG Image and Data Matrix {#plot_hum} 
+## Download SVG Image and Data Matrix {#plot_hum} 
 
 Download "homo_sapiens.brain.svg" from the [repository](https://github.com/jianhaizhang/SVG_tutorial_file/tree/master/svg_repo/ebi_trans) (click an image, mouse over the image and right click, then select "Save image as…"). Open the dowloaded SVG image in [Inkscape](https://inkscape.org/) and check tissue ids in the "XML Editor (Shift+Ctrl+X)" ([Figure 5](#brain)). These ids are preferred key words for searching the expression data. Take the id "cerebellum" for instance. Use function `searchAtlasExperiments` from the package ExpressionAtlas [@ebi] to search for human data with key words "cerebellum" and "Homo sapiens".    
 
@@ -687,7 +731,7 @@ assay(rse.hum)[1:3, 1:3]
 
 ```
 
-### Format the Data Matrix {#mat_form}
+## Format the Data Matrix {#mat_form}
 
 Formatting the data matrix is essentially define replicates of tissues and conditions, and this is carried out by a targets file (a data frame of column metadata) with at least 2 columns specifying sample and condition replicates respectively. The data matrix with rows and columns being genes and sample/conditions respectively should be in the form of "SummarizedExperiment" [@SummarizedExperiment]. The "colData" slot contains the a targetes file, while the "rowData" slot is not required for plotting spatial heatmaps. 
 
@@ -785,7 +829,7 @@ se.fil.hum <- filter_data(se=se.aggr.hum, sam.factor='organism_part', con.factor
 
 ```
 
-### Format The SVG Image {#svg_form}
+## Format The SVG Image {#svg_form}
 
 Spatial heatmap plotting also requires the SVG image is formatted in a specific way by using [Inkscape](https://inkscape.org/). [Figure 8](#brain) the downloaded SVG image opened in Inkscape, tissues are represented by paths and labeled by ids.
 
@@ -822,7 +866,7 @@ include_graphics(svg.hum)
 
 ```
 
-### Plot spatial heatmaps 
+## Plot spatial heatmaps 
 
 With the formatted data matrix and SVG image, the spatial heatmap is plotted with function `spatial_hm`, which is shown in [Figure 1](#brain_shm).
 
@@ -837,12 +881,16 @@ spatial_hm(svg.path=svg.hum, se=se.fil.hum, ID='ENSG00000268433', col.com=c("yel
 
 ```{r eval=TRUE, echo=TRUE}
 
-# Session informaion.  
+# Version Informaion
+
 sessionInfo()
 
 ```
 
-# Reference
+# Funding
+
+
+# References
 
 
 
