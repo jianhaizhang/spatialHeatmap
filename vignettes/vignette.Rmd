@@ -251,9 +251,14 @@ it requires some basic functionality to extract feature names from pre-annotated
 ## Human Brain 
 
 <font color="red">
-The first paragraphs below have been moved here. There is a lot of duplication in this
-text that needs to be deleted (or hidden via comment tags) and/or merged into other 
-sections where appropriate. 
+The first paragraphs below have been moved here for now. There is a lot of
+duplication in this text that needs to be deleted (or hidden via comment tags)
+and/or merged into other sections where appropriate. Some of the text is
+certainly important but it often should be used to explain code sections rather
+than keeping it separate from the code. For instance the first paragraph below
+should go to a section where you show how to generate multiple target gene
+plots rather then just describing it in stand-alone text, especially since a summary 
+of this particular example has been given in the intro section already. 
 </font>
 
 It is able to take mutiple target genes as input. If so, a set of spatial
