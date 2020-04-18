@@ -57,7 +57,7 @@ accessed remotely as a centralized web service for using _spatialHeatmap's_
 functionalities with community and/or private data.
 
 <font color="red">
-Please add here an overview illustration ("visual abstract") of the entire
+[ThG-Comment 1: Please add here an overview illustration ("visual abstract") of the entire
 package that outlines all its core functionalities in one figure. Similar to
 Fig 1 and Fig 2 in the <i>signatureSearch</i> vignette <a
 href="https://bit.ly/2RGmUON">here</a>. In your case, the package design
@@ -67,7 +67,7 @@ with me. This way we can jointly edit it, and export to SVG or PNG as needed.
 Please take your time to create a quality illustration for this purpose that
 both looks professional and is informative too. The intent of this
 illustration is to use it in various places, e.g. slide shows, posters,
-vignette and paper.
+vignette and paper.]
 </font>
 
 As anatomical images the package supports both tissue maps from public
@@ -147,7 +147,7 @@ introduced using the Human Brain data set as an example.
 
 # Installation
 
-Start R (version 3.6 or higher) and run: 
+The 'spatialHeatmap' package can be installed from R (version 3.6 or higher) as follows. 
 
 ```{r, eval=FALSE, echo=TRUE, warnings=FALSE} 
 
@@ -159,7 +159,7 @@ BiocManager::install("spatialHeatmap")
 
 # Load Packages and Vignette
 
-Load packages.  
+The following loads the packages required for running the sample code in this vignette.  
 
 ```{r, eval=TRUE, echo=TRUE, warnings=FALSE}
 
@@ -167,7 +167,7 @@ library(spatialHeatmap); library(SummarizedExperiment); library(ExpressionAtlas)
 
 ```   
 
-Access the vingette in R console.
+The vignette of `spatialHeatmap` can be opened from R with the `browseVignette` function.
 
 ```{r, eval=FALSE, echo=TRUE, warnings=FALSE}
 
@@ -176,6 +176,21 @@ browseVignettes('spatialHeatmap')
 ```
 
 # Functionality
+
+<font color="red">
+[ThG-Comment 2: how can the user find out what features are defined (mapped) in
+the existing SVG images provided by your SVG collection, or the one from
+Expression Atlas? A very common use case would be that the user has generated
+some cell/tissue specific expression data, and then wants to map it to an
+existing mapped SVG. How can they find out what SVGs contain the features they
+have data for, so that they can properly set up their expression data for
+plotting and choose the appropriate SVG images rather than generating their
+own. Shouldn't each SVG be accompanied with a feature table, or an R function
+provided that returns this info from a mapped SVG by parsing it? This would be
+an obvious utility reviewers and user will ask for in a package that is
+supposed to provide a high level of flexibilty and reusability, and I don't think
+it would be hard to address this important need.]
+</font>
 
 The core functionality is spatial heatmap. It is designed to intuitively
 visualise the expression profile of target gene in a data matrix on an SVG
@@ -348,7 +363,7 @@ Plot spatial heatmaps.
 <a name="brain_shm"></a>
 ```{r eval=TRUE, echo=TRUE, warnings=FALSE, fig.align="center", fig.cap=("Figure 1 Example of plotting EBI data matrix on the SVG template. Cerebellum and frontal cortex are coloured, since they are the only 2 identical tissues between the SVG image and the data matrix."), out.width="100%" }
 
-spatial_hm(svg.path=svg.hum, se=se.fil.hum, ID='ENSG00000268433', col.com=c("yellow", "blue", "purple"), width=1, height=0.4, legend.r=0.5, sub.title.size=11, layout="gene", ncol=2, tis.trans=NULL, sam.legend='identical', line.size=0.2, line.color='grey70', legend.position=c(0.5, -0.15), legend.nrow=1)
+spatial_hm(svg.path=svg.hum, se=se.fil.hum, ID=c('ENSG00000268433'), col.com=c("yellow", "blue", "purple"), width=1, height=0.4, legend.r=0.5, sub.title.size=11, layout="gene", ncol=2, tis.trans=NULL, sam.legend='identical', line.size=0.2, line.color='grey70', legend.position=c(0.5, -0.15), legend.nrow=1)
 
 ```
 
