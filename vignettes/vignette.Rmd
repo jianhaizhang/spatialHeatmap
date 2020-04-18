@@ -227,16 +227,16 @@ below.
 ## Toy Example
 
 Spatial heatmaps are plotted with the `spatial_hm` function. To illustrate how
-these plots are generated, the following uses a generalized toy example where
-a vector of random numeric values is generated that are used to color the
+these plots are generated, the following uses a generalized toy example where a
+vector of random numeric values is generated that are used to color the
 corresponding features in a pre-annotated SVG image. The image chosen for this
-example is an pre-annotated SVG of the human brain. To map the numbers to the
-correct features in the image they are paired by a name matching approach between
-the name slot of the numeric vector and features names of the image. To obtain
-the feature names present in the annotated SVG, the `returnSVGFeatures()` function 
-can be used. The obtained names of the image are stored in a character vector and
-then assigned to the name slot in the numeric vector provided by the user. Next, 
-the numbers are translated to colors based on a user definable color key and then 
+example is from the human brain. To map the numbers to the correct features in
+the image they are paired by a name matching approach between the name slot of
+the numeric vector and features names of the image. To obtain the feature names
+present in the annotated SVG, the `returnSVGFeatures()` function can be used.
+The obtained names of the image are stored in a character vector and then
+assigned to the name slot in the numeric vector provided by the user. Next, the
+numbers are translated to colors based on a user definable color key and then
 painted onto the corresponding named features in the image.
 
 <font color="red">
