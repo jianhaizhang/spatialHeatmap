@@ -58,7 +58,7 @@ that is also part of this package. While the R-based mode provides flexibility
 to customize and automate analysis routines, the Shiny App includes a variety
 of convenience features that will appeal to many biologists. Moreover, the
 Shiny App has been designed to work on both local computers as well as
-server-based deployments (_e.g._ cloud-based or custom server) that can be
+server-based deployments (_e.g._ cloud-based or custom servers) that can be
 accessed remotely as a centralized web service for using _spatialHeatmap's_ 
 functionalities with community and/or private data.
 
@@ -80,27 +80,28 @@ As anatomical images the package supports both tissue maps from public
 repositories (_e.g._ EMBL-EBI's Expression Atlas) and custom images provided by
 the user. In general any type of image can be used as long as it can be
 provided in SVG (Scalable Vector Graphics) format, where the corresponding
-spatial features have been defined. The numeric values plotted onto a spatial
-heatmap are usually quantitative measurements from a wide range of profiling
-technologies, such as microarrays, next generation sequencing (_e.g._ RNA-Seq
-and scRNA-Seq), proteomics, metabolomics, or many other small- or large-scale
-experiments. For convenience, several preprocessing and normalization methods
-for the most common use cases are included that support raw and/or preprocessed
-data. Currently, the main application domains of the _spatialHeatmap_ package
-are numeric data sets and spatially mapped images from biological and
-biomedical areas. However, the package has been designed to also work with many
-other spatial data types, such a population data plotted onto geographic maps.
-This high level of flexibility is one of the unique features of _spatialHeatmap_.
-Existing software in this field is largely based on pure web applications
-[@Winter2007-bq; @Waese2017-fx] or local tools [@Maag2018-gi;
-@Muschelli2014-av] that typically lack customization functionalities by
-restricting users to utilizing pre-existing expression data and/or fixed sets
-of anatomical image collections. To close this gap for biological use cases, 
-we have developed _spatialHeatmap_ as a generic R/Bioconductor package
-for plotting quantitative values onto any type of spatially mapped images in a
-programmable environment and/or in an intuitive to use GUI application.
+spatial features have been defined (see [aSVG](#term) below). The numeric
+values plotted onto a spatial heatmap are usually quantitative measurements
+from a wide range of profiling technologies, such as microarrays, next
+generation sequencing (_e.g._ RNA-Seq and scRNA-Seq), proteomics, metabolomics,
+or many other small- or large-scale experiments. For convenience, several
+preprocessing and normalization methods for the most common use cases are
+included that support raw and/or preprocessed data. Currently, the main
+application domains of the _spatialHeatmap_ package are numeric data sets and
+spatially mapped images from biological and biomedical areas. However, the
+package has been designed to also work with many other spatial data types, such
+a population data plotted onto geographic maps.  This high level of flexibility
+is one of the unique features of _spatialHeatmap_.  Existing software in this
+field is largely based on pure web applications [@Winter2007-bq; @Waese2017-fx]
+or local tools [@Maag2018-gi; @Muschelli2014-av] that typically lack
+customization functionalities by restricting users to utilizing pre-existing
+expression data and/or fixed sets of anatomical image collections. To close
+this gap for biological use cases, we have developed _spatialHeatmap_ as a
+generic R/Bioconductor package for plotting quantitative values onto any type
+of spatially mapped images in a programmable environment and/or in an intuitive
+to use GUI application.
 
-## Design
+## Design {#design}
 
 The core feature [Spatial Heatmap](#shm) is to map the assay values (_e.g._
 gene expression data) of one or many items (_e.g._ genes) measured under
@@ -152,7 +153,7 @@ environment [@shiny; @shinydashboard].  Fourth, more advanced features for
 plotting customized spatial heatmaps are introduced using the Human Brain data
 set as an example.  
 
-## Terminology
+## Terminology {#term}
 SVG is a widely used vector graphics format where XML formatted text describes
 all lines, shapes and text in images, such as drawings of anatomical
 structures. To assign colors to specific features in spatial heatmaps,
@@ -161,15 +162,15 @@ labeled according to certain conventions so that they can be colored
 programmatically.  aSVGs of anatomical structures can be downloaded from the
 repositories mentioned above, or users can generate them themselves. Typically,
 in aSVGs one or more shapes making up a feature of interest, such as the cell
-shapes of an organ, are grouped together by a common feature identifier in the
-aSVG. Via these identifiers one or many feature types can be colored
-simultaneously in an aSVG according to biological experiments assaying the
-corresponding feature types with the required spatial resolution. Correct
-assignment of image features and assay results is assured by using for both the
-same feature identifiers. The color gradient used to visually represent the
-numeric assay values is controlled by a color gradient parameter. For
-convenience the corresponding color key can be included in the spatial heatmap
-plots. Additional formatting details of both aSVG images and assay data are
+shapes of an organ, are grouped together by a common feature identifier. Via
+these identifiers one or many feature types can be colored simultaneously in an
+aSVG according to biological experiments assaying the corresponding feature
+types with the required spatial resolution. Correct assignment of image
+features and assay results is assured by using for both the same feature
+identifiers. The color gradient used to visually represent the numeric assay
+values is controlled by a color gradient parameter. To interpret the meaning of
+the colors, the corresponding color key can be included in the spatial heatmap
+plots.  Additional formatting details of both aSVG images and assay data are
 provided in [Supplement Section](#sup) of this vignette. 
 
 # Getting Started
