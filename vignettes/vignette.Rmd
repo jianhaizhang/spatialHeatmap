@@ -156,20 +156,20 @@ set as an example.
 SVG is a widely used vector graphics format where XML formatted text describes
 all lines, shapes and text in images, such as drawings of anatomical
 structures. To assign colors to specific features in spatial heatmaps,
-"annotated SVG" files have to be used where the shapes of interest are labeled
-according to certain conventions so that they can be colored programmatically.
-Annotated SVGs of anatomical structures can be downloaded from the repositories
-mentioned above, or users can generate them themselves. Typically, in annotated
-SVGs one or more shapes making up a feature of interest, such as the cell
+_annotated SVG_ (aSVG) files have to be used where the shapes of interest are
+labeled according to certain conventions so that they can be colored
+programmatically.  aSVGs of anatomical structures can be downloaded from the
+repositories mentioned above, or users can generate them themselves. Typically,
+in aSVGs one or more shapes making up a feature of interest, such as the cell
 shapes of an organ, are grouped together by a common feature identifier in the
-SVG. Via these identifiers one or many feature types can be colored
-simultaneously in an SVG according to biological experiments assaying the
+aSVG. Via these identifiers one or many feature types can be colored
+simultaneously in an aSVG according to biological experiments assaying the
 corresponding feature types with the required spatial resolution. Correct
 assignment of image features and assay results is assured by using for both the
 same feature identifiers. The color gradient used to visually represent the
 numeric assay values is controlled by a color gradient parameter. For
 convenience the corresponding color key can be included in the spatial heatmap
-plots. Additional formatting details of both SVG images and assay data are
+plots. Additional formatting details of both aSVG images and assay data are
 provided in [Supplement Section](#sup) of this vignette. 
 
 # Getting Started
