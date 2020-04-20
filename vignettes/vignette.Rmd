@@ -103,7 +103,7 @@ to use GUI application.
 
 ## Design {#design}
 
-The core feature [`spatialHeatmap`](#shm) is to map the assay values (_e.g._
+The core feature of [`spatialHeatmap`](#shm) is to map the assay values (_e.g._
 gene expression data) of one or many items (_e.g._ genes) measured under
 different conditions in form of numerically graded colors onto the
 corresponding cell types or tissues represented in a chosen SVG image. In the
