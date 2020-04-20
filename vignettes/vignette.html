@@ -335,8 +335,17 @@ below.
 <p><font color="red"> [ThG-Comment 2: how can the user find out what features are defined (mapped) in the existing SVG images provided by your SVG collection, or the one from Expression Atlas? A very common use case would be that the user has generated some cell/tissue specific expression data, and then wants to map it to an existing mapped SVG. How can they find out what SVGs contain the features they have data for, so that they can properly set up their expression data for plotting and choose the appropriate SVG images rather than generating their own. Shouldn’t each SVG be accompanied with a feature table, or an R function provided that returns this info from a mapped SVG by parsing it? This would be an obvious utility reviewers and user will ask for in a package that is supposed to provide a high level of flexibilty and reusability, and I don’t think it would be hard to address this important need.] </font></p>
 <div id="toy-example" class="section level2">
 <h2><span class="header-section-number">3.1</span> Toy Example</h2>
-<p>Spatial heatmaps are plotted with the <code>spatial_hm</code> function. To illustrate how these plots are generated, the following uses a generalized toy example where a vector of random numeric values is generated that are used to color the corresponding features in an aSVG image. The image chosen for this example is from the human brain. To map the numbers to the correct features in the image they are paired by a name matching approach between the name slot of the numeric vector and features names of the image. To obtain the feature names present in the aSVG, the <code>returnSVGFeatures()</code> function can be used. The obtained names of the image are stored in a character vector and then assigned to the name slot in the numeric vector provided by the user. Next, the <code>spatial_hm</code> is used translate the numbers to colors based on a user definable color key and then paint them onto the corresponding features in the aSVG image.</p>
-<p><font color="red"> [ThG-Comment 3: Jianhai, please add a code section that accomplishes what is described in the above text. This will help to give the user a quick code-based intro into the functionalities of the spatial_hm function without requiring too much knowledge about expression data and other details. This section also overlaps with the comment #2, since it requires some basic functionality to extract feature names from pre-annotated SVGs.] </font></p>
+<p>Spatial heatmaps are plotted with the <code>spatial_hm</code> function. To illustrate how these plots are generated, the following uses a generalized toy example where a vector of random numeric values is generated that are used to color the corresponding features in an aSVG image. The image chosen for this example is from the human brain. The latter has been included in this package for testing purposes. The path to the file of this image on a user’s system can be obtained with the <code>system.file</code> function.</p>
+<pre class="r"><code>svg.hum &lt;- system.file(&quot;extdata/shinyApp/example&quot;, &quot;homo_sapiens.brain.svg&quot;, package=&quot;spatialHeatmap&quot;)</code></pre>
+<p>To obtain the feature names present in the sample aSVG, the <code>returnSVGFeatures</code> function can be used.</p>
+<pre class="r"><code>fnames &lt;- retrunSVGFeatures(&quot;...&quot;)
+fnames</code></pre>
+<p>Next a small numeric toy vector is generated, where the data slot contains five numbers and its name slot is populated with the feature names obtained from the aSVG image. Note, the numbers are mapped to features via matching names in the numeric vector and the aSVG, respectively. Accordingly, only numbers with matching name counterparts can be colored in the aSVG image. Entries without name matches are returned as a message printed to the R console. This behavior can be turned off with <code>verbose=FALSE</code>. In addition, a summary of the numeric assay to feature mappings is stored in the result object returned by the <code>spatial_hm</code> function.</p>
+<pre class="r"><code>my_vec &lt;- sample(1:100, length(unique(fnames)))
+names(my_vec) &lt;- unique(fnames)</code></pre>
+<p>Next, the spatial heatmap is plotted with the <code>spatial_hm</code> function. Internally, the numbers in <code>my_vec</code> are translated to colors based on the color key assigned to the <code>col.com</code> argument, and then painted onto the corresponding features in the aSVG image (here path <code>svg.hum</code>).</p>
+<pre class="r"><code>spatial_hm(svg.path=svg.hum, se=my_vec, col.com=c(&quot;yellow&quot;, &quot;blue&quot;, &quot;purple&quot;))</code></pre>
+<p><font color="red"> [ThG-Comment 3: Jianhai, please add a section that accomplishes what is described in the above text and code chunks. When done the corresponding code chunks should be evaluated. This will help to give the user a quick code-based intro into the functionalities of the spatial_hm function without requiring too much knowledge about expression data and other details. This section also overlaps with the comment #2, since it requires some basic functionality to extract feature names from pre-annotated SVGs.] </font></p>
 </div>
 <div id="human-brain" class="section level2">
 <h2><span class="header-section-number">3.2</span> Human Brain</h2>
@@ -552,14 +561,15 @@ Figure 3 Example of plotting chicken organ spatial heatmaps. Liver in day10 is n
 <pre class="r"><code>gset &lt;- getGEO(&quot;GSE14502&quot;, GSEMatrix=TRUE, getGPL=TRUE)[[1]]</code></pre>
 <pre><code>## Found 1 file(s)</code></pre>
 <pre><code>## GSE14502_series_matrix.txt.gz</code></pre>
+<pre><code>## Using locally cached version: /tmp/RtmpSX4D1i/GSE14502_series_matrix.txt.gz</code></pre>
 <pre><code>## Parsed with column specification:
 ## cols(
 ##   .default = col_double(),
 ##   ID_REF = col_character()
 ## )</code></pre>
 <pre><code>## See spec(...) for full column specifications.</code></pre>
-<pre><code>## File stored at:</code></pre>
-<pre><code>## /tmp/RtmpP2DVCw/GPL198.soft</code></pre>
+<pre><code>## Using locally cached version of GPL198 found here:
+## /tmp/RtmpSX4D1i/GPL198.soft</code></pre>
 <pre><code>## Warning: 64 parsing failures.
 ##   row     col           expected    actual         file
 ## 22747 SPOT_ID 1/0/T/F/TRUE/FALSE --Control literal data
@@ -818,57 +828,56 @@ sessionInfo()</code></pre>
 ## [8] methods   base     
 ## 
 ## other attached packages:
-##  [1] BiocParallel_1.21.2         GEOquery_2.55.1            
+##  [1] knitr_1.28                  GEOquery_2.55.1            
 ##  [3] ExpressionAtlas_1.15.0      xml2_1.3.1                 
 ##  [5] limma_3.43.8                SummarizedExperiment_1.17.5
 ##  [7] DelayedArray_0.13.12        matrixStats_0.56.0         
 ##  [9] Biobase_2.47.3              GenomicRanges_1.39.3       
 ## [11] GenomeInfoDb_1.23.17        IRanges_2.21.8             
 ## [13] S4Vectors_0.25.15           BiocGenerics_0.33.3        
-## [15] spatialHeatmap_0.99.0       knitr_1.28                 
-## [17] nvimcom_0.9-87             
+## [15] spatialHeatmap_0.99.0       nvimcom_0.9-87             
 ## 
 ## loaded via a namespace (and not attached):
 ##   [1] backports_1.1.6        Hmisc_4.4-0            igraph_1.2.5          
 ##   [4] lazyeval_0.2.2         shinydashboard_0.7.1   splines_4.1.0         
-##   [7] ggplot2_3.3.0          digest_0.6.25          foreach_1.5.0         
-##  [10] htmltools_0.4.0        GO.db_3.10.0           gdata_2.18.0          
-##  [13] fansi_0.4.1            magrittr_1.5           checkmate_2.0.0       
-##  [16] memoise_1.1.0          cluster_2.1.0          doParallel_1.0.15     
-##  [19] fastcluster_1.1.25     readr_1.3.1            annotate_1.65.1       
-##  [22] jpeg_0.1-8.1           colorspace_1.4-1       blob_1.2.1            
-##  [25] xfun_0.13              dplyr_0.8.5            crayon_1.3.4          
-##  [28] RCurl_1.98-1.1         jsonlite_1.6.1         genefilter_1.69.0     
-##  [31] impute_1.61.0          survival_3.1-12        iterators_1.0.12      
-##  [34] glue_1.4.0             gtable_0.3.0           zlibbioc_1.33.1       
-##  [37] XVector_0.27.2         scales_1.1.0           DBI_1.1.0             
-##  [40] edgeR_3.29.1           Rcpp_1.0.4.6           viridisLite_0.3.0     
-##  [43] xtable_1.8-4           htmlTable_1.13.3       flashClust_1.01-2     
-##  [46] foreign_0.8-78         bit_1.1-15.2           preprocessCore_1.49.2 
-##  [49] Formula_1.2-3          rsvg_1.3               htmlwidgets_1.5.1     
-##  [52] httr_1.4.1             gplots_3.0.3           RColorBrewer_1.1-2    
-##  [55] acepack_1.4.1          ellipsis_0.3.0         farver_2.0.3          
-##  [58] pkgconfig_2.0.3        XML_3.99-0.3           nnet_7.3-13           
-##  [61] locfit_1.5-9.4         dynamicTreeCut_1.63-1  labeling_0.3          
-##  [64] tidyselect_1.0.0       rlang_0.4.5            later_1.0.0           
-##  [67] AnnotationDbi_1.49.1   munsell_0.5.0          tools_4.1.0           
-##  [70] visNetwork_2.0.9       cli_2.0.2              RSQLite_2.2.0         
-##  [73] evaluate_0.14          stringr_1.4.0          fastmap_1.0.1         
-##  [76] ggdendro_0.1-20        yaml_2.2.1             bit64_0.9-7           
-##  [79] caTools_1.18.0         purrr_0.3.3            mime_0.9              
-##  [82] compiler_4.1.0         rstudioapi_0.11        curl_4.3              
-##  [85] plotly_4.9.2.1         png_0.1-7              tibble_3.0.0          
-##  [88] geneplotter_1.65.0     stringi_1.4.6          highr_0.8             
-##  [91] lattice_0.20-41        Matrix_1.2-18          vctrs_0.2.4           
-##  [94] pillar_1.4.3           lifecycle_0.2.0        data.table_1.12.8     
-##  [97] bitops_1.0-6           grImport_0.9-3         httpuv_1.5.2          
-## [100] R6_2.4.1               latticeExtra_0.6-29    promises_1.1.0        
-## [103] KernSmooth_2.23-16     gridExtra_2.3          codetools_0.2-16      
-## [106] MASS_7.3-51.5          gtools_3.8.2           assertthat_0.2.1      
-## [109] DESeq2_1.27.31         GenomeInfoDbData_1.2.3 hms_0.5.3             
-## [112] grid_4.1.0             rpart_4.1-15           tidyr_1.0.2           
-## [115] rmarkdown_2.1          shiny_1.4.0.2          WGCNA_1.69            
-## [118] base64enc_0.1-3</code></pre>
+##   [7] BiocParallel_1.21.2    ggplot2_3.3.0          digest_0.6.25         
+##  [10] foreach_1.5.0          htmltools_0.4.0        GO.db_3.10.0          
+##  [13] gdata_2.18.0           fansi_0.4.1            magrittr_1.5          
+##  [16] checkmate_2.0.0        memoise_1.1.0          cluster_2.1.0         
+##  [19] doParallel_1.0.15      fastcluster_1.1.25     readr_1.3.1           
+##  [22] annotate_1.65.1        jpeg_0.1-8.1           colorspace_1.4-1      
+##  [25] blob_1.2.1             xfun_0.13              dplyr_0.8.5           
+##  [28] crayon_1.3.4           RCurl_1.98-1.1         jsonlite_1.6.1        
+##  [31] genefilter_1.69.0      impute_1.61.0          survival_3.1-12       
+##  [34] iterators_1.0.12       glue_1.4.0             gtable_0.3.0          
+##  [37] zlibbioc_1.33.1        XVector_0.27.2         scales_1.1.0          
+##  [40] DBI_1.1.0              edgeR_3.29.1           Rcpp_1.0.4.6          
+##  [43] viridisLite_0.3.0      xtable_1.8-4           htmlTable_1.13.3      
+##  [46] flashClust_1.01-2      foreign_0.8-78         bit_1.1-15.2          
+##  [49] preprocessCore_1.49.2  Formula_1.2-3          rsvg_1.3              
+##  [52] htmlwidgets_1.5.1      httr_1.4.1             gplots_3.0.3          
+##  [55] RColorBrewer_1.1-2     acepack_1.4.1          ellipsis_0.3.0        
+##  [58] farver_2.0.3           pkgconfig_2.0.3        XML_3.99-0.3          
+##  [61] nnet_7.3-13            locfit_1.5-9.4         dynamicTreeCut_1.63-1 
+##  [64] tidyselect_1.0.0       labeling_0.3           rlang_0.4.5           
+##  [67] later_1.0.0            AnnotationDbi_1.49.1   munsell_0.5.0         
+##  [70] tools_4.1.0            visNetwork_2.0.9       cli_2.0.2             
+##  [73] RSQLite_2.2.0          evaluate_0.14          stringr_1.4.0         
+##  [76] fastmap_1.0.1          ggdendro_0.1-20        yaml_2.2.1            
+##  [79] bit64_0.9-7            caTools_1.18.0         purrr_0.3.3           
+##  [82] mime_0.9               compiler_4.1.0         rstudioapi_0.11       
+##  [85] plotly_4.9.2.1         curl_4.3               png_0.1-7             
+##  [88] tibble_3.0.0           geneplotter_1.65.0     stringi_1.4.6         
+##  [91] highr_0.8              lattice_0.20-41        Matrix_1.2-18         
+##  [94] vctrs_0.2.4            pillar_1.4.3           lifecycle_0.2.0       
+##  [97] data.table_1.12.8      bitops_1.0-6           grImport_0.9-3        
+## [100] httpuv_1.5.2           R6_2.4.1               latticeExtra_0.6-29   
+## [103] promises_1.1.0         KernSmooth_2.23-16     gridExtra_2.3         
+## [106] codetools_0.2-16       MASS_7.3-51.5          gtools_3.8.2          
+## [109] assertthat_0.2.1       DESeq2_1.27.31         GenomeInfoDbData_1.2.3
+## [112] hms_0.5.3              grid_4.1.0             rpart_4.1-15          
+## [115] tidyr_1.0.2            rmarkdown_2.1          shiny_1.4.0.2         
+## [118] WGCNA_1.69             base64enc_0.1-3</code></pre>
 </div>
 </div>
 <div id="funding" class="section level1">

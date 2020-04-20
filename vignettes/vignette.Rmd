@@ -251,19 +251,57 @@ it would be hard to address this important need.]
 Spatial heatmaps are plotted with the `spatial_hm` function. To illustrate how
 these plots are generated, the following uses a generalized toy example where a
 vector of random numeric values is generated that are used to color the
-corresponding features in an aSVG image. The image chosen for this
-example is from the human brain. To map the numbers to the correct features in
-the image they are paired by a name matching approach between the name slot of
-the numeric vector and features names of the image. To obtain the feature names
-present in the aSVG, the `returnSVGFeatures()` function can be used.
-The obtained names of the image are stored in a character vector and then
-assigned to the name slot in the numeric vector provided by the user. Next, the
-`spatial_hm` is used translate the numbers to colors based on a user definable color 
-key and then paint them onto the corresponding features in the aSVG image. 
+corresponding features in an aSVG image. The image chosen for this example is
+from the human brain. The latter has been included in this package for testing
+purposes. The path to the file of this image on a user's system can be obtained 
+with the `system.file` function.
+
+```{r eval=FALSE, echo=TRUE, warnings=FALSE }
+
+svg.hum <- system.file("extdata/shinyApp/example", "homo_sapiens.brain.svg", package="spatialHeatmap")
+
+```
+
+To obtain the feature names present in the sample aSVG, the `returnSVGFeatures` 
+function can be used.
+
+```{r eval=FALSE, echo=TRUE, warnings=FALSE }
+fnames <- retrunSVGFeatures("...")
+fnames
+```
+
+Next a small numeric toy vector is generated, where the data slot contains five
+numbers and its name slot is populated with the feature names obtained from the
+aSVG image. Note, the numbers are mapped to features via matching names in the 
+numeric vector and the aSVG, respectively. Accordingly, only numbers with matching 
+name counterparts can be colored in the aSVG image. Entries without name matches are 
+returned as a message printed to the R console. This behavior can be turned off 
+with `verbose=FALSE`. In addition, a summary of the numeric assay to feature
+mappings is stored in the result object returned by the `spatial_hm` function. 
+
+
+```{r eval=FALSE, echo=TRUE, warnings=FALSE }
+my_vec <- sample(1:100, length(unique(fnames)))
+names(my_vec) <- unique(fnames)
+```
+
+Next, the spatial heatmap is plotted with the `spatial_hm` function.
+Internally, the numbers in `my_vec` are translated to colors based on the color
+key assigned to the `col.com` argument, and then painted onto the corresponding
+features in the aSVG image (here path `svg.hum`). 
+
+
+```{r eval=FALSE, echo=TRUE, warnings=FALSE} 
+
+spatial_hm(svg.path=svg.hum, se=my_vec, col.com=c("yellow", "blue", "purple"))
+
+```
+
 
 <font color="red">
-[ThG-Comment 3: Jianhai, please add a code section that accomplishes what is described
-in the above text. This will help to give the user a quick code-based intro into the
+[ThG-Comment 3: Jianhai, please add a section that accomplishes what is described
+in the above text and code chunks. When done the corresponding code chunks should be evaluated.
+This will help to give the user a quick code-based intro into the
 functionalities of the spatial_hm function without requiring too much knowledge about
 expression data and other details. This section also overlaps with the comment #2, since
 it requires some basic functionality to extract feature names from pre-annotated SVGs.]
