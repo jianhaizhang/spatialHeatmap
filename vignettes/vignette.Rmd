@@ -230,7 +230,7 @@ it would be hard to address this important need.]
 
 ## Background and Terminology {#term}
 Spatial heatmaps are images where colors encode numeric values in features of
-any shape. For plotting spatial heatmaps, Scalable Vector Graphics (SVG) have
+any shape. For plotting spatial heatmaps, Scalable Vector Graphics (SVG) has
 been chosen as image format since it is a flexible and widely adapted vector
 graphics format that provides many advantages for computationally embedding
 numerical information in images. SVG is based on XML formatted text describing
