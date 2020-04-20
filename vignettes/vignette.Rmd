@@ -88,7 +88,7 @@ or many other small- or large-scale experiments. For convenience, several
 preprocessing and normalization methods for the most common use cases are
 included that support raw and/or preprocessed data. Currently, the main
 application domains of the _spatialHeatmap_ package are numeric data sets and
-spatially mapped images from biological and biomedical areas. However, the
+spatially mapped images from biological and biomedical areas. Moreover, the
 package has been designed to also work with many other spatial data types, such
 a population data plotted onto geographic maps.  This high level of flexibility
 is one of the unique features of _spatialHeatmap_.  Existing software in this
@@ -103,7 +103,7 @@ to use GUI application.
 
 ## Design {#design}
 
-The core feature [Spatial Heatmap](#shm) is to map the assay values (_e.g._
+The core feature [`spatialHeatmap`](#shm) is to map the assay values (_e.g._
 gene expression data) of one or many items (_e.g._ genes) measured under
 different conditions in form of numerically graded colors onto the
 corresponding cell types or tissues represented in a chosen SVG image. In the
@@ -120,8 +120,8 @@ to hide features in the top layers by making them transparent in order to
 expose features below them. This transparency viewing feature is highlighted
 below in the [mouse example](#mus_shm).
 
-To maximize reusability and extensibility, the package organizes all numeric
-assay data along with the associated experimental design information in a
+To maximize reusability and extensibility, the package organizes large-scale
+omics assay data along with the associated experimental design information in a
 `SummarizedExperiment` object. The latter is one of the core S4 classes within
 the Bioconductor ecosystem that has been widely adapted by many other software
 packages dealing with gene-, protein- and metabolite-level profiling data
@@ -138,9 +138,10 @@ SVG images and the associated expression data are provided in the [Formatting
 Requirements](#form) section of this vignette.
 
 The following sections of this vignette highlight the most important
-functionalities of the `spatialHeatmap` package using mRNA profiling data as
-an example. First, spatial heatmap plots are generated for four gene
-expression data sets including both RNA-seq and microarray experiments from
+functionalities of the `spatialHeatmap` package using as examples a simple to
+understand toy data set as well as mRNA expression data. First, spatial heatmap
+plots are generated for both the toy and mRNA expression data. The latter
+include gene expression data sets from RNA-seq and microarray experiments of
 [Human Brain](#hum), [Mouse Organs](#mus), [Chicken Organs](#chk), and
 [Arabidopsis Shoots](#shoot).  Second, gene context visualization features are
 introduced, which facilitate the visualization of gene modules sharing similar
@@ -153,25 +154,6 @@ environment [@shiny; @shinydashboard].  Fourth, more advanced features for
 plotting customized spatial heatmaps are introduced using the Human Brain data
 set as an example.  
 
-## Terminology {#term}
-SVG is a widely used vector graphics format where XML formatted text describes
-all lines, shapes and text in images, such as drawings of anatomical
-structures. To assign colors to specific features in spatial heatmaps,
-_annotated SVG_ (aSVG) files have to be used where the shapes of interest are
-labeled according to certain conventions so that they can be colored
-programmatically.  aSVGs of anatomical structures can be downloaded from the
-repositories mentioned above, or users can generate them themselves. Typically,
-in aSVGs one or more shapes making up a feature of interest, such as the cell
-shapes of an organ, are grouped together by a common feature identifier. Via
-these identifiers one or many feature types can be colored simultaneously in an
-aSVG according to biological experiments assaying the corresponding feature
-types with the required spatial resolution. Correct assignment of image
-features and assay results is assured by using for both the same feature
-identifiers. The color gradient used to visually represent the numeric assay
-values is controlled by a color gradient parameter. To interpret the meaning of
-the colors, the corresponding color key can be included in the spatial heatmap
-plots.  Additional formatting details of both aSVG images and assay data are
-provided in the [Supplement Section](#sup) of this vignette. 
 
 # Getting Started
 
@@ -246,15 +228,41 @@ supposed to provide a high level of flexibilty and reusability, and I don't thin
 it would be hard to address this important need.]
 </font>
 
+## Background and Terminology {#term}
+Spatial heatmaps are images where colors encode numeric values. For plotting
+spatial heatmaps, the Scalable Vector Graphics (SVG) format has been chosen as
+image encoding since it is a flexible and widely adapted vector graphics format
+that provides many advantages for computationally embedding numerical
+information in images. SVG is based on XML formatted text describing all
+lines, shapes and text in images.  In case of biological images the shapes
+often represent anatomical or cell structures. To assign colors to specific
+features in spatial heatmaps, _annotated SVG_ (aSVG) files have to be used
+where the shapes of interest are labeled according to certain conventions so
+that they can be colored programmatically. Raw SVGs and aSVGs of anatomical
+structures can be downloaded from many sources including the repositories
+mentioned above.  Alternatively, users can generate them themselves with vector
+graphics software such as [Inkscape](https://inkscape.org/). Typically, in
+aSVGs one or more shapes making up a feature of interest, such as the cell
+shapes of an organ, are grouped together by a common feature identifier. Via
+these identifiers one or many feature types can be colored simultaneously in an
+aSVG according to biological experiments assaying the corresponding feature
+types with the required spatial resolution. Correct assignment of image
+features and assay results is assured by using for both the same feature
+identifiers. The color gradient used to visually represent the numeric assay
+values is controlled by a color gradient parameter. To interpret the meaning of
+the colors, the corresponding color key can be included in the spatial heatmap
+plots.  Additional formatting details of both aSVG images and assay data are
+provided in the [Supplement Section](#sup) of this vignette. 
+
 ## Toy Example
 
-Spatial heatmaps are plotted with the `spatial_hm` function. To illustrate how
-these plots are generated, the following uses a generalized toy example where a
-vector of random numeric values is generated that are used to color the
-corresponding features in an aSVG image. The image chosen for this example is
-from the human brain. The latter has been included in this package for testing
-purposes. The path to the file of this image on a user's system can be obtained 
-with the `system.file` function.
+Spatial heatmaps are plotted with the `spatial_hm` function. To provide a quick
+overview how these plots are generated, the following uses a generalized toy
+example where a vector of random numeric values is generated that are used to
+color the corresponding features in an aSVG image. The image chosen for this
+example is from the human brain. The latter has been included in this package
+for testing purposes. The path to the file of this image on a user's system can
+be obtained with the `system.file` function.
 
 ```{r eval=FALSE, echo=TRUE, warnings=FALSE }
 
@@ -275,7 +283,7 @@ numbers and its name slot is populated with the feature names obtained from the
 aSVG image. Note, the numbers are mapped to features via matching names in the 
 numeric vector and the aSVG, respectively. Accordingly, only numbers with matching 
 name counterparts can be colored in the aSVG image. Entries without name matches are 
-returned as a message printed to the R console. This behavior can be turned off 
+indicated by a message printed to the R console. This behavior can be turned off 
 with `verbose=FALSE`. In addition, a summary of the numeric assay to feature
 mappings is stored in the result object returned by the `spatial_hm` function. 
 
