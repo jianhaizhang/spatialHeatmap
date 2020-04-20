@@ -171,7 +171,7 @@ identifiers. The color gradient used to visually represent the numeric assay
 values is controlled by a color gradient parameter. To interpret the meaning of
 the colors, the corresponding color key can be included in the spatial heatmap
 plots.  Additional formatting details of both aSVG images and assay data are
-provided in [Supplement Section](#sup) of this vignette. 
+provided in the [Supplement Section](#sup) of this vignette. 
 
 # Getting Started
 
@@ -208,20 +208,6 @@ browseVignettes('spatialHeatmap')
 
 ```
 
-<font color="red">
-[ThG-Comment 2: how can the user find out what features are defined (mapped) in
-the existing SVG images provided by your SVG collection, or the one from
-Expression Atlas? A very common use case would be that the user has generated
-some cell/tissue specific expression data, and then wants to map it to an
-existing mapped SVG. How can they find out what SVGs contain the features they
-have data for, so that they can properly set up their expression data for
-plotting and choose the appropriate SVG images rather than generating their
-own. Shouldn't each SVG be accompanied with a feature table, or an R function
-provided that returns this info from a mapped SVG by parsing it? This would be
-an obvious utility reviewers and user will ask for in a package that is
-supposed to provide a high level of flexibilty and reusability, and I don't think
-it would be hard to address this important need.]
-</font>
 
 
 # Spatial Heatmaps {#shm}
@@ -245,20 +231,35 @@ optimal display under different circumstances. The main features are introduced
 below.
 -->
 
+<font color="red">
+[ThG-Comment 2: how can the user find out what features are defined (mapped) in
+the existing SVG images provided by your SVG collection, or the one from
+Expression Atlas? A very common use case would be that the user has generated
+some cell/tissue specific expression data, and then wants to map it to an
+existing mapped SVG. How can they find out what SVGs contain the features they
+have data for, so that they can properly set up their expression data for
+plotting and choose the appropriate SVG images rather than generating their
+own. Shouldn't each SVG be accompanied with a feature table, or an R function
+provided that returns this info from a mapped SVG by parsing it? This would be
+an obvious utility reviewers and user will ask for in a package that is
+supposed to provide a high level of flexibilty and reusability, and I don't think
+it would be hard to address this important need.]
+</font>
+
 ## Toy Example
 
 Spatial heatmaps are plotted with the `spatial_hm` function. To illustrate how
 these plots are generated, the following uses a generalized toy example where a
 vector of random numeric values is generated that are used to color the
-corresponding features in a pre-annotated SVG image. The image chosen for this
+corresponding features in an aSVG image. The image chosen for this
 example is from the human brain. To map the numbers to the correct features in
 the image they are paired by a name matching approach between the name slot of
 the numeric vector and features names of the image. To obtain the feature names
-present in the annotated SVG, the `returnSVGFeatures()` function can be used.
+present in the aSVG, the `returnSVGFeatures()` function can be used.
 The obtained names of the image are stored in a character vector and then
 assigned to the name slot in the numeric vector provided by the user. Next, the
-numbers are translated to colors based on a user definable color key and then
-painted onto the corresponding named features in the image.
+`spatial_hm` is used translate the numbers to colors based on a user definable color 
+key and then paint them onto the corresponding features in the aSVG image. 
 
 <font color="red">
 [ThG-Comment 3: Jianhai, please add a code section that accomplishes what is described
@@ -299,12 +300,12 @@ tissues will be visible, a representative example of which is shown in [Figure
 In the legend plot, if too many tissues are included, the legends might occupy
 too much space and lead to main plot squeezed. To overcome this issue, the
 `sam.legend` parameter is developed to allows users to only show selected
-tissues in the legend, and the default "identical" only shows the coloured
+tissues in the legend, and the default "identical" only shows the colored
 tissues.   
 
 Moreover, too many tissues might affect the visual effects due to the messy
 polygon outlines. The `line.size` and `line.color` parameters are used to
-adjust the thickness and colour of polygon outlines respectively and thus can
+adjust the thickness and color of polygon outlines respectively and thus can
 enhance the visualisation.  
 
 This core functionality is presented with 4 examples: Human Brain, Mouse Organ,
@@ -431,13 +432,13 @@ svg.hum <- system.file("extdata/shinyApp/example", "homo_sapiens.brain.svg", pac
 Plot spatial heatmaps.   
 
 <a name="brain_shm"></a>
-```{r eval=TRUE, echo=TRUE, warnings=FALSE, fig.align="center", fig.cap=("Figure 1 Example of plotting EBI data matrix on the SVG template. Cerebellum and frontal cortex are coloured, since they are the only 2 identical tissues between the SVG image and the data matrix."), out.width="100%" }
+```{r eval=TRUE, echo=TRUE, warnings=FALSE, fig.align="center", fig.cap=("Figure 1 Example of plotting EBI data matrix on the SVG template. Cerebellum and frontal cortex are colored, since they are the only 2 identical tissues between the SVG image and the data matrix."), out.width="100%" }
 
 spatial_hm(svg.path=svg.hum, se=se.fil.hum, ID=c('ENSG00000268433'), col.com=c("yellow", "blue", "purple"), width=1, height=0.4, legend.r=0.5, sub.title.size=11, layout="gene", ncol=2, tis.trans=NULL, sam.legend='identical', line.size=0.2, line.color='grey70', legend.position=c(0.5, -0.15), legend.nrow=1)
 
 ```
 
-In this example, the expression profile of gene ENSG00000268433 in frontal cortex and cerebellum is plotted under ALS and normal conditions ([Figure 1](#brain_shm)) with the legend plot on the right. For example, in [Table 2](#hum_table) its expression value in cerebellum under ALS is 5.3240638. After mapping, this tissue is coloured purple corresponding to 5.3240638 in the colour scale. By contrast, this gene's expression profile is blue in the same tissue under normal condition. On the other hand, the expression profile (yellow) in frontal cortex is similar across ALS and normal. Therefore, it is intuitive that this gene's higher activity in cerebellum is potentially associated with ALS and could contribute to hypothesis generation. Note that only frontal cortex and cerebellum are coloured while others are blank in the spatial heatmaps, since they are the only 2 identical tissues between the data matrix and SVG image.  
+In this example, the expression profile of gene ENSG00000268433 in frontal cortex and cerebellum is plotted under ALS and normal conditions ([Figure 1](#brain_shm)) with the legend plot on the right. For example, in [Table 2](#hum_table) its expression value in cerebellum under ALS is 5.3240638. After mapping, this tissue is colored purple corresponding to 5.3240638 in the color scale. By contrast, this gene's expression profile is blue in the same tissue under normal condition. On the other hand, the expression profile (yellow) in frontal cortex is similar across ALS and normal. Therefore, it is intuitive that this gene's higher activity in cerebellum is potentially associated with ALS and could contribute to hypothesis generation. Note that only frontal cortex and cerebellum are colored while others are blank in the spatial heatmaps, since they are the only 2 identical tissues between the data matrix and SVG image.  
 
 ## Mouse Organ {#mus}
 
@@ -613,7 +614,7 @@ svg.sh <- system.file("extdata/shinyApp/example", "shoot_final.svg", package="sp
 Plot spatial heatmaps.   
 
 <a name="sh_shm"></a>
-```{r eval=TRUE, echo=FALSE, warnings=FALSE, fig.align="center", fig.cap=('Figure 4 Spatial heatmaps of Arabidopsis shoot. Pre-defined tissue regions are coloured by the expression profile of the target gene. The promoter pGL2, pRBCS, pCER5, pSultr2.2, pSUC2, pKAT1 label shoot trichomes, shoot photosynthetic cell, cotyledon and leaf epidermis, shootbundle sheath, shoot phloem companion cells, Cotyledon and leaf guard cells, respectively.'), out.width="100%"}
+```{r eval=TRUE, echo=FALSE, warnings=FALSE, fig.align="center", fig.cap=('Figure 4 Spatial heatmaps of Arabidopsis shoot. Pre-defined tissue regions are colored by the expression profile of the target gene. The promoter pGL2, pRBCS, pCER5, pSultr2.2, pSUC2, pKAT1 label shoot trichomes, shoot photosynthetic cell, cotyledon and leaf epidermis, shootbundle sheath, shoot phloem companion cells, Cotyledon and leaf guard cells, respectively.'), out.width="100%"}
 
 spatial_hm(svg.path=svg.sh, se=se.fil.sh, ID="HRE2", col.com=c('purple', 'cyan', "brown"), width=1, height=0.5, layout="gene", ncol=2, legend.nrow=3, legend.r=0.8, legend.key.size=0.3, legend.label.size=7, legend.position=c(0.5, -0.07))
 
@@ -678,7 +679,7 @@ network(geneID="HRE2", se=se.fil.sh, ann=NULL, adj.mod=adj.mod, ds="3", adj.min=
 ```   
 
 <a name="inter_net"></a>
-Setting `static=FALSE` launches the interactive network. There is an interactive colour bar to denote gene connectivity. The colour ingredients must only be separated by comma, e.g. "yellow,black,purple", which means gene connectivity increases from yellow to purple. If too many edges (e.g.: > 300) are displayed, the network could get stuck. So the "Input an adjacency threshold to display the adjacency network." option sets a threthold to filter out weak edges. If not too many edges retained (e.g.: < 300), users can check "Yes" under "Display or not?", then the network would be responsive smoothly. To maintain acceptable performance, users are advised to choose a stringent threshold (e.g. 0.9) initially, then decrease the value gradually. The interactive feature allows users to zoom in and out, or drag a gene around. All the gene IDs in the network module are listed in "Select by id" in decreasing order according to gene connectivity. Same with static mode, the target gene ID is appended "_selected".  
+Setting `static=FALSE` launches the interactive network. There is an interactive color bar to denote gene connectivity. The color ingredients must only be separated by comma, e.g. "yellow,black,purple", which means gene connectivity increases from yellow to purple. If too many edges (e.g.: > 300) are displayed, the network could get stuck. So the "Input an adjacency threshold to display the adjacency network." option sets a threthold to filter out weak edges. If not too many edges retained (e.g.: < 300), users can check "Yes" under "Display or not?", then the network would be responsive smoothly. To maintain acceptable performance, users are advised to choose a stringent threshold (e.g. 0.9) initially, then decrease the value gradually. The interactive feature allows users to zoom in and out, or drag a gene around. All the gene IDs in the network module are listed in "Select by id" in decreasing order according to gene connectivity. Same with static mode, the target gene ID is appended "_selected".  
 
 If gene annotation is available in "rowData" slot and provided to 'ann', the annotation is seen by mousing over a node. In this example, "Target.Description" in "rowData" is provided to "ann".  
 
@@ -721,7 +722,7 @@ se.fil.sh <- filter_data(se=se.aggr.sh, ann="Target.Description", sam.factor='sa
 
 # Supplement {#sup} 
 
-To plot spatial heatmaps, a pair of formatted data matrix and SVG images are required. The most important step is to format data matrix and SVG image so that the values in data matrix are mapped to polygons in SVG image as expected. The plotting algorithm maps values from the data matrix onto SVG image according to sample names, so only samples with identcial names between the matrix and SVG are coloured. The SVG images can be downloaded from the SVG repository or created by following the step-by-step [SVG tutorial](https://jianhaizhang.github.io/SVG_tutorial_file/), which is based on [Inkscape](https://inkscape.org/).     
+To plot spatial heatmaps, a pair of formatted data matrix and SVG images are required. The most important step is to format data matrix and SVG image so that the values in data matrix are mapped to polygons in SVG image as expected. The plotting algorithm maps values from the data matrix onto SVG image according to sample names, so only samples with identcial names between the matrix and SVG are colored. The SVG images can be downloaded from the SVG repository or created by following the step-by-step [SVG tutorial](https://jianhaizhang.github.io/SVG_tutorial_file/), which is based on [Inkscape](https://inkscape.org/).     
 
 <a name='svg_tmp'></a>
 **SVG repository**  
@@ -861,12 +862,12 @@ Spatial heatmap plotting also requires the SVG image is formatted in a specific 
 
 **SVG format requirements**
 
-1. A path represents a shape. If a tissue consists of multiple paths and is expected to be colured in the spatial heatmap, all its paths must be grouped as a whole (labeled by tag "g", e.g. "bottom_right_outline" in [Figure 8](#brain)). The group id is the tissue id and the inside path ids are useless. A group should not include another group, which means all elements in a group should be single paths. However, if a multiple-path tissue is not expected to coloured in the spatial heatmap, there is no need to group them and the paths can keep random ids.
+1. A path represents a shape. If a tissue consists of multiple paths and is expected to be colured in the spatial heatmap, all its paths must be grouped as a whole (labeled by tag "g", e.g. "bottom_right_outline" in [Figure 8](#brain)). The group id is the tissue id and the inside path ids are useless. A group should not include another group, which means all elements in a group should be single paths. However, if a multiple-path tissue is not expected to colored in the spatial heatmap, there is no need to group them and the paths can keep random ids.
 
 2. If a tissue has only one path, it can stay as an individual path, no need to be formatted as a group (e.g. "frontal_cortex"). 
 
-3. If a tissue is expected to be coloured in the spatial heatmaps, its "id" must be identical with corresponding tissue name from the targets file. It means even a difference of dot, space, underscore, uppercase, or lowercase matters.  
-   E.g. In [Figure 8](#brain), the tissue "frontal_cortex" is identical with corresponding tissue in [Table 1](#tar_hum), and thus frontal_cortex is coloured in [Figure 1](#brain_shm). By contrast, the group with id "bottom_right_outline" does not correspond with any identical tissue in [Table 1](#tar_hum) and are not coloured.  
+3. If a tissue is expected to be colored in the spatial heatmaps, its "id" must be identical with corresponding tissue name from the targets file. It means even a difference of dot, space, underscore, uppercase, or lowercase matters.  
+   E.g. In [Figure 8](#brain), the tissue "frontal_cortex" is identical with corresponding tissue in [Table 1](#tar_hum), and thus frontal_cortex is colored in [Figure 1](#brain_shm). By contrast, the group with id "bottom_right_outline" does not correspond with any identical tissue in [Table 1](#tar_hum) and are not colored.  
 
 4. All the tissues (groups and single paths) must be placed in another container group (id="container" in Figure 8) as a whole, and this group must be the last element in the "XML Editor".  
 
@@ -896,7 +897,7 @@ include_graphics(svg.hum)
 
 With the formatted data matrix and SVG image, the spatial heatmap is plotted with function `spatial_hm`, which is shown in [Figure 1](#brain_shm).
 
-```{r eval=FALSE, echo=TRUE, warnings=FALSE, fig.align="center", fig.cap=("Figure 3 Example of plotting EBI data on the SVG template. Cerebellum and frontal cortex are coloured, since they are the only 2 common tissues between the SVG and the expression matrix."), out.width="100%" }
+```{r eval=FALSE, echo=TRUE, warnings=FALSE, fig.align="center", fig.cap=("Figure 3 Example of plotting EBI data on the SVG template. Cerebellum and frontal cortex are colored, since they are the only 2 common tissues between the SVG and the expression matrix."), out.width="100%" }
 
 spatial_hm(svg.path=svg.hum, se=se.fil.hum, ID='ENSG00000268433', col.com=c("yellow", "blue", "purple"), width=1, height=0.5, sub.title.size=11, layout="gene", ncol=2, tis.trans=NULL, sam.legend='identical', line.size=0.2, line.color='grey70', legend.position=c(0.5, -0.15), legend.nrow=1)
 
