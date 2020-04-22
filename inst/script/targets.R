@@ -48,7 +48,7 @@ df.con$genotype <- sub('presence of a C9orf72 repeat expansion', 'pre.C9orf72', 
 df.con$genotype <- sub('absence of a C9orf72 repeat expansion', 'ab.C9orf72', df.con$genotype)
 df.con$genotype <- sub('not applicable', 'NA', df.con$genotype)
 
-write.table(df.con, 'target_brain.txt', col.names=TRUE, row.names=TRUE, sep='\t')
+write.table(df.con, 'target_human.txt', col.names=TRUE, row.names=TRUE, sep='\t')
 
 ## Make target file-mouse organ example.
 

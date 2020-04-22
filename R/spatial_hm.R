@@ -94,7 +94,7 @@ spatial_hm <- function(svg.path, se, sam.factor=NULL, con.factor=NULL, ID, col.c
 
     } else if (data.trans=='exp2') gene <- 2^gene
  
-    if (!is.null(sam.factor) & !is.null(con.factor)) { col.met <- as.data.frame(colData(se), stringsAsFactors=FALSE); colnames(gene) <- paste(col.met[, sam.factor], col.met[, con.factor], sep='__') }
+    if (!is.null(sam.factor) & !is.null(con.factor)) { col.met <- as.data.frame(colData(se), stringsAsFactors=FALSE); colnames(gene) <- make.names(paste(col.met[, sam.factor], col.met[, con.factor], sep='__')) }
 
     # Color bar.
     bar.len=1000

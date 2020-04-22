@@ -66,7 +66,7 @@ filter_data <- function(se, pOA=c(0, 0), CV=c(-Inf, Inf), ann=NULL, sam.factor, 
 
     if (!is.null(dir)) { path <- paste0(dir, "/local_mode_result/"); if (!dir.exists(path)) dir.create(path) }
     df <- assay(se); col.met <- as.data.frame(colData(se), stringsAsFactors=FALSE)
-    if (!is.null(sam.factor) & !is.null(con.factor)) { colnames(df) <- paste(col.met[, sam.factor], col.met[, con.factor], sep='__') }
+    if (!is.null(sam.factor) & !is.null(con.factor)) { colnames(df) <- make.names(paste(col.met[, sam.factor], col.met[, con.factor], sep='__')) }
     ffun <- filterfun(pOverA(p=pOA[1], A=pOA[2]), cv(CV[1], CV[2]))
     filtered <- genefilter(df, ffun); df <- df[filtered, ]
     row.met <- as.data.frame(rowData(se), stringsAsFactors=FALSE)[filtered, , drop=FALSE]

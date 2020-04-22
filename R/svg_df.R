@@ -24,7 +24,7 @@ svg_df <- function(svg.path) {
   # All original colours of each tissue.
   fil.cols <- NULL; for (i in seq_len(xmlSize(ply))) {
 
-    ply0 <- ply[[i]]; na <- xmlName(ply0); id <- xmlAttrs(ply0)[['id']]
+    ply0 <- ply[[i]]; na <- xmlName(ply0); id <- make.names(xmlAttrs(ply0)[['id']])
     if (na=='g') sty <- xmlAttrs(ply0[[1]])[['style']] else sty <- xmlAttrs(ply0)[['style']]
     sp <- strsplit(sty, ';')[[1]]; fil.col <- sp[grep('fill:', sp)]; fil.col <- sub('fill:', '', fil.col)
     names(fil.col) <- id; fil.cols <- c(fil.cols, fil.col)
@@ -49,9 +49,9 @@ svg_df <- function(svg.path) {
   do.call(file.remove, list(svg.inter, p1, p2))
 
   lis.ma <- xmlApply(xmltop[[size]], xmlAttrs)
-  if (is(lis.ma, "matrix")) { id.xml <- lis.ma["id", ] } else if (is(lis.ma, "list")) {
+  if (is(lis.ma, "matrix")) { id.xml <- make.names(lis.ma["id", ]) } else if (is(lis.ma, "list")) {
 
-    id.xml <- NULL; for (i in seq_len(length(lis.ma))) { id.xml <- c(id.xml, lis.ma[[i]][["id"]]) }
+    id.xml <- NULL; for (i in seq_len(length(lis.ma))) { id.xml <- c(id.xml, make.names(lis.ma[[i]][["id"]])) }
 
   }
 
