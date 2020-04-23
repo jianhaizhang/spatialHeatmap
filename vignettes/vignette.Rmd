@@ -77,8 +77,8 @@ vignette and paper.]
 </font>
 
 As anatomical images the package supports both tissue maps from public
-repositories (_e.g._ EMBL-EBI's Expression Atlas) and custom images provided by
-the user. In general any type of image can be used as long as it can be
+repositories (_e.g._ [Expression Atlas](https://www.ebi.ac.uk/gxa/home)) and 
+custom images provided by the user [@Papatheodorou2018-jy]. In general any type of image can be used as long as it can be
 provided in SVG (Scalable Vector Graphics) format, where the corresponding
 spatial features have been defined (see [aSVG](#term) below). The numeric
 values plotted onto a spatial heatmap are usually quantitative measurements
@@ -91,15 +91,15 @@ application domains of the _spatialHeatmap_ package are numeric data sets and
 spatially mapped images from biological and biomedical areas. Moreover, the
 package has been designed to also work with many other spatial data types, such
 a population data plotted onto geographic maps.  This high level of flexibility
-is one of the unique features of _spatialHeatmap_.  Existing software in this
-field is largely based on pure web applications [@Winter2007-bq; @Waese2017-fx]
-or local tools [@Maag2018-gi; @Muschelli2014-av] that typically lack
-customization functionalities by restricting users to utilizing pre-existing
-expression data and/or fixed sets of anatomical image collections. To close
-this gap for biological use cases, we have developed _spatialHeatmap_ as a
-generic R/Bioconductor package for plotting quantitative values onto any type
-of spatially mapped images in a programmable environment and/or in an intuitive
-to use GUI application.
+is one of the unique features of _spatialHeatmap_. Related software tools for
+biological applications in this field are largely based on pure web
+applications [@Winter2007-bq; @Waese2017-fx] or local tools [@Maag2018-gi;
+@Muschelli2014-av] that typically lack customization functionalities. These
+restrictions limit users to utilizing pre-existing expression data and/or fixed sets
+of anatomical image collections. To close this gap for biological use cases, we
+have developed _spatialHeatmap_ as a generic R/Bioconductor package for
+plotting quantitative values onto any type of spatially mapped images in a
+programmable environment and/or in an intuitive to use GUI application.
 
 ## Design {#design}
 
@@ -108,17 +108,17 @@ gene expression data) of one or many items (_e.g._ genes) measured under
 different conditions in form of numerically graded colors onto the
 corresponding cell types or tissues represented in a chosen SVG image. In the
 gene profiling field, this feature supports comparisons of the expression
-values among multiple genes by plotting their spatial heatmap representations
-next to each other. Similarly, one can display the expression values of a
-single or multiple genes across multiple conditions in the same plot. This
-level of flexibility is very efficient for visualizing complicated expression
-patterns across genes, cell types and conditions. In case of more complex
-anatomical images composed of multiple layer tissues, it is important to
-visually expose the tissue layer of interest in the plots. To address this,
-several default and customizable layer viewing options are provided. They allow
-to hide features in the top layers by making them transparent in order to
-expose features below them. This transparency viewing feature is highlighted
-below in the [mouse example](#mus_shm).
+values among multiple genes by plotting their spatial heatmaps next to each
+other. Similarly, one can display the expression values of a single or multiple
+genes across multiple conditions in the same plot. This level of flexibility is
+very efficient for visualizing complicated expression patterns across genes,
+cell types and conditions. In case of more complex anatomical images composed
+of overlapping multiple layer tissues, it is important to visually expose the
+tissue layer of interest in the plots. To address this, several default and
+customizable layer viewing options are provided. They allow to hide features in
+the top layers by making them transparent in order to expose features below
+them. This transparency viewing feature is highlighted below in the [mouse
+example](#mus_shm).
 
 To maximize reusability and extensibility, the package organizes large-scale
 omics assay data along with the associated experimental design information in a
@@ -137,23 +137,73 @@ features of interest in an SVG image according to the numeric data stored in a
 SVG images and the associated expression data are provided in the [Formatting
 Requirements](#form) section of this vignette.
 
+## Terminology {#term}
+Spatial heatmaps are images where colors encode numeric values in features of
+any shape. For plotting spatial heatmaps, Scalable Vector Graphics (SVG) has
+been chosen as image format since it is a flexible and widely adapted vector
+graphics format that provides many advantages for computationally embedding
+numerical and other information in images. SVG is based on XML formatted text
+describing all components present in images, including lines, shapes and
+colors. In case of biological images suitable for spatial heatmaps, the shapes
+often represent anatomical or cell structures. To assign colors to specific
+features in spatial heatmaps, _annotated SVG_ (aSVG) files are used where the
+shapes of interest are labeled according to certain conventions so that they
+can be colored programmatically.  SVGs and aSVGs of anatomical structures can
+be downloaded from many sources including the repositories described [below](#data_sources).
+Alternatively, users can generate them themselves with vector graphics software
+such as [Inkscape](https://inkscape.org/). Typically, in aSVGs one or more
+shapes of a feature of interest, such as the cell shapes of an organ, are
+grouped together by a common feature identifier. Via these group identifiers
+one or many feature types can be colored simultaneously in an aSVG according to
+biological experiments assaying the corresponding feature types with the
+required spatial resolution. Correct assignment of image features and assay
+results is assured by using for both the same feature identifiers. The color
+gradient used to visually represent the numeric assay values is controlled by a
+color gradient parameter. To visually interpret the meaning of the colors, the
+corresponding color key can be included in the spatial heatmap plots.
+The formatting details for properly annotating both aSVG images and
+assay data are provided in the [Supplement Section](#sup) of this vignette. 
+
+
+## Data Repositories {#data_sources}
+
+If not generated by the user, spatial heatmaps can be generated with data
+downloaded from various public repositories. This includes gene, protein and
+metabolic profiling data from databases, such as GEO, BAR, EBI and the
+[Expression Atlas](https://www.ebi.ac.uk/gxa/home). The latter contains both
+assay and image data. The assay data include omics data for mRNA and protein
+profiling experiments across different species, tissues and conditions. The
+corresponding anatomical image collections are also provided for a wide range
+of species including animals and plants. In `spatialHeatmap` several import
+functions are provided to work with the expression and images from the
+Expression Atlas. To make the SVG images from the Expression Atlas fully
+compatible with `spatialHeatmap`, slight modifications had to be introduced in
+those images. The compatible and fully annotated aSVG image collection is
+available in the [SVG repository](#svg_tmp) of this package. The same SVG
+repository is used to deposit custom images developed by this project and/or
+those contributed by users.
+
+
+## Data of Code Sections {#sample_data}
+
 The following sections of this vignette highlight the most important
 functionalities of the `spatialHeatmap` package using as examples a simple to
 understand toy data set as well as mRNA expression data. First, spatial heatmap
 plots are generated for both the toy and mRNA expression data. The latter
-include gene expression data sets from RNA-seq and microarray experiments of
+include gene expression data sets from RNA-Seq and microarray experiments of
 [Human Brain](#hum), [Mouse Organs](#mus), [Chicken Organs](#chk), and
-[Arabidopsis Shoots](#shoot).  Second, gene context visualization features are
-introduced, which facilitate the visualization of gene modules sharing similar
-expression patterns. This includes the visualization of hierarchical clustering
-results with traditional matrix heatmaps ([Matrix Heatmap](#mhm)) as well
-co-expression network plots ([Network](#net)). Third, an overview of the
-corresponding [Shiny App](#shiny) is presented that provides access to the same
-functionalities as the R functions, but executes them in an interactive
-environment [@shiny; @shinydashboard].  Fourth, more advanced features for
-plotting customized spatial heatmaps are introduced using the Human Brain data
-set as an example.  
-
+[Arabidopsis Shoots](#shoot). The first three are RNA-Seq data from the 
+[Expression Atlas](https://www.ebi.ac.uk/gxa/home) and the last one is a
+microarray data set from [GEO](https://www.ncbi.nlm.nih.gov/geo/).  Second,
+gene context visualization features are introduced, which facilitate the
+visualization of gene modules sharing similar expression patterns. This
+includes the visualization of hierarchical clustering results with traditional
+matrix heatmaps ([Matrix Heatmap](#mhm)) as well co-expression network plots
+([Network](#net)). Third, an overview of the corresponding [Shiny App](#shiny)
+is presented that provides access to the same functionalities as the R
+functions, but executes them in an interactive environment [@shiny;
+@shinydashboard].  Fourth, more advanced features for plotting customized
+spatial heatmaps are introduced using the Human Brain data set as an example.  
 
 # Getting Started
 
@@ -189,8 +239,6 @@ corresponding name will open this vignette.
 browseVignettes('spatialHeatmap')
 
 ```
-
-
 
 # Spatial Heatmaps {#shm}
 
@@ -228,42 +276,16 @@ supposed to provide a high level of flexibilty and reusability, and I don't thin
 it would be hard to address this important need.]
 </font>
 
-## Background and Terminology {#term}
-Spatial heatmaps are images where colors encode numeric values in features of
-any shape. For plotting spatial heatmaps, Scalable Vector Graphics (SVG) has
-been chosen as image format since it is a flexible and widely adapted vector
-graphics format that provides many advantages for computationally embedding
-numerical and other information in images. SVG is based on XML formatted text
-describing all lines, shapes and text in images.  In case of biological images
-the shapes often represent anatomical or cell structures. To assign colors to
-specific features in spatial heatmaps, _annotated SVG_ (aSVG) files are used
-where the shapes of interest are labeled according to certain conventions so
-that they can be colored programmatically. SVGs and aSVGs of anatomical
-structures can be downloaded from many sources including the repositories
-mentioned above.  Alternatively, users can generate them themselves with vector
-graphics software such as [Inkscape](https://inkscape.org/). Typically, in
-aSVGs one or more shapes making up a feature of interest, such as the cell
-shapes of an organ, are grouped together by a common feature identifier. Via
-these group identifiers one or many feature types can be colored simultaneously
-in an aSVG according to biological experiments assaying the corresponding
-feature types with the required spatial resolution. Correct assignment of image
-features and assay results is assured by using for both the same feature
-identifiers. The color gradient used to visually represent the numeric assay
-values is controlled by a color gradient parameter. To visually interpret the
-meaning of the colors, the corresponding color key can be included in the
-spatial heatmap plots. Additional formatting details for properly annotating
-both aSVG images and assay data are provided in the [Supplement Section](#sup)
-of this vignette. 
-
 ## Toy Example
 
 Spatial heatmaps are plotted with the `spatial_hm` function. To provide a quick
-overview how these plots are generated, the following uses a generalized toy
-example where a vector of random numeric values is generated that are used to
-color the corresponding features in an aSVG image. The image chosen for this
-example is from the human brain. The latter has been included in this package
-for testing purposes. The path to the file of this image on a user's system can
-be obtained with the `system.file` function.
+and transparent overview how these plots are generated, the following uses a
+generalized toy example where a vector of random numeric values is generated
+that are used to color the corresponding features in an aSVG image. The image
+chosen for this example is from the human brain. The latter has been included
+in this package for testing purposes. The path to the file of this image on a
+user's system, where `spatialHeatmap` is installed, can be obtained with the 
+`system.file` function.
 
 ```{r eval=FALSE, echo=TRUE, warnings=FALSE }
 
@@ -281,7 +303,7 @@ fnames
 
 Next a small numeric toy vector is generated, where the data slot contains five
 numbers and its name slot is populated with the feature names obtained from the
-aSVG image. Note, the numbers are mapped to features via matching names in the 
+aSVG image. Note, the numbers are mapped to features via names matching among the 
 numeric vector and the aSVG, respectively. Accordingly, only numbers with matching 
 name counterparts can be colored in the aSVG image. Entries without name matches are 
 indicated by a message printed to the R console. This behavior can be turned off 
@@ -319,61 +341,8 @@ it requires some basic functionality to extract feature names from pre-annotated
 
 ## Human Brain 
 
-<font color="red">
-The first paragraphs below have been moved here for now. There is a lot of
-duplication in this text that needs to be deleted (or hidden via comment tags)
-and/or merged into other sections where appropriate. Some of the text is
-certainly important but it often should be used to explain code sections rather
-than keeping it separate from the code. For instance the first paragraph below
-should go to a section where you show how to generate multiple target gene
-plots rather then just describing it in stand-alone text, especially since a summary 
-of this particular example has been given in the intro section already. 
-</font>
 
-It is able to take mutiple target genes as input. If so, a set of spatial
-heatmaps for each gene are plotted sequentially and organised on the same page.
-The `layout` parameter specifies display these spatial heatmaps by genes or by
-conditions. This feature makes it flexible for users to compare expression
-profiles of the same gene across conditions or different genes across the same
-condition. If many conditions are displayed, the `ncol` parameter can be used
-to adjust the column number in the layout to achieve optimal dispaly.     
 
-In the case of tissues existing in multiple layers, some tissues might be
-covered and invisible in the spatial heatmaps. In this case, the `tis.trans`
-parameter can be used to set the front tissues transparent. Then the covered
-tissues will be visible, a representative example of which is shown in [Figure
-2](#mus_shm). 
-
-In the legend plot, if too many tissues are included, the legends might occupy
-too much space and lead to main plot squeezed. To overcome this issue, the
-`sam.legend` parameter is developed to allows users to only show selected
-tissues in the legend, and the default "identical" only shows the colored
-tissues.   
-
-Moreover, too many tissues might affect the visual effects due to the messy
-polygon outlines. The `line.size` and `line.color` parameters are used to
-adjust the thickness and color of polygon outlines respectively and thus can
-enhance the visualisation.  
-
-This core functionality is presented with 4 examples: Human Brain, Mouse Organ,
-Chicken Organ, Arabidopsis Shoot. The first 3 are RNA-seq data from [Expression
-Atlas-EMBL-EBI](https://www.ebi.ac.uk/gxa/home) and the last one is microarray
-data from [GEO](https://www.ncbi.nlm.nih.gov/geo/). Successful plotting of
-spatial heatmaps requires a pair of formatted data matrix and SVG image, as
-explained in format requirements on [data matrix](#mat_form) and [SVG
-image](#svg_form).   
-
-The Expression Atlas-EMBL-EBI is a rich resource of gene and protein
-expression. It contains gene expression data measured from diverse origins such
-as different species, biological conditions, tissues, cell types, developmental
-stages, and diseases. Moreover, Expression Atlas also provides a rich resource
-of SVG images, which convers many species from animals to plants. The format of
-these SVG images are slightly modified to be compatible with the
-spatialHeatmap, which are available in the [SVG repository](#svg_tmp). The GEO
-is another rich repository of public genomics data covering a wide range of
-species, which accepts array- and sequence-based data in MIAME-compliant
-format. To demonstrate the wide usage of spatialHeatmap, example data are
-chosen from the 2 popular databases.     
 
 The first example is plotting an EBI RNA-seq data matrix of human brain tissues
 onto a human brain SVG image from the [SVG repository](#svg_tmp). The data come
@@ -486,6 +455,42 @@ spatial_hm(svg.path=svg.hum, se=se.fil.hum, ID=c('ENSG00000268433'), col.com=c("
 ```
 
 In this example, the expression profile of gene ENSG00000268433 in frontal cortex and cerebellum is plotted under ALS and normal conditions ([Figure 1](#brain_shm)) with the legend plot on the right. For example, in [Table 2](#hum_table) its expression value in cerebellum under ALS is 5.3240638. After mapping, this tissue is colored purple corresponding to 5.3240638 in the color scale. By contrast, this gene's expression profile is blue in the same tissue under normal condition. On the other hand, the expression profile (yellow) in frontal cortex is similar across ALS and normal. Therefore, it is intuitive that this gene's higher activity in cerebellum is potentially associated with ALS and could contribute to hypothesis generation. Note that only frontal cortex and cerebellum are colored while others are blank in the spatial heatmaps, since they are the only 2 identical tissues between the data matrix and SVG image.  
+
+<font color="red">
+The first paragraphs below have been moved here for now. There is a lot of
+duplication in this text that needs to be deleted (or hidden via comment tags)
+and/or merged into other sections where appropriate. Some of the text is
+certainly important but it often should be used to explain code sections rather
+than keeping it separate from the code. For instance the first paragraph below
+should go to a section where you show how to generate multiple target gene
+plots rather then just describing it in stand-alone text, especially since a summary 
+of this particular example has been given in the intro section already. 
+</font>
+
+It is able to take mutiple target genes as input. If so, a set of spatial
+heatmaps for each gene are plotted sequentially and organised on the same page.
+The `layout` parameter specifies display these spatial heatmaps by genes or by
+conditions. This feature makes it flexible for users to compare expression
+profiles of the same gene across conditions or different genes across the same
+condition. If many conditions are displayed, the `ncol` parameter can be used
+to adjust the column number in the layout to achieve optimal dispaly.     
+
+In the case of tissues existing in multiple layers, some tissues might be
+covered and invisible in the spatial heatmaps. In this case, the `tis.trans`
+parameter can be used to set the front tissues transparent. Then the covered
+tissues will be visible, a representative example of which is shown in [Figure
+2](#mus_shm). 
+
+In the legend plot, if too many tissues are included, the legends might occupy
+too much space and lead to main plot squeezed. To overcome this issue, the
+`sam.legend` parameter is developed to allows users to only show selected
+tissues in the legend, and the default "identical" only shows the colored
+tissues.   
+
+Moreover, too many tissues might affect the visual effects due to the messy
+polygon outlines. The `line.size` and `line.color` parameters are used to
+adjust the thickness and color of polygon outlines respectively and thus can
+enhance the visualisation.  
 
 ## Mouse Organ {#mus}
 
