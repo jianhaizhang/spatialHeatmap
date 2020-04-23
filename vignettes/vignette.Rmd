@@ -184,7 +184,7 @@ repository is used to deposit custom images developed by this project and/or
 those contributed by users.
 
 
-## Data of Code Sections {#sample_data}
+## Tutorial Data {#sample_data}
 
 The following sections of this vignette highlight the most important
 functionalities of the `spatialHeatmap` package using as examples a simple to
