@@ -148,7 +148,7 @@ colors. In case of biological images suitable for spatial heatmaps, the shapes
 often represent anatomical or cell structures. To assign colors to specific
 features in spatial heatmaps, _annotated SVG_ (aSVG) files are used where the
 shapes of interest are labeled according to certain conventions so that they
-can be colored programmatically.  SVGs and aSVGs of anatomical structures can
+can be addressed and colored programmatically.  SVGs and aSVGs of anatomical structures can
 be downloaded from many sources including the repositories described [below](#data_sources).
 Alternatively, users can generate them themselves with vector graphics software
 such as [Inkscape](https://inkscape.org/). Typically, in aSVGs one or more
@@ -348,8 +348,8 @@ processed expression values of genes selected by users are plotted onto a chosen
 image. In this case, the query and download functionalities of expression data are 
 provided by functionalities of the `ExpressionAtlas` package. 
 
-The following example searches the Expression Atlas for expression data sets performed
-on a specific tissue from a species of interest, here 'cerebellum' and 'Homo sapiens',
+The following example searches the Expression Atlas for expression data derived from
+specific tissues and species of interest, here _'cerebellum'_ and _'Homo sapiens'_,
 respectively.
 
 ```{r eval=TRUE, echo=TRUE, message=FALSE, warnings=FALSE }
@@ -388,8 +388,8 @@ columns of `colData`. This way one can use the source data for generating 'prett
 column and legend names in downstream tables and plots, respectively, in an automated and 
 reproducible manner. To achieve this, the following example imports a 'targets' file 
 that can be maintained by the user and is used to replace the text in the `colData` 
-slot with the shortened text. This targets file utility is particularly useful for 
-data sets requiring custom annotations. Additional details for generating and using 
+slot with the shortened version suitable for column titles and legends. This targets 
+file utility is particularly useful for data sets requiring custom annotations. Additional details for generating and using 
 targets files in `spatialHeatmap` are provided in the [Supplement](#sup) of this
 vignette.
 
