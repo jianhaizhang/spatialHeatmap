@@ -306,7 +306,7 @@ div.tocify {
 <h1><span class="header-section-number">2</span> Getting Started</h1>
 <div id="installation" class="section level2">
 <h2><span class="header-section-number">2.1</span> Installation</h2>
-<p>The <code>spatialHeatmap</code> package should be installed from R (version <span class="math inline">\(\ge\)</span> 3.6) with the <code>BiocManager::install</code> command.</p>
+<p>The <code>spatialHeatmap</code> package should be installed from an R (version <span class="math inline">\(\ge\)</span> 3.6) session with the <code>BiocManager::install</code> command.</p>
 <pre class="r"><code>if (!requireNamespace(&quot;BiocManager&quot;, quietly = TRUE))
     install.packages(&quot;BiocManager&quot;)
 BiocManager::install(&quot;spatialHeatmap&quot;)</code></pre>
@@ -347,22 +347,19 @@ below.
 <p>To obtain the feature names present in the sample aSVG, the <code>returnSVGFeatures</code> function can be used.</p>
 <pre class="r"><code>fnames &lt;- retrunSVGFeatures(&quot;...&quot;)
 fnames</code></pre>
-<p>Next a small numeric toy vector is generated, where the data slot contains five numbers and its name slot is populated with the feature names obtained from the aSVG image. Note, the numbers are mapped to features via names matching among the numeric vector and the aSVG, respectively. Accordingly, only numbers and features with matching name counterparts can be colored in the aSVG image. Entries without name matches are indicated by a message printed to the R console. This behavior can be turned off with <code>verbose=FALSE</code> in the corresponding function call. In addition, a summary of the numeric assay to feature mappings is stored in the result object returned by the <code>spatial_hm</code> function.</p>
+<p>A small numeric toy vector is generated, where the data slot contains five numbers and its name slot is populated with the feature names obtained from the aSVG image. Note, the numbers are mapped to features via names matching among the numeric vector and the aSVG, respectively. Accordingly, only numbers and features with matching name counterparts can be colored in the aSVG image. Entries without name matches are indicated by a message printed to the R console. This behavior can be turned off with <code>verbose=FALSE</code> in the corresponding function call. In addition, a summary of the numeric assay to feature mappings is stored in the result object returned by the <code>spatial_hm</code> function.</p>
 <pre class="r"><code>my_vec &lt;- sample(1:100, length(unique(fnames)))
 names(my_vec) &lt;- unique(fnames)</code></pre>
 <p>Next, the spatial heatmap is plotted with the <code>spatial_hm</code> function. Internally, the numbers in <code>my_vec</code> are translated to colors based on the color key assigned to the <code>col.com</code> argument, and then painted onto the corresponding features in the aSVG image (here path <code>svg.hum</code>).</p>
 <pre class="r"><code>spatial_hm(svg.path=svg.hum, se=my_vec, col.com=c(&quot;yellow&quot;, &quot;blue&quot;, &quot;purple&quot;))</code></pre>
-<p><font color="red"> [ThG-Comment 3: Jianhai, please add a section that accomplishes what is described in the above text and code chunks. When done the corresponding code chunks should be evaluated. This will help to give the user a quick code-based intro into the functionalities of the spatial_hm function without requiring too much knowledge about expression data and other details. This section also overlaps with the comment #2, since it requires some basic functionality to extract feature names from pre-annotated SVGs.] </font></p>
+<p><font color="red"> [ThG-Comment 3: Jianhai, please add a section that accomplishes what is described in the above text and code chunks. When done the corresponding functional code chunks should be functional and evaluated in the vignette. This will help to give the user a quick code-based intro into the core functionalities of the spatial_hm function without requiring too much background knowledge about expression data and other details. Note, this section overlaps with the comment #2, since it requires some basic functionality to extract feature names from pre-annotated SVGs.] </font></p>
 </div>
 <div id="human-brain" class="section level2">
 <h2><span class="header-section-number">3.2</span> Human Brain</h2>
-<p>The first example is plotting an EBI RNA-seq data matrix of human brain tissues onto a human brain SVG image from the <a href="#svg_tmp">SVG repository</a>. The data come from a transcriptome study of frontal cortex and cerebellum between normal and amyotrophic lateral sclerosis (ALS) subjects <span class="citation">(Prudencio et al. 2015)</span>. Below is the simplified plotting process, and details are explained in the <a href="#sup">Supplement</a> section.</p>
-<p>Download the SVG image “homo_sapiens.brain.svg” from the <a href="https://github.com/jianhaizhang/SVG_tutorial_file/tree/master/svg_repo/ebi_trans">repository</a> and check tissue ids in <a href="https://inkscape.org/">Inkscape</a>. Use a tissues id as key word to search for gene expression data. Take “cerebellum” for instance. Use function <code>searchAtlasExperiments</code> from the package ExpressionAtlas <span class="citation">(Keays 2019)</span> to search for human data with key words “cerebellum” and “Homo sapiens”.</p>
+<p>This subsection demonstrates how to find cell- and tissue-specific assay data in the Expression Atlas. After choosing a gene expression experiment, the data is downloaded directly into a user’s R session and normalized. Subsequently, the processed expression values of user selected genes are plotted onto a chosen aSVG image. In this case, the query and download functionalities of expression data are provided by functionalities of the <code>ExpressionAtlas</code> package.</p>
+<p>The following example searches for expression samples from ‘cerebellum’ from ‘Homo sapiens’.</p>
 <pre class="r"><code>all.hum &lt;- searchAtlasExperiments(properties=&quot;cerebellum&quot;, species=&quot;Homo sapiens&quot;)</code></pre>
-<pre><code>## Searching for Expression Atlas experiments matching your query ...</code></pre>
-<pre><code>## Query successful.</code></pre>
-<pre><code>## Found 13 experiments matching your query.</code></pre>
-<p>Check the results and select one study conducted in at least one tissue in the downloaded SVG image. In this example, the experiment “E-GEOD-67196” is selected, since the data is measured in cerebellum and frontal cortex that are represented in the SVG image.</p>
+<p>The search result is stored in a <code>DataFrame</code> containing 13 accessions matching the above query. For the following sample code, the accession ‘<a href="https://www.ebi.ac.uk/arrayexpress/experiments/E-GEOD-67196/">E-GEOD-67196</a>’ from Prudencio <em>et al.</em> <span class="citation">(2015)</span> is chosen below which corresponds to an RNA-Seq profiling experiment of cerebellum and frontal cortex brain tissue from patients with amyotrophic lateral sclerosis (ALS). The corresponding record looks as follows.</p>
 <pre class="r"><code>all.hum[2, ]</code></pre>
 <pre><code>## DataFrame with 1 row and 4 columns
 ##      Accession      Species                  Type
@@ -371,55 +368,42 @@ names(my_vec) &lt;- unique(fnames)</code></pre>
 ##                                                                                                                                   Title
 ##                                                                                                                             &lt;character&gt;
 ## 1 Transcription profiling by high throughput sequencing of cerebellum and frontal cortex from patients of amyotrophic lateral sclerosis</code></pre>
-<p>Access the selected data automatically from EBI Expression Atlas.</p>
+<p>The <code>getAtlasData</code> function allows to download the chosen RNA-Seq experiment from the Expression Atlas and import it into a <code>RangedSummarizedExperiment</code> of a user’s R session.</p>
 <pre class="r"><code>rse.hum &lt;- getAtlasData('E-GEOD-67196')[[1]][[1]]</code></pre>
 <pre><code>## Downloading Expression Atlas experiment summary from:
 ##  ftp://ftp.ebi.ac.uk/pub/databases/microarray/data/atlas/experiments/E-GEOD-67196/E-GEOD-67196-atlasExperimentSummary.Rdata</code></pre>
 <pre><code>## Successfully downloaded experiment summary object for E-GEOD-67196</code></pre>
-<p>Make a targets file (a data frame describing replicates of tissues and conditions) for the data matrix, which is available in this package.</p>
+<p>The design of the downloaded RNA-Seq experiment is described in the <code>colData</code> slot of <code>rse.hum</code>. The following returns only its first four rows and first five columns.</p>
+<pre class="r"><code>colData(rse.hum)[1:4, 1:5]</code></pre>
+<pre><code>## DataFrame with 4 rows and 5 columns
+##            AtlasAssayGroup     organism  individual  organism_part
+##                &lt;character&gt;  &lt;character&gt; &lt;character&gt;    &lt;character&gt;
+## SRR1927019              g1 Homo sapiens individual1     cerebellum
+## SRR1927020              g2 Homo sapiens individual1 frontal cortex
+## SRR1927021              g1 Homo sapiens individual2     cerebellum
+## SRR1927022              g2 Homo sapiens individual2 frontal cortex
+##                                  disease
+##                              &lt;character&gt;
+## SRR1927019 amyotrophic lateral sclerosis
+## SRR1927020 amyotrophic lateral sclerosis
+## SRR1927021 amyotrophic lateral sclerosis
+## SRR1927022 amyotrophic lateral sclerosis</code></pre>
+<p>To shorten the text in some of the columns of <code>colData</code>, a simplified version of this information is provided by this package. Below this so called ‘targets’ file is imported and used to replace the longer version of this information in the <code>colData</code> slot. It is important to note that for this well annotated data set this step is optional and mainly serves the purpose of shorting the text in some columns to automatically assign ‘pretty’ labels to the headers and legends of tables and plots, respectively, in a controlled manner. If this utility is needed by users, the details for generating the corresponding targets files are provided in the <a href="#sup">Supplement</a> of this vignette.</p>
 <pre class="r"><code>hum.pa &lt;- system.file('extdata/shinyApp/example/target_human.txt', package='spatialHeatmap')
 target.hum &lt;- read.table(hum.pa, header=TRUE, row.names=1, sep='\t')
 colData(rse.hum) &lt;- DataFrame(target.hum)</code></pre>
-<pre class="r"><code>target.hum[c(1:3, 41:42), 4:5]</code></pre>
-<p><a name="tar_hum"></a></p>
-<table>
-<caption>Table 1 Targets file (metadata of replicates of tissues and conditions) of the human brain count matrix, which describes replicates of tissues and conditions.</caption>
-<thead>
-<tr class="header">
-<th></th>
-<th align="left">organism_part</th>
-<th align="left">disease</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td>SRR1927019</td>
-<td align="left">cerebellum</td>
-<td align="left">ALS</td>
-</tr>
-<tr class="even">
-<td>SRR1927020</td>
-<td align="left">frontal_cortex</td>
-<td align="left">ALS</td>
-</tr>
-<tr class="odd">
-<td>SRR1927021</td>
-<td align="left">cerebellum</td>
-<td align="left">ALS</td>
-</tr>
-<tr class="even">
-<td>SRR1927059</td>
-<td align="left">cerebellum</td>
-<td align="left">normal</td>
-</tr>
-<tr class="odd">
-<td>SRR1927060</td>
-<td align="left">frontal_cortex</td>
-<td align="left">normal</td>
-</tr>
-</tbody>
-</table>
-<p>The data from EBI is raw RNA-seq count matrix, so there is process of normalisation, replicates aggregation, and filtering. In this example, genes with expression values larger than 5 in at least 1% of all samples (pOA=c(0.01, 5)), and with coefficient of variance (CV) between 0.30 and 100 (CV=c(0.30, 100)) are retained.</p>
+<p>A slice of the simplified <code>colData</code> object is shown below, where the <code>disease</code> column contains now shorter labels than before.</p>
+<pre class="r"><code>colData(rse.hum)[c(1:3, 41:42), 4:5]</code></pre>
+<pre><code>## DataFrame with 5 rows and 2 columns
+##             organism_part     disease
+##               &lt;character&gt; &lt;character&gt;
+## SRR1927019     cerebellum         ALS
+## SRR1927020 frontal_cortex         ALS
+## SRR1927021     cerebellum         ALS
+## SRR1927059     cerebellum      normal
+## SRR1927060 frontal_cortex      normal</code></pre>
+<p>The actual expression data of the downloaded RNA-Seq experiment is stored in the <code>assay</code> slot of <code>rse.hum</code>. Since it contains raw RNA-Seq count data, it is often beneficial to apply basic preprocessing routines prior to plotting spatial heatmaps. The following shows how to normalize the count data, filter the results and also collapse technical and/or biological replicates by applying basic summary statistics such as mean, median or other.</p>
+<p>The following example eliminates genes with expression values larger than 5 in at least 1% of all samples (pOA=c(0.01, 5)), and with coefficient of variance (CV) between 0.30 and 100 (CV=c(0.30, 100)) are retained.</p>
 <pre class="r"><code># Normalise.
 se.nor.hum &lt;- norm_data(se=rse.hum, method.norm='ratio', data.trans='log2')</code></pre>
 <pre><code>## Normalising: ratio</code></pre>

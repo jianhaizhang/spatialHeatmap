@@ -1,6 +1,6 @@
 #' Normalise Sequencing Count Matrix
 #' 
-#' This function normalise count matrix from sequencing. It inputs the count matrix and sample metadata in form of "SummarizedExperiment". In "colData" slot, at least replicates of "sample" and "condition" should be included.
+#' This function normalizes sequencing count data. It accepts the count matrix and sample metadata in form of "SummarizedExperiment" object. In "colData" slot, at least replicates of "sample" and "condition" should be included.
 
 #' @inheritParams filter_data   
 
@@ -39,7 +39,7 @@
 #' se.nor.hum <- norm_data(se=rse.hum, method.norm='ratio', data.trans='log2')
 
 
-#' @author Jianhai Zhang \email{jzhan067@@ucr.edu; zhang.jianhai@@hotmail.com} \cr Dr. Thomas Girke \email{thomas.girke@@ucr.edu}
+#' @author Jianhai Zhang \email{jzhan067@@ucr.edu; zhang.jianhai@@hotmail.com}
 
 #' @references
 #' SummarizedExperiment: SummarizedExperiment container. R package version 1.10.1 \cr R Core Team (2018). R: A language and environment for statistical computing. R Foundation for Statistical Computing, Vienna, Austria. URL https://www.R-project.org/

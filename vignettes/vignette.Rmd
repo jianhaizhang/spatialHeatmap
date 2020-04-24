@@ -211,8 +211,8 @@ spatial heatmaps are introduced using the Human Brain data set as an example.
 
 ## Installation
 
-The `spatialHeatmap` package should be installed from R (version $\ge$ 3.6) 
-with the `BiocManager::install` command.
+The `spatialHeatmap` package should be installed from an R (version $\ge$ 3.6)
+session with the `BiocManager::install` command.
 
 ```{r, eval=FALSE, echo=TRUE, warnings=FALSE} 
 
@@ -303,7 +303,7 @@ fnames <- retrunSVGFeatures("...")
 fnames
 ```
 
-Next a small numeric toy vector is generated, where the data slot contains five
+A small numeric toy vector is generated, where the data slot contains five
 numbers and its name slot is populated with the feature names obtained from the
 aSVG image. Note, the numbers are mapped to features via names matching among the 
 numeric vector and the aSVG, respectively. Accordingly, only numbers and features
@@ -334,87 +334,91 @@ spatial_hm(svg.path=svg.hum, se=my_vec, col.com=c("yellow", "blue", "purple"))
 
 <font color="red">
 [ThG-Comment 3: Jianhai, please add a section that accomplishes what is described
-in the above text and code chunks. When done the corresponding code chunks should be evaluated.
-This will help to give the user a quick code-based intro into the
-functionalities of the spatial_hm function without requiring too much knowledge about
-expression data and other details. This section also overlaps with the comment #2, since
-it requires some basic functionality to extract feature names from pre-annotated SVGs.]
+in the above text and code chunks. When done the corresponding functional code chunks 
+should be functional and evaluated in the vignette. This will help to give the user a 
+quick code-based intro into the core functionalities of the spatial_hm function without 
+requiring too much background knowledge about expression data and other details. Note,
+this section overlaps with the comment #2, since it requires some basic functionality to 
+extract feature names from pre-annotated SVGs.]
 </font>
 
 
 ## Human Brain 
 
+This subsection demonstrates how to find cell- and tissue-specific assay data in the 
+Expression Atlas. After choosing a gene expression experiment, the data is downloaded
+directly into a user's R session and normalized. Subsequently, the processed expression
+values of user selected genes are plotted onto a chosen aSVG image. In this case, the 
+query and download functionalities of expression data are provided by functionalities 
+of the `ExpressionAtlas` package. 
 
+The following example searches for expression samples from 'cerebellum' from 'Homo sapiens'.
 
-
-The first example is plotting an EBI RNA-seq data matrix of human brain tissues
-onto a human brain SVG image from the [SVG repository](#svg_tmp). The data come
-from a transcriptome study of frontal cortex and cerebellum between normal and
-amyotrophic lateral sclerosis (ALS) subjects [@Prudencio2015-wd]. Below is the
-simplified plotting process, and details are explained in the
-[Supplement](#sup) section.  
-
-Download the SVG image "homo_sapiens.brain.svg" from the
-[repository](https://github.com/jianhaizhang/SVG_tutorial_file/tree/master/svg_repo/ebi_trans)
-and check tissue ids in [Inkscape](https://inkscape.org/). Use a tissues id as
-key word to search for gene expression data. Take "cerebellum" for instance.
-Use function `searchAtlasExperiments` from the package ExpressionAtlas [@ebi]
-to search for human data with key words "cerebellum" and "Homo sapiens".    
-
-```{r eval=TRUE, echo=TRUE, warnings=FALSE }
-
+```{r eval=TRUE, echo=TRUE, message=FALSE, warnings=FALSE }
 all.hum <- searchAtlasExperiments(properties="cerebellum", species="Homo sapiens")
-
 ```
 
-Check the results and select one study conducted in at least one tissue in the
-downloaded SVG image. In this example, the experiment "E-GEOD-67196" is
-selected, since the data is measured in cerebellum and frontal cortex that are
-represented in the SVG image.   
+The search result is stored in a `DataFrame` containing `r nrow(all.hum)`
+accessions matching the above query. For the following sample code, the
+accession
+'[E-GEOD-67196](https://www.ebi.ac.uk/arrayexpress/experiments/E-GEOD-67196/)'
+from Prudencio _et al._ [-@Prudencio2015-wd] is chosen below which corresponds
+to an RNA-Seq profiling experiment of cerebellum and frontal cortex brain
+tissue from patients with amyotrophic lateral sclerosis (ALS). The
+corresponding record looks as follows.
 
 ```{r eval=TRUE, echo=TRUE, warnings=FALSE }
-
 all.hum[2, ]
-
 ```
 
-Access the selected data automatically from EBI Expression Atlas.  
+The `getAtlasData` function allows to download the chosen RNA-Seq experiment from the 
+Expression Atlas and import it into a `RangedSummarizedExperiment` of a user's R session.  
 
 ```{r eval=TRUE, echo=TRUE, warnings=FALSE }
-
 rse.hum <- getAtlasData('E-GEOD-67196')[[1]][[1]]
-
 ```
 
-Make a targets file (a data frame describing replicates of tissues and
-conditions) for the data matrix, which is available in this package.   
+The design of the downloaded RNA-Seq experiment is described in the `colData` slot of 
+`rse.hum`. The following returns only its first four rows and first five columns.
 
 ```{r eval=TRUE, echo=TRUE, warnings=FALSE }
+colData(rse.hum)[1:4, 1:5]
+```
 
+To shorten the text in some of the columns of `colData`, a simplified version
+of this information is provided by this package. Below this so called
+'targets' file is imported and used to replace the longer version in the `colData` slot. 
+It is important to note that for this well annotated data set 
+this step is optional and mainly serves the purpose of shorting the text in some 
+columns to automatically assign downstream 'pretty' labels to the headers and legends of tables and plots, respectively,
+in a controlled manner. If this utility is needed by users, the details for generating 
+the corresponding targets files are provided in the [Supplement](#sup) of this
+vignette.
+
+
+```{r eval=TRUE, echo=TRUE, warnings=FALSE }
 hum.pa <- system.file('extdata/shinyApp/example/target_human.txt', package='spatialHeatmap')
 target.hum <- read.table(hum.pa, header=TRUE, row.names=1, sep='\t')
 colData(rse.hum) <- DataFrame(target.hum)
-
 ```
 
-```{r eval=FALSE, echo=TRUE, warnings=FALSE}
+A slice of the simplified `colData` object is shown below, where the `disease` column
+contains now shorter labels than before.
 
-target.hum[c(1:3, 41:42), 4:5]
-
+```{r eval=TRUE, echo=TRUE, warnings=FALSE}
+colData(rse.hum)[c(1:3, 41:42), 4:5]
 ```
 
-<a name='tar_hum'></a>
-```{r, eval=TRUE, echo=FALSE, warnings=FALSE}
+The actual expression data of the downloaded RNA-Seq experiment is stored in
+the `assay` slot of `rse.hum`. Since it contains raw RNA-Seq count data, it is
+often beneficial to apply basic preprocessing routines prior to plotting
+spatial heatmaps. The following shows how to normalize the count data, filter
+the results and also collapse technical and/or biological replicates by
+applying basic summary statistics such as mean, median or other. 
 
-kable(target.hum[c(1:3, 41:42), 4:5], caption='Table 1 Targets file (metadata of replicates of tissues and conditions) of the human brain count matrix, which describes replicates of tissues and conditions.')
-
-``` 
-
-The data from EBI is raw RNA-seq count matrix, so there is process of
-normalisation, replicates aggregation, and filtering. In this example, genes
-with expression values larger than 5 in at least 1% of all samples (pOA=c(0.01, 5)),
-and with coefficient of variance (CV) between 0.30 and 100 (CV=c(0.30, 100))
-are retained.  
+The following example eliminates genes with expression values larger than 5 in
+at least 1% of all samples (pOA=c(0.01, 5)), and with coefficient of variance
+(CV) between 0.30 and 100 (CV=c(0.30, 100)) are retained.  
 
 ```{r eval=TRUE, echo=TRUE, warnings=FALSE }
 
