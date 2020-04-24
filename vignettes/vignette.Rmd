@@ -290,9 +290,7 @@ user's system, where `spatialHeatmap` is installed, can be obtained with the
 `system.file` function.
 
 ```{r eval=FALSE, echo=TRUE, warnings=FALSE }
-
 svg.hum <- system.file("extdata/shinyApp/example", "homo_sapiens.brain.svg", package="spatialHeatmap")
-
 ```
 
 To obtain the feature names present in the sample aSVG, the `returnSVGFeatures` 
@@ -326,9 +324,7 @@ features in the aSVG image (here path `svg.hum`).
 
 
 ```{r eval=FALSE, echo=TRUE, warnings=FALSE} 
-
 spatial_hm(svg.path=svg.hum, se=my_vec, col.com=c("yellow", "blue", "purple"))
-
 ```
 
 
@@ -386,10 +382,10 @@ colData(rse.hum)[1:4, 1:5]
 ```
 
 To shorten the text in some of the columns of `colData`, a simplified version
-of this information is provided by this package. Below this so called
+of this information is provided by this package. In the following example this so called
 'targets' file is imported and used to replace the longer version in the `colData` slot. 
-It is important to note that for this well annotated data set 
-this step is optional and mainly serves the purpose of shorting the text in some 
+It is important to note that for this well annotated data set from the Expression Atlas
+this step is optional. It mainly serves the purpose of shorting the text in some 
 columns to automatically assign downstream 'pretty' labels to the headers and legends of tables and plots, respectively,
 in a controlled manner. If this utility is needed by users, the details for generating 
 the corresponding targets files are provided in the [Supplement](#sup) of this
@@ -410,14 +406,22 @@ colData(rse.hum)[c(1:3, 41:42), 4:5]
 ```
 
 The actual expression data of the downloaded RNA-Seq experiment is stored in
-the `assay` slot of `rse.hum`. Since it contains raw RNA-Seq count data, it is
-often beneficial to apply basic preprocessing routines prior to plotting
-spatial heatmaps. The following shows how to normalize the count data, filter
-the results and also collapse technical and/or biological replicates by
-applying basic summary statistics such as mean, median or other. 
+the `assay` slot of `rse.hum`. Since it contains raw count data, it is
+often beneficial to apply prior to generating spatial heatmaps basic preprocessing 
+routines to the data. The following shows how to normalize the count data, aggregate
+replicates and then remove genes with unreliable expression responses.
 
-The following example eliminates genes with expression values larger than 5 in
-at least 1% of all samples (pOA=c(0.01, 5)), and with coefficient of variance
+
+<font color="red">[ThG-Comment 4: can you please substantially improve the text
+in this preprocessing step as well as the help files of the corresponding
+functions. I am not able to follow why and how certain parts are done. For
+instance, why is ratio a normalization method?  The final result also doesn't
+seem to be log ratios. You need to better describe what you are doing here.
+Asking readers to look through your code is not appropriate for a package.]
+</font>
+
+Specifically, the following example eliminates genes with expression values larger 
+than 5 in at least 1% of all samples (pOA=c(0.01, 5)), and with coefficient of variance
 (CV) between 0.30 and 100 (CV=c(0.30, 100)) are retained.  
 
 ```{r eval=TRUE, echo=TRUE, warnings=FALSE }
