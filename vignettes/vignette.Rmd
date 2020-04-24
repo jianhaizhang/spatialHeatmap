@@ -492,14 +492,20 @@ heatmaps, since they are the only 2 identical tissues between the data matrix
 and SVG image.  
 
 <font color="red">
-The first paragraphs below have been moved here for now. There is a lot of
-duplication in this text that needs to be deleted (or hidden via comment tags)
-and/or merged into other sections where appropriate. Some of the text is
+[ThG-Comment 6: I suggest to include here a table where you summarize all arguments
+relevant for controlling the output of `spatial_hm` function. This will make it much 
+easier for the user to look up relevant arguments and how to use them.]
+</font>
+
+<font color="red">
+[ThG-Comment 7: The paragraphs below have been moved here for now. There is a
+lot of duplication in this text that needs to be deleted (or hidden via comment
+tags) and/or merged into other sections where appropriate. Some of the text is
 certainly important but it often should be used to explain code sections rather
 than keeping it separate from the code. For instance the first paragraph below
 should go to a section where you show how to generate multiple target gene
-plots rather then just describing it in stand-alone text, especially since a summary 
-of this particular example has been given in the intro section already. 
+plots rather then just describing it in stand-alone text, especially since a
+summary of this particular example has been given in the intro section already.] 
 </font>
 
 It is able to take mutiple target genes as input. If so, a set of spatial
