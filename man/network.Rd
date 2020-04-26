@@ -6,7 +6,7 @@
 \usage{
 network(
   geneID,
-  se,
+  data,
   ann,
   adj.mod,
   ds = "3",
@@ -26,7 +26,7 @@ network(
 \arguments{
 \item{geneID}{A gene ID from the expression matrix.}
 
-\item{se}{A "SummarizedExperiment" object containing the processed data matrix and metadata returned by the function \code{\link{filter_data}}.}
+\item{data}{A "SummarizedExperiment" object containing the processed data matrix and metadata returned by the function \code{\link{filter_data}}.}
 
 \item{ann}{A character. The column name corresponding to row (gene) annotation in the "rowData" of "se" parameter.}
 
@@ -82,20 +82,20 @@ df <- assay(rse.hum); df[1:2, 1:3]
 rse.hum <- SummarizedExperiment(assay=df, colData=target.hum, rowData=NULL)
 
 # The count matrix is normalised with estimateSizeFactors (type=‘ratio’).
-se.nor.hum <- norm_data(se=rse.hum, method.norm='ratio', data.trans='log2')
+se.nor.hum <- norm_data(data=rse.hum, method.norm='CNF', data.trans='log2')
 
 # Average replicates of concatenated sample__condition.
-se.aggr.hum <- aggr_rep(se=se.nor.hum, sam.factor='organism_part', con.factor='disease', aggr='mean')
+se.aggr.hum <- aggr_rep(data=se.nor.hum, sam.factor='organism_part', con.factor='disease', aggr='mean')
 assay(se.aggr.hum)[49939:49942, ] # The concatenated tissue__conditions are the column names of the output data matrix.
 
 # Genes with low expression level and low variantion are always filtered. 
-se.fil.hum <- filter_data(se=se.aggr.hum, sam.factor='organism_part', con.factor='disease', pOA=c(0.01, 5), CV=c(0.3, 100), dir=NULL)
+se.fil.hum <- filter_data(data=se.aggr.hum, sam.factor='organism_part', con.factor='disease', pOA=c(0.01, 5), CV=c(0.3, 100), dir=NULL)
 # Detect modules. 
-adj.mod <- adj_mod(se=se.fil.hum, type="signed", minSize=15, dir=NULL)
+adj.mod <- adj_mod(data=se.fil.hum, type="signed", minSize=15, dir=NULL)
 # The first column is ds=2 while the second is ds=3. The numbers in each column are module labels with "0" meaning genes not assigned to any modules.
 adj.mod[['mod']][1:3, ]
 # Plot network on gene ENSG00000008196 with ds='3'. Set "static=TRUE" to launch the interactive mode. 
-network(geneID="ENSG00000008196", se=se.fil.hum, ann=NULL, adj.mod=adj.mod, ds="3", adj.min=0.999, con.min=0, vertex.label.cex=1, vertex.cex=0.1, static=TRUE)
+network(geneID="ENSG00000008196", data=se.fil.hum, ann=NULL, adj.mod=adj.mod, ds="3", adj.min=0.999, con.min=0, vertex.label.cex=1, vertex.cex=0.1, static=TRUE)
 }
 \references{
 Martin Morgan, Valerie Obenchain, Jim Hester and Hervé Pagès (2018). SummarizedExperiment: SummarizedExperiment container. R package version 1.10.1 \cr Csardi G, Nepusz T: The igraph software package for complex network research, InterJournal, Complex Systems 1695. 2006. http://igraph.org \cr R Core Team (2018). R: A language and environment for statistical computing. R Foundation for Statistical Computing, Vienna, Austria. URL https://www.R-project.org/ \cr Winston Chang, Joe Cheng, JJ Allaire, Yihui Xie and Jonathan McPherson (2018). shiny: Web Application Framework for R. R package version 1.1.0. https://CRAN.R-project.org/package=shiny \cr Winston Chang and Barbara Borges Ribeiro (2018). shinydashboard: Create Dashboards with 'Shiny'. R package version 0.7.1. https://CRAN.R-project.org/package=shinydashboard \cr Almende B.V., Benoit Thieurmel and Titouan Robert (2018). visNetwork: Network Visualization using 'vis.js' Library. R package version 2.0.4. https://CRAN.R-project.org/package=visNetwork

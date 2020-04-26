@@ -1,14 +1,12 @@
 #' Normalise Sequencing Count Matrix
 #' 
-#' This function normalise count matrix from sequencing. It inputs the count matrix and sample metadata in form of "SummarizedExperiment". In "colData" slot, at least replicates of "sample" and "condition" should be included.
+#' This function normalizes sequencing count data. It accepts the count matrix and sample metadata in form of "SummarizedExperiment" object. In "colData" slot, at least replicates of "sample" and "condition" should be included.
 
 #' @inheritParams filter_data   
 
-#' @param method.norm A character of the normalisation methods. Options are "TMM", "TMMwsp", "RLE", "upperquartile" in \code{\link[edgeR]{calcNormFactors}} from edgeR (McCarthy et al. 2012), and "ratio" (i.e. "type=ratio" in \code{\link[DESeq2]{estimateSizeFactors}}), "iterate" (i.e. "type=iterate" in \code{\link[DESeq2]{estimateSizeFactors}}), "VST" (i.e. \code{\link[DESeq2]{varianceStabilizingTransformation}}), \code{\link[DESeq2]{rlog}} from DESeq2 (Love, Huber, and Anders 2014). If "none", no normalisation is applied. Default is "TMM".
+#' @param norm.fun One of the normalisation functions: "CNF", "ESF", "VST", "rlog", and "none". Specifically, "CNF" stands for \code{\link[edgeR]{calcNormFactors}} from edgeR (McCarthy et al. 2012), and "EST", "VST", and "rlog" is equivalent to \code{\link[DESeq2]{estimateSizeFactors}}, \code{\link[DESeq2]{varianceStabilizingTransformation}}, and \code{\link[DESeq2]{rlog}} from DESeq2 respectively (Love, Huber, and Anders 2014). If "none", no normalisation is applied. Default is "CNF". The parameters of each normalisation function are specified through "parameter.list".
 
-#' @inheritParams DESeq2::estimateSizeFactors 
-#' @inheritParams DESeq2::estimateDispersions
-#' @inheritParams DESeq2::varianceStabilizingTransformation
+#' @param parameter.list A list of parameters for each normalisation function specified in "norm.fun". Default is NULL and it means list(method='TMM'), list(type='ratio'), list(fitType='parametric', blind=TRUE), list(fitType='parametric', blind=TRUE) is internally set for "CNF", "ESF", "VST", "rlog" respectively. Note the name of each element in the list is required. E.g. list(method='TMM') is expected while list('TMM') causes errors. \cr Complete parameters of CNF: https://www.rdocumentation.org/packages/edgeR/versions/3.14.0/topics/calcNormFactors \cr Complete parameters of ESF: https://www.rdocumentation.org/packages/DESeq2/versions/1.12.3/topics/estimateSizeFactors \cr Complete parameters of VST: https://www.rdocumentation.org/packages/DESeq2/versions/1.12.3/topics/varianceStabilizingTransformation \cr Complete parameters of rlog: https://www.rdocumentation.org/packages/DESeq2/versions/1.12.3/topics/rlog
 
 #' @param data.trans One of "log2", "exp2", and "none", corresponding to transform the count matrix by log2, 2-based exponent, and no transformation respecitvely. Default is "none".
 
@@ -36,10 +34,10 @@
 #' rse.hum <- SummarizedExperiment(assay=df, colData=target.hum, rowData=NULL)
 #' 
 #' # The count matrix is normalised with estimateSizeFactors (type=‘ratio’).
-#' se.nor.hum <- norm_data(se=rse.hum, method.norm='ratio', data.trans='log2')
+#' se.nor.hum <- norm_data(data=rse.hum, norm.fun='CNF', data.trans='log2')
 
 
-#' @author Jianhai Zhang \email{jzhan067@@ucr.edu; zhang.jianhai@@hotmail.com} \cr Dr. Thomas Girke \email{thomas.girke@@ucr.edu}
+#' @author Jianhai Zhang \email{jzhan067@@ucr.edu; zhang.jianhai@@hotmail.com}
 
 #' @references
 #' SummarizedExperiment: SummarizedExperiment container. R package version 1.10.1 \cr R Core Team (2018). R: A language and environment for statistical computing. R Foundation for Statistical Computing, Vienna, Austria. URL https://www.R-project.org/
@@ -56,11 +54,21 @@
 #' @importFrom DESeq2 DESeqDataSetFromMatrix estimateSizeFactors counts varianceStabilizingTransformation rlog
 
 
-norm_data <- function(se, method.norm='TMM', fitType='parametric', blind=TRUE, data.trans='none') { 
+norm_data <- function(data, norm.fun='CNF', parameter.list=NULL, data.trans='none') { 
   
-  fit.type <- NULL
-  expr <- SummarizedExperiment::assay(se); if (is.null(method.norm)) method.norm <- 'no'
-  if (!(method.norm %in% c('TMM', 'ratio', 'iterate', 'VST', 'rlog'))) { 
+  if (is(data, 'data.frame')|is(data, 'matrix')) {
+
+    data <- as.data.frame(data); rna <- rownames(data); cna <- colnames(data) 
+    na <- vapply(seq_len(ncol(data)), function(i) { tryCatch({ as.numeric(data[, i]) }, warning=function(w) { return(rep(NA, nrow(data)))
+    }, error=function(e) { stop("Please make sure input data are numeric!") }) }, FUN.VALUE=numeric(nrow(data)) )
+    na <- as.data.frame(na); rownames(na) <- rna
+    idx <- colSums(apply(na, 2, is.na))!=0
+    ann <- data[idx]; expr <- na[!idx]; colnames(expr) <- cna[!idx]
+
+  } else if (is(data, 'SummarizedExperiment')) { expr <- SummarizedExperiment::assay(data) }
+  
+  if (is.null(norm.fun)) norm.fun <- 'no'
+  if (!(norm.fun %in% c("CNF", "ESF", "VST", "rlog"))) { 
 
     if (data.trans=='log2') { 
 
@@ -71,41 +79,56 @@ norm_data <- function(se, method.norm='TMM', fitType='parametric', blind=TRUE, d
   
   if (min(expr)>=0 & all(round(expr)==expr)) {
 
-    if (method.norm=='TMM') {
+    if (norm.fun=='CNF') {
 
-      cat('Normalising:', method.norm, '\n')
-      y <- DGEList(counts=expr); y <- calcNormFactors(y, method=method.norm)
+      na <- names(parameter.list); if (!('method' %in% na)|is.null(parameter.list)) {
+
+        parameter.list <- c(list(method='TMM'), parameter.list)
+
+      }
+      cat('Normalising:', norm.fun, '\n'); print(unlist(parameter.list))
+      y <- DGEList(counts=expr); 
+      y <- do.call(calcNormFactors, c(list(object=y), parameter.list))
       expr <- cpm(y, normalized.lib.sizes=TRUE, log=(data.trans=='log2'))
 
     } else dds <- DESeqDataSetFromMatrix(countData=expr, colData=data.frame(col.dat=colnames(expr)), design=~1) # "design" does not affect "rlog" and "varianceStabilizingTransformation".
 
-    if (method.norm %in% c('ratio', 'iterate')) {
+    if (norm.fun=='ESF') {
 
-      cat('Normalising:', method.norm, '\n') 
-      # Estimates the size factors using the "median ratio method". 
-      dds <- estimateSizeFactors(dds, type=method.norm)
+      na <- names(parameter.list); if (!('type' %in% na)|is.null(parameter.list)) { parameter.list <- c(list(type='ratio'), parameter.list) }
+      cat('Normalising:', norm.fun, '\n'); print(unlist(parameter.list))
+      dds <- do.call(estimateSizeFactors, c(list(object=dds), parameter.list))
       expr <- counts(dds, normalized=TRUE)
       if (data.trans=='log2') expr <- log2(expr+1)
 
-    } else if (method.norm=='VST') { 
+    } else if (norm.fun=='VST') { 
     
       # Apply A Variance Stabilizing Transformation (VST) To The Count Data.
-      cat('Normalising:', method.norm, '\n')
+      if (is.null(parameter.list)) parameter.list <- list(fitType='parametric', blind=TRUE)
+      na <- names(parameter.list); if (!('fitType' %in% na)) { parameter.list <- c(list(fitType='parametric'), parameter.list) }
+      if (!('blind' %in% na)) { parameter.list <- c(list(blind=TRUE), parameter.list) }    
+      cat('Normalising:', norm.fun, '\n'); print(unlist(parameter.list))
       # Returns log2-scale data. 
-      vsd <- varianceStabilizingTransformation(dds, blind=blind, fitType=fit.type); expr <- SummarizedExperiment::assay(vsd)
+      vsd <- do.call(varianceStabilizingTransformation, c(list(object=dds), parameter.list))
+      expr <- SummarizedExperiment::assay(vsd)
       if (data.trans=='exp2') expr <- 2^expr
 
-    } else if (method.norm=='rlog') { 
+    } else if (norm.fun=='rlog') { 
   
-      cat('Normalising:', method.norm, '\n') 
+      if (is.null(parameter.list)) parameter.list <- list(fitType='parametric', blind=TRUE)
+      na <- names(parameter.list); if (!('fitType' %in% na)) { parameter.list <- c(list(fitType='parametric'), parameter.list) }
+      if (!('blind' %in% na)) { parameter.list <- c(list(blind=TRUE), parameter.list) }    
+      cat('Normalising:', norm.fun, '\n'); print(unlist(parameter.list))
       # Apply A 'Regularized Log' Transformation. 
-      rld <- rlog(dds, blind=blind, fitType=fit.type); expr <- SummarizedExperiment::assay(rld) 
+      rld <- do.call(rlog, c(list(object=dds), parameter.list))
+      expr <- SummarizedExperiment::assay(rld) 
       if (data.trans=='exp2') expr <- 2^expr  
 
     }
 
   } else cat('Nornalisation only applies to data matrix with all non-negative values! \n')
-  SummarizedExperiment::assay(se) <- expr; return(se)
+
+  if (is(data, 'data.frame')|is(data, 'matrix')) { return(cbind(expr, ann)) } else if (is(data, 'SummarizedExperiment')) { SummarizedExperiment::assay(data) <- expr; return(data) }
 
 } 
 

@@ -6,7 +6,7 @@
 \usage{
 matrix_hm(
   geneID,
-  se,
+  data,
   adj.mod,
   ds,
   scale,
@@ -28,7 +28,7 @@ matrix_hm(
 \arguments{
 \item{geneID}{A gene ID from the expression data matrix.}
 
-\item{se}{A "SummarizedExperiment" object containing the processed data matrix and metadata returned by the function \code{\link{filter_data}}. In the data matrix, rows are gene IDs and columns are samples/conditions.}
+\item{data}{A "SummarizedExperiment" object containing the processed data matrix and metadata returned by the function \code{\link{filter_data}}. In the data matrix, rows are gene IDs and columns are samples/conditions.}
 
 \item{adj.mod}{The list of "adjacency matrix" and "module" definition retured by the function \code{\link{adj_mod}}.}
 
@@ -88,20 +88,20 @@ df <- assay(rse.hum); df[1:2, 1:3]
 rse.hum <- SummarizedExperiment(assay=df, colData=target.hum, rowData=NULL)
 
 # The count matrix is normalised with estimateSizeFactors (type=‘ratio’).
-se.nor.hum <- norm_data(se=rse.hum, method.norm='ratio', data.trans='log2')
+se.nor.hum <- norm_data(data=rse.hum, method.norm='CNF', data.trans='log2')
 
 # Average replicates of concatenated sample__condition.
-se.aggr.hum <- aggr_rep(se=se.nor.hum, sam.factor='organism_part', con.factor='disease', aggr='mean')
+se.aggr.hum <- aggr_rep(data=se.nor.hum, sam.factor='organism_part', con.factor='disease', aggr='mean')
 assay(se.aggr.hum)[49939:49942, ] # The concatenated tissue__conditions are the column names of the output data matrix.
 
 # Genes with low expression level and low variantion are always filtered. 
-se.fil.hum <- filter_data(se=se.aggr.hum, sam.factor='organism_part', con.factor='disease', pOA=c(0.01, 5), CV=c(0.3, 100), dir=NULL)
+se.fil.hum <- filter_data(data=se.aggr.hum, sam.factor='organism_part', con.factor='disease', pOA=c(0.01, 5), CV=c(0.3, 100), dir=NULL)
 # Detect modules. 
-adj.mod <- adj_mod(se=se.fil.hum, type="signed", minSize=15, dir=NULL)
+adj.mod <- adj_mod(data=se.fil.hum, type="signed", minSize=15, dir=NULL)
 # The first column is ds=2 while the second is ds=3. The numbers in each column are module labels with "0" meaning genes not assigned to any modules.
 adj.mod[['mod']][1:3, ]
 # Plot matrix heatmap on gene ENSG00000008196 with ds='3'. Set "static=TRUE" to launch the interactive mode. 
-matrix_hm(geneID="ENSG00000008196", se=se.fil.hum, adj.mod=adj.mod, ds="3", scale="no", angleCol=80, angleRow=35, cexRow=0.8, cexCol=0.8, margin=c(10, 6), static=TRUE, arg.lis1=list(offsetRow=0.1, offsetCol=0.1))
+matrix_hm(geneID="ENSG00000008196", data=se.fil.hum, adj.mod=adj.mod, ds="3", scale="no", angleCol=80, angleRow=35, cexRow=0.8, cexCol=0.8, margin=c(10, 6), static=TRUE, arg.lis1=list(offsetRow=0.1, offsetCol=0.1))
 }
 \references{
 Martin Morgan, Valerie Obenchain, Jim Hester and Hervé Pagès (2018). SummarizedExperiment: SummarizedExperiment container. R package version 1.10.1 \cr Andrie de Vries and Brian D. Ripley (2016). ggdendro: Create Dendrograms and Tree Diagrams Using 'ggplot2'. R package version 0.1-20. https://CRAN.R-project.org/package=ggdendro \cr H. Wickham. ggplot2: Elegant Graphics for Data Analysis. Springer-Verlag New York, 2016. \cr Carson Sievert (2018) plotly for R. https://plotly-book.cpsievert.me \cr Langfelder P and Horvath S, WGCNA: an R package for weighted correlation network analysis. BMC Bioinformatics 2008, 9:559 doi:10.1186/1471-2105-9-559 \cr R Core Team (2018). R: A language and environment for statistical computing. R Foundation for Statistical Computing, Vienna, Austria. URL https://www.R-project.org/ \cr Gregory R. Warnes, Ben Bolker, Lodewijk Bonebakker, Robert Gentleman, Wolfgang Huber Andy Liaw, Thomas Lumley, Martin Maechler, Arni Magnusson, Steffen Moeller, Marc Schwartz and Bill Venables (2019). gplots: Various R Programming Tools for Plotting Data. R package version 3.0.1.1.  https://CRAN.R-project.org/package=gplots \cr Hadley Wickham (2007). Reshaping Data with the reshape Package. Journal of Statistical Software, 21(12), 1-20. URL http://www.jstatsoft.org/v21/i12/ 

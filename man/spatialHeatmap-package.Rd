@@ -158,7 +158,7 @@ df <- assay(rse.hum); df[1:2, 1:3]
 rse.hum <- SummarizedExperiment(assay=df, colData=target.hum, rowData=NULL)
  
 # The count matrix is normalised with estimateSizeFactors (type=‘ratio’).
-se.nor.hum <- norm_data(se=rse.hum, method.norm='ratio', data.trans='log2')
+se.nor.hum <- norm_data(se=rse.hum, method.norm='CNF', data.trans='log2')
 
 # Average replicates of concatenated sample__condition.
 se.aggr.hum <- aggr_rep(se=se.nor.hum, sam.factor='organism_part', con.factor='disease', aggr='mean')

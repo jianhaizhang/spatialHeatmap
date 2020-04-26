@@ -302,7 +302,7 @@ features in the aSVG image (here path `svg.hum`).
 
 ```{r eval=FALSE, echo=TRUE, warnings=FALSE} 
 
-spatial_hm(svg.path=svg.hum, se=my_vec, col.com=c("yellow", "blue", "purple"))
+spatial_hm(svg.path=svg.hum, data=my_vec, col.com=c("yellow", "blue", "purple"))
 
 ```
 
@@ -447,11 +447,11 @@ are retained.
 ```{r eval=TRUE, echo=TRUE, warnings=FALSE }
 
 # Normalise.
-se.nor.hum <- norm_data(se=rse.hum, method.norm='ratio', data.trans='log2')
+se.nor.hum <- norm_data(data=rse.hum, norm.fun='CNF', data.trans='log2')
 # Aggregate replicates.
-se.aggr.hum <- aggr_rep(se=se.nor.hum, sam.factor='organism_part', con.factor='disease', aggr='mean')
+se.aggr.hum <- aggr_rep(data=se.nor.hum, sam.factor='organism_part', con.factor='disease', aggr='mean')
 # Filter genes with low variance and low counts.
-se.fil.hum <- filter_data(se=se.aggr.hum, sam.factor='organism_part', con.factor='disease', pOA=c(0.01, 5), CV=c(0.3, 100), dir=NULL)
+se.fil.hum <- filter_data(data=se.aggr.hum, sam.factor='organism_part', con.factor='disease', pOA=c(0.01, 5), CV=c(0.3, 100), dir=NULL)
 
 ```
 
@@ -481,7 +481,7 @@ Plot spatial heatmaps.
 <a name="brain_shm"></a>
 ```{r eval=TRUE, echo=TRUE, warnings=FALSE, fig.align="center", fig.cap=("Figure 1 Example of plotting EBI data matrix on the SVG template. Cerebellum and frontal cortex are colored, since they are the only 2 identical tissues between the SVG image and the data matrix."), out.width="100%" }
 
-spatial_hm(svg.path=svg.hum, se=se.fil.hum, ID=c('ENSG00000268433'), col.com=c("yellow", "blue", "purple"), width=1, height=0.4, legend.r=0.5, sub.title.size=11, layout="gene", ncol=2, tis.trans=NULL, sam.legend='identical', line.size=0.2, line.color='grey70', legend.position=c(0.5, -0.15), legend.nrow=1)
+spatial_hm(svg.path=svg.hum, data=se.fil.hum, ID=c('ENSG00000268433'), col.com=c("yellow", "blue", "purple"), width=1, height=0.4, legend.r=0.5, sub.title.size=11, layout="gene", ncol=2, tis.trans=NULL, sam.legend='identical', line.size=0.2, line.color='grey70', legend.position=c(0.5, -0.15), legend.nrow=1)
 
 ```
 
@@ -515,11 +515,11 @@ Pro-process the raw count matrix: normalise, aggregate, filter. Genes with expre
 ```{r eval=TRUE, echo=TRUE, warnings=FALSE }
 
 # Normalise.
-se.nor.mus <- norm_data(se=rse.mus, method.norm='ratio', data.trans='log2')
+se.nor.mus <- norm_data(data=rse.mus, norm.fun='CNF', data.trans='log2')
 # Aggregate replicates.
-se.aggr.mus <- aggr_rep(se=se.nor.mus, sam.factor='organism_part', con.factor='strain', aggr='mean')
+se.aggr.mus <- aggr_rep(data=se.nor.mus, sam.factor='organism_part', con.factor='strain', aggr='mean')
 # Filter genes with low variance and low counts.
-se.fil.mus <- filter_data(se=se.aggr.mus, sam.factor='organism_part', con.factor='strain', pOA=c(0.01, 5), CV=c(0.6, 100), dir=NULL)
+se.fil.mus <- filter_data(data=se.aggr.mus, sam.factor='organism_part', con.factor='strain', pOA=c(0.01, 5), CV=c(0.6, 100), dir=NULL)
 
 ```
 
@@ -536,7 +536,7 @@ Plot spatial heatmaps.
 
 ```{r eval=TRUE, echo=FALSE, warnings=FALSE, fig.align="center", fig.cap=("Figure 2 Mouse organ spatial heatmap. This is a multiple-layer image and skeletal.muscle is set transparent to exposed lung and heart."), out.width="100%" }
 
-spatial_hm(svg.path=svg.mus, se=se.fil.mus, ID='ENSMUSG00000000263', col.com=c("yellow", "blue", "purple"), width=1, height=0.5, legend.r=0.6, sub.title.size=7, layout="gene", ncol=3, tis.trans='skeletal.muscle', sam.legend='identical', legend.key.size=0.3, legend.nrow=4, legend.position=c(0.5, -0.15))
+spatial_hm(svg.path=svg.mus, data=se.fil.mus, ID='ENSMUSG00000000263', col.com=c("yellow", "blue", "purple"), width=1, height=0.5, legend.r=0.6, sub.title.size=7, layout="gene", ncol=3, tis.trans='skeletal.muscle', sam.legend='identical', legend.key.size=0.3, legend.nrow=4, legend.position=c(0.5, -0.15))
 
 ```
 
@@ -580,11 +580,11 @@ Pro-process data matrix: normalise, aggregate, filter. Genes with expression val
 ```{r eval=TRUE, echo=TRUE, warnings=FALSE }
 
 # Normalise.
-se.nor.chk <- norm_data(se=rse.chk, method.norm='ratio', data.trans='log2')
+se.nor.chk <- norm_data(data=rse.chk, norm.fun='CNF', data.trans='log2')
 # Aggregate replicates. 
-se.aggr.chk <- aggr_rep(se=se.nor.chk, sam.factor='organism_part', con.factor='age', aggr='mean')
+se.aggr.chk <- aggr_rep(data=se.nor.chk, sam.factor='organism_part', con.factor='age', aggr='mean')
 # Filter genes with low variance and low counts.
-se.fil.chk <- filter_data(se=se.aggr.chk, sam.factor='organism_part', con.factor='age', pOA=c(0.01, 5), CV=c(0.6, 100), dir=NULL)
+se.fil.chk <- filter_data(data=se.aggr.chk, sam.factor='organism_part', con.factor='age', pOA=c(0.01, 5), CV=c(0.6, 100), dir=NULL)
 
 ```
 
@@ -601,7 +601,7 @@ Plot spatial heatmaps.
 <a name="chk_shm"></a>
 ```{r eval=TRUE, echo=FALSE, warnings=FALSE, fig.align="center", fig.cap=("Figure 3 Example of plotting chicken organ spatial heatmaps. Liver in day10 is not plotted since this tissue in day10 in not available in the data matrix."), out.width="100%" }
 
-spatial_hm(svg.path=svg.chk, se=se.fil.chk, ID='ENSGALG00000006346', col.com=c("yellow", "blue", "purple"), bar.width=0.7, width=1, height=0.9, legend.r=0.4, sub.title.size=7, layout="gene", ncol=3, legend.key.size=0.4, legend.label.size=7.5, legend.position=c(0.5, -0.15), legend.nrow=2)
+spatial_hm(svg.path=svg.chk, data=se.fil.chk, ID='ENSGALG00000006346', col.com=c("yellow", "blue", "purple"), bar.width=0.7, width=1, height=0.9, legend.r=0.4, sub.title.size=7, layout="gene", ncol=3, legend.key.size=0.4, legend.label.size=7.5, legend.position=c(0.5, -0.15), legend.nrow=2)
 
 ```
 
@@ -644,9 +644,9 @@ The dataset GSE14502 is already normalised by RMA [@affy], so the pro-processing
 ```{r eval=TRUE, echo=TRUE, warnings=FALSE }
 
 # Aggregate replicates. 
-se.aggr.sh <- aggr_rep(se=se.sh, sam.factor='samples', con.factor='conditions', aggr='mean')
+se.aggr.sh <- aggr_rep(data=se.sh, sam.factor='samples', con.factor='conditions', aggr='mean')
 # Filter genes with low variance and low intensity.
-se.fil.sh <- filter_data(se=se.aggr.sh, sam.factor='samples', con.factor='conditions', pOA=c(0.03, 6), CV=c(0.30, 100), dir=NULL)
+se.fil.sh <- filter_data(data=se.aggr.sh, sam.factor='samples', con.factor='conditions', pOA=c(0.03, 6), CV=c(0.30, 100), dir=NULL)
 
 ```
 
@@ -663,7 +663,7 @@ Plot spatial heatmaps.
 <a name="sh_shm"></a>
 ```{r eval=TRUE, echo=FALSE, warnings=FALSE, fig.align="center", fig.cap=('Figure 4 Spatial heatmaps of Arabidopsis shoot. Pre-defined tissue regions are colored by the expression profile of the target gene. The promoter pGL2, pRBCS, pCER5, pSultr2.2, pSUC2, pKAT1 label shoot trichomes, shoot photosynthetic cell, cotyledon and leaf epidermis, shootbundle sheath, shoot phloem companion cells, Cotyledon and leaf guard cells, respectively.'), out.width="100%"}
 
-spatial_hm(svg.path=svg.sh, se=se.fil.sh, ID="HRE2", col.com=c('purple', 'cyan', "brown"), width=1, height=0.5, layout="gene", ncol=2, legend.nrow=3, legend.r=0.8, legend.key.size=0.3, legend.label.size=7, legend.position=c(0.5, -0.07))
+spatial_hm(svg.path=svg.sh, data=se.fil.sh, ID="HRE2", col.com=c('purple', 'cyan', "brown"), width=1, height=0.5, layout="gene", ncol=2, legend.nrow=3, legend.r=0.8, legend.key.size=0.3, legend.label.size=7, legend.position=c(0.5, -0.07))
 
 ```   
 
@@ -682,7 +682,7 @@ The function `adj_mod` returns a list containing an adjacency matrix and a data 
 
 ```{r eval=TRUE, echo=TRUE, warnings=FALSE, results=FALSE}
 
-adj.mod <- adj_mod(se=se.fil.sh, type="signed", minSize=15, dir=NULL)
+adj.mod <- adj_mod(data=se.fil.sh, type="signed", minSize=15, dir=NULL)
 
 ```   
 
@@ -707,7 +707,7 @@ The matrix heatmap is implemented in function `matrix_hm` with 2 modes provided:
 
 ```{r eval=TRUE, echo=TRUE, warnings=FALSE, fig.cap=("Figure 5 Matrix Heatmap. Rows are genes and columns are samples. The input gene is tagged by 2 black lines."), out.width='100%'}
 
-matrix_hm(geneID="HRE2", se=se.fil.sh, adj.mod=adj.mod, ds="3", scale="no", angleCol=80, angleRow=35, cexRow=0.8, cexCol=0.8, margin=c(10, 6), static=TRUE, arg.lis1=list(offsetRow=0.1, offsetCol=0.1))
+matrix_hm(geneID="HRE2", data=se.fil.sh, adj.mod=adj.mod, ds="3", scale="no", angleCol=80, angleRow=35, cexRow=0.8, cexCol=0.8, margin=c(10, 6), static=TRUE, arg.lis1=list(offsetRow=0.1, offsetCol=0.1))
 
 ```   
 
@@ -721,7 +721,7 @@ Setting `static=TRUE` launches the static network. In Figure 6 Nodes are genes a
 
 ```{r eval=TRUE, echo=TRUE, warnings=FALSE, fig.cap=("Figure 6 Static network. Node size denotes gene connectivity while edge thickness stands for co-expression similarity.") }
 
-network(geneID="HRE2", se=se.fil.sh, ann=NULL, adj.mod=adj.mod, ds="3", adj.min=0.75, con.min=0, vertex.label.cex=1.2, vertex.cex=2, static=TRUE)
+network(geneID="HRE2", data=se.fil.sh, ann=NULL, adj.mod=adj.mod, ds="3", adj.min=0.75, con.min=0, vertex.label.cex=1.2, vertex.cex=2, static=TRUE)
 
 ```   
 
@@ -732,7 +732,7 @@ If gene annotation is available in "rowData" slot and provided to 'ann', the ann
 
 ```{r eval=FALSE, echo=TRUE, warnings=FALSE}
 
-network(geneID="HRE2", se=se.fil.sh, ann='Target.Description', adj.mod=adj.mod, adj.min=0.75, con.min=0, vertex.label.cex=1.2, vertex.cex=2, static=FALSE)
+network(geneID="HRE2", data=se.fil.sh, ann='Target.Description', adj.mod=adj.mod, adj.min=0.75, con.min=0, vertex.label.cex=1.2, vertex.cex=2, static=FALSE)
 
 ```
 
@@ -761,7 +761,7 @@ For example, in `filter_data`, setting `dir='./'` (current working directory) wi
 
 ```{r eval=FALSE, echo=TRUE, warnings=FALSE}
 
-se.fil.sh <- filter_data(se=se.aggr.sh, ann="Target.Description", sam.factor='samples', con.factor='conditions', pOA=c(0.03, 6), CV=c(0.30, 100), dir='./')
+se.fil.sh <- filter_data(data=se.aggr.sh, ann="Target.Description", sam.factor='samples', con.factor='conditions', pOA=c(0.03, 6), CV=c(0.30, 100), dir='./')
 
 ```
 
@@ -869,7 +869,7 @@ It is optional to pre-process the data matrix for plotting spatial heatmaps as l
 
 ```{r eval=FALSE, echo=TRUE, warnings=FALSE }
 
-se.nor.hum <- norm_data(se=rse.hum, method.norm='ratio', data.trans='log2')
+se.nor.hum <- norm_data(data=rse.hum, norm.fun='CNF', data.trans='log2')
 
 ```
 
@@ -877,7 +877,7 @@ To aggregate replicates, the sample (organism_part) and condition (disease) colu
 
 ```{r eval=FALSE, echo=TRUE, warnings=FALSE }
 
-se.aggr.hum <- aggr_rep(se=se.nor.hum, sam.factor='organism_part', con.factor='disease', aggr='mean')
+se.aggr.hum <- aggr_rep(data=se.nor.hum, sam.factor='organism_part', con.factor='disease', aggr='mean')
 
 ```
 
@@ -899,7 +899,7 @@ Genes with low expression level and low variantion are always filtered. In this 
 
 ```{r eval=FALSE, echo=TRUE, warnings=FALSE }
 
-se.fil.hum <- filter_data(se=se.aggr.hum, sam.factor='organism_part', con.factor='disease', pOA=c(0.01, 5), CV=c(0.3, 100), dir=NULL)
+se.fil.hum <- filter_data(data=se.aggr.hum, sam.factor='organism_part', con.factor='disease', pOA=c(0.01, 5), CV=c(0.3, 100), dir=NULL)
 
 ```
 
@@ -946,7 +946,7 @@ With the formatted data matrix and SVG image, the spatial heatmap is plotted wit
 
 ```{r eval=FALSE, echo=TRUE, warnings=FALSE, fig.align="center", fig.cap=("Figure 3 Example of plotting EBI data on the SVG template. Cerebellum and frontal cortex are colored, since they are the only 2 common tissues between the SVG and the expression matrix."), out.width="100%" }
 
-spatial_hm(svg.path=svg.hum, se=se.fil.hum, ID='ENSG00000268433', col.com=c("yellow", "blue", "purple"), width=1, height=0.5, sub.title.size=11, layout="gene", ncol=2, tis.trans=NULL, sam.legend='identical', line.size=0.2, line.color='grey70', legend.position=c(0.5, -0.15), legend.nrow=1)
+spatial_hm(svg.path=svg.hum, data=se.fil.hum, ID='ENSG00000268433', col.com=c("yellow", "blue", "purple"), width=1, height=0.5, sub.title.size=11, layout="gene", ncol=2, tis.trans=NULL, sam.legend='identical', line.size=0.2, line.color='grey70', legend.position=c(0.5, -0.15), legend.nrow=1)
 
 ```
 

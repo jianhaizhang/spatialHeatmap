@@ -3,7 +3,7 @@
 #' This function displays the input gene in the context of corresponding gene network module, where the rows and columns are sorted by hierarchical clustering dendrograms and the row of input gene is tagged by two lines. The matrix heatmap can be dispalyed in static or a web-browser based interactive mode. If the latter, users can zoom in and out by drawing a rectangle and by double clicking the image, respectively. Users can scale the data matrix by gene or sample. The same module can also be displayed in form of a network through the \code{\link{network}} function.
 
 #' @param geneID A gene ID from the expression data matrix. 
-#' @param se A "SummarizedExperiment" object containing the processed data matrix and metadata returned by the function \code{\link{filter_data}}. In the data matrix, rows are gene IDs and columns are samples/conditions.
+#' @param data A "SummarizedExperiment" object containing the processed data matrix and metadata returned by the function \code{\link{filter_data}}. In the data matrix, rows are gene IDs and columns are samples/conditions.
 #' @param adj.mod The list of "adjacency matrix" and "module" definition retured by the function \code{\link{adj_mod}}.
 #' @param ds The module identification sensitivity ds, either 2 or 3. See function \code{\link{adj_mod}} for details.
 #' @param scale "row", "column", or "no", meaing scale the data matrix by row, column, or no scale. 
@@ -42,22 +42,22 @@
 #' rse.hum <- SummarizedExperiment(assay=df, colData=target.hum, rowData=NULL)
 #' 
 #' # The count matrix is normalised with estimateSizeFactors (type=‘ratio’).
-#' se.nor.hum <- norm_data(se=rse.hum, method.norm='ratio', data.trans='log2')
+#' se.nor.hum <- norm_data(data=rse.hum, method.norm='CNF', data.trans='log2')
 #'
 #' # Average replicates of concatenated sample__condition.
-#' se.aggr.hum <- aggr_rep(se=se.nor.hum, sam.factor='organism_part', con.factor='disease', aggr='mean')
+#' se.aggr.hum <- aggr_rep(data=se.nor.hum, sam.factor='organism_part', con.factor='disease', aggr='mean')
 #' assay(se.aggr.hum)[49939:49942, ] # The concatenated tissue__conditions are the column names of the output data matrix.
 #' 
 #' # Genes with low expression level and low variantion are always filtered. 
-#' se.fil.hum <- filter_data(se=se.aggr.hum, sam.factor='organism_part', con.factor='disease', pOA=c(0.01, 5), CV=c(0.3, 100), dir=NULL)
+#' se.fil.hum <- filter_data(data=se.aggr.hum, sam.factor='organism_part', con.factor='disease', pOA=c(0.01, 5), CV=c(0.3, 100), dir=NULL)
 
 #' # Detect modules. 
-#' adj.mod <- adj_mod(se=se.fil.hum, type="signed", minSize=15, dir=NULL)
+#' adj.mod <- adj_mod(data=se.fil.hum, type="signed", minSize=15, dir=NULL)
 #' # The first column is ds=2 while the second is ds=3. The numbers in each column are module labels with "0" meaning genes not assigned to any modules.
 #' adj.mod[['mod']][1:3, ]
 
 #' # Plot matrix heatmap on gene ENSG00000008196 with ds='3'. Set "static=TRUE" to launch the interactive mode. 
-#' matrix_hm(geneID="ENSG00000008196", se=se.fil.hum, adj.mod=adj.mod, ds="3", scale="no", angleCol=80, angleRow=35, cexRow=0.8, cexCol=0.8, margin=c(10, 6), static=TRUE, arg.lis1=list(offsetRow=0.1, offsetCol=0.1))
+#' matrix_hm(geneID="ENSG00000008196", data=se.fil.hum, adj.mod=adj.mod, ds="3", scale="no", angleCol=80, angleRow=35, cexRow=0.8, cexCol=0.8, margin=c(10, 6), static=TRUE, arg.lis1=list(offsetRow=0.1, offsetCol=0.1))
 
 #' @author Jianhai Zhang \email{jzhan067@@ucr.edu; zhang.jianhai@@hotmail.com} \cr Dr. Thomas Girke \email{thomas.girke@@ucr.edu}
 #' @references
@@ -77,16 +77,27 @@
 #' @importFrom graphics image mtext par plot title
 #' @importFrom grDevices dev.off png
 
-matrix_hm <- function(geneID, se, adj.mod, ds, scale, col=c('yellow', 'blue'), main=NULL, title.size=10, cexCol=1, cexRow=1, angleCol=45, angleRow=45, sepcolor="black", sep.width=0.02, static=TRUE, margin=c(10, 10), arg.lis1=list(), arg.lis2=list()) {
+matrix_hm <- function(geneID, data, adj.mod, ds, scale, col=c('yellow', 'blue'), main=NULL, title.size=10, cexCol=1, cexRow=1, angleCol=45, angleRow=45, sepcolor="black", sep.width=0.02, static=TRUE, margin=c(10, 10), arg.lis1=list(), arg.lis2=list()) {
 
-  mods <- adj.mod[["mod"]]; ds <- as.character(ds); gene <- assay(se)
+  options(stringsAsFactors=FALSE)
+  if (is(data, 'data.frame')|is(data, 'matrix')) {
+
+    data <- as.data.frame(data); rna <- rownames(data); cna <- colnames(data) 
+    na <- vapply(seq_len(ncol(data)), function(i) { tryCatch({ as.numeric(data[, i]) }, warning=function(w) { return(rep(NA, nrow(data)))
+    }, error=function(e) { stop("Please make sure input data are numeric!") }) }, FUN.VALUE=numeric(nrow(se)) )
+    na <- as.data.frame(na); rownames(na) <- rna
+    idx <- colSums(apply(na, 2, is.na))!=0
+    gene <- na[!idx]; colnames(gene) <- cna[!idx]
+
+  } else if (is(data, 'SummarizedExperiment')) { gene <- assay(data) }
+  mods <- adj.mod[["mod"]]; ds <- as.character(ds)
   lab <- mods[, ds][rownames(gene)==geneID]
   if (lab=="0") stop("The input gene is not assigned to any module. Please input a different one.")
   mod <- as.matrix(gene[mods[, ds]==lab, ])
   
   if (static==TRUE) {
 
-    tmp <- system.file("extdata/shinyApp/tmp", package="spatialHeatmap"); pa <- paste0(tmp, '/delete_hm.png')
+    tmp <- tempdir(); pa <- paste0(tmp, '/delete_hm.png')
     png(pa); hm <- heatmap.2(x=mod, scale=scale, main=main, trace="none"); dev.off()
     do.call(file.remove, list(pa))
     # Logical matrix with the same dimensions as module matrix.

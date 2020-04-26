@@ -31,10 +31,10 @@
 #' rse.hum <- SummarizedExperiment(assay=df, colData=target.hum, rowData=NULL)
 #' 
 #' # The count matrix is normalised with estimateSizeFactors (type=‘ratio’).
-#' se.nor.hum <- norm_data(se=rse.hum, method.norm='ratio', data.trans='log2')
+#' se.nor.hum <- norm_data(data=rse.hum, method.norm='CNF', data.trans='log2')
 #'
 #' # Average replicates of concatenated sample__condition.
-#' se.aggr.hum <- aggr_rep(se=se.nor.hum, sam.factor='organism_part', con.factor='disease', aggr='mean')
+#' se.aggr.hum <- aggr_rep(data=se.nor.hum, sam.factor='organism_part', con.factor='disease', aggr='mean')
 #' assay(se.aggr.hum)[49939:49942, ] # The concatenated tissue__conditions are the column names of the output data matrix.
 
 #' @author Jianhai Zhang \email{jzhan067@@ucr.edu; zhang.jianhai@@hotmail.com} \cr Dr. Thomas Girke \email{thomas.girke@@ucr.edu}
@@ -49,23 +49,41 @@
 #' @export aggr_rep
 #' @importFrom SummarizedExperiment assay rowData colData SummarizedExperiment
 
-aggr_rep <- function(se, sam.factor, con.factor, aggr='mean') {
+aggr_rep <- function(data, sam.factor, con.factor, aggr='mean') {
 
-  mat <- assay(se); col.meta <- as.data.frame(colData(se))
-  fct <- colnames(mat) <- paste0(make.names(col.meta[, sam.factor]), '__', make.names(col.meta[, con.factor]))
+  options(stringsAsFactors=FALSE)
+  if (is(data, 'data.frame')|is(data, 'matrix')) {
+
+    data <- as.data.frame(data); rna <- rownames(data); cna <- colnames(data) 
+    na <- vapply(seq_len(ncol(data)), function(i) { tryCatch({ as.numeric(data[, i]) }, warning=function(w) { return(rep(NA, nrow(data)))
+    }, error=function(e) { stop("Please make sure input data are numeric!") }) }, FUN.VALUE=numeric(nrow(data)) )
+    na <- as.data.frame(na); rownames(na) <- rna
+    idx <- colSums(apply(na, 2, is.na))!=0
+    ann <- data[idx]; mat <- na[!idx]; fct <- colnames(mat) <- cna[!idx]
+
+  } else if (is(data, 'SummarizedExperiment')) {
+
+    mat <- assay(data); col.meta <- as.data.frame(colData(data))
+    # Factors teated by paste0/make.names are vecters.
+    if (!is.null(sam.factor) & !is.null(con.factor)) { fct <- colnames(mat) <- paste0(make.names(col.meta[, sam.factor]), '__', make.names(col.meta[, con.factor])) } else if (!is.null(sam.factor) & is.null(con.factor)) {  fct <- colnames(mat) <- make.names(col.meta[, sam.factor]) } else if (is.null(sam.factor) & !is.null(con.factor)) { fct <- colnames(mat) <- make.names(col.meta[, con.factor]) }
+ 
+  }
   # To keep colnames, "X" should be a character, not a factor.
   if (aggr=='mean') mat <- sapply(X=unique(fct), function(x) rowMeans(mat[, fct==x, drop=FALSE]))
   if (aggr=='median') {
   
     mat <- sapply(X=unique(fct), function(x) Biobase::rowMedians(mat[, fct==x, drop=FALSE]))
-    rownames(mat) <- rownames(se)
+    rownames(mat) <- rownames(data)
 
   }
-  col.meta <- col.meta[!duplicated(fct), ]; rownames(col.meta) <- NULL
-  se <- SummarizedExperiment(assays=list(expr=mat), rowData=rowData(se), colData=col.meta); return(se)
+  
+  if (is(data, 'data.frame')|is(data, 'matrix')) { return(cbind(mat, ann)) } else if (is(data, 'SummarizedExperiment')) { 
+  
+    col.meta <- col.meta[!duplicated(fct), ]; rownames(col.meta) <- NULL
+    data <- SummarizedExperiment(assays=list(expr=mat), rowData=rowData(data), colData=col.meta); return(data)
+
+  } 
 
 }
-
-
 
 

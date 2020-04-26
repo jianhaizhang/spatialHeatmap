@@ -2,7 +2,7 @@
 #'
 #' It is designed to compute adjacency matrix and identify modules using the filtered expression data matrix from \code{\link{filter_data}}. The results should be provided to \code{\link{matrix_hm}} and \code{\link{network}}.
 
-#' @param se A "SummarizedExperiment" object containing a data matrix and metadata returned by the function \code{\link{filter_data}}.
+#' @param data A "SummarizedExperiment" object containing a data matrix and metadata returned by the function \code{\link{filter_data}}.
 
 #' @param type "signed" or "unsigned". The "signed" means both positive and negative adjacency between genes are maintained in network module identification while "unsigned" takes the absolute values of negative adjacency. Refer to "WGCNA" (Langfelder and Horvath 2008) for more details.
 
@@ -32,17 +32,17 @@
 #' rse.hum <- SummarizedExperiment(assay=df, colData=target.hum, rowData=NULL)
 #' 
 #' # The count matrix is normalised with estimateSizeFactors (type="ratio").
-#' se.nor.hum <- norm_data(se=rse.hum, method.norm='ratio', data.trans='log2')
+#' se.nor.hum <- norm_data(data=rse.hum, method.norm='CNF', data.trans='log2')
 #'
 #' # Average replicates of concatenated sample__condition.
-#' se.aggr.hum <- aggr_rep(se=se.nor.hum, sam.factor='organism_part', con.factor='disease', aggr='mean')
+#' se.aggr.hum <- aggr_rep(data=se.nor.hum, sam.factor='organism_part', con.factor='disease', aggr='mean')
 #' assay(se.aggr.hum)[49939:49942, ] # The concatenated tissue__conditions are the column names of the output data matrix.
 #' 
 #' # Genes with low expression level and low variantion are always filtered. 
-#' se.fil.hum <- filter_data(se=se.aggr.hum, sam.factor='organism_part', con.factor='disease', pOA=c(0.01, 5), CV=c(0.3, 100), dir=NULL)
+#' se.fil.hum <- filter_data(data=se.aggr.hum, sam.factor='organism_part', con.factor='disease', pOA=c(0.01, 5), CV=c(0.3, 100), dir=NULL)
 #' 
 #' # Detect modules. 
-#' adj.mod <- adj_mod(se=se.fil.hum, type="signed", minSize=15, dir=NULL)
+#' adj.mod <- adj_mod(data=se.fil.hum, type="signed", minSize=15, dir=NULL)
 #' # The first column is ds=2 while the second is ds=3. The numbers in each column are module labels with "0" meaning genes not assigned to any modules.
 #' adj.mod[['mod']][1:3, ]
 
@@ -67,21 +67,31 @@
 #' @importFrom dynamicTreeCut cutreeHybrid
 
 
-adj_mod <- function(se, type, minSize=15, dir=NULL) {
+adj_mod <- function(data, type, minSize=15, dir=NULL) {
 
+  options(stringsAsFactors=FALSE)
+  if (is(data, 'data.frame')|is(data, 'matrix')) {
+
+    data <- as.data.frame(data); rna <- rownames(data); cna <- colnames(data) 
+    na <- vapply(seq_len(ncol(data)), function(i) { tryCatch({ as.numeric(data[, i]) }, warning=function(w) { return(rep(NA, nrow(data)))
+    }, error=function(e) { stop("Please make sure input data are numeric!") }) }, FUN.VALUE=numeric(nrow(data)) )
+    na <- as.data.frame(na); rownames(na) <- rna
+    idx <- colSums(apply(na, 2, is.na))!=0
+    data <- na[!idx]; colnames(data) <- cna[!idx]; data <- t(data)
+
+  } else if (is(data, 'SummarizedExperiment')) { data <- t(assay(data)) }
+    
     if (!is.null(dir)) { path <- paste0(dir, "/local_mode_result/"); if (!dir.exists(path)) dir.create(path) }
-
     if (type=="signed") sft <- 12; if (type=="unsigned") sft <- 6
-    data <- t(assay(se))
     adj <- adjacency(data, power=sft, type=type); diag(adj) <- 0
     tom <- TOMsimilarity(adj, TOMType="signed")
     dissTOM <- 1-tom; tree.hclust <- flashClust(as.dist(dissTOM), method="average")
     ch <- quantile(tree.hclust[['height']], probs=seq(0, 1, 0.05))[19]
     mcol <- NULL; for (ds in 2:3) {
          
-        min <- minSize-3*ds; if (min <=5) min <-5
-        tree <- cutreeHybrid(dendro=tree.hclust, pamStage=FALSE, minClusterSize=min, cutHeight=ch, deepSplit=ds, distM=dissTOM)
-        mcol <- cbind(mcol, tree$labels)
+      min <- minSize-3*ds; if (min <= 5) min <- 5
+      tree <- cutreeHybrid(dendro=tree.hclust, pamStage=FALSE, minClusterSize=min, cutHeight=ch, deepSplit=ds, distM=dissTOM)
+      mcol <- cbind(mcol, tree$labels)
 
     }; colnames(mcol) <- as.character(2:3); rownames(mcol) <- colnames(adj) <- rownames(adj) <- colnames(data)
     if (!is.null(dir)) { 
@@ -92,7 +102,6 @@ adj_mod <- function(se, type, minSize=15, dir=NULL) {
     }; return(list(adj=adj, mod=mcol))
 
 }
-
 
 
 

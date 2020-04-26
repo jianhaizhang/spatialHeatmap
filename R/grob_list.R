@@ -3,6 +3,7 @@
 
 #' @param gene The gene expession matrix, where rows are genes and columns are tissue/conditions.
 #' @param geneV The gene expression values used to construct the colour bar.
+#' @param con.na Logical, TRUE or FALSE. Default is TRUE. If conditions are available.
 #' @param coord The coordidates extracted from the SVG file.
 #' @param ID All gene ids selected after the App is launched.
 #' @param cols All the colour codes used to construct the colour bar.
@@ -33,8 +34,8 @@
 
 #' @importFrom ggplot2 ggplot aes theme element_blank margin element_rect scale_y_continuous scale_x_continuous ggplotGrob geom_polygon scale_fill_manual ggtitle element_text labs guide_legend alpha coord_fixed
 
-grob_list <- function(gene, geneV, coord, ID, cols, tis.path, tis.trans=NULL, sub.title.size, sam.legend='identical', legend.col, legend.title=NULL, legend.ncol=NULL, legend.nrow=NULL, legend.position='bottom', legend.direction=NULL, legend.key.size=0.5, legend.label.size=8, legend.title.size=8, line.size=0.2, line.color='grey70', ...) {
- 
+grob_list <- function(gene, con.na=TRUE, geneV, coord, ID, cols, tis.path, tis.trans=NULL, sub.title.size, sam.legend='identical', legend.col, legend.title=NULL, legend.ncol=NULL, legend.nrow=NULL, legend.position='bottom', legend.direction=NULL, legend.key.size=0.5, legend.label.size=8, legend.title.size=8, line.size=0.2, line.color='grey70', ...) {
+
   g_list <- function(con, lgd=FALSE, ...) {
 
     x <- y <- tissue <- NULL; tis.df <- unique(coord[, 'tissue'])
@@ -82,6 +83,7 @@ grob_list <- function(gene, geneV, coord, ID, cols, tis.path, tis.trans=NULL, su
     }
 
     g <- ggplot(...)+geom_polygon(data=coord, aes(x=x, y=y, fill=tissue), color=line.color, size=line.size, linetype='solid')+scl.fil+theme(axis.text=element_blank(), axis.ticks=element_blank(), panel.grid=element_blank(), panel.background=element_rect(fill="white", colour="grey80"), plot.margin=margin(0.1, 0.1, 0.1, 0.3, "cm"), axis.title.x=element_text(size=16,face="bold"), plot.title=element_text(hjust=0.5, size=sub.title.size))+labs(x="", y="")+scale_y_continuous(expand=c(0.01, 0.01))+scale_x_continuous(expand=c(0.01, 0.01))+ggtitle(paste0(k, "_", con))
+    if (con.na==FALSE) g.tit <- ggtitle(k) else g.tit <- ggtitle(paste0(k, "_", con)); g <- g+g.tit
 
     if (lgd==TRUE) {
 
@@ -111,3 +113,4 @@ grob_list <- function(gene, geneV, coord, ID, cols, tis.path, tis.trans=NULL, su
   return(list(grob.lis=grob.lis, g.lgd=g.lgd))
 
 }
+

@@ -3,7 +3,7 @@
 #' This function exhibits the input gene in the context of corresponding gene network module, where nodes are genes and edges are adjacencies between genes. The network can be dispayed in static or interactive mode. \cr The gene modules are identified at two alternative sensitivity levels (ds=3 or 2). See function \code{\link{adj_mod}} for details. The thicker edge denotes higher adjacency (coexpression similarity) between genes while larger node indicates higher gene connectivity (sum of a gene's adjacency with all its direct neighbours). \cr In the interactive mode, there is an interactive colour bar to denote gene connectivity. The colour ingredients must only be separated by comma, e.g. "yellow,purple,blue", which means gene connectivity increases from yellow to blue. If too many edges (e.g.: > 300) are displayed, the network could get stuck. So the "Input an adjacency threshold to display the adjacency network." option sets a threthold to filter out weak edges and all remaining edges are displayed. If not too many (e.g.: < 300), users can check "Yes" under "Display or not?", then the network will be displayed and would be responsive smoothly. To maintain acceptable performance, users are advised to choose a stringent threshold (e.g. 0.9) initially, then decrease the value gradually. The interactive feature allows users to zoom in and out, or drag a gene around. All the gene IDs in the network module are listed in "Select by id" in decreasing order according to gene connectivity. The input gene ID is appended "_selected" as a label. By clicking an ID in this list, users can identify the corresponding gene in the network. If the input has gene annotations, then the annotation can be seen by hovering the cursor over a node. \cr The same module can also be displayed in the form of a matrix heatmap with the function \code{\link{matrix_hm}}. 
 
 #' @param geneID A gene ID from the expression matrix. 
-#' @param se A "SummarizedExperiment" object containing the processed data matrix and metadata returned by the function \code{\link{filter_data}}.
+#' @param data A "SummarizedExperiment" object containing the processed data matrix and metadata returned by the function \code{\link{filter_data}}.
 #' @param ann A character. The column name corresponding to row (gene) annotation in the "rowData" of "se" parameter.
 #' @param adj.mod A list of adjacency matrix and module definition returned by the function \code{\link{adj_mod}}.
 #' @param ds The module identification sensitivity, either 2 or 3. See function \code{\link{adj_mod}} for details. Used for static network.
@@ -41,22 +41,22 @@
 #' rse.hum <- SummarizedExperiment(assay=df, colData=target.hum, rowData=NULL)
 #' 
 #' # The count matrix is normalised with estimateSizeFactors (type=‘ratio’).
-#' se.nor.hum <- norm_data(se=rse.hum, method.norm='ratio', data.trans='log2')
+#' se.nor.hum <- norm_data(data=rse.hum, method.norm='CNF', data.trans='log2')
 #'
 #' # Average replicates of concatenated sample__condition.
-#' se.aggr.hum <- aggr_rep(se=se.nor.hum, sam.factor='organism_part', con.factor='disease', aggr='mean')
+#' se.aggr.hum <- aggr_rep(data=se.nor.hum, sam.factor='organism_part', con.factor='disease', aggr='mean')
 #' assay(se.aggr.hum)[49939:49942, ] # The concatenated tissue__conditions are the column names of the output data matrix.
 #' 
 #' # Genes with low expression level and low variantion are always filtered. 
-#' se.fil.hum <- filter_data(se=se.aggr.hum, sam.factor='organism_part', con.factor='disease', pOA=c(0.01, 5), CV=c(0.3, 100), dir=NULL)
+#' se.fil.hum <- filter_data(data=se.aggr.hum, sam.factor='organism_part', con.factor='disease', pOA=c(0.01, 5), CV=c(0.3, 100), dir=NULL)
 
 #' # Detect modules. 
-#' adj.mod <- adj_mod(se=se.fil.hum, type="signed", minSize=15, dir=NULL)
+#' adj.mod <- adj_mod(data=se.fil.hum, type="signed", minSize=15, dir=NULL)
 #' # The first column is ds=2 while the second is ds=3. The numbers in each column are module labels with "0" meaning genes not assigned to any modules.
 #' adj.mod[['mod']][1:3, ]
 
 #' # Plot network on gene ENSG00000008196 with ds='3'. Set "static=TRUE" to launch the interactive mode. 
-#' network(geneID="ENSG00000008196", se=se.fil.hum, ann=NULL, adj.mod=adj.mod, ds="3", adj.min=0.999, con.min=0, vertex.label.cex=1, vertex.cex=0.1, static=TRUE)
+#' network(geneID="ENSG00000008196", data=se.fil.hum, ann=NULL, adj.mod=adj.mod, ds="3", adj.min=0.999, con.min=0, vertex.label.cex=1, vertex.cex=0.1, static=TRUE)
 
 
 #' @author Jianhai Zhang \email{jzhan067@@ucr.edu; zhang.jianhai@@hotmail.com} \cr Dr. Thomas Girke \email{thomas.girke@@ucr.edu}
@@ -75,11 +75,25 @@
 #' @importFrom shinydashboard dashboardSidebar dashboardPage dashboardHeader sidebarMenu menuItem menuSubItem dashboardBody tabItems tabItem box
 #' @importFrom visNetwork visNetworkOutput visNetwork visOptions renderVisNetwork visIgraphLayout
 
-network <- function(geneID, se, ann, adj.mod, ds="3", adj.min=0, con.min=0, node.col=c("mediumorchid1", "chocolate4"), edge.col=c("yellow", "blue"), vertex.label.cex=1, vertex.cex=3, edge.cex=10, layout="circle", main=NULL, static=TRUE, ...) {
+network <- function(geneID, data, ann, adj.mod, ds="3", adj.min=0, con.min=0, node.col=c("mediumorchid1", "chocolate4"), edge.col=c("yellow", "blue"), vertex.label.cex=1, vertex.cex=3, edge.cex=10, layout="circle", main=NULL, static=TRUE, ...) {
 
-  from <- to <- width <- size <- NULL 
+  options(stringsAsFactors=FALSE)
+  if (is(data, 'data.frame')|is(se, 'matrix')) {
+
+    data <- as.data.frame(data); rna <- rownames(data); cna <- colnames(data) 
+    na <- vapply(seq_len(ncol(data)), function(i) { tryCatch({ as.numeric(data[, i]) }, warning=function(w) { return(rep(NA, nrow(data)))
+    }, error=function(e) { stop("Please make sure input data are numeric!") }) }, FUN.VALUE=numeric(nrow(data)) )
+    na <- as.data.frame(na); rownames(na) <- rna
+    idx <- colSums(apply(na, 2, is.na))!=0
+    gene <- na[!idx]; colnames(gene) <- cna[!idx]
+    if (any(idx)) ann <- data[which(idx)[1]] else ann <- NULL
+
+  } else if (is(data, 'SummarizedExperiment')) { 
+
+    gene <- assay(data); if (!is.null(rowData(data)) & !is.null(ann)) { ann <- rowData(data)[, ann, drop=FALSE]; rownames(gene) <- rownames(ann) <- make.names(rownames(gene)) } else ann <- NULL
+
+  }; from <- to <- width <- size <- NULL 
   adj <- adj.mod[["adj"]]; mods <- adj.mod[["mod"]]
-  gene <- assay(se); if (!is.null(rowData(se)) & !is.null(ann)) { ann <- rowData(se)[, ann, drop=FALSE]; rownames(ann) <- rownames(gene) } else ann <- NULL
   ds <- as.character(ds); lab <- mods[, ds][rownames(gene)==geneID]
   if (lab=="0") { return('The selected gene is not assigned to any module. Please select a different one') }
   
@@ -281,7 +295,6 @@ network <- function(geneID, se, ann, adj.mod, ds="3", adj.min=0, con.min=0, node
   }
 
 }
-
 
 
 

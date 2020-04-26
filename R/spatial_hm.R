@@ -44,19 +44,19 @@
 #' rse.hum <- SummarizedExperiment(assay=df, colData=target.hum, rowData=NULL)
 #' 
 #' # The count matrix is normalised with estimateSizeFactors (type=‘ratio’).
-#' se.nor.hum <- norm_data(se=rse.hum, method.norm='ratio', data.trans='log2')
+#' se.nor.hum <- norm_data(data=rse.hum, method.norm='CNF', data.trans='log2')
 #'
 #' # Average replicates of concatenated sample__condition.
-#' se.aggr.hum <- aggr_rep(se=se.nor.hum, sam.factor='organism_part', con.factor='disease', aggr='mean')
+#' se.aggr.hum <- aggr_rep(data=se.nor.hum, sam.factor='organism_part', con.factor='disease', aggr='mean')
 #' assay(se.aggr.hum)[49939:49942, ] # The concatenated tissue__conditions are the column names of the output data matrix.
 #' 
 #' # Genes with low expression level and low variantion are always filtered. 
-#' se.fil.hum <- filter_data(se=se.aggr.hum, sam.factor='organism_part', con.factor='disease', pOA=c(0.01, 5), CV=c(0.3, 100), dir=NULL)
+#' se.fil.hum <- filter_data(data=se.aggr.hum, sam.factor='organism_part', con.factor='disease', pOA=c(0.01, 5), CV=c(0.3, 100), dir=NULL)
 
 #' # Formatted SVG image.
 #' svg.hum <- system.file("extdata/shinyApp/example", "homo_sapiens.brain.svg", package="spatialHeatmap")
 #' # Plot spatial heatmaps of gene ENSG00000268433.
-#' spatial_hm(svg=svg.hum, se=se.fil.hum, ID='ENSG00000268433', col.com=c("yellow", "blue", "purple"), width=1, height=0.5, sub.title.size=11, layout="gene", ncol=2, tis.trans=NULL, legend.position=c(0.5, -0.15), legend.nrow=1)
+#' spatial_hm(svg=svg.hum, data=se.fil.hum, ID='ENSG00000268433', col.com=c("yellow", "blue", "purple"), width=1, height=0.5, sub.title.size=11, layout="gene", ncol=2, tis.trans=NULL, legend.position=c(0.5, -0.15), legend.nrow=1)
 
 
 #' @author Jianhai Zhang \email{jzhan067@@ucr.edu; zhang.jianhai@@hotmail.com} \cr Dr. Thomas Girke \email{thomas.girke@@ucr.edu}
@@ -80,13 +80,35 @@
 #' @importFrom grDevices colorRampPalette
 #' @importFrom methods is
 
-spatial_hm <- function(svg.path, se, sam.factor=NULL, con.factor=NULL, ID, col.com=c("yellow", "purple", "blue"), col.bar="selected", bar.width=0.7, data.trans=NULL, tis.trans=NULL, width=1, height=1, legend.r=1, sub.title.size=11, lay.shm="gene", ncol=3, sam.legend='identical', legend.title=NULL, legend.ncol=NULL, legend.nrow=NULL, legend.position='bottom', legend.direction=NULL, legend.key.size=0.5, legend.label.size=8, legend.title.size=8, line.size=0.2, line.color='grey70', ...) {
+spatial_hm <- function(svg.path, data, sam.factor=NULL, con.factor=NULL, ID, col.com=c("yellow", "purple", "blue"), col.bar="selected", bar.width=0.7, data.trans=NULL, tis.trans=NULL, width=1, height=1, legend.r=1, sub.title.size=11, lay.shm="gene", ncol=3, sam.legend='identical', legend.title=NULL, legend.ncol=NULL, legend.nrow=NULL, legend.position='bottom', legend.direction=NULL, legend.key.size=0.5, legend.label.size=8, legend.title.size=8, line.size=0.2, line.color='grey70', ...) {
 
-    x <- y <- color_scale <- tissue <- line.type <- NULL
-    # Extract and filter data.
+  x <- y <- color_scale <- tissue <- line.type <- NULL  
+  # Extract and filter data.
+  options(stringsAsFactors=FALSE) 
+  if (is.vector(data)) {
 
-    gene <- assay(se); r.na <- rownames(gene); gene <- apply(gene, 2, as.numeric) # This step removes rownames of gene2.
-    rownames(gene) <- r.na
+    vec.na <- make.names(names(data)); if (is.null(vec.na)) stop("Please provide names for the input data!")
+    if (any(duplicated(vec.na))) stop('Please make sure data names are unique!')
+    form <- grepl("__", vec.na); if (sum(form)==0) { vec.na <- paste0(vec.na, '__', vec.na) }
+    data <- tryCatch({ as.numeric(data) }, warning=function(w) { stop("Please make sure input data are numeric!") }, error=function(e) { stop("Please make sure input data are numeric!") })
+    if (is.null(ID)) stop('Please provide a name for the data!')
+    gene <- as.data.frame(matrix(data, nrow=1, dimnames=list(ID, vec.na)))
+
+  } else if (is(data, 'data.frame')|is(data, 'matrix')) {
+
+   gene <- data; cna <- colnames(gene)
+   if (any(duplicated(cna))) stop('Please make sure column names are unique!')
+   form <- grepl("__", cna); if (sum(form)==0) { colnames(gene) <- paste0(cna, '__', 'con'); con.na=FALSE } else { gene <- gene[, form]; con.na=TRUE }
+
+  } else if (is(data, 'SummarizedExperiment')) {
+
+    gene <- assay(data); r.na <- rownames(gene); gene <- apply(gene, 2, as.numeric) # This step removes rownames of gene2.
+    rownames(gene) <- r.na; colnames(gene) <- make.names(colnames(gene))
+    col.meta <- as.data.frame(colData(data), stringsAsFactors=FALSE)
+    # Factors teated by paste0/make.names are vecters.
+    if (!is.null(sam.factor) & !is.null(con.factor)) { colnames(gene) <- paste0(make.names(col.meta[, sam.factor]), '__', make.names(col.meta[, con.factor])); con.na=TRUE } else if (!is.null(sam.factor) & is.null(con.factor)) { sam.na <- make.names(col.meta[, sam.factor]); colnames(gene) <- paste0(sam.na, "__", "con"); con.na=FALSE }
+
+  }
     if (!is.null(data.trans)) if (data.trans=='log2') { 
           
       g.min <- min(gene) 
@@ -94,8 +116,6 @@ spatial_hm <- function(svg.path, se, sam.factor=NULL, con.factor=NULL, ID, col.c
 
     } else if (data.trans=='exp2') gene <- 2^gene
  
-    if (!is.null(sam.factor) & !is.null(con.factor)) { col.met <- as.data.frame(colData(se), stringsAsFactors=FALSE); colnames(gene) <- make.names(paste(col.met[, sam.factor], col.met[, con.factor], sep='__')) }
-
     # Color bar.
     bar.len=1000
     if (col.bar=="all") geneV <- seq(min(gene), max(gene), len=bar.len) else if (col.bar=="selected") geneV <- seq(min(gene[ID, , drop=FALSE]), max(gene[ID, , drop=FALSE]), len=bar.len)
@@ -106,7 +126,7 @@ spatial_hm <- function(svg.path, se, sam.factor=NULL, con.factor=NULL, ID, col.c
     if (is.character(df_tis)) stop(df_tis)
     g.df <- df_tis[['df']]; tis.path <- df_tis[['tis.path']]
     cname <- colnames(gene); con <- gsub("(.*)(__)(.*)", "\\3", cname); con.uni <- unique(con) 
-    grob.lis <- grob_list(gene=gene, geneV=geneV, coord=g.df, ID=ID, cols=col, legend.col=df_tis[['fil.cols']], tis.path=tis.path, tis.trans=tis.trans, sub.title.size=sub.title.size, sam.legend=sam.legend, legend.title=legend.title, legend.ncol=legend.ncol, legend.nrow=legend.nrow, legend.position=legend.position, legend.direction=legend.direction, legend.key.size=legend.key.size, legend.label.size=legend.label.size, legend.title.size=legend.title.size, line.size=line.size, line.color=line.color, line.type=line.type, ...)
+    grob.lis <- grob_list(gene=gene, con.na=con.na, geneV=geneV, coord=g.df, ID=ID, cols=col, legend.col=df_tis[['fil.cols']], tis.path=tis.path, tis.trans=tis.trans, sub.title.size=sub.title.size, sam.legend=sam.legend, legend.title=legend.title, legend.ncol=legend.ncol, legend.nrow=legend.nrow, legend.position=legend.position, legend.direction=legend.direction, legend.key.size=legend.key.size, legend.label.size=legend.label.size, legend.title.size=legend.title.size, line.size=line.size, line.color=line.color, line.type=line.type, ...)
     g.arr <- lay_shm(lay.shm=lay.shm, con=con, ncol=ncol, ID.sel=ID, grob.list=grob.lis[['grob.lis']], width=width, height=height, shiny=FALSE)
     cs.arr <- arrangeGrob(grobs=list(grobTree(cs.grob)), layout_matrix=cbind(1), widths=unit(1, "npc")) # "mm" is fixed, "npc" is scalable.
     g.lgd <- grob.lis[['g.lgd']]; grob.lgd <- ggplotGrob(g.lgd)

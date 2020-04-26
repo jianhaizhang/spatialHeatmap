@@ -1,0 +1,139 @@
+#' Return SVG Images Containing Provided Features and Species
+#' 
+#' Successful spatial heatmap plotting requires the feature identifiers of interest are identical between the data matrix and SVG image. This function parses a collection of SVG images and returns existing features related to the provided keywords. If users want to use their custom feature identifiers, \code{\link{update_feature}} should be used. Otherwise the returned featrue identifiers should be used to replace the counterparts in the data matrix. Features denote tissues, cells, etc. 
+
+#' @param feature The keywords of target feature(s), which is used to select SVG images from a collection. E.g. "frontal cortex".
+#' @param species The keywords of a target species, which is used to select SVG images from a collection. E.g. "homo sapiens".
+#' @param keywords.all Logical, TRUE or FALSE. Default is TRUE. If TRUE, the returned hits will contain all the provided keywords in "feature" and "species". Otherwise, the returned hits contain at least 1 keyword in "feature" and at least 1 keyword in "species".
+#' @param remote Logical, FALSE or TRUE. Default is FALSE. If TRUE, the remote SVG repository "https://github.com/jianhaizhang/SVG_tutorial_file/tree/master/svg_repo" is used for query.
+#' @param dir The directory where the SVG images are available. If "remote" is TRUE, the returned SVG images are saved in this directory. Note, in this case existing SVG images with identical names as returned ones are overwritten. If "remote" is FALSE, user-provided SVG images should be saved in this directory for query.
+#' @param desc Logical, FALSE or TRUE. Default is FALSE. If TRUE, the feature descriptions from the package "rols" (Laurent Gatto 2019) are added. If too many features are returned, this process takes a long time.
+#' @param return.all Logical, FALSE or TRUE. Default is FALSE. If TRUE, all features together with all SVG images are returned, either remote or user-provided.
+
+#' @return A feature data frame with columns corresponding to feature id, feature ontology id, feature is index in an SVG image, and/or feature description. 
+#' @examples
+#' feature.df <- return_feature(feature='frontal cortex', species='homo sapiens', keywords.all=TRUE, desc=FALSE, return.all=FALSE, dir='.', remote=TRUE)
+
+#' @author Jianhai Zhang \email{jzhan067@@ucr.edu; zhang.jianhai@@hotmail.com} \cr Dr. Thomas Girke \email{thomas.girke@@ucr.edu}
+
+#' @references
+#' Laurent Gatto (2019). rols: An R interface to the Ontology Lookup Service. R package version 2.14.0. http://lgatto.github.com/rols/
+#' Hadley Wickham, Jim Hester and Jeroen Ooms (2019). xml2: Parse XML. R package version 1.2.2. https://CRAN.R-project.org/package=xml2
+
+#' @export return_feature
+#' @importFrom xml2 read_xml xml_children xml_length xml_attr
+#' @importFrom rols term termDesc
+
+return_feature <- function(feature, species, keywords.all=TRUE, remote=FALSE, dir=NULL, desc=FALSE, return.all=FALSE) {
+
+  options(stringsAsFactors=FALSE)
+  dir.check <- !is.null(dir) 
+  if (dir.check) dir.check <- !(is.na(dir)) else stop("\'dir\' is not valid!") 
+  if (dir.check) { dir.check <- dir.exists(dir); if (!dir.check) stop("\'dir\' is not valid!") } else stop("\'dir\'is not valid!")
+
+  # Parse and return features.
+  ftr.return <- function(svgs, desc=desc) { 
+
+    cat('Accessing features... \n')
+    id.ont <- NULL; for (path.in in svgs) {
+
+      doc <- read_xml(path.in); chdn <- xml_children(doc)
+      ply <- chdn[[xml_length(doc)]]; chdn1 <- xml_children(ply)
+      na <- strsplit(path.in, '/')[[1]]; na <- na[grep('.svg$', na)]; len <- xml_length(ply)
+      ids <- NULL; for (j in seq_len(len)) {
+
+        ont <- xml_attr(chdn1[[j]], 'ontology')
+        id <- xml_attr(chdn1[[j]], 'id'); names(id) <- ont
+        ids <- c(ids, id)
+
+       }; dup <- duplicated(ids)
+       if (any(dup)) stop(paste0("Duplicated feature \'", paste0(ids[dup], collapse=', '), "\' detected in ", path.in, "!"))
+       lis <- list(ids); names(lis) <- na; id.ont <- c(id.ont, lis) 
+
+    }
+
+    df <- NULL; for (i in seq_along(id.ont)) {
+
+      feat <- id.ont[[i]]
+      df0 <- data.frame(feature=feat, ontology=names(feat), row.names=NULL)
+      df0$SVG <- names(id.ont[i]); df0$index <- as.numeric(rownames(df0))
+      df <- rbind(df, df0)
+
+    }; rownames(df) <- NULL
+
+    if (desc==TRUE) {
+  
+      cat('Appending descriptions... \n')
+      df$description <- NA; for (i in seq_len(nrow(df))) {
+
+        ont <- df[i, 'ontology']; abbr <- tolower(sub('_.*', '', ont))
+        trm <- tryCatch({ term(abbr, ont) }, error=function(e) { return(NA) })
+        if (is(trm, 'Term')) { des <- termDesc(trm); if (!is.null(des)) df[i, 'description'] <- termDesc(trm) }
+  
+      }
+
+    }; return(df)
+
+  }
+
+  if (remote==TRUE) {
+  
+    cat('Downloading SVG images... \n')
+    tmp <- tempdir(check=TRUE); tmp1 <- paste0(tempdir(), '/git.zip')
+    tmp2 <- paste0(tmp, '/git'); if (!dir.exists(tmp2)) dir.create(tmp2)
+    download.file('https://github.com/jianhaizhang/SVG_tutorial_file/archive/master.zip', tmp1); unzip(tmp1, exdir=tmp2)
+    tmp3 <- paste0(tmp2, '/SVG_tutorial_file-master/svg_repo')
+    svgs <- list.files(path=tmp3, pattern='.svg$', full.names=TRUE, recursive=TRUE)
+    df <- ftr.return(svgs=svgs, desc=desc)
+    if (return.all==TRUE) { 
+
+      svgs.na <- sapply(svgs, function(i) { str <- strsplit(i, '/')[[1]]; str[length(str)] })
+      svgs1 <- list.files(path=dir, pattern='.svg$', full.names=TRUE)
+      svgs.na1 <- list.files(path=dir, pattern='.svg$', full.names=FALSE)
+      svgs1.rm <- svgs1[svgs.na1 %in% svgs.na] 
+      cat(paste0('Overwriting: ', svgs1.rm, '\n')); file.remove(svgs1.rm)   
+      # "file.copy" does not overwrite.
+      sapply(svgs, function (i) file.copy(i, dir)); return(df)
+
+    }
+
+  } else {
+
+    svgs <- list.files(path=dir, pattern='.svg$', full.names=TRUE)
+    df <- ftr.return(svgs=svgs, desc=desc)
+    if (return.all==TRUE) return(df)
+
+  }
+  
+  sp <- gsub(' |_|\\.|-|;|,', '|', species); ft <- gsub(' |_|\\.|-|;|,', '|', feature)
+  
+  if (keywords.all==TRUE) {
+
+    sp <- strsplit(sp, '\\|')[[1]]; ft <- strsplit(ft, '\\|')[[1]]
+    df.idx <- NULL; for (i in sp) {
+
+     idx <- grepl(i, df$SVG, ignore.case=TRUE); df.idx <- cbind(df.idx, idx)
+
+    } 
+    for (i in ft) {
+
+     idx <- grepl(i, df$feature, ignore.case=TRUE); df.idx <- cbind(df.idx, idx)
+
+    } 
+    w <- which(rowSums(df.idx)==ncol(df.idx))
+    
+  } else {
+
+    w <- grepl(sp, df$SVG, ignore.case=TRUE) & grepl(ft, df$feature, ignore.case=TRUE)
+
+  }; df1 <- df[w, ]; rownames(df1) <- NULL
+  
+  if (remote==TRUE) {
+
+    svgs.cp <- svgs[svgs.na %in% df1$SVG]
+    svgs.rm <- svgs1[svgs.na1 %in% df1$SVG]
+    sapply(svgs.cp, function (i) file.copy(i, dir))
+
+  }; unlink(tmp, recursive=TRUE); return(df1)
+
+}

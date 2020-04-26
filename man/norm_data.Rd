@@ -4,43 +4,14 @@
 \alias{norm_data}
 \title{Normalise Sequencing Count Matrix}
 \usage{
-norm_data(
-  se,
-  method.norm = "TMM",
-  fitType = "parametric",
-  blind = TRUE,
-  data.trans = "none"
-)
+norm_data(data, norm.fun = "CNF", parameter.list = NULL, data.trans = "none")
 }
 \arguments{
-\item{se}{A "SummarizedExperiment". The "assays" slot stores an gene expression data matrix with row and column names being gene IDs and sample/conditions, respectively. The "rowData" can store a data frame of row (gene) anntation, but is optional. \cr The "colData" slot is required and contains a data frame with at least 2 columns corresponding to replicates of samples and conditions respectively. Only letters, digits, single underscore, dots, single space are allowed in the 2 columns. It is crucial that replicate names of the same sample or condition must be identical. E.g. If sample A has 3 replicates, "sampleA", "sampleA", "sampleA" is right while "sampleA1", "sampleA2", "sampleA3" is wrong.}
+\item{data}{A "SummarizedExperiment". The "assays" slot stores an gene expression data matrix with row and column names being gene IDs and sample/conditions, respectively. The "rowData" can store a data frame of row (gene) anntation, but is optional. \cr The "colData" slot is required and contains a data frame with at least 2 columns corresponding to replicates of samples and conditions respectively. Only letters, digits, single underscore, dots, single space are allowed in the 2 columns. It is crucial that replicate names of the same sample or condition must be identical. E.g. If sample A has 3 replicates, "sampleA", "sampleA", "sampleA" is right while "sampleA1", "sampleA2", "sampleA3" is wrong.}
 
-\item{method.norm}{A character of the normalisation methods. Options are "TMM", "TMMwsp", "RLE", "upperquartile" in \code{\link[edgeR]{calcNormFactors}} from edgeR (McCarthy et al. 2012), and "ratio" (i.e. "type=ratio" in \code{\link[DESeq2]{estimateSizeFactors}}), "iterate" (i.e. "type=iterate" in \code{\link[DESeq2]{estimateSizeFactors}}), "VST" (i.e. \code{\link[DESeq2]{varianceStabilizingTransformation}}), \code{\link[DESeq2]{rlog}} from DESeq2 (Love, Huber, and Anders 2014). If "none", no normalisation is applied. Default is "TMM".}
+\item{norm.fun}{One of the normalisation functions: "CNF", "ESF", "VST", "rlog", and "none". Specifically, "CNF" stands for \code{\link[edgeR]{calcNormFactors}} from edgeR (McCarthy et al. 2012), and "EST", "VST", and "rlog" is equivalent to \code{\link[DESeq2]{estimateSizeFactors}}, \code{\link[DESeq2]{varianceStabilizingTransformation}}, and \code{\link[DESeq2]{rlog}} from DESeq2 respectively (Love, Huber, and Anders 2014). If "none", no normalisation is applied. Default is "CNF". The parameters of each normalisation function are specified through "parameter.list".}
 
-\item{fitType}{either "parametric", "local", or "mean"
-for the type of fitting of dispersions to the mean intensity.
-\itemize{
-  \item parametric - fit a dispersion-mean relation of the form:
-    \deqn{dispersion = asymptDisp + extraPois / mean}
-    via a robust gamma-family GLM. The coefficients \code{asymptDisp} and \code{extraPois}
-    are given in the attribute \code{coefficients} of the \code{\link[DESeq2]{dispersionFunction}}
-    of the object.
-  \item local - use the locfit package to fit a local regression
-    of log dispersions over log base mean (normal scale means and dispersions
-    are input and output for \code{\link[DESeq2]{dispersionFunction}}). The points
-    are weighted by normalized mean count in the local regression.
-  \item mean - use the mean of gene-wise dispersion estimates.
-}}
-
-\item{blind}{logical, whether to blind the transformation to the experimental
-design. blind=TRUE should be used for comparing samples in an manner unbiased by
-prior information on samples, for example to perform sample QA (quality assurance).
-blind=FALSE should be used for transforming data for downstream analysis,
-where the full use of the design information should be made.
-blind=FALSE will skip re-estimation of the dispersion trend, if this has already been calculated.
-If many of genes have large differences in counts due to
-the experimental design, it is important to set blind=FALSE for downstream
-analysis.}
+\item{parameter.list}{A list of parameters for each normalisation function specified in "norm.fun". Default is NULL and it means list(method='TMM'), list(type='ratio'), list(fitType='parametric', blind=TRUE), list(fitType='parametric', blind=TRUE) is internally set for "CNF", "ESF", "VST", "rlog" respectively. Note the name of each element in the list is required. E.g. list(method='TMM') is expected while list('TMM') causes errors. \cr Complete parameters of CNF: https://www.rdocumentation.org/packages/edgeR/versions/3.14.0/topics/calcNormFactors \cr Complete parameters of ESF: https://www.rdocumentation.org/packages/DESeq2/versions/1.12.3/topics/estimateSizeFactors \cr Complete parameters of VST: https://www.rdocumentation.org/packages/DESeq2/versions/1.12.3/topics/varianceStabilizingTransformation \cr Complete parameters of rlog: https://www.rdocumentation.org/packages/DESeq2/versions/1.12.3/topics/rlog}
 
 \item{data.trans}{One of "log2", "exp2", and "none", corresponding to transform the count matrix by log2, 2-based exponent, and no transformation respecitvely. Default is "none".}
 }
@@ -48,7 +19,7 @@ analysis.}
 A "SummarizedExperiment" object containing normalised data matrix and metadata. The replicates of samples and conditions are concatenated by double underscore "__" to form "sample__condition" replicates. The column names of the output data matrix are replaced by "sample__condition" replicates.
 }
 \description{
-This function normalise count matrix from sequencing. It inputs the count matrix and sample metadata in form of "SummarizedExperiment". In "colData" slot, at least replicates of "sample" and "condition" should be included.
+This function normalizes sequencing count data. It accepts the count matrix and sample metadata in form of "SummarizedExperiment" object. In "colData" slot, at least replicates of "sample" and "condition" should be included.
 }
 \examples{
 # The example data (E-GEOD-67196) is an RNA-seq data measured in cerebellum and frontal cortex of human brain across normal and amyotrophic lateral sclerosis (ALS) subjects (Prudencio et al. 2015). 
@@ -70,7 +41,7 @@ df <- assay(rse.hum); df[1:2, 1:3]
 rse.hum <- SummarizedExperiment(assay=df, colData=target.hum, rowData=NULL)
 
 # The count matrix is normalised with estimateSizeFactors (type=‘ratio’).
-se.nor.hum <- norm_data(se=rse.hum, method.norm='ratio', data.trans='log2')
+se.nor.hum <- norm_data(data=rse.hum, norm.fun='CNF', data.trans='log2')
 }
 \references{
 SummarizedExperiment: SummarizedExperiment container. R package version 1.10.1 \cr R Core Team (2018). R: A language and environment for statistical computing. R Foundation for Statistical Computing, Vienna, Austria. URL https://www.R-project.org/
@@ -84,5 +55,5 @@ McCarthy, Davis J., Chen, Yunshun, Smyth, and Gordon K. 2012. "Differential Expr
 \code{\link[edgeR]{calcNormFactors}} in edgeR, and \code{\link[DESeq2]{estimateSizeFactors}}, \code{\link[DESeq2]{varianceStabilizingTransformation}}, \code{\link[DESeq2]{rlog}} in DESeq2.
 }
 \author{
-Jianhai Zhang \email{jzhan067@ucr.edu; zhang.jianhai@hotmail.com} \cr Dr. Thomas Girke \email{thomas.girke@ucr.edu}
+Jianhai Zhang \email{jzhan067@ucr.edu; zhang.jianhai@hotmail.com}
 }

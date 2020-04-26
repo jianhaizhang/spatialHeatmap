@@ -6,6 +6,7 @@
 \usage{
 grob_list(
   gene,
+  con.na = TRUE,
   geneV,
   coord,
   ID,
@@ -30,6 +31,8 @@ grob_list(
 }
 \arguments{
 \item{gene}{The gene expession matrix, where rows are genes and columns are tissue/conditions.}
+
+\item{con.na}{Logical, TRUE or FALSE. Default is TRUE. If conditions are available.}
 
 \item{geneV}{The gene expression values used to construct the colour bar.}
 

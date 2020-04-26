@@ -2,7 +2,7 @@
 #' 
 #' It is designed to filter the gene expression data matrix. The filtering is based on two functions \code{\link[genefilter]{pOverA}} and \code{\link[genefilter]{cv}} from the package "genefilter"(Gentleman et al. 2018). It is optional to filter the data matrix for plotting spatial heatmaps as long as the format is right. However, as a convention the transcriptome data matrix is always pre-processed before downstream analysis, including normalising, filtering.
 
-#' @param se A "SummarizedExperiment". The "assays" slot stores an gene expression data matrix with row and column names being gene IDs and sample/conditions, respectively. The "rowData" can store a data frame of row (gene) anntation, but is optional. \cr The "colData" slot is required and contains a data frame with at least 2 columns corresponding to replicates of samples and conditions respectively. Only letters, digits, single underscore, dots, single space are allowed in the 2 columns. It is crucial that replicate names of the same sample or condition must be identical. E.g. If sample A has 3 replicates, "sampleA", "sampleA", "sampleA" is right while "sampleA1", "sampleA2", "sampleA3" is wrong.
+#' @param data A "SummarizedExperiment". The "assays" slot stores an gene expression data matrix with row and column names being gene IDs and sample/conditions, respectively. The "rowData" can store a data frame of row (gene) anntation, but is optional. \cr The "colData" slot is required and contains a data frame with at least 2 columns corresponding to replicates of samples and conditions respectively. Only letters, digits, single underscore, dots, single space are allowed in the 2 columns. It is crucial that replicate names of the same sample or condition must be identical. E.g. If sample A has 3 replicates, "sampleA", "sampleA", "sampleA" is right while "sampleA1", "sampleA2", "sampleA3" is wrong.
 
 #' @param pOA It specifies parameters of the filter function \code{\link[genefilter]{pOverA}} from the package "genefilter" (Gentleman et al. 2018). Genes with expression values larger than "A" in at least the proportion of "P" samples are retained. The input is a vector of two numbers with the first being the "p" and the second being "A". The default is c(0, 0), which means no filter is applied. \cr E.g. c(0.1, 2) means genes with expression values over 2 in at least 10\% of all samples are kept. 
 
@@ -39,14 +39,14 @@
 #' rse.hum <- SummarizedExperiment(assay=df, colData=target.hum, rowData=NULL)
 #' 
 #' # The count matrix is normalised with estimateSizeFactors (type=‘ratio’).
-#' se.nor.hum <- norm_data(se=rse.hum, method.norm='ratio', data.trans='log2')
+#' se.nor.hum <- norm_data(data=rse.hum, method.norm='CNF', data.trans='log2')
 #'
 #' # Average replicates of concatenated sample__condition.
-#' se.aggr.hum <- aggr_rep(se=se.nor.hum, sam.factor='organism_part', con.factor='disease', aggr='mean')
+#' se.aggr.hum <- aggr_rep(data=se.nor.hum, sam.factor='organism_part', con.factor='disease', aggr='mean')
 #' assay(se.aggr.hum)[49939:49942, ] # The concatenated tissue__conditions are the column names of the output data matrix.
 #' 
 #' # Genes with low expression level and low variantion are always filtered. 
-#' se.fil.hum <- filter_data(se=se.aggr.hum, sam.factor='organism_part', con.factor='disease', pOA=c(0.01, 5), CV=c(0.3, 100), dir=NULL)
+#' se.fil.hum <- filter_data(data=se.aggr.hum, sam.factor='organism_part', con.factor='disease', pOA=c(0.01, 5), CV=c(0.3, 100), dir=NULL)
 
 #' @author Jianhai Zhang \email{jzhan067@@ucr.edu; zhang.jianhai@@hotmail.com} \cr Dr. Thomas Girke \email{thomas.girke@@ucr.edu}
 
@@ -62,31 +62,54 @@
 #' @importFrom genefilter filterfun pOverA cv genefilter
 #' @importFrom utils write.table
 
-filter_data <- function(se, pOA=c(0, 0), CV=c(-Inf, Inf), ann=NULL, sam.factor, con.factor,  dir=NULL) {
+filter_data <- function(data, pOA=c(0, 0), CV=c(-Inf, Inf), ann=NULL, sam.factor, con.factor,  dir=NULL) {
 
-    if (!is.null(dir)) { path <- paste0(dir, "/local_mode_result/"); if (!dir.exists(path)) dir.create(path) }
-    df <- assay(se); col.met <- as.data.frame(colData(se), stringsAsFactors=FALSE)
-    if (!is.null(sam.factor) & !is.null(con.factor)) { colnames(df) <- make.names(paste(col.met[, sam.factor], col.met[, con.factor], sep='__')) }
-    ffun <- filterfun(pOverA(p=pOA[1], A=pOA[2]), cv(CV[1], CV[2]))
-    filtered <- genefilter(df, ffun); df <- df[filtered, ]
-    row.met <- as.data.frame(rowData(se), stringsAsFactors=FALSE)[filtered, , drop=FALSE]
+  options(stringsAsFactors=FALSE)
+  if (is(data, 'data.frame')|is(data, 'matrix')) {
 
-    df1 <- NULL; if (!is.null(dir) & !is.null(ann) & ncol(row.met)>0) { 
+    data <- as.data.frame(data); rna <- rownames(data); cna <- colnames(data) 
+    na <- vapply(seq_len(ncol(data)), function(i) { tryCatch({ as.numeric(data[, i]) }, warning=function(w) { return(rep(NA, nrow(data)))
+    }, error=function(e) { stop("Please make sure input data are numeric!") }) }, FUN.VALUE=numeric(nrow(data)) )
+    na <- as.data.frame(na); rownames(na) <- rna
+    idx <- colSums(apply(na, 2, is.na))!=0
+    row.meta <- data[idx]; expr <- na[!idx]; colnames(expr) <- cna[!idx]
 
-      df1 <- cbind.data.frame(df, row.met[, ann], stringsAsFactors=FALSE)
-      colnames(df1)[ncol(df1)] <- ann
+  } else if (is(data, 'SummarizedExperiment')) {
+
+    expr <- assay(data); col.meta <- as.data.frame(colData(data))
+    row.meta <- as.data.frame(rowData(data), stringsAsFactors=FALSE)[, , drop=FALSE]
+    # Factors teated by paste0/make.names are vecters.
+    if (!is.null(sam.factor) & !is.null(con.factor)) { colnames(expr) <- paste0(make.names(col.meta[, sam.factor]), '__', make.names(col.meta[, con.factor])) } else if (!is.null(sam.factor) & is.null(con.factor)) { colnames(expr) <- make.names(col.meta[, sam.factor]) } else if (is.null(sam.factor) & !is.null(con.factor)) { colnames(expr) <- make.names(col.meta[, con.factor]) }
+ 
+  }
+  if (!is.null(dir)) { path <- paste0(dir, "/local_mode_result/"); if (!dir.exists(path)) dir.create(path) }
+  ffun <- filterfun(pOverA(p=pOA[1], A=pOA[2]), cv(CV[1], CV[2]))
+  filtered <- genefilter(expr, ffun); expr <- expr[filtered, ]
+  row.meta <- row.meta[filtered, , drop=FALSE]
+
+  expr1 <- NULL; if (!is.null(dir)) { 
+
+    if (is.null(ann)) stop("Please specify row annotation!")
+    if (ncol(row.meta)==0) stop("Row annotation is not available!")
+    expr1 <- cbind.data.frame(expr, row.meta[, ann], stringsAsFactors=FALSE)
+    colnames(expr1)[ncol(expr1)] <- ann
 
     }
 
     if (!is.null(dir)) {
       
-      if (!is.null(df1)) write.table(df1, paste0(path, "processed_data.txt"), sep="\t", row.names=TRUE, col.names=TRUE) else write.table(df, paste0(path, "processed_data.txt"), sep="\t", row.names=TRUE, col.names=TRUE)
+      if (!is.null(expr1)) write.table(expr1, paste0(path, "processed_data.txt"), sep="\t", row.names=TRUE, col.names=TRUE) else write.table(expr, paste0(path, "processed_data.txt"), sep="\t", row.names=TRUE, col.names=TRUE)
       
-    }; rownames(col.met) <- NULL # If row names present in colData(se), if will become column names of assay(se).
-    expr <- SummarizedExperiment(assays=list(expr=df), rowData=row.met, colData=col.met); return(expr)
+    }
+
+  if (is(data, 'data.frame')|is(data, 'matrix')) { return(cbind(expr, row.meta)) } else if (is(data, 'SummarizedExperiment')) {
+  
+  rownames(col.meta) <- NULL # If row names present in colData(data), if will become column names of assay(data).
+  expr <- SummarizedExperiment(assays=list(expr=expr), rowData=row.meta, colData=col.meta); return(expr)
+
+  }
 
 }
-
 
 
 
