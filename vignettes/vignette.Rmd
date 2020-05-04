@@ -283,7 +283,7 @@ svg.hum <- system.file("extdata/shinyApp/example", 'homo_sapiens.brain.svg', pac
 ```
 
 <font color='blue'> 
-The `return_feature` function is designed to query a collection of aSVG files in a directory with feature ('lobe') and species ('homo sapiens') keywords, and return matched features in a data frame. 
+The `return_feature` function is designed to query a collection of aSVG files in a directory with feature ('lobe') and species ('homo sapiens') keywords, and return matched features in a data frame.   
 </font>
 
 
@@ -487,7 +487,7 @@ kable(assay(se.fil.hum)[733:735, ], caption='A slice of fully preprocessed data 
 </table>
 
 <font color='blue'>
-The following shows how to download the corresponding pre-annotated aSVG image from the [EBI SVG repository](#svg_repo). The function `return_feature` queries the repository with feature and species keywords, i.e. `c("frontal cortex", "cerebellum")` and `c("brain")` respectively. The argument `keywords.all` is set `FALSE` so that aSVGs matching at least one word are returned. The argument `return.all=FALSE` means only aSVGs matching the keywords are returned and saved in `dir`. Otherwise, all aSVGs are returned regardless of the keywords. An empty directory is recommended so as to avoid overwriting existing SVG files with the same names. Here `~/test` is used. `remote=TRUE` means the remote SVG repository is queried. If users want to query a local aSVG collection `remote=FALSE` should be used, and directory of the aSVG collection should be provided to `dir`. `match.only` is set `TRUE` so that only matching features are returned. If `FALSE`, all features in the matching aSVGs are returned.  
+The following shows how to download the corresponding pre-annotated aSVG image from the [EBI SVG repository](#svg_repo). The function `return_feature` queries the repository with feature and species keywords, i.e. `c("frontal cortex", "cerebellum")` and `c("brain")` respectively. The argument `keywords.all` is set `FALSE` so that aSVGs matching at least one word are returned. The argument `return.all=FALSE` means only aSVGs matching the keywords are returned and saved in `dir`. Otherwise, all aSVGs are returned regardless of the keywords. An empty directory is recommended so as to avoid overwriting existing SVG files with the same names. Here `~/test` is used. `remote=TRUE` means the remote SVG repository is queried. If users want to query a local aSVG collection `remote=FALSE` should be used, and directory of the aSVG collection should be provided to `dir`. `match.only` is set `TRUE` so that only matching features are returned. If `FALSE`, all features in the matching aSVGs are returned.     
 </font>
 
 <font color="red">
@@ -503,13 +503,14 @@ jianai: The functionality of using EBI online aSVG directly is in development. A
 # Make an empty directory.
 dir.create('~/test')
 # Query aSVGs.
-feature.df <- return_feature(feature=c('frontal cortex', 'cerebellum'), species=c('brain'), keywords.all=FALSE, return.all=FALSE, dir='~/test', remote=TRUE, match.only=TRUE)
+feature.df <- return_feature(feature=c('frontal cortex', 'cerebellum'), species=c('brain'), keywords.all=FALSE, return.all=FALSE, dir='~/test', remote=TRUE, match.only=TRUE, desc=FALSE)
 feature.df
 ```
 
-<font color='blue'> As explained in the [toy example](#toy), the same aSVG image has been included in this 
+<font color='blue'> 
+As explained in the [toy example](#toy), the same aSVG image has been included in this 
 package. To meet the requirements for building vignettes in R packages, the following 
-code section uses the packaged instance of the aSVG file (i.e. local aSVG) rather than downloading it.  
+code section uses the packaged instance of the aSVG file (i.e. local aSVG) rather than downloading it. The ontology ids are available in the R package `rols` [@rols] or [Ontology Lookup Service](https://www.ebi.ac.uk/ols/index).  
 
 ```{r eval=TRUE, echo=TRUE, warnings=FALSE }
 feature.df <- return_feature(feature=c('frontal cortex', 'cerebellum'), species=c('brain'), keywords.all=FALSE, return.all=FALSE, dir=svg.dir, remote=FALSE)
