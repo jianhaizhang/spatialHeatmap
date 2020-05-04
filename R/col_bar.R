@@ -4,7 +4,8 @@
 #' @param geneV The gene expression values used for building the colour bar.
 
 #' @param cols The colour codes corresponding to geneV.
-#' @param width A numeric between 0 and 1, used to reduce the widths of bins in the colour bar so as to avoid overlaps. 
+#' @param width A numeric between 0 and 1, used to reduce the widths of bins in the colour bar so as to avoid overlaps.
+#' @param bar.title.size A numeric of colour bar title size. Default is 10. 
 
 #' @param mar A 4-length numeric vector specifying margins of the colour bar, in the "top", "right", "bottom", "left" order. The unit is "cm". Default is "c(3, 0.1, 3, 0.1)".
 
@@ -18,11 +19,11 @@
 
 #' @importFrom ggplot2 ggplot geom_bar theme element_blank margin coord_flip scale_y_continuous scale_x_continuous 
 
-col_bar <- function(geneV, cols, width, mar=c(3, 0.1, 3, 0.1)) {        
+col_bar <- function(geneV, cols, width, bar.title.size=10, mar=c(3, 0.1, 3, 0.1)) {        
 
   color_scale <- y <- NULL
   cs.df <- data.frame(color_scale=geneV, y=1)
-  cs.g <- ggplot()+geom_bar(data=cs.df, aes(x=color_scale, y=y), fill=cols, stat="identity", width=((max(geneV)-min(geneV))/length(geneV))*width)+theme(axis.title.x=element_blank(), axis.text.x=element_blank(), axis.ticks.x=element_blank(), plot.margin=margin(t=mar[1], r=mar[2], b=mar[3], l=mar[4], "cm"), panel.grid=element_blank(), panel.background=element_blank(), plot.title= element_text(size=7, hjust=0.7))+coord_flip()+labs(title="Value", x=NULL, y=NULL)
+  cs.g <- ggplot()+geom_bar(data=cs.df, aes(x=color_scale, y=y), fill=cols, stat="identity", width=((max(geneV)-min(geneV))/length(geneV))*width)+theme(axis.title.x=element_blank(), axis.text.x=element_blank(), axis.ticks.x=element_blank(), plot.margin=margin(t=mar[1], r=mar[2], b=mar[3], l=mar[4], "cm"), panel.grid=element_blank(), panel.background=element_blank(), plot.title= element_text(hjust=0.7, size=bar.title.size))+coord_flip()+labs(title="Value", x=NULL, y=NULL)
   if (max(geneV)<=10000) cs.g <- cs.g+scale_x_continuous(expand=c(0,0))+scale_y_continuous(expand=c(0,0))
   if (max(geneV)>10000) cs.g <- cs.g+scale_x_continuous(expand=c(0,0), labels=function(x) format(x, scientific=TRUE))+scale_y_continuous(expand=c(0,0))
   return(cs.g)

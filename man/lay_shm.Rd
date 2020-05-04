@@ -17,9 +17,9 @@ lay_shm(lay.shm, con, ncol, ID.sel, grob.list, width, height, shiny)
 
 \item{grob.list}{A list of spatial heatmaps in the form of ggplot2 plot grob, returned by "grob_list()".}
 
-\item{width}{A numeric of each subplot width, relative to height. The default is 1.}
+\item{width}{A numeric of each subplot width. The default is 1.}
 
-\item{height}{A numeric of each subplot height, relative to width. The default is 1.}
+\item{height}{A numeric of each subplot height. The default is 1.}
 
 \item{shiny}{"TRUE" or "FALSE", apply this function to shiny app or not respectively.}
 }

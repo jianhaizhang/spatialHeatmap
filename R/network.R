@@ -78,7 +78,7 @@
 network <- function(geneID, data, ann, adj.mod, ds="3", adj.min=0, con.min=0, node.col=c("mediumorchid1", "chocolate4"), edge.col=c("yellow", "blue"), vertex.label.cex=1, vertex.cex=3, edge.cex=10, layout="circle", main=NULL, static=TRUE, ...) {
 
   options(stringsAsFactors=FALSE)
-  if (is(data, 'data.frame')|is(se, 'matrix')) {
+  if (is(data, 'data.frame')|is(data, 'matrix')) {
 
     data <- as.data.frame(data); rna <- rownames(data); cna <- colnames(data) 
     na <- vapply(seq_len(ncol(data)), function(i) { tryCatch({ as.numeric(data[, i]) }, warning=function(w) { return(rep(NA, nrow(data)))

@@ -6,6 +6,7 @@
 
 #' @inheritParams filter_data
 #' @inheritParams grob_list
+#' @inheritParams col_bar
 
 #' @param ID A character of gene ID(s) whose expression values are used to colour the spatial heatmaps. It can be a single gene or a vector of multiple genes.
 
@@ -13,13 +14,14 @@
 
 #' @param col.bar "selected" or "all", meaning use input genes or whole data matrix to build the colour scale respectively. The default is "selected".
 #' @param data.trans "log2", "exp2", or NULL. If colours across tissues cannot distinguish due to low variance or outliers, transform the data matrix by log2 or 2-base expoent (exp2). Default is NULL (data will not be transformed).
-#' @param bar.width The width of colour bar. Default if 0.7.
-#' @param width A numeric of each subplot width, relative to height. The default is 1.
-#' @param height A numeric of each subplot height, relative to width. The default is 1.
-#' @param legend.r The ratio of height to width of the legend plot. Default is 1.
+#' @param bar.width The width of colour bar. Default if 0.08.
+#' @param width A numeric of each subplot width. The default is 1.
+#' @param height A numeric of each subplot height. The default is 1.
+#' @param legend.r A numeric to adjust the dimension of the legend plot. Default is 0.1. The larger, the higher ratio of width to height.
 #' @param lay.shm "gene" or "con" (condition), the organisation of the subplots.
 #' @param ncol Number of columns to display the subplots.
-#' @return It generates an image of spatial heatmap(s) along with a colour key.
+#' @param verbose Logical FALSE or TRUE. If TRUE the samples in data not coloured in spatial heatmaps are printed to R console. Default is TRUE.
+#' @return An image of spatial heatmap(s) along with a colour key, and a data frame of mapping between data and SVG features.
 
 #' @section Details:
 #' Details about how to format an SVG image and a data matrix are provided in the package vignette (\code{browseVignettes('spatialHeatmap')}). The "se" parameter can be the value returned by the function \code{\link{filter_data}}, or built on an expression matrix and a targets file. See examples blow.
@@ -67,10 +69,10 @@
 #' Prudencio, Mercedes, Veronique V Belzil, Ranjan Batra, Christian A Ross, Tania F Gendron, Luc J Pregent, Melissa E Murray, et al. 2015. "Distinct Brain Transcriptome Profiles in C9orf72-Associated and Sporadic ALS." Nat. Neurosci. 18 (8): 1175–82
 #' Keays, Maria. 2019. ExpressionAtlas: Download Datasets from EMBL-EBI Expression Atlas
 #' Love, Michael I., Wolfgang Huber, and Simon Anders. 2014. "Moderated Estimation of Fold Change and Dispersion for RNA-Seq Data with DESeq2." Genome Biology 15 (12): 550. doi:10.1186/s13059-014-0550-8
+#' Guangchuang Yu (2020). ggplotify: Convert Plot to 'grob' or 'ggplot' Object. R package version 0.0.5. https://CRAN.R-project.org/package=ggplotify
 
 #' @export
 #' @importFrom SummarizedExperiment assay
-#' @importFrom genefilter filterfun genefilter
 #' @importFrom ggplot2 ggplot geom_bar aes theme element_blank margin element_rect coord_flip scale_y_continuous scale_x_continuous ggplotGrob geom_polygon scale_fill_manual ggtitle element_text labs
 #' @importFrom rsvg rsvg_ps 
 #' @importFrom grImport PostScriptTrace 
@@ -79,8 +81,9 @@
 #' @importFrom grid grobTree unit
 #' @importFrom grDevices colorRampPalette
 #' @importFrom methods is
+#' @importFrom ggplotify as.ggplot
 
-spatial_hm <- function(svg.path, data, sam.factor=NULL, con.factor=NULL, ID, col.com=c("yellow", "purple", "blue"), col.bar="selected", bar.width=0.7, data.trans=NULL, tis.trans=NULL, width=1, height=1, legend.r=1, sub.title.size=11, lay.shm="gene", ncol=3, sam.legend='identical', legend.title=NULL, legend.ncol=NULL, legend.nrow=NULL, legend.position='bottom', legend.direction=NULL, legend.key.size=0.5, legend.label.size=8, legend.title.size=8, line.size=0.2, line.color='grey70', ...) {
+spatial_hm <- function(svg.path, data, sam.factor=NULL, con.factor=NULL, ID, col.com=c("yellow", "purple", "blue"), col.bar="selected", bar.width=0.08, bar.title.size=10, data.trans=NULL, tis.trans=NULL, width=1, height=1, legend.r=1, sub.title.size=11, lay.shm="gene", ncol=2, sam.legend='identical', legend.ncol=NULL, legend.nrow=NULL, legend.position='bottom', legend.direction=NULL, legend.key.size=0.5, legend.label.size=8, line.size=0.2, line.color='grey70', verbose=TRUE, ...) {
 
   x <- y <- color_scale <- tissue <- line.type <- NULL  
   # Extract and filter data.
@@ -89,27 +92,33 @@ spatial_hm <- function(svg.path, data, sam.factor=NULL, con.factor=NULL, ID, col
 
     vec.na <- make.names(names(data)); if (is.null(vec.na)) stop("Please provide names for the input data!")
     if (any(duplicated(vec.na))) stop('Please make sure data names are unique!')
-    form <- grepl("__", vec.na); if (sum(form)==0) { vec.na <- paste0(vec.na, '__', vec.na) }
+    form <- grepl("__", vec.na); if (sum(form)==0) { vec.na <- paste0(vec.na, '__', 'con'); con.na <- FALSE } else con.na <- TRUE
     data <- tryCatch({ as.numeric(data) }, warning=function(w) { stop("Please make sure input data are numeric!") }, error=function(e) { stop("Please make sure input data are numeric!") })
     if (is.null(ID)) stop('Please provide a name for the data!')
     gene <- as.data.frame(matrix(data, nrow=1, dimnames=list(ID, vec.na)))
 
   } else if (is(data, 'data.frame')|is(data, 'matrix')) {
 
-   gene <- data; cna <- colnames(gene)
-   if (any(duplicated(cna))) stop('Please make sure column names are unique!')
-   form <- grepl("__", cna); if (sum(form)==0) { colnames(gene) <- paste0(cna, '__', 'con'); con.na=FALSE } else { gene <- gene[, form]; con.na=TRUE }
+    data <- as.data.frame(data); rna <- rownames(data); cna <- colnames(data)
+    if (any(duplicated(cna))) stop('Please make sure column names are unique!')
+    na <- vapply(seq_len(ncol(data)), function(i) { tryCatch({ as.numeric(data[, i]) }, warning=function(w) { return(rep(NA, nrow(data)))
+    }, error=function(e) { stop("Please make sure input data are numeric!") }) }, FUN.VALUE=numeric(nrow(data)) )
+    na <- as.data.frame(na); rownames(na) <- rna
+    idx <- colSums(apply(na, 2, is.na))!=0
+    gene <- na[!idx]; colnames(gene) <- cna <- cna[!idx]
+    form <- grepl("__", cna); if (sum(form)==0) { colnames(gene) <- paste0(cna, '__', 'con'); con.na <- FALSE } else con.na <- TRUE
 
   } else if (is(data, 'SummarizedExperiment')) {
 
     gene <- assay(data); r.na <- rownames(gene); gene <- apply(gene, 2, as.numeric) # This step removes rownames of gene2.
-    rownames(gene) <- r.na; colnames(gene) <- make.names(colnames(gene))
+    rownames(gene) <- r.na; cna <- colnames(gene) <- make.names(colnames(gene))
     col.meta <- as.data.frame(colData(data), stringsAsFactors=FALSE)
     # Factors teated by paste0/make.names are vecters.
-    if (!is.null(sam.factor) & !is.null(con.factor)) { colnames(gene) <- paste0(make.names(col.meta[, sam.factor]), '__', make.names(col.meta[, con.factor])); con.na=TRUE } else if (!is.null(sam.factor) & is.null(con.factor)) { sam.na <- make.names(col.meta[, sam.factor]); colnames(gene) <- paste0(sam.na, "__", "con"); con.na=FALSE }
+    if (!is.null(sam.factor) & !is.null(con.factor)) { colnames(gene) <- paste0(make.names(col.meta[, sam.factor]), '__', make.names(col.meta[, con.factor])); con.na <- TRUE } else if (!is.null(sam.factor) & is.null(con.factor)) { sam.na <- make.names(col.meta[, sam.factor]); colnames(gene) <- paste0(sam.na, "__", "con"); con.na <- FALSE } else if (is.null(sam.factor)) { form <- grepl("__", cna); if (sum(form)==0) { colnames(gene) <- paste0(cna, '__', 'con'); con.na <- FALSE } else con.na <- TRUE }
+    if (any(duplicated(colnames(gene)))) stop('Please use function \'aggr_rep\' to aggregate \'sample__condition\' replicates!')
 
-  }
-    if (!is.null(data.trans)) if (data.trans=='log2') { 
+  }; gene <- as.data.frame(gene)
+  if (!is.null(data.trans)) if (data.trans=='log2') { 
           
       g.min <- min(gene) 
       if (g.min<0) gene <- gene-g.min+1; if (g.min==0) gene <- gene+1; gene <- log2(gene)  
@@ -120,20 +129,38 @@ spatial_hm <- function(svg.path, data, sam.factor=NULL, con.factor=NULL, ID, col
     bar.len=1000
     if (col.bar=="all") geneV <- seq(min(gene), max(gene), len=bar.len) else if (col.bar=="selected") geneV <- seq(min(gene[ID, , drop=FALSE]), max(gene[ID, , drop=FALSE]), len=bar.len)
     col <- colorRampPalette(col.com)(length(geneV))
-    cs.g <- col_bar(geneV=geneV, cols=col, width=1, mar=c(3, 0.1, 3, 0.1)); cs.grob <- ggplotGrob(cs.g)    
+    cs.g <- col_bar(geneV=geneV, cols=col, width=1, bar.title.size=bar.title.size, mar=c(3, 0.1, 3, 0.1)); cs.grob <- ggplotGrob(cs.g)    
 
     df_tis <- svg_df(svg.path=svg.path)
     if (is.character(df_tis)) stop(df_tis)
     g.df <- df_tis[['df']]; tis.path <- df_tis[['tis.path']]
-    cname <- colnames(gene); con <- gsub("(.*)(__)(.*)", "\\3", cname); con.uni <- unique(con) 
-    grob.lis <- grob_list(gene=gene, con.na=con.na, geneV=geneV, coord=g.df, ID=ID, cols=col, legend.col=df_tis[['fil.cols']], tis.path=tis.path, tis.trans=tis.trans, sub.title.size=sub.title.size, sam.legend=sam.legend, legend.title=legend.title, legend.ncol=legend.ncol, legend.nrow=legend.nrow, legend.position=legend.position, legend.direction=legend.direction, legend.key.size=legend.key.size, legend.label.size=legend.label.size, legend.title.size=legend.title.size, line.size=line.size, line.color=line.color, line.type=line.type, ...)
+    # Only take the column names with "__".
+    cname <- colnames(gene); form <- grepl('__', cname)
+    con <- gsub("(.*)(__)(.*)", "\\3", cname[form]); con.uni <- unique(con)
+    sam.uni <- unique(gsub("(.*)(__)(.*)", "\\1", cname))
+    not.map <- setdiff(sam.uni, unique(tis.path)); if (verbose==TRUE & length(not.map)>0) cat('Enrties not mapped:', paste0(not.map, collapse=', '), '\n')
+    sam.com <- intersect(unique(tis.path), sam.uni) 
+
+    idx.com <- vapply(cname, function(i) grepl(paste0(sam.com, '__', collapse='|'), i), FUN.VALUE=logical(1))
+    map.gene <- gene[idx.com]; cna <- colnames(map.gene)
+    map.sum <- data.frame(); for (i in ID) {
+
+      df0 <- as.data.frame(t(map.gene[i, ])); colnames(df0) <- 'value'
+      featureSVG <- gsub("(.*)(__)(.*)", "\\1", cna)
+      rowID <- i; df1 <- data.frame(rowID=rowID, featureSVG=featureSVG)
+      if (con.na==TRUE) { condition <- gsub("(.*)(__)(.*)", "\\3", cna); df1 <- cbind(df1, condition=condition) }
+      df1 <- cbind(df1, df0); map.sum <- rbind(map.sum, df1)
+
+    }; row.names(map.sum) <- NULL    
+    grob.lis <- grob_list(gene=gene, con.na=con.na, geneV=geneV, coord=g.df, ID=ID, cols=col, legend.col=df_tis[['fil.cols']], tis.path=tis.path, tis.trans=tis.trans, sub.title.size=sub.title.size, sam.legend=sam.legend, legend.ncol=legend.ncol, legend.nrow=legend.nrow, legend.position=legend.position, legend.direction=legend.direction, legend.key.size=legend.key.size, legend.label.size=legend.label.size, line.size=line.size, line.color=line.color, line.type=line.type, ...)
     g.arr <- lay_shm(lay.shm=lay.shm, con=con, ncol=ncol, ID.sel=ID, grob.list=grob.lis[['grob.lis']], width=width, height=height, shiny=FALSE)
     cs.arr <- arrangeGrob(grobs=list(grobTree(cs.grob)), layout_matrix=cbind(1), widths=unit(1, "npc")) # "mm" is fixed, "npc" is scalable.
     g.lgd <- grob.lis[['g.lgd']]; grob.lgd <- ggplotGrob(g.lgd)
     # Layout matrix of legend.
     if (lay.shm=='gene') lay.lgd <- matrix(seq_len(ceiling(length(con.uni)/ncol)), byrow=FALSE)
     if (lay.shm=='con') lay.lgd <- matrix(seq_len(ceiling(length(ID)/ncol)), byrow=FALSE)
-    lgd.arr <- arrangeGrob(grobs=list(grobTree(grob.lgd)), layout_matrix=lay.lgd, widths=unit(width, "npc"), heights=unit(legend.r, "npc"))
-    grid.arrange(cs.arr, g.arr, lgd.arr, ncol=3, widths=c(bar.width, 10/(ncol+1)*ncol, 10/(ncol+1)))
+    lgd.arr <- arrangeGrob(grobs=list(grobTree(grob.lgd)), layout_matrix=lay.lgd, widths=unit(width, "npc"), heights=unit(width/legend.r, "npc"))
+    shm <- grid.arrange(cs.arr, g.arr, lgd.arr, ncol=3, widths=unit(c(bar.width-0.005, (1-bar.width)/(ncol+1)*ncol, (1-bar.width)/(ncol+1)), 'npc')); shm
+    lis <- list(spatial_heatmap=as.ggplot(shm), mapped_feature=map.sum); invisible(lis)
 
 }

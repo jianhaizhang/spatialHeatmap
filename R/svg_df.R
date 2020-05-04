@@ -123,7 +123,7 @@ svg_df <- function(svg.path) {
 
      }
 
-    }; g.df <- df; lis <- list(df=df, tis.path=tis.path, fil.cols=fil.cols); return(lis)
+    }; lis <- list(df=df, tis.path=tis.path, fil.cols=fil.cols); return(lis)
 
 }
 

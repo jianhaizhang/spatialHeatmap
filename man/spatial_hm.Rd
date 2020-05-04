@@ -12,7 +12,8 @@ spatial_hm(
   ID,
   col.com = c("yellow", "purple", "blue"),
   col.bar = "selected",
-  bar.width = 0.7,
+  bar.width = 0.08,
+  bar.title.size = 10,
   data.trans = NULL,
   tis.trans = NULL,
   width = 1,
@@ -20,18 +21,17 @@ spatial_hm(
   legend.r = 1,
   sub.title.size = 11,
   lay.shm = "gene",
-  ncol = 3,
+  ncol = 2,
   sam.legend = "identical",
-  legend.title = NULL,
   legend.ncol = NULL,
   legend.nrow = NULL,
   legend.position = "bottom",
   legend.direction = NULL,
   legend.key.size = 0.5,
   legend.label.size = 8,
-  legend.title.size = 8,
   line.size = 0.2,
   line.color = "grey70",
+  verbose = TRUE,
   ...
 )
 }
@@ -50,17 +50,19 @@ spatial_hm(
 
 \item{col.bar}{"selected" or "all", meaning use input genes or whole data matrix to build the colour scale respectively. The default is "selected".}
 
-\item{bar.width}{The width of colour bar. Default if 0.7.}
+\item{bar.width}{The width of colour bar. Default if 0.08.}
+
+\item{bar.title.size}{A numeric of colour bar title size. Default is 10.}
 
 \item{data.trans}{"log2", "exp2", or NULL. If colours across tissues cannot distinguish due to low variance or outliers, transform the data matrix by log2 or 2-base expoent (exp2). Default is NULL (data will not be transformed).}
 
 \item{tis.trans}{A character vector of tissue names. These tissues cover other tissues and should be set transparent. E.g c("epidermis", "cortex").}
 
-\item{width}{A numeric of each subplot width, relative to height. The default is 1.}
+\item{width}{A numeric of each subplot width. The default is 1.}
 
-\item{height}{A numeric of each subplot height, relative to width. The default is 1.}
+\item{height}{A numeric of each subplot height. The default is 1.}
 
-\item{legend.r}{The ratio of height to width of the legend plot. Default is 1.}
+\item{legend.r}{A numeric to adjust the dimension of the legend plot. Default is 0.1. The larger, the higher ratio of width to height.}
 
 \item{sub.title.size}{A numeric. The subtitle font size of each individual spatial heatmap. Default is 11.}
 
@@ -68,9 +70,7 @@ spatial_hm(
 
 \item{ncol}{Number of columns to display the subplots.}
 
-\item{sam.legend}{A character vector of tissue names in the SVG image. These tissues are shown in the legend. Default is "identical", meaning all the identical tissues between the data matrix and SVG image. Another value is 'all', meaning all tissues in the SVG image.}
-
-\item{legend.title}{A character, the legend title. Default is NULL.}
+\item{sam.legend}{A character vector of tissue names from the SVG image to show in the legend plot, "identical", or "all". Default is "identical", meaning all the identical tissues between the data matrix and SVG image. If "all", all tissues in the SVG image are shown.}
 
 \item{legend.ncol}{An integer, the column number of the items in the legend. Default is NULL.}
 
@@ -86,16 +86,16 @@ spatial_hm(
 
 \item{legend.label.size}{A numeric. Default is 8. Size of the legend label.}
 
-\item{legend.title.size}{A numeric. Default is 8. Size of the legend title.}
-
 \item{line.size}{A numeric. The size of the polygon outline. Default is 0.2.}
 
 \item{line.color}{A character. The color of polygon outline. Default is "grey70".}
 
+\item{verbose}{Logical FALSE or TRUE. If TRUE the samples in data not coloured in spatial heatmaps are printed to R console. Default is TRUE.}
+
 \item{...}{Other arguments passed to ggplot().}
 }
 \value{
-It generates an image of spatial heatmap(s) along with a colour key.
+An image of spatial heatmap(s) along with a colour key, and a data frame of mapping between data and SVG features.
 }
 \description{
 It takes a pair of formatted gene expression data matrix ("SummarizedExperiment") and SVG image as input. In the SVG image, tissue regions are pre-defined and linked with data matrix through tissue names. The expression profiles of the input gene(s) under each condition are mapped to each tissue in the form of different colours. The application is not limited to gene expression data. It is applicable as long as a pair of formatted data matrix and SVG image are provided, such as population data generated in different years across different cities.
@@ -144,6 +144,7 @@ Martin Morgan, Valerie Obenchain, Jim Hester and Hervé Pagès (2018). Summarize
 Prudencio, Mercedes, Veronique V Belzil, Ranjan Batra, Christian A Ross, Tania F Gendron, Luc J Pregent, Melissa E Murray, et al. 2015. "Distinct Brain Transcriptome Profiles in C9orf72-Associated and Sporadic ALS." Nat. Neurosci. 18 (8): 1175–82
 Keays, Maria. 2019. ExpressionAtlas: Download Datasets from EMBL-EBI Expression Atlas
 Love, Michael I., Wolfgang Huber, and Simon Anders. 2014. "Moderated Estimation of Fold Change and Dispersion for RNA-Seq Data with DESeq2." Genome Biology 15 (12): 550. doi:10.1186/s13059-014-0550-8
+Guangchuang Yu (2020). ggplotify: Convert Plot to 'grob' or 'ggplot' Object. R package version 0.0.5. https://CRAN.R-project.org/package=ggplotify
 }
 \author{
 Jianhai Zhang \email{jzhan067@ucr.edu; zhang.jianhai@hotmail.com} \cr Dr. Thomas Girke \email{thomas.girke@ucr.edu}

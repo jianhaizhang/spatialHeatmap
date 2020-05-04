@@ -11,21 +11,24 @@ return_feature(
   remote = FALSE,
   dir = NULL,
   desc = FALSE,
+  match.only = TRUE,
   return.all = FALSE
 )
 }
 \arguments{
-\item{feature}{The keywords of target feature(s), which is used to select SVG images from a collection. E.g. "frontal cortex".}
+\item{feature}{A vector of keywords (case insentitive) of target feature(s), which is used to select SVG images from a collection. E.g. c("frontal", "cortex").}
 
-\item{species}{The keywords of a target species, which is used to select SVG images from a collection. E.g. "homo sapiens".}
+\item{species}{A vector of keywords (case insentitive) of a target species, which is used to select SVG images from a collection. E.g. c("homo sapiens").}
 
-\item{keywords.all}{Logical, TRUE or FALSE. Default is TRUE. If TRUE, the returned hits will contain all the provided keywords in "feature" and "species". Otherwise, the returned hits contain at least 1 keyword in "feature" and at least 1 keyword in "species".}
+\item{keywords.all}{Logical, TRUE or FALSE. Default is TRUE. If TRUE, every returned hit will contain all the provided keywords in "feature" and "species". Otherwise, every returned hit contain at least 1 keyword in "feature" and at least 1 keyword in "species".}
 
 \item{remote}{Logical, FALSE or TRUE. Default is FALSE. If TRUE, the remote SVG repository "https://github.com/jianhaizhang/SVG_tutorial_file/tree/master/svg_repo" is used for query.}
 
 \item{dir}{The directory where the SVG images are available. If "remote" is TRUE, the returned SVG images are saved in this directory. Note, in this case existing SVG images with identical names as returned ones are overwritten. If "remote" is FALSE, user-provided SVG images should be saved in this directory for query.}
 
 \item{desc}{Logical, FALSE or TRUE. Default is FALSE. If TRUE, the feature descriptions from the package "rols" (Laurent Gatto 2019) are added. If too many features are returned, this process takes a long time.}
+
+\item{match.only}{Logical, TRUE or FALSE. If TRUE (default), only features matching the feature keywords are returned. If FALSE, all features in the matching species are returned, and the matching features are listed on the top of the data frame.}
 
 \item{return.all}{Logical, FALSE or TRUE. Default is FALSE. If TRUE, all features together with all SVG images are returned, either remote or user-provided.}
 }

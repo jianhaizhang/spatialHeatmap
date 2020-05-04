@@ -767,36 +767,6 @@ matrix_hm <- function(geneID, se, adj.mod, ds, scale, col=c('yellow', 'blue'), m
 }
 
 
-
-
-
-adj_mod <- function(se, type, minSize=15, dir=NULL) {
-
-    if (!is.null(dir)) { path <- paste0(dir, "/local_mode_result/"); if (!dir.exists(path)) dir.create(path) }
-
-    if (type=="signed") sft <- 12; if (type=="unsigned") sft <- 6
-    data <- t(assay(se))
-    adj <- adjacency(data, power=sft, type=type); diag(adj) <- 0
-    tom <- TOMsimilarity(adj, TOMType="signed")
-    dissTOM <- 1-tom; tree.hclust <- flashClust(as.dist(dissTOM), method="average")
-    ch <- quantile(tree.hclust[['height']], probs=seq(0, 1, 0.05))[19]
-    mcol <- NULL; for (ds in 2:3) {
-         
-        min <- minSize-3*ds; if (min <=5) min <-5
-        tree <- cutreeHybrid(dendro=tree.hclust, pamStage=FALSE, minClusterSize=min, cutHeight=ch, deepSplit=ds, distM=dissTOM)
-        mcol <- cbind(mcol, tree$labels)
-
-    }; colnames(mcol) <- as.character(2:3); rownames(mcol) <- colnames(adj) <- rownames(adj) <- colnames(data)
-    if (!is.null(dir)) { 
-
-      write.table(adj, paste0(path, "adj.txt"), sep="\t", row.names=TRUE, col.names=TRUE)
-      write.table(mcol, paste0(path, "mod.txt"), sep="\t", row.names=TRUE, col.names=TRUE)
-    
-    }; return(list(adj=adj, mod=mcol))
-
-}
-
-
 lay_shm <- function(lay.shm, con, ncol, ID.sel, grob.list, width, height, shiny) {
 
     width <- as.numeric(width); height <- as.numeric(height); ncol <- as.numeric(ncol); con <- unique(con)
@@ -834,16 +804,17 @@ lay_shm <- function(lay.shm, con, ncol, ID.sel, grob.list, width, height, shiny)
 }
 
 
-col_bar <- function(geneV, cols, width, mar=c(3, 0.1, 3, 0.1)) {        
+col_bar <- function(geneV, cols, width, bar.title.size=10, mar=c(3, 0.1, 3, 0.1)) {        
 
   color_scale <- y <- NULL
   cs.df <- data.frame(color_scale=geneV, y=1)
-  cs.g <- ggplot()+geom_bar(data=cs.df, aes(x=color_scale, y=y), fill=cols, stat="identity", width=((max(geneV)-min(geneV))/length(geneV))*width)+theme(axis.title.x=element_blank(), axis.text.x=element_blank(), axis.ticks.x=element_blank(), plot.margin=margin(t=mar[1], r=mar[2], b=mar[3], l=mar[4], "cm"), panel.grid=element_blank(), panel.background=element_blank(), plot.title= element_text(size=7, hjust=0.7))+coord_flip()+labs(title="Value", x=NULL, y=NULL)
+  cs.g <- ggplot()+geom_bar(data=cs.df, aes(x=color_scale, y=y), fill=cols, stat="identity", width=((max(geneV)-min(geneV))/length(geneV))*width)+theme(axis.title.x=element_blank(), axis.text.x=element_blank(), axis.ticks.x=element_blank(), plot.margin=margin(t=mar[1], r=mar[2], b=mar[3], l=mar[4], "cm"), panel.grid=element_blank(), panel.background=element_blank(), plot.title= element_text(hjust=0.7, size=bar.title.size))+coord_flip()+labs(title="Value", x=NULL, y=NULL)
   if (max(geneV)<=10000) cs.g <- cs.g+scale_x_continuous(expand=c(0,0))+scale_y_continuous(expand=c(0,0))
   if (max(geneV)>10000) cs.g <- cs.g+scale_x_continuous(expand=c(0,0), labels=function(x) format(x, scientific=TRUE))+scale_y_continuous(expand=c(0,0))
   return(cs.g)
 
 }
+
 
 
 nod_lin <- function(ds, lab, mods, adj, geneID, adj.min) {
@@ -970,73 +941,17 @@ svg_df <- function(svg.path) {
 
      }
 
-    }; g.df <- df; lis <- list(df=df, tis.path=tis.path, fil.cols=fil.cols); return(lis)
+    }; lis <- list(df=df, tis.path=tis.path, fil.cols=fil.cols); return(lis)
 
 }
 
 
-spatial_hm <- function(svg.path, se, sam.factor=NULL, con.factor=NULL, ID, col.com=c("yellow", "purple", "blue"), col.bar="selected", bar.width=0.7, data.trans=NULL, tis.trans=NULL, width=1, height=1, legend.r=1, sub.title.size=11, lay.shm="gene", ncol=3, sam.legend='identical', legend.title=NULL, legend.ncol=NULL, legend.nrow=NULL, legend.position='bottom', legend.direction=NULL, legend.key.size=0.5, legend.label.size=8, legend.title.size=8, line.size=0.2, line.color='grey70', ...) {
-
-  x <- y <- color_scale <- tissue <- line.type <- NULL  
-  # Extract and filter data.
-  options(stringsAsFactors=FALSE) 
-  if (is.vector(se)) {
-
-    vec.na <- make.names(names(se)); if (is.null(vec.na)) stop("Please provide names for the input data!")
-    if (any(duplicated(vec.na))) stop('Please make sure data names are unique!')
-    form <- grepl("__", vec.na); if (sum(form)==0) { vec.na <- paste0(vec.na, '__', vec.na) }
-    se <- tryCatch({ as.numeric(se) }, warning=function(w) { stop("Please make sure input data are numeric!") }, error=function(e) { stop("Please make sure input data are numeric!") })
-    if (is.null(ID)) stop('Please provide a name for the data!')
-    gene <- as.data.frame(matrix(se, nrow=1, dimnames=list(ID, vec.na)))
-
-  } else if (is(se, 'data.frame')|is(se, 'matrix')) {
-
-   gene <- se; cna <- colnames(gene)
-   if (any(duplicated(cna))) stop('Please make sure column names are unique!')
-   form <- grepl("__", cna); if (sum(form)==0) { colnames(gene) <- paste0(cna, '__', 'con'); con.na=FALSE } else { gene <- gene[, form]; con.na=TRUE }
-
-  } else if (is(se, 'SummarizedExperiment')) {
-
-    gene <- assay(se); r.na <- rownames(gene); gene <- apply(gene, 2, as.numeric) # This step removes rownames of gene2.
-    rownames(gene) <- r.na; colnames(gene) <- make.names(colnames(gene))
-    col.meta <- as.data.frame(colData(se), stringsAsFactors=FALSE)
-    # Factors teated by paste0/make.names are vecters.
-    if (!is.null(sam.factor) & !is.null(con.factor)) { colnames(gene) <- paste0(make.names(col.meta[, sam.factor]), '__', make.names(col.meta[, con.factor])); con.na=TRUE } else if (!is.null(sam.factor) & is.null(con.factor)) { sam.na <- make.names(col.meta[, sam.factor]); colnames(gene) <- paste0(sam.na, "__", "con"); con.na=FALSE }
-
-  }
-    if (!is.null(data.trans)) if (data.trans=='log2') { 
-          
-      g.min <- min(gene) 
-      if (g.min<0) gene <- gene-g.min+1; if (g.min==0) gene <- gene+1; gene <- log2(gene)  
-
-    } else if (data.trans=='exp2') gene <- 2^gene
- 
-    # Color bar.
-    bar.len=1000
-    if (col.bar=="all") geneV <- seq(min(gene), max(gene), len=bar.len) else if (col.bar=="selected") geneV <- seq(min(gene[ID, , drop=FALSE]), max(gene[ID, , drop=FALSE]), len=bar.len)
-    col <- colorRampPalette(col.com)(length(geneV))
-    cs.g <- col_bar(geneV=geneV, cols=col, width=1, mar=c(3, 0.1, 3, 0.1)); cs.grob <- ggplotGrob(cs.g)    
-
-    df_tis <- svg_df(svg.path=svg.path)
-    if (is.character(df_tis)) stop(df_tis)
-    g.df <- df_tis[['df']]; tis.path <- df_tis[['tis.path']]
-    cname <- colnames(gene); con <- gsub("(.*)(__)(.*)", "\\3", cname); con.uni <- unique(con) 
-    grob.lis <- grob_list(gene=gene, con.na=con.na, geneV=geneV, coord=g.df, ID=ID, cols=col, legend.col=df_tis[['fil.cols']], tis.path=tis.path, tis.trans=tis.trans, sub.title.size=sub.title.size, sam.legend=sam.legend, legend.title=legend.title, legend.ncol=legend.ncol, legend.nrow=legend.nrow, legend.position=legend.position, legend.direction=legend.direction, legend.key.size=legend.key.size, legend.label.size=legend.label.size, legend.title.size=legend.title.size, line.size=line.size, line.color=line.color, line.type=line.type, ...)
-    g.arr <- lay_shm(lay.shm=lay.shm, con=con, ncol=ncol, ID.sel=ID, grob.list=grob.lis[['grob.lis']], width=width, height=height, shiny=FALSE)
-    cs.arr <- arrangeGrob(grobs=list(grobTree(cs.grob)), layout_matrix=cbind(1), widths=unit(1, "npc")) # "mm" is fixed, "npc" is scalable.
-    g.lgd <- grob.lis[['g.lgd']]; grob.lgd <- ggplotGrob(g.lgd)
-    # Layout matrix of legend.
-    if (lay.shm=='gene') lay.lgd <- matrix(seq_len(ceiling(length(con.uni)/ncol)), byrow=FALSE)
-    if (lay.shm=='con') lay.lgd <- matrix(seq_len(ceiling(length(ID)/ncol)), byrow=FALSE)
-    lgd.arr <- arrangeGrob(grobs=list(grobTree(grob.lgd)), layout_matrix=lay.lgd, widths=unit(width, "npc"), heights=unit(legend.r, "npc"))
-    grid.arrange(cs.arr, g.arr, lgd.arr, ncol=3, widths=c(bar.width, 10/(ncol+1)*ncol, 10/(ncol+1)))
-
-}
 
 
 grob_list <- function(gene, con.na=TRUE, geneV, coord, ID, cols, tis.path, tis.trans=NULL, sub.title.size, sam.legend='identical', legend.col, legend.title=NULL, legend.ncol=NULL, legend.nrow=NULL, legend.position='bottom', legend.direction=NULL, legend.key.size=0.5, legend.label.size=8, legend.title.size=8, line.size=0.2, line.color='grey70', ...) {
 
-  save(gene, geneV, coord, ID, cols, tis.path, tis.trans, sub.title.size, sam.legend, legend.col, legend.title, legend.ncol, legend.nrow, legend.position, legend.direction, legend.key.size, legend.label.size, legend.title.size, line.size, line.color, file='all')
+ save(gene, geneV, coord, ID, cols, tis.path, tis.trans, sub.title.size, sam.legend, legend.col, legend.title, legend.ncol, legend.nrow, legend.position, legend.direction, legend.key.size, legend.label.size, legend.title.size, line.size, line.color, file='all')
+  options(stringsAsFactors=FALSE)
   g_list <- function(con, lgd=FALSE, ...) {
 
     x <- y <- tissue <- NULL; tis.df <- unique(coord[, 'tissue'])
@@ -1083,7 +998,7 @@ grob_list <- function(gene, con.na=TRUE, geneV, coord, ID, cols, tis.path, tis.t
 
     }
 
-    g <- ggplot(...)+geom_polygon(data=coord, aes(x=x, y=y, fill=tissue), color=line.color, size=line.size, linetype='solid')+scl.fil+theme(axis.text=element_blank(), axis.ticks=element_blank(), panel.grid=element_blank(), panel.background=element_rect(fill="white", colour="grey80"), plot.margin=margin(0.1, 0.1, 0.1, 0.3, "cm"), axis.title.x=element_text(size=16,face="bold"), plot.title=element_text(hjust=0.5, size=sub.title.size))+labs(x="", y="")+scale_y_continuous(expand=c(0.01, 0.01))+scale_x_continuous(expand=c(0.01, 0.01))+ggtitle(paste0(k, "_", con))
+    g <- ggplot(...)+geom_polygon(data=coord, aes(x=x, y=y, fill=tissue), color=line.color, size=line.size, linetype='solid')+scl.fil+theme(axis.text=element_blank(), axis.ticks=element_blank(), panel.grid=element_blank(), panel.background=element_rect(fill="white", colour="grey80"), plot.margin=margin(0.1, 0.1, 0.1, 0.3, "cm"), axis.title.x=element_text(size=16,face="bold"), plot.title=element_text(hjust=0.5, size=sub.title.size))+labs(x="", y="")+scale_y_continuous(expand=c(0.01, 0.01))+scale_x_continuous(expand=c(0.01, 0.01))
     if (con.na==FALSE) g.tit <- ggtitle(k) else g.tit <- ggtitle(paste0(k, "_", con)); g <- g+g.tit
 
     if (lgd==TRUE) {
@@ -1094,7 +1009,8 @@ grob_list <- function(gene, con.na=TRUE, geneV, coord, ID, cols, tis.path, tis.t
 
   }
   # Map colours to samples according to expression level.
-  cname <- colnames(gene); cons <- gsub("(.*)(__)(.*)", "\\3", cname); con.uni <- unique(cons)
+  cname <- colnames(gene); form <- grep('__', cname) # Only take the column names with "__".
+  cons <- gsub("(.*)(__)(.*)", "\\3", cname[form]); con.uni <- unique(cons)
   sam.uni <- unique(gsub("(.*)(__)(.*)", "\\1", cname))
   grob.na <- grob.lis <- NULL; for (k in ID) {
 
@@ -1114,6 +1030,8 @@ grob_list <- function(gene, con.na=TRUE, geneV, coord, ID, cols, tis.path, tis.t
   return(list(grob.lis=grob.lis, g.lgd=g.lgd))
 
 }
+
+
 
 
 library(SummarizedExperiment); library(shiny); library(shinydashboard); library(grImport); library(rsvg); library(ggplot2); library(DT); library(gridExtra); library(ggdendro); library(WGCNA); library(grid); library(XML); library(plotly); library(data.table); library(genefilter); library(flashClust); library(visNetwork); library(reshape2); library(igraph)

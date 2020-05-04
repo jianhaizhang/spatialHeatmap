@@ -17,7 +17,7 @@
 #' @references
 #' Hadley Wickham, Jim Hester and Jeroen Ooms (2019). xml2: Parse XML. R package version 1.2.2. https://CRAN.R-project.org/package=xml2
 
-#' @export return_feature
+#' @export update_feature
 #' @importFrom xml2 xml_children xml_length xml_attr xml_set_attr
 
 update_feature <- function(feature, dir) {

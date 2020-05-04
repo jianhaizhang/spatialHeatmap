@@ -10,7 +10,7 @@
 #' @param tis.path All the tissues/paths extracted from the SVG.
 #' @param tis.trans A character vector of tissue names. These tissues cover other tissues and should be set transparent. E.g c("epidermis", "cortex").
 #' @param sub.title.size A numeric. The subtitle font size of each individual spatial heatmap. Default is 11.
-#' @param sam.legend A character vector of tissue names in the SVG image. These tissues are shown in the legend. Default is "identical", meaning all the identical tissues between the data matrix and SVG image. Another value is 'all', meaning all tissues in the SVG image.
+#' @param sam.legend A character vector of tissue names from the SVG image to show in the legend plot, "identical", or "all". Default is "identical", meaning all the identical tissues between the data matrix and SVG image. If "all", all tissues in the SVG image are shown.
 #' @param legend.col A character vector of colours for the legend keys. The lenght must be equal to the number of target samples shown in the legend. 
 #' @param legend.title A character, the legend title. Default is NULL.
 #' @param legend.ncol An integer, the column number of the items in the legend. Default is NULL.
@@ -82,7 +82,7 @@ grob_list <- function(gene, con.na=TRUE, geneV, coord, ID, cols, tis.path, tis.t
 
     }
 
-    g <- ggplot(...)+geom_polygon(data=coord, aes(x=x, y=y, fill=tissue), color=line.color, size=line.size, linetype='solid')+scl.fil+theme(axis.text=element_blank(), axis.ticks=element_blank(), panel.grid=element_blank(), panel.background=element_rect(fill="white", colour="grey80"), plot.margin=margin(0.1, 0.1, 0.1, 0.3, "cm"), axis.title.x=element_text(size=16,face="bold"), plot.title=element_text(hjust=0.5, size=sub.title.size))+labs(x="", y="")+scale_y_continuous(expand=c(0.01, 0.01))+scale_x_continuous(expand=c(0.01, 0.01))+ggtitle(paste0(k, "_", con))
+    g <- ggplot(...)+geom_polygon(data=coord, aes(x=x, y=y, fill=tissue), color=line.color, size=line.size, linetype='solid')+scl.fil+theme(axis.text=element_blank(), axis.ticks=element_blank(), panel.grid=element_blank(), panel.background=element_rect(fill="white", colour="grey80"), plot.margin=margin(0.1, 0.1, 0.1, 0.3, "cm"), axis.title.x=element_text(size=16,face="bold"), plot.title=element_text(hjust=0.5, size=sub.title.size))+labs(x="", y="")+scale_y_continuous(expand=c(0.01, 0.01))+scale_x_continuous(expand=c(0.01, 0.01))
     if (con.na==FALSE) g.tit <- ggtitle(k) else g.tit <- ggtitle(paste0(k, "_", con)); g <- g+g.tit
 
     if (lgd==TRUE) {
@@ -93,7 +93,8 @@ grob_list <- function(gene, con.na=TRUE, geneV, coord, ID, cols, tis.path, tis.t
 
   }
   # Map colours to samples according to expression level.
-  cname <- colnames(gene); cons <- gsub("(.*)(__)(.*)", "\\3", cname); con.uni <- unique(cons)
+  cname <- colnames(gene); form <- grep('__', cname) # Only take the column names with "__".
+  cons <- gsub("(.*)(__)(.*)", "\\3", cname[form]); con.uni <- unique(cons)
   sam.uni <- unique(gsub("(.*)(__)(.*)", "\\1", cname))
   grob.na <- grob.lis <- NULL; for (k in ID) {
 
