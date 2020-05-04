@@ -4,6 +4,7 @@ author: "Authors: Jianhai Zhang, Bing Yang, Wolf B. Frommer, Julia Bailey-Serres
 date: "Last update: `r format(Sys.time(), '%d %B, %Y')`"
 output:
   BiocStyle::html_document:
+    css: file/custom.css
     toc: true
     toc_float:
         collapsed: true
@@ -35,15 +36,18 @@ BiocStyle::markdown()
 knitr::opts_chunk$set(cache=TRUE)
 ```
 <!-- 
+
 <style type="text/css">
  .main-container { max-width: 1800px; margin-left: 5px; margin-right: auto; }
 </style>
 
 <style>body { text-align: justify }</style>  
 
+
 ```{r css, echo = FALSE, results = 'asis'}
 BiocStyle::markdown(css.files=c('file/custom.css'))
 ```
+
 -->
 
 ```{r setup0, eval=TRUE, echo=FALSE, message=FALSE, warning=FALSE}
@@ -478,13 +482,9 @@ preprocessed data matrix (Table \@ref(tab:humtab)).
 assay(se.fil.hum)[733:735, ]
 ```
 
-<table align="center">
-
-```{r humtab, eval=TRUE, echo=FALSE, align='center', warnings=FALSE}
+```{r humtab, eval=TRUE, echo=FALSE, warnings=FALSE}
 kable(assay(se.fil.hum)[733:735, ], caption='A slice of fully preprocessed data matrix.')
 ```
-
-</table>
 
 <font color='blue'>
 The following shows how to download the corresponding pre-annotated aSVG image from the [EBI SVG repository](#svg_repo). The function `return_feature` queries the repository with feature and species keywords, i.e. `c("frontal cortex", "cerebellum")` and `c("brain")` respectively. The argument `keywords.all` is set `FALSE` so that aSVGs matching at least one word are returned. The argument `return.all=FALSE` means only aSVGs matching the keywords are returned and saved in `dir`. Otherwise, all aSVGs are returned regardless of the keywords. An empty directory is recommended so as to avoid overwriting existing SVG files with the same names. Here `~/test` is used. `remote=TRUE` means the remote SVG repository is queried. If users want to query a local aSVG collection `remote=FALSE` should be used, and directory of the aSVG collection should be provided to `dir`. `match.only` is set `TRUE` so that only matching features are returned. If `FALSE`, all features in the matching aSVGs are returned.     
