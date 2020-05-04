@@ -869,7 +869,7 @@ se.aggr.sh <- aggr_rep(data=se.sh, sam.factor='samples', con.factor='conditions'
 se.fil.sh <- filter_data(data=se.aggr.sh, sam.factor='samples', con.factor='conditions', pOA=c(0.03, 6), CV=c(0.30, 100), dir=NULL)
 ```
 
-The aSVG image is made from [Mustroph2009-nu] and included in this packaged. Thus it can be queried locally.   
+The aSVG image is made from [@Mustroph2009-nu] and included in this packaged. Thus it can be queried locally.   
 
 ```{r eval=TRUE, echo=TRUE, warnings=FALSE }
 feature.df <- return_feature(feature=c('shoot_pGL2', 'shoot_pRBCS'), species=c('shoot'), keywords.all=FALSE, return.all=FALSE, dir=svg.dir, remote=FALSE, match.only=FALSE)
