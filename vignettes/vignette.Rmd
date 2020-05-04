@@ -1057,7 +1057,7 @@ To plot spaital heatmap successfully, the targets file should meet the following
 2. The sample column specifies sample replicates. It is crucial that replicate names of the same sample must be identical. Otherwise, they are treated as different samples. E.g. 
 'occipital_lobe', 'occipital_lobe' are the same sample while 'occipital_lobe1', 'occipital_lobe2' are different samples. 
 
-3. The sample identifiers of interest must be identical with features of interest in aSVG respectively. Otherwise, they are not coloured in spatial heatmaps.  
+3. The sample identifiers of interest must be identical with features of interest in aSVG respectively. It means even a dot, undescore, space, *etc* can make a difference and lead to target features not coloured in spatial heatmaps. Since double underscore (__) is a reserved separator in spatialHeatmap, it cannot be used in sample or condition identifiers.  
 
 4. The condition column has the same requirement with the sample column. E.g. 'condition1', 'condition1' is same conditoin while 'condition1A', 'condition1B' is treated as different conditions.   
 
