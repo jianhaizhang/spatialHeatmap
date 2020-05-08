@@ -33,13 +33,13 @@
 # Search for human samples related to brain.
 all.res <- searchAtlasExperiments(properties="brain", species="Homo sapiens")
 # Select "E-GEOD-67196", which is RNA-seq data of cerebellum and frontal cortex in brain.
-rse <- getAtlasData('E-GEOD-67196')[[1]][[1]]
+rse.hum <- getAtlasData('E-GEOD-67196')[[1]][[1]]
 
 # Tissue/condition metadata.
-df.con <- as.data.frame(colData(rse)); df.con[1:3, ]
+df.con <- as.data.frame(colData(rse.hum)); df.con[1:3, ]
 
 # The matching tissues in the SVG template are "cerebellum" and "frontal_cortex" while in the expression data are "cerebellum" and "frontal cortex". The tissue names must be exactly same between the SVG and the expression matrix, so change "frontal cortex" to "frontal_cortex".
-df.con$organism_part <- sub(' ', '_', df.con$organism_part)
+# df.con$organism_part <- sub(' ', '_', df.con$organism_part)
 # Use abbreviations of the conditions ("individual", "disease", "genotype").
 df.con$individual <- sub('individual', 'indi', df.con$individual)
 df.con$individual <- sub('Individual ', 'indi', df.con$individual)
@@ -60,7 +60,7 @@ rse.mus <- getAtlasData('E-MTAB-2801')[[1]][[1]]
 
 # Tissue/condition metadata.
 df.con <- as.data.frame(colData(rse.mus)); df.con[1:3, ]
-df.con$organism_part <- gsub('skeletal muscle tissue', 'skeletal.muscle', df.con$organism_part)
+df.con$organism_part <- gsub('skeletal muscle tissue', 'skeletal muscle', df.con$organism_part)
 df.con$strain <- make.names(df.con$strain)
 
 write.table(df.con, 'target_mouse.txt', col.names=TRUE, row.names=TRUE, sep='\t')

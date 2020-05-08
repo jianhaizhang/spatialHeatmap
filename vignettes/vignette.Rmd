@@ -395,6 +395,47 @@ The design of the downloaded RNA-Seq experiment is described in the `colData` sl
 colData(rse.hum)[1:5, 1:5]
 ```
 
+<font color="red">
+[ThG-Comment 5: please add here the corresponding but unevaluated code to download the 
+ aSVG from your repos. Users want to know how this works.]
+</font>
+
+<font color='blue'>
+The following shows how to download the corresponding pre-annotated aSVG image from the [EBI SVG repository](#svg_repo) based on above experiment design. The function `return_feature` queries the repository with feature and species keywords, i.e. `c('frontal cortex', 'cerebellum')` and `c('homo sapiens', 'brain')` respectively. The argument `keywords.all` is set `FALSE` so that aSVGs matching at least one word are returned. The argument `return.all=FALSE` means only aSVGs matching the keywords are returned and saved in `dir`. Otherwise, all aSVGs are returned regardless of the keywords. An empty directory is recommended so as to avoid overwriting existing SVG files with the same names. Here `~/test` is used. `remote=TRUE` means the remote SVG repository is queried. If users want to query a local aSVG collection `remote=FALSE` should be used, and directory of the aSVG collection should be provided to `dir`. `match.only` is set `TRUE` so that only matching features are returned. If `FALSE`, all features in the matching aSVGs are returned.     
+</font>
+
+<font color='blue'>
+jianai: The functionality of using EBI online aSVG directly is completed. 
+</font>
+
+```{r eval=FALSE, echo=TRUE, warnings=FALSE }
+# Make an empty directory.
+dir.create('~/test')
+# Query aSVGs.
+feature.df <- return_feature(feature=c('frontal cortex', 'cerebellum'), species=c('homo sapiens', 'brain'), keywords.all=FALSE, return.all=FALSE, dir='~/test', remote=TRUE, match.only=TRUE, desc=FALSE)
+# First 8 rows.
+feature.df[1:8, ]
+# All matching aSVGs.
+unique(feature.df$SVG)
+```
+
+<font color='blue'> 
+As explained in the [toy example](#toy), the target aSVG image (homo_sapiens.brain.svg) has been included in this 
+package. To meet the requirements for building vignettes in R packages, the following 
+code section uses the packaged instance of the aSVG file (i.e. local aSVG) rather than downloading it. The ontology ids are available in the R package `rols` [@rols] or [Ontology Lookup Service](https://www.ebi.ac.uk/ols/index).  
+
+```{r eval=TRUE, echo=TRUE, warnings=FALSE }
+feature.df <- return_feature(feature=c('frontal cortex', 'cerebellum'), species=c('homo sapiens', 'brain'), keywords.all=FALSE, return.all=FALSE, dir=svg.dir, remote=FALSE)
+```
+
+The target tissues 'frontal cortex' and 'cerebellum' in the experiment design are all included in the aSVG, so it can be used for plotting spatial heatmaps. If users want to change the feature identifiers in the aSVG refer to the [Supplement](#update) for details.  
+
+```{r eval=TRUE, echo=TRUE, warnings=FALSE }
+feature.df
+```
+
+</font>
+
 For downstream plotting purposes it can be desirable to shorten the text in
 certain columns of `colData`. This way one can use the source data for
 including 'pretty' sample names in columns and legends of all downstream tables
@@ -402,39 +443,38 @@ and plots, respectively, in an automated and reproducible manner. To achieve
 this, the following example imports a 'targets' file that can be maintained by
 the user and is used to replace the text in the `colData` slot with the
 shortened version suitable for column titles and legends. This targets file
-utility is particularly useful for data sets requiring custom annotations.  
-
-<font color='blue'>
-Note, to plot spatial heatmaps, only the 2 columns of tissue and condition replicates are used. Additional details for generating and using targets files in `spatialHeatmap`
-are provided in the [Supplement](#data_form) of this vignette.   
-
-jianhai: I added this paragraph, since the targte files can include many columns but only the 2 columns of tissue and condition are required, so when users make their own targets file they can save time by ignoring others. `DataFrame` should be used otherewise errors arise.  
+utility is particularly useful for data sets requiring custom annotations. 
 
 ```{r eval=TRUE, echo=TRUE, warnings=FALSE }
 hum.tar <- system.file('extdata/shinyApp/example/target_human.txt', package='spatialHeatmap')
 target.hum <- read.table(hum.tar, header=TRUE, row.names=1, sep='\t')
 ```
 
+<font color='blue'>
 Use the tagets file to replace the data frame in `colData` slot.  
+
+jianhai: `DataFrame` should be used otherewise errors arise.  
+
 ```{r eval=TRUE, echo=TRUE, warnings=FALSE }
 colData(rse.hum) <- DataFrame(target.hum)
 ```
 
-</font>
-
 A slice of the simplified `colData` object is shown below, where the `disease` column
-contains now shorter labels than in the original data set.
+contains now shorter labels than in the original data set. Additional details for generating and using targets files in `spatialHeatmap`
+are provided in the [Supplement](#data_form) of this vignette.  
+
 
 ```{r eval=TRUE, echo=TRUE, warnings=FALSE}
 colData(rse.hum)[c(1:3, 41:42), 4:5]
 ```
+
+</font>
 
 The actual expression data of the downloaded RNA-Seq experiment is stored in
 the `assay` slot of `rse.hum`. Since it contains raw count data, it is
 often beneficial to apply prior to plotting spatial heatmaps basic preprocessing 
 routines. The following shows how to normalize the count data, aggregate
 replicates and then remove genes with unreliable expression responses.
-
 
 <font color="red">[ThG-Comment 4: can you please substantially improve the
 below text in the following preprocessing code step as well as the help files
@@ -486,49 +526,11 @@ assay(se.fil.hum)[733:735, ]
 kable(assay(se.fil.hum)[733:735, ], caption='A slice of fully preprocessed data matrix.')
 ```
 
-<font color='blue'>
-The following shows how to download the corresponding pre-annotated aSVG image from the [EBI SVG repository](#svg_repo). The function `return_feature` queries the repository with feature and species keywords, i.e. `c("frontal cortex", "cerebellum")` and `c("brain")` respectively. The argument `keywords.all` is set `FALSE` so that aSVGs matching at least one word are returned. The argument `return.all=FALSE` means only aSVGs matching the keywords are returned and saved in `dir`. Otherwise, all aSVGs are returned regardless of the keywords. An empty directory is recommended so as to avoid overwriting existing SVG files with the same names. Here `~/test` is used. `remote=TRUE` means the remote SVG repository is queried. If users want to query a local aSVG collection `remote=FALSE` should be used, and directory of the aSVG collection should be provided to `dir`. `match.only` is set `TRUE` so that only matching features are returned. If `FALSE`, all features in the matching aSVGs are returned.     
-</font>
-
-<font color="red">
-[ThG-Comment 5: please add here the corresponding but unevaluated code to download the 
- aSVG from your repos. Users want to know how this works.]
-</font>
-
-<font color='blue'>
-jianai: The functionality of using EBI online aSVG directly is in development. After done, there is no difference on the user interface. Thus it does not affect reviewing on this vignette. 
-</font>
-
-```{r eval=FALSE, echo=TRUE, warnings=FALSE }
-# Make an empty directory.
-dir.create('~/test')
-# Query aSVGs.
-feature.df <- return_feature(feature=c('frontal cortex', 'cerebellum'), species=c('brain'), keywords.all=FALSE, return.all=FALSE, dir='~/test', remote=TRUE, match.only=TRUE, desc=FALSE)
-feature.df
-```
-
-<font color='blue'> 
-As explained in the [toy example](#toy), the same aSVG image has been included in this 
-package. To meet the requirements for building vignettes in R packages, the following 
-code section uses the packaged instance of the aSVG file (i.e. local aSVG) rather than downloading it. The ontology ids are available in the R package `rols` [@rols] or [Ontology Lookup Service](https://www.ebi.ac.uk/ols/index).  
-
-```{r eval=TRUE, echo=TRUE, warnings=FALSE }
-feature.df <- return_feature(feature=c('frontal cortex', 'cerebellum'), species=c('brain'), keywords.all=FALSE, return.all=FALSE, dir=svg.dir, remote=FALSE)
-```
-
-The two target tissues (frontal_cortex, cerebellum) in targets file are all included in the aSVG, so it can be used for plotting spatial heatmaps. If users want to change the feature identifiers in the aSVG refer to the [Supplement](#update) for details.  
-
-```{r eval=TRUE, echo=TRUE, warnings=FALSE }
-feature.df
-```
-
-</font>
-
 Next, the preprocessed expression values of gene `ENSG00000268433` are plotted onto the
 corresponding features of the aSVG image depicting the human brain. 
 
 ```{r humshm, eval=TRUE, echo=TRUE, warnings=FALSE, fig.wide=TRUE, fig.cap=("Spatial heatmaps of human brain. Cerebellum and frontal cortex are colored, since they are the only 2 identical tissues between the aSVG image and the data."), out.width="100%" }
-shm.df <- spatial_hm(svg.path=svg.hum, data=se.fil.hum, col.com=c('purple', 'yellow', 'blue'), ID=c('ENSG00000268433'), height=0.6, legend.r=1.3, sam.legend='identical')
+shm.df <- spatial_hm(svg.path=svg.hum, data=se.fil.hum, ID=c('ENSG00000268433'), height=0.6, legend.r=1.3)
 ```
 
 The spatial heatmaps and mapped features are stored in a list and assigned to an object `shm.df`.
@@ -625,14 +627,55 @@ A slice of the experiment design, which is stored in `colData` slot.
 colData(rse.mus)[1:3, ]
 ```
 
-Make a targets file based on the experiment design. It is included in this package and part is shown below.  
+<font color='blue'> 
+Download aSVGs from remote EBI repository directly based on the experiment design. An empty directory '~/test' is suggested to save the downloaded files so as to avoid overwriting existing files.
+
+```{r eval=FALSE, echo=TRUE, warnings=FALSE }
+# Make an empty directory "~/test" if not exist.
+if (!dir.exists('~/test')) dir.create('~/test')
+# Query aSVGs.
+feature.df <- return_feature(feature=c('heart', 'kidney'), species=c('Mus musculus'), keywords.all=FALSE, return.all=FALSE, dir='~/test', remote=TRUE, match.only=FALSE)
+```
+
+As explained in the [toy example](#toy), the target aSVG file has been included in this 
+package. To meet the requirements for building vignettes in R packages, the following 
+code section uses the packaged instance of the aSVG files (`remote=FALSE`) rather than downloading it. To explain how to select a certain aSVG among the returned resutls, `species` is set `NULL` on purpose so that all aSVGs marching the feature keywords are returned.   
 
 ```{r eval=TRUE, echo=TRUE, warnings=FALSE }
+feature.df <- return_feature(feature=c('heart', 'kidney'), species=NULL, keywords.all=FALSE, return.all=FALSE, dir=svg.dir, remote=FALSE, match.only=FALSE) 
+```
 
+All aSVG files matching the query.  
+
+```{r eval=TRUE, echo=TRUE, warnings=FALSE }
+unique(feature.df$SVG)
+```
+
+Select 'mus_musculus.male.svg' as the target aSVG. A slice of the feature data frame and all the aSVG features are shown.   
+
+```{r eval=TRUE, echo=TRUE, warnings=FALSE }
+feature.df <- subset(feature.df, SVG=='mus_musculus.male.svg')
+# A slice of the feature data frame.
+feature.df[1:3, ]
+# All features in the aSVG.
+unique(feature.df[, 1])
+```
+
+Get the target aSVG path.   
+
+```{r eval=TRUE, echo=TRUE, warnings=FALSE}
+svg.mus <- system.file("extdata/shinyApp/example", "mus_musculus.male.svg", package="spatialHeatmap")
+```
+
+</font>
+
+Make a targets file based on the experiment design and features of interest in the aSVG file. It is included in this package and part is shown below.  
+
+```{r eval=TRUE, echo=TRUE, warnings=FALSE }
 mus.tar <- system.file('extdata/shinyApp/example/target_mouse.txt', package='spatialHeatmap')
 target.mus <- read.table(mus.tar, header=TRUE, row.names=1, sep='\t')
 target.mus[1:3, ]
-# Tissue. 
+# Tissues in the experiment. 
 unique(target.mus[, 3])
 ```
 
@@ -645,53 +688,13 @@ colData(rse.mus) <- DataFrame(target.mus)
 Pre-process the raw count matrix: normalise, aggregate, filter. Genes with expression values larger than 5 in at least 1% of all samples (pOA=c(0.01, 5)), and with coefficient of variance (CV) between 0.60 and 100 (CV=c(0.6, 100)) are retained.    
 
 ```{r eval=TRUE, echo=TRUE, warnings=FALSE }
-
 # Normalise.
 se.nor.mus <- norm_data(data=rse.mus, norm.fun='ESF', data.trans='log2')
 # Aggregate replicates.
 se.aggr.mus <- aggr_rep(data=se.nor.mus, sam.factor='organism_part', con.factor='strain', aggr='mean')
 # Filter genes with low variance and low counts.
 se.fil.mus <- filter_data(data=se.aggr.mus, sam.factor='organism_part', con.factor='strain', pOA=c(0.01, 5), CV=c(0.6, 100), dir=NULL)
-
 ```
-
-<font color='blue'> 
-Download aSVGs from EBI repository directly. An empty directory '~/test' is suggested to save the downloaded files so as to avoid overwriting existing files.
-
-```{r eval=FALSE, echo=TRUE, warnings=FALSE }
-# Make an empty directory "~/test" if not exist.
-if (!dir.exists('~/test')) dir.create('~/test')
-# Query aSVGs.
-feature.df <- return_feature(feature=c('heart', 'kidney'), species=c('Mus musculus'), keywords.all=FALSE, return.all=FALSE, dir='~/test', remote=TRUE, match.only=FALSE)
-```
-
-As explained in the [toy example](#toy), the same aSVG image has been included in this 
-package. To meet the requirements for building vignettes in R packages, the following 
-code section uses the packaged instance of the aSVG files (i.e. local aSVG) rather than downloading it. To explain how to select a certain aSVG among the returned resutls, `species` is set `NULL` on purpose so that all aSVGs marching the feature keywords are returned.   
-
-```{r eval=TRUE, echo=TRUE, warnings=FALSE }
-feature.df <- return_feature(feature=c('heart', 'kidney'), species=NULL, keywords.all=FALSE, return.all=FALSE, dir=svg.dir, remote=FALSE, match.only=FALSE) 
-```
-
-All aSVG files matching the keywords.  
-```{r eval=TRUE, echo=TRUE, warnings=FALSE }
-unique(feature.df$SVG)
-```
-
-Select 'mus_musculus.male.svg' as the target aSVG.  
-```{r eval=TRUE, echo=TRUE, warnings=FALSE }
-feature.df <- subset(feature.df, SVG=='mus_musculus.male.svg')
-# A slice of the feature data frame.
-feature.df[1:3, ]
-```
-
-Get the target aSVG path.   
-
-```{r eval=TRUE, echo=TRUE, warnings=FALSE}
-svg.mus <- system.file("extdata/shinyApp/example", "mus_musculus.male.svg", package="spatialHeatmap")
-```
-
-</font>
 
 Plot spatial heatmaps.   
 
@@ -739,7 +742,33 @@ A slice of the experiment design, which is stored in colData slot.
 colData(rse.chk)[1:3, ]
 ```
 
-Make a targets file based on the experiment design. It is included in this package and part is shown below.  
+<font color='blue'> 
+Download aSVGs from EBI repository based on the experiment design. An empty directory '~/test' is suggested to save the downloaded files so as to avoid overwriting existing files.  
+
+```{r eval=FALSE, echo=TRUE, warnings=FALSE }
+# Make an empty directory "~/test" if not exist.
+if (!dir.exists('~/test')) dir.create('~/test')
+# Query aSVGs.
+feature.df <- return_feature(feature=c('heart', 'kidney'), species=c('gallus'), keywords.all=FALSE, return.all=FALSE, dir='~/test', remote=TRUE, match.only=FALSE)
+```
+
+As explained in the [toy example](#toy), the target aSVG image has been included in this 
+package, and will be used for plotting spatial heatmaps.    
+
+```{r eval=TRUE, echo=TRUE, warnings=FALSE }
+feature.df <- return_feature(feature=c('heart', 'kidney'), species=c('gallus'), keywords.all=FALSE, return.all=FALSE, dir=svg.dir, remote=FALSE, match.only=FALSE)
+feature.df
+```
+
+Get the target aSVG path.   
+
+</font>
+
+```{r eval=TRUE, echo=TRUE, warnings=FALSE}
+svg.chk <- system.file("extdata/shinyApp/example", "gallus_gallus.svg", package="spatialHeatmap")
+```
+
+Make a targets file based on the experiment design and features of interest in the aSVG. It is included in this package and part is shown below.  
 
 ```{r eval=TRUE, echo=TRUE, warnings=FALSE }
 chk.tar <- system.file('extdata/shinyApp/example/target_chicken.txt', package='spatialHeatmap')
@@ -775,31 +804,6 @@ se.aggr.chk <- aggr_rep(data=se.nor.chk, sam.factor='organism_part', con.factor=
 se.fil.chk <- filter_data(data=se.aggr.chk, sam.factor='organism_part', con.factor='age', pOA=c(0.01, 5), CV=c(0.6, 100), dir=NULL)
 ```
 
-<font color='blue'> 
-Download aSVGs from EBI repository directly. An empty directory '~/test' is suggested to save the downloaded files so as to avoid overwriting existing files.
-
-```{r eval=FALSE, echo=TRUE, warnings=FALSE }
-# Make an empty directory "~/test" if not exist.
-if (!dir.exists('~/test')) dir.create('~/test')
-# Query aSVGs.
-feature.df <- return_feature(feature=c('heart', 'kidney'), species=c('gallus'), keywords.all=FALSE, return.all=FALSE, dir='~/test', remote=TRUE, match.only=FALSE)
-```
-
-As explained in the [toy example](#toy), the target aSVG image has been included in this 
-package, and will be used for plotting spatial heatmaps.    
-
-```{r eval=TRUE, echo=TRUE, warnings=FALSE }
-feature.df <- return_feature(feature=c('heart', 'kidney'), species=c('gallus'), keywords.all=FALSE, return.all=FALSE, dir=svg.dir, remote=FALSE, match.only=FALSE)
-feature.df
-```
-
-Get the target aSVG path.   
-
-</font>
-
-```{r eval=TRUE, echo=TRUE, warnings=FALSE}
-svg.chk <- system.file("extdata/shinyApp/example", "gallus_gallus.svg", package="spatialHeatmap")
-```
 
 Plot spatial heatmaps.  
 
@@ -828,13 +832,41 @@ Use gene symbols to replace probes.
 rownames(se.sh) <- make.names(rowData(se.sh)[, 'Gene.Symbol'])
 ```
 
-A slice of the experiment design, which is stored in colData slot.  
+A slice of the experiment design, which is stored in `colData` slot. The samples and conditions are included in the `title` column. In samples, promoter pGL2, pCO2, pSCR, pWOL labels root atrichoblast epidermis, root cortex meristematic zone, root endodermis, root vasculature respectively, and p35S labels 'root_total' and 'shoot_total'. There are 2 conditions: control and hypoxia.  
 
 ```{r eval=TRUE, echo=TRUE, warnings=FALSE}
-colData(se.sh)[1:3, 1:4]
+colData(se.sh)[60:63, 1:4]
 ```
 
-Make a targets file based on the `title` column in experiment design. It is included in this package and part is shown below.
+In this example, the aSVG image of Arabidopsis is made from @Mustroph2009-nu. Similarly, it is included in this packaged and thus can be queried locally. The instructions on how to make custom aSVG images are provided in the [SVG tutorial](https://jianhaizhang.github.io/SVG_tutorial_file/).   
+
+Query the packaged aSVG files.  
+
+```{r eval=TRUE, echo=TRUE, warnings=FALSE }
+feature.df <- return_feature(feature=c('pGL2', 'pRBCS'), species=c('shoot'), keywords.all=FALSE, return.all=FALSE, dir=svg.dir, remote=FALSE, match.only=FALSE)
+```
+
+All matching aSVGs.   
+
+```{r eval=TRUE, echo=TRUE, warnings=FALSE } 
+unique(feature.df$SVG)
+```
+
+Select 'shoot_final.svg' for plotting spaital heatmaps.  
+
+```{r eval=TRUE, echo=TRUE, warnings=FALSE }
+feature.df <- subset(feature.df, SVG=='shoot_final.svg')
+# A slice of the feature data frame.
+feature.df[1:3, ]
+```
+
+Get path of 'shoot_final.svg'.  
+
+```{r eval=TRUE, echo=TRUE, warnings=FALSE }
+svg.sh <- system.file("extdata/shinyApp/example", "shoot_final.svg", package="spatialHeatmap")
+```
+
+Make a targets file based on the `title` column in experiment design and features of interest in the aSVG. It is included in this package and part is shown below.
 
 ```{r eval=TRUE, echo=TRUE, warnings=FALSE}
 sh.tar <- system.file('extdata/shinyApp/example/target_arab.txt', package='spatialHeatmap')
@@ -842,7 +874,7 @@ target.sh <- read.table(sh.tar, header=TRUE, row.names=1, sep='\t')
 target.sh[60:63, ]
 ```
 
-All samples in targets file. Promoter pGL2, pCO2, pSCR, pWOL labels root atrichoblast epidermis, root cortex meristematic zone, root endodermis, root vasculature respectively.   
+All samples in targets file.     
 
 ```{r eval=TRUE, echo=TRUE, warnings=FALSE}
 unique(target.sh[, 'samples'])
@@ -867,32 +899,6 @@ The dataset GSE14502 is already normalised by RMA [@affy], so the pro-processing
 se.aggr.sh <- aggr_rep(data=se.sh, sam.factor='samples', con.factor='conditions', aggr='mean')
 # Filter genes with low variance and low intensity.
 se.fil.sh <- filter_data(data=se.aggr.sh, sam.factor='samples', con.factor='conditions', pOA=c(0.03, 6), CV=c(0.30, 100), dir=NULL)
-```
-
-The aSVG image is made from @Mustroph2009-nu and included in this packaged. Thus it can be queried locally.   
-
-```{r eval=TRUE, echo=TRUE, warnings=FALSE }
-feature.df <- return_feature(feature=c('shoot_pGL2', 'shoot_pRBCS'), species=c('shoot'), keywords.all=FALSE, return.all=FALSE, dir=svg.dir, remote=FALSE, match.only=FALSE)
-```
-
-All matching aSVGs.   
-
-```{r eval=TRUE, echo=TRUE, warnings=FALSE } 
-unique(feature.df$SVG)
-```
-
-Select 'shoot_final.svg' for plotting spaital heatmaps.  
-
-```{r eval=TRUE, echo=TRUE, warnings=FALSE }
-feature.df <- subset(feature.df, SVG=='shoot_final.svg')
-# A slice of the feature data frame.
-feature.df[1:3, ]
-```
-
-Get path of 'shoot_final.svg'.  
-
-```{r eval=TRUE, echo=TRUE, warnings=FALSE }
-svg.sh <- system.file("extdata/shinyApp/example", "shoot_final.svg", package="spatialHeatmap")
 ```
 
 Plot spatial heatmaps.   
@@ -952,7 +958,7 @@ network(geneID="HRE2", data=se.fil.sh, ann=NULL, adj.mod=adj.mod, ds="3", adj.mi
 ```   
 
 <a name="inter_net"></a>
-Setting `static=FALSE` launches the interactive network. There is an interactive color bar to denote gene connectivity. The color ingredients must only be separated by comma, e.g. 'yellow,black,purple', which means gene connectivity increases from yellow to purple. If too many edges (e.g.: > 300) are displayed, the network could get stuck. So the 'Input an adjacency threshold to display the adjacency network.' option sets a threthold to filter out weak edges. If not too many edges retained (e.g.: < 300), users can check 'Yes' under 'Display or not?', then the network would be responsive smoothly. To maintain acceptable performance, users are advised to choose a stringent threshold (e.g. 0.9) initially, then decrease the value gradually. The interactive feature allows users to zoom in and out, or drag a gene around. All the gene IDs in the network module are listed in 'Select by id' in decreasing order according to gene connectivity. Same with static mode, the target gene ID is appended '_selected'.  
+Setting `static=FALSE` launches the interactive network. There is an interactive color bar to denote gene connectivity. The color ingredients must only be separated by comma, e.g. 'purple,yellow,blue', which means gene connectivity increases from purple to yellow. If too many edges (e.g.: > 300) are displayed, the network could get stuck. So the 'Input an adjacency threshold to display the adjacency network.' option sets a threthold to filter out weak edges. If not too many edges retained (e.g.: < 300), users can check 'Yes' under 'Display or not?', then the network would be responsive smoothly. To maintain acceptable performance, users are advised to choose a stringent threshold (e.g. 0.9) initially, then decrease the value gradually. The interactive feature allows users to zoom in and out, or drag a gene around. All the gene IDs in the network module are listed in 'Select by id' in decreasing order according to gene connectivity. Same with static mode, the target gene ID is appended '_selected'.  
 
 If gene annotation is available in `rowData` slot and provided to `ann` argument, the annotation is seen by mousing over a node. In this example, `Target.Description` in `rowData` is provided to `ann`.  
 

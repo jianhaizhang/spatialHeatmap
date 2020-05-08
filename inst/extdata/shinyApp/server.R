@@ -96,7 +96,7 @@ network <- function(geneID, se, ann, adj.mod, ds="3", adj.min=0, con.min=0, node
         selectInput("ds","Select a module splitting sensitivity level", 3:2, selected="3", width=190),
         selectInput("adj.in", "Input an adjcency threshold to display the adjacency network.", c("None", sort(seq(0, 1, 0.002), decreasing=TRUE)), "None", width=190), 
         htmlOutput("edge"),
-        div(style="display:inline-block;width:75%;text-align:left;",textInput("color.net", "Color scheme of Interactive Network", "yellow,purple,blue", placeholder="Eg: yellow,purple,blue", width=200)),
+        div(style="display:inline-block;width:75%;text-align:left;",textInput("color.net", "Color scheme of Interactive Network", "purple,yellow,blue", placeholder="Eg: purple,yellow,blue", width=200)),
         div(style="display:inline-block;width:25%;text-align:left;", actionButton("col.but.net", "Go", icon=icon("refresh"), style="padding:7px; font-size:90%; margin-left: 0px")),
         radioButtons("cpt.nw", "Display or not?", c("Yes"="Y", "No"="N"), "N", inline=TRUE),
         menuSubItem("View", tabName="net")
@@ -175,7 +175,7 @@ network <- function(geneID, se, ann, adj.mod, ds="3", adj.min=0, con.min=0, node
 
       if (input$adj.in=="None"|input$cpt.nw=="N") return(NULL)
       if (length(color.net$col.net=="none")==0) return(NULL)
-      if(input$col.but.net==0) color.net$col.net <- colorRampPalette(c("yellow", "purple", "blue"))(len)
+      if(input$col.but.net==0) color.net$col.net <- colorRampPalette(c('purple', 'yellow', 'blue'))(len)
      
         withProgress(message="Color scale: ", value = 0, {
 
@@ -257,7 +257,7 @@ matrix_hm <- function(geneID, se, adj.mod, ds, scale, col=c('yellow', 'blue'), m
   
   if (static==TRUE) {
 
-    tmp <- tempdir(); pa <- paste0(tmp, '/delete_hm.png')
+    tmp <- tempdir(check=TRUE); pa <- paste0(tmp, '/delete_hm.png')
     png(pa); hm <- heatmap.2(x=mod, scale=scale, main=main, trace="none"); dev.off()
     do.call(file.remove, list(pa))
     # Logical matrix with the same dimensions as module matrix.
@@ -576,7 +576,7 @@ network <- function(geneID, se, ann, adj.mod, ds="3", adj.min=0, con.min=0, node
         selectInput("ds","Select a module splitting sensitivity level", 3:2, selected="3", width=190),
         selectInput("adj.in", "Input an adjcency threshold to display the adjacency network.", c("None", sort(seq(0, 1, 0.002), decreasing=TRUE)), "None", width=190), 
         htmlOutput("edge"),
-        div(style="display:inline-block;width:75%;text-align:left;",textInput("color.net", "Color scheme of Interactive Network", "yellow,purple,blue", placeholder="Eg: yellow,purple,blue", width=200)),
+        div(style="display:inline-block;width:75%;text-align:left;",textInput("color.net", "Color scheme of Interactive Network", "purple,yellow,blue", placeholder="Eg: purple,yellow,blue", width=200)),
         div(style="display:inline-block;width:25%;text-align:left;", actionButton("col.but.net", "Go", icon=icon("refresh"), style="padding:7px; font-size:90%; margin-left: 0px")),
         radioButtons("cpt.nw", "Display or not?", c("Yes"="Y", "No"="N"), "N", inline=TRUE),
         menuSubItem("View", tabName="net")
@@ -655,7 +655,7 @@ network <- function(geneID, se, ann, adj.mod, ds="3", adj.min=0, con.min=0, node
 
       if (input$adj.in=="None"|input$cpt.nw=="N") return(NULL)
       if (length(color.net$col.net=="none")==0) return(NULL)
-      if(input$col.but.net==0) color.net$col.net <- colorRampPalette(c("yellow", "purple", "blue"))(len)
+      if(input$col.but.net==0) color.net$col.net <- colorRampPalette(c('purple', 'yellow', 'blue'))(len)
      
         withProgress(message="Color scale: ", value = 0, {
 
@@ -1028,7 +1028,7 @@ svg_df <- function(svg.path, feature) {
   xml_set_attr(chdn.out, 'style', style); xml_set_attr(chdn.ply, 'style', style)  
   # xml_set_attr(out, 'style', style); xml_set_attr(ply, 'style', style)  
   # Export internal SVG.
-  tmp <- tempdir(); svg.inter <- paste0(tmp, '/internal.svg')
+  tmp <- tempdir(check=TRUE); svg.inter <- paste0(tmp, '/internal.svg')
   if (grepl("~", svg.inter)) svg.inter <- normalizePath(svg.inter)
   write_xml(doc, file=svg.inter)
   
@@ -1406,7 +1406,7 @@ shinyServer(function(input, output, session) {
 
       if (length(color$col=="none")==0|input$color==""|is.null(geneV())) return(NULL)
 
-      if(input$col.but==0) color$col <- colorRampPalette(c("yellow", "purple", "blue"))(length(geneV()))
+      if(input$col.but==0) color$col <- colorRampPalette(c('purple', 'yellow', 'blue'))(length(geneV()))
 
       withProgress(message="Color scale: ", value = 0, {
 
@@ -1709,7 +1709,7 @@ shinyServer(function(input, output, session) {
     if (input$TOM.in=="None"|input$cpt.nw=="N") return(NULL)
     if (length(color.net$col.net=="none")==0) return(NULL)
     gene <- geneIn()[["gene2"]]; if (!(input$gen.sel %in% rownames(gene))) return() # Avoid unnecessary computing of 'adj', since 'input$gen.sel' is a cerain true gene id of an irrelevant expression matrix, not 'None', when switching from one defaul example's network to another example.
-    if(input$col.but.net==0) color.net$col.net <- colorRampPalette(c("yellow", "purple", "blue"))(len.cs.net) # color.net$col.net is changed alse outside renderPlot, since it is a reactive value.
+    if(input$col.but.net==0) color.net$col.net <- colorRampPalette(c('purple', 'yellow', 'blue'))(len.cs.net) # color.net$col.net is changed alse outside renderPlot, since it is a reactive value.
    
       withProgress(message="Color scale: ", value = 0, {
       incProgress(0.25, detail="Preparing data. Please wait.")

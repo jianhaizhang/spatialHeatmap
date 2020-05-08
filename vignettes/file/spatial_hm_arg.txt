@@ -4,7 +4,7 @@
 "3"	"sam.factor"	"Applies to SE. Column name of sample replicates in colData slot. Default is NULL"
 "4"	"con.factor"	"Applies to SE. Column name of condition replicates in colData slot. Default is NULL"
 "5"	"ID"	"A character vector of row features for plotting spatial heatmaps"
-"6"	"col.com"	"A character vector of colour components for building colour scale. Default is c('yellow', 'purple', 'blue')"
+"6"	"col.com"	"A character vector of colour components for building colour scale. Default is c('purple', 'yellow', 'blue')"
 "7"	"col.bar"	"'selected' or 'all', the former means use values of ID to build the colour scale while the latter use all values in data. Default is 'selected'."
 "8"	"bar.width"	"A numeric of colour bar width. Default is 0.7"
 "9"	"data.trans"	"'log2', 'exp2', or NULL, 'log2' transforms data to log2 scale for plotting while 'exp2' to 2-base exponent. Default is NULL, no transformation."

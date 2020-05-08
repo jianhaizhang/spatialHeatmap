@@ -10,7 +10,7 @@ spatial_hm(
   sam.factor = NULL,
   con.factor = NULL,
   ID,
-  col.com = c("yellow", "purple", "blue"),
+  col.com = c("purple", "yellow", "blue"),
   col.bar = "selected",
   bar.width = 0.08,
   bar.title.size = 10,
@@ -46,7 +46,7 @@ spatial_hm(
 
 \item{ID}{A character of gene ID(s) whose expression values are used to colour the spatial heatmaps. It can be a single gene or a vector of multiple genes.}
 
-\item{col.com}{A character vector of the colour components used to build the colour scale, e.g. the default is c("yellow", "blue", "purple").}
+\item{col.com}{A character vector of the colour components used to build the colour scale, e.g. the default is c('purple', 'yellow', 'blue').}
 
 \item{col.bar}{"selected" or "all", meaning use input genes or whole data matrix to build the colour scale respectively. The default is "selected".}
 
@@ -136,7 +136,7 @@ se.fil.hum <- filter_data(data=se.aggr.hum, sam.factor='organism_part', con.fact
 # Formatted SVG image.
 svg.hum <- system.file("extdata/shinyApp/example", "homo_sapiens.brain.svg", package="spatialHeatmap")
 # Plot spatial heatmaps of gene ENSG00000268433.
-spatial_hm(svg=svg.hum, data=se.fil.hum, ID='ENSG00000268433', col.com=c("yellow", "blue", "purple"), width=1, height=0.5, sub.title.size=11, layout="gene", ncol=2, tis.trans=NULL, legend.position=c(0.5, -0.15), legend.nrow=1)
+spatial_hm(svg=svg.hum, data=se.fil.hum, ID='ENSG00000268433', width=1, height=0.5, sub.title.size=11, layout="gene", ncol=2, tis.trans=NULL, legend.position=c(0.5, -0.15), legend.nrow=1)
 }
 \references{
 https://www.gimp.org/tutorials/ \cr https://inkscape.org/en/doc/tutorials/advanced/tutorial-advanced.en.html \cr http://www.microugly.com/inkscape-quickguide/

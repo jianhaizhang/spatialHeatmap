@@ -16,6 +16,7 @@
 
 svg_attr <- function(doc, feature) {
 
+  options(stringsAsFactors=FALSE)
   len <- xml_length(doc); out <- xml_children(doc)[[len-1]]; ply <- xml_children(doc)[[len]]
   # Break combined path to a group or siblings.
   path_br_all(out); path_br_all(ply)
@@ -34,8 +35,8 @@ svg_attr <- function(doc, feature) {
   nas <- c(xml_name(chdn.out), xml_name(chdn.ply))
   ids <- make.names(c(xml_attr(chdn.out, 'id'), xml_attr(chdn.ply, 'id')))
   if (any(duplicated(ids))) return(paste0('Duplicated node ids detected: ', paste0(ids[duplicated(ids)], collapse=' '), '!'))
-  title <- make.names(c(xml_text(chdn.out), xml_text(chdn.ply)))
-  w <- which(title=='X'); title[w] <- ids[w]
+  title <- c(xml_text(chdn.out), xml_text(chdn.ply)) # Use original names, no 'make.names'.
+  w <- which(title=='X'|title==''); title[w] <- ids[w]
   dup <- duplicated(title); if (any(dup)) {
     
     if (length(intersect(title[dup], feature))>0) return(paste0('Duplicated title text detected: ', paste0(title[dup], collapse=' '), '!')) else {

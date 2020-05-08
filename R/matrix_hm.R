@@ -97,7 +97,7 @@ matrix_hm <- function(geneID, data, adj.mod, ds, scale, col=c('yellow', 'blue'),
   
   if (static==TRUE) {
 
-    tmp <- tempdir(); pa <- paste0(tmp, '/delete_hm.png')
+    tmp <- tempdir(check=TRUE); pa <- paste0(tmp, '/delete_hm.png')
     png(pa); hm <- heatmap.2(x=mod, scale=scale, main=main, trace="none"); dev.off()
     do.call(file.remove, list(pa))
     # Logical matrix with the same dimensions as module matrix.

@@ -95,7 +95,7 @@ return_feature <- function(feature, species, keywords.all=TRUE, remote=FALSE, di
   }
  
   if (!is.null(species)) if (species[1]=='') species <- NULL
-  if (!is.null(feature)) if (feature[1]=='') species <- NULL
+  if (!is.null(feature)) if (feature[1]=='') feature <- NULL
   sp <- gsub(' |_|\\.|-|;|,|/', '|', make.names(species)); ft <- gsub(' |_|\\.|-|;|,|/', '|', make.names(feature))
   sp <- paste0(sp, collapse="|"); ft <- paste0(ft, collapse="|") 
   

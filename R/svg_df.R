@@ -24,7 +24,8 @@ svg_df <- function(svg.path, feature) {
   if (!is.na(spa)) if (spa=='preserve') xml_set_attr(doc, 'xml:space', 'default')
 
   svg.attr <- svg_attr(doc, feature=feature); if (is(svg.attr, 'character')) return(svg.attr)
-  df.attr <- svg.attr[['df.attr']]; out <- svg.attr[['out']]; ply <- svg.attr[['ply']]
+  df.attr <- svg.attr[['df.attr']]; df.attr$title <- make.names(df.attr$title)
+  out <- svg.attr[['out']]; ply <- svg.attr[['ply']]
   # Paths in 'a' node are recognised in .ps.xml file, so all 'a' nodes in or out groups are removed. 
   chdn.out <- xml_children(out); chdn.ply <- xml_children(ply)
   chdn.all <- c(chdn.out, chdn.ply)
@@ -81,7 +82,7 @@ svg_df <- function(svg.path, feature) {
   xml_set_attr(chdn.out, 'style', style); xml_set_attr(chdn.ply, 'style', style)  
   # xml_set_attr(out, 'style', style); xml_set_attr(ply, 'style', style)  
   # Export internal SVG.
-  tmp <- tempdir(); svg.inter <- paste0(tmp, '/internal.svg')
+  tmp <- tempdir(check=TRUE); svg.inter <- paste0(tmp, '/internal.svg')
   if (grepl("~", svg.inter)) svg.inter <- normalizePath(svg.inter)
   write_xml(doc, file=svg.inter)
   

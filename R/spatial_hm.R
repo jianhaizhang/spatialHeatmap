@@ -10,7 +10,7 @@
 
 #' @param ID A character of gene ID(s) whose expression values are used to colour the spatial heatmaps. It can be a single gene or a vector of multiple genes.
 
-#' @param col.com A character vector of the colour components used to build the colour scale, e.g. the default is c("yellow", "blue", "purple").
+#' @param col.com A character vector of the colour components used to build the colour scale, e.g. the default is c('purple', 'yellow', 'blue').
 
 #' @param col.bar "selected" or "all", meaning use input genes or whole data matrix to build the colour scale respectively. The default is "selected".
 #' @param data.trans "log2", "exp2", or NULL. If colours across tissues cannot distinguish due to low variance or outliers, transform the data matrix by log2 or 2-base expoent (exp2). Default is NULL (data will not be transformed).
@@ -58,7 +58,7 @@
 #' # Formatted SVG image.
 #' svg.hum <- system.file("extdata/shinyApp/example", "homo_sapiens.brain.svg", package="spatialHeatmap")
 #' # Plot spatial heatmaps of gene ENSG00000268433.
-#' spatial_hm(svg=svg.hum, data=se.fil.hum, ID='ENSG00000268433', col.com=c("yellow", "blue", "purple"), width=1, height=0.5, sub.title.size=11, layout="gene", ncol=2, tis.trans=NULL, legend.position=c(0.5, -0.15), legend.nrow=1)
+#' spatial_hm(svg=svg.hum, data=se.fil.hum, ID='ENSG00000268433', width=1, height=0.5, sub.title.size=11, layout="gene", ncol=2, tis.trans=NULL, legend.position=c(0.5, -0.15), legend.nrow=1)
 
 
 #' @author Jianhai Zhang \email{jzhan067@@ucr.edu; zhang.jianhai@@hotmail.com} \cr Dr. Thomas Girke \email{thomas.girke@@ucr.edu}
@@ -83,7 +83,7 @@
 #' @importFrom methods is
 #' @importFrom ggplotify as.ggplot
 
-spatial_hm <- function(svg.path, data, sam.factor=NULL, con.factor=NULL, ID, col.com=c("yellow", "purple", "blue"), col.bar="selected", bar.width=0.08, bar.title.size=10, data.trans=NULL, tis.trans=NULL, width=1, height=1, legend.r=1, sub.title.size=11, lay.shm="gene", ncol=2, sam.legend='identical', legend.ncol=NULL, legend.nrow=NULL, legend.position='bottom', legend.direction=NULL, legend.key.size=0.5, legend.label.size=8, line.size=0.2, line.color='grey70', verbose=TRUE, ...) {
+spatial_hm <- function(svg.path, data, sam.factor=NULL, con.factor=NULL, ID, col.com=c('purple', 'yellow', 'blue'), col.bar="selected", bar.width=0.08, bar.title.size=10, data.trans=NULL, tis.trans=NULL, width=1, height=1, legend.r=1, sub.title.size=11, lay.shm="gene", ncol=2, sam.legend='identical', legend.ncol=NULL, legend.nrow=NULL, legend.position='bottom', legend.direction=NULL, legend.key.size=0.5, legend.label.size=8, line.size=0.2, line.color='grey70', verbose=TRUE, ...) {
 
   x <- y <- color_scale <- tissue <- line.type <- NULL  
   # Extract and filter data.
