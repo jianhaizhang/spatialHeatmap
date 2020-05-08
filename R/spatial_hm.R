@@ -131,13 +131,15 @@ spatial_hm <- function(svg.path, data, sam.factor=NULL, con.factor=NULL, ID, col
     col <- colorRampPalette(col.com)(length(geneV))
     cs.g <- col_bar(geneV=geneV, cols=col, width=1, bar.title.size=bar.title.size, mar=c(3, 0.1, 3, 0.1)); cs.grob <- ggplotGrob(cs.g)    
 
-    df_tis <- svg_df(svg.path=svg.path)
-    if (is.character(df_tis)) stop(df_tis)
-    g.df <- df_tis[['df']]; tis.path <- df_tis[['tis.path']]
     # Only take the column names with "__".
     cname <- colnames(gene); form <- grepl('__', cname)
     con <- gsub("(.*)(__)(.*)", "\\3", cname[form]); con.uni <- unique(con)
     sam.uni <- unique(gsub("(.*)(__)(.*)", "\\1", cname))
+
+    df_tis <- svg_df(svg.path=svg.path, feature=sam.uni)
+    if (is.character(df_tis)) stop(df_tis)
+    g.df <- df_tis[['df']]; tis.path <- df_tis[['tis.path']]
+
     not.map <- setdiff(sam.uni, unique(tis.path)); if (verbose==TRUE & length(not.map)>0) cat('Enrties not mapped:', paste0(not.map, collapse=', '), '\n')
     sam.com <- intersect(unique(tis.path), sam.uni) 
 

@@ -834,117 +834,237 @@ nod_lin <- function(ds, lab, mods, adj, geneID, adj.min) {
 }
 
 
-svg_df <- function(svg.path) {
+  library(xml2)
+  # Break combined path to a group (g=TRUE) or siblings (g=FALSE).
+  path_br <- function(node, g=TRUE) {
 
-  # Make sure the style is correct. If the stroke width is not the same across polygons such as '0.0002px', '0.216px', some stroke outlines cannot be recognised by 'PostScriptTrace'. Then some polygons are missing. Since the ggplot is based on 'stroke' not 'fill'.
-  tmp <- tempdir()
-  xmlfile <- xmlParse(svg.path); xmltop <- xmlRoot(xmlfile); ply <- xmltop[[xmlSize(xmltop)]]
-  # All original colours of each tissue.
-  fil.cols <- NULL; for (i in seq_len(xmlSize(ply))) {
+    na <- xml_name(node); if (na!='g') {
 
-    ply0 <- ply[[i]]; na <- xmlName(ply0); id <- make.names(xmlAttrs(ply0)[['id']])
-    if (na=='g') sty <- xmlAttrs(ply0[[1]])[['style']] else sty <- xmlAttrs(ply0)[['style']]
-    sp <- strsplit(sty, ';')[[1]]; fil.col <- sp[grep('fill:', sp)]; fil.col <- sub('fill:', '', fil.col)
-    names(fil.col) <- id; fil.cols <- c(fil.cols, fil.col)
+      d <- xml_attr(node, 'd') 
+      if (grepl('m ', d)) return('Please use absolute coordinates for all paths!')
+      if (grepl('Z M', d)) {
 
-  }
-
-  style <- 'stroke:#000000;stroke-width:5.216;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1' # 'fill' is not necessary. In Inkscape, "group" or move an object adds transforms (relative positions), and this can lead to related polygons uncolored in the spatial heatmaps. Solution: ungroup and regroup to get rid of transforms and get absolute positions.
-  # Change 'style' of all polygons.
-  for (i in seq_len(xmlSize(ply))) {                      
-         
-    addAttributes(ply[[i]], style=style) 
-    if (xmlSize(ply[[i]])>=1) for (j in seq_len(xmlSize(ply[[i]]))) { addAttributes(ply[[i]][[j]], style=style) }
+        z <- paste0(strsplit(d, 'Z')[[1]], 'Z')
+        ids <- paste0(xml_attr(node, 'id'), '_', seq_along(z))
+        # Make node empty.
+        xml_attr(node, 'd') <- NA
         
-  }; svg.inter <- paste0(tmp, '/internal.svg')
-  if (grepl("~", svg.inter)) svg.inter <- normalizePath(svg.inter)
-  saveXML(doc=xmlfile, file=svg.inter)
-  # SVG file conversion. 
-  rsvg_ps(svg.inter, file=sub("svg$", "ps", svg.inter))
-  p1 <- sub("svg$", "ps", svg.inter); p2 <- paste0(sub("svg$", "ps", svg.inter), ".xml"); PostScriptTrace(p1, p2) 
-  grml <- xmlParse(p2); top <- xmlRoot(grml) # Use internal svg to get coordinates.
-  xml <- xmlParse(svg.path); xmltop <- xmlRoot(xml); size <- xmlSize(xmltop) # Use original not internal svg to get path ids. Otherwise, errors can come up.
-  do.call(file.remove, list(svg.inter, p1, p2))
+        # Break the combined path to a group.
+        if (g==TRUE) {
+        
+          # Isolate 'title' node.
+          na.chil <- xml_name(xml_children(node))
+          w <- which(na.chil=='title')
+          if (length(w)>0) { tit <- xml_children(node)[[w]]; xml_remove(xml_children(node)[w], free=FALSE) }
 
-  lis.ma <- xmlApply(xmltop[[size]], xmlAttrs)
-  if (is(lis.ma, "matrix")) { id.xml <- make.names(lis.ma["id", ]) } else if (is(lis.ma, "list")) {
+          # Add the empty node to itself as the first child.
+          xml_add_child(node, node)
+          # Copy the first child for length(z)-1 times.
+          node1 <- xml_children(node)[[1]]
+          for (j in seq_len(length(z)-1)) { xml_add_child(node, node1) }
+          node.chl <- xml_children(node) # Function applies to 'nodeset' recusively. 
+          # Set d and id for all childrend of node.
+          xml_set_attr(node.chl, 'd', z)
+          xml_set_attr(node.chl, 'id', ids)  
+          # Name node 'g'.
+          xml_name(node) <- 'g'; xml_attr(node, 'd') <- NULL
+          if (length(w)>0) xml_add_child(node, tit, .where=0)
 
-    id.xml <- NULL; for (i in seq_len(length(lis.ma))) { id.xml <- c(id.xml, make.names(lis.ma[[i]][["id"]])) }
+        } else {
 
-  }
+          for (j in seq_along(z)[-1]) {
 
-  xml.na <- NULL; for (i in seq_len(xmlSize(xmltop[[size]]))) { xml.na <- c(xml.na, xmlName(xmltop[[size]][[i]])) } 
+            # Copy node as its own siblings.
+            xml_set_attr(node, 'd', z[j]); xml_set_attr(node, 'id', ids[j])
+            xml_add_sibling(node, node, 'after')
+            # Change 'd' in node at last.  
+            xml_set_attr(node, 'd', z[1]); xml_set_attr(node, 'id', ids[1])
 
-  for (j in seq_len(length(xml.na))) {
+          }
 
-    if (xml.na[j]=="g") {
+        }
 
-      len.dif <- length(id.xml)-length(xml.na); g.size <- xmlSize(xmltop[[size]][[j]])
-      if ((j+1+len.dif) <= length(id.xml)) {
-
-        if (j==1) { 
-
-          id.xml <- c(paste0(id.xml[j+len.dif], "_", seq_len(g.size)), id.xml[(j+1+len.dif):length(id.xml)]) 
-
-        } else if (j>1) {
-
-          id.xml <- c(id.xml[seq_len(j-1+len.dif)], paste0(id.xml[j+len.dif], "_", 
-          seq_len(g.size)), id.xml[(j+1+len.dif):length(id.xml)])
-
-       } } else if ((j+1+len.dif) >= length(id.xml)) { 
-
-        id.xml <- c(id.xml[seq_len(j-1+len.dif)], paste0(id.xml[j+len.dif], "_", seq_len(g.size))) 
-
-       }
-
-    }
-
-  }; tis.path <- gsub("_\\d+$", "", id.xml)
-
-  # Detect groups that use relative coordinates ("transform", "matrix" in Inkscape.), which leads to some plygons missed in ".ps.xml" file.
-  fil.stk <- sapply(seq_len(xmlSize(top)-1), function (i) xmlAttrs(top[[i]])['type']); tab <- table(fil.stk)
-  w <- which(fil.stk=='fill')%%2==0
-  if (any(w) & tab['fill'] > tab['stroke']) { 
-
-    # All path ids in original SVG.
-    id.svg <- NULL; for (i in seq_len(xmlSize(xmltop[[size]]))) {
-
-     node <- xmltop[[size]][[i]] 
-     if (xmlName(node)=='g') for (j in seq_len(xmlSize(node))) { id.svg <- c(id.svg, xmlAttrs(node[[j]])[['id']]) } else id.svg <- c(id.svg, xmlAttrs(node)[['id']])  
-
-    }
+      }
     
-    # Index of wrong path.
-    w1 <- which(w)[1]
-    # Wrong path and related group.
-    tis.wrg <- paste0(tis.path[c(w1-1, w1)], collapse='; ')
-    return(paste0("Error detected in '", tis.wrg, "' in SVG image. Please ungroup and regroup the respective group they belong to.")) 
+    }
 
   }
+  
+  # The outline or tissue nodes are checked for combines paths. If combined paths are detected, those outside a group are broken to a group while those inside a group are broken as siblings.  
+  path_br_all <- function(node.parent) {
 
-  k <-0; df <- NULL; for (i in seq_len(xmlSize(top)-1)) {
+    len <- xml_length(node.parent); chdn <- xml_children(node.parent)
+    for (i in seq_len(len)) {
 
-    if (xmlAttrs(top[[i]])['type']=='stroke') {
+      nod0 <- chdn[[i]]; na <- xml_name(nod0)
+      if (na=='a') next
+      if (na!='g') path_br(nod0, g=TRUE) else {
 
-      k <- k+1; chil <- xmlChildren(top[[i]]); xy <- chil[grep("move|line", names(chil))]
-      coor <- matrix(NA, nrow=length(xy), ncol=2, dimnames=list(NULL, c("x", "y")))
+        nod0.chl <- xml_children(nod0); nas <- xml_name(nod0.chl)
+        if ('g' %in% nas) return(paste0('Nested group detected in ', xml_attr(nod0, 'id'), '!'))
+        if ('use' %in% nas) return(paste0('use node detected in ', xml_attr(nod0, 'id'), '!'))
+        for (j in seq_along(nod0.chl)) {
 
-      for (j in seq_len(length(xy))) {
+          nod1 <- nod0.chl[[j]]; if (xml_name(nod1)=='a') next
+          path_br(nod1, g=FALSE)
 
-        coor[j, "x"] <- as.numeric(xmlAttrs(xy[[j]])["x"])
-        coor[j, "y"] <- as.numeric(xmlAttrs(xy[[j]])["y"])
+        }
 
       }
 
-      df0 <- cbind(tissue=id.xml[k], data.frame(coor, stringsAsFactors=FALSE), stringsAsFactors=TRUE)
-      df <- rbind(df, df0, stringsAsFactors=TRUE)
+    }
 
-     }
+  }
 
-    }; lis <- list(df=df, tis.path=tis.path, fil.cols=fil.cols); return(lis)
+# 'a' nodes are not removed.
+  svg_attr <- function(doc, feature) {
+
+  len <- xml_length(doc); out <- xml_children(doc)[[len-1]]; ply <- xml_children(doc)[[len]]
+  # Break combined path to a group or siblings.
+  path_br_all(out); path_br_all(ply)
+
+
+  # If out is not a group, it is assigned an empty node.
+  if (xml_name(out)!='g') { xml_add_child(out, 'empty', .where=0); out1 <- xml_children(out)[[1]]; xml_remove(xml_children(out)[[1]], free=FALSE); out <- out1 }
+  # If ply is not a group, it is assigned an empty node.
+  if (xml_name(ply)!='g') { xml_add_child(ply, 'empty', .where=0); ply1 <- xml_children(ply)[[1]]; xml_remove(xml_children(ply)[[1]], free=FALSE); ply <- ply1 }
+  chdn.out <- xml_children(out); chdn.ply <- xml_children(ply)
+  
+  ## Exrtact basic attributes into a data frame.
+  idx <- seq_len(length(chdn.out)+length(chdn.ply))
+  idx1 <- c(seq_len(length(chdn.out)), seq_len(length(chdn.ply)))
+  parent <- c(rep(xml_attr(out, 'id'), length(chdn.out)), rep(xml_attr(ply, 'id'), length(chdn.ply)))
+  nas <- c(xml_name(chdn.out), xml_name(chdn.ply))
+  ids <- make.names(c(xml_attr(chdn.out, 'id'), xml_attr(chdn.ply, 'id')))
+  if (any(duplicated(ids))) return(paste0('Duplicated node ids detected: ', paste0(ids[duplicated(ids)], collapse=' '), '!'))
+  title <- make.names(c(xml_text(chdn.out), xml_text(chdn.ply)))
+  w <- which(title=='X'); title[w] <- ids[w]
+  dup <- duplicated(title); if (any(dup)) {
+    
+    if (length(intersect(title[dup], feature))>0) return(paste0('Duplicated title text detected: ', paste0(title[dup], collapse=' '), '!')) else {
+
+      w <- title %in% title[dup]
+      title[w] <- paste0(title[w], seq_len(sum(w)))
+
+    }
+  
+  }
+  # Style inside groups are ignored. 
+  sty <- c(xml_attr(chdn.out, 'style'), xml_attr(chdn.ply, 'style'))
+  sty[!grepl('fill:', sty)] <- 'none'
+  w1 <- grepl(';', sty); st <- sty[w1]; st <- strsplit(st, ';')
+  st1 <- NULL; for (i in st) { st1 <- c(st1, i[grepl('fill:', i)]) }; sty[w1] <- st1
+  # If only keep part of the string, the pattern should cover everything in the string, e.g. the '.*' on both ends.
+  fil.cols <- gsub('.*(fill:)(.*).*', '\\2', sty)
+  df.attr <- data.frame(index=idx, index1=idx1, parent=parent, name=nas, id=ids, title=title, fil.cols=fil.cols)
+  df.attr <- subset(df.attr, name!='a')    
+  return(list(df.attr=df.attr, out=out, ply=ply))
+
+  }
+
+svg_df <- function(svg.path, feature) {
+
+  # Make sure the style is correct. If the stroke width is not the same across polygons such as '0.0002px', '0.216px', some stroke outlines cannot be recognised by 'PostScriptTrace'. Then some polygons are missing. Since the ggplot is based on 'stroke' not 'fill'.
+
+  options(stringsAsFactors=FALSE)
+  doc <- read_xml(svg.path); spa <- xml_attr(doc, 'space')
+  if (!is.na(spa)) if (spa=='preserve') xml_set_attr(doc, 'xml:space', 'default')
+
+  svg.attr <- svg_attr(doc, feature=feature); if (is(svg.attr, 'character')) return(svg.attr)
+  df.attr <- svg.attr[['df.attr']]; out <- svg.attr[['out']]; ply <- svg.attr[['ply']]
+  # Paths in 'a' node are recognised in .ps.xml file, so all 'a' nodes in or out groups are removed. 
+  chdn.out <- xml_children(out); chdn.ply <- xml_children(ply)
+  chdn.all <- c(chdn.out, chdn.ply)
+  for (i in chdn.all) {
+
+    na <- xml_name(i)
+    if (na=='a') xml_remove(i, free=FALSE) else if (na=='g') {
+
+      chil <- xml_children(i); for (j in chil) {
+
+        na1 <- xml_name(j); if (na1=='a') xml_remove(j, free=FALSE) else if (na1=='g') return(paste0('Nested group detected in ', xml_attr(i, 'id'), '!'))
+
+      }
+
+    }
+ 
+  }
+  # Renew the children after deletion of 'a' nodes.
+  chdn.out <- xml_children(out); chdn.ply <- xml_children(ply)
+  chdn.all <- c(chdn.out, chdn.ply)
+
+  # Get ids and titles for every path, including paths inside groups, except for 'a' nodes.
+  tit <- id.all <- NULL; for (i in seq_along(chdn.all)) {
+
+    if (df.attr[i, 'name']=='g') {
+
+     na <- xml_name(xml_children(chdn.all[[i]]))
+     tit0 <- rep(df.attr[i, 'title'], xml_length(chdn.all[[i]])-sum(na=='title')); tit0 <- paste0(tit0, '_', seq_along(tit0)); tit <- c(tit, tit0)
+     id0 <- rep(df.attr[i, 'id'], xml_length(chdn.all[[i]])-sum(na=='title')); id.all <- c(id.all, id0)
+     # If the styles in paths of a group are different with group style, they can lead to messy 'fill' and 'stroke' in '.ps.xml', so they are set NULL. This step is super important.
+     xml_set_attr(xml_children(chdn.all[[i]]), 'style', NULL)
+
+    } else if (df.attr[i, 'name']=='use') {
+
+      ref <- paste0('#', df.attr[, 'id'])
+      w <- which(ref %in% xml_attr(chdn.all[[i]], 'href'))
+      # If reference is inside a group. A group contains no groups, so the use node has 1 shape.
+      if (length(w)==0) { tit <- c(tit, df.attr[i, 'title']); id.all <- c(id.all, df.attr[i, 'id']) }
+      # If reference is outside a group.
+      if (length(w)>0) if (df.attr[w, 'name']=='g') {
+
+        na <- xml_name(xml_children(chdn.all[[w]]))
+        tit0 <- rep(df.attr[i, 'title'], xml_length(chdn.all[[w]])-sum(na=='title')); tit0 <- paste0(tit0, '_', seq_along(tit0)); tit <- c(tit, tit0)
+        id0 <- rep(df.attr[i, 'id'], xml_length(chdn.all[[w]])-sum(na=='title')); id.all <- c(id.all, id0)
+
+      } else { tit <- c(tit, df.attr[i, 'title']); id.all <- c(id.all, df.attr[i, 'id']) }
+
+    } else { tit <- c(tit, df.attr[i, 'title']); id.all <- c(id.all, df.attr[i, 'id']) }
+
+  }; tis.path <- gsub("_\\d+$", "", tit)  
+
+  style <- 'fill:#46e8e8;fill-opacity:1;stroke:#000000;stroke-width:3;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1' # 'fill' is not necessary. In Inkscape, "group" or move an object adds transforms (relative positions), and this can lead to related polygons uncolored in the spatial heatmaps. Solution: ungroup and regroup to get rid of transforms and get absolute positions.
+  # Change 'style' of all polygons.
+  xml_set_attr(chdn.out, 'style', style); xml_set_attr(chdn.ply, 'style', style)  
+  # xml_set_attr(out, 'style', style); xml_set_attr(ply, 'style', style)  
+  # Export internal SVG.
+  tmp <- tempdir(); svg.inter <- paste0(tmp, '/internal.svg')
+  if (grepl("~", svg.inter)) svg.inter <- normalizePath(svg.inter)
+  write_xml(doc, file=svg.inter)
+  
+  # SVG file conversion. 
+  rsvg_ps(svg.inter, file=sub("svg$", "ps", svg.inter)) # Only the paths inside canvas of SVG are valid.
+  p1 <- sub("svg$", "ps", svg.inter); p2 <- paste0(sub("svg$", "ps", svg.inter), ".xml"); PostScriptTrace(p1, p2) 
+  chdn1 <- xml_children(read_xml(p2)) # Use internal svg to get coordinates.
+     
+  # Detect groups that use relative coordinates ("transform", "matrix" in Inkscape.), which leads to some plygons missing in ".ps.xml" file.
+  # EBI SVG, if the outline shapes and tissue shapes are separate, they must be in two layers NOT two groups. Otherwise, 'fill' and 'stroke' in '.ps.xml' can be  messy.
+  fil.stk <- xml_attr(chdn1[-length(chdn1)], 'type'); tab <- table(fil.stk)
+  w <- which(fil.stk=='fill')%%2==0
+  if (any(w) & tab['fill'] > tab['stroke']) { 
+ 
+    # Index of wrong path.
+    w1 <- which(w)[1]
+    # Wrong path and related group.
+    tis.wrg <- paste0(id.all[c(w1-1, w1)], collapse='; ')
+    return(paste0("Error detected in '", tis.wrg, "' in SVG image. Please ungroup and regroup the respective group they belong to.")) 
+
+  }
+  
+  # Get coordinates from '.ps.xml'.
+  stroke <- chdn1[which(xml_attr(chdn1, 'type')=='stroke')]
+  df <- NULL; for (i in seq_along(stroke)) {
+
+    xy <- xml_children(stroke[[i]])[-1]
+    x <- as.numeric(xml_attr(xy, 'x'))
+    y <- as.numeric(xml_attr(xy, 'y'))
+    df0 <- cbind(tissue=tit[i], data.frame(x=x, y=y), stringsAsFactors=TRUE) # The coordinates should not be factor.
+    df <- rbind(df, df0)
+
+  }; fil.cols <- df.attr$fil.cols; names(fil.cols) <- df.attr$title 
+  lis <- list(df=df, tis.path=sub('_\\d+$', '', tit), fil.cols=fil.cols); return(lis)
 
 }
-
 
 
 
@@ -952,6 +1072,7 @@ grob_list <- function(gene, con.na=TRUE, geneV, coord, ID, cols, tis.path, tis.t
 
  save(gene, geneV, coord, ID, cols, tis.path, tis.trans, sub.title.size, sam.legend, legend.col, legend.title, legend.ncol, legend.nrow, legend.position, legend.direction, legend.key.size, legend.label.size, legend.title.size, line.size, line.color, file='all')
   options(stringsAsFactors=FALSE)
+
   g_list <- function(con, lgd=FALSE, ...) {
 
     x <- y <- tissue <- NULL; tis.df <- unique(coord[, 'tissue'])
@@ -1030,6 +1151,10 @@ grob_list <- function(gene, con.na=TRUE, geneV, coord, ID, cols, tis.path, tis.t
   return(list(grob.lis=grob.lis, g.lgd=g.lgd))
 
 }
+
+
+
+
 
 
 
@@ -1311,6 +1436,13 @@ shinyServer(function(input, output, session) {
 
   })
 
+  sam <- reactive({ 
+
+    cname <- colnames(geneIn()[["gene2"]]); idx <- grep("__", cname); c.na <- cname[idx]
+    if (length(grep("__", c.na))>=1) gsub("(.*)(__)(.*$)", "\\1", c.na) else return(NULL) 
+
+  })
+  
   svg.df <- reactive({ 
 
     if (is.null(gID$all)) return(NULL)
@@ -1320,7 +1452,7 @@ shinyServer(function(input, output, session) {
       withProgress(message="Tissue heatmap: ", value=0, {
     
         incProgress(0.5, detail="Extracting coordinates. Please wait.") 
-        df_tis <- svg_df(svg.path=svg.path()[['svg.path']])
+        df_tis <- svg_df(svg.path=svg.path()[['svg.path']], feature=sam())
         validate(need(!is.character(df_tis), df_tis))
         return(df_tis)
 
@@ -1330,12 +1462,6 @@ shinyServer(function(input, output, session) {
 
   })
 
-  sam <- reactive({ 
-
-    cname <- colnames(geneIn()[["gene2"]]); idx <- grep("__", cname); c.na <- cname[idx]
-    if (length(grep("__", c.na))>=1) gsub("(.*)(__)(.*$)", "\\1", c.na) else return(NULL) 
-
-  })
 
   observe({
 

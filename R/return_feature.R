@@ -22,7 +22,7 @@
 #' Hadley Wickham, Jim Hester and Jeroen Ooms (2019). xml2: Parse XML. R package version 1.2.2. https://CRAN.R-project.org/package=xml2
 
 #' @export return_feature
-#' @importFrom xml2 read_xml xml_children xml_length xml_attr
+#' @importFrom xml2 read_xml
 #' @importFrom rols term termDesc
 
 return_feature <- function(feature, species, keywords.all=TRUE, remote=FALSE, dir=NULL, desc=FALSE, match.only=TRUE, return.all=FALSE) {
@@ -36,41 +36,26 @@ return_feature <- function(feature, species, keywords.all=TRUE, remote=FALSE, di
   ftr.return <- function(svgs, desc=desc) { 
 
     cat('Accessing features... \n')
-    id.ont <- NULL; for (path.in in svgs) {
+    df <- NULL; for (i in svgs) {
 
-      doc <- read_xml(path.in); chdn <- xml_children(doc)
-      ply <- chdn[[xml_length(doc)]]; chdn1 <- xml_children(ply)
-      na <- strsplit(path.in, '/')[[1]]; na <- na[grep('.svg$', na)]; len <- xml_length(ply)
-      ids <- NULL; for (j in seq_len(len)) {
-
-        ont <- xml_attr(chdn1[[j]], 'ontology')
-        id <- xml_attr(chdn1[[j]], 'id'); names(id) <- ont
-        ids <- c(ids, id)
-
-       }; dup <- duplicated(ids)
-       if (any(dup)) stop(paste0("Duplicated feature \'", paste0(ids[dup], collapse=', '), "\' detected in ", path.in, "!"))
-       lis <- list(ids); names(lis) <- na; id.ont <- c(id.ont, lis) 
-
-    }
-
-    df <- NULL; for (i in seq_along(id.ont)) {
-
-      feat <- id.ont[[i]]
-      df0 <- data.frame(feature=feat, ontology=names(feat), row.names=NULL)
-      df0$SVG <- names(id.ont[i]); df0$index <- as.numeric(rownames(df0))
+      doc <- read_xml(i); df0 <- svg_attr(doc, feature=NULL)[['df.attr']]
       # Move ontology with NA or "NULL" to bottom.
-      w.na <- which(is.na(df0$ontology)|df0$ontology=='NULL'|df0$ontology=='NA')
+      w.na <- which(is.na(df0$id)|df0$id=='NULL'|df0$id=='NA')
       if (length(w.na)>0) df0 <- rbind(df0[-w.na, ], df0[w.na, ])
+      na <- strsplit(i, '/')[[1]]; na <- na[grep('.svg$', na)]
+      cat(na); cat(', ')
+      df0$SVG <- na
       df <- rbind(df, df0)
 
-    }; rownames(df) <- NULL
+    }; cat('\n')
+    cna <- colnames(df); colnames(df)[cna=='title'] <- 'feature'; df <- df[, c('feature', 'id', 'SVG', 'parent', 'index', 'index1')]
 
     if (desc==TRUE) {
   
       cat('Appending descriptions... \n')
       df$description <- NA; for (i in seq_len(nrow(df))) {
 
-        ont <- df[i, 'ontology']; abbr <- tolower(sub('_.*', '', ont))
+        ont <- df[i, 'id']; abbr <- tolower(sub('_.*', '', ont))
         trm <- tryCatch({ term(abbr, ont) }, error=function(e) { return(NA) })
         if (is(trm, 'Term')) { des <- termDesc(trm); if (!is.null(des)) df[i, 'description'] <- termDesc(trm) }
   
@@ -85,11 +70,11 @@ return_feature <- function(feature, species, keywords.all=TRUE, remote=FALSE, di
     cat('Downloading SVG images... \n')
     tmp <- tempdir(check=TRUE); tmp1 <- paste0(tempdir(), '/git.zip')
     tmp2 <- paste0(tmp, '/git'); if (!dir.exists(tmp2)) dir.create(tmp2)
-    download.file('https://github.com/jianhaizhang/SVG_tutorial_file/archive/master.zip', tmp1); unzip(tmp1, exdir=tmp2)
-    tmp3 <- paste0(tmp2, '/SVG_tutorial_file-master/svg_repo')
+    download.file('https://github.com/ebi-gene-expression-group/anatomogram/archive/master.zip', tmp1); unzip(tmp1, exdir=tmp2)
+    tmp3 <- paste0(tmp2, '/anatomogram-master/src/svg')
     svgs <- list.files(path=tmp3, pattern='.svg$', full.names=TRUE, recursive=TRUE)
     df <- ftr.return(svgs=svgs, desc=desc)
-    svgs.na <- sapply(svgs, function(i) { str <- strsplit(i, '/')[[1]]; str[length(str)] })
+    svgs.na <- vapply(svgs, function(i) { str <- strsplit(i, '/')[[1]]; str[length(str)] }, FUN.VALUE=character(1))
     svgs1 <- list.files(path=dir, pattern='.svg$', full.names=TRUE)
     svgs.na1 <- list.files(path=dir, pattern='.svg$', full.names=FALSE)
     if (return.all==TRUE) { 
@@ -97,7 +82,7 @@ return_feature <- function(feature, species, keywords.all=TRUE, remote=FALSE, di
       svgs1.rm <- svgs1[svgs.na1 %in% svgs.na] 
       cat(paste0('Overwriting: ', svgs1.rm, '\n')) 
       # "file.copy" does not overwrite.
-      sapply(svgs, function (i) file.copy(i, dir, overwrite=TRUE)); return(df)
+      sapply(svgs, function (i) file.copy(i, dir, overwrite=TRUE)); row.names(df) <- NULL;  return(df)
 
     }
 
@@ -105,11 +90,12 @@ return_feature <- function(feature, species, keywords.all=TRUE, remote=FALSE, di
 
     svgs <- list.files(path=dir, pattern='.svg$', full.names=TRUE)
     df <- ftr.return(svgs=svgs, desc=desc)
-    if (return.all==TRUE) return(df)
+    if (return.all==TRUE) { row.names(df) <- NULL; return(df) }
 
   }
  
-  if (!is.null(species)) if (species=='') species <- NULL
+  if (!is.null(species)) if (species[1]=='') species <- NULL
+  if (!is.null(feature)) if (feature[1]=='') species <- NULL
   sp <- gsub(' |_|\\.|-|;|,|/', '|', make.names(species)); ft <- gsub(' |_|\\.|-|;|,|/', '|', make.names(feature))
   sp <- paste0(sp, collapse="|"); ft <- paste0(ft, collapse="|") 
   
@@ -178,3 +164,6 @@ return_feature <- function(feature, species, keywords.all=TRUE, remote=FALSE, di
   }; return(df.final)
 
 }
+
+
+

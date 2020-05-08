@@ -528,7 +528,7 @@ Next, the preprocessed expression values of gene `ENSG00000268433` are plotted o
 corresponding features of the aSVG image depicting the human brain. 
 
 ```{r humshm, eval=TRUE, echo=TRUE, warnings=FALSE, fig.wide=TRUE, fig.cap=("Spatial heatmaps of human brain. Cerebellum and frontal cortex are colored, since they are the only 2 identical tissues between the aSVG image and the data."), out.width="100%" }
-shm.df <- spatial_hm(svg.path=svg.hum, data=se.fil.hum, ID=c('ENSG00000268433'), height=0.6, legend.r=1.3, sam.legend='identical')
+shm.df <- spatial_hm(svg.path=svg.hum, data=se.fil.hum, col.com=c('purple', 'yellow', 'blue'), ID=c('ENSG00000268433'), height=0.6, legend.r=1.3, sam.legend='identical')
 ```
 
 The spatial heatmaps and mapped features are stored in a list and assigned to an object `shm.df`.
@@ -540,10 +540,10 @@ shm.df[['mapped_feature']]
 ```
 
 In this example, the expression profile of gene ENSG00000268433 in frontal
-cortex and cerebellum is plotted under ALS and normal conditions (Figure \@ref(fig:humshm)) with the legend plot on the right. For example, in Table \@ref(tab:humtab) its expression value in cerebellum under ALS is 5.3240638. After
-mapping, this tissue is colored purple corresponding to 5.3240638 in the color
-scale. By contrast, this gene\'s expression profile is blue in the same tissue
-under normal condition. On the other hand, the expression profile (yellow) in
+cortex and cerebellum is plotted under ALS and normal conditions (Figure \@ref(fig:humshm)) with the legend plot on the right. For example, in Table \@ref(tab:humtab) its expression value in cerebellum under ALS is 5.324064. After
+mapping, this tissue is coloured blue corresponding to 5.324064 in the color
+scale. By contrast, this gene\'s expression profile is dark yellow in the same tissue
+under normal condition. On the other hand, the expression profile (purple) in
 frontal cortex is similar across ALS and normal. Therefore, it is intuitive
 that this gene\'s higher activity in cerebellum is potentially associated with
 ALS and could contribute to hypothesis generation.  

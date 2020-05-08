@@ -2,22 +2,24 @@
 % Please edit documentation in R/svg_df.R
 \name{svg_df}
 \alias{svg_df}
-\title{Extract coordinates and tissue/path names from the SVG file}
+\title{Extract Coordinates, Tissue Names, and Colours from the SVG File}
 \usage{
-svg_df(svg.path)
+svg_df(svg.path, feature)
 }
 \arguments{
 \item{svg.path}{The path of an SVG file.}
+
+\item{feature}{A character vector of features/samples extracted from the data. If some of the input features are duplicated in SVG file, then a reminder message is returned.}
 }
 \value{
-A 2-length list, the first component is a data frame of the coordinates and the second is a vector of all tissue/path names.
+A 3-length list, the first component is a data frame of the coordinates, the second is a vector of all tissue/path names, and the third is the fill colours.
 }
 \description{
-Extract coordinates and tissue/path names from the SVG file
+Extract Coordinates, Tissue Names, and Colours from the SVG File
 }
 \references{
 https://www.gimp.org/tutorials/ \cr https://inkscape.org/en/doc/tutorials/advanced/tutorial-advanced.en.html \cr http://www.microugly.com/inkscape-quickguide/
-Jeroen Ooms (2018). rsvg: Render SVG Images into PDF, PNG, PostScript, or Bitmap Arrays. R package version 1.3. https://CRAN.R-project.org/package=rsvg \cr Paul Murrell (2009). Importing Vector Graphics: The grImport Package for R. Journal of Statistical Software, 30(4), 1-37. URL http://www.jstatsoft.org/v30/i04/ \cr Duncan Temple Lang and the CRAN Team (2018). XML: Tools for Parsing and Generating XML Within R and S-Plus. R package version 3.98-1.16. https://CRAN.R-project.org/package=XML \cr R Core Team (2018). R: A language and environment for statistical computing. R Foundation for Statistical Computing, Vienna, Austria. RL https://www.R-project.org/ \cr
+Jeroen Ooms (2018). rsvg: Render SVG Images into PDF, PNG, PostScript, or Bitmap Arrays. R package version 1.3. https://CRAN.R-project.org/package=rsvg \cr Paul Murrell (2009). Importing Vector Graphics: The grImport Package for R. Journal of Statistical Software, 30(4), 1-37. URL http://www.jstatsoft.org/v30/i04/ \cr Hadley Wickham, Jim Hester and Jeroen Ooms (2019). xml2: Parse XML. R package version 1.2.2. https://CRAN.R-project.org/package=xml2 \cr R Core Team (2018). R: A language and environment for statistical computing. R Foundation for Statistical Computing, Vienna, Austria. RL https://www.R-project.org/ \cr
 }
 \author{
 Jianhai Zhang \email{jzhan067@ucr.edu; zhang.jianhai@hotmail.com} \cr Dr. Thomas Girke \email{thomas.girke@ucr.edu}

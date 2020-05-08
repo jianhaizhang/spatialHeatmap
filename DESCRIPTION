@@ -32,12 +32,14 @@ Imports:
    graphics,
    ggplotify,
    plotly,
+   rols,
    stats,  
    SummarizedExperiment,
    shinydashboard,
    utils,
    visNetwork,
-   methods
+   methods,
+   xml2
 BugReports: https://github.com/jianhaizhang/spatialHeatmap/issues
 URL: https://github.com/jianhaizhang/spatialHeatmap
 Video: NA
