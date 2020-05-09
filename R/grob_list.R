@@ -95,7 +95,7 @@ grob_list <- function(gene, con.na=TRUE, geneV, coord, ID, cols, tis.path, tis.t
   # Map colours to samples according to expression level.
   cname <- colnames(gene); form <- grep('__', cname) # Only take the column names with "__".
   cons <- gsub("(.*)(__)(.*)", "\\3", cname[form]); con.uni <- unique(cons)
-  sam.uni <- unique(gsub("(.*)(__)(.*)", "\\1", cname))
+  sam.uni <- unique(gsub("(.*)(__)(.*)", "\\1", cname)); tis.trans <- make.names(tis.trans)
   grob.na <- grob.lis <- NULL; for (k in ID) {
 
     scol <- NULL; for (i in gene[k, ]) { 
