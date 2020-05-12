@@ -698,14 +698,14 @@ se.fil.mus <- filter_data(data=se.aggr.mus, sam.factor='organism_part', con.fact
 
 Plot spatial heatmaps.   
 
-```{r musshm, eval=TRUE, echo=FALSE, warnings=FALSE, fig.wide=TRUE, fig.cap=("Mouse organ spatial heatmap. This is a multiple-layer image and `skeletal.muscle` is set transparent to expose lung and heart."), out.width="100%" }
-spatial_hm(svg.path=svg.mus, data=se.fil.mus, ID=c('ENSMUSG00000000263'), height=0.5, legend.r=1.1, sub.title.size=9, ncol=3, tis.trans=c('skeletal.muscle'), legend.nrow=4, line.size=0.2, line.color='grey70')
+```{r musshm, eval=TRUE, echo=FALSE, warnings=FALSE, fig.wide=TRUE, fig.cap=("Mouse organ spatial heatmap. This is a multiple-layer image and `skeletal muscle` is set transparent to expose lung and heart."), out.width="100%" }
+spatial_hm(svg.path=svg.mus, data=se.fil.mus, ID=c('ENSMUSG00000000263'), height=0.5, legend.r=1.1, sub.title.size=9, ncol=3, tis.trans=c('skeletal muscle'), legend.nrow=4, line.size=0.2, line.color='grey70')
 ```
 
 The spatial heatmap of gene ENSMUSG00000000263 is plotted in 8 tissues across 3 strains. It is manifest that only brain exhibits obvious difference across the 3 strains with DBA.2J, C57BL.6, and CD1 being highest, medium, and lowest respectively. In contrast, all the other 8 tissues display similar profile across strains. Thus this gene is potentially strain-specific. Moreover, the expression levels of all the other 8 tissues are all lower than brain.   
 
 <font color='blue'>
-This is a typical example to demonstrate the usage of `tis.trans` parameter, since this mouse organ image includes tissues in multiple layers and skelectal muscle covers lung and heart. In Figure \@ref(fig:musshm), skelectal muscle is set transparent through `tis.trans=c('skeletal.muscle')` so that lung and heart are exposed. By contrast, in Figure \@ref(fig:musshm1) `tis.trans=NULL` exposes `skeletal.muscle` and lung and heart are covered.  
+This is a typical example to demonstrate the usage of `tis.trans` parameter, since this mouse organ image includes tissues in multiple layers and skelectal muscle covers lung and heart. In Figure \@ref(fig:musshm), skelectal muscle is set transparent through `tis.trans=c('skeletal muscle')` so that lung and heart are exposed. By contrast, in Figure \@ref(fig:musshm1) `tis.trans=NULL` exposes `skeletal muscle` and lung and heart are covered.  
 
 Moreover, presence of too many tissues might affect the visual effects due to the messy
 polygon outlines. The `line.size` and `line.color` parameters are used to
@@ -713,7 +713,7 @@ adjust the thickness and color of polygon outlines respectively and thus enhance
 </font>
 
 
-```{r musshm1, eval=TRUE, echo=FALSE, warnings=FALSE, fig.wide=TRUE, fig.cap=("Mouse organ spatial heatmap. This is a multiple-layer image and `skeletal.muscle` convers lung and heart."), out.width="100%" }
+```{r musshm1, eval=TRUE, echo=FALSE, warnings=FALSE, fig.wide=TRUE, fig.cap=("Mouse organ spatial heatmap. This is a multiple-layer image and `skeletal muscle` convers lung and heart."), out.width="100%" }
 spatial_hm(svg.path=svg.mus, data=se.fil.mus, ID=c('ENSMUSG00000000263'), height=0.5, legend.r=1.1, sub.title.size=9, ncol=3, tis.trans=NULL, legend.ncol=2, line.size=0.2, line.color='grey70')
 ```
 
@@ -1020,7 +1020,7 @@ spatial_hm(svg.path=svg.hum, data=vec, ID='toy', ncol=1, legend.r=1.2, sub.title
 ```
 
 **Data Frame**  
-In the case of data frame, numeric values are measured from different samples. Similarly, if one or more conditions are provided, the column names should be in the form of 'sample__condition'. If no conditions are provided, all the samples are assumed to have same condition.     
+In the case of data frame, numeric values are measured from different samples. Similarly, if one or more conditions are provided, the column names should be in the form of 'sample__condition'. If no conditions are provided, all the samples are assumed to have same condition.   
 
 Take the same samples and conditions in the vector case as example.  
 
@@ -1141,7 +1141,7 @@ feature.df <- return_feature(feature=c('frontal cortex'), species=c('homo sapien
 feature.df
 ``` 
 
-Make a vector of new feature identifiers corresponding to every returned feature, *e.g.* replacing undescores with dots. This vector must be added to the first column of the feature data frame, since that is where `update_feature` looks for new features. Then features are updated with `update_feature`.    
+Make a vector of new feature identifiers corresponding to every returned feature, *e.g.* replacing space with dots. This vector must be added to the first column of the feature data frame, since that is where `update_feature` looks for new features. Then features are updated with `update_feature`.    
 
 ```{r eval=TRUE, echo=TRUE, warnings=FALSE } 
 # A vector of new features.

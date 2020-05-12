@@ -834,7 +834,6 @@ nod_lin <- function(ds, lab, mods, adj, geneID, adj.min) {
 }
 
 
-  library(xml2)
   # Break combined path to a group (g=TRUE) or siblings (g=FALSE).
   path_br <- function(node, g=TRUE) {
 
@@ -1132,7 +1131,7 @@ grob_list <- function(gene, con.na=TRUE, geneV, coord, ID, cols, tis.path, tis.t
   # Map colours to samples according to expression level.
   cname <- colnames(gene); form <- grep('__', cname) # Only take the column names with "__".
   cons <- gsub("(.*)(__)(.*)", "\\3", cname[form]); con.uni <- unique(cons)
-  sam.uni <- unique(gsub("(.*)(__)(.*)", "\\1", cname))
+  sam.uni <- unique(gsub("(.*)(__)(.*)", "\\1", cname)); tis.trans <- make.names(tis.trans)
   grob.na <- grob.lis <- NULL; for (k in ID) {
 
     scol <- NULL; for (i in gene[k, ]) { 
@@ -1159,7 +1158,7 @@ grob_list <- function(gene, con.na=TRUE, geneV, coord, ID, cols, tis.path, tis.t
 
 
 
-library(SummarizedExperiment); library(shiny); library(shinydashboard); library(grImport); library(rsvg); library(ggplot2); library(DT); library(gridExtra); library(ggdendro); library(WGCNA); library(grid); library(XML); library(plotly); library(data.table); library(genefilter); library(flashClust); library(visNetwork); library(reshape2); library(igraph)
+library(SummarizedExperiment); library(shiny); library(shinydashboard); library(grImport); library(rsvg); library(ggplot2); library(DT); library(gridExtra); library(ggdendro); library(WGCNA); library(grid); library(xml2); library(plotly); library(data.table); library(genefilter); library(flashClust); library(visNetwork); library(reshape2); library(igraph)
 
 # Import input matrix.
 fread.df <- function(input, isRowGene, header, sep, fill, rep.aggr='mean') {
@@ -1543,12 +1542,8 @@ shinyServer(function(input, output, session) {
 
       svg.path <- svg.path()[['svg.path']]
       # Width and height in original SVG.
-      na <- c('width', 'height'); lis <- xmlToList(svg.path)
-      for (i in seq_len(length(lis))) {
-
-        if (sum(na %in% names(lis[[i]]))==2) w.h <- as.character(xmlToList(svg.path)[[i]][na])
-
-      }; w.h <- as.numeric(gsub("^(\\d+\\.\\d+|\\d+).*", "\\1", w.h)); r <- w.h[1]/w.h[2]
+      doc <- read_xml(svg.path); w.h <- c(xml_attr(doc, 'width'), xml_attr(doc, 'height'))
+      w.h <- as.numeric(gsub("^(\\d+\\.\\d+|\\d+).*", "\\1", w.h)); r <- w.h[1]/w.h[2]
       g.lgd <- gs()[['g.lgd']]; g.lgd <- g.lgd+coord_fixed(ratio =r); return(g.lgd)
 
   })

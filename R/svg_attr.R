@@ -35,7 +35,7 @@ svg_attr <- function(doc, feature) {
   nas <- c(xml_name(chdn.out), xml_name(chdn.ply))
   ids <- make.names(c(xml_attr(chdn.out, 'id'), xml_attr(chdn.ply, 'id')))
   if (any(duplicated(ids))) return(paste0('Duplicated node ids detected: ', paste0(ids[duplicated(ids)], collapse=' '), '!'))
-  title <- c(xml_text(chdn.out), xml_text(chdn.ply)) # Use original names, no 'make.names'.
+  title <- c(xml_text(chdn.out), xml_text(chdn.ply)) # Use original names, no 'make.names'. '' after applied to 'make.names' becomes 'X'.
   w <- which(title=='X'|title==''); title[w] <- ids[w]
   dup <- duplicated(title); if (any(dup)) {
     

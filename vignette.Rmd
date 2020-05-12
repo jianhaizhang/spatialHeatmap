@@ -548,7 +548,7 @@ ALS and could contribute to hypothesis generation.
 
 <font color='blue'> 
 Note that only frontal cortex and cerebellum are coloured while others are blank in the spatial
-heatmaps, since they are the only 2 matching tissues between the data and aSVG image. And the legend plot only shows these 2 tissues, because `sam.legend=identical` limits the legend to identical tissues between the data and aSVG. If `sam.legend=all`, all tissues are shown and legend plot would overlap with spatial heatmaps. Except for `identical` and `all`, `sam.legend` also accepts a vector of specific tissues for display.  
+heatmaps, since they are the only 2 matching tissues between the data and aSVG image. And the legend plot only shows these 2 tissues, because `sam.legend=identical` limits the legend to identical tissues between the data and aSVG. If `sam.legend=all`, all tissues are shown and legend plot would overlap with spatial heatmaps. Except for `identical` and `all`, `sam.legend` also accepts a `vector` of specific tissues for display.  
 </font>
 
 
@@ -1000,14 +1000,14 @@ se.fil.sh <- filter_data(data=se.aggr.sh, ann="Target.Description", sam.factor='
 
 # Supplement {#sup} 
 
-To plot spatial heatmaps, a pair of data (vector, data frame, SummarizedExperiment) and aSVG image are required. The most important step is to format the data and aSVG image so that target features in aSVG have matching counterparts in the data, since only the matching features in aSVG images are coloured. This section explains details of data and aSVG setup that are not covered in the main vignette.  
+To plot spatial heatmaps, a pair of data (`vector`, `data frame`, `SummarizedExperiment`) and aSVG image are required. The most important step is to format the data and aSVG image so that target features in aSVG have matching counterparts in the data, since only the matching features in aSVG images are colored. This section explains details of data and aSVG setup that are not covered in the main vignette.  
 
 ## Format the Data {#mat_form}
 
-The accepted data classes include vector, data frame, or SummarizedExperiment (SE). Vector applies to several numeric values measured from a single sample, and data frame applies to several samples and/or serveral conditions (e.g. 2 samples under 2 conditions) regardless of row features. By contrast, SE applies to experiments with many samples and many conditions. Formatting the data is essentially define samples and/or conditions.     
+The accepted data classes include `vector`, `data frame`, or `SummarizedExperiment` (SE). The `vector` applies to numeric values of a single item (*e.g.* gene) measured from several samples, and `data frame` applies to several samples and/or serveral conditions (e.g. 2 samples under 2 conditions) regardless of row features. By contrast, SE applies to experiments with many samples and many conditions. Formatting the data is essentially define samples and/or conditions.     
 
 **Vector**  
-In the case of vector, the numeric values are measured from each samples. If 1 or more conditions are provided, the samples and conditions should be connected by double undescore, i.e. in the form of 'sample__condition'. Take 2 samples 'occipital_lobe' and 'parietal_lobe' from the [toy example](#toy) for instance. Assume there are 2 conditions, 'condition1' and 'condition2'. Select 5 random values, assign 4 of them to the 2 samples under the 2 conditions, and the last one to a not-mapped sample. Note the value names should be unique.   
+In the case of vector, if 1 or more conditions are provided, the samples and conditions should be connected by double undescore, i.e. in the form of 'sample__condition'. Take 2 samples 'occipital_lobe' and 'parietal_lobe' from the [toy example](#toy) for instance. Assume there are 2 conditions, 'condition1' and 'condition2'. Select 5 random values, assign 4 of them to the 2 samples under the 2 conditions, and the last one to a not-mapped sample. Note the value names should be unique.   
 
 If no conditions are provided, all the samples are assumed to have same condition, which is illustrated in the [toy example](#toy).    
 
@@ -1026,7 +1026,7 @@ spatial_hm(svg.path=svg.hum, data=vec, ID='toy', ncol=1, height=1, legend.r=1.5)
 ```
 
 **Data Frame**  
-In the case of data frame, numeric values are measured from different samples. Similarly, if 1 or more conditions are provided, the column names should be in the form of 'sample__condition'. If no conditions are provided, all the samples are assumed to have same condition.     
+In the case of data frame, similarly if 1 or more conditions are provided, the column names should be in the form of 'sample__condition'. If no conditions are provided, all the samples are assumed to have same condition.     
 
 Take the same samples and conditions in the vector case as example.  
 
