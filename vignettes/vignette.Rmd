@@ -63,7 +63,7 @@ The _spatialHeatmap_ package provides functionalities for visualizing cell-, tis
 and organ-specific data of biological assays by coloring the corresponding spatial
 features defined in anatomical images according to a numeric color key. The
 color scheme used to represent the assay values can be customized by
-the user. This core functionality is called a _spatial heatmap_ plot. It is
+the user. This core functionality of the package is called a _spatial heatmap_ plot. It is
 enhanced with nearest neighbor visualization tools for groups of measured items 
 (_e.g._ gene modules) sharing related abundance profiles, including matrix heatmaps
 combined with hierarchical clustering dendrograms and network representations.
@@ -71,10 +71,12 @@ The functionalities of _spatialHeatmap_ can be used either in a command-driven
 mode from within R or a graphical user interface (GUI) provided by a Shiny App
 that is also part of this package. While the R-based mode provides flexibility
 to customize and automate analysis routines, the Shiny App includes a variety
-of convenience features that will appeal to many biologists. Moreover, the
-Shiny App has been designed to work on both local computers as well as
+of convenience features that will appeal to biologists. Moreover, the
+Shiny App can be used on both local computers as well as centralized
 server-based deployments (_e.g._ cloud-based or custom servers) that can be
-accessed remotely as a centralized web service for using _spatialHeatmap\'s_ functionalities with community and/or private data. The functionality overview of this package is illustrated in Figure \@ref(fig:illus).   
+accessed remotely as a public web service for using _spatialHeatmap's_
+functionalities with community and/or private data. The functionalities
+of the `spatialHeatmap` package are illustrated in Figure \@ref(fig:illus).   
 
 
 ```{r illus, echo=FALSE, fig.wide=TRUE, fig.cap=("Functionality overview. The numeric data can come as a `vector`, `data frame`, or `SummarizedExperiment` (SE). If `vector` or `data frame`, the sample and condition identifiers should be in the form of \'sample__condition\', e.g. \'S1__con1\'. If `data frame` or SE, the columns and rows should be sample/conditions and assayed items (gene1, gene2) respectively. In SE, the `colData` slot is required and contains replicate information, while the `rowData` slot is optional and contains row item annotation. If the latter is available, the annotation is seen by mousing over a node in the interactive network. In the aSVG image (see [aSVG](#term) below), spatial features are pre-defined and assigned unique identifiers. In visualization, only aSVG features having identical sample counterparts in data are colored (*e.g.* S1) in spatial heatmaps. To supplement spatial heatmaps, coexpression analysis is applied on \'data matrix\' to identify network modules. The gene in spatial heatmaps can be investigated in the gene module it belongs to, where the module is in form of matrix heatmap and network. Lastly, the spatial heatmaps, matrix heatmap, network are all combined as an interactive Shiny app."), out.width="100%"}
@@ -82,21 +84,6 @@ accessed remotely as a centralized web service for using _spatialHeatmap\'s_ fun
 include_graphics('img/illustration.png')
 
 ```
-
-<font color="red">
-[ThG-Comment 1: Please add here an overview illustration ("visual abstract") of the entire
-package that outlines all its core functionalities in one figure. Similar to
-Fig 1 and Fig 2 in the <i>signatureSearch</i> vignette <a
-href="https://bit.ly/2RGmUON">here</a>. In your case, the package design
-illustration (from Fig 2) could go into the same figure. To keep it simple and
-reusable, please create this illustration in a Google Drawing that you share
-with me. This way we can jointly edit it, and export to SVG or PNG as needed.
-Please take your time to create a quality illustration for this purpose that
-both looks professional and is informative too. The intent of this
-illustration is to use it in various places, e.g. slide shows, posters,
-vignette and paper.]
-</font>
-<font color='blue'> Added <br/> In the following all blue text are edited by jianhai. </font>
 
 
 As anatomical images the package supports both tissue maps from public
@@ -110,9 +97,9 @@ and scRNA-Seq), proteomics, metabolomics, or many other small- or large-scale
 experiments. For convenience, several preprocessing and normalization methods
 for the most common use cases are included that support raw and/or preprocessed
 data. Currently, the main application domains of the _spatialHeatmap_ package
-are numeric data sets and spatially mapped images from biological and
-biomedical areas. Moreover, the package has been designed to also work with
-many other spatial data types, such as population data plotted onto geographic
+are numeric data sets and spatially mapped images from biological, agricultural
+and biomedical areas. Moreover, the package has been designed to also work with
+many other spatial data types, such a population data plotted onto geographic
 maps. This high level of flexibility is one of the unique features of
 _spatialHeatmap_. Related software tools for biological applications in this
 field are largely based on pure web applications [@Winter2007-bq;
@@ -156,7 +143,13 @@ tissues and/or cell type information in the object maps via `colData` to the
 corresponding features in the SVG images using unique identifiers for the
 spatial features (_e.g._ tissues or cell types). This allows to color the
 features of interest in an SVG image according to the numeric data stored in a
-`SummarizedExperiment` object. <font color='blue'> In cases of simple assays, there is no need to use the advanced `SummarizedExperiment`, and the data can come as a `vector` or `data frame`. The former applies to several numeric values measured for a single item (gene, protein, metabolite, *etc*), while the latter applies to more items assayed in several samples and/or condidions, *e.g.* two tissues under two conditions. Details about how to access the SVG images and properly format the associated expression data are provided in the [Supplement](#data_form) section of this vignette. </font>
+`SummarizedExperiment` object. For simplicity the numeric data can also be
+provided as numeric `vectors` or `data frames`. This can be useful for testing
+purposes and/or the usage of simple data sets that may not require the more 
+advanced features of the `SummarizedExperiment` class, such as measurements with only one or a
+few data points. Details about how to access the SVG images and properly format
+the associated expression data are provided in the [Supplement
+section](#data_form) of this vignette.
 
 ## Terminology {#term}
 Spatial heatmaps are images where colors encode numeric values in features of
@@ -171,16 +164,17 @@ features in spatial heatmaps, _annotated SVG_ (aSVG) files are used where the
 shapes of interest are labeled according to certain conventions so that they
 can be addressed and colored programmatically. SVGs and aSVGs of anatomical structures can
 be downloaded from many sources including the repositories described [below](#data_sources).
-Alternatively, users can generate them themselves with vector graphics software. <font color='blue'> [Inkscape](https://inkscape.org/) is highly recommended, since other software could introduce potential issues due to default parameters. </font> Typically, in aSVGs one or more
+Alternatively, users can generate them themselves with vector graphics
+such as [Inkscape](https://inkscape.org/). Typically, in aSVGs one or more 
 shapes of a feature of interest, such as the cell shapes of an organ, are
 grouped together by a common feature identifier. Via these group identifiers
 one or many feature types can be colored simultaneously in an aSVG according to
 biological experiments assaying the corresponding feature types with the
-required spatial resolution. <font color='blue'> It is very important that </font> correct assignment of image features and assay
+required spatial resolution. Correct assignment of image features and assay
 results is assured by using for both the same feature identifiers. The color
 gradient used to visually represent the numeric assay values is controlled by a
 color gradient parameter. To visually interpret the meaning of the colors, the
-corresponding color key <font color='blue'> is </font> included in the spatial heatmap plots.
+corresponding color key is included in the spatial heatmap plots.
 The formatting details for properly annotating both aSVG images and
 assay data are provided in the [Supplement](#sup) section of this vignette. 
 
@@ -194,23 +188,27 @@ Atlas from EMBL-EBI [@Papatheodorou2018-jy]. This online service contains both a
 anatomical images. Its assays data include mRNA and protein profiling
 experiments for different species, tissues and conditions. The corresponding
 anatomical image collections are also provided for a wide range of species
-including animals and plants. <font color='blue'> In `spatialHeatmap` several import functions are
+including animals and plants. In `spatialHeatmap` several import functions are
 provided to work with the expression and [aSVG repository](#svg_repo) from the Expression Atlas
-directly. Users are encouraged to contribute aSVG images to the same repository by following their authoring guidlines.  </font> 
+directly. The aSVG images developed by this project will be deposited in its
+own [repository](https://github.com/jianhaizhang/SVG_tutorial_file/tree/master/svg_repo), where users can contribute their aSVG images that are 
+formatted according to our guidlines. <font color="red">[ThG-Comment: URL and name
+of your own aSVG repos is missing.]</font>
+<font color='blue'>jianhai_comment: a specific repo name will be added later. </font>
 
 
 ## Tutorial Overview {#sample_data}
 
 The following sections of this vignette showcase the most important
-functionalities of the `spatialHeatmap` package <font color='blue'> using as first example a simple
-to understand toy data set (jianhai_comment: is the phrase order mixed?) </font>, and then more complex mRNA profiling data from the
-Expression Atlas. First, spatial heatmap plots are generated for both the toy
+functionalities of the `spatialHeatmap` package using as initial example a simple
+to understand toy data set, and then more complex mRNA profiling data from the
+Expression Atlas.  First, spatial heatmap plots are generated for both the toy
 and mRNA expression data. The latter include gene expression data sets from
 RNA-Seq and microarray experiments of [Human Brain](#hum), [Mouse
 Organs](#mus), [Chicken Organs](#chk), and [Arabidopsis Shoots](#shoot). The
 first three are RNA-Seq data from the [Expression
 Atlas](https://www.ebi.ac.uk/gxa/home) and the last one is a microarray data
-set from [GEO](https://www.ncbi.nlm.nih.gov/geo/). Second, gene context
+set from [GEO](https://www.ncbi.nlm.nih.gov/geo/).  Second, gene context
 visualization features are introduced, which facilitate the visualization of
 gene modules sharing similar expression patterns. This includes the
 visualization of hierarchical clustering results with traditional matrix
@@ -218,8 +216,9 @@ heatmaps ([Matrix Heatmap](#mhm)) as well co-expression network plots
 ([Network](#net)). Third, an overview of the corresponding [Shiny App](#shiny)
 is presented that provides access to the same functionalities as the R
 functions, but executes them in an interactive environment [@shiny;
-@shinydashboard]. <font color='blue'> Fourth, more advanced features for plotting customized
-spatial heatmaps are introduced. </font> 
+@shinydashboard]. Fourth, more advanced features for plotting customized
+spatial heatmaps are introduced using the Human Brain data set as an example.  
+
 
 # Getting Started  
 
@@ -250,34 +249,17 @@ browseVignettes('spatialHeatmap')
 
 # Spatial Heatmaps {#shm}
 
-<!-- duplicated contents deleted -->
-
-<font color="red">
-[ThG-Comment 2: how can the user find out what features are defined (mapped) in
-the existing SVG images provided by your SVG collection, or the one from
-Expression Atlas? A very common use case would be that the user has generated
-some cell/tissue specific expression data, and then wants to map it to an
-existing mapped SVG. How can they find out what SVGs contain the features they
-have data for, so that they can properly set up their expression data for
-plotting and choose the appropriate SVG images rather than generating their
-own. Shouldn't each SVG be accompanied with a feature table, or an R function
-provided that returns this info from a mapped SVG by parsing it? This would be
-an obvious utility reviewers and user will ask for in a package that is
-supposed to provide a high level of flexibilty and reusability, and I don't think
-it would be hard to address this important need.]
-</font>  
-
-<font color='blue'>jianhai_comment: return_feature and update_feature is designed to extraxt features and add custom features respectively. The snake case is used so as to keep consistent with all other functions. </font>
 
 ## Toy Example {#toy}
 
 Spatial heatmaps are plotted with the `spatial_hm` function. To provide a quick
 and transparent overview how these plots are generated, the following uses a
 generalized toy example where a vector of random numeric values is generated
-that are used to color the corresponding features in an aSVG image. <font color='blue'> The image
-chosen for this example is from the human brain (homo_sapiens.brain.svg), and has been included
-in this package for testing purposes </font>. The path to the file of this image on a
-user\'s system, where `spatialHeatmap` is installed, can be obtained with the `system.file` function.
+that are used to color the corresponding features in an aSVG image. The image
+chosen for this example is an aSVG depicting the human brain. The corresponding
+image file 'homo_sapiens.brain.svg' is included in this package for testing purposes. 
+The path to this image on a user\'s system, where `spatialHeatmap` is installed, can 
+be obtained with the `system.file` function.
 
 ```{r eval=TRUE, echo=TRUE, warnings=FALSE }
 # Directory of the aSVG collection.
@@ -286,9 +268,10 @@ svg.dir <- system.file("extdata/shinyApp/example", package="spatialHeatmap")
 svg.hum <- system.file("extdata/shinyApp/example", 'homo_sapiens.brain.svg', package="spatialHeatmap")
 ```
 
-<font color='blue'> 
-The `return_feature` function is designed to query a collection of aSVG files in a directory with feature ('lobe') and species ('homo sapiens') keywords, and return matched features in a data frame.   
-</font>
+To identify features of interest in annotated in aSVG images, the `return_feature` function
+can be used. The following searches the aSVG images stored in `dir` for the query terms
+'lobe' and 'homo sapiens' under `feature` and `species`, respectively. The identified 
+matches are returned as a `data.frame`.   
 
 
 ```{r eval=TRUE, echo=TRUE, warnings=FALSE }
@@ -297,53 +280,50 @@ feature.df
 fnames <- feature.df[, 1]
 ```
 
-<font color='blue'> A small numeric toy vector is generated, where the data slot contains four
-numbers and its name slot is populated with the three feature names obtained from the
-aSVG image and `notMapped`. Note, the numbers are mapped to features via names matching among the 
-numeric vector and the aSVG, respectively. Accordingly, only numbers and features
-with matching name counterparts can be colored in the aSVG image. Entries without 
-name matches are indicated by a message printed to the R console, e.g. `notMapped`. </font> This behavior can 
-be turned off with `verbose=FALSE` in the corresponding function call. In addition, 
-a summary of the numeric assay to feature mappings is stored in the result data frame
-returned by the `spatial_hm` function. 
+The following example generates a small numeric toy vector, where the data slot
+contains four numbers and its name slot is populated with the three feature
+names obtained from the above aSVG image. In addition, a non-matching entry
+(here 'notMapped') is included for demonstration purposes. Note, the numbers
+are mapped to features via name matching among the numeric vector and the aSVG,
+respectively. Accordingly, only numbers and features with matching name
+counterparts can be colored in the aSVG image.  Entries without name matches
+are indicated by a message printed to the R console, _here_ "notMapped". This
+behavior can be turned off with `verbose=FALSE` in the corresponding function
+call. In addition, a summary of the numeric assay to feature mappings is stored
+in the result `data.frame` returned by the `spatial_hm` function (see below). 
 
 
 ```{r eval=TRUE, echo=TRUE, warnings=FALSE }
-# Random values.
 my_vec <- sample(1:100, length(unique(fnames))+1)
-# Name the vector.
 names(my_vec) <- c(unique(fnames), 'notMapped')
 my_vec
 ```
 
-Next, the spatial heatmap is plotted with the `spatial_hm` function (Figure \@ref(fig:toyshm)).
-Internally, the numbers in `my_vec` are translated to colors based on the color
-key assigned to the `col.com` argument, and then painted onto the corresponding
-features in the aSVG image (path `svg.hum`). <font color='blue'> In addition, the `ID` argument is used to name the data, `ncol` sets the number of columns for the spatial heatmaps, which does not include the legend plot, and `height` is the overall height of all spatial heatmaps. In Figure \@ref(fig:toyshm), only `occipital_lobe`, `parietal_lobe`, and `temporal_lobe` are mapped, since they are the matching features between the data and aSVG.  </font> 
+Next, the spatial heatmap is plotted with the `spatial_hm` function (Figure
+\@ref(fig:toyshm)). Internally, the numbers in `my_vec` are translated to
+colors based on the color key assigned to the `col.com` argument, and then
+painted onto the corresponding features in the aSVG, where the path to the image
+file is defined by `svg.path=svg.hum`. The remaining arguments used here include:
+`ID` for defining the title of the plot; `ncol` for setting the column-wise layout 
+of the plot excluding the feature legend plot on the right; and `height` for defining 
+the height of the spatial heatmap relative to its width. In the given example
+(Figure \@ref(fig:toyshm)) only three features in `my_vec` ('occipital_lobe', 
+'parietal_lobe', and 'temporal_lobe') have matching entries in the corresponding 
+aSVG. 
 
 ```{r toyshm, eval=TRUE, echo=TRUE, warnings=FALSE, fig.wide=TRUE, fig.cap=("Spatial heatmap on toy data. The middle plot is the spatial heatmap and the right is the legend."), out.width="100%" }
 shm.df <- spatial_hm(svg.path=svg.hum, data=my_vec, ID='toy', ncol=1, height=0.7, sub.title.size=20)
 ```
 
-The resulting spatial heatmaps (`spatial_heatmap`) and mapped features (`mapped_feature`) between data and aSVG are saved in a list.   
+The named numeric values in `my_vec`, that have name matches with the features in the 
+chosen aSVG, are stored in the `mapped_feature` slot.
+
 ```{r eval=TRUE, echo=TRUE, warnings=FALSE} 
 # Spatial heatmaps and mapped features are stored in a list.
 names(shm.df)
 # Mapped features
 shm.df[['mapped_feature']]
 ```
-
-<font color="red">
-[ThG-Comment 3: Jianhai, please add a section that accomplishes what is described
-in the above text and code chunks. When done the corresponding functional code chunks 
-should be functional and evaluated in the vignette. This will help to give the user a 
-quick code-based intro into the core functionalities of the spatial_hm function without 
-requiring too much background knowledge about expression data and other details. Note,
-this section overlaps with the comment #2, since it requires some basic functionality to 
-extract feature names from pre-annotated SVGs.]
-</font>
-
-<font color='blue'> Added </font>
 
 ## Human Brain {#hum} 
 
