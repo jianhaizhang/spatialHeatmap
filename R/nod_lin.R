@@ -1,7 +1,6 @@
-#' Calculate gene connectivity and edge adjacency
+#' Calculate Gene Connectivity and Edge Adjacency
 #'
-
-#' @param ds Module detecting sensativity, "3" or "4".
+#' @param ds Module detecting sensativity, "2" or "3".
 #' @param lab An interger, which is the module the target gene belongs to.
 #' @param mods A 2-column data frame, where each coloumn is a module assignmet.
 #' @param adj The complete adjacency matrix.

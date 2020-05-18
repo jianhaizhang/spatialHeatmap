@@ -2,7 +2,7 @@
 % Please edit documentation in R/svg_df.R
 \name{svg_df}
 \alias{svg_df}
-\title{Extract Coordinates, Tissue Names, and Colours from the SVG File}
+\title{Extract Coordinates, Sample Names, and Colors from the SVG File}
 \usage{
 svg_df(svg.path, feature)
 }
@@ -12,10 +12,10 @@ svg_df(svg.path, feature)
 \item{feature}{A character vector of features/samples extracted from the data. If some of the input features are duplicated in SVG file, then a reminder message is returned.}
 }
 \value{
-A 3-length list, the first component is a data frame of the coordinates, the second is a vector of all tissue/path names, and the third is the fill colours.
+A 3-length list, the first component is a data frame of the coordinates, the second is a vector of all sample/path names, and the third is the fill colors.
 }
 \description{
-Extract Coordinates, Tissue Names, and Colours from the SVG File
+Extract Coordinates, Sample Names, and Colors from the SVG File
 }
 \references{
 https://www.gimp.org/tutorials/ \cr https://inkscape.org/en/doc/tutorials/advanced/tutorial-advanced.en.html \cr http://www.microugly.com/inkscape-quickguide/

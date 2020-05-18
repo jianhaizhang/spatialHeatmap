@@ -7,7 +7,7 @@
 network(
   geneID,
   data,
-  ann,
+  ann = NULL,
   adj.mod,
   ds = "3",
   adj.min = 0,
@@ -24,23 +24,23 @@ network(
 )
 }
 \arguments{
-\item{geneID}{A gene ID from the expression matrix.}
+\item{geneID}{An identifier of assayed item (gene, protein, metabolite, etc) in the data.}
 
-\item{data}{A "SummarizedExperiment" object containing the processed data matrix and metadata returned by the function \code{\link{filter_data}}.}
+\item{data}{A "data frame" or "SummarizedExperiment" object returned by the function \code{\link{filter_data}}, where rows are assayed items and columns are samples/conditions.}
 
-\item{ann}{A character. The column name corresponding to row (gene) annotation in the "rowData" of "se" parameter.}
+\item{ann}{Applies to "data" argument of "SummarizedExperiment". The column name corresponding to row item annotation in the "rowData" slot. Default is NULL.}
 
-\item{adj.mod}{A list of adjacency matrix and module definition returned by the function \code{\link{adj_mod}}.}
+\item{adj.mod}{The list of "adjacency matrix" and "module" definition retured by the function \code{\link{adj_mod}}.}
 
-\item{ds}{The module identification sensitivity, either 2 or 3. See function \code{\link{adj_mod}} for details. Used for static network.}
+\item{ds}{The module identification sensitivity either 2 or 3. Default is 3. See function \code{\link{adj_mod}} for details.}
 
-\item{adj.min}{Minimum adjacency between genes, edges with adjacency below which will be removed. Used for static network.}
+\item{adj.min}{Minimum adjacency between nodes, edges with adjacency below which will be removed. Default is 0. Applicable to static network.}
 
-\item{con.min}{Minimun connectivity of a gene, genes with connectivity below which will be removed. Used for static network.}
+\item{con.min}{Minimun connectivity of a node, nodes with connectivity below which will be removed. Default is 0. Applicable to static network.}
 
-\item{node.col}{A vector of colour ingredients for constructing node colour scale in the static image. The default is c("mediumorchid1", "chocolate4").}
+\item{node.col}{A vector of color ingredients for constructing node color scale in the static image. The default is c("mediumorchid1", "chocolate4").}
 
-\item{edge.col}{A vector of colour ingredients for constructing edge colour scale in the static image. The default is c("yellow", "blue").}
+\item{edge.col}{A vector of color ingredients for constructing edge color scale in the static image. The default is c("yellow", "blue").}
 
 \item{vertex.label.cex}{The size of node label. The default is 1.}
 
@@ -50,9 +50,9 @@ network(
 
 \item{layout}{The layout of the network in static image, either "circle" or "fr". The "fr" stands for force-directed layout algorithm by Fruchterman and Reingold. The default is "circle".}
 
-\item{main}{The title in the static image.}
+\item{main}{The title in the static image. Default is NULL.}
 
-\item{static}{Either "TRUE" or "FALSE", which displays static or interactive network respectively.}
+\item{static}{Logical, TRUE or FALSE, displaying static or interactive network respectively.}
 
 \item{...}{Other arguments passed to the generic function \code{\link[graphics]{plot}}, e.g: "asp=1".}
 }
@@ -60,48 +60,66 @@ network(
 A static or interactive network display.
 }
 \description{
-This function exhibits the input gene in the context of corresponding gene network module, where nodes are genes and edges are adjacencies between genes. The network can be dispayed in static or interactive mode. \cr The gene modules are identified at two alternative sensitivity levels (ds=3 or 2). See function \code{\link{adj_mod}} for details. The thicker edge denotes higher adjacency (coexpression similarity) between genes while larger node indicates higher gene connectivity (sum of a gene's adjacency with all its direct neighbours). \cr In the interactive mode, there is an interactive colour bar to denote gene connectivity. The colour ingredients must only be separated by comma, e.g. "purple,yellow,blue", which means gene connectivity increases from purple to blue. If too many edges (e.g.: > 300) are displayed, the network could get stuck. So the "Input an adjacency threshold to display the adjacency network." option sets a threthold to filter out weak edges and all remaining edges are displayed. If not too many (e.g.: < 300), users can check "Yes" under "Display or not?", then the network will be displayed and would be responsive smoothly. To maintain acceptable performance, users are advised to choose a stringent threshold (e.g. 0.9) initially, then decrease the value gradually. The interactive feature allows users to zoom in and out, or drag a gene around. All the gene IDs in the network module are listed in "Select by id" in decreasing order according to gene connectivity. The input gene ID is appended "_selected" as a label. By clicking an ID in this list, users can identify the corresponding gene in the network. If the input has gene annotations, then the annotation can be seen by hovering the cursor over a node. \cr The same module can also be displayed in the form of a matrix heatmap with the function \code{\link{matrix_hm}}.
+This function exhibits the input item (gene, protein, metabolite, etc) in the context of corresponding network module, where nodes are items and edges are adjacencies between items. The network can be dispayed in static or interactive mode. \cr The modules are identified at two alternative sensitivity levels (ds=3 or 2). See function \code{\link{adj_mod}} for details. The thicker edge denotes higher adjacency (coexpression similarity) between nodes while larger node indicates higher connectivity (sum of a node's adjacency with all its direct neighbours). \cr In the interactive mode, there is an interactive color bar to denote node connectivity. The color ingredients must only be separated by comma, e.g. "purple,yellow,blue", which means node connectivity increases from purple to blue. If too many edges (e.g.: > 300) are displayed, the network could get stuck. So the "Input an adjacency threshold to display the adjacency network." option sets a threthold to filter out weak edges and all remaining edges are displayed. If not too many (e.g.: < 300), users can check "Yes" under "Display or not?", then the network will be displayed and would be responsive smoothly. To maintain acceptable performance, users are advised to choose a stringent threshold (e.g. 0.9) initially, then decrease the value gradually. The interactive feature allows users to zoom in and out, or drag a node around. All the node IDs in the network module are listed in "Select by id" in decreasing order according to node connectivity. The input item ID is appended "_selected" as a label. By clicking an ID in this list, users can identify the corresponding node in the network. If the input data has item annotations, then the annotation can be seen by hovering the cursor over a node. \cr The same module can also be displayed in the form of a matrix heatmap with the function \code{\link{matrix_hm}}.
 }
 \examples{
-# The example data (E-GEOD-67196) is an RNA-seq data measured in cerebellum and frontal cortex of human brain across normal and amyotrophic lateral sclerosis (ALS) subjects (Prudencio et al. 2015). 
-library(ExpressionAtlas); library(SummarizedExperiment)
-rse.hum <- getAtlasData('E-GEOD-67196')[[1]][[1]]; assay(rse.hum)[1:3, 1:3]
+## In the following example code, the 2 toy data come from an RNA-seq analysis on developments of 7 chicken organs under 9 time points (Cardoso-Moreira et al. 2019). The complete raw count data are downloaded with the accession number "E-MTAB-6769" using the R package ExpressionAtlas (Keays 2019). Both toy data are generated by truncating the complete data. For conveninece, they are included in this package. Toy data1 is used as a "data frame" input to exemplify data with simple samples/conditions, while toy data2 as "SummarizedExperiment" to illustrate data involving complex samples/conditions.   
 
-# A targets file describing replicates of samples and conditions is required, which is made based on the "colData" slot in the downloaded "RangedSummarizedExperiment" and available in spatialHeatmap. See the "se" parameter for details. 
-brain.pa <- system.file('extdata/shinyApp/example/target_brain.txt', package='spatialHeatmap')
-target.hum <- read.table(brain.pa, header=TRUE, row.names=1, sep='\t')
-# The "organism_part" and "disease" column describes tissue and condition replicates respectively.  
-target.hum[c(1:3, 41:42), 4:5]
-# Place the targets file into "colData" slot as a DataFrame class. 
-colData(rse.hum) <- DataFrame(target.hum)
+## Set up toy data.
 
-# For users with little R expertise, if the gene expression matrix comes as a data frame, it should be placed into "SummarizedExperiment" before proceeding to next step. An example is shown below by borrowing a data matrix from the brain data.
-# Borrow a data matrix.
-df <- assay(rse.hum); df[1:2, 1:3]
-# Place the data matrix and targets file (target.hum) into "SummarizedExperiment".
-rse.hum <- SummarizedExperiment(assay=df, colData=target.hum, rowData=NULL)
+# Access the toy data1.
+cnt.chk.simple <- system.file('extdata/shinyApp/example/count_chicken_simple.txt', package='spatialHeatmap')
+df.chk <- read.table(cnt.chk.simple, header=TRUE, row.names=1, sep='\t', check.names=FALSE)
+# Note the naming scheme "sample__condition" in columns, where "sample" and "condition" stands for organs and time points respectively.
+df.chk[1:3, ]
 
-# The count matrix is normalised with estimateSizeFactors (type=‘ratio’).
-se.nor.hum <- norm_data(data=rse.hum, method.norm='CNF', data.trans='log2')
+# A column of gene annotation can be appended to the data frame, but is not required.  
+ann <- paste0('ann', seq_len(nrow(df.chk))); ann[1:3]
+df.chk <- cbind(df.chk, ann=ann)
+df.chk[1:3, ]
 
-# Average replicates of concatenated sample__condition.
-se.aggr.hum <- aggr_rep(data=se.nor.hum, sam.factor='organism_part', con.factor='disease', aggr='mean')
-assay(se.aggr.hum)[49939:49942, ] # The concatenated tissue__conditions are the column names of the output data matrix.
+# Access the toy data2. 
+cnt.chk <- system.file('extdata/shinyApp/example/count_chicken.txt', package='spatialHeatmap')
+count.chk <- read.table(cnt.chk, header=TRUE, row.names=1, sep='\t')
+count.chk[1:3, 1:5]
 
-# Genes with low expression level and low variantion are always filtered. 
-se.fil.hum <- filter_data(data=se.aggr.hum, sam.factor='organism_part', con.factor='disease', pOA=c(0.01, 5), CV=c(0.3, 100), dir=NULL)
-# Detect modules. 
-adj.mod <- adj_mod(data=se.fil.hum, type="signed", minSize=15, dir=NULL)
-# The first column is ds=2 while the second is ds=3. The numbers in each column are module labels with "0" meaning genes not assigned to any modules.
-adj.mod[['mod']][1:3, ]
-# Plot network on gene ENSG00000008196 with ds='3'. Set "static=TRUE" to launch the interactive mode. 
-network(geneID="ENSG00000008196", data=se.fil.hum, ann=NULL, adj.mod=adj.mod, ds="3", adj.min=0.999, con.min=0, vertex.label.cex=1, vertex.cex=0.1, static=TRUE)
+# A targets file is required for toy data2. It should be made based on the experiment design, which is accessible through the accession number "E-MTAB-6769" in R package ExpressionAtlas. The completed targets file is included in this package. 
+# Access the targets file. 
+tar.chk <- system.file('extdata/shinyApp/example/target_chicken.txt', package='spatialHeatmap')
+target.chk <- read.table(tar.chk, header=TRUE, row.names=1, sep='\t')
+# Note every column in toy data2 corresponds with a row in targets file. 
+target.chk[1:5, ]
+# Store toy data2 in "SummarizedExperiment".
+library(SummarizedExperiment)
+se.chk <- SummarizedExperiment(assay=count.chk, colData=target.chk)
+# The "rowData" slot can store a data frame of gene annotation, but not required.
+rowData(se.chk) <- DataFrame(ann=ann)
+
+## As conventions, sequencing count data should be normalized, aggregated, and filtered fo reduce noise. In the following, the two toy data are used in the same way. For simplicity, only toy data2 is illustrated.
+
+# The normalizing function "calcNormFactors" (McCarthy et al. 2012) with default settings is used.  
+se.nor.chk <- norm_data(data=se.chk, norm.fun='CNF', data.trans='log2')
+# Aggregate "sample__condition" replicates in toy data2, where "sample" is "organism_part" and "condition" is "age". 
+se.aggr.chk <- aggr_rep(data=se.nor.chk, sam.factor='organism_part', con.factor='age', aggr='mean')
+assay(se.aggr.chk)[1:3, 1:3]
+# Filter genes with low counts and low variance. Genes with counts over 5 (log2 unit) in at least 1\% samples (pOA), and coefficient of variance (CV) between 0.2 and 100 are retained.
+se.fil.chk <- filter_data(data=se.aggr.chk, sam.factor='organism_part', con.factor='age', pOA=c(0.01, 5), CV=c(0.2, 100), dir=NULL)
+
+## Identify modules.
+adj.mod <- adj_mod(data=se.fil.chk)
+
+## Network 
+
+# Static network. In the graph, nodes are genes and edges are adjacencies between genes.
+network(geneID="ENSGALG00000019846", data=se.fil.chk, adj.mod=adj.mod, adj.min=0.5, vertex.label.cex=1.5, vertex.cex=4, static=TRUE)
+# Interactive network.   
+# network(geneID="ENSGALG00000019846", data=se.fil.chk, ann='ann', adj.mod=adj.mod, static=FALSE)
 }
 \references{
 Martin Morgan, Valerie Obenchain, Jim Hester and Hervé Pagès (2018). SummarizedExperiment: SummarizedExperiment container. R package version 1.10.1 \cr Csardi G, Nepusz T: The igraph software package for complex network research, InterJournal, Complex Systems 1695. 2006. http://igraph.org \cr R Core Team (2018). R: A language and environment for statistical computing. R Foundation for Statistical Computing, Vienna, Austria. URL https://www.R-project.org/ \cr Winston Chang, Joe Cheng, JJ Allaire, Yihui Xie and Jonathan McPherson (2018). shiny: Web Application Framework for R. R package version 1.1.0. https://CRAN.R-project.org/package=shiny \cr Winston Chang and Barbara Borges Ribeiro (2018). shinydashboard: Create Dashboards with 'Shiny'. R package version 0.7.1. https://CRAN.R-project.org/package=shinydashboard \cr Almende B.V., Benoit Thieurmel and Titouan Robert (2018). visNetwork: Network Visualization using 'vis.js' Library. R package version 2.0.4. https://CRAN.R-project.org/package=visNetwork
-Prudencio, Mercedes, Veronique V Belzil, Ranjan Batra, Christian A Ross, Tania F Gendron, Luc J Pregent, Melissa E Murray, et al. 2015. "Distinct Brain Transcriptome Profiles in C9orf72-Associated and Sporadic ALS." Nat. Neurosci. 18 (8): 1175–82
 Keays, Maria. 2019. ExpressionAtlas: Download Datasets from EMBL-EBI Expression Atlas
 Love, Michael I., Wolfgang Huber, and Simon Anders. 2014. "Moderated Estimation of Fold Change and Dispersion for RNA-Seq Data with DESeq2." Genome Biology 15 (12): 550. doi:10.1186/s13059-014-0550-8
+Cardoso-Moreira, Margarida, Jean Halbert, Delphine Valloton, Britta Velten, Chunyan Chen, Yi Shao, Angélica Liechti, et al. 2019. “Gene Expression Across Mammalian Organ Development.” Nature 571 (7766): 505–9
 }
 \author{
 Jianhai Zhang \email{jzhan067@ucr.edu; zhang.jianhai@hotmail.com} \cr Dr. Thomas Girke \email{thomas.girke@ucr.edu}

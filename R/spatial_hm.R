@@ -1,82 +1,123 @@
-#' Plot Spatial Heatmap
+#' Plot Spatial Heatmaps
 #'
-#'It takes a pair of formatted gene expression data matrix ("SummarizedExperiment") and SVG image as input. In the SVG image, tissue regions are pre-defined and linked with data matrix through tissue names. The expression profiles of the input gene(s) under each condition are mapped to each tissue in the form of different colours. The application is not limited to gene expression data. It is applicable as long as a pair of formatted data matrix and SVG image are provided, such as population data generated in different years across different cities. 
+#' The input are a pair of aSVG image and formatted data ("vector", "data frame", "SummarizedExperiment"). The former is an annotated SVG file (aSVG) where spatial features represented by shapes are labeled according specific conventions, while the latter are numeric values measured from these spatial features and organised in specific formats. In biological cases, aSVGs are anatomical or cell structures, and data are measurements of genes, proteins, metabolites, etc. in different samples (e.g. cells, tissues). Data are mapped to the aSVG according to identifiers of assay samples and aSVG features. Only the data from samples having matching counterparts in aSVG features are mapped. The mapped features are filled with colors translated from the data, and the resulting images are termed spatial heatmaps. \cr This function is designed as much flexible as to achieve optimal visualization. For example, subplots of spatial heatmaps can be organized by gene or condition for easy comparison, in multi-layer anotomical structures selected tissues can be set transparent to expose burried features, color scale is customizable to highlight difference among features. This function also works with many other types of spatial data, such as population data plotted to geographic maps.
 
-#' @param svg.path The path of the SVG image. Target tissues to be coloured in spaial heatmaps must have identical tissue names with corresponding tissues in the data matrix. \cr E.g.: system.file("extdata/example", "homo_sapiens.brain.svg", package = "spatialHeatmap") (https://www.ebi.ac.uk/gxa/home).
+#' @param svg.path The path of the aSVG image. E.g.: system.file("extdata/shinyApp/example", "gallus_gallus.svg", package="spatialHeatmap"). See \code{\link{return_feature}} for details on how to download aSVGs from the EBI aSVG repository (https://github.com/ebi-gene-expression-group/anatomogram/tree/master/src/svg) directly.
 
 #' @inheritParams filter_data
 #' @inheritParams grob_list
 #' @inheritParams col_bar
 
-#' @param ID A character of gene ID(s) whose expression values are used to colour the spatial heatmaps. It can be a single gene or a vector of multiple genes.
-
-#' @param col.com A character vector of the colour components used to build the colour scale, e.g. the default is c('purple', 'yellow', 'blue').
-
-#' @param col.bar "selected" or "all", meaning use input genes or whole data matrix to build the colour scale respectively. The default is "selected".
-#' @param data.trans "log2", "exp2", or NULL. If colours across tissues cannot distinguish due to low variance or outliers, transform the data matrix by log2 or 2-base expoent (exp2). Default is NULL (data will not be transformed).
+#' @param ID A character vector of items (e.g. genes, proteins) whose assayed values are used to color the aSVG.
+#' @param col.com A character vector of the color components used to build the color scale. The default is c('purple', 'yellow', 'blue').
+#' @param col.bar "selected" or "all", the former uses values of input items to build the colour scale while the latter uses all values from the data. The default is "selected".
+#' @param data.trans "log2", "exp2", or NULL. If colors across samples cannot distinguish due to low variance or outliers, transform the data by "log2" or "2-base expoent" (exp2). Default is NULL (data will not be transformed).
 #' @param bar.width The width of colour bar. Default if 0.08.
 #' @param width A numeric of each subplot width. The default is 1.
 #' @param height A numeric of each subplot height. The default is 1.
 #' @param legend.r A numeric to adjust the dimension of the legend plot. Default is 0.1. The larger, the higher ratio of width to height.
-#' @param lay.shm "gene" or "con" (condition), the organisation of the subplots.
-#' @param ncol Number of columns to display the subplots.
-#' @param verbose Logical FALSE or TRUE. If TRUE the samples in data not coloured in spatial heatmaps are printed to R console. Default is TRUE.
-#' @return An image of spatial heatmap(s) along with a colour key, and a data frame of mapping between data and SVG features.
+#' @param lay.shm "gene" or "con", the former organizes spatial heatmaps by genes, proteins, metabolites, etc. while the latter by conditions/treatments applied to experiments.
+#' @param ncol Number of columns to display the spatial heatmaps, not including the legend plot.
+#' @param verbose Logical, FALSE or TRUE. If TRUE the samples in data not colored in spatial heatmaps are printed to R console. Default is TRUE.
+#' @return An image of spatial heatmap(s), and a data frame of mapping between assayed samples and aSVG features.
 
 #' @section Details:
-#' Details about how to format an SVG image and a data matrix are provided in the package vignette (\code{browseVignettes('spatialHeatmap')}). The "se" parameter can be the value returned by the function \code{\link{filter_data}}, or built on an expression matrix and a targets file. See examples blow.
+#' See the package vignette (\code{browseVignettes('spatialHeatmap')}).  
 
 #' @examples
-#' # The example data (E-GEOD-67196) is an RNA-seq data measured in cerebellum and frontal cortex of human brain across normal and amyotrophic lateral sclerosis (ALS) subjects (Prudencio et al. 2015). 
-#' library(ExpressionAtlas)
-#' rse.hum <- getAtlasData('E-GEOD-67196')[[1]][[1]]; assay(rse.hum)[1:3, 1:3]
-#'
-#' # A targets file describing replicates of samples and conditions is required, which is made based on the "colData" slot in the downloaded "RangedSummarizedExperiment" and available in spatialHeatmap. See the "se" parameter for details. 
-#' brain.pa <- system.file('extdata/shinyApp/example/target_brain.txt', package='spatialHeatmap')
-#' target.hum <- read.table(brain.pa, header=TRUE, row.names=1, sep='\t')
-#' # The "organism_part" and "disease" column describes tissue and condition replicates respectively.  
-#' target.hum[c(1:3, 41:42), 4:5]
-#' # Place the targets file into "colData" slot as a DataFrame class. 
-#' colData(rse.hum) <- DataFrame(target.hum)
-#' 
-#' # For users with little R expertise, if the gene expression matrix comes as a data frame, it should be placed into "SummarizedExperiment" before proceeding to next step. An example is shown below by borrowing a data matrix from the brain data.
-#' # Borrow a data matrix.
-#' df <- assay(rse.hum); df[1:2, 1:3]
-#' # Place the data matrix and targets file (target.hum) into "SummarizedExperiment".
-#' rse.hum <- SummarizedExperiment(assay=df, colData=target.hum, rowData=NULL)
-#' 
-#' # The count matrix is normalised with estimateSizeFactors (type=‘ratio’).
-#' se.nor.hum <- norm_data(data=rse.hum, method.norm='CNF', data.trans='log2')
-#'
-#' # Average replicates of concatenated sample__condition.
-#' se.aggr.hum <- aggr_rep(data=se.nor.hum, sam.factor='organism_part', con.factor='disease', aggr='mean')
-#' assay(se.aggr.hum)[49939:49942, ] # The concatenated tissue__conditions are the column names of the output data matrix.
-#' 
-#' # Genes with low expression level and low variantion are always filtered. 
-#' se.fil.hum <- filter_data(data=se.aggr.hum, sam.factor='organism_part', con.factor='disease', pOA=c(0.01, 5), CV=c(0.3, 100), dir=NULL)
 
-#' # Formatted SVG image.
-#' svg.hum <- system.file("extdata/shinyApp/example", "homo_sapiens.brain.svg", package="spatialHeatmap")
-#' # Plot spatial heatmaps of gene ENSG00000268433.
-#' spatial_hm(svg=svg.hum, data=se.fil.hum, ID='ENSG00000268433', width=1, height=0.5, sub.title.size=11, layout="gene", ncol=2, tis.trans=NULL, legend.position=c(0.5, -0.15), legend.nrow=1)
+#' ## In the following example code, the 2 toy data come from an RNA-seq analysis on developments of 7 chicken organs under 9 time points (Cardoso-Moreira et al. 2019). The complete raw count data are downloaded with the accession number "E-MTAB-6769" using the R package ExpressionAtlas (Keays 2019). Both toy data are generated by truncating the complete data. For conveninece, they are included in this package. Toy data1 is used as a "data frame" input to exemplify data with simple samples/conditions, while toy data2 as "SummarizedExperiment" to illustrate data involving complex samples/conditions.   
+#'
+#' ## Set up toy data.
+#'
+#' # Access the toy data1.
+#' cnt.chk.simple <- system.file('extdata/shinyApp/example/count_chicken_simple.txt', package='spatialHeatmap')
+#' df.chk <- read.table(cnt.chk.simple, header=TRUE, row.names=1, sep='\t', check.names=FALSE)
+#' # Note the naming scheme "sample__condition" in columns, where "sample" and "condition" stands for organs and time points respectively.
+#' df.chk[1:3, ]
+
+#' # A column of gene annotation can be appended to the data frame, but is not required.  
+#' ann <- paste0('ann', seq_len(nrow(df.chk))); ann[1:3]
+#' df.chk <- cbind(df.chk, ann=ann)
+#' df.chk[1:3, ]
+#'
+#' # Access the toy data2. 
+#' cnt.chk <- system.file('extdata/shinyApp/example/count_chicken.txt', package='spatialHeatmap')
+#' count.chk <- read.table(cnt.chk, header=TRUE, row.names=1, sep='\t')
+#' count.chk[1:3, 1:5]
+
+#' # A targets file is required for toy data2. It should be made based on the experiment design, which is accessible through the accession number "E-MTAB-6769" in R package ExpressionAtlas. The completed targets file is included in this package. 
+
+#' # Access the targets file. 
+#' tar.chk <- system.file('extdata/shinyApp/example/target_chicken.txt', package='spatialHeatmap')
+#' target.chk <- read.table(tar.chk, header=TRUE, row.names=1, sep='\t')
+#' # Note every column in toy data2 corresponds with a row in targets file. 
+#' target.chk[1:5, ]
+#' # Store toy data2 in "SummarizedExperiment".
+#' library(SummarizedExperiment)
+#' se.chk <- SummarizedExperiment(assay=count.chk, colData=target.chk)
+#' # The "rowData" slot can store a data frame of gene annotation, but not required.
+#' rowData(se.chk) <- DataFrame(ann=ann)
+#'
+#' ## As conventions, sequencing count data should be normalized, aggregated, and filtered fo reduce noise.
+#'
+#' # Normalize count data.
+#' # The normalizing function "calcNormFactors" (McCarthy et al. 2012) with default settings is used.  
+#' df.nor.chk <- norm_data(data=df.chk, norm.fun='CNF', data.trans='log2')
+#' se.nor.chk <- norm_data(data=se.chk, norm.fun='CNF', data.trans='log2')
+
+#' # Aggregate count data.
+#' # Aggregate "sample__condition" replicates in toy data1.
+#' df.aggr.chk <- aggr_rep(data=df.nor.chk, aggr='mean')
+#' df.aggr.chk[1:3, ]
+
+#' # Aggregate "sample_condition" replicates in toy data2, where "sample" is "organism_part" and "condition" is "age". 
+#' se.aggr.chk <- aggr_rep(data=se.nor.chk, sam.factor='organism_part', con.factor='age', aggr='mean')
+#' assay(se.aggr.chk)[1:3, 1:3]
+
+#' # Filter genes with low counts and low variance. Genes with counts over 5 (log2 unit) in at least 1% samples (pOA), and coefficient of variance (CV) between 0.2 and 100 are retained.
+#' # Filter toy data1.
+#' df.fil.chk <- filter_data(data=df.aggr.chk, pOA=c(0.01, 5), CV=c(0.2, 100), dir=NULL)
+#' # Filter toy data2.
+#' se.fil.chk <- filter_data(data=se.aggr.chk, sam.factor='organism_part', con.factor='age', pOA=c(0.01, 5), CV=c(0.2, 100), dir=NULL)
+#'
+#' ## Spatial heatmaps.
+#'
+#' # The target chicken aSVG is downloaded from the EBI aSVG repository (https://github.com/ebi-gene-expression-group/anatomogram/tree/master/src/svg) directly with function "return_feature". It is included in this package and accessed as below. Details on how this aSVG is selected are documented in function "return_feature".
+#' svg.chk <- system.file("extdata/shinyApp/example", "gallus_gallus.svg", package="spatialHeatmap")
+
+#' # Plot spatial heatmaps on gene "ENSGALG00000019846".
+#' # Toy data1. 
+#' spatial_hm(svg.path=svg.chk, data=df.fil.chk, ID='ENSGALG00000019846', height=0.4, legend.r=1.7, sub.title.size=9, ncol=3, legend.nrow=2)
+#' # Toy data2.
+#' spatial_hm(svg.path=svg.chk, data=se.fil.chk, ID='ENSGALG00000019846', legend.r=1.5, sub.title.size=9, ncol=3, legend.nrow=2)
+#'
+#' # The data can also come as as a simple named vector. The following gives an example on a vector of 3 random values. 
+#' # Random values.
+#' vec <- sample(1:100, 3)
+#' # Name the vector. The last name is assumed as a random sample without a matching feature in aSVG.
+#' names(vec) <- c('brain', 'heart', 'notMapped')
+#' vec
+#' # Plot.
+#' spatial_hm(svg.path=svg.chk, data=vec, ID='geneX', height=0.7, legend.r=1.5, sub.title.size=9, ncol=1, legend.nrow=2)
+
 
 
 #' @author Jianhai Zhang \email{jzhan067@@ucr.edu; zhang.jianhai@@hotmail.com} \cr Dr. Thomas Girke \email{thomas.girke@@ucr.edu}
 
 #' @references
 #' https://www.gimp.org/tutorials/ \cr https://inkscape.org/en/doc/tutorials/advanced/tutorial-advanced.en.html \cr http://www.microugly.com/inkscape-quickguide/
-#' Martin Morgan, Valerie Obenchain, Jim Hester and Hervé Pagès (2018). SummarizedExperiment: SummarizedExperiment container. R package version 1.10.1 \cr H. Wickham. ggplot2: Elegant Graphics for Data Analysis. Springer-Verlag New York, 2016. \cr Jeroen Ooms (2018). rsvg: Render SVG Images into PDF, PNG, PostScript, or Bitmap Arrays. R package version 1.3. https://CRAN.R-project.org/package=rsvg \cr R. Gentleman, V. Carey, W. Huber and F. Hahne (2017). genefilter: genefilter: methods for filtering genes from high-throughput experiments. R package version 1.58.1 \cr Paul Murrell (2009). Importing Vector Graphics: The grImport Package for R. Journal of Statistical Software, 30(4), 1-37. URL http://www.jstatsoft.org/v30/i04/ \cr Duncan Temple Lang and the CRAN Team (2018). XML: Tools for Parsing and Generating XML Within R and S-Plus. R package version 3.98-1.16. https://CRAN.R-project.org/package=XML \cr Baptiste Auguie (2017). gridExtra: Miscellaneous Functions for "Grid" Graphics. R package version 2.3. https://CRAN.R-project.org/package=gridExtra \cr R Core Team (2018). R: A language and environment for statistical computing. R Foundation for Statistical Computing, Vienna, Austria. RL https://www.R-project.org/ \cr https://github.com/ebi-gene-expression-group/anatomogram/tree/master/src/svg 
-#' Prudencio, Mercedes, Veronique V Belzil, Ranjan Batra, Christian A Ross, Tania F Gendron, Luc J Pregent, Melissa E Murray, et al. 2015. "Distinct Brain Transcriptome Profiles in C9orf72-Associated and Sporadic ALS." Nat. Neurosci. 18 (8): 1175–82
+#' Martin Morgan, Valerie Obenchain, Jim Hester and Hervé Pagès (2018). SummarizedExperiment: SummarizedExperiment container. R package version 1.10.1 \cr H. Wickham. ggplot2: Elegant Graphics for Data Analysis. Springer-Verlag New York, 2016. \cr Jeroen Ooms (2018). rsvg: Render SVG Images into PDF, PNG, PostScript, or Bitmap Arrays. R package version 1.3. https://CRAN.R-project.org/package=rsvg \cr R. Gentleman, V. Carey, W. Huber and F. Hahne (2017). genefilter: genefilter: methods for filtering genes from high-throughput experiments. R package version 1.58.1 \cr Paul Murrell (2009). Importing Vector Graphics: The grImport Package for R. Journal of Statistical Software, 30(4), 1-37. URL http://www.jstatsoft.org/v30/i04/ \cr Baptiste Auguie (2017). gridExtra: Miscellaneous Functions for "Grid" Graphics. R package version 2.3. https://CRAN.R-project.org/package=gridExtra \cr R Core Team (2018). R: A language and environment for statistical computing. R Foundation for Statistical Computing, Vienna, Austria. RL https://www.R-project.org/ \cr https://github.com/ebi-gene-expression-group/anatomogram/tree/master/src/svg 
 #' Keays, Maria. 2019. ExpressionAtlas: Download Datasets from EMBL-EBI Expression Atlas
 #' Love, Michael I., Wolfgang Huber, and Simon Anders. 2014. "Moderated Estimation of Fold Change and Dispersion for RNA-Seq Data with DESeq2." Genome Biology 15 (12): 550. doi:10.1186/s13059-014-0550-8
 #' Guangchuang Yu (2020). ggplotify: Convert Plot to 'grob' or 'ggplot' Object. R package version 0.0.5. https://CRAN.R-project.org/package=ggplotify
+#' Cardoso-Moreira, Margarida, Jean Halbert, Delphine Valloton, Britta Velten, Chunyan Chen, Yi Shao, Angélica Liechti, et al. 2019. “Gene Expression Across Mammalian Organ Development.” Nature 571 (7766): 505–9
 
 #' @export
 #' @importFrom SummarizedExperiment assay
 #' @importFrom ggplot2 ggplot geom_bar aes theme element_blank margin element_rect coord_flip scale_y_continuous scale_x_continuous ggplotGrob geom_polygon scale_fill_manual ggtitle element_text labs
 #' @importFrom rsvg rsvg_ps 
 #' @importFrom grImport PostScriptTrace 
-#' @importFrom XML addAttributes xmlParse xmlRoot xmlSize xmlSApply xmlAttrs xmlName xmlChildren saveXML xmlApply
 #' @importFrom gridExtra arrangeGrob grid.arrange
 #' @importFrom grid grobTree unit
 #' @importFrom grDevices colorRampPalette

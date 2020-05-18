@@ -1,11 +1,11 @@
-#' Extract attributes in an SVG file
+#' Extract Attributes in an SVG File
 #' 
 #' This function extract basic attributes of nodes in an SVG file. The 'a' nodes are not deleted.
 
 #' @param doc An object of class "xml_document", i.e. the imported SVG file in R.
 #' @param feature A character vector of features/samples extracted from the data. If some of the input features are duplicated in SVG file, then a reminder message is returned.
 
-#' @return A 3-component list of attribute data frame, the outline node, and the tissue node. 
+#' @return A 3-component list of attribute data frame, the outline node, and the sample node. 
 
 #' @author Jianhai Zhang \email{jzhan067@@ucr.edu; zhang.jianhai@@hotmail.com} \cr Dr. Thomas Girke \email{thomas.girke@@ucr.edu}
 
@@ -16,7 +16,7 @@
 
 svg_attr <- function(doc, feature) {
 
-  options(stringsAsFactors=FALSE)
+  options(stringsAsFactors=FALSE); name <- NULL
   len <- xml_length(doc); out <- xml_children(doc)[[len-1]]; ply <- xml_children(doc)[[len]]
   # Break combined path to a group or siblings.
   path_br_all(out); path_br_all(ply)

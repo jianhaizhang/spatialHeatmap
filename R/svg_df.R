@@ -1,9 +1,9 @@
-#' Extract Coordinates, Tissue Names, and Colours from the SVG File
+#' Extract Coordinates, Sample Names, and Colors from the SVG File
 #'
 #' @param svg.path The path of an SVG file.
 #' @inheritParams svg_attr
 
-#' @return A 3-length list, the first component is a data frame of the coordinates, the second is a vector of all tissue/path names, and the third is the fill colours.
+#' @return A 3-length list, the first component is a data frame of the coordinates, the second is a vector of all sample/path names, and the third is the fill colors.
 #' @keywords Internal
 
 #' @author Jianhai Zhang \email{jzhan067@@ucr.edu; zhang.jianhai@@hotmail.com} \cr Dr. Thomas Girke \email{thomas.girke@@ucr.edu}

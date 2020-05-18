@@ -1,7 +1,7 @@
 #' Break Children in a Node into a Group or Siblings
 #' 
 #' This function applies to the last two parent nodes in SVG file. Each child node in the input parent node is checked for combined path. The function \code{\link{path_br}} is used to break the combined paths.
-#' @param node.parent An object of class "xml_node" with children, i.e. the last two nodes in SVG file, outline and tissue layer respectively.
+#' @param node.parent An object of class "xml_node" with children, i.e. one of the last two nodes in SVG file, outline and tissue layer respectively.
 #' @return Nothing is returned. The broken paths are updated in the root.
 
 #' @author Jianhai Zhang \email{jzhan067@@ucr.edu; zhang.jianhai@@hotmail.com} \cr Dr. Thomas Girke \email{thomas.girke@@ucr.edu}

@@ -15,7 +15,7 @@ path_br(node, g = TRUE)
 Nothing is returned. The broken paths are updated in the root.
 }
 \description{
-The combined paths introduces connecting lines between the last point of one polygon and the first point of next polygon in the spatial heatmaps. Therefore, they should be broken apart into a group or siblings. This function checks if the input node is a combined path internally.
+The combined paths introduces connecting lines between the last point of one polygon and the first point of next polygon in the spatial heatmaps. Therefore, they should be broken apart into a group or siblings. This function checks if the input node is a combined path internally and breaks them apart if existing.
 }
 \references{
 Hadley Wickham, Jim Hester and Jeroen Ooms (2019). xml2: Parse XML. R package version 1.2.2. https://CRAN.R-project.org/package=xml2

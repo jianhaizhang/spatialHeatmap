@@ -2,7 +2,7 @@
 % Please edit documentation in R/lay_shm.R
 \name{lay_shm}
 \alias{lay_shm}
-\title{Organise spatial heatmaps according to user-specified layout}
+\title{Organise Spatial Heatmaps by Gene or Condition}
 \usage{
 lay_shm(lay.shm, con, ncol, ID.sel, grob.list, width, height, shiny)
 }
@@ -11,23 +11,23 @@ lay_shm(lay.shm, con, ncol, ID.sel, grob.list, width, height, shiny)
 
 \item{con}{A charater vector of all conditions.}
 
-\item{ncol}{An integer specifying columns of layout.}
+\item{ncol}{An integer specifying number of columns in the layout.}
 
 \item{ID.sel}{A vector of target genes for spatial heatmaps.}
 
-\item{grob.list}{A list of spatial heatmaps in the form of ggplot2 plot grob, returned by "grob_list()".}
+\item{grob.list}{A list of spatial heatmaps in the form of ggplot2 plot grob, returned by \code{\link{grob_list}}.}
 
 \item{width}{A numeric of each subplot width. The default is 1.}
 
 \item{height}{A numeric of each subplot height. The default is 1.}
 
-\item{shiny}{"TRUE" or "FALSE", apply this function to shiny app or not respectively.}
+\item{shiny}{Logical, TRUE or FALSE, apply this function to shiny app or not respectively.}
 }
 \value{
-Organised spatial heatmaps according to the layout.
+Organised spatial heatmaps according to the provided layout.
 }
 \description{
-Organise spatial heatmaps according to user-specified layout
+Organise Spatial Heatmaps by Gene or Condition
 }
 \references{
 H. Wickham. ggplot2: Elegant Graphics for Data Analysis. Springer-Verlag New York, 2016. \cr R Core Team (2018). R: A language and environment for statistical computing. R Foundation for Statistical Computing, Vienna, Austria. RL https://www.R-project.org/ \cr Mustroph, Angelika, M Eugenia Zanetti, Charles J H Jang, Hans E Holtan, Peter P Repetti, David W Galbraith, Thomas Girke, and Julia Bailey-Serres. 2009. “Profiling Translatomes of Discrete Cell Populations Resolves Altered Cellular Priorities During Hypoxia in Arabidopsis.” Proc Natl Acad Sci U S A 106 (44): 18843–8

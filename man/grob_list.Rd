@@ -2,7 +2,7 @@
 % Please edit documentation in R/grob_list.R
 \name{grob_list}
 \alias{grob_list}
-\title{Draw each spatial heatmap and convert them to ggplot2 plot grob}
+\title{Draw Each Spatial Heatmap and Convert Them to Ggplot2 Plot Grob}
 \usage{
 grob_list(
   gene,
@@ -32,7 +32,7 @@ grob_list(
 \arguments{
 \item{gene}{The gene expession matrix, where rows are genes and columns are tissue/conditions.}
 
-\item{con.na}{Logical, TRUE or FALSE. Default is TRUE. If conditions are available.}
+\item{con.na}{Logical, TRUE or FALSE. Default is TRUE, meaning conditions are available.}
 
 \item{geneV}{The gene expression values used to construct the colour bar.}
 
@@ -40,7 +40,7 @@ grob_list(
 
 \item{ID}{All gene ids selected after the App is launched.}
 
-\item{cols}{All the colour codes used to construct the colour bar.}
+\item{cols}{All the color codes used to construct the color bar.}
 
 \item{tis.path}{All the tissues/paths extracted from the SVG.}
 
@@ -48,15 +48,15 @@ grob_list(
 
 \item{sub.title.size}{A numeric. The subtitle font size of each individual spatial heatmap. Default is 11.}
 
-\item{sam.legend}{A character vector of tissue names from the SVG image to show in the legend plot, "identical", or "all". Default is "identical", meaning all the identical tissues between the data matrix and SVG image. If "all", all tissues in the SVG image are shown.}
+\item{sam.legend}{"identical", "all", or a character vector of tissue names from the SVG image to show in the legend plot. Default is "identical", meaning all the identical tissues between the data matrix and SVG image. If "all", all tissues in the SVG image are shown.}
 
-\item{legend.col}{A character vector of colours for the legend keys. The lenght must be equal to the number of target samples shown in the legend.}
+\item{legend.col}{A character vector of colors for the legend keys. The lenght must be equal to the number of target samples shown in the legend.}
 
 \item{legend.title}{A character, the legend title. Default is NULL.}
 
-\item{legend.ncol}{An integer, the column number of the items in the legend. Default is NULL.}
+\item{legend.ncol}{An integer, the total column number of the items in the legend. Default is NULL.}
 
-\item{legend.nrow}{An integer, the row number of the items in the legend. Default is NULL.}
+\item{legend.nrow}{An integer, the total row number of the items in the legend. Default is NULL.}
 
 \item{legend.position}{the position of legends ("none", "left", "right",
 "bottom", "top", or two-element numeric vector)}
@@ -70,17 +70,17 @@ grob_list(
 
 \item{legend.title.size}{A numeric. Default is 8. Size of the legend title.}
 
-\item{line.size}{A numeric. The size of the polygon outline. Default is 0.2.}
+\item{line.size}{A numeric. The size of the shape outline. Default is 0.2.}
 
-\item{line.color}{A character. The color of polygon outline. Default is "grey70".}
+\item{line.color}{A character. The color of shape outline. Default is "grey70".}
 
-\item{...}{Other arguments passed to ggplot().}
+\item{...}{Other arguments passed to \code{\link[ggplot2]{ggplot}}.}
 }
 \value{
 A list of spatial heatmaps in the form of ggplot2 plot grob.
 }
 \description{
-Draw each spatial heatmap and convert them to ggplot2 plot grob
+Draw Each Spatial Heatmap and Convert Them to Ggplot2 Plot Grob
 }
 \references{
 H. Wickham. ggplot2: Elegant Graphics for Data Analysis. Springer-Verlag New York, 2016. \cr R Core Team (2018). R: A language and environment for statistical computing. R Foundation for Statistical Computing, Vienna, Austria. RL https://www.R-project.org/ \cr Mustroph, Angelika, M Eugenia Zanetti, Charles J H Jang, Hans E Holtan, Peter P Repetti, David W Galbraith, Thomas Girke, and Julia Bailey-Serres. 2009. “Profiling Translatomes of Discrete Cell Populations Resolves Altered Cellular Priorities During Hypoxia in Arabidopsis.” Proc Natl Acad Sci U S A 106 (44): 18843–8

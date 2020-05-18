@@ -1,33 +1,57 @@
-#' Return SVG Images Containing Provided Features and Species
+#' Return aSVG Images Containing Target Features
 #' 
-#' Successful spatial heatmap plotting requires the feature identifiers of interest are identical between the data matrix and SVG image. This function parses a collection of SVG images and returns existing features related to the provided keywords. If users want to use their custom feature identifiers, \code{\link{update_feature}} should be used. Otherwise the returned featrue identifiers should be used to replace the counterparts in the data matrix. Features denote tissues, cells, etc. 
+#' This function parses a collection of aSVG files and returns those containing target features in a data frame. Successful spatial heatmap plotting requires the aSVG features of interest have identical matching samples (cells, tissues, etc) in the data. To meet this requirement, the returned features could be used to replace matching sample counterparts in the data. Alternatively, the target samples in the data could be used to replace matching features in the aSVG through function \code{\link{update_feature}}. Refer to function \code{\link{spatial_hm}} for details on aSVGs.  
 
-#' @param feature A vector of keywords (case insentitive) of target feature(s), which is used to select SVG images from a collection. E.g. c("frontal", "cortex").
-#' @param species A vector of keywords (case insentitive) of a target species, which is used to select SVG images from a collection. E.g. c("homo sapiens").
-#' @param keywords.all Logical, TRUE or FALSE. Default is TRUE. If TRUE, every returned hit will contain all the provided keywords in "feature" and "species". Otherwise, every returned hit contain at least 1 keyword in "feature" and at least 1 keyword in "species".
-#' @param remote Logical, FALSE or TRUE. Default is FALSE. If TRUE, the remote SVG repository "https://github.com/jianhaizhang/SVG_tutorial_file/tree/master/svg_repo" is used for query.
-#' @param dir The directory where the SVG images are available. If "remote" is TRUE, the returned SVG images are saved in this directory. Note, in this case existing SVG images with identical names as returned ones are overwritten. If "remote" is FALSE, user-provided SVG images should be saved in this directory for query.
-#' @param desc Logical, FALSE or TRUE. Default is FALSE. If TRUE, the feature descriptions from the package "rols" (Laurent Gatto 2019) are added. If too many features are returned, this process takes a long time.
-#' @param match.only Logical, TRUE or FALSE. If TRUE (default), only features matching the feature keywords are returned. If FALSE, all features in the matching species are returned, and the matching features are listed on the top of the data frame. 
-#' @param return.all Logical, FALSE or TRUE. Default is FALSE. If TRUE, all features together with all SVG images are returned, either remote or user-provided.
+#' @param feature A vector of target feature keywords (case insentitive), which is used to select aSVG images from a collection. E.g. c('heart', 'brain').
+#' @param species A vector of target species keywords (case insentitive), which is used to select aSVG images from a collection. E.g. c('gallus').
+#' @param keywords.any Logical, TRUE or FALSE. Default is TRUE. The internal searching is case-insensitive. The sapce, dot, hypen, semicolon, comma, forward slash are treated as separators between words and not counted in searching. If TRUE, every returned hit contains at least one word in the "feature" vector and at least one word in the "species" vector, which means all the possible hits are returned. E.g. "prefrontal cortex" in "homo_sapiens.brain.svg" would be returned if feature=c('frontal') and species=c('homo'). If FALSE, every returned hit contains at least one exact element in the "feature" vector and all exact elements in the "species" vector. E.g. "frontal cortex" rather than "prefrontal cortex" in "homo_sapiens.brain.svg" would be returned if feature=c('frontal cortex') and species=c('homo sapiens', 'brain').
+#' @param remote Logical, FALSE or TRUE. Default is TRUE. If TRUE, the remote EBI aSVG repository "https://github.com/ebi-gene-expression-group/anatomogram/tree/master/src/svg" is used for query.
+#' @param dir The directory path of aSVG images. If "remote" is TRUE, the returned aSVG images are saved in this directory. Note existing aSVG files with identical names as returned ones are overwritten. If "remote" is FALSE, user-provided (local) aSVG images should be saved in this directory for query. Default is NULL.
+#' @param desc Logical, FALSE or TRUE. Default is FALSE. If TRUE, the feature descriptions from the R package "rols" (Laurent Gatto 2019) are added. If too many features are returned, this process takes a long time.
+#' @param match.only Logical, TRUE or FALSE. If TRUE (default), only target features are returned. If FALSE, all features in the matching aSVGs are returned, and the matching features are listed on the top of the data frame. 
+#' @param return.all Logical, FALSE or TRUE. Default is FALSE. If TRUE, all features together with all respective aSVGs are returned, regardless of remote or local aSVG collections.
 
-#' @return A feature data frame with columns corresponding to feature id, feature ontology id, feature is index in an SVG image, and/or feature description. 
+#' @return A data frame containing information on target features and aSVGs.
+
 #' @examples
-#' feature.df <- return_feature(feature='frontal cortex', species='homo sapiens', keywords.all=TRUE, desc=FALSE, return.all=FALSE, dir='.', remote=TRUE)
+
+#' # This function is able to work on the EBI aSVG repository directly: https://github.com/ebi-gene-expression-group/anatomogram/tree/master/src/svg. The following shows how to download a chicken aSVG containing spatial features of 'brain' and 'heart'. An empty directory is recommended so as to avoid overwriting existing SVG files with the same names. Here "~/test" is used. 
+#'
+#' # Make an empty directory "~/test" if not exist.
+#' if (!dir.exists('~/test')) dir.create('~/test')
+#' # Query the remote EBI aSVG repo.
+#' feature.df <- return_feature(feature=c('heart', 'brain'), species=c('gallus'), dir='~/test', match.only=FALSE, remote=TRUE)
+#' feature.df
+#' # The path of downloaded aSVG.
+#' svg.chk <- '~/test/gallus_gallus.svg'
+#'
+#' # The spatialHeatmap package has a small aSVG collection and can be used to demonstrate the local query.
+#' # Get the path of local aSVGs from the package.
+#' svg.dir <- system.file("extdata/shinyApp/example", package="spatialHeatmap")
+#' # Query the local aSVG repo. The "species" argument is set NULL on purpose so as to illustrate how to select the target aSVG among all matching aSVGs.
+#' feature.df <- return_feature(feature=c('heart', 'brain'), species=NULL, dir=svg.dir, match.only=FALSE, remote=FALSE)
+#' # All matching aSVGs.
+#' unique(feature.df$SVG)
+#' # Select the target aSVG of chicken.
+#' subset(feature.df, SVG=='gallus_gallus.svg')
+
 
 #' @author Jianhai Zhang \email{jzhan067@@ucr.edu; zhang.jianhai@@hotmail.com} \cr Dr. Thomas Girke \email{thomas.girke@@ucr.edu}
 
 #' @references
 #' Laurent Gatto (2019). rols: An R interface to the Ontology Lookup Service. R package version 2.14.0. http://lgatto.github.com/rols/
 #' Hadley Wickham, Jim Hester and Jeroen Ooms (2019). xml2: Parse XML. R package version 1.2.2. https://CRAN.R-project.org/package=xml2
+#' R Core Team (2019). R: A language and environment for statistical computing. R Foundation for Statistical Computing, Vienna, Austria. URL https://www.R-project.org/.
+#' Cardoso-Moreira, Margarida, Jean Halbert, Delphine Valloton, Britta Velten, Chunyan Chen, Yi Shao, Angélica Liechti, et al. 2019. "Gene Expression Across Mammalian Organ Development." Nature 571 (7766): 505-9
 
 #' @export return_feature
 #' @importFrom xml2 read_xml
 #' @importFrom rols term termDesc
+#' @importFrom utils download.file unzip
 
-return_feature <- function(feature, species, keywords.all=TRUE, remote=FALSE, dir=NULL, desc=FALSE, match.only=TRUE, return.all=FALSE) {
+return_feature <- function(feature, species, keywords.any=TRUE, remote=TRUE, dir=NULL, desc=FALSE, match.only=TRUE, return.all=FALSE) {
 
-  options(stringsAsFactors=FALSE)
+  options(stringsAsFactors=FALSE); SVG <- parent <- NULL
   dir.check <- !is.null(dir) 
   if (dir.check) dir.check <- !(is.na(dir)) else stop("\'dir\' is not valid!") 
   if (dir.check) { dir.check <- dir.exists(dir); if (!dir.check) stop("\'dir\' is not valid!") } else stop("\'dir\'is not valid!")
@@ -70,6 +94,7 @@ return_feature <- function(feature, species, keywords.all=TRUE, remote=FALSE, di
     cat('Downloading SVG images... \n')
     tmp <- tempdir(check=TRUE); tmp1 <- paste0(tempdir(), '/git.zip')
     tmp2 <- paste0(tmp, '/git'); if (!dir.exists(tmp2)) dir.create(tmp2)
+    # Dowloaded file overwrites existing file by default.
     download.file('https://github.com/ebi-gene-expression-group/anatomogram/archive/master.zip', tmp1); unzip(tmp1, exdir=tmp2)
     tmp3 <- paste0(tmp2, '/anatomogram-master/src/svg')
     svgs <- list.files(path=tmp3, pattern='.svg$', full.names=TRUE, recursive=TRUE)
@@ -96,39 +121,41 @@ return_feature <- function(feature, species, keywords.all=TRUE, remote=FALSE, di
  
   if (!is.null(species)) if (species[1]=='') species <- NULL
   if (!is.null(feature)) if (feature[1]=='') feature <- NULL
-  sp <- gsub(' |_|\\.|-|;|,|/', '|', make.names(species)); ft <- gsub(' |_|\\.|-|;|,|/', '|', make.names(feature))
-  sp <- paste0(sp, collapse="|"); ft <- paste0(ft, collapse="|") 
   
-  if (keywords.all==TRUE) {
+  if (keywords.any==FALSE) {
 
-    sp <- strsplit(sp, '\\|')[[1]]; ft <- strsplit(ft, '\\|')[[1]]
-    df.idx <- vapply(sp, function(i) grepl(i, df$SVG, ignore.case=TRUE), FUN.VALUE=logical(nrow(df)))
+    sp <- gsub(' |\\.|-|;|,|/', '_', make.names(species)); ft <- gsub(' |\\.|-|;|,|/', '_', make.names(feature))
+    SVG <- paste0('_', gsub(' |\\.|-|;|,|/', '_', make.names(df$SVG)))
+    df.idx <- vapply(sp, function(i) grepl(paste0('_', i, '_'), SVG, ignore.case=TRUE), FUN.VALUE=logical(nrow(df)))
+    w1 <- which(rowSums(df.idx)==ncol(df.idx))
+    if (length(w1)==0) return(data.frame())
 
     if (match.only==FALSE) {
       
-      w1 <- which(rowSums(df.idx)==ncol(df.idx))
-      if (length(w1)==0) return(data.frame())
-      sp.df <- unique(df$SVG[w1])
-      
+      sp.df <- unique(df$SVG[w1])  
       df.final <- NULL; for (i in sp.df) {
 
         df0 <- subset(df, SVG==i)
-        df.idx1 <- vapply(ft, function(i) grepl(i, df0$feature, ignore.case=TRUE), FUN.VALUE=logical(nrow(df0)))
-        w2 <- which(rowSums(df.idx1)==ncol(df.idx1))
+        ft0 <- gsub(' |\\.|-|;|,|/', '_', make.names(df0$feature))
+        df.idx1 <- vapply(ft, function(i) grepl(paste0('^', i, '$'), ft0, ignore.case=TRUE), FUN.VALUE=logical(nrow(df0)))
+        w2 <- which(rowSums(df.idx1)>0)
         df.final <- rbind(df.final, df0[w2, ], df0[-w2, ])
 
       }
 
     } else {
 
-      df.idx1 <- vapply(ft, function(i) grepl(i, df$feature, ignore.case=TRUE), FUN.VALUE=logical(nrow(df)))
-      df.idx <- cbind(df.idx, df.idx1)
-      w <- which(rowSums(df.idx)==ncol(df.idx))
-      df.final <- df[w, ]
+      df0 <- df[w1, ]; ft0 <- gsub(' |\\.|-|;|,|/', '_', make.names(df0$feature))
+      df.idx1 <- vapply(ft, function(i) grepl(paste0('^', i, '$'), ft0, ignore.case=TRUE), FUN.VALUE=logical(nrow(df0)))
+      w2 <- which(rowSums(df.idx1)>0)
+      df.final <- df0[w2, ]
     
     }
 
   } else {
+  
+    sp <- gsub(' |_|\\.|-|;|,|/', '|', make.names(species)); ft <- gsub(' |_|\\.|-|;|,|/', '|', make.names(feature))
+    sp <- paste0(sp, collapse="|"); ft <- paste0(ft, collapse="|") 
 
     if (match.only==FALSE) {
 
@@ -160,7 +187,7 @@ return_feature <- function(feature, species, keywords.all=TRUE, remote=FALSE, di
     cat(paste0('Overwriting: ', svgs.rm, '\n'))
     sapply(svgs.cp, function (i) file.copy(i, dir, overwrite=TRUE))
     if (dir.exists(tmp)) unlink(tmp, recursive=TRUE)
-　　
+
   }; return(df.final)
 
 }

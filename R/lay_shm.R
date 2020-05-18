@@ -1,15 +1,14 @@
-#' Organise spatial heatmaps according to user-specified layout
+#' Organise Spatial Heatmaps by Gene or Condition
 #'
-
 #' @param lay.shm The layout of spatial heatmaps, "gene" or "con", which means organise spatial heatmaps by genes or by conditions.
 #' @param con A charater vector of all conditions.
-#' @param ncol An integer specifying columns of layout.
+#' @param ncol An integer specifying number of columns in the layout.
 #' @param ID.sel A vector of target genes for spatial heatmaps.
-#' @param grob.list A list of spatial heatmaps in the form of ggplot2 plot grob, returned by "grob_list()".
-#' @param shiny "TRUE" or "FALSE", apply this function to shiny app or not respectively.
+#' @param grob.list A list of spatial heatmaps in the form of ggplot2 plot grob, returned by \code{\link{grob_list}}.
+#' @param shiny Logical, TRUE or FALSE, apply this function to shiny app or not respectively.
 #' @inheritParams spatial_hm
 
-#' @return Organised spatial heatmaps according to the layout.
+#' @return Organised spatial heatmaps according to the provided layout.
 #' @keywords Internal
 
 #' @author Jianhai Zhang \email{jzhan067@@ucr.edu; zhang.jianhai@@hotmail.com} \cr Dr. Thomas Girke \email{thomas.girke@@ucr.edu}

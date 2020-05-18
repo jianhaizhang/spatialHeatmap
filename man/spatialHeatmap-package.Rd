@@ -15,15 +15,9 @@ The DESCRIPTION file:
 \packageDESCRIPTION{spatialHeatmap}
 \packageIndices{spatialHeatmap}
 
-The rapid advance in high-throughput biotechnology (e.g. next-generation sequencing, microarray) has generated a large amount of biological data. Accordingly, tools are developed over time to visualise these data, such as eFP (Winter et al. 2007), ePlant (Waese et al. 2017), gganatogram (Maag 2018), brainR (Muschelli, Sweeney, and Crainiceanu 2014), etc. These tools map the gene expression data onto a pre-defined tissue image where the data are measured. The great feature is that they display the data intuitively and interactively and therefore could promote hypothesis generation. However, the visualisation is based on data and image pre-configured by developers. Therefore, users have difficuty in displaying their custom data. To address this issue, we developed the R/Bioconductor package spatialHeatmap.
+The spatialHeatmap package provides functionalities for visualizing cell-, tissue- and organ-specific data of biological assays by coloring the corresponding spatial features defined in anatomical images according to a numeric color key. The color scheme used to represent the assay values can be customized by the user. This core functionality is called a spatial heatmap plot. It is enhanced with nearest neighbor visualization tools for groups of measured items (e.g. gene modules) sharing related abundance profiles, including matrix heatmaps combined with hierarchical clustering dendrograms and network representations. The functionalities of spatialHeatmap can be used either in a command-driven mode from within R or a graphical user interface (GUI) provided by a Shiny App that is also part of this package. While the R-based mode provides flexibility to customize and automate analysis routines, the Shiny App includes a variety of convenience features that will appeal to many biologists. Moreover, the Shiny App has been designed to work on both local computers as well as server-based deployments (e.g. cloud-based or custom servers) that can be accessed remotely as a centralized web service for using spatialHeatmap's functionalities with community and/or private data.
 
-The spatialHeatmap is designed to allow users to visualise custom data on tissue images in an intuitive way, and therefore promote hypothesis generation. The core feature Spatial Heatmap is to map expression profile of a target gene under different conditions to different tissues on a formatted SVG image, where different tissues are predefined. After mapping, the expression profile is represented as different colours across tissues in the image, which are called spatial heatmaps. This feature allows to input multiple target genes. If so, the spatial heatmaps of different genes are generated sequentially on the same page. There is also an option to display these spatial heatmaps by genes or by conditions, which makes it flexible for users to compare expression profiles of the same gene across conditions or different genes across the same condition. In the multiple-layer tissues, if some tissues are covered by front tissues and thus not visible in the spatial heatmaps, then front tissues can be set transparent to exhibit convered ones, which is shown in the mouse example.
-
-The data is in the form of "SummarizedExperiment" (Morgan et al. 2018). The "assays" slot contains the gene expression matrix with columns and rows being tissue/conditions and genes respectively, and the "colData" slot contains replicates of samples and conditions. The tissues are pre-defined in an SVG image. To visualise the data successfully, the data matrix and SVG image should meet the format requirements, which includes tissue ids in the SVG image must be identical to tissue names in the "colData", same tissues should be grouped in the SVG image, etc.
-
-In addition, the accessory features of Matrix Heatmap and Network display the target gene in the context of corresponding gene module, which make this package more informative. All the utilities can be implemented step-by-step or lanuched as an interactive Shiny App (Chang et al., n.d.; Chang and Borges Ribeiro 2018).
-
-The application is not limited to biological data. It is applicable as long as a pair of formatted data matrix in "SummariaedExperiment" and SVG image are provided. Other exmaples include population data collected in different years across different cities, health data of an individual under different conditions, ect.
+As anatomical images the package supports both tissue maps from public repositories and custom images provided by the user. In general any type of image can be used as long as it can be provided in SVG (Scalable Vector Graphics) format, where the corresponding spatial features have been defined (see aSVG below). The numeric values plotted onto a spatial heatmap are usually quantitative measurements from a wide range of profiling technologies, such as microarrays, next generation sequencing (e.g. RNA-Seq and scRNA-Seq), proteomics, metabolomics, or many other small- or large-scale experiments. For convenience, several preprocessing and normalization methods for the most common use cases are included that support raw and/or preprocessed data. Currently, the main application domains of the spatialHeatmap package are numeric data sets and spatially mapped images from biological and biomedical areas. Moreover, the package has been designed to also work with many other spatial data types, such a population data plotted onto geographic maps. This high level of flexibility is one of the unique features of spatialHeatmap. Related software tools for biological applications in this field are largely based on pure web applications (Winter et al. 2007; Waese et al. 2017) or local tools (Maag 2018; Muschelli, Sweeney, and Crainiceanu 2014) that typically lack customization functionalities. These restrictions limit users to utilizing pre-existing expression data and/or fixed sets of anatomical image collections. To close this gap for biological use cases, we have developed spatialHeatmap as a generic R/Bioconductor package for plotting quantitative values onto any type of spatially mapped images in a programmable environment and/or in an intuitive to use GUI application.
 
 }
 \author{
@@ -42,7 +36,8 @@ Maintainer: \packageMaintainer{spatialHeatmap}
   https://www.gimp.org/tutorials/  
   https://inkscape.org/en/doc/tutorials/advanced/tutorial-advanced.en.html  
   http://www.microugly.com/inkscape-quickguide/  
-  https://cran.r-project.org/web/packages/visNetwork/vignettes/Introduction-to-visNetwork.html  
+  https://cran.r-project.org/web/packages/visNetwork/vignettes/Introduction-to-visNetwork.html 
+  https://github.com/ebi-gene-expression-group/anatomogram/tree/master/src/svg 
 
   Winter, Debbie, Ben Vinegar, Hardeep Nahal, Ron Ammar, Greg V Wilson, and Nicholas J Provart. 2007. 
   "An 'Electronic Fluorescent Pictograph' Browser for Exploring and Analyzing Large-Scale Biological Data Sets." PLoS One 2 (8): e718
@@ -50,8 +45,8 @@ Maintainer: \packageMaintainer{spatialHeatmap}
   Waese, Jamie, Jim Fan, Asher Pasha, Hans Yu, Geoffrey Fucile, Ruian Shi, Matthew Cumming, et al. 2017. 
   "EPlant: Visualizing and Exploring Multiple Levels of Data for Hypothesis Generation in Plant Biology." Plant Cell 29 (8): 1806–21
 
-  Prudencio, Mercedes, Veronique V Belzil, Ranjan Batra, Christian A Ross, Tania F Gendron, Luc J Pregent, 
-  Melissa E Murray, et al. 2015. "Distinct Brain Transcriptome Profiles in C9orf72-Associated and Sporadic ALS." Nat. Neurosci. 18 (8): 1175–82
+  Cardoso-Moreira, Margarida, Jean Halbert, Delphine Valloton, Britta Velten, Chunyan Chen, Yi Shao, Angelica Liechti, et al. 2019.   
+  "Gene Expression Across Mammalian Organ Development." Nature 571 (7766): 505–9
 
   Keays, Maria. 2019. ExpressionAtlas: Download Datasets from EMBL-EBI Expression Atlas
 
@@ -136,54 +131,170 @@ Maintainer: \packageMaintainer{spatialHeatmap}
 %%~~ documentation directory ~~
 \keyword{ spatial heatmap}
 \seealso{
- \code{\link{filter_data}}, \code{\link{adj_mod}}, \code{\link{shiny_all}}, \code{\link{spatial_hm}}, \code{\link{matrix_hm}}, \code{\link{network}}
+ \code{\link{norm_data}}, \code{\link{aggr_rep}}, \code{\link{filter_data}}, \code{\link{adj_mod}}, \code{\link{shiny_all}}, \code{\link{spatial_hm}}, \code{\link{matrix_hm}}, \code{\link{network}}, \code{\link{return_feature}}, \code{\link{update_feature}}
 }
 \examples{
-# The example data (E-GEOD-67196) is an RNA-seq data measured in cerebellum and frontal cortex of human brain across normal and amyotrophic lateral sclerosis (ALS) subjects (Prudencio et al. 2015). 
-library(ExpressionAtlas)
-rse.hum <- getAtlasData('E-GEOD-67196')[[1]][[1]]; assay(rse.hum)[1:3, 1:3]
 
-# A targets file describing replicates of samples and conditions is required, which is made based on the "colData" slot in the downloaded "RangedSummarizedExperiment" and available in spatialHeatmap. See the "se" parameter for details. 
-brain.pa <- system.file('extdata/shinyApp/example/target_brain.txt', package='spatialHeatmap')
-target.hum <- read.table(brain.pa, header=TRUE, row.names=1, sep='\t')
-# The "organism_part" and "disease" column describes tissue and condition replicates respectively.  
-target.hum[c(1:3, 41:42), 4:5]
-# Place the targets file into "colData" slot as a DataFrame class. 
-colData(rse.hum) <- DataFrame(target.hum)
+## In the following example code, the 2 toy data come from an RNA-seq analysis on developments of 7 chicken organs under 9 time points (Cardoso-Moreira et al. 2019). The complete raw count data are downloaded with the accession number "E-MTAB-6769" using the R package ExpressionAtlas (Keays 2019). Both toy data are generated by truncating the complete data. For conveninece, they are included in this package. Toy data1 is used as a "data frame" input to exemplify data with simple samples/conditions, while toy data2 as "SummarizedExperiment" to illustrate data involving complex samples/conditions.   
+
+## Set up toy data.
+
+# Access the toy data1.
+cnt.chk.simple <- system.file('extdata/shinyApp/example/count_chicken_simple.txt', package='spatialHeatmap')
+df.chk <- read.table(cnt.chk.simple, header=TRUE, row.names=1, sep='\t', check.names=FALSE)
+# Note the naming scheme "sample__condition" in columns, where "sample" and "condition" stands for organs and time points respectively.
+df.chk[1:3, ]
+
+# A column of gene annotation can be appended to the data frame, but is not required.  
+ann <- paste0('ann', seq_len(nrow(df.chk))); ann[1:3]
+df.chk <- cbind(df.chk, ann=ann)
+df.chk[1:3, ]
+
+# Access the toy data2. 
+cnt.chk <- system.file('extdata/shinyApp/example/count_chicken.txt', package='spatialHeatmap')
+count.chk <- read.table(cnt.chk, header=TRUE, row.names=1, sep='\t')
+count.chk[1:3, 1:5]
+
+# A targets file is required for toy data2. It should be made based on the experiment design, which is accessible through the accession number "E-MTAB-6769" in R package ExpressionAtlas. The completed targets file is included in this package. 
+
+# Access the targets file. 
+tar.chk <- system.file('extdata/shinyApp/example/target_chicken.txt', package='spatialHeatmap')
+target.chk <- read.table(tar.chk, header=TRUE, row.names=1, sep='\t')
+# Note every column in toy data2 corresponds with a row in targets file. 
+target.chk[1:5, ]
+# Store toy data2 in "SummarizedExperiment".
+library(SummarizedExperiment)
+se.chk <- SummarizedExperiment(assay=count.chk, colData=target.chk)
+# The "rowData" slot can store a data frame of gene annotation, but not required.
+rowData(se.chk) <- DataFrame(ann=ann)
+
+## As conventions, sequencing count data should be normalized, aggregated, and filtered to reduce noise.
+
+# Normalize count data.
+
+# The normalizing function "calcNormFactors" (McCarthy et al. 2012) with default settings is used.  
+df.nor.chk <- norm_data(data=df.chk, norm.fun='CNF', data.trans='log2')
+se.nor.chk <- norm_data(data=se.chk, norm.fun='CNF', data.trans='log2')
+
+# Aggregate count data.
+
+# Aggregate "sample_condition" replicates in toy data1.
+df.aggr.chk <- aggr_rep(data=df.nor.chk, aggr='mean')
+df.aggr.chk[1:3, ]
+
+# Aggregate "sample_condition" replicates in toy data2, where "sample" is "organism_part" and "condition" is "age". 
+se.aggr.chk <- aggr_rep(data=se.nor.chk, sam.factor='organism_part', con.factor='age', aggr='mean')
+assay(se.aggr.chk)[1:3, 1:3]
+
+# Filter genes with low counts and low variance. Genes with counts over 5 (log2 unit) in at least 1% samples (pOA), and coefficient of variance (CV) between 0.2 and 100 are retained.
+
+# Filter toy data1.
+df.fil.chk <- filter_data(data=df.aggr.chk, pOA=c(0.01, 5), CV=c(0.2, 100), dir=NULL)
+# Filter toy data2.
+se.fil.chk <- filter_data(data=se.aggr.chk, sam.factor='organism_part', con.factor='age', pOA=c(0.01, 5), CV=c(0.2, 100), dir=NULL)
+
+## Spatial heatmaps.
+
+# To plot spatial heatmaps, a pair of formatted data and pre-annotated SVG (aSVG) are required. If the data is a "data frame", the formatting is to use the naming scheme "sample_condition" in column names. If "SummarizedExperiment", the "sample" and "condition" replicates should be defined in the "colData" slot. In the aSVG, sample features are annotated according to certain conventions so that numeric values are mapped to matching features programmatically. The mapped images are called spatial heatmaps.
+
+# The following shows how to download the corresponding pre-annotated aSVG image from the EBI SVG repository based on above tissues and species involved, i.e. c('heart', 'brain') and c('gallus') respectively. See the function return_feature for details. An empty directory is recommended so as to avoid overwriting existing SVG files with the same names. Here "~/test" is used. 
+
+# To meet the package building requirements, the code of querying aSVG remotely is not evaluated. The matching aSVG (gallus_gallus.svg) is included in this package and accessed for plotting spaital heatmaps.
+
+\donttest{
+# Make an empty directory "~/test" if not exist.
+if (!dir.exists('~/test')) dir.create('~/test')
+# Query aSVGs from remote.
+feature.df <- return_feature(feature=c('heart', 'brain'), species=c('gallus'), dir='~/test', match.only=FALSE, remote=TRUE)
+feature.df
+# The path of matching aSVG.
+svg.chk <- '~/test/gallus_gallus.svg'
+}
+
+# Get the matching aSVG path from the package.
+svg.chk <- system.file("extdata/shinyApp/example", "gallus_gallus.svg", package="spatialHeatmap")
+
+# Plot spatial heatmaps on gene "ENSGALG00000019846". In the middle are spatial heatmaps. Only aSVG features with matching countparts in data are colored. On the right is the legend plot, only the matching features are labeled.
+# Toy data1. 
+spatial_hm(svg.path=svg.chk, data=df.fil.chk, ID='ENSGALG00000019846', height=0.4, legend.r=1.7, sub.title.size=9, ncol=3, legend.nrow=2)
+# Toy data2.
+spatial_hm(svg.path=svg.chk, data=se.fil.chk, ID='ENSGALG00000019846', legend.r=1.5, sub.title.size=9, ncol=3, legend.nrow=2)
+
+# When plot spatial heatmaps, the data can also come as as a simple named vector. The following gives an example on a vector of 3 random values. 
+# Random values.
+vec <- sample(1:100, 3)
+# Name the vector. The last name is assumed as a random sample without a matching feature in aSVG.
+names(vec) <- c('brain', 'heart', 'notMapped')
+vec
+# Plot.
+spatial_hm(svg.path=svg.chk, data=vec, ID='geneX', height=0.7, legend.r=1.5, sub.title.size=9, ncol=1, legend.nrow=2)
  
-# For users with little R expertise, if the gene expression matrix comes as a data frame, it should be placed into "SummarizedExperiment" before proceeding to next step. An example is shown below by borrowing a data matrix from the brain data.
-# Borrow a data matrix.
-df <- assay(rse.hum); df[1:2, 1:3]
-# Place the data matrix and targets file (target.hum) into "SummarizedExperiment".
-rse.hum <- SummarizedExperiment(assay=df, colData=target.hum, rowData=NULL)
- 
-# The count matrix is normalised with estimateSizeFactors (type=‘ratio’).
-se.nor.hum <- norm_data(se=rse.hum, method.norm='CNF', data.trans='log2')
+## If users want to use custom features in the aSVG file, the function "update_feature" should be used to change feature identifiers in the aSVG file. For illustration purpose, the aSVG "gallus_gallus.svg" in this package is copied to '~/test' as example.
 
-# Average replicates of concatenated sample__condition.
-se.aggr.hum <- aggr_rep(se=se.nor.hum, sam.factor='organism_part', con.factor='disease', aggr='mean')
-assay(se.aggr.hum)[49939:49942, ] # The concatenated tissue__conditions are the column names of the output data matrix.
- 
-# Genes with low expression level and low variantion are always filtered. 
-se.fil.hum <- filter_data(se=se.aggr.hum, sam.factor='organism_part', con.factor='disease', pOA=c(0.01, 5), CV=c(0.3, 100), dir=NULL)
+\donttest{
+# Make an empty directory "~/test" if not exist.
+if (!dir.exists('~/test')) dir.create('~/test')
+# Make a copy of "gallus_gallus.svg".
+file.copy(from=svg.chk, to='~/test', overwrite=FALSE)
+# Query "gallus_gallus.svg".
+feature.df <- return_feature(feature=c('heart', 'brain'), species=c('gallus'), dir='~/test', match.only=TRUE, remote=TRUE)
+feature.df
 
-# Formatted SVG image.
-svg.hum <- system.file("extdata/shinyApp/example", "homo_sapiens.brain.svg", package="spatialHeatmap")
-# Plot spatial heatmaps of gene ENSG00000008196.
-spatial_hm(svg=svg.hum, se=se.fil.hum, ID='ENSG00000008196', col.com=c("yellow", "blue", "purple"), width=1, height=0.5, sub.title.size=11, layout="gene", ncol=2, tis.trans=NULL, legend.position=c(0.5, -0.15), legend.nrow=1)
+# New features.
+ft.new <- c('BRAIN', 'HEART')
+# Add new features to the first column.
+feature.df.new <- cbind(featureNew=ft.new, feature.df)
+feature.df.new
+# Update features.
+update_feature(feature=feature.df.new, dir='~/test')
+}
 
-# Detect modules. 
-adj.mod <- adj_mod(se=se.fil.hum, type="signed", minSize=15, dir=NULL)
-# The first column is ds=2 while the second is ds=3. The numbers in each column are module labels with "0" meaning genes not assigned to any modules.
+## Matrix heatmap
+
+# The Matrix Heatmap is designed to supplement the core feature of spatial heatmap. It displays the target gene in the context of corresponding gene network module, so there is a process of gene modules identification.
+
+# Adjacency matrix and module identification
+
+# The modules are identified by \code{\link{adj_mod}}. It first computes an adjacency matrix on the gene expression matrix then hierarchically clusters the adjacency matrix by using WGCNA (Langfelder and Horvath 2008) and flashClust (Langfelder and Horvath 2012). The clutersing includes 4 alternative sensitivity levels (ds=0, 1, 2, or 3). From 3 to 0, the sensitivity decreases and results in less modules with larger sizes. Since the interactive network functionality performs better on smaller modules, only ds of 3 and 2 are used. There is another parameter type for module identification: signed and unsinged. The signed means both positive and negative adjacency between genes are used while the unsigned takes the absolute values of negative adjacency.
+
+# In the following both toy data can be used, but for simplicity only toy data2 are illustrated. 
+
+# The function \code{\link{adj_mod}} returns a list containing an adjacency matrix and a data frame of module assignment. 
+adj.mod <- adj_mod(data=se.fil.chk)
+
+# The adjacency matrix is a measure of co-expression similarity between genes, where larger value denotes more similarity.
+adj.mod[['adj']][1:3, 1:3]
+
+# The module assignment is a data frame. The first column is ds=2 while the second is ds=3. The numbers in each column are module labels with "0" meaning genes not assigned to any modules.
 adj.mod[['mod']][1:3, ]
 
-# Plot matrix heatmap on gene ENSG00000008196 with ds='3'. Set "static=TRUE" to launch the interactive mode. 
-matrix_hm(geneID="ENSG00000008196", se=se.fil.hum, adj.mod=adj.mod, ds="3", scale="no", angleCol=80, angleRow=35, cexRow=0.8, cexCol=0.8, margin=c(10, 6), static=TRUE, arg.lis1=list(offsetRow=0.1, offsetCol=0.1))
+# Static matrix heatmap.
+matrix_hm(geneID="ENSGALG00000019846", data=se.fil.chk, adj.mod=adj.mod, angleCol=80, angleRow=35, cexRow=0.8, cexCol=0.8, margin=c(10, 6), static=TRUE, arg.lis1=list(offsetRow=0.1, offsetCol=0.1))
+# Interactive matrix heatmap.
+\donttest{ matrix_hm(geneID="ENSGALG00000019846", data=se.fil.chk, adj.mod=adj.mod, static=FALSE) }
 
-# Plot network on gene ENSG00000008196 with ds='3'. Set "static=TRUE" to launch the interactive mode. 
-network(geneID="ENSG00000008196", se=se.fil.hum, ann=NULL, adj.mod=adj.mod, ds="3", adj.min=0.999, con.min=0, vertex.label.cex=1, vertex.cex=0.1, static=TRUE)
+## Network 
 
-# Launch the integrated Shiny app.
-\donttest{ shiny_all() }
+# The same target gene and module from matrix heatmap can also be displayed as a network. Similarly, the network can be dispayed in static or interactive mode.
+
+# Static network. In the graph, nodes are genes and edges are adjacencies between genes. The thicker edge denotes higher adjacency (co-expression similarity) while larger node indicates higher gene connectivity (sum of a gene's adjacency with all its direct neighbours). The target gene is labeled by "_selected".
+network(geneID="ENSGALG00000019846", data=se.fil.chk, adj.mod=adj.mod, adj.min=0.5, vertex.label.cex=1.5, vertex.cex=4, static=TRUE)
+
+# Interactive network. Same with static mode, the target gene ID is appended "_selected". If gene annotation is available in "rowData" slot and provided to "ann" argument, the annotation is seen by mousing over a node. In this example, "ann" in "rowData" is provided to "ann". See function "network" for details.  
+\donttest{ network(geneID="ENSGALG00000019846", data=se.fil.chk, ann='ann', adj.mod=adj.mod, static=FALSE) }
+
+## Shiny app
+
+# All the above functionality (spatial heatmap, interactive matrix heatmap, interactive network) is also combined into a web-browser based Shiny App, which takes advantage of the computational power of R and interactivity of the web. The main benefits of the Shiny App is combine all the utities in one interface and increase interactivity. On the left of this app is the menu. It includes pre-formatted ready-to-use examples, options to upload formatted data matrix and aSVG images, and instruction to use this app. On the right is the interactive interfacce, including Data Matrix, Spatial Heatmap, Matrix Heatmap, and Network. To use interactive features, there are paramters on the left menu to operate. Upon launched, the app automatically displays a pre-formatted example. A good practice to use this app is to follow steps in the menu rather than skipping steps. If unexpectation happens, the app webpage should be refreshed.
+
+# This app is launched by the function shiny_all without any parameters. 
+\donttest{shiny_all()}
+
+# The data matrix to upload is a data frame. If the data is a "SummarizedExperiment" class, the data matrix can be obtained by setting a directory path to "dir" in function \code{\link{filter_data}}. A directory "local_mode_result/" is automatically created in the provided path, and the filtered data matrix is written to "local_mode_result/processed_data.txt" with column names in the scheme "sample__condition", which is a tab-separated file. If users want to see annotation by mousing over a node in the network, a column of gene annotation in "rowData" slot should be provided to "ann", then the annotation is appended to the last column in "processed_data.txt".
+
+# For example, in "filter_data", setting "dir='./'" (current working directory) will output the filtered data matrix in "./local_mode_result/processed_data.txt", and setting "ann='ann'" appends the annotation from "rowData" slot to the last column of "processed_data.txt", which is ready to upload to the app.
+\donttest{se.fil.chk <- filter_data(data=se.aggr.chk, sam.factor='organism_part', con.factor='age', pOA=c(0.01, 5), CV=c(0.2, 100), dir='./')}
+
+
 
 }

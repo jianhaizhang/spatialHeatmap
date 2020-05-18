@@ -2,30 +2,41 @@
 % Please edit documentation in R/update_feature.R
 \name{update_feature}
 \alias{update_feature}
-\title{Update SVG Images with Provided Features}
+\title{Update aSVG Spatial Features}
 \usage{
 update_feature(feature, dir)
 }
 \arguments{
-\item{feature}{The data frame returned by \code{\link{return_feature}} with the user-provided features being the first column.}
+\item{feature}{The data frame returned by \code{\link{return_feature}} with the user-provided features added as the first column.}
 
-\item{dir}{The directory where the SVG images are available. It should be same with "dir" in \code{\link{return_feature}}.}
+\item{dir}{The directory path where the aSVG images to update. It should be same with "dir" in \code{\link{return_feature}}.}
 }
 \value{
-Nothing is returned. The SVG images of interest in "dir" are updated with new features, and are ready for plotting spatial heatmaps.
+Nothing is returned. The aSVG images of interest in "dir" are updated with new features, and are ready to use in function \code{\link{spatial_hm}}.
 }
 \description{
-Successful spatial heatmap plotting requires the feature identifiers of interest are identical between the data matrix and SVG image. This function is designed to replace existing features in SVG images with user-provided features. Note this function treats the first column in the feature data frame as user-provided features, so custom features must be the first column.
+Successful spatial heatmap plotting requires the aSVG features of interest have identical matching samples (cells, tissues, etc) in the data. This function is designed to replace existing features in aSVG images with user-provided features. Note this function treats the first column in the feature data frame as user-provided features, so custom features must be the first column.
 }
 \examples{
-feature.df <- return_feature(feature='frontal cortex', species='homo sapiens', keywords.all=TRUE, desc=FALSE, return.all=FALSE, dir='.', remote=TRUE)
-ft <- c('frontal.cortex', 'prefrontal.cortex', 'prefrontal.cortex', 'frontal.cortex', 'frontal.cortex', 'prefrontal.cortex')
+# The following shows how to download a chicken aSVG containing spatial features of 'brain' and 'heart' from the EBI aSVG repository directly (https://github.com/ebi-gene-expression-group/anatomogram/tree/master/src/svg). An empty directory is recommended so as to avoid overwriting existing SVG files with the same names. Here "~/test" is used. 
+
+# Make an empty directory "~/test" if not exist.
+if (!dir.exists('~/test')) dir.create('~/test')
+# Query the remote EBI aSVG repo.
+feature.df <- return_feature(feature=c('heart', 'brain'), species=c('gallus'), dir='~/test', match.only=TRUE, remote=TRUE)
+feature.df
+
+# New features.
+ft.new <- c('BRAIN', 'HEART')
 # Add new features to the first column.
-feature.df.new <- cbind(featureNew=ft, feature.df) 
-update_feature(feature=ft2, dir='.')
+feature.df.new <- cbind(featureNew=ft.new, feature.df)
+feature.df.new
+# Update features.
+update_feature(feature=feature.df.new, dir='~/test')
 }
 \references{
 Hadley Wickham, Jim Hester and Jeroen Ooms (2019). xml2: Parse XML. R package version 1.2.2. https://CRAN.R-project.org/package=xml2
+Cardoso-Moreira, Margarida, Jean Halbert, Delphine Valloton, Britta Velten, Chunyan Chen, Yi Shao, Angélica Liechti, et al. 2019. "Gene Expression Across Mammalian Organ Development." Nature 571 (7766): 505-9
 }
 \author{
 Jianhai Zhang \email{jzhan067@ucr.edu; zhang.jianhai@hotmail.com} \cr Dr. Thomas Girke \email{thomas.girke@ucr.edu}

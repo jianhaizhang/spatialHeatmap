@@ -2,7 +2,7 @@
 % Please edit documentation in R/svg_attr.R
 \name{svg_attr}
 \alias{svg_attr}
-\title{Extract attributes in an SVG file}
+\title{Extract Attributes in an SVG File}
 \usage{
 svg_attr(doc, feature)
 }
@@ -12,7 +12,7 @@ svg_attr(doc, feature)
 \item{feature}{A character vector of features/samples extracted from the data. If some of the input features are duplicated in SVG file, then a reminder message is returned.}
 }
 \value{
-A 3-component list of attribute data frame, the outline node, and the tissue node.
+A 3-component list of attribute data frame, the outline node, and the sample node.
 }
 \description{
 This function extract basic attributes of nodes in an SVG file. The 'a' nodes are not deleted.

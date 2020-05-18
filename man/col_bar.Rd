@@ -2,26 +2,26 @@
 % Please edit documentation in R/col_bar.R
 \name{col_bar}
 \alias{col_bar}
-\title{Build colour bar for the spatial heatmaps}
+\title{Build Color Bar for the Spatial Heatmaps}
 \usage{
 col_bar(geneV, cols, width, bar.title.size = 10, mar = c(3, 0.1, 3, 0.1))
 }
 \arguments{
-\item{geneV}{The gene expression values used for building the colour bar.}
+\item{geneV}{The gene expression values used for building the color bar.}
 
-\item{cols}{The colour codes corresponding to geneV.}
+\item{cols}{The color codes corresponding to geneV.}
 
-\item{width}{A numeric between 0 and 1, used to reduce the widths of bins in the colour bar so as to avoid overlaps.}
+\item{width}{A numeric between 0 and 1, used to reduce the widths of bins in the color bar so as to avoid overlaps.}
 
-\item{bar.title.size}{A numeric of colour bar title size. Default is 10.}
+\item{bar.title.size}{A numeric of color bar title size. Default is 10.}
 
-\item{mar}{A 4-length numeric vector specifying margins of the colour bar, in the "top", "right", "bottom", "left" order. The unit is "cm". Default is "c(3, 0.1, 3, 0.1)".}
+\item{mar}{A 4-length numeric vector specifying margins of the color bar, in the "top", "right", "bottom", "left" order. The unit is "cm". Default is "c(3, 0.1, 3, 0.1)".}
 }
 \value{
 An image of ggplot.
 }
 \description{
-Build colour bar for the spatial heatmaps
+Build Color Bar for the Spatial Heatmaps
 }
 \references{
 H. Wickham. ggplot2: Elegant Graphics for Data Analysis. Springer-Verlag New York, 2016.

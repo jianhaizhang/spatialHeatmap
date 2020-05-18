@@ -2,12 +2,12 @@
 % Please edit documentation in R/nod_lin.R
 \name{nod_lin}
 \alias{nod_lin}
-\title{Calculate gene connectivity and edge adjacency}
+\title{Calculate Gene Connectivity and Edge Adjacency}
 \usage{
 nod_lin(ds, lab, mods, adj, geneID, adj.min)
 }
 \arguments{
-\item{ds}{Module detecting sensativity, "3" or "4".}
+\item{ds}{Module detecting sensativity, "2" or "3".}
 
 \item{lab}{An interger, which is the module the target gene belongs to.}
 
@@ -23,7 +23,7 @@ nod_lin(ds, lab, mods, adj, geneID, adj.min)
 A 2-length list, containing the gene connectiviy and edge adjaceny respectively.
 }
 \description{
-Calculate gene connectivity and edge adjacency
+Calculate Gene Connectivity and Edge Adjacency
 }
 \author{
 Jianhai Zhang \email{jzhan067@ucr.edu; zhang.jianhai@hotmail.com} \cr Dr. Thomas Girke \email{thomas.girke@ucr.edu}

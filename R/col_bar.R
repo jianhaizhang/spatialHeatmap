@@ -1,13 +1,10 @@
-#' Build colour bar for the spatial heatmaps
+#' Build Color Bar for the Spatial Heatmaps
 #'
-
-#' @param geneV The gene expression values used for building the colour bar.
-
-#' @param cols The colour codes corresponding to geneV.
-#' @param width A numeric between 0 and 1, used to reduce the widths of bins in the colour bar so as to avoid overlaps.
-#' @param bar.title.size A numeric of colour bar title size. Default is 10. 
-
-#' @param mar A 4-length numeric vector specifying margins of the colour bar, in the "top", "right", "bottom", "left" order. The unit is "cm". Default is "c(3, 0.1, 3, 0.1)".
+#' @param geneV The gene expression values used for building the color bar.
+#' @param cols The color codes corresponding to geneV.
+#' @param width A numeric between 0 and 1, used to reduce the widths of bins in the color bar so as to avoid overlaps.
+#' @param bar.title.size A numeric of color bar title size. Default is 10. 
+#' @param mar A 4-length numeric vector specifying margins of the color bar, in the "top", "right", "bottom", "left" order. The unit is "cm". Default is "c(3, 0.1, 3, 0.1)".
 
 #' @return An image of ggplot.
 #' @keywords Internal

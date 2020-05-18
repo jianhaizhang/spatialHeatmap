@@ -7,7 +7,7 @@
 path_br_all(node.parent)
 }
 \arguments{
-\item{node.parent}{An object of class "xml_node" with children, i.e. the last two nodes in SVG file, outline and tissue layer respectively.}
+\item{node.parent}{An object of class "xml_node" with children, i.e. one of the last two nodes in SVG file, outline and tissue layer respectively.}
 }
 \value{
 Nothing is returned. The broken paths are updated in the root.

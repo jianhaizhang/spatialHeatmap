@@ -74,10 +74,10 @@ to customize and automate analysis routines, the Shiny App includes a variety
 of convenience features that will appeal to many biologists. Moreover, the
 Shiny App has been designed to work on both local computers as well as
 server-based deployments (_e.g._ cloud-based or custom servers) that can be
-accessed remotely as a centralized web service for using _spatialHeatmap\'s_ functionalities with community and/or private data. The functionality overview of this package is illustrated on Figure \@ref(fig:illus).   
+accessed remotely as a centralized web service for using _spatialHeatmap\'s_ functionalities with community and/or private data. The functionality overview of this package is illustrated in Figure \@ref(fig:illus).   
 
 
-```{r illus, echo=FALSE, fig.wide=TRUE, fig.cap=("Functionality overview. The numeric data can come as a `vector`, `data frame`, or `SummarizedExperiment` (SE). If vector or data frame, the sample and condition identifiers should be in the form of \'sample__condition\', e.g. \'S1__con1\'. If data frame or SE, the columns and rows should be sample/conditions and features (gene1, gene2) respectively. In SE, the colData slot is required and contains replicate information, while the rowData slot is optional and contains row feature annotation. If the latter is available, the annotation is seen by mousing over a node in the interactive network. In the aSVG image (see [aSVG](#term) below), features are pre-defined and assigned unique identifiers. In visualising process, only features with exactly same identifiers between the data and aSVG image are recognised and coloured (e.g. S1) in spatial heatmaps. To supplement spatial heatmaps, coexpression analysis is applied on \'data matrix\' to identify network modules. The gene in spatial heatmaps can be investigated in the gene module it belongs to, where the module is in form of matrix heatmap and network. Lastly, the spatial heatmaps, matrix heatmap, network are all combined as an interactive Shiny app."), out.width="100%"}
+```{r illus, echo=FALSE, fig.wide=TRUE, fig.cap=("Functionality overview. The numeric data can come as a `vector`, `data frame`, or `SummarizedExperiment` (SE). If `vector` or `data frame`, the sample and condition identifiers should be in the form of \'sample__condition\', e.g. \'S1__con1\'. If `data frame` or SE, the columns and rows should be sample/conditions and assayed items (gene1, gene2) respectively. In SE, the `colData` slot is required and contains replicate information, while the `rowData` slot is optional and contains row item annotation. If the latter is available, the annotation is seen by mousing over a node in the interactive network. In the aSVG image (see [aSVG](#term) below), spatial features are pre-defined and assigned unique identifiers. In visualization, only aSVG features having identical sample counterparts in data are colored (*e.g.* S1) in spatial heatmaps. To supplement spatial heatmaps, coexpression analysis is applied on \'data matrix\' to identify network modules. The gene in spatial heatmaps can be investigated in the gene module it belongs to, where the module is in form of matrix heatmap and network. Lastly, the spatial heatmaps, matrix heatmap, network are all combined as an interactive Shiny app."), out.width="100%"}
 
 include_graphics('img/illustration.png')
 
@@ -96,7 +96,7 @@ both looks professional and is informative too. The intent of this
 illustration is to use it in various places, e.g. slide shows, posters,
 vignette and paper.]
 </font>
-<font color='blue'> Added <br/> In the following all blue text are changes from jianhai. </font>
+<font color='blue'> Added <br/> In the following all blue text are edited by jianhai. </font>
 
 
 As anatomical images the package supports both tissue maps from public
@@ -112,7 +112,7 @@ for the most common use cases are included that support raw and/or preprocessed
 data. Currently, the main application domains of the _spatialHeatmap_ package
 are numeric data sets and spatially mapped images from biological and
 biomedical areas. Moreover, the package has been designed to also work with
-many other spatial data types, such a population data plotted onto geographic
+many other spatial data types, such as population data plotted onto geographic
 maps. This high level of flexibility is one of the unique features of
 _spatialHeatmap_. Related software tools for biological applications in this
 field are largely based on pure web applications [@Winter2007-bq;
@@ -196,14 +196,14 @@ experiments for different species, tissues and conditions. The corresponding
 anatomical image collections are also provided for a wide range of species
 including animals and plants. <font color='blue'> In `spatialHeatmap` several import functions are
 provided to work with the expression and [aSVG repository](#svg_repo) from the Expression Atlas
-directly. The aSVG images developed by this project will be deposited in this repository, and users are encouraged to contribute aSVG images to the same repository by following their authoring guidlines.  </font> 
+directly. Users are encouraged to contribute aSVG images to the same repository by following their authoring guidlines.  </font> 
 
 
 ## Tutorial Overview {#sample_data}
 
 The following sections of this vignette showcase the most important
 functionalities of the `spatialHeatmap` package <font color='blue'> using as first example a simple
-to understand toy data set (jianhai: is the phrase order mixed?) </font>, and then more complex mRNA profiling data from the
+to understand toy data set (jianhai_comment: is the phrase order mixed?) </font>, and then more complex mRNA profiling data from the
 Expression Atlas. First, spatial heatmap plots are generated for both the toy
 and mRNA expression data. The latter include gene expression data sets from
 RNA-Seq and microarray experiments of [Human Brain](#hum), [Mouse
@@ -267,7 +267,7 @@ supposed to provide a high level of flexibilty and reusability, and I don't thin
 it would be hard to address this important need.]
 </font>  
 
-<font color='blue'>jianhai: return_feature and update_feature is designed to extraxt features and add custom features respectively. The snake case is used so as to keep consistent with all other functions. </font>
+<font color='blue'>jianhai_comment: return_feature and update_feature is designed to extraxt features and add custom features respectively. The snake case is used so as to keep consistent with all other functions. </font>
 
 ## Toy Example {#toy}
 
@@ -292,17 +292,17 @@ The `return_feature` function is designed to query a collection of aSVG files in
 
 
 ```{r eval=TRUE, echo=TRUE, warnings=FALSE }
-feature.df <- return_feature(feature=c('lobe'), species=c('homo sapiens'), dir=svg.dir)
+feature.df <- return_feature(feature=c('lobe'), species=c('homo sapiens'), remote=FALSE, dir=svg.dir)
 feature.df
 fnames <- feature.df[, 1]
 ```
 
 <font color='blue'> A small numeric toy vector is generated, where the data slot contains four
 numbers and its name slot is populated with the three feature names obtained from the
-aSVG image and "notMapped". Note, the numbers are mapped to features via names matching among the 
+aSVG image and `notMapped`. Note, the numbers are mapped to features via names matching among the 
 numeric vector and the aSVG, respectively. Accordingly, only numbers and features
 with matching name counterparts can be colored in the aSVG image. Entries without 
-name matches are indicated by a message printed to the R console, e.g. "notMapped". </font> This behavior can 
+name matches are indicated by a message printed to the R console, e.g. `notMapped`. </font> This behavior can 
 be turned off with `verbose=FALSE` in the corresponding function call. In addition, 
 a summary of the numeric assay to feature mappings is stored in the result data frame
 returned by the `spatial_hm` function. 
@@ -319,13 +319,13 @@ my_vec
 Next, the spatial heatmap is plotted with the `spatial_hm` function (Figure \@ref(fig:toyshm)).
 Internally, the numbers in `my_vec` are translated to colors based on the color
 key assigned to the `col.com` argument, and then painted onto the corresponding
-features in the aSVG image (here path `svg.hum`). <font color='blue'> In addition, the `ID` argument is used to name the data, `ncol` sets the number of columns for the spatial heatmap, which does not include the legend plot, and `height` is the height of spatial heatmap relative to width. In Figure \@ref(fig:toyshm), only 'occipital_lobe', 'parietal_lobe', and 'temporal_lobe' are mapped, since they are the matching features between the data and aSVG.  </font> 
+features in the aSVG image (path `svg.hum`). <font color='blue'> In addition, the `ID` argument is used to name the data, `ncol` sets the number of columns for the spatial heatmaps, which does not include the legend plot, and `height` is the overall height of all spatial heatmaps. In Figure \@ref(fig:toyshm), only `occipital_lobe`, `parietal_lobe`, and `temporal_lobe` are mapped, since they are the matching features between the data and aSVG.  </font> 
 
 ```{r toyshm, eval=TRUE, echo=TRUE, warnings=FALSE, fig.wide=TRUE, fig.cap=("Spatial heatmap on toy data. The middle plot is the spatial heatmap and the right is the legend."), out.width="100%" }
 shm.df <- spatial_hm(svg.path=svg.hum, data=my_vec, ID='toy', ncol=1, height=0.7, sub.title.size=20)
 ```
 
-The resulting spatial heatmaps ('spatial_heatmap') and mapped features ('mapped_feature') between data and aSVG are saved in a list.   
+The resulting spatial heatmaps (`spatial_heatmap`) and mapped features (`mapped_feature`) between data and aSVG are saved in a list.   
 ```{r eval=TRUE, echo=TRUE, warnings=FALSE} 
 # Spatial heatmaps and mapped features are stored in a list.
 names(shm.df)
@@ -401,7 +401,7 @@ colData(rse.hum)[1:5, 1:5]
 </font>
 
 <font color='blue'>
-The following shows how to download the corresponding pre-annotated aSVG image from the [EBI SVG repository](#svg_repo) based on above experiment design. The function `return_feature` queries the repository with feature and species keywords, i.e. `c('frontal cortex', 'cerebellum')` and `c('homo sapiens', 'brain')` respectively. The argument `keywords.all` is set `FALSE` so that aSVGs matching at least one word are returned. The argument `return.all=FALSE` means only aSVGs matching the keywords are returned and saved in `dir`. Otherwise, all aSVGs are returned regardless of the keywords. An empty directory is recommended so as to avoid overwriting existing SVG files with the same names. Here `~/test` is used. `remote=TRUE` means the remote SVG repository is queried. If users want to query a local aSVG collection `remote=FALSE` should be used, and directory of the aSVG collection should be provided to `dir`. `match.only` is set `TRUE` so that only matching features are returned. If `FALSE`, all features in the matching aSVGs are returned.     
+The following shows how to download the corresponding pre-annotated aSVG image from the [EBI SVG repository](#svg_repo) based on above tissues and species involved. The function `return_feature` queries the repository with feature and species keywords, i.e. `c('frontal cortex', 'cerebellum')` and `c('homo sapiens', 'brain')` respectively. The argument `keywords.any` is set `TRUE` by default so that aSVGs containing at least one feature word and one species word are returned. The argument `return.all=FALSE` means only aSVGs matching the keywords are returned and saved in `dir`. Otherwise, all aSVGs are returned regardless of the keywords. An empty directory is recommended so as to avoid overwriting existing SVG files with the same names. Here `~/test` is used. `remote=TRUE` means the remote SVG repository is queried. If users want to query a local aSVG collection `remote=FALSE` should be used, and directory of the local aSVG collection should be provided to `dir`. `match.only` is set `TRUE` so that only matching features are returned. If `FALSE`, all features in the matching aSVGs are returned.     
 </font>
 
 <font color='blue'>
@@ -412,7 +412,7 @@ jianai: The functionality of using EBI online aSVG directly is completed.
 # Make an empty directory.
 dir.create('~/test')
 # Query aSVGs.
-feature.df <- return_feature(feature=c('frontal cortex', 'cerebellum'), species=c('homo sapiens', 'brain'), keywords.all=FALSE, return.all=FALSE, dir='~/test', remote=TRUE, match.only=TRUE, desc=FALSE)
+feature.df <- return_feature(feature=c('frontal cortex', 'cerebellum'), species=c('homo sapiens', 'brain'), keywords.any=TRUE, return.all=FALSE, dir='~/test', remote=TRUE, match.only=TRUE, desc=FALSE)
 # First 8 rows.
 feature.df[1:8, ]
 # All matching aSVGs.
@@ -425,10 +425,10 @@ package. To meet the requirements for building vignettes in R packages, the foll
 code section uses the packaged instance of the aSVG file (i.e. local aSVG) rather than downloading it. The ontology ids are available in the R package `rols` [@rols] or [Ontology Lookup Service](https://www.ebi.ac.uk/ols/index).  
 
 ```{r eval=TRUE, echo=TRUE, warnings=FALSE }
-feature.df <- return_feature(feature=c('frontal cortex', 'cerebellum'), species=c('homo sapiens', 'brain'), keywords.all=FALSE, return.all=FALSE, dir=svg.dir, remote=FALSE)
+feature.df <- return_feature(feature=c('frontal cortex', 'cerebellum'), species=c('homo sapiens', 'brain'), keywords.any=TRUE, return.all=FALSE, dir=svg.dir, remote=FALSE)
 ```
 
-The target tissues 'frontal cortex' and 'cerebellum' in the experiment design are all included in the aSVG, so it can be used for plotting spatial heatmaps. If users want to change the feature identifiers in the aSVG refer to the [Supplement](#update) for details.  
+The target tissues `frontal cortex` and `cerebellum` in the experiment design are all included in the aSVG, so it can be used for plotting spatial heatmaps. If users want to change the feature identifiers in the aSVG refer to the [Supplement](#update) for details.  
 
 ```{r eval=TRUE, echo=TRUE, warnings=FALSE }
 feature.df
@@ -453,7 +453,7 @@ target.hum <- read.table(hum.tar, header=TRUE, row.names=1, sep='\t')
 <font color='blue'>
 Use the tagets file to replace the data frame in `colData` slot.  
 
-jianhai: `DataFrame` should be used otherewise errors arise.  
+jianhai_comment: `DataFrame` should be used otherewise errors arise, so I isolated this code chunk to emphasise it. 
 
 ```{r eval=TRUE, echo=TRUE, warnings=FALSE }
 colData(rse.hum) <- DataFrame(target.hum)
@@ -487,7 +487,7 @@ for a package.]
 <font color='blue'>Added</font>
 
 <font color='blue'> 
-The raw-count normalizing function is `norm_data`. It builds on calcNormFactors (CNF) from edgeR [@edgeR], and estimateSizeFactors (EST), varianceStabilizingTransformation (VST), rlog from DESeq2 [@DESeq2]. The argument `norm.fun` specifies one of the four internal normalizing functions: `CNF`, `EST`, `VST`, `rlog`. If `none`, no normalization is applied. The arguments of each internal normalizing function are provided through `parameter.list`, which is a named list. For example, `norm.fun='ESF'` and `parameter.list=list(type='ratio')` is equivalent to `estimateSizeFactors(object, type='ratio')`.  
+The raw-count normalizing function is `norm_data`. It builds on `calcNormFactors` (CNF) from edgeR [@edgeR], and `estimateSizeFactors` (EST), `varianceStabilizingTransformation` (VST), `rlog` from DESeq2 [@DESeq2]. The argument `norm.fun` specifies one of the four internal normalizing functions: `CNF`, `EST`, `VST`, `rlog`. If `none`, no normalization is applied. The arguments of each internal normalizing function are provided through `parameter.list`, which is a named list. For example, `norm.fun='ESF'` and `parameter.list=list(type='ratio')` is equivalent to `estimateSizeFactors(object, type='ratio')`.  
 
 If `paramter.list=NULL`, the default arguments are applied for the normalizing function provided to `norm.fun`. See the help file of `norm_data` for details by running `?norm_data` in R console. In this example, `ESF` is chose for faster speed.   
 
@@ -507,7 +507,7 @@ assay(se.aggr.hum)[1:3, ]
 </font>
 
 The filtering removes unreliable expression measures. Specifically, the following example eliminates genes with expression values larger 
-than 5 in at least 1% of all samples (pOA=c(0.01, 5)), and with coefficient of variance
+than 5 (log2 unit) in at least 1% of all samples (pOA=c(0.01, 5)), and with coefficient of variance
 (CV) between 0.30 and 100 (CV=c(0.30, 100)) are retained.  
 
 ```{r eval=TRUE, echo=TRUE, warnings=FALSE }
@@ -541,9 +541,9 @@ names(shm.df)
 shm.df[['mapped_feature']]
 ```
 
-In this example, the expression profile of gene ENSG00000268433 in frontal
+In this example, the expression profile of gene `ENSG00000268433` in frontal
 cortex and cerebellum is plotted under ALS and normal conditions (Figure \@ref(fig:humshm)) with the legend plot on the right. For example, in Table \@ref(tab:humtab) its expression value in cerebellum under ALS is 5.324064. After
-mapping, this tissue is coloured blue corresponding to 5.324064 in the color
+mapping, this tissue is colored blue corresponding to 5.324064 in the color
 scale. By contrast, this gene\'s expression profile is dark yellow in the same tissue
 under normal condition. On the other hand, the expression profile (purple) in
 frontal cortex is similar across ALS and normal. Therefore, it is intuitive
@@ -551,8 +551,8 @@ that this gene\'s higher activity in cerebellum is potentially associated with
 ALS and could contribute to hypothesis generation.  
 
 <font color='blue'> 
-Note that only frontal cortex and cerebellum are coloured while others are blank in the spatial
-heatmaps, since they are the only 2 matching tissues between the data and aSVG image. And the legend plot only shows these 2 tissues, because `sam.legend=identical` limits the legend to matching tissues between the data and aSVG. If `sam.legend=all`, all tissues are shown and legend plot would overlap with spatial heatmaps. Except for `identical` and `all`, `sam.legend` also accepts a vector of specific tissues for display.  
+Note that only frontal cortex and cerebellum are colored while others are blank in the spatial
+heatmaps, since they are the only 2 aSVG features having identical tissue counterpars in the data. And the legend plot only shows these 2 tissues, because `sam.legend=identical` limits the legend to matching tissues between the data and aSVG. If `sam.legend=all`, all tissues are shown and legend plot would overlap with spatial heatmaps. Except for `identical` and `all`, `sam.legend` also accepts a vector of specific tissues for display.  
 </font>
 
 
@@ -593,7 +593,7 @@ heatmaps for each gene are plotted sequentially and organised on the same page.
 The `lay.shm` parameter specifies display these spatial heatmaps by genes or by
 conditions. This feature makes it flexible for users to compare expression
 profiles of the same gene across conditions or different genes across the same
-condition. For instance, Figure \@ref(fig:mul) is the spatial heatmaps of gene ENSG00000268433 and ENSG00000006047, which are organised by condition (horizontal view).   
+condition, and is particularly useful when compare gene families. For instance, Figure \@ref(fig:mul) is the spatial heatmaps of gene `ENSG00000268433` and `ENSG00000006047`, which are organised by condition (horizontal view).   
 
 
 ```{r mul, eval=TRUE, echo=TRUE, warnings=FALSE, fig.wide=TRUE, fig.cap=("Spatial heatmaps of two genes. The subplots are organised by \"condition\" through `lay.shm` argument."), out.width="100%" }
@@ -628,13 +628,13 @@ colData(rse.mus)[1:3, ]
 ```
 
 <font color='blue'> 
-Download aSVGs from remote EBI repository directly based on the experiment design. An empty directory '~/test' is suggested to save the downloaded files so as to avoid overwriting existing files.
+Download aSVGs from remote EBI repository directly based on tissues and species involved. An empty directory `~/test` is suggested to save the downloaded files so as to avoid overwriting existing files.
 
 ```{r eval=FALSE, echo=TRUE, warnings=FALSE }
 # Make an empty directory "~/test" if not exist.
 if (!dir.exists('~/test')) dir.create('~/test')
 # Query aSVGs.
-feature.df <- return_feature(feature=c('heart', 'kidney'), species=c('Mus musculus'), keywords.all=FALSE, return.all=FALSE, dir='~/test', remote=TRUE, match.only=FALSE)
+feature.df <- return_feature(feature=c('heart', 'kidney'), species=c('Mus musculus'), keywords.any=TRUE, return.all=FALSE, dir='~/test', remote=TRUE, match.only=FALSE)
 ```
 
 As explained in the [toy example](#toy), the target aSVG file has been included in this 
@@ -642,7 +642,7 @@ package. To meet the requirements for building vignettes in R packages, the foll
 code section uses the packaged instance of the aSVG files (`remote=FALSE`) rather than downloading it. To explain how to select a certain aSVG among the returned resutls, `species` is set `NULL` on purpose so that all aSVGs marching the feature keywords are returned.   
 
 ```{r eval=TRUE, echo=TRUE, warnings=FALSE }
-feature.df <- return_feature(feature=c('heart', 'kidney'), species=NULL, keywords.all=FALSE, return.all=FALSE, dir=svg.dir, remote=FALSE, match.only=FALSE) 
+feature.df <- return_feature(feature=c('heart', 'kidney'), species=NULL, keywords.any=TRUE, return.all=FALSE, dir=svg.dir, remote=FALSE, match.only=FALSE) 
 ```
 
 All aSVG files matching the query.  
@@ -651,7 +651,7 @@ All aSVG files matching the query.
 unique(feature.df$SVG)
 ```
 
-Select 'mus_musculus.male.svg' as the target aSVG. A slice of the feature data frame and all the aSVG features are shown.   
+Select `mus_musculus.male.svg` as the target aSVG. A slice of the feature data frame and all the aSVG features are shown.   
 
 ```{r eval=TRUE, echo=TRUE, warnings=FALSE }
 feature.df <- subset(feature.df, SVG=='mus_musculus.male.svg')
@@ -685,7 +685,7 @@ Use the targets file to replace the data frame in `colData` slot.
 colData(rse.mus) <- DataFrame(target.mus)
 ```
 
-Pre-process the raw count matrix: normalise, aggregate, filter. Genes with expression values larger than 5 in at least 1% of all samples (pOA=c(0.01, 5)), and with coefficient of variance (CV) between 0.60 and 100 (CV=c(0.6, 100)) are retained.    
+Pre-process the raw count matrix: normalise, aggregate, filter. Genes with expression values larger than 5 (log2 unit) in at least 1% of all samples (pOA=c(0.01, 5)), and with coefficient of variance (CV) between 0.60 and 100 (CV=c(0.6, 100)) are retained.    
 
 ```{r eval=TRUE, echo=TRUE, warnings=FALSE }
 # Normalise.
@@ -698,11 +698,11 @@ se.fil.mus <- filter_data(data=se.aggr.mus, sam.factor='organism_part', con.fact
 
 Plot spatial heatmaps.   
 
-```{r musshm, eval=TRUE, echo=FALSE, warnings=FALSE, fig.wide=TRUE, fig.cap=("Mouse organ spatial heatmap. This is a multiple-layer image and `skeletal muscle` is set transparent to expose lung and heart."), out.width="100%" }
+```{r musshm, eval=TRUE, echo=TRUE, warnings=FALSE, fig.wide=TRUE, fig.cap=("Mouse organ spatial heatmap. This is a multiple-layer image and `skeletal muscle` is set transparent to expose lung and heart."), out.width="100%" }
 spatial_hm(svg.path=svg.mus, data=se.fil.mus, ID=c('ENSMUSG00000000263'), height=0.5, legend.r=1.1, sub.title.size=9, ncol=3, tis.trans=c('skeletal muscle'), legend.nrow=4, line.size=0.2, line.color='grey70')
 ```
 
-The spatial heatmap of gene ENSMUSG00000000263 is plotted in 8 tissues across 3 strains. It is manifest that only brain exhibits obvious difference across the 3 strains with DBA.2J, C57BL.6, and CD1 being highest, medium, and lowest respectively. In contrast, all the other 8 tissues display similar profile across strains. Thus this gene is potentially strain-specific. Moreover, the expression levels of all the other 8 tissues are all lower than brain.   
+The spatial heatmap of gene `ENSMUSG00000000263` is plotted in 8 tissues across 3 strains. It is manifest that only brain exhibits obvious difference across the 3 strains with DBA.2J, C57BL.6, and CD1 being highest, medium, and lowest respectively. In contrast, all the other 8 tissues display similar profile across strains. Thus this gene is potentially strain-specific. Moreover, the expression levels of all the other 8 tissues are all lower than brain.   
 
 <font color='blue'>
 This is a typical example to demonstrate the usage of `tis.trans` parameter, since this mouse organ image includes tissues in multiple layers and skelectal muscle covers lung and heart. In Figure \@ref(fig:musshm), skelectal muscle is set transparent through `tis.trans=c('skeletal muscle')` so that lung and heart are exposed. By contrast, in Figure \@ref(fig:musshm1) `tis.trans=NULL` exposes `skeletal muscle` and lung and heart are covered.  
@@ -713,7 +713,7 @@ adjust the thickness and color of polygon outlines respectively and thus enhance
 </font>
 
 
-```{r musshm1, eval=TRUE, echo=FALSE, warnings=FALSE, fig.wide=TRUE, fig.cap=("Mouse organ spatial heatmap. This is a multiple-layer image and `skeletal muscle` convers lung and heart."), out.width="100%" }
+```{r musshm1, eval=TRUE, echo=TRUE, warnings=FALSE, fig.wide=TRUE, fig.cap=("Mouse organ spatial heatmap. This is a multiple-layer image and `skeletal muscle` convers lung and heart."), out.width="100%" }
 spatial_hm(svg.path=svg.mus, data=se.fil.mus, ID=c('ENSMUSG00000000263'), height=0.5, legend.r=1.1, sub.title.size=9, ncol=3, tis.trans=NULL, legend.ncol=2, line.size=0.2, line.color='grey70')
 ```
 
@@ -723,7 +723,7 @@ In this example, the data come from developments of 7 chicken organs under 9 tim
 
 The following process is similar to the Human Brain example, so explanation of code chunks is simplified to avoid lengthy text.  
 
-Search Expression Atlas for expression data derived from 'hear' and 'gallus'.  
+Search Expression Atlas for expression data derived from *'heart'* and *'gallus'*.  
 
 ```{r eval=TRUE, echo=TRUE, warnings=FALSE }
 all.chk <- searchAtlasExperiments(properties="heart", species="gallus")
@@ -743,20 +743,20 @@ colData(rse.chk)[1:3, ]
 ```
 
 <font color='blue'> 
-Download aSVGs from EBI repository based on the experiment design. An empty directory '~/test' is suggested to save the downloaded files so as to avoid overwriting existing files.  
+Download aSVGs from EBI repository based on the tissues and species involved. An empty directory `~/test` is suggested to save the downloaded files so as to avoid overwriting existing files.  
 
 ```{r eval=FALSE, echo=TRUE, warnings=FALSE }
 # Make an empty directory "~/test" if not exist.
 if (!dir.exists('~/test')) dir.create('~/test')
 # Query aSVGs.
-feature.df <- return_feature(feature=c('heart', 'kidney'), species=c('gallus'), keywords.all=FALSE, return.all=FALSE, dir='~/test', remote=TRUE, match.only=FALSE)
+feature.df <- return_feature(feature=c('heart', 'kidney'), species=c('gallus'), keywords.any=TRUE, return.all=FALSE, dir='~/test', remote=TRUE, match.only=FALSE)
 ```
 
 As explained in the [toy example](#toy), the target aSVG image has been included in this 
 package, and will be used for plotting spatial heatmaps.    
 
 ```{r eval=TRUE, echo=TRUE, warnings=FALSE }
-feature.df <- return_feature(feature=c('heart', 'kidney'), species=c('gallus'), keywords.all=FALSE, return.all=FALSE, dir=svg.dir, remote=FALSE, match.only=FALSE)
+feature.df <- return_feature(feature=c('heart', 'kidney'), species=c('gallus'), keywords.any=TRUE, return.all=FALSE, dir=svg.dir, remote=FALSE, match.only=FALSE)
 feature.df
 ```
 
@@ -789,11 +789,12 @@ unique(colData(rse.chk)[, 'organism_part'])
 ```
 
 All conditions used for plotting spatial heatmaps.  
+
 ```{r eval=TRUE, echo=TRUE, warnings=FALSE }
 unique(colData(rse.chk)[, 'age'])
 ```
 
-Pro-process data matrix: normalise, aggregate, filter. Genes with expression values larger than 5 in at least 1% of all samples (pOA=c(0.01, 5)), and with coefficient of variance (CV) between 0.6 and 100 (CV=c(0.6, 100)) are retained.  
+Pro-process data matrix: normalize, aggregate, filter. Genes with expression values larger than 5 (log2 unit) in at least 1% of all samples (pOA=c(0.01, 5)), and with coefficient of variance (CV) between 0.6 and 100 (CV=c(0.6, 100)) are retained.  
 
 ```{r eval=TRUE, echo=TRUE, warnings=FALSE }
 # Normalise.
@@ -807,11 +808,11 @@ se.fil.chk <- filter_data(data=se.aggr.chk, sam.factor='organism_part', con.fact
 
 Plot spatial heatmaps.  
 
-```{r chkshm, eval=TRUE, echo=FALSE, warnings=FALSE, fig.wide=TRUE, fig.cap=("Example of plotting chicken organ spatial heatmaps. Liver in day10 is not plotted since this tissue in day10 in not available in the data matrix."), out.width="100%" }
+```{r chkshm, eval=TRUE, echo=TRUE, warnings=FALSE, fig.wide=TRUE, fig.cap=("Example of plotting chicken organ spatial heatmaps. Liver in day10 is not plotted since this tissue in day10 in not available in the data matrix."), out.width="100%" }
 spatial_hm(svg.path=svg.chk, data=se.fil.chk, ID='ENSGALG00000006346', legend.r=1.5, sub.title.size=9, ncol=3, legend.nrow=2)
 ```
 
-The spatial heatmap of gene ENSGALG00000006346 is plotted. It is intuitive that the profiles of liver, heart, and kidney are all higher in day17 than other days. Therefore, the important role of this gene in day10 is worth futher exploration. In day10 liver is blank, because in the expression matrix liver data is not availble for day10. This reflects the plotting algorithm that only matching samples between the data and SVG image are plotted.    
+The spatial heatmap of gene `ENSGALG00000006346` is plotted. It is intuitive that the profiles of liver, heart, and kidney are all higher in day17 than other days. Therefore, the important role of this gene in day10 is worth futher exploration. In day10 liver is blank, because in the expression matrix liver data is not availble for day10. This reflects the plotting algorithm that only matching samples between the data and SVG image are plotted.    
 
 In this example, the usage of argument `ncol` is exhibited on how to achieve optimal layout. There are 9 time conditions, so `ncol=3` is set to make make full use of the space.   
 
@@ -832,7 +833,7 @@ Use gene symbols to replace probes.
 rownames(se.sh) <- make.names(rowData(se.sh)[, 'Gene.Symbol'])
 ```
 
-A slice of the experiment design, which is stored in `colData` slot. The samples and conditions are included in the `title` column. In samples, promoter pGL2, pCO2, pSCR, pWOL labels root atrichoblast epidermis, root cortex meristematic zone, root endodermis, root vasculature respectively, and p35S labels 'root_total' and 'shoot_total'. There are 2 conditions: control and hypoxia.  
+A slice of the experiment design, which is stored in `colData` slot. The samples and conditions are included in the `title` column. In samples, promoter *pGL2, pCO2, pSCR, pWOL* labels *root atrichoblast epidermis, root cortex meristematic zone, root endodermis, root vasculature* respectively, and *p35S* labels *root_total* and *shoot_total*. There are 2 conditions: `control` and `hypoxia`.  
 
 ```{r eval=TRUE, echo=TRUE, warnings=FALSE}
 colData(se.sh)[60:63, 1:4]
@@ -843,7 +844,7 @@ In this example, the aSVG image of Arabidopsis is made from @Mustroph2009-nu. Si
 Query the packaged aSVG files.  
 
 ```{r eval=TRUE, echo=TRUE, warnings=FALSE }
-feature.df <- return_feature(feature=c('pGL2', 'pRBCS'), species=c('shoot'), keywords.all=FALSE, return.all=FALSE, dir=svg.dir, remote=FALSE, match.only=FALSE)
+feature.df <- return_feature(feature=c('pGL2', 'pRBCS'), species=c('shoot'), keywords.any=TRUE, return.all=FALSE, dir=svg.dir, remote=FALSE, match.only=FALSE)
 ```
 
 All matching aSVGs.   
@@ -892,24 +893,24 @@ Use the targets file to replace the data frame in `colData` slot.
 colData(se.sh) <- DataFrame(target.sh)
 ```
 
-The dataset GSE14502 is already normalised by RMA [@affy], so the pro-processing only includes aggregation and filtering. Genes with expression values larger than 6 in at least 3% of all samples (pOA=c(0.03, 6)), and with coefficient of variance (CV) between 0.30 and 100 (CV=c(0.30, 100)) are retained.   
+The dataset GSE14502 is already normalised by RMA [@affy], so the pro-processing only includes aggregation and filtering. Genes with expression values larger than 6 (log2 unit) in at least 3% of all samples (pOA=c(0.03, 6)), and with coefficient of variance (CV) between 0.30 and 100 (CV=c(0.30, 100)) are retained.   
 
 ```{r eval=TRUE, echo=TRUE, warnings=FALSE }
 # Aggregate replicates. 
 se.aggr.sh <- aggr_rep(data=se.sh, sam.factor='samples', con.factor='conditions', aggr='mean')
 # Filter genes with low variance and low intensity.
-se.fil.sh <- filter_data(data=se.aggr.sh, sam.factor='samples', con.factor='conditions', pOA=c(0.03, 6), CV=c(0.30, 100), dir=NULL)
+se.fil.arab <- filter_data(data=se.aggr.sh, sam.factor='samples', con.factor='conditions', pOA=c(0.03, 6), CV=c(0.30, 100), dir=NULL)
 ```
 
 Plot spatial heatmaps.   
 
 ```{r shshm, eval=TRUE, echo=TRUE, warnings=FALSE, fig.wide=TRUE, fig.cap=('Spatial heatmaps of Arabidopsis shoot. Pre-defined tissue regions are colored by the expression profile of the target gene. The promoter pGL2, pRBCS, pCER5, pSultr2.2, pSUC2, pKAT1 label shoot trichomes, shoot photosynthetic cell, cotyledon and leaf epidermis, shootbundle sheath, shoot phloem companion cells, Cotyledon and leaf guard cells, respectively.'), out.width="100%"}
-spatial_hm(svg.path=svg.sh, data=se.fil.sh, ID=c("HRE2"), height=0.6, legend.nrow=3, legend.r=1.3, legend.key.size=0.3)
+spatial_hm(svg.path=svg.sh, data=se.fil.arab, ID=c("HRE2"), height=0.6, legend.nrow=3, legend.r=1.3, legend.key.size=0.3)
 ```
 
-Figure \@ref(fig:shshm) is the spatial heatmap of gene 'HRE2' under control and hypoxia. It is clear that this gene\'s exression profiles under control are lower than hypoxia across all the 5 tissues (pGL2, pRBCS, pCER5, pSUC2, pKAT1). Therefore, it can be hypothesised that hypoxia induces over-expression of 'HRE2' across the 5 tissues and thus 'HRE2' might be an important factor for Arabidopsis shoot to cope with hypoxia stress. The tissue pSultr2.2 is blank under hypoxia due to unavailability of its data under hypoxia in the data matrix.   
+Figure \@ref(fig:shshm) is the spatial heatmap of gene `HRE2` under `control` and `hypoxia`. It is clear that this gene\'s exression profiles under control are lower than `hypoxia` across all the 5 tissues (*pGL2, pRBCS, pCER5, pSUC2, pKAT1*). Therefore, it can be hypothesised that `hypoxia` induces over-expression of `HRE2` across the 5 tissues and thus `HRE2` might be an important factor for Arabidopsis shoot to cope with `hypoxia` stress. The tissue *pSultr2.2* is blank under `hypoxia` due to unavailability of its data under `hypoxia` in the data matrix.   
 
-<font color='blue'>jianhai: From here to Shiny App section, slight changes are made.</font>
+<font color='blue'>jianhai_comment: From here to Shiny App section, slight changes are made.</font>
 
 # Matrix Heatmaps {#mhm}
 
@@ -918,12 +919,12 @@ The Matrix Heatmap is designed to supplement the core feature of spatial heatmap
 **Adjacency Matrix and Module Identification**  
 
 <a name="ds"></a>
-The modules are identified by `adj_mod`. It first computes an adjacency matrix on the gene expression matrix then hierarchically clusters the adjacency matrix by using WGCNA [@Langfelder2008-sg] and flashClust [@flashClust]. The clutersing includes 4 alternative sensitivity levels (`ds`=0, 1, 2, or 3). From 3 to 0, the sensitivity decreases and results in less modules with larger sizes. Since the [interactive network](#inter_net) functionality performs better on smaller modules, only `ds` of 3 and 2 are used. There is another  parameter `type` for module identification: `signed` and `unsinged`. The `signed` means both positive and negative adjacency between genes are used while the `unsigned` takes the absolute values of negative adjacency.  
+The modules are identified by `adj_mod`. It first computes an adjacency matrix on the gene expression matrix then hierarchically clusters the adjacency matrix by using WGCNA [@Langfelder2008-sg] and flashClust [@flashClust]. The clutersing includes 4 alternative sensitivity levels (`ds`=0, 1, 2, or 3). From 3 to 0, the sensitivity decreases and results in less modules with larger sizes. Since the [interactive network](#inter_net) functionality performs better on smaller modules, only `ds` of 3 and 2 are used. There is another  parameter `type` for module identification: `signed` and `unsinged`. The former means both positive and negative adjacency between genes are used while the latter takes the absolute values of negative adjacency.  
 
 The function `adj_mod` returns a list containing an adjacency matrix and a data frame of module assignment. It is domenstrated on the [Arabidopsis Shoot](#plot_sh) data.
 
 ```{r eval=TRUE, echo=TRUE, warnings=FALSE, results=FALSE}
-adj.mod <- adj_mod(data=se.fil.sh, type="signed", minSize=15, dir=NULL)
+adj.mod <- adj_mod(data=se.fil.arab)
 ```   
 
 The adjacency matrix is a measure of co-expression similarity between genes, where larger value denotes more similarity.   
@@ -939,13 +940,13 @@ adj.mod[['mod']][1:3, ]
 ```
 
 <a name="mhm1"></a>
-The matrix heatmap is implemented in function `matrix_hm` with 2 modes provided: static or interactive. Figure \@ref(fig:static) is the static mode on gene 'HRE2'. Setting `static=FALSE` launches the interactive mode, where users can zoom in and out by drawing a rectangle and by double clicking the heatmap, respectively.
+The matrix heatmap is implemented in function `matrix_hm` with 2 modes provided: static or interactive. Figure \@ref(fig:static) is the static mode on gene `HRE2`. Setting `static=FALSE` launches the interactive mode, where users can zoom in and out by drawing a rectangle and by double clicking the heatmap, respectively.
 
 ```{r static, eval=TRUE, echo=TRUE, warnings=FALSE, fig.cap=("Matrix Heatmap. Rows are genes and columns are samples. The input gene is tagged by 2 black lines."), out.width='100%'}
-matrix_hm(geneID="HRE2", data=se.fil.sh, adj.mod=adj.mod, ds="3", scale="no", angleCol=80, angleRow=35, cexRow=0.8, cexCol=0.8, margin=c(10, 6), static=TRUE, arg.lis1=list(offsetRow=0.1, offsetCol=0.1))
+matrix_hm(geneID="HRE2", data=se.fil.arab, adj.mod=adj.mod, angleCol=80, angleRow=35, cexRow=0.8, cexCol=0.8, margin=c(10, 6), static=TRUE, arg.lis1=list(offsetRow=0.1, offsetCol=0.1))
 ```   
 
-In Figure \@ref(fig:static), the target gene is displayed in the gene module it belongs to, which is indicated by 2 black lines. The rows and columns are sorted by hierarchical clustering dendrograms. The expression matrix of this module is visualised without being scaled (`scale="no"`). It can be seen that the expression levels of this module is overall much higher in hypoxia than control, and therefore it could potentially be used to infer the hypoxia response mechanism in Arabidopsis.   
+In Figure \@ref(fig:static), the target gene is displayed in the gene module it belongs to, which is indicated by 2 black lines. The rows and columns are sorted by hierarchical clustering dendrograms. The expression matrix of this module is visualised without being scaled (`scale="no"`). It can be seen that the expression levels of this module is overall much higher in `hypoxia` than `control`, and therefore it could potentially be used to infer the `hypoxia` response mechanism in Arabidopsis.   
 
 # Network Graphs {#net}
 
@@ -954,16 +955,16 @@ The same target gene and module from matrix heatmap can also be displayed as a n
 Setting `static=TRUE` launches the static network. In Figure \@ref(fig:inter) Nodes are genes and edges are adjacencies between genes. The thicker edge denotes higher adjacency (co-expression similarity) while larger node indicates higher gene connectivity (sum of a gene\'s adjacency with all its direct neighbours). The target gene is labeled by '_selected'.  
 
 ```{r inter, eval=TRUE, echo=TRUE, warnings=FALSE, fig.cap=("Static network. Node size denotes gene connectivity while edge thickness stands for co-expression similarity.") }
-network(geneID="HRE2", data=se.fil.sh, ann=NULL, adj.mod=adj.mod, ds="3", adj.min=0.75, con.min=0, vertex.label.cex=1.2, vertex.cex=2, static=TRUE)
+network(geneID="HRE2", data=se.fil.arab, adj.mod=adj.mod, adj.min=0.75, vertex.label.cex=1.2, vertex.cex=2, static=TRUE)
 ```   
 
 <a name="inter_net"></a>
-Setting `static=FALSE` launches the interactive network. There is an interactive color bar to denote gene connectivity. The color ingredients must only be separated by comma, e.g. 'purple,yellow,blue', which means gene connectivity increases from purple to yellow. If too many edges (e.g.: > 300) are displayed, the network could get stuck. So the 'Input an adjacency threshold to display the adjacency network.' option sets a threthold to filter out weak edges. If not too many edges retained (e.g.: < 300), users can check 'Yes' under 'Display or not?', then the network would be responsive smoothly. To maintain acceptable performance, users are advised to choose a stringent threshold (e.g. 0.9) initially, then decrease the value gradually. The interactive feature allows users to zoom in and out, or drag a gene around. All the gene IDs in the network module are listed in 'Select by id' in decreasing order according to gene connectivity. Same with static mode, the target gene ID is appended '_selected'.  
+Setting `static=FALSE` launches the interactive network. There is an interactive color bar to denote gene connectivity. The color ingredients must only be separated by comma, e.g. `purple,yellow,blue`, which means gene connectivity increases from purple to yellow. If too many edges (e.g.: > 300) are displayed, the network could get stuck. So the 'Input an adjacency threshold to display the adjacency network.' option sets a threthold to filter out weak edges. If not too many edges retained (e.g.: < 300), users can check 'Yes' under 'Display or not?', then the network would be responsive smoothly. To maintain acceptable performance, users are advised to choose a stringent threshold (e.g. 0.9) initially, then decrease the value gradually. The interactive feature allows users to zoom in and out, or drag a gene around. All the gene IDs in the network module are listed in 'Select by id' in decreasing order according to gene connectivity. Same with static mode, the target gene ID is appended '_selected'.  
 
 If gene annotation is available in `rowData` slot and provided to `ann` argument, the annotation is seen by mousing over a node. In this example, `Target.Description` in `rowData` is provided to `ann`.  
 
 ```{r eval=FALSE, echo=TRUE, warnings=FALSE}
-network(geneID="HRE2", data=se.fil.sh, ann='Target.Description', adj.mod=adj.mod, adj.min=0.75, con.min=0, vertex.label.cex=1.2, vertex.cex=2, static=FALSE)
+network(geneID="HRE2", data=se.fil.arab, ann='Target.Description', adj.mod=adj.mod, static=FALSE)
 ```
 
 # Shiny App {#shiny}
@@ -982,19 +983,19 @@ include_graphics('img/shiny.png')
 
 ```  
 
-The data matrix to upload is a data frame and can be obtained by setting a directory path to `dir` in function `filter_data`. A directory 'local_mode_result/' is automatically created in the provided path, and the filtered data matrix is written to 'local_mode_result/processed_data.txt' with column names in the syntax ['sample__condition'](Table \@ref(tab:humtab)), which is a tab-separated file. If users want to see annotation by mousing over a node in the network, then a column of gene annotation in `rowData` slot should be provided to `ann`, and the annotation is appended to the last column in 'processed_data.txt'.  
+The data matrix to upload is a data frame. If the data is a `SummarizedExperiment` class, the data matrix can be obtained by setting a directory path to `dir` in function `filter_data`. A folder `local_mode_result/` is automatically created in the provided path, and the filtered data matrix is written to `local_mode_result/processed_data.txt` with column names in the scheme 'sample__condition' (Table \@ref(tab:humtab)), which is a tab-separated file. If users want to see annotation by mousing over a node in the network, a column of gene annotation in `rowData` slot should be provided to `ann`, then the annotation is appended to the last column in `processed_data.txt`.  
 
-For example, in `filter_data`, setting `dir='./'` (current working directory) will output the filtered data matrix in './local_mode_result/processed_data.txt', and setting `ann='Target.Description'` appends the annotation from `rowData` slot to the last column of 'processed_data.txt', which is ready to upload to the app.
+For example, in `filter_data`, setting `dir='./'` (current working directory) will output the filtered data matrix in `./local_mode_result/processed_data.txt`, and setting `ann='Target.Description'` appends the annotation from `rowData` slot to the last column of `processed_data.txt`, which is ready to upload to the app.
 
 ```{r eval=FALSE, echo=TRUE, warnings=FALSE}
-se.fil.sh <- filter_data(data=se.aggr.sh, ann="Target.Description", sam.factor='samples', con.factor='conditions', pOA=c(0.03, 6), CV=c(0.30, 100), dir='./')
+se.fil.arab <- filter_data(data=se.aggr.sh, ann="Target.Description", sam.factor='samples', con.factor='conditions', pOA=c(0.03, 6), CV=c(0.30, 100), dir='./')
 ```
 
-<font color='blue'>jianhai: the following Supplement section is substantially changed.</font>
+<font color='blue'>jianhai_comment: the following Supplement section is substantially changed.</font>
 
 # Supplement {#sup} 
 
-To plot spatial heatmaps, a pair of data (`vector`, `data frame`, `SummarizedExperiment`) and aSVG image are required. The most important step is to format the data and aSVG image so that target features in aSVG have matching counterparts in the data, since only the matching features in aSVG images are coloured. This section explains details of data and aSVG setup that are not covered in the main vignette.  
+To plot spatial heatmaps, a pair of data (`vector`, `data frame`, `SummarizedExperiment`) and aSVG image are required. The most important step is to format the data and aSVG image so that target features in aSVG have matching counterparts in the data, since only the matching features in aSVG images are colored. This section explains details of data and aSVG setup that are not covered in the main vignette.  
 
 ## Format the Data {#data_form}
 
@@ -1003,7 +1004,7 @@ The accepted data classes include `vector`, `data frame`, or `SummarizedExperime
 **Vector**  
 In the case of vector, the numeric values are measured from different samples. If one or more conditions are provided, the samples and conditions should be connected by double undescore, i.e. in the form of 'sample__condition'. If no conditions are provided, all the samples are assumed to have same condition, which is the [toy example](#toy).    
 
-Take 2 samples 'occipital_lobe' and 'parietal_lobe' from the [toy example](#toy) for instance and assume there are 2 conditions, 'condition1' and 'condition2'. Select 5 random values, assign 4 of them to the 2 samples under the 2 conditions, and the last one to a not-mapped sample. Note the value names should be unique.   
+Take 2 samples `occipital_lobe` and `parietal_lobe` from the [toy example](#toy) for instance and assume there are 2 conditions, `condition1` and `condition2`. Select 5 random values, assign 4 of them to the 2 samples under the 2 conditions, and the last one to a not-mapped sample. Note the value names should be unique.   
 
 ```{r eval=TRUE, echo=TRUE, warnings=FALSE }
 # Random numeric values.
@@ -1022,7 +1023,7 @@ spatial_hm(svg.path=svg.hum, data=vec, ID='toy', ncol=1, legend.r=1.2, sub.title
 **Data Frame**  
 In the case of data frame, numeric values are measured from different samples. Similarly, if one or more conditions are provided, the column names should be in the form of 'sample__condition'. If no conditions are provided, all the samples are assumed to have same condition.   
 
-Take the same samples and conditions in the vector case as example.  
+Take the same samples and conditions in the `vector` case as example.  
 
 Make a numeric data frame of 20 rows and 5 columns. Name columns with the value names (each is unique) from above vector and rows with 20 genes (gene1, gene2, ..., gene20).  
 
@@ -1044,7 +1045,7 @@ df.test$ann <- paste0('ann', 1:20)
 df.test[1:3, ]
 ```
 
-Plot spatial heatmaps on 'gene1'.   
+Plot spatial heatmaps on `gene1`.   
 
 ```{r dfshm, eval=TRUE, echo=TRUE, warnings=FALSE, fig.wide=FALSE, fig.cap=c('Spatial heatmaps on a data frame. \'occipital_lobe\' and \'parietal_lobe\' are 2 aSVG features and \'condition1\' and \'condition2\' are conditions.')}
 spatial_hm(svg.path=svg.hum, data=df.test, ID=c('gene1'), ncol=1, legend.r=1.2, sub.title.size=14)
@@ -1054,21 +1055,21 @@ spatial_hm(svg.path=svg.hum, data=df.test, ID=c('gene1'), ncol=1, legend.r=1.2, 
 
 In the following, the same samples and conditions in the above data frame are taken as example.  
 
-Formatting data of SummarizedExperiment (SE, @SummarizedExperiment) is essentially to make a targets file (a data frame of column metadata). The targets file usually has at least 2 columns that specifies sample and condition replicates respectively, and should be added to the `colData` slot. The data matrix should have genes and sample/conditions in rows and columns respectively, and must be in the `assay` slot. The `rowData` slot can store a data frame of annotaions corresponding to rows in `assay` slot, but is not required.  
+Formatting data of `SummarizedExperiment` (SE, @SummarizedExperiment) is essentially to make a targets file (a data frame of column metadata). The targets file usually has at least 2 columns that specifies sample and condition replicates respectively, and should be added to the `colData` slot. The data matrix should have assayed items (*e.g.* genes) and sample/conditions in rows and columns respectively, and must be in the `assay` slot. The `rowData` slot can store a data frame of annotaions corresponding to rows in `assay` slot, but is not required.  
 
 To plot spaital heatmap successfully, the targets file should meet the following requirements.  
 
-1. It is a data frame and usually has at least one column of samples and one column of conditions. The rows correspond with columns in `assay` slot. If the condition column is not defined, the samples are assumped under same condition.
+1. It is a `data frame` and usually has at least one column of samples and one column of conditions. The rows correspond with columns in `assay` slot. If the condition column is not defined, the samples are assumped under same condition.
  
 2. The sample column specifies sample replicates. It is crucial that replicate names of the same sample must be identical. Otherwise, they are treated as different samples. E.g. 
-'occipital_lobe', 'occipital_lobe' are the same sample while 'occipital_lobe1', 'occipital_lobe2' are different samples. 
+`occipital_lobe`, `occipital_lobe` are the same sample while `occipital_lobe1`, `occipital_lobe2` are different samples. 
 
-3. The sample identifiers of interest must be identical with features of interest in aSVG respectively. It means even a dot, undescore, space, *etc* can make a difference and lead to target features not coloured in spatial heatmaps. Since double underscore (__) is a reserved separator in spatialHeatmap, it cannot be used in sample or condition identifiers.  
+3. The sample identifiers of interest must be identical with features of interest in aSVG respectively. It means even a dot, undescore, space, *etc* can make a difference and lead to target features not colored in spatial heatmaps. Since double underscore (_\_) is a reserved separator in *spatialHeatmap*, it cannot be used in sample or condition identifiers.  
 
-4. The condition column has the same requirement with the sample column. E.g. 'condition1', 'condition1' is same conditoin while 'condition1A', 'condition1B' is treated as different conditions.   
+4. The condition column has the same requirement with the sample column. E.g. `condition1`, `condition1` is same conditoin while `condition1A`, `condition1B` is treated as different conditions.   
 
 
-In the following example, 'occipital_lobe' has 2 conditions 'condition1' and 'condition2', and each condition has 2 replicates, so there are 4 assays for 'occipital_lobe'. The same applies to 'parietal_lobe'. Based on this experiment design, the corresponding targets file is made, where a row is an assay.   
+In the following example, `occipital_lobe` has 2 conditions `condition1` and `condition2`, and each condition has 2 replicates, so there are 4 assays for `occipital_lobe`. The same applies to `parietal_lobe`. Based on this experiment design, the corresponding targets file is made, where a row is an assay.   
 
 ```{r eval=TRUE, echo=TRUE, warnings=FALSE }
 # Two samples.
@@ -1095,7 +1096,7 @@ se <- SummarizedExperiment(assays=df.se, colData=target.test)
 se
 ```
 
-Similarly, in the downstream [interactive network](#inter_net), if users want to have a gene annotation by mousing over a node, a data frame of gene annotation can be added to `rowData` slot, i.e. the `ann` column in `df.test`.  
+Similarly, in the downstream [interactive network](#inter_net), if users want to have a gene annotation by mousing over a node, a data frame of gene annotation can be added to `rowData` slot, *i.e.* the `ann` column in `df.test`.  
 
 ```{r eval=TRUE, echo=TRUE, warnings=FALSE }
 rowData(se) <- df.test['ann']
@@ -1108,7 +1109,7 @@ se.aggr <- aggr_rep(data=se, sam.factor='sample', con.factor='condition', aggr='
 assay(se.aggr)[1:3, ]
 ```
 
-Plot spatial heatmaps on 'gene1'.     
+Plot spatial heatmaps on `gene1`.     
 
 ```{r seshm, eval=TRUE, echo=TRUE, warnings=FALSE, fig.wide=FALSE, fig.cap=c('Spatial heatmaps on a SummarizedExperiment. \'occipital_lobe\' and \'parietal_lobe\' are 2 aSVG features and \'condition1\' and \'condition2\' are conditions.')}
 spatial_hm(svg.path=svg.hum, data=se.aggr, ID=c('gene1'), ncol=1, legend.r=1.2, sub.title.size=14)
@@ -1118,32 +1119,31 @@ spatial_hm(svg.path=svg.hum, data=se.aggr, ID=c('gene1'), ncol=1, legend.r=1.2, 
 
 The aSVG repository is from [EBI Gene Expression Group](https://github.com/ebi-gene-expression-group/anatomogram/tree/master/src/svg), where the requirements on aSVG format are included. It contains aSVGs across different species and can be downloaded with funtion `return_feature` directly. If users cannot find a target aSVG in this repository, there is a step-by-step [SVG tutorial](https://jianhaizhang.github.io/SVG_tutorial_file/) to create custom aSVG images, which is developed by this project.    
 
-<font color='blue'> 
-jianhai: This tutorial is made based on previous SVG format. It is being updated to be compatible with EBI SVG format.  
-</font>
 
 ## Update aSVG features {#update}
 
-To change existing feature identifiers in aSVG, the function `update_feature` should be used. For testing purpose, an empty folder '~/test1' is created and a copy of the aSVG 'homo_sapiens.brain.svg' packaged in `spatialHeatmap` is saved in there.  
+To change existing feature identifiers in aSVG, the function `update_feature` should be used. For testing purpose, an empty folder `~/test1` is created and a copy of the aSVG `homo_sapiens.brain.svg` packaged in *spatialHeatmap* is saved in there.  
 
-```{r eval=TRUE, echo=TRUE, warnings=FALSE }
+<!-- To avoid creating '~/test1' in users' computer, the following code chunks are not evaluated when building this vignette. -->
+
+```{r eval=FALSE, echo=TRUE, warnings=FALSE }
 # Make an empty directory.
-dir.create('~/test1')
+if (!dir.exists('~/test1')) dir.create('~/test1')
 # Copy the "homo_sapiens.brain.svg" aSVG.
 svg.hum <- system.file("extdata/shinyApp/example", 'homo_sapiens.brain.svg', package="spatialHeatmap")
 file.copy(from=svg.hum, to='~/test1', overwrite=FALSE)
 ```
 
-Use feature and species keywords ('frontal cortex' and 'homo sapiens') to query the aSVG and return existing features, which is a data frame. 
+Use feature and species keywords to query the aSVG and return existing features, which is a data frame. 
 
-```{r eval=TRUE, echo=TRUE, warnings=FALSE }
-feature.df <- return_feature(feature=c('frontal cortex'), species=c('homo sapiens'), dir='~/test1', remote=FALSE)
+```{r eval=FALSE, echo=TRUE, warnings=FALSE }
+feature.df <- return_feature(feature=c('frontal cortex'), species=c('homo sapiens', 'brain'), dir='~/test1', remote=FALSE, keywords.any=FALSE)
 feature.df
 ``` 
 
-Make a vector of new feature identifiers corresponding to every returned feature, *e.g.* replacing space with dots. This vector must be added to the first column of the feature data frame, since that is where `update_feature` looks for new features. Then features are updated with `update_feature`.    
+Make a vector of new feature identifiers corresponding to every returned feature, *e.g.* replacing spaces with dots. This vector must be added to the first column of the feature data frame, since that is where `update_feature` looks for new features. Then features are updated with `update_feature`.    
 
-```{r eval=TRUE, echo=TRUE, warnings=FALSE } 
+```{r eval=FALSE, echo=TRUE, warnings=FALSE } 
 # A vector of new features.
 f.new <- c('frontal.cortex', 'prefrontal.cortex')
 

@@ -2,58 +2,56 @@
 % Please edit documentation in R/norm_data.R
 \name{norm_data}
 \alias{norm_data}
-\title{Normalise Sequencing Count Matrix}
+\title{Normalize Sequencing Count Matrix}
 \usage{
 norm_data(data, norm.fun = "CNF", parameter.list = NULL, data.trans = "none")
 }
 \arguments{
-\item{data}{A "SummarizedExperiment". The "assays" slot stores an gene expression data matrix with row and column names being gene IDs and sample/conditions, respectively. The "rowData" can store a data frame of row (gene) anntation, but is optional. \cr The "colData" slot is required and contains a data frame with at least 2 columns corresponding to replicates of samples and conditions respectively. Only letters, digits, single underscore, dots, single space are allowed in the 2 columns. It is crucial that replicate names of the same sample or condition must be identical. E.g. If sample A has 3 replicates, "sampleA", "sampleA", "sampleA" is right while "sampleA1", "sampleA2", "sampleA3" is wrong.}
+\item{data}{An object of "data frame" or "SummarizedExperiment". If "data frame", the columns and rows should be sample/conditions and assayed items (e.g. genes, proteins, metabolites) respectively. The column names should follow the naming scheme "sample__condition". The "sample" is a general term and stands for cells, tissues, organs, etc. where the values are measured from. The "condition" is also a general term and refers to experiment treatments applied to "sample" such as drug dosage, temperature, time points, etc. If certain samples are not expected to be colored in the "spatial heatmap" (see \code{\link{spatial_hm}}), they are not required to follow this naming scheme. Since double underscore "__" is a reserved separator, it should not be used in any "sample" or "condition". In the downstream interactive network, if users want to see node annotation by mousing over a node, a column of row item annotation could be optionally appended to the last column. See \code{\link{network}} for details. \cr In the case of "SummarizedExperiment", the "assays" slot stores a data matrix with row and column names being assayed items and sample/conditions, respectively. Similarly, the "rowData" slot could optionally store a data frame of row item anntation. The "colData" slot contains a data frame and usually has a column of sample replicates and/or a column of condition replicates. Similarly, the reserved separator "__" should not be used in the sample and condition columns. It is crucial that replicate names of the same sample or condition must be identical. E.g. If sampleA has 3 replicates, "sampleA", "sampleA", "sampleA" is expected while "sampleA1", "sampleA2", "sampleA3" is regarded as 3 different samples. If original column names in the "assay" slot already follow the "sample__condition" scheme, then the "colData" slot is not required at all. \cr In the function \code{\link{spatial_hm}}, this argument can also be a numeric vector. In this vector, every value should be named, and values expected to color the "spatial heatmap" should follow the naming scheme "sample__condition". \cr In certain cases, there is no condition associated with data. Then in the naming scheme of "data frame" or "vector", the "__condition" part could be discarded. In "SummarizedExperiment", the "condition" column could be discarded in "colData" slot. Regardless of data class, "__" is still not allowed in "sample".}
 
-\item{norm.fun}{One of the normalisation functions: "CNF", "ESF", "VST", "rlog". Specifically, "CNF" stands for \code{\link[edgeR]{calcNormFactors}} from edgeR (McCarthy et al. 2012), and "EST", "VST", and "rlog" is equivalent to \code{\link[DESeq2]{estimateSizeFactors}}, \code{\link[DESeq2]{varianceStabilizingTransformation}}, and \code{\link[DESeq2]{rlog}} from DESeq2 respectively (Love, Huber, and Anders 2014). If "none", no normalisation is applied. Default is "CNF". The parameters of each normalisation function are specified through "parameter.list".}
+\item{norm.fun}{One of the normalizing functions: "CNF", "ESF", "VST", "rlog". Specifically, "CNF" stands for \code{\link[edgeR]{calcNormFactors}} from edgeR (McCarthy et al. 2012), and "EST", "VST", and "rlog" is equivalent to \code{\link[DESeq2]{estimateSizeFactors}}, \code{\link[DESeq2]{varianceStabilizingTransformation}}, and \code{\link[DESeq2]{rlog}} from DESeq2 respectively (Love, Huber, and Anders 2014). If "none", no normalisation is applied. Default is "CNF". The parameters of each normalisation function are specified through "parameter.list".}
 
-\item{parameter.list}{A list of parameters for each normalisation function specified in "norm.fun". Default is NULL and it means list(method='TMM'), list(type='ratio'), list(fitType='parametric', blind=TRUE), list(fitType='parametric', blind=TRUE) is internally set for "CNF", "ESF", "VST", "rlog" respectively. Note the name of each element in the list is required. E.g. list(method='TMM') is expected while list('TMM') causes errors. \cr Complete parameters of CNF: https://www.rdocumentation.org/packages/edgeR/versions/3.14.0/topics/calcNormFactors \cr Complete parameters of ESF: https://www.rdocumentation.org/packages/DESeq2/versions/1.12.3/topics/estimateSizeFactors \cr Complete parameters of VST: https://www.rdocumentation.org/packages/DESeq2/versions/1.12.3/topics/varianceStabilizingTransformation \cr Complete parameters of rlog: https://www.rdocumentation.org/packages/DESeq2/versions/1.12.3/topics/rlog}
+\item{parameter.list}{A list of parameters for each normalizing function specified in "norm.fun". Default is NULL and it means "list(method='TMM')", "list(type='ratio')", "list(fitType='parametric', blind=TRUE)", "list(fitType='parametric', blind=TRUE)" is internally set for "CNF", "ESF", "VST", "rlog" respectively. Note the name of each element in the list is required. E.g. "list(method='TMM')" is expected while "list('TMM')" would cause errors. \cr Complete parameters of CNF: https://www.rdocumentation.org/packages/edgeR/versions/3.14.0/topics/calcNormFactors \cr Complete parameters of ESF: https://www.rdocumentation.org/packages/DESeq2/versions/1.12.3/topics/estimateSizeFactors \cr Complete parameters of VST: https://www.rdocumentation.org/packages/DESeq2/versions/1.12.3/topics/varianceStabilizingTransformation \cr Complete parameters of rlog: https://www.rdocumentation.org/packages/DESeq2/versions/1.12.3/topics/rlog}
 
-\item{data.trans}{One of "log2", "exp2", and "none", corresponding to transform the count matrix by log2, 2-based exponent, and no transformation respecitvely. Default is "none".}
+\item{data.trans}{One of "log2", "exp2", and "none", corresponding to transform the count matrix by "log2", "2-based exponent", and "no transformation" respecitvely. Default is "none".}
 }
 \value{
-A "SummarizedExperiment" object containing normalised data matrix and metadata. The replicates of samples and conditions are concatenated by double underscore "__" to form "sample__condition" replicates. The column names of the output data matrix are replaced by "sample__condition" replicates.
+If the input data is "SummarizedExperiment", the retured value is also a "SummarizedExperiment" object containing normalized data matrix and metadata. If the input data is a data frame, the returned value is a data frame of normalized data.
 }
 \description{
-This function normalizes sequencing count data. It accepts the count matrix and sample metadata in form of "SummarizedExperiment" object. In "colData" slot, at least replicates of "sample" and "condition" should be included.
+This function normalizes sequencing count data. It accepts the count matrix and sample metadata in form of "SummarizedExperiment" or "data frame" object. In either class, the columns and rows of the count matix should be sample/conditions and genes respectively.
 }
 \examples{
-# The example data (E-GEOD-67196) is an RNA-seq data measured in cerebellum and frontal cortex of human brain across normal and amyotrophic lateral sclerosis (ALS) subjects (Prudencio et al. 2015). 
-library(ExpressionAtlas); library(SummarizedExperiment)
-rse.hum <- getAtlasData('E-GEOD-67196')[[1]][[1]]; assay(rse.hum)[1:3, 1:3]
+## In the following example, the 2 toy data come from an RNA-seq analysis on developments of 7 chicken organs under 9 time points (Cardoso-Moreira et al. 2019). The complete raw count data are downloaded with the accession number "E-MTAB-6769" using the R package ExpressionAtlas (Keays 2019). Both toy data are generated by truncating the complete data. For conveninece, they are included in this package. Toy data1 is used as a "data frame" input to exemplify data with simple samples/conditions, while toy data2 as "SummarizedExperiment" to illustrate data involving complex samples/conditions.   
 
-# A targets file describing replicates of samples and conditions is required, which is made based on the "colData" slot in the downloaded "RangedSummarizedExperiment" and available in spatialHeatmap. See the "se" parameter for details. 
-brain.pa <- system.file('extdata/shinyApp/example/target_brain.txt', package='spatialHeatmap')
-target.hum <- read.table(brain.pa, header=TRUE, row.names=1, sep='\t')
-# The "organism_part" and "disease" column describes tissue and condition replicates respectively.  
-target.hum[c(1:3, 41:42), 4:5]
-# Place the targets file into "colData" slot as a DataFrame class. 
-colData(rse.hum) <- DataFrame(target.hum)
+# Access the toy data1.
+cnt.chk.simple <- system.file('extdata/shinyApp/example/count_chicken_simple.txt', package='spatialHeatmap')
+df.chk <- read.table(cnt.chk.simple, header=TRUE, row.names=1, sep='\t', check.names=FALSE)
+df.chk[1:3, ]
 
-# For users with little R expertise, if the gene expression matrix comes as a data frame, it should be placed into "SummarizedExperiment" before proceeding to next step. An example is shown below by borrowing a data matrix from the brain data.
-# Borrow a data matrix.
-df <- assay(rse.hum); df[1:2, 1:3]
-# Place the data matrix and targets file (target.hum) into "SummarizedExperiment".
-rse.hum <- SummarizedExperiment(assay=df, colData=target.hum, rowData=NULL)
+# Access the toy data2. 
+cnt.chk <- system.file('extdata/shinyApp/example/count_chicken.txt', package='spatialHeatmap')
+count.chk <- read.table(cnt.chk, header=TRUE, row.names=1, sep='\t')
+count.chk[1:3, 1:5]
+# Store toy data2 in "SummarizedExperiment".
+library(SummarizedExperiment)
+se.chk <- SummarizedExperiment(assay=count.chk)
 
-# The count matrix is normalised with estimateSizeFactors (type=‘ratio’).
-se.nor.hum <- norm_data(data=rse.hum, norm.fun='CNF', data.trans='log2')
+# Normalize count data. The normalizing function "calcNormFactors" (McCarthy et al. 2012) with default settings is used.  
+df.nor.chk <- norm_data(data=df.chk, norm.fun='CNF', data.trans='log2')
+se.nor.chk <- norm_data(data=se.chk, norm.fun='CNF', data.trans='log2')
 }
 \references{
 SummarizedExperiment: SummarizedExperiment container. R package version 1.10.1 \cr R Core Team (2018). R: A language and environment for statistical computing. R Foundation for Statistical Computing, Vienna, Austria. URL https://www.R-project.org/
 McCarthy, Davis J., Chen, Yunshun, Smyth, and Gordon K. 2012. "Differential Expression Analysis of Multifactor RNA-Seq Experiments with Respect to Biological Variation." Nucleic Acids Research 40 (10): 4288–97
-Prudencio, Mercedes, Veronique V Belzil, Ranjan Batra, Christian A Ross, Tania F Gendron, Luc J Pregent, Melissa E Murray, et al. 2015. "Distinct Brain Transcriptome Profiles in C9orf72-Associated and Sporadic ALS." Nat. Neurosci. 18 (8): 1175–82
 Keays, Maria. 2019. ExpressionAtlas: Download Datasets from EMBL-EBI Expression Atlas
 Love, Michael I., Wolfgang Huber, and Simon Anders. 2014. "Moderated Estimation of Fold Change and Dispersion for RNA-Seq Data with DESeq2." Genome Biology 15 (12): 550. doi:10.1186/s13059-014-0550-8
 McCarthy, Davis J., Chen, Yunshun, Smyth, and Gordon K. 2012. "Differential Expression Analysis of Multifactor RNA-Seq Experiments with Respect to Biological Variation." Nucleic Acids Research 40 (10): 4288–97
+Cardoso-Moreira, Margarida, Jean Halbert, Delphine Valloton, Britta Velten, Chunyan Chen, Yi Shao, Angélica Liechti, et al. 2019. “Gene Expression Across Mammalian Organ Development.” Nature 571 (7766): 505–9
 }
 \seealso{
 \code{\link[edgeR]{calcNormFactors}} in edgeR, and \code{\link[DESeq2]{estimateSizeFactors}}, \code{\link[DESeq2]{varianceStabilizingTransformation}}, \code{\link[DESeq2]{rlog}} in DESeq2.
 }
 \author{
-Jianhai Zhang \email{jzhan067@ucr.edu; zhang.jianhai@hotmail.com}
+Jianhai Zhang \email{jzhan067@ucr.edu; zhang.jianhai@hotmail.com} \cr Dr. Thomas Girke \email{thomas.girke@ucr.edu}
 }
