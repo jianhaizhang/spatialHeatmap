@@ -17,17 +17,11 @@ output:
 fontsize: 14pt
 bibliography: bibtex.bib
 package: spatialHeatmap
-vignette: |
-  %\VignetteIndexEntry{spatialHeatmap Vignette}
+vignette: >
+  %\VignetteIndexEntry{spatialHeatmap: Visualizing Spatial Assays in Anatomical Images and Network Graphs}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
-
-<!-- %% \VignetteEngine{knitr::knitr} -->
-
-```{r style, echo=FALSE, results='asis'}
-BiocStyle::markdown()
-```
 
 
 ```{r global_options, include=FALSE}
@@ -307,8 +301,8 @@ file is defined by `svg.path=svg.hum`. The remaining arguments used here include
 `ID` for defining the title of the plot; `ncol` for setting the column-wise layout 
 of the plot excluding the feature legend plot on the right; and `height` for defining 
 the height of the spatial heatmap relative to its width. In the given example
-(Figure \@ref(fig:toyshm)) only three features in `my_vec` ('occipital_lobe', 
-'parietal_lobe', and 'temporal_lobe') have matching entries in the corresponding 
+(Figure \@ref(fig:toyshm)) only three features in `my_vec` ('occipital lobe', 
+'parietal lobe', and 'temporal lobe') have matching entries in the corresponding 
 aSVG. 
 
 ```{r toyshm, eval=TRUE, echo=TRUE, warnings=FALSE, fig.wide=TRUE, fig.cap=("Spatial heatmap on toy data. The middle plot is the spatial heatmap and the right is the legend."), out.width="100%" }
@@ -984,19 +978,19 @@ The accepted data classes include `vector`, `data frame`, or `SummarizedExperime
 **Vector**  
 In the case of vector, the numeric values are measured from different samples. If one or more conditions are provided, the samples and conditions should be connected by double undescore, i.e. in the form of 'sample__condition'. If no conditions are provided, all the samples are assumed to have same condition, which is the [toy example](#toy).    
 
-Take 2 samples `occipital_lobe` and `parietal_lobe` from the [toy example](#toy) for instance and assume there are 2 conditions, `condition1` and `condition2`. Select 5 random values, assign 4 of them to the 2 samples under the 2 conditions, and the last one to a not-mapped sample. Note the value names should be unique.   
+Take 2 samples `occipital lobe` and `parietal lobe` from the [toy example](#toy) for instance and assume there are 2 conditions, `condition1` and `condition2`. Select 5 random values, assign 4 of them to the 2 samples under the 2 conditions, and the last one to a not-mapped sample. Note the value names should be unique.   
 
 ```{r eval=TRUE, echo=TRUE, warnings=FALSE }
 # Random numeric values.
 vec <- sample(x=1:100, size=5)
 # Give unique names to random values.
-names(vec) <- c('occipital_lobe__condition1', 'occipital_lobe__condition2', 'parietal_lobe__condition1', 'parietal_lobe__condition2', 'notMapped')
+names(vec) <- c('occipital lobe__condition1', 'occipital lobe__condition2', 'parietal lobe__condition1', 'parietal lobe__condition2', 'notMapped')
 vec
 ```
 
 Plot spatial heatmaps.  
 
-```{r vecshm, eval=TRUE, echo=TRUE, warnings=FALSE, fig.wide=FALSE, fig.cap=c('Spatial heatmaps on a vector. \'occipital_lobe\' and \'parietal_lobe\' are 2 aSVG features and \'condition1\' and \'condition2\' are conditions.')}
+```{r vecshm, eval=TRUE, echo=TRUE, warnings=FALSE, fig.wide=FALSE, fig.cap=c('Spatial heatmaps on a vector. \'occipital lobe\' and \'parietal lobe\' are 2 aSVG features and \'condition1\' and \'condition2\' are conditions.')}
 spatial_hm(svg.path=svg.hum, data=vec, ID='toy', ncol=1, legend.r=1.2, sub.title.size=14)
 ```
 
@@ -1027,7 +1021,7 @@ df.test[1:3, ]
 
 Plot spatial heatmaps on `gene1`.   
 
-```{r dfshm, eval=TRUE, echo=TRUE, warnings=FALSE, fig.wide=FALSE, fig.cap=c('Spatial heatmaps on a data frame. \'occipital_lobe\' and \'parietal_lobe\' are 2 aSVG features and \'condition1\' and \'condition2\' are conditions.')}
+```{r dfshm, eval=TRUE, echo=TRUE, warnings=FALSE, fig.wide=FALSE, fig.cap=c('Spatial heatmaps on a data frame. \'occipital lobe\' and \'parietal lobe\' are 2 aSVG features and \'condition1\' and \'condition2\' are conditions.')}
 spatial_hm(svg.path=svg.hum, data=df.test, ID=c('gene1'), ncol=1, legend.r=1.2, sub.title.size=14)
 ```
 
@@ -1042,18 +1036,18 @@ To plot spaital heatmap successfully, the targets file should meet the following
 1. It is a `data frame` and usually has at least one column of samples and one column of conditions. The rows correspond with columns in `assay` slot. If the condition column is not defined, the samples are assumped under same condition.
  
 2. The sample column specifies sample replicates. It is crucial that replicate names of the same sample must be identical. Otherwise, they are treated as different samples. E.g. 
-`occipital_lobe`, `occipital_lobe` are the same sample while `occipital_lobe1`, `occipital_lobe2` are different samples. 
+`occipital lobe`, `occipital lobe` are the same sample while `occipital lobe1`, `occipital lobe2` are different samples. 
 
 3. The sample identifiers of interest must be identical with features of interest in aSVG respectively. It means even a dot, undescore, space, *etc* can make a difference and lead to target features not colored in spatial heatmaps. Since double underscore (_\_) is a reserved separator in *spatialHeatmap*, it cannot be used in sample or condition identifiers.  
 
 4. The condition column has the same requirement with the sample column. E.g. `condition1`, `condition1` is same conditoin while `condition1A`, `condition1B` is treated as different conditions.   
 
 
-In the following example, `occipital_lobe` has 2 conditions `condition1` and `condition2`, and each condition has 2 replicates, so there are 4 assays for `occipital_lobe`. The same applies to `parietal_lobe`. Based on this experiment design, the corresponding targets file is made, where a row is an assay.   
+In the following example, `occipital lobe` has 2 conditions `condition1` and `condition2`, and each condition has 2 replicates, so there are 4 assays for `occipital lobe`. The same applies to `parietal lobe`. Based on this experiment design, the corresponding targets file is made, where a row is an assay.   
 
 ```{r eval=TRUE, echo=TRUE, warnings=FALSE }
 # Two samples.
-sample <- c(rep('occipital_lobe', 4), rep('parietal_lobe', 4))
+sample <- c(rep('occipital lobe', 4), rep('parietal lobe', 4))
 # Two conditions.
 condition <- rep(c('condition1', 'condition1', 'condition2', 'condition2'), 2)
 # Targets file.
@@ -1091,7 +1085,7 @@ assay(se.aggr)[1:3, ]
 
 Plot spatial heatmaps on `gene1`.     
 
-```{r seshm, eval=TRUE, echo=TRUE, warnings=FALSE, fig.wide=FALSE, fig.cap=c('Spatial heatmaps on a SummarizedExperiment. \'occipital_lobe\' and \'parietal_lobe\' are 2 aSVG features and \'condition1\' and \'condition2\' are conditions.')}
+```{r seshm, eval=TRUE, echo=TRUE, warnings=FALSE, fig.wide=FALSE, fig.cap=c('Spatial heatmaps on a SummarizedExperiment. \'occipital lobe\' and \'parietal lobe\' are 2 aSVG features and \'condition1\' and \'condition2\' are conditions.')}
 spatial_hm(svg.path=svg.hum, data=se.aggr, ID=c('gene1'), ncol=1, legend.r=1.2, sub.title.size=14)
 ```
 

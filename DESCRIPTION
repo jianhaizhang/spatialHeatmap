@@ -11,7 +11,7 @@ Encoding: UTF-8
 biocViews: Visualization, Microarray, Sequencing, GeneExpression, DataRepresentation, Network, Clustering, GraphAndNetwork
 VignetteBuilder: knitr
 Suggests: knitr, rmarkdown, BiocStyle, RUnit, BiocGenerics, data.table, ExpressionAtlas, DT, reshape2, Biobase, GEOquery
-Depends: R (>= 3.6.0)
+Depends: 
 Imports:
    DESeq2,
    edgeR,
