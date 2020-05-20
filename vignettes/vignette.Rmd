@@ -27,7 +27,7 @@ vignette: >
 ```{r global_options, include=FALSE}
 ## ThG: chunk added to enable global knitr options. The below turns on
 ## caching for faster vignette re-build during text editing.
-knitr::opts_chunk$set(cache=TRUE)
+knitr::opts_chunk$set(cache=FALSE)
 ```
 <!-- 
 
@@ -1021,7 +1021,7 @@ df.test[1:3, ]
 
 Plot spatial heatmaps on `gene1`.   
 
-```{r dfshm, eval=TRUE, echo=TRUE, warnings=FALSE, fig.wide=FALSE, fig.cap=c('Spatial heatmaps on a data frame. \'occipital lobe\' and \'parietal lobe\' are 2 aSVG features and \'condition1\' and \'condition2\' are conditions.')}
+```{r dfshm, eval=FALSE, echo=TRUE, warnings=FALSE, fig.wide=FALSE, fig.cap=c('Spatial heatmaps on a data frame. \'occipital lobe\' and \'parietal lobe\' are 2 aSVG features and \'condition1\' and \'condition2\' are conditions.')}
 spatial_hm(svg.path=svg.hum, data=df.test, ID=c('gene1'), ncol=1, legend.r=1.2, sub.title.size=14)
 ```
 
@@ -1085,7 +1085,7 @@ assay(se.aggr)[1:3, ]
 
 Plot spatial heatmaps on `gene1`.     
 
-```{r seshm, eval=TRUE, echo=TRUE, warnings=FALSE, fig.wide=FALSE, fig.cap=c('Spatial heatmaps on a SummarizedExperiment. \'occipital lobe\' and \'parietal lobe\' are 2 aSVG features and \'condition1\' and \'condition2\' are conditions.')}
+```{r seshm, eval=FALSE, echo=TRUE, warnings=FALSE, fig.wide=FALSE, fig.cap=c('Spatial heatmaps on a SummarizedExperiment. \'occipital lobe\' and \'parietal lobe\' are 2 aSVG features and \'condition1\' and \'condition2\' are conditions.')}
 spatial_hm(svg.path=svg.hum, data=se.aggr, ID=c('gene1'), ncol=1, legend.r=1.2, sub.title.size=14)
 ```
 

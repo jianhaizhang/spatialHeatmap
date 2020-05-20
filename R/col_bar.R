@@ -20,9 +20,8 @@ col_bar <- function(geneV, cols, width, bar.title.size=10, mar=c(3, 0.1, 3, 0.1)
 
   color_scale <- y <- NULL
   cs.df <- data.frame(color_scale=geneV, y=1)
-  cs.g <- ggplot()+geom_bar(data=cs.df, aes(x=color_scale, y=y), fill=cols, stat="identity", width=((max(geneV)-min(geneV))/length(geneV))*width)+theme(axis.title.x=element_blank(), axis.text.x=element_blank(), axis.ticks.x=element_blank(), plot.margin=margin(t=mar[1], r=mar[2], b=mar[3], l=mar[4], "cm"), panel.grid=element_blank(), panel.background=element_blank(), plot.title= element_text(hjust=0.7, size=bar.title.size))+coord_flip()+labs(title="Value", x=NULL, y=NULL)
-  if (max(geneV)<=10000) cs.g <- cs.g+scale_x_continuous(expand=c(0,0))+scale_y_continuous(expand=c(0,0))
-  if (max(geneV)>10000) cs.g <- cs.g+scale_x_continuous(expand=c(0,0), labels=function(x) format(x, scientific=TRUE))+scale_y_continuous(expand=c(0,0))
+  cs.g <- ggplot()+geom_bar(data=cs.df, aes(x=color_scale, y=y), fill=cols, orientation='x', stat="identity", width=((max(geneV)-min(geneV))/length(geneV))*width)+theme(axis.title.x=element_blank(), axis.text.x=element_blank(), axis.ticks.x=element_blank(), plot.margin=margin(t=mar[1], r=mar[2], b=mar[3], l=mar[4], "cm"), panel.grid=element_blank(), panel.background=element_blank(), plot.title= element_text(hjust=0.7, size=bar.title.size))+coord_flip()+labs(title="Value", x=NULL, y=NULL)
+  if (max(abs(geneV))<=10000 & max(abs(geneV))>=0.0001) cs.g <- cs.g+scale_x_continuous(expand=c(0,0))+scale_y_continuous(expand=c(0,0)) else cs.g <- cs.g+scale_x_continuous(expand=c(0,0), labels=function(x) format(x, scientific=TRUE))+scale_y_continuous(expand=c(0,0))+theme(axis.text.y=element_text(angle=45))
   return(cs.g)
 
 }
