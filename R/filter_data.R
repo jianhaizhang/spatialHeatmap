@@ -78,7 +78,8 @@ filter_data <- function(data, pOA=c(0, 0), CV=c(-Inf, Inf), ann=NULL, sam.factor
   options(stringsAsFactors=FALSE)
   if (is(data, 'data.frame')|is(data, 'matrix')) {
 
-    data <- as.data.frame(data); rna <- rownames(data); cna <- colnames(data) 
+    data <- as.data.frame(data); rna <- rownames(data); cna <- make.names(colnames(data))
+    if (!identical(cna, colnames(data))) cat('Syntactically valid column names are made! \n')
     na <- vapply(seq_len(ncol(data)), function(i) { tryCatch({ as.numeric(data[, i]) }, warning=function(w) { return(rep(NA, nrow(data)))
     }, error=function(e) { stop("Please make sure input data are numeric!") }) }, FUN.VALUE=numeric(nrow(data)) )
     na <- as.data.frame(na); rownames(na) <- rna
@@ -89,34 +90,42 @@ filter_data <- function(data, pOA=c(0, 0), CV=c(-Inf, Inf), ann=NULL, sam.factor
 
     expr <- assay(data); col.meta <- as.data.frame(colData(data))
     row.meta <- as.data.frame(rowData(data), stringsAsFactors=FALSE)[, , drop=FALSE]
-    # Factors teated by paste0/make.names are vecters.
-    if (!is.null(sam.factor) & !is.null(con.factor)) { colnames(expr) <- paste0(make.names(col.meta[, sam.factor]), '__', make.names(col.meta[, con.factor])) } else if (!is.null(sam.factor) & is.null(con.factor)) { colnames(expr) <- make.names(col.meta[, sam.factor]) } else if (is.null(sam.factor) & !is.null(con.factor)) { colnames(expr) <- make.names(col.meta[, con.factor]) }
- 
+    # Factors teated by paste0/make.names are vectors.
+    if (!is.null(sam.factor) & !is.null(con.factor)) { cna <- paste0(col.meta[, sam.factor], '__', col.meta[, con.factor]) } else if (!is.null(sam.factor) & is.null(con.factor)) { cna <- as.vector(col.meta[, sam.factor]) } else if (is.null(sam.factor) & !is.null(con.factor)) { cna <- as.vector(col.meta[, con.factor]) } else cna <- colnames(expr)
+    colnames(expr) <- make.names(cna); if (!identical(cna, make.names(cna))) cat('Syntactically valid column names are made! \n')
+
   }
-  if (!is.null(dir)) { path <- paste0(dir, "/local_mode_result/"); if (!dir.exists(path)) dir.create(path) }
+
   ffun <- filterfun(pOverA(p=pOA[1], A=pOA[2]), cv(CV[1], CV[2]))
   filtered <- genefilter(expr, ffun); expr <- expr[filtered, ]
   row.meta <- row.meta[filtered, , drop=FALSE]
 
-  expr1 <- NULL; if (!is.null(dir)) { 
+  if (!is.null(dir)) { 
 
-    if (is.null(ann)) stop("Please specify row annotation!")
-    if (ncol(row.meta)==0) stop("Row annotation is not available!")
-    expr1 <- cbind.data.frame(expr, row.meta[, ann], stringsAsFactors=FALSE)
-    colnames(expr1)[ncol(expr1)] <- ann
+    path <- paste0(dir, "/local_mode_result/"); if (!dir.exists(path)) dir.create(path)
+
+    if (is(data, 'data.frame')|is(data, 'matrix')) {
+
+      expr1 <- cbind.data.frame(expr, row.meta, stringsAsFactors=FALSE)
+
+    }  else if (is(data, 'SummarizedExperiment')) {
+      
+      if (ncol(row.meta)>0 & !is.null(ann)) {
+        
+        expr1 <- cbind.data.frame(expr, row.meta[, ann], stringsAsFactors=FALSE)
+        colnames(expr1)[ncol(expr1)] <- ann
+      
+      } else expr1 <- expr
 
     }
-
-    if (!is.null(dir)) {
+    write.table(expr1, paste0(path, "processed_data.txt"), sep="\t", row.names=TRUE, col.names=TRUE)
       
-      if (!is.null(expr1)) write.table(expr1, paste0(path, "processed_data.txt"), sep="\t", row.names=TRUE, col.names=TRUE) else write.table(expr, paste0(path, "processed_data.txt"), sep="\t", row.names=TRUE, col.names=TRUE)
-      
-    }
+  }
 
   if (is(data, 'data.frame')|is(data, 'matrix')) { return(cbind(expr, row.meta)) } else if (is(data, 'SummarizedExperiment')) {
   
-  rownames(col.meta) <- NULL # If row names present in colData(data), if will become column names of assay(data).
-  expr <- SummarizedExperiment(assays=list(expr=expr), rowData=row.meta, colData=col.meta); return(expr)
+    rownames(col.meta) <- NULL # If row names present in colData(data), if will become column names of assay(data).
+    expr <- SummarizedExperiment(assays=list(expr=expr), rowData=row.meta, colData=col.meta); return(expr)
 
   }
 

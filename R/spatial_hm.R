@@ -132,6 +132,7 @@ spatial_hm <- function(svg.path, data, sam.factor=NULL, con.factor=NULL, ID, col
   if (is.vector(data)) {
 
     vec.na <- make.names(names(data)); if (is.null(vec.na)) stop("Please provide names for the input data!")
+    if (!identical(vec.na, names(data))) cat('Syntactically valid column names are made! \n')
     if (any(duplicated(vec.na))) stop('Please make sure data names are unique!')
     form <- grepl("__", vec.na); if (sum(form)==0) { vec.na <- paste0(vec.na, '__', 'con'); con.na <- FALSE } else con.na <- TRUE
     data <- tryCatch({ as.numeric(data) }, warning=function(w) { stop("Please make sure input data are numeric!") }, error=function(e) { stop("Please make sure input data are numeric!") })
@@ -141,6 +142,7 @@ spatial_hm <- function(svg.path, data, sam.factor=NULL, con.factor=NULL, ID, col
   } else if (is(data, 'data.frame')|is(data, 'matrix')) {
 
     data <- as.data.frame(data); rna <- rownames(data); cna <- make.names(colnames(data))
+    if (!identical(cna, colnames(data))) cat('Syntactically valid column names are made! \n')
     if (any(duplicated(cna))) stop('Please make sure column names are unique!')
     na <- vapply(seq_len(ncol(data)), function(i) { tryCatch({ as.numeric(data[, i]) }, warning=function(w) { return(rep(NA, nrow(data)))
     }, error=function(e) { stop("Please make sure input data are numeric!") }) }, FUN.VALUE=numeric(nrow(data)) )
@@ -153,9 +155,11 @@ spatial_hm <- function(svg.path, data, sam.factor=NULL, con.factor=NULL, ID, col
 
     gene <- assay(data); r.na <- rownames(gene); gene <- apply(gene, 2, as.numeric) # This step removes rownames of gene2.
     rownames(gene) <- r.na; cna <- colnames(gene) <- make.names(colnames(gene))
+    if (!identical(cna, colnames(gene))) cat('Syntactically valid column names are made! \n')
     col.meta <- as.data.frame(colData(data), stringsAsFactors=FALSE)
     # Factors teated by paste0/make.names are vecters.
-    if (!is.null(sam.factor) & !is.null(con.factor)) { colnames(gene) <- paste0(make.names(col.meta[, sam.factor]), '__', make.names(col.meta[, con.factor])); con.na <- TRUE } else if (!is.null(sam.factor) & is.null(con.factor)) { sam.na <- make.names(col.meta[, sam.factor]); colnames(gene) <- paste0(sam.na, "__", "con"); con.na <- FALSE } else if (is.null(sam.factor)) { form <- grepl("__", cna); if (sum(form)==0) { colnames(gene) <- paste0(cna, '__', 'con'); con.na <- FALSE } else con.na <- TRUE }
+    if (!is.null(sam.factor) & !is.null(con.factor)) { cna.tar <- paste0(col.meta[, sam.factor], '__', col.meta[, con.factor]); con.na <- TRUE } else if (!is.null(sam.factor) & is.null(con.factor)) { sam.na <- as.vector(col.meta[, sam.factor]); cna.tar <- paste0(sam.na, "__", "con"); con.na <- FALSE } else if (is.null(sam.factor)) { form <- grepl("__", cna); if (sum(form)==0) { cna.tar <- paste0(cna, '__', 'con'); con.na <- FALSE } else con.na <- TRUE }
+    if (exists('cna.tar')) { colnames(gene) <- make.names(cna.tar); if (!identical(cna.tar, make.names(cna.tar))) cat('Syntactically valid column names are made! \n') }
     if (any(duplicated(colnames(gene)))) stop('Please use function \'aggr_rep\' to aggregate \'sample__condition\' replicates!')
 
   }; gene <- as.data.frame(gene)

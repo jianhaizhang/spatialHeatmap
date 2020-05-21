@@ -91,7 +91,7 @@ adj_mod <- function(data, type='signed', minSize=15, dir=NULL) {
   options(stringsAsFactors=FALSE)
   if (is(data, 'data.frame')|is(data, 'matrix')) {
 
-    data <- as.data.frame(data); rna <- rownames(data); cna <- colnames(data) 
+    data <- as.data.frame(data); rna <- rownames(data); cna <- make.names(colnames(data)) 
     na <- vapply(seq_len(ncol(data)), function(i) { tryCatch({ as.numeric(data[, i]) }, warning=function(w) { return(rep(NA, nrow(data)))
     }, error=function(e) { stop("Please make sure input data are numeric!") }) }, FUN.VALUE=numeric(nrow(data)) )
     na <- as.data.frame(na); rownames(na) <- rna
