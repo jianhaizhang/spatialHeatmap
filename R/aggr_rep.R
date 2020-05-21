@@ -68,7 +68,8 @@ aggr_rep <- function(data, sam.factor, con.factor, aggr='mean') {
   options(stringsAsFactors=FALSE)
   if (is(data, 'data.frame')|is(data, 'matrix')) {
 
-    data <- as.data.frame(data); rna <- rownames(data); cna <- colnames(data) 
+    data <- as.data.frame(data); rna <- rownames(data); cna <- make.names(colnames(data))
+    if (!identical(cna, colnames(data))) cat('Syntactically valid column names are made! \n')
     na <- vapply(seq_len(ncol(data)), function(i) { tryCatch({ as.numeric(data[, i]) }, warning=function(w) { return(rep(NA, nrow(data)))
     }, error=function(e) { stop("Please make sure input data are numeric!") }) }, FUN.VALUE=numeric(nrow(data)) )
     na <- as.data.frame(na); rownames(na) <- rna
@@ -78,9 +79,11 @@ aggr_rep <- function(data, sam.factor, con.factor, aggr='mean') {
   } else if (is(data, 'SummarizedExperiment')) {
 
     mat <- assay(data); col.meta <- as.data.frame(colData(data))
-    # Factors teated by paste0/make.names are vecters.
-    if (!is.null(sam.factor) & !is.null(con.factor)) { fct <- colnames(mat) <- paste0(make.names(col.meta[, sam.factor]), '__', make.names(col.meta[, con.factor])) } else if (!is.null(sam.factor) & is.null(con.factor)) {  fct <- colnames(mat) <- make.names(col.meta[, sam.factor]) } else if (is.null(sam.factor) & !is.null(con.factor)) { fct <- colnames(mat) <- make.names(col.meta[, con.factor]) }
- 
+    # Factors teated by paste0/make.names are vectrs.
+    if (!is.null(sam.factor) & !is.null(con.factor)) { fct <- paste0(col.meta[, sam.factor], '__', col.meta[, con.factor]) } else if (!is.null(sam.factor) & is.null(con.factor)) {  fct <- as.vector(col.meta[, sam.factor]) } else if (is.null(sam.factor) & !is.null(con.factor)) { fct <- as.vector(col.meta[, con.factor]) } else fct <- colnames(mat)
+    if (!identical(fct, make.names(fct))) cat('Syntactically valid column names are made! \n')
+    fct <- colnames(mat) <- make.names(fct) 
+
   }
   # To keep colnames, "X" should be a character, not a factor.
   if (aggr=='mean') mat <- sapply(X=unique(fct), function(x) rowMeans(mat[, fct==x, drop=FALSE]))
