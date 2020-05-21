@@ -27,7 +27,7 @@ vignette: >
 ```{r global_options, include=FALSE}
 ## ThG: chunk added to enable global knitr options. The below turns on
 ## caching for faster vignette re-build during text editing.
-knitr::opts_chunk$set(cache=FALSE)
+knitr::opts_chunk$set(cache=TRUE)
 ```
 <!-- 
 
@@ -168,9 +168,9 @@ required spatial resolution. Correct assignment of image features and assay
 results is assured by using for both the same feature identifiers. The color
 gradient used to visually represent the numeric assay values is controlled by a
 color gradient parameter. To visually interpret the meaning of the colors, the
-corresponding color key is included in the spatial heatmap plots.
-The formatting details for properly annotating both aSVG images and
-assay data are provided in the [Supplement](#sup) section of this vignette. 
+corresponding color key is included in the spatial heatmap plots.  Additional
+details for properly formatting and annotating both aSVG images and assay data
+are provided in the [Supplement](#sup) section of this vignette. 
 
 ## Data Repositories {#data_sources}
 
@@ -186,9 +186,7 @@ including animals and plants. In `spatialHeatmap` several import functions are
 provided to work with the expression and [aSVG repository](#svg_repo) from the Expression Atlas
 directly. The aSVG images developed by this project will be deposited in its
 own [repository](https://github.com/jianhaizhang/SVG_tutorial_file/tree/master/svg_repo), where users can contribute their aSVG images that are 
-formatted according to our guidlines. <font color="red">[ThG-Comment: URL and name
-of your own aSVG repos is missing.]</font>
-<font color='blue'>jianhai_comment: a specific repo name will be added later. </font>
+formatted according to our guidlines.^[Jianhai will provide here a repos name later.] 
 
 
 ## Tutorial Overview {#sample_data}
