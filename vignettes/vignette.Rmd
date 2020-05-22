@@ -184,10 +184,10 @@ experiments for different species, tissues and conditions. The corresponding
 anatomical image collections are also provided for a wide range of species
 including animals and plants. In `spatialHeatmap` several import functions are
 provided to work with the expression and [aSVG repository](#svg_repo) from the Expression Atlas
-directly. The aSVG images developed by this project will be deposited in its
-own [repository](https://github.com/jianhaizhang/SVG_tutorial_file/tree/master/svg_repo), where users can contribute their aSVG images that are 
-formatted according to our guidlines.^[Jianhai will provide here a repos name later.] 
+directly. The aSVG images developed by this project (*e.g.* the Arabidopsis Shoot in Figure \@ref(fig:shshm)) are deposited in [GirkeLab SVG Repository](https://github.com/jianhaizhang/SVG_tutorial_file/tree/master/GirkeLab_SVG_Repo), where users can contribute their aSVG images that are 
+formatted according to our guidlines.   
 
+<font color='blue'>jianhai_comment: repo added.</font>
 
 ## Tutorial Overview {#sample_data}
 
