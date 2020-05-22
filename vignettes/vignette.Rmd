@@ -114,7 +114,7 @@ corresponding cell types or tissues represented in a chosen SVG image. In the
 gene profiling field, this feature supports comparisons of the expression
 values among multiple genes by plotting their spatial heatmaps next to each
 other. Similarly, one can display the expression values of a single or multiple
-genes across multiple conditions in the same plot (Figure \@ref(fig:mul)). This level of flexibility is
+genes across multiple conditions in the same plot (Figure \@ref(fig:humshm)). This level of flexibility is
 very efficient for visualizing complicated expression patterns across genes,
 cell types and conditions. In case of more complex anatomical images composed
 of overlapping multiple layer tissues, it is important to visually expose the
@@ -493,18 +493,26 @@ To inspect the results, the following returns three selected rows of the fully
 preprocessed data matrix (Table \@ref(tab:humtab)). 
 
 ```{r eval=FALSE, echo=TRUE, warnings=FALSE }
-assay(se.fil.hum)[733:735, ]
+assay(se.fil.hum)[c(5, 733:734), ]
 ```
 
 ```{r humtab, eval=TRUE, echo=FALSE, warnings=FALSE}
-kable(assay(se.fil.hum)[733:735, ], caption='A slice of fully preprocessed data matrix.')
+kable(assay(se.fil.hum)[c(5, 733:734), ], caption='A slice of fully preprocessed data matrix.')
 ```
 
-Next, the preprocessed expression values of gene `ENSG00000268433` are plotted onto the
-corresponding features of the aSVG image depicting the human brain. 
+<font color='blue'>
+When plot spatial heatmaps, if mutiple target genes are input, a set of spatial
+heatmaps for each gene are plotted sequentially and organised on the same page.
+The `lay.shm` parameter specifies display these spatial heatmaps by genes or by
+conditions. This feature makes it flexible for users to compare expression
+profiles of the same gene across conditions or different genes across the same
+condition, and is particularly useful when compare gene families. Next, the preprocessed expression values of gene `ENSG00000268433` and `ENSG00000006047` are plotted onto the
+corresponding features of the aSVG image depicting the human brain.   
+</font>
 
-```{r humshm, eval=TRUE, echo=TRUE, warnings=FALSE, fig.wide=TRUE, fig.cap=("Spatial heatmaps of human brain. Cerebellum and frontal cortex are colored, since they are the only 2 identical tissues between the aSVG image and the data."), out.width="100%" }
-shm.df <- spatial_hm(svg.path=svg.hum, data=se.fil.hum, ID=c('ENSG00000268433'), height=0.6, legend.r=1.3)
+
+```{r humshm, eval=TRUE, echo=TRUE, warnings=FALSE, fig.wide=TRUE, fig.cap=("Spatial heatmaps of two genes. The subplots are organised by \"condition\" through `lay.shm` argument. Cerebellum and frontal cortex are colored, since they are the only 2 matching tissues between the aSVG image and the data."), out.width="100%" }
+shm.df <- spatial_hm(svg.path=svg.hum, data=se.fil.hum, ID=c('ENSG00000268433', 'ENSG00000006047'), lay.shm='con', width=1, height=1, legend.r=1.5)
 ```
 
 The spatial heatmaps and mapped features are stored in a list and assigned to an object `shm.df`.
@@ -515,20 +523,38 @@ names(shm.df)
 shm.df[['mapped_feature']]
 ```
 
-In this example, the expression profile of gene `ENSG00000268433` in frontal
-cortex and cerebellum is plotted under ALS and normal conditions (Figure \@ref(fig:humshm)) with the legend plot on the right. For example, in Table \@ref(tab:humtab) its expression value in cerebellum under ALS is 5.324064. After
-mapping, this tissue is colored blue corresponding to 5.324064 in the color
-scale. By contrast, this gene\'s expression profile is dark yellow in the same tissue
-under normal condition. On the other hand, the expression profile (purple) in
-frontal cortex is similar across ALS and normal. Therefore, it is intuitive
-that this gene\'s higher activity in cerebellum is potentially associated with
-ALS and could contribute to hypothesis generation.  
+<font color="red">
+[ThG-Comment 7: The paragraphs below have been moved here for now. There is a
+lot of duplication in this text that needs to be deleted (or hidden via comment
+tags) and/or merged into other sections where appropriate. Some of the text is
+certainly important but it often should be used to explain code sections rather
+than keeping it separate from the code. For instance the first paragraph below
+should go to a section where you show how to generate multiple target gene
+plots rather then just describing it in stand-alone text, especially since a
+summary of this particular example has been given in the intro section already.] 
+</font>
+
+<font color='blue'>Moved</font>
+
+<font color='blue'>
+
+The expression profiles of gene `ENSG00000268433` and `ENSG00000006047` in frontal
+cortex and cerebellum are plotted under ALS and normal conditions. In Figure \@ref(fig:humshm), spatial heatmaps of the two genes are organized by condition (horizontal view) in the middle, and the legend plot is on the right. The expression profiles are translated into colors and reflected on the color scale on the left. For example, in Table \@ref(tab:humtab) the expression value of `ENSG00000268433` in cerebellum under ALS is 5.324064. After
+mapping, cerebellum under ALS is colored blue corresponding to 5.324064 in the color
+scale. By contrast, this gene\'s expression profile is dark yellow (lower) in the same tissue
+under normal condition. On the other hand, its expression profile (purple) in
+frontal cortex is similar across ALS and normal. And the expression level of `ENSG00000006047` shows little difference in cerebellum across conditions. Therefore, this figure provides intuitive findings
+that `ENSG00000268433`\'s higher activity in cerebellum is potentially associated with
+ALS and could contribute to hypothesis generation.   
+ 
+In addition, when compare across conditions Figure \@ref(fig:humshm) clearly shows that expression of `ENSG00000006047` in frontal cortex is obviously higher than cerebellum, but it is reversed on `ENSG00000268433`.   
+
+</font>
 
 <font color='blue'> 
 Note that only frontal cortex and cerebellum are colored while others are blank in the spatial
 heatmaps, since they are the only 2 aSVG features having identical tissue counterpars in the data. And the legend plot only shows these 2 tissues, because `sam.legend=identical` limits the legend to matching tissues between the data and aSVG. If `sam.legend=all`, all tissues are shown and legend plot would overlap with spatial heatmaps. Except for `identical` and `all`, `sam.legend` also accepts a vector of specific tissues for display.  
 </font>
-
 
 <font color="red">
 [ThG-Comment 6: I suggest to include here a table where you summarize all arguments
@@ -547,34 +573,6 @@ kable((arg.df), escape=TRUE, caption='Description of arguments in \"spatial_hm\"
 
 </font>
 
-
-<font color="red">
-[ThG-Comment 7: The paragraphs below have been moved here for now. There is a
-lot of duplication in this text that needs to be deleted (or hidden via comment
-tags) and/or merged into other sections where appropriate. Some of the text is
-certainly important but it often should be used to explain code sections rather
-than keeping it separate from the code. For instance the first paragraph below
-should go to a section where you show how to generate multiple target gene
-plots rather then just describing it in stand-alone text, especially since a
-summary of this particular example has been given in the intro section already.] 
-</font>
-
-<font color='blue'>Moved</font>
-
-<font color='blue'>
-If mutiple target genes are input, a set of spatial
-heatmaps for each gene are plotted sequentially and organised on the same page.
-The `lay.shm` parameter specifies display these spatial heatmaps by genes or by
-conditions. This feature makes it flexible for users to compare expression
-profiles of the same gene across conditions or different genes across the same
-condition, and is particularly useful when compare gene families. For instance, Figure \@ref(fig:mul) is the spatial heatmaps of gene `ENSG00000268433` and `ENSG00000006047`, which are organised by condition (horizontal view).   
-
-
-```{r mul, eval=TRUE, echo=TRUE, warnings=FALSE, fig.wide=TRUE, fig.cap=("Spatial heatmaps of two genes. The subplots are organised by \"condition\" through `lay.shm` argument."), out.width="100%" }
-spatial_hm(svg.path=svg.hum, data=se.fil.hum, ID=c('ENSG00000268433', 'ENSG00000006047'), lay.shm='con', width=1, height=1, legend.r=1.5)
-```
-
-</font>
 
 ## Mouse Organ {#mus}
 
