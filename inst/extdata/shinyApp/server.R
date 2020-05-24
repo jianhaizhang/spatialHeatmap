@@ -1067,7 +1067,6 @@ svg_df <- function(svg.path, feature) {
 
 grob_list <- function(gene, con.na=TRUE, geneV, coord, ID, cols, tis.path, tis.trans=NULL, sub.title.size, sam.legend='identical', legend.col, legend.title=NULL, legend.ncol=NULL, legend.nrow=NULL, legend.position='bottom', legend.direction=NULL, legend.key.size=0.5, legend.label.size=8, legend.title.size=8, line.size=0.2, line.color='grey70', ...) {
 
- save(gene, geneV, coord, ID, cols, tis.path, tis.trans, sub.title.size, sam.legend, legend.col, legend.title, legend.ncol, legend.nrow, legend.position, legend.direction, legend.key.size, legend.label.size, legend.title.size, line.size, line.color, file='all')
   options(stringsAsFactors=FALSE)
 
   g_list <- function(con, lgd=FALSE, ...) {

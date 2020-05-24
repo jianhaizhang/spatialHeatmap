@@ -116,7 +116,7 @@ corresponding cell types or tissues represented in a chosen SVG image. In the
 gene profiling field, this feature supports comparisons of the expression
 values among multiple genes by plotting their SHMs next to each
 other. Similarly, one can display the expression values of a single or multiple
-genes across multiple conditions in the same plot (Figure \@ref(fig:mul)). This level of flexibility is
+genes across multiple conditions in the same plot (Figure \@ref(fig:humshm)). This level of flexibility is
 very efficient for visualizing complicated expression patterns across genes,
 cell types and conditions. In case of more complex anatomical images composed
 of overlapping multiple layer tissues, it is important to visually expose the
@@ -186,11 +186,10 @@ experiments for different species, tissues and conditions. The corresponding
 anatomical image collections are also provided for a wide range of species
 including animals and plants. In `spatialHeatmap` several import functions are
 provided to work with the expression and [aSVG repository](#svg_repo) from the Expression Atlas
-directly. The aSVG images developed by the `spatialHeatmap` project are available in its
-own [repository](https://github.com/jianhaizhang/SVG_tutorial_file/tree/master/svg_repo), 
-where users can contribute their aSVG images that are formatted according to our 
-guidlines.^[Jianhai will provide here a repos name later.] 
-
+directly. The aSVG images developed by the `spatialHeatmap` project are available in its own
+[repository](https://github.com/jianhaizhang/SVG_tutorial_file/tree/master/GirkeLab_SVG_Repo), 
+where users can contribute their aSVG images that are formatted according to our guidlines.
+^[GirkeLab in the name of this repos is a poor choice. Perhaps just call it spatialHeatmap_SVGs.]
 
 ## Tutorial Overview {#sample_data}
 
@@ -527,10 +526,11 @@ To inspect the results, the following returns three selected rows of the fully
 preprocessed data matrix (Table \@ref(tab:humtab)). 
 
 ```{r eval=FALSE, echo=TRUE, warnings=FALSE }
-assay(se.fil.hum)[733:735, ]
+assay(se.fil.hum)[c(5, 733:734), ]
 ```
 
 ```{r humtab, eval=TRUE, echo=FALSE, warnings=FALSE}
+<<<<<<< HEAD
 kable(assay(se.fil.hum)[733:735, ], caption='Slice of fully preprocessed expression matrix.')
 ```
 
@@ -544,6 +544,24 @@ values in `se.fil.hum`.
 
 ```{r humshm, eval=TRUE, echo=TRUE, warnings=FALSE, fig.wide=TRUE, fig.cap=("SHM of human brain. Only cerebellum and frontal cortex are colored, because they are present in both the aSVG and the expression data. The legend plot on the right maps the feature labels to the corresponding spatial regions in the image."), out.width="100%" }
 shm.df <- spatial_hm(svg.path=svg.hum, data=se.fil.hum, ID=c('ENSG00000268433'), height=0.6, legend.r=1.3)
+=======
+kable(assay(se.fil.hum)[c(5, 733:734), ], caption='A slice of fully preprocessed data matrix.')
+```
+
+<font color='blue'>
+When plot spatial heatmaps, if mutiple target genes are input, a set of spatial
+heatmaps for each gene are plotted sequentially and organised on the same page.
+The `lay.shm` parameter specifies display these spatial heatmaps by genes or by
+conditions. This feature makes it flexible for users to compare expression
+profiles of the same gene across conditions or different genes across the same
+condition, and is particularly useful when compare gene families. Next, the preprocessed expression values of gene `ENSG00000268433` and `ENSG00000006047` are plotted onto the
+corresponding features of the aSVG image depicting the human brain.   
+</font>
+
+
+```{r humshm, eval=TRUE, echo=TRUE, warnings=FALSE, fig.wide=TRUE, fig.cap=("Spatial heatmaps of two genes. The subplots are organised by \"condition\" through `lay.shm` argument. Cerebellum and frontal cortex are colored, since they are the only 2 matching tissues between the aSVG image and the data."), out.width="100%" }
+shm.df <- spatial_hm(svg.path=svg.hum, data=se.fil.hum, ID=c('ENSG00000268433', 'ENSG00000006047'), lay.shm='con', width=1, height=1, legend.r=1.5)
+>>>>>>> 82667e5b7c76a7628a211710608e5b49d00f401d
 ```
 
 The plotting instructions of the SHM along with the corresponding 
@@ -556,6 +574,7 @@ names(shm.df)
 shm.df[['mapped_feature']]
 ```
 
+<<<<<<< HEAD
 In the above example, the normalized expression values of gene `ENSG00000268433` 
 are colored in the frontal cortex and cerebellum, while the different conditions, 
 here normal and ALS, are given in separate SHMs plotted next to 
@@ -563,9 +582,39 @@ each other (Figure \@ref(fig:humshm)). The color and feature mappings are define
 by the corresponding color key and legend plot on the left and right, respectively.
 ^[The expression values for the gene range from 0-5, while the color key on the 
 left has a range from 0-2500. This is confusing and should be corrected.]
+=======
+<font color="red">
+[ThG-Comment 7: The paragraphs below have been moved here for now. There is a
+lot of duplication in this text that needs to be deleted (or hidden via comment
+tags) and/or merged into other sections where appropriate. Some of the text is
+certainly important but it often should be used to explain code sections rather
+than keeping it separate from the code. For instance the first paragraph below
+should go to a section where you show how to generate multiple target gene
+plots rather then just describing it in stand-alone text, especially since a
+summary of this particular example has been given in the intro section already.] 
+</font>
+
+<font color='blue'>Moved</font>
+
+<font color='blue'>
+
+The expression profiles of gene `ENSG00000268433` and `ENSG00000006047` in frontal
+cortex and cerebellum are plotted under ALS and normal conditions. In Figure \@ref(fig:humshm), spatial heatmaps of the two genes are organized by condition (horizontal view) in the middle, and the legend plot is on the right. The expression profiles are translated into colors and reflected on the color scale on the left. For example, in Table \@ref(tab:humtab) the expression value of `ENSG00000268433` in cerebellum under ALS is 5.324064. After
+mapping, cerebellum under ALS is colored blue corresponding to 5.324064 in the color
+scale. By contrast, this gene\'s expression profile is dark yellow (lower) in the same tissue
+under normal condition. On the other hand, its expression profile (purple) in
+frontal cortex is similar across ALS and normal. And the expression level of `ENSG00000006047` shows little difference in cerebellum across conditions. Therefore, this figure provides intuitive findings
+that `ENSG00000268433`\'s higher activity in cerebellum is potentially associated with
+ALS and could contribute to hypothesis generation.   
+ 
+In addition, when compare across conditions Figure \@ref(fig:humshm) clearly shows that expression of `ENSG00000006047` in frontal cortex is obviously higher than cerebellum, but it is reversed on `ENSG00000268433`.   
+
+</font>
+>>>>>>> 82667e5b7c76a7628a211710608e5b49d00f401d
 
 ### SHM: Multiple Genes
 
+<<<<<<< HEAD
 SHMs for multiple genes can be plotted by providing the
 corresponding gene IDs under the `ID` argument as a character vector. The
 `spatial_hm` function will then sequentially arrange the SHMs for
@@ -576,6 +625,14 @@ SHMs of genes `ENSG00000268433` and `ENSG00000006047` are organised
 by condition in a horizontal view. This function is particularly useful when
 comparing gene families. 
 
+=======
+<font color="red">
+[ThG-Comment 6: I suggest to include here a table where you summarize all arguments
+relevant for controlling the output of `spatial_hm` function. This will make it much 
+easier for the user to look up relevant arguments and how to use them.]
+</font>
+<font color='blue'>Added</font>
+>>>>>>> 82667e5b7c76a7628a211710608e5b49d00f401d
 
 ```{r mul, eval=TRUE, echo=TRUE, warnings=FALSE, fig.wide=TRUE, fig.cap=("SHMs of two genes. The subplots are organised by \"condition\" through `lay.shm` argument."), out.width="100%" }
 spatial_hm(svg.path=svg.hum, data=se.fil.hum, ID=c('ENSG00000268433', 'ENSG00000006047'), lay.shm='con', width=1, height=1, legend.r=1.5)
@@ -583,6 +640,7 @@ spatial_hm(svg.path=svg.hum, data=se.fil.hum, ID=c('ENSG00000268433', 'ENSG00000
 
 ### SHM: Customization
 
+<<<<<<< HEAD
 To provide a high level of flexibility, the `spatial_hm` contains many arguments.
 An overview of the argument names and their utility is provide in Table \@ref(tab:arg).
 
@@ -591,6 +649,8 @@ arg.df <- read.table('file/spatial_hm_arg.txt', header=TRUE, sep='\t')
 kable((arg.df), escape=TRUE, caption="Argument list of \'spatial_hm\'.")
 ```
 
+=======
+>>>>>>> 82667e5b7c76a7628a211710608e5b49d00f401d
 ## Mouse Organ {#mus}
 
 This example is based on a mouse data from an RNA-seq study aiming at assessing tissue-specific transcriptome variation across mammals [@Merkin2012-ak], which is from EBI Expression Atlas.   
