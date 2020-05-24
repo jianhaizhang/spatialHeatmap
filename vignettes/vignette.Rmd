@@ -312,6 +312,8 @@ shm.df <- spatial_hm(svg.path=svg.hum, data=my_vec, ID='toy', ncol=1, height=0.7
 
 The named numeric values in `my_vec`, that have name matches with the features in the 
 chosen aSVG, are stored in the `mapped_feature` slot.
+^[The numeric values range from 9-26, while the color key on the 
+left has a range from 0-2500. This is confusing and should be corrected.]
 
 ```{r eval=TRUE, echo=TRUE, warnings=FALSE} 
 # SHMs and mapped features are stored in a list.
