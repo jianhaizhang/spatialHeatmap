@@ -593,9 +593,18 @@ kable((arg.df), escape=TRUE, caption="Argument list of \'spatial_hm\'.")
 
 ## Mouse Organ {#mus}
 
-This example is based on a mouse data from an RNA-seq study aiming at assessing tissue-specific transcriptome variation across mammals [@Merkin2012-ak], which is from EBI Expression Atlas.   
+This section generates a SHM plot for mouse data from the Expression Atlas. The
+code in this subsection is similar to the [Human Brain](#hum) example, but the
+text explaining it has been reduced to a minimum for brevity reasons. 
 
-The following process is similar to the Human Brain example, so explanation of code chunks is simplified to avoid lengthy text.  
+### Gene Expression Data
+
+This example is based on a mouse data from an RNA-seq study aiming at assessing
+tissue-specific transcriptome variation across mammals [@Merkin2012-ak], which
+is from EBI Expression Atlas.   
+
+The following process is similar to the Human Brain example, so explanation of
+code chunks is simplified to avoid lengthy text.  
 
 Search Expression Atlas for expression data derived from *'hear'* and *'Mus musculus'*.  
 
