@@ -459,8 +459,6 @@ are provided in the [Supplement](#data_form) of this vignette.
 colData(rse.hum)[c(1:3, 41:42), 4:5]
 ```
 
-</font>
-
 ### Preprocess Assay Data
 
 The actual gene expression data of the downloaded RNA-Seq experiment is stored
@@ -591,116 +589,123 @@ arg.df <- read.table('file/spatial_hm_arg.txt', header=TRUE, sep='\t')
 kable((arg.df), escape=TRUE, caption="Argument list of \'spatial_hm\'.")
 ```
 
-## Mouse Organ {#mus}
+## Mouse Organs {#mus}
 
-This section generates a SHM plot for mouse data from the Expression Atlas. The
-code in this subsection is similar to the [Human Brain](#hum) example, but the
-text explaining it has been reduced to a minimum for brevity reasons. 
+This section generates an SHM plot for mouse data from the Expression Atlas.
+The code in this subsection is very similar to the previous [Human Brain](#hum)
+example. For brevity reasons, the corresponding text explaining the code has
+been reduced to the bare minimum. 
 
 ### Gene Expression Data
 
-This example is based on a mouse data from an RNA-seq study aiming at assessing
-tissue-specific transcriptome variation across mammals [@Merkin2012-ak], which
-is from EBI Expression Atlas.   
-
-The following process is similar to the Human Brain example, so explanation of
-code chunks is simplified to avoid lengthy text.  
-
-Search Expression Atlas for expression data derived from *'hear'* and *'Mus musculus'*.  
+The chosen mouse RNA-Seq data compares tissue level gene expression across 
+mammalian species [@Merkin2012-ak]. The following searches the Expression 
+Atlas for expression data from _'heart'_ and _'Mus musculus'_.
 
 ```{r eval=TRUE, echo=TRUE, warnings=FALSE }
 all.mus <- searchAtlasExperiments(properties="heart", species="Mus musculus")
 ```
 
-Among the results, select 'E-MTAB-2801'.  
+Among the many matching entries, accession 'E-MTAB-2801' will be downloaded.  
 
 ```{r eval=TRUE, echo=TRUE, warnings=FALSE }
 all.mus[7, ]
 rse.mus <- getAtlasData('E-MTAB-2801')[[1]][[1]]
 ```
 
-A slice of the experiment design, which is stored in `colData` slot.  
+The design of the downloaded RNA-Seq experiment is described in the `colData` slot of 
+`rse.mus`. The following returns only its first three rows.
 
 ```{r eval=TRUE, echo=TRUE, warnings=FALSE }
 colData(rse.mus)[1:3, ]
 ```
 
-<font color='blue'> 
-Download aSVGs from remote EBI repository directly based on tissues and species involved. An empty directory `~/test` is suggested to save the downloaded files so as to avoid overwriting existing files.
+### aSVG Image  
+
+The following example shows how to download from the [EBI SVG
+repository](#svg_repo) an aSVG image that matches the tissues and species
+assayed in the gene expression data set downloaded in the previous subsection.
+As before the image is saved to a directory named `~/test`.
 
 ```{r eval=FALSE, echo=TRUE, warnings=FALSE }
-# Make an empty directory "~/test" if not exist.
 if (!dir.exists('~/test')) dir.create('~/test')
-# Query aSVGs.
 feature.df <- return_feature(feature=c('heart', 'kidney'), species=c('Mus musculus'), keywords.any=TRUE, return.all=FALSE, dir='~/test', remote=TRUE, match.only=FALSE)
 ```
 
-As explained in the [toy example](#toy), the target aSVG file has been included in this 
-package. To meet the requirements for building vignettes in R packages, the following 
-code section uses the packaged instance of the aSVG files (`remote=FALSE`) rather than downloading it. To explain how to select a certain aSVG among the returned resutls, `species` is set `NULL` on purpose so that all aSVGs marching the feature keywords are returned.   
+To build this vignettes according to the R/Bioconductor package requirements, the
+following code section uses the aSVG file instance included in the
+`spatialHeatmap` package rather than the downloaded instance from the previous
+example. 
 
 ```{r eval=TRUE, echo=TRUE, warnings=FALSE }
 feature.df <- return_feature(feature=c('heart', 'kidney'), species=NULL, keywords.any=TRUE, return.all=FALSE, dir=svg.dir, remote=FALSE, match.only=FALSE) 
 ```
 
-All aSVG files matching the query.  
+Return the names of the matching aSVG files.
 
 ```{r eval=TRUE, echo=TRUE, warnings=FALSE }
 unique(feature.df$SVG)
 ```
 
-Select `mus_musculus.male.svg` as the target aSVG. A slice of the feature data frame and all the aSVG features are shown.   
+The following selects `mus_musculus.male.svg` as the target aSVG, returns the first
+three rows of the resulting `feature.df` and also prints the unique set of all
+aSVG features.   
 
 ```{r eval=TRUE, echo=TRUE, warnings=FALSE }
 feature.df <- subset(feature.df, SVG=='mus_musculus.male.svg')
-# A slice of the feature data frame.
 feature.df[1:3, ]
-# All features in the aSVG.
 unique(feature.df[, 1])
 ```
 
-Get the target aSVG path.   
+Obtain path of target aSVG on user system.   
 
 ```{r eval=TRUE, echo=TRUE, warnings=FALSE}
 svg.mus <- system.file("extdata/shinyApp/example", "mus_musculus.male.svg", package="spatialHeatmap")
 ```
 
-</font>
+### Experimental Design
 
-Make a targets file based on the experiment design and features of interest in the aSVG file. It is included in this package and part is shown below.  
+Import of custom target file defining simplified sample labels and experimental
+design. The following imports a sample target file that is included in this package.
+To instect its content, the first three rows of the target file are printed to the 
+screen.
 
 ```{r eval=TRUE, echo=TRUE, warnings=FALSE }
 mus.tar <- system.file('extdata/shinyApp/example/target_mouse.txt', package='spatialHeatmap')
 target.mus <- read.table(mus.tar, header=TRUE, row.names=1, sep='\t')
 target.mus[1:3, ]
-# Tissues in the experiment. 
 unique(target.mus[, 3])
 ```
 
-Use the targets file to replace the data frame in `colData` slot.  
+Load custom target data into `colData` slot.  
 
 ```{r eval=TRUE, echo=TRUE, warnings=FALSE }
 colData(rse.mus) <- DataFrame(target.mus)
 ```
 
-Pre-process the raw count matrix: normalise, aggregate, filter. Genes with expression values larger than 5 (log2 unit) in at least 1% of all samples (pOA=c(0.01, 5)), and with coefficient of variance (CV) between 0.60 and 100 (CV=c(0.6, 100)) are retained.    
+### Preprocess Assay Data
+
+The raw RNA-Seq count are preprocessed with the following steps including (1)
+normalization, (2) aggregation of replicates, and (3) filtering of reliable
+expression data. The details of these steps are explained in the previous
+sub-section using data from human.
 
 ```{r eval=TRUE, echo=TRUE, warnings=FALSE }
-# Normalise.
-se.nor.mus <- norm_data(data=rse.mus, norm.fun='ESF', data.trans='log2')
-# Aggregate replicates.
-se.aggr.mus <- aggr_rep(data=se.nor.mus, sam.factor='organism_part', con.factor='strain', aggr='mean')
-# Filter genes with low variance and low counts.
-se.fil.mus <- filter_data(data=se.aggr.mus, sam.factor='organism_part', con.factor='strain', pOA=c(0.01, 5), CV=c(0.6, 100), dir=NULL)
+se.nor.mus <- norm_data(data=rse.mus, norm.fun='ESF', data.trans='log2') # Normalization
+se.aggr.mus <- aggr_rep(data=se.nor.mus, sam.factor='organism_part', con.factor='strain', aggr='mean') # Aggregation of replicates
+se.fil.mus <- filter_data(data=se.aggr.mus, sam.factor='organism_part', con.factor='strain', pOA=c(0.01, 5), CV=c(0.6, 100), dir=NULL) # Filtering of genes with low counts and variance 
 ```
 
-Plot SHMs.   
+### SHM: Single Gene
+
+The pre-processed expression data for gene 'ENSMUSG00000000263' is plotted in form
+of an SHM. In this case the plot includes expression data for 8 tissues across 3 
+mouse strains. 
 
 ```{r musshm, eval=TRUE, echo=TRUE, warnings=FALSE, fig.wide=TRUE, fig.cap=("Mouse organ SHM. This is a multiple-layer image and `skeletal muscle` is set transparent to expose lung and heart."), out.width="100%" }
 spatial_hm(svg.path=svg.mus, data=se.fil.mus, ID=c('ENSMUSG00000000263'), height=0.5, legend.r=1.1, sub.title.size=9, ncol=3, tis.trans=c('skeletal muscle'), legend.nrow=4, line.size=0.2, line.color='grey70')
 ```
 
-The SHM of gene `ENSMUSG00000000263` is plotted in 8 tissues across 3 strains. It is manifest that only brain exhibits obvious difference across the 3 strains with DBA.2J, C57BL.6, and CD1 being highest, medium, and lowest respectively. In contrast, all the other 8 tissues display similar profile across strains. Thus this gene is potentially strain-specific. Moreover, the expression levels of all the other 8 tissues are all lower than brain.   
 
 <font color='blue'>
 This is a typical example to demonstrate the usage of `tis.trans` parameter, since this mouse organ image includes tissues in multiple layers and skelectal muscle covers lung and heart. In Figure \@ref(fig:musshm), skelectal muscle is set transparent through `tis.trans=c('skeletal muscle')` so that lung and heart are exposed. By contrast, in Figure \@ref(fig:musshm1) `tis.trans=NULL` exposes `skeletal muscle` and lung and heart are covered.  
@@ -715,7 +720,7 @@ adjust the thickness and color of polygon outlines respectively and thus enhance
 spatial_hm(svg.path=svg.mus, data=se.fil.mus, ID=c('ENSMUSG00000000263'), height=0.5, legend.r=1.1, sub.title.size=9, ncol=3, tis.trans=NULL, legend.ncol=2, line.size=0.2, line.color='grey70')
 ```
 
-## Chicken Organ {#chk}
+## Chicken Organs {#chk}
 
 In this example, the data come from developments of 7 chicken organs under 9 time points [@Cardoso-Moreira2019-yq], which is an RNA-seq analysis and accessed from EBI Expression Atlas.  
 
