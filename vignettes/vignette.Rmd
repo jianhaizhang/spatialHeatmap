@@ -23,7 +23,6 @@ vignette: >
   %\VignetteEncoding{UTF-8}
 ---
 
-## For better readability, enable scrollbar and turn off line wrapping in code/output chunks 
 ```{css, echo=FALSE}
 pre code {
 white-space: pre !important;
@@ -89,7 +88,6 @@ of the `spatialHeatmap` package are illustrated in Figure \@ref(fig:illus).
 include_graphics('img/illustration.png')
 
 ```
-
 
 As anatomical images the package supports both tissue maps from public
 repositories and custom images provided by the user. In general any type of
@@ -198,8 +196,6 @@ provided to work with the expression and [aSVG repository](#svg_repo) from the E
 directly. The aSVG images developed by the `spatialHeatmap` project are available in its own
 repository called [spatialHeatmap aSVG Repository](https://github.com/jianhaizhang/SVG_tutorial_file/tree/master/svg_repo), 
 where users can contribute their aSVG images that are formatted according to our guidlines.
-^[GirkeLab in the name of this repos is a poor choice. Perhaps just call it spatialHeatmap_aSVGs.]
-<font color='blue'>jianai_comment: SVG repo name changed</font>
 
 ## Tutorial Overview {#sample_data}
 
@@ -328,9 +324,6 @@ shm.df <- spatial_hm(svg.path=svg.hum, data=my_vec, ID='toy', ncol=1, height=0.7
 
 The named numeric values in `my_vec`, that have name matches with the features in the 
 chosen aSVG, are stored in the `mapped_feature` slot.
-^[The numeric values range from 9-26, while the color key on the 
-left has a range from 0-2500. This is confusing and should be corrected.]
-<font color='blue'>jianai_comment: This issue stems from the new ggolot2 pacakge. I reported it to ggplot2 github and they said it will be fixed in next version. For the current release of ggplot2, I added a solution in spatialHeatamp. Re-rendering the vignette without using old cache  will restore the scale. </font>
 
 ```{r eval=TRUE, echo=TRUE, warnings=FALSE} 
 # The SHM and mapped features are stored in a list
@@ -434,8 +427,6 @@ and names in an aSVG. Details on this utility are provided in the [Supplement](#
 feature.df
 ```
 
-<font color='blue'>UBERON ids only applied to animals, but the EBI SVG also includes plant ontology ids. So is "https://www.ebi.ac.uk/ols/index" a better choice for the link?  </font>
-
 Since the Expression Atlas supports the [cross-species anatomy
 ontology](http://uberon.github.io/), the corresponding UBERON identifiers are
 included in the `id` column of the `data.frame` returned by the above function
@@ -481,19 +472,15 @@ colData(rse.hum)[c(1:3, 41:42), 4:5]
 
 ### Preprocess Assay Data
 
-<font color='blue'>
 The actual gene expression data of the downloaded RNA-Seq experiment is stored
 in the `assay` slot of `rse.hum`. Since it contains raw count data, it can be
 desirable to apply basic preprocessing routines prior to plotting spatial
-heatmaps.  The following shows how to normalize the count data, aggregate
+heatmaps. The following shows how to normalize the count data, aggregate
 replicates and then remove genes with unreliable expression responses.  These
-preprocessing steps are optional and can be skipped if needed. For instanse, fully preprocessed data can be applied to the function `spatial_hm` for [plotting spatial heatmaps](#hum_single) directly by skipping the preprocessing routines, but the sample column name and/or condition column name in the `colData` slot must be provided to `sam.factor` and/or `con.factor` respectively (Table \@ref(tab:arg)).  
-^[I think one
-should assure that skipping the preprocessing works seemlessly even without
-aggregating replicates by letting the user choose which replicate to use. Is
-this possible yet? This is also important when users start with their fully
-preprocessed data which I assume will be a very common situation.]
-</font>
+preprocessing steps are optional and can be skipped if needed. For this,
+the expression data can be provided to the `spatial_hm` function directly, where
+it is important to assign to the `sam.factor` and/or `con.factor` arguments 
+the corresponding sample and/or condition column names (Table \@ref(tab:arg)).  
 
 For normalizing raw count data from RNA-Seq experiments, the `norm_data`
 function can be used. It supports the following pre-existing functions from
@@ -582,10 +569,6 @@ are colored in the frontal cortex and cerebellum, while the different conditions
 here normal and ALS, are given in separate SHMs plotted next to 
 each other (Figure \@ref(fig:humshm)). The color and feature mappings are defined
 by the corresponding color key and legend plot on the left and right, respectively.
-
-<font color='blue'>jianhai_reply: Can be corrected by re-rendering without using old cache.</font>
-^[The expression values for the gene range from 0-5, while the color key on the 
-left has a range from 0-2500. This is confusing and should be corrected.]
 
 ### SHM: Multiple Genes
 
