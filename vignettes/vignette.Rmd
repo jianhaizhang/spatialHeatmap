@@ -196,9 +196,10 @@ anatomical image collections are also provided for a wide range of species
 including animals and plants. In `spatialHeatmap` several import functions are
 provided to work with the expression and [aSVG repository](#svg_repo) from the Expression Atlas
 directly. The aSVG images developed by the `spatialHeatmap` project are available in its own
-repository called [spatialHeatmap_aSVGs](https://github.com/jianhaizhang/SVG_tutorial_file/tree/master/GirkeLab_SVG_Repo), 
+repository called [spatialHeatmap aSVG Repository](https://github.com/jianhaizhang/SVG_tutorial_file/tree/master/svg_repo), 
 where users can contribute their aSVG images that are formatted according to our guidlines.
 ^[GirkeLab in the name of this repos is a poor choice. Perhaps just call it spatialHeatmap_aSVGs.]
+<font color='blue'>jianai_comment: SVG repo name changed</font>
 
 ## Tutorial Overview {#sample_data}
 
@@ -329,6 +330,7 @@ The named numeric values in `my_vec`, that have name matches with the features i
 chosen aSVG, are stored in the `mapped_feature` slot.
 ^[The numeric values range from 9-26, while the color key on the 
 left has a range from 0-2500. This is confusing and should be corrected.]
+<font color='blue'>jianai_comment: This issue stems from the new ggolot2 pacakge. I reported it to ggplot2 github and they said it will be fixed in next version. For the current release of ggplot2, I added a solution in spatialHeatamp. Re-rendering the vignette without using old cache  will restore the scale. </font>
 
 ```{r eval=TRUE, echo=TRUE, warnings=FALSE} 
 # The SHM and mapped features are stored in a list
@@ -432,6 +434,8 @@ and names in an aSVG. Details on this utility are provided in the [Supplement](#
 feature.df
 ```
 
+<font color='blue'>UBERON ids only applied to animals, but the EBI SVG also includes plant ontology ids. So is "https://www.ebi.ac.uk/ols/index" a better choice for the link?  </font>
+
 Since the Expression Atlas supports the [cross-species anatomy
 ontology](http://uberon.github.io/), the corresponding UBERON identifiers are
 included in the `id` column of the `data.frame` returned by the above function
@@ -477,16 +481,19 @@ colData(rse.hum)[c(1:3, 41:42), 4:5]
 
 ### Preprocess Assay Data
 
+<font color='blue'>
 The actual gene expression data of the downloaded RNA-Seq experiment is stored
 in the `assay` slot of `rse.hum`. Since it contains raw count data, it can be
-desirable to apply basic preprocessing routines prior to plotting spatical
+desirable to apply basic preprocessing routines prior to plotting spatial
 heatmaps.  The following shows how to normalize the count data, aggregate
 replicates and then remove genes with unreliable expression responses.  These
-preprocessing steps are optional and can be skipped if needed. ^[I think one
+preprocessing steps are optional and can be skipped if needed. For instanse, fully preprocessed data can be applied to the function `spatial_hm` for [plotting spatial heatmaps](#hum_single) directly by skipping the preprocessing routines, but the sample column name and/or condition column name in the `colData` slot must be provided to `sam.factor` and/or `con.factor` respectively (Table \@ref(tab:arg)).  
+^[I think one
 should assure that skipping the preprocessing works seemlessly even without
 aggregating replicates by letting the user choose which replicate to use. Is
 this possible yet? This is also important when users start with their fully
 preprocessed data which I assume will be a very common situation.]
+</font>
 
 For normalizing raw count data from RNA-Seq experiments, the `norm_data`
 function can be used. It supports the following pre-existing functions from
@@ -544,7 +551,7 @@ assay(se.fil.hum)[c(5, 733:734), ]
 ```
 
 ```{r humtab, eval=TRUE, echo=FALSE, warnings=FALSE}
-kable(assay(se.fil.hum)[733:735, ], caption='Slice of fully preprocessed expression matrix.')
+kable(assay(se.fil.hum)[c(5, 733:734), ], caption='Slice of fully preprocessed expression matrix.')
 ```
 
 ### SHM: Single Gene
@@ -553,8 +560,9 @@ The preprocessed expression values for any gene in the `assay` slot of
 `se.fil.hum` can be plotted as a SHM. The following uses gene
 `ENSG00000268433` as an example. The chosen aSVG is a depiction of the human
 brain where the assayed featured are colored by the corresponding expression
-values in `se.fil.hum`. 
+values in `se.fil.hum`.  
 
+<a name='hum_single'></a>
 ```{r humshm, eval=TRUE, echo=TRUE, warnings=FALSE, fig.wide=TRUE, fig.cap=("SHM of human brain. Only cerebellum and frontal cortex are colored, because they are present in both the aSVG and the expression data. The legend plot on the right maps the feature labels to the corresponding spatial regions in the image."), out.width="100%" }
 shm.df <- spatial_hm(svg.path=svg.hum, data=se.fil.hum, ID=c('ENSG00000268433'), height=0.6, legend.r=1.3)
 ```
@@ -574,6 +582,8 @@ are colored in the frontal cortex and cerebellum, while the different conditions
 here normal and ALS, are given in separate SHMs plotted next to 
 each other (Figure \@ref(fig:humshm)). The color and feature mappings are defined
 by the corresponding color key and legend plot on the left and right, respectively.
+
+<font color='blue'>jianhai_reply: Can be corrected by re-rendering without using old cache.</font>
 ^[The expression values for the gene range from 0-5, while the color key on the 
 left has a range from 0-2500. This is confusing and should be corrected.]
 
@@ -1086,7 +1096,7 @@ df.test$ann <- paste0('ann', 1:20)
 df.test[1:3, ]
 ```
 
-Plot SHMs on `gene1`.   
+The pre-processing steps are optional and thus are skipped. Next plot SHMs on `gene1`.   
 
 ```{r dfshm, eval=FALSE, echo=TRUE, warnings=FALSE, fig.wide=FALSE, fig.cap=c('SHMs on a data frame. \'occipital lobe\' and \'parietal lobe\' are 2 aSVG features and \'condition1\' and \'condition2\' are conditions.')}
 spatial_hm(svg.path=svg.hum, data=df.test, ID=c('gene1'), ncol=1, legend.r=1.2, sub.title.size=14)
