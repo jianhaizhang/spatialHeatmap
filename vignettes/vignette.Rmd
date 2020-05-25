@@ -727,7 +727,7 @@ this case the skelectal muscle layer partially overlaps with lung and heart
 tissues. To view lung and heart in Figure \@ref(fig:musshm), the skelectal
 muscle tissue is set transparent with `tis.trans=c('skeletal muscle')`. To view
 in the same aSVG the skeletal muscle tissue instead, `tis.trans` is assigned
-`NULL` in the SHM plot of Figure \@ref(fig:musshm1).
+`NULL` for generating the SHM plot of Figure \@ref(fig:musshm1).
 
 To fine control the visual effects in feature rich aSVGs, the `line.size` and
 `line.color` parameters are useful. This way one can adjust the thickness and 
@@ -740,31 +740,44 @@ spatial_hm(svg.path=svg.mus, data=se.fil.mus, ID=c('ENSMUSG00000000263'), height
 
 ## Chicken Organs {#chk}
 
-In this example, the data come from developments of 7 chicken organs under 9 time points [@Cardoso-Moreira2019-yq], which is an RNA-seq analysis and accessed from EBI Expression Atlas.  
+This section generates an SHM plot for chicken data from the Expression Atlas.
+The code components are very similar to the [Human Brain](#hum) example. For
+brevity, the corresponding text explaining the code has been reduced to a
+minimum. 
 
-The following process is similar to the Human Brain example, so explanation of code chunks is simplified to avoid lengthy text.  
+### Gene Expression Data
 
-Search Expression Atlas for expression data derived from *'heart'* and *'gallus'*.  
+The chosen chicken RNA-Seq experiment compares the developmental changes across 
+nine time points of seven organs [@Cardoso-Moreira2019-yq].
+
+
+The following searches the Expression Atlas for expression data from _'heart'_
+and _'gallus'_.
 
 ```{r eval=TRUE, echo=TRUE, warnings=FALSE }
 all.chk <- searchAtlasExperiments(properties="heart", species="gallus")
 ```
 
-Among the results, select 'E-MTAB-6769'.  
+Among the matching entries, accession 'E-MTAB-6769' will be downloaded.  
 
 ```{r eval=TRUE, echo=TRUE, warnings=FALSE }
 all.chk[3, ]
 rse.chk <- getAtlasData('E-MTAB-6769')[[1]][[1]]
 ```
 
-A slice of the experiment design, which is stored in colData slot.  
+The design of the downloaded RNA-Seq experiment is described in the `colData`
+slot of `rse.chk`. The following returns only its first three rows.
 
 ```{r eval=TRUE, echo=TRUE, warnings=FALSE } 
 colData(rse.chk)[1:3, ]
 ```
 
-<font color='blue'> 
-Download aSVGs from EBI repository based on the tissues and species involved. An empty directory `~/test` is suggested to save the downloaded files so as to avoid overwriting existing files.  
+### aSVG Image  
+
+The following example shows how to download from the [EBI SVG
+repository](#svg_repo) an aSVG image that matches the tissues and species
+assayed in the gene expression data set downloaded in the previous subsection.
+As before the image is saved to a directory named `~/test`.
 
 ```{r eval=FALSE, echo=TRUE, warnings=FALSE }
 # Make an empty directory "~/test" if not exist.
@@ -773,8 +786,10 @@ if (!dir.exists('~/test')) dir.create('~/test')
 feature.df <- return_feature(feature=c('heart', 'kidney'), species=c('gallus'), keywords.any=TRUE, return.all=FALSE, dir='~/test', remote=TRUE, match.only=FALSE)
 ```
 
-As explained in the [toy example](#toy), the target aSVG image has been included in this 
-package, and will be used for plotting SHMs.    
+To build this vignettes according to the R/Bioconductor package requirements, the
+following code section uses the aSVG file instance included in the
+`spatialHeatmap` package rather than the downloaded instance from the previous
+example. 
 
 ```{r eval=TRUE, echo=TRUE, warnings=FALSE }
 feature.df <- return_feature(feature=c('heart', 'kidney'), species=c('gallus'), keywords.any=TRUE, return.all=FALSE, dir=svg.dir, remote=FALSE, match.only=FALSE)
@@ -783,7 +798,6 @@ feature.df
 
 Get the target aSVG path.   
 
-</font>
 
 ```{r eval=TRUE, echo=TRUE, warnings=FALSE}
 svg.chk <- system.file("extdata/shinyApp/example", "gallus_gallus.svg", package="spatialHeatmap")
