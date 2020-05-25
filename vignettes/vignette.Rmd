@@ -196,7 +196,7 @@ anatomical image collections are also provided for a wide range of species
 including animals and plants. In `spatialHeatmap` several import functions are
 provided to work with the expression and [aSVG repository](#svg_repo) from the Expression Atlas
 directly. The aSVG images developed by the `spatialHeatmap` project are available in its own
-repository called [spatialHeatmap aSVG Repository](https://github.com/jianhaizhang/SVG_tutorial_file/tree/master/GirkeLab_SVG_Repo), 
+repository called [spatialHeatmap aSVG Repository](https://github.com/jianhaizhang/SVG_tutorial_file/tree/master/svg_repo), 
 where users can contribute their aSVG images that are formatted according to our guidlines.
 ^[GirkeLab in the name of this repos is a poor choice. Perhaps just call it spatialHeatmap_aSVGs.]
 <font color='blue'>jianai_comment: SVG repo name changed</font>
