@@ -92,14 +92,19 @@ adj_mod <- function(data, type='signed', minSize=15, dir=NULL) {
   if (is(data, 'data.frame')|is(data, 'matrix')) {
 
     data <- as.data.frame(data); rna <- rownames(data); cna <- make.names(colnames(data)) 
+    if (any(duplicated(cna))) stop('Please use function \'aggr_rep\' to aggregate replicates!')
     na <- vapply(seq_len(ncol(data)), function(i) { tryCatch({ as.numeric(data[, i]) }, warning=function(w) { return(rep(NA, nrow(data)))
     }, error=function(e) { stop("Please make sure input data are numeric!") }) }, FUN.VALUE=numeric(nrow(data)) )
     na <- as.data.frame(na); rownames(na) <- rna
     idx <- colSums(apply(na, 2, is.na))!=0
     data <- na[!idx]; colnames(data) <- cna[!idx]; data <- t(data)
 
-  } else if (is(data, 'SummarizedExperiment')) { data <- t(assay(data)) }
-    
+  } else if (is(data, 'SummarizedExperiment')) { data <- t(assay(data)) 
+
+    if (any(duplicated(rownames(data)))) stop('Please use function \'aggr_rep\' to aggregate replicates!')
+
+  }; if (nrow(data)<5) cat('Warning: variables of sample/condition are less than 5! \n')
+
     if (!is.null(dir)) { path <- paste0(dir, "/local_mode_result/"); if (!dir.exists(path)) dir.create(path) }
     if (type=="signed") sft <- 12; if (type=="unsigned") sft <- 6
     adj <- adjacency(data, power=sft, type=type); diag(adj) <- 0
