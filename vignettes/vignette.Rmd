@@ -134,18 +134,18 @@ packages dealing with gene-, protein- and metabolite-level profiling data
 [@SummarizedExperiment]. In case of gene expression data, the `assays` slot of
 the `SummarizedExperiment` container is populated with a gene expression
 matrix, where the rows and columns represent the genes and tissue/conditions,
-respectively, while the `colData` slot contains replicate information. The
-tissues and/or cell type information in the object maps via `colData` to the
-corresponding features in the SVG images using unique identifiers for the
-spatial features (_e.g._ tissues or cell types). This allows to color the
-features of interest in an SVG image according to the numeric data stored in a
-`SummarizedExperiment` object. For simplicity the numeric data can also be
-provided as numeric `vectors` or `data.frames`. This can be useful for testing
-purposes and/or the usage of simple data sets that may not require the more 
-advanced features of the `SummarizedExperiment` class, such as measurements with only one or a
-few data points. Details about how to access the SVG images and properly format
-the associated expression data are provided in the [Supplement
-section](#data_form) of this vignette.
+respectively, while the `colData` slot contains metadata including replicate
+information. The tissues and/or cell type information in the object maps via
+`colData` to the corresponding features in the SVG images using unique
+identifiers for the spatial features (_e.g._ tissues or cell types). This
+allows to color the features of interest in an SVG image according to the
+numeric data stored in a `SummarizedExperiment` object. For simplicity the
+numeric data can also be provided as numeric `vectors` or `data.frames`. This
+can be useful for testing purposes and/or the usage of simple data sets that
+may not require the more advanced features of the `SummarizedExperiment` class,
+such as measurements with only one or a few data points. Details about how to
+access the SVG images and properly format the associated expression data are
+provided in the [Supplement section](#data_form) of this vignette.
 
 ## Image Format: SVG {#term}
 SHMs are images where colors encode numeric values in features of
