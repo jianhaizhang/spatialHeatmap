@@ -23,6 +23,15 @@ vignette: >
   %\VignetteEncoding{UTF-8}
 ---
 
+## For better readability, enable scrollbar and turn off line wrapping in code/output chunks 
+```{css, echo=FALSE}
+pre code {
+white-space: pre !important;
+overflow-x: scroll !important;
+word-break: keep-all !important;
+word-wrap: initial !important;
+}
+```
 
 ```{r global_options, include=FALSE}
 ## ThG: chunk added to enable global knitr options. The below turns on
@@ -134,18 +143,18 @@ packages dealing with gene-, protein- and metabolite-level profiling data
 [@SummarizedExperiment]. In case of gene expression data, the `assays` slot of
 the `SummarizedExperiment` container is populated with a gene expression
 matrix, where the rows and columns represent the genes and tissue/conditions,
-respectively, while the `colData` slot contains replicate information. The
-tissues and/or cell type information in the object maps via `colData` to the
-corresponding features in the SVG images using unique identifiers for the
-spatial features (_e.g._ tissues or cell types). This allows to color the
-features of interest in an SVG image according to the numeric data stored in a
-`SummarizedExperiment` object. For simplicity the numeric data can also be
-provided as numeric `vectors` or `data.frames`. This can be useful for testing
-purposes and/or the usage of simple data sets that may not require the more 
-advanced features of the `SummarizedExperiment` class, such as measurements with only one or a
-few data points. Details about how to access the SVG images and properly format
-the associated expression data are provided in the [Supplement
-section](#data_form) of this vignette.
+respectively, while the `colData` slot contains metadata including replicate
+information. The tissues and/or cell type information in the object maps via
+`colData` to the corresponding features in the SVG images using unique
+identifiers for the spatial features (_e.g._ tissues or cell types). This
+allows to color the features of interest in an SVG image according to the
+numeric data stored in a `SummarizedExperiment` object. For simplicity the
+numeric data can also be provided as numeric `vectors` or `data.frames`. This
+can be useful for testing purposes and/or the usage of simple data sets that
+may not require the more advanced features of the `SummarizedExperiment` class,
+such as measurements with only one or a few data points. Details about how to
+access the SVG images and properly format the associated expression data are
+provided in the [Supplement section](#data_form) of this vignette.
 
 ## Image Format: SVG {#term}
 SHMs are images where colors encode numeric values in features of
@@ -248,13 +257,15 @@ browseVignettes('spatialHeatmap')
 ## Toy Example {#toy}
 
 SHMs are plotted with the `spatial_hm` function. To provide a quick
-and transparent overview how these plots are generated, the following uses a
+and intuitive overview how these plots are generated, the following uses a
 generalized toy example where a small vector of random numeric values is
 generated that are used to color features in an aSVG image. The image chosen
 for this example is an aSVG depicting the human brain. The corresponding image
 file 'homo_sapiens.brain.svg' is included in this package for testing purposes.
 The path to this image on a user\'s system, where `spatialHeatmap` is
 installed, can be obtained with the `system.file` function.
+
+### aSVG Image
 
 The following commands obtain the directory of the aSVG collection and the full path 
 to the chosen target aSVG image on a user's system, respectively.
@@ -276,14 +287,16 @@ feature.df
 fnames <- feature.df[, 1]
 ```
 
+### Numeric Data
+
 The following example generates a small numeric toy vector, where the data slot
 contains four numbers and its name slot is populated with the three feature
 names obtained from the above aSVG image. In addition, a non-matching entry
 (here 'notMapped') is included for demonstration purposes. Note, the numbers
-are mapped to features via name matching among the numeric vector and the aSVG,
+are mapped to features via matching names among the numeric vector and the aSVG,
 respectively. Accordingly, only numbers and features with matching name
 counterparts can be colored in the aSVG image.  Entries without name matches
-are indicated by a message printed to the R console, _here_ "notMapped". This
+are indicated by a message printed to the R console, here "notMapped". This
 behavior can be turned off with `verbose=FALSE` in the corresponding function
 call. In addition, a summary of the numeric assay to feature mappings is stored
 in the result `data.frame` returned by the `spatial_hm` function (see below). 
@@ -294,6 +307,8 @@ my_vec <- sample(1:100, length(unique(fnames))+1)
 names(my_vec) <- c(unique(fnames), 'notMapped')
 my_vec
 ```
+
+### Plot SHM
 
 Next, the SHM is plotted with the `spatial_hm` function (Figure
 \@ref(fig:toyshm)). Internally, the numbers in `my_vec` are translated to
@@ -318,7 +333,7 @@ left has a range from 0-2500. This is confusing and should be corrected.]
 <font color='blue'>jianai_comment: This issue stems from the new ggolot2 pacakge. I reported it to ggplot2 github and they said it will be fixed in next version. For the current release of ggplot2, I added a solution in spatialHeatamp. Re-rendering the vignette without using old cache  will restore the scale. </font>
 
 ```{r eval=TRUE, echo=TRUE, warnings=FALSE} 
-# SHMs and mapped features are stored in a list.
+# The SHM and mapped features are stored in a list
 names(shm.df)
 # Mapped features
 shm.df[['mapped_feature']]
@@ -412,8 +427,8 @@ feature.df <- return_feature(feature=c('frontal cortex', 'cerebellum'), species=
 Note, the target tissues `frontal cortex` and `cerebellum` are included in both
 the experimental design slot of the downloaded expression data as well as the 
 annotations of the aSVG. This way these features can be colored in the downstream
-SHM plots. If necessary users can also change the feature identifiers and
-names in an aSVG. Details on this utility are provided in the [Supplement](#update).  
+SHM plots. If necessary users can also change from within R the feature identifiers 
+and names in an aSVG. Details on this utility are provided in the [Supplement](#update).  
 
 ```{r eval=TRUE, echo=TRUE, warnings=FALSE }
 feature.df
@@ -430,18 +445,18 @@ by the `rols` Bioconductor package [@rols].
 
 ### Experimental Design
 
-For organizing experimental designs and downstream plotting purposes it can be 
-desirable to shorten the text in certain columns of `colData`. This way one can use the source data for
-including 'pretty' sample names in columns and legends of all downstream tables
-and plots, respectively, in a consistent and automated manner. To achieve
-this, the following example imports a 'targets' file that can be generated and 
-edited by the user in a text or spreadsheet program. In the following example the
-targets file is used to replace the text in the `colData` slot with the
-shortened version. 
+For organizing experimental designs and downstream plotting purposes, it can be
+desirable to shorten the text in certain columns of `colData`. This way one can
+use the source data for displaying 'pretty' sample names in columns and legends
+of all downstream tables and plots, respectively, in a consistent and automated
+manner. To achieve this, the following example imports a 'targets' file that
+can be generated and edited by the user in a text or spreadsheet program. In
+the following example the target file content is used to replace the text in the
+`colData` slot with a shortened version. 
 
 
-Import of custom target file defining simplified sample labels and experimental
-design.
+The following imports a custom target file containing simplified sample labels 
+and experimental design information.
 
 ```{r eval=TRUE, echo=TRUE, warnings=FALSE }
 hum.tar <- system.file('extdata/shinyApp/example/target_human.txt', package='spatialHeatmap')
@@ -454,9 +469,10 @@ Load custom target data into `colData` slot.
 colData(rse.hum) <- DataFrame(target.hum)
 ```
 
-A slice of the simplified `colData` object is shown below, where the `disease` column
-contains now shorter labels than in the original data set. Additional details for generating and using targets files in `spatialHeatmap`
-are provided in the [Supplement](#data_form) of this vignette.  
+A slice of the simplified `colData` object is shown below, where the `disease`
+column contains now shorter labels than in the original data set. Additional
+details for generating and using target files in `spatialHeatmap` are provided
+in the [Supplement](#data_form) of this vignette.  
 
 
 ```{r eval=TRUE, echo=TRUE, warnings=FALSE}
@@ -467,35 +483,33 @@ colData(rse.hum)[c(1:3, 41:42), 4:5]
 
 <font color='blue'>
 The actual gene expression data of the downloaded RNA-Seq experiment is stored
-in the `assay` slot of `rse.hum`. Since it contains raw count data, it is often
-desirable to apply basic preprocessing routines prior to plotting spatical
-heatmaps. The following shows how to normalize the count data, aggregate
-replicates and then remove genes with unreliable expression responses. These
-preprocessing steps are optional, and thus can be skipped as needed. For instanse, fully preprocessed data can be applied to the function `spatial_hm` for [plotting spatial heatmaps](#hum_single) directly by skipping the preprocessing routines, but the sample column name and/or condition column name in the `colData` slot must be provided to `sam.factor` and/or `con.factor` respectively (Table \@ref(tab:arg)).  
-</font>
-
-^[I think
-one should assure that skipping the preprocessing works seemlessly even without
+in the `assay` slot of `rse.hum`. Since it contains raw count data, it can be
+desirable to apply basic preprocessing routines prior to plotting spatial
+heatmaps.  The following shows how to normalize the count data, aggregate
+replicates and then remove genes with unreliable expression responses.  These
+preprocessing steps are optional and can be skipped if needed. For instanse, fully preprocessed data can be applied to the function `spatial_hm` for [plotting spatial heatmaps](#hum_single) directly by skipping the preprocessing routines, but the sample column name and/or condition column name in the `colData` slot must be provided to `sam.factor` and/or `con.factor` respectively (Table \@ref(tab:arg)).  
+^[I think one
+should assure that skipping the preprocessing works seemlessly even without
 aggregating replicates by letting the user choose which replicate to use. Is
 this possible yet? This is also important when users start with their fully
 preprocessed data which I assume will be a very common situation.]
+</font>
 
-For normalizing raw count data from RNA-Seq experiments, the `norm_data` can be
-used. It supports the following pre-existing functions from widely used
-packages for analyzing count data in the next generation sequencing (NGS)
-field: `calcNormFactors` (CNF) from `edgeR` [@edgeR]; as well as
+For normalizing raw count data from RNA-Seq experiments, the `norm_data`
+function can be used. It supports the following pre-existing functions from
+widely used packages for analyzing count data in the next generation sequencing
+(NGS) field: `calcNormFactors` (CNF) from `edgeR` [@edgeR]; as well as
 `estimateSizeFactors` (EST),  `varianceStabilizingTransformation` (VST), and
 `rlog` from DESeq2 [@DESeq2].  The argument `norm.fun` specifies one of the
-four internal normalizing functions: `CNF`, `EST`, `VST`, and `rlog`. If
+four internal normalizing methods: `CNF`, `EST`, `VST`, and `rlog`. If
 `norm.fun='none'`, no normalization is applied.  The arguments for each
-normalizing function are provided via `parameter.list`, which is a `list` with
-named slots. For example, `norm.fun='ESF'` and
+normalizing function are provided via a `parameter.list`, which is a `list`
+with named slots. For example, `norm.fun='ESF'` and
 `parameter.list=list(type='ratio')` is equivalent to
-`estimateSizeFactors(object, type='ratio')`.  
-
-If `paramter.list=NULL`, the default arguments are used by the normalizing
-function assigned to `norm.fun`. For additional details, users want to consult
-the help file of the `norm_data` function by typing `?norm_data` in the R console. 
+`estimateSizeFactors(object, type='ratio')`.  If `paramter.list=NULL`, the
+default arguments are used by the normalizing function assigned to `norm.fun`.
+For additional details, users want to consult the help file of the `norm_data`
+function by typing `?norm_data` in the R console. 
 
 The following example uses the `ESF` normalization option. This method has been 
 chosen mainly due to its good time performance.   
@@ -581,8 +595,8 @@ corresponding gene IDs under the `ID` argument as a character vector. The
 each gene in a single composite plot. To facilitate comparisons of expression
 values across genes and/or conditions, the `lay.shm` parameter can be assigned
 `'gene'` or `'con'`, respectively. For instance, in Figure \@ref(fig:mul) the
-SHMs of genes `ENSG00000268433` and `ENSG00000006047` are organised
-by condition in a horizontal view. This function is particularly useful when
+SHMs of the genes `ENSG00000268433` and `ENSG00000006047` are organised
+by condition in a horizontal view. This functionality is particularly useful when
 comparing gene families. 
 
 ```{r mul, eval=TRUE, echo=TRUE, warnings=FALSE, fig.wide=TRUE, fig.cap=("SHMs of two genes. The subplots are organised by \"condition\" through `lay.shm` argument."), out.width="100%" }
@@ -657,8 +671,8 @@ Return the names of the matching aSVG files.
 unique(feature.df$SVG)
 ```
 
-The following selects `mus_musculus.male.svg` as the target aSVG, returns the first
-three rows of the resulting `feature.df` and also prints the unique set of all
+The following first selects `mus_musculus.male.svg` as target aSVG, then returns the 
+first three rows of the resulting `feature.df`, and finally prints the unique set of all
 aSVG features.   
 
 ```{r eval=TRUE, echo=TRUE, warnings=FALSE }
@@ -677,7 +691,7 @@ svg.mus <- system.file("extdata/shinyApp/example", "mus_musculus.male.svg", pack
 
 Import of custom target file defining simplified sample labels and experimental
 design. The following imports a sample target file that is included in this package.
-To instect its content, the first three rows of the target file are printed to the 
+To inspect its content, the first three rows of the target file are printed to the 
 screen.
 
 ```{r eval=TRUE, echo=TRUE, warnings=FALSE }
@@ -695,7 +709,7 @@ colData(rse.mus) <- DataFrame(target.mus)
 
 ### Preprocess Assay Data
 
-The raw RNA-Seq count are preprocessed with the following steps including (1)
+The raw RNA-Seq count are preprocessed with the following steps: (1)
 normalization, (2) aggregation of replicates, and (3) filtering of reliable
 expression data. The details of these steps are explained in the previous
 sub-section using data from human.
@@ -706,27 +720,31 @@ se.aggr.mus <- aggr_rep(data=se.nor.mus, sam.factor='organism_part', con.factor=
 se.fil.mus <- filter_data(data=se.aggr.mus, sam.factor='organism_part', con.factor='strain', pOA=c(0.01, 5), CV=c(0.6, 100), dir=NULL) # Filtering of genes with low counts and variance 
 ```
 
-### SHM: Single Gene
+### SHM: Transparency
 
 The pre-processed expression data for gene 'ENSMUSG00000000263' is plotted in form
 of an SHM. In this case the plot includes expression data for 8 tissues across 3 
 mouse strains. 
 
-```{r musshm, eval=TRUE, echo=TRUE, warnings=FALSE, fig.wide=TRUE, fig.cap=("Mouse organ SHM. This is a multiple-layer image and `skeletal muscle` is set transparent to expose lung and heart."), out.width="100%" }
+```{r musshm, eval=TRUE, echo=TRUE, warnings=FALSE, fig.wide=TRUE, fig.cap=("SHM of mouse organs. This is a multiple-layer image where the polygon of the 'skeletal muscle' is set transparent to expose 'lung' and 'heart'."), out.width="100%" }
 spatial_hm(svg.path=svg.mus, data=se.fil.mus, ID=c('ENSMUSG00000000263'), height=0.5, legend.r=1.1, sub.title.size=9, ncol=3, tis.trans=c('skeletal muscle'), legend.nrow=4, line.size=0.2, line.color='grey70')
 ```
 
+The SHM plots in Figures \@ref(fig:musshm) and \@ref(fig:musshm1) demonstrate
+the usage of the transparency feature via the `tis.trans` parameter. The
+corresponding mouse organ aSVG image includes overlapping tissue layers. In
+this case the skelectal muscle layer partially overlaps with lung and heart
+tissues. To view lung and heart in Figure \@ref(fig:musshm), the skelectal
+muscle tissue is set transparent with `tis.trans=c('skeletal muscle')`. To view
+in the same aSVG the skeletal muscle tissue instead, `tis.trans` is assigned
+`NULL` in the SHM plot of Figure \@ref(fig:musshm1).
 
-<font color='blue'>
-This is a typical example to demonstrate the usage of `tis.trans` parameter, since this mouse organ image includes tissues in multiple layers and skelectal muscle covers lung and heart. In Figure \@ref(fig:musshm), skelectal muscle is set transparent through `tis.trans=c('skeletal muscle')` so that lung and heart are exposed. By contrast, in Figure \@ref(fig:musshm1) `tis.trans=NULL` exposes `skeletal muscle` and lung and heart are covered.  
-
-Moreover, presence of too many tissues might affect the visual effects due to the messy
-shape outlines. The `line.size` and `line.color` parameters are used to
-adjust the thickness and color of shape outlines respectively and thus enhance the visualization. In Figure \@ref(fig:musshm1), the default values of the 2 arguments are used.   
-</font>
+To fine control the visual effects in feature rich aSVGs, the `line.size` and
+`line.color` parameters are useful. This way one can adjust the thickness and 
+color of complex polygon structures.
 
 
-```{r musshm1, eval=TRUE, echo=TRUE, warnings=FALSE, fig.wide=TRUE, fig.cap=("Mouse organ SHM. This is a multiple-layer image and `skeletal muscle` convers lung and heart."), out.width="100%" }
+```{r musshm1, eval=TRUE, echo=TRUE, warnings=FALSE, fig.wide=TRUE, fig.cap=("SHM of mouse organs. This is a multiple-layer image where the view onto 'lung' and 'heart' is obstructed by displaying the 'skeletal muscle' tissue."), out.width="100%" }
 spatial_hm(svg.path=svg.mus, data=se.fil.mus, ID=c('ENSMUSG00000000263'), height=0.5, legend.r=1.1, sub.title.size=9, ncol=3, tis.trans=NULL, legend.ncol=2, line.size=0.2, line.color='grey70')
 ```
 
