@@ -592,9 +592,9 @@ kable((arg.df), escape=TRUE, caption="Argument list of \'spatial_hm\'.")
 ## Mouse Organs {#mus}
 
 This section generates an SHM plot for mouse data from the Expression Atlas.
-The code in this subsection is very similar to the previous [Human Brain](#hum)
-example. For brevity reasons, the corresponding text explaining the code has
-been reduced to the bare minimum. 
+The code components are very similar to the previous [Human Brain](#hum)
+example. For brevity, the corresponding text explaining the code has
+been reduced to a minimum. 
 
 ### Gene Expression Data
 
