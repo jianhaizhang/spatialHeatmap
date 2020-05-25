@@ -710,7 +710,7 @@ se.aggr.mus <- aggr_rep(data=se.nor.mus, sam.factor='organism_part', con.factor=
 se.fil.mus <- filter_data(data=se.aggr.mus, sam.factor='organism_part', con.factor='strain', pOA=c(0.01, 5), CV=c(0.6, 100), dir=NULL) # Filtering of genes with low counts and variance 
 ```
 
-### SHM: Single Gene
+### SHM: Transparency
 
 The pre-processed expression data for gene 'ENSMUSG00000000263' is plotted in form
 of an SHM. In this case the plot includes expression data for 8 tissues across 3 
@@ -719,8 +719,6 @@ mouse strains.
 ```{r musshm, eval=TRUE, echo=TRUE, warnings=FALSE, fig.wide=TRUE, fig.cap=("SHM of mouse organs. This is a multiple-layer image where the polygon of the 'skeletal muscle' is set transparent to expose 'lung' and 'heart'."), out.width="100%" }
 spatial_hm(svg.path=svg.mus, data=se.fil.mus, ID=c('ENSMUSG00000000263'), height=0.5, legend.r=1.1, sub.title.size=9, ncol=3, tis.trans=c('skeletal muscle'), legend.nrow=4, line.size=0.2, line.color='grey70')
 ```
-
-### SHM: Transparency
 
 The SHM plots in Figures \@ref(fig:musshm) and \@ref(fig:musshm1) demonstrate
 the usage of the transparency feature via the `tis.trans` parameter. The
