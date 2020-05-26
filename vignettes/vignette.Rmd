@@ -1003,6 +1003,16 @@ are described in this and the following sections, respectively.
  __Adjacency Matrix and Module Identification__^[Why this title if there are no 
  additional ones in this section. Is this an orphan leftover from somewhere else?]  
 
+<font color='red'>[ThG-Comment: this section needs major improvements. The intent was
+to identify for a target gene nearest neighbors based on some similarity metric for gene
+expression profiles (e.g. correlation), and then hierarchically cluster them and visualize
+the result in a heatmap. Instead you are subjecting the entire expression matrix to 
+clustering/WGCNA and the only plot the target gene in the context of a single
+cluster/module. This is hugely inefficient compared to doing it only for the nearest
+neighbors instead. Just think about if a user imports an expression matrix for
+all transcripts from human. With your approach they will not be able to complete this
+step since they will run out of memory on their system.]</font>
+
 <a name="ds"></a>
 The modules are identified by `adj_mod`. It first computes an adjacency
 matrix^[You need to describe how this adjency matrix is generated and what it
@@ -1055,10 +1065,6 @@ matrix_hm(geneID="HRE2", data=se.fil.arab, adj.mod=adj.mod, angleCol=80, angleRo
 
 In Figure \@ref(fig:static), the target gene is displayed in the gene module it belongs to, which is indicated by 2 black lines. The rows and columns are sorted by hierarchical clustering dendrograms. The expression matrix of this module is visualised without being scaled (`scale="no"`). It can be seen that the expression levels of this module is overall much higher in `hypoxia` than `control`, and therefore it could potentially be used to infer the `hypoxia` response mechanism in Arabidopsis.   
 
-<font color='red'>[ThG-Comment: this section needs major improvements. The intent was
-to identify for a target gene nearest neighbors based on some similarity method for gene
-expression profiles (e.g. correlation), and then hierarchically cluster them and visualize
-the result in a heatmap.]</font>
 
 # Network Graphs {#net}
 
