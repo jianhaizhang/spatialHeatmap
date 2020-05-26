@@ -905,8 +905,8 @@ colData(se.sh)[60:63, 1:4]
 
 In this example, the aSVG image has been regenerated in Inkscape from 
 the corresponding figure in @Mustroph2009-nu. The resulting custom figure
-has been included as a sample aSVG file of the `spatialHeatmap` package. Detailed 
-instructions on generating custom aSVG images are provided in the 
+has been included as a sample aSVG file in the `spatialHeatmap` package. Detailed 
+instructions for generating custom aSVG images in Inkscape are provided in the 
 [SVG tutorial](https://jianhaizhang.github.io/SVG_tutorial_file/).   
 
 The annotations in the corresponding aSVG file located under `svg.dir` can be
@@ -916,7 +916,7 @@ queried with the `return_features` function.
 feature.df <- return_feature(feature=c('pGL2', 'pRBCS'), species=c('shoot'), keywords.any=TRUE, return.all=FALSE, dir=svg.dir, remote=FALSE, match.only=FALSE)
 ```
 
-The unique set of the matching sSVG files can be returned as follows.   
+The unique set of the matching aSVG files can be returned as follows.   
 
 ```{r eval=TRUE, echo=TRUE, warnings=FALSE } 
 unique(feature.df$SVG)
