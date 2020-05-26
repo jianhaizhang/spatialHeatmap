@@ -102,7 +102,7 @@ As anatomical images the package supports both tissue maps from public
 repositories and custom images provided by the user. In general any type of
 image can be used as long as it can be provided in SVG (Scalable Vector
 Graphics) format, where the corresponding spatial features have been defined
-(see [aSVG](#term) below). The numeric values plotted onto a SHM
+(see [aSVG](#term) below). The numeric values plotted onto an SHM
 are usually quantitative measurements from a wide range of profiling
 technologies, such as microarrays, next generation sequencing (_e.g._ RNA-Seq
 and scRNA-Seq), proteomics, metabolomics, or many other small- or large-scale
@@ -992,22 +992,49 @@ spatial_hm(svg.path=svg.sh, data=se.fil.arab, ID=c("HRE2"), height=0.6, legend.n
 
 # Matrix Heatmaps {#mhm}
 
-<font color='blue'>jianhai_comment: From here to Shiny App section, slight changes are made.</font>
+SHMs are a visualization approach suitable for comparing the expression profiles
+of single genes or a small number of them across cell types and conditions. To 
+also support analyses across larger number of genes, `spatialHeatmap` provides 
+utilities for identifying for a gene of interest nearest neighbor genes that share 
+similar expression profiles. This is achieved by identifying clusters and 
+network modules using hierarchical clustering and network analysis. These approaches
+are described in this and the following sections, respectively.
 
-The Matrix Heatmap is designed to supplement the core feature of SHM. It displays the target gene in the context of corresponding gene network module, so there is a process of gene modules identification.
-
-**Adjacency Matrix and Module Identification**  
+ __Adjacency Matrix and Module Identification__^[Why this title if there are no 
+ additional ones in this section. Is this an orphan leftover from somewhere else?]  
 
 <a name="ds"></a>
-The modules are identified by `adj_mod`. It first computes an adjacency matrix on the gene expression matrix then hierarchically clusters the adjacency matrix by using WGCNA [@Langfelder2008-sg] and flashClust [@flashClust]. The clutersing includes 4 alternative sensitivity levels (`ds`=0, 1, 2, or 3). From 3 to 0, the sensitivity decreases and results in less modules with larger sizes. Since the [interactive network](#inter_net) functionality performs better on smaller modules, only `ds` of 3 and 2 are used. There is another  parameter `type` for module identification: `signed` and `unsinged`. The former means both positive and negative adjacency between genes are used while the latter takes the absolute values of negative adjacency.  
+The modules are identified by `adj_mod`. It first computes an adjacency
+matrix^[You need to describe how this adjency matrix is generated and what it
+represents. It also needs to mention what type of disance/correlation method is used
+initially to generate the downstream matrix.] on the gene expression matrix then hierarchically clusters the
+adjacency matrix by using WGCNA [@Langfelder2008-sg]^[Unclear for what you need
+WGCNA here. I thought this section uses hierarchical clustering. The latter is
+certainly used by WGCNA but it remains a mystery what exactly you are doing
+here.] I would expect to use here only hierarchical clustering, e.g. with
+flashClust. WGCNA seems more suitable for the next section.] and flashClust
+[@flashClust]. The clutersing includes 4 alternative sensitivity levels
+(`ds`=0, 1, 2, or 3).^[What is the meaning of the sensitivity levels, how are they 
+generated and how should the user interpret them?] From 3 to 0, the sensitivity decreases and results in
+less modules with larger sizes. Since the [interactive network](#inter_net)
+functionality performs better on smaller modules, only `ds` of 3 and 2 are
+used. There is another parameter `type` for module identification: `signed` and
+`unsinged`. The former means both positive and negative adjacency between genes
+are used while the latter takes the absolute values of negative adjacency^[Without
+defining how adjacency is defined here readers will not be able to understand
+what was done here, especially since this section is mainly about hierarchical 
+clustering.].  
 
-The function `adj_mod` returns a list containing an adjacency matrix and a data frame of module assignment. It is domenstrated on the [Arabidopsis Shoot](#plot_sh) data.
+The function `adj_mod` returns a list containing an adjacency matrix and a data
+frame of module assignment. It is domenstrated on the [Arabidopsis
+Shoot](#plot_sh) data.
 
 ```{r eval=TRUE, echo=TRUE, warnings=FALSE, results=FALSE}
 adj.mod <- adj_mod(data=se.fil.arab)
 ```   
 
-The adjacency matrix is a measure of co-expression similarity between genes, where larger value denotes more similarity.   
+The adjacency matrix is a measure of co-expression similarity between genes,
+where larger value denotes more similarity.   
 
 ```{r eval=TRUE, echo=TRUE, warnings=FALSE}
 adj.mod[['adj']][1:3, 1:3]
@@ -1027,6 +1054,11 @@ matrix_hm(geneID="HRE2", data=se.fil.arab, adj.mod=adj.mod, angleCol=80, angleRo
 ```   
 
 In Figure \@ref(fig:static), the target gene is displayed in the gene module it belongs to, which is indicated by 2 black lines. The rows and columns are sorted by hierarchical clustering dendrograms. The expression matrix of this module is visualised without being scaled (`scale="no"`). It can be seen that the expression levels of this module is overall much higher in `hypoxia` than `control`, and therefore it could potentially be used to infer the `hypoxia` response mechanism in Arabidopsis.   
+
+<font color='red'>[ThG-Comment: this section needs major improvements. The intent was
+to identify for a target gene nearest neighbors based on some similarity method for gene
+expression profiles (e.g. correlation), and then hierarchically cluster them and visualize
+the result in a heatmap.]</font>
 
 # Network Graphs {#net}
 
