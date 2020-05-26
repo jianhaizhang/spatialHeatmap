@@ -852,56 +852,87 @@ spatial_hm(svg.path=svg.chk, data=se.fil.chk, ID='ENSGALG00000006346', legend.r=
 
 ## Arabidopsis Shoot {#shoot}
 
-[GEO](https://www.ncbi.nlm.nih.gov/geo/) is a another well-known public repository of array- and sequence-based data. To demonstrate the use of spatialHeatmap on this resource, the dataset GSE14502 is plotted on a shoot aSVG image. It a microarray data from a study of translatome variation of *Arabidopsis thaliana* (Arabidopsis) shoot and root tissues under control and hypoxia conditions [@Mustroph2009-nu], and is downloaded through GEOquery [@geo].  
+This section generates an SHM for _Arabidopsis thaliana_ with gene expression
+data from the Affymetrix microarray technology. The chosen experiment used
+ribosome-associated mRNAs from several cell populations of shoots and roots that were
+exposed to hypoxia stress [@Mustroph2009-nu]. In this case the expression data
+will be downloaded from [GEO](https://www.ncbi.nlm.nih.gov/geo/) with utilites
+from the `GEOquery` package [@geo] and the preprocessing routines will be
+specific to the Affymetrix technology. The remaining code components for
+generating SHMs are very similar to the previous examples. For brevity, the
+text in this section explains mainly the steps that are specific to this data
+set. 
 
-Access the GEO dataset GSE14502 and convert it to `SummarizedExperiment`.  
+
+### Gene Expression Data
+
+The GSE14502 data set is downloaded with the `getGEO` function from the `GEOquery` 
+package. Intermediately, the expression data is stored in an `ExpressionSet` container 
+and then converted to a `SummarizedExperiment` object.
 
 ```{r eval=TRUE, echo=TRUE, warnings=FALSE}
 gset <- getGEO("GSE14502", GSEMatrix=TRUE, getGPL=TRUE)[[1]]
 se.sh <- as(gset, "SummarizedExperiment")
 ```
 
-Use gene symbols to replace probes.   
+The gene symbol identifiers are extracted from the `rowData` component and used 
+as row names. Similarly, one can work with AGI identifiers by providing below `AGI` 
+under `Gene.Symbol`.
 
 ```{r eval=TRUE, echo=TRUE, warnings=FALSE}
 rownames(se.sh) <- make.names(rowData(se.sh)[, 'Gene.Symbol'])
 ```
 
-A slice of the experiment design, which is stored in `colData` slot. The samples and conditions are included in the `title` column. In samples, promoter *pGL2, pCO2, pSCR, pWOL* labels *root atrichoblast epidermis, root cortex meristematic zone, root endodermis, root vasculature* respectively, and *p35S* labels *root_total* and *shoot_total*. There are 2 conditions: `control` and `hypoxia`.  
+The following returns a slice of the experimental design stored in the
+`colData` slot. Both the samples and conditions are contained in the `title` column.
+The samples include promoters (pGL2, pCO2, pSCR, pWOL, p35S), tissues 
+and organs (root atrichoblast epidermis, root cortex meristematic zone, root 
+endodermis, root vasculature, root_total and shoot_total); and the conditions 
+are control and hypoxia.  
 
 ```{r eval=TRUE, echo=TRUE, warnings=FALSE}
 colData(se.sh)[60:63, 1:4]
 ```
 
-In this example, the aSVG image of Arabidopsis is made from @Mustroph2009-nu. Similarly, it is included in this packaged and thus can be queried locally. The instructions on how to make custom aSVG images are provided in the [SVG tutorial](https://jianhaizhang.github.io/SVG_tutorial_file/).   
+### aSVG Image  
 
-Query the packaged aSVG files.  
+In this example, the aSVG image has been regenerated in Inkscape from 
+the corresponding figure in @Mustroph2009-nu. The resulting custom figure
+has been included as a sample aSVG file of the `spatialHeatmap` package. Detailed 
+instructions on generating custom aSVG images are provided in the 
+[SVG tutorial](https://jianhaizhang.github.io/SVG_tutorial_file/).   
+
+The annotations in the corresponding aSVG file located under `svg.dir` can be
+queried with the `return_features` function.  
 
 ```{r eval=TRUE, echo=TRUE, warnings=FALSE }
 feature.df <- return_feature(feature=c('pGL2', 'pRBCS'), species=c('shoot'), keywords.any=TRUE, return.all=FALSE, dir=svg.dir, remote=FALSE, match.only=FALSE)
 ```
 
-All matching aSVGs.   
+The unique set of the matching sSVG files can be returned as follows.   
 
 ```{r eval=TRUE, echo=TRUE, warnings=FALSE } 
 unique(feature.df$SVG)
 ```
 
-Select 'shoot_final.svg' for plotting spaital heatmaps.  
+The aSVG file `shoot_final.svg` is chosen to generate the SHM in this section.
 
 ```{r eval=TRUE, echo=TRUE, warnings=FALSE }
 feature.df <- subset(feature.df, SVG=='shoot_final.svg')
-# A slice of the feature data frame.
 feature.df[1:3, ]
 ```
 
-Get path of 'shoot_final.svg'.  
+Obtain full path of target aSVG on user system.   
 
 ```{r eval=TRUE, echo=TRUE, warnings=FALSE }
 svg.sh <- system.file("extdata/shinyApp/example", "shoot_final.svg", package="spatialHeatmap")
 ```
 
-Make a targets file based on the `title` column in experiment design and features of interest in the aSVG. It is included in this package and part is shown below.
+### Experimental Design
+
+The following imports a sample target file that is included in this package.
+To inspect its content, four selected rows of this target file are printed to the 
+screen.
 
 ```{r eval=TRUE, echo=TRUE, warnings=FALSE}
 sh.tar <- system.file('extdata/shinyApp/example/target_arab.txt', package='spatialHeatmap')
@@ -909,44 +940,50 @@ target.sh <- read.table(sh.tar, header=TRUE, row.names=1, sep='\t')
 target.sh[60:63, ]
 ```
 
-All samples in targets file.     
+Return all samples present in target file.     
 
 ```{r eval=TRUE, echo=TRUE, warnings=FALSE}
 unique(target.sh[, 'samples'])
 ```
 
-All conditions in targets file.  
+Return all conditions present in target file.  
 
 ```{r eval=TRUE, echo=TRUE, warnings=FALSE}
 unique(target.sh[, 'conditions'])
 ```
 
-Use the targets file to replace the data frame in `colData` slot.  
+Load custom target data into `colData` slot.  
 
 ```{r eval=TRUE, echo=TRUE, warnings=FALSE}
 colData(se.sh) <- DataFrame(target.sh)
 ```
 
-The dataset GSE14502 is already normalised by RMA [@affy], so the pro-processing only includes aggregation and filtering. Genes with expression values larger than 6 (log2 unit) in at least 3% of all samples (pOA=c(0.03, 6)), and with coefficient of variance (CV) between 0.30 and 100 (CV=c(0.30, 100)) are retained.   
+### Preprocess Assay Data
+
+The downloaded GSE14502 data set has already been normalized with the RMA
+algorithm [@affy]. Thus, the pre-processing steps can be restricted to the
+aggregation of replicates and filtering of reliably expressed genes. For the
+latter, the following code will retain genes with expression values larger than
+6 (log2 space) in at least 3% of all samples (pOA=c(0.03, 6)), and with a
+coefficient of variance (CV) between 0.30 and 100 (CV=c(0.30, 100)).   
 
 ```{r eval=TRUE, echo=TRUE, warnings=FALSE }
-# Aggregate replicates. 
-se.aggr.sh <- aggr_rep(data=se.sh, sam.factor='samples', con.factor='conditions', aggr='mean')
-# Filter genes with low variance and low intensity.
-se.fil.arab <- filter_data(data=se.aggr.sh, sam.factor='samples', con.factor='conditions', pOA=c(0.03, 6), CV=c(0.30, 100), dir=NULL)
+se.aggr.sh <- aggr_rep(data=se.sh, sam.factor='samples', con.factor='conditions', aggr='mean') # Replicate agggregation using mean
+se.fil.arab <- filter_data(data=se.aggr.sh, sam.factor='samples', con.factor='conditions', pOA=c(0.03, 6), CV=c(0.30, 100), dir=NULL) # Filtering of genes with low intensities and variance
 ```
 
-Plot SHMs.   
+### SHM: Microarray Example
 
-```{r shshm, eval=TRUE, echo=TRUE, warnings=FALSE, fig.wide=TRUE, fig.cap=('SHMs of Arabidopsis shoot. Pre-defined tissue regions are colored by the expression profile of the target gene. The promoter pGL2, pRBCS, pCER5, pSultr2.2, pSUC2, pKAT1 label shoot trichomes, shoot photosynthetic cell, cotyledon and leaf epidermis, shootbundle sheath, shoot phloem companion cells, Cotyledon and leaf guard cells, respectively.'), out.width="100%"}
+The expression profile for the HRE2 gene is plotted for control and hypoxia treatment
+across six cell types (Figure \@ref(fig:shshm)).
+
+```{r shshm, eval=TRUE, echo=TRUE, warnings=FALSE, fig.wide=TRUE, fig.cap=('SHM of Arabidopsis shoots. The expression profile of the HRE2 gene is plotted for control and hypoxia treatment across six cell types.'), out.width="100%"}
 spatial_hm(svg.path=svg.sh, data=se.fil.arab, ID=c("HRE2"), height=0.6, legend.nrow=3, legend.r=1.3, legend.key.size=0.3)
 ```
 
-Figure \@ref(fig:shshm) is the SHM of gene `HRE2` under `control` and `hypoxia`. It is clear that this gene\'s exression profiles under control are lower than `hypoxia` across all the 5 tissues (*pGL2, pRBCS, pCER5, pSUC2, pKAT1*). Therefore, it can be hypothesised that `hypoxia` induces over-expression of `HRE2` across the 5 tissues and thus `HRE2` might be an important factor for Arabidopsis shoot to cope with `hypoxia` stress. The tissue *pSultr2.2* is blank under `hypoxia` due to unavailability of its data under `hypoxia` in the data matrix.   
+# Matrix Heatmaps {#mhm}
 
 <font color='blue'>jianhai_comment: From here to Shiny App section, slight changes are made.</font>
-
-# Matrix Heatmaps {#mhm}
 
 The Matrix Heatmap is designed to supplement the core feature of SHM. It displays the target gene in the context of corresponding gene network module, so there is a process of gene modules identification.
 
