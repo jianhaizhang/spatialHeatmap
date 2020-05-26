@@ -1007,11 +1007,11 @@ are described in this and the following sections, respectively.
 to identify for a target gene nearest neighbors based on some similarity metric for gene
 expression profiles (e.g. correlation), and then hierarchically cluster them and visualize
 the result in a heatmap. Instead you are subjecting the entire expression matrix to 
-clustering/WGCNA and the only plot the target gene in the context of a single
+clustering/WGCNA and then plot the target gene in the context of a single
 cluster/module. This is hugely inefficient compared to doing it only for the nearest
-neighbors instead. Just think about if a user imports an expression matrix for
-all transcripts from human. With your approach they will not be able to complete this
-step since they will run out of memory on their system.]</font>
+neighbors instead. Just think about what will happen if a user imports an expression 
+matrix for all transcripts from human. With your approach they will not be able to 
+complete this step since they will run out of memory on their system.]</font>
 
 <a name="ds"></a>
 The modules are identified by `adj_mod`. It first computes an adjacency
@@ -1067,6 +1067,11 @@ In Figure \@ref(fig:static), the target gene is displayed in the gene module it 
 
 
 # Network Graphs {#net}
+
+<font color='red'>[ThG-Comment: both the previous section and this section need
+                   to clearly explain what is done to arrive at a given network 
+                   module and what it represents. Once this is done I will edit 
+                   the text.]</font>
 
 The same target gene and module from matrix heatmap can also be displayed as a network. Similarly, the network can be dispayed in static or interactive mode.  
 
