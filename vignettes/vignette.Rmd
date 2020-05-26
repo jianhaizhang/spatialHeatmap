@@ -88,6 +88,13 @@ of the `spatialHeatmap` package are illustrated in Figure \@ref(fig:illus).
 include_graphics('img/illustration.png')
 
 ```
+^[Thomas-Comment: the legend text should provide a brief overview of what is shown
+in the flowchart. Right now there is too much technical detail that lacks context.
+I suggest to significantly shorten it. Also, you may want to organize the flowchart
+with bullet labels like (A), (B), (C) and (D) that can be referenced in the text. 
+For instance: (A) Expression Data, (B) aSVG, (C) SHM and (D) Gene Context Plots. 
+This way there is a clear label plus a visual illustration for each component one
+can refer to in the text with Figure 1A or Figure 1B, etc.]
 
 As anatomical images the package supports both tissue maps from public
 repositories and custom images provided by the user. In general any type of
