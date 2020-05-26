@@ -1092,9 +1092,24 @@ network(geneID="HRE2", data=se.fil.arab, ann='Target.Description', adj.mod=adj.m
 
 # Shiny App {#shiny}
 
-All the above functionality (SHM, interactive matrix heatmap, interactive network) is also combined into a web-browser based [Shiny App](https://shiny.rstudio.com/), which takes advantage of the computational power of R and interactivity of the web. The main benefits of the Shiny App is combine all the utities in one interface and increase interactivity. On the left of this app is the menu. It includes pre-formatted ready-to-use examples, options to upload formatted data matrix and aSVG images, and instruction to use this app. On the right is the interactive interfacce, including Data Matrix, Spatial Heatmap, Matrix Heatmap, and Network. To use interactive features, there are paramters on the left menu to operate. Upon launched, the app automatically displays a pre-formatted example. A good practice to use this app is to follow steps in the menu rather than skipping steps. If unexpectation happens, the app webpage should be refreshed.
+In additon to generating SHMs and the corresponding gene context plots from R, 
+`spatialHeatmap` provides a [Shiny App](https://shiny.rstudio.com/) to generate
+them from within an interactive web browser-based interface. Apart from its
+user-friendliness, this App combines the results of all plotting utilities in a 
+single browser window which simplifies the visual interpretation of the results.
+For testing purposes, ready-to-use sample expression data and aSVG images are included
+along with detailed user instructions. 
 
-This app is launched by the function `shiny_all` without any parameters. Figure \@ref(fig:shiny) is the screenshot of Spatial Heatmap.  
+
+On the right is the interactive interfacce, including Data Matrix,
+Spatial Heatmap, Matrix Heatmap, and Network. To use interactive features,
+there are paramters on the left menu to operate. Upon launched, the app
+automatically displays a pre-formatted example. A good practice to use this app
+is to follow steps in the menu rather than skipping steps. If unexpectation
+happens, the app webpage should be refreshed.
+
+This app is launched by the function `shiny_all` without any parameters. Figure
+\@ref(fig:shiny) is the screenshot of Spatial Heatmap.  
 
 ```{r eval=FALSE, echo=TRUE, warnings=FALSE}
 shiny_all()
