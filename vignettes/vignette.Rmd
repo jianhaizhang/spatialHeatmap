@@ -88,7 +88,7 @@ of the `spatialHeatmap` package are illustrated in Figure \@ref(fig:illus).
 include_graphics('img/illustration.png')
 
 ```
-^[Thomas-Comment: the legend text should provide a brief overview of what is shown
+^[Thomas-Comment: the legend text of Figure 1 should provide a brief overview of what is shown
 in the flowchart. Right now there is too much technical detail that lacks context.
 I suggest to significantly shorten it. Also, you may want to organize the flowchart
 with bullet labels like (A), (B), (C) and (D) that can be referenced in the text. 
