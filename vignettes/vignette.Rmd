@@ -63,24 +63,26 @@ on right.]</font>
 
 ## Motivation
 
-The _spatialHeatmap_ package provides functionalities for visualizing cell-, tissue-
-and organ-specific data of biological assays by coloring the corresponding spatial
-features defined in anatomical images according to a numeric color key. The
-color scheme used to represent the assay values can be customized by
-the user. This core functionality of the package is called a _spatial heatmap_ (SHM) plot. It is
-enhanced with nearest neighbor visualization tools for groups of measured items 
-(_e.g._ gene modules) sharing related abundance profiles, including matrix heatmaps
-combined with hierarchical clustering dendrograms and network representations.
-The functionalities of _spatialHeatmap_ can be used either in a command-driven
-mode from within R or a graphical user interface (GUI) provided by a Shiny App
-that is also part of this package. While the R-based mode provides flexibility
-to customize and automate analysis routines, the Shiny App includes a variety
-of convenience features that will appeal to biologists. Moreover, the
-Shiny App can be used on both local computers as well as centralized
-server-based deployments (_e.g._ cloud-based or custom servers) that can be
-accessed remotely as a public web service for using _spatialHeatmap's_
-functionalities with community and/or private data. The functionalities
-of the `spatialHeatmap` package are illustrated in Figure \@ref(fig:illus).   
+The _spatialHeatmap_ package provides functionalities for visualizing cell-,
+tissue- and organ-specific data of biological assays by coloring the
+corresponding spatial features defined in anatomical images according to a
+numeric color key. The color scheme used to represent the assay values can be
+customized by the user. This core functionality of the package is called a
+_spatial heatmap_ (SHM) plot. It is enhanced with nearest neighbor
+visualization tools for groups of measured items (_e.g._ gene modules) sharing
+related abundance profiles, including matrix heatmaps combined with
+hierarchical clustering dendrograms and network representations.  The
+functionalities of _spatialHeatmap_ can be used either in a command-driven mode
+from within R or a graphical user interface (GUI) provided by a Shiny App that
+is also part of this package. While the R-based mode provides flexibility to
+customize and automate analysis routines, the Shiny App includes a variety of
+convenience features that will appeal to experimentalists and other users less
+familiar with R. Moreover, the Shiny App can be used on both local computers as
+well as centralized server-based deployments (_e.g._ cloud-based or custom
+servers) that can be accessed remotely as a public web service for using
+_spatialHeatmap's_ functionalities with community and/or private data. The
+functionalities of the `spatialHeatmap` package are illustrated in Figure
+\@ref(fig:illus).   
 
 
 ```{r illus, echo=FALSE, fig.wide=TRUE, fig.cap=("Functionality overview. The numeric data can come as a `vector`, `data frame`, or `SummarizedExperiment` (SE). If `vector` or `data frame`, the sample and condition identifiers should be in the form of \'sample__condition\', e.g. \'S1__con1\'. If `data frame` or SE, the columns and rows should be sample/conditions and assayed items (gene1, gene2) respectively. In SE, the `colData` slot is required and contains replicate information, while the `rowData` slot is optional and contains row item annotation. If the latter is available, the annotation is seen by mousing over a node in the interactive network. In the aSVG image (see [aSVG](#term) below), spatial features are pre-defined and assigned unique identifiers. In visualization, only aSVG features having identical sample counterparts in data are colored (*e.g.* S1) in SHMs. To supplement SHMs, coexpression analysis is applied on \'data matrix\' to identify network modules. The gene in SHMs can be investigated in the gene module it belongs to, where the module is in form of matrix heatmap and network. Lastly, the SHMs, matrix heatmap, network are all combined as an interactive Shiny app."), out.width="100%"}
