@@ -1170,11 +1170,12 @@ servers or cloud services such as AWS, GCP or
 
 # Supplement {#sup} 
 
-To generate SHMs with custom data, proper formatting of the numeric data and/or 
-aSVG images is often required. This section provides additional details on 
-this topic.
+To generate SHMs with custom data, proper formatting of the numeric data and/or
+aSVG images is often required. A tabular target file describing the numeric
+data can also be provided but is optional. This section provides additional
+details on these three input files.
 
-## Format the Data {#data_form}
+## Numeric Data Format {#data_form}
 
 The accepted data classes include `vector`, `data frame`, or
 `SummarizedExperiment` (SE). A `vector` applies to several numeric values
@@ -1184,7 +1185,9 @@ under 2 conditions). By contrast, SE applies to experiments with many samples
 and many conditions. Formatting the data is essentially define samples and/or
 conditions.     
 
-**Vector**  
+### Object Types
+
+#### `vector`
 In the case of vector, the numeric values are measured from different samples. If one or more conditions are provided, the samples and conditions should be connected by double undescore, i.e. in the form of 'sample__condition'. If no conditions are provided, all the samples are assumed to have same condition, which is the [toy example](#toy).    
 
 Take 2 samples `occipital lobe` and `parietal lobe` from the [toy example](#toy) for instance and assume there are 2 conditions, `condition1` and `condition2`. Select 5 random values, assign 4 of them to the 2 samples under the 2 conditions, and the last one to a not-mapped sample. Note the value names should be unique.   
@@ -1203,7 +1206,8 @@ Plot SHMs.
 spatial_hm(svg.path=svg.hum, data=vec, ID='toy', ncol=1, legend.r=1.2, sub.title.size=14)
 ```
 
-**Data Frame**  
+#### `data.frame`  
+
 In the case of data frame, numeric values are measured from different samples. Similarly, if one or more conditions are provided, the column names should be in the form of 'sample__condition'. If no conditions are provided, all the samples are assumed to have same condition.   
 
 Take the same samples and conditions in the `vector` case as example.  
@@ -1234,7 +1238,7 @@ The pre-processing steps are optional and thus are skipped. Next plot SHMs on `g
 spatial_hm(svg.path=svg.hum, data=df.test, ID=c('gene1'), ncol=1, legend.r=1.2, sub.title.size=14)
 ```
 
-**SummarizedExperiment**  
+#### `SummarizedExperiment` 
 
 In the following, the same samples and conditions in the above data frame are taken as example.  
 
