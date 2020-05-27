@@ -1097,7 +1097,7 @@ In additon to generating SHMs and the corresponding gene context plots from R,
 provides access to the same functionalities from an intuitive-to-use web
 browser interface.  Apart from being very user-friendly, this App
 conveniently organizes the results of the entire visualization workflow in a
-single browser window with options to modulate the individual components
+single browser window with options to adjust the parameters of the individual components
 interactively. For instance, genes can be selected and replotted in the SHM
 simply by clicking the corresponding rows in the expression table included in the same window. 
 This representation is very efficient in guiding the interpretation of the results 
@@ -1105,6 +1105,7 @@ in a visual and user-friendly manner. For testing purposes, the `spatialHeatmap`
 Shiny App also includes ready-to-use sample expression data and aSVG images 
 along with embedded user instructions.
 
+## Local System 
 
 The Shiny App of `spatialHeatmap` can be launched from an R session with the following
 function call. 
@@ -1112,6 +1113,9 @@ function call.
 ```{r eval=FALSE, echo=TRUE, warnings=FALSE}
 shiny_all()
 ```   
+
+<font color='red'>[ThG-Comment: many menu items are not functional in the Shiny App. 
+E.g.: Instructions and Acknowledgement return error messages.]</font>
 
 The dashboard panels of the Shiny App are organized as follows:
 
@@ -1130,34 +1134,55 @@ include_graphics('img/shiny.png')
 
 After launching, the Shiny App displays by default one of the included data sets. 
 
-The data matrix^[This must be a tabular file in CSV or TSV format?] to upload
-is a data frame. If the data is a `SummarizedExperiment` class, the data matrix
-can be obtained by setting a directory path to `dir` in function `filter_data`.
-A folder `local_mode_result/` is automatically created in the provided path,
-and the filtered data matrix is written to `local_mode_result/processed_data.txt` with column names in the scheme
-'sample__condition' (Table \@ref(tab:humtab)), which is a tab-separated file.
-If users want to see annotation by mousing over a node in the network, a column
-of gene annotation in `rowData` slot should be provided to `ann`, then the
-annotation is appended to the last column in `processed_data.txt`.  
+The gene expression data and aSVG image files can be uploaded to the Shiny App
+as tabular text (_e.g._ in CSV or TSV format) and SVG files, respectively. To
+also allow users to upload gene expression data stored in
+`SummarizedExperiment` objects, one can export them from R to a tabular file
+with the `filter_data` function. In this function call the user sets the
+desired directory path under `dir`. Within this directory the tabular file will 
+be written to `local_mode_result/processed_data.txt` in TSV format. The
+column names in the exported tabular file preserve the experimental design information from 
+the `colData` slot by concatenating the corresponding sample and condition information 
+separated by double underscores. An example of this format is shown in Table \@ref(tab:humtab). 
 
-For example, in `filter_data`, setting `dir='./'` (current working directory)
-will output the filtered data matrix in
-`./local_mode_result/processed_data.txt`, and setting
-`ann='Target.Description'` appends the annotation from `rowData` slot to the
-last column of `processed_data.txt`, which is ready to upload to the app.
+To interactively access gene- or transcript-level annotations in the plots and
+tabels of the Shiny App, such as viewing functional descriptions by moving the
+cursor over network nodes, the corresponding annotation column needs to be
+present in the `rowData` slot and its column name assigned to the `ann`
+argument. In the exported tabular file the extra annotation column is appended
+to the expression matrix. ^[Check for correctness. For readability I made a lot
+                            of changes in this paragraph.] 
 
 ```{r eval=FALSE, echo=TRUE, warnings=FALSE}
 se.fil.arab <- filter_data(data=se.aggr.sh, ann="Target.Description", sam.factor='samples', con.factor='conditions', pOA=c(0.03, 6), CV=c(0.30, 100), dir='./')
 ```
 
+## Server Deployment
+
+As most Shiny Apps, `spatialHeatmap` can be deployed as a centralized web
+service. A major advantage of a web server deployment is that the
+functionalities can be accessed remotely by anyone on the internet without the
+need to use R on their local system. For deployment one can use local web
+servers or cloud services such as AWS, GCP or
+[shinysapps.io](https://www.shinyapps.io/). An example web instance for testing
+`spatialHeatmap` online is available
+[here](https://www.plantsecretome.org/software/spatialheatmap).
 
 # Supplement {#sup} 
 
-To plot SHMs, a pair of data (`vector`, `data frame`, `SummarizedExperiment`) and aSVG image are required. The most important step is to format the data and aSVG image so that target features in aSVG have matching counterparts in the data, since only the matching features in aSVG images are colored. This section explains details of data and aSVG setup that are not covered in the main vignette.  
+To generate SHMs with custom data, proper formatting of the numeric data and/or 
+aSVG images is often required. This section provides additional details on 
+this topic.
 
 ## Format the Data {#data_form}
 
-The accepted data classes include `vector`, `data frame`, or `SummarizedExperiment` (SE). A `vector` applies to several numeric values measured for a single item (*e.g.* gene), and `data frame` applies to more items assayed in several samples and/or several conditions (e.g. 2 samples under 2 conditions). By contrast, SE applies to experiments with many samples and many conditions. Formatting the data is essentially define samples and/or conditions.     
+The accepted data classes include `vector`, `data frame`, or
+`SummarizedExperiment` (SE). A `vector` applies to several numeric values
+measured for a single item (*e.g.* gene), and `data frame` applies to more
+items assayed in several samples and/or several conditions (e.g. 2 samples
+under 2 conditions). By contrast, SE applies to experiments with many samples
+and many conditions. Formatting the data is essentially define samples and/or
+conditions.     
 
 **Vector**  
 In the case of vector, the numeric values are measured from different samples. If one or more conditions are provided, the samples and conditions should be connected by double undescore, i.e. in the form of 'sample__condition'. If no conditions are provided, all the samples are assumed to have same condition, which is the [toy example](#toy).    
