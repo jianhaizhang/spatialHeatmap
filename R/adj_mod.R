@@ -2,9 +2,9 @@
 #'
 #' It first computes an adjacency matrix on the iput data matrix, then hierarchically clusters the adjacency matrix by using WGCNA (Langfelder and Horvath 2008) and flashClust (Langfelder and Horvath 2012). The clutersing includes 4 alternative sensitivity levels (ds=0, 1, 2, or 3). From 3 to 0, the sensitivity decreases and results in less modules with larger sizes. Since the interactive network functionality (see \code{\link{network}}) performs better on smaller modules, only ds of 3 and 2 are used. There is another parameter \code{\link{type}} for module identification: "signed" and "unsinged". The former eans both positive and negative adjacency between genes are used while the latter takes the absolute values of negative adjacency.
 
-#' @param data A "data frame" or "SummarizedExperiment" object returned by the function \code{\link{filter_data}}, where the columns and rows of the data matrix are samples/conditions and assayed items (e.g. genes, proteins) respectively. Since this function builds on coexpression analysis, variables of sample/condition should be at least 5. Otherwise, the results are not reliable. 
+#' @param data A \code{data frame} or \code{SummarizedExperiment} object returned by the function \code{\link{filter_data}}, where the columns and rows of the data matrix are samples/conditions and assayed items (e.g. genes, proteins) respectively. Since this function builds on coexpression analysis, variables of sample/condition should be at least 5. Otherwise, the results are not reliable. 
 
-#' @param type "signed" or "unsigned". The former means both positive and negative adjacency between genes are maintained in network module identification while the latter takes the absolute values of negative adjacency. Default is "signed". Refer to "WGCNA" (Langfelder and Horvath 2008) for more details.
+#' @param type \code{signed} or \code{unsigned}. The former means both positive and negative adjacency between genes are maintained in network module identification while the latter takes the absolute values of negative adjacency. Default is "signed". Refer to "WGCNA" (Langfelder and Horvath 2008) for more details.
 
 #' @param minSize The minimum module size in module identification. The default value is 15. Refer to "WGCNA" for more details.
 

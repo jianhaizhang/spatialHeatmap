@@ -23,7 +23,6 @@ vignette: >
   %\VignetteEncoding{UTF-8}
 ---
 
-## For better readability, enable scrollbar and turn off line wrapping in code/output chunks 
 ```{css, echo=FALSE}
 pre code {
 white-space: pre !important;
@@ -64,38 +63,48 @@ on right.]</font>
 
 ## Motivation
 
-The _spatialHeatmap_ package provides functionalities for visualizing cell-, tissue-
-and organ-specific data of biological assays by coloring the corresponding spatial
-features defined in anatomical images according to a numeric color key. The
-color scheme used to represent the assay values can be customized by
-the user. This core functionality of the package is called a _spatial heatmap_ (SHM) plot. It is
-enhanced with nearest neighbor visualization tools for groups of measured items 
-(_e.g._ gene modules) sharing related abundance profiles, including matrix heatmaps
-combined with hierarchical clustering dendrograms and network representations.
-The functionalities of _spatialHeatmap_ can be used either in a command-driven
-mode from within R or a graphical user interface (GUI) provided by a Shiny App
-that is also part of this package. While the R-based mode provides flexibility
-to customize and automate analysis routines, the Shiny App includes a variety
-of convenience features that will appeal to biologists. Moreover, the
-Shiny App can be used on both local computers as well as centralized
-server-based deployments (_e.g._ cloud-based or custom servers) that can be
-accessed remotely as a public web service for using _spatialHeatmap's_
-functionalities with community and/or private data. The functionalities
-of the `spatialHeatmap` package are illustrated in Figure \@ref(fig:illus).   
+The _spatialHeatmap_ package provides functionalities for visualizing cell-,
+tissue- and organ-specific data of biological assays by coloring the
+corresponding spatial features defined in anatomical images according to a
+numeric color key. The color scheme used to represent the assay values can be
+customized by the user. This core functionality of the package is called a
+_spatial heatmap_ (SHM) plot. It is enhanced with nearest neighbor
+visualization tools for groups of measured items (_e.g._ gene modules) sharing
+related abundance profiles, including matrix heatmaps combined with
+hierarchical clustering dendrograms and network representations.  The
+functionalities of _spatialHeatmap_ can be used either in a command-driven mode
+from within R or a graphical user interface (GUI) provided by a Shiny App that
+is also part of this package. While the R-based mode provides flexibility to
+customize and automate analysis routines, the Shiny App includes a variety of
+convenience features that will appeal to experimentalists and other users less
+familiar with R. Moreover, the Shiny App can be used on both local computers as
+well as centralized server-based deployments (_e.g._ cloud-based or custom
+servers) that can be accessed remotely as a public web service for using
+_spatialHeatmap's_ functionalities with community and/or private data. The
+functionalities of the `spatialHeatmap` package are illustrated in Figure
+\@ref(fig:illus).   
 
 
-```{r illus, echo=FALSE, fig.wide=TRUE, fig.cap=("Functionality overview. The numeric data can come as a `vector`, `data frame`, or `SummarizedExperiment` (SE). If `vector` or `data frame`, the sample and condition identifiers should be in the form of \'sample__condition\', e.g. \'S1__con1\'. If `data frame` or SE, the columns and rows should be sample/conditions and assayed items (gene1, gene2) respectively. In SE, the `colData` slot is required and contains replicate information, while the `rowData` slot is optional and contains row item annotation. If the latter is available, the annotation is seen by mousing over a node in the interactive network. In the aSVG image (see [aSVG](#term) below), spatial features are pre-defined and assigned unique identifiers. In visualization, only aSVG features having identical sample counterparts in data are colored (*e.g.* S1) in SHMs. To supplement SHMs, coexpression analysis is applied on \'data matrix\' to identify network modules. The gene in SHMs can be investigated in the gene module it belongs to, where the module is in form of matrix heatmap and network. Lastly, the SHMs, matrix heatmap, network are all combined as an interactive Shiny app."), out.width="100%"}
+```{r illus, echo=FALSE, fig.wide=TRUE, fig.cap=("Functionality overview of spatialHeatmap. This figure illustrates the overview of spatialHeatmap functionality on a gene expression data, which could be generalized on many other data types. The accepted data classes are `SummarizedExperiment` (SE, A1), `data frame` (A2), `vector` (A3). If exist, replicates should be aggregated. Subfigure B is the aSVG image (see [aSVG](#term) below), where target spatial features (*e.g.* S1) are pre-annotated. The numeric values of target samples in data are mapped to matching features in aSVG and translated to colors (*e.g.* S1), and the resulting plots are spatial heatmaps (SHMs, subfigure C). The color scale on the left indicates gene expression levels and the legend plot on the right labels target spatial features. As a supplement to SHMs, the target gene is explored in the context of its coexpression cluster in form of matrix heatmap (subfigure D) and network (subfigure E). In addition to command-driven mode, all utilities are also combined as an interactive Shiny App, which would be convenient for users with litte programing exprience."), out.width="100%"}
 
 include_graphics('img/illustration.png')
 
 ```
 
 
+<font color='blue'>jianhai-reply: legend is edited.^[Thomas-Comment: the legend text of Figure 1 should provide a brief overview of what is shown
+in the flowchart. Right now there is too much technical detail that lacks context.
+I suggest to significantly shorten it. Also, you may want to organize the flowchart
+with bullet labels like (A), (B), (C) and (D) that can be referenced in the text. 
+For instance: (A) Expression Data, (B) aSVG, (C) SHM and (D) Gene Context Plots. 
+This way there is a clear label plus a visual illustration for each component one
+can refer to in the text with Figure 1A or Figure 1B, etc.]</font>
+
 As anatomical images the package supports both tissue maps from public
 repositories and custom images provided by the user. In general any type of
 image can be used as long as it can be provided in SVG (Scalable Vector
 Graphics) format, where the corresponding spatial features have been defined
-(see [aSVG](#term) below). The numeric values plotted onto a SHM
+(see [aSVG](#term) below). The numeric values plotted onto an SHM
 are usually quantitative measurements from a wide range of profiling
 technologies, such as microarrays, next generation sequencing (_e.g._ RNA-Seq
 and scRNA-Seq), proteomics, metabolomics, or many other small- or large-scale
@@ -198,8 +207,6 @@ provided to work with the expression and [aSVG repository](#svg_repo) from the E
 directly. The aSVG images developed by the `spatialHeatmap` project are available in its own
 repository called [spatialHeatmap aSVG Repository](https://github.com/jianhaizhang/SVG_tutorial_file/tree/master/svg_repo), 
 where users can contribute their aSVG images that are formatted according to our guidlines.
-^[GirkeLab in the name of this repos is a poor choice. Perhaps just call it spatialHeatmap_aSVGs.]
-<font color='blue'>jianai_comment: SVG repo name changed</font>
 
 ## Tutorial Overview {#sample_data}
 
@@ -328,9 +335,6 @@ shm.df <- spatial_hm(svg.path=svg.hum, data=my_vec, ID='toy', ncol=1, height=0.7
 
 The named numeric values in `my_vec`, that have name matches with the features in the 
 chosen aSVG, are stored in the `mapped_feature` slot.
-^[The numeric values range from 9-26, while the color key on the 
-left has a range from 0-2500. This is confusing and should be corrected.]
-<font color='blue'>jianai_comment: This issue stems from the new ggolot2 pacakge. I reported it to ggplot2 github and they said it will be fixed in next version. For the current release of ggplot2, I added a solution in spatialHeatamp. Re-rendering the vignette without using old cache  will restore the scale. </font>
 
 ```{r eval=TRUE, echo=TRUE, warnings=FALSE} 
 # The SHM and mapped features are stored in a list
@@ -434,8 +438,6 @@ and names in an aSVG. Details on this utility are provided in the [Supplement](#
 feature.df
 ```
 
-<font color='blue'>UBERON ids only applied to animals, but the EBI SVG also includes plant ontology ids. So is "https://www.ebi.ac.uk/ols/index" a better choice for the link?  </font>
-
 Since the Expression Atlas supports the [cross-species anatomy
 ontology](http://uberon.github.io/), the corresponding UBERON identifiers are
 included in the `id` column of the `data.frame` returned by the above function
@@ -481,19 +483,15 @@ colData(rse.hum)[c(1:3, 41:42), 4:5]
 
 ### Preprocess Assay Data
 
-<font color='blue'>
 The actual gene expression data of the downloaded RNA-Seq experiment is stored
 in the `assay` slot of `rse.hum`. Since it contains raw count data, it can be
 desirable to apply basic preprocessing routines prior to plotting spatial
-heatmaps.  The following shows how to normalize the count data, aggregate
+heatmaps. The following shows how to normalize the count data, aggregate
 replicates and then remove genes with unreliable expression responses.  These
-preprocessing steps are optional and can be skipped if needed. For instanse, fully preprocessed data can be applied to the function `spatial_hm` for [plotting spatial heatmaps](#hum_single) directly by skipping the preprocessing routines, but the sample column name and/or condition column name in the `colData` slot must be provided to `sam.factor` and/or `con.factor` respectively (Table \@ref(tab:arg)).  
-^[I think one
-should assure that skipping the preprocessing works seemlessly even without
-aggregating replicates by letting the user choose which replicate to use. Is
-this possible yet? This is also important when users start with their fully
-preprocessed data which I assume will be a very common situation.]
-</font>
+preprocessing steps are optional and can be skipped if needed. For this,
+the expression data can be provided to the `spatial_hm` function directly, where
+it is important to assign to the `sam.factor` and/or `con.factor` arguments 
+the corresponding sample and/or condition column names (Table \@ref(tab:arg)).  
 
 For normalizing raw count data from RNA-Seq experiments, the `norm_data`
 function can be used. It supports the following pre-existing functions from
@@ -582,10 +580,6 @@ are colored in the frontal cortex and cerebellum, while the different conditions
 here normal and ALS, are given in separate SHMs plotted next to 
 each other (Figure \@ref(fig:humshm)). The color and feature mappings are defined
 by the corresponding color key and legend plot on the left and right, respectively.
-
-<font color='blue'>jianhai_reply: Can be corrected by re-rendering without using old cache.</font>
-^[The expression values for the gene range from 0-5, while the color key on the 
-left has a range from 0-2500. This is confusing and should be corrected.]
 
 ### SHM: Multiple Genes
 
@@ -737,7 +731,7 @@ this case the skelectal muscle layer partially overlaps with lung and heart
 tissues. To view lung and heart in Figure \@ref(fig:musshm), the skelectal
 muscle tissue is set transparent with `tis.trans=c('skeletal muscle')`. To view
 in the same aSVG the skeletal muscle tissue instead, `tis.trans` is assigned
-`NULL` in the SHM plot of Figure \@ref(fig:musshm1).
+`NULL` for generating the SHM plot of Figure \@ref(fig:musshm1).
 
 To fine control the visual effects in feature rich aSVGs, the `line.size` and
 `line.color` parameters are useful. This way one can adjust the thickness and 
@@ -750,31 +744,44 @@ spatial_hm(svg.path=svg.mus, data=se.fil.mus, ID=c('ENSMUSG00000000263'), height
 
 ## Chicken Organs {#chk}
 
-In this example, the data come from developments of 7 chicken organs under 9 time points [@Cardoso-Moreira2019-yq], which is an RNA-seq analysis and accessed from EBI Expression Atlas.  
+This section generates an SHM plot for chicken data from the Expression Atlas.
+The code components are very similar to the [Human Brain](#hum) example. For
+brevity, the corresponding text explaining the code has been reduced to a
+minimum. 
 
-The following process is similar to the Human Brain example, so explanation of code chunks is simplified to avoid lengthy text.  
+### Gene Expression Data
 
-Search Expression Atlas for expression data derived from *'heart'* and *'gallus'*.  
+The chosen chicken RNA-Seq experiment compares the developmental changes across 
+nine time points of seven organs [@Cardoso-Moreira2019-yq].
+
+
+The following searches the Expression Atlas for expression data from _'heart'_
+and _'gallus'_.
 
 ```{r eval=TRUE, echo=TRUE, warnings=FALSE }
 all.chk <- searchAtlasExperiments(properties="heart", species="gallus")
 ```
 
-Among the results, select 'E-MTAB-6769'.  
+Among the matching entries, accession 'E-MTAB-6769' will be downloaded.  
 
 ```{r eval=TRUE, echo=TRUE, warnings=FALSE }
 all.chk[3, ]
 rse.chk <- getAtlasData('E-MTAB-6769')[[1]][[1]]
 ```
 
-A slice of the experiment design, which is stored in colData slot.  
+The design of the downloaded RNA-Seq experiment is described in the `colData`
+slot of `rse.chk`. The following returns only its first three rows.
 
 ```{r eval=TRUE, echo=TRUE, warnings=FALSE } 
 colData(rse.chk)[1:3, ]
 ```
 
-<font color='blue'> 
-Download aSVGs from EBI repository based on the tissues and species involved. An empty directory `~/test` is suggested to save the downloaded files so as to avoid overwriting existing files.  
+### aSVG Image  
+
+The following example shows how to download from the [EBI SVG
+repository](#svg_repo) an aSVG image that matches the tissues and species
+assayed in the gene expression data set downloaded in the previous subsection.
+As before the image is saved to a directory named `~/test`.
 
 ```{r eval=FALSE, echo=TRUE, warnings=FALSE }
 # Make an empty directory "~/test" if not exist.
@@ -783,23 +790,28 @@ if (!dir.exists('~/test')) dir.create('~/test')
 feature.df <- return_feature(feature=c('heart', 'kidney'), species=c('gallus'), keywords.any=TRUE, return.all=FALSE, dir='~/test', remote=TRUE, match.only=FALSE)
 ```
 
-As explained in the [toy example](#toy), the target aSVG image has been included in this 
-package, and will be used for plotting SHMs.    
+To build this vignettes according to the R/Bioconductor package requirements, the
+following code section uses the aSVG file instance included in the
+`spatialHeatmap` package rather than the downloaded instance from the previous
+example. 
 
 ```{r eval=TRUE, echo=TRUE, warnings=FALSE }
 feature.df <- return_feature(feature=c('heart', 'kidney'), species=c('gallus'), keywords.any=TRUE, return.all=FALSE, dir=svg.dir, remote=FALSE, match.only=FALSE)
 feature.df
 ```
 
-Get the target aSVG path.   
-
-</font>
+Obtain path of target aSVG on user system.   
 
 ```{r eval=TRUE, echo=TRUE, warnings=FALSE}
 svg.chk <- system.file("extdata/shinyApp/example", "gallus_gallus.svg", package="spatialHeatmap")
 ```
 
-Make a targets file based on the experiment design and features of interest in the aSVG. It is included in this package and part is shown below.  
+### Experimental Design
+
+Import of custom target file defining simplified sample labels and experimental
+design. The following imports a sample target file that is included in this package.
+To inspect its content, the first three rows of the target file are printed to the 
+screen.
 
 ```{r eval=TRUE, echo=TRUE, warnings=FALSE }
 chk.tar <- system.file('extdata/shinyApp/example/target_chicken.txt', package='spatialHeatmap')
@@ -807,7 +819,7 @@ target.chk <- read.table(chk.tar, header=TRUE, row.names=1, sep='\t')
 target.chk[1:3, ]
 ```
 
-Use the targets file to replace the data frame in `colData` slot.  
+Load custom target data into `colData` slot.  
 
 ```{r eval=TRUE, echo=TRUE, warnings=FALSE }
 colData(rse.chk) <- DataFrame(target.chk)
@@ -819,86 +831,121 @@ All samples used for plotting SHMs.
 unique(colData(rse.chk)[, 'organism_part'])
 ```
 
-All conditions used for plotting SHMs.  
+Return conditions considered for plotting downstream SHM.  
 
 ```{r eval=TRUE, echo=TRUE, warnings=FALSE }
 unique(colData(rse.chk)[, 'age'])
 ```
 
-Pro-process data matrix: normalize, aggregate, filter. Genes with expression values larger than 5 (log2 unit) in at least 1% of all samples (pOA=c(0.01, 5)), and with coefficient of variance (CV) between 0.6 and 100 (CV=c(0.6, 100)) are retained.  
+### Preprocess Assay Data
+
+The raw RNA-Seq count are preprocessed with the following steps: (1)
+normalization, (2) aggregation of replicates, and (3) filtering of reliable
+expression data. The details of these steps are explained in the above
+sub-section using data from human.
 
 ```{r eval=TRUE, echo=TRUE, warnings=FALSE }
-# Normalise.
-se.nor.chk <- norm_data(data=rse.chk, norm.fun='ESF', data.trans='log2')
-# Aggregate replicates. 
-se.aggr.chk <- aggr_rep(data=se.nor.chk, sam.factor='organism_part', con.factor='age', aggr='mean')
-# Filter genes with low variance and low counts.
-se.fil.chk <- filter_data(data=se.aggr.chk, sam.factor='organism_part', con.factor='age', pOA=c(0.01, 5), CV=c(0.6, 100), dir=NULL)
+se.nor.chk <- norm_data(data=rse.chk, norm.fun='ESF', data.trans='log2') # Normalization
+se.aggr.chk <- aggr_rep(data=se.nor.chk, sam.factor='organism_part', con.factor='age', aggr='mean') # Replicate agggregation using mean 
+se.fil.chk <- filter_data(data=se.aggr.chk, sam.factor='organism_part', con.factor='age', pOA=c(0.01, 5), CV=c(0.6, 100), dir=NULL) # Filtering of genes with low counts and varince
 ```
 
+### SHM: Time Series
 
-Plot SHMs.  
+The expression profile for gene `ENSGALG00000006346` is plotted across nine time
+points in four organs in form of a composite SHM with 9 panels. Their layout in
+three columns is controlled with the argument setting `ncol=3`. 
 
-```{r chkshm, eval=TRUE, echo=TRUE, warnings=FALSE, fig.wide=TRUE, fig.cap=("Example of plotting chicken organ SHMs. Liver in day10 is not plotted since this tissue in day10 in not available in the data matrix."), out.width="100%" }
+<font color='blue'>jianhai-reply: reordered.^[The order of the
+time points in Figure 7 should be by time. Right now it is rather random.]</font>
+
+```{r chkshm, eval=TRUE, echo=TRUE, warnings=FALSE, fig.wide=TRUE, fig.cap=("Time course of chicken organs. The SHM shows the expression profile of a single gene across nine time points and four organs."), out.width="100%" }
 spatial_hm(svg.path=svg.chk, data=se.fil.chk, ID='ENSGALG00000006346', legend.r=1.5, sub.title.size=9, ncol=3, legend.nrow=2)
 ```
 
-The SHM of gene `ENSGALG00000006346` is plotted. It is intuitive that the profiles of liver, heart, and kidney are all higher in day17 than other days. Therefore, the important role of this gene in day10 is worth futher exploration. In day10 liver is blank, because in the expression matrix liver data is not availble for day10. This reflects the plotting algorithm that only matching samples between the data and SVG image are plotted.    
-
-In this example, the usage of argument `ncol` is exhibited on how to achieve optimal layout. There are 9 time conditions, so `ncol=3` is set to make make full use of the space.   
-
 ## Arabidopsis Shoot {#shoot}
 
-[GEO](https://www.ncbi.nlm.nih.gov/geo/) is a another well-known public repository of array- and sequence-based data. To demonstrate the use of spatialHeatmap on this resource, the dataset GSE14502 is plotted on a shoot aSVG image. It a microarray data from a study of translatome variation of *Arabidopsis thaliana* (Arabidopsis) shoot and root tissues under control and hypoxia conditions [@Mustroph2009-nu], and is downloaded through GEOquery [@geo].  
+This section generates an SHM for _Arabidopsis thaliana_ with gene expression
+data from the Affymetrix microarray technology. The chosen experiment used
+ribosome-associated mRNAs from several cell populations of shoots and roots that were
+exposed to hypoxia stress [@Mustroph2009-nu]. In this case the expression data
+will be downloaded from [GEO](https://www.ncbi.nlm.nih.gov/geo/) with utilites
+from the `GEOquery` package [@geo] and the preprocessing routines will be
+specific to the Affymetrix technology. The remaining code components for
+generating SHMs are very similar to the previous examples. For brevity, the
+text in this section explains mainly the steps that are specific to this data
+set. 
 
-Access the GEO dataset GSE14502 and convert it to `SummarizedExperiment`.  
+
+### Gene Expression Data
+
+The GSE14502 data set is downloaded with the `getGEO` function from the `GEOquery` 
+package. Intermediately, the expression data is stored in an `ExpressionSet` container 
+and then converted to a `SummarizedExperiment` object.
 
 ```{r eval=TRUE, echo=TRUE, warnings=FALSE}
 gset <- getGEO("GSE14502", GSEMatrix=TRUE, getGPL=TRUE)[[1]]
 se.sh <- as(gset, "SummarizedExperiment")
 ```
 
-Use gene symbols to replace probes.   
+The gene symbol identifiers are extracted from the `rowData` component and used 
+as row names. Similarly, one can work with AGI identifiers by providing below `AGI` 
+under `Gene.Symbol`.
 
 ```{r eval=TRUE, echo=TRUE, warnings=FALSE}
 rownames(se.sh) <- make.names(rowData(se.sh)[, 'Gene.Symbol'])
 ```
 
-A slice of the experiment design, which is stored in `colData` slot. The samples and conditions are included in the `title` column. In samples, promoter *pGL2, pCO2, pSCR, pWOL* labels *root atrichoblast epidermis, root cortex meristematic zone, root endodermis, root vasculature* respectively, and *p35S* labels *root_total* and *shoot_total*. There are 2 conditions: `control` and `hypoxia`.  
+The following returns a slice of the experimental design stored in the
+`colData` slot. Both the samples and conditions are contained in the `title` column.
+The samples include promoters (pGL2, pCO2, pSCR, pWOL, p35S), tissues 
+and organs (root atrichoblast epidermis, root cortex meristematic zone, root 
+endodermis, root vasculature, root_total and shoot_total); and the conditions 
+are control and hypoxia.  
 
 ```{r eval=TRUE, echo=TRUE, warnings=FALSE}
 colData(se.sh)[60:63, 1:4]
 ```
 
-In this example, the aSVG image of Arabidopsis is made from @Mustroph2009-nu. Similarly, it is included in this packaged and thus can be queried locally. The instructions on how to make custom aSVG images are provided in the [SVG tutorial](https://jianhaizhang.github.io/SVG_tutorial_file/).   
+### aSVG Image  
 
-Query the packaged aSVG files.  
+In this example, the aSVG image has been regenerated in Inkscape from 
+the corresponding figure in @Mustroph2009-nu. The resulting custom figure
+has been included as a sample aSVG file in the `spatialHeatmap` package. Detailed 
+instructions for generating custom aSVG images in Inkscape are provided in the 
+[SVG tutorial](https://jianhaizhang.github.io/SVG_tutorial_file/).   
+
+The annotations in the corresponding aSVG file located under `svg.dir` can be
+queried with the `return_features` function.  
 
 ```{r eval=TRUE, echo=TRUE, warnings=FALSE }
 feature.df <- return_feature(feature=c('pGL2', 'pRBCS'), species=c('shoot'), keywords.any=TRUE, return.all=FALSE, dir=svg.dir, remote=FALSE, match.only=FALSE)
 ```
 
-All matching aSVGs.   
+The unique set of the matching aSVG files can be returned as follows.   
 
 ```{r eval=TRUE, echo=TRUE, warnings=FALSE } 
 unique(feature.df$SVG)
 ```
 
-Select 'shoot_final.svg' for plotting spaital heatmaps.  
+The aSVG file `shoot_final.svg` is chosen to generate the SHM in this section.
 
 ```{r eval=TRUE, echo=TRUE, warnings=FALSE }
 feature.df <- subset(feature.df, SVG=='shoot_final.svg')
-# A slice of the feature data frame.
 feature.df[1:3, ]
 ```
 
-Get path of 'shoot_final.svg'.  
+Obtain full path of target aSVG on user system.   
 
 ```{r eval=TRUE, echo=TRUE, warnings=FALSE }
 svg.sh <- system.file("extdata/shinyApp/example", "shoot_final.svg", package="spatialHeatmap")
 ```
 
-Make a targets file based on the `title` column in experiment design and features of interest in the aSVG. It is included in this package and part is shown below.
+### Experimental Design
+
+The following imports a sample target file that is included in this package.
+To inspect its content, four selected rows of this target file are printed to the 
+screen.
 
 ```{r eval=TRUE, echo=TRUE, warnings=FALSE}
 sh.tar <- system.file('extdata/shinyApp/example/target_arab.txt', package='spatialHeatmap')
@@ -906,59 +953,102 @@ target.sh <- read.table(sh.tar, header=TRUE, row.names=1, sep='\t')
 target.sh[60:63, ]
 ```
 
-All samples in targets file.     
+Return all samples present in target file.     
 
 ```{r eval=TRUE, echo=TRUE, warnings=FALSE}
 unique(target.sh[, 'samples'])
 ```
 
-All conditions in targets file.  
+Return all conditions present in target file.  
 
 ```{r eval=TRUE, echo=TRUE, warnings=FALSE}
 unique(target.sh[, 'conditions'])
 ```
 
-Use the targets file to replace the data frame in `colData` slot.  
+Load custom target data into `colData` slot.  
 
 ```{r eval=TRUE, echo=TRUE, warnings=FALSE}
 colData(se.sh) <- DataFrame(target.sh)
 ```
 
-The dataset GSE14502 is already normalised by RMA [@affy], so the pro-processing only includes aggregation and filtering. Genes with expression values larger than 6 (log2 unit) in at least 3% of all samples (pOA=c(0.03, 6)), and with coefficient of variance (CV) between 0.30 and 100 (CV=c(0.30, 100)) are retained.   
+### Preprocess Assay Data
+
+The downloaded GSE14502 data set has already been normalized with the RMA
+algorithm [@affy]. Thus, the pre-processing steps can be restricted to the
+aggregation of replicates and filtering of reliably expressed genes. For the
+latter, the following code will retain genes with expression values larger than
+6 (log2 space) in at least 3% of all samples (pOA=c(0.03, 6)), and with a
+coefficient of variance (CV) between 0.30 and 100 (CV=c(0.30, 100)).   
 
 ```{r eval=TRUE, echo=TRUE, warnings=FALSE }
-# Aggregate replicates. 
-se.aggr.sh <- aggr_rep(data=se.sh, sam.factor='samples', con.factor='conditions', aggr='mean')
-# Filter genes with low variance and low intensity.
-se.fil.arab <- filter_data(data=se.aggr.sh, sam.factor='samples', con.factor='conditions', pOA=c(0.03, 6), CV=c(0.30, 100), dir=NULL)
+se.aggr.sh <- aggr_rep(data=se.sh, sam.factor='samples', con.factor='conditions', aggr='mean') # Replicate agggregation using mean
+se.fil.arab <- filter_data(data=se.aggr.sh, sam.factor='samples', con.factor='conditions', pOA=c(0.03, 6), CV=c(0.30, 100), dir=NULL) # Filtering of genes with low intensities and variance
 ```
 
-Plot SHMs.   
+### SHM: Microarray Example
 
-```{r shshm, eval=TRUE, echo=TRUE, warnings=FALSE, fig.wide=TRUE, fig.cap=('SHMs of Arabidopsis shoot. Pre-defined tissue regions are colored by the expression profile of the target gene. The promoter pGL2, pRBCS, pCER5, pSultr2.2, pSUC2, pKAT1 label shoot trichomes, shoot photosynthetic cell, cotyledon and leaf epidermis, shootbundle sheath, shoot phloem companion cells, Cotyledon and leaf guard cells, respectively.'), out.width="100%"}
+The expression profile for the HRE2 gene is plotted for control and hypoxia treatment
+across six cell types (Figure \@ref(fig:shshm)).
+
+```{r shshm, eval=TRUE, echo=TRUE, warnings=FALSE, fig.wide=TRUE, fig.cap=('SHM of Arabidopsis shoots. The expression profile of the HRE2 gene is plotted for control and hypoxia treatment across six cell types.'), out.width="100%"}
 spatial_hm(svg.path=svg.sh, data=se.fil.arab, ID=c("HRE2"), height=0.6, legend.nrow=3, legend.r=1.3, legend.key.size=0.3)
 ```
 
-Figure \@ref(fig:shshm) is the SHM of gene `HRE2` under `control` and `hypoxia`. It is clear that this gene\'s exression profiles under control are lower than `hypoxia` across all the 5 tissues (*pGL2, pRBCS, pCER5, pSUC2, pKAT1*). Therefore, it can be hypothesised that `hypoxia` induces over-expression of `HRE2` across the 5 tissues and thus `HRE2` might be an important factor for Arabidopsis shoot to cope with `hypoxia` stress. The tissue *pSultr2.2* is blank under `hypoxia` due to unavailability of its data under `hypoxia` in the data matrix.   
-
-<font color='blue'>jianhai_comment: From here to Shiny App section, slight changes are made.</font>
-
 # Matrix Heatmaps {#mhm}
 
-The Matrix Heatmap is designed to supplement the core feature of SHM. It displays the target gene in the context of corresponding gene network module, so there is a process of gene modules identification.
+SHMs are a visualization approach suitable for comparing the expression profiles
+of single genes or a small number of them across cell types and conditions. To 
+also support analyses across larger number of genes, `spatialHeatmap` provides 
+utilities for identifying for a gene of interest nearest neighbor genes that share 
+similar expression profiles. This is achieved by identifying clusters and 
+network modules using hierarchical clustering and network analysis. These approaches
+are described in this and the following sections, respectively.
 
-**Adjacency Matrix and Module Identification**  
+ __Adjacency Matrix and Module Identification__^[Why this title if there are no 
+ additional ones in this section. Is this an orphan leftover from somewhere else?]  
+
+<font color='red'>[ThG-Comment: this section needs major improvements. The intent was
+to identify for a target gene nearest neighbors based on some similarity metric for gene
+expression profiles (e.g. correlation), and then hierarchically cluster them and visualize
+the result in a heatmap. Instead you are subjecting the entire expression matrix to 
+clustering/WGCNA and then plot the target gene in the context of a single
+cluster/module. This is hugely inefficient compared to doing it only for the nearest
+neighbors instead. Just think about what will happen if a user imports an expression 
+matrix for all transcripts from human. With your approach they will not be able to 
+complete this step since they will run out of memory on their system.]</font>
 
 <a name="ds"></a>
-The modules are identified by `adj_mod`. It first computes an adjacency matrix on the gene expression matrix then hierarchically clusters the adjacency matrix by using WGCNA [@Langfelder2008-sg] and flashClust [@flashClust]. The clutersing includes 4 alternative sensitivity levels (`ds`=0, 1, 2, or 3). From 3 to 0, the sensitivity decreases and results in less modules with larger sizes. Since the [interactive network](#inter_net) functionality performs better on smaller modules, only `ds` of 3 and 2 are used. There is another  parameter `type` for module identification: `signed` and `unsinged`. The former means both positive and negative adjacency between genes are used while the latter takes the absolute values of negative adjacency.  
+The modules are identified by `adj_mod`. It first computes an adjacency
+matrix^[You need to describe how this adjency matrix is generated and what it
+represents. It also needs to mention what type of disance/correlation method is used
+initially to generate the downstream matrix.] on the gene expression matrix then hierarchically clusters the
+adjacency matrix by using WGCNA [@Langfelder2008-sg]^[Unclear for what you need
+WGCNA here. I thought this section uses hierarchical clustering. The latter is
+certainly used by WGCNA but it remains a mystery what exactly you are doing
+here.] I would expect to use here only hierarchical clustering, e.g. with
+flashClust. WGCNA seems more suitable for the next section.] and flashClust
+[@flashClust]. The clutersing includes 4 alternative sensitivity levels
+(`ds`=0, 1, 2, or 3).^[What is the meaning of the sensitivity levels, how are they 
+generated and how should the user interpret them?] From 3 to 0, the sensitivity decreases and results in
+less modules with larger sizes. Since the [interactive network](#inter_net)
+functionality performs better on smaller modules, only `ds` of 3 and 2 are
+used. There is another parameter `type` for module identification: `signed` and
+`unsinged`. The former means both positive and negative adjacency between genes
+are used while the latter takes the absolute values of negative adjacency^[Without
+defining how adjacency is defined here readers will not be able to understand
+what was done here, especially since this section is mainly about hierarchical 
+clustering.].  
 
-The function `adj_mod` returns a list containing an adjacency matrix and a data frame of module assignment. It is domenstrated on the [Arabidopsis Shoot](#plot_sh) data.
+The function `adj_mod` returns a list containing an adjacency matrix and a data
+frame of module assignment. It is domenstrated on the [Arabidopsis
+Shoot](#plot_sh) data.
 
 ```{r eval=TRUE, echo=TRUE, warnings=FALSE, results=FALSE}
 adj.mod <- adj_mod(data=se.fil.arab)
 ```   
 
-The adjacency matrix is a measure of co-expression similarity between genes, where larger value denotes more similarity.   
+The adjacency matrix is a measure of co-expression similarity between genes,
+where larger value denotes more similarity.   
 
 ```{r eval=TRUE, echo=TRUE, warnings=FALSE}
 adj.mod[['adj']][1:3, 1:3]
@@ -979,7 +1069,13 @@ matrix_hm(geneID="HRE2", data=se.fil.arab, adj.mod=adj.mod, angleCol=80, angleRo
 
 In Figure \@ref(fig:static), the target gene is displayed in the gene module it belongs to, which is indicated by 2 black lines. The rows and columns are sorted by hierarchical clustering dendrograms. The expression matrix of this module is visualised without being scaled (`scale="no"`). It can be seen that the expression levels of this module is overall much higher in `hypoxia` than `control`, and therefore it could potentially be used to infer the `hypoxia` response mechanism in Arabidopsis.   
 
+
 # Network Graphs {#net}
+
+<font color='red'>[ThG-Comment: both the previous section and this section need
+                   to clearly explain what is done to arrive at a given network 
+                   module and what it represents. Once this is done I will edit 
+                   the text.]</font>
 
 The same target gene and module from matrix heatmap can also be displayed as a network. Similarly, the network can be dispayed in static or interactive mode.  
 
@@ -1000,37 +1096,97 @@ network(geneID="HRE2", data=se.fil.arab, ann='Target.Description', adj.mod=adj.m
 
 # Shiny App {#shiny}
 
-All the above functionality (SHM, interactive matrix heatmap, interactive network) is also combined into a web-browser based [Shiny App](https://shiny.rstudio.com/), which takes advantage of the computational power of R and interactivity of the web. The main benefits of the Shiny App is combine all the utities in one interface and increase interactivity. On the left of this app is the menu. It includes pre-formatted ready-to-use examples, options to upload formatted data matrix and aSVG images, and instruction to use this app. On the right is the interactive interfacce, including Data Matrix, Spatial Heatmap, Matrix Heatmap, and Network. To use interactive features, there are paramters on the left menu to operate. Upon launched, the app automatically displays a pre-formatted example. A good practice to use this app is to follow steps in the menu rather than skipping steps. If unexpectation happens, the app webpage should be refreshed.
+In additon to generating SHMs and the corresponding gene context plots from R,
+`spatialHeatmap` includes a [Shiny App](https://shiny.rstudio.com/) that
+provides access to the same functionalities from an intuitive-to-use web
+browser interface.  Apart from being very user-friendly, this App
+conveniently organizes the results of the entire visualization workflow in a
+single browser window with options to adjust the parameters of the individual components
+interactively. For instance, genes can be selected and replotted in the SHM
+simply by clicking the corresponding rows in the expression table included in the same window. 
+This representation is very efficient in guiding the interpretation of the results 
+in a visual and user-friendly manner. For testing purposes, the `spatialHeatmap` 
+Shiny App also includes ready-to-use sample expression data and aSVG images 
+along with embedded user instructions.
 
-This app is launched by the function `shiny_all` without any parameters. Figure \@ref(fig:shiny) is the screenshot of Spatial Heatmap.  
+## Local System 
+
+The Shiny App of `spatialHeatmap` can be launched from an R session with the following
+function call. 
 
 ```{r eval=FALSE, echo=TRUE, warnings=FALSE}
 shiny_all()
 ```   
 
-```{r shiny, echo=FALSE, fig.wide=TRUE, fig.cap=("The snapshot of Shiny App. Left is the menu and right is the Spatial Heatmap."), out.width="100%"}
+<font color='red'>[ThG-Comment: many menu items are not functional in the Shiny App. 
+E.g.: Instructions and Acknowledgement return error messages.]</font>
 
+The dashboard panels of the Shiny App are organized as follows:
+
+1. Left Side Panel: menu for workflow execution and parameter selection
+2. Expression Matrix: scrollable expression matrix uploaded by user
+3. Spatial Heatmap: aSVG image provided by user
+4. Matrix Heatmap: hierarchical clustering results for genes with similar expression profiles as target gene(s)
+5. Network Graph: interactive network module generated for genes with similar expression proviles as target gene(s)
+
+A screenshot of the Spatial Heatmap component within the Shiny App window is shown below 
+(Figure \@ref(fig:shiny)).
+
+```{r shiny, echo=FALSE, fig.wide=TRUE, fig.cap=("Screenshot of `spatialHeatmap's` Shiny App."), out.width="100%"}
 include_graphics('img/shiny.png')
-
 ```  
 
-The data matrix to upload is a data frame. If the data is a `SummarizedExperiment` class, the data matrix can be obtained by setting a directory path to `dir` in function `filter_data`. A folder `local_mode_result/` is automatically created in the provided path, and the filtered data matrix is written to `local_mode_result/processed_data.txt` with column names in the scheme 'sample__condition' (Table \@ref(tab:humtab)), which is a tab-separated file. If users want to see annotation by mousing over a node in the network, a column of gene annotation in `rowData` slot should be provided to `ann`, then the annotation is appended to the last column in `processed_data.txt`.  
+After launching, the Shiny App displays by default one of the included data sets. 
 
-For example, in `filter_data`, setting `dir='./'` (current working directory) will output the filtered data matrix in `./local_mode_result/processed_data.txt`, and setting `ann='Target.Description'` appends the annotation from `rowData` slot to the last column of `processed_data.txt`, which is ready to upload to the app.
+The gene expression data and aSVG image files can be uploaded to the Shiny App
+as tabular text (_e.g._ in CSV or TSV format) and SVG files, respectively. To
+also allow users to upload gene expression data stored in
+`SummarizedExperiment` objects, one can export them from R to a tabular file
+with the `filter_data` function. In this function call the user sets the
+desired directory path under `dir`. Within this directory the tabular file will 
+be written to `local_mode_result/processed_data.txt` in TSV format. The
+column names in the exported tabular file preserve the experimental design information from 
+the `colData` slot by concatenating the corresponding sample and condition information 
+separated by double underscores. An example of this format is shown in Table \@ref(tab:humtab). 
+
+To interactively access gene- or transcript-level annotations in the plots and
+tabels of the Shiny App, such as viewing functional descriptions by moving the
+cursor over network nodes, the corresponding annotation column needs to be
+present in the `rowData` slot and its column name assigned to the `ann`
+argument. In the exported tabular file the extra annotation column is appended
+to the expression matrix. ^[Check for correctness. For readability I made a lot
+                            of changes in this paragraph.] 
 
 ```{r eval=FALSE, echo=TRUE, warnings=FALSE}
 se.fil.arab <- filter_data(data=se.aggr.sh, ann="Target.Description", sam.factor='samples', con.factor='conditions', pOA=c(0.03, 6), CV=c(0.30, 100), dir='./')
 ```
 
-<font color='blue'>jianhai_comment: the following Supplement section is substantially changed.</font>
+## Server Deployment
+
+As most Shiny Apps, `spatialHeatmap` can be deployed as a centralized web
+service. A major advantage of a web server deployment is that the
+functionalities can be accessed remotely by anyone on the internet without the
+need to use R on their local system. For deployment one can use local web
+servers or cloud services such as AWS, GCP or
+[shinysapps.io](https://www.shinyapps.io/). An example web instance for testing
+`spatialHeatmap` online is available
+[here](https://www.plantsecretome.org/software/spatialheatmap).
 
 # Supplement {#sup} 
 
-To plot SHMs, a pair of data (`vector`, `data frame`, `SummarizedExperiment`) and aSVG image are required. The most important step is to format the data and aSVG image so that target features in aSVG have matching counterparts in the data, since only the matching features in aSVG images are colored. This section explains details of data and aSVG setup that are not covered in the main vignette.  
+To generate SHMs with custom data, proper formatting of the numeric data and/or 
+aSVG images is often required. This section provides additional details on 
+this topic.
 
 ## Format the Data {#data_form}
 
-The accepted data classes include `vector`, `data frame`, or `SummarizedExperiment` (SE). A `vector` applies to several numeric values measured for a single item (*e.g.* gene), and `data frame` applies to more items assayed in several samples and/or several conditions (e.g. 2 samples under 2 conditions). By contrast, SE applies to experiments with many samples and many conditions. Formatting the data is essentially define samples and/or conditions.     
+The accepted data classes include `vector`, `data frame`, or
+`SummarizedExperiment` (SE). A `vector` applies to several numeric values
+measured for a single item (*e.g.* gene), and `data frame` applies to more
+items assayed in several samples and/or several conditions (e.g. 2 samples
+under 2 conditions). By contrast, SE applies to experiments with many samples
+and many conditions. Formatting the data is essentially define samples and/or
+conditions.     
 
 **Vector**  
 In the case of vector, the numeric values are measured from different samples. If one or more conditions are provided, the samples and conditions should be connected by double undescore, i.e. in the form of 'sample__condition'. If no conditions are provided, all the samples are assumed to have same condition, which is the [toy example](#toy).    

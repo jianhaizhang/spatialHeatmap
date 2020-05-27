@@ -27,37 +27,61 @@
 
 lay_shm <- function(lay.shm, con, ncol, ID.sel, grob.list, width, height, shiny) {
 
-    width <- as.numeric(width); height <- as.numeric(height); ncol <- as.numeric(ncol); con <- unique(con)
-    if (lay.shm=="gene") {
+  # Sort vector of letter and number mixture.
+  sort_mix <- function(vec) {
 
-        all.cell <- ceiling(length(con)/ncol)*ncol
-        cell.idx <- c(seq_len(length(con)), rep(NA, all.cell-length(con)))
-        m <- matrix(cell.idx, ncol=as.numeric(ncol), byrow=TRUE)
-        lay <- NULL; for (i in seq_len(length(ID.sel))) { lay <- rbind(lay, m+(i-1)*length(con)) }
-      if (shiny==TRUE & length(grob.list)>=1) return(grid.arrange(grobs=grob.list, layout_matrix=lay, newpage=TRUE))
+    w <- is.na(as.numeric(gsub('\\D', '', vec)))
+    let <- vec[w]; num <- vec[!w]
+    let.num <- as.numeric(gsub('\\D', '', vec))
+    vec[!w] <- num[order(let.num[!w])]
+    vec[w] <- let[order(let.num[w])]; return(vec)
+        
+  }        
+
+  width <- as.numeric(width); height <- as.numeric(height); ncol <- as.numeric(ncol); con <- unique(con)
+  grob.all.na <- names(grob.list)
+  if (lay.shm=="gene") {
+
+    all.cell <- ceiling(length(con)/ncol)*ncol
+    cell.idx <- c(seq_len(length(con)), rep(NA, all.cell-length(con)))
+    m <- matrix(cell.idx, ncol=as.numeric(ncol), byrow=TRUE)
+    lay <- NULL; for (i in seq_len(length(ID.sel))) { lay <- rbind(lay, m+(i-1)*length(con)) }
+    # Sort conditions under each gene.
+    con.pat1 <- paste0('.*_(', paste0(con, collapse='|'), ')$')
+    na.sort <- NULL; for (i in ID.sel) {
+        
+      na0 <- grob.all.na[grepl(paste0('^', i, '_'), grob.all.na)]
+      con1 <- gsub(con.pat1, '\\1', na0)
+      na.sort <- c(na.sort, paste0(i, '_', sort_mix(con1)))
+
+    }; grob.list <- grob.list[na.sort]
+    if (shiny==TRUE & length(grob.list)>=1) return(grid.arrange(grobs=grob.list, layout_matrix=lay, newpage=TRUE))
        
-      g.tr <- lapply(grob.list[seq_len(length(grob.list))], grobTree)
-      n.col <- ncol(lay); n.row <- nrow(lay)
-      g.arr <- arrangeGrob(grobs=g.tr, layout_matrix=lay, widths=unit(rep(width/n.col, n.col), "npc"), heights=unit(rep(height/n.row, n.row), "npc"))
+    g.tr <- lapply(grob.list[seq_len(length(grob.list))], grobTree)
+    n.col <- ncol(lay); n.row <- nrow(lay)
+    g.arr <- arrangeGrob(grobs=g.tr, layout_matrix=lay, widths=unit(rep(width/n.col, n.col), "npc"), heights=unit(rep(height/n.row, n.row), "npc"))
 
-    } else if (lay.shm=="con") {
+  } else if (lay.shm=="con") {
 
-      grob.all.na <- names(grob.list)
-      # Reverse the "gene_condition" names, and re-oder them.
-      na.rev <- NULL; for (i in grob.all.na) { na.rev <- c(na.rev, paste0(rev(strsplit(i, NULL)[[1]]), collapse='')) }
-      # Put legend plot at the end.
-      grob.all.con <- grob.list[order(na.rev)]
-      all.cell <- ceiling(length(ID.sel)/ncol)*ncol
-      cell.idx <- c(seq_len(length(ID.sel)), rep(NA, all.cell-length(ID.sel)))
-      m <- matrix(cell.idx, ncol=ncol, byrow=TRUE)
-      lay <- NULL; for (i in seq_len(length(con))) { lay <- rbind(lay, m+(i-1)*length(ID.sel)) }
- 
-      if (shiny==TRUE & length(grob.all.con)>=1) return(grid.arrange(grobs=grob.all.con, layout_matrix=lay, newpage=TRUE))
-      g.tr <- lapply(grob.all.con, grobTree); g.tr <- g.tr[names(grob.all.con)]
-      n.col <- ncol(lay); n.row <- nrow(lay)
-      g.arr <- arrangeGrob(grobs=g.tr, layout_matrix=lay, widths=unit(rep(width/n.col, n.col), "npc"), heights=unit(rep(height/n.row, n.row), "npc")) 
+    all.cell <- ceiling(length(ID.sel)/ncol)*ncol
+    cell.idx <- c(seq_len(length(ID.sel)), rep(NA, all.cell-length(ID.sel)))
+    m <- matrix(cell.idx, ncol=ncol, byrow=TRUE)
+    lay <- NULL; for (i in seq_len(length(con))) { lay <- rbind(lay, m+(i-1)*length(ID.sel)) }
+    # Sort conditions and genes.
+    gen.pat1 <- paste0('^(', paste0(ID.sel, collapse='|'), ')_.*')
+    na.sort <- NULL; for (i in sort_mix(con)) {
+      
+      na0 <- grob.all.na[grepl(paste0('_', i, '$'), grob.all.na)]
+      gen1 <- gsub(gen.pat1, '\\1', na0)
+      na.sort <- c(na.sort, paste0(sort_mix(gen1), '_', i))
 
-    }; return(g.arr)
+    }; grob.list <- grob.list[na.sort]
+    if (shiny==TRUE & length(grob.list)>=1) return(grid.arrange(grobs=grob.list, layout_matrix=lay, newpage=TRUE))
+    g.tr <- lapply(grob.list, grobTree); g.tr <- g.tr[names(grob.list)]
+    n.col <- ncol(lay); n.row <- nrow(lay)
+    g.arr <- arrangeGrob(grobs=g.tr, layout_matrix=lay, widths=unit(rep(width/n.col, n.col), "npc"), heights=unit(rep(height/n.row, n.row), "npc")) 
+
+  }; return(g.arr)
 
 }
 

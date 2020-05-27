@@ -62,7 +62,7 @@ spatial_hm(
 
 \item{height}{A numeric of each subplot height. The default is 1.}
 
-\item{legend.r}{A numeric to adjust the dimension of the legend plot. Default is 0.1. The larger, the higher ratio of width to height.}
+\item{legend.r}{A numeric to adjust the dimension of the legend plot. Default is 1. The larger, the higher ratio of width to height.}
 
 \item{sub.title.size}{A numeric. The subtitle font size of each individual spatial heatmap. Default is 11.}
 
