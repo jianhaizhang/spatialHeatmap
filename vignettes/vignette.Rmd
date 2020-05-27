@@ -1092,44 +1092,64 @@ network(geneID="HRE2", data=se.fil.arab, ann='Target.Description', adj.mod=adj.m
 
 # Shiny App {#shiny}
 
-In additon to generating SHMs and the corresponding gene context plots from R, 
-`spatialHeatmap` provides a [Shiny App](https://shiny.rstudio.com/) to generate
-them from within an interactive web browser-based interface. Apart from its
-user-friendliness, this App combines the results of all plotting utilities in a 
-single browser window which simplifies the visual interpretation of the results.
-For testing purposes, ready-to-use sample expression data and aSVG images are included
-along with detailed user instructions. 
+In additon to generating SHMs and the corresponding gene context plots from R,
+`spatialHeatmap` includes a [Shiny App](https://shiny.rstudio.com/) that
+provides access to the same functionalities from an intuitive-to-use web
+browser interface.  Apart from being very user-friendly, this App
+conveniently organizes the results of the entire visualization workflow in a
+single browser window with options to modulate the individual components
+interactively. For instance, genes can be selected and replotted in the SHM
+simply by clicking the corresponding rows in the expression table included in the same window. 
+This representation is very efficient in guiding the interpretation of the results 
+in a visual and user-friendly manner. For testing purposes, the `spatialHeatmap` 
+Shiny App also includes ready-to-use sample expression data and aSVG images 
+along with embedded user instructions.
 
 
-On the right is the interactive interfacce, including Data Matrix,
-Spatial Heatmap, Matrix Heatmap, and Network. To use interactive features,
-there are paramters on the left menu to operate. Upon launched, the app
-automatically displays a pre-formatted example. A good practice to use this app
-is to follow steps in the menu rather than skipping steps. If unexpectation
-happens, the app webpage should be refreshed.
-
-This app is launched by the function `shiny_all` without any parameters. Figure
-\@ref(fig:shiny) is the screenshot of Spatial Heatmap.  
+The Shiny App of `spatialHeatmap` can be launched from an R session with the following
+function call. 
 
 ```{r eval=FALSE, echo=TRUE, warnings=FALSE}
 shiny_all()
 ```   
 
-```{r shiny, echo=FALSE, fig.wide=TRUE, fig.cap=("The snapshot of Shiny App. Left is the menu and right is the Spatial Heatmap."), out.width="100%"}
+The dashboard panels of the Shiny App are organized as follows:
 
+1. Left Side Panel: menu for workflow execution and parameter selection
+2. Expression Matrix: scrollable expression matrix uploaded by user
+3. Spatial Heatmap: aSVG image provided by user
+4. Matrix Heatmap: hierarchical clustering results for genes with similar expression profiles as target gene(s)
+5. Network Graph: interactive network module generated for genes with similar expression proviles as target gene(s)
+
+A screenshot of the Spatial Heatmap component within the Shiny App window is shown below 
+(Figure \@ref(fig:shiny)).
+
+```{r shiny, echo=FALSE, fig.wide=TRUE, fig.cap=("Screenshot of `spatialHeatmap's` Shiny App."), out.width="100%"}
 include_graphics('img/shiny.png')
-
 ```  
 
-The data matrix to upload is a data frame. If the data is a `SummarizedExperiment` class, the data matrix can be obtained by setting a directory path to `dir` in function `filter_data`. A folder `local_mode_result/` is automatically created in the provided path, and the filtered data matrix is written to `local_mode_result/processed_data.txt` with column names in the scheme 'sample__condition' (Table \@ref(tab:humtab)), which is a tab-separated file. If users want to see annotation by mousing over a node in the network, a column of gene annotation in `rowData` slot should be provided to `ann`, then the annotation is appended to the last column in `processed_data.txt`.  
+After launching, the Shiny App displays by default one of the included data sets. 
 
-For example, in `filter_data`, setting `dir='./'` (current working directory) will output the filtered data matrix in `./local_mode_result/processed_data.txt`, and setting `ann='Target.Description'` appends the annotation from `rowData` slot to the last column of `processed_data.txt`, which is ready to upload to the app.
+The data matrix^[This must be a tabular file in CSV or TSV format?] to upload
+is a data frame. If the data is a `SummarizedExperiment` class, the data matrix
+can be obtained by setting a directory path to `dir` in function `filter_data`.
+A folder `local_mode_result/` is automatically created in the provided path,
+and the filtered data matrix is written to `local_mode_result/processed_data.txt` with column names in the scheme
+'sample__condition' (Table \@ref(tab:humtab)), which is a tab-separated file.
+If users want to see annotation by mousing over a node in the network, a column
+of gene annotation in `rowData` slot should be provided to `ann`, then the
+annotation is appended to the last column in `processed_data.txt`.  
+
+For example, in `filter_data`, setting `dir='./'` (current working directory)
+will output the filtered data matrix in
+`./local_mode_result/processed_data.txt`, and setting
+`ann='Target.Description'` appends the annotation from `rowData` slot to the
+last column of `processed_data.txt`, which is ready to upload to the app.
 
 ```{r eval=FALSE, echo=TRUE, warnings=FALSE}
 se.fil.arab <- filter_data(data=se.aggr.sh, ann="Target.Description", sam.factor='samples', con.factor='conditions', pOA=c(0.03, 6), CV=c(0.30, 100), dir='./')
 ```
 
-<font color='blue'>jianhai_comment: the following Supplement section is substantially changed.</font>
 
 # Supplement {#sup} 
 
