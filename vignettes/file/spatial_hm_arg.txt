@@ -10,7 +10,7 @@
 "9"	"data.trans"	"'log2', 'exp2', or NULL, 'log2' transforms data to log2 scale for plotting while 'exp2' to 2-base exponent. Default is NULL, no transformation."
 "10"	"tis.trans"	"A vector of aSVG features to be transparent. Default is NULL."
 "11"	"width, height"	"Two numerics of width and height of spatial heatmap plots repsectively. Default is 1, 1."
-"12"	"legend.r"	"The ratio aspect (width to height) of legend plot. Default is 1."
+"12"	"legend.r"	"A numeric to adjust the dimension of the legend plot. Default is 1. The larger, the higher ratio of width to height."
 "13"	"sub.title.size"	"The title size of each spatial heatmap subplot. Default is 11."
 "14"	"lay.shm"	"'gen' or 'con', applies to multiple genes or conditions respectively. 'gen' means spatial heatmaps are organised by genes while 'con' organised by conditions. Default is 'gen'"
 "15"	"ncol"	"The total column number of spatial heatmaps, not including legend plot. Default is 2."

@@ -15,7 +15,7 @@
 #' @param bar.width The width of colour bar. Default if 0.08.
 #' @param width A numeric of each subplot width. The default is 1.
 #' @param height A numeric of each subplot height. The default is 1.
-#' @param legend.r A numeric to adjust the dimension of the legend plot. Default is 0.1. The larger, the higher ratio of width to height.
+#' @param legend.r A numeric to adjust the dimension of the legend plot. Default is 1. The larger, the higher ratio of width to height.
 #' @param lay.shm "gene" or "con", the former organizes spatial heatmaps by genes, proteins, metabolites, etc. while the latter by conditions/treatments applied to experiments.
 #' @param ncol Number of columns to display the spatial heatmaps, not including the legend plot.
 #' @param verbose Logical, FALSE or TRUE. If TRUE the samples in data not colored in spatial heatmaps are printed to R console. Default is TRUE.
