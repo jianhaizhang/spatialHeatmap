@@ -9,7 +9,7 @@ output:
     toc_float:
         collapsed: true
         smooth_scroll: true
-    toc_depth: 3
+    toc_depth: 4
     fig_caption: yes
     code_folding: show
     number_sections: true
@@ -1162,45 +1162,54 @@ se.fil.arab <- filter_data(data=se.aggr.sh, ann="Target.Description", sam.factor
 As most Shiny Apps, `spatialHeatmap` can be deployed as a centralized web
 service. A major advantage of a web server deployment is that the
 functionalities can be accessed remotely by anyone on the internet without the
-need to use R on their local system. For deployment one can use local web
-servers or cloud services such as AWS, GCP or
+need to use R on the user system. For deployment one can use custom web
+servers or cloud services, such as AWS, GCP or
 [shinysapps.io](https://www.shinyapps.io/). An example web instance for testing
 `spatialHeatmap` online is available
 [here](https://www.plantsecretome.org/software/spatialheatmap).
 
 # Supplement {#sup} 
 
-To generate SHMs with custom data, proper formatting of the numeric data and/or
-aSVG images is often required. A tabular target file describing the numeric
-data can also be provided but is optional. This section provides additional
-details on these three input files.
+To generate SHMs with custom data, proper formatting of the numeric (assay)
+data and/or aSVG images is required. A tabular target file describing the
+numeric data can also be provided but is optional. This section provides
+additional details on these three input types.
 
-## Numeric Data Format {#data_form}
+## Numeric Data {#data_form}
 
-The accepted data classes include `vector`, `data frame`, or
-`SummarizedExperiment` (SE). A `vector` applies to several numeric values
-measured for a single item (*e.g.* gene), and `data frame` applies to more
-items assayed in several samples and/or several conditions (e.g. 2 samples
-under 2 conditions). By contrast, SE applies to experiments with many samples
-and many conditions. Formatting the data is essentially define samples and/or
-conditions.     
+The numceric data used to color the features in aSVG images can be provided as
+three different object types including `vector`, `data.frame` and
+`SummerizedExperiment` objects. When working with complex omics-based assay
+data then the latter provides the most flexibility, and thus should be the
+preferred container class for managing numeric data in `spatialHeatmap`. Both
+`data.frame` and `SummarizedExperiment` can hold data from many measured items,
+such as genes, across large numbers of samples and conditions. In contrast to
+this, the `vector` class is only suitable for data from single items. Due to its
+simplicity this less complex container is often useful for testing or when dealing with simple
+data sets.
 
 ### Object Types
 
 #### `vector`
-In the case of vector, the numeric values are measured from different samples. If one or more conditions are provided, the samples and conditions should be connected by double undescore, i.e. in the form of 'sample__condition'. If no conditions are provided, all the samples are assumed to have same condition, which is the [toy example](#toy).    
 
-Take 2 samples `occipital lobe` and `parietal lobe` from the [toy example](#toy) for instance and assume there are 2 conditions, `condition1` and `condition2`. Select 5 random values, assign 4 of them to the 2 samples under the 2 conditions, and the last one to a not-mapped sample. Note the value names should be unique.   
+When using numeric vectors as input to `spatial_hm`, then their name slot needs
+to be populated with strings matching the feature names in the corresponding aSVG. 
+To also specify conditions, their labels need to be appended to the feature names
+with double underscores separators, _i.e._ 'feature__condition'. 
+
+The following example replots the [toy example](#toy) for two spatial features 
+('occipital lobe' and 'parietal lobe') and two conditions ('1' and '2'). 
 
 ```{r eval=TRUE, echo=TRUE, warnings=FALSE }
-# Random numeric values.
-vec <- sample(x=1:100, size=5)
-# Give unique names to random values.
-names(vec) <- c('occipital lobe__condition1', 'occipital lobe__condition2', 'parietal lobe__condition1', 'parietal lobe__condition2', 'notMapped')
+vec <- sample(x=1:100, size=5) # Random numeric values
+names(vec) <- c('occipital lobe__condition1', 'occipital lobe__condition2', 'parietal lobe__condition1', 'parietal lobe__condition2', 'notMapped') # Assign unique names to random values
 vec
 ```
 
-Plot SHMs.  
+With this configuration the resulting plot contains two spatial heatmap plots for
+the human brain, one for 'condition 1' and another one for 'contition 2'. Since the
+`spatial_hm` function call in this code block is not evaluated, the actual SHM is 
+not shown in this vignette.
 
 ```{r vecshm, eval=FALSE, echo=TRUE, warnings=FALSE, fig.wide=FALSE, fig.cap=c('SHMs on a vector. \'occipital lobe\' and \'parietal lobe\' are 2 aSVG features and \'condition1\' and \'condition2\' are conditions.')}
 spatial_hm(svg.path=svg.hum, data=vec, ID='toy', ncol=1, legend.r=1.2, sub.title.size=14)
@@ -1302,12 +1311,14 @@ Plot SHMs on `gene1`.
 spatial_hm(svg.path=svg.hum, data=se.aggr, ID=c('gene1'), ncol=1, legend.r=1.2, sub.title.size=14)
 ```
 
-## aSVG repository {#svg_repo}
+## aSVG File
+
+### aSVG repository {#svg_repo}
 
 The aSVG repository is from [EBI Gene Expression Group](https://github.com/ebi-gene-expression-group/anatomogram/tree/master/src/svg), where the requirements on aSVG format are included. It contains aSVGs across different species and can be downloaded with funtion `return_feature` directly. If users cannot find a target aSVG in this repository, there is a step-by-step [SVG tutorial](https://jianhaizhang.github.io/SVG_tutorial_file/) to create custom aSVG images, which is developed by this project.    
 
 
-## Update aSVG features {#update}
+### Update aSVG features {#update}
 
 To change existing feature identifiers in aSVG, the function `update_feature` should be used. For testing purpose, an empty folder `~/test1` is created and a copy of the aSVG `homo_sapiens.brain.svg` packaged in *spatialHeatmap* is saved in there.  
 
@@ -1341,6 +1352,10 @@ feature.df.new
 # Update the features.
 update_feature(feature=feature.df.new, dir='~/test1')
 ```
+
+## Target File
+
+...^[Provide basics here.]
 
 <br/>
 
