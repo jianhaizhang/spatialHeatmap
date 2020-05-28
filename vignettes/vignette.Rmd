@@ -91,7 +91,6 @@ include_graphics('img/illustration.png')
 
 ```
 
-
 <font color='blue'>jianhai-reply: legend is edited.^[Thomas-Comment: the legend text of Figure 1 should provide a brief overview of what is shown
 in the flowchart. Right now there is too much technical detail that lacks context.
 I suggest to significantly shorten it. Also, you may want to organize the flowchart
@@ -753,7 +752,6 @@ minimum.
 
 The chosen chicken RNA-Seq experiment compares the developmental changes across 
 nine time points of seven organs [@Cardoso-Moreira2019-yq].
-
 
 The following searches the Expression Atlas for expression data from _'heart'_
 and _'gallus'_.
