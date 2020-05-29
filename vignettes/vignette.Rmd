@@ -34,7 +34,7 @@ word-wrap: initial !important;
 
 ```{r global_options, include=FALSE}
 ## ThG: chunk added to enable global knitr options. The below turns on
-## caching  for faster vignette re-build during text editing.
+## caching qor faster vignette re-build during text editing.
 knitr::opts_chunk$set(cache=TRUE)
 ```
 <!-- 
@@ -1181,14 +1181,14 @@ additional details on these three input types.
 
 The numceric data used to color the features in aSVG images can be provided as
 three different object types including `vector`, `data.frame` and
-`SummerizedExperiment` objects. When working with complex omics-based assay
-data then the latter provides the most flexibility, and thus should be the
-preferred container class for managing numeric data in `spatialHeatmap`. Both
+`SummerizedExperiment`. When working with complex omics-based assay data then
+the latter provides the most flexibility, and thus should be the preferred
+container class for managing numeric data in `spatialHeatmap`. Both
 `data.frame` and `SummarizedExperiment` can hold data from many measured items,
-such as genes, across large numbers of samples and conditions. In contrast to
-this, the `vector` class is only suitable for data from single items. Due to its
-simplicity this less complex container is often useful for testing or when dealing with simple
-data sets.
+such as genes across many samples and conditions. In contrast to this, the
+`vector` class is only suitable for data from single items. Due to its
+simplicity this less complex container is often useful for testing or when
+dealing with simple data sets.
 
 ### Object Types
 
@@ -1197,7 +1197,7 @@ data sets.
 When using numeric vectors as input to `spatial_hm`, then their name slot needs
 to be populated with strings matching the feature names in the corresponding aSVG. 
 To also specify conditions, their labels need to be appended to the feature names
-with double underscores separators, _i.e._ 'feature__condition'. 
+with double underscores as separator, _i.e._ 'feature__condition'. 
 
 The following example replots the [toy example](#toy) for two spatial features 
 ('occipital lobe' and 'parietal lobe') and two conditions ('1' and '2'). 
@@ -1208,10 +1208,11 @@ names(vec) <- c('occipital lobe__condition1', 'occipital lobe__condition2', 'par
 vec
 ```
 
-With this configuration the resulting plot contains two spatial heatmap plots for
-the human brain, one for 'condition 1' and another one for 'contition 2'. Since the
-`spatial_hm` function call in this code block is not evaluated, the actual SHM is 
-not shown in this vignette.
+With this configuration the resulting plot contains two spatial heatmap plots
+for the human brain, one for 'condition 1' and another one for 'contition 2'.
+To keep the build time and storage size of this package to a minimum, the 
+`spatial_hm` function call in the code block below is not evaluated. Thus,
+the corresponding SHM is not shown in this vignette. 
 
 ```{r vecshm, eval=FALSE, echo=TRUE, warnings=FALSE, fig.wide=FALSE, fig.cap=c('SHMs on a vector. \'occipital lobe\' and \'parietal lobe\' are 2 aSVG features and \'condition1\' and \'condition2\' are conditions.')}
 spatial_hm(svg.path=svg.hum, data=vec, ID='toy', ncol=1, legend.r=1.2, sub.title.size=14)
@@ -1219,16 +1220,16 @@ spatial_hm(svg.path=svg.hum, data=vec, ID='toy', ncol=1, legend.r=1.2, sub.title
 
 #### `data.frame`  
 
-Compared to the above vector input, `data.frames` are like row-wise appended
-vectors where the name slot information in the vectors is stored in the
+Compared to the above vector input, `data.frames` are structured here like row-wise 
+appended vectors, where the name slot information in the vectors is stored in the
 column names. Each row also contains a name that corresponds to the corresponding
 item name, such as a gene ID. The naming of spatial features and conditions in the 
 column names follows the same conventions as the naming used for the name slots in 
 the above vector example. 
 
-The following illustrates this with an example where a numeric `data.frame` is
-generated containing 20 rows and 5 columns. To avoid name clashes, the values
-in the rows and columns should be unique. 
+The following illustrates this with an example where a numeric `data.frame` with
+random numbers is generated containing 20 rows and 5 columns. To avoid name clashes, 
+the values in the rows and columns should be unique. 
 
 ```{r eval=TRUE, echo=TRUE, warnings=FALSE }
 df.test <- data.frame(matrix(sample(x=1:1000, size=100), nrow=20)) # Create numeric data.frame
@@ -1239,16 +1240,16 @@ df.test[1:3, ]
 
 With the resulting `data.frame` one can generate the same SHM as in the previous
 example, that used a named vector as input to the `spatial_hm` function. Additionally,
-one can now select each rows by its name (here gene ID) under the `ID` argument.
+one can now select each row by its name (here gene ID) under the `ID` argument.
 
 ```{r dfshm, eval=FALSE, echo=TRUE, warnings=FALSE, fig.wide=FALSE, fig.cap=c('SHMs on a data frame. \'occipital lobe\' and \'parietal lobe\' are 2 aSVG features and \'condition1\' and \'condition2\' are conditions.')}
 spatial_hm(svg.path=svg.hum, data=df.test, ID=c('gene1'), ncol=1, legend.r=1.2, sub.title.size=14)
 ```
 
-To provide additional information in `data.frames`, it can be appended
-column-wise. For instance, this way one can provide gene descriptions that one
-can see by placing the curser over network nodes in the Shiny App of this
-package. 
+Additional information can be appended to the `data.frame` column-wise, such as
+annotation data including gene descriptions. This information can then be displayed 
+interactively in the network plots of the Shiny App by placing the curser over 
+network nodes.
 
 ```{r eval=TRUE, echo=TRUE, warnings=FALSE }
 df.test$ann <- paste0('ann', 1:20)
@@ -1260,71 +1261,87 @@ df.test[1:3, ]
 
 The `SummarizedExperiment` class is a much more extensible and flexible container 
 for providing metadata for both rows and columns of numeric data stored in tabular 
-format. To illustrate this, the following uses the same information as 
-the previous `data.frame` example.
+format. 
 
-Formatting data of `SummarizedExperiment` (SE, @SummarizedExperiment) is
-essentially to make a targets file (a data frame of column metadata). The
-targets file usually has at least 2 columns that specifies sample and condition
-replicates respectively, and should be added to the `colData` slot. The data
-matrix should have assayed items (*e.g.* genes) and sample/conditions in rows
-and columns respectively, and must be in the `assay` slot. The `rowData` slot
-can store a data frame of annotaions corresponding to rows in `assay` slot, but
-is not required.  
+To import experimental design information from tabular files, users can provide
+a target file that will be stored in the `colData` slot of the
+`SummarizedExperiment` (SE, @SummarizedExperiment) object. In other words, the
+target file provides the metadata for the columns of the numeric assay data. Usually,
+the target file contains at least two columns: one for the features/samples and
+one for the conditions. Replicates are indicated by identical entries in these
+columns. The actual numeric matrix representing the assay data is stored in
+the `assay` slot, where the rows correspond to items, such as gene IDs.
+Optionally, additional annotation information for the rows (_e.g._ gene
+descriptions) can be stored in the `rowData` slot. 
 
-To plot spaital heatmap successfully, the targets file should meet the following requirements.  
+For constructing a valid `SummarizedExperiment` object, that can be used by 
+the `spatial_hm` function, the target file should meet the following requirements.  
 
-1. It is a `data frame` and usually has at least one column of samples and one column of conditions. The rows correspond with columns in `assay` slot. If the condition column is not defined, the samples are assumped under same condition.
+1. It should be imported with `read.table` or `read.delim` into a `data.frame`
+   or the `data.frame` can be constructed in R on the fly (as shown below).
+
+2. It should contain at least two columns. One column represents the features/samples 
+   and the other one the conditions. The rows in the target file 
+   correspond to the columns of the numeric data stored in the `assay` slot. If
+   the condition column is empty, then the same condition is assumed under the
+   corresponding features/samples entry.
  
-2. The sample column specifies sample replicates. It is crucial that replicate names of the same sample must be identical. Otherwise, they are treated as different samples. E.g. 
-`occipital lobe`, `occipital lobe` are the same sample while `occipital lobe1`, `occipital lobe2` are different samples. 
+3. The feature/sample names must have matching entries in to corresponding aSVG
+   to be considered in the final SHM. Note, the double underscore is a special
+   string that is reserved for specific purposes in *spatialHeatmap*, and thus
+   should be avoided for naming feature/samples and conditions. 
 
-3. The sample identifiers of interest must be identical with features of interest in aSVG respectively. It means even a dot, undescore, space, *etc* can make a difference and lead to target features not colored in SHMs. Since double underscore (_\_) is a reserved separator in *spatialHeatmap*, it cannot be used in sample or condition identifiers.  
-
-4. The condition column has the same requirement with the sample column. E.g. `condition1`, `condition1` is same conditoin while `condition1A`, `condition1B` is treated as different conditions.   
-
-
-In the following example, `occipital lobe` has 2 conditions `condition1` and `condition2`, and each condition has 2 replicates, so there are 4 assays for `occipital lobe`. The same applies to `parietal lobe`. Based on this experiment design, the corresponding targets file is made, where a row is an assay.   
+The following example illustrates the design of a valid `SummarizedExperiment`
+object for generating SHMs. In this example, the 'occipital lobe' tissue has 2
+conditions and each condition has 2 replicates. Thus, there are 4 assays for
+`occipital lobe`, and the same design applies to the `parietal lobe` tissue. 
 
 ```{r eval=TRUE, echo=TRUE, warnings=FALSE }
-# Two samples.
 sample <- c(rep('occipital lobe', 4), rep('parietal lobe', 4))
-# Two conditions.
 condition <- rep(c('condition1', 'condition1', 'condition2', 'condition2'), 2)
-# Targets file.
 target.test <- data.frame(sample=sample, condition=condition, row.names=paste0('assay', 1:8))
 target.test
 ```
 
-Make a random numeric data frame of 8 columns and 20 rows. Each column is an assay and each row is a gene\'s expression profile. Columns must correspond with rows in targets file, so column names are assigned assay1-8.  
+The `assay` slot is populated with a `8 x 20` `data.frame` containing random
+numbers. Each column corresponds to an assay in the target file (here imported 
+into `colData`), while each row corresponds to a gene. 
 
 ```{r eval=TRUE, echo=TRUE, warnings=FALSE }
-# Make a numeric data frame.
 df.se <- data.frame(matrix(sample(x=1:1000, size=160), nrow=20))
-# Name the rows.
 rownames(df.se) <- paste0('gene', 1:20)
-# Replace the default column names. 
 colnames(df.se) <- row.names(target.test)
-# A slice of the data frame.
 df.se[1:3, ]
+```
+
+Next, the final `SummarizedExperiment` object is constructed by providing the
+numeric and target data under the `assays` and `colData` arguments,
+respectively.
+
+```{r eval=TRUE, echo=TRUE, warnings=FALSE }
 se <- SummarizedExperiment(assays=df.se, colData=target.test)
 se
 ```
 
-Similarly, in the downstream [interactive network](#inter_net), if users want to have a gene annotation by mousing over a node, a data frame of gene annotation can be added to `rowData` slot, *i.e.* the `ann` column in `df.test`.  
+If needed row-wise annotation information (_e.g. for genes_) can be included in
+the `SummarizedExperiment` object as well. This can be done during the
+construction of the initial object, or as below by injecting the information
+into an existing `SummarizedExperiment` object.
 
 ```{r eval=TRUE, echo=TRUE, warnings=FALSE }
 rowData(se) <- df.test['ann']
 ```
 
-In this simple example, the normalization and filtering process is left out, but replicates should be aggregated. In function `aggr_rep`, the `sample` and `condition` columns in targets file are concatenated with double underscore to form 'sample__condition' replicates for aggregating.  
+In this simple example, possible normalization and filtering steps are skipped.
+Yet, the aggregation of replicates is performed as shown below. 
 
 ```{r eval=TRUE, echo=TRUE, warnings=FALSE }
 se.aggr <- aggr_rep(data=se, sam.factor='sample', con.factor='condition', aggr='mean')
 assay(se.aggr)[1:3, ]
 ```
 
-Plot SHMs on `gene1`.     
+With the fully configured `SummarizedExperiment` object, a similar SHM is plotted as 
+in the previous examples. 
 
 ```{r seshm, eval=FALSE, echo=TRUE, warnings=FALSE, fig.wide=FALSE, fig.cap=c('SHMs on a SummarizedExperiment. \'occipital lobe\' and \'parietal lobe\' are 2 aSVG features and \'condition1\' and \'condition2\' are conditions.')}
 spatial_hm(svg.path=svg.hum, data=se.aggr, ID=c('gene1'), ncol=1, legend.r=1.2, sub.title.size=14)
@@ -1334,47 +1351,64 @@ spatial_hm(svg.path=svg.hum, data=se.aggr, ID=c('gene1'), ncol=1, legend.r=1.2, 
 
 ### aSVG repository {#svg_repo}
 
-The aSVG repository is from [EBI Gene Expression Group](https://github.com/ebi-gene-expression-group/anatomogram/tree/master/src/svg), where the requirements on aSVG format are included. It contains aSVGs across different species and can be downloaded with funtion `return_feature` directly. If users cannot find a target aSVG in this repository, there is a step-by-step [SVG tutorial](https://jianhaizhang.github.io/SVG_tutorial_file/) to create custom aSVG images, which is developed by this project.    
-
+An aSVG repository, that can be used by `spatialHeatmap` directly, has been
+generated by the [EBI Gene Expression
+Group](https://github.com/ebi-gene-expression-group/anatomogram/tree/master/src/svg).^[It
+is confusing that you are not mentioning here your custom aSVG repos.] It
+contains annatomical aSVG images from different species. These SVG images are 
+also used by the Expression Atlas database. If users cannot find a target aSVG 
+in this repository, we have developed a step-by-step [SVG
+tutorial](https://jianhaizhang.github.io/SVG_tutorial_file/) for creating
+custom aSVG images. 
 
 ### Update aSVG features {#update}
 
-To change existing feature identifiers in aSVG, the function `update_feature` should be used. For testing purpose, an empty folder `~/test1` is created and a copy of the aSVG `homo_sapiens.brain.svg` packaged in *spatialHeatmap* is saved in there.  
+To create and edit existing feature identifiers in aSVGs, the `update_feature` function
+can be used. The demonstration below, creates an empty folder `~/test1` and copies
+into it the `homo_sapiens.brain.svg` aSVG image provided by the `spatialHeatmap`
+package. Subsequently, selected feature annotations are updated in this file. 
 
 <!-- To avoid creating '~/test1' in users' computer, the following code chunks are not evaluated when building this vignette. -->
 
 ```{r eval=FALSE, echo=TRUE, warnings=FALSE }
-# Make an empty directory.
-if (!dir.exists('~/test1')) dir.create('~/test1')
-# Copy the "homo_sapiens.brain.svg" aSVG.
-svg.hum <- system.file("extdata/shinyApp/example", 'homo_sapiens.brain.svg', package="spatialHeatmap")
-file.copy(from=svg.hum, to='~/test1', overwrite=FALSE)
+if (!dir.exists('~/test1')) dir.create('~/test1') # Create an empty directory
+svg.hum <- system.file("extdata/shinyApp/example", 'homo_sapiens.brain.svg', package="spatialHeatmap") 
+file.copy(from=svg.hum, to='~/test1', overwrite=FALSE) # Copy "homo_sapiens.brain.svg" file into '~/test1'
 ```
 
-Use feature and species keywords to query the aSVG and return existing features, which is a data frame. 
+Query the above aSVG with feature and species keywords, and return the resulting matches
+in a `data.frame`.
 
 ```{r eval=FALSE, echo=TRUE, warnings=FALSE }
 feature.df <- return_feature(feature=c('frontal cortex'), species=c('homo sapiens', 'brain'), dir='~/test1', remote=FALSE, keywords.any=FALSE)
 feature.df
 ``` 
 
-Make a vector of new feature identifiers corresponding to every returned feature, *e.g.* replacing spaces with dots. This vector must be added to the first column of the feature data frame, since that is where `update_feature` looks for new features. Then features are updated with `update_feature`.    
+Subsequently, create a character vector of new feature identifiers corresponding to 
+each of the returned features. In the following examples spaces in strings will be 
+filled with dots. This character vector must be added to the first column of the 
+feature `data.frame`. The latter is used by the `update_feature` function to look 
+up new features. 
+
+
+Sample code that creates new feature names and stores them in a character vector.
 
 ```{r eval=FALSE, echo=TRUE, warnings=FALSE } 
-# A vector of new features.
 f.new <- c('frontal.cortex', 'prefrontal.cortex')
-
-# New features added to the first column of feature data frame.
-feature.df.new <- cbind(featureNew=f.new, feature.df)
-feature.df.new
-
-# Update the features.
-update_feature(feature=feature.df.new, dir='~/test1')
 ```
 
-## Target File
+Next, new features are added to the first column of the feature `data.frame`.
 
-...^[Provide basics here.]
+```{r eval=FALSE, echo=TRUE, warnings=FALSE } 
+feature.df.new <- cbind(featureNew=f.new, feature.df)
+feature.df.new
+```
+
+Finally, the features are updated in the aSVG file(s) located in the `~/test` directory.
+
+```{r eval=FALSE, echo=TRUE, warnings=FALSE } 
+update_feature(feature=feature.df.new, dir='~/test1')
+```
 
 <br/>
 
