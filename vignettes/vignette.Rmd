@@ -1028,6 +1028,8 @@ In this section, network analysis is applied on the subsetted gene expression ma
 
 ## Adjacency Matrix and Module Identification
 
+<font color='blue'>jianhai-reply: the blue text are responses to ThG-Comments. </font>
+
 <font color='red'>[ThG-Comment: this section needs major improvements. The intent was
 to identify for a target gene nearest neighbors based on some similarity metric for gene
 expression profiles (e.g. correlation), and then hierarchically cluster them and visualize
@@ -1123,6 +1125,8 @@ shiny_all()
 
 <font color='red'>[ThG-Comment: many menu items are not functional in the Shiny App. 
 E.g.: Instructions and Acknowledgement return error messages.]</font>
+<font color='blue'>jianhai-reply: Missing pre-uploaded files are added, and now it is functional. The matrix heatmap and network section in the app are not synced with the vignette, since the vignette is not final yet.</font>
+
 
 The dashboard panels of the Shiny App are organized as follows:
 

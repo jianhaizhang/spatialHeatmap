@@ -11,7 +11,7 @@ options(shiny.maxRequestSize=7*1024^3, stringsAsFactors=FALSE)
 #matrix_hm <- get('matrix_hm', envir=asNamespace('spatialHeatmap'), inherits=FALSE)
 #network <- get('network', envir=asNamespace('spatialHeatmap'), inherits=FALSE)
 
-source('~/tissue_specific_gene/function/fun.R')
+# source('~/tissue_specific_gene/function/fun.R')
 
 
 adj_mod <- function(data, type='signed', minSize=15, dir=NULL) {
@@ -1045,113 +1045,6 @@ shinyServer(function(input, output, session) {
       g.lgd <- gs()[['g.lgd']]; g.lgd <- g.lgd+coord_fixed(ratio =r); return(g.lgd)
 
   })
-
-
-  edg <- reactive({
-
-    if (input$fileIn!="Compute online") return(NULL)
-    if (is.null(geneIn0())) return(NULL)
-    gen.rep <- geneIn0()[['gen.rep']]
-    save(gen.rep, file='gen.rep')
-    log2.fc=1; fdr=0.5
-    se <- SummarizedExperiment(assays=list(expr=as.matrix(gen.rep)), colData=data.frame(fct=colnames(gen.rep)))
-    edg <- edgeR(se=se, method.norm='TMM', sample.factor='fct', method.adjust='BH', log2.fc=log2.fc, fdr=fdr); edg
-
-  })
-
-  dsq <- reactive({
-
-    if (input$fileIn!="Compute online") return(NULL)
-    if (is.null(geneIn0())) return(NULL)
-    gen.rep <- geneIn0()[['gen.rep']]
-    log2.fc=1; fdr=0.5
-    se <- SummarizedExperiment(assays=list(expr=as.matrix(gen.rep)), colData=data.frame(fct=colnames(gen.rep)))
-    dsq <- deseq2(se=se, sample.factor='fct', method.adjust='BH', log2.fc=log2.fc, fdr=fdr); dsq
-
-  })
-
-  output$ssg.sep <- renderPlot({ 
-
-    if (is.null(geneIn0())|is.null(edg())|is.null(dsq())) return(NULL)
-    width=0.85
-    lis.all <- list(edg=edg(), dsq=dsq()); sam.all <- names(lis.all[[1]])
-    sam <- sam.all[1:3]
-    ssg.sep <- ssg_sep(lis.all=lis.all, sam=sam, width=width); ssg.sep
-
-  })
- 
-  
-  output$w.table <- renderDataTable({
-    
-    if (is.null(geneIn0())|is.null(edg())|is.null(dsq())) return(NULL)
-    if (is.null(geneIn0())) return(NULL)
-    sam.con <- unique(colnames(geneIn()))[1:3]
-    lis.all <- list(edg=edg(), dsq=dsq()); sam.all <- names(lis.all[[1]])
-    sam <- sam.all[1:3]; sam.tar <- sam.all[2]; sam.vs <- sam.all[c(1, 3)]
-    meth <- 'edg'
-    df.up <- lis.all[[meth]][[sam[2]]][[1]]
-    df.dn <- lis.all[[meth]][[sam[2]]][[2]]
-    df.up.dn <- rbind(df.up, df.dn)
-    if (nrow(df.up.dn)==0) return("No SSGs detected.")
-    print(df.up.dn)
-    pat <- c(paste0('^', sam.tar, '_VS_', sam.vs, '_'), paste0('^', sam.vs, '_VS_', sam.tar, '_'))
-    df.up.dn <- df.up.dn[, c(1, grep(paste0(pat, collapse='|'), colnames(df.up.dn)))]
-    datatable(df.up.dn, selection=list(mode="multiple", target="row", selected=NULL), filter="top", extensions='Scroller', options=list(pageLength=5, lengthMenu=c(5, 15, 20), autoWidth=TRUE, scrollCollapse=TRUE, deferRender=TRUE, scrollX=TRUE, scrollY=200, scroller=TRUE), class='cell-border strip hover') %>% formatStyle(0, backgroundColor="orange", cursor='pointer')
- 
-  })
- 
-  output$ssg.sum <- renderPlot({ 
-
-    if (is.null(geneIn0())|is.null(edg())|is.null(dsq())) return(NULL)
-    if (input$fileIn!="Compute online") return(NULL)
-    if (is.null(geneIn0())) return(NULL)
-    per=0.5; width=0.85
-    lis.all <- list(edg(), dsq()); sam.all <- names(lis.all[[1]])
-    sam <- sam.all[1:3]
-    lis.aggr <- sig_frq(lis.all=lis.all, per=per, sam=sam)
-    ssg_sum(lis.aggr=lis.aggr, width=width)
-
-  })
-
-
-  output$a.table <- renderDataTable({
-    
-    if (is.null(geneIn0())|is.null(edg())|is.null(dsq())) return(NULL)
-    if (is.null(geneIn0())) return(NULL)
-    per=0.5
-    sam.con <- unique(colnames(geneIn()))[1:3]
-    lis.all <- list(edg=edg(), dsq=dsq()); sam.all <- names(lis.all[[1]])
-    lis.aggr.r <- sig_frq(lis.all=lis.all, per=per)
-    df.sum.up <- as.data.frame(lis.aggr.r[[1]][[1]][[1]])
-    df.sum.dn <- as.data.frame(lis.aggr.r[[1]][[1]][[2]])
-    df.sum.up$up <- 'up'; df.sum.dn$dn <- 'down'
-    rownames(df.sum.up) <- df.sum.up$up.g
-    rownames(df.sum.dn) <- df.sum.dn$dn.g
-    df.sum.up <- df.sum.up[, 3:2]
-    df.sum.dn <- df.sum.dn[, 3:2]
-    colnames(df.sum.up) <- colnames(df.sum.dn) <- c('Status', 'Frequency')
-    df.sum <- rbind(df.sum.up, df.sum.dn)
-
-    datatable(df.sum, selection=list(mode="multiple", target="row", selected=NULL), filter="top", extensions='Scroller', options=list(pageLength=5, lengthMenu=c(5, 15, 20), autoWidth=TRUE, scrollCollapse=TRUE, deferRender=TRUE, scrollX=TRUE, scrollY=200, scroller=TRUE), class='cell-border strip hover') %>% formatStyle(0, backgroundColor="orange", cursor='pointer')
-
-  })
-
-    expr.nor <- reactive({
-
-    if (is.null(geneIn0())|is.null(edg())|is.null(dsq())) return(NULL)
-      if (is.null(geneIn0())) return(NULL)
-      gen.rep <- geneIn0()[['gen.rep']]
-      se <- SummarizedExperiment(assays=list(expr=as.matrix(gen.rep)), colData=data.frame(fct=colnames(gen.rep)))
-      norm_aggr(se=se, method.norm='TMM', data.trans='log2', sample.factor='fct', rep.aggr='mean')
-
-    })
-
-
-    #id.r <- rownames(se)[1]
-
-    #plot_gen(se=se.nor, id=id.r)
-
-
 
 
   adj.mod <- reactive({ 
