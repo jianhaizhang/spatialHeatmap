@@ -76,7 +76,7 @@
 filter_data <- function(data, pOA=c(0, 0), CV=c(-Inf, Inf), ann=NULL, sam.factor, con.factor,  dir=NULL) {
 
   options(stringsAsFactors=FALSE)
-  if (is(data, 'data.frame')|is(data, 'matrix')) {
+  if (is(data, 'data.frame')|is(data, 'matrix')|is(data, 'DFrame')) {
 
     data <- as.data.frame(data); rna <- rownames(data); cna <- make.names(colnames(data))
     if (!identical(cna, colnames(data))) cat('Syntactically valid column names are made! \n')

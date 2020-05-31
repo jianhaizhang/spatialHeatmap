@@ -2,20 +2,20 @@
 #'
 #' This function displays the input assayed item (gene, protein, metabolite, etc) in the context of corresponding network module, where the rows and columns are sorted by hierarchical clustering dendrograms and the row of input item is tagged by two lines. The matrix heatmap can be dispalyed in static or a web-browser based interactive mode. If the latter, users can zoom in and out by drawing a rectangle and by double clicking the image, respectively. Users can scale the data matrix by row or column. The same module can also be displayed in form of a network through the \code{\link{network}} function.
 
-#' @param geneID An identifier of assayed item (gene, protein, metabolite, etc) in the data. 
+#' @param ID An identifier of assayed item (gene, protein, metabolite, etc) in the data. 
 #' @param data A "data frame" or "SummarizedExperiment" object returned by the function \code{\link{filter_data}}, where rows are assayed items and columns are samples/conditions.
 #' @param adj.mod The list of "adjacency matrix" and "module" definition retured by the function \code{\link{adj_mod}}.
 #' @param ds The module identification sensitivity either 2 or 3. Default is 3. See function \code{\link{adj_mod}} for details.
 #' @param scale "row", "column", or "no", meaing scale the data matrix by row, column, or no scale respectively. Default is 'no'.
-#' @param col A character vector of two colors for constructing the color scale. The default is c('yellow', 'blue').
+#' @param col A character vector of color ingredients for constructing the color scale. The default is c('purple', 'yellow', 'blue').
 #' @param main The title of the matrix heatmap.
 #' @param title.size A numeric value, the size of the title font.
 #' @param cexCol A numeric value, the size of column names. Default is 1.
 #' @param cexRow A numeric value, the size of row names. Default is 1.
 #' @param angleCol The angle of column names. The default is 45.
 #' @param angleRow The angle of row names. The default is 45.
-#' @param sep.color The color of the two lines labelling the row of "geneID". The default is "black".
-#' @param sep.width The width of two lines labelling the row of "geneID". The default is 0.02.
+#' @param sep.color The color of the two lines labelling the row of "ID". The default is "black".
+#' @param sep.width The width of two lines labelling the row of "ID". The default is 0.02.
 #' @param static Logical, TRUE gives the static mode and FALSE interactive mode.
 #' @param margin A vector of two numbers, specifying bottom and right margins respectively. The default is c(10, 10).
 #' @param arg.lis1 A list of additional arguments passed to the \code{\link[gplots]{heatmap.2}} function from "gplots" package. E.g. list(xlab='sample', ylab='gene'). The default is an empty list.
@@ -69,16 +69,15 @@
 #' # Filter genes with low counts and low variance. Genes with counts over 5 (log2 unit) in at least 1% samples (pOA), and coefficient of variance (CV) between 0.2 and 100 are retained.
 #' se.fil.chk <- filter_data(data=se.aggr.chk, sam.factor='organism_part', con.factor='age', pOA=c(0.01, 5), CV=c(0.2, 100), dir=NULL)
 #'
-#' ## Identify modules.
-#' adj.mod <- adj_mod(data=se.fil.chk)
+#' ## Select genes showing most similar expression profiles with target genes.
+#' sub.mat <- submatrix(data=se.fil.chk, ID=c('ENSGALG00000019846', 'ENSGALG00000000112'))
 #'
 #' ## Matrix heatmap.
 #'
 #' # Static matrix heatmap.
-#' matrix_hm(geneID="ENSGALG00000019846", data=se.fil.chk, adj.mod=adj.mod, angleCol=80, angleRow=35, cexRow=0.8, cexCol=0.8, margin=c(10, 6), static=TRUE, arg.lis1=list(offsetRow=0.1, offsetCol=0.1))
+#' matrix_hm(ID=c('ENSGALG00000019846', 'ENSGALG00000000112'), data=sub.mat[['sub_matrix']], angleCol=80, angleRow=35, cexRow=0.8, cexCol=0.8, static=TRUE, arg.lis1=list(offsetRow=0.1, offsetCol=0.1))
 #' # Interactive matrix heatmap.
-#' # matrix_hm(geneID="ENSGALG00000019846", data=se.fil.chk, adj.mod=adj.mod, static=FALSE)
-
+#' \donttest{matrix_hm(ID=c('ENSGALG00000019846', 'ENSGALG00000000112'), data=sub.mat[['sub_matrix']], static=FALSE)}
 
 #' @author Jianhai Zhang \email{jzhan067@@ucr.edu; zhang.jianhai@@hotmail.com} \cr Dr. Thomas Girke \email{thomas.girke@@ucr.edu}
 #' @references
@@ -97,10 +96,10 @@
 #' @importFrom graphics image mtext par plot title
 #' @importFrom grDevices dev.off png
 
-matrix_hm <- function(geneID, data, adj.mod, ds=3, scale='no', col=c('yellow', 'blue'), main=NULL, title.size=10, cexCol=1, cexRow=1, angleCol=45, angleRow=45, sep.color="black", sep.width=0.02, static=TRUE, margin=c(10, 10), arg.lis1=list(), arg.lis2=list()) {
+matrix_hm <- function(ID, data, scale='no', col=c('purple', 'yellow', 'blue'), main=NULL, title.size=10, cexCol=1, cexRow=1, angleCol=45, angleRow=45, sep.color="black", sep.width=0.02, static=TRUE, margin=c(10, 10), arg.lis1=list(), arg.lis2=list()) {
 
   options(stringsAsFactors=FALSE)
-  if (is(data, 'data.frame')|is(data, 'matrix')) {
+  if (is(data, 'data.frame')|is(data, 'matrix')|is(data, 'DFrame')) {
 
     data <- as.data.frame(data); rna <- rownames(data); cna <- make.names(colnames(data)) 
     na <- vapply(seq_len(ncol(data)), function(i) { tryCatch({ as.numeric(data[, i]) }, warning=function(w) { return(rep(NA, nrow(data)))
@@ -110,21 +109,17 @@ matrix_hm <- function(geneID, data, adj.mod, ds=3, scale='no', col=c('yellow', '
     gene <- na[!idx]; colnames(gene) <- cna[!idx]
 
   } else if (is(data, 'SummarizedExperiment')) { gene <- assay(data) }
-  mods <- adj.mod[["mod"]]; ds <- as.character(ds)
-  lab <- mods[, ds][rownames(gene)==geneID]
-  if (lab=="0") stop("The input gene is not assigned to any module. Please input a different one.")
-  mod <- as.matrix(gene[mods[, ds]==lab, ])
-  
+  mod <- as.matrix(gene)
+ 
   if (static==TRUE) {
 
     tmp <- tempdir(check=TRUE); pa <- paste0(tmp, '/delete_hm.png')
     png(pa); hm <- heatmap.2(x=mod, scale=scale, main=main, trace="none"); dev.off()
     do.call(file.remove, list(pa))
-    # Logical matrix with the same dimensions as module matrix.
-    selection <- matrix(rep(FALSE, nrow(mod)*ncol(mod)), nrow=nrow(mod))
     # Select the row of target gene.  
-    idx <- which(rev(colnames(hm$carpet) %in% geneID))
-    lis1 <- c(arg.lis1, list(x=mod, scale=scale, main=main, margin=margin, col=colorRampPalette(col)(nrow(mod)*ncol(mod)), rowsep=c(idx-1, idx), cexCol=cexCol, cexRow=cexRow, srtRow=angleRow, srtCol=angleCol, dendrogram='both', sepcolor=sep.color, sepwidth=c(sep.width, sep.width), key=TRUE, trace="none", density.info="none", Rowv=TRUE, Colv=TRUE))
+    idx <- which(rev(colnames(hm$carpet) %in% ID))
+    # If colour codes are more than 500, the colour key is blank.
+    lis1 <- c(arg.lis1, list(x=mod, scale=scale, main=main, margin=margin, col=colorRampPalette(col)(500), rowsep=c(idx-1, idx), cexCol=cexCol, cexRow=cexRow, srtRow=angleRow, srtCol=angleCol, dendrogram='both', sepcolor=sep.color, sepwidth=c(sep.width, sep.width), key=TRUE, trace="none", density.info="none", Rowv=TRUE, Colv=TRUE))
     do.call(heatmap.2, lis1)
 
   } else if (static==FALSE) {
@@ -150,7 +145,7 @@ matrix_hm <- function(geneID, data, adj.mod, ds=3, scale='no', col=c('yellow', '
      lis2 <- c(arg.lis2, list(data=mod.m, mapping=aes(x=sample, y=gene))) 
      g <- do.call(ggplot, lis2)+geom_tile(aes(fill=value), colour="white")+scale_fill_gradient(low=col[1], high=col[2])+theme(axis.text.x=element_text(size=cexRow*10, angle=angleCol), axis.text.y=element_text(size=cexCol*10, angle=angleRow))
      # Label target row/gene.
-     g.idx <- which(rownames(mod.cl)==geneID)
+     g.idx <- which(rownames(mod.cl) %in% ID)
      g <- g+geom_hline(yintercept=c(g.idx-0.5, g.idx+0.5), linetype="solid", color=sep.color, size=sep.width*25)
      ft <- list(family = "sans serif", size=title.size, color='black')
      subplot(p.sam, ggplot(), g, p.gen, nrows=2, shareX=TRUE, shareY=TRUE, margin=0, heights=c(0.2, 0.8), widths=c(0.8, 0.2)) %>% plotly::layout(title=main, font=ft)
@@ -158,6 +153,7 @@ matrix_hm <- function(geneID, data, adj.mod, ds=3, scale='no', col=c('yellow', '
    }
 
 }
+
 
 
 

@@ -997,13 +997,36 @@ spatial_hm(svg.path=svg.sh, data=se.fil.arab, ID=c("HRE2"), height=0.6, legend.n
 SHMs are a visualization approach suitable for comparing the expression profiles
 of single genes or a small number of them across cell types and conditions. To 
 also support analyses across larger number of genes, `spatialHeatmap` provides 
-utilities for identifying for a gene of interest nearest neighbor genes that share 
+utilities for identifying for gene(s) of interest nearest neighbor genes that share 
 similar expression profiles. This is achieved by identifying clusters and 
 network modules using hierarchical clustering and network analysis. These approaches
-are described in this and the following sections, respectively.
+are described with the Arabidopsis Shoot data in this and the following sections, respectively.
 
- __Adjacency Matrix and Module Identification__^[Why this title if there are no 
- additional ones in this section. Is this an orphan leftover from somewhere else?]  
+The nearest neighbors of target genes are selected based on the correlation coefficient or distance between genes. The default measure is Pearson correlation coefficient (PCC). The argument `p` is the proportion of genes showing most similar expression profiles with target genes. Only genes within this proportion are returned. Note, the nearest neighbors are selected for each target gene independently. In this example, the target genes are `RCA` and `HRE2`. The argument `ann` is the column name of gene annotation in `rowData` slot. It is only relevant if users want to see annotation when mousing over a node in the [interactive network](#inter_net) below, so it is optional to be assigned a value. Here `ann='Target.Description'` is set and the corresponding annotation is appended to selected nearest neighbors. 
+
+```{r eval=TRUE, echo=TRUE, warnings=FALSE}
+sub.mat <- submatrix(data=se.fil.arab, ann='Target.Description', ID=c('RCA', 'HRE2'), p=0.1)
+```
+
+The subsetted matrix (target genes and nearest neighbors) and the related PCC matrix are returned in a list, and partial is shown below.   
+
+```{r eval=TRUE, echo=TRUE, warnings=FALSE}
+sub.mat[['sub_matrix']][c('RCA', 'HRE2'), c(1:3, 37)]
+sub.mat[['cor_dist']][1:3, 1:3]
+```
+
+<a name="mhm1"></a>
+Hierarchical clustering is applied on the subsetted matrix and results are displayed as matrix heatmap in either static or interactive mode. Figure \@ref(fig:static) is the static mode on gene `RCA` and `HRE2`. The rows (genes) and columns (samples) are sorted by hierarchical clustering dendrograms. Target genes are labeled by black lines. It is manifest that the two target genes belong to two separate patterns respectively. Setting `static=FALSE` launches the interactive mode, where users can zoom in for details by drawing a rectangle, and zoom out by double clicking the heatmap.
+
+```{r static, eval=TRUE, echo=TRUE, warnings=FALSE, fig.cap=("Matrix Heatmap. Rows are genes and columns are samples. The input genes are tagged by black lines."), out.width='100%'}
+matrix_hm(ID=c('RCA', 'HRE2'), data=sub.mat[['sub_matrix']], angleCol=80, angleRow=35, cexRow=0.8, cexCol=0.8, margin=c(10, 6), static=TRUE, arg.lis1=list(offsetRow=0.01, offsetCol=0.01))
+```   
+
+# Network Graphs {#net}
+
+In this section, network analysis is applied on the subsetted gene expression matrix from last section. It includes network module identification and visualization of modules in form of network graphs.  
+
+## Adjacency Matrix and Module Identification
 
 <font color='red'>[ThG-Comment: this section needs major improvements. The intent was
 to identify for a target gene nearest neighbors based on some similarity metric for gene
@@ -1015,78 +1038,60 @@ neighbors instead. Just think about what will happen if a user imports an expres
 matrix for all transcripts from human. With your approach they will not be able to 
 complete this step since they will run out of memory on their system.]</font>
 
+<font color='blue'>
 <a name="ds"></a>
-The modules are identified by `adj_mod`. It first computes an adjacency
-matrix^[You need to describe how this adjency matrix is generated and what it
+The WGCNA network analysis [@Langfelder2008-sg] is applied on the subsetted gene expression matrix to identify gene modules, which are clusters of genes showing highly similar expression profiles. First, a correlation matrix or distance matrix is computed by using the subsetted matrix, which defaults to Pearson correlation or euclidean distance respectively. Then the computed matrix is transformed to an adjacency matrix. The adjacency matrix is characterized by sale-free topology, where only a small number of genes are expected to have many connections with other genes and thus donimate the whole network [@Ravasz2002-db]. Values in this adjacency matrix denotes expresson similarity between genes. The larger value, the higher similarity.^[You need to describe how this adjency matrix is generated and what it
 represents. It also needs to mention what type of disance/correlation method is used
-initially to generate the downstream matrix.] on the gene expression matrix then hierarchically clusters the
-adjacency matrix by using WGCNA [@Langfelder2008-sg]^[Unclear for what you need
-WGCNA here. I thought this section uses hierarchical clustering. The latter is
-certainly used by WGCNA but it remains a mystery what exactly you are doing
-here.] I would expect to use here only hierarchical clustering, e.g. with
-flashClust. WGCNA seems more suitable for the next section.] and flashClust
-[@flashClust]. The clutersing includes 4 alternative sensitivity levels
-(`ds`=0, 1, 2, or 3).^[What is the meaning of the sensitivity levels, how are they 
-generated and how should the user interpret them?] From 3 to 0, the sensitivity decreases and results in
-less modules with larger sizes. Since the [interactive network](#inter_net)
-functionality performs better on smaller modules, only `ds` of 3 and 2 are
-used. There is another parameter `type` for module identification: `signed` and
-`unsinged`. The former means both positive and negative adjacency between genes
-are used while the latter takes the absolute values of negative adjacency^[Without
+initially to generate the downstream matrix.] ^[Without
 defining how adjacency is defined here readers will not be able to understand
 what was done here, especially since this section is mainly about hierarchical 
-clustering.].  
+clustering.] 
 
-The function `adj_mod` returns a list containing an adjacency matrix and a data
-frame of module assignment. It is domenstrated on the [Arabidopsis
-Shoot](#plot_sh) data.
+Next, the adjacency matrix is used to calculate an advanced similarity measure of topological overlap matrix (TOM), which quantifies expression similarity for a pair of genes in the context of all other genes. Then, the `TOM` transformed distance matrix `1-TOM` is used for hierarchical clustering with `flashClust` [@flashClust]. Lastly, network modules are identified with the `dynamicTreeCut` package [@dynamicTreeCut]. It provides an argument `deepSplit` (`ds`) for rough control over sensitivity to module splitting. The `ds` has four alternative values `0`, `1`, `2`, `3`, and each generates an alternative set of modules. The higher the value, the more and smaller modules are produced, thus there are four alternative sets of modules generated with varying sizes.^[What is the meaning of the sensitivity levels, how are they 
+generated and how should the user interpret them?] ^[Unclear for what you need
+WGCNA here. I thought this section uses hierarchical clustering. The latter is
+certainly used by WGCNA but it remains a mystery what exactly you are doing
+here. I would expect to use here only hierarchical clustering, e.g. with
+flashClust. WGCNA seems more suitable for the next section.] 
+
+</font>
+
+The whole process above of identifying modules is implemented in the function `adj_mod`. It returns a list containing the adjacency matrix and a data frame of module assignment. Since the [interactive network](#inter_net) below performs better on smaller modules, only modules resulting from `ds=2` and `ds=3` are returned.  
 
 ```{r eval=TRUE, echo=TRUE, warnings=FALSE, results=FALSE}
-adj.mod <- adj_mod(data=se.fil.arab)
-```   
+adj.mod <- adj_mod(data=sub.mat[['sub_matrix']])
+```
 
-The adjacency matrix is a measure of co-expression similarity between genes,
-where larger value denotes more similarity.   
+The adjacency matrix is a measure of co-expression similarity between genes, where larger value denotes more similarity. Partial of the matrix is shown below.    
 
 ```{r eval=TRUE, echo=TRUE, warnings=FALSE}
 adj.mod[['adj']][1:3, 1:3]
 ```
 
-The module assignment is a data frame. The first column is `ds=2` while the second is `ds=3`. The numbers in each column are module labels with "0" meaning genes not assigned to any modules.   
+The module assignment is a data frame. The first column is `ds=2` while the second is `ds=3`. The numbers in each column are module labels with `0` meaning genes not assigned to any modules. First three rows are shown below.  
 
 ```{r eval=TRUE, echo=TRUE, warnings=FALSE}
-adj.mod[['mod']][1:3, ]
+adj.mod[['mod']][1:3, ] 
 ```
 
-<a name="mhm1"></a>
-The matrix heatmap is implemented in function `matrix_hm` with 2 modes provided: static or interactive. Figure \@ref(fig:static) is the static mode on gene `HRE2`. Setting `static=FALSE` launches the interactive mode, where users can zoom in and out by drawing a rectangle and by double clicking the heatmap, respectively.
-
-```{r static, eval=TRUE, echo=TRUE, warnings=FALSE, fig.cap=("Matrix Heatmap. Rows are genes and columns are samples. The input gene is tagged by 2 black lines."), out.width='100%'}
-matrix_hm(geneID="HRE2", data=se.fil.arab, adj.mod=adj.mod, angleCol=80, angleRow=35, cexRow=0.8, cexCol=0.8, margin=c(10, 6), static=TRUE, arg.lis1=list(offsetRow=0.1, offsetCol=0.1))
-```   
-
-In Figure \@ref(fig:static), the target gene is displayed in the gene module it belongs to, which is indicated by 2 black lines. The rows and columns are sorted by hierarchical clustering dendrograms. The expression matrix of this module is visualised without being scaled (`scale="no"`). It can be seen that the expression levels of this module is overall much higher in `hypoxia` than `control`, and therefore it could potentially be used to infer the `hypoxia` response mechanism in Arabidopsis.   
-
-
-# Network Graphs {#net}
 
 <font color='red'>[ThG-Comment: both the previous section and this section need
                    to clearly explain what is done to arrive at a given network 
                    module and what it represents. Once this is done I will edit 
                    the text.]</font>
 
-The same target gene and module from matrix heatmap can also be displayed as a network. Similarly, the network can be dispayed in static or interactive mode.  
+## Module Visualization
 
-Setting `static=TRUE` launches the static network. In Figure \@ref(fig:inter) Nodes are genes and edges are adjacencies between genes. The thicker edge denotes higher adjacency (co-expression similarity) while larger node indicates higher gene connectivity (sum of a gene\'s adjacency with all its direct neighbours). The target gene is labeled by '_selected'.  
+To visualize modules, a target gene should be selected first, usually a gene from the SHMs. Then the module containing the target gene is internally selected based on the `ds`, which defaults to `3`. There are two modes to visualize the selected module, static or interactive. Figure \@ref(fig:inter) is the static network containing gene `HRE2`, which is generated by `static=TRUE`. Nodes are genes and edges are adjacencies between genes. The thicker edge denotes higher adjacency while larger node indicates higher gene connectivity (sum of a gene\'s adjacency with all its direct neighbours). The target gene is labeled by '_selected'.  
 
 ```{r inter, eval=TRUE, echo=TRUE, warnings=FALSE, fig.cap=("Static network. Node size denotes gene connectivity while edge thickness stands for co-expression similarity.") }
-network(geneID="HRE2", data=se.fil.arab, adj.mod=adj.mod, adj.min=0.75, vertex.label.cex=1.2, vertex.cex=2, static=TRUE)
+network(ID="HRE2", data=sub.mat[['sub_matrix']], adj.mod=adj.mod, adj.min=0.90, vertex.label.cex=1.2, vertex.cex=2, static=TRUE)
 ```   
 
 <a name="inter_net"></a>
-Setting `static=FALSE` launches the interactive network. There is an interactive color bar to denote gene connectivity. The color ingredients must only be separated by comma, e.g. `purple,yellow,blue`, which means gene connectivity increases from purple to yellow. If too many edges (e.g.: > 300) are displayed, the network could get stuck. So the 'Input an adjacency threshold to display the adjacency network.' option sets a threthold to filter out weak edges. If not too many edges retained (e.g.: < 300), users can check 'Yes' under 'Display or not?', then the network would be responsive smoothly. To maintain acceptable performance, users are advised to choose a stringent threshold (e.g. 0.9) initially, then decrease the value gradually. The interactive feature allows users to zoom in and out, or drag a gene around. All the gene IDs in the network module are listed in 'Select by id' in decreasing order according to gene connectivity. Same with static mode, the target gene ID is appended '_selected'.  
+Setting `static=FALSE` launches the interactive network. There is an interactive color bar to denote gene connectivity. The color ingredients must only be separated by comma, e.g. `purple,yellow,blue`, which means gene connectivity increases from purple to yellow. If too many edges (*e.g.*: > 300) are displayed, the network could get stuck. So the 'Input an adjacency threshold to display the adjacency network.' option sets a threthold to filter out weak edges. If not too many edges retained (*e.g.*: < 300), users can check 'Yes' under 'Display or not?', then the network would be responsive smoothly. To maintain acceptable performance, users are advised to choose a stringent threshold (*e.g.* 0.9) initially, then decrease the value gradually. The interactive feature allows users to zoom in and out, or drag a gene around. All the gene IDs in the network module are listed in 'Select by id' in decreasing order according to gene connectivity. Same with static mode, the target gene ID is appended '_selected'.  
 
-If gene annotation is available in `rowData` slot and provided to `ann` argument, the annotation is seen by mousing over a node. In this example, `Target.Description` in `rowData` is provided to `ann`.  
+If gene annotation is available in `rowData` slot and provided to `ann` argument, the annotation is seen by mousing over a node, *e.g* `ann=Target.Description`. If the expression matrix is a `data frame` and annotation is appended as a column, the function `network` will detect the annotation automatically.    
 
 ```{r eval=FALSE, echo=TRUE, warnings=FALSE}
 network(geneID="HRE2", data=se.fil.arab, ann='Target.Description', adj.mod=adj.mod, static=FALSE)
@@ -1123,9 +1128,11 @@ The dashboard panels of the Shiny App are organized as follows:
 
 1. Left Side Panel: menu for workflow execution and parameter selection
 2. Expression Matrix: scrollable expression matrix uploaded by user
-3. Spatial Heatmap: aSVG image provided by user
+<font color='blue'> 
+3. Spatial Heatmap: spatially colored images based on aSVG image provided by user
+</font>
 4. Matrix Heatmap: hierarchical clustering results for genes with similar expression profiles as target gene(s)
-5. Network Graph: interactive network module generated for genes with similar expression proviles as target gene(s)
+5. Network Graph: interactive network module generated for genes with similar expression profiles as target gene(s)
 
 A screenshot of the Spatial Heatmap component within the Shiny App window is shown below 
 (Figure \@ref(fig:shiny)).
@@ -1140,7 +1147,7 @@ The gene expression data and aSVG image files can be uploaded to the Shiny App
 as tabular text (_e.g._ in CSV or TSV format) and SVG files, respectively. To
 also allow users to upload gene expression data stored in
 `SummarizedExperiment` objects, one can export them from R to a tabular file
-with the `filter_data` function. In this function call the user sets the
+with the `filter_data` function. In this function call, the user sets the
 desired directory path under `dir`. Within this directory the tabular file will 
 be written to `local_mode_result/processed_data.txt` in TSV format. The
 column names in the exported tabular file preserve the experimental design information from 
@@ -1152,8 +1159,10 @@ tabels of the Shiny App, such as viewing functional descriptions by moving the
 cursor over network nodes, the corresponding annotation column needs to be
 present in the `rowData` slot and its column name assigned to the `ann`
 argument. In the exported tabular file the extra annotation column is appended
-to the expression matrix. ^[Check for correctness. For readability I made a lot
-                            of changes in this paragraph.] 
+to the expression matrix.   
+
+<font color='blue'>jianhai-reply: yes, that's fine. </font>^[Check for correctness. For readability I made a lot
+                            of changes in this paragraph.]
 
 ```{r eval=FALSE, echo=TRUE, warnings=FALSE}
 se.fil.arab <- filter_data(data=se.aggr.sh, ann="Target.Description", sam.factor='samples', con.factor='conditions', pOA=c(0.03, 6), CV=c(0.30, 100), dir='./')
@@ -1187,7 +1196,7 @@ and many conditions. Formatting the data is essentially define samples and/or
 conditions.     
 
 **Vector**  
-In the case of vector, the numeric values are measured from different samples. If one or more conditions are provided, the samples and conditions should be connected by double undescore, i.e. in the form of 'sample__condition'. If no conditions are provided, all the samples are assumed to have same condition, which is the [toy example](#toy).    
+In the case of vector, the numeric values are measured from different samples. If one or more conditions are provided, the samples and conditions should be connected by double undescore, *i.e.* in the form of 'sample__condition'. If no conditions are provided, all the samples are assumed to have same condition, which is the [toy example](#toy).    
 
 Take 2 samples `occipital lobe` and `parietal lobe` from the [toy example](#toy) for instance and assume there are 2 conditions, `condition1` and `condition2`. Select 5 random values, assign 4 of them to the 2 samples under the 2 conditions, and the last one to a not-mapped sample. Note the value names should be unique.   
 

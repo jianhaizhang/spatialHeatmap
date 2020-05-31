@@ -66,7 +66,7 @@
 aggr_rep <- function(data, sam.factor, con.factor, aggr='mean') {
 
   options(stringsAsFactors=FALSE)
-  if (is(data, 'data.frame')|is(data, 'matrix')) {
+  if (is(data, 'data.frame')|is(data, 'matrix')|is(data, 'DFrame')) {
 
     data <- as.data.frame(data); rna <- rownames(data); cna <- make.names(colnames(data))
     if (!identical(cna, colnames(data))) cat('Syntactically valid column names are made! \n')

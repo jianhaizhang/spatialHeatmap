@@ -55,7 +55,7 @@
 
 norm_data <- function(data, norm.fun='CNF', parameter.list=NULL, data.trans='none') { 
   
-  if (is(data, 'data.frame')|is(data, 'matrix')) {
+  if (is(data, 'data.frame')|is(data, 'matrix')|is(data, 'DFrame')) {
 
     data <- as.data.frame(data); rna <- rownames(data); cna <- colnames(data) 
     na <- vapply(seq_len(ncol(data)), function(i) { tryCatch({ as.numeric(data[, i]) }, warning=function(w) { return(rep(NA, nrow(data)))

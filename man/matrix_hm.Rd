@@ -5,12 +5,10 @@
 \title{Matrix Heatmap}
 \usage{
 matrix_hm(
-  geneID,
+  ID,
   data,
-  adj.mod,
-  ds = 3,
   scale = "no",
-  col = c("yellow", "blue"),
+  col = c("purple", "yellow", "blue"),
   main = NULL,
   title.size = 10,
   cexCol = 1,
@@ -26,17 +24,13 @@ matrix_hm(
 )
 }
 \arguments{
-\item{geneID}{An identifier of assayed item (gene, protein, metabolite, etc) in the data.}
+\item{ID}{An identifier of assayed item (gene, protein, metabolite, etc) in the data.}
 
 \item{data}{A "data frame" or "SummarizedExperiment" object returned by the function \code{\link{filter_data}}, where rows are assayed items and columns are samples/conditions.}
 
-\item{adj.mod}{The list of "adjacency matrix" and "module" definition retured by the function \code{\link{adj_mod}}.}
-
-\item{ds}{The module identification sensitivity either 2 or 3. Default is 3. See function \code{\link{adj_mod}} for details.}
-
 \item{scale}{"row", "column", or "no", meaing scale the data matrix by row, column, or no scale respectively. Default is 'no'.}
 
-\item{col}{A character vector of two colors for constructing the color scale. The default is c('yellow', 'blue').}
+\item{col}{A character vector of color ingredients for constructing the color scale. The default is c('purple', 'yellow', 'blue').}
 
 \item{main}{The title of the matrix heatmap.}
 
@@ -50,9 +44,9 @@ matrix_hm(
 
 \item{angleRow}{The angle of row names. The default is 45.}
 
-\item{sep.color}{The color of the two lines labelling the row of "geneID". The default is "black".}
+\item{sep.color}{The color of the two lines labelling the row of "ID". The default is "black".}
 
-\item{sep.width}{The width of two lines labelling the row of "geneID". The default is 0.02.}
+\item{sep.width}{The width of two lines labelling the row of "ID". The default is 0.02.}
 
 \item{static}{Logical, TRUE gives the static mode and FALSE interactive mode.}
 
@@ -61,6 +55,10 @@ matrix_hm(
 \item{arg.lis1}{A list of additional arguments passed to the \code{\link[gplots]{heatmap.2}} function from "gplots" package. E.g. list(xlab='sample', ylab='gene'). The default is an empty list.}
 
 \item{arg.lis2}{A list of additional arguments passed to the \code{\link[ggplot2]{ggplot}} function from "ggplot2" package. The default is an empty list.}
+
+\item{adj.mod}{The list of "adjacency matrix" and "module" definition retured by the function \code{\link{adj_mod}}.}
+
+\item{ds}{The module identification sensitivity either 2 or 3. Default is 3. See function \code{\link{adj_mod}} for details.}
 }
 \value{
 A static image or an interactive instance lauched on the web browser.
@@ -111,15 +109,15 @@ assay(se.aggr.chk)[1:3, 1:3]
 # Filter genes with low counts and low variance. Genes with counts over 5 (log2 unit) in at least 1\% samples (pOA), and coefficient of variance (CV) between 0.2 and 100 are retained.
 se.fil.chk <- filter_data(data=se.aggr.chk, sam.factor='organism_part', con.factor='age', pOA=c(0.01, 5), CV=c(0.2, 100), dir=NULL)
 
-## Identify modules.
-adj.mod <- adj_mod(data=se.fil.chk)
+## Select genes showing most similar expression profiles with target genes.
+sub.mat <- submatrix(data=se.fil.chk, ID=c('ENSGALG00000019846', 'ENSGALG00000000112'))
 
 ## Matrix heatmap.
 
 # Static matrix heatmap.
-matrix_hm(geneID="ENSGALG00000019846", data=se.fil.chk, adj.mod=adj.mod, angleCol=80, angleRow=35, cexRow=0.8, cexCol=0.8, margin=c(10, 6), static=TRUE, arg.lis1=list(offsetRow=0.1, offsetCol=0.1))
+matrix_hm(ID=c('ENSGALG00000019846', 'ENSGALG00000000112'), data=sub.mat[['sub_matrix']], angleCol=80, angleRow=35, cexRow=0.8, cexCol=0.8, static=TRUE, arg.lis1=list(offsetRow=0.1, offsetCol=0.1))
 # Interactive matrix heatmap.
-# matrix_hm(geneID="ENSGALG00000019846", data=se.fil.chk, adj.mod=adj.mod, static=FALSE)
+\donttest{matrix_hm(ID=c('ENSGALG00000019846', 'ENSGALG00000000112'), data=sub.mat[['sub_matrix']], static=FALSE)}
 }
 \references{
 Martin Morgan, Valerie Obenchain, Jim Hester and Hervé Pagès (2018). SummarizedExperiment: SummarizedExperiment container. R package version 1.10.1 \cr Andrie de Vries and Brian D. Ripley (2016). ggdendro: Create Dendrograms and Tree Diagrams Using 'ggplot2'. R package version 0.1-20. https://CRAN.R-project.org/package=ggdendro \cr H. Wickham. ggplot2: Elegant Graphics for Data Analysis. Springer-Verlag New York, 2016. \cr Carson Sievert (2018) plotly for R. https://plotly-book.cpsievert.me \cr Langfelder P and Horvath S, WGCNA: an R package for weighted correlation network analysis. BMC Bioinformatics 2008, 9:559 doi:10.1186/1471-2105-9-559 \cr R Core Team (2018). R: A language and environment for statistical computing. R Foundation for Statistical Computing, Vienna, Austria. URL https://www.R-project.org/ \cr Gregory R. Warnes, Ben Bolker, Lodewijk Bonebakker, Robert Gentleman, Wolfgang Huber Andy Liaw, Thomas Lumley, Martin Maechler, Arni Magnusson, Steffen Moeller, Marc Schwartz and Bill Venables (2019). gplots: Various R Programming Tools for Plotting Data. R package version 3.0.1.1.  https://CRAN.R-project.org/package=gplots \cr Hadley Wickham (2007). Reshaping Data with the reshape Package. Journal of Statistical Software, 21(12), 1-20. URL http://www.jstatsoft.org/v21/i12/ 

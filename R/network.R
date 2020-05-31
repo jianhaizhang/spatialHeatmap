@@ -3,7 +3,7 @@
 #' This function exhibits the input item (gene, protein, metabolite, etc) in the context of corresponding network module, where nodes are items and edges are adjacencies between items. The network can be dispayed in static or interactive mode. \cr The modules are identified at two alternative sensitivity levels (ds=3 or 2). See function \code{\link{adj_mod}} for details. The thicker edge denotes higher adjacency (coexpression similarity) between nodes while larger node indicates higher connectivity (sum of a node's adjacency with all its direct neighbours). \cr In the interactive mode, there is an interactive color bar to denote node connectivity. The color ingredients must only be separated by comma, e.g. "purple,yellow,blue", which means node connectivity increases from purple to blue. If too many edges (e.g.: > 300) are displayed, the network could get stuck. So the "Input an adjacency threshold to display the adjacency network." option sets a threthold to filter out weak edges and all remaining edges are displayed. If not too many (e.g.: < 300), users can check "Yes" under "Display or not?", then the network will be displayed and would be responsive smoothly. To maintain acceptable performance, users are advised to choose a stringent threshold (e.g. 0.9) initially, then decrease the value gradually. The interactive feature allows users to zoom in and out, or drag a node around. All the node IDs in the network module are listed in "Select by id" in decreasing order according to node connectivity. The input item ID is appended "_selected" as a label. By clicking an ID in this list, users can identify the corresponding node in the network. If the input data has item annotations, then the annotation can be seen by hovering the cursor over a node. \cr The same module can also be displayed in the form of a matrix heatmap with the function \code{\link{matrix_hm}}. 
 
 #' @inheritParams matrix_hm
-#' @param ann Applies to "data" argument of "SummarizedExperiment". The column name corresponding to row item annotation in the "rowData" slot. Default is NULL.
+#' @param ann Applies to \code{data} argument of \code{SummarizedExperiment}. The column name corresponding to row item annotation in the \code{rowData} slot. Default is NULL.
 #' @param adj.min Minimum adjacency between nodes, edges with adjacency below which will be removed. Default is 0. Applicable to static network.
 #' @param con.min Minimun connectivity of a node, nodes with connectivity below which will be removed. Default is 0. Applicable to static network.
 #' @param node.col A vector of color ingredients for constructing node color scale in the static image. The default is c("mediumorchid1", "chocolate4").
@@ -70,10 +70,10 @@
 #' ## Network 
 #'
 #' # Static network. In the graph, nodes are genes and edges are adjacencies between genes.
-#' network(geneID="ENSGALG00000019846", data=se.fil.chk, adj.mod=adj.mod, adj.min=0.5, vertex.label.cex=1.5, vertex.cex=4, static=TRUE)
+#' network(ID="ENSGALG00000019846", data=se.fil.chk, adj.mod=adj.mod, adj.min=0.5, vertex.label.cex=1.5, vertex.cex=4, static=TRUE)
 
 #' # Interactive network.   
-#' # network(geneID="ENSGALG00000019846", data=se.fil.chk, ann='ann', adj.mod=adj.mod, static=FALSE)
+#' # network(ID="ENSGALG00000019846", data=se.fil.chk, ann='ann', adj.mod=adj.mod, static=FALSE)
 
 
 #' @author Jianhai Zhang \email{jzhan067@@ucr.edu; zhang.jianhai@@hotmail.com} \cr Dr. Thomas Girke \email{thomas.girke@@ucr.edu}
@@ -91,10 +91,10 @@
 #' @importFrom shinydashboard dashboardSidebar dashboardPage dashboardHeader sidebarMenu menuItem menuSubItem dashboardBody tabItems tabItem box
 #' @importFrom visNetwork visNetworkOutput visNetwork visOptions renderVisNetwork visIgraphLayout
 
-network <- function(geneID, data, ann=NULL, adj.mod, ds="3", adj.min=0, con.min=0, node.col=c("mediumorchid1", "chocolate4"), edge.col=c("yellow", "blue"), vertex.label.cex=1, vertex.cex=3, edge.cex=10, layout="circle", main=NULL, static=TRUE, ...) {
+network <- function(ID, data, ann=NULL, adj.mod, ds="3", adj.min=0, con.min=0, node.col=c("mediumorchid1", "chocolate4"), edge.col=c("yellow", "blue"), vertex.label.cex=1, vertex.cex=3, edge.cex=10, layout="circle", main=NULL, static=TRUE, ...) {
 
   options(stringsAsFactors=FALSE)
-  if (is(data, 'data.frame')|is(data, 'matrix')) {
+  if (is(data, 'data.frame')|is(data, 'matrix')|is(data, 'DFrame')) {
 
     data <- as.data.frame(data); rna <- rownames(data); cna <- make.names(colnames(data)) 
     na <- vapply(seq_len(ncol(data)), function(i) { tryCatch({ as.numeric(data[, i]) }, warning=function(w) { return(rep(NA, nrow(data)))
@@ -110,17 +110,19 @@ network <- function(geneID, data, ann=NULL, adj.mod, ds="3", adj.min=0, con.min=
 
   }; from <- to <- width <- size <- NULL 
   adj <- adj.mod[["adj"]]; mods <- adj.mod[["mod"]]
-  ds <- as.character(ds); lab <- mods[, ds][rownames(gene)==geneID]
+  ds <- as.character(ds); lab <- mods[, ds][rownames(gene)==ID]
   if (lab=="0") { return('The selected gene is not assigned to any module. Please select a different one') }
   
   if (static==TRUE) { 
 
-  nod.lin <- nod_lin(ds=ds, lab=lab, mods=mods, adj=adj, geneID=geneID, adj.min=adj.min)
+  nod.lin <- nod_lin(ds=ds, lab=lab, mods=mods, adj=adj, geneID=ID, adj.min=adj.min)
   node <- nod.lin[['node']]; link1 <- nod.lin[['link']]
+  if (nrow(link1)==0) stop('All edges are filtered out, please reduce \'adj.min\'!')
   net <- graph_from_data_frame(d=link1, vertices=node, directed=FALSE)
   # Delete edges and nodes.
   edg.del <- delete_edges(net, E(net)[width <= adj.min])
   net <- delete_vertices(edg.del, igraph::V(edg.del)[size <= con.min])
+  if (length(V(net))==0) stop('All nodes are filtered out, please reduce \'con.min\'!')
   # Remaining nodes and edges.
   node <- as_data_frame(net, what="vertices"); link1 <- as_data_frame(net, what="edges")
   
@@ -232,7 +234,7 @@ network <- function(geneID, data, ann=NULL, adj.mod, ds="3", adj.min=0, con.min=
       withProgress(message="Computing network:", value=0, {
    
         incProgress(0.8, detail="making network data frame")
-        nod.lin <- nod_lin(ds=ds, lab=lab, mods=mods, adj=adj, geneID=geneID, adj.min=input$adj.in)
+        nod.lin <- nod_lin(ds=ds, lab=lab, mods=mods, adj=adj, geneID=ID, adj.min=input$adj.in)
         node <- nod.lin[['node']]; colnames(node) <- c('id', 'value')
         link1 <- nod.lin[['link']]; colnames(link1)[3] <- 'value'
         if (nrow(link1)!=0) { 
@@ -287,7 +289,7 @@ network <- function(geneID, data, ann=NULL, adj.mod, ds="3", adj.min=0, con.min=
 
         }; node$color <- col.nod
 
-        visNetwork(node, visNet()[["link"]], height="300px", width="100%", background="", main=paste0("Network Module Containing ", geneID), submain="", footer= "") %>% visIgraphLayout(physics=FALSE, smooth=TRUE) %>%
+        visNetwork(node, visNet()[["link"]], height="300px", width="100%", background="", main=paste0("Network Module Containing ", ID), submain="", footer= "") %>% visIgraphLayout(physics=FALSE, smooth=TRUE) %>%
         visOptions(highlightNearest=list(enabled=TRUE, hover=TRUE), nodesIdSelection=TRUE)
 
       })

@@ -70,7 +70,8 @@ shinyUI(dashboardPage(
       fluidRow(splitLayout(cellWidths=c('1%', "99%"), '', checkboxGroupInput(inputId="tis", label="Select tissues to be transparent:", choices='', selected='', inline=TRUE))),
       fluidRow(splitLayout(cellWidths=c("1%", "7%", "91%", "1%"), "", plotOutput("bar"), plotOutput("shm"), "")), width=9),
       box(title="Original Image", status="primary", solidHeader=TRUE, collapsible=TRUE, splitLayout(cellWidths=c("1%", "98%", "1%"), "", plotOutput("lgd"), ""), width=3), br(),
-      box(title="Matrix Heatmap", status="primary", solidHeader=TRUE, collapsible=TRUE, plotlyOutput("HMly"), width=12, height=460), br(),
+      box(title='SSG', status="primary", solidHeader=TRUE, collapsible=TRUE, width=12, tabBox(title="", width=12, id="ssg", selected='w.meth', side='right',tabPanel(title="Across methods table", dataTableOutput("a.table"), value='a.table'), tabPanel(title="Across methods", plotOutput("ssg.sum"), value='a.meth'), tabPanel(title="Within method table", dataTableOutput("w.table"), value='w.table'), tabPanel(title="Within methods", plotOutput("ssg.sep"), value='w.meth'))),      
+box(title="Matrix Heatmap", status="primary", solidHeader=TRUE, collapsible=TRUE, plotlyOutput("HMly"), width=12, height=460), br(),
       box(title="Interactive Network", status="primary", solidHeader=TRUE, collapsible=TRUE, fluidRow(splitLayout(cellWidths=c("1%", "6%", "91%", "2%"), "", plotOutput("bar.net"), visNetworkOutput("vis"), "")), width=12)
       ),
 

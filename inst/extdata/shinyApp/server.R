@@ -11,309 +11,28 @@ options(shiny.maxRequestSize=7*1024^3, stringsAsFactors=FALSE)
 #matrix_hm <- get('matrix_hm', envir=asNamespace('spatialHeatmap'), inherits=FALSE)
 #network <- get('network', envir=asNamespace('spatialHeatmap'), inherits=FALSE)
 
-# source('~/tissue_specific_gene/function/fun.R')
+source('~/tissue_specific_gene/function/fun.R')
 
 
-network <- function(geneID, se, ann, adj.mod, ds="3", adj.min=0, con.min=0, node.col=c("mediumorchid1", "chocolate4"), edge.col=c("yellow", "blue"), vertex.label.cex=1, vertex.cex=3, edge.cex=10, layout="circle", main=NULL, static=TRUE, ...) {
+adj_mod <- function(data, type='signed', minSize=15, dir=NULL) {
 
   options(stringsAsFactors=FALSE)
-  if (is(se, 'data.frame')|is(se, 'matrix')) {
-
-    se <- as.data.frame(se); rna <- rownames(se); cna <- colnames(se) 
-    na <- vapply(seq_len(ncol(se)), function(i) { tryCatch({ as.numeric(se[, i]) }, warning=function(w) { return(rep(NA, nrow(se)))
-    }, error=function(e) { stop("Please make sure input data are numeric!") }) }, FUN.VALUE=numeric(nrow(se)) )
-    na <- as.data.frame(na); rownames(na) <- rna
-    idx <- colSums(apply(na, 2, is.na))!=0
-    gene <- na[!idx]; colnames(gene) <- cna[!idx]
-    if (any(idx)) ann <- se[which(idx)[1]] else ann <- NULL
-
-  } else if (is(se, 'SummarizedExperiment')) { 
-
-    gene <- assay(se); if (!is.null(rowData(se)) & !is.null(ann)) { ann <- rowData(se)[, ann, drop=FALSE]; rownames(gene) <- rownames(ann) <- make.names(rownames(gene)) } else ann <- NULL
-
-  }; from <- to <- width <- size <- NULL 
-  adj <- adj.mod[["adj"]]; mods <- adj.mod[["mod"]]
-  ds <- as.character(ds); lab <- mods[, ds][rownames(gene)==geneID]
-  if (lab=="0") { return('The selected gene is not assigned to any module. Please select a different one') }
-  
-  if (static==TRUE) { 
-
-  nod.lin <- nod_lin(ds=ds, lab=lab, mods=mods, adj=adj, geneID=geneID, adj.min=adj.min)
-  node <- nod.lin[['node']]; link1 <- nod.lin[['link']]
-  net <- graph_from_data_frame(d=link1, vertices=node, directed=FALSE)
-  # Delete edges and nodes.
-  edg.del <- delete_edges(net, E(net)[width <= adj.min])
-  net <- delete_vertices(edg.del, igraph::V(edg.del)[size <= con.min])
-  # Remaining nodes and edges.
-  node <- as_data_frame(net, what="vertices"); link1 <- as_data_frame(net, what="edges")
-  
-  # Match colours with gene connectivity by approximation.
-  col.len <- 350; col.nod <- colorRampPalette(node.col)(col.len)
-  # Assign node colours.
-  col.node <- NULL; node.v <- node$size; v.nod <- seq(min(node.v), max(node.v), len=col.len)
-      for (i in node$size) {
-
-        ab <- abs(i-v.nod); col.node <- c(col.node, col.nod[which(ab==min(ab))[1]])
-
-      }; igraph::V(net)$color <- col.node
-  # Match colours with gene adjacency by approximation.
-  col.lin <- colorRampPalette(edge.col)(col.len)
-  # Assign edge colours.
-  col.link <- NULL; link.v <- link1$width; v.link <- seq(min(link.v), max(link.v), len=col.len)
-      for (i in link1$width) {
-
-        ab <- abs(i-v.link); col.link <- c(col.link, col.lin[which(ab==min(ab))[1]])
-
-      }; igraph::E(net)$color <- col.link
-  
-  if (layout=="circle") lay <- layout_in_circle(net); if (layout=="fr") lay <- layout_with_fr(net)
-  
-  # Network.
-  graphics::layout(mat=matrix(c(1, 2, 1, 3), nrow=2, ncol=2), height=c(6, 1))
-  par(mar=c(2, 2.5, 2, 2.5), new=FALSE); plot(net, edge.width=igraph::E(net)$width*edge.cex, vertex.size=igraph::V(net)$size*vertex.cex, vertex.label.cex=vertex.label.cex, layout=lay, ...)
-  # Node colour bar.
-  mat1 <- matrix(v.nod, ncol=1, nrow=length(v.nod)) 
-  par(mar=c(2.2, 3, 1, 2.5), new=FALSE); image(x=seq_len(length(v.nod)), y=1, mat1, col=col.nod, xlab="", ylab="", axes=FALSE)
-  title(xlab="Node colour scale", line=1, cex.lab=1)
-  mtext(text=round(seq(min(node.v), max(node.v), len=5), 1), side=1, line=0.3, at=seq(1, col.len, len=5), las=0, cex=0.8)
-  mat2 <- matrix(v.link, ncol=1, nrow=length(v.link)) 
-  par(mar=c(2.2, 2.5, 1, 3), new=FALSE); image(x=seq_len(length(v.link)), y=1, mat2, col=col.lin, xlab="", ylab="", axes=FALSE)
-  title(xlab="Edge colour scale", line=1, cex.lab=1)
-  mtext(text=round(seq(min(link.v), max(link.v), len=5), 1), side=1, line=0.3, at=seq(1, col.len, len=5), las=0, cex=0.8)
-
-  } else if (static==FALSE) {
-
-
-    ui <- shinyUI(dashboardPage(
-
-      dashboardHeader(),
-
-      dashboardSidebar(
-  
-      sidebarMenu(
-
-        menuItem("Network", icon=icon("dashboard"), 
-        selectInput("ds","Select a module splitting sensitivity level", 3:2, selected="3", width=190),
-        selectInput("adj.in", "Input an adjcency threshold to display the adjacency network.", c("None", sort(seq(0, 1, 0.002), decreasing=TRUE)), "None", width=190), 
-        htmlOutput("edge"),
-        div(style="display:inline-block;width:75%;text-align:left;",textInput("color.net", "Color scheme of Interactive Network", "purple,yellow,blue", placeholder='Eg: "purple,yellow,blue"', width=200)),
-        div(style="display:inline-block;width:25%;text-align:left;", actionButton("col.but.net", "Go", icon=icon("refresh"), style="padding:7px; font-size:90%; margin-left: 0px")),
-        radioButtons("cpt.nw", "Display or not?", c("Yes"="Y", "No"="N"), "N", inline=TRUE),
-        menuSubItem("View", tabName="net")
-
-        )
-
-     )
-
-     ),
-
-     dashboardBody(
- 
-       tabItems(
-
-        tabItem(tabName="net", 
-        box(title="Interactive Network", status="primary", solidHeader=TRUE, collapsible=TRUE, fluidRow(splitLayout(cellWidths=c("1%", "6%", "91%", "2%"), "", plotOutput("bar.net"), visNetworkOutput("vis"), "")), width=12)
-        )
-
-        )
-
-     )
-
-  ))
-
-  server <- shinyServer(function(input, output, session) {
-
-    observe({
-
-      input$ds
-      updateSelectInput(session, "adj.in", "Input an adjcency threshold to display the adjacency network.", c("None", sort(seq(0, 1, 0.002), decreasing=TRUE)), "None")
-      updateRadioButtons(session, "cpt.nw", "Display or not?", c("Yes"="Y", "No"="N"), "N", inline=TRUE)
-
-    })
-
-    observe({
-
-      input$adj.in; updateRadioButtons(session, "cpt.nw", "Display or not?", c("Yes"="Y", "No"="N"), "N", inline=TRUE)
-
-    })
-
-    color_scale <- y <- NULL 
-    col.sch.net <- reactive({ if(input$color.net=="") { return(NULL) }
-    unlist(strsplit(input$color.net, ",")) }); color.net <- reactiveValues(col.net="none")
-
-    len <- 350
-    observeEvent(input$col.but.net, {
-
-      if (is.null(col.sch.net())) return (NULL)
-      color.net$col.net <- colorRampPalette(col.sch.net())(len)
-
-    })
-    
-    visNet <- reactive({
-
-      if (input$adj.in=="None") return(NULL)
-      withProgress(message="Computing network:", value=0, {
-   
-        incProgress(0.8, detail="making network data frame")
-        nod.lin <- nod_lin(ds=ds, lab=lab, mods=mods, adj=adj, geneID=geneID, adj.min=input$adj.in)
-        node <- nod.lin[['node']]; colnames(node) <- c('id', 'value')
-        link1 <- nod.lin[['link']]; colnames(link1)[3] <- 'value'
-        if (nrow(link1)!=0) { 
-        
-          link1$title <- link1$value # 'length' is not well indicative of adjacency value, so replaced by 'value'.
-          link1$color <- 'lightblue'
-        
-        }; node <- cbind(node, label=node$id, font.size=vertex.label.cex*20, borderWidth=2, color.border="black", color.highlight.background="orange", color.highlight.border="darkred", color=NA, stringsAsFactors=FALSE)
-        if (!is.null(ann)) node <- cbind(node, title=ann[node$id, ], stringsAsFactors=FALSE)
-        net.lis <- list(node=node, link=link1)
-
-      }); net.lis
-
-    })
-
-    output$bar.net <- renderPlot({  
-
-      if (input$adj.in=="None"|input$cpt.nw=="N") return(NULL)
-      if (length(color.net$col.net=="none")==0) return(NULL)
-      if(input$col.but.net==0) color.net$col.net <- colorRampPalette(c('purple', 'yellow', 'blue'))(len)
-     
-        withProgress(message="Color scale: ", value = 0, {
-
-          incProgress(0.25, detail="Preparing data. Please wait.")
-          incProgress(0.75, detail="Plotting. Please wait.")
-          node.v <- visNet()[["node"]]$value; v.net <- seq(min(node.v), max(node.v), len=len)
-          cs.net <- col_bar(geneV=v.net, cols=color.net$col.net, width=1, mar=c(3, 0.1, 3, 0.1)); return(cs.net)
-
-        })
-
-    })
-
-    output$edge <- renderUI({ 
-
-      if (input$adj.in=="None") return(NULL)
-      HTML(paste0("&nbsp&nbsp&nbsp&nbsp Total edges to display (If > 300, the <br/> 
-      &nbsp&nbsp&nbsp App can possibly get stuck.): ", nrow((visNet()[["link"]]))))
-
-    })
-
-    vis.net <- reactive({ 
-
-      if (input$adj.in=="None"|input$cpt.nw=="N") return(NULL)
-      withProgress(message="Network:", value=0.5, {
-
-        incProgress(0.3, detail="prepare for plotting.")
-        # Match colours with gene connectivity by approximation.
-        node <- visNet()[["node"]]; node.v <- node$value; v.net <- seq(min(node.v), max(node.v), len=len)
-        col.nod <- NULL; for (i in node$value) {
-
-          ab <- abs(i-v.net); col.nod <- c(col.nod, color.net$col.net[which(ab==min(ab))[1]])
-
-        }; node$color <- col.nod
-
-        visNetwork(node, visNet()[["link"]], height="300px", width="100%", background="", main=paste0("Network Module Containing ", geneID), submain="", footer= "") %>% visIgraphLayout(physics=FALSE, smooth=TRUE) %>%
-        visOptions(highlightNearest=list(enabled=TRUE, hover=TRUE), nodesIdSelection=TRUE)
-
-      })
-    
-    })
-
-    output$vis <- renderVisNetwork({
-
-      if (input$adj.in=="None"|input$cpt.nw=="N") return(NULL)
-      withProgress(message="Network:", value=0.5, {
-
-        incProgress(0.3, detail="plotting.")
-        vis.net()
-
-      })
-
-    })
-
-  }); shinyApp(ui, server) 
-
-  }
-
-}
-
-
-
-matrix_hm <- function(geneID, se, adj.mod, ds, scale, col=c('yellow', 'blue'), main=NULL, title.size=10, cexCol=1, cexRow=1, angleCol=45, angleRow=45, sepcolor="black", sep.width=0.02, static=TRUE, margin=c(10, 10), arg.lis1=list(), arg.lis2=list()) {
-
-  options(stringsAsFactors=FALSE)
-  if (is(se, 'data.frame')|is(se, 'matrix')) {
-
-    se <- as.data.frame(se); rna <- rownames(se); cna <- colnames(se) 
-    na <- vapply(seq_len(ncol(se)), function(i) { tryCatch({ as.numeric(se[, i]) }, warning=function(w) { return(rep(NA, nrow(se)))
-    }, error=function(e) { stop("Please make sure input data are numeric!") }) }, FUN.VALUE=numeric(nrow(se)) )
-    na <- as.data.frame(na); rownames(na) <- rna
-    idx <- colSums(apply(na, 2, is.na))!=0
-    gene <- na[!idx]; colnames(gene) <- cna[!idx]
-
-  } else if (is(se, 'SummarizedExperiment')) { gene <- assay(se) }
-  mods <- adj.mod[["mod"]]; ds <- as.character(ds)
-  lab <- mods[, ds][rownames(gene)==geneID]
-  if (lab=="0") stop("The input gene is not assigned to any module. Please input a different one.")
-  mod <- as.matrix(gene[mods[, ds]==lab, ])
-  
-  if (static==TRUE) {
-
-    tmp <- tempdir(check=TRUE); pa <- paste0(tmp, '/delete_hm.png')
-    png(pa); hm <- heatmap.2(x=mod, scale=scale, main=main, trace="none"); dev.off()
-    do.call(file.remove, list(pa))
-    # Logical matrix with the same dimensions as module matrix.
-    selection <- matrix(rep(FALSE, nrow(mod)*ncol(mod)), nrow=nrow(mod))
-    # Select the row of target gene.  
-    idx <- which(rev(colnames(hm$carpet) %in% geneID))
-    lis1 <- c(arg.lis1, list(x=mod, scale=scale, main=main, margin=margin, col=colorRampPalette(col)(nrow(mod)*ncol(mod)), rowsep=c(idx-1, idx), cexCol=cexCol, cexRow=cexRow, srtRow=angleRow, srtCol=angleCol, dendrogram='both', sepcolor="black", sepwidth=c(sep.width, sep.width), key=TRUE, trace="none", density.info="none", Rowv=TRUE, Colv=TRUE))
-    do.call(heatmap.2, lis1)
-
-  } else if (static==FALSE) {
-
-     x <- x1 <- x2 <- y <- y1 <- y2 <- xend <- yend <- value <- NULL 
-     dd.gen <- as.dendrogram(hclust(dist(mod))); dd.sam <- as.dendrogram(hclust(dist(t(mod))))
-     d.sam <- dendro_data(dd.sam); d.gen <- dendro_data(dd.gen)
-
-     g.dengra <- function(df) {
-
-       ggplot()+geom_segment(data=df, aes(x=x, y=y, xend=xend, yend=yend))+labs(x="", y="")+theme_minimal()+theme(axis.text= element_blank(), axis.ticks=element_blank(), panel.grid=element_blank())
-
-     }
-
-     p.gen <- g.dengra(d.gen$segments)+coord_flip(); p.sam <- g.dengra(d.sam$segments)
-     gen.ord <- order.dendrogram(dd.gen); sam.ord <- order.dendrogram(dd.sam); mod.cl <- mod[gen.ord, sam.ord]
-     if (scale=="column") mod.cl <- data.frame(scale(mod.cl), stringsAsFactors=FALSE); if (scale=="row") mod.cl <- data.frame(t(scale(t(mod.cl))), stringsAsFactors=FALSE)
-     mod.cl$gene <- rownames(mod.cl)
-     mod.m <- reshape2::melt(mod.cl, id.vars='gene', measure.vars=colnames(mod)); colnames(mod.m) <- c('gene', 'sample', 'value')
-     # Use "factor" to re-order rows and columns as specified in dendrograms. 
-     mod.m$gene <- factor(mod.m$gene, levels=rownames(mod.cl)); mod.m$sample <- factor(mod.m$sample, levels=colnames(mod.cl))
-     # Plot the re-ordered heatmap.
-     lis2 <- c(arg.lis2, list(data=mod.m, mapping=aes(x=sample, y=gene))) 
-     g <- do.call(ggplot, lis2)+geom_tile(aes(fill=value), colour="white")+scale_fill_gradient(low=col[1], high=col[2])+theme(axis.text.x=element_text(size=cexRow*10, angle=angleCol), axis.text.y=element_text(size=cexCol*10, angle=angleRow))
-     # Label target row/gene.
-     g.idx <- which(rownames(mod.cl)==geneID)
-     g <- g+geom_hline(yintercept=c(g.idx-0.5, g.idx+0.5), linetype="solid", color=sepcolor, size=sep.width*25)
-     ft <- list(family = "sans serif", size=title.size, color='black')
-     subplot(p.sam, ggplot(), g, p.gen, nrows=2, shareX=TRUE, shareY=TRUE, margin=0, heights=c(0.2, 0.8), widths=c(0.8, 0.2)) %>% plotly::layout(title=main, font=ft)
-
-   }
-
-}
-
-
-adj_mod <- function(se, type, minSize=15, dir=NULL) {
-
-  options(stringsAsFactors=FALSE)
-  if (is(se, 'data.frame')|is(se, 'matrix')) {
-
-    se <- as.data.frame(se); rna <- rownames(se); cna <- colnames(se) 
-    na <- vapply(seq_len(ncol(se)), function(i) { tryCatch({ as.numeric(se[, i]) }, warning=function(w) { return(rep(NA, nrow(se)))
-    }, error=function(e) { stop("Please make sure input data are numeric!") }) }, FUN.VALUE=numeric(nrow(se)) )
+  if (is(data, 'data.frame')|is(data, 'matrix')) {
+
+    data <- as.data.frame(data); rna <- rownames(data); cna <- make.names(colnames(data)) 
+    if (any(duplicated(cna))) stop('Please use function \'aggr_rep\' to aggregate replicates!')
+    na <- vapply(seq_len(ncol(data)), function(i) { tryCatch({ as.numeric(data[, i]) }, warning=function(w) { return(rep(NA, nrow(data)))
+    }, error=function(e) { stop("Please make sure input data are numeric!") }) }, FUN.VALUE=numeric(nrow(data)) )
     na <- as.data.frame(na); rownames(na) <- rna
     idx <- colSums(apply(na, 2, is.na))!=0
     data <- na[!idx]; colnames(data) <- cna[!idx]; data <- t(data)
 
-  } else if (is(se, 'SummarizedExperiment')) { data <- t(assay(se)) }
-    
+  } else if (is(data, 'SummarizedExperiment')) { data <- t(assay(data)) 
+
+    if (any(duplicated(rownames(data)))) stop('Please use function \'aggr_rep\' to aggregate replicates!')
+
+  }; if (nrow(data)<5) cat('Warning: variables of sample/condition are less than 5! \n')
+
     if (!is.null(dir)) { path <- paste0(dir, "/local_mode_result/"); if (!dir.exists(path)) dir.create(path) }
     if (type=="signed") sft <- 12; if (type=="unsigned") sft <- 6
     adj <- adjacency(data, power=sft, type=type); diag(adj) <- 0
@@ -338,70 +57,77 @@ adj_mod <- function(se, type, minSize=15, dir=NULL) {
 
 
 
-filter_data <- function(se, pOA=c(0, 0), CV=c(-Inf, Inf), ann=NULL, sam.factor, con.factor,  dir=NULL) {
+filter_data <- function(data, pOA=c(0, 0), CV=c(-Inf, Inf), ann=NULL, sam.factor, con.factor,  dir=NULL) {
 
   options(stringsAsFactors=FALSE)
-  if (is(se, 'data.frame')|is(se, 'matrix')) {
+  if (is(data, 'data.frame')|is(data, 'matrix')) {
 
-    se <- as.data.frame(se); rna <- rownames(se); cna <- colnames(se) 
-    na <- vapply(seq_len(ncol(se)), function(i) { tryCatch({ as.numeric(se[, i]) }, warning=function(w) { return(rep(NA, nrow(se)))
-    }, error=function(e) { stop("Please make sure input data are numeric!") }) }, FUN.VALUE=numeric(nrow(se)) )
+    data <- as.data.frame(data); rna <- rownames(data); cna <- make.names(colnames(data))
+    if (!identical(cna, colnames(data))) cat('Syntactically valid column names are made! \n')
+    na <- vapply(seq_len(ncol(data)), function(i) { tryCatch({ as.numeric(data[, i]) }, warning=function(w) { return(rep(NA, nrow(data)))
+    }, error=function(e) { stop("Please make sure input data are numeric!") }) }, FUN.VALUE=numeric(nrow(data)) )
     na <- as.data.frame(na); rownames(na) <- rna
     idx <- colSums(apply(na, 2, is.na))!=0
-    row.meta <- se[idx]; expr <- na[!idx]; colnames(expr) <- cna[!idx]
+    row.meta <- data[idx]; expr <- na[!idx]; colnames(expr) <- cna[!idx]
 
-  } else if (is(se, 'SummarizedExperiment')) {
+  } else if (is(data, 'SummarizedExperiment')) {
 
-    expr <- assay(se); col.meta <- as.data.frame(colData(se))
-    row.meta <- as.data.frame(rowData(se), stringsAsFactors=FALSE)[, , drop=FALSE]
-    # Factors teated by paste0/make.names are vecters.
-    if (!is.null(sam.factor) & !is.null(con.factor)) { colnames(expr) <- paste0(make.names(col.meta[, sam.factor]), '__', make.names(col.meta[, con.factor])) } else if (!is.null(sam.factor) & is.null(con.factor)) { colnames(expr) <- make.names(col.meta[, sam.factor]) } else if (is.null(sam.factor) & !is.null(con.factor)) { colnames(expr) <- make.names(col.meta[, con.factor]) }
- 
+    expr <- assay(data); col.meta <- as.data.frame(colData(data))
+    row.meta <- as.data.frame(rowData(data), stringsAsFactors=FALSE)[, , drop=FALSE]
+    # Factors teated by paste0/make.names are vectors.
+    if (!is.null(sam.factor) & !is.null(con.factor)) { cna <- paste0(col.meta[, sam.factor], '__', col.meta[, con.factor]) } else if (!is.null(sam.factor) & is.null(con.factor)) { cna <- as.vector(col.meta[, sam.factor]) } else if (is.null(sam.factor) & !is.null(con.factor)) { cna <- as.vector(col.meta[, con.factor]) } else cna <- colnames(expr)
+    colnames(expr) <- make.names(cna); if (!identical(cna, make.names(cna))) cat('Syntactically valid column names are made! \n')
+
   }
-  if (!is.null(dir)) { path <- paste0(dir, "/local_mode_result/"); if (!dir.exists(path)) dir.create(path) }
+
   ffun <- filterfun(pOverA(p=pOA[1], A=pOA[2]), cv(CV[1], CV[2]))
   filtered <- genefilter(expr, ffun); expr <- expr[filtered, ]
   row.meta <- row.meta[filtered, , drop=FALSE]
 
-  expr1 <- NULL; if (!is.null(dir)) { 
+  if (!is.null(dir)) { 
 
-    if (is.null(ann)) stop("Please specify row annotation!")
-    if (ncol(row.meta)==0) stop("Row annotation is not available!")
-    expr1 <- cbind.data.frame(expr, row.meta[, ann], stringsAsFactors=FALSE)
-    colnames(expr1)[ncol(expr1)] <- ann
+    path <- paste0(dir, "/local_mode_result/"); if (!dir.exists(path)) dir.create(path)
+
+    if (is(data, 'data.frame')|is(data, 'matrix')) {
+
+      expr1 <- cbind.data.frame(expr, row.meta, stringsAsFactors=FALSE)
+
+    }  else if (is(data, 'SummarizedExperiment')) {
+      
+      if (ncol(row.meta)>0 & !is.null(ann)) {
+        
+        expr1 <- cbind.data.frame(expr, row.meta[, ann], stringsAsFactors=FALSE)
+        colnames(expr1)[ncol(expr1)] <- ann
+      
+      } else expr1 <- expr
 
     }
-
-    if (!is.null(dir)) {
+    write.table(expr1, paste0(path, "processed_data.txt"), sep="\t", row.names=TRUE, col.names=TRUE)
       
-      if (!is.null(expr1)) write.table(expr1, paste0(path, "processed_data.txt"), sep="\t", row.names=TRUE, col.names=TRUE) else write.table(expr, paste0(path, "processed_data.txt"), sep="\t", row.names=TRUE, col.names=TRUE)
-      
-    }
+  }
 
-  if (is(se, 'data.frame')|is(se, 'matrix')) { return(cbind(expr, row.meta)) } else if (is(se, 'SummarizedExperiment')) {
+  if (is(data, 'data.frame')|is(data, 'matrix')) { return(cbind(expr, row.meta)) } else if (is(data, 'SummarizedExperiment')) {
   
-  rownames(col.meta) <- NULL # If row names present in colData(se), if will become column names of assay(se).
-  expr <- SummarizedExperiment(assays=list(expr=expr), rowData=row.meta, colData=col.meta); return(expr)
+    rownames(col.meta) <- NULL # If row names present in colData(data), if will become column names of assay(data).
+    expr <- SummarizedExperiment(assays=list(expr=expr), rowData=row.meta, colData=col.meta); return(expr)
 
   }
 
 }
 
 
-
-
-norm_data <- function(se, norm.fun='CNF', parameter.list=list(method="TMM"), data.trans='none') { 
+norm_data <- function(data, norm.fun='CNF', parameter.list=NULL, data.trans='none') { 
   
-  if (is(se, 'data.frame')|is(se, 'matrix')) {
+  if (is(data, 'data.frame')|is(data, 'matrix')) {
 
-    se <- as.data.frame(se); rna <- rownames(se); cna <- colnames(se) 
-    na <- vapply(seq_len(ncol(se)), function(i) { tryCatch({ as.numeric(se[, i]) }, warning=function(w) { return(rep(NA, nrow(se)))
-    }, error=function(e) { stop("Please make sure input data are numeric!") }) }, FUN.VALUE=numeric(nrow(se)) )
+    data <- as.data.frame(data); rna <- rownames(data); cna <- colnames(data) 
+    na <- vapply(seq_len(ncol(data)), function(i) { tryCatch({ as.numeric(data[, i]) }, warning=function(w) { return(rep(NA, nrow(data)))
+    }, error=function(e) { stop("Please make sure input data are numeric!") }) }, FUN.VALUE=numeric(nrow(data)) )
     na <- as.data.frame(na); rownames(na) <- rna
     idx <- colSums(apply(na, 2, is.na))!=0
-    ann <- se[idx]; expr <- na[!idx]; colnames(expr) <- cna[!idx]
+    ann <- data[idx]; expr <- na[!idx]; colnames(expr) <- cna[!idx]
 
-  } else if (is(se, 'SummarizedExperiment')) { expr <- SummarizedExperiment::assay(se) }
+  } else if (is(data, 'SummarizedExperiment')) { expr <- SummarizedExperiment::assay(data) }
   
   if (is.null(norm.fun)) norm.fun <- 'no'
   if (!(norm.fun %in% c("CNF", "ESF", "VST", "rlog"))) { 
@@ -464,342 +190,110 @@ norm_data <- function(se, norm.fun='CNF', parameter.list=list(method="TMM"), dat
 
   } else cat('Nornalisation only applies to data matrix with all non-negative values! \n')
 
-  if (is(se, 'data.frame')|is(se, 'matrix')) { return(cbind(expr, ann)) } else if (is(se, 'SummarizedExperiment')) { SummarizedExperiment::assay(se) <- expr; return(se) }
+  if (is(data, 'data.frame')|is(data, 'matrix')) { return(cbind(expr, ann)) } else if (is(data, 'SummarizedExperiment')) { SummarizedExperiment::assay(data) <- expr; return(data) }
 
 } 
 
 
-aggr_rep <- function(se, sam.factor, con.factor, aggr='mean') {
+
+aggr_rep <- function(data, sam.factor, con.factor, aggr='mean') {
 
   options(stringsAsFactors=FALSE)
-  if (is(se, 'data.frame')|is(se, 'matrix')) {
+  if (is(data, 'data.frame')|is(data, 'matrix')) {
 
-    se <- as.data.frame(se); rna <- rownames(se); cna <- colnames(se) 
-    na <- vapply(seq_len(ncol(se)), function(i) { tryCatch({ as.numeric(se[, i]) }, warning=function(w) { return(rep(NA, nrow(se)))
-    }, error=function(e) { stop("Please make sure input data are numeric!") }) }, FUN.VALUE=numeric(nrow(se)) )
+    data <- as.data.frame(data); rna <- rownames(data); cna <- make.names(colnames(data))
+    if (!identical(cna, colnames(data))) cat('Syntactically valid column names are made! \n')
+    na <- vapply(seq_len(ncol(data)), function(i) { tryCatch({ as.numeric(data[, i]) }, warning=function(w) { return(rep(NA, nrow(data)))
+    }, error=function(e) { stop("Please make sure input data are numeric!") }) }, FUN.VALUE=numeric(nrow(data)) )
     na <- as.data.frame(na); rownames(na) <- rna
     idx <- colSums(apply(na, 2, is.na))!=0
-    ann <- se[idx]; mat <- na[!idx]; fct <- colnames(mat) <- cna[!idx]
+    ann <- data[idx]; mat <- na[!idx]; fct <- colnames(mat) <- cna[!idx]
 
-  } else if (is(se, 'SummarizedExperiment')) {
+  } else if (is(data, 'SummarizedExperiment')) {
 
-    mat <- assay(se); col.meta <- as.data.frame(colData(se))
-    # Factors teated by paste0/make.names are vecters.
-    if (!is.null(sam.factor) & !is.null(con.factor)) { fct <- colnames(mat) <- paste0(make.names(col.meta[, sam.factor]), '__', make.names(col.meta[, con.factor])) } else if (!is.null(sam.factor) & is.null(con.factor)) {  fct <- colnames(mat) <- make.names(col.meta[, sam.factor]) } else if (is.null(sam.factor) & !is.null(con.factor)) { fct <- colnames(mat) <- make.names(col.meta[, con.factor]) }
- 
+    mat <- assay(data); col.meta <- as.data.frame(colData(data))
+    # Factors teated by paste0/make.names are vectrs.
+    if (!is.null(sam.factor) & !is.null(con.factor)) { fct <- paste0(col.meta[, sam.factor], '__', col.meta[, con.factor]) } else if (!is.null(sam.factor) & is.null(con.factor)) {  fct <- as.vector(col.meta[, sam.factor]) } else if (is.null(sam.factor) & !is.null(con.factor)) { fct <- as.vector(col.meta[, con.factor]) } else fct <- colnames(mat)
+    if (!identical(fct, make.names(fct))) cat('Syntactically valid column names are made! \n')
+    fct <- colnames(mat) <- make.names(fct) 
+
   }
   # To keep colnames, "X" should be a character, not a factor.
   if (aggr=='mean') mat <- sapply(X=unique(fct), function(x) rowMeans(mat[, fct==x, drop=FALSE]))
   if (aggr=='median') {
   
     mat <- sapply(X=unique(fct), function(x) Biobase::rowMedians(mat[, fct==x, drop=FALSE]))
-    rownames(mat) <- rownames(se)
+    rownames(mat) <- rownames(data)
 
   }
   
-  if (is(se, 'data.frame')|is(se, 'matrix')) { return(cbind(mat, ann)) } else if (is(se, 'SummarizedExperiment')) { 
+  if (is(data, 'data.frame')|is(data, 'matrix')) { return(cbind(mat, ann)) } else if (is(data, 'SummarizedExperiment')) { 
   
     col.meta <- col.meta[!duplicated(fct), ]; rownames(col.meta) <- NULL
-    se <- SummarizedExperiment(assays=list(expr=mat), rowData=rowData(se), colData=col.meta); return(se)
+    data <- SummarizedExperiment(assays=list(expr=mat), rowData=rowData(data), colData=col.meta); return(data)
 
   } 
 
 }
 
 
-
-network <- function(geneID, se, ann, adj.mod, ds="3", adj.min=0, con.min=0, node.col=c("mediumorchid1", "chocolate4"), edge.col=c("yellow", "blue"), vertex.label.cex=1, vertex.cex=3, edge.cex=10, layout="circle", main=NULL, static=TRUE, ...) {
-
-  from <- to <- width <- size <- NULL 
-  adj <- adj.mod[["adj"]]; mods <- adj.mod[["mod"]]
-  gene <- assay(se); if (!is.null(rowData(se)) & !is.null(ann)) { ann <- rowData(se)[, ann, drop=FALSE]; rownames(ann) <- rownames(gene) } else ann <- NULL
-  ds <- as.character(ds); lab <- mods[, ds][rownames(gene)==geneID]
-  if (lab=="0") { return('The selected gene is not assigned to any module. Please select a different one') }
-  
-  if (static==TRUE) { 
-
-  nod.lin <- nod_lin(ds=ds, lab=lab, mods=mods, adj=adj, geneID=geneID, adj.min=adj.min)
-  node <- nod.lin[['node']]; link1 <- nod.lin[['link']]
-  net <- graph_from_data_frame(d=link1, vertices=node, directed=FALSE)
-  # Delete edges and nodes.
-  edg.del <- delete_edges(net, E(net)[width <= adj.min])
-  net <- delete_vertices(edg.del, igraph::V(edg.del)[size <= con.min])
-  # Remaining nodes and edges.
-  node <- as_data_frame(net, what="vertices"); link1 <- as_data_frame(net, what="edges")
-  
-  # Match colours with gene connectivity by approximation.
-  col.len <- 350; col.nod <- colorRampPalette(node.col)(col.len)
-  # Assign node colours.
-  col.node <- NULL; node.v <- node$size; v.nod <- seq(min(node.v), max(node.v), len=col.len)
-      for (i in node$size) {
-
-        ab <- abs(i-v.nod); col.node <- c(col.node, col.nod[which(ab==min(ab))[1]])
-
-      }; igraph::V(net)$color <- col.node
-  # Match colours with gene adjacency by approximation.
-  col.lin <- colorRampPalette(edge.col)(col.len)
-  # Assign edge colours.
-  col.link <- NULL; link.v <- link1$width; v.link <- seq(min(link.v), max(link.v), len=col.len)
-      for (i in link1$width) {
-
-        ab <- abs(i-v.link); col.link <- c(col.link, col.lin[which(ab==min(ab))[1]])
-
-      }; igraph::E(net)$color <- col.link
-  
-  if (layout=="circle") lay <- layout_in_circle(net); if (layout=="fr") lay <- layout_with_fr(net)
-  
-  # Network.
-  graphics::layout(mat=matrix(c(1, 2, 1, 3), nrow=2, ncol=2), height=c(6, 1))
-  par(mar=c(2, 2.5, 2, 2.5), new=FALSE); plot(net, edge.width=igraph::E(net)$width*edge.cex, vertex.size=igraph::V(net)$size*vertex.cex, vertex.label.cex=vertex.label.cex, layout=lay, ...)
-  # Node colour bar.
-  mat1 <- matrix(v.nod, ncol=1, nrow=length(v.nod)) 
-  par(mar=c(2.2, 3, 1, 2.5), new=FALSE); image(x=seq_len(length(v.nod)), y=1, mat1, col=col.nod, xlab="", ylab="", axes=FALSE)
-  title(xlab="Node colour scale", line=1, cex.lab=1)
-  mtext(text=round(seq(min(node.v), max(node.v), len=5), 1), side=1, line=0.3, at=seq(1, col.len, len=5), las=0, cex=0.8)
-  mat2 <- matrix(v.link, ncol=1, nrow=length(v.link)) 
-  par(mar=c(2.2, 2.5, 1, 3), new=FALSE); image(x=seq_len(length(v.link)), y=1, mat2, col=col.lin, xlab="", ylab="", axes=FALSE)
-  title(xlab="Edge colour scale", line=1, cex.lab=1)
-  mtext(text=round(seq(min(link.v), max(link.v), len=5), 1), side=1, line=0.3, at=seq(1, col.len, len=5), las=0, cex=0.8)
-
-  } else if (static==FALSE) {
-
-
-    ui <- shinyUI(dashboardPage(
-
-      dashboardHeader(),
-
-      dashboardSidebar(
-  
-      sidebarMenu(
-
-        menuItem("Network", icon=icon("dashboard"), 
-        selectInput("ds","Select a module splitting sensitivity level", 3:2, selected="3", width=190),
-        selectInput("adj.in", "Input an adjcency threshold to display the adjacency network.", c("None", sort(seq(0, 1, 0.002), decreasing=TRUE)), "None", width=190), 
-        htmlOutput("edge"),
-        div(style="display:inline-block;width:75%;text-align:left;",textInput("color.net", "Color scheme of Interactive Network", "purple,yellow,blue", placeholder='Eg: "purple,yellow,blue"', width=200)),
-        div(style="display:inline-block;width:25%;text-align:left;", actionButton("col.but.net", "Go", icon=icon("refresh"), style="padding:7px; font-size:90%; margin-left: 0px")),
-        radioButtons("cpt.nw", "Display or not?", c("Yes"="Y", "No"="N"), "N", inline=TRUE),
-        menuSubItem("View", tabName="net")
-
-        )
-
-     )
-
-     ),
-
-     dashboardBody(
- 
-       tabItems(
-
-        tabItem(tabName="net", 
-        box(title="Interactive Network", status="primary", solidHeader=TRUE, collapsible=TRUE, fluidRow(splitLayout(cellWidths=c("1%", "6%", "91%", "2%"), "", plotOutput("bar.net"), visNetworkOutput("vis"), "")), width=12)
-        )
-
-        )
-
-     )
-
-  ))
-
-  server <- shinyServer(function(input, output, session) {
-
-    observe({
-
-      input$ds
-      updateSelectInput(session, "adj.in", "Input an adjcency threshold to display the adjacency network.", c("None", sort(seq(0, 1, 0.002), decreasing=TRUE)), "None")
-      updateRadioButtons(session, "cpt.nw", "Display or not?", c("Yes"="Y", "No"="N"), "N", inline=TRUE)
-
-    })
-
-    observe({
-
-      input$adj.in; updateRadioButtons(session, "cpt.nw", "Display or not?", c("Yes"="Y", "No"="N"), "N", inline=TRUE)
-
-    })
-
-    color_scale <- y <- NULL 
-    col.sch.net <- reactive({ if(input$color.net=="") { return(NULL) }
-    unlist(strsplit(input$color.net, ",")) }); color.net <- reactiveValues(col.net="none")
-
-    len <- 350
-    observeEvent(input$col.but.net, {
-
-      if (is.null(col.sch.net())) return (NULL)
-      color.net$col.net <- colorRampPalette(col.sch.net())(len)
-
-    })
-    
-    visNet <- reactive({
-
-      if (input$adj.in=="None") return(NULL)
-      withProgress(message="Computing network:", value=0, {
-   
-        incProgress(0.8, detail="making network data frame")
-        nod.lin <- nod_lin(ds=ds, lab=lab, mods=mods, adj=adj, geneID=geneID, adj.min=input$adj.in)
-        node <- nod.lin[['node']]; colnames(node) <- c('id', 'value')
-        link1 <- nod.lin[['link']]; colnames(link1)[3] <- 'value'
-        if (nrow(link1)!=0) { 
-        
-          link1$title <- link1$value # 'length' is not well indicative of adjacency value, so replaced by 'value'.
-          link1$color <- 'lightblue'
-        
-        }; node <- cbind(node, label=node$id, font.size=vertex.label.cex*20, borderWidth=2, color.border="black", color.highlight.background="orange", color.highlight.border="darkred", color=NA, stringsAsFactors=FALSE)
-        if (!is.null(ann)) node <- cbind(node, title=ann[node$id, ], stringsAsFactors=FALSE)
-        net.lis <- list(node=node, link=link1)
-
-      }); net.lis
-
-    })
-
-    output$bar.net <- renderPlot({  
-
-      if (input$adj.in=="None"|input$cpt.nw=="N") return(NULL)
-      if (length(color.net$col.net=="none")==0) return(NULL)
-      if(input$col.but.net==0) color.net$col.net <- colorRampPalette(c('purple', 'yellow', 'blue'))(len)
-     
-        withProgress(message="Color scale: ", value = 0, {
-
-          incProgress(0.25, detail="Preparing data. Please wait.")
-          incProgress(0.75, detail="Plotting. Please wait.")
-          node.v <- visNet()[["node"]]$value; v.net <- seq(min(node.v), max(node.v), len=len)
-          cs.net <- col_bar(geneV=v.net, cols=color.net$col.net, width=1, mar=c(3, 0.1, 3, 0.1)); return(cs.net)
-
-        })
-
-    })
-
-    output$edge <- renderUI({ 
-
-      if (input$adj.in=="None") return(NULL)
-      HTML(paste0("&nbsp&nbsp&nbsp&nbsp Total edges to display (If > 300, the <br/> 
-      &nbsp&nbsp&nbsp App can possibly get stuck.): ", nrow((visNet()[["link"]]))))
-
-    })
-
-    vis.net <- reactive({ 
-
-      if (input$adj.in=="None"|input$cpt.nw=="N") return(NULL)
-      withProgress(message="Network:", value=0.5, {
-
-        incProgress(0.3, detail="prepare for plotting.")
-        # Match colours with gene connectivity by approximation.
-        node <- visNet()[["node"]]; node.v <- node$value; v.net <- seq(min(node.v), max(node.v), len=len)
-        col.nod <- NULL; for (i in node$value) {
-
-          ab <- abs(i-v.net); col.nod <- c(col.nod, color.net$col.net[which(ab==min(ab))[1]])
-
-        }; node$color <- col.nod
-
-        visNetwork(node, visNet()[["link"]], height="300px", width="100%", background="", main=paste0("Network Module Containing ", geneID), submain="", footer= "") %>% visIgraphLayout(physics=FALSE, smooth=TRUE) %>%
-        visOptions(highlightNearest=list(enabled=TRUE, hover=TRUE), nodesIdSelection=TRUE)
-
-      })
-    
-    })
-
-    output$vis <- renderVisNetwork({
-
-      if (input$adj.in=="None"|input$cpt.nw=="N") return(NULL)
-      withProgress(message="Network:", value=0.5, {
-
-        incProgress(0.3, detail="plotting.")
-        vis.net()
-
-      })
-
-    })
-
-  }); shinyApp(ui, server) 
-
-  }
-
-}
-
-matrix_hm <- function(geneID, se, adj.mod, ds, scale, col=c('yellow', 'blue'), main=NULL, title.size=10, cexCol=1, cexRow=1, angleCol=45, angleRow=45, sepcolor="black", sep.width=0.02, static=TRUE, margin=c(10, 10), arg.lis1=list(), arg.lis2=list()) {
-
-  mods <- adj.mod[["mod"]]; ds <- as.character(ds); gene <- assay(se)
-  lab <- mods[, ds][rownames(gene)==geneID]
-  if (lab=="0") stop("The input gene is not assigned to any module. Please input a different one.")
-  mod <- as.matrix(gene[mods[, ds]==lab, ])
-  
-  if (static==TRUE) {
-
-    tmp <- system.file("extdata/shinyApp/tmp", package="spatialHeatmap"); pa <- paste0(tmp, '/delete_hm.png')
-    png(pa); hm <- heatmap.2(x=mod, scale=scale, main=main, trace="none"); dev.off()
-    do.call(file.remove, list(pa))
-    # Logical matrix with the same dimensions as module matrix.
-    selection <- matrix(rep(FALSE, nrow(mod)*ncol(mod)), nrow=nrow(mod))
-    # Select the row of target gene.  
-    idx <- which(rev(colnames(hm$carpet) %in% geneID))
-    lis1 <- c(arg.lis1, list(x=mod, scale=scale, main=main, margin=margin, col=colorRampPalette(col)(nrow(mod)*ncol(mod)), rowsep=c(idx-1, idx), cexCol=cexCol, cexRow=cexRow, srtRow=angleRow, srtCol=angleCol, dendrogram='both', sepcolor="black", sepwidth=c(sep.width, sep.width), key=TRUE, trace="none", density.info="none", Rowv=TRUE, Colv=TRUE))
-    do.call(heatmap.2, lis1)
-
-  } else if (static==FALSE) {
-
-     x <- x1 <- x2 <- y <- y1 <- y2 <- xend <- yend <- value <- NULL 
-     dd.gen <- as.dendrogram(hclust(dist(mod))); dd.sam <- as.dendrogram(hclust(dist(t(mod))))
-     d.sam <- dendro_data(dd.sam); d.gen <- dendro_data(dd.gen)
-
-     g.dengra <- function(df) {
-
-       ggplot()+geom_segment(data=df, aes(x=x, y=y, xend=xend, yend=yend))+labs(x="", y="")+theme_minimal()+theme(axis.text= element_blank(), axis.ticks=element_blank(), panel.grid=element_blank())
-
-     }
-
-     p.gen <- g.dengra(d.gen$segments)+coord_flip(); p.sam <- g.dengra(d.sam$segments)
-     gen.ord <- order.dendrogram(dd.gen); sam.ord <- order.dendrogram(dd.sam); mod.cl <- mod[gen.ord, sam.ord]
-     if (scale=="column") mod.cl <- data.frame(scale(mod.cl), stringsAsFactors=FALSE); if (scale=="row") mod.cl <- data.frame(t(scale(t(mod.cl))), stringsAsFactors=FALSE)
-     mod.cl$gene <- rownames(mod.cl)
-     mod.m <- reshape2::melt(mod.cl, id.vars='gene', measure.vars=colnames(mod)); colnames(mod.m) <- c('gene', 'sample', 'value')
-     # Use "factor" to re-order rows and columns as specified in dendrograms. 
-     mod.m$gene <- factor(mod.m$gene, levels=rownames(mod.cl)); mod.m$sample <- factor(mod.m$sample, levels=colnames(mod.cl))
-     # Plot the re-ordered heatmap.
-     lis2 <- c(arg.lis2, list(data=mod.m, mapping=aes(x=sample, y=gene))) 
-     g <- do.call(ggplot, lis2)+geom_tile(aes(fill=value), colour="white")+scale_fill_gradient(low=col[1], high=col[2])+theme(axis.text.x=element_text(size=cexRow*10, angle=angleCol), axis.text.y=element_text(size=cexCol*10, angle=angleRow))
-     # Label target row/gene.
-     g.idx <- which(rownames(mod.cl)==geneID)
-     g <- g+geom_hline(yintercept=c(g.idx-0.5, g.idx+0.5), linetype="solid", color=sepcolor, size=sep.width*25)
-     ft <- list(family = "sans serif", size=title.size, color='black')
-     subplot(p.sam, ggplot(), g, p.gen, nrows=2, shareX=TRUE, shareY=TRUE, margin=0, heights=c(0.2, 0.8), widths=c(0.8, 0.2)) %>% plotly::layout(title=main, font=ft)
-
-   }
-
-}
-
-
 lay_shm <- function(lay.shm, con, ncol, ID.sel, grob.list, width, height, shiny) {
 
-    width <- as.numeric(width); height <- as.numeric(height); ncol <- as.numeric(ncol); con <- unique(con)
-    if (lay.shm=="gene") {
+  # Sort vector of letter and number mixture.
+  sort_mix <- function(vec) {
 
-        all.cell <- ceiling(length(con)/ncol)*ncol
-        cell.idx <- c(seq_len(length(con)), rep(NA, all.cell-length(con)))
-        m <- matrix(cell.idx, ncol=as.numeric(ncol), byrow=TRUE)
-        lay <- NULL; for (i in seq_len(length(ID.sel))) { lay <- rbind(lay, m+(i-1)*length(con)) }
-      if (shiny==TRUE & length(grob.list)>=1) return(grid.arrange(grobs=grob.list, layout_matrix=lay, newpage=TRUE))
+    w <- is.na(as.numeric(gsub('\\D', '', vec)))
+    let <- vec[w]; num <- vec[!w]
+    let.num <- as.numeric(gsub('\\D', '', vec))
+    vec[!w] <- num[order(let.num[!w])]
+    vec[w] <- let[order(let.num[w])]; return(vec)
+        
+  }        
+
+  width <- as.numeric(width); height <- as.numeric(height); ncol <- as.numeric(ncol); con <- unique(con)
+  grob.all.na <- names(grob.list)
+  if (lay.shm=="gene") {
+
+    all.cell <- ceiling(length(con)/ncol)*ncol
+    cell.idx <- c(seq_len(length(con)), rep(NA, all.cell-length(con)))
+    m <- matrix(cell.idx, ncol=as.numeric(ncol), byrow=TRUE)
+    lay <- NULL; for (i in seq_len(length(ID.sel))) { lay <- rbind(lay, m+(i-1)*length(con)) }
+    # Sort conditions under each gene.
+    con.pat1 <- paste0('.*_(', paste0(con, collapse='|'), ')$')
+    na.sort <- NULL; for (i in ID.sel) {
+        
+      na0 <- grob.all.na[grepl(paste0('^', i, '_'), grob.all.na)]
+      con1 <- gsub(con.pat1, '\\1', na0)
+      na.sort <- c(na.sort, paste0(i, '_', sort_mix(con1)))
+
+    }; grob.list <- grob.list[na.sort]
+    if (shiny==TRUE & length(grob.list)>=1) return(grid.arrange(grobs=grob.list, layout_matrix=lay, newpage=TRUE))
        
-      g.tr <- lapply(grob.list[seq_len(length(grob.list))], grobTree)
-      n.col <- ncol(lay); n.row <- nrow(lay)
-      g.arr <- arrangeGrob(grobs=g.tr, layout_matrix=lay, widths=unit(rep(width/n.col, n.col), "npc"), heights=unit(rep(height/n.row, n.row), "npc"))
+    g.tr <- lapply(grob.list[seq_len(length(grob.list))], grobTree)
+    n.col <- ncol(lay); n.row <- nrow(lay)
+    g.arr <- arrangeGrob(grobs=g.tr, layout_matrix=lay, widths=unit(rep(width/n.col, n.col), "npc"), heights=unit(rep(height/n.row, n.row), "npc"))
 
-    } else if (lay.shm=="con") {
+  } else if (lay.shm=="con") {
 
-      grob.all.na <- names(grob.list)
-      # Reverse the "gene_condition" names, and re-oder them.
-      na.rev <- NULL; for (i in grob.all.na) { na.rev <- c(na.rev, paste0(rev(strsplit(i, NULL)[[1]]), collapse='')) }
-      # Put legend plot at the end.
-      grob.all.con <- grob.list[order(na.rev)]
-      all.cell <- ceiling(length(ID.sel)/ncol)*ncol
-      cell.idx <- c(seq_len(length(ID.sel)), rep(NA, all.cell-length(ID.sel)))
-      m <- matrix(cell.idx, ncol=ncol, byrow=TRUE)
-      lay <- NULL; for (i in seq_len(length(con))) { lay <- rbind(lay, m+(i-1)*length(ID.sel)) }
- 
-      if (shiny==TRUE & length(grob.all.con)>=1) return(grid.arrange(grobs=grob.all.con, layout_matrix=lay, newpage=TRUE))
-      g.tr <- lapply(grob.all.con, grobTree); g.tr <- g.tr[names(grob.all.con)]
-      n.col <- ncol(lay); n.row <- nrow(lay)
-      g.arr <- arrangeGrob(grobs=g.tr, layout_matrix=lay, widths=unit(rep(width/n.col, n.col), "npc"), heights=unit(rep(height/n.row, n.row), "npc")) 
+    all.cell <- ceiling(length(ID.sel)/ncol)*ncol
+    cell.idx <- c(seq_len(length(ID.sel)), rep(NA, all.cell-length(ID.sel)))
+    m <- matrix(cell.idx, ncol=ncol, byrow=TRUE)
+    lay <- NULL; for (i in seq_len(length(con))) { lay <- rbind(lay, m+(i-1)*length(ID.sel)) }
+    # Sort conditions and genes.
+    gen.pat1 <- paste0('^(', paste0(ID.sel, collapse='|'), ')_.*')
+    na.sort <- NULL; for (i in sort_mix(con)) {
+      
+      na0 <- grob.all.na[grepl(paste0('_', i, '$'), grob.all.na)]
+      gen1 <- gsub(gen.pat1, '\\1', na0)
+      na.sort <- c(na.sort, paste0(sort_mix(gen1), '_', i))
 
-    }; return(g.arr)
+    }; grob.list <- grob.list[na.sort]
+    if (shiny==TRUE & length(grob.list)>=1) return(grid.arrange(grobs=grob.list, layout_matrix=lay, newpage=TRUE))
+    g.tr <- lapply(grob.list, grobTree); g.tr <- g.tr[names(grob.list)]
+    n.col <- ncol(lay); n.row <- nrow(lay)
+    g.arr <- arrangeGrob(grobs=g.tr, layout_matrix=lay, widths=unit(rep(width/n.col, n.col), "npc"), heights=unit(rep(height/n.row, n.row), "npc")) 
+
+  }; return(g.arr)
 
 }
 
@@ -813,6 +307,7 @@ col_bar <- function(geneV, cols, width, bar.title.size=10, mar=c(3, 0.1, 3, 0.1)
   return(cs.g)
 
 }
+
 
 
 nod_lin <- function(ds, lab, mods, adj, geneID, adj.min) {
@@ -832,19 +327,20 @@ nod_lin <- function(ds, lab, mods, adj, geneID, adj.min) {
 }
 
 
-  # Break combined path to a group (g=TRUE) or siblings (g=FALSE).
-  path_br <- function(node, g=TRUE) {
+# Break combined path to a group (g=TRUE) or siblings (g=FALSE).
 
-    na <- xml_name(node); if (na!='g') {
+path_br <- function(node, g=TRUE) {
 
-      d <- xml_attr(node, 'd') 
+    na <- xml2::xml_name(node); if (na!='g') {
+
+      d <- xml2::xml_attr(node, 'd') 
       if (grepl('m ', d)) return('Please use absolute coordinates for all paths!')
       if (grepl('Z M', d)) {
 
         z <- paste0(strsplit(d, 'Z')[[1]], 'Z')
-        ids <- paste0(xml_attr(node, 'id'), '_', seq_along(z))
+        ids <- paste0(xml2::xml_attr(node, 'id'), '_', seq_along(z))
         # Make node empty.
-        xml_attr(node, 'd') <- NA
+        xml2::xml_attr(node, 'd') <- NA
         
         # Break the combined path to a group.
         if (g==TRUE) {
@@ -864,7 +360,7 @@ nod_lin <- function(ds, lab, mods, adj, geneID, adj.min) {
           xml_set_attr(node.chl, 'd', z)
           xml_set_attr(node.chl, 'id', ids)  
           # Name node 'g'.
-          xml_name(node) <- 'g'; xml_attr(node, 'd') <- NULL
+          xml2::xml_name(node) <- 'g'; xml2::xml_attr(node, 'd') <- NULL
           if (length(w)>0) xml_add_child(node, tit, .where=0)
 
         } else {
@@ -886,14 +382,16 @@ nod_lin <- function(ds, lab, mods, adj, geneID, adj.min) {
     }
 
   }
-  
-  # The outline or tissue nodes are checked for combines paths. If combined paths are detected, those outside a group are broken to a group while those inside a group are broken as siblings.  
-  path_br_all <- function(node.parent) {
 
-    len <- xml_length(node.parent); chdn <- xml_children(node.parent)
-    for (i in seq_len(len)) {
 
-      nod0 <- chdn[[i]]; na <- xml_name(nod0)
+
+# The outline or tissue nodes are checked for combines paths. If combined paths are detected, those outside a group are broken to a group while those inside a group are broken as siblings.  
+path_br_all <- function(node.parent) {
+
+  len <- xml_length(node.parent); chdn <- xml_children(node.parent)
+  for (i in seq_len(len)) {
+
+    nod0 <- chdn[[i]]; na <- xml_name(nod0)
       if (na=='a') next
       if (na!='g') path_br(nod0, g=TRUE) else {
 
@@ -909,13 +407,16 @@ nod_lin <- function(ds, lab, mods, adj, geneID, adj.min) {
 
       }
 
-    }
-
   }
 
-# 'a' nodes are not removed.
-  svg_attr <- function(doc, feature) {
+}
 
+
+
+# 'a' nodes are not removed.
+svg_attr <- function(doc, feature) {
+
+  options(stringsAsFactors=FALSE); name <- NULL
   len <- xml_length(doc); out <- xml_children(doc)[[len-1]]; ply <- xml_children(doc)[[len]]
   # Break combined path to a group or siblings.
   path_br_all(out); path_br_all(ply)
@@ -934,8 +435,8 @@ nod_lin <- function(ds, lab, mods, adj, geneID, adj.min) {
   nas <- c(xml_name(chdn.out), xml_name(chdn.ply))
   ids <- make.names(c(xml_attr(chdn.out, 'id'), xml_attr(chdn.ply, 'id')))
   if (any(duplicated(ids))) return(paste0('Duplicated node ids detected: ', paste0(ids[duplicated(ids)], collapse=' '), '!'))
-  title <- make.names(c(xml_text(chdn.out), xml_text(chdn.ply)))
-  w <- which(title=='X'); title[w] <- ids[w]
+  title <- c(xml_text(chdn.out), xml_text(chdn.ply)) # Use original names, no 'make.names'. '' after applied to 'make.names' becomes 'X'.
+  w <- which(title=='X'|title==''); title[w] <- ids[w]
   dup <- duplicated(title); if (any(dup)) {
     
     if (length(intersect(title[dup], feature))>0) return(paste0('Duplicated title text detected: ', paste0(title[dup], collapse=' '), '!')) else {
@@ -957,18 +458,19 @@ nod_lin <- function(ds, lab, mods, adj, geneID, adj.min) {
   df.attr <- subset(df.attr, name!='a')    
   return(list(df.attr=df.attr, out=out, ply=ply))
 
-  }
+}
+
 
 svg_df <- function(svg.path, feature) {
 
   # Make sure the style is correct. If the stroke width is not the same across polygons such as '0.0002px', '0.216px', some stroke outlines cannot be recognised by 'PostScriptTrace'. Then some polygons are missing. Since the ggplot is based on 'stroke' not 'fill'.
-
   options(stringsAsFactors=FALSE)
   doc <- read_xml(svg.path); spa <- xml_attr(doc, 'space')
   if (!is.na(spa)) if (spa=='preserve') xml_set_attr(doc, 'xml:space', 'default')
 
   svg.attr <- svg_attr(doc, feature=feature); if (is(svg.attr, 'character')) return(svg.attr)
-  df.attr <- svg.attr[['df.attr']]; out <- svg.attr[['out']]; ply <- svg.attr[['ply']]
+  df.attr <- svg.attr[['df.attr']]; df.attr$title <- make.names(df.attr$title)
+  out <- svg.attr[['out']]; ply <- svg.attr[['ply']]
   # Paths in 'a' node are recognised in .ps.xml file, so all 'a' nodes in or out groups are removed. 
   chdn.out <- xml_children(out); chdn.ply <- xml_children(ply)
   chdn.all <- c(chdn.out, chdn.ply)
@@ -1064,10 +566,7 @@ svg_df <- function(svg.path, feature) {
 }
 
 
-
 grob_list <- function(gene, con.na=TRUE, geneV, coord, ID, cols, tis.path, tis.trans=NULL, sub.title.size, sam.legend='identical', legend.col, legend.title=NULL, legend.ncol=NULL, legend.nrow=NULL, legend.position='bottom', legend.direction=NULL, legend.key.size=0.5, legend.label.size=8, legend.title.size=8, line.size=0.2, line.color='grey70', ...) {
-
-  options(stringsAsFactors=FALSE)
 
   g_list <- function(con, lgd=FALSE, ...) {
 
@@ -1149,12 +648,6 @@ grob_list <- function(gene, con.na=TRUE, geneV, coord, ID, cols, tis.path, tis.t
 }
 
 
-
-
-
-
-
-
 library(SummarizedExperiment); library(shiny); library(shinydashboard); library(grImport); library(rsvg); library(ggplot2); library(DT); library(gridExtra); library(ggdendro); library(WGCNA); library(grid); library(xml2); library(plotly); library(data.table); library(genefilter); library(flashClust); library(visNetwork); library(reshape2); library(igraph)
 
 # Import input matrix.
@@ -1166,17 +659,25 @@ fread.df <- function(input, isRowGene, header, sep, fill, rep.aggr='mean') {
   # Subsetting identical column names in a matrix will not trigger appending numbers.
   df1 <- as.matrix(df1[, -1]); colnames(df1) <- cna
   if(isRowGene==FALSE) df1 <- t(df1)
-  cna <- colnames(df1)
-  idx <- grep("__", cna); idx1 <- setdiff(seq_len(length(cna)), idx)
-  gene2 <- df1[, idx, drop=FALSE]; gene3 <- df1[, idx1, drop=FALSE]; if (ncol(gene3)>0) colnames(gene3) <- 'ann'
-  if(sum(is.na(as.numeric(gene2)))>=1) return('Make sure all values in data matrix are numeric.')
+  cna <- colnames(df1); rna <- rownames(df1)
+  
+  # Isolate data and annotation.
+  na <- vapply(seq_len(ncol(df1)), function(i) { tryCatch({ as.numeric(df1[, i]) }, warning=function(w) { return(rep(NA, nrow(df1))) }, error=function(e) { stop("Please make sure input data are numeric!") }) }, FUN.VALUE=numeric(nrow(df1)) )
+  na <- as.data.frame(na); rownames(na) <- rna
+  idx <- colSums(apply(na, 2, is.na))!=0
+  gene2 <- na[!idx]; colnames(gene2) <- cna <- cna[!idx]
+  gene3 <- as.data.frame(df1)[idx] 
+  form <- grepl("__", cna); if (sum(form)==0) { colnames(gene2) <- paste0(cna, '__', 'con'); con.na <- FALSE } else con.na <- TRUE
+  if (ncol(gene3)>0) { colnames(gene3)[1] <- 'ann'; gene3 <- gene3[1] }
+  if(sum(is.na(as.numeric(as.matrix(gene2))))>=1) return('Make sure all values in data matrix are numeric.')
+  
   gen.rep <- gene2; rna <- rownames(gen.rep); gen.rep <-apply(gen.rep, 2, as.numeric); rownames(gen.rep) <- rna
   # Aggregate replicates.
   if (any(duplicated(cna)) & !is.null(rep.aggr)) {
 
     # To keep colnames, "X" should be a character, not a factor.
     if (rep.aggr=='mean') gene2 <- sapply(X=unique(cna), function(x) rowMeans(gene2[, cna==x, drop=FALSE]))
-    if (aggr=='median') {
+    if (rep.aggr=='median') {
 
       gene2 <- sapply(X=unique(cna), function(x) Biobase::rowMedians(gene2[, cna==x, drop=FALSE]))
       rownames(gene2) <- rna
@@ -1184,7 +685,7 @@ fread.df <- function(input, isRowGene, header, sep, fill, rep.aggr='mean') {
     }
 
   }; gene2 <-apply(gene2, 2, as.numeric); rownames(gene2) <- rna 
-  return(list(gene2=as.data.frame(gene2), gene3=as.data.frame(gene3), gen.rep=as.data.frame(gen.rep)))
+  return(list(gene2=as.data.frame(gene2), gene3=as.data.frame(gene3), gen.rep=as.data.frame(gen.rep), con.na=con.na))
 
 }
 
@@ -1318,7 +819,7 @@ shinyServer(function(input, output, session) {
       
       se <- SummarizedExperiment(assays=list(expr=as.matrix(gene2)), rowData=gene3)
       if (ncol(gene3)>0) ann.col <- colnames(gene3)[1] else ann.col <- NULL
-      se <- filter_data(se=se, ann=ann.col, sam.factor=NULL, con.factor=NULL, pOA=c(fil$P, fil$A), CV=c(fil$CV1, fil$CV2), dir=NULL)
+      se <- filter_data(data=se, ann=ann.col, sam.factor=NULL, con.factor=NULL, pOA=c(fil$P, fil$A), CV=c(fil$CV1, fil$CV2), dir=NULL)
       if (nrow(se)==0) { showModal(modalDialog(title="Filtering", "All genes are filtered out. Please refresh this app to restart.")); return() }
       gene2 <- as.data.frame(assay(se), stringsAsfactors=FALSE); colnames(gene2) <- make.names(colnames(gene2))
       gene3 <- as.data.frame(rowData(se))[, , drop=FALSE]
@@ -1483,7 +984,7 @@ shinyServer(function(input, output, session) {
       if (input$cs.v=="sel.gen") gene <- geneIn()[["gene2"]][input$dt_rows_selected, ]
       if (input$cs.v=="w.mat") gene <- geneIn()[["gene2"]]
       g.df <- svg.df()[["df"]]; tis.path <- svg.df()[["tis.path"]]; fil.cols <- svg.df()[['fil.cols']]
-      grob.lis <- grob_list(gene=gene, geneV=geneV(), coord=g.df, ID=gID$new, legend.col=fil.cols, cols=color$col, tis.path=tis.path, tis.trans=input$tis, sub.title.size=21) # Only gID$new is used.
+      grob.lis <- grob_list(gene=gene, con.na=geneIn0()[['con.na']], geneV=geneV(), coord=g.df, ID=gID$new, legend.col=fil.cols, cols=color$col, tis.path=tis.path, tis.trans=input$tis, sub.title.size=21) # Only gID$new is used.
       return(grob.lis)
 
     })
@@ -1545,6 +1046,114 @@ shinyServer(function(input, output, session) {
 
   })
 
+
+  edg <- reactive({
+
+    if (input$fileIn!="Compute online") return(NULL)
+    if (is.null(geneIn0())) return(NULL)
+    gen.rep <- geneIn0()[['gen.rep']]
+    save(gen.rep, file='gen.rep')
+    log2.fc=1; fdr=0.5
+    se <- SummarizedExperiment(assays=list(expr=as.matrix(gen.rep)), colData=data.frame(fct=colnames(gen.rep)))
+    edg <- edgeR(se=se, method.norm='TMM', sample.factor='fct', method.adjust='BH', log2.fc=log2.fc, fdr=fdr); edg
+
+  })
+
+  dsq <- reactive({
+
+    if (input$fileIn!="Compute online") return(NULL)
+    if (is.null(geneIn0())) return(NULL)
+    gen.rep <- geneIn0()[['gen.rep']]
+    log2.fc=1; fdr=0.5
+    se <- SummarizedExperiment(assays=list(expr=as.matrix(gen.rep)), colData=data.frame(fct=colnames(gen.rep)))
+    dsq <- deseq2(se=se, sample.factor='fct', method.adjust='BH', log2.fc=log2.fc, fdr=fdr); dsq
+
+  })
+
+  output$ssg.sep <- renderPlot({ 
+
+    if (is.null(geneIn0())|is.null(edg())|is.null(dsq())) return(NULL)
+    width=0.85
+    lis.all <- list(edg=edg(), dsq=dsq()); sam.all <- names(lis.all[[1]])
+    sam <- sam.all[1:3]
+    ssg.sep <- ssg_sep(lis.all=lis.all, sam=sam, width=width); ssg.sep
+
+  })
+ 
+  
+  output$w.table <- renderDataTable({
+    
+    if (is.null(geneIn0())|is.null(edg())|is.null(dsq())) return(NULL)
+    if (is.null(geneIn0())) return(NULL)
+    sam.con <- unique(colnames(geneIn()))[1:3]
+    lis.all <- list(edg=edg(), dsq=dsq()); sam.all <- names(lis.all[[1]])
+    sam <- sam.all[1:3]; sam.tar <- sam.all[2]; sam.vs <- sam.all[c(1, 3)]
+    meth <- 'edg'
+    df.up <- lis.all[[meth]][[sam[2]]][[1]]
+    df.dn <- lis.all[[meth]][[sam[2]]][[2]]
+    df.up.dn <- rbind(df.up, df.dn)
+    if (nrow(df.up.dn)==0) return("No SSGs detected.")
+    print(df.up.dn)
+    pat <- c(paste0('^', sam.tar, '_VS_', sam.vs, '_'), paste0('^', sam.vs, '_VS_', sam.tar, '_'))
+    df.up.dn <- df.up.dn[, c(1, grep(paste0(pat, collapse='|'), colnames(df.up.dn)))]
+    datatable(df.up.dn, selection=list(mode="multiple", target="row", selected=NULL), filter="top", extensions='Scroller', options=list(pageLength=5, lengthMenu=c(5, 15, 20), autoWidth=TRUE, scrollCollapse=TRUE, deferRender=TRUE, scrollX=TRUE, scrollY=200, scroller=TRUE), class='cell-border strip hover') %>% formatStyle(0, backgroundColor="orange", cursor='pointer')
+ 
+  })
+ 
+  output$ssg.sum <- renderPlot({ 
+
+    if (is.null(geneIn0())|is.null(edg())|is.null(dsq())) return(NULL)
+    if (input$fileIn!="Compute online") return(NULL)
+    if (is.null(geneIn0())) return(NULL)
+    per=0.5; width=0.85
+    lis.all <- list(edg(), dsq()); sam.all <- names(lis.all[[1]])
+    sam <- sam.all[1:3]
+    lis.aggr <- sig_frq(lis.all=lis.all, per=per, sam=sam)
+    ssg_sum(lis.aggr=lis.aggr, width=width)
+
+  })
+
+
+  output$a.table <- renderDataTable({
+    
+    if (is.null(geneIn0())|is.null(edg())|is.null(dsq())) return(NULL)
+    if (is.null(geneIn0())) return(NULL)
+    per=0.5
+    sam.con <- unique(colnames(geneIn()))[1:3]
+    lis.all <- list(edg=edg(), dsq=dsq()); sam.all <- names(lis.all[[1]])
+    lis.aggr.r <- sig_frq(lis.all=lis.all, per=per)
+    df.sum.up <- as.data.frame(lis.aggr.r[[1]][[1]][[1]])
+    df.sum.dn <- as.data.frame(lis.aggr.r[[1]][[1]][[2]])
+    df.sum.up$up <- 'up'; df.sum.dn$dn <- 'down'
+    rownames(df.sum.up) <- df.sum.up$up.g
+    rownames(df.sum.dn) <- df.sum.dn$dn.g
+    df.sum.up <- df.sum.up[, 3:2]
+    df.sum.dn <- df.sum.dn[, 3:2]
+    colnames(df.sum.up) <- colnames(df.sum.dn) <- c('Status', 'Frequency')
+    df.sum <- rbind(df.sum.up, df.sum.dn)
+
+    datatable(df.sum, selection=list(mode="multiple", target="row", selected=NULL), filter="top", extensions='Scroller', options=list(pageLength=5, lengthMenu=c(5, 15, 20), autoWidth=TRUE, scrollCollapse=TRUE, deferRender=TRUE, scrollX=TRUE, scrollY=200, scroller=TRUE), class='cell-border strip hover') %>% formatStyle(0, backgroundColor="orange", cursor='pointer')
+
+  })
+
+    expr.nor <- reactive({
+
+    if (is.null(geneIn0())|is.null(edg())|is.null(dsq())) return(NULL)
+      if (is.null(geneIn0())) return(NULL)
+      gen.rep <- geneIn0()[['gen.rep']]
+      se <- SummarizedExperiment(assays=list(expr=as.matrix(gen.rep)), colData=data.frame(fct=colnames(gen.rep)))
+      norm_aggr(se=se, method.norm='TMM', data.trans='log2', sample.factor='fct', rep.aggr='mean')
+
+    })
+
+
+    #id.r <- rownames(se)[1]
+
+    #plot_gen(se=se.nor, id=id.r)
+
+
+
+
   adj.mod <- reactive({ 
 
     if (input$fileIn=="Compute locally") {
@@ -1580,7 +1189,7 @@ shinyServer(function(input, output, session) {
         incProgress(0.5, detail="topological overlap matrix.")
         incProgress(0.1, detail="dynamic tree cutting.")
         se <- SummarizedExperiment(assays=list(expr=as.matrix(gene)))
-        adjMod <- adj_mod(se=se, type=type, minSize=input$min.size, dir=NULL)
+        adjMod <- adj_mod(data=se, type=type, minSize=input$min.size, dir=NULL)
         adj <- adjMod[['adj']]; mod4 <- adjMod[['mod']]
 
       }); return(list(adj=adj, mod4=mod4))
@@ -1635,7 +1244,7 @@ shinyServer(function(input, output, session) {
     withProgress(message="Matrix heatmap:", value=0, {
       incProgress(0.7, detail="Plotting...")
       se <- SummarizedExperiment(assays=list(expr=as.matrix(gene))); mods <- list(mod=mods); if (input$mat.scale=="By column/sample") scale.hm <- 'column' else if (input$mat.scale=="By row/gene") scale.hm <- 'row'
-      matrix_hm(geneID=input$gen.sel, se=se, adj.mod=mods, ds=input$ds, scale=scale.hm, main=paste0('Network module containing ', input$gen.sel), title.size=10, static=FALSE)
+      matrix_hm(geneID=input$gen.sel, data=se, adj.mod=mods, ds=input$ds, scale=scale.hm, main=paste0('Network module containing ', input$gen.sel), title.size=10, static=FALSE)
 
     })
 

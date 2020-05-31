@@ -5,7 +5,7 @@
 \title{Network}
 \usage{
 network(
-  geneID,
+  ID,
   data,
   ann = NULL,
   adj.mod,
@@ -24,11 +24,11 @@ network(
 )
 }
 \arguments{
-\item{geneID}{An identifier of assayed item (gene, protein, metabolite, etc) in the data.}
+\item{ID}{An identifier of assayed item (gene, protein, metabolite, etc) in the data.}
 
 \item{data}{A "data frame" or "SummarizedExperiment" object returned by the function \code{\link{filter_data}}, where rows are assayed items and columns are samples/conditions.}
 
-\item{ann}{Applies to "data" argument of "SummarizedExperiment". The column name corresponding to row item annotation in the "rowData" slot. Default is NULL.}
+\item{ann}{Applies to \code{data} argument of \code{SummarizedExperiment}. The column name corresponding to row item annotation in the \code{rowData} slot. Default is NULL.}
 
 \item{adj.mod}{The list of "adjacency matrix" and "module" definition retured by the function \code{\link{adj_mod}}.}
 
@@ -111,9 +111,9 @@ adj.mod <- adj_mod(data=se.fil.chk)
 ## Network 
 
 # Static network. In the graph, nodes are genes and edges are adjacencies between genes.
-network(geneID="ENSGALG00000019846", data=se.fil.chk, adj.mod=adj.mod, adj.min=0.5, vertex.label.cex=1.5, vertex.cex=4, static=TRUE)
+network(ID="ENSGALG00000019846", data=se.fil.chk, adj.mod=adj.mod, adj.min=0.5, vertex.label.cex=1.5, vertex.cex=4, static=TRUE)
 # Interactive network.   
-# network(geneID="ENSGALG00000019846", data=se.fil.chk, ann='ann', adj.mod=adj.mod, static=FALSE)
+# network(ID="ENSGALG00000019846", data=se.fil.chk, ann='ann', adj.mod=adj.mod, static=FALSE)
 }
 \references{
 Martin Morgan, Valerie Obenchain, Jim Hester and Hervé Pagès (2018). SummarizedExperiment: SummarizedExperiment container. R package version 1.10.1 \cr Csardi G, Nepusz T: The igraph software package for complex network research, InterJournal, Complex Systems 1695. 2006. http://igraph.org \cr R Core Team (2018). R: A language and environment for statistical computing. R Foundation for Statistical Computing, Vienna, Austria. URL https://www.R-project.org/ \cr Winston Chang, Joe Cheng, JJ Allaire, Yihui Xie and Jonathan McPherson (2018). shiny: Web Application Framework for R. R package version 1.1.0. https://CRAN.R-project.org/package=shiny \cr Winston Chang and Barbara Borges Ribeiro (2018). shinydashboard: Create Dashboards with 'Shiny'. R package version 0.7.1. https://CRAN.R-project.org/package=shinydashboard \cr Almende B.V., Benoit Thieurmel and Titouan Robert (2018). visNetwork: Network Visualization using 'vis.js' Library. R package version 2.0.4. https://CRAN.R-project.org/package=visNetwork
