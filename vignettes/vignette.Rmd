@@ -85,7 +85,7 @@ functionalities of the `spatialHeatmap` package are illustrated in Figure
 \@ref(fig:illus).   
 
 
-```{r illus, echo=FALSE, fig.wide=TRUE, fig.cap=("Functionality overview of spatialHeatmap. This figure illustrates the overview of spatialHeatmap functionality on a gene expression data, which could be generalized on many other data types. The accepted data classes are `SummarizedExperiment` (SE, A1), `data frame` (A2), `vector` (A3). If exist, replicates should be aggregated. Subfigure B is the aSVG image (see [aSVG](#term) below), where target spatial features (*e.g.* S1) are pre-annotated. The numeric values of target samples in data are mapped to matching features in aSVG and translated to colors (*e.g.* S1), and the resulting plots are spatial heatmaps (SHMs, subfigure C). The color scale on the left indicates gene expression levels and the legend plot on the right labels target spatial features. As a supplement to SHMs, the target gene is explored in the context of its coexpression cluster in form of matrix heatmap (subfigure D) and network (subfigure E). In addition to command-driven mode, all utilities are also combined as an interactive Shiny App, which would be convenient for users with litte programing exprience."), out.width="100%"}
+```{r illus, echo=FALSE, fig.wide=TRUE, fig.cap=("Functionality overview of spatialHeatmap. This figure illustrates the overview of spatialHeatmap functionality on a gene expression data, which could be generalized on many other data types. The accepted data classes are `SummarizedExperiment` (SE, A1), `data frame` (A2), `vector` (A3). If exist, replicates should be aggregated. Subfigure B is the aSVG image (see [aSVG](#term) below), where target spatial features (*e.g.* S1) are pre-annotated. The numeric values of target samples in data are mapped to matching features in aSVG and translated to colors (*e.g.* S1), and the resulting plots are spatial heatmaps (SHMs, subfigure C). The color scale on the left indicates gene expression levels and the legend plot on the right labels target spatial features. As a supplement to SHMs, target genes are visualized in the context of nearest neighbors in form of matrix heatmap (subfigure D), which are selected with correlation or distance measure. Next, network analysis is applied on all genes in matrix heatmap, and the module containing a target gene is shown as network graph (subfigure E). In addition to command-driven mode, all utilities are also combined as an interactive Shiny App, which would be convenient for users with litte programing exprience."), out.width="100%"}
 
 include_graphics('img/illustration.png')
 
@@ -1002,17 +1002,17 @@ similar expression profiles. This is achieved by identifying clusters and
 network modules using hierarchical clustering and network analysis. These approaches
 are described with the Arabidopsis Shoot data in this and the following sections, respectively.
 
-The nearest neighbors of target genes are selected based on the correlation coefficient or distance between genes. The default measure is Pearson correlation coefficient (PCC). The argument `p` is the proportion of genes showing most similar expression profiles with target genes. Only genes within this proportion are returned. Note, the nearest neighbors are selected for each target gene independently. In this example, the target genes are `RCA` and `HRE2`. The argument `ann` is the column name of gene annotation in `rowData` slot. It is only relevant if users want to see annotation when mousing over a node in the [interactive network](#inter_net) below, so it is optional to be assigned a value. Here `ann='Target.Description'` is set and the corresponding annotation is appended to selected nearest neighbors. 
+The nearest neighbors of target genes are selected based on the correlation coefficient or distance between genes. The default measure is Pearson correlation coefficient (PCC). The argument `p` is the proportion of genes showing most similar expression profiles with target genes. Only genes within this proportion are returned. Other two alternative threshold arguments are `n` and `v`. The former selects top `n` most similar genes, while the latter is a real PCC or distance value and only genes within this value are selected. Note, the nearest neighbors are selected for each target gene independently. In this example, the target genes are `RCA` and `HRE2`. The argument `ann` is the column name of gene annotation in `rowData` slot. It is only relevant if users want to see annotation when mousing over a node in the [interactive network](#inter_net) below, so it is optional to be assigned a value. Here `ann='Target.Description'` is set and the corresponding annotation is appended to selected nearest neighbors. 
 
 ```{r eval=TRUE, echo=TRUE, warnings=FALSE}
 sub.mat <- submatrix(data=se.fil.arab, ann='Target.Description', ID=c('RCA', 'HRE2'), p=0.1)
 ```
 
-The subsetted matrix (target genes and nearest neighbors) and the related PCC matrix are returned in a list, and partial is shown below.   
+The subsetted matrix (target genes and nearest neighbors) and the complete PCC matrix are returned in a list, and partial is shown below.   
 
 ```{r eval=TRUE, echo=TRUE, warnings=FALSE}
-sub.mat[['sub_matrix']][c('RCA', 'HRE2'), c(1:3, 37)]
-sub.mat[['cor_dist']][1:3, 1:3]
+sub.mat[['sub_matrix']][c('RCA', 'HRE2'), c(1:3, 37)] # Subsetted data matrix.
+sub.mat[['cor_dist']][1:3, 1:3] # Correlation matrix.
 ```
 
 <a name="mhm1"></a>
@@ -1096,7 +1096,7 @@ Setting `static=FALSE` launches the interactive network. There is an interactive
 If gene annotation is available in `rowData` slot and provided to `ann` argument, the annotation is seen by mousing over a node, *e.g* `ann=Target.Description`. If the expression matrix is a `data frame` and annotation is appended as a column, the function `network` will detect the annotation automatically.    
 
 ```{r eval=FALSE, echo=TRUE, warnings=FALSE}
-network(geneID="HRE2", data=se.fil.arab, ann='Target.Description', adj.mod=adj.mod, static=FALSE)
+network(ID="HRE2", data=se.fil.arab, ann='Target.Description', adj.mod=adj.mod, static=FALSE)
 ```
 
 # Shiny App {#shiny}
@@ -1371,11 +1371,15 @@ generated by the [EBI Gene Expression
 Group](https://github.com/ebi-gene-expression-group/anatomogram/tree/master/src/svg). It
 contains annatomical aSVG images from different species. These SVG images are 
 also used by the Expression Atlas database. In addition, the `spatialHeatmap` has its own 
-repository called [spatialHeatmap aSVG Repository](https://github.com/jianhaizhang/SVG_tutorial_file/tree/master/svg_repo), where some aSVG files developed in this project are already deposited (*e.g.* Figure \@ref(fig:shshm)). ^[It
-is confusing that you are not mentioning here your custom aSVG repos.]If users cannot find a target aSVG 
+repository called [spatialHeatmap aSVG Repository](https://github.com/jianhaizhang/SVG_tutorial_file/tree/master/svg_repo), where some aSVG files developed in this project are already deposited (*e.g.* Figure \@ref(fig:shshm)).  ^[It
+is confusing that you are not mentioning here your custom aSVG repos.] 
+
+If users cannot find a target aSVG 
 in the two repositories, we have developed a step-by-step [SVG
 tutorial](https://jianhaizhang.github.io/SVG_tutorial_file/) for creating
-custom aSVG images. We will add more aSVGs to our repository in the future and users are welcome to deposit their own aSVGs there to share with other spatialHeatmap users.  
+custom aSVG images. For example, the [BAR eFP browser](http://bar.utoronto.ca/) at University of Toronto contains many anotomical images, and these images can be used as templates in the SVG tutorial to make custom aSVGs.  
+
+We will add more aSVGs to our repository in the future and users are welcome to deposit their own aSVGs there to share with other spatialHeatmap users.   
 
 </font>
 

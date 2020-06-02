@@ -9,6 +9,8 @@ submatrix(
   ann = NULL,
   ID,
   p = 0.3,
+  n = NULL,
+  v = NULL,
   fun = "cor",
   cor.absolute = FALSE,
   arg.cor = list(method = "pearson"),
@@ -23,6 +25,10 @@ submatrix(
 \item{ID}{A vector of target gene identifiers.}
 
 \item{p}{The proportion of top genes with most similar expression profiles with the target genes. Only genes within this proportion are returned. Default is 0.3. It applies to each target gene independently, and selected genes of each target gene are all returned.}
+
+\item{n}{An integer of top genes with most similar expression profiles with the target genes. Only genes within this number are returned. Default is NULL. It applies to each target gene independently, and selected genes of each target gene are all returned.}
+
+\item{v}{A numeric of correlation (-1 to 1) or distance (>=0) threshold to select genes with the most similar expression profiles with the target genes. If \code{fun='cor'}, only genes within correlation coefficient larger than \code{v} are returned. If \code{fun='dist'}, only genes with distance less than \code{v} are returned. Default is NULL. It applies to each target gene independently, and selected genes of each target gene are all returned.}
 
 \item{fun}{The function to calculate similarity measure, 'cor' or 'dist', corresponding to \code{\link[stats]{cor}} or \code{\link[stats]{dist}} from the "stats" package respectively. Default is 'cor'.}
 

@@ -4,12 +4,14 @@
 #' @param data A \code{data frame} or \code{SummarizedExperiment} object returned by the function \code{\link{filter_data}}, where the columns and rows of the data matrix are samples/conditions and assayed items (e.g. genes, proteins) respectively. Since this function builds on coexpression analysis, variables of sample/condition should be at least 5. Otherwise, the results are not reliable. 
 #' @param ID A vector of target gene identifiers.
 #' @param p The proportion of top genes with most similar expression profiles with the target genes. Only genes within this proportion are returned. Default is 0.3. It applies to each target gene independently, and selected genes of each target gene are all returned.
+#' @param n An integer of top genes with most similar expression profiles with the target genes. Only genes within this number are returned. Default is NULL. It applies to each target gene independently, and selected genes of each target gene are all returned.
+#' @param v A numeric of correlation (-1 to 1) or distance (>=0) threshold to select genes with the most similar expression profiles with the target genes. If \code{fun='cor'}, only genes within correlation coefficient larger than \code{v} are returned. If \code{fun='dist'}, only genes with distance less than \code{v} are returned. Default is NULL. It applies to each target gene independently, and selected genes of each target gene are all returned.
 #' @param fun The function to calculate similarity measure, 'cor' or 'dist', corresponding to \code{\link[stats]{cor}} or \code{\link[stats]{dist}} from the "stats" package respectively. Default is 'cor'.
 #' @param cor.absolute Logical, \code{TRUE} or \code{FALSE}. Use absolute values or not. Only applies to \code{fun='cor'}. Default is \code{FALSE}, meaning the correlation coefficient preserves the negative sign when selecting genes. 
 #' @param arg.cor A list of arguments passed to \code{\link[stats]{cor}} in the "stats" package. Default is \code{list(method="pearson")}.
 #' @param arg.dist A list of arguments passed to \code{\link[stats]{dist}} in the "stats" package. Default is \code{list(method="euclidean")}.
 #' @inheritParams network
-#' @return A two-componet list containing the subsetted matrix of target genes and selected genes, and the correlation matrix or distance matrix of the target genes and selected genes.
+#' @return A two-componet list containing the subsetted matrix of target genes and selected genes, and the complete correlation matrix or distance matrix.
 
 #' @examples
 
@@ -73,7 +75,7 @@
 #' @importFrom SummarizedExperiment assay rowData
 #' @importFrom stats cor dist
 
-submatrix <- function(data, ann=NULL, ID, p=0.3, fun='cor', cor.absolute=FALSE, arg.cor=list(method="pearson"), arg.dist=list(method="euclidean")) {
+submatrix <- function(data, ann=NULL, ID, p=0.3, n=NULL, v=NULL, fun='cor', cor.absolute=FALSE, arg.cor=list(method="pearson"), arg.dist=list(method="euclidean")) {
 
   options(stringsAsFactors=FALSE)
   if (is(data, 'data.frame')|is(data, 'matrix')|is(data, 'DFrame')) {
@@ -95,32 +97,50 @@ submatrix <- function(data, ann=NULL, ID, p=0.3, fun='cor', cor.absolute=FALSE, 
 
   na <- NULL; len <- nrow(data)
   if (len>=50000) cat('More than 50,000 rows are detected in data. Computation may take a long time! \n')
+  if (sum(c(!is.null(p), !is.null(n), !is.null(v)))>1) return('Please only use one of \'p\', \'n\', \'v\' as the threshold!')
+   
+  # Function to extract nearest genes.
+  sub_na <- function() {
+
+    na <- NULL; for (i in ID) {
+
+      if (!is.null(p)) {
+  
+        vec <- sort(m[, i]); thr <- vec[len-floor(len*p)+1]
+        na0 <- names(vec[vec >= thr]); na <- c(na, na0)
+
+      } else if (!is.null(n)) {
+
+        vec <- sort(m[, i]); thr <- vec[len-n+1]
+        na0 <- names(vec[vec >= thr]); na <- c(na, na0)
+
+      } else if (!is.null(v)) {
+  
+        vec <- m[, i]; na0 <- names(vec[vec >= v]); na <- c(na, na0)
+
+      }
+
+    }; na <- unique(na); return(na)
+
+  }
+
   if (fun=='cor') {
 
     m <- do.call(cor, c(x=list(t(data)), arg.cor))
-    if (cor.absolute==TRUE) m <- abs(m)
-    for (i in ID) {
+    if (cor.absolute==TRUE) { m1 <- m; m <- abs(m) }
+    na <- sub_na()
+    if (cor.absolute==TRUE) m <- m1
 
-      vec <- sort(m[, i]); thr <- vec[len-floor(len*p)+1]
-      na0 <- names(vec[vec >= thr]); na <- c(na, na0)
-
-    } 
-  
   } else if (fun=='dist') { 
     
-    m <- as.matrix(do.call(dist, c(x=list(data), arg.dist)))
-    for (i in ID) {
-    
-      vec <- sort(m[, i]); thr <- vec[ceiling(len*p)]
-      na0 <- names(vec[vec <= thr]); na <- c(na, na0)
+    m <- -as.matrix(do.call(dist, c(x=list(data), arg.dist)))
+    if (!is.null(v)) v <- -v
+    na <- sub_na(); m <- -m
 
-    }
-
-  }; na <- unique(na); sub.m <- m[na, na] 
-  return(list(sub_matrix=cbind(data[na, ], ann[na, , drop=FALSE]), cor_dist=sub.m))
+  }; sub.m <- m[na, na] 
+  return(list(sub_matrix=cbind(data[na, ], ann[na, , drop=FALSE]), cor_dist=m))
 
 }
-
 
 
 
