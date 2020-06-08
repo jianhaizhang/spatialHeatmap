@@ -2,7 +2,7 @@
 % Please edit documentation in R/submatrix.R
 \name{submatrix}
 \alias{submatrix}
-\title{Subset Matrix According to Expression Similarity with Target Genes}
+\title{Subset Data Matrix According to Expression Similarity with Target Assayed Items}
 \usage{
 submatrix(
   data,
@@ -18,38 +18,38 @@ submatrix(
 )
 }
 \arguments{
-\item{data}{A \code{data frame} or \code{SummarizedExperiment} object returned by the function \code{\link{filter_data}}, where the columns and rows of the data matrix are samples/conditions and assayed items (e.g. genes, proteins) respectively. Since this function builds on coexpression analysis, variables of sample/condition should be at least 5. Otherwise, the results are not reliable.}
+\item{data}{A \code{data frame} or \code{SummarizedExperiment} object returned by the function \code{\link{filter_data}}, where the columns and rows of the data matrix are samples/conditions and assayed items (\emph{e.g.} genes, proteins) respectively. Since this function builds on coexpression analysis, variables of sample/condition should be at least 5. Otherwise, the results are not reliable.}
 
 \item{ann}{Applies to \code{data} argument of \code{SummarizedExperiment}. The column name corresponding to row item annotation in the \code{rowData} slot. Default is NULL.}
 
 \item{ID}{A vector of target gene identifiers.}
 
-\item{p}{The proportion of top genes with most similar expression profiles with the target genes. Only genes within this proportion are returned. Default is 0.3. It applies to each target gene independently, and selected genes of each target gene are all returned.}
+\item{p}{The proportion of top assayed items with most similar expression profiles with the target items. Only items within this proportion are returned. Default is 0.3. It applies to each target item independently, and selected items of each target are returned together.}
 
-\item{n}{An integer of top genes with most similar expression profiles with the target genes. Only genes within this number are returned. Default is NULL. It applies to each target gene independently, and selected genes of each target gene are all returned.}
+\item{n}{An integer of top items with most similar expression profiles with the target items. Only items within this number are returned. Default is NULL. It applies to each target independently, and selected items of each target are returned together.}
 
-\item{v}{A numeric of correlation (-1 to 1) or distance (>=0) threshold to select genes with the most similar expression profiles with the target genes. If \code{fun='cor'}, only genes within correlation coefficient larger than \code{v} are returned. If \code{fun='dist'}, only genes with distance less than \code{v} are returned. Default is NULL. It applies to each target gene independently, and selected genes of each target gene are all returned.}
+\item{v}{A numeric of correlation (-1 to 1) or distance (>=0) threshold to select items with the most similar expression profiles with the target items. If \code{fun='cor'}, only items with correlation coefficient larger than \code{v} are returned. If \code{fun='dist'}, only items with distance less than \code{v} are returned. Default is NULL. It applies to each target independently, and selected items of each target are returned together.}
 
-\item{fun}{The function to calculate similarity measure, 'cor' or 'dist', corresponding to \code{\link[stats]{cor}} or \code{\link[stats]{dist}} from the "stats" package respectively. Default is 'cor'.}
+\item{fun}{The function to calculate similarity/distance measure, 'cor' or 'dist', corresponding to \code{\link[stats]{cor}} or \code{\link[stats]{dist}} from the "stats" package respectively. Default is 'cor'.}
 
-\item{cor.absolute}{Logical, \code{TRUE} or \code{FALSE}. Use absolute values or not. Only applies to \code{fun='cor'}. Default is \code{FALSE}, meaning the correlation coefficient preserves the negative sign when selecting genes.}
+\item{cor.absolute}{Logical, TRUE or FALSE. Use absolute values or not. Only applies to \code{fun='cor'}. Default is FALSE, meaning the correlation coefficient preserves the negative sign when selecting items.}
 
 \item{arg.cor}{A list of arguments passed to \code{\link[stats]{cor}} in the "stats" package. Default is \code{list(method="pearson")}.}
 
 \item{arg.dist}{A list of arguments passed to \code{\link[stats]{dist}} in the "stats" package. Default is \code{list(method="euclidean")}.}
 }
 \value{
-A two-componet list containing the subsetted matrix of target genes and selected genes, and the correlation matrix or distance matrix of the target genes and selected genes.
+A two-componet list containing the subsetted matrix of target items and their nearest neighbors, and the complete correlation matrix or distance matrix.
 }
 \description{
-Given a vector of target gene identifiers, this function selects genes with similar expression profiles for every target gene. The selection is based on correlation matrix or distance matrix generated by \code{\link[stats]{cor}} or \code{\link[stats]{dist}} from the "stats" package respectively. The argument \code{p} sets the proportion of top most similar genes. Only genes within this proportion are selected.
+Given a vector of target assayed items (gene, protein, metabolite, \emph{etc}), this function selects items with similar expression profiles for every target. The selection is based on correlation matrix or distance matrix generated by \code{\link[stats]{cor}} or \code{\link[stats]{dist}} from the "stats" package respectively. One of there alternative arguments \code{p}, \code{n}, \code{v} sets a cutoff for the selection.
 }
 \examples{
-## In the following example code, the 2 toy data come from an RNA-seq analysis on developments of 7 chicken organs under 9 time points (Cardoso-Moreira et al. 2019). The complete raw count data are downloaded with the accession number "E-MTAB-6769" using the R package ExpressionAtlas (Keays 2019). Both toy data are generated by truncating the complete data. For conveninece, they are included in this package. Toy data1 is used as a "data frame" input to exemplify data with simple samples/conditions, while toy data2 as "SummarizedExperiment" to illustrate data involving complex samples/conditions.   
+## In the following examples, the 2 toy data come from an RNA-seq analysis on developments of 7 chicken organs under 9 time points (Cardoso-Moreira et al. 2019). For conveninece, they are included in this package. The complete raw count data are downloaded using the R package ExpressionAtlas (Keays 2019) with the accession number "E-MTAB-6769". Toy data1 is used as a "data frame" input to exemplify data with simple samples/conditions, while toy data2 as "SummarizedExperiment" to illustrate data involving complex samples/conditions.   
 
 ## Set up toy data.
 
-# Access the toy data1.
+# Access toy data1.
 cnt.chk.simple <- system.file('extdata/shinyApp/example/count_chicken_simple.txt', package='spatialHeatmap')
 df.chk <- read.table(cnt.chk.simple, header=TRUE, row.names=1, sep='\t', check.names=FALSE)
 # Note the naming scheme "sample__condition" in columns, where "sample" and "condition" stands for organs and time points respectively.
@@ -60,13 +60,13 @@ ann <- paste0('ann', seq_len(nrow(df.chk))); ann[1:3]
 df.chk <- cbind(df.chk, ann=ann)
 df.chk[1:3, ]
 
-# Access the toy data2. 
+# Access toy data2. 
 cnt.chk <- system.file('extdata/shinyApp/example/count_chicken.txt', package='spatialHeatmap')
 count.chk <- read.table(cnt.chk, header=TRUE, row.names=1, sep='\t')
 count.chk[1:3, 1:5]
 
-# A targets file is required for toy data2. It should be made based on the experiment design, which is accessible through the accession number "E-MTAB-6769" in R package ExpressionAtlas. The completed targets file is included in this package. 
-# Access the targets file. 
+# A targets file describing samples and conditions is required for toy data2. It should be made based on the experiment design, which is accessible through the accession number "E-MTAB-6769" in R package ExpressionAtlas. An example targets file is included in this package. 
+# Access the example targets file. 
 tar.chk <- system.file('extdata/shinyApp/example/target_chicken.txt', package='spatialHeatmap')
 target.chk <- read.table(tar.chk, header=TRUE, row.names=1, sep='\t')
 # Note every column in toy data2 corresponds with a row in targets file. 
@@ -77,18 +77,33 @@ se.chk <- SummarizedExperiment(assay=count.chk, colData=target.chk)
 # The "rowData" slot can store a data frame of gene annotation, but not required.
 rowData(se.chk) <- DataFrame(ann=ann)
 
-## As conventions, sequencing count data should be normalized, aggregated, and filtered fo reduce noise. In the following, the two toy data are used in the same way. For simplicity, only toy data2 is illustrated.
+## As conventions, raw sequencing count data should be normalized, aggregated, and filtered fo reduce noise.
 
+# Normalize count data.
 # The normalizing function "calcNormFactors" (McCarthy et al. 2012) with default settings is used.  
+df.nor.chk <- norm_data(data=df.chk, norm.fun='CNF', data.trans='log2')
 se.nor.chk <- norm_data(data=se.chk, norm.fun='CNF', data.trans='log2')
-# Aggregate "sample__condition" replicates in toy data2, where "sample" is "organism_part" and "condition" is "age". 
+# Aggregate count data.
+# Aggregate "sample__condition" replicates in toy data1.
+df.aggr.chk <- aggr_rep(data=df.nor.chk, aggr='mean')
+df.aggr.chk[1:3, ]
+# Aggregate "sample_condition" replicates in toy data2, where "sample" is "organism_part" and "condition" is "age". 
 se.aggr.chk <- aggr_rep(data=se.nor.chk, sam.factor='organism_part', con.factor='age', aggr='mean')
 assay(se.aggr.chk)[1:3, 1:3]
 # Filter genes with low counts and low variance. Genes with counts over 5 (log2 unit) in at least 1\% samples (pOA), and coefficient of variance (CV) between 0.2 and 100 are retained.
+# Filter toy data1.
+df.fil.chk <- filter_data(data=df.aggr.chk, pOA=c(0.01, 5), CV=c(0.2, 100), dir=NULL)
+# Filter toy data2.
 se.fil.chk <- filter_data(data=se.aggr.chk, sam.factor='organism_part', con.factor='age', pOA=c(0.01, 5), CV=c(0.2, 100), dir=NULL)
 
-## Select genes showing most similar expression profiles with target genes.
-sum.mat <- submatrix(data=se.fil.chk, ID=c('ENSGALG00000019846', 'ENSGALG00000000112'))
+## Select nearest neighbors for target genes 'ENSGALG00000019846' and 'ENSGALG00000000112'.
+# Toy data1.
+df.sub.mat <- submatrix(data=df.fil.chk, ID=c('ENSGALG00000019846', 'ENSGALG00000000112'), p=0.1)
+# Toy data2.
+se.sub.mat <- submatrix(data=se.fil.chk, ann='ann', ID=c('ENSGALG00000019846', 'ENSGALG00000000112'), p=0.1) 
+# The subsetted matrix and the complete correlation matrix are returned in a list, and partial is shown below.
+se.sub.mat[['sub_matrix']][c('ENSGALG00000019846', 'ENSGALG00000000112'), c(1:2, 63)] # Subsetted matrix.
+se.sub.mat[['cor_dist']][c('ENSGALG00000019846', 'ENSGALG00000000112'), 1:3] # Correlation matrix.
 }
 \references{
 Langfelder P and Horvath S, WGCNA: an R package for weighted correlation network analysis. BMC Bioinformatics 2008, 9:559 doi:10.1186/1471-2105-9-559 \cr Peter Langfelder, Steve Horvath (2012). Fast R Functions for Robust Correlations and Hierarchical Clustering. Journal of Statistical Software, 46(11), 1-17. URL http://www.jstatsoft.org/v46/i11/ \cr R Core Team (2018). R: A language and environment for statistical computing. R Foundation for Statistical Computing, Vienna, Austria. URL https://www.R-project.org/ \cr Peter Langfelder, Bin Zhang and with contributions from Steve Horvath (2016). dynamicTreeCut: Methods for Detection of Clusters in Hierarchical Clustering Dendrograms. R package version 1.63-1. https://CRAN.R-project.org/package=dynamicTreeCut \cr Martin Morgan, Valerie Obenchain, Jim Hester and Hervé Pagès (2018). SummarizedExperiment: SummarizedExperiment container. R package version 1.10.1 

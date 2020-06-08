@@ -36,27 +36,27 @@ spatial_hm(
 )
 }
 \arguments{
-\item{svg.path}{The path of the aSVG image. E.g.: system.file("extdata/shinyApp/example", "gallus_gallus.svg", package="spatialHeatmap"). See \code{\link{return_feature}} for details on how to download aSVGs from the EBI aSVG repository (https://github.com/ebi-gene-expression-group/anatomogram/tree/master/src/svg) directly.}
+\item{svg.path}{The path of the aSVG image. \emph{E.g.}: system.file("extdata/shinyApp/example", "gallus_gallus.svg", package="spatialHeatmap"). See \code{\link{return_feature}} for details on how to download aSVGs from the EBI aSVG repository (https://github.com/ebi-gene-expression-group/anatomogram/tree/master/src/svg) directly.}
 
-\item{data}{An object of "data frame" or "SummarizedExperiment". If "data frame", the columns and rows should be sample/conditions and assayed items (e.g. genes, proteins, metabolites) respectively. The column names should follow the naming scheme "sample__condition". The "sample" is a general term and stands for cells, tissues, organs, etc. where the values are measured from. The "condition" is also a general term and refers to experiment treatments applied to "sample" such as drug dosage, temperature, time points, etc. If certain samples are not expected to be colored in the "spatial heatmap" (see \code{\link{spatial_hm}}), they are not required to follow this naming scheme. Since double underscore "__" is a reserved separator, it should not be used in any "sample" or "condition". In the downstream interactive network, if users want to see node annotation by mousing over a node, a column of row item annotation could be optionally appended to the last column. See \code{\link{network}} for details. \cr In the case of "SummarizedExperiment", the "assays" slot stores a data matrix with row and column names being assayed items and sample/conditions, respectively. Similarly, the "rowData" slot could optionally store a data frame of row item anntation. The "colData" slot contains a data frame and usually has a column of sample replicates and/or a column of condition replicates. Similarly, the reserved separator "__" should not be used in the sample and condition columns. It is crucial that replicate names of the same sample or condition must be identical. E.g. If sampleA has 3 replicates, "sampleA", "sampleA", "sampleA" is expected while "sampleA1", "sampleA2", "sampleA3" is regarded as 3 different samples. If original column names in the "assay" slot already follow the "sample__condition" scheme, then the "colData" slot is not required at all. \cr In the function \code{\link{spatial_hm}}, this argument can also be a numeric vector. In this vector, every value should be named, and values expected to color the "spatial heatmap" should follow the naming scheme "sample__condition". \cr In certain cases, there is no condition associated with data. Then in the naming scheme of "data frame" or "vector", the "__condition" part could be discarded. In "SummarizedExperiment", the "condition" column could be discarded in "colData" slot. Regardless of data class, "__" is still not allowed in "sample".}
+\item{data}{An object of \code{data frame} or \code{SummarizedExperiment}. In either case, the columns and rows should be sample/conditions and assayed items (\emph{e.g.} genes, proteins, metabolites) respectively. If \code{data frame}, the column names should follow the naming scheme "sample__condition". The "sample" is a general term and stands for cells, tissues, organs, \emph{etc}. where the values are measured. The "condition" is also a general term and refers to experiment treatments applied to "sample" such as drug dosage, temperature, time points, \emph{etc}. If certain samples are not expected to be colored in "spatial heatmaps" (see \code{\link{spatial_hm}}), they are not required to follow this naming scheme. In the downstream interactive network (see \code{\link{network}}), if users want to see node annotation by mousing over a node, a column of row item annotation could be optionally appended to the last column. \cr In the case of \code{SummarizedExperiment}, the \code{assays} slot stores the data matrix. Similarly, the \code{rowData} slot could optionally store a data frame of row item anntation. The \code{colData} slot usually contains a data frame with one column of sample replicates and one column of condition replicates. It is crucial that replicate names of the same sample or condition must be identical. \emph{E.g.} If sampleA has 3 replicates, "sampleA", "sampleA", "sampleA" is expected while "sampleA1", "sampleA2", "sampleA3" is regarded as 3 different samples. If original column names in the \code{assay} slot already follow the "sample__condition" scheme, then the \code{colData} slot is not required at all. \cr In the function \code{\link{spatial_hm}}, this argument can also be a numeric vector. In this vector, every value should be named, and values expected to color the "spatial heatmaps" should follow the naming scheme "sample__condition". \cr In certain cases, there is no condition associated with data. Then in the naming scheme of \code{data frame} or \code{vector}, the "__condition" part could be discarded. In \code{SummarizedExperiment}, the "condition" column could be discarded in \code{colData} slot. \cr Note, regardless of data class the double underscore is a special string that is reserved for specific purposes in "spatialHeatmap", and thus should be avoided for naming feature/samples and conditions.}
 
-\item{sam.factor}{The column name corresponding to samples in the "colData" of "SummarizedExperiment". If the original column names in the "assay" slot already follows the schme "sample__condition", then the "colData" slot is not required and accordingly this argument could be NULL.}
+\item{sam.factor}{The column name corresponding to samples in the \code{colData} of \code{SummarizedExperiment}. If the original column names in the \code{assay} slot already follows the scheme "sample__condition", then the \code{colData} slot is not required and accordingly this argument could be NULL.}
 
-\item{con.factor}{The column name corresponding to conditions in the "colData" of "SummarizedExperiment". Could be NULL if column names of in the "assay" slot already follows the schme "sample__condition", or no condition is associated with the data.}
+\item{con.factor}{The column name corresponding to conditions in the \code{colData} of \code{SummarizedExperiment}. Could be NULL if column names of in the \code{assay} slot already follows the scheme "sample__condition", or no condition is associated with the data.}
 
-\item{ID}{A character vector of items (e.g. genes, proteins) whose assayed values are used to color the aSVG.}
+\item{ID}{A character vector of assyed items (\emph{e.g.} genes, proteins) whose values are used to color the aSVG.}
 
 \item{col.com}{A character vector of the color components used to build the color scale. The default is c('purple', 'yellow', 'blue').}
 
-\item{col.bar}{"selected" or "all", the former uses values of input items to build the colour scale while the latter uses all values from the data. The default is "selected".}
+\item{col.bar}{"selected" or "all", the former uses values of input assayed items to build the color scale while the latter uses all values from the data. The default is "selected".}
 
-\item{bar.width}{The width of colour bar. Default if 0.08.}
+\item{bar.width}{The width of color bar. Default if 0.08.}
 
 \item{bar.title.size}{A numeric of color bar title size. Default is 10.}
 
 \item{data.trans}{"log2", "exp2", or NULL. If colors across samples cannot distinguish due to low variance or outliers, transform the data by "log2" or "2-base expoent" (exp2). Default is NULL (data will not be transformed).}
 
-\item{tis.trans}{A character vector of tissue names. These tissues cover other tissues and should be set transparent. E.g c("epidermis", "cortex").}
+\item{tis.trans}{A character vector of tissue/spatial feature identifiers. These tissues may cover other tissues and should be set transparent. \emph{E.g} c("brain", "heart").}
 
 \item{width}{A numeric of each subplot width. The default is 1.}
 
@@ -66,15 +66,15 @@ spatial_hm(
 
 \item{sub.title.size}{A numeric. The subtitle font size of each individual spatial heatmap. Default is 11.}
 
-\item{lay.shm}{"gene" or "con", the former organizes spatial heatmaps by genes, proteins, metabolites, etc. while the latter by conditions/treatments applied to experiments.}
+\item{lay.shm}{"gene" or "con", the former organizes spatial heatmaps by genes, proteins, metabolites, \emph{etc}. while the latter by conditions/treatments applied to experiments.}
 
-\item{ncol}{Number of columns to display the spatial heatmaps, not including the legend plot.}
+\item{ncol}{An integer, number of columns to display the spatial heatmaps, not including the legend plot.}
 
-\item{sam.legend}{"identical", "all", or a character vector of tissue names from the SVG image to show in the legend plot. Default is "identical", meaning all the identical tissues between the data matrix and SVG image. If "all", all tissues in the SVG image are shown.}
+\item{sam.legend}{"identical", "all", or a character vector of tissue names from the aSVG image to show in the legend plot. Default is "identical", meaning all the identical/matching tissues between the data matrix and aSVG image. If "all", all tissues in the aSVG image are shown.}
 
-\item{legend.ncol}{An integer, the total column number of the items in the legend. Default is NULL.}
+\item{legend.ncol}{An integer, the total columns of items in the legend. Default is NULL.}
 
-\item{legend.nrow}{An integer, the total row number of the items in the legend. Default is NULL.}
+\item{legend.nrow}{An integer, the total rows of the items in the legend. Default is NULL.}
 
 \item{legend.position}{the position of legends ("none", "left", "right",
 "bottom", "top", or two-element numeric vector)}
@@ -86,19 +86,19 @@ spatial_hm(
 
 \item{legend.label.size}{A numeric. Default is 8. Size of the legend label.}
 
-\item{line.size}{A numeric. The size of the shape outline. Default is 0.2.}
+\item{line.size}{A numeric. The size of the shape outlines. Default is 0.2.}
 
-\item{line.color}{A character. The color of shape outline. Default is "grey70".}
+\item{line.color}{A character. The color of shape outlines. Default is "grey70".}
 
 \item{verbose}{Logical, FALSE or TRUE. If TRUE the samples in data not colored in spatial heatmaps are printed to R console. Default is TRUE.}
 
 \item{...}{Other arguments passed to \code{\link[ggplot2]{ggplot}}.}
 }
 \value{
-An image of spatial heatmap(s), and a data frame of mapping between assayed samples and aSVG features.
+An image of spatial heatmap(s), a two-component list of the spatial heatmap(s) in \code{ggplot} format and a data frame of mapping between assayed samples and aSVG features.
 }
 \description{
-The input are a pair of aSVG image and formatted data ("vector", "data frame", "SummarizedExperiment"). The former is an annotated SVG file (aSVG) where spatial features represented by shapes are labeled according specific conventions, while the latter are numeric values measured from these spatial features and organised in specific formats. In biological cases, aSVGs are anatomical or cell structures, and data are measurements of genes, proteins, metabolites, etc. in different samples (e.g. cells, tissues). Data are mapped to the aSVG according to identifiers of assay samples and aSVG features. Only the data from samples having matching counterparts in aSVG features are mapped. The mapped features are filled with colors translated from the data, and the resulting images are termed spatial heatmaps. \cr This function is designed as much flexible as to achieve optimal visualization. For example, subplots of spatial heatmaps can be organized by gene or condition for easy comparison, in multi-layer anotomical structures selected tissues can be set transparent to expose burried features, color scale is customizable to highlight difference among features. This function also works with many other types of spatial data, such as population data plotted to geographic maps.
+The input are a pair of aSVG image and formatted data (\code{vector}, \code{data frame}, \code{SummarizedExperiment}). The former is an annotated SVG file (aSVG) where spatial features are represented by shapes and assigned unique identifiers, while the latter are numeric values measured from these spatial features and organized in specific formats. In biological cases, aSVGs are anatomical or cell structures, and data are measurements of genes, proteins, metabolites, \emph{etc}. in different samples (\emph{e.g.} cells, tissues). Data are mapped to the aSVG according to identifiers of assay samples and aSVG features. Only the data from samples having matching counterparts in aSVG features are mapped. The mapped features are filled with colors translated from the data, and the resulting images are termed spatial heatmaps. \cr This function is designed as much flexible as to achieve optimal visualization. For example, subplots of spatial heatmaps can be organized by gene or condition for easy comparison, in multi-layer anotomical structures selected tissues can be set transparent to expose burried features, color scale is customizable to highlight difference among features. This function also works with many other types of spatial data, such as population data plotted to geographic maps.
 }
 \section{Details}{
 
@@ -106,11 +106,11 @@ See the package vignette (\code{browseVignettes('spatialHeatmap')}).
 }
 
 \examples{
-## In the following example code, the 2 toy data come from an RNA-seq analysis on developments of 7 chicken organs under 9 time points (Cardoso-Moreira et al. 2019). The complete raw count data are downloaded with the accession number "E-MTAB-6769" using the R package ExpressionAtlas (Keays 2019). Both toy data are generated by truncating the complete data. For conveninece, they are included in this package. Toy data1 is used as a "data frame" input to exemplify data with simple samples/conditions, while toy data2 as "SummarizedExperiment" to illustrate data involving complex samples/conditions.   
+## In the following examples, the 2 toy data come from an RNA-seq analysis on developments of 7 chicken organs under 9 time points (Cardoso-Moreira et al. 2019). For conveninece, they are included in this package. The complete raw count data are downloaded using the R package ExpressionAtlas (Keays 2019) with the accession number "E-MTAB-6769". Toy data1 is used as a "data frame" input to exemplify data with simple samples/conditions, while toy data2 as "SummarizedExperiment" to illustrate data involving complex samples/conditions.     
 
 ## Set up toy data.
 
-# Access the toy data1.
+# Access toy data1.
 cnt.chk.simple <- system.file('extdata/shinyApp/example/count_chicken_simple.txt', package='spatialHeatmap')
 df.chk <- read.table(cnt.chk.simple, header=TRUE, row.names=1, sep='\t', check.names=FALSE)
 # Note the naming scheme "sample__condition" in columns, where "sample" and "condition" stands for organs and time points respectively.
@@ -120,11 +120,11 @@ ann <- paste0('ann', seq_len(nrow(df.chk))); ann[1:3]
 df.chk <- cbind(df.chk, ann=ann)
 df.chk[1:3, ]
 
-# Access the toy data2. 
+# Access toy data2. 
 cnt.chk <- system.file('extdata/shinyApp/example/count_chicken.txt', package='spatialHeatmap')
 count.chk <- read.table(cnt.chk, header=TRUE, row.names=1, sep='\t')
 count.chk[1:3, 1:5]
-# A targets file is required for toy data2. It should be made based on the experiment design, which is accessible through the accession number "E-MTAB-6769" in R package ExpressionAtlas. The completed targets file is included in this package. 
+# A targets file describing samples and conditions is required for toy data2. It should be made based on the experiment design, which is accessible through the accession number "E-MTAB-6769" in R package ExpressionAtlas. An example targets file is included in this package.  
 # Access the targets file. 
 tar.chk <- system.file('extdata/shinyApp/example/target_chicken.txt', package='spatialHeatmap')
 target.chk <- read.table(tar.chk, header=TRUE, row.names=1, sep='\t')
@@ -136,7 +136,7 @@ se.chk <- SummarizedExperiment(assay=count.chk, colData=target.chk)
 # The "rowData" slot can store a data frame of gene annotation, but not required.
 rowData(se.chk) <- DataFrame(ann=ann)
 
-## As conventions, sequencing count data should be normalized, aggregated, and filtered fo reduce noise.
+## As conventions, raw sequencing count data should be normalized, aggregated, and filtered fo reduce noise.
 
 # Normalize count data.
 # The normalizing function "calcNormFactors" (McCarthy et al. 2012) with default settings is used.  

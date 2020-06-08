@@ -7,18 +7,18 @@
 #' @param ID All gene ids selected after the App is launched.
 #' @param cols All the color codes used to construct the color bar.
 #' @param tis.path All the tissues/paths extracted from the SVG.
-#' @param tis.trans A character vector of tissue names. These tissues cover other tissues and should be set transparent. E.g c("epidermis", "cortex").
+#' @param tis.trans A character vector of tissue/spatial feature identifiers. These tissues may cover other tissues and should be set transparent. \emph{E.g} c("brain", "heart").
 #' @param sub.title.size A numeric. The subtitle font size of each individual spatial heatmap. Default is 11.
-#' @param sam.legend "identical", "all", or a character vector of tissue names from the SVG image to show in the legend plot. Default is "identical", meaning all the identical tissues between the data matrix and SVG image. If "all", all tissues in the SVG image are shown.
+#' @param sam.legend "identical", "all", or a character vector of tissue names from the aSVG image to show in the legend plot. Default is "identical", meaning all the identical/matching tissues between the data matrix and aSVG image. If "all", all tissues in the aSVG image are shown.
 #' @param legend.col A character vector of colors for the legend keys. The lenght must be equal to the number of target samples shown in the legend. 
 #' @param legend.title A character, the legend title. Default is NULL.
-#' @param legend.ncol An integer, the total column number of the items in the legend. Default is NULL.
-#' @param legend.nrow An integer, the total row number of the items in the legend. Default is NULL. 
+#' @param legend.ncol An integer, the total columns of items in the legend. Default is NULL.
+#' @param legend.nrow An integer, the total rows of the items in the legend. Default is NULL. 
 #' @param legend.key.size A numeric (in "cm"). Default is 0.5. Size of the legend key.
 #' @param legend.label.size A numeric. Default is 8. Size of the legend label.
 #' @param legend.title.size A numeric. Default is 8. Size of the legend title.
-#' @param line.size A numeric. The size of the shape outline. Default is 0.2.
-#' @param line.color A character. The color of shape outline. Default is "grey70".
+#' @param line.size A numeric. The size of the shape outlines. Default is 0.2.
+#' @param line.color A character. The color of shape outlines. Default is "grey70".
 #' @param ... Other arguments passed to \code{\link[ggplot2]{ggplot}}.
 #' @inheritParams ggplot2::theme
 

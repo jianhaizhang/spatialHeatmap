@@ -1,36 +1,37 @@
 #' Plot Spatial Heatmaps
 #'
-#' The input are a pair of aSVG image and formatted data ("vector", "data frame", "SummarizedExperiment"). The former is an annotated SVG file (aSVG) where spatial features represented by shapes are labeled according specific conventions, while the latter are numeric values measured from these spatial features and organised in specific formats. In biological cases, aSVGs are anatomical or cell structures, and data are measurements of genes, proteins, metabolites, etc. in different samples (e.g. cells, tissues). Data are mapped to the aSVG according to identifiers of assay samples and aSVG features. Only the data from samples having matching counterparts in aSVG features are mapped. The mapped features are filled with colors translated from the data, and the resulting images are termed spatial heatmaps. \cr This function is designed as much flexible as to achieve optimal visualization. For example, subplots of spatial heatmaps can be organized by gene or condition for easy comparison, in multi-layer anotomical structures selected tissues can be set transparent to expose burried features, color scale is customizable to highlight difference among features. This function also works with many other types of spatial data, such as population data plotted to geographic maps.
+#' The input are a pair of aSVG image and formatted data (\code{vector}, \code{data frame}, \code{SummarizedExperiment}). The former is an annotated SVG file (aSVG) where spatial features are represented by shapes and assigned unique identifiers, while the latter are numeric values measured from these spatial features and organized in specific formats. In biological cases, aSVGs are anatomical or cell structures, and data are measurements of genes, proteins, metabolites, \emph{etc}. in different samples (\emph{e.g.} cells, tissues). Data are mapped to the aSVG according to identifiers of assay samples and aSVG features. Only the data from samples having matching counterparts in aSVG features are mapped. The mapped features are filled with colors translated from the data, and the resulting images are termed spatial heatmaps. \cr This function is designed as much flexible as to achieve optimal visualization. For example, subplots of spatial heatmaps can be organized by gene or condition for easy comparison, in multi-layer anotomical structures selected tissues can be set transparent to expose burried features, color scale is customizable to highlight difference among features. This function also works with many other types of spatial data, such as population data plotted to geographic maps.
 
-#' @param svg.path The path of the aSVG image. E.g.: system.file("extdata/shinyApp/example", "gallus_gallus.svg", package="spatialHeatmap"). See \code{\link{return_feature}} for details on how to download aSVGs from the EBI aSVG repository (https://github.com/ebi-gene-expression-group/anatomogram/tree/master/src/svg) directly.
+#' @param svg.path The path of the aSVG image. \emph{E.g.}: system.file("extdata/shinyApp/example", "gallus_gallus.svg", package="spatialHeatmap"). See \code{\link{return_feature}} for details on how to download aSVGs from the EBI aSVG repository (https://github.com/ebi-gene-expression-group/anatomogram/tree/master/src/svg) directly.
 
 #' @inheritParams filter_data
 #' @inheritParams grob_list
 #' @inheritParams col_bar
 
-#' @param ID A character vector of items (e.g. genes, proteins) whose assayed values are used to color the aSVG.
+#' @param ID A character vector of assyed items (\emph{e.g.} genes, proteins) whose values are used to color the aSVG.
 #' @param col.com A character vector of the color components used to build the color scale. The default is c('purple', 'yellow', 'blue').
-#' @param col.bar "selected" or "all", the former uses values of input items to build the colour scale while the latter uses all values from the data. The default is "selected".
+#' @param col.bar "selected" or "all", the former uses values of input assayed items to build the color scale while the latter uses all values from the data. The default is "selected".
 #' @param data.trans "log2", "exp2", or NULL. If colors across samples cannot distinguish due to low variance or outliers, transform the data by "log2" or "2-base expoent" (exp2). Default is NULL (data will not be transformed).
-#' @param bar.width The width of colour bar. Default if 0.08.
+#' @param bar.width The width of color bar. Default if 0.08.
 #' @param width A numeric of each subplot width. The default is 1.
 #' @param height A numeric of each subplot height. The default is 1.
 #' @param legend.r A numeric to adjust the dimension of the legend plot. Default is 1. The larger, the higher ratio of width to height.
-#' @param lay.shm "gene" or "con", the former organizes spatial heatmaps by genes, proteins, metabolites, etc. while the latter by conditions/treatments applied to experiments.
-#' @param ncol Number of columns to display the spatial heatmaps, not including the legend plot.
+#' @param lay.shm "gene" or "con", the former organizes spatial heatmaps by genes, proteins, metabolites, \emph{etc}. while the latter by conditions/treatments applied to experiments.
+#' @param ncol An integer, number of columns to display the spatial heatmaps, not including the legend plot.
 #' @param verbose Logical, FALSE or TRUE. If TRUE the samples in data not colored in spatial heatmaps are printed to R console. Default is TRUE.
-#' @return An image of spatial heatmap(s), and a data frame of mapping between assayed samples and aSVG features.
+
+#' @return An image of spatial heatmap(s), a two-component list of the spatial heatmap(s) in \code{ggplot} format and a data frame of mapping between assayed samples and aSVG features.
 
 #' @section Details:
 #' See the package vignette (\code{browseVignettes('spatialHeatmap')}).  
 
 #' @examples
 
-#' ## In the following example code, the 2 toy data come from an RNA-seq analysis on developments of 7 chicken organs under 9 time points (Cardoso-Moreira et al. 2019). The complete raw count data are downloaded with the accession number "E-MTAB-6769" using the R package ExpressionAtlas (Keays 2019). Both toy data are generated by truncating the complete data. For conveninece, they are included in this package. Toy data1 is used as a "data frame" input to exemplify data with simple samples/conditions, while toy data2 as "SummarizedExperiment" to illustrate data involving complex samples/conditions.   
+#' ## In the following examples, the 2 toy data come from an RNA-seq analysis on developments of 7 chicken organs under 9 time points (Cardoso-Moreira et al. 2019). For conveninece, they are included in this package. The complete raw count data are downloaded using the R package ExpressionAtlas (Keays 2019) with the accession number "E-MTAB-6769". Toy data1 is used as a "data frame" input to exemplify data with simple samples/conditions, while toy data2 as "SummarizedExperiment" to illustrate data involving complex samples/conditions.     
 #'
 #' ## Set up toy data.
 #'
-#' # Access the toy data1.
+#' # Access toy data1.
 #' cnt.chk.simple <- system.file('extdata/shinyApp/example/count_chicken_simple.txt', package='spatialHeatmap')
 #' df.chk <- read.table(cnt.chk.simple, header=TRUE, row.names=1, sep='\t', check.names=FALSE)
 #' # Note the naming scheme "sample__condition" in columns, where "sample" and "condition" stands for organs and time points respectively.
@@ -41,12 +42,12 @@
 #' df.chk <- cbind(df.chk, ann=ann)
 #' df.chk[1:3, ]
 #'
-#' # Access the toy data2. 
+#' # Access toy data2. 
 #' cnt.chk <- system.file('extdata/shinyApp/example/count_chicken.txt', package='spatialHeatmap')
 #' count.chk <- read.table(cnt.chk, header=TRUE, row.names=1, sep='\t')
 #' count.chk[1:3, 1:5]
 
-#' # A targets file is required for toy data2. It should be made based on the experiment design, which is accessible through the accession number "E-MTAB-6769" in R package ExpressionAtlas. The completed targets file is included in this package. 
+#' # A targets file describing samples and conditions is required for toy data2. It should be made based on the experiment design, which is accessible through the accession number "E-MTAB-6769" in R package ExpressionAtlas. An example targets file is included in this package.  
 
 #' # Access the targets file. 
 #' tar.chk <- system.file('extdata/shinyApp/example/target_chicken.txt', package='spatialHeatmap')
@@ -59,7 +60,7 @@
 #' # The "rowData" slot can store a data frame of gene annotation, but not required.
 #' rowData(se.chk) <- DataFrame(ann=ann)
 #'
-#' ## As conventions, sequencing count data should be normalized, aggregated, and filtered fo reduce noise.
+#' ## As conventions, raw sequencing count data should be normalized, aggregated, and filtered fo reduce noise.
 #'
 #' # Normalize count data.
 #' # The normalizing function "calcNormFactors" (McCarthy et al. 2012) with default settings is used.  
@@ -100,7 +101,6 @@
 #' vec
 #' # Plot.
 #' spatial_hm(svg.path=svg.chk, data=vec, ID='geneX', height=0.7, legend.r=1.5, sub.title.size=9, ncol=1, legend.nrow=2)
-
 
 
 #' @author Jianhai Zhang \email{jzhan067@@ucr.edu; zhang.jianhai@@hotmail.com} \cr Dr. Thomas Girke \email{thomas.girke@@ucr.edu}

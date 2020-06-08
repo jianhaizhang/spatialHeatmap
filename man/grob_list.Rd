@@ -44,19 +44,19 @@ grob_list(
 
 \item{tis.path}{All the tissues/paths extracted from the SVG.}
 
-\item{tis.trans}{A character vector of tissue names. These tissues cover other tissues and should be set transparent. E.g c("epidermis", "cortex").}
+\item{tis.trans}{A character vector of tissue/spatial feature identifiers. These tissues may cover other tissues and should be set transparent. \emph{E.g} c("brain", "heart").}
 
 \item{sub.title.size}{A numeric. The subtitle font size of each individual spatial heatmap. Default is 11.}
 
-\item{sam.legend}{"identical", "all", or a character vector of tissue names from the SVG image to show in the legend plot. Default is "identical", meaning all the identical tissues between the data matrix and SVG image. If "all", all tissues in the SVG image are shown.}
+\item{sam.legend}{"identical", "all", or a character vector of tissue names from the aSVG image to show in the legend plot. Default is "identical", meaning all the identical/matching tissues between the data matrix and aSVG image. If "all", all tissues in the aSVG image are shown.}
 
 \item{legend.col}{A character vector of colors for the legend keys. The lenght must be equal to the number of target samples shown in the legend.}
 
 \item{legend.title}{A character, the legend title. Default is NULL.}
 
-\item{legend.ncol}{An integer, the total column number of the items in the legend. Default is NULL.}
+\item{legend.ncol}{An integer, the total columns of items in the legend. Default is NULL.}
 
-\item{legend.nrow}{An integer, the total row number of the items in the legend. Default is NULL.}
+\item{legend.nrow}{An integer, the total rows of the items in the legend. Default is NULL.}
 
 \item{legend.position}{the position of legends ("none", "left", "right",
 "bottom", "top", or two-element numeric vector)}
@@ -70,9 +70,9 @@ grob_list(
 
 \item{legend.title.size}{A numeric. Default is 8. Size of the legend title.}
 
-\item{line.size}{A numeric. The size of the shape outline. Default is 0.2.}
+\item{line.size}{A numeric. The size of the shape outlines. Default is 0.2.}
 
-\item{line.color}{A character. The color of shape outline. Default is "grey70".}
+\item{line.color}{A character. The color of shape outlines. Default is "grey70".}
 
 \item{...}{Other arguments passed to \code{\link[ggplot2]{ggplot}}.}
 }

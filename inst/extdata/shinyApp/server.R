@@ -14,10 +14,137 @@ options(shiny.maxRequestSize=7*1024^3, stringsAsFactors=FALSE)
 # source('~/tissue_specific_gene/function/fun.R')
 
 
-adj_mod <- function(data, type='signed', minSize=15, dir=NULL) {
+matrix_hm <- function(ID, data, scale='no', col=c('purple', 'yellow', 'blue'), main=NULL, title.size=10, cexCol=1, cexRow=1, angleCol=45, angleRow=45, sep.color="black", sep.width=0.02, static=TRUE, margin=c(10, 10), arg.lis1=list(), arg.lis2=list()) {
 
   options(stringsAsFactors=FALSE)
-  if (is(data, 'data.frame')|is(data, 'matrix')) {
+  if (is(data, 'data.frame')|is(data, 'matrix')|is(data, 'DFrame')) {
+
+    data <- as.data.frame(data); rna <- rownames(data); cna <- make.names(colnames(data)) 
+    na <- vapply(seq_len(ncol(data)), function(i) { tryCatch({ as.numeric(data[, i]) }, warning=function(w) { return(rep(NA, nrow(data)))
+    }, error=function(e) { stop("Please make sure input data are numeric!") }) }, FUN.VALUE=numeric(nrow(data)) )
+    na <- as.data.frame(na); rownames(na) <- rna
+    idx <- colSums(apply(na, 2, is.na))!=0
+    gene <- na[!idx]; colnames(gene) <- cna[!idx]
+
+  } else if (is(data, 'SummarizedExperiment')) { gene <- assay(data) }
+  mod <- as.matrix(gene)
+ 
+  if (static==TRUE) {
+
+    tmp <- tempdir(check=TRUE); pa <- paste0(tmp, '/delete_hm.png')
+    png(pa); hm <- heatmap.2(x=mod, scale=scale, main=main, trace="none"); dev.off()
+    do.call(file.remove, list(pa))
+    # Select the row of target gene.  
+    idx <- which(rev(colnames(hm$carpet) %in% ID))
+    # If colour codes are more than 500, the colour key is blank.
+    lis1 <- c(arg.lis1, list(x=mod, scale=scale, main=main, margin=margin, col=colorRampPalette(col)(500), rowsep=c(idx-1, idx), cexCol=cexCol, cexRow=cexRow, srtRow=angleRow, srtCol=angleCol, dendrogram='both', sepcolor=sep.color, sepwidth=c(sep.width, sep.width), key=TRUE, trace="none", density.info="none", Rowv=TRUE, Colv=TRUE))
+    do.call(heatmap.2, lis1)
+
+  } else if (static==FALSE) {
+
+     x <- x1 <- x2 <- y <- y1 <- y2 <- xend <- yend <- value <- NULL 
+     dd.gen <- as.dendrogram(hclust(dist(mod))); dd.sam <- as.dendrogram(hclust(dist(t(mod))))
+     d.sam <- dendro_data(dd.sam); d.gen <- dendro_data(dd.gen)
+
+     g.dengra <- function(df) {
+
+       ggplot()+geom_segment(data=df, aes(x=x, y=y, xend=xend, yend=yend))+labs(x="", y="")+theme_minimal()+theme(axis.text= element_blank(), axis.ticks=element_blank(), panel.grid=element_blank())
+
+     }
+
+     p.gen <- g.dengra(d.gen$segments)+coord_flip(); p.sam <- g.dengra(d.sam$segments)
+     gen.ord <- order.dendrogram(dd.gen); sam.ord <- order.dendrogram(dd.sam); mod.cl <- mod[gen.ord, sam.ord]
+     if (scale=="column") mod.cl <- scale(mod.cl); if (scale=="row") mod.cl <- t(scale(t(mod.cl)))
+     mod.cl <- data.frame(mod.cl); mod.cl$gene <- rownames(mod.cl)
+     mod.m <- reshape2::melt(mod.cl, id.vars='gene', measure.vars=colnames(mod)); colnames(mod.m) <- c('gene', 'sample', 'value')
+     # Use "factor" to re-order rows and columns as specified in dendrograms. 
+     mod.m$gene <- factor(mod.m$gene, levels=rownames(mod.cl)); mod.m$sample <- factor(mod.m$sample, levels=colnames(mod.cl))
+     # Plot the re-ordered heatmap.
+     lis2 <- c(arg.lis2, list(data=mod.m, mapping=aes(x=sample, y=gene))) 
+     g <- do.call(ggplot, lis2)+geom_tile(aes(fill=value), colour="white")+scale_fill_gradient(low=col[1], high=col[2])+theme(axis.text.x=element_text(size=cexRow*10, angle=angleCol), axis.text.y=element_text(size=cexCol*10, angle=angleRow))
+     # Label target row/gene.
+     g.idx <- which(rownames(mod.cl) %in% ID)
+     g <- g+geom_hline(yintercept=c(g.idx-0.5, g.idx+0.5), linetype="solid", color=sep.color, size=sep.width*25)
+     ft <- list(family = "sans serif", size=title.size, color='black')
+     subplot(p.sam, ggplot(), g, p.gen, nrows=2, shareX=TRUE, shareY=TRUE, margin=0, heights=c(0.2, 0.8), widths=c(0.8, 0.2)) %>% plotly::layout(title=main, font=ft)
+
+   }
+
+}
+
+
+
+sub_na <- function(mat, ID, p=0.3, n=NULL, v=NULL) {
+
+  len <- nrow(mat)
+  na <- NULL; for (i in ID) {
+
+    if (!is.null(p)) {
+  
+      vec <- sort(mat[, i]); thr <- vec[len-floor(len*p)+1]
+      na0 <- names(vec[vec >= thr]); na <- c(na, na0)
+
+    } else if (!is.null(n)) {
+
+      vec <- sort(mat[, i]); thr <- vec[len-n+1]
+      na0 <- names(vec[vec >= thr]); na <- c(na, na0)
+    } else if (!is.null(v)) {
+  
+      vec <- mat[, i]; na0 <- names(vec[vec >= v]); na <- c(na, na0)
+
+    }
+
+  }; na <- unique(na); return(na)
+
+}
+
+submatrix <- function(data, ann=NULL, ID, p=0.3, n=NULL, v=NULL, fun='cor', cor.absolute=FALSE, arg.cor=list(method="pearson"), arg.dist=list(method="euclidean")) {
+
+  options(stringsAsFactors=FALSE)
+  if (is(data, 'data.frame')|is(data, 'matrix')|is(data, 'DFrame')) {
+
+    data <- as.data.frame(data); rna <- rownames(data); cna <- make.names(colnames(data)) 
+    if (any(duplicated(cna))) stop('Please use function \'aggr_rep\' to aggregate replicates!')
+    na <- vapply(seq_len(ncol(data)), function(i) { tryCatch({ as.numeric(data[, i]) }, warning=function(w) { return(rep(NA, nrow(data)))
+    }, error=function(e) { stop("Please make sure input data are numeric!") }) }, FUN.VALUE=numeric(nrow(data)) )
+    na <- as.data.frame(na); rownames(na) <- rna
+    idx <- colSums(apply(na, 2, is.na))!=0; ann <- data[idx]
+    data <- na[!idx]; colnames(data) <- cna[!idx]
+
+  } else if (is(data, 'SummarizedExperiment')) { 
+
+    ann <- rowData(data)[ann]; data <- as.data.frame(assay(data)) 
+    if (any(duplicated(rownames(data)))) stop('Please use function \'aggr_rep\' to aggregate replicates!')
+
+  }; if (nrow(data)<5) cat('Warning: variables of sample/condition are less than 5! \n')
+
+  na <- NULL; len <- nrow(data)
+  if (len>=50000) cat('More than 50,000 rows are detected in data. Computation may take a long time! \n')
+  if (sum(c(!is.null(p), !is.null(n), !is.null(v)))>1) return('Please only use one of \'p\', \'n\', \'v\' as the threshold!')
+
+  if (fun=='cor') {
+
+    m <- do.call(cor, c(x=list(t(data)), arg.cor))
+    if (cor.absolute==TRUE) { m1 <- m; m <- abs(m) }
+    na <- sub_na(mat=m, ID=ID, p=p, n=n, v=v)
+    if (cor.absolute==TRUE) m <- m1
+
+  } else if (fun=='dist') { 
+    
+    m <- -as.matrix(do.call(dist, c(x=list(data), arg.dist)))
+    if (!is.null(v)) v <- -v
+    na <- sub_na(mat=m, ID=ID, p=p, n=n, v=v); m <- -m
+
+  }; sub.m <- m[na, na] 
+  return(list(sub_matrix=cbind(data[na, ], ann[na, , drop=FALSE]), cor_dist=m))
+
+}
+
+adj_mod <- function(data, type='signed', power=if (type=='distance') 1 else 6, arg.adj=list(), TOMType='unsigned', arg.tom=list(), method='complete', minSize=15, arg.cut=list(), dir=NULL) {
+
+  options(stringsAsFactors=FALSE)
+  # Get data matrix.
+  if (is(data, 'data.frame')|is(data, 'matrix')|is(data, 'DFrame')) {
 
     data <- as.data.frame(data); rna <- rownames(data); cna <- make.names(colnames(data)) 
     if (any(duplicated(cna))) stop('Please use function \'aggr_rep\' to aggregate replicates!')
@@ -33,25 +160,37 @@ adj_mod <- function(data, type='signed', minSize=15, dir=NULL) {
 
   }; if (nrow(data)<5) cat('Warning: variables of sample/condition are less than 5! \n')
 
-    if (!is.null(dir)) { path <- paste0(dir, "/local_mode_result/"); if (!dir.exists(path)) dir.create(path) }
-    if (type=="signed") sft <- 12; if (type=="unsigned") sft <- 6
-    adj <- adjacency(data, power=sft, type=type); diag(adj) <- 0
-    tom <- TOMsimilarity(adj, TOMType="signed")
-    dissTOM <- 1-tom; tree.hclust <- flashClust(as.dist(dissTOM), method="average")
-    ch <- quantile(tree.hclust[['height']], probs=seq(0, 1, 0.05))[19]
-    mcol <- NULL; for (ds in 2:3) {
+  if (ncol(data)>10000) cat('More than 10,000 rows are detected in data. Computation may take a long time! \n')
+  
+  # Compute adjacency matrix.
+  arg.adj <- c(list(datExpr=data, power=power, type=type), arg.adj)
+  adj <- do.call(adjacency, arg.adj)
+  # Compute TOM and hierarchical clustering.
+  arg.tom <- c(list(adjMat=adj, TOMType=TOMType), arg.tom)
+  tom <- do.call(TOMsimilarity, arg.tom)
+  dissTOM <- 1-tom; tree.hclust <- flashClust(d=as.dist(dissTOM), method=method)
+  # Cut the tree to get modules.
+  cutHeight <- quantile(tree.hclust[['height']], probs=seq(0, 1, 0.05))[19]
+  arg.cut1 <- list(dendro=tree.hclust, pamStage=FALSE, cutHeight=cutHeight, distM=dissTOM)
+  na.cut1 <- names(arg.cut1); na.cut <- names(arg.cut)
+  if ('deepSplit' %in% na.cut) arg.cut <- arg.cut[!(na.cut %in% 'deepSplit')]
+  w <- na.cut1 %in% na.cut
+  arg.cut1 <- c(arg.cut1[!w], arg.cut)
+  mcol <- NULL; for (ds in 2:3) {
          
-      min <- minSize-3*ds; if (min <= 5) min <- 5
-      tree <- cutreeHybrid(dendro=tree.hclust, pamStage=FALSE, minClusterSize=min, cutHeight=ch, deepSplit=ds, distM=dissTOM)
-      mcol <- cbind(mcol, tree$labels)
+    min <- as.numeric(minSize)-3*ds; if (min < 5) min <- 5
+    arg.cut <- c(list(minClusterSize=min, deepSplit=ds), arg.cut1)
+    tree <- do.call(cutreeHybrid, arg.cut)
+    mcol <- cbind(mcol, tree$labels); arg.cut <- list()
 
-    }; colnames(mcol) <- as.character(2:3); rownames(mcol) <- colnames(adj) <- rownames(adj) <- colnames(data)
-    if (!is.null(dir)) { 
+  }; colnames(mcol) <- as.character(2:3); rownames(mcol) <- colnames(adj) <- rownames(adj) <- colnames(data)
+  if (!is.null(dir)) { 
 
-      write.table(adj, paste0(path, "adj.txt"), sep="\t", row.names=TRUE, col.names=TRUE)
-      write.table(mcol, paste0(path, "mod.txt"), sep="\t", row.names=TRUE, col.names=TRUE)
+    path <- paste0(dir, "/local_mode_result/"); if (!dir.exists(path)) dir.create(path)
+    write.table(adj, paste0(path, "adj.txt"), sep="\t", row.names=TRUE, col.names=TRUE)
+    write.table(mcol, paste0(path, "mod.txt"), sep="\t", row.names=TRUE, col.names=TRUE)
     
-    }; return(list(adj=adj, mod=mcol))
+  }; return(list(adj=adj, mod=mcol))
 
 }
 
@@ -81,7 +220,7 @@ filter_data <- function(data, pOA=c(0, 0), CV=c(-Inf, Inf), ann=NULL, sam.factor
   }
 
   ffun <- filterfun(pOverA(p=pOA[1], A=pOA[2]), cv(CV[1], CV[2]))
-  filtered <- genefilter(expr, ffun); expr <- expr[filtered, ]
+  filtered <- genefilter(expr, ffun); expr <- expr[filtered, , drop=FALSE] # Subset one row in a matrix, the result is a numeric vector not a matrix, so drop=FALSE.
   row.meta <- row.meta[filtered, , drop=FALSE]
 
   if (!is.null(dir)) { 
@@ -314,7 +453,7 @@ nod_lin <- function(ds, lab, mods, adj, geneID, adj.min) {
 
   from <- to <- NULL
   idx.m <- mods[, ds]==lab; adj.m <- adj[idx.m, idx.m]; gen.na <- colnames(adj.m) 
-  idx.sel <- grep(paste0("^", geneID, "$"), gen.na); gen.na[idx.sel] <- paste0(geneID, "_selected")
+  idx.sel <- grep(paste0("^", geneID, "$"), gen.na); gen.na[idx.sel] <- paste0(geneID, "_target")
   colnames(adj.m) <- rownames(adj.m) <- gen.na; idx = adj.m > as.numeric(adj.min)
   link <- data.frame(from=rownames(adj.m)[row(adj.m)[idx]], to=colnames(adj.m)[col(adj.m)[idx]], width=adj.m[idx], stringsAsFactors=FALSE)
   # Should not exclude duplicate rows by "length".
@@ -648,6 +787,76 @@ grob_list <- function(gene, con.na=TRUE, geneV, coord, ID, cols, tis.path, tis.t
 }
 
 
+# Subset data matrix by correlation or distance measure.
+submatrix <- function(data, ann=NULL, ID, p=0.3, n=NULL, v=NULL, fun='cor', cor.absolute=FALSE, arg.cor=list(method="pearson"), arg.dist=list(method="euclidean")) {
+
+  options(stringsAsFactors=FALSE)
+  if (is(data, 'data.frame')|is(data, 'matrix')|is(data, 'DFrame')) {
+
+    data <- as.data.frame(data); rna <- rownames(data); cna <- make.names(colnames(data)) 
+    if (any(duplicated(cna))) stop('Please use function \'aggr_rep\' to aggregate replicates!')
+    na <- vapply(seq_len(ncol(data)), function(i) { tryCatch({ as.numeric(data[, i]) }, warning=function(w) { return(rep(NA, nrow(data)))
+    }, error=function(e) { stop("Please make sure input data are numeric!") }) }, FUN.VALUE=numeric(nrow(data)) )
+    na <- as.data.frame(na); rownames(na) <- rna
+    idx <- colSums(apply(na, 2, is.na))!=0; ann <- data[idx]
+    data <- na[!idx]; colnames(data) <- cna[!idx]
+
+  } else if (is(data, 'SummarizedExperiment')) { 
+
+    ann <- rowData(data)[ann]; data <- as.data.frame(assay(data)) 
+    if (any(duplicated(rownames(data)))) stop('Please use function \'aggr_rep\' to aggregate replicates!')
+
+  }; if (nrow(data)<5) cat('Warning: variables of sample/condition are less than 5! \n')
+
+  na <- NULL; len <- nrow(data)
+  if (len>=50000) cat('More than 50,000 rows are detected in data. Computation may take a long time! \n')
+  if (sum(c(!is.null(p), !is.null(n), !is.null(v)))>1) return('Please only use one of \'p\', \'n\', \'v\' as the threshold!')
+   
+  # Function to extract nearest genes.
+  sub_na <- function() {
+
+    na <- NULL; for (i in ID) {
+
+      if (!is.null(p)) {
+  
+        vec <- sort(m[, i]); thr <- vec[len-floor(len*p)+1]
+        na0 <- names(vec[vec >= thr]); na <- c(na, na0)
+
+      } else if (!is.null(n)) {
+
+        vec <- sort(m[, i]); thr <- vec[len-n+1]
+        na0 <- names(vec[vec >= thr]); na <- c(na, na0)
+
+      } else if (!is.null(v)) {
+  
+        vec <- m[, i]; na0 <- names(vec[vec >= v]); na <- c(na, na0)
+
+      }
+
+    }; na <- unique(na); return(na)
+
+  }
+
+  if (fun=='cor') {
+
+    m <- do.call(cor, c(x=list(t(data)), arg.cor))
+    if (cor.absolute==TRUE) { m1 <- m; m <- abs(m) }
+    na <- sub_na()
+    if (cor.absolute==TRUE) m <- m1
+
+  } else if (fun=='dist') { 
+    
+    m <- -as.matrix(do.call(dist, c(x=list(data), arg.dist)))
+    if (!is.null(v)) v <- -v
+    na <- sub_na(); m <- -m
+
+  }; sub.m <- m[na, na] 
+  return(list(sub_matrix=cbind(data[na, ], ann[na, , drop=FALSE]), cor_dist=m))
+
+}
+
+
+
 library(SummarizedExperiment); library(shiny); library(shinydashboard); library(grImport); library(rsvg); library(ggplot2); library(DT); library(gridExtra); library(ggdendro); library(WGCNA); library(grid); library(xml2); library(plotly); library(data.table); library(genefilter); library(flashClust); library(visNetwork); library(reshape2); library(igraph)
 
 # Import input matrix.
@@ -713,7 +922,8 @@ shinyServer(function(input, output, session) {
   output$input <-renderUI({ includeHTML("file/input.html") })
   output$input1 <-renderUI({ includeHTML("file/input1.html") })
   output$shm.ins <-renderUI({ includeHTML("file/shm.html") })
-  output$matrix_net <-renderUI({ includeHTML("file/matrix_net.html") })
+  output$mhm.ins <-renderUI({ includeHTML("file/mhm.html") })
+  output$net.ins <-renderUI({ includeHTML("file/net.html") })
   # Acknowledgement.
   output$ack <-renderUI({ includeHTML("file/acknowledgement.html") })
 
@@ -726,37 +936,37 @@ shinyServer(function(input, output, session) {
     updateRadioButtons(session, inputId="dimName", label="Step 3: is column or row gene?", 
     inline=TRUE, choices=c("None", "Row", "Column"), selected="None")
     updateSelectInput(session, 'sep', 'Step 4: separator', c("None", "Tab", "Comma", "Semicolon"), "None")
-    updateRadioButtons(session, inputId='log', label='Data transform', choices=c("No", "log2", "exp2"), selected="No", inline=TRUE)
-    updateRadioButtons(session, inputId='cs.v', label='Colour scale based on:', choices=c("Selected genes"="sel.gen", "Whole matrix"="w.mat"), selected="sel.gen", inline=TRUE)
-    updateSelectInput(session, "height", "Overall canvas height:", seq(100, 15000, 20), "400")
-    updateSelectInput(session, "width", "Overall canvas width:", seq(100, 15000, 20), "820")
-    updateSelectInput(session, "col.n", "No. of columns for sub-plots", seq(1, 15, 1), "2")
-    updateTextInput(session, inputId="P", label="Filter genes: the proportion (P) of samples whose values exceed A:", value=0, placeholder='a numeric: 0-1')                                                                                    
-    updateTextInput(session, inputId="A", label="Filter genes: the value (A) to be exceeded:", value='-Inf', placeholder='a numeric')                                                                                                           
-    updateTextInput(session, inputId="CV1", label="Filter genes: lower bound of coefficient of variation (CV1):", value='-Inf', placeholder='a numeric')                                                                                        
-    updateTextInput(session, inputId="CV2", label="Filter genes: lower bound of coefficient of variation (CV2):", value='Inf', placeholder='a numeric') 
+    updateRadioButtons(session, inputId='log', label='Data transform:', choices=c("No", "log2", "exp2"), selected="No", inline=TRUE)
+    updateRadioButtons(session, inputId='cs.v', label='Color scale based on:', choices=c("Selected rows"="sel.gen", "All rows"="w.mat"), selected="sel.gen", inline=TRUE)
+    updateNumericInput(session, inputId="height", label="Overall height:", value=400, min=0.1, max=Inf, step=NA)
+    updateNumericInput(session, inputId="width", label="Overall width:", value=820, min=0.1, max=Inf, step=NA)
+    updateNumericInput(session, inputId="col.n", label="No. of columns:", value=2, min=1, max=Inf, step=1)
 
   })
 
   observe({
 
     input$fileIn; input$geneInpath; input$log
-    updateTextInput(session, inputId="P", label="Filter genes: the proportion (P) of samples whose values exceed A:", value=0, placeholder='a numeric: 0-1')                                                                                    
-    updateTextInput(session, inputId="A", label="Filter genes: the value (A) to be exceeded:", value='-Inf', placeholder='a numeric')                                                                                                           
-    updateTextInput(session, inputId="CV1", label="Filter genes: lower bound of coefficient of variation (CV1):", value='-Inf', placeholder='a numeric')                                                                                        
-    updateTextInput(session, inputId="CV2", label="Filter genes: lower bound of coefficient of variation (CV2):", value='Inf', placeholder='a numeric') 
+    updateNumericInput(session, inputId="A", label="Value (A) to exceed:", value=0) 
+    updateNumericInput(session, inputId="P", label="Proportion (P) of samples with values >= A:", value=0, min=0, max=1)
+    updateNumericInput(session, inputId="CV1", label="Min coefficient of variation (CV1):", value=-10^4)
+    updateNumericInput(session, inputId="CV2", label="Max coefficient of variation (CV2):", value=10^4,)
     fil$P <- 0; fil$A=-Inf; fil$CV1 <- -Inf; fil$CV2 <- Inf
 
   })
 
-  # As long as a button is used, observeEvent should be used.
-  observeEvent(input$fil.but, { 
-                 
-    fil$P <- as.numeric(input$P); fil$A <- as.numeric(input$A); fil$CV1 <- as.numeric(input$CV1); fil$CV2 <- as.numeric(input$CV2) 
-    if (is.na(fil$P) | !(fil$P>=0) | !(fil$P<=1)) { showModal(modalDialog(title="Filtering", "P should be a numeric between 0 and 1.")); return() }
-    if (is.na(fil$A)) { showModal(modalDialog(title="Filtering", "A should be a numeric.")); return() }
-    if (is.na(fil$CV1)) { showModal(modalDialog(title="Filtering", "CV1 should be a numeric.")); return() }
-    if (is.na(fil$CV2)) { showModal(modalDialog(title="Filtering", "CV2 should be a numeric.")); return() }
+  observeEvent(input$fil.but, {
+
+    if (input$fileIn=="None") return(NULL)  
+    fil$P <- input$P; fil$A <- input$A; fil$CV1 <- input$CV1; fil$CV2 <- input$CV2
+  
+  })
+
+  output$fil.par <- renderText({
+    
+    if (input$fileIn=="None") return(NULL)  
+    P <- input$P
+    validate(need(try(P<=1 & P>=0), 'P should be between 0 to 1 !'))
 
   })
 
@@ -816,11 +1026,12 @@ shinyServer(function(input, output, session) {
     gene2 <- geneIn1()[['gene2']]; gene3 <- geneIn1()[['gene3']]; input$fil.but
     # Input variables in "isolate" will not triger re-excution, but if the whole reactive object is trigered by "input$fil.but" then code inside "isolate" will re-excute.
     isolate({
-      
+  
       se <- SummarizedExperiment(assays=list(expr=as.matrix(gene2)), rowData=gene3)
       if (ncol(gene3)>0) ann.col <- colnames(gene3)[1] else ann.col <- NULL
       se <- filter_data(data=se, ann=ann.col, sam.factor=NULL, con.factor=NULL, pOA=c(fil$P, fil$A), CV=c(fil$CV1, fil$CV2), dir=NULL)
-      if (nrow(se)==0) { showModal(modalDialog(title="Filtering", "All genes are filtered out. Please refresh this app to restart.")); return() }
+      if (nrow(se)==0) { validate(need(try(nrow(se)>0), 'All rows are filtered out !')); return() }
+
       gene2 <- as.data.frame(assay(se), stringsAsfactors=FALSE); colnames(gene2) <- make.names(colnames(gene2))
       gene3 <- as.data.frame(rowData(se))[, , drop=FALSE]
       
@@ -864,13 +1075,15 @@ shinyServer(function(input, output, session) {
     })
 
   # To make the "gID$new" and "gID$all" updated with the new "input$fileIn", since the selected row is fixed (3rd row), the "gID$new" is not updated when "input$fileIn" is changed, and the downstream is not updated either. The shoot/root examples use the same data matrix, so the "gID$all" is the same (pre-selected 3rd row) when change from the default "shoot" to others like "organ". As a result, the "gene$new" is null and downstream is not updated. Also the "gene$new" is the same when change from shoot to organ, and downstream is not updated, thus "gene$new" and "gene$all" are both set null above upon new "input$fileIn".
-  observeEvent(input$fileIn, {
+  observe({
 
+    input$fileIn 
     if (!grepl("_Mustroph$|_Merkin$|_Cardoso.Moreira$|_Prudencio$|_Census$", input$fileIn)|is.null(input$dt_rows_selected)) return()
     r.na <- rownames(geneIn()[["gene2"]]); gID$geneID <- r.na[input$dt_rows_selected]
     gID$new <- setdiff(gID$geneID, gID$all); gID$all <- c(gID$all, gID$new)
 
     })
+
 
   geneV <- reactive({
 
@@ -882,13 +1095,17 @@ shinyServer(function(input, output, session) {
 
   })
 
-
   col.sch <- reactive({ 
 
-    if(input$color=="") return(NULL); unlist(strsplit(input$color, ","))
+    if(input$color=="") return(NULL)
+    col <- gsub(' |\\.|-|;|,|/', '_', input$color)
+    col <- strsplit(col, '_')[[1]]
+    col <- col[col!='']; col1 <- col[!col %in% colors()]
+    if (length(col1>0)) validate(need(try(col1 %in% colors()), paste0('Colors not valid: ', col1, ' !'))); col
 
   }); color <- reactiveValues(col="none")
 
+  # As long as a button is used, observeEvent should be used. All variables inside 'observeEvent' trigger code evaluation, not only 'eventExpr'.  
   observeEvent(input$col.but, {
 
     if (is.null(col.sch())) return (NULL)
@@ -902,7 +1119,6 @@ shinyServer(function(input, output, session) {
     if ((grepl("_Mustroph$|_Merkin$|_Cardoso.Moreira$|_Prudencio$|_Census$", input$fileIn) & !is.null(geneIn()))|((input$fileIn=="Compute locally"|input$fileIn=="Compute online") & !is.null(input$svgInpath) & !is.null(geneIn()))) {
 
       if (length(color$col=="none")==0|input$color==""|is.null(geneV())) return(NULL)
-
       if(input$col.but==0) color$col <- colorRampPalette(c('purple', 'yellow', 'blue'))(length(geneV()))
 
       withProgress(message="Color scale: ", value = 0, {
@@ -991,6 +1207,7 @@ shinyServer(function(input, output, session) {
 
   })
 
+  # Extension of 'observeEvent': any of 'input$log; input$tis; input$col.but; input$cs.v' causes evaluation of all code. 
   observe({
     
     input$log; input$tis; input$col.but; input$cs.v # input$tis as an argument in "grob_list" will not cause evaluation of all code, thus it is listed here.
@@ -1014,6 +1231,19 @@ shinyServer(function(input, output, session) {
   })
 
   observeEvent(gID$new, { grob.all <- c(grob$all, gs()[['grob.lis']]); grob$all <- grob.all[unique(names(grob.all))] })
+  
+  output$h.w.c <- renderText({
+    
+    if (is.null(geneIn())|is.null(input$dt_rows_selected)|is.null(svg.df())|gID$geneID[1]=="none"|is.null(grob$all)) return(NULL)
+
+    height <- input$height; width <- input$width
+    col.n <- input$col.n;
+    validate(need(height>=0.1 & !is.na(height), 'Height should be a positive numeric !'))
+    validate(need(width>=0.1 & !is.na(width), 'Width should be a positive numeric !'))
+    validate(need(col.n>=1 & as.integer(col.n)==col.n & !is.na(col.n), 'No. of columns should be a positive integer !'))
+
+  })
+
   # In "observe" and "observeEvent", if one code return (NULL), then all the following code stops. If one code changes, all the code renews.
   observe({
     
@@ -1047,6 +1277,102 @@ shinyServer(function(input, output, session) {
   })
 
 
+  observe({
+
+    geneIn(); input$adj.modInpath; input$A; input$p; input$cv1
+    input$cv2; input$min.size; input$net.type
+    input$measure; input$cor.abs; input$thr; input$mhm.v
+    updateRadioButtons(session, "mat.scale", "Scale: ", c("No", "By column", "By row"), "No", inline=TRUE)
+
+  })
+
+
+  observe({
+  
+    input$fileIn; geneIn(); input$adj.modInpath; input$A; input$p; input$cv1; input$cv2
+    updateRadioButtons(session, inputId="mhm.but", label="Show plot: ", choices=c("Yes"="Y", "No"="N"), selected="N", inline=TRUE)
+
+  })
+
+
+  # Calculate whole correlation or distance matrix.
+  cor.dis <- reactive({
+
+    if (is.null(geneIn())|input$mhm.but=='N') return()
+    if (((input$fileIn=="Compute locally"|input$fileIn=="Compute online") & is.null(geneIn()))|input$fileIn=="None") return(NULL)
+    
+    withProgress(message="Compute similarity/distance matrix: ", value = 0, {
+
+      incProgress(0.5, detail="Please wait...")
+      gene <- geneIn()[['gene2']]
+      if (input$measure=='cor') {
+      
+        m <- cor(x=t(gene))
+        if (input$cor.abs==TRUE) { m <- abs(m) }; return(m)
+
+      } else if (input$measure=='dis') { return(-as.matrix(dist(x=gene))) }
+
+    })
+
+  })
+
+  # Subset nearest neighbours for target genes based on correlation or distance matrix.
+  submat <- reactive({
+    
+    if (is.null(cor.dis())|input$mhm.but=='N') return()
+    gene <- geneIn()[["gene2"]]; rna <- rownames(gene)
+    gen.tar<- rna[input$dt_rows_selected]; mat <- cor.dis()
+    
+    # Validate filtering parameters in matrix heatmap.<Paste> 
+    measure <- input$measure; cor.abs <- input$cor.abs; mhm.v <- input$mhm.v; thr <- input$thr
+    if (input$thr=='p') {
+
+      validate(need(try(mhm.v>0 & mhm.v<=1), 'Proportion should be between 0 to 1 !'))
+
+    } else if (input$thr=='n') {
+
+      validate(need(try(mhm.v>=1 & as.integer(mhm.v)==mhm.v & !is.na(mhm.v)), 'Number should be a positive integer !'))
+
+    } else if (input$thr=='v' & measure=='cor') {
+
+      validate(need(try(mhm.v>-1 & mhm.v <1), 'Correlation value should be between -1 to 1 !'))
+
+    } else if (input$thr=='v' & measure=='dis') {
+
+      validate(need(try(mhm.v>=0), 'Distance value should be non-negative !'))
+
+    }
+
+    withProgress(message="Selecting nearest neighbours: ", value = 0, {
+
+      incProgress(0.5, detail="Please wait...")
+      arg <- list(p=NULL, n=NULL, v=NULL)
+      arg[names(arg) %in% input$thr] <- input$mhm.v
+      if (input$measure=='dis' & input$thr=='v') arg['v'] <- -arg[['v']]
+      gen.na <- do.call(sub_na, c(mat=list(mat), ID=list(gen.tar), arg)) 
+      validate(need(try(length(gen.na)>=2), paste0('Only ', gen.na, ' selected !'))); return(gene[gen.na, ])
+
+    })
+
+  })
+
+
+  # Plot matrix heatmap.
+  output$HMly <- renderPlotly({
+    
+    if (is.null(submat())|input$mhm.but=='N') return()
+    gene <- geneIn()[["gene2"]]; rna <- rownames(gene)
+    gen.tar<- rna[input$dt_rows_selected]
+    withProgress(message="Matrix heatmap:", value=0, {
+      incProgress(0.7, detail="Plotting...")
+      if (input$mat.scale=="By column") scale.hm <- 'column' else if (input$mat.scale=="By row") scale.hm <- 'row' else scale.hm <- 'no'
+      matrix_hm(ID=gen.tar, data=submat(), scale=scale.hm, main='Target Genes and Their Nearest Neighbours', title.size=10, static=FALSE)
+
+    })
+
+  })
+
+
   adj.mod <- reactive({ 
 
     if (input$fileIn=="Compute locally") {
@@ -1075,14 +1401,13 @@ shinyServer(function(input, output, session) {
     if (input$fileIn=="Compute online"|grepl("_Mustroph$|_Merkin$|_Cardoso.Moreira$|_Prudencio$|_Census$", input$fileIn)) {
 
       gene <- geneIn()[["gene2"]]; if (is.null(gene)) return()
-      if (input$net.type=="S") { sft <- 12; type <- "signed" } else if (input$net.type=="U") { sft <- 6; type <- "unsigned" }
+      type <- input$net.type; sft <- if (type=='distance') 1 else 6
 
       withProgress(message="Computing: ", value = 0, {
         incProgress(0.3, detail="adjacency matrix.")
         incProgress(0.5, detail="topological overlap matrix.")
         incProgress(0.1, detail="dynamic tree cutting.")
-        se <- SummarizedExperiment(assays=list(expr=as.matrix(gene)))
-        adjMod <- adj_mod(data=se, type=type, minSize=input$min.size, dir=NULL)
+        adjMod <- adj_mod(data=submat(), type=type, minSize=input$min.size, dir=NULL)
         adj <- adjMod[['adj']]; mod4 <- adjMod[['mod']]
 
       }); return(list(adj=adj, mod4=mod4))
@@ -1093,7 +1418,8 @@ shinyServer(function(input, output, session) {
 
   observe({
     
-    input$gen.sel; updateSelectInput(session, 'ds', "Select a module splitting sensitivity level", 3:2, selected="3")
+    input$gen.sel; input$measure; input$cor.abs; input$thr; input$mhm.v
+    updateSelectInput(session, 'ds', "Module splitting sensitivity level:", 3:2, selected="3")
 
   })
 
@@ -1112,53 +1438,30 @@ shinyServer(function(input, output, session) {
   })
 
   observe({
-
-    geneIn(); input$adj.modInpath; input$A; input$p; input$cv1
-    input$cv2; input$min.size; input$net.type
-    updateSelectInput(session, "mat.scale", "Scale matrix heatmap", c("No", "By column/sample", "By row/gene"), "By row/gene")
-
-  })
-
-  output$HMly <- renderPlotly({
-    
-    gene <- geneIn()[["gene2"]]; if (!(input$gen.sel %in% rownames(gene))) return() # Avoid unnecessary computing of 'adj', since 'input$gen.sel' is a cerain true gene id of an irrelevant expression matrix, not 'None', when switching from one defaul example's matrix heatmap to another example.
-    if (input$fileIn=="Compute locally") { 
-
-      if (is.null(adj.mod())|input$gen.sel=="None") return(NULL); adj <- adj.mod()[[1]]; mods <- adj.mod()[[2]] 
-
-    } else if (input$fileIn=="Compute online"|grepl("_Mustroph$|_Merkin$|_Cardoso.Moreira$|_Prudencio$|_Census$", input$fileIn)) { 
-
-      if (is.null(adj.tree())|input$gen.sel=="None") return(NULL); adj <- adj.tree()[['adj']]; mods <- mcol() 
-
-    }
-    lab <- mods[, input$ds][rownames(gene)==input$gen.sel]
-    if (!is.null(lab)) if (lab=="0") { showModal(modalDialog(title="Module", "The selected gene is not assigned to any module. Please select a different one.")); return() } # All the arguments in 'if' statement are evaluated, regardless of the order. Therefore a 'NULL' object should not be compared with others (e.g. >, <) in 'if' statement. But it can be evaluated exclusively in a separate 'if' statement, e.g. 'if (!is.null(lab))'.
-
-    withProgress(message="Matrix heatmap:", value=0, {
-      incProgress(0.7, detail="Plotting...")
-      se <- SummarizedExperiment(assays=list(expr=as.matrix(gene))); mods <- list(mod=mods); if (input$mat.scale=="By column/sample") scale.hm <- 'column' else if (input$mat.scale=="By row/gene") scale.hm <- 'row'
-      matrix_hm(geneID=input$gen.sel, data=se, adj.mod=mods, ds=input$ds, scale=scale.hm, main=paste0('Network module containing ', input$gen.sel), title.size=10, static=FALSE)
-
-    })
-
-  })
-
-  observe({
   
     geneIn(); gID$geneID; input$gen.sel; input$ds; input$adj.modInpath; input$A; input$p; input$cv1; input$cv2; input$min.size; input$net.type
-    updateSelectInput(session, "TOM.in", label="Input a similarity threshold to display the similarity network.", choices=c("None", sort(seq(0, 1, 0.002), decreasing=TRUE)), selected="None")
+    input$gen.sel; input$measure; input$cor.abs; input$thr; input$mhm.v
+    updateSelectInput(session, "TOM.in", label="Adjacency threshold:", choices=c("None", sort(seq(0, 1, 0.002), decreasing=TRUE)), selected="None")
 
   })
 
   observe({
   
     geneIn(); gID$geneID; input$TOM.in; input$gen.sel; input$ds; input$adj.modInpath; input$A; input$p; input$cv1; input$cv2; input$min.size; input$net.type
-    updateRadioButtons(session, inputId="cpt.nw", label="Display or not?", choices=c("Yes"="Y", "No"="N"), selected="N", inline=TRUE)
+    updateRadioButtons(session, inputId="cpt.nw", label="Show plot:", choices=c("Yes"="Y", "No"="N"), selected="N", inline=TRUE)
 
   })
 
-  col.sch.net <- reactive({ if(input$color.net=="") { return(NULL) }
-  unlist(strsplit(input$color.net, ",")) }); color.net <- reactiveValues(col.net="none")
+
+  col.sch.net <- reactive({ 
+
+    if(input$color.net=="") return(NULL) 
+    col <- gsub(' |\\.|-|;|,|/', '_', input$color.net)
+    col <- strsplit(col, '_')[[1]]
+    col <- col[col!='']; col1 <- col[!col %in% colors()]
+    if (length(col1>0)) validate(need(try(col1 %in% colors()), paste0('Colors not valid: ', col1, ' !'))); col
+
+  }); color.net <- reactiveValues(col.net="none")
 
   len.cs.net <- 350
   observeEvent(input$col.but.net, {
@@ -1173,11 +1476,11 @@ shinyServer(function(input, output, session) {
 
     if (input$TOM.in=="None") return(NULL)
     if (input$fileIn=="Compute locally") { adj <- adj.mod()[[1]]; mods <- adj.mod()[[2]] } else if (input$fileIn=="Compute online"|grepl("_Mustroph$|_Merkin$|_Cardoso.Moreira$|_Prudencio$|_Census$", input$fileIn)) { adj <- adj.tree()[[1]]; mods <- mcol() }
-    gene <- geneIn()[["gene2"]]; if (!(input$gen.sel %in% rownames(gene))) return() # Avoid unnecessary computing of 'adj', since 'input$gen.sel' is a cerain true gene id of an irrelevant expression matrix, not 'None', when switching from one defaul example's network to another example.
+    gene <- submat(); if (!(input$gen.sel %in% rownames(gene))) return() # Avoid unnecessary computing of 'adj', since 'input$gen.sel' is a cerain true gene id of an irrelevant expression matrix, not 'None', when switching from one defaul example's network to another example.
     lab <- mods[, input$ds][rownames(gene)==input$gen.sel]
     if (lab=="0") { showModal(modalDialog(title="Module", "The selected gene is not assigned to any module. Please select a different gene.")); return() }
     idx.m <- mods[, input$ds]==lab; adj.m <- adj[idx.m, idx.m]; gen.na <- colnames(adj.m) 
-    idx.sel <- grep(paste0("^", input$gen.sel, "$"), gen.na); gen.na[idx.sel] <- paste0(input$gen.sel, "_selected")
+    idx.sel <- grep(paste0("^", input$gen.sel, "$"), gen.na); gen.na[idx.sel] <- paste0(input$gen.sel, "_target")
     colnames(adj.m) <- rownames(adj.m) <- gen.na
     withProgress(message="Computing network:", value=0, { 
       incProgress(0.8, detail="making network data frame")

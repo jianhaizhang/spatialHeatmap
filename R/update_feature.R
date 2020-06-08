@@ -1,10 +1,10 @@
 #' Update aSVG Spatial Features
 #' 
-#' Successful spatial heatmap plotting requires the aSVG features of interest have identical matching samples (cells, tissues, etc) in the data. This function is designed to replace existing features in aSVG images with user-provided features. Note this function treats the first column in the feature data frame as user-provided features, so custom features must be the first column.
+#' Successful spatial heatmap plotting requires the aSVG features of interest have matching samples (cells, tissues, \emph{etc}) in the data. This function is designed to replace existing features in aSVG images with user-provided features. Note this function treats the first column in the feature data frame as user-provided features, so custom features must be the first column.
 
 #' @param feature The data frame returned by \code{\link{return_feature}} with the user-provided features added as the first column.
-#' @param dir The directory path where the aSVG images to update. It should be same with "dir" in \code{\link{return_feature}}.
-#' @return Nothing is returned. The aSVG images of interest in "dir" are updated with new features, and are ready to use in function \code{\link{spatial_hm}}.
+#' @param dir The directory path where the aSVG images to update. It should be same with \code{dir} in \code{\link{return_feature}}.
+#' @return Nothing is returned. The aSVG images of interest in \code{dir} are updated with new features, and are ready to use in function \code{\link{spatial_hm}}.
 
 #' @examples
 
