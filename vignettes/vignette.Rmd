@@ -399,7 +399,7 @@ assayed in the gene expression data set downloaded in the previous subsection.
 The `return_feature` function queries the repository for feature- and
 species-related keywords, here `c('frontal cortex', 'cerebellum')` and
 `c('homo sapiens', 'brain')`, respectively. To return aSVGs with at least one
-feature and one species match, ^[<font color='blue'>jianhai-comment: at least one feature cannot be guarenteed, since the SVG repo is not huge. "To return all possible matching aSVGs" is more accurate.</font>] the argument `keywords.any` is set to `TRUE` by
+feature and one species match, ^[<font color='blue'>jianhai-comment: at least one feature cannot be guaranteed, since the SVG repo is not huge. "To return all possible matching aSVGs" is more accurate.</font>] the argument `keywords.any` is set to `TRUE` by
 default. When `return.all=FALSE`, only aSVGs matching the query keywords are returned
 and saved under `dir`. Otherwise, all aSVGs are returned regardless of the
 keywords. To avoid overwriting of existing SVG files, it is recommended to

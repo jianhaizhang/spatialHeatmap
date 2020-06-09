@@ -13,6 +13,7 @@ options(shiny.maxRequestSize=7*1024^3, stringsAsFactors=FALSE)
 
 # source('~/tissue_specific_gene/function/fun.R')
 
+# Right before submit the package the following functions will be deleted, and they will be imported as above. They are listed here now for the convenience of functionality development.
 
 matrix_hm <- function(ID, data, scale='no', col=c('purple', 'yellow', 'blue'), main=NULL, title.size=10, cexCol=1, cexRow=1, angleCol=45, angleRow=45, sep.color="black", sep.width=0.02, static=TRUE, margin=c(10, 10), arg.lis1=list(), arg.lis2=list()) {
 
