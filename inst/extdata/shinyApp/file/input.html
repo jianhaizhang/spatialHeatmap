@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html>
+<body>
+
+
+<div align="justify">
+<p>First, select a mode under "Select a work mode" in the "Input" menu. The "Compute locally" should be selected if users have a large data matrix(e.g. > 10,000 rows) while the "Compute online" can be selected if users have a small data matrix(e.g. < 10,000 genes). The rest are pre-uploaded examples ready-to-use. In "Step 1: upload aSVG image" and "Step 2: upload formatted data matrix", users are asked to upload the annotated SVG (aSVG) image and data matrix respectively. </p>
+
+The aSVG means spaital features are assigned unique identifiers and target features should have matching counterparts in the data matrix. In the data matrix, the row and column names are usually gene IDs and sample/conditions, respectively. The sample/conditions MUST follow these naming scheme: <b>1) A sample name is followed by double underscore then the condition. E.g. in "root_pGL2__hypoxia", "root_pGL2" is the sample (atrichoblast epidermis) and "hypoxia" is the condition. 2) The "__" is a reserved separator, so it cannot be used in sample or condition identifiers. 3) Each column name must be unique.</b> To obtain such naming format, simple sample/conditions can be edited in a regular text editor while if complex it can be generated with the function <code style="color:brown">filter_data</code> in spatialHeatmap. One column of metadata (e.g. gene annotation) could be optinally appended to sample/condition at the end, where the column name should not include "__". Only values of samples having a matching feature counterpart in the aSVG are translated to colors in spatial heatmaps. More details about how to set up aSVG image and data matrix are provided in the <a href='https://jianhaizhang.github.io/SVG_tutorial_file/vignette.html'>package vignette</a> and the <a href='https://jianhaizhang.github.io/SVG_tutorial_file/'>SVG tutorial</a>. A pair of example aSVG file and formatted data matrix can be downloaded and uploaded directly for testing after selecting "Compute online" mode: 
+
+</div>
+
+
+</body>
+</html>
+
+
+
+
+
+
+

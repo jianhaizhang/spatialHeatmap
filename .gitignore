@@ -4,9 +4,9 @@
 tmp/
 *.ps$
 *.ps.xml$
-*.html
+# *.html
 rsconnect/
 local_mode_result/
-vignette.html
+# vignette.html
 vignette_files/
 vignette_cache/
