@@ -2,12 +2,11 @@
 % Please edit documentation in R/network.R
 \name{network}
 \alias{network}
-\title{Network}
+\title{Visualize A Target Assayed Item in Network Graphs}
 \usage{
 network(
   ID,
   data,
-  ann = NULL,
   adj.mod,
   ds = "3",
   adj.min = 0,
@@ -28,7 +27,7 @@ network(
 
 \item{data}{The subsetted data matrix returned by the function \code{\link{submatrix}}, where rows are assayed items and columns are samples/conditions.}
 
-\item{ann}{Applies to \code{data} argument of \code{SummarizedExperiment}. The column name corresponding to row item annotation in the \code{rowData} slot. Default is NULL.}
+\item{ds}{One of "2" or "3", the module splitting sensitivity level. Default is "3". See function \code{\link{adj_mod}} for details.}
 
 \item{adj.min}{Minimum adjacency between nodes, edges with adjacency below which will be removed. Default is 0. Applicable to static network.}
 
@@ -50,20 +49,20 @@ network(
 
 \item{static}{Logical, TRUE or FALSE, displaying static or interactive network respectively.}
 
-\item{...}{Other arguments passed to the generic function \code{\link[graphics]{plot}}, e.g: "asp=1".}
+\item{...}{Other arguments passed to the generic function \code{\link[graphics]{plot}}, \emph{e.g.}: "asp=1".}
 }
 \value{
-A static or interactive network display.
+A static or interactive network graph.
 }
 \description{
-This function exhibits the input item (gene, protein, metabolite, etc) in the context of corresponding network module, where nodes are items and edges are adjacencies between items. The network can be dispayed in static or interactive mode. \cr The modules are identified at two alternative sensitivity levels (ds=3 or 2). See function \code{\link{adj_mod}} for details. The thicker edge denotes higher adjacency (coexpression similarity) between nodes while larger node indicates higher connectivity (sum of a node's adjacency with all its direct neighbours). \cr In the interactive mode, there is an interactive color bar to denote node connectivity. The color ingredients must only be separated by comma, e.g. "purple,yellow,blue", which means node connectivity increases from purple to blue. If too many edges (e.g.: > 300) are displayed, the network could get stuck. So the "Input an adjacency threshold to display the adjacency network." option sets a threthold to filter out weak edges and all remaining edges are displayed. If not too many (e.g.: < 300), users can check "Yes" under "Display or not?", then the network will be displayed and would be responsive smoothly. To maintain acceptable performance, users are advised to choose a stringent threshold (e.g. 0.9) initially, then decrease the value gradually. The interactive feature allows users to zoom in and out, or drag a node around. All the node IDs in the network module are listed in "Select by id" in decreasing order according to node connectivity. The input item ID is appended "_target" as a label. By clicking an ID in this list, users can identify the corresponding node in the network. If the input data has item annotations, then the annotation can be seen by hovering the cursor over a node. \cr The same module can also be displayed in the form of a matrix heatmap with the function \code{\link{matrix_hm}}.
+This function exhibits a target assayed item (gene, protein, metabolite, \emph{etc}) in the context of corresponding network module as static and interactive network graphs. See function \code{\link{adj_mod}} for module identification. In the network graph, nodes are items and edges are adjacencies between items. The thicker edge denotes higher adjacency (coexpression similarity) between nodes while larger node indicates higher connectivity (sum of a node's adjacency with all its direct neighbours). \cr In the interactive mode, there is an interactive color bar to denote node connectivity. The color ingredients could be separated by comma, semicolon, single space, dot, hypen, or, underscore. \emph{E.g.} "purple,yellow,blue", which means node connectivity increases from purple to blue. If too many edges (\emph{e.g.}: > 300) are displayed, the network could get stuck. So the "Adjacency threshold" option sets a threthold to filter out weak edges and all remaining edges are displayed. If not too many (\emph{e.g.}: < 300), users can check "Yes" under "Show plot", then the network will be displayed and would be responsive smoothly. To maintain acceptable performance, users are advised to choose a stringent threshold (\emph{e.g.} 0.9) initially, then decrease the value gradually. The interactive feature allows users to zoom in and out, or drag a node around. All the node IDs in the network module are listed in "Select by id" in decreasing order according to node connectivity. The input item ID is appended "_target" as a label. By clicking an ID in this list, users can identify the corresponding node in the network. If the input data has item annotations, then the annotation can be seen by hovering the cursor over a node.
 }
 \examples{
-## In the following example code, the 2 toy data come from an RNA-seq analysis on developments of 7 chicken organs under 9 time points (Cardoso-Moreira et al. 2019). The complete raw count data are downloaded with the accession number "E-MTAB-6769" using the R package ExpressionAtlas (Keays 2019). Both toy data are generated by truncating the complete data. For conveninece, they are included in this package. Toy data1 is used as a "data frame" input to exemplify data with simple samples/conditions, while toy data2 as "SummarizedExperiment" to illustrate data involving complex samples/conditions.   
+## In the following examples, the 2 toy data come from an RNA-seq analysis on developments of 7 chicken organs under 9 time points (Cardoso-Moreira et al. 2019). For conveninece, they are included in this package. The complete raw count data are downloaded using the R package ExpressionAtlas (Keays 2019) with the accession number "E-MTAB-6769". Toy data1 is used as a "data frame" input to exemplify data with simple samples/conditions, while toy data2 as "SummarizedExperiment" to illustrate data involving complex samples/conditions.   
 
 ## Set up toy data.
 
-# Access the toy data1.
+# Access toy data1.
 cnt.chk.simple <- system.file('extdata/shinyApp/example/count_chicken_simple.txt', package='spatialHeatmap')
 df.chk <- read.table(cnt.chk.simple, header=TRUE, row.names=1, sep='\t', check.names=FALSE)
 # Note the naming scheme "sample__condition" in columns, where "sample" and "condition" stands for organs and time points respectively.
@@ -74,13 +73,13 @@ ann <- paste0('ann', seq_len(nrow(df.chk))); ann[1:3]
 df.chk <- cbind(df.chk, ann=ann)
 df.chk[1:3, ]
 
-# Access the toy data2. 
+# Access toy data2. 
 cnt.chk <- system.file('extdata/shinyApp/example/count_chicken.txt', package='spatialHeatmap')
 count.chk <- read.table(cnt.chk, header=TRUE, row.names=1, sep='\t')
 count.chk[1:3, 1:5]
 
-# A targets file is required for toy data2. It should be made based on the experiment design, which is accessible through the accession number "E-MTAB-6769" in R package ExpressionAtlas. The completed targets file is included in this package. 
-# Access the targets file. 
+# A targets file describing samples and conditions is required for toy data2. It should be made based on the experiment design, which is accessible through the accession number "E-MTAB-6769" in R package ExpressionAtlas. An example targets file is included in this package. 
+# Access the example targets file. 
 tar.chk <- system.file('extdata/shinyApp/example/target_chicken.txt', package='spatialHeatmap')
 target.chk <- read.table(tar.chk, header=TRUE, row.names=1, sep='\t')
 # Note every column in toy data2 corresponds with a row in targets file. 
@@ -91,25 +90,48 @@ se.chk <- SummarizedExperiment(assay=count.chk, colData=target.chk)
 # The "rowData" slot can store a data frame of gene annotation, but not required.
 rowData(se.chk) <- DataFrame(ann=ann)
 
-## As conventions, sequencing count data should be normalized, aggregated, and filtered fo reduce noise. In the following, the two toy data are used in the same way. For simplicity, only toy data2 is illustrated.
+## As conventions, raw sequencing count data should be normalized, aggregated, and filtered fo reduce noise.
 
+# Normalize count data.
 # The normalizing function "calcNormFactors" (McCarthy et al. 2012) with default settings is used.  
+df.nor.chk <- norm_data(data=df.chk, norm.fun='CNF', data.trans='log2')
 se.nor.chk <- norm_data(data=se.chk, norm.fun='CNF', data.trans='log2')
-# Aggregate "sample__condition" replicates in toy data2, where "sample" is "organism_part" and "condition" is "age". 
+# Aggregate count data.
+# Aggregate "sample__condition" replicates in toy data1.
+df.aggr.chk <- aggr_rep(data=df.nor.chk, aggr='mean')
+df.aggr.chk[1:3, ]
+# Aggregate "sample_condition" replicates in toy data2, where "sample" is "organism_part" and "condition" is "age". 
 se.aggr.chk <- aggr_rep(data=se.nor.chk, sam.factor='organism_part', con.factor='age', aggr='mean')
 assay(se.aggr.chk)[1:3, 1:3]
 # Filter genes with low counts and low variance. Genes with counts over 5 (log2 unit) in at least 1\% samples (pOA), and coefficient of variance (CV) between 0.2 and 100 are retained.
+# Filter toy data1.
+df.fil.chk <- filter_data(data=df.aggr.chk, pOA=c(0.01, 5), CV=c(0.2, 100), dir=NULL)
+# Filter toy data2.
 se.fil.chk <- filter_data(data=se.aggr.chk, sam.factor='organism_part', con.factor='age', pOA=c(0.01, 5), CV=c(0.2, 100), dir=NULL)
 
-## Identify modules.
-adj.mod <- adj_mod(data=se.fil.chk)
+## Select nearest neighbors for target genes 'ENSGALG00000019846' and 'ENSGALG00000000112', which are usually genes from spatial heatmaps.
+# Toy data1.
+df.sub.mat <- submatrix(data=df.fil.chk, ID=c('ENSGALG00000019846', 'ENSGALG00000000112'), p=0.1)
+# Toy data2.
+se.sub.mat <- submatrix(data=se.fil.chk, ann='ann', ID=c('ENSGALG00000019846', 'ENSGALG00000000112'), p=0.1) 
 
-## Network 
+# In the following, "df.sub.mat" and "se.sub.mat" is used in the same way, so only "se.sub.mat" illustrated.
 
-# Static network. In the graph, nodes are genes and edges are adjacencies between genes.
-network(ID="ENSGALG00000019846", data=se.fil.chk, adj.mod=adj.mod, adj.min=0.5, vertex.label.cex=1.5, vertex.cex=4, static=TRUE)
-# Interactive network.   
-# network(ID="ENSGALG00000019846", data=se.fil.chk, ann='ann', adj.mod=adj.mod, static=FALSE)
+# The subsetted matrix and the complete correlation matrix are returned in a list, and partial is shown below.
+se.sub.mat[['sub_matrix']][c('ENSGALG00000019846', 'ENSGALG00000000112'), c(1:2, 63)] # Subsetted matrix.
+se.sub.mat[['cor_dist']][c('ENSGALG00000019846', 'ENSGALG00000000112'), 1:3] # Correlation matrix.
+
+## Adjacency matrix and module identification
+# The modules are identified by "adj_mod". It returns a list containing an adjacency matrix and a data frame of module assignment. 
+adj.mod <- adj_mod(data=se.sub.mat[['sub_matrix']])
+# The adjacency matrix is a measure of co-expression similarity between genes, where larger value denotes more similarity.
+adj.mod[['adj']][1:3, 1:3]
+# The modules are identified at two alternative sensitivity levels (ds=2 or 3). From 2 to 3, more modules are identified but module sizes are smaller. The two sets of module assignment are returned in a data frame. The first column is ds=2 while the second is ds=3. The numbers in each column are module labels with "0" meaning genes not assigned to any module.
+adj.mod[['mod']][1:3, ]
+# Static network. In the graph, nodes are genes and edges are adjacencies between genes. The thicker edge denotes higher adjacency (co-expression similarity) while larger node indicates higher gene connectivity (sum of a gene's adjacency with all its direct neighbors). The target gene is labeled by "_target".
+network(ID="ENSGALG00000019846", data=se.sub.mat[['sub_matrix']], adj.mod=adj.mod, adj.min=0.7, vertex.label.cex=1.5, vertex.cex=4, static=TRUE)
+# Interactive network. Same with static mode, the target gene ID is appended "_target".  
+\donttest{ network(ID="ENSGALG00000019846", data=se.sub.mat[['sub_matrix']], adj.mod=adj.mod, static=FALSE) }
 }
 \references{
 Martin Morgan, Valerie Obenchain, Jim Hester and Hervé Pagès (2018). SummarizedExperiment: SummarizedExperiment container. R package version 1.10.1 \cr Csardi G, Nepusz T: The igraph software package for complex network research, InterJournal, Complex Systems 1695. 2006. http://igraph.org \cr R Core Team (2018). R: A language and environment for statistical computing. R Foundation for Statistical Computing, Vienna, Austria. URL https://www.R-project.org/ \cr Winston Chang, Joe Cheng, JJ Allaire, Yihui Xie and Jonathan McPherson (2018). shiny: Web Application Framework for R. R package version 1.1.0. https://CRAN.R-project.org/package=shiny \cr Winston Chang and Barbara Borges Ribeiro (2018). shinydashboard: Create Dashboards with 'Shiny'. R package version 0.7.1. https://CRAN.R-project.org/package=shinydashboard \cr Almende B.V., Benoit Thieurmel and Titouan Robert (2018). visNetwork: Network Visualization using 'vis.js' Library. R package version 2.0.4. https://CRAN.R-project.org/package=visNetwork

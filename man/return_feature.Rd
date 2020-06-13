@@ -2,7 +2,7 @@
 % Please edit documentation in R/return_feature.R
 \name{return_feature}
 \alias{return_feature}
-\title{Return aSVG Images Containing Target Features}
+\title{Return aSVG Files Containing Target Features}
 \usage{
 return_feature(
   feature,
@@ -16,30 +16,30 @@ return_feature(
 )
 }
 \arguments{
-\item{feature}{A vector of target feature keywords (case insentitive), which is used to select aSVG images from a collection. E.g. c('heart', 'brain').}
+\item{feature}{A vector of target feature keywords (case insentitive), which is used to select aSVG images from a collection. \emph{E.g.} c('heart', 'brain').}
 
-\item{species}{A vector of target species keywords (case insentitive), which is used to select aSVG images from a collection. E.g. c('gallus').}
+\item{species}{A vector of target species keywords (case insentitive), which is used to select aSVG images from a collection. \emph{E.g.} c('gallus').}
 
-\item{keywords.any}{Logical, TRUE or FALSE. Default is TRUE. The internal searching is case-insensitive. The sapce, dot, hypen, semicolon, comma, forward slash are treated as separators between words and not counted in searching. If TRUE, every returned hit contains at least one word in the "feature" vector and at least one word in the "species" vector, which means all the possible hits are returned. E.g. "prefrontal cortex" in "homo_sapiens.brain.svg" would be returned if feature=c('frontal') and species=c('homo'). If FALSE, every returned hit contains at least one exact element in the "feature" vector and all exact elements in the "species" vector. E.g. "frontal cortex" rather than "prefrontal cortex" in "homo_sapiens.brain.svg" would be returned if feature=c('frontal cortex') and species=c('homo sapiens', 'brain').}
+\item{keywords.any}{Logical, TRUE or FALSE. Default is TRUE. The internal searching is case-insensitive. The sapce, dot, hypen, semicolon, comma, forward slash are treated as separators between words and not counted in searching. If TRUE, every returned hit contains at least one word in the \code{feature} vector and at least one word in the \code{species} vector, which means all the possible hits are returned. \emph{E.g.} "prefrontal cortex" in "homo_sapiens.brain.svg" would be returned if \code{feature=c('frontal')} and \code{species=c('homo')}. If FALSE, every returned hit contains at least one exact element in the \code{feature} vector and all exact elements in the \code{species} vector. \emph{E.g.} "frontal cortex" rather than "prefrontal cortex" in "homo_sapiens.brain.svg" would be returned if \code{feature=c('frontal cortex')} and \code{species=c('homo sapiens', 'brain')}.}
 
 \item{remote}{Logical, FALSE or TRUE. Default is TRUE. If TRUE, the remote EBI aSVG repository "https://github.com/ebi-gene-expression-group/anatomogram/tree/master/src/svg" is used for query.}
 
-\item{dir}{The directory path of aSVG images. If "remote" is TRUE, the returned aSVG images are saved in this directory. Note existing aSVG files with identical names as returned ones are overwritten. If "remote" is FALSE, user-provided (local) aSVG images should be saved in this directory for query. Default is NULL.}
+\item{dir}{The directory path of aSVG images. If \code{remote} is TRUE, the returned aSVG images are saved in this directory. Note existing aSVG files with same names as returned ones are overwritten. If \code{remote} is FALSE, user-provided (local) aSVG images should be saved in this directory for query. Default is NULL.}
 
 \item{desc}{Logical, FALSE or TRUE. Default is FALSE. If TRUE, the feature descriptions from the R package "rols" (Laurent Gatto 2019) are added. If too many features are returned, this process takes a long time.}
 
-\item{match.only}{Logical, TRUE or FALSE. If TRUE (default), only target features are returned. If FALSE, all features in the matching aSVGs are returned, and the matching features are listed on the top of the data frame.}
+\item{match.only}{Logical, TRUE or FALSE. If TRUE (default), only target features are returned. If FALSE, all features in the matching aSVGs are returned, and the matching features are moved on the top of the data frame.}
 
-\item{return.all}{Logical, FALSE or TRUE. Default is FALSE. If TRUE, all features together with all respective aSVGs are returned, regardless of remote or local aSVG collections.}
+\item{return.all}{Logical, FALSE or TRUE. Default is FALSE. If TRUE, all features together with all respective aSVGs are returned, regardless of \code{feature} and \code{species}.}
 }
 \value{
 A data frame containing information on target features and aSVGs.
 }
 \description{
-This function parses a collection of aSVG files and returns those containing target features in a data frame. Successful spatial heatmap plotting requires the aSVG features of interest have identical matching samples (cells, tissues, etc) in the data. To meet this requirement, the returned features could be used to replace matching sample counterparts in the data. Alternatively, the target samples in the data could be used to replace matching features in the aSVG through function \code{\link{update_feature}}. Refer to function \code{\link{spatial_hm}} for details on aSVGs.
+This function parses a collection of aSVG files and returns those containing target features in a data frame. Successful spatial heatmap plotting requires the aSVG features of interest have matching samples (cells, tissues, \emph{etc}) in the data. To meet this requirement, the returned features could be used to replace target sample counterparts in the data. Alternatively, the target samples in the data could be used to replace matching features in the aSVG through function \code{\link{update_feature}}. Refer to function \code{\link{spatial_hm}} for more details on aSVGs.
 }
 \examples{
-# This function is able to work on the EBI aSVG repository directly: https://github.com/ebi-gene-expression-group/anatomogram/tree/master/src/svg. The following shows how to download a chicken aSVG containing spatial features of 'brain' and 'heart'. An empty directory is recommended so as to avoid overwriting existing SVG files with the same names. Here "~/test" is used. 
+# This function is able to work on the EBI aSVG repository directly: https://github.com/ebi-gene-expression-group/anatomogram/tree/master/src/svg. The following shows how to download a chicken aSVG containing spatial features of 'brain' and 'heart'. An empty directory is recommended so as to avoid overwriting existing SVG files. Here "~/test" is used. 
 
 # Make an empty directory "~/test" if not exist.
 if (!dir.exists('~/test')) dir.create('~/test')

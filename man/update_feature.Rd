@@ -9,13 +9,13 @@ update_feature(feature, dir)
 \arguments{
 \item{feature}{The data frame returned by \code{\link{return_feature}} with the user-provided features added as the first column.}
 
-\item{dir}{The directory path where the aSVG images to update. It should be same with "dir" in \code{\link{return_feature}}.}
+\item{dir}{The directory path where the aSVG images to update. It should be same with \code{dir} in \code{\link{return_feature}}.}
 }
 \value{
-Nothing is returned. The aSVG images of interest in "dir" are updated with new features, and are ready to use in function \code{\link{spatial_hm}}.
+Nothing is returned. The aSVG images of interest in \code{dir} are updated with new features, and are ready to use in function \code{\link{spatial_hm}}.
 }
 \description{
-Successful spatial heatmap plotting requires the aSVG features of interest have identical matching samples (cells, tissues, etc) in the data. This function is designed to replace existing features in aSVG images with user-provided features. Note this function treats the first column in the feature data frame as user-provided features, so custom features must be the first column.
+Successful spatial heatmap plotting requires the aSVG features of interest have matching samples (cells, tissues, \emph{etc}) in the data. This function is designed to replace existing features in aSVG images with user-provided features. Note this function treats the first column in the feature data frame as user-provided features, so custom features must be the first column.
 }
 \examples{
 # The following shows how to download a chicken aSVG containing spatial features of 'brain' and 'heart' from the EBI aSVG repository directly (https://github.com/ebi-gene-expression-group/anatomogram/tree/master/src/svg). An empty directory is recommended so as to avoid overwriting existing SVG files with the same names. Here "~/test" is used. 

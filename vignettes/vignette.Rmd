@@ -247,7 +247,7 @@ BiocManager::install("spatialHeatmap")
 
 Next, the packages required for running the sample code in this vignette need to be loaded.  
 
-```{r, eval=TRUE, echo=TRUE, warnings=FALSE}
+```{r, eval=TRUE, echo=TRUE, warnings=FALSE, results='hide'}
 library(spatialHeatmap); library(SummarizedExperiment); library(ExpressionAtlas); library(GEOquery)
 ```
 
@@ -575,7 +575,7 @@ shm.df[['mapped_feature']]
 ```
 
 In the above example, the normalized expression values of gene `ENSG00000268433` 
-are colored in the frontal cortex and cerebellum, while the different conditions, 
+are colored in the frontal cortex and cerebellum, where the different conditions, 
 here normal and ALS, are given in separate SHMs plotted next to 
 each other (Figure \@ref(fig:humshm)). The color and feature mappings are defined
 by the corresponding color key and legend plot on the left and right, respectively.
@@ -588,11 +588,11 @@ corresponding gene IDs under the `ID` argument as a character vector. The
 each gene in a single composite plot. To facilitate comparisons of expression
 values across genes and/or conditions, the `lay.shm` parameter can be assigned
 `'gene'` or `'con'`, respectively. For instance, in Figure \@ref(fig:mul) the
-SHMs of the genes `ENSG00000268433` and `ENSG00000006047` are organised
+SHMs of the genes `ENSG00000268433` and `ENSG00000006047` are organized
 by condition in a horizontal view. This functionality is particularly useful when
 comparing gene families. 
 
-```{r mul, eval=TRUE, echo=TRUE, warnings=FALSE, fig.wide=TRUE, fig.cap=("SHMs of two genes. The subplots are organised by \"condition\" through `lay.shm` argument."), out.width="100%" }
+```{r mul, eval=TRUE, echo=TRUE, warnings=FALSE, fig.wide=TRUE, fig.cap=("SHMs of two genes. The subplots are organized by \"condition\" through `lay.shm` argument."), out.width="100%" }
 spatial_hm(svg.path=svg.hum, data=se.fil.hum, ID=c('ENSG00000268433', 'ENSG00000006047'), lay.shm='con', width=1, height=1, legend.r=1.5)
 ```
 
@@ -878,7 +878,7 @@ set.
 ### Gene Expression Data
 
 The GSE14502 data set is downloaded with the `getGEO` function from the `GEOquery` 
-package. Intermediately, the expression data is stored in an `ExpressionSet` container 
+package. Intermediately, the expression data is stored in an `ExpressionSet` container [@biobase] 
 and then converted to a `SummarizedExperiment` object.
 
 ```{r eval=TRUE, echo=TRUE, warnings=FALSE}
@@ -999,10 +999,10 @@ of single genes or a small number of them across cell types and conditions. To
 also support analyses across larger number of genes, `spatialHeatmap` provides 
 utilities for identifying for gene(s) of interest nearest neighbor genes that share 
 similar expression profiles. This is achieved by identifying clusters and 
-network modules using hierarchical clustering and network analysis. These approaches
+network modules using hierarchical clustering and network analysis, <font color='blue'> and the former is displayed as matrix heatmap while the latter as network graph </font>. These approaches
 are described with the Arabidopsis Shoot data in this and the following sections, respectively.
 
-The nearest neighbors of target genes are selected based on the correlation coefficient or distance between genes. The default measure is Pearson correlation coefficient (PCC). The argument `p` is the proportion of genes showing most similar expression profiles with target genes. Only genes within this proportion are returned. Other two alternative threshold arguments are `n` and `v`. The former selects top `n` most similar genes, while the latter is a real PCC or distance value and only genes within this value are selected. Note, the nearest neighbors are selected for each target gene independently. In this example, the target genes are `RCA` and `HRE2`. The argument `ann` is the column name of gene annotation in `rowData` slot. It is only relevant if users want to see annotation when mousing over a node in the [interactive network](#inter_net) below, so it is optional to be assigned a value. Here `ann='Target.Description'` is set and the corresponding annotation is appended to selected nearest neighbors. 
+The nearest neighbors of target genes are selected based on the correlation coefficient or distance between genes, where the default is Pearson correlation coefficient (PCC). The argument `p` is the proportion of genes showing most similar expression profiles with target genes. Only genes within this proportion are returned. Other two alternative threshold arguments are `n` and `v`. The former selects top `n` most similar genes, while the latter is a real PCC or distance value and only genes within this value are selected. Note, the nearest neighbors are selected for each target gene independently. In this example, the target genes are `RCA` and `HRE2`. The argument `ann` is the column name of gene annotation in `rowData` slot. It is only relevant if users want to see annotation when mousing over a node in the [interactive network](#inter_net) below, so it is optional to be assigned a value. Here `ann='Target.Description'` is set and the corresponding annotation is appended to selected nearest neighbors. 
 
 ```{r eval=TRUE, echo=TRUE, warnings=FALSE}
 sub.mat <- submatrix(data=se.fil.arab, ann='Target.Description', ID=c('RCA', 'HRE2'), p=0.1)
@@ -1042,7 +1042,7 @@ complete this step since they will run out of memory on their system.]</font>
 
 <font color='blue'>
 <a name="ds"></a>
-The WGCNA network analysis [@Langfelder2008-sg] is applied on the subsetted gene expression matrix to identify gene modules, which are clusters of genes showing highly similar expression profiles. First, a correlation matrix or distance matrix is computed on the subsetted matrix, which defaults to Pearson correlation or euclidean distance respectively. Then the computed matrix is transformed to an adjacency matrix. The adjacency matrix is characterized by sale-free topology, where only a small number of genes are expected to have many connections with other genes and thus dominate the whole network [@Ravasz2002-db]. Values in this adjacency matrix denotes expresson similarity between genes. The larger value, the higher similarity.^[You need to describe how this adjency matrix is generated and what it
+The WGCNA network analysis [@Langfelder2008-sg] is applied on the subsetted gene expression matrix to identify gene modules, which are clusters of genes showing highly similar expression profiles. First, a correlation matrix or distance matrix is computed on the subsetted matrix, which defaults to Pearson correlation or euclidean distance respectively. Then the computed matrix is transformed to an adjacency matrix. The adjacency matrix is characterized by sale-free topology, where only a small number of genes are expected to have many connections with other genes and thus dominate the whole network [@Ravasz2002-db]. Values in this adjacency matrix denotes expression similarity between genes. The larger value, the higher similarity.^[You need to describe how this adjency matrix is generated and what it
 represents. It also needs to mention what type of disance/correlation method is used
 initially to generate the downstream matrix.] ^[Without
 defining how adjacency is defined here readers will not be able to understand
@@ -1091,12 +1091,12 @@ network(ID="HRE2", data=sub.mat[['sub_matrix']], adj.mod=adj.mod, adj.min=0.90, 
 ```   
 
 <a name="inter_net"></a>
-Setting `static=FALSE` launches the interactive network. There is an interactive color bar to denote gene connectivity. The color ingredients must only be separated by comma, e.g. `purple,yellow,blue`, which means gene connectivity increases from purple to yellow. If too many edges (*e.g.*: > 300) are displayed, the network could get stuck. So the 'Input an adjacency threshold to display the adjacency network.' option sets a threthold to filter out weak edges. If not too many edges retained (*e.g.*: < 300), users can check 'Yes' under 'Display or not?', then the network would be responsive smoothly. To maintain acceptable performance, users are advised to choose a stringent threshold (*e.g.* 0.9) initially, then decrease the value gradually. The interactive feature allows users to zoom in and out, or drag a gene around. All the gene IDs in the network module are listed in 'Select by id' in decreasing order according to gene connectivity. Same with static mode, the target gene ID is appended '_target'.  
+Setting `static=FALSE` launches the interactive network. There is an interactive color bar to denote gene connectivity. The color ingredients must only be separated by comma, e.g. `purple,yellow,blue`, which means gene connectivity increases from purple to yellow. If too many edges (*e.g.*: > 300) are displayed, the network could get stuck. So the 'Adjacency threshold' option sets a threthold to filter out weak edges. If not too many edges retained (*e.g.*: < 300), users can check 'Yes' under 'Show plot', then the network would be responsive smoothly. To maintain acceptable performance, users are advised to choose a stringent threshold (*e.g.* 0.9) initially, then decrease the value gradually. The interactive feature allows users to zoom in and out, or drag a gene around. All the gene IDs in the network module are listed in 'Select by id' in decreasing order according to gene connectivity. Same with static mode, the target gene ID is appended '_target'.  
 
-If gene annotation is available in `rowData` slot and provided to `ann` argument, the annotation is seen by mousing over a node, *e.g* `ann=Target.Description`. If the expression matrix is a `data frame` and annotation is appended as a column, the function `network` will detect the annotation automatically.    
+If gene annotation is appended as a column in the subsetted expression matrix, it will be detected by the function `network` automatically, and is seen by mousing over a node.    
 
 ```{r eval=FALSE, echo=TRUE, warnings=FALSE}
-network(ID="HRE2", data=se.fil.arab, ann='Target.Description', adj.mod=adj.mod, static=FALSE)
+network(ID="HRE2", data=sub.mat[['sub_matrix']],  adj.mod=adj.mod, static=FALSE)
 ```
 
 # Shiny App {#shiny}

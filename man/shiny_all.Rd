@@ -2,7 +2,7 @@
 % Please edit documentation in R/shiny_all.R
 \name{shiny_all}
 \alias{shiny_all}
-\title{Launch the Integrated Shiny App}
+\title{Integrated Shiny App}
 \usage{
 shiny_all()
 }
@@ -10,11 +10,11 @@ shiny_all()
 A web browser based Shiny app.
 }
 \description{
-This function combines essential functionalities (spatial heatmap, matrix heatmap, network) in this package in an integrated Shiny app. To use this app, a pair of formatted data and aSVG image is required. The former can be obtained by assigning a directory path to "dir" in the function \code{\link{filter_data}}, and the latter can be downloaded with function \code{\link{return_feature}} from the EBI SVG repository, or made with Inkscape. See the package vignette for details (\code{browseVignettes('spatialHeatmap')}). The computation of adjacency matrix and module identification is intensive for large data matrix (e.g. >10,000 rows), so to avoid repetitive computation the adjacency matrix and module assignment can be save as "adj.txt" and "mod.txt" respectively in \code{\link{adj_mod}} and uploaded to "Compute locally" in Shiny app at later time. See the instruction page in Shiny app for details. \cr Note: when using "Compute locally" mode, the 3 files filtered data matrix "processed_data.txt" generated in \code{\link{filter_data}}, "adj.txt", and "mod.txt" for uploading must be downstream the same set of filtering parameters in \code{\link{filter_data}}, since the 3 files are filtering-parameter specific.
+
 }
 \section{Details}{
 
-No argument is required, this function launches the Shiny-app based Spatial Heatmap directly.
+No argument is required, this function launches the Shiny-app based Shiny app directly.
 }
 
 \examples{

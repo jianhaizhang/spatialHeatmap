@@ -96,7 +96,7 @@ df.fil.chk <- filter_data(data=df.aggr.chk, pOA=c(0.01, 5), CV=c(0.2, 100), dir=
 # Filter toy data2.
 se.fil.chk <- filter_data(data=se.aggr.chk, sam.factor='organism_part', con.factor='age', pOA=c(0.01, 5), CV=c(0.2, 100), dir=NULL)
 
-## Select nearest neighbors for target genes 'ENSGALG00000019846' and 'ENSGALG00000000112'.
+## Select nearest neighbors for target genes 'ENSGALG00000019846' and 'ENSGALG00000000112', which are usually genes visualized in spatial heatmaps.
 # Toy data1.
 df.sub.mat <- submatrix(data=df.fil.chk, ID=c('ENSGALG00000019846', 'ENSGALG00000000112'), p=0.1)
 # Toy data2.

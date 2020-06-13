@@ -2,6 +2,7 @@
 #'
 #' This function exhibits a target assayed item (gene, protein, metabolite, \emph{etc}) in the context of corresponding network module as static and interactive network graphs. See function \code{\link{adj_mod}} for module identification. In the network graph, nodes are items and edges are adjacencies between items. The thicker edge denotes higher adjacency (coexpression similarity) between nodes while larger node indicates higher connectivity (sum of a node's adjacency with all its direct neighbours). \cr In the interactive mode, there is an interactive color bar to denote node connectivity. The color ingredients could be separated by comma, semicolon, single space, dot, hypen, or, underscore. \emph{E.g.} "purple,yellow,blue", which means node connectivity increases from purple to blue. If too many edges (\emph{e.g.}: > 300) are displayed, the network could get stuck. So the "Adjacency threshold" option sets a threthold to filter out weak edges and all remaining edges are displayed. If not too many (\emph{e.g.}: < 300), users can check "Yes" under "Show plot", then the network will be displayed and would be responsive smoothly. To maintain acceptable performance, users are advised to choose a stringent threshold (\emph{e.g.} 0.9) initially, then decrease the value gradually. The interactive feature allows users to zoom in and out, or drag a node around. All the node IDs in the network module are listed in "Select by id" in decreasing order according to node connectivity. The input item ID is appended "_target" as a label. By clicking an ID in this list, users can identify the corresponding node in the network. If the input data has item annotations, then the annotation can be seen by hovering the cursor over a node. 
 
+#' @inheritParams matrix_hm
 #' @param ds One of "2" or "3", the module splitting sensitivity level. Default is "3". See function \code{\link{adj_mod}} for details.
 #' @param adj.min Minimum adjacency between nodes, edges with adjacency below which will be removed. Default is 0. Applicable to static network.
 #' @param con.min Minimun connectivity of a node, nodes with connectivity below which will be removed. Default is 0. Applicable to static network.
@@ -118,7 +119,7 @@
 #' @importFrom shinydashboard dashboardSidebar dashboardPage dashboardHeader sidebarMenu menuItem menuSubItem dashboardBody tabItems tabItem box
 #' @importFrom visNetwork visNetworkOutput visNetwork visOptions renderVisNetwork visIgraphLayout
 
-network <- function(ID, data, ann=NULL, adj.mod, ds="3", adj.min=0, con.min=0, node.col=c("mediumorchid1", "chocolate4"), edge.col=c("yellow", "blue"), vertex.label.cex=1, vertex.cex=3, edge.cex=10, layout="circle", main=NULL, static=TRUE, ...) {
+network <- function(ID, data, adj.mod, ds="3", adj.min=0, con.min=0, node.col=c("mediumorchid1", "chocolate4"), edge.col=c("yellow", "blue"), vertex.label.cex=1, vertex.cex=3, edge.cex=10, layout="circle", main=NULL, static=TRUE, ...) {
 
   options(stringsAsFactors=FALSE)
   if (is(data, 'data.frame')|is(data, 'matrix')|is(data, 'DFrame')) {
