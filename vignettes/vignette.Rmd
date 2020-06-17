@@ -495,7 +495,7 @@ the corresponding sample and condition column names (Table \@ref(tab:arg)).
 For normalizing raw count data from RNA-Seq experiments, the `norm_data`
 function can be used. It supports the following pre-existing functions from
 widely used packages for analyzing count data in the next generation sequencing
-(NGS) field: `calcNormFactors` (CNF) from `edgeR` [@edgeR]; as well as
+(NGS) field: `calcNormFactors` (CNF) from `edgeR` [@edgeR1]; as well as
 `estimateSizeFactors` (EST),  `varianceStabilizingTransformation` (VST), and
 `rlog` from DESeq2 [@DESeq2].  The argument `norm.fun` specifies one of the
 four internal normalizing methods: `CNF`, `EST`, `VST`, and `rlog`. If

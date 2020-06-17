@@ -50,7 +50,7 @@ shinyUI(dashboardPage(
       numericInput(inputId='height', label='Overall height:', value=400, min=1, max=Inf, step=NA, width=170), '',
       numericInput(inputId='width', label='Overall width:', value=820, min=1, max=Inf, step=NA, width=170), '',
       numericInput(inputId='col.n', label='No. of columns:', value=2, min=1, max=Inf, step=1, width=150), '',
-      radioButtons(inputId="gen.con", label="Show plot:", choices=c("Gene"="gene", "Condition"="con"), selected="gene", inline=TRUE),
+      radioButtons(inputId="gen.con", label="Display by:", choices=c("Gene"="gene", "Condition"="con"), selected="gene", inline=TRUE),
       textInput("color", "Color scheme:", "purple,yellow,blue", placeholder='Eg: "purple,yellow,blue"', width=250),
       actionButton("col.but", "Go", icon=icon("refresh")), '', 
       radioButtons(inputId='cs.v', label='Color scale based on:', choices=c("Selected rows"="sel.gen", "All rows"="w.mat"), selected="sel.gen", inline=TRUE)

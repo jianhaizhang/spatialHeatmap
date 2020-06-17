@@ -15,6 +15,47 @@ options(shiny.maxRequestSize=7*1024^3, stringsAsFactors=FALSE)
 
 # Right before submit the package the following functions will be deleted, and they will be imported as above. They are listed here now for the convenience of functionality development.
 
+sort_gen_con <- function(ID.sel, na.all, con.all, by='gene') {
+
+  # Sort vector of letter and number mixture.
+  sort_mix <- function(vec) {
+
+    w <- is.na(as.numeric(gsub('\\D', '', vec)))
+    let <- vec[w]; num <- vec[!w]
+    let.num <- as.numeric(gsub('\\D', '', vec))
+    vec[!w] <- num[order(let.num[!w])]
+    vec[w] <- let[order(let.num[w])]; return(vec)
+        
+  }  
+
+  if (by=='gene') {
+
+    # Sort conditions under each gene.
+    con.pat1 <- paste0('.*_(', paste0(con.all, collapse='|'), ')$')
+    na.sort <- NULL; for (i in sort_mix(ID.sel)) {
+        
+      na0 <- na.all[grepl(paste0('^', i, '_'), na.all)]
+      con1 <- gsub(con.pat1, '\\1', na0)
+      na.sort <- c(na.sort, paste0(i, '_', sort_mix(con1)))
+
+    }
+
+  } else if (by=='con') {
+
+    # Sort conditions and genes.
+    gen.pat1 <- paste0('^(', paste0(ID.sel, collapse='|'), ')_.*')
+    na.sort <- NULL; for (i in sort_mix(con.all)) {
+      
+      na0 <- na.all[grepl(paste0('_', i, '$'), na.all)]
+      gen1 <- gsub(gen.pat1, '\\1', na0)
+      na.sort <- c(na.sort, paste0(sort_mix(gen1), '_', i))
+
+    }
+
+  }; return(na.sort)
+
+}
+
 matrix_hm <- function(ID, data, scale='no', col=c('purple', 'yellow', 'blue'), main=NULL, title.size=10, cexCol=1, cexRow=1, angleCol=45, angleRow=45, sep.color="black", sep.width=0.02, static=TRUE, margin=c(10, 10), arg.lis1=list(), arg.lis2=list()) {
 
   options(stringsAsFactors=FALSE)
@@ -377,65 +418,7 @@ aggr_rep <- function(data, sam.factor, con.factor, aggr='mean') {
 }
 
 
-lay_shm <- function(lay.shm, con, ncol, ID.sel, grob.list, width, height, shiny) {
 
-  # Sort vector of letter and number mixture.
-  sort_mix <- function(vec) {
-
-    w <- is.na(as.numeric(gsub('\\D', '', vec)))
-    let <- vec[w]; num <- vec[!w]
-    let.num <- as.numeric(gsub('\\D', '', vec))
-    vec[!w] <- num[order(let.num[!w])]
-    vec[w] <- let[order(let.num[w])]; return(vec)
-        
-  }        
-
-  width <- as.numeric(width); height <- as.numeric(height); ncol <- as.numeric(ncol); con <- unique(con)
-  grob.all.na <- names(grob.list)
-  if (lay.shm=="gene") {
-
-    all.cell <- ceiling(length(con)/ncol)*ncol
-    cell.idx <- c(seq_len(length(con)), rep(NA, all.cell-length(con)))
-    m <- matrix(cell.idx, ncol=as.numeric(ncol), byrow=TRUE)
-    lay <- NULL; for (i in seq_len(length(ID.sel))) { lay <- rbind(lay, m+(i-1)*length(con)) }
-    # Sort conditions under each gene.
-    con.pat1 <- paste0('.*_(', paste0(con, collapse='|'), ')$')
-    na.sort <- NULL; for (i in ID.sel) {
-        
-      na0 <- grob.all.na[grepl(paste0('^', i, '_'), grob.all.na)]
-      con1 <- gsub(con.pat1, '\\1', na0)
-      na.sort <- c(na.sort, paste0(i, '_', sort_mix(con1)))
-
-    }; grob.list <- grob.list[na.sort]
-    if (shiny==TRUE & length(grob.list)>=1) return(grid.arrange(grobs=grob.list, layout_matrix=lay, newpage=TRUE))
-       
-    g.tr <- lapply(grob.list[seq_len(length(grob.list))], grobTree)
-    n.col <- ncol(lay); n.row <- nrow(lay)
-    g.arr <- arrangeGrob(grobs=g.tr, layout_matrix=lay, widths=unit(rep(width/n.col, n.col), "npc"), heights=unit(rep(height/n.row, n.row), "npc"))
-
-  } else if (lay.shm=="con") {
-
-    all.cell <- ceiling(length(ID.sel)/ncol)*ncol
-    cell.idx <- c(seq_len(length(ID.sel)), rep(NA, all.cell-length(ID.sel)))
-    m <- matrix(cell.idx, ncol=ncol, byrow=TRUE)
-    lay <- NULL; for (i in seq_len(length(con))) { lay <- rbind(lay, m+(i-1)*length(ID.sel)) }
-    # Sort conditions and genes.
-    gen.pat1 <- paste0('^(', paste0(ID.sel, collapse='|'), ')_.*')
-    na.sort <- NULL; for (i in sort_mix(con)) {
-      
-      na0 <- grob.all.na[grepl(paste0('_', i, '$'), grob.all.na)]
-      gen1 <- gsub(gen.pat1, '\\1', na0)
-      na.sort <- c(na.sort, paste0(sort_mix(gen1), '_', i))
-
-    }; grob.list <- grob.list[na.sort]
-    if (shiny==TRUE & length(grob.list)>=1) return(grid.arrange(grobs=grob.list, layout_matrix=lay, newpage=TRUE))
-    g.tr <- lapply(grob.list, grobTree); g.tr <- g.tr[names(grob.list)]
-    n.col <- ncol(lay); n.row <- nrow(lay)
-    g.arr <- arrangeGrob(grobs=g.tr, layout_matrix=lay, widths=unit(rep(width/n.col, n.col), "npc"), heights=unit(rep(height/n.row, n.row), "npc")) 
-
-  }; return(g.arr)
-
-}
 
 
 col_bar <- function(geneV, cols, width, bar.title.size=10, mar=c(3, 0.1, 3, 0.1)) {        
@@ -448,7 +431,41 @@ col_bar <- function(geneV, cols, width, bar.title.size=10, mar=c(3, 0.1, 3, 0.1)
 
 }
 
+lay_shm <- function(lay.shm, con, ncol, ID.sel, grob.list, width, height, shiny) {
 
+  width <- as.numeric(width); height <- as.numeric(height); ncol <- as.numeric(ncol); con <- unique(con)
+  grob.all.na <- names(grob.list)
+  if (lay.shm=="gene") {
+
+    all.cell <- ceiling(length(con)/ncol)*ncol
+    cell.idx <- c(seq_len(length(con)), rep(NA, all.cell-length(con)))
+    m <- matrix(cell.idx, ncol=as.numeric(ncol), byrow=TRUE)
+    lay <- NULL; for (i in seq_len(length(ID.sel))) { lay <- rbind(lay, m+(i-1)*length(con)) }
+    # Sort conditions under each gene.
+    na.sort <- sort_gen_con(ID.sel=ID.sel, na.all=grob.all.na, con.all=con, by='gene')
+    grob.list <- grob.list[na.sort]
+    if (shiny==TRUE & length(grob.list)>=1) return(grid.arrange(grobs=grob.list, layout_matrix=lay, newpage=TRUE))
+       
+    g.tr <- lapply(grob.list[seq_len(length(grob.list))], grobTree)
+    n.col <- ncol(lay); n.row <- nrow(lay)
+    g.arr <- arrangeGrob(grobs=g.tr, layout_matrix=lay, widths=unit(rep(width/n.col, n.col), "npc"), heights=unit(rep(height/n.row, n.row), "npc"))
+
+  } else if (lay.shm=="con") {
+
+    all.cell <- ceiling(length(ID.sel)/ncol)*ncol
+    cell.idx <- c(seq_len(length(ID.sel)), rep(NA, all.cell-length(ID.sel)))
+    m <- matrix(cell.idx, ncol=ncol, byrow=TRUE)
+    lay <- NULL; for (i in seq_len(length(con))) { lay <- rbind(lay, m+(i-1)*length(ID.sel)) }
+    na.sort <- sort_gen_con(ID.sel=ID.sel, na.all=grob.all.na, con.all=con, by='con')
+    grob.list <- grob.list[na.sort]
+    if (shiny==TRUE & length(grob.list)>=1) return(grid.arrange(grobs=grob.list, layout_matrix=lay, newpage=TRUE))
+    g.tr <- lapply(grob.list, grobTree); g.tr <- g.tr[names(grob.list)]
+    n.col <- ncol(lay); n.row <- nrow(lay)
+    g.arr <- arrangeGrob(grobs=g.tr, layout_matrix=lay, widths=unit(rep(width/n.col, n.col), "npc"), heights=unit(rep(height/n.row, n.row), "npc")) 
+
+  }; return(g.arr)
+
+}
 
 nod_lin <- function(ds, lab, mods, adj, geneID, adj.min) {
 
@@ -768,7 +785,7 @@ grob_list <- function(gene, con.na=TRUE, geneV, coord, ID, cols, tis.path, tis.t
   cname <- colnames(gene); form <- grep('__', cname) # Only take the column names with "__".
   cons <- gsub("(.*)(__)(.*)", "\\3", cname[form]); con.uni <- unique(cons)
   sam.uni <- unique(gsub("(.*)(__)(.*)", "\\1", cname)); tis.trans <- make.names(tis.trans)
-  grob.na <- grob.lis <- NULL; for (k in ID) {
+  grob.na <- grob.lis <- g.lis.all <- NULL; for (k in ID) {
 
     scol <- NULL; for (i in gene[k, ]) { 
       ab <- abs(i-geneV); col.ind <- which(ab==min(ab))[1]; scol <- c(scol, cols[col.ind])
@@ -780,10 +797,10 @@ grob_list <- function(gene, con.na=TRUE, geneV, coord, ID, cols, tis.path, tis.t
     # Repress popups by saving it to a png file, then delete it.
     tmp <- tempfile()
     png(tmp); grob <- lapply(g.lis, ggplotGrob); dev.off(); if (file.exists(tmp)) do.call(file.remove, list(tmp))
-    names(grob) <- grob.na0; grob.lis <- c(grob.lis, grob) 
+    names(g.lis) <- names(grob) <- grob.na0; grob.lis <- c(grob.lis, grob); g.lis.all <- c(g.lis.all, g.lis)
 
   }; g.lgd <- g_list(con=NULL, lgd=TRUE)
-  return(list(grob.lis=grob.lis, g.lgd=g.lgd))
+  return(list(grob.lis=grob.lis, g.lgd=g.lgd, g.lis.all=g.lis.all))
 
 }
 
@@ -1065,21 +1082,12 @@ shinyServer(function(input, output, session) {
   gID <- reactiveValues(geneID="none", new=NULL, all=NULL)
   observe({ input$geneInpath; input$fileIn; gID$geneID <- "none" })
   observe({ if (is.null(geneIn())) gID$geneID <- "none" })
+  # To make the "gID$new" and "gID$all" updated with the new "input$fileIn", since the selected row is fixed (3rd row), the "gID$new" is not updated when "input$fileIn" is changed, and the downstream is not updated either. The shoot/root examples use the same data matrix, so the "gID$all" is the same (pre-selected 3rd row) when change from the default "shoot" to others like "organ". As a result, the "gene$new" is null and downstream is not updated. Also the "gene$new" is the same when change from shoot to organ, and downstream is not updated, thus "gene$new" and "gene$all" are both set NULL above upon new "input$fileIn".  
   observeEvent(input$fileIn, { gID$all <- gID$new <- NULL })
 
   observeEvent(input$dt_rows_selected, {
     
     if (is.null(input$dt_rows_selected)) return()
-    r.na <- rownames(geneIn()[["gene2"]]); gID$geneID <- r.na[input$dt_rows_selected]
-    gID$new <- setdiff(gID$geneID, gID$all); gID$all <- c(gID$all, gID$new)
-
-    })
-
-  # To make the "gID$new" and "gID$all" updated with the new "input$fileIn", since the selected row is fixed (3rd row), the "gID$new" is not updated when "input$fileIn" is changed, and the downstream is not updated either. The shoot/root examples use the same data matrix, so the "gID$all" is the same (pre-selected 3rd row) when change from the default "shoot" to others like "organ". As a result, the "gene$new" is null and downstream is not updated. Also the "gene$new" is the same when change from shoot to organ, and downstream is not updated, thus "gene$new" and "gene$all" are both set null above upon new "input$fileIn".
-  observe({
-
-    input$fileIn 
-    if (!grepl("_Mustroph$|_Merkin$|_Cardoso.Moreira$|_Prudencio$|_Census$", input$fileIn)|is.null(input$dt_rows_selected)) return()
     r.na <- rownames(geneIn()[["gene2"]]); gID$geneID <- r.na[input$dt_rows_selected]
     gID$new <- setdiff(gID$geneID, gID$all); gID$all <- c(gID$all, gID$new)
 
@@ -1191,7 +1199,7 @@ shinyServer(function(input, output, session) {
 
   })
 
-  grob <- reactiveValues(all=NULL); observeEvent(input$fileIn, { grob$all <- NULL })
+  grob <- reactiveValues(all=NULL, gg.all=NULL); observeEvent(input$fileIn, { grob$all <- grob$gg.all <- NULL })
   gs <- reactive({ 
 
     if (is.null(svg.df())|is.null(gID$new)|is.null(gID$all)) return(NULL); 
@@ -1212,7 +1220,7 @@ shinyServer(function(input, output, session) {
   observe({
     
     input$log; input$tis; input$col.but; input$cs.v # input$tis as an argument in "grob_list" will not cause evaluation of all code, thus it is listed here.
-    grob$all <- NULL; gs <- reactive({ 
+    grob$all <- grob$gg.all <- NULL; gs <- reactive({ 
 
       if (is.null(svg.df())) return(NULL); if (input$cs.v=="sel.gen" & is.null(input$dt_rows_selected)) return(NULL)
       withProgress(message="Spatial heatmap: ", value=0, {
@@ -1227,11 +1235,16 @@ shinyServer(function(input, output, session) {
 
       })
 
-    }); grob$all <- gs()[['grob.lis']]
+    }); grob$all <- gs()[['grob.lis']]; grob$gg.all <- gs()[['g.lis.all']]
 
   })
 
-  observeEvent(gID$new, { grob.all <- c(grob$all, gs()[['grob.lis']]); grob$all <- grob.all[unique(names(grob.all))] })
+  observeEvent(gID$new, { 
+                 
+    grob.all <- c(grob$all, gs()[['grob.lis']]); grob$all <- grob.all[unique(names(grob.all))] 
+    gg.all <- c(grob$gg.all, gs()[['g.lis.all']]); grob$gg.all <- gg.all[unique(names(gg.all))] 
+  
+  })
   
   output$h.w.c <- renderText({
     
@@ -1258,7 +1271,7 @@ shinyServer(function(input, output, session) {
     r.na <- rownames(geneIn()[["gene2"]]); gID$geneID <- r.na[input$dt_rows_selected]
     grob.na <- names(grob$all); con <- unique(con())
     idx <- NULL; for (i in gID$geneID) { idx <- c(idx, grob.na[grob.na %in% paste0(i, '_', con)]) } 
-    grob.lis.p <- grob$all[sort(idx)] #grob.lis.p <- grob.lis.p[unique(names(grob.lis.p))]
+    grob.lis.p <- grob$all[idx] #grob.lis.p <- grob.lis.p[unique(names(grob.lis.p))]
     lay_shm(lay.shm=input$gen.con, con=con, ncol=input$col.n, ID.sel=gID$geneID, grob.list=grob.lis.p, width=input$width, height=input$height, shiny=TRUE) 
 
     })
