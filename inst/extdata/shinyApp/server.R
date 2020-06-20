@@ -958,7 +958,7 @@ shinyServer(function(input, output, session) {
     updateRadioButtons(session, inputId='cs.v', label='Color scale based on:', choices=c("Selected rows"="sel.gen", "All rows"="w.mat"), selected="sel.gen", inline=TRUE)
     updateNumericInput(session, inputId="height", label="Overall height:", value=400, min=0.1, max=Inf, step=NA)
     updateNumericInput(session, inputId="width", label="Overall width:", value=820, min=0.1, max=Inf, step=NA)
-    updateNumericInput(session, inputId="col.n", label="No. of columns:", value=2, min=1, max=Inf, step=1)
+    updateNumericInput(session, inputId="col.n", label="Columns:", value=2, min=1, max=Inf, step=1)
 
   })
 
@@ -1122,7 +1122,7 @@ shinyServer(function(input, output, session) {
 
   })
 
-  output$bar <- renderPlot({
+  shm.bar <- reactive({
 
     if (is.null(gID$all)) return(NULL)
     if ((grepl("_Mustroph$|_Merkin$|_Cardoso.Moreira$|_Prudencio$|_Census$", input$fileIn) & !is.null(geneIn()))|((input$fileIn=="Compute locally"|input$fileIn=="Compute online") & !is.null(input$svgInpath) & !is.null(geneIn()))) {
@@ -1140,7 +1140,9 @@ shinyServer(function(input, output, session) {
     }
 
   })
-
+  # One output can only be used once in ui.R.
+  output$bar1 <- renderPlot({ if (!is.null(shm.bar)) shm.bar() })
+  output$bar2 <- renderPlot({ if (!is.null(shm.bar)) shm.bar() })
 
   observe({
 
@@ -1290,6 +1292,73 @@ shinyServer(function(input, output, session) {
 
   })
 
+  anm <- reactive({
+
+    if (is.null(geneIn())|is.null(input$dt_rows_selected)|is.null(svg.df())|gID$geneID[1]=="none"|is.null(grob$all)) return(NULL)
+    if (is.null(input$dt_rows_selected)|is.null(svg.df())|gID$geneID[1]=="none"|is.null(grob$all)) return(NULL)
+    if (length(color$col=="none")==0|input$color=="") return(NULL)
+
+    withProgress(message="Animation: ", value=0, {
+
+    incProgress(0.25, detail="preparing data...")
+    svg.df <- svg.df(); gg.all <- grob$gg.all; gene <- geneIn()[['gene2']]; con <- unique(con())
+    con.pat <- paste0('(.*)', '_', '(', paste0(con, collapse='|'), ')')
+    fm <- names(gg.all); gen <- unique(gsub(con.pat, '\\1', fm))
+    if (input$gen.con=='gene') dis <- 'gene' else dis <- 'con'
+    fm <- sort_gen_con(ID.sel=gen, na.all=fm, con.all=con, by=dis)
+    # Add colors and frames to coordinates.    
+    df.all <- data.frame(); for (i in seq_along(fm)) {
+
+      df0 <- svg.df[['df']]; g0 <- gg.all[[fm[i]]]; df0$color <- layer_data(g0)$fill
+      df0$frame <- g0$labels[['title']]; df0$tissue <- paste0(df0$tissue, '.', i)
+      df.all <- rbind(df.all, df0)
+
+    }
+    # Separate genes, conditions, and samples.
+    df.all$value <- NA; tis0 <- df.all[, 'tissue']; idx <- grepl('_\\d+\\.\\d+$', tis0)
+    tis1 <- tis0[idx]; tis2 <- tis0[!idx]; tis0[idx] <- sub('_\\d+\\.\\d+$', '', tis1)
+    tis0[!idx] <- sub('\\.\\d+$', '', tis2); df.all$feature <- tis0
+    df.all$gene <- gsub(con.pat, '\\1', df.all$frame)
+    df.all$condition <- gsub(con.pat, '\\2', df.all$frame)
+    col.na <- paste0(df.all$feature, '__', df.all$condition)
+    idx1 <- col.na %in% colnames(gene)
+    # Assign values to each row.
+    for (i in fm) {
+
+      idx2 <- (df.all$frame %in% i) & idx1; df0 <- df.all[idx2, ]
+      df0$value <- unlist(gene[df0$gene[1], col.na[idx2]]); df.all[idx2, ] <- df0
+    
+    }; df.all$frame <- factor(df.all$frame, levels=fm) # Play order. 
+    
+    incProgress(0.25, detail="plotting...")
+    # Colours in "fill" of "geom_polygon" are not internally ordered and no need to be named, while colours in "values" of "scale_fill_manual" are if the colors are not named.
+    # text=paste0('frame: ', frame, '\n', 'feature: ', feature, '\n', 'value: ', value)
+    ggplot(df.all, aes(x=x, y=y, frame=frame, group=tissue, value=value))+geom_polygon(fill=df.all$color, size=0.2, color='grey70')+theme(axis.text=element_blank(), axis.ticks=element_blank(), panel.grid=element_blank(), panel.background=element_rect(fill="white", colour="grey80"), plot.margin=margin(0.1, 0.1, 0.1, 0.3, "cm"), axis.title.x=element_text(size=16,face="bold"), plot.title=element_text(hjust=0.5, size=11))+labs(x="", y="")+scale_y_continuous(expand=c(0.01, 0.01))+scale_x_continuous(expand=c(0.01, 0.01))
+    
+    })
+
+  })
+
+
+  output$tran <- renderText({
+    
+    if (is.null(geneIn())|is.null(input$dt_rows_selected)|is.null(svg.df())|gID$geneID[1]=="none"|is.null(grob$all)) return(NULL)
+
+    validate(need(try(input$t>=0.1), 'Transition time should be at least 0.1 second!'))
+
+  })
+  
+  output$gply <- renderPlotly({
+
+    if (is.null(anm())) return()
+    withProgress(message="Animation: ", value=0, {
+
+    incProgress(0.75, detail="plotting...")
+    ggplotly(anm(), tootip='text', width=input$width.ly, height=input$height.ly) %>% animation_opts(frame=input$t*10^3, transition=0, redraw=FALSE) %>% animation_slider(currentvalue=list(prefix='frame: ', font=list(color="purple", size=18), xanchor='left'), pad=list(t=1)) %>% layout(margin=list(t=20, r=3, b=1, l=3))
+
+  })
+
+  })
 
   observe({
 
@@ -1303,7 +1372,7 @@ shinyServer(function(input, output, session) {
 
   observe({
   
-    input$fileIn; geneIn(); input$adj.modInpath; input$A; input$p; input$cv1; input$cv2
+    input$fileIn; geneIn(); input$adj.modInpath; input$A; input$p; input$cv1; input$cv2; input$dt_rows_selected
     updateRadioButtons(session, inputId="mhm.but", label="Show plot: ", choices=c("Yes"="Y", "No"="N"), selected="N", inline=TRUE)
 
   })

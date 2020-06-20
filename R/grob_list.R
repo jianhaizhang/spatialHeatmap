@@ -22,7 +22,7 @@
 #' @param ... Other arguments passed to \code{\link[ggplot2]{ggplot}}.
 #' @inheritParams ggplot2::theme
 
-#' @return A list of spatial heatmaps in the form of ggplot2 plot grob.
+#' @return A list of spatial heatmaps of ggplot2 plot grob, legend plot, and spatial heatmaps of ggplot object.
 #' @keywords Internal
 
 #' @author Jianhai Zhang \email{jzhan067@@ucr.edu; zhang.jianhai@@hotmail.com} \cr Dr. Thomas Girke \email{thomas.girke@@ucr.edu}
@@ -94,7 +94,7 @@ grob_list <- function(gene, con.na=TRUE, geneV, coord, ID, cols, tis.path, tis.t
   cname <- colnames(gene); form <- grep('__', cname) # Only take the column names with "__".
   cons <- gsub("(.*)(__)(.*)", "\\3", cname[form]); con.uni <- unique(cons)
   sam.uni <- unique(gsub("(.*)(__)(.*)", "\\1", cname)); tis.trans <- make.names(tis.trans)
-  grob.na <- grob.lis <- NULL; for (k in ID) {
+  grob.na <- grob.lis <- g.lis.all <- NULL; for (k in ID) {
 
     scol <- NULL; for (i in gene[k, ]) { 
       ab <- abs(i-geneV); col.ind <- which(ab==min(ab))[1]; scol <- c(scol, cols[col.ind])
@@ -106,10 +106,10 @@ grob_list <- function(gene, con.na=TRUE, geneV, coord, ID, cols, tis.path, tis.t
     # Repress popups by saving it to a png file, then delete it.
     tmp <- tempfile()
     png(tmp); grob <- lapply(g.lis, ggplotGrob); dev.off(); if (file.exists(tmp)) do.call(file.remove, list(tmp))
-    names(grob) <- grob.na0; grob.lis <- c(grob.lis, grob) 
+    names(g.lis) <- names(grob) <- grob.na0; grob.lis <- c(grob.lis, grob); g.lis.all <- c(g.lis.all, g.lis)
 
   }; g.lgd <- g_list(con=NULL, lgd=TRUE)
-  return(list(grob.lis=grob.lis, g.lgd=g.lgd))
+  return(list(grob.lis=grob.lis, g.lgd=g.lgd, g.lis.all=g.lis.all))
 
 }
 

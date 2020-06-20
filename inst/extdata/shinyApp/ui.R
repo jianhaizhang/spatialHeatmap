@@ -45,11 +45,23 @@ shinyUI(dashboardPage(
       )), verbatimTextOutput("fil.par"),
       fluidRow(splitLayout(cellWidths=c("1%", "98%", "1%"), "", dataTableOutput("dt"), ""))
       ),
+      
       box(title="Spatial Heatmap", status="primary", solidHeader=TRUE, collapsible=TRUE, width=9, 
-      fluidRow(splitLayout(cellWidths=c('1%', '11%', '1%', '10%', '1%', '11%', '1%', '16%', '15%', '7%', '1%', '18%'), '', 
+      tabBox(title="", width=12, id='shm_all', selected='shm1', side='right', 
+      
+      tabPanel(title='Animation', value='shm2', 
+      fluidRow(splitLayout(cellWidths=c('1%', '10%', '1%', '10%', '1%', '15%'), '', 
+      numericInput(inputId='height.ly', label='Height:', value=400, min=1, max=Inf, step=NA, width=170), '',
+      numericInput(inputId='width.ly', label='Width:', value=620, min=1, max=Inf, step=NA, width=170), '',
+      numericInput(inputId='t', label='Transition time (s):', value=1, min=0.1, max=Inf, step=NA, width=270)
+      )), textOutput('tran'),
+      fluidRow(splitLayout(cellWidths=c("1%", "7%", "91%", "1%"), "", plotOutput("bar2"), plotlyOutput("gply"), ""))),
+      
+      tabPanel(title="Basic", value='shm1',  
+      fluidRow(splitLayout(cellWidths=c('1%', '11%', '1%', '11%', '1%', '7%', '1%', '18%', '15%', '8%', '1%', '22%'), '', 
       numericInput(inputId='height', label='Overall height:', value=400, min=1, max=Inf, step=NA, width=170), '',
       numericInput(inputId='width', label='Overall width:', value=820, min=1, max=Inf, step=NA, width=170), '',
-      numericInput(inputId='col.n', label='No. of columns:', value=2, min=1, max=Inf, step=1, width=150), '',
+      numericInput(inputId='col.n', label='Columns:', value=2, min=1, max=Inf, step=1, width=150), '',
       radioButtons(inputId="gen.con", label="Display by:", choices=c("Gene"="gene", "Condition"="con"), selected="gene", inline=TRUE),
       textInput("color", "Color scheme:", "purple,yellow,blue", placeholder='Eg: "purple,yellow,blue"', width=250),
       actionButton("col.but", "Go", icon=icon("refresh")), '', 
@@ -57,7 +69,9 @@ shinyUI(dashboardPage(
       )), textOutput('h.w.c'), textOutput('msg.col'),
 
       fluidRow(splitLayout(cellWidths=c('1%', "99%"), '', checkboxGroupInput(inputId="tis", label="Select tissues to be transparent:", choices='', selected='', inline=TRUE))),
-      fluidRow(splitLayout(cellWidths=c("1%", "7%", "91%", "1%"), "", plotOutput("bar"), plotOutput("shm"), ""))),
+      fluidRow(splitLayout(cellWidths=c("1%", "7%", "91%", "1%"), "", plotOutput("bar1"), plotOutput("shm"), "")))
+
+      )),
       
       box(title="Original Image", status="primary", solidHeader=TRUE, collapsible=TRUE, splitLayout(cellWidths=c("1%", "98%", "1%"), "", plotOutput("lgd"), ""), width=3), br(),
       # 'height=NULL': height is automatic.
