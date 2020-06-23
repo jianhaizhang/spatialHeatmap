@@ -1294,7 +1294,7 @@ shinyServer(function(input, output, session) {
 
   anm <- reactive({
 
-    if (is.null(geneIn())|is.null(input$dt_rows_selected)|is.null(svg.df())|gID$geneID[1]=="none"|is.null(grob$all)) return(NULL)
+    if (is.null(geneIn())|is.null(input$dt_rows_selected)|is.null(svg.df())|gID$geneID[1]=="none"|is.null(grob$all)|input$gply.but=='N') return(NULL)
     if (is.null(input$dt_rows_selected)|is.null(svg.df())|gID$geneID[1]=="none"|is.null(grob$all)) return(NULL)
     if (length(color$col=="none")==0|input$color=="") return(NULL)
 
@@ -1350,11 +1350,11 @@ shinyServer(function(input, output, session) {
   
   output$gply <- renderPlotly({
 
-    if (is.null(anm())) return()
+    if (is.null(anm())|input$gply.but=='N') return()
     withProgress(message="Animation: ", value=0, {
 
     incProgress(0.75, detail="plotting...")
-    ggplotly(anm(), tootip='text', width=input$width.ly, height=input$height.ly) %>% animation_opts(frame=input$t*10^3, transition=0, redraw=FALSE) %>% animation_slider(currentvalue=list(prefix='frame: ', font=list(color="purple", size=18), xanchor='left'), pad=list(t=1)) %>% layout(margin=list(t=20, r=3, b=1, l=3))
+    ggplotly(anm(), tootip='all', width=input$width.ly, height=input$height.ly) %>% animation_opts(frame=input$t*10^3, transition=0, redraw=FALSE) %>% animation_slider(currentvalue=list(prefix='frame: ', font=list(color="purple", size=18), xanchor='left'), pad=list(t=1)) %>% layout(margin=list(t=20, r=3, b=1, l=3))
 
   })
 
@@ -1373,7 +1373,8 @@ shinyServer(function(input, output, session) {
   observe({
   
     input$fileIn; geneIn(); input$adj.modInpath; input$A; input$p; input$cv1; input$cv2; input$dt_rows_selected
-    updateRadioButtons(session, inputId="mhm.but", label="Show plot: ", choices=c("Yes"="Y", "No"="N"), selected="N", inline=TRUE)
+    updateRadioButtons(session, inputId="mhm.but", label="Show plot:", choices=c("Yes"="Y", "No"="N"), selected="N", inline=TRUE)
+    updateRadioButtons(session, inputId="gply.but", label="Show animation:", choices=c("Yes"="Y", "No"="N"), selected="N", inline=TRUE)
 
   })
 

@@ -77,7 +77,7 @@ grob_list(
 \item{...}{Other arguments passed to \code{\link[ggplot2]{ggplot}}.}
 }
 \value{
-A list of spatial heatmaps in the form of ggplot2 plot grob.
+A list of spatial heatmaps of ggplot2 plot grob, legend plot, and spatial heatmaps of ggplot object.
 }
 \description{
 Draw Each Spatial Heatmap and Convert Them to Ggplot2 Plot Grob

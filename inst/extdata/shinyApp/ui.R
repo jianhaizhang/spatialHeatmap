@@ -50,10 +50,11 @@ shinyUI(dashboardPage(
       tabBox(title="", width=12, id='shm_all', selected='shm1', side='right', 
       
       tabPanel(title='Animation', value='shm2', 
-      fluidRow(splitLayout(cellWidths=c('1%', '10%', '1%', '10%', '1%', '15%'), '', 
+      fluidRow(splitLayout(cellWidths=c('1%', '10%', '1%', '10%', '1%', '15%', '1%', '15%'), '', 
       numericInput(inputId='height.ly', label='Height:', value=400, min=1, max=Inf, step=NA, width=170), '',
       numericInput(inputId='width.ly', label='Width:', value=620, min=1, max=Inf, step=NA, width=170), '',
-      numericInput(inputId='t', label='Transition time (s):', value=1, min=0.1, max=Inf, step=NA, width=270)
+      numericInput(inputId='t', label='Transition time (s):', value=1, min=0.1, max=Inf, step=NA, width=270), '',
+      radioButtons(inputId="gply.but", label="Show animation:", choices=c("Yes"="Y", "No"="N"), selected="N", inline=TRUE)
       )), textOutput('tran'),
       fluidRow(splitLayout(cellWidths=c("1%", "7%", "91%", "1%"), "", plotOutput("bar2"), plotlyOutput("gply"), ""))),
       

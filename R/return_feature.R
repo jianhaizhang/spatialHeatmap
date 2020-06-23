@@ -97,7 +97,11 @@ return_feature <- function(feature, species, keywords.any=TRUE, remote=TRUE, dir
     # Dowloaded file overwrites existing file by default.
     download.file('https://github.com/ebi-gene-expression-group/anatomogram/archive/master.zip', tmp1); unzip(tmp1, exdir=tmp2)
     tmp3 <- paste0(tmp2, '/anatomogram-master/src/svg')
+    download.file('https://github.com/jianhaizhang/spatialHeatmap_aSVG_Repository/archive/master.zip', tmp1); unzip(tmp1, exdir=tmp2)
+    tmp4 <- paste0(tmp2, '/spatialHeatmap_aSVG_Repository-master')
     svgs <- list.files(path=tmp3, pattern='.svg$', full.names=TRUE, recursive=TRUE)
+    svgs.shm <- list.files(path=tmp4, pattern='.svg$', full.names=TRUE, recursive=TRUE)
+    svgs <- c(svgs, svgs.shm)
     df <- ftr.return(svgs=svgs, desc=desc)
     svgs.na <- vapply(svgs, function(i) { str <- strsplit(i, '/')[[1]]; str[length(str)] }, FUN.VALUE=character(1))
     svgs1 <- list.files(path=dir, pattern='.svg$', full.names=TRUE)
@@ -106,7 +110,6 @@ return_feature <- function(feature, species, keywords.any=TRUE, remote=TRUE, dir
 
       svgs1.rm <- svgs1[svgs.na1 %in% svgs.na] 
       cat(paste0('Overwriting: ', svgs1.rm, '\n')) 
-      # "file.copy" does not overwrite.
       sapply(svgs, function (i) file.copy(i, dir, overwrite=TRUE)); row.names(df) <- NULL;  return(df)
 
     }
@@ -182,8 +185,8 @@ return_feature <- function(feature, species, keywords.any=TRUE, remote=TRUE, dir
   
   if (remote==TRUE) {
 
-    svgs.cp <- svgs[svgs.na %in% df.final$SVG]
-    svgs.rm <- svgs1[svgs.na1 %in% df.final$SVG]
+    svgs.cp <- svgs[svgs.na %in% unique(df.final$SVG)]
+    svgs.rm <- svgs1[svgs.na1 %in% unique(df.final$SVG)]
     cat(paste0('Overwriting: ', svgs.rm, '\n'))
     sapply(svgs.cp, function (i) file.copy(i, dir, overwrite=TRUE))
     if (dir.exists(tmp)) unlink(tmp, recursive=TRUE)
@@ -191,6 +194,5 @@ return_feature <- function(feature, species, keywords.any=TRUE, remote=TRUE, dir
   }; return(df.final)
 
 }
-
 
 

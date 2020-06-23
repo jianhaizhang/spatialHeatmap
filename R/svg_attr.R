@@ -36,7 +36,10 @@ svg_attr <- function(doc, feature) {
   ids <- make.names(c(xml_attr(chdn.out, 'id'), xml_attr(chdn.ply, 'id')))
   if (any(duplicated(ids))) return(paste0('Duplicated node ids detected: ', paste0(ids[duplicated(ids)], collapse=' '), '!'))
   title <- c(xml_text(chdn.out), xml_text(chdn.ply)) # Use original names, no 'make.names'. '' after applied to 'make.names' becomes 'X'.
+  # spatialHeatmap-specific SVG format.
+  onts <- c(xml_attr(chdn.out, 'ontology'), xml_attr(chdn.ply, 'ontology'))
   w <- which(title=='X'|title==''); title[w] <- ids[w]
+  w1 <- !is.na(onts); ids[w1] <- onts[w1] 
   dup <- duplicated(title); if (any(dup)) {
     
     if (length(intersect(title[dup], feature))>0) return(paste0('Duplicated title text detected: ', paste0(title[dup], collapse=' '), '!')) else {
