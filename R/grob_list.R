@@ -16,9 +16,10 @@
 #' @param legend.nrow An integer, the total rows of the items in the legend. Default is NULL. 
 #' @param legend.key.size A numeric (in "cm"). Default is 0.5. Size of the legend key.
 #' @param legend.label.size A numeric. Default is 8. Size of the legend label.
-#' @param legend.title.size A numeric. Default is 8. Size of the legend title.
+#' @param legend.title.size A numeric. Default is 15. Size of the legend plot title.
 #' @param line.size A numeric. The size of the shape outlines. Default is 0.2.
 #' @param line.color A character. The color of shape outlines. Default is "grey70".
+#' @param mar.lb A two-component numeric vector. The first and second numeric is left/right and bottom/top margin (npc) respectively.
 #' @param ... Other arguments passed to \code{\link[ggplot2]{ggplot}}.
 #' @inheritParams ggplot2::theme
 
@@ -32,7 +33,7 @@
 
 #' @importFrom ggplot2 ggplot aes theme element_blank margin element_rect scale_y_continuous scale_x_continuous ggplotGrob geom_polygon scale_fill_manual ggtitle element_text labs guide_legend alpha coord_fixed
 
-grob_list <- function(gene, con.na=TRUE, geneV, coord, ID, cols, tis.path, tis.trans=NULL, sub.title.size, sam.legend='identical', legend.col, legend.title=NULL, legend.ncol=NULL, legend.nrow=NULL, legend.position='bottom', legend.direction=NULL, legend.key.size=0.5, legend.label.size=8, legend.title.size=8, line.size=0.2, line.color='grey70', ...) {
+grob_list <- function(gene, con.na=TRUE, geneV, coord, ID, cols, tis.path, tis.trans=NULL, sub.title.size, sam.legend='identical', legend.col, legend.title=NULL, legend.ncol=NULL, legend.nrow=NULL, legend.position='bottom', legend.direction=NULL, legend.key.size=0.5, legend.label.size=8, legend.title.size=8, line.size=0.2, line.color='grey70', mar.lb=NULL, ...) {
 
   g_list <- function(con, lgd=FALSE, ...) {
 
@@ -80,12 +81,14 @@ grob_list <- function(gene, con.na=TRUE, geneV, coord, ID, cols, tis.path, tis.t
 
     }
 
-    g <- ggplot(...)+geom_polygon(data=coord, aes(x=x, y=y, fill=tissue), color=line.color, size=line.size, linetype='solid')+scl.fil+theme(axis.text=element_blank(), axis.ticks=element_blank(), panel.grid=element_blank(), panel.background=element_rect(fill="white", colour="grey80"), plot.margin=margin(0.1, 0.1, 0.1, 0.3, "cm"), axis.title.x=element_text(size=16,face="bold"), plot.title=element_text(hjust=0.5, size=sub.title.size))+labs(x="", y="")+scale_y_continuous(expand=c(0.01, 0.01))+scale_x_continuous(expand=c(0.01, 0.01))
+    # If "data" is not in ggplot(), g$data slot is empty.
+    g <- ggplot(data=coord, aes(x=x, y=y), ...)+geom_polygon(aes(fill=tissue), color=line.color, size=line.size, linetype='solid')+scl.fil+theme(axis.text=element_blank(), axis.ticks=element_blank(), panel.grid=element_blank(), panel.background=element_rect(fill="white", colour="grey80"), axis.title.x=element_text(size=16, face="bold"), plot.title=element_text(hjust=0.5, size=sub.title.size))+labs(x="", y="")+scale_y_continuous(expand=c(0.01, 0.01))+scale_x_continuous(expand=c(0.01, 0.01))
+    if (is.null(mar.lb)) g <- g+theme(plot.margin=margin(0.005, 0.005, 0.005, 0.005, "npc")) else g <- g+theme(plot.margin=margin(mar.lb[2], mar.lb[1], mar.lb[2], mar.lb[1], "npc"))
     if (con.na==FALSE) g.tit <- ggtitle(k) else g.tit <- ggtitle(paste0(k, "_", con)); g <- g+g.tit
 
     if (lgd==TRUE) {
 
-      g <- g+theme(axis.text=element_blank(), axis.ticks=element_blank(), panel.grid=element_blank(), panel.background=element_rect(fill="white", colour="grey80"), plot.margin=margin(0.01, 0.01, 0.2, 0, "npc"), axis.title.x=element_text(size=16,face="bold"), plot.title=element_text(hjust=0.5, size=15, face="bold"), legend.position=legend.position, legend.direction=legend.direction, legend.background = element_rect(fill=alpha(NA, 0)), legend.key.size=unit(legend.key.size, "cm"), legend.text=element_text(size=legend.label.size), legend.title=element_text(size=legend.title.size), legend.margin=margin(l=0.1, r=0.1, unit='cm'))+ggtitle('Legend')
+      g <- g+theme(axis.text=element_blank(), axis.ticks=element_blank(), panel.grid=element_blank(), panel.background=element_rect(fill="white", colour="grey80"), plot.margin=margin(0.005, 0.005, 0.2, 0, "npc"), axis.title.x=element_text(size=16,face="bold"), plot.title=element_text(hjust=0.5, size=15, face="bold"), legend.position=legend.position, legend.direction=legend.direction, legend.background = element_rect(fill=alpha(NA, 0)), legend.key.size=unit(legend.key.size, "cm"), legend.text=element_text(size=legend.label.size), legend.title=element_text(size=legend.title.size), legend.margin=margin(l=0.1, r=0.1, unit='cm'))+ggtitle('Legend')
 
     }; return(g)
 

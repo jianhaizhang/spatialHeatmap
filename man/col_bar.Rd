@@ -4,7 +4,14 @@
 \alias{col_bar}
 \title{Build Color Bar for the Spatial Heatmaps}
 \usage{
-col_bar(geneV, cols, width, bar.title.size = 10, mar = c(3, 0.1, 3, 0.1))
+col_bar(
+  geneV,
+  cols,
+  width,
+  bar.title.size = 10,
+  bar.value.size = 10,
+  mar = c(3, 0.1, 3, 0.1)
+)
 }
 \arguments{
 \item{geneV}{The gene expression values used for building the color bar.}
@@ -14,6 +21,8 @@ col_bar(geneV, cols, width, bar.title.size = 10, mar = c(3, 0.1, 3, 0.1))
 \item{width}{A numeric between 0 and 1, used to reduce the widths of bins in the color bar so as to avoid overlaps.}
 
 \item{bar.title.size}{A numeric of color bar title size. Default is 10.}
+
+\item{bar.value.size}{A numeric of value size in the color bar y-axis. Default is 10.}
 
 \item{mar}{A 4-length numeric vector specifying margins of the color bar, in the "top", "right", "bottom", "left" order. The unit is "cm". Default is "c(3, 0.1, 3, 0.1)".}
 }

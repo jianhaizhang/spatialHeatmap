@@ -228,7 +228,22 @@ names(vec) <- c('brain', 'heart', 'notMapped')
 vec
 # Plot.
 spatial_hm(svg.path=svg.chk, data=vec, ID='geneX', height=0.7, legend.r=1.5, sub.title.size=9, ncol=1, legend.nrow=2)
- 
+
+# Plot spatial heatmaps on aSVGs of two Arabidopsis thaliana development stages.
+
+# Make up a random numeric data frame.
+df.test <- data.frame(matrix(sample(x=1:100, size=50, replace=TRUE), nrow=10))
+colnames(df.test) <- c('shoot_totalA__condition1', 'shoot_totalA__condition2', 'shoot_totalB__condition1', 'shoot_totalB__condition2', 'notMapped')
+rownames(df.test) <- paste0('gene', 1:10) # Assign row names 
+df.test[1:3, ]
+
+# aSVG of development stage 1.
+svg1 <- system.file("extdata/shinyApp/example", "arabidopsis_thaliana.organ_shm1.svg", package="spatialHeatmap")
+# aSVG of development stage 2.
+svg2 <- system.file("extdata/shinyApp/example", "arabidopsis_thaliana.organ_shm2.svg", package="spatialHeatmap")
+# Spatial heatmaps. The second aSVG is used for legend plot through "legend='shm2'".
+spatial_hm(svg.path=c(svg1, svg2), data=df.test, ID=c('gene1'), height=0.8, legend.r=1.6, preserve.scale=TRUE, legend='shm2') 
+
 ## If users want to use custom identifiers for spatial features in the aSVG file, the function "update_feature" should be used. For illustration purpose, the aSVG "gallus_gallus.svg" in this package is copied to '~/test' as example.
 
 \donttest{

@@ -1,0 +1,11 @@
+"shoot_totalA__condition1"	"shoot_totalA__condition2"	"shoot_totalB__condition1"	"shoot_totalB__condition2"	"notMapped"
+"gene1"	22	78	29	6	50
+"gene2"	98	94	19	83	85
+"gene3"	15	31	44	53	64
+"gene4"	60	23	28	82	54
+"gene5"	13	95	92	2	55
+"gene6"	29	8	72	61	49
+"gene7"	77	72	66	21	54
+"gene8"	72	65	59	67	77
+"gene9"	25	60	65	43	64
+"gene10"	16	86	89	11	83

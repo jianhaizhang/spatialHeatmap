@@ -22,7 +22,9 @@ svg_df <- function(svg.path, feature) {
   options(stringsAsFactors=FALSE)
   doc <- read_xml(svg.path); spa <- xml_attr(doc, 'space')
   if (!is.na(spa)) if (spa=='preserve') xml_set_attr(doc, 'xml:space', 'default')
-
+  w.h <- c(xml_attr(doc, 'width'), xml_attr(doc, 'height'))
+  w.h <- as.numeric(gsub("^(\\d+\\.\\d+|\\d+).*", "\\1", w.h))
+  names(w.h) <- c('width', 'height')
   svg.attr <- svg_attr(doc, feature=feature); if (is(svg.attr, 'character')) return(svg.attr)
   df.attr <- svg.attr[['df.attr']]; df.attr$title <- make.names(df.attr$title)
   out <- svg.attr[['out']]; ply <- svg.attr[['ply']]
@@ -116,7 +118,7 @@ svg_df <- function(svg.path, feature) {
     df <- rbind(df, df0)
 
   }; fil.cols <- df.attr$fil.cols; names(fil.cols) <- df.attr$title 
-  lis <- list(df=df, tis.path=sub('_\\d+$', '', tit), fil.cols=fil.cols); return(lis)
+  lis <- list(df=df, tis.path=sub('_\\d+$', '', tit), fil.cols=fil.cols, w.h=w.h); return(lis)
 
 }
 

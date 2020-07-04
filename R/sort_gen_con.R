@@ -30,7 +30,7 @@ sort_gen_con <- function(ID.sel, na.all, con.all, by='gene') {
     na.sort <- NULL; for (i in sort_mix(ID.sel)) {
         
       na0 <- na.all[grepl(paste0('^', i, '_'), na.all)]
-      con1 <- gsub(con.pat1, '\\1', na0)
+      if (length(na0)==0) next; con1 <- gsub(con.pat1, '\\1', na0)
       na.sort <- c(na.sort, paste0(i, '_', sort_mix(con1)))
 
     }
@@ -42,7 +42,7 @@ sort_gen_con <- function(ID.sel, na.all, con.all, by='gene') {
     na.sort <- NULL; for (i in sort_mix(con.all)) {
       
       na0 <- na.all[grepl(paste0('_', i, '$'), na.all)]
-      gen1 <- gsub(gen.pat1, '\\1', na0)
+      if (length(na0)==0) next; gen1 <- gsub(gen.pat1, '\\1', na0)
       na.sort <- c(na.sort, paste0(sort_mix(gen1), '_', i))
 
     }

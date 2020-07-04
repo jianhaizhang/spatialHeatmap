@@ -22,7 +22,7 @@ return_feature(
 
 \item{keywords.any}{Logical, TRUE or FALSE. Default is TRUE. The internal searching is case-insensitive. The sapce, dot, hypen, semicolon, comma, forward slash are treated as separators between words and not counted in searching. If TRUE, every returned hit contains at least one word in the \code{feature} vector and at least one word in the \code{species} vector, which means all the possible hits are returned. \emph{E.g.} "prefrontal cortex" in "homo_sapiens.brain.svg" would be returned if \code{feature=c('frontal')} and \code{species=c('homo')}. If FALSE, every returned hit contains at least one exact element in the \code{feature} vector and all exact elements in the \code{species} vector. \emph{E.g.} "frontal cortex" rather than "prefrontal cortex" in "homo_sapiens.brain.svg" would be returned if \code{feature=c('frontal cortex')} and \code{species=c('homo sapiens', 'brain')}.}
 
-\item{remote}{Logical, FALSE or TRUE. Default is TRUE. If TRUE, the remote EBI aSVG repository "https://github.com/ebi-gene-expression-group/anatomogram/tree/master/src/svg" is used for query.}
+\item{remote}{Logical, FALSE or TRUE. If TRUE (default), the remote EBI aSVG repository \url{https://github.com/ebi-gene-expression-group/anatomogram/tree/master/src/svg} and spatialHeatmap aSVG Repository \url{https://github.com/jianhaizhang/spatialHeatmap_aSVG_Repository} developed in this project are used for query.}
 
 \item{dir}{The directory path of aSVG images. If \code{remote} is TRUE, the returned aSVG images are saved in this directory. Note existing aSVG files with same names as returned ones are overwritten. If \code{remote} is FALSE, user-provided (local) aSVG images should be saved in this directory for query. Default is NULL.}
 

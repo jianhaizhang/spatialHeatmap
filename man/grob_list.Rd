@@ -26,6 +26,7 @@ grob_list(
   legend.title.size = 8,
   line.size = 0.2,
   line.color = "grey70",
+  mar.lb = NULL,
   ...
 )
 }
@@ -68,11 +69,13 @@ grob_list(
 
 \item{legend.label.size}{A numeric. Default is 8. Size of the legend label.}
 
-\item{legend.title.size}{A numeric. Default is 8. Size of the legend title.}
+\item{legend.title.size}{A numeric. Default is 15. Size of the legend plot title.}
 
 \item{line.size}{A numeric. The size of the shape outlines. Default is 0.2.}
 
 \item{line.color}{A character. The color of shape outlines. Default is "grey70".}
+
+\item{mar.lb}{A two-component numeric vector. The first and second numeric is left/right and bottom/top margin (npc) respectively.}
 
 \item{...}{Other arguments passed to \code{\link[ggplot2]{ggplot}}.}
 }

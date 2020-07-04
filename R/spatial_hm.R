@@ -2,7 +2,7 @@
 #'
 #' The input are a pair of aSVG image and formatted data (\code{vector}, \code{data frame}, \code{SummarizedExperiment}). The former is an annotated SVG file (aSVG) where spatial features are represented by shapes and assigned unique identifiers, while the latter are numeric values measured from these spatial features and organized in specific formats. In biological cases, aSVGs are anatomical or cell structures, and data are measurements of genes, proteins, metabolites, \emph{etc}. in different samples (\emph{e.g.} cells, tissues). Data are mapped to the aSVG according to identifiers of assay samples and aSVG features. Only the data from samples having matching counterparts in aSVG features are mapped. The mapped features are filled with colors translated from the data, and the resulting images are termed spatial heatmaps. Note, "sample" and "feature" are two equivalent terms referring to cells, tissues, organs etc. where numeric values are measured. Matching means a target sample in data and a target spatial feature in aSVG image have the same identifier. \cr This function is designed as much flexible as to achieve optimal visualization. For example, subplots of spatial heatmaps can be organized by gene or condition for easy comparison, in multi-layer anotomical structures selected tissues can be set transparent to expose burried features, color scale is customizable to highlight difference among features. This function also works with many other types of spatial data, such as population data plotted to geographic maps.
 
-#' @param svg.path The path of the aSVG image. \emph{E.g.}: system.file("extdata/shinyApp/example", "gallus_gallus.svg", package="spatialHeatmap"). See \code{\link{return_feature}} for details on how to download aSVGs from the EBI aSVG repository \url{https://github.com/ebi-gene-expression-group/anatomogram/tree/master/src/svg} and spatialHeatmap aSVG Repository \url{https://github.com/jianhaizhang/spatialHeatmap_aSVG_Repository} developed in this project directly.
+#' @param svg.path The path of an aSVG file. \emph{E.g.}: system.file("extdata/shinyApp/example", "gallus_gallus.svg", package="spatialHeatmap"). Multiple aSVGs are also accepted, such as aSVGs depicting organs development across mutiple times. In this case, the aSVGs should be indexed with suffixes "_shm1", "_shm2", ..., such as "arabidopsis_thaliana.organ_shm1.svg", "arabidopsis_thaliana.organ_shm2.svg", and the paths of these aSVGs are provided in a character vector.  \cr See \code{\link{return_feature}} for details on how to directly download aSVGs from the EBI aSVG repository \url{https://github.com/ebi-gene-expression-group/anatomogram/tree/master/src/svg} and spatialHeatmap aSVG Repository \url{https://github.com/jianhaizhang/spatialHeatmap_aSVG_Repository} developed in this project.
 
 #' @inheritParams filter_data
 #' @inheritParams grob_list
@@ -15,9 +15,11 @@
 #' @param bar.width The width of color bar. Default if 0.08.
 #' @param width A numeric of each subplot width. The default is 1.
 #' @param height A numeric of each subplot height. The default is 1.
+#' @param legend Only applicable if multiple aSVG files are provided to \code{svg.path}. The suffix of an aSVG file name that used to make legend plot. Default is 'shm1'. 
 #' @param legend.r A numeric to adjust the dimension of the legend plot. Default is 1. The larger, the higher ratio of width to height.
 #' @param lay.shm "gene" or "con", the former organizes spatial heatmaps by genes, proteins, metabolites, \emph{etc}. while the latter by conditions/treatments applied to experiments.
 #' @param ncol An integer, number of columns to display the spatial heatmaps, not including the legend plot.
+#' @param preserve.scale Logical, TRUE or FALSE. Default is FALSE. If TRUE, the relative dimensions of multiple aSVGs are preserved. Only applicable if multiple aSVG files are provided to \code{svg.path}. The original dimension (width/height) is specified in the top-most node "svg" in the aSVG file.
 #' @param verbose Logical, FALSE or TRUE. If TRUE the samples in data not colored in spatial heatmaps are printed to R console. Default is TRUE.
 
 #' @return An image of spatial heatmap(s), a two-component list of the spatial heatmap(s) in \code{ggplot} format and a data frame of mapping between assayed samples and aSVG features.
@@ -101,7 +103,21 @@
 #' vec
 #' # Plot.
 #' spatial_hm(svg.path=svg.chk, data=vec, ID='geneX', height=0.7, legend.r=1.5, sub.title.size=9, ncol=1, legend.nrow=2)
+#'
+#' # Plot spatial heatmaps on aSVGs of two Arabidopsis thaliana development stages.
+#' 
+#' # Make up a random numeric data frame.
+#' df.test <- data.frame(matrix(sample(x=1:100, size=50, replace=TRUE), nrow=10))
+#' colnames(df.test) <- c('shoot_totalA__condition1', 'shoot_totalA__condition2', 'shoot_totalB__condition1', 'shoot_totalB__condition2', 'notMapped')
+#' rownames(df.test) <- paste0('gene', 1:10) # Assign row names 
+#' df.test[1:3, ]
 
+#' # aSVG of development stage 1.
+#' svg1 <- system.file("extdata/shinyApp/example", "arabidopsis_thaliana.organ_shm1.svg", package="spatialHeatmap")
+#' # aSVG of development stage 2.
+#' svg2 <- system.file("extdata/shinyApp/example", "arabidopsis_thaliana.organ_shm2.svg", package="spatialHeatmap")
+#' # Spatial heatmaps. The second aSVG is used for legend plot through "legend='shm2'".
+#' spatial_hm(svg.path=c(svg1, svg2), data=df.test, ID=c('gene1'), height=0.8, legend.r=1.6, preserve.scale=TRUE, legend='shm2') 
 
 #' @author Jianhai Zhang \email{jzhan067@@ucr.edu; zhang.jianhai@@hotmail.com} \cr Dr. Thomas Girke \email{thomas.girke@@ucr.edu}
 
@@ -125,7 +141,7 @@
 #' @importFrom methods is
 #' @importFrom ggplotify as.ggplot
 
-spatial_hm <- function(svg.path, data, sam.factor=NULL, con.factor=NULL, ID, col.com=c('purple', 'yellow', 'blue'), col.bar="selected", bar.width=0.08, bar.title.size=10, data.trans=NULL, tis.trans=NULL, width=1, height=1, legend.r=1, sub.title.size=11, lay.shm="gene", ncol=2, sam.legend='identical', legend.ncol=NULL, legend.nrow=NULL, legend.position='bottom', legend.direction=NULL, legend.key.size=0.5, legend.label.size=8, line.size=0.2, line.color='grey70', verbose=TRUE, ...) {
+spatial_hm <- function(svg.path, data, sam.factor=NULL, con.factor=NULL, ID, col.com=c('purple', 'yellow', 'blue'), col.bar="selected", bar.width=0.08, bar.title.size=10, data.trans=NULL, tis.trans=NULL, width=1, height=1, legend.r=1, sub.title.size=11, lay.shm="gene", ncol=2, legend='shm1', sam.legend='identical', legend.title.size=15, bar.value.size=10, legend.ncol=NULL, legend.nrow=NULL, legend.position='bottom', legend.direction=NULL, legend.key.size=0.5, legend.label.size=8, line.size=0.2, line.color='grey70', preserve.scale=FALSE, verbose=TRUE, ...) {
 
   x <- y <- color_scale <- tissue <- line.type <- NULL  
   # Extract and filter data.
@@ -175,35 +191,83 @@ spatial_hm <- function(svg.path, data, sam.factor=NULL, con.factor=NULL, ID, col
     bar.len=1000
     if (col.bar=="all") geneV <- seq(min(gene), max(gene), len=bar.len) else if (col.bar=="selected") geneV <- seq(min(gene[ID, , drop=FALSE]), max(gene[ID, , drop=FALSE]), len=bar.len)
     col <- colorRampPalette(col.com)(length(geneV))
-    cs.g <- col_bar(geneV=geneV, cols=col, width=1, bar.title.size=bar.title.size, mar=c(3, 0.1, 3, 0.1)); cs.grob <- ggplotGrob(cs.g)    
+    cs.g <- col_bar(geneV=geneV, cols=col, width=1, bar.title.size=bar.title.size, bar.value.size=bar.value.size, mar=c(3, 0.1, 3, 0.1)); cs.grob <- ggplotGrob(cs.g)    
 
     # Only take the column names with "__".
     cname <- colnames(gene); form <- grepl('__', cname)
     con <- gsub("(.*)(__)(.*)", "\\3", cname[form]); con.uni <- unique(con)
     sam.uni <- unique(gsub("(.*)(__)(.*)", "\\1", cname))
 
-    df_tis <- svg_df(svg.path=svg.path, feature=sam.uni)
-    if (is.character(df_tis)) stop(df_tis)
-    g.df <- df_tis[['df']]; tis.path <- df_tis[['tis.path']]
+    # Get SVG names.
+    str.lis <- strsplit(svg.path, '/')
+    svg.na <- vapply(str.lis, function(x) x[[length(x)]], FUN.VALUE=character(1))
+    if (length(svg.na)>1) { 
 
-    not.map <- setdiff(sam.uni, unique(tis.path)); if (verbose==TRUE & length(not.map)>0) cat('Enrties not mapped:', paste0(not.map, collapse=', '), '\n')
-    sam.com <- intersect(unique(tis.path), sam.uni) 
+      shm <- gsub('.*_(shm\\d+).svg$', '\\1', svg.na)
+      if (any(duplicated(shm))) stop(paste0('Suffixes of aSVG files are duplicated: ', paste0(shm, collapse='; ')))
+      if (!all(grepl('_shm\\d+', svg.na, perl=TRUE))) stop("Suffixes of aSVG files should be indexed as '_shm1', '_shm2', '_shm3', ...") 
 
-    idx.com <- vapply(cname, function(i) grepl(paste0(sam.com, '__', collapse='|'), i), FUN.VALUE=logical(1))
-    map.gene <- gene[idx.com]; cna <- colnames(map.gene)
-    map.sum <- data.frame(); for (i in ID) {
+    }
+    ord <- order(gsub('.*_(shm.*)$', '\\1', svg.na))
+    svg.path <- svg.path[ord]; svg.na <- svg.na[ord]
 
-      df0 <- as.data.frame(t(map.gene[i, ])); colnames(df0) <- 'value'
-      featureSVG <- gsub("(.*)(__)(.*)", "\\1", cna)
-      rowID <- i; df1 <- data.frame(rowID=rowID, featureSVG=featureSVG)
-      if (con.na==TRUE) { condition <- gsub("(.*)(__)(.*)", "\\3", cna); df1 <- cbind(df1, condition=condition) }
-      df1 <- cbind(df1, df0); map.sum <- rbind(map.sum, df1)
+    # Coordinates of each SVG are extracted and placed in a list.
+    svg.df.lis <- NULL; for (i in seq_along(svg.na)) {
+          
+      df_tis <- svg_df(svg.path=svg.path[i], feature=sam.uni)
+      if (is.character(df_tis)) stop(paste0(svg.na[i], ': ', df_tis))
+      svg.df.lis <- c(svg.df.lis, list(df_tis))
+   
+    }; names(svg.df.lis) <- svg.na
 
-    }; row.names(map.sum) <- NULL    
-    grob.lis <- grob_list(gene=gene, con.na=con.na, geneV=geneV, coord=g.df, ID=ID, cols=col, legend.col=df_tis[['fil.cols']], tis.path=tis.path, tis.trans=tis.trans, sub.title.size=sub.title.size, sam.legend=sam.legend, legend.ncol=legend.ncol, legend.nrow=legend.nrow, legend.position=legend.position, legend.direction=legend.direction, legend.key.size=legend.key.size, legend.label.size=legend.label.size, line.size=line.size, line.color=line.color, line.type=line.type, ...)
-    g.arr <- lay_shm(lay.shm=lay.shm, con=con, ncol=ncol, ID.sel=ID, grob.list=grob.lis[['grob.lis']], width=width, height=height, shiny=FALSE)
+    # Extract mapped tissues.
+    map.sum <- data.frame(); for (j in svg.na) {
+    
+      df_tis <- svg.df.lis[[j]] 
+      g.df <- df_tis[['df']]; tis.path <- df_tis[['tis.path']]
+
+      not.map <- setdiff(sam.uni, unique(tis.path)); if (verbose==TRUE & length(not.map)>0) cat('Enrties not mapped:', paste0(not.map, collapse=', '), '\n')
+      sam.com <- intersect(unique(tis.path), sam.uni) 
+      if (length(sam.com)==0) next 
+
+      idx.com <- vapply(cname, function(i) grepl(paste0('^', sam.com, '__', collapse='|'), i), FUN.VALUE=logical(1))
+      map.gene <- gene[idx.com]; cna <- colnames(map.gene)
+      for (i in ID) {
+
+        df0 <- as.data.frame(t(map.gene[i, ])); colnames(df0) <- 'value'
+        featureSVG <- gsub("(.*)(__)(.*)", "\\1", cna)
+        rowID <- i; df1 <- data.frame(rowID=rowID, featureSVG=featureSVG)
+        if (con.na==TRUE) { condition <- gsub("(.*)(__)(.*)", "\\3", cna); df1 <- cbind(df1, condition=condition) }
+        df1 <- cbind(df1, df0); df1$SVG <- j
+        map.sum <- rbind(map.sum, df1)
+
+      } 
+    
+    }; row.names(map.sum) <- NULL
+
+    # Get max width/height of multiple SVGs, and dimensions of other SVGs can be set relative to this max width/height.
+    w.h.all <- NULL; for (i in seq_along(svg.df.lis)) { w.h.all <- c(w.h.all, svg.df.lis[[i]][['w.h']]); w.h.max <- max(w.h.all) }
+    # A set of SHMs are made for each SVG, and all sets of SHMs are placed in a list.
+    grob.lis.all <- NULL; for (i in seq_along(svg.df.lis)) {
+
+      svg.df <- svg.df.lis[[i]]; g.df <- svg.df[["df"]]; w.h <- svg.df[['w.h']]
+      tis.path <- svg.df[["tis.path"]]; fil.cols <- svg.df[['fil.cols']]
+      if (preserve.scale==TRUE) mar <- (1-w.h/w.h.max*0.99)/2 else mar <- NULL
+      grob.lis <- grob_list(gene=gene, con.na=con.na, geneV=geneV, coord=g.df, ID=ID, legend.col=fil.cols, cols=col, tis.path=tis.path, tis.trans=tis.trans, sub.title.size=sub.title.size, sam.legend=sam.legend, legend.ncol=legend.ncol, legend.nrow=legend.nrow, legend.position=legend.position, legend.direction=legend.direction, legend.title.size=legend.title.size, egend.key.size=legend.key.size, legend.label.size=legend.label.size, line.size=line.size, line.color=line.color, line.type=line.type, mar.lb=mar, ...)
+      grob.lis.all <- c(grob.lis.all, list(grob.lis))
+
+    }; names(grob.lis.all) <- names(svg.df.lis);     
+
+    # Extract SHMs of grob and placed in a list. Different SHMs of same 'gene_condition' are indexed with suffixed of '_1', '_2', ...
+    grob.all <- grob_gg(gs=grob.lis.all)[['grob']]    
+    gen.pat <- paste0('^(', paste0(ID, collapse='|'), ')', '_(.*)') 
+    # Indexed cons with '_1', '_2', ... at the end.
+    con <- unique(gsub(gen.pat, '\\2', names(grob.all)))
+    g.arr <- lay_shm(lay.shm=lay.shm, con=con, ncol=ncol, ID.sel=ID, grob.list=grob.all, width=width, height=height, shiny=FALSE)
     cs.arr <- arrangeGrob(grobs=list(grobTree(cs.grob)), layout_matrix=cbind(1), widths=unit(1, "npc")) # "mm" is fixed, "npc" is scalable.
-    g.lgd <- grob.lis[['g.lgd']]; grob.lgd <- ggplotGrob(g.lgd)
+    # Select legend plot.
+    if (length(svg.na)>1) na.lgd <- svg.na[grep(paste0('_', legend, '.svg$'), svg.na)] else na.lgd <- svg.na
+    g.lgd <- grob.lis.all[[na.lgd]][['g.lgd']]; grob.lgd <- ggplotGrob(g.lgd)
     # Layout matrix of legend.
     if (lay.shm=='gene') lay.lgd <- matrix(seq_len(ceiling(length(con.uni)/ncol)), byrow=FALSE)
     if (lay.shm=='con') lay.lgd <- matrix(seq_len(ceiling(length(ID)/ncol)), byrow=FALSE)

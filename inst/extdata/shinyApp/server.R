@@ -35,7 +35,7 @@ sort_gen_con <- function(ID.sel, na.all, con.all, by='gene') {
     na.sort <- NULL; for (i in sort_mix(ID.sel)) {
         
       na0 <- na.all[grepl(paste0('^', i, '_'), na.all)]
-      con1 <- gsub(con.pat1, '\\1', na0)
+      if (length(na0)==0) next; con1 <- gsub(con.pat1, '\\1', na0)
       na.sort <- c(na.sort, paste0(i, '_', sort_mix(con1)))
 
     }
@@ -47,7 +47,7 @@ sort_gen_con <- function(ID.sel, na.all, con.all, by='gene') {
     na.sort <- NULL; for (i in sort_mix(con.all)) {
       
       na0 <- na.all[grepl(paste0('_', i, '$'), na.all)]
-      gen1 <- gsub(gen.pat1, '\\1', na0)
+      if (length(na0)==0) next; gen1 <- gsub(gen.pat1, '\\1', na0)
       na.sort <- c(na.sort, paste0(sort_mix(gen1), '_', i))
 
     }
@@ -624,7 +624,9 @@ svg_df <- function(svg.path, feature) {
   options(stringsAsFactors=FALSE)
   doc <- read_xml(svg.path); spa <- xml_attr(doc, 'space')
   if (!is.na(spa)) if (spa=='preserve') xml_set_attr(doc, 'xml:space', 'default')
-
+  w.h <- c(xml_attr(doc, 'width'), xml_attr(doc, 'height'))
+  w.h <- as.numeric(gsub("^(\\d+\\.\\d+|\\d+).*", "\\1", w.h))
+  names(w.h) <- c('width', 'height')
   svg.attr <- svg_attr(doc, feature=feature); if (is(svg.attr, 'character')) return(svg.attr)
   df.attr <- svg.attr[['df.attr']]; df.attr$title <- make.names(df.attr$title)
   out <- svg.attr[['out']]; ply <- svg.attr[['ply']]
@@ -718,12 +720,12 @@ svg_df <- function(svg.path, feature) {
     df <- rbind(df, df0)
 
   }; fil.cols <- df.attr$fil.cols; names(fil.cols) <- df.attr$title 
-  lis <- list(df=df, tis.path=sub('_\\d+$', '', tit), fil.cols=fil.cols); return(lis)
+  lis <- list(df=df, tis.path=sub('_\\d+$', '', tit), fil.cols=fil.cols, w.h=w.h); return(lis)
 
 }
 
 
-grob_list <- function(gene, con.na=TRUE, geneV, coord, ID, cols, tis.path, tis.trans=NULL, sub.title.size, sam.legend='identical', legend.col, legend.title=NULL, legend.ncol=NULL, legend.nrow=NULL, legend.position='bottom', legend.direction=NULL, legend.key.size=0.5, legend.label.size=8, legend.title.size=8, line.size=0.2, line.color='grey70', ...) {
+grob_list <- function(gene, con.na=TRUE, geneV, coord, ID, cols, tis.path, tis.trans=NULL, sub.title.size, sam.legend='identical', legend.col, legend.title=NULL, legend.ncol=NULL, legend.nrow=NULL, legend.position='bottom', legend.direction=NULL, legend.key.size=0.5, legend.label.size=8, legend.title.size=8, line.size=0.2, line.color='grey70', mar.lb=NULL, ...) {
 
   g_list <- function(con, lgd=FALSE, ...) {
 
@@ -771,12 +773,14 @@ grob_list <- function(gene, con.na=TRUE, geneV, coord, ID, cols, tis.path, tis.t
 
     }
 
-    g <- ggplot(...)+geom_polygon(data=coord, aes(x=x, y=y, fill=tissue), color=line.color, size=line.size, linetype='solid')+scl.fil+theme(axis.text=element_blank(), axis.ticks=element_blank(), panel.grid=element_blank(), panel.background=element_rect(fill="white", colour="grey80"), plot.margin=margin(0.1, 0.1, 0.1, 0.3, "cm"), axis.title.x=element_text(size=16,face="bold"), plot.title=element_text(hjust=0.5, size=sub.title.size))+labs(x="", y="")+scale_y_continuous(expand=c(0.01, 0.01))+scale_x_continuous(expand=c(0.01, 0.01))
+    # If "data" is not in ggplot(), g$data slot is empty.
+    g <- ggplot(data=coord, aes(x=x, y=y), ...)+geom_polygon(aes(fill=tissue), color=line.color, size=line.size, linetype='solid')+scl.fil+theme(axis.text=element_blank(), axis.ticks=element_blank(), panel.grid=element_blank(), panel.background=element_rect(fill="white", colour="grey80"), axis.title.x=element_text(size=16, face="bold"), plot.title=element_text(hjust=0.5, size=sub.title.size))+labs(x="", y="")+scale_y_continuous(expand=c(0.01, 0.01))+scale_x_continuous(expand=c(0.01, 0.01))
+    if (is.null(mar.lb)) g <- g+theme(plot.margin=margin(0.005, 0.005, 0.005, 0.005, "npc")) else g <- g+theme(plot.margin=margin(mar.lb[2], mar.lb[1], mar.lb[2], mar.lb[1], "npc"))
     if (con.na==FALSE) g.tit <- ggtitle(k) else g.tit <- ggtitle(paste0(k, "_", con)); g <- g+g.tit
 
     if (lgd==TRUE) {
 
-      g <- g+theme(axis.text=element_blank(), axis.ticks=element_blank(), panel.grid=element_blank(), panel.background=element_rect(fill="white", colour="grey80"), plot.margin=margin(0.01, 0.01, 0.2, 0, "npc"), axis.title.x=element_text(size=16,face="bold"), plot.title=element_text(hjust=0.5, size=15, face="bold"), legend.position=legend.position, legend.direction=legend.direction, legend.background = element_rect(fill=alpha(NA, 0)), legend.key.size=unit(legend.key.size, "cm"), legend.text=element_text(size=legend.label.size), legend.title=element_text(size=legend.title.size), legend.margin=margin(l=0.1, r=0.1, unit='cm'))+ggtitle('Legend')
+      g <- g+theme(axis.text=element_blank(), axis.ticks=element_blank(), panel.grid=element_blank(), panel.background=element_rect(fill="white", colour="grey80"), plot.margin=margin(0.005, 0.005, 0.2, 0, "npc"), axis.title.x=element_text(size=16,face="bold"), plot.title=element_text(hjust=0.5, size=15, face="bold"), legend.position=legend.position, legend.direction=legend.direction, legend.background = element_rect(fill=alpha(NA, 0)), legend.key.size=unit(legend.key.size, "cm"), legend.text=element_text(size=legend.label.size), legend.title=element_text(size=legend.title.size), legend.margin=margin(l=0.1, r=0.1, unit='cm'))+ggtitle('Legend')
 
     }; return(g)
 
@@ -804,6 +808,20 @@ grob_list <- function(gene, con.na=TRUE, geneV, coord, ID, cols, tis.path, tis.t
 
 }
 
+# Separate SHMs of grobs and ggplot. Different SHMs of same 'gene_condition' are indexed with suffixed of '_1', '_2', ...
+grob_gg <- function(gs) {
+  
+  # One SVG and multiple SVGs are treated same way. The list of gs slots are named with SVG file names.
+  grob.all <- gg.all <- NULL; idx <- seq_along(gs)
+  for (i in idx) {
+    
+    grob0 <- gs[[i]][['grob.lis']]; names(grob0) <- paste0(names(grob0), '_', i)
+    grob.all <- c(grob.all, grob0); gg0 <- gs[[i]][['g.lis.all']]
+    names(gg0) <- names(grob0); gg.all <- c(gg.all, gg0)
+
+  }; return(list(grob=grob.all, gg=gg.all))
+
+}
 
 # Subset data matrix by correlation or distance measure.
 submatrix <- function(data, ann=NULL, ID, p=0.3, n=NULL, v=NULL, fun='cor', cor.absolute=FALSE, arg.cor=list(method="pearson"), arg.dist=list(method="euclidean")) {
@@ -917,14 +935,14 @@ fread.df <- function(input, isRowGene, header, sep, fill, rep.aggr='mean') {
 }
 
 # enableWGCNAThreads()
-inter.svg <- readLines("example/root_cross_final.svg")
+inter.svg <- readLines("example/arabidopsis_thaliana.root.cross_shm.svg")
 inter.data <- read.table("example/expr_arab.txt", header=TRUE, row.names=1, sep="\t")
 
 shinyServer(function(input, output, session) {
 
   output$dld.svg <- downloadHandler(
 
-    filename=function(){ "root_cross_final.svg"}, 
+    filename=function(){ "arabidopsis_thaliana.root.cross_shm.svg"}, 
     content=function(file){ writeLines(inter.svg, file) }
 
   )
@@ -935,6 +953,15 @@ shinyServer(function(input, output, session) {
     content=function(file){ write.table(inter.data, file, col.names=TRUE, row.names=TRUE, quote=FALSE, sep="\t") }
 
   )
+
+  output$dld.mul <- downloadHandler( filename=function(){"multiple_aSVG_data.zip" },
+  
+    fil <- paste0(tempdir(), '/multiple_aSVG_data.zip'),
+    content=function(fil){
+      zip(fil, c('example/random_data_multiple_aSVG.txt', 'example/arabidopsis_thaliana.organ_shm1.svg', 'example/arabidopsis_thaliana.organ_shm2.svg'))
+    }
+  )
+
   # Instruction.
   output$sum <-renderUI({ includeHTML("file/summary.html") })
   output$input <-renderUI({ includeHTML("file/input.html") })
@@ -1090,8 +1117,8 @@ shinyServer(function(input, output, session) {
     if (is.null(input$dt_rows_selected)) return()
     r.na <- rownames(geneIn()[["gene2"]]); gID$geneID <- r.na[input$dt_rows_selected]
     gID$new <- setdiff(gID$geneID, gID$all); gID$all <- c(gID$all, gID$new)
-
-    })
+    
+  })
 
 
   geneV <- reactive({
@@ -1125,7 +1152,7 @@ shinyServer(function(input, output, session) {
   shm.bar <- reactive({
 
     if (is.null(gID$all)) return(NULL)
-    if ((grepl("_Mustroph$|_Merkin$|_Cardoso.Moreira$|_Prudencio$|_Census$", input$fileIn) & !is.null(geneIn()))|((input$fileIn=="Compute locally"|input$fileIn=="Compute online") & !is.null(input$svgInpath) & !is.null(geneIn()))) {
+    if ((grepl("_Mustroph$|_Merkin$|_Cardoso.Moreira$|_Prudencio$|_Census$", input$fileIn) & !is.null(geneIn()))|((input$fileIn=="Compute locally"|input$fileIn=="Compute online") & (!is.null(input$svgInpath)|!is.null(input$svgInpath1)) & !is.null(geneIn()))) {
 
       if (length(color$col=="none")==0|input$color==""|is.null(geneV())) return(NULL)
       if(input$col.but==0) color$col <- colorRampPalette(c('purple', 'yellow', 'blue'))(length(geneV()))
@@ -1155,7 +1182,15 @@ shinyServer(function(input, output, session) {
 
   svg.path <- reactive({
 
-    if (input$fileIn=="Compute locally"|input$fileIn=="Compute online") { svg.path <- input$svgInpath$datapath; svg.na <- input$svgInpath$name } else if (input$fileIn=="brain_Prudencio") { svg.path <- "example/homo_sapiens.brain.svg"; svg.na <- "homo_sapiens.brain.svg" } else if (input$fileIn=="mouse_Merkin") { svg.path <- "example/mus_musculus.male.svg"; svg.na <- "mus_musculus.male.svg" } else if (input$fileIn=="chicken_Cardoso.Moreira") { svg.path <- "example/gallus_gallus.svg"; svg.na <- "gallus_gallus.svg" } else if (input$fileIn=="shoot_Mustroph") { svg.path <- "example/shoot_final.svg"; svg.na <- "shoot_final.svg" } else if (input$fileIn=="organ_Mustroph") { svg.path <- "example/organ_final.svg"; svg.na <- "organ_final.svg" } else if (input$fileIn=="root_Mustroph") { svg.path <- "example/root_cross_final.svg"; svg.na <- "root_cross_final.svg" } else if (input$fileIn=="shoot_root_Mustroph") { svg.path <- "example/shoot_root_final.svg"; svg.na <- "shoot_root_final.svg" } else if (input$fileIn=="root_roottip_Mustroph") { svg.path <- "example/root_roottip_final.svg"; svg.na <- "root_roottip_final.svg" } else if (input$fileIn=="map_Census") { svg.path <- "example/us_map_final.svg"; svg.na <- "us_map_final.svg" } else return(NULL)
+    if (input$fileIn=="Compute locally"|input$fileIn=="Compute online") { 
+      
+      if (is.null(input$svgInpath1)) svgIn.df <- input$svgInpath else svgIn.df <- input$svgInpath1
+        svg.path <- svgIn.df$datapath; svg.na <- svgIn.df$name
+        if (!is.null(input$svgInpath1)) validate(need(try(all(grepl('_shm\\d+', svg.na, perl=TRUE))), "Suffixes of aSVGs should be indexed as '_shm1', '_shm2', '_shm3', ..."))
+        ord <- order(gsub('.*_(shm.*)$', '\\1', svg.na))
+        svg.path <- svg.path[ord]; svg.na <- svg.na[ord]
+    
+    } else if (input$fileIn=="brain_Prudencio") { svg.path <- "example/homo_sapiens.brain.svg"; svg.na <- "homo_sapiens.brain.svg" } else if (input$fileIn=="mouse_Merkin") { svg.path <- "example/mus_musculus.male.svg"; svg.na <- "mus_musculus.male.svg" } else if (input$fileIn=="chicken_Cardoso.Moreira") { svg.path <- "example/gallus_gallus.svg"; svg.na <- "gallus_gallus.svg" } else if (input$fileIn=="shoot_Mustroph") { svg.path <- "example/arabidopsis_thaliana.shoot_shm.svg"; svg.na <- "arabidopsis_thaliana.shoot_shm.svg" } else if (input$fileIn=="organ_Mustroph") { svg.path <- "example/arabidopsis_thaliana.organ_shm.svg"; svg.na <- "arabidopsis_thaliana.organ_shm.svg" } else if (input$fileIn=="root_Mustroph") { svg.path <- "example/arabidopsis_thaliana.root.cross_shm.svg"; svg.na <- "arabidopsis_thaliana.root.cross_shm.svg" } else if (input$fileIn=="shoot_root_Mustroph") { svg.path <- "example/arabidopsis_thaliana.shoot.root_shm.svg"; svg.na <- "arabidopsis_thaliana.shoot.root_shm.svg" } else if (input$fileIn=="root_roottip_Mustroph") { svg.path <- "example/arabidopsis_thaliana.root.roottip_shm.svg"; svg.na <- "arabidopsis_thaliana.root.roottip_shm.svg" } else if (input$fileIn=="map_Census") { svg.path <- "example/us_map_shm.svg"; svg.na <- "us_map_shm.svg" } else return(NULL)
     return(list(svg.path=svg.path, svg.na=svg.na))
 
   })
@@ -1171,14 +1206,22 @@ shinyServer(function(input, output, session) {
 
     if (is.null(gID$all)) return(NULL)
     if (((input$fileIn=="Compute locally"|input$fileIn=="Compute online") & 
-    !is.null(input$svgInpath))|(grepl("_Mustroph$|_Merkin$|_Cardoso.Moreira$|_Prudencio$|_Census$", input$fileIn) & is.null(input$svgInpath))) {
+    (!is.null(input$svgInpath)|!is.null(input$svgInpath1)))|(grepl("_Mustroph$|_Merkin$|_Cardoso.Moreira$|_Prudencio$|_Census$", input$fileIn) & is.null(input$svgInpath))) {
 
       withProgress(message="Tissue heatmap: ", value=0, {
     
         incProgress(0.5, detail="Extracting coordinates. Please wait.") 
-        df_tis <- svg_df(svg.path=svg.path()[['svg.path']], feature=sam())
-        validate(need(!is.character(df_tis), df_tis))
-        return(df_tis)
+          svg.path <- svg.path()[['svg.path']]
+          svg.na <- svg.path()[['svg.na']]; svg.df.lis <- NULL
+          # Whether a single or multiple SVGs, all are returned in a list.
+          for (i in seq_along(svg.na)) {
+          
+            df_tis <- svg_df(svg.path=svg.path[i], feature=sam())
+            validate(need(!is.character(df_tis), paste0(svg.na[i], ': ', df_tis)))
+            svg.df.lis <- c(svg.df.lis, list(df_tis))
+   
+          }; names(svg.df.lis) <- svg.na; 
+          return(svg.df.lis)
 
       })
 
@@ -1190,7 +1233,8 @@ shinyServer(function(input, output, session) {
   observe({
 
     input$fileIn; geneIn(); input$adj.modInpath; input$A; input$p; input$cv1; input$cv2; svg.df()
-    updateCheckboxGroupInput(session, inputId="tis", label='Select tissues to be transparent:', choices=intersect(unique(sam()), unique(svg.df()[['tis.path']])), selected='', inline=TRUE)
+    tis.tran <- NULL; for (i in seq_along(svg.df())) { tis.tran <- c(tis.tran, svg.df()[[i]][['tis.path']]) }
+    updateCheckboxGroupInput(session, inputId="tis", label='Select tissues to be transparent:', choices=intersect(unique(sam()), unique(tis.tran)), selected='', inline=TRUE)
 
   })
 
@@ -1202,7 +1246,7 @@ shinyServer(function(input, output, session) {
   })
 
   grob <- reactiveValues(all=NULL, gg.all=NULL); observeEvent(input$fileIn, { grob$all <- grob$gg.all <- NULL })
-  gs <- reactive({ 
+  gs.new <- reactive({ 
 
     if (is.null(svg.df())|is.null(gID$new)|is.null(gID$all)) return(NULL); 
     withProgress(message="Tissue heatmap: ", value=0, {
@@ -1211,18 +1255,32 @@ shinyServer(function(input, output, session) {
       if (input$cs.v=="sel.gen") gene <- geneIn()[["gene2"]][input$dt_rows_selected, ]
       if (input$cs.v=="w.mat") gene <- geneIn()[["gene2"]]
       g.df <- svg.df()[["df"]]; tis.path <- svg.df()[["tis.path"]]; fil.cols <- svg.df()[['fil.cols']]
-      grob.lis <- grob_list(gene=gene, con.na=geneIn0()[['con.na']], geneV=geneV(), coord=g.df, ID=gID$new, legend.col=fil.cols, cols=color$col, tis.path=tis.path, tis.trans=input$tis, sub.title.size=21) # Only gID$new is used.
-      return(grob.lis)
+      
+      svg.df.lis <- svg.df(); grob.lis.all <- w.h.all <- NULL
+      # Get max width/height of multiple SVGs, and dimensions of other SVGs can be set relative to this max width/height.
+      for (i in seq_along(svg.df.lis)) { w.h.all <- c(w.h.all, svg.df.lis[[i]][['w.h']]); w.h.max <- max(w.h.all) }
+      # A set of SHMs are made for each SVG, and all sets of SHMs are placed in a list.
+      for (i in seq_along(svg.df.lis)) {
+
+        svg.df <- svg.df.lis[[i]]; g.df <- svg.df[["df"]]; w.h <- svg.df[['w.h']]
+        tis.path <- svg.df[["tis.path"]]; fil.cols <- svg.df[['fil.cols']]
+        if (input$pre.scale=='Y') mar <- (1-w.h/w.h.max*0.99)/2 else mar <- NULL
+        grob.lis <- grob_list(gene=gene, con.na=geneIn0()[['con.na']], geneV=geneV(), coord=g.df, ID=gID$new, legend.col=fil.cols, cols=color$col, tis.path=tis.path, tis.trans=input$tis, sub.title.size=21, mar.lb=mar) # Only gID$new is used.
+        grob.lis.all <- c(grob.lis.all, list(grob.lis))
+
+      }; names(grob.lis.all) <- names(svg.df.lis); 
+      return(grob.lis.all)
 
     })
 
   })
 
+
   # Extension of 'observeEvent': any of 'input$log; input$tis; input$col.but; input$cs.v' causes evaluation of all code. 
   observe({
     
-    input$log; input$tis; input$col.but; input$cs.v # input$tis as an argument in "grob_list" will not cause evaluation of all code, thus it is listed here.
-    grob$all <- grob$gg.all <- NULL; gs <- reactive({ 
+    input$log; input$tis; input$col.but; input$cs.v; input$pre.scale # input$tis as an argument in "grob_list" will not cause evaluation of all code, thus it is listed here.
+    grob$all <- grob$gg.all <- NULL; gs.all <- reactive({ 
 
       if (is.null(svg.df())) return(NULL); if (input$cs.v=="sel.gen" & is.null(input$dt_rows_selected)) return(NULL)
       withProgress(message="Spatial heatmap: ", value=0, {
@@ -1231,21 +1289,37 @@ shinyServer(function(input, output, session) {
         g.df <- svg.df()[["df"]]; tis.path <- svg.df()[["tis.path"]]
         if (input$cs.v=="sel.gen") gene <- geneIn()[["gene2"]][input$dt_rows_selected, ]
         if (input$cs.v=="w.mat") gene <- geneIn()[["gene2"]]
-        g.df <- svg.df()[["df"]]; tis.path <- svg.df()[["tis.path"]]; fil.cols <- svg.df()[['fil.cols']]
-        grob.lis <- grob_list(gene=gene, geneV=geneV(), coord=g.df, ID=gID$all, legend.col=fil.cols, cols=color$col, tis.path=tis.path, tis.trans=input$tis, sub.title.size=20) # All gene IDs are used.
-        return(grob.lis)
+
+      svg.df.lis <- svg.df(); grob.lis.all <- w.h.all <- NULL
+      # Get max width/height of multiple SVGs, and dimensions of other SVGs can be set relative to this max width/height.
+      for (i in seq_along(svg.df.lis)) { w.h.all <- c(w.h.all, svg.df.lis[[i]][['w.h']]); w.h.max <- max(w.h.all) }
+      # A set of SHMs are made for each SVG, and all sets of SHMs are placed in a list.
+      for (i in seq_along(svg.df.lis)) {
+
+        svg.df <- svg.df.lis[[i]]; g.df <- svg.df[["df"]]
+        tis.path <- svg.df[["tis.path"]]; fil.cols <- svg.df[['fil.cols']]; w.h <- svg.df[['w.h']]
+        if (input$pre.scale=='Y') mar <- (1-w.h/w.h.max*0.99)/2 else mar <- NULL
+        grob.lis <- grob_list(gene=gene, con.na=geneIn0()[['con.na']], geneV=geneV(), coord=g.df, ID=gID$all, legend.col=fil.cols, cols=color$col, tis.path=tis.path, tis.trans=input$tis, sub.title.size=21, mar.lb=mar) # All gene IDs are used.
+        grob.lis.all <- c(grob.lis.all, list(grob.lis))
+
+      }; names(grob.lis.all) <- names(svg.df.lis); 
+      return(grob.lis.all)
 
       })
 
-    }); grob$all <- gs()[['grob.lis']]; grob$gg.all <- gs()[['g.lis.all']]
+    }); grob.gg.lis <- grob_gg(gs=gs.all())
+    grob$all <- grob.gg.lis[['grob']]; grob$gg.all <- grob.gg.lis[['gg']]
 
   })
 
+
   observeEvent(gID$new, { 
-                 
-    grob.all <- c(grob$all, gs()[['grob.lis']]); grob$all <- grob.all[unique(names(grob.all))] 
-    gg.all <- c(grob$gg.all, gs()[['g.lis.all']]); grob$gg.all <- gg.all[unique(names(gg.all))] 
-  
+
+    if (is.null(svg.df())|is.null(gID$new)|length(gID$new)==0|is.null(gID$all)) return(NULL)
+    grob.gg.lis <- grob_gg(gs=gs.new())
+    grob.all <- c(grob$all, grob.gg.lis[['grob']]); grob$all <- grob.all[unique(names(grob.all))] 
+    gg.all <- c(grob$gg.all, grob.gg.lis[['gg']]); grob$gg.all <- gg.all[unique(names(gg.all))] 
+
   })
   
   output$h.w.c <- renderText({
@@ -1271,46 +1345,60 @@ shinyServer(function(input, output, session) {
     if (length(color$col=="none")==0|input$color=="") return(NULL)
 
     r.na <- rownames(geneIn()[["gene2"]]); gID$geneID <- r.na[input$dt_rows_selected]
-    grob.na <- names(grob$all); con <- unique(con())
-    idx <- NULL; for (i in gID$geneID) { idx <- c(idx, grob.na[grob.na %in% paste0(i, '_', con)]) } 
-    grob.lis.p <- grob$all[idx] #grob.lis.p <- grob.lis.p[unique(names(grob.lis.p))]
+    grob.na <- names(grob$all)
+    # Select target grobs.
+    gen.pat0 <- paste0('^(',paste0(gID$geneID, collapse='|'), ')', '_(.*)_\\d+')
+    grob.lis.p <- grob$all[grepl(gen.pat0, grob.na)] # grob.lis.p <- grob.lis.p[unique(names(grob.lis.p))]
+    gen.pat <- paste0('^(', paste0(gID$geneID, collapse='|'), ')', '_(.*)')
+    # Indexed cons with '_1', '_2', ... at the end.
+    con <- unique(gsub(gen.pat, '\\2', names(grob.lis.p)))
     lay_shm(lay.shm=input$gen.con, con=con, ncol=input$col.n, ID.sel=gID$geneID, grob.list=grob.lis.p, width=input$width, height=input$height, shiny=TRUE) 
 
     })
 
   })
 
+  output$shms.o <- renderUI({
+
+    selectInput('shms.in', label='aSVG for legend:', choices=as.list(svg.path()[['svg.na']], selected=svg.path()[['svg.na']][1]))
+
+  })
+
   output$lgd <- renderPlot(width=260, {
 
-    if (is.null(svg.path())|is.null(gs())) return(ggplot())
+    if (is.null(svg.path())|is.null(gs.new())) return(ggplot())
 
-      svg.path <- svg.path()[['svg.path']]
       # Width and height in original SVG.
-      doc <- read_xml(svg.path); w.h <- c(xml_attr(doc, 'width'), xml_attr(doc, 'height'))
+      w.h <- svg.df()[[input$shms.in]][['w.h']]
       w.h <- as.numeric(gsub("^(\\d+\\.\\d+|\\d+).*", "\\1", w.h)); r <- w.h[1]/w.h[2]
-      g.lgd <- gs()[['g.lgd']]; g.lgd <- g.lgd+coord_fixed(ratio =r); return(g.lgd)
+      g.lgd <- gs.new()[[input$shms.in]][['g.lgd']]; g.lgd <- g.lgd+coord_fixed(ratio =r); return(g.lgd)
 
   })
 
   anm <- reactive({
 
-    if (is.null(geneIn())|is.null(input$dt_rows_selected)|is.null(svg.df())|gID$geneID[1]=="none"|is.null(grob$all)|input$gply.but=='N') return(NULL)
-    if (is.null(input$dt_rows_selected)|is.null(svg.df())|gID$geneID[1]=="none"|is.null(grob$all)) return(NULL)
+    if (is.null(geneIn())|is.null(input$dt_rows_selected)|is.null(svg.df())|gID$geneID[1]=="none"|is.null(grob$gg.all)|input$gply.but=='N') return(NULL)
     if (length(color$col=="none")==0|input$color=="") return(NULL)
 
     withProgress(message="Animation: ", value=0, {
-
-    incProgress(0.25, detail="preparing data...")
-    svg.df <- svg.df(); gg.all <- grob$gg.all; gene <- geneIn()[['gene2']]; con <- unique(con())
-    con.pat <- paste0('(.*)', '_', '(', paste0(con, collapse='|'), ')')
-    fm <- names(gg.all); gen <- unique(gsub(con.pat, '\\1', fm))
+    incProgress(0.25, detail="preparing data...") 
+    gg.all <- grob$gg.all; gene <- geneIn()[['gene2']]
+    gen <- rownames(gene)[input$dt_rows_selected]
+    # Select ggplots only for selected genes.
+    idx <- grepl(paste0('^(', paste0(gen, collapse='|'), ')_(', paste0(con(), collapse='|'), ')_'), names(gg.all))
+    gg.all <- gg.all[idx]; fm <- names(gg.all) 
+    gen.pat <- paste0('^(', paste0(gID$geneID, collapse='|'), ')', '_(.*)')
+    # Indexed cons with '_1', '_2', ... at the end.
+    con <- unique(gsub(gen.pat, '\\2', fm))
     if (input$gen.con=='gene') dis <- 'gene' else dis <- 'con'
     fm <- sort_gen_con(ID.sel=gen, na.all=fm, con.all=con, by=dis)
-    # Add colors and frames to coordinates.    
-    df.all <- data.frame(); for (i in seq_along(fm)) {
 
-      df0 <- svg.df[['df']]; g0 <- gg.all[[fm[i]]]; df0$color <- layer_data(g0)$fill
-      df0$frame <- g0$labels[['title']]; df0$tissue <- paste0(df0$tissue, '.', i)
+    # Add colors and frames to coordinates.
+    df.all <- data.frame(); for (i in seq_along(fm)) {
+ 
+      g0 <- gg.all[[fm[i]]]; df0 <- g0$data
+      df0$color <- layer_data(g0)$fill
+      df0$frame <- fm[i]; df0$tissue <- paste0(df0$tissue, '.', i)
       df.all <- rbind(df.all, df0)
 
     }
@@ -1318,7 +1406,9 @@ shinyServer(function(input, output, session) {
     df.all$value <- NA; tis0 <- df.all[, 'tissue']; idx <- grepl('_\\d+\\.\\d+$', tis0)
     tis1 <- tis0[idx]; tis2 <- tis0[!idx]; tis0[idx] <- sub('_\\d+\\.\\d+$', '', tis1)
     tis0[!idx] <- sub('\\.\\d+$', '', tis2); df.all$feature <- tis0
+    con.pat <- paste0('^(', paste0(gen, collapse='|'), ')_', '(.*)_\\d+')
     df.all$gene <- gsub(con.pat, '\\1', df.all$frame)
+    # Cons without index at the end.
     df.all$condition <- gsub(con.pat, '\\2', df.all$frame)
     col.na <- paste0(df.all$feature, '__', df.all$condition)
     idx1 <- col.na %in% colnames(gene)
@@ -1328,17 +1418,16 @@ shinyServer(function(input, output, session) {
       idx2 <- (df.all$frame %in% i) & idx1; df0 <- df.all[idx2, ]
       df0$value <- unlist(gene[df0$gene[1], col.na[idx2]]); df.all[idx2, ] <- df0
     
-    }; df.all$frame <- factor(df.all$frame, levels=fm) # Play order. 
+    }; df.all$frame <- factor(df.all$frame, levels=fm) # A factor determins frames to show. 
     
     incProgress(0.25, detail="plotting...")
     # Colours in "fill" of "geom_polygon" are not internally ordered and no need to be named, while colours in "values" of "scale_fill_manual" are if the colors are not named.
     # text=paste0('frame: ', frame, '\n', 'feature: ', feature, '\n', 'value: ', value)
-    ggplot(df.all, aes(x=x, y=y, frame=frame, group=tissue, value=value))+geom_polygon(fill=df.all$color, size=0.2, color='grey70')+theme(axis.text=element_blank(), axis.ticks=element_blank(), panel.grid=element_blank(), panel.background=element_rect(fill="white", colour="grey80"), plot.margin=margin(0.1, 0.1, 0.1, 0.3, "cm"), axis.title.x=element_text(size=16,face="bold"), plot.title=element_text(hjust=0.5, size=11))+labs(x="", y="")+scale_y_continuous(expand=c(0.01, 0.01))+scale_x_continuous(expand=c(0.01, 0.01))
+    ggplot(df.all, aes(x=x, y=y, frame=frame, group=tissue, value=value))+geom_polygon(fill=df.all$color, size=0.2, color='grey70')+theme(axis.title=element_blank(), axis.text=element_blank(), axis.ticks=element_blank(), panel.grid=element_blank(), panel.background=element_rect(fill="white", colour="grey80"), plot.margin=margin(0.005, 0.005, 0.005, 0.005, "npc"), plot.title=element_text(hjust=0.5, size=11))+labs(x="", y="")+scale_y_continuous(expand=c(0.01, 0.01))+scale_x_continuous(expand=c(0.01, 0.01))
     
     })
 
   })
-
 
   output$tran <- renderText({
     

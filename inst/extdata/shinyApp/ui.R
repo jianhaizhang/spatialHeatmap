@@ -12,7 +12,8 @@ shinyUI(dashboardPage(
       menuItem("Input", icon=icon("dashboard"),
       menuSubItem("View", tabName="hm_net"), br(),
       selectInput("fileIn", "Select a work mode", c("None", "Compute online", "Compute locally", "brain_Prudencio", "mouse_Merkin", "chicken_Cardoso.Moreira", "shoot_Mustroph", "organ_Mustroph", "root_Mustroph", "shoot_root_Mustroph", "root_roottip_Mustroph", "map_Census"), "organ_Mustroph"),
-      fileInput("svgInpath", "Step 1: upload aSVG image", accept=".svg", multiple=FALSE),
+      fileInput("svgInpath", "Step 1A: upload aSVG image", accept=".svg", multiple=FALSE),
+      fileInput("svgInpath1", "Step 1B: upload aSVG images", accept=".svg", multiple=TRUE),
       fileInput("geneInpath", "Step 2: upload formatted data matrix", accept=c(".txt", ".csv"), multiple=FALSE),
       radioButtons(inputId='dimName', label='Step 3: is column or row gene?', choices=c("None", "Row", "Column"), selected="None", inline=TRUE),
       selectInput('sep', 'Step 4: separator', c("None", "Tab", "Comma", "Semicolon"), "None"),
@@ -69,12 +70,12 @@ shinyUI(dashboardPage(
       radioButtons(inputId='cs.v', label='Color scale based on:', choices=c("Selected rows"="sel.gen", "All rows"="w.mat"), selected="sel.gen", inline=TRUE)
       )), textOutput('h.w.c'), textOutput('msg.col'),
 
-      fluidRow(splitLayout(cellWidths=c('1%', "99%"), '', checkboxGroupInput(inputId="tis", label="Select tissues to be transparent:", choices='', selected='', inline=TRUE))),
+      fluidRow(splitLayout(cellWidths=c('1%', '12%', "87%"), '', radioButtons(inputId="pre.scale", label="Preserve.scale:", choices=c("Yes"="Y", "No"="N"), selected="N", inline=TRUE), checkboxGroupInput(inputId="tis", label="Select tissues to be transparent:", choices='', selected='', inline=TRUE))),
       fluidRow(splitLayout(cellWidths=c("1%", "7%", "91%", "1%"), "", plotOutput("bar1"), plotOutput("shm"), "")))
 
       )),
       
-      box(title="Original Image", status="primary", solidHeader=TRUE, collapsible=TRUE, splitLayout(cellWidths=c("1%", "98%", "1%"), "", plotOutput("lgd"), ""), width=3), br(),
+      box(title="Original Image", status="primary", solidHeader=TRUE, collapsible=TRUE, uiOutput('shms.o'),  splitLayout(cellWidths=c("1%", "98%", "1%"), "", plotOutput("lgd"), ""), width=3), br(),
       # 'height=NULL': height is automatic.
       box(title="Matrix Heatmap", status="primary", solidHeader=TRUE, collapsible=TRUE, width=12, height=NULL, 
       fluidRow(splitLayout(cellWidths=c('1%', '15%', '1%', '10%', '1%', '20%', '1%', '7%', '1%', '20%', '1%', '10%'), '', 
@@ -106,7 +107,7 @@ shinyUI(dashboardPage(
 
       tabItem(tabName="ins", 
       box(title="Summary", status="primary", solidHeader=TRUE, collapsible=TRUE, htmlOutput("sum"), width=12),
-      box(title="Input", status="primary", solidHeader=TRUE, collapsible=TRUE, htmlOutput("input"), downloadButton("dld.svg", "Download SVG image"), downloadButton("dld.data", "Download data matrix"), htmlOutput("input1"), width=12), 
+      box(title="Input", status="primary", solidHeader=TRUE, collapsible=TRUE, htmlOutput("input"), downloadButton("dld.svg", "Download single aSVG file"), downloadButton("dld.data", "Download data for single aSVG"), downloadButton("dld.mul", "Download aSVGs/data"), htmlOutput("input1"), width=12), 
       box(title="Spatial Heatmap", status="primary", solidHeader=TRUE, collapsible=TRUE, htmlOutput("shm.ins"), width=12),
       box(title="Matrix Heatmap", status="primary", solidHeader=TRUE, collapsible=TRUE, htmlOutput("mhm.ins"), width=12),
       box(title="Interactive Network", status="primary", solidHeader=TRUE, collapsible=TRUE, htmlOutput("net.ins"), width=12)

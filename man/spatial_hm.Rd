@@ -22,7 +22,10 @@ spatial_hm(
   sub.title.size = 11,
   lay.shm = "gene",
   ncol = 2,
+  legend = "shm1",
   sam.legend = "identical",
+  legend.title.size = 15,
+  bar.value.size = 10,
   legend.ncol = NULL,
   legend.nrow = NULL,
   legend.position = "bottom",
@@ -31,12 +34,13 @@ spatial_hm(
   legend.label.size = 8,
   line.size = 0.2,
   line.color = "grey70",
+  preserve.scale = FALSE,
   verbose = TRUE,
   ...
 )
 }
 \arguments{
-\item{svg.path}{The path of the aSVG image. \emph{E.g.}: system.file("extdata/shinyApp/example", "gallus_gallus.svg", package="spatialHeatmap"). See \code{\link{return_feature}} for details on how to download aSVGs from the EBI aSVG repository (https://github.com/ebi-gene-expression-group/anatomogram/tree/master/src/svg) directly.}
+\item{svg.path}{The path of an aSVG file. \emph{E.g.}: system.file("extdata/shinyApp/example", "gallus_gallus.svg", package="spatialHeatmap"). Multiple aSVGs are also accepted, such as aSVGs depicting organs development across mutiple times. In this case, the aSVGs should be indexed with suffixes "_shm1", "_shm2", ..., such as "arabidopsis_thaliana.organ_shm1.svg", "arabidopsis_thaliana.organ_shm2.svg", and the paths of these aSVGs are provided in a character vector.  \cr See \code{\link{return_feature}} for details on how to directly download aSVGs from the EBI aSVG repository \url{https://github.com/ebi-gene-expression-group/anatomogram/tree/master/src/svg} and spatialHeatmap aSVG Repository \url{https://github.com/jianhaizhang/spatialHeatmap_aSVG_Repository} developed in this project.}
 
 \item{data}{An object of \code{data frame} or \code{SummarizedExperiment}. In either case, the columns and rows should be sample/conditions and assayed items (\emph{e.g.} genes, proteins, metabolites) respectively. If \code{data frame}, the column names should follow the naming scheme "sample__condition". The "sample" is a general term and stands for cells, tissues, organs, \emph{etc}. where the values are measured. The "condition" is also a general term and refers to experiment treatments applied to "sample" such as drug dosage, temperature, time points, \emph{etc}. If certain samples are not expected to be colored in "spatial heatmaps" (see \code{\link{spatial_hm}}), they are not required to follow this naming scheme. In the downstream interactive network (see \code{\link{network}}), if users want to see node annotation by mousing over a node, a column of row item annotation could be optionally appended to the last column. \cr In the case of \code{SummarizedExperiment}, the \code{assays} slot stores the data matrix. Similarly, the \code{rowData} slot could optionally store a data frame of row item anntation. The \code{colData} slot usually contains a data frame with one column of sample replicates and one column of condition replicates. It is crucial that replicate names of the same sample or condition must be identical. \emph{E.g.} If sampleA has 3 replicates, "sampleA", "sampleA", "sampleA" is expected while "sampleA1", "sampleA2", "sampleA3" is regarded as 3 different samples. If original column names in the \code{assay} slot already follow the "sample__condition" scheme, then the \code{colData} slot is not required at all. \cr In the function \code{\link{spatial_hm}}, this argument can also be a numeric vector. In this vector, every value should be named, and values expected to color the "spatial heatmaps" should follow the naming scheme "sample__condition". \cr In certain cases, there is no condition associated with data. Then in the naming scheme of \code{data frame} or \code{vector}, the "__condition" part could be discarded. In \code{SummarizedExperiment}, the "condition" column could be discarded in \code{colData} slot. \cr Note, regardless of data class the double underscore is a special string that is reserved for specific purposes in "spatialHeatmap", and thus should be avoided for naming feature/samples and conditions.}
 
@@ -70,7 +74,13 @@ spatial_hm(
 
 \item{ncol}{An integer, number of columns to display the spatial heatmaps, not including the legend plot.}
 
+\item{legend}{Only applicable if multiple aSVG files are provided to \code{svg.path}. The suffix of an aSVG file name that used to make legend plot. Default is 'shm1'.}
+
 \item{sam.legend}{"identical", "all", or a character vector of tissue names from the aSVG image to show in the legend plot. Default is "identical", meaning all the identical/matching tissues between the data matrix and aSVG image. If "all", all tissues in the aSVG image are shown.}
+
+\item{legend.title.size}{A numeric. Default is 15. Size of the legend plot title.}
+
+\item{bar.value.size}{A numeric of value size in the color bar y-axis. Default is 10.}
 
 \item{legend.ncol}{An integer, the total columns of items in the legend. Default is NULL.}
 
@@ -89,6 +99,8 @@ spatial_hm(
 \item{line.size}{A numeric. The size of the shape outlines. Default is 0.2.}
 
 \item{line.color}{A character. The color of shape outlines. Default is "grey70".}
+
+\item{preserve.scale}{Logical, TRUE or FALSE. Default is FALSE. If TRUE, the relative dimensions of multiple aSVGs are preserved. Only applicable if multiple aSVG files are provided to \code{svg.path}. The original dimension (width/height) is specified in the top-most node "svg" in the aSVG file.}
 
 \item{verbose}{Logical, FALSE or TRUE. If TRUE the samples in data not colored in spatial heatmaps are printed to R console. Default is TRUE.}
 
@@ -173,6 +185,20 @@ names(vec) <- c('brain', 'heart', 'notMapped')
 vec
 # Plot.
 spatial_hm(svg.path=svg.chk, data=vec, ID='geneX', height=0.7, legend.r=1.5, sub.title.size=9, ncol=1, legend.nrow=2)
+
+# Plot spatial heatmaps on aSVGs of two Arabidopsis thaliana development stages.
+
+# Make up a random numeric data frame.
+df.test <- data.frame(matrix(sample(x=1:100, size=50, replace=TRUE), nrow=10))
+colnames(df.test) <- c('shoot_totalA__condition1', 'shoot_totalA__condition2', 'shoot_totalB__condition1', 'shoot_totalB__condition2', 'notMapped')
+rownames(df.test) <- paste0('gene', 1:10) # Assign row names 
+df.test[1:3, ]
+# aSVG of development stage 1.
+svg1 <- system.file("extdata/shinyApp/example", "arabidopsis_thaliana.organ_shm1.svg", package="spatialHeatmap")
+# aSVG of development stage 2.
+svg2 <- system.file("extdata/shinyApp/example", "arabidopsis_thaliana.organ_shm2.svg", package="spatialHeatmap")
+# Spatial heatmaps. The second aSVG is used for legend plot through "legend='shm2'".
+spatial_hm(svg.path=c(svg1, svg2), data=df.test, ID=c('gene1'), height=0.8, legend.r=1.6, preserve.scale=TRUE, legend='shm2') 
 }
 \references{
 https://www.gimp.org/tutorials/ \cr https://inkscape.org/en/doc/tutorials/advanced/tutorial-advanced.en.html \cr http://www.microugly.com/inkscape-quickguide/
