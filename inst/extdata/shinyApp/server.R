@@ -1110,10 +1110,16 @@ shinyServer(function(input, output, session) {
   observe({ input$geneInpath; input$fileIn; gID$geneID <- "none" })
   observe({ if (is.null(geneIn())) gID$geneID <- "none" })
   # To make the "gID$new" and "gID$all" updated with the new "input$fileIn", since the selected row is fixed (3rd row), the "gID$new" is not updated when "input$fileIn" is changed, and the downstream is not updated either. The shoot/root examples use the same data matrix, so the "gID$all" is the same (pre-selected 3rd row) when change from the default "shoot" to others like "organ". As a result, the "gene$new" is null and downstream is not updated. Also the "gene$new" is the same when change from shoot to organ, and downstream is not updated, thus "gene$new" and "gene$all" are both set NULL above upon new "input$fileIn".  
-  observeEvent(input$fileIn, { gID$all <- gID$new <- NULL })
+  observeEvent(input$fileIn, {
 
+    if (!grepl("_Mustroph$|_Merkin$|_Cardoso.Moreira$|_Prudencio$|_Census$", input$fileIn)|is.null(input$dt_rows_selected)) return()
+    gID$all <- gID$new <- NULL
+    r.na <- rownames(geneIn()[["gene2"]]); gID$geneID <- r.na[input$dt_rows_selected]
+    gID$new <- setdiff(gID$geneID, gID$all); gID$all <- c(gID$all, gID$new)
+
+    })
   observeEvent(input$dt_rows_selected, {
-    
+ 
     if (is.null(input$dt_rows_selected)) return()
     r.na <- rownames(geneIn()[["gene2"]]); gID$geneID <- r.na[input$dt_rows_selected]
     gID$new <- setdiff(gID$geneID, gID$all); gID$all <- c(gID$all, gID$new)
@@ -1254,8 +1260,6 @@ shinyServer(function(input, output, session) {
       incProgress(0.25, detail="preparing data.")
       if (input$cs.v=="sel.gen") gene <- geneIn()[["gene2"]][input$dt_rows_selected, ]
       if (input$cs.v=="w.mat") gene <- geneIn()[["gene2"]]
-      g.df <- svg.df()[["df"]]; tis.path <- svg.df()[["tis.path"]]; fil.cols <- svg.df()[['fil.cols']]
-      
       svg.df.lis <- svg.df(); grob.lis.all <- w.h.all <- NULL
       # Get max width/height of multiple SVGs, and dimensions of other SVGs can be set relative to this max width/height.
       for (i in seq_along(svg.df.lis)) { w.h.all <- c(w.h.all, svg.df.lis[[i]][['w.h']]); w.h.max <- max(w.h.all) }
@@ -1268,7 +1272,7 @@ shinyServer(function(input, output, session) {
         grob.lis <- grob_list(gene=gene, con.na=geneIn0()[['con.na']], geneV=geneV(), coord=g.df, ID=gID$new, legend.col=fil.cols, cols=color$col, tis.path=tis.path, tis.trans=input$tis, sub.title.size=21, mar.lb=mar) # Only gID$new is used.
         grob.lis.all <- c(grob.lis.all, list(grob.lis))
 
-      }; names(grob.lis.all) <- names(svg.df.lis); 
+      }; names(grob.lis.all) <- names(svg.df.lis) 
       return(grob.lis.all)
 
     })
@@ -1282,11 +1286,9 @@ shinyServer(function(input, output, session) {
     input$log; input$tis; input$col.but; input$cs.v; input$pre.scale # input$tis as an argument in "grob_list" will not cause evaluation of all code, thus it is listed here.
     grob$all <- grob$gg.all <- NULL; gs.all <- reactive({ 
 
-      if (is.null(svg.df())) return(NULL); if (input$cs.v=="sel.gen" & is.null(input$dt_rows_selected)) return(NULL)
+      if (is.null(svg.df())|is.null(input$dt_rows_selected)) return(NULL)
       withProgress(message="Spatial heatmap: ", value=0, {
         incProgress(0.25, detail="preparing data.")
-
-        g.df <- svg.df()[["df"]]; tis.path <- svg.df()[["tis.path"]]
         if (input$cs.v=="sel.gen") gene <- geneIn()[["gene2"]][input$dt_rows_selected, ]
         if (input$cs.v=="w.mat") gene <- geneIn()[["gene2"]]
 
@@ -1302,7 +1304,7 @@ shinyServer(function(input, output, session) {
         grob.lis <- grob_list(gene=gene, con.na=geneIn0()[['con.na']], geneV=geneV(), coord=g.df, ID=gID$all, legend.col=fil.cols, cols=color$col, tis.path=tis.path, tis.trans=input$tis, sub.title.size=21, mar.lb=mar) # All gene IDs are used.
         grob.lis.all <- c(grob.lis.all, list(grob.lis))
 
-      }; names(grob.lis.all) <- names(svg.df.lis); 
+      }; names(grob.lis.all) <- names(svg.df.lis) 
       return(grob.lis.all)
 
       })
