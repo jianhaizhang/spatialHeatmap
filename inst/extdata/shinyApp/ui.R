@@ -12,8 +12,8 @@ shinyUI(dashboardPage(
       menuItem("Input", icon=icon("dashboard"),
       menuSubItem("View", tabName="hm_net"), br(),
       selectInput("fileIn", "Select a work mode", c("None", "Compute online", "Compute locally", "brain_Prudencio", "mouse_Merkin", "chicken_Cardoso.Moreira", "shoot_Mustroph", "organ_Mustroph", "root_Mustroph", "shoot_root_Mustroph", "root_roottip_Mustroph", "map_Census"), "organ_Mustroph"),
-      fileInput("svgInpath", "Step 1A: upload aSVG image", accept=".svg", multiple=FALSE),
-      fileInput("svgInpath1", "Step 1B: upload aSVG images", accept=".svg", multiple=TRUE),
+      fileInput("svgInpath", "Step 1A: upload one aSVG file", accept=".svg", multiple=FALSE),
+      fileInput("svgInpath1", "Step 1B: upload multiple aSVG files", accept=".svg", multiple=TRUE),
       fileInput("geneInpath", "Step 2: upload formatted data matrix", accept=c(".txt", ".csv"), multiple=FALSE),
       radioButtons(inputId='dimName', label='Step 3: is column or row gene?', choices=c("None", "Row", "Column"), selected="None", inline=TRUE),
       selectInput('sep', 'Step 4: separator', c("None", "Tab", "Comma", "Semicolon"), "None"),
@@ -51,11 +51,10 @@ shinyUI(dashboardPage(
       tabBox(title="", width=12, id='shm_all', selected='shm1', side='right', 
       
       tabPanel(title='Animation', value='shm2', 
-      fluidRow(splitLayout(cellWidths=c('1%', '10%', '1%', '10%', '1%', '15%', '1%', '15%'), '', 
-      numericInput(inputId='height.ly', label='Height:', value=400, min=1, max=Inf, step=NA, width=170), '',
-      numericInput(inputId='width.ly', label='Width:', value=620, min=1, max=Inf, step=NA, width=170), '',
+      fluidRow(splitLayout(cellWidths=c('1%', '15%', '1%', '15%', '1%', '10%', '1%', '10%'), '', 
+      radioButtons(inputId="gply.but", label="Show animation:", choices=c("Yes"="Y", "No"="N"), selected="N", inline=TRUE), '',
       numericInput(inputId='t', label='Transition time (s):', value=1, min=0.1, max=Inf, step=NA, width=270), '',
-      radioButtons(inputId="gply.but", label="Show animation:", choices=c("Yes"="Y", "No"="N"), selected="N", inline=TRUE)
+      uiOutput('anm.h'), '', uiOutput('anm.w')
       )), textOutput('tran'),
       fluidRow(splitLayout(cellWidths=c("1%", "7%", "91%", "1%"), "", plotOutput("bar2"), plotlyOutput("gply"), ""))),
       
@@ -86,7 +85,19 @@ shinyUI(dashboardPage(
       radioButtons(inputId="mat.scale", label="Scale: ", choices=c("No", "By column", "By row"), selected="No", inline=TRUE), '',
       radioButtons(inputId="mhm.but", label="Show plot: ", choices=c("Yes"="Y", "No"="N"), selected="N", inline=TRUE)
       )),
-      plotlyOutput("HMly")), br(),
+tags$a("Some Title", 
+    onclick="customHref('gly.html')",  
+    tags$img(src = "gly.html", alt= "my cool image")
+),      
+
+navbarMenu("Links",
+           tabPanel(
+               a("Google", href="https://google.com", target="_blank")
+           )), 
+
+a("test", href="http://google.com", target="_blank"), 
+
+plotlyOutput("HMly")), br(),
       box(title="Interactive Network", status="primary", solidHeader=TRUE, collapsible=TRUE, width=12,  
       tabBox(title="", width=12, id='inter_net', selected='inter_net', side='right', 
       tabPanel(title='Parameter', value='par', 

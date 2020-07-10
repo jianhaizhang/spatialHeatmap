@@ -28,14 +28,16 @@ sort_gen_con <- function(ID.sel, na.all, con.all, by='gene') {
         
   }  
 
+  pat.all <- paste0(paste0('^(', paste0(ID.sel, collapse='|'), ')'), '_', paste0('(', paste0(con.all, collapse='|'), ')$'))
+  
   if (by=='gene') {
 
     # Sort conditions under each gene.
-    con.pat1 <- paste0('.*_(', paste0(con.all, collapse='|'), ')$')
+    con.pat1 <- paste0('_(', paste0(con.all, collapse='|'), ')$') # Avoid using '.*' as much as possible.
     na.sort <- NULL; for (i in sort_mix(ID.sel)) {
         
-      na0 <- na.all[grepl(paste0('^', i, '_'), na.all)]
-      if (length(na0)==0) next; con1 <- gsub(con.pat1, '\\1', na0)
+      na0 <- na.all[grepl(paste0('^', i, con.pat1), na.all)]
+      if (length(na0)==0) next; con1 <- gsub(pat.all, '\\2', na0)
       na.sort <- c(na.sort, paste0(i, '_', sort_mix(con1)))
 
     }
@@ -43,11 +45,11 @@ sort_gen_con <- function(ID.sel, na.all, con.all, by='gene') {
   } else if (by=='con') {
 
     # Sort conditions and genes.
-    gen.pat1 <- paste0('^(', paste0(ID.sel, collapse='|'), ')_.*')
+    gen.pat1 <- paste0('^(', paste0(ID.sel, collapse='|'), ')_') # Avoid using '.*' as much as possible.
     na.sort <- NULL; for (i in sort_mix(con.all)) {
       
-      na0 <- na.all[grepl(paste0('_', i, '$'), na.all)]
-      if (length(na0)==0) next; gen1 <- gsub(gen.pat1, '\\1', na0)
+      na0 <- na.all[grepl(paste0(gen.pat1, i, '$'), na.all)]
+      if (length(na0)==0) next; gen1 <- gsub(pat.all, '\\1', na0)
       na.sort <- c(na.sort, paste0(sort_mix(gen1), '_', i))
 
     }
@@ -1254,7 +1256,7 @@ shinyServer(function(input, output, session) {
   grob <- reactiveValues(all=NULL, gg.all=NULL); observeEvent(input$fileIn, { grob$all <- grob$gg.all <- NULL })
   gs.new <- reactive({ 
 
-    if (is.null(svg.df())|is.null(gID$new)|is.null(gID$all)) return(NULL); 
+    if (is.null(svg.df())|is.null(geneIn())|is.null(gID$new)|is.null(gID$all)|is.null(input$dt_rows_selected)|color$col[1]=='none') return(NULL); 
     withProgress(message="Tissue heatmap: ", value=0, {
 
       incProgress(0.25, detail="preparing data.")
@@ -1286,7 +1288,7 @@ shinyServer(function(input, output, session) {
     input$log; input$tis; input$col.but; input$cs.v; input$pre.scale # input$tis as an argument in "grob_list" will not cause evaluation of all code, thus it is listed here.
     grob$all <- grob$gg.all <- NULL; gs.all <- reactive({ 
 
-      if (is.null(svg.df())|is.null(input$dt_rows_selected)) return(NULL)
+      if (is.null(svg.df())|is.null(geneIn())|is.null(input$dt_rows_selected)|color$col[1]=='none') return(NULL)
       withProgress(message="Spatial heatmap: ", value=0, {
         incProgress(0.25, detail="preparing data.")
         if (input$cs.v=="sel.gen") gene <- geneIn()[["gene2"]][input$dt_rows_selected, ]
@@ -1326,7 +1328,7 @@ shinyServer(function(input, output, session) {
   
   output$h.w.c <- renderText({
     
-    if (is.null(geneIn())|is.null(input$dt_rows_selected)|is.null(svg.df())|gID$geneID[1]=="none"|is.null(grob$all)) return(NULL)
+    if (is.null(geneIn())|is.null(input$dt_rows_selected)|is.null(svg.df())|is.null(grob$all)) return(NULL)
 
     height <- input$height; width <- input$width
     col.n <- input$col.n;
@@ -1345,15 +1347,13 @@ shinyServer(function(input, output, session) {
 
     if (is.null(input$dt_rows_selected)|is.null(svg.df())|gID$geneID[1]=="none"|is.null(grob$all)) return(NULL)
     if (length(color$col=="none")==0|input$color=="") return(NULL)
-
     r.na <- rownames(geneIn()[["gene2"]]); gID$geneID <- r.na[input$dt_rows_selected]
     grob.na <- names(grob$all)
     # Select target grobs.
-    gen.pat0 <- paste0('^(',paste0(gID$geneID, collapse='|'), ')', '_(.*)_\\d+')
-    grob.lis.p <- grob$all[grepl(gen.pat0, grob.na)] # grob.lis.p <- grob.lis.p[unique(names(grob.lis.p))]
-    gen.pat <- paste0('^(', paste0(gID$geneID, collapse='|'), ')', '_(.*)')
+    pat.all <- paste0(paste0('^(', paste0(gID$geneID, collapse='|'), ')'), '_', paste0('(', paste0(paste0(con(), '_\\d+$'), collapse='|'), ')')) # Use definite patterns and avoid using '.*' as much as possible. Try to as specific as possible.
+    grob.lis.p <- grob$all[grepl(pat.all, grob.na)] # grob.lis.p <- grob.lis.p[unique(names(grob.lis.p))]
     # Indexed cons with '_1', '_2', ... at the end.
-    con <- unique(gsub(gen.pat, '\\2', names(grob.lis.p)))
+    con <- unique(gsub(pat.all, '\\2', names(grob.lis.p)))
     lay_shm(lay.shm=input$gen.con, con=con, ncol=input$col.n, ID.sel=gID$geneID, grob.list=grob.lis.p, width=input$width, height=input$height, shiny=TRUE) 
 
     })
@@ -1362,6 +1362,7 @@ shinyServer(function(input, output, session) {
 
   output$shms.o <- renderUI({
 
+    if (is.null(input$svgInpath1)) return(NULL)
     selectInput('shms.in', label='aSVG for legend:', choices=as.list(svg.path()[['svg.na']], selected=svg.path()[['svg.na']][1]))
 
   })
@@ -1371,9 +1372,10 @@ shinyServer(function(input, output, session) {
     if (is.null(svg.path())|is.null(gs.new())) return(ggplot())
 
       # Width and height in original SVG.
-      w.h <- svg.df()[[input$shms.in]][['w.h']]
+      if (!is.null(input$svgInpath1)) svg.na <- input$shms.in else svg.na <- 1
+      w.h <- svg.df()[[svg.na]][['w.h']]
       w.h <- as.numeric(gsub("^(\\d+\\.\\d+|\\d+).*", "\\1", w.h)); r <- w.h[1]/w.h[2]
-      g.lgd <- gs.new()[[input$shms.in]][['g.lgd']]; g.lgd <- g.lgd+coord_fixed(ratio =r); return(g.lgd)
+      g.lgd <- gs.new()[[svg.na]][['g.lgd']]; g.lgd <- g.lgd+coord_fixed(ratio =r); return(g.lgd)
 
   })
 
@@ -1425,8 +1427,9 @@ shinyServer(function(input, output, session) {
     incProgress(0.25, detail="plotting...")
     # Colours in "fill" of "geom_polygon" are not internally ordered and no need to be named, while colours in "values" of "scale_fill_manual" are if the colors are not named.
     # text=paste0('frame: ', frame, '\n', 'feature: ', feature, '\n', 'value: ', value)
-    ggplot(df.all, aes(x=x, y=y, frame=frame, group=tissue, value=value))+geom_polygon(fill=df.all$color, size=0.2, color='grey70')+theme(axis.title=element_blank(), axis.text=element_blank(), axis.ticks=element_blank(), panel.grid=element_blank(), panel.background=element_rect(fill="white", colour="grey80"), plot.margin=margin(0.005, 0.005, 0.005, 0.005, "npc"), plot.title=element_text(hjust=0.5, size=11))+labs(x="", y="")+scale_y_continuous(expand=c(0.01, 0.01))+scale_x_continuous(expand=c(0.01, 0.01))
-    
+    g <- ggplot(df.all, aes(x=x, y=y, frame=frame, group=tissue, value=value))+geom_polygon(fill=df.all$color, size=0.2, color='grey70')+theme(axis.title=element_blank(), axis.text=element_blank(), axis.ticks=element_blank(), panel.grid=element_blank(), panel.background=element_rect(fill="white", colour="grey80"), plot.margin=margin(0.005, 0.005, 0.005, 0.005, "npc"), plot.title=element_text(hjust=0.5, size=11))+labs(x="", y="")+scale_y_continuous(expand=c(0.01, 0.01))+scale_x_continuous(expand=c(0.01, 0.01))
+    return(list(g=g, df.all=df.all))
+
     })
 
   })
@@ -1434,8 +1437,26 @@ shinyServer(function(input, output, session) {
   output$tran <- renderText({
     
     if (is.null(geneIn())|is.null(input$dt_rows_selected)|is.null(svg.df())|gID$geneID[1]=="none"|is.null(grob$all)) return(NULL)
-
     validate(need(try(input$t>=0.1), 'Transition time should be at least 0.1 second!'))
+
+  })
+  
+  output$anm.h <- renderUI({
+
+    if (is.null(anm())) return(NULL)
+    df.all <- anm()[['df.all']]; x.max <- max(df.all$x); y.max <- max(df.all$y)
+    h <- 400; w <- x.max/y.max*h
+    if (w>760) { w <- 760; h <- y.max/x.max*w }
+    numericInput(inputId='height.ly', label='Height:', value=h, min=1, max=Inf, step=NA, width=170)
+
+  })
+  output$anm.w <- renderUI({
+
+    if (is.null(anm())) return(NULL)
+    df.all <- anm()[['df.all']]; x.max <- max(df.all$x); y.max <- max(df.all$y)
+    h <- 400; w <- x.max/y.max*h
+    if (w>760) { w <- 760; h <- y.max/x.max*w }
+    numericInput(inputId='width.ly', label='Width:', value=w, min=1, max=Inf, step=NA, width=170)
 
   })
   
@@ -1443,11 +1464,9 @@ shinyServer(function(input, output, session) {
 
     if (is.null(anm())|input$gply.but=='N') return()
     withProgress(message="Animation: ", value=0, {
-
     incProgress(0.75, detail="plotting...")
-    ggplotly(anm(), tootip='all', width=input$width.ly, height=input$height.ly) %>% animation_opts(frame=input$t*10^3, transition=0, redraw=FALSE) %>% animation_slider(currentvalue=list(prefix='frame: ', font=list(color="purple", size=18), xanchor='left'), pad=list(t=1)) %>% layout(margin=list(t=20, r=3, b=1, l=3))
-
-  })
+    ggplotly(anm()[['g']], tootip='all', width=input$width.ly, height=input$height.ly) %>% animation_opts(frame=input$t*10^3, transition=0, redraw=FALSE) %>% animation_slider(currentvalue=list(prefix='frame: ', font=list(color="purple", size=18), xanchor='left'), pad=list(t=1)) %>% layout(margin=list(t=20, r=3, b=1, l=3))
+    })
 
   })
 

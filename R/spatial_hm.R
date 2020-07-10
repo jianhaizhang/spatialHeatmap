@@ -208,7 +208,7 @@ spatial_hm <- function(svg.path, data, sam.factor=NULL, con.factor=NULL, ID, col
       if (!all(grepl('_shm\\d+', svg.na, perl=TRUE))) stop("Suffixes of aSVG files should be indexed as '_shm1', '_shm2', '_shm3', ...") 
 
     }
-    ord <- order(gsub('.*_(shm.*)$', '\\1', svg.na))
+    ord <- order(gsub('.*_(shm.*).svg$', '\\1', svg.na))
     svg.path <- svg.path[ord]; svg.na <- svg.na[ord]
 
     # Coordinates of each SVG are extracted and placed in a list.
@@ -259,11 +259,11 @@ spatial_hm <- function(svg.path, data, sam.factor=NULL, con.factor=NULL, ID, col
     }; names(grob.lis.all) <- names(svg.df.lis);     
 
     # Extract SHMs of grob and placed in a list. Different SHMs of same 'gene_condition' are indexed with suffixed of '_1', '_2', ...
-    grob.all <- grob_gg(gs=grob.lis.all)[['grob']]    
-    gen.pat <- paste0('^(', paste0(ID, collapse='|'), ')', '_(.*)') 
+    grob.all <- grob_gg(gs=grob.lis.all)[['grob']]
+    pat.all <- paste0(paste0('^(', paste0(ID, collapse='|'), ')'), '_', paste0('(', paste0(paste0(con.uni, '_\\d+$'), collapse='|'), ')')) # Use definite patterns and avoid using '.*' as much as possible. Try to as specific as possible.
     # Indexed cons with '_1', '_2', ... at the end.
-    con <- unique(gsub(gen.pat, '\\2', names(grob.all)))
-    g.arr <- lay_shm(lay.shm=lay.shm, con=con, ncol=ncol, ID.sel=ID, grob.list=grob.all, width=width, height=height, shiny=FALSE)
+    con.idx <- unique(gsub(pat.all, '\\2', names(grob.all)))
+    g.arr <- lay_shm(lay.shm=lay.shm, con=con.idx, ncol=ncol, ID.sel=ID, grob.list=grob.all, width=width, height=height, shiny=FALSE)
     cs.arr <- arrangeGrob(grobs=list(grobTree(cs.grob)), layout_matrix=cbind(1), widths=unit(1, "npc")) # "mm" is fixed, "npc" is scalable.
     # Select legend plot.
     if (length(svg.na)>1) na.lgd <- svg.na[grep(paste0('_', legend, '.svg$'), svg.na)] else na.lgd <- svg.na

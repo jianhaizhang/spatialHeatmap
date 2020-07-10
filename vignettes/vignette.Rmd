@@ -991,7 +991,7 @@ across six cell types (Figure \@ref(fig:shshm)).
 spatial_hm(svg.path=svg.sh, data=se.fil.arab, ID=c("HRE2"), height=0.6, legend.nrow=3, legend.r=1.3, legend.key.size=0.3)
 ```
 
-### SHM: Multiple-aSVG Example {#mul_svg}
+### SHM: Growth-stage Example {#mul_svg}
 
 The `spatial_hm` function also accepts multiple aSVG files, such as aSVGs of different growth stages. In this case, these aSVG files should be indexed with suffixes of `_shm1`, `_shm2`, *etc*, such as `arabidopsis_thaliana.organ_shm1.svg` and `arabidopsis_thaliana.organ_shm2.svg` in the following example. Without such suffixes, the order of aSVGs cannot be determined and an error will be reported. The paths of aSVG files should be provided to `svg.path` as a vector. To preserve the relative dimensions across original aSVGs, the argument `preserve.scale` should be set `TRUE`, which is useful if tissue/organ features need to reflect varying sizes across growth stages. The `legend` argument specifies which aSVG should be used for the legend plot and accepted values are `shm1`, `shm2`, *etc*. 
 

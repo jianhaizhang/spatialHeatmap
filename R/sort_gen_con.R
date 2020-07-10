@@ -23,14 +23,16 @@ sort_gen_con <- function(ID.sel, na.all, con.all, by='gene') {
         
   }  
 
+  pat.all <- paste0(paste0('^(', paste0(ID.sel, collapse='|'), ')'), '_', paste0('(', paste0(con.all, collapse='|'), ')$'))
+  
   if (by=='gene') {
 
     # Sort conditions under each gene.
-    con.pat1 <- paste0('.*_(', paste0(con.all, collapse='|'), ')$')
+    con.pat1 <- paste0('_(', paste0(con.all, collapse='|'), ')$') # Avoid using '.*' as much as possible.
     na.sort <- NULL; for (i in sort_mix(ID.sel)) {
         
-      na0 <- na.all[grepl(paste0('^', i, '_'), na.all)]
-      if (length(na0)==0) next; con1 <- gsub(con.pat1, '\\1', na0)
+      na0 <- na.all[grepl(paste0('^', i, con.pat1), na.all)]
+      if (length(na0)==0) next; con1 <- gsub(pat.all, '\\2', na0)
       na.sort <- c(na.sort, paste0(i, '_', sort_mix(con1)))
 
     }
@@ -38,11 +40,11 @@ sort_gen_con <- function(ID.sel, na.all, con.all, by='gene') {
   } else if (by=='con') {
 
     # Sort conditions and genes.
-    gen.pat1 <- paste0('^(', paste0(ID.sel, collapse='|'), ')_.*')
+    gen.pat1 <- paste0('^(', paste0(ID.sel, collapse='|'), ')_') # Avoid using '.*' as much as possible.
     na.sort <- NULL; for (i in sort_mix(con.all)) {
       
-      na0 <- na.all[grepl(paste0('_', i, '$'), na.all)]
-      if (length(na0)==0) next; gen1 <- gsub(gen.pat1, '\\1', na0)
+      na0 <- na.all[grepl(paste0(gen.pat1, i, '$'), na.all)]
+      if (length(na0)==0) next; gen1 <- gsub(pat.all, '\\1', na0)
       na.sort <- c(na.sort, paste0(sort_mix(gen1), '_', i))
 
     }
