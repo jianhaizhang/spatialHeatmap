@@ -13,9 +13,9 @@
 #' @param legend.col A character vector of colors for the legend keys. The lenght must be equal to the number of target samples shown in the legend. 
 #' @param legend.title A character, the legend title. Default is NULL.
 #' @param legend.ncol An integer, the total columns of items in the legend. Default is NULL.
-#' @param legend.nrow An integer, the total rows of the items in the legend. Default is NULL. 
-#' @param legend.key.size A numeric (in "cm"). Default is 0.5. Size of the legend key.
-#' @param legend.label.size A numeric. Default is 8. Size of the legend label.
+#' @param legend.nrow An integer, the total rows of the items in the legend. Default is 2. It is applicable to both static image and video.
+#' @param legend.key.size A numeric (in "npc"). Default is 0.02. Size of the legend key, applicable to both static image and video.
+#' @param legend.label.size A numeric. Default is 8. Size of the legend label, applicable to both static image and video.
 #' @param legend.title.size A numeric. Default is 15. Size of the legend plot title.
 #' @param line.size A numeric. The size of the shape outlines. Default is 0.2.
 #' @param line.color A character. The color of shape outlines. Default is "grey70".
@@ -23,7 +23,7 @@
 #' @param ... Other arguments passed to \code{\link[ggplot2]{ggplot}}.
 #' @inheritParams ggplot2::theme
 
-#' @return A list of spatial heatmaps of ggplot2 plot grob, legend plot, and spatial heatmaps of ggplot object.
+#' @return A nested list of spatial heatmaps of ggplot2 plot grob, spatial heatmaps of ggplot, and legend plot of ggplot.
 #' @keywords Internal
 
 #' @author Jianhai Zhang \email{jzhan067@@ucr.edu; zhang.jianhai@@hotmail.com} \cr Dr. Thomas Girke \email{thomas.girke@@ucr.edu}
@@ -33,7 +33,7 @@
 
 #' @importFrom ggplot2 ggplot aes theme element_blank margin element_rect scale_y_continuous scale_x_continuous ggplotGrob geom_polygon scale_fill_manual ggtitle element_text labs guide_legend alpha coord_fixed
 
-grob_list <- function(gene, con.na=TRUE, geneV, coord, ID, cols, tis.path, tis.trans=NULL, sub.title.size, sam.legend='identical', legend.col, legend.title=NULL, legend.ncol=NULL, legend.nrow=NULL, legend.position='bottom', legend.direction=NULL, legend.key.size=0.5, legend.label.size=8, legend.title.size=8, line.size=0.2, line.color='grey70', mar.lb=NULL, ...) {
+grob_list <- function(gene, con.na=TRUE, geneV, coord, ID, cols, tis.path, tis.trans=NULL, sub.title.size, sam.legend='identical', legend.col, legend.title=NULL, legend.ncol=NULL, legend.nrow=2, legend.position='bottom', legend.direction=NULL, legend.key.size=0.02, legend.label.size=8, legend.title.size=8, line.size=0.2, line.color='grey70', mar.lb=NULL, ...) {
 
   g_list <- function(con, lgd=FALSE, ...) {
 
@@ -55,10 +55,18 @@ grob_list <- function(gene, con.na=TRUE, geneV, coord, ID, cols, tis.path, tis.t
     } else g.col <- rep(NA, length(tis.path))
     names(g.col) <- tis.df # The colors might be internally re-ordered alphabetically during mapping, so give them names to fix the match with tissues. E.g. c('yellow', 'blue') can be re-ordered to c('blue', 'yellow'), which makes tissue mapping wrong. Correct: colours are not re-ordered. The 'tissue' in 'data=coord' are internally re-ordered according to a factor. Therfore, 'tissue' should be a factor with the right order. Otherwise, disordered mapping can happen.
 
-    if (lgd==FALSE) scl.fil <- scale_fill_manual(values=g.col, guide=FALSE) else { 
+    # Show selected or all samples in legend.
+    if (length(sam.legend)==1) if (sam.legend=='identical') sam.legend <- intersect(sam.uni, unique(tis.path)) else if (sam.legend=='all') sam.legend <- unique(tis.path)
+    
+    if (lgd==FALSE) {
+    
+      sam.legend <- setdiff(sam.legend, tis.trans) 
+      leg.idx <- !duplicated(tis.path) & (tis.path %in% sam.legend)
+      # Legends are set for each SHM and then removed in 'ggplotGrob', but a copy with legend is saved separately for later used in video.
+      scl.fil <- scale_fill_manual(values=g.col, breaks=tis.df[leg.idx], labels=tis.path[leg.idx], guide=guide_legend(title=legend.title, ncol=legend.ncol, nrow=legend.nrow))
+   
+    } else { 
 
-      # Show selected or all samples in legend.
-      if (length(sam.legend)==1) if (sam.legend=='identical') sam.legend <- intersect(sam.uni, unique(tis.path)) else if (sam.legend=='all') sam.legend <- unique(tis.path)
       # Select legend key colours if identical samples between SVG and matrix have colors of "none".
       legend.col <- legend.col[sam.legend] 
       if (any(legend.col=='none')) {
@@ -80,15 +88,25 @@ grob_list <- function(gene, con.na=TRUE, geneV, coord, ID, cols, tis.path, tis.t
        }; scl.fil <- scale_fill_manual(values=g.col, breaks=tis.df[leg.idx], labels=tis.path[leg.idx], guide=guide_legend(title=legend.title, ncol=legend.ncol, nrow=legend.nrow)) 
 
     }
+    lgd.par <- theme(legend.position=legend.position, legend.direction=legend.direction, legend.background = element_rect(fill=alpha(NA, 0)), legend.key.size=unit(legend.key.size, "npc"), legend.text=element_text(size=legend.label.size), legend.title=element_text(size=legend.title.size), legend.margin=margin(l=0.1, r=0.1, unit='npc'))
+    ## Add 'feature' and 'value' to coordinate data frame, since the resulting ggplot object is used in 'ggplotly'. Otherwise, the coordinate data frame is applied to 'ggplot' directly by skipping the following code.
+    coord$gene <- k; coord$condition <- con; coord$value <- NA
+    ft.pat <- paste0('(', paste0(unique(tis.path), collapse='|'), ')(_\\d+)$')
+    coord$feature <- gsub(ft.pat, '\\1', coord$tissue)    
+    # Assign values to each tissue.
+    col.na <- paste0(coord$feature, '__', coord$condition)
+    idx1 <- col.na %in% colnames(gene); df0 <- coord[idx1, ]
+    df0$value <- unlist(gene[df0$gene[1], col.na[idx1]])
+    coord[idx1, ] <- df0
 
     # If "data" is not in ggplot(), g$data slot is empty.
-    g <- ggplot(data=coord, aes(x=x, y=y), ...)+geom_polygon(aes(fill=tissue), color=line.color, size=line.size, linetype='solid')+scl.fil+theme(axis.text=element_blank(), axis.ticks=element_blank(), panel.grid=element_blank(), panel.background=element_rect(fill="white", colour="grey80"), axis.title.x=element_text(size=16, face="bold"), plot.title=element_text(hjust=0.5, size=sub.title.size))+labs(x="", y="")+scale_y_continuous(expand=c(0.01, 0.01))+scale_x_continuous(expand=c(0.01, 0.01))
+    g <- ggplot(data=coord, aes(x=x, y=y, value=value, group=tissue, text=paste0('feature: ', feature, '\n', 'value: ', value)), ...)+geom_polygon(aes(fill=tissue), color=line.color, size=line.size, linetype='solid')+scl.fil+theme(axis.text=element_blank(), axis.ticks=element_blank(), panel.grid=element_blank(), panel.background=element_rect(fill="white", colour="grey80"), axis.title.x=element_text(size=16, face="bold"), plot.title=element_text(hjust=0.5, size=sub.title.size))+labs(x="", y="")+scale_y_continuous(expand=c(0.01, 0.01))+scale_x_continuous(expand=c(0.01, 0.01))+lgd.par
     if (is.null(mar.lb)) g <- g+theme(plot.margin=margin(0.005, 0.005, 0.005, 0.005, "npc")) else g <- g+theme(plot.margin=margin(mar.lb[2], mar.lb[1], mar.lb[2], mar.lb[1], "npc"))
     if (con.na==FALSE) g.tit <- ggtitle(k) else g.tit <- ggtitle(paste0(k, "_", con)); g <- g+g.tit
 
     if (lgd==TRUE) {
 
-      g <- g+theme(axis.text=element_blank(), axis.ticks=element_blank(), panel.grid=element_blank(), panel.background=element_rect(fill="white", colour="grey80"), plot.margin=margin(0.005, 0.005, 0.2, 0, "npc"), axis.title.x=element_text(size=16,face="bold"), plot.title=element_text(hjust=0.5, size=15, face="bold"), legend.position=legend.position, legend.direction=legend.direction, legend.background = element_rect(fill=alpha(NA, 0)), legend.key.size=unit(legend.key.size, "cm"), legend.text=element_text(size=legend.label.size), legend.title=element_text(size=legend.title.size), legend.margin=margin(l=0.1, r=0.1, unit='cm'))+ggtitle('Legend')
+      g <- g+theme(axis.text=element_blank(), axis.ticks=element_blank(), panel.grid=element_blank(), panel.background=element_rect(fill="white", colour="grey80"), plot.margin=margin(0.005, 0.005, 0.2, 0, "npc"), axis.title.x=element_text(size=16,face="bold"), plot.title=element_text(hjust=0.5, size=15, face="bold"))+lgd.par+ggtitle('Legend')
 
     }; return(g)
 
@@ -104,15 +122,23 @@ grob_list <- function(gene, con.na=TRUE, geneV, coord, ID, cols, tis.path, tis.t
     }
 
     idx <- grep("__", cname); c.na <- cname[idx]
-    tis.col <- gsub("(.*)(__)(.*)", "\\1", c.na); g.lis <- NULL
-    grob.na0 <- paste0(k, "_", con.uni); g.lis <- lapply(con.uni, g_list)
+    tis.col <- gsub("(.*)(__)(.*)", "\\1", c.na) 
+    tis.col.uni <- unique(tis.col); tis.path.uni <- unique(tis.path)
+    tis.tar <- tis.col.uni[tis.col.uni %in% tis.path.uni]
+    if (length(tis.tar)==0) return(NULL)
+    c.na1 <- c.na[grepl(paste0('^(', paste0(tis.tar,collapse='|'), ')__'), c.na)]
+    # Only conditions paired with valid tissues (have matching samples in data) are used. 
+    con.vld <- gsub("(.*)(__)(.*)", "\\3", c.na1); con.vld.uni <- unique(con.vld)
+    g.lis <- NULL; grob.na0 <- paste0(k, "_", con.vld.uni); g.lis <- lapply(con.vld.uni, g_list)
     # Repress popups by saving it to a png file, then delete it.
     tmp <- tempfile()
-    png(tmp); grob <- lapply(g.lis, ggplotGrob); dev.off(); if (file.exists(tmp)) do.call(file.remove, list(tmp))
+    png(tmp); grob <- lapply(g.lis, function(x) { x <- x+theme(legend.position="none"); ggplotGrob(x) })
+    dev.off(); if (file.exists(tmp)) do.call(file.remove, list(tmp))
     names(g.lis) <- names(grob) <- grob.na0; grob.lis <- c(grob.lis, grob); g.lis.all <- c(g.lis.all, g.lis)
 
   }; g.lgd <- g_list(con=NULL, lgd=TRUE)
   return(list(grob.lis=grob.lis, g.lgd=g.lgd, g.lis.all=g.lis.all))
 
 }
+
 

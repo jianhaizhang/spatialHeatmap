@@ -1,4 +1,4 @@
-#' Plot Spatial Heatmaps
+#' Create Spatial Heatmaps
 #'
 #' The input are a pair of aSVG image and formatted data (\code{vector}, \code{data frame}, \code{SummarizedExperiment}). The former is an annotated SVG file (aSVG) where spatial features are represented by shapes and assigned unique identifiers, while the latter are numeric values measured from these spatial features and organized in specific formats. In biological cases, aSVGs are anatomical or cell structures, and data are measurements of genes, proteins, metabolites, \emph{etc}. in different samples (\emph{e.g.} cells, tissues). Data are mapped to the aSVG according to identifiers of assay samples and aSVG features. Only the data from samples having matching counterparts in aSVG features are mapped. The mapped features are filled with colors translated from the data, and the resulting images are termed spatial heatmaps. Note, "sample" and "feature" are two equivalent terms referring to cells, tissues, organs etc. where numeric values are measured. Matching means a target sample in data and a target spatial feature in aSVG image have the same identifier. \cr This function is designed as much flexible as to achieve optimal visualization. For example, subplots of spatial heatmaps can be organized by gene or condition for easy comparison, in multi-layer anotomical structures selected tissues can be set transparent to expose burried features, color scale is customizable to highlight difference among features. This function also works with many other types of spatial data, such as population data plotted to geographic maps.
 
@@ -12,15 +12,22 @@
 #' @param col.com A character vector of the color components used to build the color scale. The default is c('purple', 'yellow', 'blue').
 #' @param col.bar "selected" or "all", the former uses values of input assayed items to build the color scale while the latter uses all values from the data. The default is "selected".
 #' @param data.trans "log2", "exp2", or NULL. If colors across samples cannot distinguish due to low variance or outliers, transform the data by "log2" or "2-base expoent" (exp2). Default is NULL (data will not be transformed).
-#' @param bar.width The width of color bar. Default if 0.08.
-#' @param width A numeric of each subplot width. The default is 1.
-#' @param height A numeric of each subplot height. The default is 1.
-#' @param legend Only applicable if multiple aSVG files are provided to \code{svg.path}. The suffix of an aSVG file name that used to make legend plot. Default is 'shm1'. 
+#' @param bar.width The width of color bar, ranging from 0 to 1. Default if 0.08.
+#' @param bar.width The width of legend plot, ranging from 0 to 1. Default if 0.7.
+#' @param width A numeric of overall width of all subplots, ranging between 0 and 1. The default is 1. It is applicable to spatial heatmaps in both static image and video.
+#' @param height A numeric of overall height of all subplots, ranging between 0 and 1. The default is 1. It is applicable to spatial heatmaps in both static image and video. 
+#' @param legend Only applicable if multiple aSVG files are provided to \code{svg.path}. A vector of suffix(es) of aSVG file name(s) that are used to make legend plot(s) such as c('shm1', 'shm2'). Default is 'all', and each aSVG will have a legend plot on the right. If NULL, no legend plot is generated.  
 #' @param legend.r A numeric to adjust the dimension of the legend plot. Default is 1. The larger, the higher ratio of width to height.
 #' @param lay.shm "gene" or "con", the former organizes spatial heatmaps by genes, proteins, metabolites, \emph{etc}. while the latter by conditions/treatments applied to experiments.
 #' @param ncol An integer, number of columns to display the spatial heatmaps, not including the legend plot.
 #' @param preserve.scale Logical, TRUE or FALSE. Default is FALSE. If TRUE, the relative dimensions of multiple aSVGs are preserved. Only applicable if multiple aSVG files are provided to \code{svg.path}. The original dimension (width/height) is specified in the top-most node "svg" in the aSVG file.
 #' @param verbose Logical, FALSE or TRUE. If TRUE the samples in data not colored in spatial heatmaps are printed to R console. Default is TRUE.
+#' @param out.dir The directory to save interactive spatial heatmaps as independent HTML files and videos. Default is NULL, and the HTML files and videos are not saved.
+#' @param anm.width The width of spatial heatmaps in HTML files. Default is 650.
+#' @param anm.height The height of spatial heatmaps in HTML files. Default is 550.
+#' @inheritParams anm_ly
+#' @param video.dim A single character of the dimension of video frame in form of 'widthxheight', such as '1920x1080', '1280x800', '320x568', '1280x1024', '1280x720', '320x480', '480x360', '600x600', '800x600', '640x480'. Default is '640x480'.
+#' @param interval The time interval (seconds) between spatial heatmap frames in the video. Default is 1.
 
 #' @return An image of spatial heatmap(s), a two-component list of the spatial heatmap(s) in \code{ggplot} format and a data frame of mapping between assayed samples and aSVG features.
 
@@ -91,9 +98,9 @@
 
 #' # Plot spatial heatmaps on gene "ENSGALG00000019846".
 #' # Toy data1. 
-#' spatial_hm(svg.path=svg.chk, data=df.fil.chk, ID='ENSGALG00000019846', height=0.4, legend.r=1.7, sub.title.size=9, ncol=3, legend.nrow=2)
+#' spatial_hm(svg.path=svg.chk, data=df.fil.chk, ID='ENSGALG00000019846', height=0.4, legend.r=1.7, sub.title.size=9, ncol=3)
 #' # Toy data2.
-#' spatial_hm(svg.path=svg.chk, data=se.fil.chk, ID='ENSGALG00000019846', legend.r=1.5, sub.title.size=9, ncol=3, legend.nrow=2)
+#' spatial_hm(svg.path=svg.chk, data=se.fil.chk, ID='ENSGALG00000019846', legend.r=1.5, sub.title.size=9, ncol=3)
 #'
 #' # The data can also come as as a simple named vector. The following gives an example on a vector of 3 random values. 
 #' # Random values.
@@ -141,7 +148,7 @@
 #' @importFrom methods is
 #' @importFrom ggplotify as.ggplot
 
-spatial_hm <- function(svg.path, data, sam.factor=NULL, con.factor=NULL, ID, col.com=c('purple', 'yellow', 'blue'), col.bar="selected", bar.width=0.08, bar.title.size=10, data.trans=NULL, tis.trans=NULL, width=1, height=1, legend.r=1, sub.title.size=11, lay.shm="gene", ncol=2, legend='shm1', sam.legend='identical', legend.title.size=15, bar.value.size=10, legend.ncol=NULL, legend.nrow=NULL, legend.position='bottom', legend.direction=NULL, legend.key.size=0.5, legend.label.size=8, line.size=0.2, line.color='grey70', preserve.scale=FALSE, verbose=TRUE, ...) {
+spatial_hm <- function(svg.path, data, sam.factor=NULL, con.factor=NULL, ID, col.com=c('purple', 'yellow', 'blue'), col.bar='selected', bar.width=0.08, legend.width=0.7, bar.title.size=0, data.trans=NULL, tis.trans=NULL, width=1, height=1, legend.r=1, sub.title.size=11, lay.shm="gene", ncol=2, legend='all', sam.legend='identical', legend.title.size=15, bar.value.size=10, legend.ncol=NULL, legend.nrow=2, legend.position='bottom', legend.direction=NULL, legend.key.size=0.02, legend.label.size=8, line.size=0.2, line.color='grey70', preserve.scale=FALSE, verbose=TRUE, out.dir=NULL, anm.width=650, anm.height=550, selfcontained=FALSE, video.dim='640x480', ...) {
 
   x <- y <- color_scale <- tissue <- line.type <- NULL  
   # Extract and filter data.
@@ -191,7 +198,7 @@ spatial_hm <- function(svg.path, data, sam.factor=NULL, con.factor=NULL, ID, col
     bar.len=1000
     if (col.bar=="all") geneV <- seq(min(gene), max(gene), len=bar.len) else if (col.bar=="selected") geneV <- seq(min(gene[ID, , drop=FALSE]), max(gene[ID, , drop=FALSE]), len=bar.len)
     col <- colorRampPalette(col.com)(length(geneV))
-    cs.g <- col_bar(geneV=geneV, cols=col, width=1, bar.title.size=bar.title.size, bar.value.size=bar.value.size, mar=c(3, 0.1, 3, 0.1)); cs.grob <- ggplotGrob(cs.g)    
+    cs.g <- col_bar(geneV=geneV, cols=col, width=1, bar.title.size=bar.title.size, bar.value.size=bar.value.size); cs.grob <- ggplotGrob(cs.g)    
 
     # Only take the column names with "__".
     cname <- colnames(gene); form <- grepl('__', cname)
@@ -253,26 +260,51 @@ spatial_hm <- function(svg.path, data, sam.factor=NULL, con.factor=NULL, ID, col
       svg.df <- svg.df.lis[[i]]; g.df <- svg.df[["df"]]; w.h <- svg.df[['w.h']]
       tis.path <- svg.df[["tis.path"]]; fil.cols <- svg.df[['fil.cols']]
       if (preserve.scale==TRUE) mar <- (1-w.h/w.h.max*0.99)/2 else mar <- NULL
-      grob.lis <- grob_list(gene=gene, con.na=con.na, geneV=geneV, coord=g.df, ID=ID, legend.col=fil.cols, cols=col, tis.path=tis.path, tis.trans=tis.trans, sub.title.size=sub.title.size, sam.legend=sam.legend, legend.ncol=legend.ncol, legend.nrow=legend.nrow, legend.position=legend.position, legend.direction=legend.direction, legend.title.size=legend.title.size, egend.key.size=legend.key.size, legend.label.size=legend.label.size, line.size=line.size, line.color=line.color, line.type=line.type, mar.lb=mar, ...)
+      grob.lis <- grob_list(gene=gene, con.na=con.na, geneV=geneV, coord=g.df, ID=ID, legend.col=fil.cols, cols=col, tis.path=tis.path, tis.trans=tis.trans, sub.title.size=sub.title.size, sam.legend=sam.legend, legend.ncol=legend.ncol, legend.nrow=legend.nrow, legend.position=legend.position, legend.direction=legend.direction, legend.title.size=legend.title.size, legend.key.size=legend.key.size, legend.label.size=legend.label.size, line.size=line.size, line.color=line.color, line.type=line.type, mar.lb=mar, ...)
       grob.lis.all <- c(grob.lis.all, list(grob.lis))
 
     }; names(grob.lis.all) <- names(svg.df.lis);     
 
     # Extract SHMs of grob and placed in a list. Different SHMs of same 'gene_condition' are indexed with suffixed of '_1', '_2', ...
-    grob.all <- grob_gg(gs=grob.lis.all)[['grob']]
-    pat.all <- paste0(paste0('^(', paste0(ID, collapse='|'), ')'), '_', paste0('(', paste0(paste0(con.uni, '_\\d+$'), collapse='|'), ')')) # Use definite patterns and avoid using '.*' as much as possible. Try to as specific as possible.
+    grob.gg <- grob_gg(gs=grob.lis.all)
+    grob.all <- grob.gg[['grob']]; gg.all <- grob.gg[['gg']] 
+    pat.gen <- paste0(ID, collapse='|')
+    pat.con <- paste0(con.uni, collapse='|')
+    # Use definite patterns and avoid using '.*' as much as possible. Try to as specific as possible.
+    pat.all <- paste0('^(', pat.gen, ')_(', pat.con, ')(_\\d+$)')
     # Indexed cons with '_1', '_2', ... at the end.
-    con.idx <- unique(gsub(pat.all, '\\2', names(grob.all)))
+    con.idx <- unique(gsub(pat.all, '\\2\\3', names(grob.all)))
     g.arr <- lay_shm(lay.shm=lay.shm, con=con.idx, ncol=ncol, ID.sel=ID, grob.list=grob.all, width=width, height=height, shiny=FALSE)
     cs.arr <- arrangeGrob(grobs=list(grobTree(cs.grob)), layout_matrix=cbind(1), widths=unit(1, "npc")) # "mm" is fixed, "npc" is scalable.
     # Select legend plot.
-    if (length(svg.na)>1) na.lgd <- svg.na[grep(paste0('_', legend, '.svg$'), svg.na)] else na.lgd <- svg.na
-    g.lgd <- grob.lis.all[[na.lgd]][['g.lgd']]; grob.lgd <- ggplotGrob(g.lgd)
-    # Layout matrix of legend.
-    if (lay.shm=='gene') lay.lgd <- matrix(seq_len(ceiling(length(con.uni)/ncol)), byrow=FALSE)
-    if (lay.shm=='con') lay.lgd <- matrix(seq_len(ceiling(length(ID)/ncol)), byrow=FALSE)
-    lgd.arr <- arrangeGrob(grobs=list(grobTree(grob.lgd)), layout_matrix=lay.lgd, widths=unit(width, "npc"), heights=unit(width/legend.r, "npc"))
-    shm <- grid.arrange(cs.arr, g.arr, lgd.arr, ncol=3, widths=unit(c(bar.width-0.005, (1-bar.width)/(ncol+1)*ncol, (1-bar.width)/(ncol+1)), 'npc')); shm
+    if (!is.null(legend)) { if (length(svg.na)>1 & legend!='all') na.lgd <- svg.na[grep(paste0('_(', paste0(legend, collapse='|'), ').svg$'), svg.na)] else na.lgd <- svg.na
+    lgd.lis <- NULL; for (i in na.lgd) { lgd.lis <- c(lgd.lis, list(grob.lis.all[[i]][['g.lgd']])) }; names(lgd.lis) <- na.lgd
+    grob.lgd.lis <- lapply(lgd.lis, ggplotGrob)
+    lgd.tr <- lapply(grob.lgd.lis, grobTree)
+
+    # Number of all rows in SHMs.
+    # if (lay.shm=='gene') row.all <- ceiling(length(con.uni)/ncol)*length(ID)
+    # if (lay.shm=='con') row.all <- ceiling(length(ID)/ncol)*length(con.uni)
+    # In 'arrangeGrob', if numbers in 'layout_matrix' are more than items in 'grobs', there is no difference. The width/height of each subplot is decided by 'widths' and 'heights'.
+    lgd.w <- 0.99; lgd.h <- 0.99/length(na.lgd)/legend.r
+    if (lgd.h*length(na.lgd)>1) { lgd.h <- 0.99/length(na.lgd); lgd.w <- lgd.h*legend.r } 
+    lgd.arr <- arrangeGrob(grobs=lgd.tr, layout_matrix=matrix(seq_along(na.lgd), ncol=1), widths=unit(lgd.w, "npc"), heights=unit(rep(lgd.h, length(na.lgd)), "npc"))
+    w.lgd <- (1-bar.width)/(ncol+1)*legend.width # Legend is reduced.
+    # A plot pops up when 'grid.arrange' runs.
+    shm <- grid.arrange(cs.arr, g.arr, lgd.arr, ncol=3, widths=unit(c(bar.width-0.005, 1-bar.width-w.lgd, w.lgd), 'npc'))
+    } else { shm <- grid.arrange(cs.arr, g.arr, ncol=2, widths=unit(c(bar.width-0.005, 1-bar.width), 'npc')) }
+
+    if (!is.null(out.dir)) { 
+
+      anm_ly(gg=gg.all, cs.g=cs.g, tis.trans=tis.trans, sam.uni=sam.uni, anm.width=anm.width, anm.height=anm.height, out.dir=out.dir)
+      vdo <- video(gg=gg.all, cs.g=cs.g, sam.uni=sam.uni, tis.trans=tis.trans, lgd.key.size=legend.key.size, lgd.text.size=legend.label.size, lgd.row=legend.nrow, width=width, height=height, video.dim=video.dim, interval=interval, out.dir=out.dir)
+      if (is.null(vdo)) cat("'ffmpeg' is not detected, so video is not generated! \n")
+
+    }
     lis <- list(spatial_heatmap=as.ggplot(shm), mapped_feature=map.sum); invisible(lis)
 
 }
+
+
+
+

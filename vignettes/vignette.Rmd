@@ -141,7 +141,7 @@ tissue layer of interest in the plots. To address this, several default and
 customizable layer viewing options are provided. They allow to hide features in
 the top layers by making them transparent in order to expose features below
 them. This transparency viewing feature is highlighted below in the mouse
-example (Figure \@ref(fig:musshm1)). <font color='blue'> The SHM functionality also accepts multiple aSVGs as shown in Figure \@ref(fig:arabshm). This is particularly useful when map data to tissues across multiple development phases. In addition to static representation, SHMs are also presented in an anmation in the Shiny App. This functionality displays SHMs sequentially according to genes or conditions in the same window, and allows zoom in and out at specific shapes.</font>      
+example (Figure \@ref(fig:musshm1)). <font color='blue'> The SHM functionality also accepts multiple aSVGs as shown in Figure \@ref(fig:arabshm). This is particularly useful when map data to tissues across multiple development phases. In addition to static representation, SHMs are also presented in form of animation and video in order of genes or conditions. In the animation, each SHM is interactive such as zoom in and out, mouse over features to show tooltip.</font>      
 
 To maximize reusability and extensibility, the package organizes large-scale
 omics assay data along with the associated experimental design information in a
@@ -594,15 +594,22 @@ comparing gene families.
 ```{r mul, eval=TRUE, echo=TRUE, warnings=FALSE, fig.wide=TRUE, fig.cap=("SHMs of two genes. The subplots are organized by \"condition\" through `lay.shm` argument."), out.width="100%" }
 spatial_hm(svg.path=svg.hum, data=se.fil.hum, ID=c('ENSG00000268433', 'ENSG00000006047'), lay.shm='con', width=1, height=1, legend.r=1.5)
 ```
+<font color='blue'>
+
+### SHM: HTML and Video
+
+There is an option to save the SHMs as HTML and video files through the argument `out.dir`, which is the directory to save these files. Each HTML file contains an interactive SHM, where features can be zoomed in and out, and a tooltip of feature, data, gene, condition is presented by hovering over features. The video is a collection of all SHMs in order of genes or conditions.   
+
+</font>
 
 ### SHM: Customization
 
 To provide a high level of flexibility, the `spatial_hm` contains many arguments.
-An overview of the argument names and their utility is provide in Table \@ref(tab:arg).
+An overview of the main argument names and their utility is provide in Table \@ref(tab:arg).
 
 ```{r arg, eval=TRUE, echo=FALSE, warnings=FALSE}
-arg.df <- read.table('file/spatial_hm_arg.txt', header=TRUE, sep='\t')
-kable((arg.df), escape=TRUE, caption="Argument list of \'spatial_hm\'.")
+arg.df <- read.table('file/spatial_hm_arg.txt', header=TRUE, row.names=1, sep='\t')
+kable((arg.df), escape=TRUE, caption="Argument list (partial) of \'spatial_hm\'.")
 ```
 
 ## Mouse Organs {#mus}
@@ -990,10 +997,11 @@ across six cell types (Figure \@ref(fig:shshm)).
 ```{r shshm, eval=TRUE, echo=TRUE, warnings=FALSE, fig.wide=TRUE, fig.cap=('SHM of Arabidopsis shoots. The expression profile of the HRE2 gene is plotted for control and hypoxia treatment across six cell types.'), out.width="100%"}
 spatial_hm(svg.path=svg.sh, data=se.fil.arab, ID=c("HRE2"), height=0.6, legend.nrow=3, legend.r=1.3, legend.key.size=0.3)
 ```
+<font color='blue'>
 
 ### SHM: Growth-stage Example {#mul_svg}
 
-The `spatial_hm` function also accepts multiple aSVG files, such as aSVGs of different growth stages. In this case, these aSVG files should be indexed with suffixes of `_shm1`, `_shm2`, *etc*, such as `arabidopsis_thaliana.organ_shm1.svg` and `arabidopsis_thaliana.organ_shm2.svg` in the following example. Without such suffixes, the order of aSVGs cannot be determined and an error will be reported. The paths of aSVG files should be provided to `svg.path` as a vector. To preserve the relative dimensions across original aSVGs, the argument `preserve.scale` should be set `TRUE`, which is useful if tissue/organ features need to reflect varying sizes across growth stages. The `legend` argument specifies which aSVG should be used for the legend plot and accepted values are `shm1`, `shm2`, *etc*. 
+The `spatial_hm` function also accepts multiple aSVG files, such as aSVGs of different growth stages. In this case, these aSVG files should be indexed with suffixes of `_shm1`, `_shm2`, *etc*, such as `arabidopsis_thaliana.organ_shm1.svg` and `arabidopsis_thaliana.organ_shm2.svg` in the following example. Without such suffixes, the order of aSVGs cannot be determined and an error will be reported. The paths of aSVG files should be provided to `svg.path` as a vector. To preserve the relative dimensions of original aSVGs, the argument `preserve.scale` should be set `TRUE`, which is useful if tissue/organ features need to reflect varying sizes across growth stages. By default, every aSVG image will have a legend plot on the right. If only specific legend plots are expected, the `legend` argument should be used, and accepted values are `shm1`, `shm2`, *etc*. The `legend.width` argument controls the width of legend plots. If a value of `0` is provided, all legend plots are removed.  
 
 In the example below, a random numeric data frame is generated and `gene1` is mapped to two aSVGs of Arabidopsis plants, `arabidopsis_thaliana.organ_shm1.svg` and `arabidopsis_thaliana.organ_shm2.svg`, which are pre-packaged in `spatialHeatmap`. The former stands for a younger stage while the latter for an older stage. The samples `shoot_totalA` and `shoot_totalB` in the data frame are assumed to have matching feature counterpart in the younger and older plant aSVG respectively.  
 
@@ -1015,11 +1023,13 @@ svg.sh1 <- system.file("extdata/shinyApp/example", "arabidopsis_thaliana.organ_s
 svg.sh2 <- system.file("extdata/shinyApp/example", "arabidopsis_thaliana.organ_shm2.svg", package="spatialHeatmap")
 ```
 
-Plot SHMs on `gene1`. The second aSVG is used for legend plot through `legend='shm2'` and orginal dimension relativity is preserved by `preserve.scale=TRUE`.    
+Plot SHMs on `gene1`. The orginal dimension relativity is preserved by `preserve.scale=TRUE`.    
 
 ```{r arabshm, eval=TRUE, echo=TRUE, warnings=FALSE, fig.wide=TRUE, fig.cap=('SHMs of Arabidopsis at two growth stages. The expression profile of `gene1` under `condition1` and `condition2` is mapped to two growth stages.'), out.width="100%"}
-spatial_hm(svg.path=c(svg.sh1, svg.sh2), data=df.random, ID=c('gene1'), legend.r=1.6, preserve.scale=TRUE, legend='shm2') 
+spatial_hm(svg.path=c(svg.sh1, svg.sh2), data=df.random, ID=c('gene1'), width=0.7, legend.r=0.9, legend.width=0.9, preserve.scale=TRUE) 
 ```
+
+</font>
 
 # Matrix Heatmaps {#mhm}
 
@@ -1137,7 +1147,7 @@ browser interface. Apart from being very user-friendly, this App
 conveniently organizes the results of the entire visualization workflow in a
 single browser window with options to adjust the parameters of the individual components
 interactively. For instance, genes can be selected and replotted in the SHM
-simply by clicking the corresponding rows in the expression table included in the same window. <font color='blue'> The subplots of SHMs, including multiple growth stages, are presented in two modes "Basic" and "Animation". The former compiles all subplots in the same page, and the dimension, layout, and color key are all customizable, while the latter displays each subplot sequentially in an animation. The animation can be played continuously or paused at a frame. Each frame can be zoomed in and out by drawing a rectangle and clicking the "home" icon in the top-right toolbar respectively. When mouse over a shape, the information of gene, condition, feature identifier, and value are displayed in a tootip. </font> This representation is very efficient in guiding the interpretation of the results 
+simply by clicking the corresponding rows in the expression table included in the same window. <font color='blue'> The subplots of SHMs, including multiple growth stages, are presented in three modes "Basic", "Animation", and "Video". The "Basic" compiles all subplots in the same page, and the dimension, layout, and color key are all customizable, the "Animation" displays each subplot sequentially in an animation. The animation can be played continuously or paused at a frame. Each frame can be zoomed in and out by drawing a rectangle and clicking the "home" icon in the top-right toolbar respectively. When mouse over a shape, the information of gene, condition, feature identifier, and value are displayed in a tootip, while the "Video" assembles all SHMs in am MP4 file. </font> This representation is very efficient in guiding the interpretation of the results 
 in a visual and user-friendly manner. For testing purposes, the `spatialHeatmap` 
 Shiny App also includes ready-to-use sample expression data and aSVG images 
 along with embedded user instructions.
@@ -1153,7 +1163,7 @@ shiny_all()
 
 <font color='red'>[ThG-Comment: many menu items are not functional in the Shiny App. 
 E.g.: Instructions and Acknowledgement return error messages.]</font>
-<font color='blue'>jianhai-reply: Missing pre-uploaded files are added, and now it is functional. The matrix heatmap and network section in the app are not synced with the vignette, since the vignette is not final yet.</font>
+<font color='blue'>jianhai-reply: Missing pre-uploaded files are added, and now it is functional.</font>
 
 
 The dashboard panels of the Shiny App are organized as follows:

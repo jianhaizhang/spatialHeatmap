@@ -4,11 +4,41 @@
 
 <div align="justify">
 
-<p>This is the core functionality. The data matrix is shown as an interactive table under Expression Matrix. In this table, rows are gene IDs and columns are samples/conditions and gene metadata, the expression values of a sample can be sorted, and a particular gene can be searched by its ID. Once a gene is selected in the table, its expression profile under each condition across different samples are mapped to matching spatial features in the aSVG and plotted as spatial heatmaps. Note, "sample" and "feature" are two equivalent terms referring to cells, tissues, organs etc. where numeric values are measured. Matching means a target sample in data matrix and a target spatial feature in aSVG image have the same identifier, and only matching features are colored in the spatial heatmaps. If multiple genes are selected, the spatial heatmaps are plotting sequentially for each gene. In multiple-layer images, if some spatial features are covered by front features and thus not visible, the front features can be selected to be transparent so as to expose covered features. The subplots of spatial heatmaps are presented in two modes "Basic" and "Animation". The former compiles all subplots in the same page, and the dimension, layout, and color key are all customizable, while the latter displays each subplot sequentially in an animation. The animation can be played continuously or paused at a frame. Each frame can be zoomed in and out by drawing a rectangle and clicking the "home" icon in the top-right tool bar respectively. When mouse over a shape, the information of gene, condition, shape identifier, and value are displayed.
+<p>This is the core functionality. Once a gene is selected in "Data Matrix", its expression profile under each condition across different samples are mapped to matching spatial features in the aSVG and plotted as spatial heatmaps. If multiple genes are selected, the spatial heatmaps are plotting sequentially for each gene. Note, "sample" and "feature" are two equivalent terms referring to cells, tissues, organs <em>etc.</em> where numeric values are measured. Matching means a target sample in data matrix and a target spatial feature in aSVG file have the same identifier, and only matching features are colored in the spatial heatmaps. The subplots of spatial heatmaps are presented in three modes "Basic", "Animation", and "video". </p>
 
-<p> <b>Data matrix parameters: </b> On top of Expression Matrix, the first two items filter genes according to expression values. Genes with expression values at least A in at least samples of P proportion are retained. The third and fourth items filter genes according to the coefficient of variation (CV). Only genes with CV between CV1 and CV2 are kept. The initial values are set to very low or hight so that no rows are filtered out on start. "Data transform": if colors cannot well distinguish across features due to low variance or outliers, transform the data matrix by log2 or 2-base expoent (exp2). </p>
+<b>Basic:</b> All subplots of spaital heatmaps are compiled in the same page, and the dimension, layout, and color key are all customizable. <br/>
+<b>Overall width/Overall height</b> Adjust overall width/height of the spatial heatmaps. <br/>
+<b>Columns</b> sets a number of columns to organize the subpots. <br/>
+<b>Display by</b> If mutliple genes are selected, the spatial heatmaps of each gene are generated sequentially. All plots can be organized by "gene" or "condition" so that it is flexible to compare same gene across different conditions or same condition across different genes.<br/>
+<b>Color scheme</b> The color ingredients for the color scale, where separaters could be comma, semicolon, single space, dot, hypen, or, underscore. The default is "purple,yellow,blue". <br/>
+<b>Color scale based on</b> The color scale can build on "Selected rows" or "All rows".<br/>
+<b>Preserve.scale</b> Applies to "Step 2B: upload multiple aSVG files". Preserve the relative dimension of uploaded aSVGs or not. <br/>
+<b>Select tissues to be transparent</b> In multiple-layer aSVGs, if target spatial features are invisible due to overlapping non-target features, the latter can be set transparent so as to expose the former. <br/>
 
-<p> <b>Spatial heatmap parameters: </b> 1) Basic: the plot dimension can be adjusted by changing "Overall width" and "Overall height". "Columns" sets a number of columns to organize the subpots. If mutliple genes are selected, the spatial heatmaps of each gene are generated sequentially. All plots can be organized by "gene" or "condition" so that it is flexible to compare same gene across different conditions or same condition across different genes. "Color scheme" inputs the color ingredients for the color scale, where separaters could be comma, semicolon, single space, dot, hypen, or, underscore. The default is "purple,yellow,blue". The color scale can be build on either "Selected rows" the "All rows". On the right is the legend plot with matching features between data matrix and aSVG image are labeled. 2) Animation: "Height" and "Width" adjust frame dimensions while "Transition time (s) " sets the transition period in seconds between frames. </p>
+<b>Download: </b> Download the composite image of spatial heatmaps.<br/>
+<b>File type: </b> The downloaded file type. Default is "NA", which mean no file is downloaded. <br/>
+<b>Resolustion (dpi): </b> The resolution of downloaded file. <br/>
+<b>Legend width:</b> The width of legend plot on the download file. If 0, the legend plot will disappear.<br/>
+<b>Legend aspect ratio:</b> The width to height ratio of legend plot on the download file.<br/>
+<br/>
+
+<b>Original Image:</b> The legend plot where spatial features having a matching sample in data are labeled.<br/>
+<b>Legend key rows:</b> The number of rows of legend keys in legend plot. It is also applicable to the downloaded image and the video legend keys.<br/>
+<b>Legend key size:</b> The size of legend keys (including key text) in legend plot. It is also applicable to the downloaded image and the video legend keys. <br/>
+<br/>
+
+<b>Animation:</b> Each subplot of spatial heatmap is displayed sequentially in an animation. The animation can be played continuously or paused at a frame. Each frame can be zoomed in and out by drawing a rectangle and clicking the "home" icon in the top-right tool bar respectively. When mouse over a shape, the information of gene, condition, shape identifier, and value are displayed.<br/>
+<b>Show Animation:</b> The animation is presented after "Yes" is checked.<br/>
+<b>Height/Width</b> Adjust frame dimension, which auto-resizes to original aspect ratio. <br/>
+<b>Transition time (s)</b> Sets the transition speed in seconds between frames. If the image contains lots of shapes this values should be increased, since it take more time to display complex shapes.<br/>
+<b>Download</b> Click to download spatial heatmaps in independent interactive HTML files.<br/>
+<br/>
+
+<b>Video:</b> Each subplot of spatial heatmap is compiled in a MP4 video in order of genes or conditions.<br/>
+<b>Show Video:</b> The video is generated and presented after "Yes" is checked.<br/>
+<b>Height/Width:</b> Adjust frame dimension, which auto-resizes to original aspect ratio. <br/>
+<b>Transition time (s):</b> Sets the transition speed in seconds between frames.<br/>
+<b>Fixed dimension:</b> Selected video frame dimensions (width by height).<br/>
 
 </div>
 

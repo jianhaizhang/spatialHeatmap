@@ -17,9 +17,9 @@ lay_shm(lay.shm, con, ncol, ID.sel, grob.list, width, height, shiny)
 
 \item{grob.list}{A list of spatial heatmaps in the form of ggplot2 plot grob, returned by \code{\link{grob_list}}.}
 
-\item{width}{A numeric of each subplot width. The default is 1.}
+\item{width}{A numeric of overall width of all subplots, ranging between 0 and 1. The default is 1. It is applicable to spatial heatmaps in both static image and video.}
 
-\item{height}{A numeric of each subplot height. The default is 1.}
+\item{height}{A numeric of overall height of all subplots, ranging between 0 and 1. The default is 1. It is applicable to spatial heatmaps in both static image and video.}
 
 \item{shiny}{Logical, TRUE or FALSE, apply this function to shiny app or not respectively.}
 }

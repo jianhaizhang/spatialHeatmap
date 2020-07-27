@@ -18,10 +18,10 @@ grob_list(
   legend.col,
   legend.title = NULL,
   legend.ncol = NULL,
-  legend.nrow = NULL,
+  legend.nrow = 2,
   legend.position = "bottom",
   legend.direction = NULL,
-  legend.key.size = 0.5,
+  legend.key.size = 0.02,
   legend.label.size = 8,
   legend.title.size = 8,
   line.size = 0.2,
@@ -57,7 +57,7 @@ grob_list(
 
 \item{legend.ncol}{An integer, the total columns of items in the legend. Default is NULL.}
 
-\item{legend.nrow}{An integer, the total rows of the items in the legend. Default is NULL.}
+\item{legend.nrow}{An integer, the total rows of the items in the legend. Default is 2. It is applicable to both static image and video.}
 
 \item{legend.position}{the position of legends ("none", "left", "right",
 "bottom", "top", or two-element numeric vector)}
@@ -65,9 +65,9 @@ grob_list(
 \item{legend.direction}{layout of items in legends ("horizontal" or
 "vertical")}
 
-\item{legend.key.size}{A numeric (in "cm"). Default is 0.5. Size of the legend key.}
+\item{legend.key.size}{A numeric (in "npc"). Default is 0.02. Size of the legend key, applicable to both static image and video.}
 
-\item{legend.label.size}{A numeric. Default is 8. Size of the legend label.}
+\item{legend.label.size}{A numeric. Default is 8. Size of the legend label, applicable to both static image and video.}
 
 \item{legend.title.size}{A numeric. Default is 15. Size of the legend plot title.}
 
@@ -80,7 +80,7 @@ grob_list(
 \item{...}{Other arguments passed to \code{\link[ggplot2]{ggplot}}.}
 }
 \value{
-A list of spatial heatmaps of ggplot2 plot grob, legend plot, and spatial heatmaps of ggplot object.
+A nested list of spatial heatmaps of ggplot2 plot grob, spatial heatmaps of ggplot, and legend plot of ggplot.
 }
 \description{
 Draw Each Spatial Heatmap and Convert Them to Ggplot2 Plot Grob
