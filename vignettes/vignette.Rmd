@@ -725,7 +725,7 @@ The pre-processed expression data for gene 'ENSMUSG00000000263' is plotted in fo
 of an SHM. In this case the plot includes expression data for 8 tissues across 3 
 mouse strains. 
 
-```{r musshm, eval=TRUE, echo=TRUE, warnings=FALSE, fig.wide=TRUE, fig.cap=("SHM of mouse organs. This is a multiple-layer image where the polygon of the 'skeletal muscle' is set transparent to expose 'lung' and 'heart'."), out.width="100%" }
+```{r musshm, eval=TRUE, echo=TRUE, warnings=FALSE, fig.wide=TRUE, fig.cap=("SHM of mouse organs. This is a multiple-layer image where the shapes of the 'skeletal muscle' is set transparent to expose 'lung' and 'heart'."), out.width="100%" }
 spatial_hm(svg.path=svg.mus, data=se.fil.mus, ID=c('ENSMUSG00000000263'), height=0.5, legend.r=1.1, sub.title.size=9, ncol=3, tis.trans=c('skeletal muscle'), legend.nrow=4, line.size=0.2, line.color='grey70')
 ```
 
@@ -740,7 +740,7 @@ in the same aSVG the skeletal muscle tissue instead, `tis.trans` is assigned
 
 To fine control the visual effects in feature rich aSVGs, the `line.size` and
 `line.color` parameters are useful. This way one can adjust the thickness and 
-color of complex polygon structures.
+color of complex shape structures.
 
 
 ```{r musshm1, eval=TRUE, echo=TRUE, warnings=FALSE, fig.wide=TRUE, fig.cap=("SHM of mouse organs. This is a multiple-layer image where the view onto 'lung' and 'heart' is obstructed by displaying the 'skeletal muscle' tissue."), out.width="100%" }
@@ -995,7 +995,7 @@ The expression profile for the HRE2 gene is plotted for control and hypoxia trea
 across six cell types (Figure \@ref(fig:shshm)).
 
 ```{r shshm, eval=TRUE, echo=TRUE, warnings=FALSE, fig.wide=TRUE, fig.cap=('SHM of Arabidopsis shoots. The expression profile of the HRE2 gene is plotted for control and hypoxia treatment across six cell types.'), out.width="100%"}
-spatial_hm(svg.path=svg.sh, data=se.fil.arab, ID=c("HRE2"), height=0.6, legend.nrow=3, legend.r=1.3, legend.key.size=0.3)
+spatial_hm(svg.path=svg.sh, data=se.fil.arab, ID=c("HRE2"), height=0.6, legend.nrow=3, legend.r=1.3, legend.key.size=0.02)
 ```
 <font color='blue'>
 

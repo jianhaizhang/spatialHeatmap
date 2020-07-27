@@ -2,7 +2,7 @@
 % Please edit documentation in R/spatial_hm.R
 \name{spatial_hm}
 \alias{spatial_hm}
-\title{Plot Spatial Heatmaps}
+\title{Create Spatial Heatmaps}
 \usage{
 spatial_hm(
   svg.path,
@@ -28,7 +28,7 @@ spatial_hm(
   legend.title.size = 15,
   bar.value.size = 10,
   legend.ncol = NULL,
-  legend.nrow = 2,
+  legend.nrow = NULL,
   legend.position = "bottom",
   legend.direction = NULL,
   legend.key.size = 0.02,
@@ -90,7 +90,7 @@ spatial_hm(
 
 \item{legend.ncol}{An integer, the total columns of items in the legend. Default is NULL.}
 
-\item{legend.nrow}{An integer, the total rows of the items in the legend. Default is 2. It is applicable to both static image and video.}
+\item{legend.nrow}{An integer, the total rows of the items in the legend. Default is NULL. It is applicable to both static image and video.}
 
 \item{legend.position}{the position of legends ("none", "left", "right",
 "bottom", "top", or two-element numeric vector)}

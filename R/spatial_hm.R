@@ -148,7 +148,7 @@
 #' @importFrom methods is
 #' @importFrom ggplotify as.ggplot
 
-spatial_hm <- function(svg.path, data, sam.factor=NULL, con.factor=NULL, ID, col.com=c('purple', 'yellow', 'blue'), col.bar='selected', bar.width=0.08, legend.width=0.7, bar.title.size=0, data.trans=NULL, tis.trans=NULL, width=1, height=1, legend.r=1, sub.title.size=11, lay.shm="gene", ncol=2, legend='all', sam.legend='identical', legend.title.size=15, bar.value.size=10, legend.ncol=NULL, legend.nrow=2, legend.position='bottom', legend.direction=NULL, legend.key.size=0.02, legend.label.size=8, line.size=0.2, line.color='grey70', preserve.scale=FALSE, verbose=TRUE, out.dir=NULL, anm.width=650, anm.height=550, selfcontained=FALSE, video.dim='640x480', ...) {
+spatial_hm <- function(svg.path, data, sam.factor=NULL, con.factor=NULL, ID, col.com=c('purple', 'yellow', 'blue'), col.bar='selected', bar.width=0.08, legend.width=0.7, bar.title.size=0, data.trans=NULL, tis.trans=NULL, width=1, height=1, legend.r=1, sub.title.size=11, lay.shm="gene", ncol=2, legend='all', sam.legend='identical', legend.title.size=15, bar.value.size=10, legend.ncol=NULL, legend.nrow=NULL, legend.position='bottom', legend.direction=NULL, legend.key.size=0.02, legend.label.size=8, line.size=0.2, line.color='grey70', preserve.scale=FALSE, verbose=TRUE, out.dir=NULL, anm.width=650, anm.height=550, selfcontained=FALSE, video.dim='640x480', ...) {
 
   x <- y <- color_scale <- tissue <- line.type <- NULL  
   # Extract and filter data.
@@ -221,6 +221,7 @@ spatial_hm <- function(svg.path, data, sam.factor=NULL, con.factor=NULL, ID, col
     # Coordinates of each SVG are extracted and placed in a list.
     svg.df.lis <- NULL; for (i in seq_along(svg.na)) {
           
+      cat('Coordinates:', svg.na[i], '... \n')
       df_tis <- svg_df(svg.path=svg.path[i], feature=sam.uni)
       if (is.character(df_tis)) stop(paste0(svg.na[i], ': ', df_tis))
       svg.df.lis <- c(svg.df.lis, list(df_tis))
@@ -257,6 +258,7 @@ spatial_hm <- function(svg.path, data, sam.factor=NULL, con.factor=NULL, ID, col
     # A set of SHMs are made for each SVG, and all sets of SHMs are placed in a list.
     grob.lis.all <- NULL; for (i in seq_along(svg.df.lis)) {
 
+      cat('Grobs:', names(svg.df.lis)[i], '... \n')
       svg.df <- svg.df.lis[[i]]; g.df <- svg.df[["df"]]; w.h <- svg.df[['w.h']]
       tis.path <- svg.df[["tis.path"]]; fil.cols <- svg.df[['fil.cols']]
       if (preserve.scale==TRUE) mar <- (1-w.h/w.h.max*0.99)/2 else mar <- NULL
@@ -277,6 +279,7 @@ spatial_hm <- function(svg.path, data, sam.factor=NULL, con.factor=NULL, ID, col
     g.arr <- lay_shm(lay.shm=lay.shm, con=con.idx, ncol=ncol, ID.sel=ID, grob.list=grob.all, width=width, height=height, shiny=FALSE)
     cs.arr <- arrangeGrob(grobs=list(grobTree(cs.grob)), layout_matrix=cbind(1), widths=unit(1, "npc")) # "mm" is fixed, "npc" is scalable.
     # Select legend plot.
+    cat('SHMs and legend...', '\n')
     if (!is.null(legend)) { if (length(svg.na)>1 & legend!='all') na.lgd <- svg.na[grep(paste0('_(', paste0(legend, collapse='|'), ').svg$'), svg.na)] else na.lgd <- svg.na
     lgd.lis <- NULL; for (i in na.lgd) { lgd.lis <- c(lgd.lis, list(grob.lis.all[[i]][['g.lgd']])) }; names(lgd.lis) <- na.lgd
     grob.lgd.lis <- lapply(lgd.lis, ggplotGrob)

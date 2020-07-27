@@ -432,7 +432,7 @@ col_bar <- function(geneV, cols, width, bar.title.size=0, bar.value.size=10, mar
 
 
 lay_shm <- function(lay.shm, con, ncol, ID.sel, grob.list, width, height, shiny) {
-
+  
   width <- as.numeric(width); height <- as.numeric(height); ncol <- as.numeric(ncol); con <- unique(con)
   grob.all.na <- names(grob.list)
   if (lay.shm=="gene") {
@@ -727,7 +727,7 @@ svg_df <- function(svg.path, feature) {
 }
 
 
-grob_list <- function(gene, con.na=TRUE, geneV, coord, ID, cols, tis.path, tis.trans=NULL, sub.title.size, sam.legend='identical', legend.col, legend.title=NULL, legend.ncol=NULL, legend.nrow=2, legend.position='bottom', legend.direction=NULL, legend.key.size=0.02, legend.label.size=8, legend.title.size=8, line.size=0.2, line.color='grey70', mar.lb=NULL, ...) {
+grob_list <- function(gene, con.na=TRUE, geneV, coord, ID, cols, tis.path, tis.trans=NULL, sub.title.size, sam.legend='identical', legend.col, legend.title=NULL, legend.ncol=NULL, legend.nrow=NULL, legend.position='bottom', legend.direction=NULL, legend.key.size=0.02, legend.label.size=8, legend.title.size=8, line.size=0.2, line.color='grey70', mar.lb=NULL, ...) {
 
 #con.na=TRUE; sam.legend='identical'; legend.title=NULL; legend.ncol=NULL; legend.nrow=NULL; legend.position='bottom'; legend.direction=NULL; legend.key.size=0.5; legend.label.size=8; legend.title.size=8; line.size=0.2; line.color='grey70'; mar.lb=NULL
 
@@ -763,7 +763,7 @@ grob_list <- function(gene, con.na=TRUE, geneV, coord, ID, cols, tis.path, tis.t
       sam.legend <- setdiff(sam.legend, tis.trans) 
       leg.idx <- !duplicated(tis.path) & (tis.path %in% sam.legend)
       # Legends are set for each SHM and then removed in 'ggplotGrob', but a copy with legend is saved separately for later used in video.
-      scl.fil <- scale_fill_manual(values=g.col, breaks=tis.df[leg.idx], labels=tis.path[leg.idx], guide=guide_legend(title=legend.title, ncol=legend.ncol, nrow=legend.nrow))
+      scl.fil <- scale_fill_manual(values=g.col, breaks=as.character(tis.df)[leg.idx], labels=tis.path[leg.idx], guide=guide_legend(title=legend.title, ncol=legend.ncol, nrow=legend.nrow))
    
     } else { 
 
@@ -785,7 +785,7 @@ grob_list <- function(gene, con.na=TRUE, geneV, coord, ID, cols, tis.path, tis.t
          g.col0 <- legend.col[sub('_\\d+', '', names(g.col)[i])]
          if (!is.na(g.col0)) g.col[i] <- g.col0
 
-       }; scl.fil <- scale_fill_manual(values=g.col, breaks=tis.df[leg.idx], labels=tis.path[leg.idx], guide=guide_legend(title=legend.title, ncol=legend.ncol, nrow=legend.nrow)) 
+       }; scl.fil <- scale_fill_manual(values=g.col, breaks=as.character(tis.df)[leg.idx], labels=tis.path[leg.idx], guide=guide_legend(title=legend.title, ncol=legend.ncol, nrow=legend.nrow)) 
 
     }
     lgd.par <- theme(legend.position=legend.position, legend.direction=legend.direction, legend.background = element_rect(fill=alpha(NA, 0)), legend.key.size=unit(legend.key.size, "npc"), legend.text=element_text(size=legend.label.size), legend.title=element_text(size=legend.title.size), legend.margin=margin(l=0.1, r=0.1, unit='npc'))
@@ -1497,7 +1497,7 @@ shinyServer(function(input, output, session) {
     pat.all <- paste0('^', pat.all(), '(_\\d+$)')
     grob.lis.p <- grob$all[grepl(pat.all, grob.na)] # grob.lis.p <- grob.lis.p[unique(names(grob.lis.p))]
     # Indexed cons with '_1', '_2', ... at the end.
-    con <- unique(gsub(pat.all, '\\2\\3', names(grob.lis.p)))
+    con <- unique(gsub(pat.all, '\\2\\3', names(grob.lis.p))); if (length(con)==0) return()
     cat('Plotting spatial heatmaps... \n')
     lay <- input$gen.con; ID <- gID$geneID; ncol <- input$col.n
     shm <- lay_shm(lay.shm=lay, con=con, ncol=ncol, ID.sel=ID, grob.list=grob.lis.p, width=input$width, height=input$height, shiny=TRUE)
