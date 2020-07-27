@@ -15,7 +15,7 @@
 #' @param legend.ncol An integer, the total columns of items in the legend. Default is NULL.
 #' @param legend.nrow An integer, the total rows of the items in the legend. Default is NULL. It is applicable to both static image and video.
 #' @param legend.key.size A numeric (in "npc"). Default is 0.02. Size of the legend key, applicable to both static image and video.
-#' @param legend.label.size A numeric. Default is 8. Size of the legend label, applicable to both static image and video.
+#' @param legend.label.size A numeric. Default is 12. Size of the legend label, applicable to both static image and video.
 #' @param legend.title.size A numeric. Default is 15. Size of the legend plot title.
 #' @param line.size A numeric. The size of the shape outlines. Default is 0.2.
 #' @param line.color A character. The color of shape outlines. Default is "grey70".
@@ -33,7 +33,7 @@
 
 #' @importFrom ggplot2 ggplot aes theme element_blank margin element_rect scale_y_continuous scale_x_continuous ggplotGrob geom_polygon scale_fill_manual ggtitle element_text labs guide_legend alpha coord_fixed
 
-grob_list <- function(gene, con.na=TRUE, geneV, coord, ID, cols, tis.path, tis.trans=NULL, sub.title.size, sam.legend='identical', legend.col, legend.title=NULL, legend.ncol=NULL, legend.nrow=NULL, legend.position='bottom', legend.direction=NULL, legend.key.size=0.02, legend.label.size=8, legend.title.size=8, line.size=0.2, line.color='grey70', mar.lb=NULL, ...) {
+grob_list <- function(gene, con.na=TRUE, geneV, coord, ID, cols, tis.path, tis.trans=NULL, sub.title.size, sam.legend='identical', legend.col, legend.title=NULL, legend.ncol=NULL, legend.nrow=NULL, legend.position='bottom', legend.direction=NULL, legend.key.size=0.02, legend.label.size=12, legend.title.size=8, line.size=0.2, line.color='grey70', mar.lb=NULL, ...) {
 
   g_list <- function(con, lgd=FALSE, ...) {
 
