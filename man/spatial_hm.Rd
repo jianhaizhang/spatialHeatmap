@@ -32,7 +32,7 @@ spatial_hm(
   legend.position = "bottom",
   legend.direction = NULL,
   legend.key.size = 0.02,
-  legend.label.size = 8,
+  legend.label.size = 12,
   line.size = 0.2,
   line.color = "grey70",
   preserve.scale = FALSE,
@@ -42,6 +42,7 @@ spatial_hm(
   anm.height = 550,
   selfcontained = FALSE,
   video.dim = "640x480",
+  interval = 1,
   ...
 )
 }
@@ -100,7 +101,7 @@ spatial_hm(
 
 \item{legend.key.size}{A numeric (in "npc"). Default is 0.02. Size of the legend key, applicable to both static image and video.}
 
-\item{legend.label.size}{A numeric. Default is 8. Size of the legend label, applicable to both static image and video.}
+\item{legend.label.size}{A numeric. Default is 12. Size of the legend label, applicable to both static image and video.}
 
 \item{line.size}{A numeric. The size of the shape outlines. Default is 0.2.}
 
@@ -122,9 +123,9 @@ placed in an adjacent directory.}
 
 \item{video.dim}{A single character of the dimension of video frame in form of 'widthxheight', such as '1920x1080', '1280x800', '320x568', '1280x1024', '1280x720', '320x480', '480x360', '600x600', '800x600', '640x480'. Default is '640x480'.}
 
-\item{...}{Other arguments passed to \code{\link[ggplot2]{ggplot}}.}
-
 \item{interval}{The time interval (seconds) between spatial heatmap frames in the video. Default is 1.}
+
+\item{...}{Other arguments passed to \code{\link[ggplot2]{ggplot}}.}
 }
 \value{
 An image of spatial heatmap(s), a two-component list of the spatial heatmap(s) in \code{ggplot} format and a data frame of mapping between assayed samples and aSVG features.

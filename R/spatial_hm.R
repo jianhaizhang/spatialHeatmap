@@ -148,7 +148,7 @@
 #' @importFrom methods is
 #' @importFrom ggplotify as.ggplot
 
-spatial_hm <- function(svg.path, data, sam.factor=NULL, con.factor=NULL, ID, col.com=c('purple', 'yellow', 'blue'), col.bar='selected', bar.width=0.08, legend.width=0.7, bar.title.size=0, data.trans=NULL, tis.trans=NULL, width=1, height=1, legend.r=1, sub.title.size=11, lay.shm="gene", ncol=2, legend='all', sam.legend='identical', legend.title.size=15, bar.value.size=10, legend.ncol=NULL, legend.nrow=NULL, legend.position='bottom', legend.direction=NULL, legend.key.size=0.02, legend.label.size=12, line.size=0.2, line.color='grey70', preserve.scale=FALSE, verbose=TRUE, out.dir=NULL, anm.width=650, anm.height=550, selfcontained=FALSE, video.dim='640x480', ...) {
+spatial_hm <- function(svg.path, data, sam.factor=NULL, con.factor=NULL, ID, col.com=c('purple', 'yellow', 'blue'), col.bar='selected', bar.width=0.08, legend.width=0.7, bar.title.size=0, data.trans=NULL, tis.trans=NULL, width=1, height=1, legend.r=1, sub.title.size=11, lay.shm="gene", ncol=2, legend='all', sam.legend='identical', legend.title.size=15, bar.value.size=10, legend.ncol=NULL, legend.nrow=NULL, legend.position='bottom', legend.direction=NULL, legend.key.size=0.02, legend.label.size=12, line.size=0.2, line.color='grey70', preserve.scale=FALSE, verbose=TRUE, out.dir=NULL, anm.width=650, anm.height=550, selfcontained=FALSE, video.dim='640x480', interval=1, ...) {
 
   x <- y <- color_scale <- tissue <- line.type <- NULL  
   # Extract and filter data.
@@ -307,6 +307,26 @@ spatial_hm <- function(svg.path, data, sam.factor=NULL, con.factor=NULL, ID, col
     lis <- list(spatial_heatmap=as.ggplot(shm), mapped_feature=map.sum); invisible(lis)
 
 }
+
+video <- function(gg, cs.g, sam.uni, tis.trans, lgd.key.size=0.02, lgd.text.size=8, lgd.row=2, width=1, height=1, video.dim='640x480', interval=1, out.dir) {
+
+  ffm <- tryCatch({ system('which ffmpeg', intern=TRUE) }, error=function(e){ return('error') }, warning=function(w) { return('warning') } )
+  if (!grepl('ffmpeg', ffm)) return()
+
+    na <- names(gg)
+    cat('Video: adjust legend size/rows... \n')
+    gg1 <- gg_lgd(gg.all=gg, size.key=lgd.key.size, size.text=lgd.text.size, row=lgd.row, sam.dat=sam.uni, tis.trans=tis.trans)
+    lay <- rbind(c(NA, NA), c(1, 2), c(NA, NA))
+    cat('Saving video... \n')
+    saveVideo(
+    for (i in na) { print(grid.arrange(cs.g, gg1[[i]], widths=unit(c(0.08, width*0.92), 'npc'), heights=unit(c(0.05, height*0.99, 0.05), 'npc'), layout_matrix=lay)) 
+    ani.options(interval=interval)
+    }, video.name=paste0(normalizePath(out.dir), "/shm.mp4"), other.opts=paste0('-pix_fmt yuv420p -b 300k -s:v ', video.dim), img.name='shm', ani.res=1000, verbose=FALSE)
+    
+}
+
+
+
 
 
 

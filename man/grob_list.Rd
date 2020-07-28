@@ -22,7 +22,7 @@ grob_list(
   legend.position = "bottom",
   legend.direction = NULL,
   legend.key.size = 0.02,
-  legend.label.size = 8,
+  legend.label.size = 12,
   legend.title.size = 8,
   line.size = 0.2,
   line.color = "grey70",
@@ -67,7 +67,7 @@ grob_list(
 
 \item{legend.key.size}{A numeric (in "npc"). Default is 0.02. Size of the legend key, applicable to both static image and video.}
 
-\item{legend.label.size}{A numeric. Default is 8. Size of the legend label, applicable to both static image and video.}
+\item{legend.label.size}{A numeric. Default is 12. Size of the legend label, applicable to both static image and video.}
 
 \item{legend.title.size}{A numeric. Default is 15. Size of the legend plot title.}
 

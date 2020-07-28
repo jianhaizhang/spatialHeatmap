@@ -1003,8 +1003,8 @@ video <- function(gg, cs.g, sam.uni, tis.trans, lgd.key.size=0.02, lgd.text.size
     cat('Saving video... \n')
     saveVideo(
     for (i in na) { print(grid.arrange(cs.g, gg1[[i]], widths=unit(c(0.08, width*0.92), 'npc'), heights=unit(c(0.05, height*0.99, 0.05), 'npc'), layout_matrix=lay)) 
-    ani.options(interval=interval, ani.res=1000)
-    }, video.name=paste0(normalizePath(out.dir), "/shm.mp4"), other.opts=paste0('-pix_fmt yuv420p -b 300k -s:v ', video.dim), img.name='shm', verbose=FALSE)
+    ani.options(interval=interval)
+    }, video.name=paste0(normalizePath(out.dir), "/shm.mp4"), other.opts=paste0('-pix_fmt yuv420p -b 300k -s:v ', video.dim), ani.res=1000, img.name='shm', verbose=FALSE)
     
 }
 
