@@ -25,10 +25,11 @@
 #' @param out.dir The directory to save interactive spatial heatmaps as independent HTML files and videos. Default is NULL, and the HTML files and videos are not saved.
 #' @param anm.width The width of spatial heatmaps in HTML files. Default is 650.
 #' @param anm.height The height of spatial heatmaps in HTML files. Default is 550.
-#' @inheritParams anm_ly
+#' @inheritParams html_ly
 #' @param video.dim A single character of the dimension of video frame in form of 'widthxheight', such as '1920x1080', '1280x800', '320x568', '1280x1024', '1280x720', '320x480', '480x360', '600x600', '800x600', '640x480'. Default is '640x480'.
 #' @param interval The time interval (seconds) between spatial heatmap frames in the video. Default is 1.
-
+#' @param framerate An integer of video framerate in frames per seconds. Default is 1. Larger values make the video smoother. 
+#' @param res Resolution of the video in dpi.
 #' @return An image of spatial heatmap(s), a two-component list of the spatial heatmap(s) in \code{ggplot} format and a data frame of mapping between assayed samples and aSVG features.
 
 #' @section Details:
@@ -38,6 +39,7 @@
 
 #' ## In the following examples, the 2 toy data come from an RNA-seq analysis on developments of 7 chicken organs under 9 time points (Cardoso-Moreira et al. 2019). For conveninece, they are included in this package. The complete raw count data are downloaded using the R package ExpressionAtlas (Keays 2019) with the accession number "E-MTAB-6769". Toy data1 is used as a "data frame" input to exemplify data with simple samples/conditions, while toy data2 as "SummarizedExperiment" to illustrate data involving complex samples/conditions.     
 #'
+#' library(spatialHeatmap)
 #' ## Set up toy data.
 #'
 #' # Access toy data1.
@@ -148,7 +150,7 @@
 #' @importFrom methods is
 #' @importFrom ggplotify as.ggplot
 
-spatial_hm <- function(svg.path, data, sam.factor=NULL, con.factor=NULL, ID, col.com=c('purple', 'yellow', 'blue'), col.bar='selected', bar.width=0.08, legend.width=0.7, bar.title.size=0, data.trans=NULL, tis.trans=NULL, width=1, height=1, legend.r=1, sub.title.size=11, lay.shm="gene", ncol=2, legend='all', sam.legend='identical', legend.title.size=15, bar.value.size=10, legend.ncol=NULL, legend.nrow=NULL, legend.position='bottom', legend.direction=NULL, legend.key.size=0.02, legend.label.size=12, line.size=0.2, line.color='grey70', preserve.scale=FALSE, verbose=TRUE, out.dir=NULL, anm.width=650, anm.height=550, selfcontained=FALSE, video.dim='640x480', interval=1, ...) {
+spatial_hm <- function(svg.path, data, sam.factor=NULL, con.factor=NULL, ID, col.com=c('purple', 'yellow', 'blue'), col.bar='selected', bar.width=0.08, legend.width=0.7, bar.title.size=0, data.trans=NULL, tis.trans=NULL, width=1, height=1, legend.r=1, sub.title.size=11, lay.shm="gene", ncol=2, legend='all', sam.legend='identical', legend.title.size=15, bar.value.size=10, legend.ncol=NULL, legend.nrow=NULL, legend.position='bottom', legend.direction=NULL, legend.key.size=0.02, legend.label.size=12, line.size=0.2, line.color='grey70', preserve.scale=FALSE, verbose=TRUE, out.dir=NULL, anm.width=650, anm.height=550, selfcontained=FALSE, video.dim='640x480', res=500, interval=1, framerate=1, ...) {
 
   x <- y <- color_scale <- tissue <- line.type <- NULL  
   # Extract and filter data.
@@ -293,41 +295,25 @@ spatial_hm <- function(svg.path, data, sam.factor=NULL, con.factor=NULL, ID, col
     if (lgd.h*length(na.lgd)>1) { lgd.h <- 0.99/length(na.lgd); lgd.w <- lgd.h*legend.r } 
     lgd.arr <- arrangeGrob(grobs=lgd.tr, layout_matrix=matrix(seq_along(na.lgd), ncol=1), widths=unit(lgd.w, "npc"), heights=unit(rep(lgd.h, length(na.lgd)), "npc"))
     w.lgd <- (1-bar.width)/(ncol+1)*legend.width # Legend is reduced.
+    shm.w <- 1-bar.width-w.lgd
     # A plot pops up when 'grid.arrange' runs.
-    shm <- grid.arrange(cs.arr, g.arr, lgd.arr, ncol=3, widths=unit(c(bar.width-0.005, 1-bar.width-w.lgd, w.lgd), 'npc'))
-    } else { shm <- grid.arrange(cs.arr, g.arr, ncol=2, widths=unit(c(bar.width-0.005, 1-bar.width), 'npc')) }
+    shm <- grid.arrange(cs.arr, g.arr, lgd.arr, ncol=3, widths=unit(c(bar.width-0.005, shm.w, w.lgd), 'npc'))
+    } else { shm.w <- 1-bar.width; shm <- grid.arrange(cs.arr, g.arr, ncol=2, widths=unit(c(bar.width-0.005, shm.w), 'npc')) }
 
     if (!is.null(out.dir)) { 
 
-      anm_ly(gg=gg.all, cs.g=cs.g, tis.trans=tis.trans, sam.uni=sam.uni, anm.width=anm.width, anm.height=anm.height, out.dir=out.dir)
-      vdo <- video(gg=gg.all, cs.g=cs.g, sam.uni=sam.uni, tis.trans=tis.trans, lgd.key.size=legend.key.size, lgd.text.size=legend.label.size, lgd.row=legend.nrow, width=width, height=height, video.dim=video.dim, interval=interval, out.dir=out.dir)
-      if (is.null(vdo)) cat("'ffmpeg' is not detected, so video is not generated! \n")
+      html_ly(gg=gg.all, cs.g=cs.g, tis.trans=tis.trans, sam.uni=sam.uni, anm.width=anm.width, anm.height=anm.height, out.dir=out.dir)
+      # Ration of width to height of single SHM.
+      ratio.w.h <- shm.w/ncol(g.arr)/(height/nrow(g.arr))
+      h <- 0.99; w <- h*ratio.w.h
+      if (w>0.92) { w <- 0.92; h <- w/ratio.w.h }
+      vdo <- video(gg=gg.all, cs.g=cs.g, sam.uni=sam.uni, tis.trans=tis.trans, lgd.key.size=legend.key.size, lgd.text.size=legend.label.size, lgd.row=legend.nrow, width=w, height=h, video.dim=video.dim, res=res, interval=interval, framerate=framerate, out.dir=out.dir)
+      if (is.null(vdo)) cat("Video is not generated! \n")
 
     }
     lis <- list(spatial_heatmap=as.ggplot(shm), mapped_feature=map.sum); invisible(lis)
 
 }
-
-video <- function(gg, cs.g, sam.uni, tis.trans, lgd.key.size=0.02, lgd.text.size=8, lgd.row=2, width=1, height=1, video.dim='640x480', interval=1, out.dir) {
-
-  ffm <- tryCatch({ system('which ffmpeg', intern=TRUE) }, error=function(e){ return('error') }, warning=function(w) { return('warning') } )
-  if (!grepl('ffmpeg', ffm)) return()
-
-    na <- names(gg)
-    cat('Video: adjust legend size/rows... \n')
-    gg1 <- gg_lgd(gg.all=gg, size.key=lgd.key.size, size.text=lgd.text.size, row=lgd.row, sam.dat=sam.uni, tis.trans=tis.trans)
-    lay <- rbind(c(NA, NA), c(1, 2), c(NA, NA))
-    cat('Saving video... \n')
-    saveVideo(
-    for (i in na) { print(grid.arrange(cs.g, gg1[[i]], widths=unit(c(0.08, width*0.92), 'npc'), heights=unit(c(0.05, height*0.99, 0.05), 'npc'), layout_matrix=lay)) 
-    ani.options(interval=interval)
-    }, video.name=paste0(normalizePath(out.dir), "/shm.mp4"), other.opts=paste0('-pix_fmt yuv420p -b 300k -s:v ', video.dim), img.name='shm', ani.res=1000, verbose=FALSE)
-    
-}
-
-
-
-
 
 
 

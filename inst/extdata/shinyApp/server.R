@@ -927,12 +927,13 @@ submatrix <- function(data, ann=NULL, ID, p=0.3, n=NULL, v=NULL, fun='cor', cor.
 }
 
 # Adjust legend key size and rows in ggplot.
-gg_lgd <- function(gg.all, size.key=0.02, size.text=8, row=2, sam.dat, tis.trans=NULL) {
+gg_lgd <- function(gg.all, size.key=0.02, size.text=8, sub.title.size=NULL, row=2, sam.dat, tis.trans=NULL) {
 
   for (i in seq_along(gg.all)) {
   
     g <- gg.all[[i]] 
     if (!is.null(size.key)) g <- g+theme(legend.key.size=unit(size.key, "npc"), legend.text=element_text(size=ifelse(is.null(size.text), 8*size.key*33, size.text)))
+    if (!is.null(sub.title.size)) g <- g+theme(plot.title=element_text(hjust=0.5, size=sub.title.size))
     if (!is.null(row)) {
 
       lay.dat <- layer_data(g)
@@ -948,14 +949,13 @@ gg_lgd <- function(gg.all, size.key=0.02, size.text=8, row=2, sam.dat, tis.trans
   }; return(gg.all)
 
 }
-
 # Prepare interactive SHMs in html.
-anm_ly <- function(gg, cs.g, tis.trans, sam.uni, anm.width, anm.height, selfcontained=FALSE, out.dir) {
+html_ly <- function(gg, cs.g, tis.trans, sam.uni, anm.width, anm.height, selfcontained=FALSE, out.dir) {
 
   gg.na <- names(gg); cs.lis <- gg2list(cs.g, tooltip='color_scale')
   cs.lis$layout$title$text <- NULL 
   csly <- as_widget(cs.lis, tooltip='color_scale') 
-  dir <- paste0(normalizePath(out.dir), '/animation_shm')
+  dir <- paste0(normalizePath(out.dir), '/html_shm')
   if (!dir.exists(dir)) dir.create(dir)
   rd1 <- '1. Double click the "html" files to display the interactive spatial heatmaps in a web browser.'
   rd2 <- '2. All files in the "lib" folder are required to display the spatial heatmaps, so the "html" files cannot work independently.'
@@ -991,24 +991,30 @@ anm_ly <- function(gg, cs.g, tis.trans, sam.uni, anm.width, anm.height, selfcont
 }
 
 # Make videos.
-video <- function(gg, cs.g, sam.uni, tis.trans, lgd.key.size=0.02, lgd.text.size=8, lgd.row=2, width=1, height=1, video.dim='640x480', interval=1, out.dir) {
+video <- function(gg, cs.g, sam.uni, tis.trans, sub.title.size=NULL, bar.value.size=NULL, lgd.key.size=0.02, lgd.text.size=8, lgd.row=2, width=0.92, height=0.99, video.dim='640x480', res=500, interval=1, framerate=1, out.dir) {
 
-  ffm <- tryCatch({ system('which ffmpeg', intern=TRUE) }, error=function(e){ return('error') }, warning=function(w) { return('warning') } )
-  if (!grepl('ffmpeg', ffm)) return()
+  # Test if "av" works.
+  test <- function() {
+    av_capture_graphics(expr=for (i in seq_along(1:2)) plot(i), output=paste0(tempdir(check=TRUE), '/tmp.mp4'))
+  }; try(test())
+  ffm <- tryCatch({ test() }, error=function(e){ return('error') }, warning=function(w) { return('warning') } )
+  if (grepl('error|warning', ffm)) return()
 
-    na <- names(gg)
-    cat('Video: adjust legend size/rows... \n')
-    gg1 <- gg_lgd(gg.all=gg, size.key=lgd.key.size, size.text=lgd.text.size, row=lgd.row, sam.dat=sam.uni, tis.trans=tis.trans)
-    lay <- rbind(c(NA, NA), c(1, 2), c(NA, NA))
-    cat('Saving video... \n')
-    saveVideo(
-    for (i in na) { print(grid.arrange(cs.g, gg1[[i]], widths=unit(c(0.08, width*0.92), 'npc'), heights=unit(c(0.05, height*0.99, 0.05), 'npc'), layout_matrix=lay)) 
-    ani.options(interval=interval)
-    }, video.name=paste0(normalizePath(out.dir), "/shm.mp4"), other.opts=paste0('-pix_fmt yuv420p -b 300k -s:v ', video.dim), ani.res=1000, img.name='shm', verbose=FALSE)
-    
+  if (!is.null(bar.value.size)) cs.g <- cs.g+theme(axis.text.y=element_text(size=bar.value.size))
+  na <- names(gg)
+  cat('Video: adjust legend size/rows... \n')
+  gg1 <- gg_lgd(gg.all=gg, size.key=lgd.key.size, size.text=lgd.text.size, sub.title.size=sub.title.size, row=lgd.row, sam.dat=sam.uni, tis.trans=tis.trans)
+  lay <- rbind(c(NA, NA), c(1, 2), c(NA, NA))
+  cat('Saving video... \n')
+  res.r=res/144; w.h <- round(as.numeric(strsplit(video.dim, 'x')[[1]])*res.r)
+  if (w.h[1] %% 2!=0) w.h[1] <- w.h[1]+1
+  if (w.h[2] %% 2!=0) w.h[2] <- w.h[2]+1
+  av_capture_graphics(expr=for (i in na) { print(grid.arrange(cs.g, gg1[[i]],widths=unit(c(0.08, width), 'npc'), 
+  heights=unit(c(0.05, height, 0.05), 'npc'), layout_matrix=lay)) }, 
+  output=paste0(normalizePath(out.dir), "/shm.mp4"), width=w.h[1], height=w.h[2], res=res, vfilter=paste0('framerate=fps=', framerate))
+
 }
-
-library(SummarizedExperiment); library(shiny); library(shinydashboard); library(grImport); library(rsvg); library(ggplot2); library(DT); library(gridExtra); library(ggdendro); library(WGCNA); library(grid); library(xml2); library(plotly); library(data.table); library(genefilter); library(flashClust); library(visNetwork); library(reshape2); library(igraph); library(animation)
+library(SummarizedExperiment); library(shiny); library(shinydashboard); library(grImport); library(rsvg); library(ggplot2); library(DT); library(gridExtra); library(ggdendro); library(WGCNA); library(grid); library(xml2); library(plotly); library(data.table); library(genefilter); library(flashClust); library(visNetwork); library(reshape2); library(igraph); library(animation); library(av)
 
 # Import input matrix.
 fread.df <- function(input, isRowGene, header, sep, fill, rep.aggr='mean', check.names=FALSE) {
@@ -1402,7 +1408,7 @@ shinyServer(function(input, output, session) {
         tis.path <- svg.df[["tis.path"]]; fil.cols <- svg.df[['fil.cols']]
         if (input$pre.scale=='Y') mar <- (1-w.h/w.h.max*0.99)/2 else mar <- NULL
         cat('New grob/ggplot:', gID$new, ' \n')
-        grob.lis <- grob_list(gene=gene, con.na=geneIn0()[['con.na']], geneV=geneV(), coord=g.df, ID=gID$new, legend.col=fil.cols, cols=color$col, tis.path=tis.path, tis.trans=input$tis, sub.title.size=21, mar.lb=mar, legend.nrow=2, legend.key.size=0.04) # Only gID$new is used.
+        grob.lis <- grob_list(gene=gene, con.na=geneIn0()[['con.na']], geneV=geneV(), coord=g.df, ID=gID$new, legend.col=fil.cols, cols=color$col, tis.path=tis.path, tis.trans=input$tis, sub.title.size=18, mar.lb=mar, legend.nrow=2, legend.key.size=0.04) # Only gID$new is used.
         validate(need(!is.null(grob.lis), paste0(svg.na[i], ': no spatial features that have matching sample identifiers in data are detected!')))
         grob.lis.all <- c(grob.lis.all, list(grob.lis))
 
@@ -1437,7 +1443,7 @@ shinyServer(function(input, output, session) {
         if (input$pre.scale=='Y') mar <- (1-w.h/w.h.max*0.99)/2 else mar <- NULL
         cat('All grob/ggplot:', gID$all, ' \n')
         svg.na <- names(svg.df.lis)
-        grob.lis <- grob_list(gene=gene, con.na=geneIn0()[['con.na']], geneV=geneV(), coord=g.df, ID=gID$all, legend.col=fil.cols, cols=color$col, tis.path=tis.path, tis.trans=input$tis, sub.title.size=21, mar.lb=mar, legend.nrow=2, legend.key.size=0.04) # All gene IDs are used.
+        grob.lis <- grob_list(gene=gene, con.na=geneIn0()[['con.na']], geneV=geneV(), coord=g.df, ID=gID$all, legend.col=fil.cols, cols=color$col, tis.path=tis.path, tis.trans=input$tis, sub.title.size=18, mar.lb=mar, legend.nrow=2, legend.key.size=0.04) # All gene IDs are used.
         validate(need(!is.null(grob.lis), paste0(svg.na[i], ': no spatial features that have matching sample identifiers in data are detected!')))
         grob.lis.all <- c(grob.lis.all, list(grob.lis))
 
@@ -1536,11 +1542,12 @@ shinyServer(function(input, output, session) {
       box(title="Spatial Heatmap", status="primary", solidHeader=TRUE, collapsible=TRUE, width=ifelse(input$hide.lgd=='N', 9, 12), height=NULL, 
       tabBox(title="", width=12, id='shm_all', selected='shm1', side='right', 
       tabPanel(title='Video', value='shm3', 
-      fluidRow(splitLayout(cellWidths=c('1%', '15%', '1%', '15%', '1%', '8%', '1%', '8%'), '', 
+      fluidRow(splitLayout(cellWidths=c('1%', '15%', '1%', '15%', '1%', '7%', '1%', '7%', '1%', '13%'), '', 
       radioButtons(inputId="vdo.but", label="Show video:", choices=c("Yes"="Y", "No"="N"), selected="N", inline=TRUE), '',
       numericInput(inputId='vdo.itvl', label='Transition time (s):', value=1, min=0.1, max=Inf, step=1, width=270), '',
       numericInput(inputId='vdo.height', label='Height:', value=0.99, min=0.1, max=0.99, step=0.1, width=270), '',
-      numericInput(inputId='vdo.width', label='Width:', value=0.92, min=0.1, max=0.92, step=0.1, width=270)
+      numericInput(inputId='vdo.width', label='Width:', value=0.92, min=0.1, max=0.92, step=0.1, width=270), '',
+      numericInput(inputId='vdo.res', label='Resolution (dpi):', value=400, min=1, max=1000, step=5, width=270)
       )), uiOutput('video.dim'), textOutput('tran.vdo'), htmlOutput('ffm'), 
       fluidRow(splitLayout(cellWidths=c("1%", "7%", "91%", "1%"), "", plotOutput("bar3"), uiOutput('video'), ""))),
       
@@ -1623,12 +1630,12 @@ shinyServer(function(input, output, session) {
 
   observeEvent(list(fineIn=input$fileIn, log=input$log, tis=input$tis, col.but=input$col.but, cs.v=input$cs.v, pre.scale=input$pre.scale), {
     if (dir.exists('www/ggly/')) { system('rm -fr www/ggly/lib'); system('rm -f www/ggly/*html') } else dir.create('www/ggly/')
-    if (dir.exists('animation_shm/')) { system('rm -fr animation_shm/lib'); system('rm -f animation_shm/*html') } else dir.create('animation_shm/')
+    if (dir.exists('html_shm/')) { system('rm -fr html_shm/lib'); system('rm -f html_shm/*html') } else dir.create('html_shm/')
     if (dir.exists('www/video/')) system('rm -fr www/video/*.mp4') else dir.create('www/video/')
   })
 
   observeEvent(list(width.ly=input$width.ly, height.ly=input$height.ly), {
-    if (dir.exists('animation_shm/')) { system('rm -fr animation_shm/lib'); system('rm -f animation_shm/*html') } else dir.create('animation_shm/')
+    if (dir.exists('html_shm/')) { system('rm -fr html_shm/lib'); system('rm -f html_shm/*html') } else dir.create('html_shm/')
   })
   observeEvent(list(log=input$log, tis=input$tis, col.but=input$col.but, cs.v=input$cs.v, pre.scale=input$pre.scale, ggly.but=input$ggly.but, gID.new=gID$new), {
     if (is.null(input$ggly.but)) return() 
@@ -1742,7 +1749,7 @@ shinyServer(function(input, output, session) {
     gg <- gg.all[grepl(pat, na)]; gg.na <- names(gg)
     pro <- 0.1; for (i in seq_along(gg.na)) {
     incProgress(pro+0.2, detail=paste0('preparing ', gg.na[i], '.html...'))
-    anm_ly(gg=gg[i], cs.g=shm.bar(), tis.trans=input$tis, sam.uni=sam(), anm.width=input$width.ly, anm.height=input$height.ly, out.dir='.') }
+    html_ly(gg=gg[i], cs.g=shm.bar(), tis.trans=input$tis, sam.uni=sam(), anm.width=input$width.ly, anm.height=input$height.ly, out.dir='.') }
 
    })
 
@@ -1751,9 +1758,9 @@ shinyServer(function(input, output, session) {
   # This step leaves 'fil.na' in 'output$dld.anm' being a global variable.
   output$dld.anm <- downloadHandler( 
     # The rest code will run only after 'anm.dld()' is done.
-    filename=function(){ anm.dld(); "animation_shm.zip" },
-    fil.na <- paste0(tempdir(), '/animation_shm.zip'),
-    content=function(fil.na){ cat('Downloading animation... \n'); zip(fil.na, 'animation_shm/') }
+    filename=function(){ anm.dld(); "html_shm.zip" },
+    fil.na <- paste0(tempdir(), '/html_shm.zip'),
+    content=function(fil.na){ cat('Downloading animation... \n'); zip(fil.na, 'html_shm/') }
   )
 
   output$video.dim <- renderUI({
@@ -1769,7 +1776,7 @@ shinyServer(function(input, output, session) {
 
   })
 
-  observeEvent(list(log=input$log, tis=input$tis, col.but=input$col.but, cs.v=input$cs.v, pre.scale=input$pre.scale, vdo.but=input$vdo.but, vdo.dim=input$vdo.dim, vdo.itvl=input$vdo.itvl, vdo.height=input$vdo.height, vdo.width=input$vdo.width), {
+  observeEvent(list(log=input$log, tis=input$tis, col.but=input$col.but, cs.v=input$cs.v, pre.scale=input$pre.scale, vdo.but=input$vdo.but, vdo.dim=input$vdo.dim, vdo.itvl=input$vdo.itvl, vdo.height=input$vdo.height, vdo.width=input$vdo.width, vdo.res=input$vdo.res), {
 
     if (is.null(input$vdo.but)) return(NULL) 
     if (input$vdo.but=='N'|is.null(pat.all())) return(NULL)
@@ -1777,6 +1784,7 @@ shinyServer(function(input, output, session) {
     validate(need(try(!is.na(input$vdo.itvl)&input$vdo.itvl>0), 'Transition time should be a positive numeric!'))
     validate(need(try(!is.na(input$vdo.height)&input$vdo.height>0&input$vdo.height<=0.99), 'Height should be between 0.1 and 0.99!'))
     validate(need(try(!is.na(input$vdo.width)&input$vdo.width>0&input$vdo.width<=0.92), 'Width should be between 0.1 and 0.92!'))
+    validate(need(try(!is.na(input$vdo.res)&input$vdo.res>=1&input$vdo.res<=700), 'Resolution should be between 1 and 700!'))
     
     withProgress(message="Video: ", value=0, {
     incProgress(0.75, detail="in progress...")
@@ -1786,9 +1794,15 @@ shinyServer(function(input, output, session) {
     cat('Video: adjust legend size/rows... \n')
     gg.all1 <- gg_lgd(gg.all=gg.all1, size.key=input$lgd.key.size, size.text=NULL, row=input$lgd.row, sam.dat=sam(), tis.trans=input$tis)
     cat('Making video... \n')
-    vdo <- video(gg=gg.all1, cs.g=shm.bar(), sam.uni=sam(), tis.trans=input$tis, lgd.key.size=input$lgd.key.size, lgd.text.size=NULL, lgd.row=input$lgd.row, width=input$vdo.width, height=input$vdo.height, video.dim=input$vdo.dim, interval=input$vdo.itvl, out.dir='./www/video'); if (is.null(vdo)) return()
-    cat('Presenting video... \n') 
-    output$video <-renderUI({ tags$video(id="video", type="video/mp4",src="video/shm.mp4", controls="controls") })
+    res <- input$vdo.res; dim <- input$vdo.dim
+    if (dim %in% c('1280x800', '1280x1024', '1280x720')&res>450) res <- 450
+    if (dim=='1920x1080'&res>300) res <- 300
+    selectInput("vdo.dim", label="Fixed dimension:", choices=c('1920x1080', '1280x800', '320x568', '1280x1024', '1280x720', '320x480', '480x360', '600x600', '800x600', '640x480'), selected='640x480', width=110)
+    vdo <- video(gg=gg.all1, cs.g=shm.bar(), sam.uni=sam(), tis.trans=input$tis, lgd.key.size=input$lgd.key.size, lgd.text.size=NULL, sub.title.size=8, bar.value.size=6, lgd.row=input$lgd.row, width=input$vdo.width, height=input$vdo.height, video.dim=dim, interval=input$vdo.itvl, res=res, out.dir='./www/video'); if (is.null(vdo)) return()
+    cat('Presenting video... \n')
+    incProgress(0.95, detail="Presenting video...")
+    w.h <- as.numeric(strsplit(input$vdo.dim, 'x')[[1]])
+    output$video <-renderUI({ tags$video(id="video", type="video/mp4", src="video/shm.mp4", width=w.h[1], height=w.h[2], controls="controls") })
 
     })
 
@@ -2093,7 +2107,7 @@ shinyServer(function(input, output, session) {
   onStop(function() { 
 
     if (dir.exists('www/ggly/')) {  cat("Removing animation files in 'www/ggly/' ... \n"); system('rm -fr www/ggly/lib/*'); system('rm -f www/ggly/*html') }
-    if (dir.exists('animation_shm/lib')) {  cat("Removing animation files in 'animation_shm/lib/' ... \n"); system('rm -fr animation_shm/lib/*'); system('rm -f animation_shm/*html') }
+    if (dir.exists('html_shm/lib')) {  cat("Removing animation files in 'html_shm/lib/' ... \n"); system('rm -fr html_shm/lib/*'); system('rm -f html_shm/*html') }
     if (dir.exists('www/video/')) {  cat("Removing video file in 'www/video/' ... \n"); system('rm -fr www/video/.mp4*') }
     cat("Session stopped\n")
 

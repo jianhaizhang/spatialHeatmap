@@ -18,12 +18,12 @@
 #' @importFrom htmlwidgets saveWidget
 
 
-anm_ly <- function(gg, cs.g, tis.trans, sam.uni, anm.width, anm.height, selfcontained=FALSE, out.dir) {
+html_ly <- function(gg, cs.g, tis.trans, sam.uni, anm.width, anm.height, selfcontained=FALSE, out.dir) {
 
   gg.na <- names(gg); cs.lis <- gg2list(cs.g, tooltip='color_scale')
   cs.lis$layout$title$text <- NULL 
   csly <- as_widget(cs.lis, tooltip='color_scale') 
-  dir <- paste0(normalizePath(out.dir), '/animation_shm')
+  dir <- paste0(normalizePath(out.dir), '/html_shm')
   if (!dir.exists(dir)) dir.create(dir)
   rd1 <- '1. Double click the "html" files to display the interactive spatial heatmaps in a web browser.'
   rd2 <- '2. All files in the "lib" folder are required to display the spatial heatmaps, so the "html" files cannot work independently.'

@@ -63,7 +63,7 @@ shinyUI(dashboardPage(
       radioButtons(inputId="mhm.but", label="Show plot:", choices=c("Yes"="Y", "No"="N"), selected="N", inline=TRUE)
       )),
 
-plotlyOutput("HMly")), br(),
+      plotlyOutput("HMly")), br(),
       box(title="Interactive Network", status="primary", solidHeader=TRUE, collapsible=TRUE, width=12,  
       tabBox(title="", width=12, id='inter_net', selected='inter_net', side='right', 
       tabPanel(title='Parameter', value='par', 

@@ -8,6 +8,7 @@ gg_lgd(
   gg.all,
   size.key = 0.02,
   size.text = 8,
+  sub.title.size = NULL,
   row = 2,
   sam.dat,
   tis.trans = NULL
@@ -19,6 +20,8 @@ gg_lgd(
 \item{size.key}{A numeric of legend key size. If \code{size.text} is NULL, it also applies to legend text size.}
 
 \item{size.text}{A numeric of legend text size.}
+
+\item{sub.title.size}{The title size of ggplot.}
 
 \item{row}{An integer of rows in legend key.}
 

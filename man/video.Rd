@@ -9,13 +9,17 @@ video(
   cs.g,
   sam.uni,
   tis.trans,
+  sub.title.size = NULL,
+  bar.value.size = NULL,
   lgd.key.size = 0.02,
   lgd.text.size = 8,
   lgd.row = 2,
-  width = 1,
-  height = 1,
+  width = 0.92,
+  height = 0.99,
   video.dim = "640x480",
+  res = 500,
   interval = 1,
+  framerate = 1,
   out.dir
 )
 }
@@ -28,19 +32,27 @@ video(
 
 \item{tis.trans}{A vector of tissues to be transparent.}
 
+\item{sub.title.size}{A numeric. The subtitle font size of each individual spatial heatmap. Default is 11.}
+
+\item{bar.value.size}{A numeric of value size in the color bar y-axis. Default is 10.}
+
 \item{lgd.key.size}{The size of legend key (including text). Default is 0.02.}
 
 \item{lgd.text.size}{The size of legend text. Default is 8.}
 
 \item{lgd.row}{An integer of legend rows.}
 
-\item{width}{A numeric of overall width of all subplots, ranging between 0 and 1. The default is 1. It is applicable to spatial heatmaps in both static image and video.}
+\item{width}{The image width in video in "npc", ranging from 0 to 0.92. Default is 0.92.}
 
-\item{height}{A numeric of overall height of all subplots, ranging between 0 and 1. The default is 1. It is applicable to spatial heatmaps in both static image and video.}
+\item{height}{The image height in video in "npc", ranging from 0 to 0.99. Default is 0.99.}
 
 \item{video.dim}{A single character of the dimension of video frame in form of 'widthxheight', such as '1920x1080', '1280x800', '320x568', '1280x1024', '1280x720', '320x480', '480x360', '600x600', '800x600', '640x480'. Default is '640x480'.}
 
+\item{res}{Resolution of the video in dpi.}
+
 \item{interval}{The time interval (seconds) between spatial heatmap frames in the video. Default is 1.}
+
+\item{framerate}{An integer of video framerate in frames per seconds. Default is 1. Larger values make the video smoother.}
 
 \item{out.dir}{The directory to save interactive spatial heatmaps as independent HTML files and videos. Default is NULL, and the HTML files and videos are not saved.}
 }
@@ -51,7 +63,8 @@ A video is saved in \code{out.dir}.
 Make Spatial Heatmap Video
 }
 \references{
-Yihui Xie (2013). animation: An R Package for Creating Animations and Demonstrating Statistical Methods. Journal of Statistical Software, 53(1), 1-27. URL http://www.jstatsoft.org/v53/i01/.
+Jeroen Ooms (2020). av: Working with Audio and Video in R. R package version 0.5.0. https://CRAN.R-project.org/package=av
+Baptiste Auguie (2017). gridExtra: Miscellaneous Functions for "Grid" Graphics. R package version 2.3. https://CRAN.R-project.org/package=gridExtra
 }
 \author{
 Jianhai Zhang \email{jzhan067@ucr.edu; zhang.jianhai@hotmail.com} \cr Dr. Thomas Girke \email{thomas.girke@ucr.edu}

@@ -42,7 +42,9 @@ spatial_hm(
   anm.height = 550,
   selfcontained = FALSE,
   video.dim = "640x480",
+  res = 500,
   interval = 1,
+  framerate = 1,
   ...
 )
 }
@@ -123,7 +125,11 @@ placed in an adjacent directory.}
 
 \item{video.dim}{A single character of the dimension of video frame in form of 'widthxheight', such as '1920x1080', '1280x800', '320x568', '1280x1024', '1280x720', '320x480', '480x360', '600x600', '800x600', '640x480'. Default is '640x480'.}
 
+\item{res}{Resolution of the video in dpi.}
+
 \item{interval}{The time interval (seconds) between spatial heatmap frames in the video. Default is 1.}
+
+\item{framerate}{An integer of video framerate in frames per seconds. Default is 1. Larger values make the video smoother.}
 
 \item{...}{Other arguments passed to \code{\link[ggplot2]{ggplot}}.}
 }
@@ -141,6 +147,7 @@ See the package vignette (\code{browseVignettes('spatialHeatmap')}).
 \examples{
 ## In the following examples, the 2 toy data come from an RNA-seq analysis on developments of 7 chicken organs under 9 time points (Cardoso-Moreira et al. 2019). For conveninece, they are included in this package. The complete raw count data are downloaded using the R package ExpressionAtlas (Keays 2019) with the accession number "E-MTAB-6769". Toy data1 is used as a "data frame" input to exemplify data with simple samples/conditions, while toy data2 as "SummarizedExperiment" to illustrate data involving complex samples/conditions.     
 
+library(spatialHeatmap)
 ## Set up toy data.
 
 # Access toy data1.
