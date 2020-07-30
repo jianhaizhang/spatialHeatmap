@@ -727,11 +727,11 @@ svg_df <- function(svg.path, feature) {
 }
 
 
-grob_list <- function(gene, con.na=TRUE, geneV, coord, ID, cols, tis.path, tis.trans=NULL, sub.title.size, sam.legend='identical', legend.col, legend.title=NULL, legend.ncol=NULL, legend.nrow=NULL, legend.position='bottom', legend.direction=NULL, legend.key.size=0.02, legend.label.size=12, legend.title.size=8, line.size=0.2, line.color='grey70', mar.lb=NULL, ...) {
+grob_list <- function(gene, con.na=TRUE, geneV, coord, ID, cols, tis.path, tis.trans=NULL, sub.title.size, sam.legend='identical', legend.col, legend.title=NULL, legend.ncol=NULL, legend.nrow=NULL, legend.position='bottom', legend.direction=NULL, legend.key.size=0.02, legend.text.size=12, legend.title.size=8, line.size=0.2, line.color='grey70', mar.lb=NULL, ...) {
 
-#con.na=TRUE; sam.legend='identical'; legend.title=NULL; legend.ncol=NULL; legend.nrow=NULL; legend.position='bottom'; legend.direction=NULL; legend.key.size=0.5; legend.label.size=8; legend.title.size=8; line.size=0.2; line.color='grey70'; mar.lb=NULL
+#con.na=TRUE; sam.legend='identical'; legend.title=NULL; legend.ncol=NULL; legend.nrow=NULL; legend.position='bottom'; legend.direction=NULL; legend.key.size=0.5; legend.text.size=8; legend.title.size=8; line.size=0.2; line.color='grey70'; mar.lb=NULL
 
-# save(con.na, tis.trans, sam.legend, legend.col, legend.title, legend.ncol, legend.nrow, legend.position, legend.direction, legend.key.size, legend.label.size, legend.title.size, line.size, line.color, mar.lb, gene, geneV, coord, ID, cols, tis.path, sub.title.size, file='all')
+# save(con.na, tis.trans, sam.legend, legend.col, legend.title, legend.ncol, legend.nrow, legend.position, legend.direction, legend.key.size, legend.text.size, legend.title.size, line.size, line.color, mar.lb, gene, geneV, coord, ID, cols, tis.path, sub.title.size, file='all')
 
 
 
@@ -788,7 +788,7 @@ grob_list <- function(gene, con.na=TRUE, geneV, coord, ID, cols, tis.path, tis.t
        }; scl.fil <- scale_fill_manual(values=g.col, breaks=as.character(tis.df)[leg.idx], labels=tis.path[leg.idx], guide=guide_legend(title=legend.title, ncol=legend.ncol, nrow=legend.nrow)) 
 
     }
-    lgd.par <- theme(legend.position=legend.position, legend.direction=legend.direction, legend.background = element_rect(fill=alpha(NA, 0)), legend.key.size=unit(legend.key.size, "npc"), legend.text=element_text(size=legend.label.size), legend.title=element_text(size=legend.title.size), legend.margin=margin(l=0.1, r=0.1, unit='npc'))
+    lgd.par <- theme(legend.position=legend.position, legend.direction=legend.direction, legend.background = element_rect(fill=alpha(NA, 0)), legend.key.size=unit(legend.key.size, "npc"), legend.text=element_text(size=legend.text.size), legend.title=element_text(size=legend.title.size), legend.margin=margin(l=0.1, r=0.1, unit='npc'))
     ## Add 'feature' and 'value' to coordinate data frame, since the resulting ggplot object is used in 'ggplotly'. Otherwise, the coordinate data frame is applied to 'ggplot' directly by skipping the following code.
     coord$gene <- k; coord$condition <- con; coord$value <- NA
     ft.pat <- paste0('(', paste0(unique(tis.path), collapse='|'), ')(_\\d+)$')
@@ -927,28 +927,65 @@ submatrix <- function(data, ann=NULL, ID, p=0.3, n=NULL, v=NULL, fun='cor', cor.
 }
 
 # Adjust legend key size and rows in ggplot.
-gg_lgd <- function(gg.all, size.key=0.02, size.text=8, sub.title.size=NULL, row=2, sam.dat, tis.trans=NULL) {
+gg_lgd <- function(gg.all, size.key=NULL, size.text.key=8, angle.text.key=NULL, position.text.key=NULL, sub.title.size=NULL, row=NULL, label=FALSE, label.size=3, label.angle=0, hjust=0, vjust=0, opacity=1, key=TRUE, sam.dat, tis.trans=NULL) {
 
   for (i in seq_along(gg.all)) {
   
     g <- gg.all[[i]] 
-    if (!is.null(size.key)) g <- g+theme(legend.key.size=unit(size.key, "npc"), legend.text=element_text(size=ifelse(is.null(size.text), 8*size.key*33, size.text)))
+    if (!is.null(size.key)) g <- g+theme(legend.key.size=unit(size.key, "npc"), legend.text=element_text(size=ifelse(is.null(size.text.key), 8*size.key*33, size.text.key)))
     if (!is.null(sub.title.size)) g <- g+theme(plot.title=element_text(hjust=0.5, size=sub.title.size))
-    if (!is.null(row)) {
+    if (!is.null(row)|label==TRUE|opacity!=1|!is.null(angle.text.key)|!is.null(position.text.key)) {
 
       lay.dat <- layer_data(g)
-      dat <- g$data; g.col <- lay.dat$fill; names(g.col) <- dat$tissue
+      dat <- g$data; g.col <- lay.dat$fill
+      names(g.col) <- dat$tissue; df.tis <- as.vector(dat$tissue)
       g.col <- g.col[!duplicated(names(g.col))]; tis.path <- dat$feature
       sam.legend <- intersect(unique(sam.dat), unique(tis.path))
       sam.legend <- setdiff(sam.legend, tis.trans) 
       leg.idx <- !duplicated(tis.path) & (tis.path %in% sam.legend)
-      gg.all[[i]] <- g+scale_fill_manual(values=g.col, breaks=as.vector(dat$tissue)[leg.idx], labels=tis.path[leg.idx], guide=guide_legend(title=NULL, nrow=row))
+      df.tar <- df.tis[leg.idx]; path.tar <- tis.path[leg.idx]
+      if (opacity!=1) g.col <- alpha(g.col, opacity)
+      if (key==TRUE) gde <- guide_legend(title=NULL, nrow=row, label.theme=element_text(angle=angle.text.key), label.position=position.text.key)
+      if (key==FALSE) gde <- FALSE
+      if (!is.null(row)|opacity!=1|key==FALSE|!is.null(angle.text.key)|!is.null(position.text.key)) g <- g+scale_fill_manual(values=g.col, breaks=df.tar, labels=path.tar, guide=gde)
+      if (label==TRUE) {
+
+        dat$x0 <- dat$y0 <- dat$label <- NA
+        lab.idx <- dat$feature %in% path.tar
+        dat1 <- dat[lab.idx, ]; dat1$label <- dat1$feature
+        df.lab <- data.frame() 
+        for (j in unique(dat1$tissue)) {
+
+          df0 <- subset(dat1, tissue==j)
+          x <- mean(df0$x); y <- mean(df0$y)
+          df0$x0 <- x; df0$y0 <- y
+          df.lab <- rbind(df.lab, df0)
+       
+         }
+         g <- g+geom_text(data=df.lab, aes(label=label, x=x0, y=y0), check_overlap=TRUE, size=label.size, angle=label.angle, hjust=hjust, vjust=vjust)
+
+      }
 
     }
+
+    if (label==FALSE) {
+
+        g.layer <- g$layer
+        if (length(g.layer)==1) { gg.all[[i]] <- g; next }
+        for (k in rev(seq_along(g.layer))) {
+
+          na.lay <- unique(names(as.list(g.layer[[k]])$geom_params))
+          if (all(c('check_overlap', 'angle', 'size') %in% na.lay)) g$layers[[k]] <- NULL
+
+        }
+
+      }; gg.all[[i]] <- g
 
   }; return(gg.all)
 
 }
+
+
 # Prepare interactive SHMs in html.
 html_ly <- function(gg, cs.g, tis.trans, sam.uni, anm.width, anm.height, selfcontained=FALSE, out.dir) {
 
@@ -991,7 +1028,7 @@ html_ly <- function(gg, cs.g, tis.trans, sam.uni, anm.width, anm.height, selfcon
 }
 
 # Make videos.
-video <- function(gg, cs.g, sam.uni, tis.trans, sub.title.size=NULL, bar.value.size=NULL, lgd.key.size=0.02, lgd.text.size=8, lgd.row=2, width=0.92, height=0.99, video.dim='640x480', res=500, interval=1, framerate=1, out.dir) {
+video <- function(gg, cs.g, sam.uni, tis.trans, sub.title.size=NULL, bar.value.size=NULL, lgd.key.size=0.02, lgd.text.size=8, angle.text.key=NULL, position.text.key=NULL, lgd.row=2, label=FALSE, label.size=4, label.angle=0, hjust=0, vjust=0, opacity=1, key=TRUE, width=0.92, height=0.99, video.dim='640x480', res=500, interval=1, framerate=1, out.dir) {
 
   # Test if "av" works.
   test <- function() {
@@ -1003,7 +1040,7 @@ video <- function(gg, cs.g, sam.uni, tis.trans, sub.title.size=NULL, bar.value.s
   if (!is.null(bar.value.size)) cs.g <- cs.g+theme(axis.text.y=element_text(size=bar.value.size))
   na <- names(gg)
   cat('Video: adjust legend size/rows... \n')
-  gg1 <- gg_lgd(gg.all=gg, size.key=lgd.key.size, size.text=lgd.text.size, sub.title.size=sub.title.size, row=lgd.row, sam.dat=sam.uni, tis.trans=tis.trans)
+  gg1 <- gg_lgd(gg.all=gg, size.key=lgd.key.size, size.text.key=lgd.text.size, angle.text.key=angle.text.key, position.text.key=position.text.key, label=label, label.size=label.size, label.angle=label.angle, hjust=hjust, vjust=vjust, opacity=opacity, key=key, sub.title.size=sub.title.size, row=lgd.row, sam.dat=sam.uni, tis.trans=tis.trans)
   lay <- rbind(c(NA, NA), c(1, 2), c(NA, NA))
   cat('Saving video... \n')
   res.r=res/144; w.h <- round(as.numeric(strsplit(video.dim, 'x')[[1]])*res.r)
@@ -1014,6 +1051,8 @@ video <- function(gg, cs.g, sam.uni, tis.trans, sub.title.size=NULL, bar.value.s
   output=paste0(normalizePath(out.dir), "/shm.mp4"), width=w.h[1], height=w.h[2], res=res, vfilter=paste0('framerate=fps=', framerate))
 
 }
+
+
 library(SummarizedExperiment); library(shiny); library(shinydashboard); library(grImport); library(rsvg); library(ggplot2); library(DT); library(gridExtra); library(ggdendro); library(WGCNA); library(grid); library(xml2); library(plotly); library(data.table); library(genefilter); library(flashClust); library(visNetwork); library(reshape2); library(igraph); library(animation); library(av)
 
 # Import input matrix.
@@ -1480,12 +1519,12 @@ shinyServer(function(input, output, session) {
     validate(need(col.n>=1 & as.integer(col.n)==col.n & !is.na(col.n), 'No. of columns should be a positive integer !'))
 
   })
-  observeEvent(list(size=input$lgd.key.size, lgd.row=input$lgd.row, tis.trans=input$tis), {
+  observeEvent(list(size=input$lgd.key.size, lgd.row=input$lgd.row, tis.trans=input$tis, lgd.label=input$lgd.label), {
 
-    lgd.key.size <- input$lgd.key.size; lgd.row <- input$lgd.row
-    if (is.null(grob$lgd.all)|is.null(lgd.key.size)|is.null(lgd.row)) return()
+    lgd.key.size <- input$lgd.key.size; lgd.row <- input$lgd.row; lgd.label <- input$lgd.label
+    if (is.null(grob$lgd.all)|is.null(lgd.key.size)|is.null(lgd.row)|is.null(lgd.label)) return()
     cat('Adjust legend size/rows... \n')
-    grob$lgd.all <- gg_lgd(gg.all=grob$lgd.all, size.key=lgd.key.size, size.text=NULL, row=lgd.row, sam.dat=sam(), tis.trans=input$tis)
+    grob$lgd.all <- gg_lgd(gg.all=grob$lgd.all, size.key=lgd.key.size, size.text.key=NULL, row=lgd.row, sam.dat=sam(), tis.trans=input$tis, position.text.key='right', label=(lgd.label=='Y'))
   
   })
   # In "observe" and "observeEvent", if one code return (NULL), then all the following code stops. If one code changes, all the code renews.
@@ -1515,7 +1554,8 @@ shinyServer(function(input, output, session) {
       cs.grob <- ggplotGrob(shm.bar())
       cs.arr <- arrangeGrob(grobs=list(grobTree(cs.grob)), layout_matrix=cbind(1), widths=unit(1, "npc"))
       # Legend size in downloaded SHM is reduced.
-      lgd.lis <- grob$lgd.all; lgd.lis <- gg_lgd(gg.all=lgd.lis, size.key=input$lgd.key.size*0.5, size.text=NULL, row=input$lgd.row, sam.dat=sam(), tis.trans=input$tis)
+      lgd.lis <- grob$lgd.all; lgd.lis <- gg_lgd(gg.all=lgd.lis, sam.dat=sam(), tis.trans=input$tis, label=FALSE)
+      lgd.lis <- gg_lgd(gg.all=lgd.lis, size.key=input$lgd.key.size*0.5, size.text.key=NULL, label.size=2, row=input$lgd.row, sam.dat=sam(), tis.trans=input$tis, position.text.key='right', label=(input$lgd.label=='Y'))
       if (input$lgd.w>0) {
   
         grob.lgd.lis <- lapply(lgd.lis, ggplotGrob)
@@ -1616,6 +1656,7 @@ shinyServer(function(input, output, session) {
     numericInput(inputId='lgd.row', label='Legend key rows:', value=2, min=1, max=Inf, step=1, width=150), '',
     numericInput(inputId='lgd.key.size', label='Legend key size:', value=0.04, min=0, max=1, step=0.02, width=150)
     ),
+    radioButtons(inputId="lgd.label", label="Label feature:", choices=c("Yes"="Y", "No"="N"), selected="N", inline=TRUE),
     splitLayout(cellWidths=c("99%", "1%"), plotOutput("lgd"), ""), width=3) 
 
   })
@@ -1791,14 +1832,12 @@ shinyServer(function(input, output, session) {
     gg.all <- grob$gg.all; na <- names(gg.all)
     pat <- paste0(pat.all(), '_\\d+$'); na <- na[grepl(pat, na)]
     gg.all1 <- gg.all[na]
-    cat('Video: adjust legend size/rows... \n')
-    gg.all1 <- gg_lgd(gg.all=gg.all1, size.key=input$lgd.key.size, size.text=NULL, row=input$lgd.row, sam.dat=sam(), tis.trans=input$tis)
     cat('Making video... \n')
     res <- input$vdo.res; dim <- input$vdo.dim
     if (dim %in% c('1280x800', '1280x1024', '1280x720')&res>450) res <- 450
     if (dim=='1920x1080'&res>300) res <- 300
     selectInput("vdo.dim", label="Fixed dimension:", choices=c('1920x1080', '1280x800', '320x568', '1280x1024', '1280x720', '320x480', '480x360', '600x600', '800x600', '640x480'), selected='640x480', width=110)
-    vdo <- video(gg=gg.all1, cs.g=shm.bar(), sam.uni=sam(), tis.trans=input$tis, lgd.key.size=input$lgd.key.size, lgd.text.size=NULL, sub.title.size=8, bar.value.size=6, lgd.row=input$lgd.row, width=input$vdo.width, height=input$vdo.height, video.dim=dim, interval=input$vdo.itvl, res=res, out.dir='./www/video'); if (is.null(vdo)) return()
+    vdo <- video(gg=gg.all1, cs.g=shm.bar(), sam.uni=sam(), tis.trans=input$tis, lgd.key.size=input$lgd.key.size, lgd.text.size=NULL, position.text.key='right', label=(input$lgd.label=='Y'), label.size=2, sub.title.size=8, bar.value.size=6, lgd.row=input$lgd.row, width=input$vdo.width, height=input$vdo.height, video.dim=dim, interval=input$vdo.itvl, res=res, out.dir='./www/video'); if (is.null(vdo)) return()
     cat('Presenting video... \n')
     incProgress(0.95, detail="Presenting video...")
     w.h <- as.numeric(strsplit(input$vdo.dim, 'x')[[1]])
@@ -1829,7 +1868,7 @@ shinyServer(function(input, output, session) {
   })
 
   observe({
-   input$lgd.key.size; input$lgd.row; input$tis
+   input$lgd.key.size; input$lgd.row; input$tis; input$lgd.label
    updateRadioButtons(session, inputId="vdo.but", label="Show video:", choices=c("Yes"="Y", "No"="N"), selected="N", inline=TRUE)
   })
 

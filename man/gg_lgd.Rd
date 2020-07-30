@@ -6,10 +6,19 @@
 \usage{
 gg_lgd(
   gg.all,
-  size.key = 0.02,
-  size.text = 8,
+  size.key = NULL,
+  size.text.key = 8,
+  angle.text.key = NULL,
+  position.text.key = NULL,
   sub.title.size = NULL,
-  row = 2,
+  row = NULL,
+  label = FALSE,
+  label.size = 3,
+  label.angle = 0,
+  hjust = 0,
+  vjust = 0,
+  opacity = 1,
+  key = TRUE,
   sam.dat,
   tis.trans = NULL
 )
@@ -19,11 +28,29 @@ gg_lgd(
 
 \item{size.key}{A numeric of legend key size. If \code{size.text} is NULL, it also applies to legend text size.}
 
-\item{size.text}{A numeric of legend text size.}
+\item{size.text.key}{A numeric of legend text size.}
+
+\item{angle.text.key}{A value of angle of key text in legend plot. Default is NULL, equivalent to 0.}
+
+\item{position.text.key}{The position of key text in legend plot, one of "top", "right", "bottom", "left". Default is NULL, equivalent to "right".}
 
 \item{sub.title.size}{The title size of ggplot.}
 
 \item{row}{An integer of rows in legend key.}
+
+\item{label}{Logical. If TRUE, spatial features having matching samples are labeled by feature identifiers. Default is FALSE. It is useful when spatial features are labeled by similar colors.}
+
+\item{label.size}{The size of spatial feature labels in legend plot. Default is 4.}
+
+\item{label.angle}{The angle of spatial feature labels in legend plot. Default is 0.}
+
+\item{hjust}{The value to horizontally adjust positions of spatial feature labels in legend plot. Default is 0.}
+
+\item{vjust}{The value to vertically adjust positions of spatial feature labels in legend plot. Default is 0.}
+
+\item{opacity}{The transparency of colored spatial features in legend plot. Default is 1. If 0, features are totally transparent.}
+
+\item{key}{Logical. Default is TRUE and keys are added in legend plot.}
 
 \item{sam.dat}{A vector of samples in the data matrix.}
 

@@ -13,7 +13,16 @@ video(
   bar.value.size = NULL,
   lgd.key.size = 0.02,
   lgd.text.size = 8,
+  angle.text.key = NULL,
+  position.text.key = NULL,
   lgd.row = 2,
+  label = FALSE,
+  label.size = 4,
+  label.angle = 0,
+  hjust = 0,
+  vjust = 0,
+  opacity = 1,
+  key = TRUE,
   width = 0.92,
   height = 0.99,
   video.dim = "640x480",
@@ -40,7 +49,25 @@ video(
 
 \item{lgd.text.size}{The size of legend text. Default is 8.}
 
+\item{angle.text.key}{A value of angle of key text in legend plot. Default is NULL, equivalent to 0.}
+
+\item{position.text.key}{The position of key text in legend plot, one of "top", "right", "bottom", "left". Default is NULL, equivalent to "right".}
+
 \item{lgd.row}{An integer of legend rows.}
+
+\item{label}{Logical. If TRUE, spatial features having matching samples are labeled by feature identifiers. Default is FALSE. It is useful when spatial features are labeled by similar colors.}
+
+\item{label.size}{The size of spatial feature labels in legend plot. Default is 4.}
+
+\item{label.angle}{The angle of spatial feature labels in legend plot. Default is 0.}
+
+\item{hjust}{The value to horizontally adjust positions of spatial feature labels in legend plot. Default is 0.}
+
+\item{vjust}{The value to vertically adjust positions of spatial feature labels in legend plot. Default is 0.}
+
+\item{opacity}{The transparency of colored spatial features in legend plot. Default is 1. If 0, features are totally transparent.}
+
+\item{key}{Logical. Default is TRUE and keys are added in legend plot.}
 
 \item{width}{The image width in video in "npc", ranging from 0 to 0.92. Default is 0.92.}
 

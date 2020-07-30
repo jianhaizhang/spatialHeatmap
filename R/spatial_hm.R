@@ -7,6 +7,8 @@
 #' @inheritParams filter_data
 #' @inheritParams grob_list
 #' @inheritParams col_bar
+#' @inheritParams html_ly
+#' @inheritParams gg_lgd
 
 #' @param ID A character vector of assyed items (\emph{e.g.} genes, proteins) whose values are used to color the aSVG.
 #' @param col.com A character vector of the color components used to build the color scale. The default is c('purple', 'yellow', 'blue').
@@ -16,7 +18,7 @@
 #' @param bar.width The width of legend plot, ranging from 0 to 1. Default if 0.7.
 #' @param width A numeric of overall width of all subplots, ranging between 0 and 1. The default is 1. It is applicable to spatial heatmaps in both static image and video.
 #' @param height A numeric of overall height of all subplots, ranging between 0 and 1. The default is 1. It is applicable to spatial heatmaps in both static image and video. 
-#' @param legend Only applicable if multiple aSVG files are provided to \code{svg.path}. A vector of suffix(es) of aSVG file name(s) that are used to make legend plot(s) such as c('shm1', 'shm2'). Default is 'all', and each aSVG will have a legend plot on the right. If NULL, no legend plot is generated.  
+#' @param legend.plot Only applicable if multiple aSVG files are provided to \code{svg.path}. A vector of suffix(es) of aSVG file name(s) that are used to make legend plot(s) such as c('shm1', 'shm2'). Default is 'all', and each aSVG will have a legend plot on the right. If NULL, no legend plot is generated.  
 #' @param legend.r A numeric to adjust the dimension of the legend plot. Default is 1. The larger, the higher ratio of width to height.
 #' @param lay.shm "gene" or "con", the former organizes spatial heatmaps by genes, proteins, metabolites, \emph{etc}. while the latter by conditions/treatments applied to experiments.
 #' @param ncol An integer, number of columns to display the spatial heatmaps, not including the legend plot.
@@ -25,7 +27,6 @@
 #' @param out.dir The directory to save interactive spatial heatmaps as independent HTML files and videos. Default is NULL, and the HTML files and videos are not saved.
 #' @param anm.width The width of spatial heatmaps in HTML files. Default is 650.
 #' @param anm.height The height of spatial heatmaps in HTML files. Default is 550.
-#' @inheritParams html_ly
 #' @param video.dim A single character of the dimension of video frame in form of 'widthxheight', such as '1920x1080', '1280x800', '320x568', '1280x1024', '1280x720', '320x480', '480x360', '600x600', '800x600', '640x480'. Default is '640x480'.
 #' @param interval The time interval (seconds) between spatial heatmap frames in the video. Default is 1.
 #' @param framerate An integer of video framerate in frames per seconds. Default is 1. Larger values make the video smoother. 
@@ -150,7 +151,7 @@
 #' @importFrom methods is
 #' @importFrom ggplotify as.ggplot
 
-spatial_hm <- function(svg.path, data, sam.factor=NULL, con.factor=NULL, ID, col.com=c('purple', 'yellow', 'blue'), col.bar='selected', bar.width=0.08, legend.width=0.7, bar.title.size=0, data.trans=NULL, tis.trans=NULL, width=1, height=1, legend.r=1, sub.title.size=11, lay.shm="gene", ncol=2, legend='all', sam.legend='identical', legend.title.size=15, bar.value.size=10, legend.ncol=NULL, legend.nrow=NULL, legend.position='bottom', legend.direction=NULL, legend.key.size=0.02, legend.label.size=12, line.size=0.2, line.color='grey70', preserve.scale=FALSE, verbose=TRUE, out.dir=NULL, anm.width=650, anm.height=550, selfcontained=FALSE, video.dim='640x480', res=500, interval=1, framerate=1, ...) {
+spatial_hm <- function(svg.path, data, sam.factor=NULL, con.factor=NULL, ID, col.com=c('purple', 'yellow', 'blue'), col.bar='selected', bar.width=0.08, legend.width=0.7, bar.title.size=0, data.trans=NULL, tis.trans=NULL, width=1, height=1, legend.r=1, sub.title.size=11, lay.shm="gene", ncol=2, legend.plot='all', sam.legend='identical', legend.title.size=15, bar.value.size=10, legend.ncol=NULL, legend.nrow=NULL, legend.position='bottom', legend.direction=NULL, legend.key.size=0.02, legend.text.size=12, angle.text.key=NULL, position.text.key=NULL, label=FALSE, label.size=4, label.angle=0, hjust=0, vjust=0, opacity=1, key=TRUE, line.size=0.2, line.color='grey70', preserve.scale=FALSE, verbose=TRUE, out.dir=NULL, anm.width=650, anm.height=550, selfcontained=FALSE, video.dim='640x480', res=500, interval=1, framerate=1, ...) {
 
   x <- y <- color_scale <- tissue <- line.type <- NULL  
   # Extract and filter data.
@@ -264,7 +265,7 @@ spatial_hm <- function(svg.path, data, sam.factor=NULL, con.factor=NULL, ID, col
       svg.df <- svg.df.lis[[i]]; g.df <- svg.df[["df"]]; w.h <- svg.df[['w.h']]
       tis.path <- svg.df[["tis.path"]]; fil.cols <- svg.df[['fil.cols']]
       if (preserve.scale==TRUE) mar <- (1-w.h/w.h.max*0.99)/2 else mar <- NULL
-      grob.lis <- grob_list(gene=gene, con.na=con.na, geneV=geneV, coord=g.df, ID=ID, legend.col=fil.cols, cols=col, tis.path=tis.path, tis.trans=tis.trans, sub.title.size=sub.title.size, sam.legend=sam.legend, legend.ncol=legend.ncol, legend.nrow=legend.nrow, legend.position=legend.position, legend.direction=legend.direction, legend.title.size=legend.title.size, legend.key.size=legend.key.size, legend.label.size=legend.label.size, line.size=line.size, line.color=line.color, line.type=line.type, mar.lb=mar, ...)
+      grob.lis <- grob_list(gene=gene, con.na=con.na, geneV=geneV, coord=g.df, ID=ID, legend.col=fil.cols, cols=col, tis.path=tis.path, tis.trans=tis.trans, sub.title.size=sub.title.size, sam.legend=sam.legend, legend.ncol=legend.ncol, legend.nrow=legend.nrow, legend.position=legend.position, legend.direction=legend.direction, legend.title.size=legend.title.size, legend.key.size=legend.key.size, legend.text.size=legend.text.size, line.size=line.size, line.color=line.color, line.type=line.type, mar.lb=mar, ...)
       grob.lis.all <- c(grob.lis.all, list(grob.lis))
 
     }; names(grob.lis.all) <- names(svg.df.lis);     
@@ -282,8 +283,10 @@ spatial_hm <- function(svg.path, data, sam.factor=NULL, con.factor=NULL, ID, col
     cs.arr <- arrangeGrob(grobs=list(grobTree(cs.grob)), layout_matrix=cbind(1), widths=unit(1, "npc")) # "mm" is fixed, "npc" is scalable.
     # Select legend plot.
     cat('SHMs and legend...', '\n')
-    if (!is.null(legend)) { if (length(svg.na)>1 & legend!='all') na.lgd <- svg.na[grep(paste0('_(', paste0(legend, collapse='|'), ').svg$'), svg.na)] else na.lgd <- svg.na
+    if (!is.null(legend.plot)) { if (length(svg.na)>1 & legend.plot!='all') na.lgd <- svg.na[grep(paste0('_(', paste0(legend.plot, collapse='|'), ').svg$'), svg.na)] else na.lgd <- svg.na
     lgd.lis <- NULL; for (i in na.lgd) { lgd.lis <- c(lgd.lis, list(grob.lis.all[[i]][['g.lgd']])) }; names(lgd.lis) <- na.lgd
+    # Add labels to target shapes in legend plots.
+    lgd.lis <- gg_lgd(gg.all=lgd.lis, angle.text.key=angle.text.key, position.text.key=position.text.key, label=label, label.size=label.size, label.angle=label.angle, hjust=hjust, vjust=vjust, opacity=opacity, key=key, sam.dat=sam.uni, tis.trans=tis.trans)
     grob.lgd.lis <- lapply(lgd.lis, ggplotGrob)
     lgd.tr <- lapply(grob.lgd.lis, grobTree)
 
@@ -307,13 +310,14 @@ spatial_hm <- function(svg.path, data, sam.factor=NULL, con.factor=NULL, ID, col
       ratio.w.h <- shm.w/ncol(g.arr)/(height/nrow(g.arr))
       h <- 0.99; w <- h*ratio.w.h
       if (w>0.92) { w <- 0.92; h <- w/ratio.w.h }
-      vdo <- video(gg=gg.all, cs.g=cs.g, sam.uni=sam.uni, tis.trans=tis.trans, lgd.key.size=legend.key.size, lgd.text.size=legend.label.size, lgd.row=legend.nrow, width=w, height=h, video.dim=video.dim, res=res, interval=interval, framerate=framerate, out.dir=out.dir)
+      vdo <- video(gg=gg.all, cs.g=cs.g, sam.uni=sam.uni, tis.trans=tis.trans, lgd.key.size=legend.key.size, lgd.text.size=legend.text.size, angle.text.key=angle.text.key, position.text.key=position.text.key, lgd.row=legend.nrow, label=label, label.size=label.size, label.angle=label.angle, hjust=hjust, vjust=vjust, opacity=opacity, key=key, width=w, height=h, video.dim=video.dim, res=res, interval=interval, framerate=framerate, out.dir=out.dir)
       if (is.null(vdo)) cat("Video is not generated! \n")
 
     }
     lis <- list(spatial_heatmap=as.ggplot(shm), mapped_feature=map.sum); invisible(lis)
 
 }
+
 
 
 

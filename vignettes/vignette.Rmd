@@ -560,7 +560,7 @@ values in `se.fil.hum`.
 
 <a name='hum_single'></a>
 ```{r humshm, eval=TRUE, echo=TRUE, warnings=FALSE, fig.wide=TRUE, fig.cap=("SHM of human brain. Only cerebellum and frontal cortex are colored, because they are present in both the aSVG and the expression data. The legend plot on the right maps the feature labels to the corresponding spatial regions in the image."), out.width="100%" }
-shm.df <- spatial_hm(svg.path=svg.hum, data=se.fil.hum, ID=c('ENSG00000268433'), height=0.7, legend.r=1.5, legend.key.size=0.02, legend.label.size=12, legend.nrow=2)
+shm.df <- spatial_hm(svg.path=svg.hum, data=se.fil.hum, ID=c('ENSG00000268433'), height=0.7, legend.r=1.5, legend.key.size=0.02, legend.text.size=12, legend.nrow=2)
 ```
 
 The plotting instructions of the SHM along with the corresponding 
@@ -726,7 +726,7 @@ of an SHM. In this case the plot includes expression data for 8 tissues across 3
 mouse strains. 
 
 ```{r musshm, eval=TRUE, echo=TRUE, warnings=FALSE, fig.wide=TRUE, fig.cap=("SHM of mouse organs. This is a multiple-layer image where the shapes of the 'skeletal muscle' is set transparent to expose 'lung' and 'heart'."), out.width="100%" }
-spatial_hm(svg.path=svg.mus, data=se.fil.mus, ID=c('ENSMUSG00000000263'), height=0.7, legend.width=0.9, legend.label.size=10, sub.title.size=9, ncol=3, tis.trans=c('skeletal muscle'), legend.nrow=4, line.size=0.2, line.color='grey70')
+spatial_hm(svg.path=svg.mus, data=se.fil.mus, ID=c('ENSMUSG00000000263'), height=0.7, legend.width=0.9, legend.text.size=10, sub.title.size=9, ncol=3, tis.trans=c('skeletal muscle'), legend.nrow=4, line.size=0.2, line.color='grey70')
 ```
 
 The SHM plots in Figures \@ref(fig:musshm) and \@ref(fig:musshm1) demonstrate
@@ -744,7 +744,7 @@ color of complex shape structures.
 
 
 ```{r musshm1, eval=TRUE, echo=TRUE, warnings=FALSE, fig.wide=TRUE, fig.cap=("SHM of mouse organs. This is a multiple-layer image where the view onto 'lung' and 'heart' is obstructed by displaying the 'skeletal muscle' tissue."), out.width="100%" }
-spatial_hm(svg.path=svg.mus, data=se.fil.mus, ID=c('ENSMUSG00000000263'), height=0.6, legend.width=1, legend.label.size=10, sub.title.size=9, ncol=3, tis.trans=NULL, legend.ncol=2, line.size=0.2, line.color='grey70')
+spatial_hm(svg.path=svg.mus, data=se.fil.mus, ID=c('ENSMUSG00000000263'), height=0.6, legend.width=1, legend.text.size=10, sub.title.size=9, ncol=3, tis.trans=NULL, legend.ncol=2, line.size=0.2, line.color='grey70')
 ```
 
 ## Chicken Organs {#chk}
@@ -858,13 +858,13 @@ se.fil.chk <- filter_data(data=se.aggr.chk, sam.factor='organism_part', con.fact
 
 The expression profile for gene `ENSGALG00000006346` is plotted across nine time
 points in four organs in form of a composite SHM with 9 panels. Their layout in
-three columns is controlled with the argument setting `ncol=3`. 
+three columns is controlled with the argument setting `ncol=3`. <font color='blue'>In the legend plot, target features are labeled by `label=TRUE`. </font>  
 
 <font color='blue'>jianhai-reply: reordered.^[The order of the
 time points in Figure 7 should be by time. Right now it is rather random.]</font>
 
 ```{r chkshm, eval=TRUE, echo=TRUE, warnings=FALSE, fig.wide=TRUE, fig.cap=("Time course of chicken organs. The SHM shows the expression profile of a single gene across nine time points and four organs."), out.width="100%" }
-spatial_hm(svg.path=svg.chk, data=se.fil.chk, ID='ENSGALG00000006346', width=0.8, legend.r=1.5, legend.width=0.8, sub.title.size=9, ncol=3, legend.nrow=2)
+spatial_hm(svg.path=svg.chk, data=se.fil.chk, ID='ENSGALG00000006346', width=0.8, legend.r=1.5, legend.width=0.8, sub.title.size=9, ncol=3, legend.nrow=2, label=TRUE)
 ```
 
 ## Arabidopsis Shoot {#shoot}
@@ -995,7 +995,7 @@ The expression profile for the HRE2 gene is plotted for control and hypoxia trea
 across six cell types (Figure \@ref(fig:shshm)).
 
 ```{r shshm, eval=TRUE, echo=TRUE, warnings=FALSE, fig.wide=TRUE, fig.cap=('SHM of Arabidopsis shoots. The expression profile of the HRE2 gene is plotted for control and hypoxia treatment across six cell types.'), out.width="100%"}
-spatial_hm(svg.path=svg.sh, data=se.fil.arab, ID=c("HRE2"), height=0.7, legend.nrow=3, legend.width=1, legend.label.size=11)
+spatial_hm(svg.path=svg.sh, data=se.fil.arab, ID=c("HRE2"), height=0.7, legend.nrow=3, legend.width=1, legend.text.size=11, angle.text.key=NULL)
 ```
 <font color='blue'>
 

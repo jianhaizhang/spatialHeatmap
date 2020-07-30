@@ -23,7 +23,7 @@ spatial_hm(
   sub.title.size = 11,
   lay.shm = "gene",
   ncol = 2,
-  legend = "all",
+  legend.plot = "all",
   sam.legend = "identical",
   legend.title.size = 15,
   bar.value.size = 10,
@@ -32,7 +32,16 @@ spatial_hm(
   legend.position = "bottom",
   legend.direction = NULL,
   legend.key.size = 0.02,
-  legend.label.size = 12,
+  legend.text.size = 12,
+  angle.text.key = NULL,
+  position.text.key = NULL,
+  label = FALSE,
+  label.size = 4,
+  label.angle = 0,
+  hjust = 0,
+  vjust = 0,
+  opacity = 1,
+  key = TRUE,
   line.size = 0.2,
   line.color = "grey70",
   preserve.scale = FALSE,
@@ -83,7 +92,7 @@ spatial_hm(
 
 \item{ncol}{An integer, number of columns to display the spatial heatmaps, not including the legend plot.}
 
-\item{legend}{Only applicable if multiple aSVG files are provided to \code{svg.path}. A vector of suffix(es) of aSVG file name(s) that are used to make legend plot(s) such as c('shm1', 'shm2'). Default is 'all', and each aSVG will have a legend plot on the right. If NULL, no legend plot is generated.}
+\item{legend.plot}{Only applicable if multiple aSVG files are provided to \code{svg.path}. A vector of suffix(es) of aSVG file name(s) that are used to make legend plot(s) such as c('shm1', 'shm2'). Default is 'all', and each aSVG will have a legend plot on the right. If NULL, no legend plot is generated.}
 
 \item{sam.legend}{"identical", "all", or a character vector of tissue names from the aSVG image to show in the legend plot. Default is "identical", meaning all the identical/matching tissues between the data matrix and aSVG image. If "all", all tissues in the aSVG image are shown.}
 
@@ -103,7 +112,25 @@ spatial_hm(
 
 \item{legend.key.size}{A numeric (in "npc"). Default is 0.02. Size of the legend key, applicable to both static image and video.}
 
-\item{legend.label.size}{A numeric. Default is 12. Size of the legend label, applicable to both static image and video.}
+\item{legend.text.size}{A numeric. Default is 12. Size of the legend label, applicable to both static image and video.}
+
+\item{angle.text.key}{A value of angle of key text in legend plot. Default is NULL, equivalent to 0.}
+
+\item{position.text.key}{The position of key text in legend plot, one of "top", "right", "bottom", "left". Default is NULL, equivalent to "right".}
+
+\item{label}{Logical. If TRUE, spatial features having matching samples are labeled by feature identifiers. Default is FALSE. It is useful when spatial features are labeled by similar colors.}
+
+\item{label.size}{The size of spatial feature labels in legend plot. Default is 4.}
+
+\item{label.angle}{The angle of spatial feature labels in legend plot. Default is 0.}
+
+\item{hjust}{The value to horizontally adjust positions of spatial feature labels in legend plot. Default is 0.}
+
+\item{vjust}{The value to vertically adjust positions of spatial feature labels in legend plot. Default is 0.}
+
+\item{opacity}{The transparency of colored spatial features in legend plot. Default is 1. If 0, features are totally transparent.}
+
+\item{key}{Logical. Default is TRUE and keys are added in legend plot.}
 
 \item{line.size}{A numeric. The size of the shape outlines. Default is 0.2.}
 

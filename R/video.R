@@ -11,7 +11,7 @@
 #' @param height The image height in video in "npc", ranging from 0 to 0.99. Default is 0.99.
 #' @inheritParams spatial_hm
 #' @inheritParams gg_lgd
-#' @inheritParams cor_bar
+#' @inheritParams col_bar
 #' @return A video is saved in \code{out.dir}.
 #' @keywords Internal
 
@@ -24,7 +24,7 @@
 #' @importFrom av av_capture_graphics
 #' @importFrom gridExtra grid.arrange
 
-video <- function(gg, cs.g, sam.uni, tis.trans, sub.title.size=NULL, bar.value.size=NULL, lgd.key.size=0.02, lgd.text.size=8, lgd.row=2, width=0.92, height=0.99, video.dim='640x480', res=500, interval=1, framerate=1, out.dir) {
+video <- function(gg, cs.g, sam.uni, tis.trans, sub.title.size=NULL, bar.value.size=NULL, lgd.key.size=0.02, lgd.text.size=8, angle.text.key=NULL, position.text.key=NULL, lgd.row=2, label=FALSE, label.size=4, label.angle=0, hjust=0, vjust=0, opacity=1, key=TRUE, width=0.92, height=0.99, video.dim='640x480', res=500, interval=1, framerate=1, out.dir) {
 
   # Test if "av" works.
   test <- function() {
@@ -36,7 +36,7 @@ video <- function(gg, cs.g, sam.uni, tis.trans, sub.title.size=NULL, bar.value.s
   if (!is.null(bar.value.size)) cs.g <- cs.g+theme(axis.text.y=element_text(size=bar.value.size))
   na <- names(gg)
   cat('Video: adjust legend size/rows... \n')
-  gg1 <- gg_lgd(gg.all=gg, size.key=lgd.key.size, size.text=lgd.text.size, sub.title.size=sub.title.size, row=lgd.row, sam.dat=sam.uni, tis.trans=tis.trans)
+  gg1 <- gg_lgd(gg.all=gg, size.key=lgd.key.size, size.text.key=lgd.text.size, angle.text.key=angle.text.key, position.text.key=position.text.key, label=label, label.size=label.size, label.angle=label.angle, hjust=hjust, vjust=vjust, opacity=opacity, key=key, sub.title.size=sub.title.size, row=lgd.row, sam.dat=sam.uni, tis.trans=tis.trans)
   lay <- rbind(c(NA, NA), c(1, 2), c(NA, NA))
   cat('Saving video... \n')
   res.r=res/144; w.h <- round(as.numeric(strsplit(video.dim, 'x')[[1]])*res.r)

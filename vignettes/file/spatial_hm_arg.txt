@@ -17,7 +17,7 @@
 "16"	"sam.legend"	"'identical', 'all', or a vector of samples/features in aSVG to show in legend plot. 'identical' only shows matching features while 'all' shows all features."
 "17"	"legend.ncol, legend.nrow"	"Two numbers of columns and rows of legend keys respectively. Default is NULL, NULL, since they are automatically set."
 "18"	"legend.position"	"the position of legend keys ('none', 'left', 'right','bottom', 'top'), or two-element numeric vector. Default is 'bottom'."
-"19"	"legend.key.size, legend.label.size"	"The size of legend keys and labels respectively. Default is 0.5 and 8 respectively."
+"19"	"legend.key.size, legend.text.size"	"The size of legend keys and labels respectively. Default is 0.5 and 8 respectively."
 "20"	"line.size, line.color"	"The size and colour of all plogyon outlines respectively. Default is 0.2 and 'grey70' respectively."
 "21"	"verbose"	"TRUE or FALSE. Default is TRUE and the aSVG features not mapped are printed to R console."
 "22"	"out.dir"	"The directory to save HTML and video files of spatial heatmaps. Default is NULL."
