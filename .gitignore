@@ -10,3 +10,4 @@ local_mode_result/
 # vignette.html
 vignette_files/
 vignette_cache/
+inst/extdata/shinyApp/test*.R

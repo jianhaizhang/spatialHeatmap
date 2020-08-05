@@ -1,6 +1,5 @@
 #' Organise Spatial Heatmaps by Gene or Condition
 #'
-#' @param lay.shm The layout of spatial heatmaps, "gene" or "con", which means organise spatial heatmaps by genes or by conditions.
 #' @param con A charater vector of all conditions.
 #' @param ncol An integer specifying number of columns in the layout.
 #' @param ID.sel A vector of target genes for spatial heatmaps.
@@ -22,19 +21,18 @@
 #' @importFrom ggplot2 ggplot aes theme element_blank margin element_rect scale_y_continuous scale_x_continuous ggplotGrob geom_polygon scale_fill_manual ggtitle element_text labs 
 #' @importFrom gridExtra arrangeGrob grid.arrange
 
-
 lay_shm <- function(lay.shm, con, ncol, ID.sel, grob.list, width, height, shiny) {
-
+  
   width <- as.numeric(width); height <- as.numeric(height); ncol <- as.numeric(ncol); con <- unique(con)
   grob.all.na <- names(grob.list)
-  if (lay.shm=="gene") {
+  if (lay.shm=="gene"|lay.shm=="none") {
 
     all.cell <- ceiling(length(con)/ncol)*ncol
     cell.idx <- c(seq_len(length(con)), rep(NA, all.cell-length(con)))
     m <- matrix(cell.idx, ncol=as.numeric(ncol), byrow=TRUE)
     lay <- NULL; for (i in seq_len(length(ID.sel))) { lay <- rbind(lay, m+(i-1)*length(con)) }
     # Sort conditions under each gene.
-    na.sort <- sort_gen_con(ID.sel=ID.sel, na.all=grob.all.na, con.all=con, by='gene')
+    na.sort <- sort_gen_con(ID.sel=ID.sel, na.all=grob.all.na, con.all=con, by=lay.shm)
     grob.list <- grob.list[na.sort]
     if (shiny==TRUE & length(grob.list)>=1) return(grid.arrange(grobs=grob.list, layout_matrix=lay, newpage=TRUE))
        
@@ -58,4 +56,3 @@ lay_shm <- function(lay.shm, con, ncol, ID.sel, grob.list, width, height, shiny)
   }; return(g.arr)
 
 }
-

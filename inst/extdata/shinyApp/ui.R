@@ -46,7 +46,7 @@ shinyUI(dashboardPage(
       actionButton(inputId='fil.but', label="Filter", icon=icon("refresh")), '',
       radioButtons(inputId='log', label='Log/exp scaling:', choices=c("No", "log2", "exp2"), selected="No", inline=TRUE)
       )), 
-       uiOutput('linear.scl'), 
+      fluidRow(column(2, uiOutput('linear.scl')), column(10, uiOutput('col.order'))),
       verbatimTextOutput("fil.par"),
       fluidRow(splitLayout(cellWidths=c("1%", "98%", "1%"), "", dataTableOutput("dt"), ""))
       ),

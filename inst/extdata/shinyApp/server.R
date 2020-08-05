@@ -20,15 +20,14 @@ sort_gen_con <- function(ID.sel, na.all, con.all, by='gene') {
   # Sort vector of letter and number mixture.
   sort_mix <- function(vec) {
 
-    w <- is.na(as.numeric(gsub('\\D', '', vec)))
-    let <- vec[w]; num <- vec[!w]
-    let.num <- as.numeric(gsub('\\D', '', vec))
-    vec[!w] <- num[order(let.num[!w])]
-    vec[w] <- let[order(let.num[w])]; return(vec)
+    w <- is.na(as.numeric(gsub('\\D', '', vec))); let <- vec[w]; num <- vec[!w]
+    let.num <- as.numeric(gsub('\\D', '', vec)); vec[!w] <- num[order(let.num[!w])]
+    vec[w] <- sort(let); return(vec)
         
   }  
 
   pat.all <- paste0(paste0('^(', paste0(ID.sel, collapse='|'), ')'), '_', paste0('(', paste0(con.all, collapse='|'), ')$'))
+  svg.idx <- unique(gsub('(.*)(_\\d+)$', '\\2', con.all))
   
   if (by=='gene') {
 
@@ -38,7 +37,14 @@ sort_gen_con <- function(ID.sel, na.all, con.all, by='gene') {
         
       na0 <- na.all[grepl(paste0('^', i, con.pat1), na.all)]
       if (length(na0)==0) next; con1 <- gsub(pat.all, '\\2', na0)
-      na.sort <- c(na.sort, paste0(i, '_', sort_mix(con1)))
+      # Sort conditions after isolating svg.idx.
+      for (j in svg.idx) {
+
+        con2 <- con1[grepl(paste0(j, '$'), con1)]
+        con0 <- gsub('(.*)(_\\d+)$', '\\1', con2)
+        na.sort <- c(na.sort, paste0(i, '_', sort_mix(con0), j))
+
+      }
 
     }
 
@@ -46,7 +52,15 @@ sort_gen_con <- function(ID.sel, na.all, con.all, by='gene') {
 
     # Sort conditions and genes.
     gen.pat1 <- paste0('^(', paste0(ID.sel, collapse='|'), ')_') # Avoid using '.*' as much as possible.
-    na.sort <- NULL; for (i in sort_mix(con.all)) {
+    # Sort conditions after isolating svg.idx.
+    con.all1 <- NULL; for (j in svg.idx) {
+
+      con1 <- con.all[grepl(paste0(j, '$'), con.all)]
+      con0 <- gsub('(.*)(_\\d+)$', '\\1', con1)
+      con.all1 <- c(con.all1, paste0(sort_mix(con0), j))
+
+    }
+    na.sort <- NULL; for (i in sort_mix(con.all1)) {
       
       na0 <- na.all[grepl(paste0(gen.pat1, i, '$'), na.all)]
       if (length(na0)==0) next; gen1 <- gsub(pat.all, '\\1', na0)
@@ -54,6 +68,17 @@ sort_gen_con <- function(ID.sel, na.all, con.all, by='gene') {
 
     }
 
+  } else if (by=='none') {
+    
+    # Sort conditions under each gene.
+    con.pat1 <- paste0('_(', paste0(con.all, collapse='|'), ')$') # Avoid using '.*' as much as possible.
+    na.sort <- NULL; for (i in ID.sel) {
+        
+      na0 <- na.all[grepl(paste0('^', i, con.pat1), na.all)]
+      if (length(na0)==0) next; na.sort <- c(na.sort, na0)
+
+    }
+        
   }; return(na.sort)
 
 }
@@ -435,14 +460,14 @@ lay_shm <- function(lay.shm, con, ncol, ID.sel, grob.list, width, height, shiny)
   
   width <- as.numeric(width); height <- as.numeric(height); ncol <- as.numeric(ncol); con <- unique(con)
   grob.all.na <- names(grob.list)
-  if (lay.shm=="gene") {
+  if (lay.shm=="gene"|lay.shm=="none") {
 
     all.cell <- ceiling(length(con)/ncol)*ncol
     cell.idx <- c(seq_len(length(con)), rep(NA, all.cell-length(con)))
     m <- matrix(cell.idx, ncol=as.numeric(ncol), byrow=TRUE)
     lay <- NULL; for (i in seq_len(length(ID.sel))) { lay <- rbind(lay, m+(i-1)*length(con)) }
     # Sort conditions under each gene.
-    na.sort <- sort_gen_con(ID.sel=ID.sel, na.all=grob.all.na, con.all=con, by='gene')
+    na.sort <- sort_gen_con(ID.sel=ID.sel, na.all=grob.all.na, con.all=con, by=lay.shm)
     grob.list <- grob.list[na.sort]
     if (shiny==TRUE & length(grob.list)>=1) return(grid.arrange(grobs=grob.list, layout_matrix=lay, newpage=TRUE))
        
@@ -929,6 +954,18 @@ submatrix <- function(data, ann=NULL, ID, p=0.3, n=NULL, v=NULL, fun='cor', cor.
 # Adjust legend key size and rows in ggplot.
 gg_lgd <- function(gg.all, size.key=NULL, size.text.key=8, angle.text.key=NULL, position.text.key=NULL, sub.title.size=NULL, row=NULL, label=FALSE, label.size=3, label.angle=0, hjust=0, vjust=0, opacity=1, key=TRUE, sam.dat, tis.trans=NULL) {
 
+  # Function to remove feature labels. 
+  rm_label <- function(g) {
+        
+    g.layer <- g$layer; if (length(g.layer)==1) return(g) 
+    for (k in rev(seq_along(g.layer))) {
+
+      na.lay <- unique(names(as.list(g.layer[[k]])$geom_params))
+      if (all(c('check_overlap', 'angle', 'size') %in% na.lay)) g$layers[[k]] <- NULL
+
+    }; return(g)
+
+  }
   for (i in seq_along(gg.all)) {
   
     g <- gg.all[[i]] 
@@ -945,7 +982,7 @@ gg_lgd <- function(gg.all, size.key=NULL, size.text.key=8, angle.text.key=NULL, 
       leg.idx <- !duplicated(tis.path) & (tis.path %in% sam.legend)
       df.tar <- df.tis[leg.idx]; path.tar <- tis.path[leg.idx]
       if (opacity!=1) g.col <- alpha(g.col, opacity)
-      if (key==TRUE) gde <- guide_legend(title=NULL, nrow=row, label.theme=element_text(angle=angle.text.key), label.position=position.text.key)
+      if (key==TRUE) gde <- guide_legend(title=NULL, nrow=row, label.theme=element_text(angle=angle.text.key, size=g$theme$legend.text$size), label.position=position.text.key)
       if (key==FALSE) gde <- FALSE
       if (!is.null(row)|opacity!=1|key==FALSE|!is.null(angle.text.key)|!is.null(position.text.key)) g <- g+scale_fill_manual(values=g.col, breaks=df.tar, labels=path.tar, guide=gde)
       if (label==TRUE) {
@@ -961,25 +998,12 @@ gg_lgd <- function(gg.all, size.key=NULL, size.text.key=8, angle.text.key=NULL, 
           df0$x0 <- x; df0$y0 <- y
           df.lab <- rbind(df.lab, df0)
        
-         }
-         g <- g+geom_text(data=df.lab, aes(label=label, x=x0, y=y0), check_overlap=TRUE, size=label.size, angle=label.angle, hjust=hjust, vjust=vjust)
+         } 
+         g <- rm_label(g)+geom_text(data=df.lab, aes(label=label, x=x0, y=y0), check_overlap=TRUE, size=label.size, angle=label.angle, hjust=hjust, vjust=vjust)
 
-      }
+      }; gg.all[[i]] <- rm_label(g)
 
-    }
-
-    if (label==FALSE) {
-
-        g.layer <- g$layer
-        if (length(g.layer)==1) { gg.all[[i]] <- g; next }
-        for (k in rev(seq_along(g.layer))) {
-
-          na.lay <- unique(names(as.list(g.layer[[k]])$geom_params))
-          if (all(c('check_overlap', 'angle', 'size') %in% na.lay)) g$layers[[k]] <- NULL
-
-        }
-
-      }; gg.all[[i]] <- g
+    }; if (label==FALSE) { gg.all[[i]] <- rm_label(g) }
 
   }; return(gg.all)
 
@@ -1053,7 +1077,7 @@ video <- function(gg, cs.g, sam.uni, tis.trans, sub.title.size=NULL, bar.value.s
 }
 
 
-library(SummarizedExperiment); library(shiny); library(shinydashboard); library(grImport); library(rsvg); library(ggplot2); library(DT); library(gridExtra); library(ggdendro); library(WGCNA); library(grid); library(xml2); library(plotly); library(data.table); library(genefilter); library(flashClust); library(visNetwork); library(reshape2); library(igraph); library(animation); library(av)
+library(SummarizedExperiment); library(shiny); library(shinydashboard); library(grImport); library(rsvg); library(ggplot2); library(DT); library(gridExtra); library(ggdendro); library(WGCNA); library(grid); library(xml2); library(plotly); library(data.table); library(genefilter); library(flashClust); library(visNetwork); library(reshape2); library(igraph); library(animation); library(av); library(shinyWidgets)
 
 # Import input matrix.
 fread.df <- function(input, isRowGene, header, sep, fill, rep.aggr='mean', check.names=FALSE) {
@@ -1094,7 +1118,6 @@ fread.df <- function(input, isRowGene, header, sep, fill, rep.aggr='mean', check
   return(list(gene2=as.data.frame(gene2), gene3=as.data.frame(gene3), gen.rep=as.data.frame(gen.rep), con.na=con.na))
 
 }
-
 
 
 # enableWGCNAThreads()
@@ -1224,10 +1247,22 @@ shinyServer(function(input, output, session) {
 
   })
 
+  output$col.order <- renderUI({
+
+    if (is.null(geneIn1())) return()
+    col.nas <- colnames(geneIn1()[['gene2']])
+    dropdownButton(inputId='dropdown', label='Re-order columns', circle=FALSE, icon=NULL, status='primary',
+    actionButton("col.cfm", "Confirm", icon=icon("refresh")), 
+    selectizeInput(inputId="col.na", label='', choices=col.nas, selected=col.nas, multiple=TRUE, options= list(plugins=list('remove_button', 'drag_drop')))
+    )
+  
+  })
+
   geneIn <- reactive({
     
     if (is.null(geneIn1())) return(NULL)    
     gene2 <- geneIn1()[['gene2']]; gene3 <- geneIn1()[['gene3']]; input$fil.but
+    if (!all(input$col.na %in% colnames(gene2))) return()
     # Input variables in "isolate" will not triger re-excution, but if the whole reactive object is trigered by "input$fil.but" then code inside "isolate" will re-excute.
     isolate({
   
@@ -1239,7 +1274,9 @@ shinyServer(function(input, output, session) {
       gene2 <- as.data.frame(assay(se), stringsAsfactors=FALSE); colnames(gene2) <- make.names(colnames(gene2))
       gene3 <- as.data.frame(rowData(se))[, , drop=FALSE]
       
-    }); return(list(gene2=gene2, gene3=gene3))
+    })
+    cat('Preparing data matrix... \n')
+    return(list(gene2=gene2[, input$col.na], gene3=gene3))
 
   })
 
@@ -1255,10 +1292,9 @@ shinyServer(function(input, output, session) {
 
       gene <- geneIn(); gene.dt <- cbind.data.frame(gene[["gene2"]][, , drop=FALSE], gene[["gene3"]][, , drop=FALSE], stringsAsFactors=FALSE) 
 
-   }
-
+   }; cat('Presenting data matrix... \n')
     datatable(gene.dt, selection=list(mode="multiple", target="row", selected=c(1)),
-    filter="top", extensions='Scroller', options=list(pageLength=5, lengthMenu=c(5, 15, 20), autoWidth=TRUE, scrollCollapse=TRUE, deferRender=TRUE, scrollX=TRUE, scrollY=200, scroller=TRUE), class='cell-border strip hover') %>% formatStyle(0, backgroundColor="orange", cursor='pointer') %>% 
+    filter="top", extensions=c('Scroller'), options=list(pageLength=5, lengthMenu=c(5, 15, 20), autoWidth=TRUE, scrollCollapse=TRUE, deferRender=TRUE, scrollX=TRUE, scrollY=200, scroller=TRUE), class='cell-border strip hover') %>% formatStyle(0, backgroundColor="orange", cursor='pointer') %>% 
     formatRound(colnames(geneIn()[["gene2"]]), 2)
 
     })
@@ -1461,7 +1497,9 @@ shinyServer(function(input, output, session) {
   # Extension of 'observeEvent': any of 'input$log; input$tis; input$col.but; input$cs.v' causes evaluation of all code. 
   # input$tis as an argument in "grob_list" will not cause evaluation of all code, thus it is listed here.
   # Use "observeEvent" to replace "observe" and list events (input$log, input$tis, ...), since if the events are in "observe", every time a new gene is clicked, "input$dt_rows_selected" causes the evaluation of all code in "observe", and the evaluation is duplicated with "gs.new".
-  observeEvent(list(log=input$log, tis=input$tis, col.but=input$col.but, cs.v=input$cs.v, pre.scale=input$pre.scale), {
+  col.reorder <- reactiveValues(col.re='Y')
+  observeEvent(input$col.na, { if (input$col.cfm>0) col.reorder$col.re <- 'N' })
+  observeEvent(list(log=input$log, tis=input$tis, col.but=input$col.but, cs.v=input$cs.v, pre.scale=input$pre.scale, col.cfm=input$col.cfm), {
     
     grob$all <- grob$gg.all <- grob$lgd.all <- NULL; gs.all <- reactive({ 
 
@@ -1519,20 +1557,23 @@ shinyServer(function(input, output, session) {
     validate(need(col.n>=1 & as.integer(col.n)==col.n & !is.na(col.n), 'No. of columns should be a positive integer !'))
 
   })
-  observeEvent(list(size=input$lgd.key.size, lgd.row=input$lgd.row, tis.trans=input$tis, lgd.label=input$lgd.label), {
+  observeEvent(list(size=input$lgd.key.size, lgd.row=input$lgd.row, tis.trans=input$tis, lgd.label=input$lgd.label, lgd.lab.size=input$lgd.lab.size), {
 
-    lgd.key.size <- input$lgd.key.size; lgd.row <- input$lgd.row; lgd.label <- input$lgd.label
+    lgd.key.size <- input$lgd.key.size; lgd.row <- input$lgd.row
+    lgd.label <- input$lgd.label; label.size <- input$lgd.lab.size
     if (is.null(grob$lgd.all)|is.null(lgd.key.size)|is.null(lgd.row)|is.null(lgd.label)) return()
     cat('Adjust legend size/rows... \n')
-    grob$lgd.all <- gg_lgd(gg.all=grob$lgd.all, size.key=lgd.key.size, size.text.key=NULL, row=lgd.row, sam.dat=sam(), tis.trans=input$tis, position.text.key='right', label=(lgd.label=='Y'))
+    grob$lgd.all <- gg_lgd(gg.all=grob$lgd.all, size.key=lgd.key.size, size.text.key=NULL, row=lgd.row, sam.dat=sam(), tis.trans=input$tis, position.text.key='right', label=(lgd.label=='Y'), label.size=label.size)
   
   })
+  observeEvent(input$col.cfm, { col.reorder$col.re <- 'Y' })
   # In "observe" and "observeEvent", if one code return (NULL), then all the following code stops. If one code changes, all the code renews.
   observe({
-    
+  
     if (is.null(geneIn())|is.null(input$dt_rows_selected)|is.null(svg.df())|gID$geneID[1]=="none"|is.null(grob$all)) return(NULL)
     output$shm <- renderPlot(width=as.numeric(input$width)/2*as.numeric(input$col.n), height=as.numeric(input$height)*length(input$dt_rows_selected), {
 
+    if (col.reorder$col.re=='N') return()
     if (is.null(input$dt_rows_selected)|is.null(svg.df())|gID$geneID[1]=="none"|is.null(grob$all)) return(NULL)
     if (length(color$col=="none")==0|input$color=="") return(NULL)
     r.na <- rownames(geneIn()[["gene2"]]); gID$geneID <- r.na[input$dt_rows_selected]
@@ -1555,7 +1596,7 @@ shinyServer(function(input, output, session) {
       cs.arr <- arrangeGrob(grobs=list(grobTree(cs.grob)), layout_matrix=cbind(1), widths=unit(1, "npc"))
       # Legend size in downloaded SHM is reduced.
       lgd.lis <- grob$lgd.all; lgd.lis <- gg_lgd(gg.all=lgd.lis, sam.dat=sam(), tis.trans=input$tis, label=FALSE)
-      lgd.lis <- gg_lgd(gg.all=lgd.lis, size.key=input$lgd.key.size*0.5, size.text.key=NULL, label.size=2, row=input$lgd.row, sam.dat=sam(), tis.trans=input$tis, position.text.key='right', label=(input$lgd.label=='Y'))
+      lgd.lis <- gg_lgd(gg.all=lgd.lis, size.key=input$lgd.key.size*0.5, size.text.key=NULL, label.size=input$lgd.lab.size, row=input$lgd.row, sam.dat=sam(), tis.trans=input$tis, position.text.key='right', label=(input$lgd.label=='Y'))
       if (input$lgd.w>0) {
   
         grob.lgd.lis <- lapply(lgd.lis, ggplotGrob)
@@ -1600,18 +1641,23 @@ shinyServer(function(input, output, session) {
       fluidRow(splitLayout(cellWidths=c("1%", "7%", "91%", "1%"), "", plotOutput("bar2"), htmlOutput("ggly"), ""))),
       
       tabPanel(title="Basic", value='shm1',  
-      fluidRow(splitLayout(cellWidths=c('11%', '1%', '11%', '1%', '7%', '1%', '18%', '15%', '8%', '1%', '22%'),
+      fluidRow(column(10, splitLayout(cellWidths=c('14%', '1%', '14%', '1%', '9%', '1%', '32%', '1%', '15%'),
       numericInput(inputId='height', label='Overall height:', value=400, min=1, max=Inf, step=NA, width=170), '',
       numericInput(inputId='width', label='Overall width:', value=760, min=1, max=Inf, step=NA, width=170), '',
       numericInput(inputId='col.n', label='Columns:', value=2, min=1, max=Inf, step=1, width=150), '',
-      radioButtons(inputId="gen.con", label="Display by:", choices=c("Gene"="gene", "Condition"="con"), selected="gene", inline=TRUE),
-      textInput("color", "Color scheme:", "purple,yellow,blue", placeholder='Eg: "purple,yellow,blue"', width=250),
-      actionButton("col.but", "Go", icon=icon("refresh")), '', 
+      radioButtons(inputId="gen.con", label="Display by:", choices=c("Gene"="gene", "Condition"="con", "None"="none"), selected="gene", inline=TRUE), '', 
+     radioButtons(inputId="pre.scale", label="Preserve.scale:", choices=c("Yes"="Y", "No"="N"), selected="N", inline=TRUE)
+      )),
+      column(1,
+      dropdownButton(inputId='dropdown', label='Color key', circle=FALSE, icon=NULL, status='primary', inline=FALSE, width=250, 
+      fluidRow(splitLayout(cellWidths=c('1%', '70%', '25%'), '', textInput("color", "Color scheme:", "purple,yellow,blue", placeholder='Eg: "purple,yellow,blue"', width=200),
+      actionButton("col.but", "Go", icon=icon("refresh")))), 
       radioButtons(inputId='cs.v', label='Color scale based on:', choices=c("Selected rows"="sel.gen", "All rows"="w.mat"), selected="sel.gen", inline=TRUE)
-      )), textOutput('h.w.c'), textOutput('msg.col'),
+      ))
+      ), textOutput('h.w.c'), textOutput('msg.col'),
 
-      fluidRow(splitLayout(cellWidths=c('12%', "88%"), radioButtons(inputId="pre.scale", label="Preserve.scale:", choices=c("Yes"="Y", "No"="N"), selected="N", inline=TRUE), checkboxGroupInput(inputId="tis", label="Select tissues to be transparent:", choices='', selected='', inline=TRUE))),
-      fluidRow(splitLayout(cellWidths=c('14%', '1%', '23%', '1%', '14%', '1%', '11%', '1%', '15%'), 
+      fluidRow(splitLayout(cellWidths=c('100%'),  checkboxGroupInput(inputId="tis", label="Select tissues to be transparent:", choices='', selected='', inline=TRUE))),
+      fluidRow(splitLayout(cellWidths=c('14%', '1%', '24%', '1%', '14%', '1%', '11%', '1%', '15%'), 
       downloadButton("dld.shm", "Download"), '',
       radioButtons(inputId='ext', label='File type:', choices=c('NA'='NA', "png"="png", "jpg"="jpg", "pdf"="pdf"), selected="NA", inline=TRUE), '',
       numericInput(inputId='res', label='Resolustion (dpi):', value=300, min=10, max=Inf, step=10, width=150), '',
@@ -1656,7 +1702,10 @@ shinyServer(function(input, output, session) {
     numericInput(inputId='lgd.row', label='Legend key rows:', value=2, min=1, max=Inf, step=1, width=150), '',
     numericInput(inputId='lgd.key.size', label='Legend key size:', value=0.04, min=0, max=1, step=0.02, width=150)
     ),
-    radioButtons(inputId="lgd.label", label="Label feature:", choices=c("Yes"="Y", "No"="N"), selected="N", inline=TRUE),
+    splitLayout(cellWidths=c("43%", "1%", '43%'),
+    radioButtons(inputId="lgd.label", label="Label feature:", choices=c("Yes"="Y", "No"="N"), selected="N", inline=TRUE), '',
+    numericInput(inputId='lgd.lab.size', label='Label size:', value=2.5, min=0, max=Inf, step=0.5, width=150)
+    ),
     splitLayout(cellWidths=c("99%", "1%"), plotOutput("lgd"), ""), width=3) 
 
   })
@@ -1679,6 +1728,7 @@ shinyServer(function(input, output, session) {
     if (dir.exists('html_shm/')) { system('rm -fr html_shm/lib'); system('rm -f html_shm/*html') } else dir.create('html_shm/')
   })
   observeEvent(list(log=input$log, tis=input$tis, col.but=input$col.but, cs.v=input$cs.v, pre.scale=input$pre.scale, ggly.but=input$ggly.but, gID.new=gID$new), {
+
     if (is.null(input$ggly.but)) return() 
     if (input$ggly.but=='N') return()
     if (is.null(geneIn())|is.null(gID$new)|is.null(input$dt_rows_selected)|is.null(svg.df())|gID$geneID[1]=="none"|is.null(grob$gg.all)|input$ggly.but=='N') return(NULL)
@@ -1837,7 +1887,7 @@ shinyServer(function(input, output, session) {
     if (dim %in% c('1280x800', '1280x1024', '1280x720')&res>450) res <- 450
     if (dim=='1920x1080'&res>300) res <- 300
     selectInput("vdo.dim", label="Fixed dimension:", choices=c('1920x1080', '1280x800', '320x568', '1280x1024', '1280x720', '320x480', '480x360', '600x600', '800x600', '640x480'), selected='640x480', width=110)
-    vdo <- video(gg=gg.all1, cs.g=shm.bar(), sam.uni=sam(), tis.trans=input$tis, lgd.key.size=input$lgd.key.size, lgd.text.size=NULL, position.text.key='right', label=(input$lgd.label=='Y'), label.size=2, sub.title.size=8, bar.value.size=6, lgd.row=input$lgd.row, width=input$vdo.width, height=input$vdo.height, video.dim=dim, interval=input$vdo.itvl, res=res, out.dir='./www/video'); if (is.null(vdo)) return()
+    vdo <- video(gg=gg.all1, cs.g=shm.bar(), sam.uni=sam(), tis.trans=input$tis, lgd.key.size=input$lgd.key.size, lgd.text.size=NULL, position.text.key='right', label=(input$lgd.label=='Y'), label.size=input$lgd.lab.size, sub.title.size=8, bar.value.size=6, lgd.row=input$lgd.row, width=input$vdo.width, height=input$vdo.height, video.dim=dim, interval=input$vdo.itvl, res=res, out.dir='./www/video'); if (is.null(vdo)) return()
     cat('Presenting video... \n')
     incProgress(0.95, detail="Presenting video...")
     w.h <- as.numeric(strsplit(input$vdo.dim, 'x')[[1]])
@@ -1868,7 +1918,7 @@ shinyServer(function(input, output, session) {
   })
 
   observe({
-   input$lgd.key.size; input$lgd.row; input$tis; input$lgd.label
+   input$lgd.key.size; input$lgd.row; input$tis; input$lgd.label; input$lgd.lab.size
    updateRadioButtons(session, inputId="vdo.but", label="Show video:", choices=c("Yes"="Y", "No"="N"), selected="N", inline=TRUE)
   })
 
