@@ -2,7 +2,7 @@
 #'
 #' @param ID.sel The vector of target genes.
 #' @param na.all All "gene_condition" names.
-#' @param con.all All condition names.
+#' @param con.all All condition names with suffixes of "_1", "_2", etc.
 #' @param by "gene", "con", or "none". Sort conditions for each gene, vice versa, or no sortation.
 
 #' @return A vector of sorted "gene_condition" names.

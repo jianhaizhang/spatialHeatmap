@@ -15,6 +15,7 @@ options(shiny.maxRequestSize=7*1024^3, stringsAsFactors=FALSE)
 
 # Right before submit the package the following functions will be deleted, and they will be imported as above. They are listed here now for the convenience of functionality development.
 
+
 sort_gen_con <- function(ID.sel, na.all, con.all, by='gene') {
 
   # Sort vector of letter and number mixture.
@@ -467,8 +468,8 @@ lay_shm <- function(lay.shm, con, ncol, ID.sel, grob.list, width, height, shiny)
     m <- matrix(cell.idx, ncol=as.numeric(ncol), byrow=TRUE)
     lay <- NULL; for (i in seq_len(length(ID.sel))) { lay <- rbind(lay, m+(i-1)*length(con)) }
     # Sort conditions under each gene.
-    na.sort <- sort_gen_con(ID.sel=ID.sel, na.all=grob.all.na, con.all=con, by=lay.shm)
-    grob.list <- grob.list[na.sort]
+    #na.sort <- sort_gen_con(ID.sel=ID.sel, na.all=grob.all.na, con.all=con, by=lay.shm)
+    # grob.list <- grob.list[na.sort]
     if (shiny==TRUE & length(grob.list)>=1) return(grid.arrange(grobs=grob.list, layout_matrix=lay, newpage=TRUE))
        
     g.tr <- lapply(grob.list[seq_len(length(grob.list))], grobTree)
@@ -481,8 +482,8 @@ lay_shm <- function(lay.shm, con, ncol, ID.sel, grob.list, width, height, shiny)
     cell.idx <- c(seq_len(length(ID.sel)), rep(NA, all.cell-length(ID.sel)))
     m <- matrix(cell.idx, ncol=ncol, byrow=TRUE)
     lay <- NULL; for (i in seq_len(length(con))) { lay <- rbind(lay, m+(i-1)*length(ID.sel)) }
-    na.sort <- sort_gen_con(ID.sel=ID.sel, na.all=grob.all.na, con.all=con, by='con')
-    grob.list <- grob.list[na.sort]
+    # na.sort <- sort_gen_con(ID.sel=ID.sel, na.all=grob.all.na, con.all=con, by='con')
+    # grob.list <- grob.list[na.sort]
     if (shiny==TRUE & length(grob.list)>=1) return(grid.arrange(grobs=grob.list, layout_matrix=lay, newpage=TRUE))
     g.tr <- lapply(grob.list, grobTree); g.tr <- g.tr[names(grob.list)]
     n.col <- ncol(lay); n.row <- nrow(lay)
@@ -754,7 +755,7 @@ svg_df <- function(svg.path, feature) {
 
 grob_list <- function(gene, con.na=TRUE, geneV, coord, ID, cols, tis.path, tis.trans=NULL, sub.title.size, sam.legend='identical', legend.col, legend.title=NULL, legend.ncol=NULL, legend.nrow=NULL, legend.position='bottom', legend.direction=NULL, legend.key.size=0.02, legend.text.size=12, legend.title.size=8, line.size=0.2, line.color='grey70', mar.lb=NULL, ...) {
 
-#con.na=TRUE; sam.legend='identical'; legend.title=NULL; legend.ncol=NULL; legend.nrow=NULL; legend.position='bottom'; legend.direction=NULL; legend.key.size=0.5; legend.text.size=8; legend.title.size=8; line.size=0.2; line.color='grey70'; mar.lb=NULL
+# con.na=TRUE; sam.legend='identical'; legend.title=NULL; legend.ncol=NULL; legend.nrow=NULL; legend.position='bottom'; legend.direction=NULL; legend.key.size=0.5; legend.text.size=8; legend.title.size=8; line.size=0.2; line.color='grey70'; mar.lb=NULL
 
 # save(con.na, tis.trans, sam.legend, legend.col, legend.title, legend.ncol, legend.nrow, legend.position, legend.direction, legend.key.size, legend.text.size, legend.title.size, line.size, line.color, mar.lb, gene, geneV, coord, ID, cols, tis.path, sub.title.size, file='all')
 
@@ -1262,7 +1263,7 @@ shinyServer(function(input, output, session) {
     
     if (is.null(geneIn1())) return(NULL)    
     gene2 <- geneIn1()[['gene2']]; gene3 <- geneIn1()[['gene3']]; input$fil.but
-    if (!all(input$col.na %in% colnames(gene2))) return()
+    if (!identical(sort(input$col.na), sort(colnames(gene2)))) return()
     # Input variables in "isolate" will not triger re-excution, but if the whole reactive object is trigered by "input$fil.but" then code inside "isolate" will re-excute.
     isolate({
   
@@ -1310,6 +1311,8 @@ shinyServer(function(input, output, session) {
     if (is.null(input$dt_rows_selected)) return()
     gID$all <- gID$new <- NULL
     r.na <- rownames(geneIn()[["gene2"]]); gID$geneID <- r.na[input$dt_rows_selected]
+    # Avoid multiple selected rows from last input$fileIn. Must be behind gID$geneID. 
+    if (length(input$dt_rows_selected)>1) return()
     gID$new <- setdiff(gID$geneID, gID$all); gID$all <- c(gID$all, gID$new)
     if (is.null(r.na)) gID$geneID <- "none"
     })
@@ -1457,10 +1460,11 @@ shinyServer(function(input, output, session) {
 
   # General selected gene/condition pattern.
   pat.con <- reactive({ con.uni <- unique(con()); if (is.null(con.uni)) return(NULL); paste0(con.uni, collapse='|') })
-  pat.gen <- reactive({ if (gID$geneID[1]=='none') return(NULL);  paste0(gID$geneID, collapse='|') })
+  pat.gen <- reactive({ if (is.null(gID$geneID)) return(); if (gID$geneID[1]=='none') return(NULL);  paste0(gID$geneID, collapse='|') })
   pat.all <- reactive({ if (is.null(pat.con())|is.null(pat.gen())) return(NULL); paste0('(', pat.gen(), ')_(', pat.con(), ')') })
 
-  grob <- reactiveValues(all=NULL, gg.all=NULL, lgd.all=NULL); observeEvent(input$fileIn, { grob$all <- grob$gg.all <- grob$lgd.all <- NULL })
+  grob <- reactiveValues(all=NULL, all1=NULL, gg.all=NULL, gg.all1=NULL, lgd.all=NULL)
+  observeEvent(input$fileIn, { grob$all <- grob$gg.all1 <- grob$gg.all1 <- grob$gg.all <- grob$lgd.all <- NULL })
   gs.new <- reactive({ 
 
     if (is.null(svg.df())|is.null(geneIn())|is.null(gID$new)|length(gID$new)==0|is.null(gID$all)|is.null(input$dt_rows_selected)|color$col[1]=='none') return(NULL); 
@@ -1470,8 +1474,7 @@ shinyServer(function(input, output, session) {
     withProgress(message="Tissue heatmap: ", value=0, {
  
       incProgress(0.25, detail="preparing data.")
-      if (input$cs.v=="sel.gen") gene <- geneIn()[["gene2"]][input$dt_rows_selected, ]
-      if (input$cs.v=="w.mat") gene <- geneIn()[["gene2"]]
+      gene <- geneIn()[["gene2"]][gID$new, ]
       svg.df.lis <- svg.df(); grob.lis.all <- w.h.all <- NULL
       # Get max width/height of multiple SVGs, and dimensions of other SVGs can be set relative to this max width/height.
       for (i in seq_along(svg.df.lis)) { w.h.all <- c(w.h.all, svg.df.lis[[i]][['w.h']]); w.h.max <- max(w.h.all) }
@@ -1506,9 +1509,9 @@ shinyServer(function(input, output, session) {
       if (is.null(svg.df())|is.null(geneIn())|is.null(input$dt_rows_selected)|color$col[1]=='none') return(NULL)
       withProgress(message="Spatial heatmap: ", value=0, {
         incProgress(0.25, detail="preparing data.")
-        if (input$cs.v=="sel.gen") gene <- geneIn()[["gene2"]][input$dt_rows_selected, ]
-        if (input$cs.v=="w.mat") gene <- geneIn()[["gene2"]]
-
+        #if (input$cs.v=="sel.gen") gene <- geneIn()[["gene2"]][input$dt_rows_selected, ]
+        #if (input$cs.v=="w.mat") gene <- geneIn()[["gene2"]]
+        gene <- geneIn()[["gene2"]][gID$all, ]
       svg.df.lis <- svg.df(); grob.lis.all <- w.h.all <- NULL
       # Get max width/height of multiple SVGs, and dimensions of other SVGs can be set relative to this max width/height.
       for (i in seq_along(svg.df.lis)) { w.h.all <- c(w.h.all, svg.df.lis[[i]][['w.h']]); w.h.max <- max(w.h.all) }
@@ -1566,22 +1569,33 @@ shinyServer(function(input, output, session) {
     grob$lgd.all <- gg_lgd(gg.all=grob$lgd.all, size.key=lgd.key.size, size.text.key=NULL, row=lgd.row, sam.dat=sam(), tis.trans=input$tis, position.text.key='right', label=(lgd.label=='Y'), label.size=label.size)
   
   })
+  observeEvent(list(grob.all=grob$all, gen.con=input$gen.con), {
+  
+    if (is.null(gID$all)|is.null(grob$all)|is.null(grob$gg.all)) return()
+    cat('Reordering grobs/ggplots... \n')
+    na.all <- names(grob$all); pat.all <- paste0('^', pat.all(), '(_\\d+$)')
+    # Indexed cons with '_1', '_2', ... at the end.
+    con <- unique(gsub(pat.all, '\\2\\3', na.all)); if (length(con)==0) return()
+    na.all <- sort_gen_con(ID.sel=gID$all, na.all=na.all, con.all=con, by=input$gen.con)
+    grob$all1 <- grob$all[na.all]; grob$gg.all1 <- grob$gg.all[na.all]
+
+  })
   observeEvent(input$col.cfm, { col.reorder$col.re <- 'Y' })
   # In "observe" and "observeEvent", if one code return (NULL), then all the following code stops. If one code changes, all the code renews.
   observe({
   
-    if (is.null(geneIn())|is.null(input$dt_rows_selected)|is.null(svg.df())|gID$geneID[1]=="none"|is.null(grob$all)) return(NULL)
+    if (is.null(geneIn())|is.null(input$dt_rows_selected)|is.null(svg.df())|gID$geneID[1]=="none"|is.null(grob$all1)) return(NULL)
     output$shm <- renderPlot(width=as.numeric(input$width)/2*as.numeric(input$col.n), height=as.numeric(input$height)*length(input$dt_rows_selected), {
 
     if (col.reorder$col.re=='N') return()
-    if (is.null(input$dt_rows_selected)|is.null(svg.df())|gID$geneID[1]=="none"|is.null(grob$all)) return(NULL)
+    if (is.null(input$dt_rows_selected)|is.null(svg.df())|gID$geneID[1]=="none"|is.null(grob$all1)) return(NULL)
     if (length(color$col=="none")==0|input$color=="") return(NULL)
     r.na <- rownames(geneIn()[["gene2"]]); gID$geneID <- r.na[input$dt_rows_selected]
-    grob.na <- names(grob$all)
+    grob.na <- names(grob$all1)
     # Select target grobs.
     # Use definite patterns and avoid using '.*' as much as possible. Try to as specific as possible.
     pat.all <- paste0('^', pat.all(), '(_\\d+$)')
-    grob.lis.p <- grob$all[grepl(pat.all, grob.na)] # grob.lis.p <- grob.lis.p[unique(names(grob.lis.p))]
+    grob.lis.p <- grob$all1[grepl(pat.all, grob.na)] # grob.lis.p <- grob.lis.p[unique(names(grob.lis.p))]
     # Indexed cons with '_1', '_2', ... at the end.
     con <- unique(gsub(pat.all, '\\2\\3', names(grob.lis.p))); if (length(con)==0) return()
     cat('Plotting spatial heatmaps... \n')
@@ -1617,6 +1631,21 @@ shinyServer(function(input, output, session) {
     cat("Downloading 'shm' from", tempdir(check=TRUE), '...\n')
     file.copy(file0, file, overwrite=TRUE) }
   )
+
+  observe({
+  
+    input$fileIn; geneIn(); input$adj.modInpath; input$A; input$p; input$cv1; input$cv2; input$dt_rows_selected; input$tis; input$gen.con  
+    updateRadioButtons(session, inputId='ext', label='File type:', choices=c('NA'='NA', "png"="png", "jpg"="jpg", "pdf"="pdf"), selected="NA", inline=TRUE)
+    updateRadioButtons(session, inputId="ggly.but", label="Show animation:", choices=c("Yes"="Y", "No"="N"), selected="N", inline=TRUE)
+    updateRadioButtons(session, inputId="vdo.but", label="Show video:", choices=c("Yes"="Y", "No"="N"), selected="N", inline=TRUE)
+
+  })
+
+  observe({
+   input$lgd.key.size; input$lgd.row; input$tis; input$lgd.label; input$lgd.lab.size
+   updateRadioButtons(session, inputId="vdo.but", label="Show video:", choices=c("Yes"="Y", "No"="N"), selected="N", inline=TRUE)
+  })
+
 
  output$shm.ui <- renderUI({
 
@@ -1731,19 +1760,20 @@ shinyServer(function(input, output, session) {
 
     if (is.null(input$ggly.but)) return() 
     if (input$ggly.but=='N') return()
-    if (is.null(geneIn())|is.null(gID$new)|is.null(input$dt_rows_selected)|is.null(svg.df())|gID$geneID[1]=="none"|is.null(grob$gg.all)|input$ggly.but=='N') return(NULL)
+    if (is.null(geneIn())|is.null(gID$new)|is.null(input$dt_rows_selected)|is.null(svg.df())|gID$geneID[1]=="none"|is.null(grob$gg.all1)|input$ggly.but=='N') return(NULL)
     if (length(color$col=="none")==0|input$color=="") return(NULL)
 
     withProgress(message="Animation: ", value=0, {
     incProgress(0.25, detail="preparing frames...") 
-    gg.all <- grob$gg.all; na <- names(gg.all)
+    gg.all <- grob$gg.all1; na <- names(gg.all)
+    # Only take the selected genes.
+    na <- na[grepl(paste0('^', pat.all(), '_\\d+$'), na)]; gg.all <- gg.all[na]
     for (i in seq_along(gg.all)) {
 
-      pat <- paste0(na[i], '_', "\\d+\\.html")
-      if (length(list.files('www/ggly/', pat))>0) next
+      na0 <- paste0(na[i], ".html")
+      if (length(list.files('www/ggly/', na0))>0) next
       gly <- ggplotly(gg.all[[i]], tooltip='text') %>% layout(showlegend=FALSE)
       gly$sizingPolicy$padding <- 0
-      na0 <- paste0(na[i], '_', i, ".html")
       cat('Animation: saving', na0, '\n')
       saveWidget(gly, na0, selfcontained=FALSE, libdir="lib")
       system(paste0('mv ', na0, ' www/ggly/'))
@@ -1756,11 +1786,9 @@ shinyServer(function(input, output, session) {
 
   output$sld.fm <- renderUI({
  
-    if (is.null(grob$gg.all)|is.null(con())|is.null(gID$geneID)) return(NULL) 
-    con.pat <- paste0(unique(con()), collapse='|')
-    gen.pat <- paste0(gID$geneID, collapse='|')
-    gen.con.pat <- paste0('^(', gen.pat, ')_(', con.pat, ')_\\d+$') 
-    sliderInput(inputId='fm', 'Frames', min=1, max=sum(grepl(gen.con.pat, names(grob$gg.all))), step=1, value=1, animate=animationOptions(interval=input$t*10^3, loop=FALSE, playButton=NULL, pauseButton='pause'))
+    if (is.null(grob$gg.all)|is.null(pat.all())|is.null(gID$geneID)) return(NULL) 
+    gen.con.pat <- paste0('^', pat.all(), '_\\d+$') 
+    sliderInput(inputId='fm', 'Frames', min=1, max=sum(grepl(gen.con.pat, names(grob$gg.all1))), step=1, value=1, animate=animationOptions(interval=input$t*10^3, loop=FALSE, playButton=NULL, pauseButton='pause'))
   
   })
 
@@ -1768,28 +1796,29 @@ shinyServer(function(input, output, session) {
   gly.url <- reactive({ 
     
     if (is.null(input$ggly.but)) return() 
-    if (is.null(grob$gg.all)|input$ggly.but=='N'|gID$geneID[1]=='none'|is.null(pat.all())) return(NULL)
-    pat <- paste0('^', pat.all(), '_\\d+_(\\d+)\\.html$')
-    na <- list.files('www/ggly', pattern=pat)
-    na <- na[order(gsub(pat, '\\3', na))][as.integer(input$fm)]
-    if (length(na)==0|is.na(na)) return(NULL)
-    cat('Animation: access', na, 'path \n')
-    paste0('ggly/', na)
+    if (is.null(grob$gg.all1)|input$ggly.but=='N'|gID$geneID[1]=='none'|is.null(pat.all())) return(NULL)
+    gg.all <- grob$gg.all1; na <- names(gg.all)
+    # Only take the selected genes.
+    na <- na[grepl(paste0('^', pat.all(), '_\\d+$'), na)]; na1 <- na[as.integer(input$fm)]
+    na2 <- list.files('www/ggly', pattern=na1)
+    if (length(na2)==0|is.na(na2)) return(NULL)
+    cat('Animation: access', na2, 'path \n')
+    paste0('ggly/', na2)
   
   })
 
   # Variables in 'observe' are accessible anywhere in the same 'observe'.
   observe({
 
-    if (is.null(input$ggly.but)) return() 
+    if (is.null(input$ggly.but)|is.null(input$fm)) return() 
     if (input$ggly.but=='N'|is.null(gly.url())) return()
     if (is.null(svg.df())|is.null(geneIn())|is.null(input$dt_rows_selected)|color$col[1]=='none') return(NULL)
     
-    gg.all <- grob$gg.all; na <- names(gg.all)
-    pat <- paste0(na, collapse='|')
-    na <- list.files('www/ggly', pattern=paste0('^(', pat, ')_', input$fm, '\\.html$')); if (length(na)==0) return(NULL)
-    pat1 <- paste0('^(', pat, ')_',input$fm, '\\.html$')
-    gg.na <- gsub(pat1, '\\1', na); gg <- gg.all[[gg.na]]
+    gg.all <- grob$gg.all1; na <- names(gg.all)
+    # Only take the selected genes.
+    na <- na[grepl(paste0('^', pat.all(), '_\\d+$'), na)]; na1 <- na[as.integer(input$fm)]
+    na2 <- list.files('www/ggly', pattern=paste0(na1, '\\.html$')); if (length(na2)==0) return(NULL)
+    gg <- gg.all[[na1]]
     dat <- layer_data(gg); x.max <- max(dat$x); y.max <- max(dat$y)
     w <- 770; h <- y.max/x.max*w
     if (h>550) { h <- 550; w <- x.max/y.max*h }
@@ -1832,12 +1861,9 @@ shinyServer(function(input, output, session) {
     if (is.null(svg.df())|is.null(geneIn())|is.null(input$dt_rows_selected)|color$col[1]=='none') return(NULL) 
     withProgress(message="Downloading animation: ", value=0, {
     incProgress(0.1, detail="in progress...")
-    gg.all <- grob$gg.all; na <- names(gg.all)
-    con.uni <- unique(con()); gen <- gID$geneID
-    pat.con <- paste0(con.uni, collapse='|')
-    pat.gen <- paste0(gen, collapse='|')
-    pat <- paste0('^(', pat.gen, ')_(', pat.con, ')_\\d+$')
-    gg <- gg.all[grepl(pat, na)]; gg.na <- names(gg)
+    gg.all <- grob$gg.all1; na <- names(gg.all)
+    gg.na <- na[grepl(paste0('^', pat.all(), '_\\d+$'), na)]
+    gg <- gg.all[gg.na]
     pro <- 0.1; for (i in seq_along(gg.na)) {
     incProgress(pro+0.2, detail=paste0('preparing ', gg.na[i], '.html...'))
     html_ly(gg=gg[i], cs.g=shm.bar(), tis.trans=input$tis, sam.uni=sam(), anm.width=input$width.ly, anm.height=input$height.ly, out.dir='.') }
@@ -1879,8 +1905,8 @@ shinyServer(function(input, output, session) {
     
     withProgress(message="Video: ", value=0, {
     incProgress(0.75, detail="in progress...")
-    gg.all <- grob$gg.all; na <- names(gg.all)
-    pat <- paste0(pat.all(), '_\\d+$'); na <- na[grepl(pat, na)]
+    gg.all <- grob$gg.all1; na <- names(gg.all)
+    pat <- paste0('^', pat.all(), '_\\d+$'); na <- na[grepl(pat, na)]
     gg.all1 <- gg.all[na]
     cat('Making video... \n')
     res <- input$vdo.res; dim <- input$vdo.dim
@@ -1910,22 +1936,10 @@ shinyServer(function(input, output, session) {
   observe({
   
     input$fileIn; geneIn(); input$adj.modInpath; input$A; input$p; input$cv1; input$cv2; input$dt_rows_selected
-    updateRadioButtons(session, inputId='ext', label='File type:', choices=c('NA'='NA', "png"="png", "jpg"="jpg", "pdf"="pdf"), selected="NA", inline=TRUE)
     updateRadioButtons(session, inputId="mhm.but", label="Show plot:", choices=c("Yes"="Y", "No"="N"), selected="N", inline=TRUE)
-    updateRadioButtons(session, inputId="ggly.but", label="Show animation:", choices=c("Yes"="Y", "No"="N"), selected="N", inline=TRUE)
-   updateRadioButtons(session, inputId="vdo.but", label="Show video:", choices=c("Yes"="Y", "No"="N"), selected="N", inline=TRUE)
 
   })
 
-  observe({
-   input$lgd.key.size; input$lgd.row; input$tis; input$lgd.label; input$lgd.lab.size
-   updateRadioButtons(session, inputId="vdo.but", label="Show video:", choices=c("Yes"="Y", "No"="N"), selected="N", inline=TRUE)
-  })
-
-  observe({
-    input$tis
-    updateRadioButtons(session, inputId="ggly.but", label="Show animation:", choices=c("Yes"="Y", "No"="N"), selected="N", inline=TRUE)
-  })
   # Calculate whole correlation or distance matrix.
   cor.dis <- reactive({
 

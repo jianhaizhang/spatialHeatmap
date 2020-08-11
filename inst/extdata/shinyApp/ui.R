@@ -3,7 +3,7 @@ library(shiny); library(shinydashboard); library(plotly); library(visNetwork); l
 
 shinyUI(dashboardPage(
 
-  dashboardHeader(title="spatialHeatmap (2020-4-10)", titleWidth=300),
+  dashboardHeader(title="spatialHeatmap (2020-08-10)", titleWidth=300),
 
   dashboardSidebar(
   

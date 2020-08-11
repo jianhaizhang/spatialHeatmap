@@ -268,17 +268,18 @@ spatial_hm <- function(svg.path, data, sam.factor=NULL, con.factor=NULL, ID, lay
       grob.lis <- grob_list(gene=gene, con.na=con.na, geneV=geneV, coord=g.df, ID=ID, legend.col=fil.cols, cols=col, tis.path=tis.path, tis.trans=tis.trans, sub.title.size=sub.title.size, sam.legend=sam.legend, legend.ncol=legend.ncol, legend.nrow=legend.nrow, legend.position=legend.position, legend.direction=legend.direction, legend.title.size=legend.title.size, legend.key.size=legend.key.size, legend.text.size=legend.text.size, line.size=line.size, line.color=line.color, line.type=line.type, mar.lb=mar, ...)
       grob.lis.all <- c(grob.lis.all, list(grob.lis))
 
-    }; names(grob.lis.all) <- names(svg.df.lis);     
+    }; names(grob.lis.all) <- names(svg.df.lis) 
 
     # Extract SHMs of grob and placed in a list. Different SHMs of same 'gene_condition' are indexed with suffixed of '_1', '_2', ...
     grob.gg <- grob_gg(gs=grob.lis.all)
-    grob.all <- grob.gg[['grob']]; gg.all <- grob.gg[['gg']] 
-    pat.gen <- paste0(ID, collapse='|')
-    pat.con <- paste0(con.uni, collapse='|')
+    grob.all <- grob.gg[['grob']]; gg.all <- grob.gg[['gg']]; na.all <- names(grob.all)
+    pat.gen <- paste0(ID, collapse='|'); pat.con <- paste0(con.uni, collapse='|')
     # Use definite patterns and avoid using '.*' as much as possible. Try to as specific as possible.
     pat.all <- paste0('^(', pat.gen, ')_(', pat.con, ')(_\\d+$)')
     # Indexed cons with '_1', '_2', ... at the end.
     con.idx <- unique(gsub(pat.all, '\\2\\3', names(grob.all)))
+    na.all <- sort_gen_con(ID.sel=ID, na.all=na.all, con.all=con.idx, by=lay.shm)
+    grob.all <- grob.all[na.all]; gg.all <- gg.all[na.all]
     g.arr <- lay_shm(lay.shm=lay.shm, con=con.idx, ncol=ncol, ID.sel=ID, grob.list=grob.all, width=width, height=height, shiny=FALSE)
     cs.arr <- arrangeGrob(grobs=list(grobTree(cs.grob)), layout_matrix=cbind(1), widths=unit(1, "npc")) # "mm" is fixed, "npc" is scalable.
     # Select legend plot.

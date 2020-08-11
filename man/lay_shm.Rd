@@ -7,7 +7,7 @@
 lay_shm(lay.shm, con, ncol, ID.sel, grob.list, width, height, shiny)
 }
 \arguments{
-\item{lay.shm}{The layout of spatial heatmaps, "gene" or "con", which means organise spatial heatmaps by genes or by conditions.}
+\item{lay.shm}{One of "gene", "con", or "none". If "gene", spatial heatmaps are organized by genes, proteins, metabolites, \emph{etc}. and conditions are sorted whithin each gene. If "con", spatial heatmaps are organized by conditions/treatments applied to experiments, and genes are sorted winthin each condition. If "none", spaital heatmaps are organized by the gene order in \code{ID} and conditions follow the order they appear in \code{data}.}
 
 \item{con}{A charater vector of all conditions.}
 

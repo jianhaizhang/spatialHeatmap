@@ -11,9 +11,9 @@ sort_gen_con(ID.sel, na.all, con.all, by = "gene")
 
 \item{na.all}{All "gene_condition" names.}
 
-\item{con.all}{All condition names.}
+\item{con.all}{All condition names with suffixes of "_1", "_2", etc.}
 
-\item{by}{"gene" or "con". Sort conditions for each gene or vice versa.}
+\item{by}{"gene", "con", or "none". Sort conditions for each gene, vice versa, or no sortation.}
 }
 \value{
 A vector of sorted "gene_condition" names.

@@ -32,8 +32,8 @@ lay_shm <- function(lay.shm, con, ncol, ID.sel, grob.list, width, height, shiny)
     m <- matrix(cell.idx, ncol=as.numeric(ncol), byrow=TRUE)
     lay <- NULL; for (i in seq_len(length(ID.sel))) { lay <- rbind(lay, m+(i-1)*length(con)) }
     # Sort conditions under each gene.
-    na.sort <- sort_gen_con(ID.sel=ID.sel, na.all=grob.all.na, con.all=con, by=lay.shm)
-    grob.list <- grob.list[na.sort]
+    #na.sort <- sort_gen_con(ID.sel=ID.sel, na.all=grob.all.na, con.all=con, by=lay.shm)
+    # grob.list <- grob.list[na.sort]
     if (shiny==TRUE & length(grob.list)>=1) return(grid.arrange(grobs=grob.list, layout_matrix=lay, newpage=TRUE))
        
     g.tr <- lapply(grob.list[seq_len(length(grob.list))], grobTree)
@@ -46,8 +46,8 @@ lay_shm <- function(lay.shm, con, ncol, ID.sel, grob.list, width, height, shiny)
     cell.idx <- c(seq_len(length(ID.sel)), rep(NA, all.cell-length(ID.sel)))
     m <- matrix(cell.idx, ncol=ncol, byrow=TRUE)
     lay <- NULL; for (i in seq_len(length(con))) { lay <- rbind(lay, m+(i-1)*length(ID.sel)) }
-    na.sort <- sort_gen_con(ID.sel=ID.sel, na.all=grob.all.na, con.all=con, by='con')
-    grob.list <- grob.list[na.sort]
+    # na.sort <- sort_gen_con(ID.sel=ID.sel, na.all=grob.all.na, con.all=con, by='con')
+    # grob.list <- grob.list[na.sort]
     if (shiny==TRUE & length(grob.list)>=1) return(grid.arrange(grobs=grob.list, layout_matrix=lay, newpage=TRUE))
     g.tr <- lapply(grob.list, grobTree); g.tr <- g.tr[names(grob.list)]
     n.col <- ncol(lay); n.row <- nrow(lay)

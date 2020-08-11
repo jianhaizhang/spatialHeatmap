@@ -10,6 +10,8 @@ spatial_hm(
   sam.factor = NULL,
   con.factor = NULL,
   ID,
+  lay.shm = "gene",
+  ncol = 2,
   col.com = c("purple", "yellow", "blue"),
   col.bar = "selected",
   bar.width = 0.08,
@@ -21,8 +23,6 @@ spatial_hm(
   height = 1,
   legend.r = 1,
   sub.title.size = 11,
-  lay.shm = "gene",
-  ncol = 2,
   legend.plot = "all",
   sam.legend = "identical",
   legend.title.size = 15,
@@ -68,6 +68,10 @@ spatial_hm(
 
 \item{ID}{A character vector of assyed items (\emph{e.g.} genes, proteins) whose values are used to color the aSVG.}
 
+\item{lay.shm}{One of "gene", "con", or "none". If "gene", spatial heatmaps are organized by genes, proteins, metabolites, \emph{etc}. and conditions are sorted whithin each gene. If "con", spatial heatmaps are organized by conditions/treatments applied to experiments, and genes are sorted winthin each condition. If "none", spaital heatmaps are organized by the gene order in \code{ID} and conditions follow the order they appear in \code{data}.}
+
+\item{ncol}{An integer, number of columns to display the spatial heatmaps, not including the legend plot.}
+
 \item{col.com}{A character vector of the color components used to build the color scale. The default is c('purple', 'yellow', 'blue').}
 
 \item{col.bar}{"selected" or "all", the former uses values of input assayed items to build the color scale while the latter uses all values from the data. The default is "selected".}
@@ -87,10 +91,6 @@ spatial_hm(
 \item{legend.r}{A numeric to adjust the dimension of the legend plot. Default is 1. The larger, the higher ratio of width to height.}
 
 \item{sub.title.size}{A numeric. The subtitle font size of each individual spatial heatmap. Default is 11.}
-
-\item{lay.shm}{"gene" or "con", the former organizes spatial heatmaps by genes, proteins, metabolites, \emph{etc}. while the latter by conditions/treatments applied to experiments.}
-
-\item{ncol}{An integer, number of columns to display the spatial heatmaps, not including the legend plot.}
 
 \item{legend.plot}{Only applicable if multiple aSVG files are provided to \code{svg.path}. A vector of suffix(es) of aSVG file name(s) that are used to make legend plot(s) such as c('shm1', 'shm2'). Default is 'all', and each aSVG will have a legend plot on the right. If NULL, no legend plot is generated.}
 
