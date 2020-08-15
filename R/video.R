@@ -7,6 +7,7 @@
 #' @param lgd.key.size The size of legend key (including text). Default is 0.02.
 #' @param lgd.text.size The size of legend text. Default is 8.
 #' @param lgd.row An integer of legend rows.
+#' @param lgd.col An integer of legend columns.
 #' @param width The image width in video in "npc", ranging from 0 to 0.92. Default is 0.92.
 #' @param height The image height in video in "npc", ranging from 0 to 0.99. Default is 0.99.
 #' @inheritParams spatial_hm
@@ -24,7 +25,7 @@
 #' @importFrom av av_capture_graphics
 #' @importFrom gridExtra grid.arrange
 
-video <- function(gg, cs.g, sam.uni, tis.trans, sub.title.size=NULL, bar.value.size=NULL, lgd.key.size=0.02, lgd.text.size=8, angle.text.key=NULL, position.text.key=NULL, lgd.row=2, label=FALSE, label.size=4, label.angle=0, hjust=0, vjust=0, opacity=1, key=TRUE, width=0.92, height=0.99, video.dim='640x480', res=500, interval=1, framerate=1, out.dir) {
+video <- function(gg, cs.g, sam.uni, tis.trans, sub.title.size=NULL, bar.value.size=NULL, lgd.key.size=0.02, lgd.text.size=8, angle.text.key=NULL, position.text.key=NULL, lgd.row=2, lgd.col=NULL, legend.value.vdo=NULL, label=FALSE, label.size=4, label.angle=0, hjust=0, vjust=0, opacity=1, key=TRUE, width=0.92, height=0.99, video.dim='640x480', res=500, interval=1, framerate=1, out.dir) {
 
   # Test if "av" works.
   test <- function() {
@@ -36,7 +37,7 @@ video <- function(gg, cs.g, sam.uni, tis.trans, sub.title.size=NULL, bar.value.s
   if (!is.null(bar.value.size)) cs.g <- cs.g+theme(axis.text.y=element_text(size=bar.value.size))
   na <- names(gg)
   cat('Video: adjust legend size/rows... \n')
-  gg1 <- gg_lgd(gg.all=gg, size.key=lgd.key.size, size.text.key=lgd.text.size, angle.text.key=angle.text.key, position.text.key=position.text.key, label=label, label.size=label.size, label.angle=label.angle, hjust=hjust, vjust=vjust, opacity=opacity, key=key, sub.title.size=sub.title.size, row=lgd.row, sam.dat=sam.uni, tis.trans=tis.trans)
+  gg1 <- gg_lgd(gg.all=gg, size.key=lgd.key.size, size.text.key=lgd.text.size, angle.text.key=angle.text.key, position.text.key=position.text.key, legend.value.vdo=legend.value.vdo, label=label, label.size=label.size, label.angle=label.angle, hjust=hjust, vjust=vjust, opacity=opacity, key=key, sub.title.size=sub.title.size, row=lgd.row, col=lgd.col, sam.dat=sam.uni, tis.trans=tis.trans)
   lay <- rbind(c(NA, NA), c(1, 2), c(NA, NA))
   cat('Saving video... \n')
   res.r=res/144; w.h <- round(as.numeric(strsplit(video.dim, 'x')[[1]])*res.r)
@@ -47,6 +48,5 @@ video <- function(gg, cs.g, sam.uni, tis.trans, sub.title.size=NULL, bar.value.s
   output=paste0(normalizePath(out.dir), "/shm.mp4"), width=w.h[1], height=w.h[2], res=res, vfilter=paste0('framerate=fps=', framerate))
 
 }
-
 
 

@@ -5,8 +5,10 @@
 #' @param size.text.key A numeric of legend text size.
 #' @param angle.text.key A value of angle of key text in legend plot. Default is NULL, equivalent to 0.
 #' @param position.text.key The position of key text in legend plot, one of "top", "right", "bottom", "left". Default is NULL, equivalent to "right".
+#' @param legend.value.vdo Logical TRUE or FALSE. If TRUE, the numeric values of matching spatial features are added to legend, which applies to the video. The default is NULL.
 #' @param sub.title.size The title size of ggplot.
 #' @param row An integer of rows in legend key.
+#' @param col An integer of columns in legend key.
 #' @param label Logical. If TRUE, spatial features having matching samples are labeled by feature identifiers. Default is FALSE. It is useful when spatial features are labeled by similar colors. 
 #' @param label.size The size of spatial feature labels in legend plot. Default is 4.
 #' @param label.angle The angle of spatial feature labels in legend plot. Default is 0.
@@ -26,7 +28,7 @@
 
 #' @importFrom ggplot2 theme layer_data scale_fill_manual unit element_text guide_legend
 
-gg_lgd <- function(gg.all, size.key=NULL, size.text.key=8, angle.text.key=NULL, position.text.key=NULL, sub.title.size=NULL, row=NULL, label=FALSE, label.size=3, label.angle=0, hjust=0, vjust=0, opacity=1, key=TRUE, sam.dat, tis.trans=NULL) {
+gg_lgd <- function(gg.all, size.key=NULL, size.text.key=8, angle.text.key=NULL, position.text.key=NULL, legend.value.vdo=NULL, sub.title.size=NULL, row=NULL, col=NULL, label=FALSE, label.size=3, label.angle=0, hjust=0, vjust=0, opacity=1, key=TRUE, sam.dat, tis.trans=NULL) {
 
   # Function to remove feature labels. 
   rm_label <- function(g) {
@@ -45,20 +47,21 @@ gg_lgd <- function(gg.all, size.key=NULL, size.text.key=8, angle.text.key=NULL, 
     g <- gg.all[[i]] 
     if (!is.null(size.key)) g <- g+theme(legend.key.size=unit(size.key, "npc"), legend.text=element_text(size=ifelse(is.null(size.text.key), 8*size.key*33, size.text.key)))
     if (!is.null(sub.title.size)) g <- g+theme(plot.title=element_text(hjust=0.5, size=sub.title.size))
-    if (!is.null(row)|label==TRUE|opacity!=1|!is.null(angle.text.key)|!is.null(position.text.key)) {
+    if (!is.null(row)|!is.null(col)|label==TRUE|opacity!=1|!is.null(angle.text.key)|!is.null(position.text.key)|!is.null(legend.value.vdo)) {
 
       lay.dat <- layer_data(g)
       dat <- g$data; g.col <- lay.dat$fill
-      names(g.col) <- dat$tissue; df.tis <- as.vector(dat$tissue)
+      names(g.col) <- dat$tissue; df.tis <- as.vector(dat$tissue); df.val <- round(dat$value, 2)
       g.col <- g.col[!duplicated(names(g.col))]; tis.path <- dat$feature
       sam.legend <- intersect(unique(sam.dat), unique(tis.path))
       sam.legend <- setdiff(sam.legend, tis.trans) 
       leg.idx <- !duplicated(tis.path) & (tis.path %in% sam.legend)
-      df.tar <- df.tis[leg.idx]; path.tar <- tis.path[leg.idx]
+      df.tar <- df.tis[leg.idx]; lab <- path.tar <- tis.path[leg.idx]; val.tar <- df.val[leg.idx]
+      if (sum(legend.value.vdo)==1) lab <- paste0(path.tar, ' (', val.tar, ')') 
       if (opacity!=1) g.col <- alpha(g.col, opacity)
-      if (key==TRUE) gde <- guide_legend(title=NULL, nrow=row, label.theme=element_text(angle=angle.text.key, size=g$theme$legend.text$size), label.position=position.text.key)
+      if (key==TRUE) gde <- guide_legend(title=NULL, nrow=row, ncol=col, label.theme=element_text(angle=angle.text.key, size=g$theme$legend.text$size), label.position=position.text.key)
       if (key==FALSE) gde <- FALSE
-      if (!is.null(row)|opacity!=1|key==FALSE|!is.null(angle.text.key)|!is.null(position.text.key)) g <- g+scale_fill_manual(values=g.col, breaks=df.tar, labels=path.tar, guide=gde)
+      if (!is.null(row)|!is.null(col)|opacity!=1|key==FALSE|!is.null(angle.text.key)|!is.null(position.text.key)|!is.null(legend.value.vdo)) g <- g+scale_fill_manual(values=g.col, breaks=df.tar, labels=lab, guide=gde)
       if (label==TRUE) {
 
         dat$x0 <- dat$y0 <- dat$label <- NA
@@ -82,3 +85,8 @@ gg_lgd <- function(gg.all, size.key=NULL, size.text.key=8, angle.text.key=NULL, 
   }; return(gg.all)
 
 }
+
+
+
+
+

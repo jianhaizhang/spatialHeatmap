@@ -25,8 +25,9 @@ spatial_hm(
   sub.title.size = 11,
   legend.plot = "all",
   sam.legend = "identical",
-  legend.title.size = 15,
   bar.value.size = 10,
+  legend.plot.title = NULL,
+  legend.plot.title.size = 11,
   legend.ncol = NULL,
   legend.nrow = NULL,
   legend.position = "bottom",
@@ -35,6 +36,15 @@ spatial_hm(
   legend.text.size = 12,
   angle.text.key = NULL,
   position.text.key = NULL,
+  legend.2nd = FALSE,
+  position.2nd = "bottom",
+  legend.nrow.2nd = NULL,
+  legend.ncol.2nd = NULL,
+  legend.key.size.2nd = 0.03,
+  legend.text.size.2nd = 10,
+  angle.text.key.2nd = 0,
+  position.text.key.2nd = "right",
+  add.feature.2nd = FALSE,
   label = FALSE,
   label.size = 4,
   label.angle = 0,
@@ -54,6 +64,7 @@ spatial_hm(
   res = 500,
   interval = 1,
   framerate = 1,
+  legend.value.vdo = NULL,
   ...
 )
 }
@@ -96,13 +107,15 @@ spatial_hm(
 
 \item{sam.legend}{"identical", "all", or a character vector of tissue names from the aSVG image to show in the legend plot. Default is "identical", meaning all the identical/matching tissues between the data matrix and aSVG image. If "all", all tissues in the aSVG image are shown.}
 
-\item{legend.title.size}{A numeric. Default is 15. Size of the legend plot title.}
-
 \item{bar.value.size}{A numeric of value size in the color bar y-axis. Default is 10.}
 
-\item{legend.ncol}{An integer, the total columns of items in the legend. Default is NULL.}
+\item{legend.plot.title}{The title of the legend plot. The default is NULL.}
 
-\item{legend.nrow}{An integer, the total rows of the items in the legend. Default is NULL. It is applicable to both static image and video.}
+\item{legend.plot.title.size}{The title size of the legend plot. The default is 11.}
+
+\item{legend.ncol}{An integer, the total columns of items in the legend plot. Default is NULL. If both \code{legend.ncol} and \code{legend.nrow} are used, the product of the two arguments should be equal or larger than the total number of matching spatial features.}
+
+\item{legend.nrow}{An integer, the total rows of the items in the legend plot. Default is NULL. It is applicable to the legend plot. If both \code{legend.ncol} and \code{legend.nrow} are used, the product of the two arguments should be equal or larger than the total number of matching spatial features.}
 
 \item{legend.position}{the position of legends ("none", "left", "right",
 "bottom", "top", or two-element numeric vector)}
@@ -110,13 +123,15 @@ spatial_hm(
 \item{legend.direction}{layout of items in legends ("horizontal" or
 "vertical")}
 
-\item{legend.key.size}{A numeric (in "npc"). Default is 0.02. Size of the legend key, applicable to both static image and video.}
+\item{legend.key.size}{A numeric (in "npc"). Default is 0.02. Size of the legend key, applicable to the legend plot.}
 
-\item{legend.text.size}{A numeric. Default is 12. Size of the legend label, applicable to both static image and video.}
+\item{legend.text.size}{A numeric. Default is 12. Size of the legend label, applicable to the legend plot.}
 
 \item{angle.text.key}{A value of angle of key text in legend plot. Default is NULL, equivalent to 0.}
 
 \item{position.text.key}{The position of key text in legend plot, one of "top", "right", "bottom", "left". Default is NULL, equivalent to "right".}
+
+\item{legend.2nd}{Logical, TRUE or FALSE. If TRUE, the secondary legend is added to each spatial heatmap, which are the numeric values of each matching spatial features. The default its FALSE. Applies to the static image.}
 
 \item{label}{Logical. If TRUE, spatial features having matching samples are labeled by feature identifiers. Default is FALSE. It is useful when spatial features are labeled by similar colors.}
 
@@ -157,6 +172,8 @@ placed in an adjacent directory.}
 \item{interval}{The time interval (seconds) between spatial heatmap frames in the video. Default is 1.}
 
 \item{framerate}{An integer of video framerate in frames per seconds. Default is 1. Larger values make the video smoother.}
+
+\item{legend.value.vdo}{Logical TRUE or FALSE. If TRUE, the numeric values of matching spatial features are added to legend, which applies to the video. The default is NULL.}
 
 \item{...}{Other arguments passed to \code{\link[ggplot2]{ggplot}}.}
 }

@@ -16,14 +16,14 @@ grob_list(
   sub.title.size,
   sam.legend = "identical",
   legend.col,
-  legend.title = NULL,
   legend.ncol = NULL,
   legend.nrow = NULL,
   legend.position = "bottom",
   legend.direction = NULL,
   legend.key.size = 0.02,
   legend.text.size = 12,
-  legend.title.size = 8,
+  legend.plot.title = NULL,
+  legend.plot.title.size = 11,
   line.size = 0.2,
   line.color = "grey70",
   mar.lb = NULL,
@@ -51,13 +51,11 @@ grob_list(
 
 \item{sam.legend}{"identical", "all", or a character vector of tissue names from the aSVG image to show in the legend plot. Default is "identical", meaning all the identical/matching tissues between the data matrix and aSVG image. If "all", all tissues in the aSVG image are shown.}
 
-\item{legend.col}{A character vector of colors for the legend keys. The lenght must be equal to the number of target samples shown in the legend.}
+\item{legend.col}{A character vector of colors for the keys in the legend plot. The lenght must be equal to the number of target samples shown in the legend.}
 
-\item{legend.title}{A character, the legend title. Default is NULL.}
+\item{legend.ncol}{An integer, the total columns of items in the legend plot. Default is NULL. If both \code{legend.ncol} and \code{legend.nrow} are used, the product of the two arguments should be equal or larger than the total number of matching spatial features.}
 
-\item{legend.ncol}{An integer, the total columns of items in the legend. Default is NULL.}
-
-\item{legend.nrow}{An integer, the total rows of the items in the legend. Default is NULL. It is applicable to both static image and video.}
+\item{legend.nrow}{An integer, the total rows of the items in the legend plot. Default is NULL. It is applicable to the legend plot. If both \code{legend.ncol} and \code{legend.nrow} are used, the product of the two arguments should be equal or larger than the total number of matching spatial features.}
 
 \item{legend.position}{the position of legends ("none", "left", "right",
 "bottom", "top", or two-element numeric vector)}
@@ -65,11 +63,13 @@ grob_list(
 \item{legend.direction}{layout of items in legends ("horizontal" or
 "vertical")}
 
-\item{legend.key.size}{A numeric (in "npc"). Default is 0.02. Size of the legend key, applicable to both static image and video.}
+\item{legend.key.size}{A numeric (in "npc"). Default is 0.02. Size of the legend key, applicable to the legend plot.}
 
-\item{legend.text.size}{A numeric. Default is 12. Size of the legend label, applicable to both static image and video.}
+\item{legend.text.size}{A numeric. Default is 12. Size of the legend label, applicable to the legend plot.}
 
-\item{legend.title.size}{A numeric. Default is 15. Size of the legend plot title.}
+\item{legend.plot.title}{The title of the legend plot. The default is NULL.}
+
+\item{legend.plot.title.size}{The title size of the legend plot. The default is 11.}
 
 \item{line.size}{A numeric. The size of the shape outlines. Default is 0.2.}
 

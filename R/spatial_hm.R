@@ -20,6 +20,7 @@
 #' @param height A numeric of overall height of all subplots, ranging between 0 and 1. The default is 1. It is applicable to spatial heatmaps in both static image and video. 
 #' @param legend.plot Only applicable if multiple aSVG files are provided to \code{svg.path}. A vector of suffix(es) of aSVG file name(s) that are used to make legend plot(s) such as c('shm1', 'shm2'). Default is 'all', and each aSVG will have a legend plot on the right. If NULL, no legend plot is generated.  
 #' @param legend.r A numeric to adjust the dimension of the legend plot. Default is 1. The larger, the higher ratio of width to height.
+#' @param legend.2nd Logical, TRUE or FALSE. If TRUE, the secondary legend is added to each spatial heatmap, which are the numeric values of each matching spatial features. The default its FALSE. Applies to the static image.
 #' @param lay.shm One of "gene", "con", or "none". If "gene", spatial heatmaps are organized by genes, proteins, metabolites, \emph{etc}. and conditions are sorted whithin each gene. If "con", spatial heatmaps are organized by conditions/treatments applied to experiments, and genes are sorted winthin each condition. If "none", spaital heatmaps are organized by the gene order in \code{ID} and conditions follow the order they appear in \code{data}. 
 #' @param ncol An integer, number of columns to display the spatial heatmaps, not including the legend plot.
 #' @param preserve.scale Logical, TRUE or FALSE. Default is FALSE. If TRUE, the relative dimensions of multiple aSVGs are preserved. Only applicable if multiple aSVG files are provided to \code{svg.path}. The original dimension (width/height) is specified in the top-most node "svg" in the aSVG file.
@@ -151,9 +152,9 @@
 #' @importFrom methods is
 #' @importFrom ggplotify as.ggplot
 
-spatial_hm <- function(svg.path, data, sam.factor=NULL, con.factor=NULL, ID, lay.shm="gene", ncol=2, col.com=c('purple', 'yellow', 'blue'), col.bar='selected', bar.width=0.08, legend.width=0.7, bar.title.size=0, data.trans=NULL, tis.trans=NULL, width=1, height=1, legend.r=1, sub.title.size=11, legend.plot='all', sam.legend='identical', legend.title.size=15, bar.value.size=10, legend.ncol=NULL, legend.nrow=NULL, legend.position='bottom', legend.direction=NULL, legend.key.size=0.02, legend.text.size=12, angle.text.key=NULL, position.text.key=NULL, label=FALSE, label.size=4, label.angle=0, hjust=0, vjust=0, opacity=1, key=TRUE, line.size=0.2, line.color='grey70', preserve.scale=FALSE, verbose=TRUE, out.dir=NULL, anm.width=650, anm.height=550, selfcontained=FALSE, video.dim='640x480', res=500, interval=1, framerate=1, ...) {
+spatial_hm <- function(svg.path, data, sam.factor=NULL, con.factor=NULL, ID, lay.shm="gene", ncol=2, col.com=c('purple', 'yellow', 'blue'), col.bar='selected', bar.width=0.08, legend.width=0.7, bar.title.size=0, data.trans=NULL, tis.trans=NULL, width=1, height=1, legend.r=1, sub.title.size=11, legend.plot='all', sam.legend='identical', bar.value.size=10, legend.plot.title=NULL, legend.plot.title.size=11, legend.ncol=NULL, legend.nrow=NULL, legend.position='bottom', legend.direction=NULL, legend.key.size=0.02, legend.text.size=12, angle.text.key=NULL, position.text.key=NULL, legend.2nd=FALSE, position.2nd='bottom', legend.nrow.2nd=NULL, legend.ncol.2nd=NULL, legend.key.size.2nd=0.03, legend.text.size.2nd=10, angle.text.key.2nd=0, position.text.key.2nd='right', add.feature.2nd=FALSE, label=FALSE, label.size=4, label.angle=0, hjust=0, vjust=0, opacity=1, key=TRUE, line.size=0.2, line.color='grey70', preserve.scale=FALSE, verbose=TRUE, out.dir=NULL, anm.width=650, anm.height=550, selfcontained=FALSE, video.dim='640x480', res=500, interval=1, framerate=1, legend.value.vdo=NULL, ...) {
 
-  x <- y <- color_scale <- tissue <- line.type <- NULL  
+  x <- y <- color_scale <- tissue <- NULL  
   # Extract and filter data.
   options(stringsAsFactors=FALSE) 
   if (is.vector(data)) {
@@ -265,7 +266,7 @@ spatial_hm <- function(svg.path, data, sam.factor=NULL, con.factor=NULL, ID, lay
       svg.df <- svg.df.lis[[i]]; g.df <- svg.df[["df"]]; w.h <- svg.df[['w.h']]
       tis.path <- svg.df[["tis.path"]]; fil.cols <- svg.df[['fil.cols']]
       if (preserve.scale==TRUE) mar <- (1-w.h/w.h.max*0.99)/2 else mar <- NULL
-      grob.lis <- grob_list(gene=gene, con.na=con.na, geneV=geneV, coord=g.df, ID=ID, legend.col=fil.cols, cols=col, tis.path=tis.path, tis.trans=tis.trans, sub.title.size=sub.title.size, sam.legend=sam.legend, legend.ncol=legend.ncol, legend.nrow=legend.nrow, legend.position=legend.position, legend.direction=legend.direction, legend.title.size=legend.title.size, legend.key.size=legend.key.size, legend.text.size=legend.text.size, line.size=line.size, line.color=line.color, line.type=line.type, mar.lb=mar, ...)
+      grob.lis <- grob_list(gene=gene, con.na=con.na, geneV=geneV, coord=g.df, ID=ID, legend.col=fil.cols, cols=col, tis.path=tis.path, tis.trans=tis.trans, sub.title.size=sub.title.size, sam.legend=sam.legend, legend.ncol=legend.ncol, legend.nrow=legend.nrow, legend.position=legend.position, legend.direction=legend.direction, legend.key.size=legend.key.size, legend.text.size=legend.text.size, legend.plot.title=legend.plot.title, legend.plot.title.size=legend.plot.title.size, line.size=line.size, line.color=line.color, mar.lb=mar, ...)
       grob.lis.all <- c(grob.lis.all, list(grob.lis))
 
     }; names(grob.lis.all) <- names(svg.df.lis) 
@@ -280,6 +281,12 @@ spatial_hm <- function(svg.path, data, sam.factor=NULL, con.factor=NULL, ID, lay
     con.idx <- unique(gsub(pat.all, '\\2\\3', names(grob.all)))
     na.all <- sort_gen_con(ID.sel=ID, na.all=na.all, con.all=con.idx, by=lay.shm)
     grob.all <- grob.all[na.all]; gg.all <- gg.all[na.all]
+    if (legend.2nd==TRUE) {
+
+      gg.all <- gg_2lgd(gg.all=gg.all, sam.dat=sam.uni, tis.trans=tis.trans, position.2nd=position.2nd, legend.nrow.2nd=legend.nrow.2nd, legend.ncol.2nd=legend.ncol.2nd, legend.key.size.2nd=legend.key.size.2nd, add.feature.2nd=add.feature.2nd, legend.text.size.2nd=legend.text.size.2nd, angle.text.key.2nd=angle.text.key.2nd, position.text.key.2nd=position.text.key.2nd)
+      grob.all <- lapply(gg.all, ggplotGrob)
+
+    }
     g.arr <- lay_shm(lay.shm=lay.shm, con=con.idx, ncol=ncol, ID.sel=ID, grob.list=grob.all, width=width, height=height, shiny=FALSE)
     cs.arr <- arrangeGrob(grobs=list(grobTree(cs.grob)), layout_matrix=cbind(1), widths=unit(1, "npc")) # "mm" is fixed, "npc" is scalable.
     # Select legend plot.
@@ -311,7 +318,7 @@ spatial_hm <- function(svg.path, data, sam.factor=NULL, con.factor=NULL, ID, lay
       ratio.w.h <- shm.w/ncol(g.arr)/(height/nrow(g.arr))
       h <- 0.99; w <- h*ratio.w.h
       if (w>0.92) { w <- 0.92; h <- w/ratio.w.h }
-      vdo <- video(gg=gg.all, cs.g=cs.g, sam.uni=sam.uni, tis.trans=tis.trans, lgd.key.size=legend.key.size, lgd.text.size=legend.text.size, angle.text.key=angle.text.key, position.text.key=position.text.key, lgd.row=legend.nrow, label=label, label.size=label.size, label.angle=label.angle, hjust=hjust, vjust=vjust, opacity=opacity, key=key, width=w, height=h, video.dim=video.dim, res=res, interval=interval, framerate=framerate, out.dir=out.dir)
+      vdo <- video(gg=gg.all, cs.g=cs.g, sam.uni=sam.uni, tis.trans=tis.trans, lgd.key.size=legend.key.size.2nd, lgd.text.size=legend.text.size.2nd, angle.text.key=angle.text.key.2nd, position.text.key=position.text.key.2nd, lgd.row=legend.nrow.2nd, lgd.col=legend.ncol.2nd, legend.value.vdo=legend.value.vdo, label=label, label.size=label.size, label.angle=label.angle, hjust=hjust, vjust=vjust, opacity=opacity, key=key, width=w, height=h, video.dim=video.dim, res=res, interval=interval, framerate=framerate, out.dir=out.dir)
       if (is.null(vdo)) cat("Video is not generated! \n")
 
     }

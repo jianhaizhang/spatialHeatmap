@@ -10,8 +10,10 @@ gg_lgd(
   size.text.key = 8,
   angle.text.key = NULL,
   position.text.key = NULL,
+  legend.value.vdo = NULL,
   sub.title.size = NULL,
   row = NULL,
+  col = NULL,
   label = FALSE,
   label.size = 3,
   label.angle = 0,
@@ -34,9 +36,13 @@ gg_lgd(
 
 \item{position.text.key}{The position of key text in legend plot, one of "top", "right", "bottom", "left". Default is NULL, equivalent to "right".}
 
+\item{legend.value.vdo}{Logical TRUE or FALSE. If TRUE, the numeric values of matching spatial features are added to legend, which applies to the video. The default is NULL.}
+
 \item{sub.title.size}{The title size of ggplot.}
 
 \item{row}{An integer of rows in legend key.}
+
+\item{col}{An integer of columns in legend key.}
 
 \item{label}{Logical. If TRUE, spatial features having matching samples are labeled by feature identifiers. Default is FALSE. It is useful when spatial features are labeled by similar colors.}
 

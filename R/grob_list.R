@@ -10,16 +10,16 @@
 #' @param tis.trans A character vector of tissue/spatial feature identifiers. These tissues may cover other tissues and should be set transparent. \emph{E.g} c("brain", "heart").
 #' @param sub.title.size A numeric. The subtitle font size of each individual spatial heatmap. Default is 11.
 #' @param sam.legend "identical", "all", or a character vector of tissue names from the aSVG image to show in the legend plot. Default is "identical", meaning all the identical/matching tissues between the data matrix and aSVG image. If "all", all tissues in the aSVG image are shown.
-#' @param legend.col A character vector of colors for the legend keys. The lenght must be equal to the number of target samples shown in the legend. 
-#' @param legend.title A character, the legend title. Default is NULL.
-#' @param legend.ncol An integer, the total columns of items in the legend. Default is NULL.
-#' @param legend.nrow An integer, the total rows of the items in the legend. Default is NULL. It is applicable to both static image and video.
-#' @param legend.key.size A numeric (in "npc"). Default is 0.02. Size of the legend key, applicable to both static image and video.
-#' @param legend.text.size A numeric. Default is 12. Size of the legend label, applicable to both static image and video.
-#' @param legend.title.size A numeric. Default is 15. Size of the legend plot title.
+#' @param legend.col A character vector of colors for the keys in the legend plot. The lenght must be equal to the number of target samples shown in the legend. 
+#' @param legend.ncol An integer, the total columns of items in the legend plot. Default is NULL. If both \code{legend.ncol} and \code{legend.nrow} are used, the product of the two arguments should be equal or larger than the total number of matching spatial features.
+#' @param legend.nrow An integer, the total rows of the items in the legend plot. Default is NULL. It is applicable to the legend plot. If both \code{legend.ncol} and \code{legend.nrow} are used, the product of the two arguments should be equal or larger than the total number of matching spatial features.
+#' @param legend.key.size A numeric (in "npc"). Default is 0.02. Size of the legend key, applicable to the legend plot.
+#' @param legend.text.size A numeric. Default is 12. Size of the legend label, applicable to the legend plot.
 #' @param line.size A numeric. The size of the shape outlines. Default is 0.2.
 #' @param line.color A character. The color of shape outlines. Default is "grey70".
 #' @param mar.lb A two-component numeric vector. The first and second numeric is left/right and bottom/top margin (npc) respectively.
+#' @param legend.plot.title The title of the legend plot. The default is NULL. 
+#' @param legend.plot.title.size The title size of the legend plot. The default is 11.
 #' @param ... Other arguments passed to \code{\link[ggplot2]{ggplot}}.
 #' @inheritParams ggplot2::theme
 
@@ -33,7 +33,7 @@
 
 #' @importFrom ggplot2 ggplot aes theme element_blank margin element_rect scale_y_continuous scale_x_continuous ggplotGrob geom_polygon scale_fill_manual ggtitle element_text labs guide_legend alpha coord_fixed
 
-grob_list <- function(gene, con.na=TRUE, geneV, coord, ID, cols, tis.path, tis.trans=NULL, sub.title.size, sam.legend='identical', legend.col, legend.title=NULL, legend.ncol=NULL, legend.nrow=NULL, legend.position='bottom', legend.direction=NULL, legend.key.size=0.02, legend.text.size=12, legend.title.size=8, line.size=0.2, line.color='grey70', mar.lb=NULL, ...) {
+grob_list <- function(gene, con.na=TRUE, geneV, coord, ID, cols, tis.path, tis.trans=NULL, sub.title.size, sam.legend='identical', legend.col, legend.ncol=NULL, legend.nrow=NULL, legend.position='bottom', legend.direction=NULL, legend.key.size=0.02, legend.text.size=12, legend.plot.title=NULL, legend.plot.title.size=11, line.size=0.2, line.color='grey70', mar.lb=NULL, ...) {
 
   g_list <- function(con, lgd=FALSE, ...) {
 
@@ -63,7 +63,7 @@ grob_list <- function(gene, con.na=TRUE, geneV, coord, ID, cols, tis.path, tis.t
       sam.legend <- setdiff(sam.legend, tis.trans) 
       leg.idx <- !duplicated(tis.path) & (tis.path %in% sam.legend)
       # Legends are set for each SHM and then removed in 'ggplotGrob', but a copy with legend is saved separately for later used in video.
-      scl.fil <- scale_fill_manual(values=g.col, breaks=as.character(tis.df)[leg.idx], labels=tis.path[leg.idx], guide=guide_legend(title=legend.title, ncol=legend.ncol, nrow=legend.nrow))
+      scl.fil <- scale_fill_manual(values=g.col, breaks=as.character(tis.df)[leg.idx], labels=tis.path[leg.idx], guide=guide_legend(title=NULL, ncol=legend.ncol, nrow=legend.nrow))
    
     } else { 
 
@@ -85,10 +85,10 @@ grob_list <- function(gene, con.na=TRUE, geneV, coord, ID, cols, tis.path, tis.t
          g.col0 <- legend.col[sub('_\\d+', '', names(g.col)[i])]
          if (!is.na(g.col0)) g.col[i] <- g.col0
 
-       }; scl.fil <- scale_fill_manual(values=g.col, breaks=as.character(tis.df)[leg.idx], labels=tis.path[leg.idx], guide=guide_legend(title=legend.title, ncol=legend.ncol, nrow=legend.nrow)) 
+       }; scl.fil <- scale_fill_manual(values=g.col, breaks=as.character(tis.df)[leg.idx], labels=tis.path[leg.idx], guide=guide_legend(title=NULL, ncol=legend.ncol, nrow=legend.nrow)) 
 
     }
-    lgd.par <- theme(legend.position=legend.position, legend.direction=legend.direction, legend.background = element_rect(fill=alpha(NA, 0)), legend.key.size=unit(legend.key.size, "npc"), legend.text=element_text(size=legend.text.size), legend.title=element_text(size=legend.title.size), legend.margin=margin(l=0.1, r=0.1, unit='npc'))
+    lgd.par <- theme(legend.position=legend.position, legend.direction=legend.direction, legend.background = element_rect(fill=alpha(NA, 0)), legend.key.size=unit(legend.key.size, "npc"), legend.text=element_text(size=legend.text.size), legend.margin=margin(l=0.1, r=0.1, unit='npc'))
     ## Add 'feature' and 'value' to coordinate data frame, since the resulting ggplot object is used in 'ggplotly'. Otherwise, the coordinate data frame is applied to 'ggplot' directly by skipping the following code.
     coord$gene <- k; coord$condition <- con; coord$value <- NA
     ft.pat <- paste0('(', paste0(unique(tis.path), collapse='|'), ')(_\\d+)$')
@@ -100,13 +100,13 @@ grob_list <- function(gene, con.na=TRUE, geneV, coord, ID, cols, tis.path, tis.t
     coord[idx1, ] <- df0
 
     # If "data" is not in ggplot(), g$data slot is empty.
-    g <- ggplot(data=coord, aes(x=x, y=y, value=value, group=tissue, text=paste0('feature: ', feature, '\n', 'value: ', value)), ...)+geom_polygon(aes(fill=tissue), color=line.color, size=line.size, linetype='solid')+scl.fil+theme(axis.text=element_blank(), axis.ticks=element_blank(), panel.grid=element_blank(), panel.background=element_rect(fill="white", colour="grey80"), axis.title.x=element_text(size=16, face="bold"), plot.title=element_text(hjust=0.5, size=sub.title.size))+labs(x="", y="")+scale_y_continuous(expand=c(0.01, 0.01))+scale_x_continuous(expand=c(0.01, 0.01))+lgd.par
+    g <- ggplot(data=coord, aes(x=x, y=y, value=value, group=tissue, text=paste0('feature: ', feature, '\n', 'value: ', value)), ...)+geom_polygon(aes(fill=tissue), color=line.color, size=line.size, linetype='solid')+scl.fil+theme(axis.text=element_blank(), axis.ticks=element_blank(), panel.grid=element_blank(), panel.background=element_rect(fill="white", colour="grey80"), axis.title.x=element_text(size=16, face="bold"), plot.title=element_text(hjust=0.5, size=sub.title.size), legend.box.margin=margin(-20, 0, 2, 0, unit='pt'))+labs(x="", y="")+scale_y_continuous(expand=c(0.01, 0.01))+scale_x_continuous(expand=c(0.01, 0.01))+lgd.par
     if (is.null(mar.lb)) g <- g+theme(plot.margin=margin(0.005, 0.005, 0.005, 0.005, "npc")) else g <- g+theme(plot.margin=margin(mar.lb[2], mar.lb[1], mar.lb[2], mar.lb[1], "npc"))
     if (con.na==FALSE) g.tit <- ggtitle(k) else g.tit <- ggtitle(paste0(k, "_", con)); g <- g+g.tit
 
     if (lgd==TRUE) {
 
-      g <- g+theme(axis.text=element_blank(), axis.ticks=element_blank(), panel.grid=element_blank(), panel.background=element_rect(fill="white", colour="grey80"), plot.margin=margin(0.005, 0.005, 0.2, 0, "npc"), axis.title.x=element_text(size=16,face="bold"), plot.title=element_text(hjust=0.5, size=15, face="bold"))+lgd.par+ggtitle('Legend')
+      g <- g+theme(axis.text=element_blank(), axis.ticks=element_blank(), panel.grid=element_blank(), panel.background=element_rect(fill="white", colour="grey80"), plot.margin=margin(0.005, 0.005, 0.2, 0, "npc"), axis.title.x=element_text(size=16,face="bold"), plot.title=element_text(hjust=0.5, size=legend.plot.title.size))+lgd.par+ggtitle(legend.plot.title)
 
     }; return(g)
 

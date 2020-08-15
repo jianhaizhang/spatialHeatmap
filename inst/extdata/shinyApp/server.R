@@ -753,13 +753,11 @@ svg_df <- function(svg.path, feature) {
 }
 
 
-grob_list <- function(gene, con.na=TRUE, geneV, coord, ID, cols, tis.path, tis.trans=NULL, sub.title.size, sam.legend='identical', legend.col, legend.title=NULL, legend.ncol=NULL, legend.nrow=NULL, legend.position='bottom', legend.direction=NULL, legend.key.size=0.02, legend.text.size=12, legend.title.size=8, line.size=0.2, line.color='grey70', mar.lb=NULL, ...) {
+grob_list <- function(gene, con.na=TRUE, geneV, coord, ID, cols, tis.path, tis.trans=NULL, sub.title.size, sam.legend='identical', legend.col, legend.ncol=NULL, legend.nrow=NULL, legend.position='bottom', legend.direction=NULL, legend.key.size=0.02, legend.text.size=12, legend.plot.title=NULL, legend.plot.title.size=11, line.size=0.2, line.color='grey70', mar.lb=NULL, ...) {
 
 # con.na=TRUE; sam.legend='identical'; legend.title=NULL; legend.ncol=NULL; legend.nrow=NULL; legend.position='bottom'; legend.direction=NULL; legend.key.size=0.5; legend.text.size=8; legend.title.size=8; line.size=0.2; line.color='grey70'; mar.lb=NULL
 
 # save(con.na, tis.trans, sam.legend, legend.col, legend.title, legend.ncol, legend.nrow, legend.position, legend.direction, legend.key.size, legend.text.size, legend.title.size, line.size, line.color, mar.lb, gene, geneV, coord, ID, cols, tis.path, sub.title.size, file='all')
-
-
 
   g_list <- function(con, lgd=FALSE, ...) {
 
@@ -789,7 +787,7 @@ grob_list <- function(gene, con.na=TRUE, geneV, coord, ID, cols, tis.path, tis.t
       sam.legend <- setdiff(sam.legend, tis.trans) 
       leg.idx <- !duplicated(tis.path) & (tis.path %in% sam.legend)
       # Legends are set for each SHM and then removed in 'ggplotGrob', but a copy with legend is saved separately for later used in video.
-      scl.fil <- scale_fill_manual(values=g.col, breaks=as.character(tis.df)[leg.idx], labels=tis.path[leg.idx], guide=guide_legend(title=legend.title, ncol=legend.ncol, nrow=legend.nrow))
+      scl.fil <- scale_fill_manual(values=g.col, breaks=as.character(tis.df)[leg.idx], labels=tis.path[leg.idx], guide=guide_legend(title=NULL, ncol=legend.ncol, nrow=legend.nrow))
    
     } else { 
 
@@ -811,10 +809,10 @@ grob_list <- function(gene, con.na=TRUE, geneV, coord, ID, cols, tis.path, tis.t
          g.col0 <- legend.col[sub('_\\d+', '', names(g.col)[i])]
          if (!is.na(g.col0)) g.col[i] <- g.col0
 
-       }; scl.fil <- scale_fill_manual(values=g.col, breaks=as.character(tis.df)[leg.idx], labels=tis.path[leg.idx], guide=guide_legend(title=legend.title, ncol=legend.ncol, nrow=legend.nrow)) 
+       }; scl.fil <- scale_fill_manual(values=g.col, breaks=as.character(tis.df)[leg.idx], labels=tis.path[leg.idx], guide=guide_legend(title=NULL, ncol=legend.ncol, nrow=legend.nrow)) 
 
     }
-    lgd.par <- theme(legend.position=legend.position, legend.direction=legend.direction, legend.background = element_rect(fill=alpha(NA, 0)), legend.key.size=unit(legend.key.size, "npc"), legend.text=element_text(size=legend.text.size), legend.title=element_text(size=legend.title.size), legend.margin=margin(l=0.1, r=0.1, unit='npc'))
+    lgd.par <- theme(legend.position=legend.position, legend.direction=legend.direction, legend.background = element_rect(fill=alpha(NA, 0)), legend.key.size=unit(legend.key.size, "npc"), legend.text=element_text(size=legend.text.size), legend.margin=margin(l=0.1, r=0.1, unit='npc'))
     ## Add 'feature' and 'value' to coordinate data frame, since the resulting ggplot object is used in 'ggplotly'. Otherwise, the coordinate data frame is applied to 'ggplot' directly by skipping the following code.
     coord$gene <- k; coord$condition <- con; coord$value <- NA
     ft.pat <- paste0('(', paste0(unique(tis.path), collapse='|'), ')(_\\d+)$')
@@ -826,13 +824,13 @@ grob_list <- function(gene, con.na=TRUE, geneV, coord, ID, cols, tis.path, tis.t
     coord[idx1, ] <- df0
 
     # If "data" is not in ggplot(), g$data slot is empty.
-    g <- ggplot(data=coord, aes(x=x, y=y, value=value, group=tissue, text=paste0('feature: ', feature, '\n', 'value: ', value)), ...)+geom_polygon(aes(fill=tissue), color=line.color, size=line.size, linetype='solid')+scl.fil+theme(axis.text=element_blank(), axis.ticks=element_blank(), panel.grid=element_blank(), panel.background=element_rect(fill="white", colour="grey80"), axis.title.x=element_text(size=16, face="bold"), plot.title=element_text(hjust=0.5, size=sub.title.size))+labs(x="", y="")+scale_y_continuous(expand=c(0.01, 0.01))+scale_x_continuous(expand=c(0.01, 0.01))+lgd.par
+    g <- ggplot(data=coord, aes(x=x, y=y, value=value, group=tissue, text=paste0('feature: ', feature, '\n', 'value: ', value)), ...)+geom_polygon(aes(fill=tissue), color=line.color, size=line.size, linetype='solid')+scl.fil+theme(axis.text=element_blank(), axis.ticks=element_blank(), panel.grid=element_blank(), panel.background=element_rect(fill="white", colour="grey80"), axis.title.x=element_text(size=16, face="bold"), plot.title=element_text(hjust=0.5, size=sub.title.size), legend.box.margin=margin(-20, 0, 2, 0, unit='pt'))+labs(x="", y="")+scale_y_continuous(expand=c(0.01, 0.01))+scale_x_continuous(expand=c(0.01, 0.01))+lgd.par
     if (is.null(mar.lb)) g <- g+theme(plot.margin=margin(0.005, 0.005, 0.005, 0.005, "npc")) else g <- g+theme(plot.margin=margin(mar.lb[2], mar.lb[1], mar.lb[2], mar.lb[1], "npc"))
     if (con.na==FALSE) g.tit <- ggtitle(k) else g.tit <- ggtitle(paste0(k, "_", con)); g <- g+g.tit
 
     if (lgd==TRUE) {
 
-      g <- g+theme(axis.text=element_blank(), axis.ticks=element_blank(), panel.grid=element_blank(), panel.background=element_rect(fill="white", colour="grey80"), plot.margin=margin(0.005, 0.005, 0.2, 0, "npc"), axis.title.x=element_text(size=16,face="bold"), plot.title=element_text(hjust=0.5, size=15, face="bold"))+lgd.par+ggtitle('Legend')
+      g <- g+theme(axis.text=element_blank(), axis.ticks=element_blank(), panel.grid=element_blank(), panel.background=element_rect(fill="white", colour="grey80"), plot.margin=margin(0.005, 0.005, 0.2, 0, "npc"), axis.title.x=element_text(size=16,face="bold"), plot.title=element_text(hjust=0.5, size=legend.plot.title.size))+lgd.par+ggtitle(legend.plot.title)
 
     }; return(g)
 
@@ -866,6 +864,7 @@ grob_list <- function(gene, con.na=TRUE, geneV, coord, ID, cols, tis.path, tis.t
   return(list(grob.lis=grob.lis, g.lgd=g.lgd, g.lis.all=g.lis.all))
 
 }
+
 
 # Separate SHMs of grobs and ggplot. Different SHMs of same 'gene_condition' are indexed with suffixed of '_1', '_2', ...
 grob_gg <- function(gs) {
@@ -953,7 +952,7 @@ submatrix <- function(data, ann=NULL, ID, p=0.3, n=NULL, v=NULL, fun='cor', cor.
 }
 
 # Adjust legend key size and rows in ggplot.
-gg_lgd <- function(gg.all, size.key=NULL, size.text.key=8, angle.text.key=NULL, position.text.key=NULL, sub.title.size=NULL, row=NULL, label=FALSE, label.size=3, label.angle=0, hjust=0, vjust=0, opacity=1, key=TRUE, sam.dat, tis.trans=NULL) {
+gg_lgd <- function(gg.all, size.key=NULL, size.text.key=8, angle.text.key=NULL, position.text.key=NULL, legend.value.vdo=NULL, sub.title.size=NULL, row=NULL, col=NULL, label=FALSE, label.size=3, label.angle=0, hjust=0, vjust=0, opacity=1, key=TRUE, sam.dat, tis.trans=NULL) {
 
   # Function to remove feature labels. 
   rm_label <- function(g) {
@@ -972,20 +971,21 @@ gg_lgd <- function(gg.all, size.key=NULL, size.text.key=8, angle.text.key=NULL, 
     g <- gg.all[[i]] 
     if (!is.null(size.key)) g <- g+theme(legend.key.size=unit(size.key, "npc"), legend.text=element_text(size=ifelse(is.null(size.text.key), 8*size.key*33, size.text.key)))
     if (!is.null(sub.title.size)) g <- g+theme(plot.title=element_text(hjust=0.5, size=sub.title.size))
-    if (!is.null(row)|label==TRUE|opacity!=1|!is.null(angle.text.key)|!is.null(position.text.key)) {
+    if (!is.null(row)|!is.null(col)|label==TRUE|opacity!=1|!is.null(angle.text.key)|!is.null(position.text.key)|!is.null(legend.value.vdo)) {
 
       lay.dat <- layer_data(g)
       dat <- g$data; g.col <- lay.dat$fill
-      names(g.col) <- dat$tissue; df.tis <- as.vector(dat$tissue)
+      names(g.col) <- dat$tissue; df.tis <- as.vector(dat$tissue); df.val <- round(dat$value, 2)
       g.col <- g.col[!duplicated(names(g.col))]; tis.path <- dat$feature
       sam.legend <- intersect(unique(sam.dat), unique(tis.path))
       sam.legend <- setdiff(sam.legend, tis.trans) 
       leg.idx <- !duplicated(tis.path) & (tis.path %in% sam.legend)
-      df.tar <- df.tis[leg.idx]; path.tar <- tis.path[leg.idx]
+      df.tar <- df.tis[leg.idx]; lab <- path.tar <- tis.path[leg.idx]; val.tar <- df.val[leg.idx]
+      if (sum(legend.value.vdo)==1) lab <- paste0(path.tar, ' (', val.tar, ')') 
       if (opacity!=1) g.col <- alpha(g.col, opacity)
-      if (key==TRUE) gde <- guide_legend(title=NULL, nrow=row, label.theme=element_text(angle=angle.text.key, size=g$theme$legend.text$size), label.position=position.text.key)
+      if (key==TRUE) gde <- guide_legend(title=NULL, nrow=row, ncol=col, label.theme=element_text(angle=angle.text.key, size=g$theme$legend.text$size), label.position=position.text.key)
       if (key==FALSE) gde <- FALSE
-      if (!is.null(row)|opacity!=1|key==FALSE|!is.null(angle.text.key)|!is.null(position.text.key)) g <- g+scale_fill_manual(values=g.col, breaks=df.tar, labels=path.tar, guide=gde)
+      if (!is.null(row)|!is.null(col)|opacity!=1|key==FALSE|!is.null(angle.text.key)|!is.null(position.text.key)|!is.null(legend.value.vdo)) g <- g+scale_fill_manual(values=g.col, breaks=df.tar, labels=lab, guide=gde)
       if (label==TRUE) {
 
         dat$x0 <- dat$y0 <- dat$label <- NA
@@ -1010,6 +1010,31 @@ gg_lgd <- function(gg.all, size.key=NULL, size.text.key=8, angle.text.key=NULL, 
 
 }
 
+# Add value keys SHMs.
+gg_2lgd <- function(gg.all, sam.dat, tis.trans, postion.2nd='bottom', legend.nrow.2nd=NULL, legend.ncol.2nd=NULL, legend.key.size.2nd=0.03, add.feature.2nd=FALSE, legend.text.size.2nd=10, angle.text.key.2nd=0, position.text.key.2nd='right') {
+
+  for (i in seq_along(gg.all)) {
+
+    g <- gg.all[[i]]; lay.dat <- layer_data(g)
+    dat <- g$data; g.col <- lay.dat$fill
+    names(g.col) <- dat$tissue; df.val <- round(dat$value, 2)
+    df.tis <- as.vector(dat$tissue); tis.path <- dat$feature
+    g.col <- g.col[!duplicated(names(g.col))]; tis.path <- dat$feature
+    sam.legend <- intersect(unique(sam.dat), unique(tis.path))
+    sam.legend <- setdiff(sam.legend, tis.trans) 
+    leg.idx <- !duplicated(tis.path) & (tis.path %in% sam.legend)
+    df.tar <- df.tis[leg.idx]; lab <- val.tar <- df.val[leg.idx]
+    path.tar <- tis.path[leg.idx]
+    if (add.feature.2nd==TRUE) lab <- paste0(path.tar, ' (', val.tar, ')') 
+    gde <- guide_legend(title=NULL, nrow=legend.nrow.2nd, ncol=legend.ncol.2nd, label.theme=element_text(angle=angle.text.key.2nd, size=legend.text.size.2nd), label.position=position.text.key.2nd)
+    g <- g+scale_fill_manual(values=g.col, breaks=df.tar, labels=lab, guide=gde)+theme(legend.box.margin=margin(-20, 0, 2, 0, unit='pt'))
+    if (!is.null(legend.key.size.2nd)) g <- g+theme(legend.key.size=unit(legend.key.size.2nd, "npc"))
+    if (position.2nd!='bottom') g <- g+theme(legend.position=position.2nd)
+    gg.all[[i]] <- g
+ 
+  }; return(gg.all)
+
+}
 
 # Prepare interactive SHMs in html.
 html_ly <- function(gg, cs.g, tis.trans, sam.uni, anm.width, anm.height, selfcontained=FALSE, out.dir) {
@@ -1053,7 +1078,7 @@ html_ly <- function(gg, cs.g, tis.trans, sam.uni, anm.width, anm.height, selfcon
 }
 
 # Make videos.
-video <- function(gg, cs.g, sam.uni, tis.trans, sub.title.size=NULL, bar.value.size=NULL, lgd.key.size=0.02, lgd.text.size=8, angle.text.key=NULL, position.text.key=NULL, lgd.row=2, label=FALSE, label.size=4, label.angle=0, hjust=0, vjust=0, opacity=1, key=TRUE, width=0.92, height=0.99, video.dim='640x480', res=500, interval=1, framerate=1, out.dir) {
+video <- function(gg, cs.g, sam.uni, tis.trans, sub.title.size=NULL, bar.value.size=NULL, lgd.key.size=0.02, lgd.text.size=8, angle.text.key=NULL, position.text.key=NULL, lgd.row=2, lgd.col=NULL, legend.value.vdo=NULL, label=FALSE, label.size=4, label.angle=0, hjust=0, vjust=0, opacity=1, key=TRUE, width=0.92, height=0.99, video.dim='640x480', res=500, interval=1, framerate=1, out.dir) {
 
   # Test if "av" works.
   test <- function() {
@@ -1065,7 +1090,7 @@ video <- function(gg, cs.g, sam.uni, tis.trans, sub.title.size=NULL, bar.value.s
   if (!is.null(bar.value.size)) cs.g <- cs.g+theme(axis.text.y=element_text(size=bar.value.size))
   na <- names(gg)
   cat('Video: adjust legend size/rows... \n')
-  gg1 <- gg_lgd(gg.all=gg, size.key=lgd.key.size, size.text.key=lgd.text.size, angle.text.key=angle.text.key, position.text.key=position.text.key, label=label, label.size=label.size, label.angle=label.angle, hjust=hjust, vjust=vjust, opacity=opacity, key=key, sub.title.size=sub.title.size, row=lgd.row, sam.dat=sam.uni, tis.trans=tis.trans)
+  gg1 <- gg_lgd(gg.all=gg, size.key=lgd.key.size, size.text.key=lgd.text.size, angle.text.key=angle.text.key, position.text.key=position.text.key, legend.value.vdo=legend.value.vdo, label=label, label.size=label.size, label.angle=label.angle, hjust=hjust, vjust=vjust, opacity=opacity, key=key, sub.title.size=sub.title.size, row=lgd.row, col=lgd.col, sam.dat=sam.uni, tis.trans=tis.trans)
   lay <- rbind(c(NA, NA), c(1, 2), c(NA, NA))
   cat('Saving video... \n')
   res.r=res/144; w.h <- round(as.numeric(strsplit(video.dim, 'x')[[1]])*res.r)
@@ -1160,8 +1185,8 @@ shinyServer(function(input, output, session) {
     inline=TRUE, choices=c("None", "Row", "Column"), selected="None")
     updateSelectInput(session, 'sep', 'Step 5: separator', c("None", "Tab", "Space", "Comma", "Semicolon"), "None")
     updateRadioButtons(session, inputId='log', label='Log/exp scaling:', choices=c("No", "log2", "exp2"), selected="No", inline=TRUE)
-    output$linear.scl <- renderUI({
-    numericInput(inputId="lin.scl", label="Fold scaling:", value=1, min=-Inf, max=Inf, step=1, width=95)
+    output$scl <- renderUI({
+    selectInput('scale', label='Scale by:', choices=c('No', 'Row', 'Column'), selected='Row')
     })
     updateRadioButtons(session, inputId='cs.v', label='Color scale based on:', choices=c("Selected rows"="sel.gen", "All rows"="w.mat"), selected="sel.gen", inline=TRUE)
     updateNumericInput(session, inputId="height", label="Overall height:", value=400, min=0.1, max=Inf, step=NA)
@@ -1233,18 +1258,19 @@ shinyServer(function(input, output, session) {
   # Transform data.
   geneIn1 <- reactive({
 
-    if (is.null(geneIn0())|is.null(input$lin.scl)) return(NULL)
-    validate(need(try(!is.na(input$lin.scl)), 'Fold should be a numeric!'))
-    gene2 <- geneIn0()[['gene2']] 
-    if (input$lin.scl==1) { if (input$log=='log2') {
+    if (is.null(geneIn0())|is.null(input$scale)) return(NULL)
+    gene1 <- gene2 <- geneIn0()[['gene2']] 
+    if (input$log=='log2') {
    
       g.min <- min(gene2)
       if (g.min<0) gene2 <- gene2-g.min+1; if (g.min==0) gene2 <- gene2+1; gene2 <- log2(gene2)
 
-    }; if (input$log=='exp2') gene2 <- 2^gene2 } else { gene2 <- gene2*input$lin.scl }
+    }; if (input$log=='exp2') gene2 <- 2^gene2
+    # Scale by row/column
+    if (input$scale=='Row') { gene2 <- t(scale(t(gene2))) } else if (input$scale=='Column') { gene2 <- scale(gene2) }
 
     gene3 <- geneIn0()[['gene3']]; gen.rep <- geneIn0()[['gen.rep']]
-    return(list(gene2=gene2, gene3=gene3, gen.rep=gen.rep))
+    return(list(gene1=gene1, gene2=gene2, gene3=gene3, gen.rep=gen.rep))
 
   })
 
@@ -1262,7 +1288,7 @@ shinyServer(function(input, output, session) {
   geneIn <- reactive({
     
     if (is.null(geneIn1())) return(NULL)    
-    gene2 <- geneIn1()[['gene2']]; gene3 <- geneIn1()[['gene3']]; input$fil.but
+    gene1 <- geneIn1()[['gene1']]; gene2 <- geneIn1()[['gene2']]; gene3 <- geneIn1()[['gene3']]; input$fil.but
     if (!identical(sort(input$col.na), sort(colnames(gene2)))) return()
     # Input variables in "isolate" will not triger re-excution, but if the whole reactive object is trigered by "input$fil.but" then code inside "isolate" will re-excute.
     isolate({
@@ -1273,11 +1299,12 @@ shinyServer(function(input, output, session) {
       if (nrow(se)==0) { validate(need(try(nrow(se)>0), 'All rows are filtered out!')); return() }
 
       gene2 <- as.data.frame(assay(se), stringsAsfactors=FALSE); colnames(gene2) <- make.names(colnames(gene2))
+      gene1 <- gene1[rownames(gene2), ]
       gene3 <- as.data.frame(rowData(se))[, , drop=FALSE]
       
     })
     cat('Preparing data matrix... \n')
-    return(list(gene2=gene2[, input$col.na], gene3=gene3))
+    return(list(gene1=gene1[, input$col.na], gene2=gene2[, input$col.na], gene3=gene3))
 
   })
 
@@ -1323,7 +1350,6 @@ shinyServer(function(input, output, session) {
     gID$new <- setdiff(gID$geneID, gID$all); gID$all <- c(gID$all, gID$new)
     
   })
-
 
   geneV <- reactive({
 
@@ -1445,7 +1471,7 @@ shinyServer(function(input, output, session) {
 
   observe({
 
-    input$fileIn; geneIn(); input$adj.modInpath; input$A; input$p; input$cv1; input$cv2; svg.df(); input$hide.lgd 
+    input$fileIn; geneIn(); input$adj.modInpath; svg.df(); input$hide.lgd 
     tis.tran <- NULL; for (i in seq_along(svg.df())) { tis.tran <- c(tis.tran, svg.df()[[i]][['tis.path']]) }
     updateCheckboxGroupInput(session, inputId="tis", label='Select tissues to be transparent:', choices=intersect(unique(sam()), unique(tis.tran)), selected='', inline=TRUE)
 
@@ -1467,14 +1493,19 @@ shinyServer(function(input, output, session) {
   observeEvent(input$fileIn, { grob$all <- grob$gg.all1 <- grob$gg.all1 <- grob$gg.all <- grob$lgd.all <- NULL })
   gs.new <- reactive({ 
 
-    if (is.null(svg.df())|is.null(geneIn())|is.null(gID$new)|length(gID$new)==0|is.null(gID$all)|is.null(input$dt_rows_selected)|color$col[1]=='none') return(NULL); 
+    if.con <- is.null(svg.df())|is.null(geneIn())|is.null(gID$new)|length(gID$new)==0|is.null(gID$all)|is.null(input$dt_rows_selected)|color$col[1]=='none'
+    if (is.null(if.con)) return(); if (is.na(if.con)|if.con==TRUE) return(NULL)
+
+    if (input$cs.v=="sel.gen") ID <- gID$geneID
+    if (input$cs.v=="w.mat") ID <- gID$new
+    if (is.null(ID)) return()
     # Avoid repetitive computation.  
     pat.new <- paste0('^', gID$new, '_(', pat.con(), ')_\\d+$')
     if (any(grepl(pat.new, names(grob$all)))) return()
     withProgress(message="Tissue heatmap: ", value=0, {
  
       incProgress(0.25, detail="preparing data.")
-      gene <- geneIn()[["gene2"]][gID$new, ]
+      gene <- geneIn()[["gene2"]]
       svg.df.lis <- svg.df(); grob.lis.all <- w.h.all <- NULL
       # Get max width/height of multiple SVGs, and dimensions of other SVGs can be set relative to this max width/height.
       for (i in seq_along(svg.df.lis)) { w.h.all <- c(w.h.all, svg.df.lis[[i]][['w.h']]); w.h.max <- max(w.h.all) }
@@ -1485,8 +1516,8 @@ shinyServer(function(input, output, session) {
         svg.df <- svg.df.lis[[i]]; g.df <- svg.df[["df"]]; w.h <- svg.df[['w.h']]
         tis.path <- svg.df[["tis.path"]]; fil.cols <- svg.df[['fil.cols']]
         if (input$pre.scale=='Y') mar <- (1-w.h/w.h.max*0.99)/2 else mar <- NULL
-        cat('New grob/ggplot:', gID$new, ' \n')
-        grob.lis <- grob_list(gene=gene, con.na=geneIn0()[['con.na']], geneV=geneV(), coord=g.df, ID=gID$new, legend.col=fil.cols, cols=color$col, tis.path=tis.path, tis.trans=input$tis, sub.title.size=18, mar.lb=mar, legend.nrow=2, legend.key.size=0.04) # Only gID$new is used.
+        cat('New grob/ggplot:', ID, ' \n')
+        grob.lis <- grob_list(gene=gene, con.na=geneIn0()[['con.na']], geneV=geneV(), coord=g.df, ID=ID, legend.col=fil.cols, cols=color$col, tis.path=tis.path, tis.trans=input$tis, sub.title.size=18, mar.lb=mar, legend.nrow=2, legend.key.size=0.04) # Only gID$new is used.
         validate(need(!is.null(grob.lis), paste0(svg.na[i], ': no spatial features that have matching sample identifiers in data are detected!')))
         grob.lis.all <- c(grob.lis.all, list(grob.lis))
 
@@ -1502,16 +1533,17 @@ shinyServer(function(input, output, session) {
   # Use "observeEvent" to replace "observe" and list events (input$log, input$tis, ...), since if the events are in "observe", every time a new gene is clicked, "input$dt_rows_selected" causes the evaluation of all code in "observe", and the evaluation is duplicated with "gs.new".
   col.reorder <- reactiveValues(col.re='Y')
   observeEvent(input$col.na, { if (input$col.cfm>0) col.reorder$col.re <- 'N' })
-  observeEvent(list(log=input$log, tis=input$tis, col.but=input$col.but, cs.v=input$cs.v, pre.scale=input$pre.scale, col.cfm=input$col.cfm), {
+  observeEvent(list(log=input$log, tis=input$tis, col.but=input$col.but, cs.v=input$cs.v, pre.scale=input$pre.scale, col.cfm=input$col.cfm, scale=input$scale), {
     
     grob$all <- grob$gg.all <- grob$lgd.all <- NULL; gs.all <- reactive({ 
 
-      if (is.null(svg.df())|is.null(geneIn())|is.null(input$dt_rows_selected)|color$col[1]=='none') return(NULL)
+      if.con <- is.null(svg.df())|is.null(geneIn())|is.null(input$dt_rows_selected)|color$col[1]=='none'|is.null(input$pre.scale)
+      if (is.null(if.con)) return(); if (is.na(if.con)|if.con==TRUE) return(NULL)
       withProgress(message="Spatial heatmap: ", value=0, {
-        incProgress(0.25, detail="preparing data.")
-        #if (input$cs.v=="sel.gen") gene <- geneIn()[["gene2"]][input$dt_rows_selected, ]
-        #if (input$cs.v=="w.mat") gene <- geneIn()[["gene2"]]
-        gene <- geneIn()[["gene2"]][gID$all, ]
+      incProgress(0.25, detail="preparing data.")
+      #if (input$cs.v=="sel.gen") gene <- geneIn()[["gene2"]][input$dt_rows_selected, ]
+      #if (input$cs.v=="w.mat") gene <- geneIn()[["gene2"]]
+      gene <- geneIn()[["gene2"]][input$dt_rows_selected, ]
       svg.df.lis <- svg.df(); grob.lis.all <- w.h.all <- NULL
       # Get max width/height of multiple SVGs, and dimensions of other SVGs can be set relative to this max width/height.
       for (i in seq_along(svg.df.lis)) { w.h.all <- c(w.h.all, svg.df.lis[[i]][['w.h']]); w.h.max <- max(w.h.all) }
@@ -1521,9 +1553,10 @@ shinyServer(function(input, output, session) {
         svg.df <- svg.df.lis[[i]]; g.df <- svg.df[["df"]]
         tis.path <- svg.df[["tis.path"]]; fil.cols <- svg.df[['fil.cols']]; w.h <- svg.df[['w.h']]
         if (input$pre.scale=='Y') mar <- (1-w.h/w.h.max*0.99)/2 else mar <- NULL
-        cat('All grob/ggplot:', gID$all, ' \n')
+        cat('All grob/ggplot:', gID$geneID, ' \n')
         svg.na <- names(svg.df.lis)
-        grob.lis <- grob_list(gene=gene, con.na=geneIn0()[['con.na']], geneV=geneV(), coord=g.df, ID=gID$all, legend.col=fil.cols, cols=color$col, tis.path=tis.path, tis.trans=input$tis, sub.title.size=18, mar.lb=mar, legend.nrow=2, legend.key.size=0.04) # All gene IDs are used.
+        incProgress(0.75, detail=paste0('preparing ', paste0(gID$geneID, collapse=';')))
+        grob.lis <- grob_list(gene=gene, con.na=geneIn0()[['con.na']], geneV=geneV(), coord=g.df, ID=gID$geneID, legend.col=fil.cols, cols=color$col, tis.path=tis.path, tis.trans=input$tis, sub.title.size=18, mar.lb=mar, legend.nrow=2, legend.key.size=0.04) # All gene IDs are used.
         validate(need(!is.null(grob.lis), paste0(svg.na[i], ': no spatial features that have matching sample identifiers in data are detected!')))
         grob.lis.all <- c(grob.lis.all, list(grob.lis))
 
@@ -1536,14 +1569,66 @@ shinyServer(function(input, output, session) {
     grob$all <- grob.gg.lis[['grob']]; grob$gg.all <- grob.gg.lis[['gg']]; grob$lgd.all <- grob.gg.lis[['lgd.all']]
 
   })
+  # Avoid repetitive computation under input$cs.v=='w.mat'.
+  observeEvent(input$dt_rows_selected, {
+  
+    ID <- gID$geneID; if (input$cs.v=='w.mat') { 
+      
+      ID <- NULL; IDs <- gID$geneID; for (i in ID) {
 
+        pat <- paste0('^', i, '_(', pat.con(), ')_\\d+$')
+        if (any(grepl(pat, names(grob$all)))) next
+        ID <- c(ID, i)
+         
+      }; if (is.null(ID)) return()
+
+    }
+    grob$all <- grob$gg.all <- grob$lgd.all <- NULL; gs.all <- reactive({ 
+
+      if.con <- is.null(svg.df())|is.null(geneIn())|is.null(input$dt_rows_selected)|color$col[1]=='none'|is.null(input$pre.scale)
+      if (is.null(if.con)) return(); if (is.na(if.con)|if.con==TRUE) return(NULL)
+      withProgress(message="Spatial heatmap: ", value=0, {
+      incProgress(0.25, detail="preparing data.")
+      #if (input$cs.v=="sel.gen") gene <- geneIn()[["gene2"]][input$dt_rows_selected, ]
+      #if (input$cs.v=="w.mat") gene <- geneIn()[["gene2"]]
+      gene <- geneIn()[["gene2"]][input$dt_rows_selected, ]
+      svg.df.lis <- svg.df(); grob.lis.all <- w.h.all <- NULL
+      # Get max width/height of multiple SVGs, and dimensions of other SVGs can be set relative to this max width/height.
+      for (i in seq_along(svg.df.lis)) { w.h.all <- c(w.h.all, svg.df.lis[[i]][['w.h']]); w.h.max <- max(w.h.all) }
+      # A set of SHMs are made for each SVG, and all sets of SHMs are placed in a list.
+      for (i in seq_along(svg.df.lis)) {
+
+        svg.df <- svg.df.lis[[i]]; g.df <- svg.df[["df"]]
+        tis.path <- svg.df[["tis.path"]]; fil.cols <- svg.df[['fil.cols']]; w.h <- svg.df[['w.h']]
+        if (input$pre.scale=='Y') mar <- (1-w.h/w.h.max*0.99)/2 else mar <- NULL
+        cat('All grob/ggplot:', ID, ' \n')
+        svg.na <- names(svg.df.lis)
+        incProgress(0.75, detail=paste0('preparing ', paste0(ID, collapse=';')))
+        grob.lis <- grob_list(gene=gene, con.na=geneIn0()[['con.na']], geneV=geneV(), coord=g.df, ID=ID, legend.col=fil.cols, cols=color$col, tis.path=tis.path, tis.trans=input$tis, sub.title.size=18, mar.lb=mar, legend.nrow=2, legend.key.size=0.04) # All gene IDs are used.
+        validate(need(!is.null(grob.lis), paste0(svg.na[i], ': no spatial features that have matching sample identifiers in data are detected!')))
+        grob.lis.all <- c(grob.lis.all, list(grob.lis))
+
+      }; names(grob.lis.all) <- svg.na
+      return(grob.lis.all)
+
+      })
+
+    }); grob.gg.lis <- grob_gg(gs=gs.all())
+    grob$all <- grob.gg.lis[['grob']]; grob$gg.all <- grob.gg.lis[['gg']]; grob$lgd.all <- grob.gg.lis[['lgd.all']]
+
+  })
   # when 'color <- reactiveValues(col="none")', upon the app is launched, 'gs.new' is evaluated for 3 time. In the 1st time, 'gID$new'/'gID$all' are NULL, so 'gs.new' is NULL. In the 2nd time, 'color$col[1]=='none'' is TRUE, so NULL is returned to 'gs.new', but 'gID$new'/'gID$all' are 'HRE2'. In the third time, 'color$col[1]=='none'' is FALSE, so 'gs.new' is not NULL, but 'gID$new' is still 'HRE2', so it does not triger evaluation of 'observeEvent' and hence SHMs and legend plot are not returned upon being launched. The solution is to assign colors to 'color$col' in 'observe' upon being launched so that in the 2nd time 'gs.new' is not NULL, and no 3rd time.
-  observeEvent(gID$new, { 
+  observeEvent(gs.new(), { 
 
     if (is.null(svg.df())|is.null(gID$new)|length(gID$new)==0|is.null(gID$all)|is.null(gs.new())) return(NULL)
-    gs.new <- gs.new(); grob.gg.lis <- grob_gg(gs=gs.new())
-    grob.all <- c(grob$all, grob.gg.lis[['grob']]); grob$all <- grob.all[unique(names(grob.all))] 
-    gg.all <- c(grob$gg.all, grob.gg.lis[['gg']]); grob$gg.all <- gg.all[unique(names(gg.all))]
+    cat('Updating grobs/ggplots/lgds... \n')
+    grob.gg.lis <- grob_gg(gs=gs.new())
+    grobs <- grob.gg.lis[['grob']]
+    grob.rm <- !names(grob$all) %in% names(grobs)
+    grob$all <- c(grob$all[grob.rm], grobs)
+    ggs <- grob.gg.lis[['gg']]
+    gg.rm <- !names(grob$gg.all) %in% names(ggs)
+    grob$gg.all <- c(grob$gg.all[gg.rm], ggs) 
     lgd0 <- grob.gg.lis[['lgd.all']]
     grob$lgd.all <- c(grob$lgd.all, lgd0[!names(lgd0) %in% names(grob$lgd.all)])
   
@@ -1580,16 +1665,46 @@ shinyServer(function(input, output, session) {
     grob$all1 <- grob$all[na.all]; grob$gg.all1 <- grob$gg.all[na.all]
 
   })
+  # Add value legend to SHMs.
+  # 'observeEvent' is able to avoid infinite cycles while 'observe' may cause such cycles. E.g. in the latter, 'is.null(grob$gg.all)' and 'grob$gg.all1 <- gg.all <- gg_2lgd()' would induce each other and form infinit circles.
+  observeEvent(list(val.lgd=input$val.lgd, row=input$val.lgd.row, key=input$val.lgd.key, text=input$val.lgd.text, feat=input$val.lgd.feat), {
+    
+    cat('Adding value legend... \n')
+    if.con <- is.null(grob$gg.all)|is.null(sam())|is.null(input$val.lgd)|is.null(input$val.lgd.feat)|input$val.lgd==0
+    if (length(if.con)==0) return(); if (is.na(if.con)|if.con==TRUE) return(NULL)
+    gg.all <- grob$gg.all1
+    if ((input$val.lgd %% 2)==1) {
+
+      gg.all <- gg_2lgd(gg.all=gg.all, sam.dat=sam(), tis.trans=input$tis, postion='bottom', legend.nrow.2nd=input$val.lgd.row, legend.key.size.2nd=input$val.lgd.key, legend.text.size.2nd=input$val.lgd.text, add.feature.2nd=(input$val.lgd.feat=='Y'))
+      grob$all1 <- gg.all <- lapply(gg.all, function(x) { x+theme(legend.position="bottom") } )
+      tmp <- tempfile()
+      png(tmp); grob$all1 <- lapply(gg.all, ggplotGrob)
+      dev.off(); if (file.exists(tmp)) do.call(file.remove, list(tmp))
+    
+    } else if ((input$val.lgd %% 2)==0) { 
+
+      cat('Remove value legend... \n')
+      grob$gg.all1 <- gg.all <- lapply(gg.all, function(x) { x+theme(legend.position="none") })
+      tmp <- tempfile(); png(tmp); grob$all1 <- lapply(gg.all, ggplotGrob) 
+      dev.off(); if (file.exists(tmp)) do.call(file.remove, list(tmp))
+
+    }
+
+  })
+
   observeEvent(input$col.cfm, { col.reorder$col.re <- 'Y' })
   # In "observe" and "observeEvent", if one code return (NULL), then all the following code stops. If one code changes, all the code renews.
   observe({
-  
-    if (is.null(geneIn())|is.null(input$dt_rows_selected)|is.null(svg.df())|gID$geneID[1]=="none"|is.null(grob$all1)) return(NULL)
+ 
+    if.con <- is.null(geneIn())|is.null(input$dt_rows_selected)|is.null(svg.df())|gID$geneID[1]=="none"|is.null(grob$all1)
+    if (length(if.con)==0) return(); if (is.na(if.con)|if.con==TRUE) return(NULL)
+    
     output$shm <- renderPlot(width=as.numeric(input$width)/2*as.numeric(input$col.n), height=as.numeric(input$height)*length(input$dt_rows_selected), {
-
+    
     if (col.reorder$col.re=='N') return()
-    if (is.null(input$dt_rows_selected)|is.null(svg.df())|gID$geneID[1]=="none"|is.null(grob$all1)) return(NULL)
-    if (length(color$col=="none")==0|input$color=="") return(NULL)
+    if.con <-  is.null(input$dt_rows_selected)|is.null(svg.df())|gID$geneID[1]=="none"|is.null(grob$all1)
+    if (length(if.con)==0) return(); if (is.na(if.con)|if.con==TRUE) return(NULL)
+    if (is.na(color$col[1])|length(color$col=="none")==0|input$color=="") return(NULL)
     r.na <- rownames(geneIn()[["gene2"]]); gID$geneID <- r.na[input$dt_rows_selected]
     grob.na <- names(grob$all1)
     # Select target grobs.
@@ -1652,12 +1767,14 @@ shinyServer(function(input, output, session) {
       box(title="Spatial Heatmap", status="primary", solidHeader=TRUE, collapsible=TRUE, width=ifelse(input$hide.lgd=='N', 9, 12), height=NULL, 
       tabBox(title="", width=12, id='shm_all', selected='shm1', side='right', 
       tabPanel(title='Video', value='shm3', 
-      fluidRow(splitLayout(cellWidths=c('1%', '15%', '1%', '15%', '1%', '7%', '1%', '7%', '1%', '13%'), '', 
+      fluidRow(splitLayout(cellWidths=c('1%', '15%', '1%', '15%', '1%', '7%', '1%', '7%', '1%', '13%', '1%', '16%'), '', 
       radioButtons(inputId="vdo.but", label="Show video:", choices=c("Yes"="Y", "No"="N"), selected="N", inline=TRUE), '',
       numericInput(inputId='vdo.itvl', label='Transition time (s):', value=1, min=0.1, max=Inf, step=1, width=270), '',
       numericInput(inputId='vdo.height', label='Height:', value=0.99, min=0.1, max=0.99, step=0.1, width=270), '',
       numericInput(inputId='vdo.width', label='Width:', value=0.92, min=0.1, max=0.92, step=0.1, width=270), '',
-      numericInput(inputId='vdo.res', label='Resolution (dpi):', value=400, min=1, max=1000, step=5, width=270)
+      numericInput(inputId='vdo.res', label='Resolution (dpi):', value=400, min=1, max=1000, step=5, width=270), '',
+      radioButtons(inputId="vdo.val.lgd", label="Add values to legend:", choices=c("Yes"="Y", "No"="N"), selected="N", inline=TRUE)
+
       )), uiOutput('video.dim'), textOutput('tran.vdo'), htmlOutput('ffm'), 
       fluidRow(splitLayout(cellWidths=c("1%", "7%", "91%", "1%"), "", plotOutput("bar3"), uiOutput('video'), ""))),
       
@@ -1686,13 +1803,28 @@ shinyServer(function(input, output, session) {
       ), textOutput('h.w.c'), textOutput('msg.col'),
 
       fluidRow(splitLayout(cellWidths=c('100%'),  checkboxGroupInput(inputId="tis", label="Select tissues to be transparent:", choices='', selected='', inline=TRUE))),
-      fluidRow(splitLayout(cellWidths=c('14%', '1%', '24%', '1%', '14%', '1%', '11%', '1%', '15%'), 
-      downloadButton("dld.shm", "Download"), '',
+
+      fluidRow(column(1, offset=0, style='padding-left:0px; padding-right:0px; padding-top:0px; padding-bottom:5px',
+      dropdownButton(inputId='dropdown', label='Download', circle=FALSE, icon=NULL, status='primary', inline=FALSE, width=800,
+      fluidRow(splitLayout(cellWidths=c('27%', '1%', '14%', '1%', '11%', '1%', '17%', '1%', '14%'), 
       radioButtons(inputId='ext', label='File type:', choices=c('NA'='NA', "png"="png", "jpg"="jpg", "pdf"="pdf"), selected="NA", inline=TRUE), '',
       numericInput(inputId='res', label='Resolustion (dpi):', value=300, min=10, max=Inf, step=10, width=150), '',
       numericInput(inputId='lgd.w', label='Legend width:', value=0.7, min=0, max=1, step=0.1, width=150), '',
-      numericInput(inputId='lgd.ratio', label='Legend aspect ratio:', value=1, min=0.0001, max=Inf, step=0.1, width=140)
-      )),
+      numericInput(inputId='lgd.ratio', label='Legend aspect ratio:', value=1, min=0.0001, max=Inf, step=0.1, width=140), '', downloadButton("dld.shm", "Download")
+      )))
+      ),  
+      column(1, offset=0, style='padding-left:40px; padding-right:0px; padding-top:0px; padding-bottom:5px',
+      dropdownButton(inputId='value.lgd', label='Value legend', circle=FALSE, icon=NULL, status='primary', inline=FALSE, width=500,
+      fluidRow(splitLayout(cellWidths=c('1%', '25%', '1%', '13%', '1%', '17%', '1%', '14%', '1%', '28%'), '', 
+      actionButton("val.lgd", "Add/Remove", icon=icon("refresh")), '',  
+      # radioButtons(inputId='val.lgd', label='Add value legend:', choices=c('No'='N', "Yes"="Y"), selected="N", inline=TRUE), '',
+      numericInput(inputId='val.lgd.row', label='Rows:', value=1, min=1, max=Inf, step=1, width=150), '',
+      numericInput(inputId='val.lgd.key', label='Key size:', value=0.03, min=0, max=1, step=0.01, width=150), '',
+      numericInput(inputId='val.lgd.text', label='Text size:', value=10, min=1, max=Inf, step=1, width=140), '',
+      radioButtons(inputId='val.lgd.feat', label='Include feature:', choices=c('No'='N', "Yes"="Y"), selected="N", inline=TRUE)
+      ))
+      ))
+      ),
       fluidRow(splitLayout(cellWidths=c("1%", "7%", "91%", "1%"), "", plotOutput("bar1"), plotOutput("shm", height='auto'), "")))
 
       ))
@@ -1726,7 +1858,7 @@ shinyServer(function(input, output, session) {
     
     if (is.null(input$hide.lgd)) return(NULL) 
     if (input$hide.lgd=='Y') return(NULL)
-    box(title="Original Image", status="primary", solidHeader=TRUE, collapsible=TRUE, uiOutput('shms.o'),
+    box(title="Legend Plot", status="primary", solidHeader=TRUE, collapsible=TRUE, uiOutput('shms.o'),
     splitLayout(cellWidths=c("43%", "1%", '43%'),
     numericInput(inputId='lgd.row', label='Legend key rows:', value=2, min=1, max=Inf, step=1, width=150), '',
     numericInput(inputId='lgd.key.size', label='Legend key size:', value=0.04, min=0, max=1, step=0.02, width=150)
@@ -1893,7 +2025,7 @@ shinyServer(function(input, output, session) {
 
   })
 
-  observeEvent(list(log=input$log, tis=input$tis, col.but=input$col.but, cs.v=input$cs.v, pre.scale=input$pre.scale, vdo.but=input$vdo.but, vdo.dim=input$vdo.dim, vdo.itvl=input$vdo.itvl, vdo.height=input$vdo.height, vdo.width=input$vdo.width, vdo.res=input$vdo.res), {
+  observeEvent(list(log=input$log, tis=input$tis, col.but=input$col.but, cs.v=input$cs.v, pre.scale=input$pre.scale, vdo.but=input$vdo.but, vdo.dim=input$vdo.dim, vdo.itvl=input$vdo.itvl, vdo.height=input$vdo.height, vdo.width=input$vdo.width, vdo.res=input$vdo.res, vdo.val.lgd=input$'vdo.val.lgd'), {
 
     if (is.null(input$vdo.but)) return(NULL) 
     if (input$vdo.but=='N'|is.null(pat.all())) return(NULL)
@@ -1913,7 +2045,7 @@ shinyServer(function(input, output, session) {
     if (dim %in% c('1280x800', '1280x1024', '1280x720')&res>450) res <- 450
     if (dim=='1920x1080'&res>300) res <- 300
     selectInput("vdo.dim", label="Fixed dimension:", choices=c('1920x1080', '1280x800', '320x568', '1280x1024', '1280x720', '320x480', '480x360', '600x600', '800x600', '640x480'), selected='640x480', width=110)
-    vdo <- video(gg=gg.all1, cs.g=shm.bar(), sam.uni=sam(), tis.trans=input$tis, lgd.key.size=input$lgd.key.size, lgd.text.size=NULL, position.text.key='right', label=(input$lgd.label=='Y'), label.size=input$lgd.lab.size, sub.title.size=8, bar.value.size=6, lgd.row=input$lgd.row, width=input$vdo.width, height=input$vdo.height, video.dim=dim, interval=input$vdo.itvl, res=res, out.dir='./www/video'); if (is.null(vdo)) return()
+    vdo <- video(gg=gg.all1, cs.g=shm.bar(), sam.uni=sam(), tis.trans=input$tis, lgd.key.size=input$lgd.key.size, lgd.text.size=NULL, position.text.key='right', legend.value.vdo=(input$'vdo.val.lgd'=='Y'), label=(input$lgd.label=='Y'), label.size=input$lgd.lab.size, sub.title.size=8, bar.value.size=6, lgd.row=input$lgd.row, width=input$vdo.width, height=input$vdo.height, video.dim=dim, interval=input$vdo.itvl, res=res, out.dir='./www/video'); if (is.null(vdo)) return()
     cat('Presenting video... \n')
     incProgress(0.95, detail="Presenting video...")
     w.h <- as.numeric(strsplit(input$vdo.dim, 'x')[[1]])
@@ -1928,7 +2060,7 @@ shinyServer(function(input, output, session) {
     geneIn(); input$adj.modInpath; input$A; input$p; input$cv1
     input$cv2; input$min.size; input$net.type
     input$measure; input$cor.abs; input$thr; input$mhm.v
-    updateRadioButtons(session, "mat.scale", "Scale: ", c("No", "By column", "By row"), "No", inline=TRUE)
+    updateRadioButtons(session, "mat.scale", "Scale by: ", c("No", "Column", "Row"), "No", inline=TRUE)
 
   })
 
@@ -1949,7 +2081,7 @@ shinyServer(function(input, output, session) {
     withProgress(message="Compute similarity/distance matrix: ", value = 0, {
 
       incProgress(0.5, detail="Please wait...")
-      gene <- geneIn()[['gene2']]
+      gene <- geneIn()[['gene1']]
       if (input$measure=='cor') {
       
         m <- cor(x=t(gene))
@@ -1965,7 +2097,7 @@ shinyServer(function(input, output, session) {
   submat <- reactive({
     
     if (is.null(cor.dis())|input$mhm.but=='N') return()
-    gene <- geneIn()[["gene2"]]; rna <- rownames(gene)
+    gene <- geneIn()[["gene1"]]; rna <- rownames(gene)
     gen.tar<- rna[input$dt_rows_selected]; mat <- cor.dis()
     
     # Validate filtering parameters in matrix heatmap.<Paste> 
@@ -2006,11 +2138,11 @@ shinyServer(function(input, output, session) {
   output$HMly <- renderPlotly({
     
     if (is.null(submat())|input$mhm.but=='N') return()
-    gene <- geneIn()[["gene2"]]; rna <- rownames(gene)
+    gene <- geneIn()[["gene1"]]; rna <- rownames(gene)
     gen.tar<- rna[input$dt_rows_selected]
     withProgress(message="Matrix heatmap:", value=0, {
       incProgress(0.7, detail="Plotting...")
-      if (input$mat.scale=="By column") scale.hm <- 'column' else if (input$mat.scale=="By row") scale.hm <- 'row' else scale.hm <- 'no'
+      if (input$mat.scale=="Column") scale.hm <- 'column' else if (input$mat.scale=="Row") scale.hm <- 'row' else scale.hm <- 'no'
       matrix_hm(ID=gen.tar, data=submat(), scale=scale.hm, main='Target Genes and Their Nearest Neighbours', title.size=10, static=FALSE)
 
     })
@@ -2045,7 +2177,7 @@ shinyServer(function(input, output, session) {
     #gene <- geneIn()[["gene2"]]; if (!(input$gen.sel %in% rownames(gene))) return() # Avoid unnecessary computing of 'adj', since 'input$gen.sel' is a cerain true gene id of an irrelevant expression matrix, not 'None', when switching from one defaul example's matrix heatmap to another example.
     if (input$fileIn=="custom_data"|grepl("_Mustroph$|_Merkin$|_Cardoso.Moreira$|_Prudencio$|_Census$", input$fileIn)) {
 
-      gene <- geneIn()[["gene2"]]; if (is.null(gene)) return()
+      gene <- geneIn()[["gene1"]]; if (is.null(gene)) return()
       type <- input$net.type; sft <- if (type=='distance') 1 else 6
 
       withProgress(message="Computing: ", value = 0, {
@@ -2150,14 +2282,14 @@ shinyServer(function(input, output, session) {
 
     if (input$TOM.in=="None"|input$cpt.nw=="N") return(NULL)
     if (length(color.net$col.net=="none")==0) return(NULL)
-    gene <- geneIn()[["gene2"]]; if (!(input$gen.sel %in% rownames(gene))) return() # Avoid unnecessary computing of 'adj', since 'input$gen.sel' is a cerain true gene id of an irrelevant expression matrix, not 'None', when switching from one defaul example's network to another example.
+    gene <- geneIn()[["gene1"]]; if (!(input$gen.sel %in% rownames(gene))) return() # Avoid unnecessary computing of 'adj', since 'input$gen.sel' is a cerain true gene id of an irrelevant expression matrix, not 'None', when switching from one defaul example's network to another example.
     if(input$col.but.net==0) color.net$col.net <- colorRampPalette(c('purple', 'yellow', 'blue'))(len.cs.net) # color.net$col.net is changed alse outside renderPlot, since it is a reactive value.
    
       withProgress(message="Color scale: ", value = 0, {
       incProgress(0.25, detail="Preparing data. Please wait.")
       incProgress(0.75, detail="Plotting. Please wait.")
       node <- visNet()[["node"]]; node.v <- node$value; v.net <- seq(min(node.v), max(node.v), len=len.cs.net)
-        cs.net <- col_bar(geneV=v.net, cols=color.net$col.net, width=1, mar=c(3, 0.1, 3, 0.1)); return(cs.net) # '((max(v.net)-min(v.net))/len.cs.net)*0.7' avoids bar overlap.
+        cs.net <- col_bar(geneV=v.net, cols=color.net$col.net, width=1); return(cs.net) # '((max(v.net)-min(v.net))/len.cs.net)*0.7' avoids bar overlap.
 
       })
 
@@ -2176,7 +2308,7 @@ shinyServer(function(input, output, session) {
   vis.net <- reactive({ 
     
     if (input$TOM.in=="None"|input$cpt.nw=="N") return(NULL)
-    gene <- geneIn()[["gene2"]]; if (!(input$gen.sel %in% rownames(gene))) return() # Avoid unnecessary computing of 'adj', since 'input$gen.sel' is a cerain true gene id of an irrelevant expression matrix, not 'None', when switching from one defaul example's network to another example.
+    gene <- geneIn()[["gene1"]]; if (!(input$gen.sel %in% rownames(gene))) return() # Avoid unnecessary computing of 'adj', since 'input$gen.sel' is a cerain true gene id of an irrelevant expression matrix, not 'None', when switching from one defaul example's network to another example.
 
     withProgress(message="Network:", value=0.5, {
     incProgress(0.3, detail="prepare for plotting.")

@@ -16,6 +16,8 @@ video(
   angle.text.key = NULL,
   position.text.key = NULL,
   lgd.row = 2,
+  lgd.col = NULL,
+  legend.value.vdo = NULL,
   label = FALSE,
   label.size = 4,
   label.angle = 0,
@@ -54,6 +56,10 @@ video(
 \item{position.text.key}{The position of key text in legend plot, one of "top", "right", "bottom", "left". Default is NULL, equivalent to "right".}
 
 \item{lgd.row}{An integer of legend rows.}
+
+\item{lgd.col}{An integer of legend columns.}
+
+\item{legend.value.vdo}{Logical TRUE or FALSE. If TRUE, the numeric values of matching spatial features are added to legend, which applies to the video. The default is NULL.}
 
 \item{label}{Logical. If TRUE, spatial features having matching samples are labeled by feature identifiers. Default is FALSE. It is useful when spatial features are labeled by similar colors.}
 

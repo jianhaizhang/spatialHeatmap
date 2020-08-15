@@ -31,8 +31,8 @@ shinyUI(dashboardPage(
   dashboardBody(
  
     tags$head(tags$style(HTML(".shiny-output-error-validation { color: red; } "))),
-    tags$head(tags$style(".shiny-notification {position: fixed; opacity: 1; 
-    top: 35%; left: 40%; height: 90px; width: 400px}"
+    tags$head(tags$style(".shiny-notification {position: fixed; opacity: 1; font-size: 30px; 
+    top: 35%; left: 30%; height: 150px; width: 700px}"
     )),
     tabItems(
       tabItem(tabName="hm_net", 
@@ -46,7 +46,7 @@ shinyUI(dashboardPage(
       actionButton(inputId='fil.but', label="Filter", icon=icon("refresh")), '',
       radioButtons(inputId='log', label='Log/exp scaling:', choices=c("No", "log2", "exp2"), selected="No", inline=TRUE)
       )), 
-      fluidRow(column(2, uiOutput('linear.scl')), column(10, uiOutput('col.order'))),
+      fluidRow(column(2, uiOutput('scl')), column(10, uiOutput('col.order'))),
       verbatimTextOutput("fil.par"),
       fluidRow(splitLayout(cellWidths=c("1%", "98%", "1%"), "", dataTableOutput("dt"), ""))
       ),
@@ -59,7 +59,7 @@ shinyUI(dashboardPage(
       radioButtons(inputId="cor.abs", label="Cor.absolute:", choices=c('No', 'Yes'), selected='No', inline=TRUE), '', 
       radioButtons(inputId="thr", label="Select by:", choices=c('proportion'='p', 'number'='n', 'value'='v'), selected='p', inline=TRUE), '',
       numericInput(inputId='mhm.v', label='Cutoff: ', value=0.2, min=-Inf, max=Inf, step=NA, width=NULL), '',
-      radioButtons(inputId="mat.scale", label="Scale:", choices=c("No", "By column", "By row"), selected="No", inline=TRUE), '',
+      radioButtons(inputId="mat.scale", label="Scale by:", choices=c("No", "Column", "Row"), selected="No", inline=TRUE), '',
       radioButtons(inputId="mhm.but", label="Show plot:", choices=c("Yes"="Y", "No"="N"), selected="N", inline=TRUE)
       )),
 
