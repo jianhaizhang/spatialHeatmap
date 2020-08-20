@@ -15,7 +15,7 @@ spatial_hm(
   col.com = c("purple", "yellow", "blue"),
   col.bar = "selected",
   bar.width = 0.08,
-  legend.width = 0.7,
+  legend.width = 1,
   bar.title.size = 0,
   data.trans = NULL,
   tis.trans = NULL,
@@ -87,7 +87,9 @@ spatial_hm(
 
 \item{col.bar}{"selected" or "all", the former uses values of input assayed items to build the color scale while the latter uses all values from the data. The default is "selected".}
 
-\item{bar.width}{The width of legend plot, ranging from 0 to 1. Default if 0.7.}
+\item{bar.width}{The width of color bar, ranging from 0 to 1. Default if 0.08.}
+
+\item{legend.width}{The width of legend plot, ranging from 0 to 1 (default).}
 
 \item{bar.title.size}{A numeric of color bar title size. Default is 0.}
 
@@ -245,9 +247,14 @@ se.fil.chk <- filter_data(data=se.aggr.chk, sam.factor='organism_part', con.fact
 svg.chk <- system.file("extdata/shinyApp/example", "gallus_gallus.svg", package="spatialHeatmap")
 # Plot spatial heatmaps on gene "ENSGALG00000019846".
 # Toy data1. 
-spatial_hm(svg.path=svg.chk, data=df.fil.chk, ID='ENSGALG00000019846', height=0.4, legend.r=1.7, sub.title.size=9, ncol=3)
+spatial_hm(svg.path=svg.chk, data=df.fil.chk, ID='ENSGALG00000019846', height=0.4, legend.r=1.9, sub.title.size=7, ncol=3)
+# Save spaital heatmaps as HTML and video files by assigning "~/test" to "out.dir". 
+\donttest{
+if (!dir.exists('~/test')) dir.create('~/test')
+spatial_hm(svg.path=svg.chk, data=df.fil.chk, ID='ENSGALG00000019846', height=0.4, legend.r=1.9, sub.title.size=7, ncol=3, out.dir='~/test')
+}
 # Toy data2.
-spatial_hm(svg.path=svg.chk, data=se.fil.chk, ID='ENSGALG00000019846', legend.r=1.5, sub.title.size=9, ncol=3)
+spatial_hm(svg.path=svg.chk, data=se.fil.chk, ID='ENSGALG00000019846', legend.r=1.9, legend.nrow=2, sub.title.size=7, ncol=3)
 
 # The data can also come as as a simple named vector. The following gives an example on a vector of 3 random values. 
 # Random values.
@@ -256,7 +263,7 @@ vec <- sample(1:100, 3)
 names(vec) <- c('brain', 'heart', 'notMapped')
 vec
 # Plot.
-spatial_hm(svg.path=svg.chk, data=vec, ID='geneX', height=0.7, legend.r=1.5, sub.title.size=9, ncol=1, legend.nrow=2)
+spatial_hm(svg.path=svg.chk, data=vec, ID='geneX', height=0.6, legend.r=1.5, ncol=1)
 
 # Plot spatial heatmaps on aSVGs of two Arabidopsis thaliana development stages.
 
@@ -269,8 +276,8 @@ df.test[1:3, ]
 svg1 <- system.file("extdata/shinyApp/example", "arabidopsis_thaliana.organ_shm1.svg", package="spatialHeatmap")
 # aSVG of development stage 2.
 svg2 <- system.file("extdata/shinyApp/example", "arabidopsis_thaliana.organ_shm2.svg", package="spatialHeatmap")
-# Spatial heatmaps. The second aSVG is used for legend plot through "legend='shm2'".
-spatial_hm(svg.path=c(svg1, svg2), data=df.test, ID=c('gene1'), height=0.8, legend.r=1.6, preserve.scale=TRUE, legend='shm2') 
+# Spatial heatmaps. 
+spatial_hm(svg.path=c(svg1, svg2), data=df.test, ID=c('gene1'), height=0.8, legend.r=1.6, preserve.scale=TRUE) 
 }
 \references{
 https://www.gimp.org/tutorials/ \cr https://inkscape.org/en/doc/tutorials/advanced/tutorial-advanced.en.html \cr http://www.microugly.com/inkscape-quickguide/

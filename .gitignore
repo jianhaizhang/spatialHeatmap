@@ -11,6 +11,7 @@ local_mode_result/
 vignette_files/
 vignette_cache/
 inst/extdata/shinyApp/test*.R
-inst/extdata/shinyApp/html_shm/*
+html_shm/
+!inst/extdata/shinyApp/html_shm/README.txt
 inst/extdata/shinyApp/www/ggly/*
-inst/extdata/shinyApp/www/video/*
+*.mp4

@@ -5,7 +5,7 @@
 #' @param ID A vector of target item identifiers in the data. 
 #' @param data The subsetted data matrix returned by the function \code{\link{submatrix}}, where rows are assayed items and columns are samples/conditions.
 #' @param scale "row", "column", or "no", meaing scale the heatmap by row, column, or no scale respectively. Default is "no".
-#' @param col A character vector of color ingredients for constructing the color scale. The default is c('purple', 'yellow', 'blue').
+#' @param col A character vector of color ingredients for constructing the color scale. The default is c('yellow', 'orange', 'red').
 #' @param main The title of the matrix heatmap.
 #' @param title.size A numeric value, the size of the title.
 #' @param cexCol A numeric value, the size of column names. Default is 1.
@@ -112,7 +112,7 @@
 #' @importFrom graphics image mtext par plot title
 #' @importFrom grDevices dev.off png
 
-matrix_hm <- function(ID, data, scale='no', col=c('purple', 'yellow', 'blue'), main=NULL, title.size=10, cexCol=1, cexRow=1, angleCol=45, angleRow=45, sep.color="black", sep.width=0.02, static=TRUE, margin=c(10, 10), arg.lis1=list(), arg.lis2=list()) {
+matrix_hm <- function(ID, data, scale='no', col=c('yellow', 'orange', 'red'), main=NULL, title.size=10, cexCol=1, cexRow=1, angleCol=45, angleRow=45, sep.color="black", sep.width=0.02, static=TRUE, margin=c(10, 10), arg.lis1=list(), arg.lis2=list()) {
 
   options(stringsAsFactors=FALSE)
   if (is(data, 'data.frame')|is(data, 'matrix')|is(data, 'DFrame')) {

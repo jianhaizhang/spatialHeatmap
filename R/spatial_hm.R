@@ -11,11 +11,11 @@
 #' @inheritParams gg_lgd
 
 #' @param ID A character vector of assyed items (\emph{e.g.} genes, proteins) whose values are used to color the aSVG.
-#' @param col.com A character vector of the color components used to build the color scale. The default is c('purple', 'yellow', 'blue').
+#' @param col.com A character vector of the color components used to build the color scale. The default is c('yellow', 'orange', 'red').
 #' @param col.bar "selected" or "all", the former uses values of input assayed items to build the color scale while the latter uses all values from the data. The default is "selected".
 #' @param data.trans "log2", "exp2", or NULL. If colors across samples cannot distinguish due to low variance or outliers, transform the data by "log2" or "2-base expoent" (exp2). Default is NULL (data will not be transformed).
 #' @param bar.width The width of color bar, ranging from 0 to 1. Default if 0.08.
-#' @param bar.width The width of legend plot, ranging from 0 to 1. Default if 0.7.
+#' @param legend.width The width of legend plot, ranging from 0 to 1 (default).
 #' @param width A numeric of overall width of all subplots, ranging between 0 and 1. The default is 1. It is applicable to spatial heatmaps in both static image and video.
 #' @param height A numeric of overall height of all subplots, ranging between 0 and 1. The default is 1. It is applicable to spatial heatmaps in both static image and video. 
 #' @param legend.plot Only applicable if multiple aSVG files are provided to \code{svg.path}. A vector of suffix(es) of aSVG file name(s) that are used to make legend plot(s) such as c('shm1', 'shm2'). Default is 'all', and each aSVG will have a legend plot on the right. If NULL, no legend plot is generated.  
@@ -102,9 +102,14 @@
 
 #' # Plot spatial heatmaps on gene "ENSGALG00000019846".
 #' # Toy data1. 
-#' spatial_hm(svg.path=svg.chk, data=df.fil.chk, ID='ENSGALG00000019846', height=0.4, legend.r=1.7, sub.title.size=9, ncol=3)
+#' spatial_hm(svg.path=svg.chk, data=df.fil.chk, ID='ENSGALG00000019846', height=0.4, legend.r=1.9, sub.title.size=7, ncol=3)
+#' # Save spaital heatmaps as HTML and video files by assigning "~/test" to "out.dir". 
+#' \donttest{
+#' if (!dir.exists('~/test')) dir.create('~/test')
+#' spatial_hm(svg.path=svg.chk, data=df.fil.chk, ID='ENSGALG00000019846', height=0.4, legend.r=1.9, sub.title.size=7, ncol=3, out.dir='~/test')
+#' }
 #' # Toy data2.
-#' spatial_hm(svg.path=svg.chk, data=se.fil.chk, ID='ENSGALG00000019846', legend.r=1.5, sub.title.size=9, ncol=3)
+#' spatial_hm(svg.path=svg.chk, data=se.fil.chk, ID='ENSGALG00000019846', legend.r=1.9, legend.nrow=2, sub.title.size=7, ncol=3)
 #'
 #' # The data can also come as as a simple named vector. The following gives an example on a vector of 3 random values. 
 #' # Random values.
@@ -113,7 +118,7 @@
 #' names(vec) <- c('brain', 'heart', 'notMapped')
 #' vec
 #' # Plot.
-#' spatial_hm(svg.path=svg.chk, data=vec, ID='geneX', height=0.7, legend.r=1.5, sub.title.size=9, ncol=1, legend.nrow=2)
+#' spatial_hm(svg.path=svg.chk, data=vec, ID='geneX', height=0.6, legend.r=1.5, ncol=1)
 #'
 #' # Plot spatial heatmaps on aSVGs of two Arabidopsis thaliana development stages.
 #' 
@@ -127,8 +132,8 @@
 #' svg1 <- system.file("extdata/shinyApp/example", "arabidopsis_thaliana.organ_shm1.svg", package="spatialHeatmap")
 #' # aSVG of development stage 2.
 #' svg2 <- system.file("extdata/shinyApp/example", "arabidopsis_thaliana.organ_shm2.svg", package="spatialHeatmap")
-#' # Spatial heatmaps. The second aSVG is used for legend plot through "legend='shm2'".
-#' spatial_hm(svg.path=c(svg1, svg2), data=df.test, ID=c('gene1'), height=0.8, legend.r=1.6, preserve.scale=TRUE, legend='shm2') 
+#' # Spatial heatmaps. 
+#' spatial_hm(svg.path=c(svg1, svg2), data=df.test, ID=c('gene1'), height=0.8, legend.r=1.6, preserve.scale=TRUE) 
 
 #' @author Jianhai Zhang \email{jzhan067@@ucr.edu; zhang.jianhai@@hotmail.com} \cr Dr. Thomas Girke \email{thomas.girke@@ucr.edu}
 
@@ -152,7 +157,7 @@
 #' @importFrom methods is
 #' @importFrom ggplotify as.ggplot
 
-spatial_hm <- function(svg.path, data, sam.factor=NULL, con.factor=NULL, ID, lay.shm="gene", ncol=2, col.com=c('purple', 'yellow', 'blue'), col.bar='selected', bar.width=0.08, legend.width=0.7, bar.title.size=0, data.trans=NULL, tis.trans=NULL, width=1, height=1, legend.r=1, sub.title.size=11, legend.plot='all', sam.legend='identical', bar.value.size=10, legend.plot.title=NULL, legend.plot.title.size=11, legend.ncol=NULL, legend.nrow=NULL, legend.position='bottom', legend.direction=NULL, legend.key.size=0.02, legend.text.size=12, angle.text.key=NULL, position.text.key=NULL, legend.2nd=FALSE, position.2nd='bottom', legend.nrow.2nd=NULL, legend.ncol.2nd=NULL, legend.key.size.2nd=0.03, legend.text.size.2nd=10, angle.text.key.2nd=0, position.text.key.2nd='right', add.feature.2nd=FALSE, label=FALSE, label.size=4, label.angle=0, hjust=0, vjust=0, opacity=1, key=TRUE, line.size=0.2, line.color='grey70', preserve.scale=FALSE, verbose=TRUE, out.dir=NULL, anm.width=650, anm.height=550, selfcontained=FALSE, video.dim='640x480', res=500, interval=1, framerate=1, legend.value.vdo=NULL, ...) {
+spatial_hm <- function(svg.path, data, sam.factor=NULL, con.factor=NULL, ID, lay.shm="gene", ncol=2, col.com=c('yellow', 'orange', 'red'), col.bar='selected', bar.width=0.08, legend.width=1, bar.title.size=0, data.trans=NULL, tis.trans=NULL, width=1, height=1, legend.r=1, sub.title.size=11, legend.plot='all', sam.legend='identical', bar.value.size=10, legend.plot.title=NULL, legend.plot.title.size=11, legend.ncol=NULL, legend.nrow=NULL, legend.position='bottom', legend.direction=NULL, legend.key.size=0.02, legend.text.size=12, angle.text.key=NULL, position.text.key=NULL, legend.2nd=FALSE, position.2nd='bottom', legend.nrow.2nd=NULL, legend.ncol.2nd=NULL, legend.key.size.2nd=0.03, legend.text.size.2nd=10, angle.text.key.2nd=0, position.text.key.2nd='right', add.feature.2nd=FALSE, label=FALSE, label.size=4, label.angle=0, hjust=0, vjust=0, opacity=1, key=TRUE, line.size=0.2, line.color='grey70', preserve.scale=FALSE, verbose=TRUE, out.dir=NULL, anm.width=650, anm.height=550, selfcontained=FALSE, video.dim='640x480', res=500, interval=1, framerate=1, legend.value.vdo=NULL, ...) {
 
   x <- y <- color_scale <- tissue <- NULL  
   # Extract and filter data.

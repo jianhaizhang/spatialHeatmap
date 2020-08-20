@@ -216,9 +216,14 @@ svg.chk <- system.file("extdata/shinyApp/example", "gallus_gallus.svg", package=
 
 # Plot spatial heatmaps on gene "ENSGALG00000019846". In the middle are spatial heatmaps. Only aSVG features with matching countparts in data are colored. On the right is the legend plot, only the matching features are labeled.
 # Toy data1. 
-spatial_hm(svg.path=svg.chk, data=df.fil.chk, ID='ENSGALG00000019846', height=0.4, legend.r=1.7, sub.title.size=9, ncol=3, legend.nrow=2)
+spatial_hm(svg.path=svg.chk, data=df.fil.chk, ID='ENSGALG00000019846', height=0.4, legend.r=1.9, sub.title.size=7, ncol=3)
+# Save spaital heatmaps as HTML and video files by assigning "~/test" to "out.dir". 
+\donttest{    
+if (!dir.exists('~/test')) dir.create('~/test')
+spatial_hm(svg.path=svg.chk, data=df.fil.chk, ID='ENSGALG00000019846', height=0.4, legend.r=1.9, sub.title.size=7, ncol=3, out.dir='~/test')
+}
 # Toy data2.
-spatial_hm(svg.path=svg.chk, data=se.fil.chk, ID='ENSGALG00000019846', legend.r=1.5, sub.title.size=9, ncol=3, legend.nrow=2)
+spatial_hm(svg.path=svg.chk, data=se.fil.chk, ID='ENSGALG00000019846', legend.r=1.9, legend.nrow=2, sub.title.size=7, ncol=3)
 
 # When plot spatial heatmaps, the data can also come as as a simple vector. The following gives an example on a vector of 3 random values. 
 # Random values.
@@ -227,7 +232,7 @@ vec <- sample(1:100, 3)
 names(vec) <- c('brain', 'heart', 'notMapped')
 vec
 # Plot.
-spatial_hm(svg.path=svg.chk, data=vec, ID='geneX', height=0.7, legend.r=1.5, sub.title.size=9, ncol=1, legend.nrow=2)
+spatial_hm(svg.path=svg.chk, data=vec, ID='geneX', height=0.6, legend.r=1.5, ncol=1)
 
 # Plot spatial heatmaps on aSVGs of two Arabidopsis thaliana development stages.
 
@@ -241,8 +246,8 @@ df.test[1:3, ]
 svg1 <- system.file("extdata/shinyApp/example", "arabidopsis_thaliana.organ_shm1.svg", package="spatialHeatmap")
 # aSVG of development stage 2.
 svg2 <- system.file("extdata/shinyApp/example", "arabidopsis_thaliana.organ_shm2.svg", package="spatialHeatmap")
-# Spatial heatmaps. The second aSVG is used for legend plot through "legend='shm2'".
-spatial_hm(svg.path=c(svg1, svg2), data=df.test, ID=c('gene1'), height=0.8, legend.r=1.6, preserve.scale=TRUE, legend='shm2') 
+# Spatial heatmaps.
+spatial_hm(svg.path=c(svg1, svg2), data=df.test, ID=c('gene1'), height=0.8, legend.r=1.6, preserve.scale=TRUE) 
 
 ## If users want to use custom identifiers for spatial features in the aSVG file, the function "update_feature" should be used. For illustration purpose, the aSVG "gallus_gallus.svg" in this package is copied to '~/test' as example.
 
@@ -306,7 +311,7 @@ network(ID="ENSGALG00000019846", data=se.sub.mat[['sub_matrix']], adj.mod=adj.mo
 # Interactive network. Same with static mode, the target gene ID is appended "_target".  
 \donttest{ network(ID="ENSGALG00000019846", data=se.sub.mat[['sub_matrix']], adj.mod=adj.mod, static=FALSE) }
 
-## Shiny app
+## Shiny App
 
 # In additon to generating spatial heatmaps and corresponding gene context plots from R, spatialHeatmap includes a Shiny App (https://shiny.rstudio.com/) that provides access to the same functionalities from an intuitive-to-use web browser interface. Apart from being very user-friendly, this App conveniently organizes the results of the entire visualization workflow in a single browser window with options to adjust the parameters of the individual components interactively. This app is launched by the function "shiny_all" without any parameters. Upon launched, the app automatically displays a pre-formatted example. 
 \donttest{shiny_all()}

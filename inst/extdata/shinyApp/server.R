@@ -84,7 +84,7 @@ sort_gen_con <- function(ID.sel, na.all, con.all, by='gene') {
 
 }
 
-matrix_hm <- function(ID, data, scale='no', col=c('purple', 'yellow', 'blue'), main=NULL, title.size=10, cexCol=1, cexRow=1, angleCol=45, angleRow=45, sep.color="black", sep.width=0.02, static=TRUE, margin=c(10, 10), arg.lis1=list(), arg.lis2=list()) {
+matrix_hm <- function(ID, data, scale='no', col=c('yellow', 'orange', 'red'), main=NULL, title.size=10, cexCol=1, cexRow=1, angleCol=45, angleRow=45, sep.color="black", sep.width=0.02, static=TRUE, margin=c(10, 10), arg.lis1=list(), arg.lis2=list()) {
 
   options(stringsAsFactors=FALSE)
   if (is(data, 'data.frame')|is(data, 'matrix')|is(data, 'DFrame')) {
@@ -1011,7 +1011,7 @@ gg_lgd <- function(gg.all, size.key=NULL, size.text.key=8, angle.text.key=NULL, 
 }
 
 # Add value keys SHMs.
-gg_2lgd <- function(gg.all, sam.dat, tis.trans, postion.2nd='bottom', legend.nrow.2nd=NULL, legend.ncol.2nd=NULL, legend.key.size.2nd=0.03, add.feature.2nd=FALSE, legend.text.size.2nd=10, angle.text.key.2nd=0, position.text.key.2nd='right') {
+gg_2lgd <- function(gg.all, sam.dat, tis.trans, position.2nd='bottom', legend.nrow.2nd=NULL, legend.ncol.2nd=NULL, legend.key.size.2nd=0.03, add.feature.2nd=FALSE, legend.text.size.2nd=10, angle.text.key.2nd=0, position.text.key.2nd='right') {
 
   for (i in seq_along(gg.all)) {
 
@@ -1321,8 +1321,8 @@ shinyServer(function(input, output, session) {
       gene <- geneIn(); gene.dt <- cbind.data.frame(gene[["gene2"]][, , drop=FALSE], gene[["gene3"]][, , drop=FALSE], stringsAsFactors=FALSE) 
 
    }; cat('Presenting data matrix... \n')
-    datatable(gene.dt, selection=list(mode="multiple", target="row", selected=c(1)),
-    filter="top", extensions=c('Scroller'), options=list(pageLength=5, lengthMenu=c(5, 15, 20), autoWidth=TRUE, scrollCollapse=TRUE, deferRender=TRUE, scrollX=TRUE, scrollY=200, scroller=TRUE), class='cell-border strip hover') %>% formatStyle(0, backgroundColor="orange", cursor='pointer') %>% 
+    datatable(gene.dt, selection=list(mode="multiple", target="row", selected=c(1)),  
+    filter="top", extensions=c('Scroller'), options=list(pageLength=5, lengthMenu=c(5, 15, 20), autoWidth=TRUE, scrollCollapse=TRUE, deferRender=TRUE, scrollX=TRUE, scrollY=200, scroller=TRUE, searchHighlight=TRUE, search=list(regex=TRUE, smart=FALSE)), class='cell-border strip hover') %>% formatStyle(0, backgroundColor="orange", cursor='pointer') %>% 
     formatRound(colnames(geneIn()[["gene2"]]), 2)
 
     })
@@ -1375,7 +1375,7 @@ shinyServer(function(input, output, session) {
   observe({
     
     if (is.null(input$col.but)) return()
-    if(input$col.but==0) color$col <- colorRampPalette(c('purple', 'yellow', 'blue'))(length(geneV()))
+    if(input$col.but==0) color$col <- colorRampPalette(c('yellow', 'orange', 'red'))(length(geneV()))
 
   })
   # As long as a button is used, observeEvent should be used. All variables inside 'observeEvent' trigger code evaluation, not only 'eventExpr'.  
@@ -1392,7 +1392,7 @@ shinyServer(function(input, output, session) {
     if ((grepl("_Mustroph$|_Merkin$|_Cardoso.Moreira$|_Prudencio$|_Census$", input$fileIn) & !is.null(geneIn()))|((input$fileIn=="custom_computed_data"|input$fileIn=="custom_data") & (!is.null(input$svgInpath)|!is.null(input$svgInpath1)) & !is.null(geneIn()))) {
 
       if (length(color$col=="none")==0|input$color==""|is.null(geneV())) return(NULL)
-      # if(input$col.but==0) color$col <- colorRampPalette(c('purple', 'yellow', 'blue'))(length(geneV()))
+      # if(input$col.but==0) color$col <- colorRampPalette(c('yellow', 'orange', 'red'))(length(geneV()))
 
       withProgress(message="Color scale: ", value = 0, {
 
@@ -1667,7 +1667,15 @@ shinyServer(function(input, output, session) {
   })
   # Add value legend to SHMs.
   # 'observeEvent' is able to avoid infinite cycles while 'observe' may cause such cycles. E.g. in the latter, 'is.null(grob$gg.all)' and 'grob$gg.all1 <- gg.all <- gg_2lgd()' would induce each other and form infinit circles.
+  observe({
+
+
+  })
   observeEvent(list(val.lgd=input$val.lgd, row=input$val.lgd.row, key=input$val.lgd.key, text=input$val.lgd.text, feat=input$val.lgd.feat), {
+    
+    validate(need(try(as.integer(input$val.lgd.row)==input$val.lgd.row & input$val.lgd.row>0), 'Legend key rows should be a positive integer!'))
+    validate(need(try(input$val.lgd.key>0), 'Legend key size should be a positive numeric!'))
+    validate(need(try(input$val.lgd.text>0), 'Legend text size should be a positive numeric!'))
     
     cat('Adding value legend... \n')
     if.con <- is.null(grob$gg.all)|is.null(sam())|is.null(input$val.lgd)|is.null(input$val.lgd.feat)|input$val.lgd==0
@@ -1675,7 +1683,7 @@ shinyServer(function(input, output, session) {
     gg.all <- grob$gg.all1
     if ((input$val.lgd %% 2)==1) {
 
-      gg.all <- gg_2lgd(gg.all=gg.all, sam.dat=sam(), tis.trans=input$tis, postion='bottom', legend.nrow.2nd=input$val.lgd.row, legend.key.size.2nd=input$val.lgd.key, legend.text.size.2nd=input$val.lgd.text, add.feature.2nd=(input$val.lgd.feat=='Y'))
+      gg.all <- gg_2lgd(gg.all=gg.all, sam.dat=sam(), tis.trans=input$tis, position.2nd='bottom', legend.nrow.2nd=input$val.lgd.row, legend.key.size.2nd=input$val.lgd.key, legend.text.size.2nd=input$val.lgd.text, add.feature.2nd=(input$val.lgd.feat=='Y'))
       grob$all1 <- gg.all <- lapply(gg.all, function(x) { x+theme(legend.position="bottom") } )
       tmp <- tempfile()
       png(tmp); grob$all1 <- lapply(gg.all, ggplotGrob)
@@ -1792,11 +1800,11 @@ shinyServer(function(input, output, session) {
       numericInput(inputId='width', label='Overall width:', value=760, min=1, max=Inf, step=NA, width=170), '',
       numericInput(inputId='col.n', label='Columns:', value=2, min=1, max=Inf, step=1, width=150), '',
       radioButtons(inputId="gen.con", label="Display by:", choices=c("Gene"="gene", "Condition"="con", "None"="none"), selected="gene", inline=TRUE), '', 
-     radioButtons(inputId="pre.scale", label="Preserve.scale:", choices=c("Yes"="Y", "No"="N"), selected="N", inline=TRUE)
+     radioButtons(inputId="pre.scale", label="Preserve.scale:", choices=c("Yes"="Y", "No"="N"), selected="Y", inline=TRUE)
       )),
       column(1,
       dropdownButton(inputId='dropdown', label='Color key', circle=FALSE, icon=NULL, status='primary', inline=FALSE, width=250, 
-      fluidRow(splitLayout(cellWidths=c('1%', '70%', '25%'), '', textInput("color", "Color scheme:", "purple,yellow,blue", placeholder='Eg: "purple,yellow,blue"', width=200),
+      fluidRow(splitLayout(cellWidths=c('1%', '70%', '25%'), '', textInput("color", "Color scheme:", "yellow,orange,red", placeholder='Eg: "yellow,orange,red"', width=200),
       actionButton("col.but", "Go", icon=icon("refresh")))), 
       radioButtons(inputId='cs.v', label='Color scale based on:', choices=c("Selected rows"="sel.gen", "All rows"="w.mat"), selected="sel.gen", inline=TRUE)
       ))
@@ -1817,10 +1825,9 @@ shinyServer(function(input, output, session) {
       dropdownButton(inputId='value.lgd', label='Value legend', circle=FALSE, icon=NULL, status='primary', inline=FALSE, width=500,
       fluidRow(splitLayout(cellWidths=c('1%', '25%', '1%', '13%', '1%', '17%', '1%', '14%', '1%', '28%'), '', 
       actionButton("val.lgd", "Add/Remove", icon=icon("refresh")), '',  
-      # radioButtons(inputId='val.lgd', label='Add value legend:', choices=c('No'='N', "Yes"="Y"), selected="N", inline=TRUE), '',
       numericInput(inputId='val.lgd.row', label='Rows:', value=1, min=1, max=Inf, step=1, width=150), '',
-      numericInput(inputId='val.lgd.key', label='Key size:', value=0.03, min=0, max=1, step=0.01, width=150), '',
-      numericInput(inputId='val.lgd.text', label='Text size:', value=10, min=1, max=Inf, step=1, width=140), '',
+      numericInput(inputId='val.lgd.key', label='Key size:', value=0.03, min=0.0001, max=1, step=0.01, width=150), '',
+      numericInput(inputId='val.lgd.text', label='Text size:', value=10, min=0.0001, max=Inf, step=1, width=140), '',
       radioButtons(inputId='val.lgd.feat', label='Include feature:', choices=c('No'='N', "Yes"="Y"), selected="N", inline=TRUE)
       ))
       ))
@@ -2283,7 +2290,7 @@ shinyServer(function(input, output, session) {
     if (input$TOM.in=="None"|input$cpt.nw=="N") return(NULL)
     if (length(color.net$col.net=="none")==0) return(NULL)
     gene <- geneIn()[["gene1"]]; if (!(input$gen.sel %in% rownames(gene))) return() # Avoid unnecessary computing of 'adj', since 'input$gen.sel' is a cerain true gene id of an irrelevant expression matrix, not 'None', when switching from one defaul example's network to another example.
-    if(input$col.but.net==0) color.net$col.net <- colorRampPalette(c('purple', 'yellow', 'blue'))(len.cs.net) # color.net$col.net is changed alse outside renderPlot, since it is a reactive value.
+    if(input$col.but.net==0) color.net$col.net <- colorRampPalette(c('yellow', 'orange', 'red'))(len.cs.net) # color.net$col.net is changed alse outside renderPlot, since it is a reactive value.
    
       withProgress(message="Color scale: ", value = 0, {
       incProgress(0.25, detail="Preparing data. Please wait.")

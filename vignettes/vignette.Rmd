@@ -589,7 +589,7 @@ values across genes and/or conditions, the `lay.shm` parameter can be assigned
 `'gene'` or `'con'`, respectively. For instance, in Figure \@ref(fig:mul) the
 SHMs of the genes `ENSG00000268433` and `ENSG00000006047` are organized
 by condition in a horizontal view. This functionality is particularly useful when
-comparing gene families. 
+comparing gene families. <font color='blue'> In other cases, if users want a customized order of the SHMs, the `lay.shm` should be assigned `'none'` and SHMs are organized according to the gene order in `ID` and the condition order in `data`.  </font> 
 
 ```{r mul, eval=TRUE, echo=TRUE, warnings=FALSE, fig.wide=TRUE, fig.cap=("SHMs of two genes. The subplots are organized by \"condition\" through `lay.shm` argument."), out.width="100%" }
 spatial_hm(svg.path=svg.hum, data=se.fil.hum, ID=c('ENSG00000268433', 'ENSG00000006047'), lay.shm='con', width=0.8, height=1, legend.r=1.5, legend.nrow=2)
@@ -598,7 +598,17 @@ spatial_hm(svg.path=svg.hum, data=se.fil.hum, ID=c('ENSG00000268433', 'ENSG00000
 
 ### SHM: HTML and Video
 
-There is an option to save the SHMs as HTML and video files through the argument `out.dir`, which is the directory to save these files. Each HTML file contains an interactive SHM, where features can be zoomed in and out, and a tooltip of feature, data, gene, condition is presented by hovering over features. The video is a collection of all SHMs in order of genes or conditions.   
+There is an option to save the SHMs as HTML and video files to a local folder through the argument `out.dir`. Each HTML file contains an interactive SHM, where features can be zoomed in and out, and a tooltip of feature, data, gene, condition is presented by hovering over features. The video is a collection of all SHMs and the SHM order is specified by `lay.shm`. 
+
+The following code snippet saves SHMs in form of HTML and video to `~/test`.  
+
+<!--
+The following code chunk is not evaluated so as to avoid writing files locally.
+-->
+```{r eval=FALSE, echo=TRUE, warnings=FALSE }
+if (!dir.exists('~/test')) dir.create('~/test')
+spatial_hm(svg.path=svg.hum, data=se.fil.hum, ID=c('ENSG00000268433', 'ENSG00000006047'), lay.shm='con', width=0.8, height=1, legend.r=1.5, legend.nrow=2, out.dir='~/test')
+```
 
 </font>
 
@@ -726,7 +736,7 @@ of an SHM. In this case the plot includes expression data for 8 tissues across 3
 mouse strains. 
 
 ```{r musshm, eval=TRUE, echo=TRUE, warnings=FALSE, fig.wide=TRUE, fig.cap=("SHM of mouse organs. This is a multiple-layer image where the shapes of the 'skeletal muscle' is set transparent to expose 'lung' and 'heart'."), out.width="100%" }
-spatial_hm(svg.path=svg.mus, data=se.fil.mus, ID=c('ENSMUSG00000000263'), height=0.7, legend.width=0.9, legend.text.size=10, sub.title.size=9, ncol=3, tis.trans=c('skeletal muscle'), legend.nrow=4, line.size=0.2, line.color='grey70')
+spatial_hm(svg.path=svg.mus, data=se.fil.mus, ID=c('ENSMUSG00000000263'), height=0.7, legend.text.size=10, sub.title.size=9, ncol=3, tis.trans=c('skeletal muscle'), legend.nrow=4, line.size=0.2, line.color='grey70')
 ```
 
 The SHM plots in Figures \@ref(fig:musshm) and \@ref(fig:musshm1) demonstrate
@@ -744,7 +754,7 @@ color of complex shape structures.
 
 
 ```{r musshm1, eval=TRUE, echo=TRUE, warnings=FALSE, fig.wide=TRUE, fig.cap=("SHM of mouse organs. This is a multiple-layer image where the view onto 'lung' and 'heart' is obstructed by displaying the 'skeletal muscle' tissue."), out.width="100%" }
-spatial_hm(svg.path=svg.mus, data=se.fil.mus, ID=c('ENSMUSG00000000263'), height=0.6, legend.width=1, legend.text.size=10, sub.title.size=9, ncol=3, tis.trans=NULL, legend.ncol=2, line.size=0.2, line.color='grey70')
+spatial_hm(svg.path=svg.mus, data=se.fil.mus, ID=c('ENSMUSG00000000263'), height=0.6, legend.text.size=10, sub.title.size=9, ncol=3, tis.trans=NULL, legend.ncol=2, line.size=0.2, line.color='grey70')
 ```
 
 ## Chicken Organs {#chk}
@@ -864,7 +874,7 @@ three columns is controlled with the argument setting `ncol=3`. <font color='blu
 time points in Figure 7 should be by time. Right now it is rather random.]</font>
 
 ```{r chkshm, eval=TRUE, echo=TRUE, warnings=FALSE, fig.wide=TRUE, fig.cap=("Time course of chicken organs. The SHM shows the expression profile of a single gene across nine time points and four organs."), out.width="100%" }
-spatial_hm(svg.path=svg.chk, data=se.fil.chk, ID='ENSGALG00000006346', width=0.8, legend.r=1.5, legend.width=0.8, sub.title.size=9, ncol=3, legend.nrow=2, label=TRUE)
+spatial_hm(svg.path=svg.chk, data=se.fil.chk, ID='ENSGALG00000006346', width=0.9, legend.width=0.9, legend.r=1.5, sub.title.size=9, ncol=3, legend.nrow=2, label=TRUE)
 ```
 
 ## Arabidopsis Shoot {#shoot}
@@ -995,7 +1005,7 @@ The expression profile for the HRE2 gene is plotted for control and hypoxia trea
 across six cell types (Figure \@ref(fig:shshm)).
 
 ```{r shshm, eval=TRUE, echo=TRUE, warnings=FALSE, fig.wide=TRUE, fig.cap=('SHM of Arabidopsis shoots. The expression profile of the HRE2 gene is plotted for control and hypoxia treatment across six cell types.'), out.width="100%"}
-spatial_hm(svg.path=svg.sh, data=se.fil.arab, ID=c("HRE2"), height=0.7, legend.nrow=3, legend.width=1, legend.text.size=11, angle.text.key=NULL)
+spatial_hm(svg.path=svg.sh, data=se.fil.arab, ID=c("HRE2"), height=0.7, legend.nrow=3, legend.text.size=11)
 ```
 <font color='blue'>
 
@@ -1130,7 +1140,7 @@ network(ID="HRE2", data=sub.mat[['sub_matrix']], adj.mod=adj.mod, adj.min=0.90, 
 ```   
 
 <a name="inter_net"></a>
-Setting `static=FALSE` launches the interactive network. There is an interactive color bar to denote gene connectivity. The color ingredients must only be separated by comma, e.g. `purple,yellow,blue`, which means gene connectivity increases from purple to yellow. If too many edges (*e.g.*: > 300) are displayed, the network could get stuck. So the 'Adjacency threshold' option sets a threthold to filter out weak edges. If not too many edges retained (*e.g.*: < 300), users can check 'Yes' under 'Show plot', then the network would be responsive smoothly. To maintain acceptable performance, users are advised to choose a stringent threshold (*e.g.* 0.9) initially, then decrease the value gradually. The interactive feature allows users to zoom in and out, or drag a gene around. All the gene IDs in the network module are listed in 'Select by id' in decreasing order according to gene connectivity. Same with static mode, the target gene ID is appended '_target'.  
+Setting `static=FALSE` launches the interactive network. There is an interactive color bar to denote gene connectivity. The color ingredients must only be separated by comma, e.g. `yellow,orange,red`, which means gene connectivity increases from yellow to red. If too many edges (*e.g.*: > 300) are displayed, the network could get stuck. So the 'Adjacency threshold' option sets a threthold to filter out weak edges. If not too many edges retained (*e.g.*: < 300), users can check 'Yes' under 'Show plot', then the network would be responsive smoothly. To maintain acceptable performance, users are advised to choose a stringent threshold (*e.g.* 0.9) initially, then decrease the value gradually. The interactive feature allows users to zoom in and out, or drag a gene around. All the gene IDs in the network module are listed in 'Select by id' in decreasing order according to gene connectivity. Same with static mode, the target gene ID is appended '_target'.  
 
 If gene annotation is appended as a column in the subsetted expression matrix, it will be detected by the function `network` automatically, and is seen by mousing over a node.    
 

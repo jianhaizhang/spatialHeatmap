@@ -34,6 +34,13 @@ shinyUI(dashboardPage(
     tags$head(tags$style(".shiny-notification {position: fixed; opacity: 1; font-size: 30px; 
     top: 35%; left: 30%; height: 150px; width: 700px}"
     )),
+    tags$head(tags$style(HTML(
+    ".dataTables_wrapper  .dataTables_filter { width: 100%; float: none; text-align: left; }
+     #DataTables_Table_0_length { float: right }
+     #DataTables_Table_0_filter { float: left; width: 500px }
+     input[type='search'] { height: 28px; width: 1100px; margin: 0; padding: 0; font-size: inherit; border: 1px solid #CCCCCC }"
+    ))),
+
     tabItems(
       tabItem(tabName="hm_net", 
 
@@ -74,7 +81,7 @@ shinyUI(dashboardPage(
 
       selectInput("TOM.in", "Adjcency threshold:", c("None", sort(seq(0, 1, 0.002), decreasing=TRUE)), "None", width=210), 
       htmlOutput("edge"),
-      textInput("color.net", "Color scheme:", "purple,yellow,blue", placeholder='Eg: "purple,yellow,blue"', width=210), actionButton("col.but.net", "Go", icon=icon("refresh")),
+      textInput("color.net", "Color scheme:", "yellow,orange,red", placeholder='Eg: yellow,orange,red', width=210), actionButton("col.but.net", "Go", icon=icon("refresh")),
       radioButtons(inputId="cpt.nw", label="Show plot:", choices=c("Yes"="Y", "No"="N"), selected="N", inline=TRUE)
 
       ), 
