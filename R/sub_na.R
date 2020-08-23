@@ -30,3 +30,5 @@ sub_na <- function(mat, ID, p=0.3, n=NULL, v=NULL) {
   }; na <- unique(na); return(na)
 
 }
+
+

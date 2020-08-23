@@ -142,8 +142,7 @@ matrix_hm <- function(ID, data, scale='no', col=c('yellow', 'orange', 'red'), ma
 
 }
 
-
-
+# Function to extract nearest genes.
 sub_na <- function(mat, ID, p=0.3, n=NULL, v=NULL) {
 
   len <- nrow(mat)
@@ -165,48 +164,6 @@ sub_na <- function(mat, ID, p=0.3, n=NULL, v=NULL) {
     }
 
   }; na <- unique(na); return(na)
-
-}
-
-submatrix <- function(data, ann=NULL, ID, p=0.3, n=NULL, v=NULL, fun='cor', cor.absolute=FALSE, arg.cor=list(method="pearson"), arg.dist=list(method="euclidean")) {
-
-  options(stringsAsFactors=FALSE)
-  if (is(data, 'data.frame')|is(data, 'matrix')|is(data, 'DFrame')) {
-
-    data <- as.data.frame(data); rna <- rownames(data); cna <- make.names(colnames(data)) 
-    if (any(duplicated(cna))) stop('Please use function \'aggr_rep\' to aggregate replicates!')
-    na <- vapply(seq_len(ncol(data)), function(i) { tryCatch({ as.numeric(data[, i]) }, warning=function(w) { return(rep(NA, nrow(data)))
-    }, error=function(e) { stop("Please make sure input data are numeric!") }) }, FUN.VALUE=numeric(nrow(data)) )
-    na <- as.data.frame(na); rownames(na) <- rna
-    idx <- colSums(apply(na, 2, is.na))!=0; ann <- data[idx]
-    data <- na[!idx]; colnames(data) <- cna[!idx]
-
-  } else if (is(data, 'SummarizedExperiment')) { 
-
-    ann <- rowData(data)[ann]; data <- as.data.frame(assay(data)) 
-    if (any(duplicated(rownames(data)))) stop('Please use function \'aggr_rep\' to aggregate replicates!')
-
-  }; if (nrow(data)<5) cat('Warning: variables of sample/condition are less than 5! \n')
-
-  na <- NULL; len <- nrow(data)
-  if (len>=50000) cat('More than 50,000 rows are detected in data. Computation may take a long time! \n')
-  if (sum(c(!is.null(p), !is.null(n), !is.null(v)))>1) return('Please only use one of \'p\', \'n\', \'v\' as the threshold!')
-
-  if (fun=='cor') {
-
-    m <- do.call(cor, c(x=list(t(data)), arg.cor))
-    if (cor.absolute==TRUE) { m1 <- m; m <- abs(m) }
-    na <- sub_na(mat=m, ID=ID, p=p, n=n, v=v)
-    if (cor.absolute==TRUE) m <- m1
-
-  } else if (fun=='dist') { 
-    
-    m <- -as.matrix(do.call(dist, c(x=list(data), arg.dist)))
-    if (!is.null(v)) v <- -v
-    na <- sub_na(mat=m, ID=ID, p=p, n=n, v=v); m <- -m
-
-  }; sub.m <- m[na, na] 
-  return(list(sub_matrix=cbind(data[na, ], ann[na, , drop=FALSE]), cor_dist=m))
 
 }
 
@@ -289,8 +246,8 @@ filter_data <- function(data, pOA=c(0, 0), CV=c(-Inf, Inf), ann=NULL, sam.factor
 
   }
 
-  ffun <- filterfun(pOverA(p=pOA[1], A=pOA[2]), cv(CV[1], CV[2]))
-  filtered <- genefilter(expr, ffun); expr <- expr[filtered, , drop=FALSE] # Subset one row in a matrix, the result is a numeric vector not a matrix, so drop=FALSE.
+  ffun <- filterfun(pOverA(p=ifelse(is.na(pOA[1]), 0, pOA[1]), A=ifelse(is.na(pOA[2]), -Inf, pOA[2])), cv(ifelse(is.na(CV[1]), -Inf, CV[1]), ifelse(is.na(CV[2]), Inf, CV[2])))
+  filtered <- genefilter(expr=expr, flist=ffun); expr <- expr[filtered, , drop=FALSE] # Subset one row in a matrix, the result is a numeric vector not a matrix, so drop=FALSE.
   row.meta <- row.meta[filtered, , drop=FALSE]
 
   if (!is.null(dir)) { 
@@ -907,44 +864,19 @@ submatrix <- function(data, ann=NULL, ID, p=0.3, n=NULL, v=NULL, fun='cor', cor.
   na <- NULL; len <- nrow(data)
   if (len>=50000) cat('More than 50,000 rows are detected in data. Computation may take a long time! \n')
   if (sum(c(!is.null(p), !is.null(n), !is.null(v)))>1) return('Please only use one of \'p\', \'n\', \'v\' as the threshold!')
-   
-  # Function to extract nearest genes.
-  sub_na <- function() {
-
-    na <- NULL; for (i in ID) {
-
-      if (!is.null(p)) {
-  
-        vec <- sort(m[, i]); thr <- vec[len-floor(len*p)+1]
-        na0 <- names(vec[vec >= thr]); na <- c(na, na0)
-
-      } else if (!is.null(n)) {
-
-        vec <- sort(m[, i]); thr <- vec[len-n+1]
-        na0 <- names(vec[vec >= thr]); na <- c(na, na0)
-
-      } else if (!is.null(v)) {
-  
-        vec <- m[, i]; na0 <- names(vec[vec >= v]); na <- c(na, na0)
-
-      }
-
-    }; na <- unique(na); return(na)
-
-  }
 
   if (fun=='cor') {
 
     m <- do.call(cor, c(x=list(t(data)), arg.cor))
     if (cor.absolute==TRUE) { m1 <- m; m <- abs(m) }
-    na <- sub_na()
+    na <- sub_na(mat=m, ID=ID, p=p, n=n, v=v)
     if (cor.absolute==TRUE) m <- m1
 
   } else if (fun=='dist') { 
     
     m <- -as.matrix(do.call(dist, c(x=list(data), arg.dist)))
     if (!is.null(v)) v <- -v
-    na <- sub_na(); m <- -m
+    na <- sub_na(mat=m, ID=ID, p=p, n=n, v=v); m <- -m
 
   }; sub.m <- m[na, na] 
   return(list(sub_matrix=cbind(data[na, ], ann[na, , drop=FALSE]), cor_dist=m))
@@ -1184,10 +1116,8 @@ shinyServer(function(input, output, session) {
     updateRadioButtons(session, inputId="dimName", label="Step 4: is column or row gene?", 
     inline=TRUE, choices=c("None", "Row", "Column"), selected="None")
     updateSelectInput(session, 'sep', 'Step 5: separator', c("None", "Tab", "Space", "Comma", "Semicolon"), "None")
-    updateRadioButtons(session, inputId='log', label='Log/exp scaling:', choices=c("No", "log2", "exp2"), selected="No", inline=TRUE)
-    output$scl <- renderUI({
-    selectInput('scale', label='Scale by:', choices=c('No', 'Row', 'Column'), selected='Row')
-    })
+    updateRadioButtons(session, inputId='log', label='Log/exp transform:', choices=c("No", "log2", "exp2"), selected="No", inline=TRUE)
+    updateRadioButtons(session, 'scale', label='Scale by:', choices=c('No', 'Row', 'Column'), selected='Row', inline=TRUE)
     updateRadioButtons(session, inputId='cs.v', label='Color scale based on:', choices=c("Selected rows"="sel.gen", "All rows"="w.mat"), selected="sel.gen", inline=TRUE)
     updateNumericInput(session, inputId="height", label="Overall height:", value=400, min=0.1, max=Inf, step=NA)
     updateNumericInput(session, inputId="width", label="Overall width:", value=760, min=0.1, max=Inf, step=NA)
@@ -1284,7 +1214,20 @@ shinyServer(function(input, output, session) {
     )
   
   })
+  sear <- reactiveValues(id=NULL)
+  observeEvent(input$fileIn, { sear$id <- NULL })
+  observeEvent(input$search.but, {
+    
+    if (is.null(geneIn1())) return()
+    if (input$search=='') sel <- 1 else {
 
+      gens <- strsplit(gsub(' |\\.|-|;|,|/|\\|', '_', input$search), '_')[[1]]
+       sel <- which(rownames(geneIn1()[['gene2']]) %in% gens)
+       if (length(sel)==0) sel <- 1
+
+     }; sear$id <- sel
+
+  })
   geneIn <- reactive({
     
     if (is.null(geneIn1())) return(NULL)    
@@ -1295,8 +1238,11 @@ shinyServer(function(input, output, session) {
   
       se <- SummarizedExperiment(assays=list(expr=as.matrix(gene2)), rowData=gene3)
       if (ncol(gene3)>0) ann.col <- colnames(gene3)[1] else ann.col <- NULL
-      se <- filter_data(data=se, ann=ann.col, sam.factor=NULL, con.factor=NULL, pOA=c(fil$P, fil$A), CV=c(fil$CV1, fil$CV2), dir=NULL)
+      # If scaled by row, sd is 1, mean is 0, cv is Inf.
+      se <- filter_data(data=se, ann=ann.col, sam.factor=NULL, con.factor=NULL, pOA=c(fil$P, fil$A), CV=c(ifelse(input$scale=='Row', -Inf, fil$CV1), ifelse(input$scale=='Row', Inf, fil$CV2)), dir=NULL)
       if (nrow(se)==0) { validate(need(try(nrow(se)>0), 'All rows are filtered out!')); return() }
+      # In case of all rows are filtered, the app continues to work without refreshing after the filter parameters are reduced.
+      se <- filter_data(data=se, ann=ann.col, sam.factor=NULL, con.factor=NULL, pOA=c(fil$P, fil$A), CV=c(ifelse(input$scale=='Row', -Inf, fil$CV1), ifelse(input$scale=='Row', Inf, fil$CV2)), dir=NULL)
 
       gene2 <- as.data.frame(assay(se), stringsAsfactors=FALSE); colnames(gene2) <- make.names(colnames(gene2))
       gene1 <- gene1[rownames(gene2), ]
@@ -1304,10 +1250,11 @@ shinyServer(function(input, output, session) {
       
     })
     cat('Preparing data matrix... \n')
-    return(list(gene1=gene1[, input$col.na], gene2=gene2[, input$col.na], gene3=gene3))
+    if (is.null(sear$id)) rows <- seq_len(nrow(gene2)) else rows <- sear$id
+    if (all(rows==1)) rows <- seq_len(nrow(gene2))
+    return(list(gene1=gene1[rows, input$col.na], gene2=gene2[rows, input$col.na], gene3=gene3[rows, , drop=FALSE]))
 
   })
-
   output$dt <- renderDataTable({
 
     if (is.null(geneIn())) return()
@@ -1321,8 +1268,10 @@ shinyServer(function(input, output, session) {
       gene <- geneIn(); gene.dt <- cbind.data.frame(gene[["gene2"]][, , drop=FALSE], gene[["gene3"]][, , drop=FALSE], stringsAsFactors=FALSE) 
 
    }; cat('Presenting data matrix... \n')
-    datatable(gene.dt, selection=list(mode="multiple", target="row", selected=c(1)),  
-    filter="top", extensions=c('Scroller'), options=list(pageLength=5, lengthMenu=c(5, 15, 20), autoWidth=TRUE, scrollCollapse=TRUE, deferRender=TRUE, scrollX=TRUE, scrollY=200, scroller=TRUE, searchHighlight=TRUE, search=list(regex=TRUE, smart=FALSE)), class='cell-border strip hover') %>% formatStyle(0, backgroundColor="orange", cursor='pointer') %>% 
+   if (is.null(sear$id)) sel <- 1 else sel <- sear$id
+   if (all(sel==1)) rows <- seq_len(nrow(gene.dt)) else rows <- sel 
+   datatable(gene.dt, selection=list(mode="multiple", target="row", selected=seq_along(sel)),  
+    filter="top", extensions=c('Scroller'), options=list(pageLength=5, lengthMenu=c(5, 15, 20), autoWidth=TRUE, scrollCollapse=TRUE, deferRender=TRUE, scrollX=TRUE, scrollY=200, scroller=TRUE, searchHighlight=FALSE, searching=FALSE), class='cell-border strip hover') %>% formatStyle(0, backgroundColor="orange", cursor='pointer') %>% 
     formatRound(colnames(geneIn()[["gene2"]]), 2)
 
     })
@@ -1343,20 +1292,27 @@ shinyServer(function(input, output, session) {
     gID$new <- setdiff(gID$geneID, gID$all); gID$all <- c(gID$all, gID$new)
     if (is.null(r.na)) gID$geneID <- "none"
     })
-  observeEvent(input$dt_rows_selected, {
+  observeEvent(list(input$dt_rows_selected, geneIn()), {
  
     if (is.null(input$dt_rows_selected)) return()
     r.na <- rownames(geneIn()[["gene2"]]); gID$geneID <- r.na[input$dt_rows_selected]
+    if (any(is.na(gID$geneID))) gID$geneID <- "none"
     gID$new <- setdiff(gID$geneID, gID$all); gID$all <- c(gID$all, gID$new)
     
+  })
+  observeEvent(list(input$search.but), {
+ 
+    if (is.null(input$search.but)|is.null(sear$id)) return()
+    gID$geneID <- rownames(geneIn()[["gene2"]])
+  
   })
 
   geneV <- reactive({
 
-    if (is.null(geneIn())) return(NULL)
+    if (is.null(geneIn())|sum(gID$geneID[1]!='none')==0) return(NULL)
     if (input$cs.v=="sel.gen" & is.null(input$dt_rows_selected)) return(NULL)
-    if (input$fileIn!="none") { if (input$cs.v=="sel.gen" & !is.null(input$dt_rows_selected)) gene <- geneIn()[["gene2"]][input$dt_rows_selected, ]
-    if (input$cs.v=="w.mat") gene <- geneIn()[["gene2"]] } 
+    if (input$fileIn!="none") { if (input$cs.v=="sel.gen") gene <- geneIn()[["gene2"]][gID$geneID, ]
+    if (input$cs.v=="w.mat") gene <- geneIn()[["gene2"]] }
     seq(min(gene), max(gene), len=1000) # len must be same with that from the function "spatial_hm()". Otherwise the mapping of a gene value to the colour bar is not accurate. 
 
   })
@@ -1491,6 +1447,7 @@ shinyServer(function(input, output, session) {
 
   grob <- reactiveValues(all=NULL, all1=NULL, gg.all=NULL, gg.all1=NULL, lgd.all=NULL)
   observeEvent(input$fileIn, { grob$all <- grob$gg.all1 <- grob$gg.all1 <- grob$gg.all <- grob$lgd.all <- NULL })
+  # Avoid repetitive computation under input$cs.v=='w.mat'.
   gs.new <- reactive({ 
 
     if.con <- is.null(svg.df())|is.null(geneIn())|is.null(gID$new)|length(gID$new)==0|is.null(gID$all)|is.null(input$dt_rows_selected)|color$col[1]=='none'
@@ -1498,7 +1455,7 @@ shinyServer(function(input, output, session) {
 
     if (input$cs.v=="sel.gen") ID <- gID$geneID
     if (input$cs.v=="w.mat") ID <- gID$new
-    if (is.null(ID)) return()
+    if (is.null(ID)|length(gID$new)>1|length(ID)>1) return()
     # Avoid repetitive computation.  
     pat.new <- paste0('^', gID$new, '_(', pat.con(), ')_\\d+$')
     if (any(grepl(pat.new, names(grob$all)))) return()
@@ -1533,7 +1490,7 @@ shinyServer(function(input, output, session) {
   # Use "observeEvent" to replace "observe" and list events (input$log, input$tis, ...), since if the events are in "observe", every time a new gene is clicked, "input$dt_rows_selected" causes the evaluation of all code in "observe", and the evaluation is duplicated with "gs.new".
   col.reorder <- reactiveValues(col.re='Y')
   observeEvent(input$col.na, { if (input$col.cfm>0) col.reorder$col.re <- 'N' })
-  observeEvent(list(log=input$log, tis=input$tis, col.but=input$col.but, cs.v=input$cs.v, pre.scale=input$pre.scale, col.cfm=input$col.cfm, scale=input$scale), {
+  observeEvent(list(input$log, input$tis, input$col.but, input$cs.v, input$pre.scale, input$col.cfm, input$scale), {
     
     grob$all <- grob$gg.all <- grob$lgd.all <- NULL; gs.all <- reactive({ 
 
@@ -1543,7 +1500,7 @@ shinyServer(function(input, output, session) {
       incProgress(0.25, detail="preparing data.")
       #if (input$cs.v=="sel.gen") gene <- geneIn()[["gene2"]][input$dt_rows_selected, ]
       #if (input$cs.v=="w.mat") gene <- geneIn()[["gene2"]]
-      gene <- geneIn()[["gene2"]][input$dt_rows_selected, ]
+      gene <- geneIn()[["gene2"]][gID$geneID, ]
       svg.df.lis <- svg.df(); grob.lis.all <- w.h.all <- NULL
       # Get max width/height of multiple SVGs, and dimensions of other SVGs can be set relative to this max width/height.
       for (i in seq_along(svg.df.lis)) { w.h.all <- c(w.h.all, svg.df.lis[[i]][['w.h']]); w.h.max <- max(w.h.all) }
@@ -1569,29 +1526,18 @@ shinyServer(function(input, output, session) {
     grob$all <- grob.gg.lis[['grob']]; grob$gg.all <- grob.gg.lis[['gg']]; grob$lgd.all <- grob.gg.lis[['lgd.all']]
 
   })
-  # Avoid repetitive computation under input$cs.v=='w.mat'.
-  observeEvent(input$dt_rows_selected, {
-  
-    ID <- gID$geneID; if (input$cs.v=='w.mat') { 
-      
-      ID <- NULL; IDs <- gID$geneID; for (i in ID) {
-
-        pat <- paste0('^', i, '_(', pat.con(), ')_\\d+$')
-        if (any(grepl(pat, names(grob$all)))) next
-        ID <- c(ID, i)
-         
-      }; if (is.null(ID)) return()
-
-    }
+  # Avoid repetitive computation under input$cs.v=='gen.sel'.
+  observeEvent(list(gID$geneID), {
+    
+    if (is.null(input$cs.v)) return(); if (input$cs.v=='w.mat') return() 
+    ID <- gID$geneID
     grob$all <- grob$gg.all <- grob$lgd.all <- NULL; gs.all <- reactive({ 
 
       if.con <- is.null(svg.df())|is.null(geneIn())|is.null(input$dt_rows_selected)|color$col[1]=='none'|is.null(input$pre.scale)
       if (is.null(if.con)) return(); if (is.na(if.con)|if.con==TRUE) return(NULL)
       withProgress(message="Spatial heatmap: ", value=0, {
       incProgress(0.25, detail="preparing data.")
-      #if (input$cs.v=="sel.gen") gene <- geneIn()[["gene2"]][input$dt_rows_selected, ]
-      #if (input$cs.v=="w.mat") gene <- geneIn()[["gene2"]]
-      gene <- geneIn()[["gene2"]][input$dt_rows_selected, ]
+      gene <- geneIn()[["gene2"]][gID$geneID, ]
       svg.df.lis <- svg.df(); grob.lis.all <- w.h.all <- NULL
       # Get max width/height of multiple SVGs, and dimensions of other SVGs can be set relative to this max width/height.
       for (i in seq_along(svg.df.lis)) { w.h.all <- c(w.h.all, svg.df.lis[[i]][['w.h']]); w.h.max <- max(w.h.all) }
@@ -1601,7 +1547,7 @@ shinyServer(function(input, output, session) {
         svg.df <- svg.df.lis[[i]]; g.df <- svg.df[["df"]]
         tis.path <- svg.df[["tis.path"]]; fil.cols <- svg.df[['fil.cols']]; w.h <- svg.df[['w.h']]
         if (input$pre.scale=='Y') mar <- (1-w.h/w.h.max*0.99)/2 else mar <- NULL
-        cat('All grob/ggplot:', ID, ' \n')
+        cat('All grob/ggplot of row selection:', ID, ' \n')
         svg.na <- names(svg.df.lis)
         incProgress(0.75, detail=paste0('preparing ', paste0(ID, collapse=';')))
         grob.lis <- grob_list(gene=gene, con.na=geneIn0()[['con.na']], geneV=geneV(), coord=g.df, ID=ID, legend.col=fil.cols, cols=color$col, tis.path=tis.path, tis.trans=input$tis, sub.title.size=18, mar.lb=mar, legend.nrow=2, legend.key.size=0.04) # All gene IDs are used.
@@ -1713,7 +1659,7 @@ shinyServer(function(input, output, session) {
     if.con <-  is.null(input$dt_rows_selected)|is.null(svg.df())|gID$geneID[1]=="none"|is.null(grob$all1)
     if (length(if.con)==0) return(); if (is.na(if.con)|if.con==TRUE) return(NULL)
     if (is.na(color$col[1])|length(color$col=="none")==0|input$color=="") return(NULL)
-    r.na <- rownames(geneIn()[["gene2"]]); gID$geneID <- r.na[input$dt_rows_selected]
+    r.na <- rownames(geneIn()[["gene2"]])
     grob.na <- names(grob$all1)
     # Select target grobs.
     # Use definite patterns and avoid using '.*' as much as possible. Try to as specific as possible.
@@ -1792,9 +1738,10 @@ shinyServer(function(input, output, session) {
       numericInput(inputId='t', label='Transition time (s):', value=2, min=0.1, max=Inf, step=NA, width=270), '',
       uiOutput('anm.h'), '', uiOutput('anm.w'), '', uiOutput('dld.anm.but')
       )), textOutput('tran'), uiOutput('sld.fm'),
-      fluidRow(splitLayout(cellWidths=c("1%", "7%", "91%", "1%"), "", plotOutput("bar2"), htmlOutput("ggly"), ""))),
-      
-      tabPanel(title="Basic", value='shm1',  
+      fluidRow(splitLayout(cellWidths=c("1%", "7%", "91%", "1%"), "", plotOutput("bar2"), htmlOutput("ggly"), ""))
+      ),
+
+      tabPanel(title="Image", value='shm1',  
       fluidRow(column(10, splitLayout(cellWidths=c('14%', '1%', '14%', '1%', '9%', '1%', '32%', '1%', '15%'),
       numericInput(inputId='height', label='Overall height:', value=400, min=1, max=Inf, step=NA, width=170), '',
       numericInput(inputId='width', label='Overall width:', value=760, min=1, max=Inf, step=NA, width=170), '',
@@ -1927,7 +1874,7 @@ shinyServer(function(input, output, session) {
  
     if (is.null(grob$gg.all)|is.null(pat.all())|is.null(gID$geneID)) return(NULL) 
     gen.con.pat <- paste0('^', pat.all(), '_\\d+$') 
-    sliderInput(inputId='fm', 'Frames', min=1, max=sum(grepl(gen.con.pat, names(grob$gg.all1))), step=1, value=1, animate=animationOptions(interval=input$t*10^3, loop=FALSE, playButton=NULL, pauseButton='pause'))
+    sliderInput(inputId='fm', 'Frames', min=1, max=sum(grepl(gen.con.pat, names(grob$gg.all1))), step=1, value=1, animate=animationOptions(interval=input$t*10^3, loop=FALSE, playButton=icon('play'), pauseButton=icon('pause')))
   
   })
 
@@ -2105,9 +2052,8 @@ shinyServer(function(input, output, session) {
     
     if (is.null(cor.dis())|input$mhm.but=='N') return()
     gene <- geneIn()[["gene1"]]; rna <- rownames(gene)
-    gen.tar<- rna[input$dt_rows_selected]; mat <- cor.dis()
-    
-    # Validate filtering parameters in matrix heatmap.<Paste> 
+    gen.tar<- gID$geneID; mat <- cor.dis()
+    # Validate filtering parameters in matrix heatmap. 
     measure <- input$measure; cor.abs <- input$cor.abs; mhm.v <- input$mhm.v; thr <- input$thr
     if (input$thr=='p') {
 
@@ -2133,8 +2079,10 @@ shinyServer(function(input, output, session) {
       arg <- list(p=NULL, n=NULL, v=NULL)
       arg[names(arg) %in% input$thr] <- input$mhm.v
       if (input$measure=='dis' & input$thr=='v') arg['v'] <- -arg[['v']]
-      gen.na <- do.call(sub_na, c(mat=list(mat), ID=list(gen.tar), arg)) 
-      validate(need(try(length(gen.na)>=2), paste0('Only ', gen.na, ' selected !'))); return(gene[gen.na, ])
+      if (!all(gen.tar %in% rownames(mat))) return()    
+      gen.na <- do.call(sub_na, c(mat=list(mat), ID=list(gen.tar), arg))
+      if (any(is.na(gen.na))) return() 
+      validate(need(try(length(gen.na)>=2), paste0('Only ', gen.na, ' selected!'))); return(gene[gen.na, ])
 
     })
 
@@ -2143,10 +2091,11 @@ shinyServer(function(input, output, session) {
 
   # Plot matrix heatmap.
   output$HMly <- renderPlotly({
-    
+   
     if (is.null(submat())|input$mhm.but=='N') return()
     gene <- geneIn()[["gene1"]]; rna <- rownames(gene)
-    gen.tar<- rna[input$dt_rows_selected]
+    gen.tar<- gID$geneID
+    print(list(2, rna[1:5], gID$geneID, submat()[1:5, 1:2]))    
     withProgress(message="Matrix heatmap:", value=0, {
       incProgress(0.7, detail="Plotting...")
       if (input$mat.scale=="Column") scale.hm <- 'column' else if (input$mat.scale=="Row") scale.hm <- 'row' else scale.hm <- 'no'

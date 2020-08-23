@@ -1,4 +1,4 @@
-library(shiny); library(shinydashboard); library(plotly); library(visNetwork); library(DT)
+library(shiny); library(shinydashboard); library(plotly); library(visNetwork); library(DT); library(shinyWidgets)
 
 
 shinyUI(dashboardPage(
@@ -35,26 +35,32 @@ shinyUI(dashboardPage(
     top: 35%; left: 30%; height: 150px; width: 700px}"
     )),
     tags$head(tags$style(HTML(
-    ".dataTables_wrapper  .dataTables_filter { width: 100%; float: none; text-align: left; }
-     #DataTables_Table_0_length { float: right }
-     #DataTables_Table_0_filter { float: left; width: 500px }
-     input[type='search'] { height: 28px; width: 1100px; margin: 0; padding: 0; font-size: inherit; border: 1px solid #CCCCCC }"
+    "input[id='search'] { height: 28px; width: 500px; margin: 3px; padding: 0; font-size: inherit; border: 1px solid #CCCCCC }"
     ))),
-
+    tags$head(tags$style(type="text/css", "label[for='search']{ display: table-cell; text-align: center; vertical-align: middle; } .form-group  { display: table-row;}")),
     tabItems(
       tabItem(tabName="hm_net", 
 
       box(title="Data Matrix", status="primary", solidHeader=TRUE, collapsible=TRUE, height=NULL, width=12,
-      fluidRow(splitLayout(cellWidths=c('1%', '11%', '1%', '23%', '1%', '18%', '1%', '18%', '7%', '1%', '14%'), '',
+      fluidRow(column(1, offset=0, style='padding-left:10px; padding-right:0px; padding-top:0px; padding-bottom:5px',
+      dropdownButton(inputId='drdn.fil', label='Filter', circle=FALSE, icon=NULL, status='primary',
+      fluidRow(splitLayout(cellWidths=c('1%', '15%', '1%', '30%', '1%', '25%', '1%', '23%', '12%', '12%'), '',
       numericInput(inputId="A", label="Value (A) to exceed:", value=0), '',
       numericInput(inputId="P", label="Proportion (P) of samples with values >= A:", value=0), '',
       numericInput(inputId="CV1", label="Min coefficient of variation (CV1):", value=-Inf), '', 
       numericInput(inputId="CV2", label="Max coefficient of variation (CV2):", value=Inf), 
-      actionButton(inputId='fil.but', label="Filter", icon=icon("refresh")), '',
-      radioButtons(inputId='log', label='Log/exp scaling:', choices=c("No", "log2", "exp2"), selected="No", inline=TRUE)
-      )), 
-      fluidRow(column(2, uiOutput('scl')), column(10, uiOutput('col.order'))),
-      verbatimTextOutput("fil.par"),
+      actionButton(inputId='fil.but', label="Submit"), verbatimTextOutput("fil.par")
+      ))
+      )),
+      column(1, offset=0, style='padding-left:0px; padding-right:0px; padding-top:0px; padding-bottom:5px',
+      dropdownButton(inputId='drdn.scale', label='Transform', circle=FALSE, icon=NULL, status='primary', width=400,
+      fluidRow(splitLayout(cellWidths=c('1%', '40%', '1%', '50%'), '',
+      radioButtons(inputId='log', label='Log/exp:', choices=c("No", "log2", "exp2"), selected="No", inline=TRUE), '',
+      radioButtons(inputId='scale', label='Scale by:', choices=c('No', 'Row', 'Column'), selected='Row', inline=TRUE)
+      )))),
+      column(10, uiOutput('col.order'))
+      ),
+      fluidRow(splitLayout(cellWidths=c("1%", "47%", "10%"), '', textInput(inputId='search', label='Search:', value='', placeholder='Muliple IDs must only be separated by space or comma.'), actionButton('search.but', 'Submit'))),
       fluidRow(splitLayout(cellWidths=c("1%", "98%", "1%"), "", dataTableOutput("dt"), ""))
       ),
       fluidRow(column(10), column(2, radioButtons(inputId='hide.lgd', label="Hide legend:", choices=c('Yes'='Y', 'No'='N'), selected="N", inline=TRUE))),
