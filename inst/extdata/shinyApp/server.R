@@ -1301,14 +1301,16 @@ shinyServer(function(input, output, session) {
     
   })
   observeEvent(list(input$search.but), {
- 
-    if (is.null(input$search.but)|is.null(sear$id)) return()
-    gID$geneID <- rownames(geneIn()[["gene2"]])
   
+    if (is.null(input$search.but)|is.null(sear$id)|is.null(geneIn())) return()
+    gID$geneID <- rownames(geneIn()[["gene2"]])[sear$id]
+    if (any(is.na(gID$geneID))) gID$geneID <- "none"
+ 
   })
 
   geneV <- reactive({
 
+    if (any(is.na(gID$geneID))) return()
     if (is.null(geneIn())|sum(gID$geneID[1]!='none')==0) return(NULL)
     if (input$cs.v=="sel.gen" & is.null(input$dt_rows_selected)) return(NULL)
     if (input$fileIn!="none") { if (input$cs.v=="sel.gen") gene <- geneIn()[["gene2"]][gID$geneID, ]
@@ -1455,7 +1457,7 @@ shinyServer(function(input, output, session) {
 
     if (input$cs.v=="sel.gen") ID <- gID$geneID
     if (input$cs.v=="w.mat") ID <- gID$new
-    if (is.null(ID)|length(gID$new)>1|length(ID)>1) return()
+    if (is.null(ID)|length(gID$new)>1|length(ID)>1|ID[1]=='none') return()
     # Avoid repetitive computation.  
     pat.new <- paste0('^', gID$new, '_(', pat.con(), ')_\\d+$')
     if (any(grepl(pat.new, names(grob$all)))) return()
@@ -1494,7 +1496,7 @@ shinyServer(function(input, output, session) {
     
     grob$all <- grob$gg.all <- grob$lgd.all <- NULL; gs.all <- reactive({ 
 
-      if.con <- is.null(svg.df())|is.null(geneIn())|is.null(input$dt_rows_selected)|color$col[1]=='none'|is.null(input$pre.scale)
+      if.con <- is.null(svg.df())|is.null(geneIn())|is.null(input$dt_rows_selected)|color$col[1]=='none'|is.null(input$pre.scale)|gID$geneID[1]=='none'
       if (is.null(if.con)) return(); if (is.na(if.con)|if.con==TRUE) return(NULL)
       withProgress(message="Spatial heatmap: ", value=0, {
       incProgress(0.25, detail="preparing data.")
@@ -1529,7 +1531,7 @@ shinyServer(function(input, output, session) {
   # Avoid repetitive computation under input$cs.v=='gen.sel'.
   observeEvent(list(gID$geneID), {
     
-    if (is.null(input$cs.v)) return(); if (input$cs.v=='w.mat') return() 
+    if (is.null(input$cs.v)|gID$geneID[1]=='none') return(); if (input$cs.v=='w.mat') return() 
     ID <- gID$geneID
     grob$all <- grob$gg.all <- grob$lgd.all <- NULL; gs.all <- reactive({ 
 

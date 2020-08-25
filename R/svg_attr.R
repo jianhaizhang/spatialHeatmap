@@ -6,6 +6,7 @@
 #' @param feature A character vector of features/samples extracted from the data. If some of the input features are duplicated in SVG file, then a reminder message is returned.
 
 #' @return A 3-component list of attribute data frame, the outline node, and the sample node. 
+#' @noRd
 
 #' @author Jianhai Zhang \email{jzhan067@@ucr.edu; zhang.jianhai@@hotmail.com} \cr Dr. Thomas Girke \email{thomas.girke@@ucr.edu}
 

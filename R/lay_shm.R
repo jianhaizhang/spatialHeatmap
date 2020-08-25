@@ -9,6 +9,7 @@
 
 #' @return Organised spatial heatmaps according to the provided layout.
 #' @keywords Internal
+#' @noRd
 
 #' @author Jianhai Zhang \email{jzhan067@@ucr.edu; zhang.jianhai@@hotmail.com} \cr Dr. Thomas Girke \email{thomas.girke@@ucr.edu}
 

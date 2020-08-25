@@ -7,6 +7,7 @@
 
 #' @return A vector of sorted "gene_condition" names.
 #' @keywords Internal
+#' @noRd
 
 #' @author Jianhai Zhang \email{jzhan067@@ucr.edu; zhang.jianhai@@hotmail.com} \cr Dr. Thomas Girke \email{thomas.girke@@ucr.edu}
 

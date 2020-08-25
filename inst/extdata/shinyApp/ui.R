@@ -1,6 +1,5 @@
 library(shiny); library(shinydashboard); library(plotly); library(visNetwork); library(DT); library(shinyWidgets)
 
-
 shinyUI(dashboardPage(
 
   dashboardHeader(title="spatialHeatmap (2020-08-10)", titleWidth=300),
@@ -37,14 +36,14 @@ shinyUI(dashboardPage(
     tags$head(tags$style(HTML(
     "input[id='search'] { height: 28px; width: 500px; margin: 3px; padding: 0; font-size: inherit; border: 1px solid #CCCCCC }"
     ))),
-    tags$head(tags$style(type="text/css", "label[for='search']{ display: table-cell; text-align: center; vertical-align: middle; } .form-group  { display: table-row;}")),
+    tags$head(tags$style(type="text/css", "label[for='search']{ display: table-cell; text-align: center; vertical-align: middle; }")),
     tabItems(
       tabItem(tabName="hm_net", 
 
       box(title="Data Matrix", status="primary", solidHeader=TRUE, collapsible=TRUE, height=NULL, width=12,
       fluidRow(column(1, offset=0, style='padding-left:10px; padding-right:0px; padding-top:0px; padding-bottom:5px',
       dropdownButton(inputId='drdn.fil', label='Filter', circle=FALSE, icon=NULL, status='primary',
-      fluidRow(splitLayout(cellWidths=c('1%', '15%', '1%', '30%', '1%', '25%', '1%', '23%', '12%', '12%'), '',
+      fluidRow(splitLayout(cellWidths=c('1%', '15%', '1%', '30%', '1%', '25%', '1%', '25%', '12%', '10%'), '',
       numericInput(inputId="A", label="Value (A) to exceed:", value=0), '',
       numericInput(inputId="P", label="Proportion (P) of samples with values >= A:", value=0), '',
       numericInput(inputId="CV1", label="Min coefficient of variation (CV1):", value=-Inf), '', 
@@ -60,7 +59,7 @@ shinyUI(dashboardPage(
       )))),
       column(10, uiOutput('col.order'))
       ),
-      fluidRow(splitLayout(cellWidths=c("1%", "47%", "10%"), '', textInput(inputId='search', label='Search:', value='', placeholder='Muliple IDs must only be separated by space or comma.'), actionButton('search.but', 'Submit'))),
+      fluidRow(splitLayout(cellWidths=c("1%", "43%", "10%"), '', textInput(inputId='search', label='Search:', value='', placeholder='Muliple IDs must only be separated by space or comma.', width='100%'), actionButton('search.but', 'Submit'))),
       fluidRow(splitLayout(cellWidths=c("1%", "98%", "1%"), "", dataTableOutput("dt"), ""))
       ),
       fluidRow(column(10), column(2, radioButtons(inputId='hide.lgd', label="Hide legend:", choices=c('Yes'='Y', 'No'='N'), selected="N", inline=TRUE))),

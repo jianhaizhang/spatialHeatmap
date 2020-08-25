@@ -4,6 +4,7 @@
 #' @param mat The correlation or distance matrix.
 #' @inheritParams submatrix
 #' @return A vector of target genes and their nearest neighbors.
+#' @noRd
 
 #' @author Jianhai Zhang \email{zhang.jianhai@@hotmail.com; jzhan067@@ucr.edu} \cr Dr. Thomas Girke \email{thomas.girke@@ucr.edu}
 

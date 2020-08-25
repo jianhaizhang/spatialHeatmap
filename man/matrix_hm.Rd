@@ -8,7 +8,7 @@ matrix_hm(
   ID,
   data,
   scale = "no",
-  col = c("purple", "yellow", "blue"),
+  col = c("yellow", "orange", "red"),
   main = NULL,
   title.size = 10,
   cexCol = 1,
@@ -30,7 +30,7 @@ matrix_hm(
 
 \item{scale}{"row", "column", or "no", meaing scale the heatmap by row, column, or no scale respectively. Default is "no".}
 
-\item{col}{A character vector of color ingredients for constructing the color scale. The default is c('purple', 'yellow', 'blue').}
+\item{col}{A character vector of color ingredients for constructing the color scale. The default is c('yellow', 'orange', 'red').}
 
 \item{main}{The title of the matrix heatmap.}
 

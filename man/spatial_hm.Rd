@@ -12,7 +12,7 @@ spatial_hm(
   ID,
   lay.shm = "gene",
   ncol = 2,
-  col.com = c("purple", "yellow", "blue"),
+  col.com = c("yellow", "orange", "red"),
   col.bar = "selected",
   bar.width = 0.08,
   legend.width = 1,
@@ -83,7 +83,7 @@ spatial_hm(
 
 \item{ncol}{An integer, number of columns to display the spatial heatmaps, not including the legend plot.}
 
-\item{col.com}{A character vector of the color components used to build the color scale. The default is c('purple', 'yellow', 'blue').}
+\item{col.com}{A character vector of the color components used to build the color scale. The default is c('yellow', 'orange', 'red').}
 
 \item{col.bar}{"selected" or "all", the former uses values of input assayed items to build the color scale while the latter uses all values from the data. The default is "selected".}
 

@@ -15,6 +15,7 @@
 #' @inheritParams col_bar
 #' @return A video is saved in \code{out.dir}.
 #' @keywords Internal
+#' @noRd
 
 #' @author Jianhai Zhang \email{jzhan067@@ucr.edu; zhang.jianhai@@hotmail.com} \cr Dr. Thomas Girke \email{thomas.girke@@ucr.edu}
 

@@ -26,6 +26,7 @@
 #' @return A nested list of spatial heatmaps of ggplot2 plot grob, spatial heatmaps of ggplot, and legend plot of ggplot.
 #' @keywords Internal
 
+
 #' @author Jianhai Zhang \email{jzhan067@@ucr.edu; zhang.jianhai@@hotmail.com} \cr Dr. Thomas Girke \email{thomas.girke@@ucr.edu}
 
 #' @references
