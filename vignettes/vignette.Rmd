@@ -1491,10 +1491,9 @@ update_feature(feature=feature.df.new, dir='~/test1')
 
 <br/>
 
+# Version Informaion 
 
 ```{r eval=TRUE, echo=TRUE}
-
-# Version Informaion
 sessionInfo()
 ```
 
