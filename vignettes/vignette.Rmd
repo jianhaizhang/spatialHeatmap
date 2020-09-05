@@ -135,9 +135,9 @@ them. This transparency viewing feature is highlighted below in the mouse
 example (Figure \@ref(fig:musshm1)). Moreover, one can plot multiple distinct 
 aSVGs in a single SHM plot as shown in Figure \@ref(fig:arabshm). This is 
 particularly useful for displaying abundance trends across multiple development 
-stages where each one of them is represented by its own aSVG image. In addition to
+stages, where each is represented by its own aSVG image. In addition to
 static SHM representations, one can visualize them in form of dynamic animations
-with a rich set of interactive functionalities, such as zooming and video download 
+that are supported a rich set of interactive functionalities, such as zooming and video download 
 options.
 
 To maximize reusability and extensibility, the package organizes large-scale
