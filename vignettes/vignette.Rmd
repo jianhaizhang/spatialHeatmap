@@ -85,19 +85,11 @@ functionalities of the `spatialHeatmap` package are illustrated in Figure
 \@ref(fig:illus).   
 
 
-```{r illus, echo=FALSE, fig.wide=FALSE, out.width="120%", fig.cap=("Overview of spatialHeatmap. This figure illustrates the functionalities of the spatialHeatmap package on gene expression data, which could be generalized on many other data types. The accepted data classes are `SummarizedExperiment` (SE, A1), `data frame` (A2), `vector` (A3). If exist, replicates should be aggregated. Subfigure B is the aSVG image (see [aSVG](#term) below), where target spatial features (*e.g.* frontal.cortex) are pre-annotated. The numeric values of target samples in data are mapped to matching features in aSVG and translated to colors (*e.g.* frontal.cortex), and the resulting plots are termed spatial heatmaps (SHMs, subfigure C). The color scale on the left indicates gene expression levels and the legend plot on the right labels matching spatial features. As enhancements to SHMs, target genes are visualized in the context of nearest neighbors in form of matrix heatmap (subfigure D), which are selected with correlation or distance measure. Next, network analysis is applied on all genes in matrix heatmap, and the module containing a target gene is shown as network graph (subfigure E). In addition to command-driven mode, all utilities are also combined as an interactive Shiny App, which would be convenient for non-R users."), out.width="100%"}
+```{r illus, echo=FALSE, fig.wide=FALSE, fig.cap=("Overview of spatialHeatmap. (A) The _saptialHeatmap_ package supports assay data from a wide range of omics technologies ranging from genomic, transcriptomic, proteomic to metabolomic profiling data. The assay data can be provided as numeric vectors, tabular data, or _SummarizedExperiment_ objects. The latter is a widely used data container for organizing both assay data as well as associated annotation and experimental design data. (B) Anatomical and other spatial images are provided as annotated SVG (aSVG) files where the spatial features and the corresponding data components of the assay data have matching labels (_e.g._ tissue labels). (C) The assay data then are used to color the matching spatial features in one or more aSVG images according to a color key. The result is called a spatial heatmap (SHM) plot. Multiple measurements can be visualized in the same plot, such as several factors (_e.g._ genes, proteins, metabolites), treatment conditions, growth stages and more. (D) Data mining graphics, such as matrix heatmaps and network graphs, are integrated to facilitate the identification of factors with similar assay profiles. The functionalities of _spatialHeatmap_ can be accessed from local computers via the R console or a graphical user interface based on Shiny. In addtion, the latter can be deployed as a web service on custom or cloud-based server systems."), out.width="150%"}
 
 include_graphics('img/spatialHeatmap_Design.jpg')
 
 ```
-
-<font color='blue'>jianhai-reply: legend is edited.^[Thomas-Comment: the legend text of Figure 1 should provide a brief overview of what is shown
-in the flowchart. Right now there is too much technical detail that lacks context.
-I suggest to significantly shorten it. Also, you may want to organize the flowchart
-with bullet labels like (A), (B), (C) and (D) that can be referenced in the text. 
-For instance: (A) Expression Data, (B) aSVG, (C) SHM and (D) Gene Context Plots. 
-This way there is a clear label plus a visual illustration for each component one
-can refer to in the text with Figure 1A or Figure 1B, etc.]</font>
 
 As anatomical images the package supports both tissue maps from public
 repositories and custom images provided by the user. In general any type of
