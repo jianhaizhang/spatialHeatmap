@@ -85,9 +85,9 @@ functionalities of the `spatialHeatmap` package are illustrated in Figure
 \@ref(fig:illus).   
 
 
-```{r illus, echo=FALSE, fig.wide=FALSE, fig.cap=("Functionality overview of spatialHeatmap. This figure illustrates the overview of spatialHeatmap functionality on gene expression data, which could be generalized on many other data types. The accepted data classes are `SummarizedExperiment` (SE, A1), `data frame` (A2), `vector` (A3). If exist, replicates should be aggregated. Subfigure B is the aSVG image (see [aSVG](#term) below), where target spatial features (*e.g.* frontal.cortex) are pre-annotated. The numeric values of target samples in data are mapped to matching features in aSVG and translated to colors (*e.g.* frontal.cortex), and the resulting plots are termed spatial heatmaps (SHMs, subfigure C). The color scale on the left indicates gene expression levels and the legend plot on the right labels matching spatial features. As enhancements to SHMs, target genes are visualized in the context of nearest neighbors in form of matrix heatmap (subfigure D), which are selected with correlation or distance measure. Next, network analysis is applied on all genes in matrix heatmap, and the module containing a target gene is shown as network graph (subfigure E). In addition to command-driven mode, all utilities are also combined as an interactive Shiny App, which would be convenient for non-R users."), out.width="100%"}
+```{r illus, echo=FALSE, fig.wide=FALSE, fig.cap=("Overview of spatialHeatmap. This figure illustrates the functionalities of the spatialHeatmap package on gene expression data, which could be generalized on many other data types. The accepted data classes are `SummarizedExperiment` (SE, A1), `data frame` (A2), `vector` (A3). If exist, replicates should be aggregated. Subfigure B is the aSVG image (see [aSVG](#term) below), where target spatial features (*e.g.* frontal.cortex) are pre-annotated. The numeric values of target samples in data are mapped to matching features in aSVG and translated to colors (*e.g.* frontal.cortex), and the resulting plots are termed spatial heatmaps (SHMs, subfigure C). The color scale on the left indicates gene expression levels and the legend plot on the right labels matching spatial features. As enhancements to SHMs, target genes are visualized in the context of nearest neighbors in form of matrix heatmap (subfigure D), which are selected with correlation or distance measure. Next, network analysis is applied on all genes in matrix heatmap, and the module containing a target gene is shown as network graph (subfigure E). In addition to command-driven mode, all utilities are also combined as an interactive Shiny App, which would be convenient for non-R users."), out.width="100%"}
 
-include_graphics('img/illustration.jpg')
+include_graphics('img/spatialHeatmap_Design.jpg')
 
 ```
 
@@ -115,8 +115,7 @@ and biomedical areas. Moreover, the package has been designed to also work with
 many other spatial data types, such a population data plotted onto geographic
 maps. This high level of flexibility is one of the unique features of
 _spatialHeatmap_. Related software tools for biological applications in this
-field are largely based on pure web applications ^[<font color='blue'> Semantic Body Browser [@Lekschas2015-gd], and the Expression Atlas (https://www.ebi.ac.uk/gxa/home) both are able to visualize data on anatomical images and are web-based, should they be cited? </font>][@Winter2007-bq;
-@Waese2017-fx] or local tools [@Maag2018-gi; @Muschelli2014-av] that typically
+field are largely based on pure web applications [@Lekschas2015-gd; @Papatheodorou2018-jy; @Winter2007-bq; @Waese2017-fx] or local tools [@Maag2018-gi; @Muschelli2014-av] that typically
 lack customization functionalities. These restrictions limit users to utilizing
 pre-existing expression data and/or fixed sets of anatomical image collections.
 To close this gap for biological use cases, we have developed _spatialHeatmap_
@@ -1502,6 +1501,10 @@ sessionInfo()
 This project has been funded by NSF awards: [PGRP-1546879](https://www.nsf.gov/awardsearch/showAward?AWD_ID=1546879&HistoricalAwards=false), [PGRP-1810468](https://www.nsf.gov/awardsearch/showAward?AWD_ID=1810468), [PGRP-1936492](https://www.nsf.gov/awardsearch/showAward?AWD_ID=1936492&HistoricalAwards=false).
 
 # References
+<!-- 
+ThG: keep this html comment to number Reference list like any other section in table of content.
+-->
+
 
 
 
