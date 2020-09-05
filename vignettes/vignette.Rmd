@@ -85,7 +85,7 @@ functionalities of the `spatialHeatmap` package are illustrated in Figure
 \@ref(fig:illus).   
 
 
-```{r illus, echo=FALSE, fig.wide=FALSE, fig.cap=("Overview of spatialHeatmap. (A) The _saptialHeatmap_ package supports assay data from a wide range of omics technologies ranging from genomic, transcriptomic, proteomic to metabolomic profiling data. The assay data can be provided as numeric vectors, tabular data, or _SummarizedExperiment_ objects. The latter is a widely used data container for organizing both assay data as well as associated annotation and experimental design data. (B) Anatomical and other spatial images are provided as annotated SVG (aSVG) files where the spatial features and the corresponding data components of the assay data have matching labels (_e.g._ tissue labels). (C) The assay data are used to color the matching spatial features in one or more aSVG images according to a color key. The result is called a spatial heatmap (SHM) plot. Multiple measurements can be visualized in the same plot, such as several factors (_e.g._ genes, proteins, metabolites), treatment conditions, growth stages and more. (D) Data mining graphics, such as matrix heatmaps and network graphs, are integrated to facilitate the identification of factors with similar assay profiles. The functionalities of _spatialHeatmap_ can be accessed from local computers via the R console or a graphical user interface based on Shiny. In addtion, the latter can be deployed as a web service on custom servers or cloud-based systems.")}
+```{r illus, echo=FALSE, fig.wide=FALSE, fig.cap=("Overview of spatialHeatmap. (A) The _saptialHeatmap_ package supports assay data from a wide range of omics technologies including genomic, transcriptomic, proteomic and metabolomic profiling data. The assay data can be provided as numeric vectors, tabular data, or _SummarizedExperiment_ objects. The latter is a widely used data container for organizing both assay data as well as associated annotation and experimental design data. (B) Anatomical and other spatial images are provided as annotated SVG (aSVG) files where the spatial features and the corresponding data components of the assay data have matching labels (_e.g._ tissue labels). (C) The assay data are used to color the matching spatial features in one or more aSVG images according to a color key. The result is called a spatial heatmap (SHM) plot. Multiple measurements can be visualized in the same plot, such as several factors (_e.g._ genes, proteins, metabolites), treatment conditions, growth stages and more. (D) Data mining graphics, such as matrix heatmaps and network graphs, are integrated to facilitate the identification of factors with similar assay profiles. The functionalities of _spatialHeatmap_ can be accessed from local computers via the R console or a graphical user interface based on Shiny. In addtion, the latter can be deployed as a web service on custom servers or cloud-based systems.")}
 
 include_graphics('img/spatialHeatmap_Design.jpg')
 
@@ -132,7 +132,13 @@ tissue layer of interest in the plots. To address this, several default and
 customizable layer viewing options are provided. They allow to hide features in
 the top layers by making them transparent in order to expose features below
 them. This transparency viewing feature is highlighted below in the mouse
-example (Figure \@ref(fig:musshm1)). <font color='blue'> The SHM functionality also accepts multiple aSVGs as shown in Figure \@ref(fig:arabshm). This is particularly useful when map data to tissues across multiple development phases. In addition to static representation, SHMs are also presented in form of animation and video in order of genes or conditions. In the animation, each SHM is interactive such as zoom in and out, mouse over features to show tooltip.</font>      
+example (Figure \@ref(fig:musshm1)). Moreover, one can plot multiple distinct 
+aSVGs in a single SHM plot as shown in Figure \@ref(fig:arabshm). This is 
+particularly useful for displaying abundance trends across multiple development 
+stages where each one of them is represented by its own aSVG image. In addition to
+static SHM representations, one can visualize them in form of dynamic animations
+with a rich set of interactive functionalities, such as zooming and video download 
+options.
 
 To maximize reusability and extensibility, the package organizes large-scale
 omics assay data along with the associated experimental design information in a
