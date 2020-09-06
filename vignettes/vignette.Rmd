@@ -67,11 +67,10 @@ tissue- and organ-specific data of biological assays by coloring the
 corresponding spatial features defined in anatomical images according to a
 numeric color key. The color scheme used to represent the assay values can be
 customized by the user. This core functionality of the package is called a
-_spatial heatmap_ (SHM) plot. It is enhanced with nearest neighbor
-visualization tools for groups of measured items (_e.g._ gene modules) sharing
-related abundance profiles, including matrix heatmaps combined with
-hierarchical clustering dendrograms and network representations.  The
-functionalities of _spatialHeatmap_ can be used either in a command-driven mode
+_spatial heatmap_ (SHM) plot. It is enhanced with visualization tools for groups 
+of measured items (_e.g._ gene modules) sharing related abundance profiles, including 
+matrix heatmaps combined with hierarchical clustering dendrograms and network representations. 
+The functionalities of _spatialHeatmap_ can be used either in a command-driven mode
 from within R or a graphical user interface (GUI) provided by a Shiny App that
 is also part of this package. While the R-based mode provides flexibility to
 customize and automate analysis routines, the Shiny App includes a variety of
@@ -116,7 +115,7 @@ intuitive to use GUI application.
 
 ## Design {#design}
 
-The core feature of [`spatialHeatmap`](#shm) is to map the assay values (_e.g._
+The core feature of [`spatialHeatmap`](#shm) is to map assay values (_e.g._
 gene expression data) of one or many items (_e.g._ genes) measured under
 different conditions in form of numerically graded colors onto the
 corresponding cell types or tissues represented in a chosen SVG image. In the
@@ -125,8 +124,8 @@ values among multiple genes by plotting their SHMs next to each
 other. Similarly, one can display the expression values of a single or multiple
 genes across multiple conditions in the same plot (Figure \@ref(fig:humshm)). This level of flexibility is
 very efficient for visualizing complicated expression patterns across genes,
-cell types and conditions. In case of more complex anatomical images composed
-of overlapping multiple layer tissues, it is important to visually expose the
+cell types and conditions. In case of more complex anatomical images with
+overlapping multiple layer tissues, it is important to visually expose the
 tissue layer of interest in the plots. To address this, several default and
 customizable layer viewing options are provided. They allow to hide features in
 the top layers by making them transparent in order to expose features below
@@ -136,8 +135,7 @@ aSVGs in a single SHM plot as shown in Figure \@ref(fig:arabshm). This is
 particularly useful for displaying abundance trends across multiple development 
 stages, where each is represented by its own aSVG image. In addition to
 static SHM representations, one can visualize them in form of dynamic animations
-that are supported a rich set of interactive functionalities, such as zooming and video download 
-options.
+embedded in interactive HTML files or generate videos for them.
 
 To maximize reusability and extensibility, the package organizes large-scale
 omics assay data along with the associated experimental design information in a
@@ -205,7 +203,10 @@ directly. The aSVG images developed by the `spatialHeatmap` project are
 available in its own repository called [spatialHeatmap aSVG
 Repository](https://github.com/jianhaizhang/spatialHeatmap_aSVG_Repository),
 where users can contribute their aSVG images that are formatted according to
-our guidlines.
+our guidlines.^[Naming the subdirectory 'UCR' where you store the images in the repos 
+is a poor choice as it indicates a personal rather than a community solution. Perhaps name it just 
+'svg_images'? Also try to include there more images. The current collection is so 
+small that it is of questionable value.]
 
 ## Tutorial Overview {#sample_data}
 
@@ -1002,7 +1003,7 @@ se.fil.arab <- filter_data(data=se.aggr.sh, sam.factor='samples', con.factor='co
 
 ### SHM: Microarray 
 
-The expression profile for the HRE2 gene is plotted for control and hypoxia treatment
+The expression profile for the HRE2 gene is plotted for the control and the hypoxia treatment
 across six cell types (Figure \@ref(fig:shshm)).
 
 ```{r shshm, eval=TRUE, echo=TRUE, warnings=FALSE, fig.wide=TRUE, fig.cap=('SHM of Arabidopsis shoots. The expression profile of the HRE2 gene is plotted for control and hypoxia treatment across six cell types.'), out.width="100%"}
@@ -1029,8 +1030,8 @@ rownames(df.random) <- paste0('gene', 1:10) # Assign row names
 df.random[1:3, ]
 ```
 
-Obtain paths to aSVG files, here for younger and older plants using `*_shm1` and 
-`*_shm1`, respectively.  
+Next the paths to the aSVG files are obtained, here for younger and older plants using `*_shm1` 
+and `*_shm1`, respectively.  
 
 ```{r eval=TRUE, echo=TRUE, warnings=FALSE}
 svg.sh1 <- system.file("extdata/shinyApp/example", "arabidopsis_thaliana.organ_shm1.svg", package="spatialHeatmap")
@@ -1046,15 +1047,42 @@ spatial_hm(svg.path=c(svg.sh1, svg.sh2), data=df.random, ID=c('gene1'), width=0.
 
 # Matrix Heatmaps {#mhm}
 
-SHMs are a visualization approach suitable for comparing the expression profiles
-of single genes or a small number of them across cell types and conditions. To 
-also support analyses across larger number of genes, `spatialHeatmap` provides 
-utilities for identifying for gene(s) of interest nearest neighbor genes that share 
-similar expression profiles. This is achieved by identifying clusters and 
-network modules using hierarchical clustering and network analysis, <font color='blue'> and the former is displayed as matrix heatmap while the latter as network graph </font>. These approaches
-are described with the Arabidopsis Shoot data in this and the following sections, respectively.
+SHMs are suitable for comparing assay profiles among small number of items
+(_e.g._ few genes or proteins) across cell types and conditions. To also
+support analysis routines of larger number of items, `spatialHeatmap` integrates
+functionalities for identifying groups of items with similar and/or dissimilar 
+assay profiles, and subsequently analyzing the results with visualization 
+methods that scale to larger numbers of items than SHMs, such as hierarchical
+clustering and network analysis methods. The following introduced both
+approaches using as sample data the gene expression data from Arabidopsis
+shoots from the previous section.
 
-The nearest neighbors of target genes are selected based on the correlation coefficient or distance between genes, where the default is Pearson correlation coefficient (PCC). The argument `p` is the proportion of genes showing most similar expression profiles with target genes. Only genes within this proportion are returned. Other two alternative threshold arguments are `n` and `v`. The former selects top `n` most similar genes, while the latter is a real PCC or distance value and only genes within this value are selected. Note, the nearest neighbors are selected for each target gene independently. In this example, the target genes are `RCA` and `HRE2`. The argument `ann` is the column name of gene annotation in `rowData` slot. It is only relevant if users want to see annotation when mousing over a node in the [interactive network](#inter_net) below, so it is optional to be assigned a value. Here `ann='Target.Description'` is set and the corresponding annotation is appended to selected nearest neighbors. 
+To identify similar items, the `submatrix` function can be used. The latter
+identifies items sharing similar profiles with one or more query items of
+interest. The given example uses correlation coefficients as similarity metric.
+Three filtering parameters are provided to control the similarity and number of
+items in the result. First, the `p` argument allows to restrict the number of
+similar items to return based on a percentage cutoff relative to the number of
+items in the assay data set (_e.g._ 1% of the top most similar items). Second,
+a fixed number `n` of the most similar items can be returned.  Third, all items
+above a user definable correlation coefficient cutoff value can be returned,
+such as a Pearson correlation coefficient (PCC) of at least 0.6. If several
+query items are provided then the function returns the similar genes for each
+query, while assuring uniqueness among items in the result. 
+^[<font color='red'>It seems submatrix creates internally an all-against-all similarity/distance
+matrix instead of performing a similarity search and returning only the
+relevant items. The computation of the full similarity matrix is a quadratic problem
+that will crash user's systems when the assay data contains many genes by
+taking up all RAM, whereas a search is of linear complexity, and thus scales to much larger 
+assay data sets. The run-time in R for a correlation search is very fast since 
+there is no R-based looping necessary (simply do: cor(query_vec, matrix)) as it 
+runs on the C/Fortran level, meaning speed is not a concern here.</font>]
+
+In the following example uses the two query genes: `RCA` and `HRE2`. The `ann`
+argument corresponds to the column name in the `rowData` slot containing gene
+annotation information. The latter is only relevant if users want to see these
+annotations when mousing over a node in the [interactive network](#inter_net)
+plot generated in the next section. 
 
 ```{r eval=TRUE, echo=TRUE, warnings=FALSE}
 sub.mat <- submatrix(data=se.fil.arab, ann='Target.Description', ID=c('RCA', 'HRE2'), p=0.1)
