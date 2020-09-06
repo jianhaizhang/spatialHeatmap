@@ -600,17 +600,17 @@ spatial_hm(svg.path=svg.hum, data=se.fil.hum, ID=c('ENSG00000268433', 'ENSG00000
 
 SHMs can be saved to interactive HTML files as well as video files. To trigger
 this export behavior the argument `out.dir` needs to be assinged a directory
-path where the HTML, SVG image and move files will be stored.  Each HTML file
+path where the HTML, SVG image and video files will be stored.  Each HTML file
 contains an interactive SHM with zoom in and out functionality. Hovering over
 graphics features will display data, gene, condition and other information. The
 video will play the SHM subplots in the order specified under the `lay.shm`
 argument. 
 
-The following example saves the interactive HTML file(s) and video under the 
+The following example saves the interactive HTML and video files under the 
 a directory named `~/test`.  
 
 <!--
-The following code chunk is not evaluated to avoid local write of files.
+Code chunk not evaluated to save time building this vignette.
 -->
 ```{r eval=FALSE, echo=TRUE, warnings=FALSE }
 if (!dir.exists('~/test')) dir.create('~/test')
