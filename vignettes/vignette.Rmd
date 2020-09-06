@@ -660,7 +660,7 @@ colData(rse.mus)[1:3, ]
 
 ### aSVG Image  
 
-The following example shows how to download from the previously mentioned [SVG
+The following example shows how to download from the above described [SVG
 repositories](#data_repo) an aSVG image that matches the tissues and species
 assayed in the gene expression data set downloaded in the previous subsection.
 As before the image is saved to a directory named `~/test`.
@@ -672,8 +672,8 @@ feature.df <- return_feature(feature=c('heart', 'kidney'), species=c('Mus muscul
 
 To build this vignettes according to the R/Bioconductor package requirements, the
 following code section uses the aSVG file instance included in the
-`spatialHeatmap` package rather than the downloaded instance from the previous
-example. 
+`spatialHeatmap` package rather than the downloaded instance from the example in
+the previous step. 
 
 ```{r eval=TRUE, echo=TRUE, warnings=FALSE }
 feature.df <- return_feature(feature=c('heart', 'kidney'), species=NULL, keywords.any=TRUE, return.all=FALSE, dir=svg.dir, remote=FALSE, match.only=FALSE) 
@@ -685,9 +685,9 @@ Return the names of the matching aSVG files.
 unique(feature.df$SVG)
 ```
 
-The following first selects `mus_musculus.male.svg` as target aSVG, then returns the 
-first three rows of the resulting `feature.df`, and finally prints the unique set of all
-aSVG features.   
+The following first selects `mus_musculus.male.svg` as target aSVG, then
+returns the first three rows of the resulting `feature.df`, and finally prints
+the unique set of all aSVG features.   
 
 ```{r eval=TRUE, echo=TRUE, warnings=FALSE }
 feature.df <- subset(feature.df, SVG=='mus_musculus.male.svg')
@@ -703,8 +703,7 @@ svg.mus <- system.file("extdata/shinyApp/example", "mus_musculus.male.svg", pack
 
 ### Experimental Design
 
-Import of custom target file defining simplified sample labels and experimental
-design. The following imports a sample target file that is included in this package.
+The following imports a sample target file that is included in this package.
 To inspect its content, the first three rows of the target file are printed to the 
 screen.
 
@@ -725,8 +724,8 @@ colData(rse.mus) <- DataFrame(target.mus)
 
 The raw RNA-Seq count are preprocessed with the following steps: (1)
 normalization, (2) aggregation of replicates, and (3) filtering of reliable
-expression data. The details of these steps are explained in the previous
-sub-section using data from human.
+expression data. The details of these steps are explained in the sub-section 
+above using data from human.
 
 ```{r eval=TRUE, echo=TRUE, warnings=FALSE }
 se.nor.mus <- norm_data(data=rse.mus, norm.fun='ESF', data.trans='log2') # Normalization
@@ -755,7 +754,7 @@ in the same aSVG the skeletal muscle tissue instead, `tis.trans` is assigned
 
 To fine control the visual effects in feature rich aSVGs, the `line.size` and
 `line.color` parameters are useful. This way one can adjust the thickness and 
-color of complex shape structures.
+color of complex structures.
 
 
 ```{r musshm1, eval=TRUE, echo=TRUE, warnings=FALSE, fig.wide=TRUE, fig.cap=("SHM of mouse organs. This is a multiple-layer image where the view onto 'lung' and 'heart' is obstructed by displaying the 'skeletal muscle' tissue."), out.width="100%" }
@@ -797,7 +796,7 @@ colData(rse.chk)[1:3, ]
 
 ### aSVG Image  
 
-The following example shows how to download from the previously mentioned [SVG
+The following example shows how to download from the above introduced [SVG
 repositories](#data_repo) an aSVG image that matches the tissues and species
 assayed in the gene expression data set downloaded in the previous subsection.
 As before the image is saved to a directory named `~/test`.
@@ -812,7 +811,7 @@ feature.df <- return_feature(feature=c('heart', 'kidney'), species=c('gallus'), 
 To build this vignettes according to the R/Bioconductor package requirements, the
 following code section uses the aSVG file instance included in the
 `spatialHeatmap` package rather than the downloaded instance from the previous
-example. 
+step. 
 
 ```{r eval=TRUE, echo=TRUE, warnings=FALSE }
 feature.df <- return_feature(feature=c('heart', 'kidney'), species=c('gallus'), keywords.any=TRUE, return.all=FALSE, dir=svg.dir, remote=FALSE, match.only=FALSE)
@@ -827,8 +826,7 @@ svg.chk <- system.file("extdata/shinyApp/example", "gallus_gallus.svg", package=
 
 ### Experimental Design
 
-Import of custom target file defining simplified sample labels and experimental
-design. The following imports a sample target file that is included in this package.
+The following imports a sample target file that is included in this package.
 To inspect its content, the first three rows of the target file are printed to the 
 screen.
 
@@ -844,7 +842,7 @@ Load custom target data into `colData` slot.
 colData(rse.chk) <- DataFrame(target.chk)
 ```
 
-All samples used for plotting SHMs.  
+Return samples used for plotting SHMs.  
 
 ```{r eval=TRUE, echo=TRUE, warnings=FALSE }
 unique(colData(rse.chk)[, 'organism_part'])
@@ -861,7 +859,7 @@ unique(colData(rse.chk)[, 'age'])
 The raw RNA-Seq count are preprocessed with the following steps: (1)
 normalization, (2) aggregation of replicates, and (3) filtering of reliable
 expression data. The details of these steps are explained in the above
-sub-section using data from human.
+sub-section on human data.
 
 ```{r eval=TRUE, echo=TRUE, warnings=FALSE }
 se.nor.chk <- norm_data(data=rse.chk, norm.fun='ESF', data.trans='log2') # Normalization
@@ -873,10 +871,7 @@ se.fil.chk <- filter_data(data=se.aggr.chk, sam.factor='organism_part', con.fact
 
 The expression profile for gene `ENSGALG00000006346` is plotted across nine time
 points in four organs in form of a composite SHM with 9 panels. Their layout in
-three columns is controlled with the argument setting `ncol=3`. <font color='blue'>In the legend plot, target features are labeled by `label=TRUE`. </font>  
-
-<font color='blue'>jianhai-reply: reordered.^[The order of the
-time points in Figure 7 should be by time. Right now it is rather random.]</font>
+three columns is controlled with the argument setting `ncol=3`. 
 
 ```{r chkshm, eval=TRUE, echo=TRUE, warnings=FALSE, fig.wide=TRUE, fig.cap=("Time course of chicken organs. The SHM shows the expression profile of a single gene across nine time points and four organs."), out.width="100%" }
 spatial_hm(svg.path=svg.chk, data=se.fil.chk, ID='ENSGALG00000006346', width=0.9, legend.width=0.9, legend.r=1.5, sub.title.size=9, ncol=3, legend.nrow=2, label=TRUE)
@@ -884,12 +879,12 @@ spatial_hm(svg.path=svg.chk, data=se.fil.chk, ID='ENSGALG00000006346', width=0.9
 
 ## Arabidopsis Shoot {#shoot}
 
-This section generates an SHM for _Arabidopsis thaliana_ with gene expression
+This section generates an SHM for _Arabidopsis thaliana_ tissues with gene expression
 data from the Affymetrix microarray technology. The chosen experiment used
 ribosome-associated mRNAs from several cell populations of shoots and roots that were
 exposed to hypoxia stress [@Mustroph2009-nu]. In this case the expression data
 will be downloaded from [GEO](https://www.ncbi.nlm.nih.gov/geo/) with utilites
-from the `GEOquery` package [@geo] and the preprocessing routines will be
+from the `GEOquery` package [@geo]. The data preprocessing routines are
 specific to the Affymetrix technology. The remaining code components for
 generating SHMs are very similar to the previous examples. For brevity, the
 text in this section explains mainly the steps that are specific to this data
@@ -898,16 +893,17 @@ set.
 
 ### Gene Expression Data
 
-The GSE14502 data set is downloaded with the `getGEO` function from the `GEOquery` 
-package. Intermediately, the expression data is stored in an `ExpressionSet` container [@biobase] 
-and then converted to a `SummarizedExperiment` object.
+The GSE14502 data set will be downloaded with the `getGEO` function from the
+`GEOquery` package. Intermediately, the expression data is stored in an
+`ExpressionSet` container [@biobase], and then converted to a
+`SummarizedExperiment` object.
 
 ```{r eval=TRUE, echo=TRUE, warnings=FALSE}
 gset <- getGEO("GSE14502", GSEMatrix=TRUE, getGPL=TRUE)[[1]]
 se.sh <- as(gset, "SummarizedExperiment")
 ```
 
-The gene symbol identifiers are extracted from the `rowData` component and used 
+The gene symbol identifiers are extracted from the `rowData` component to be used 
 as row names. Similarly, one can work with AGI identifiers by providing below `AGI` 
 under `Gene.Symbol`.
 
@@ -928,7 +924,7 @@ colData(se.sh)[60:63, 1:4]
 
 ### aSVG Image  
 
-In this example, the aSVG image has been regenerated in Inkscape from 
+In this example, the aSVG image has been generated in Inkscape from 
 the corresponding figure in @Mustroph2009-nu. The resulting custom figure
 has been included as a sample aSVG file in the `spatialHeatmap` package. Detailed 
 instructions for generating custom aSVG images in Inkscape are provided in the 
@@ -1004,7 +1000,7 @@ se.aggr.sh <- aggr_rep(data=se.sh, sam.factor='samples', con.factor='conditions'
 se.fil.arab <- filter_data(data=se.aggr.sh, sam.factor='samples', con.factor='conditions', pOA=c(0.03, 6), CV=c(0.30, 100), dir=NULL) # Filtering of genes with low intensities and variance
 ```
 
-### SHM: Microarray Example
+### SHM: Microarray 
 
 The expression profile for the HRE2 gene is plotted for control and hypoxia treatment
 across six cell types (Figure \@ref(fig:shshm)).
@@ -1012,15 +1008,19 @@ across six cell types (Figure \@ref(fig:shshm)).
 ```{r shshm, eval=TRUE, echo=TRUE, warnings=FALSE, fig.wide=TRUE, fig.cap=('SHM of Arabidopsis shoots. The expression profile of the HRE2 gene is plotted for control and hypoxia treatment across six cell types.'), out.width="100%"}
 spatial_hm(svg.path=svg.sh, data=se.fil.arab, ID=c("HRE2"), height=0.7, legend.nrow=3, legend.text.size=11)
 ```
-<font color='blue'>
 
-### SHM: Growth-stage Example {#mul_svg}
+### SHM: Development {#mul_svg}
 
-The `spatial_hm` function also accepts multiple aSVG files, such as aSVGs of different growth stages. In this case, these aSVG files should be indexed with suffixes of `_shm1`, `_shm2`, *etc*, such as `arabidopsis_thaliana.organ_shm1.svg` and `arabidopsis_thaliana.organ_shm2.svg` in the following example. Without such suffixes, the order of aSVGs cannot be determined and an error will be reported. The paths of aSVG files should be provided to `svg.path` as a vector. To preserve the relative dimensions of original aSVGs, the argument `preserve.scale` should be set `TRUE`, which is useful if tissue/organ features need to reflect varying sizes across growth stages. By default, every aSVG image will have a legend plot on the right. If only specific legend plots are expected, the `legend` argument should be used, and accepted values are `shm1`, `shm2`, *etc*. The `legend.width` argument controls the width of legend plots. If a value of `0` is provided, all legend plots are removed.  
+The `spatial_hm` function can arrange multiple aSVGs in a single SHM plot, such
+as aSVGs from different development stages. To organize the subplots, the names
+of the aSVG files are expected to include the following suffixes: `*_shm1.svg`,
+`*_shm2.svg`, *etc*.  The paths to the aSVG files are provided under the
+`svg.path` argument.  By default, every aSVG image will have a legend plot on
+the right.  The `legend` argument provides fine control over which legend plots
+to display. 
 
-In the example below, a random numeric data frame is generated and `gene1` is mapped to two aSVGs of Arabidopsis plants, `arabidopsis_thaliana.organ_shm1.svg` and `arabidopsis_thaliana.organ_shm2.svg`, which are pre-packaged in `spatialHeatmap`. The former stands for a younger stage while the latter for an older stage. The samples `shoot_totalA` and `shoot_totalB` in the data frame are assumed to have matching feature counterpart in the younger and older plant aSVG respectively.  
-
-Create random numeric data.frame.  
+As a simple toy example, the following stores random numbers in a 
+`data.frame`.  
 
 ```{r eval=TRUE, echo=TRUE, warnings=FALSE}
 df.random <- data.frame(matrix(sample(x=1:100, size=50, replace=TRUE), nrow=10))
@@ -1029,22 +1029,20 @@ rownames(df.random) <- paste0('gene', 1:10) # Assign row names
 df.random[1:3, ]
 ```
 
-Access aSVG paths of the younger and older plants.  
+Obtain paths to aSVG files, here for younger and older plants using `*_shm1` and 
+`*_shm1`, respectively.  
 
 ```{r eval=TRUE, echo=TRUE, warnings=FALSE}
-# aSVG of growth stage 1 (younger).
 svg.sh1 <- system.file("extdata/shinyApp/example", "arabidopsis_thaliana.organ_shm1.svg", package="spatialHeatmap")
-# aSVG of growth stage 2 (older).
 svg.sh2 <- system.file("extdata/shinyApp/example", "arabidopsis_thaliana.organ_shm2.svg", package="spatialHeatmap")
 ```
 
-Plot SHMs on `gene1`. The orginal dimension relativity is preserved by `preserve.scale=TRUE`.    
+The following generates the corresponding SHMs plot for `gene1`. The orginal 
+image dimensions can be preserved by assigning `TRUE` to the `preserve.scale` argument.    
 
-```{r arabshm, eval=TRUE, echo=TRUE, warnings=FALSE, fig.wide=TRUE, fig.cap=('SHMs of Arabidopsis at two growth stages. The expression profile of `gene1` under `condition1` and `condition2` is mapped to two growth stages.'), out.width="100%"}
+```{r arabshm, eval=TRUE, echo=TRUE, warnings=FALSE, fig.wide=TRUE, fig.cap=('SHMs of Arabidopsis at two growth stages. The expression profile of gene1 under condition1 and condition2 is plotted for two growth stages (top and bottom row).'), out.width="100%"}
 spatial_hm(svg.path=c(svg.sh1, svg.sh2), data=df.random, ID=c('gene1'), width=0.7, legend.r=0.9, legend.width=1, preserve.scale=TRUE) 
 ```
-
-</font>
 
 # Matrix Heatmaps {#mhm}
 
