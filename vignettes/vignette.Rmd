@@ -1078,7 +1078,7 @@ assay data sets. The run-time in R for a correlation search is very fast since
 there is no R-based looping necessary (simply do: cor(query_vec, matrix)) as it 
 runs on the C/Fortran level, meaning speed is not a concern here.</font>]
 
-In the following example uses the two query genes: `RCA` and `HRE2`. The `ann`
+The following example uses as query the two genes: `RCA` and `HRE2`. The `ann`
 argument corresponds to the column name in the `rowData` slot containing gene
 annotation information. The latter is only relevant if users want to see these
 annotations when mousing over a node in the [interactive network](#inter_net)
