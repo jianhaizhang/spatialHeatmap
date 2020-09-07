@@ -1,0 +1,11 @@
+
+.shiny-output-error-validation { color: red }
+
+.shiny-notification {
+  position: fixed; opacity: 1; font-size: 30px; 
+  top: 35%; left: 30%; height: 150px; width: 700px
+}
+
+input[id='search'] { height: 28px; width: 500px; margin: 3px; padding: 0; font-size: inherit; border: 1px solid #CCCCCC }
+
+label[for='search']{ display: table-cell; text-align: center; vertical-align: middle;   }

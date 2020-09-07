@@ -39,7 +39,8 @@ Imports:
    utils,
    visNetwork,
    methods,
-   xml2
+   xml2,
+   yaml
 BugReports: https://github.com/jianhaizhang/spatialHeatmap/issues
 URL: https://github.com/jianhaizhang/spatialHeatmap
 Video: NA

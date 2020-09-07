@@ -10,8 +10,7 @@
 
 sub_na <- function(mat, ID, p=0.3, n=NULL, v=NULL) {
 
-  len <- nrow(mat)
-  na <- NULL; for (i in ID) {
+  len <- nrow(mat); na <- NULL; for (i in ID) {
 
     if (!is.null(p)) {
   
@@ -22,6 +21,7 @@ sub_na <- function(mat, ID, p=0.3, n=NULL, v=NULL) {
 
       vec <- sort(mat[, i]); thr <- vec[len-n+1]
       na0 <- names(vec[vec >= thr]); na <- c(na, na0)
+
     } else if (!is.null(v)) {
   
       vec <- mat[, i]; na0 <- names(vec[vec >= v]); na <- c(na, na0)

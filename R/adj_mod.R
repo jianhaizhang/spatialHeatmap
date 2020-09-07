@@ -87,14 +87,12 @@
 #'
 #' # In the following, "df.sub.mat" and "se.sub.mat" is used in the same way, so only "se.sub.mat" illustrated.
 #'
-#' # The subsetted matrix and the complete correlation matrix are returned in a list, and partial is shown below.
-#' se.sub.mat[['sub_matrix']][c('ENSGALG00000019846', 'ENSGALG00000000112'), c(1:2, 63)] # Subsetted matrix.
-#' se.sub.mat[['cor_dist']][c('ENSGALG00000019846', 'ENSGALG00000000112'), 1:3] # Correlation matrix.
-#'
+#' # The subsetted matrix is shown below.
+#' se.sub.mat[c('ENSGALG00000019846', 'ENSGALG00000000112'), c(1:2, 63)]
 #' ## Adjacency matrix and module identification
 
 #' # The modules are identified by "adj_mod". It returns a list containing an adjacency matrix and a data frame of module assignment. 
-#' adj.mod <- adj_mod(data=se.sub.mat[['sub_matrix']])
+#' adj.mod <- adj_mod(data=se.sub.mat)
 
 #' # The adjacency matrix is a measure of co-expression similarity between genes, where larger value denotes more similarity.
 #' adj.mod[['adj']][1:3, 1:3]

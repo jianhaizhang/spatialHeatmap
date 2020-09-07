@@ -867,19 +867,31 @@ submatrix <- function(data, ann=NULL, ID, p=0.3, n=NULL, v=NULL, fun='cor', cor.
 
   if (fun=='cor') {
 
-    m <- do.call(cor, c(x=list(t(data)), arg.cor))
+    dat.t <- t(data)
+    m <- do.call(cor, c(x=list(dat.t[, ID]), y=list(dat.t), arg.cor)); m <- t(m)
     if (cor.absolute==TRUE) { m1 <- m; m <- abs(m) }
     na <- sub_na(mat=m, ID=ID, p=p, n=n, v=v)
     if (cor.absolute==TRUE) m <- m1
+    m <- t(m)
 
   } else if (fun=='dist') { 
-    
-    m <- -as.matrix(do.call(dist, c(x=list(data), arg.dist)))
-    if (!is.null(v)) v <- -v
-    na <- sub_na(mat=m, ID=ID, p=p, n=n, v=v); m <- -m
 
-  }; sub.m <- m[na, na] 
-  return(list(sub_matrix=cbind(data[na, ], ann[na, , drop=FALSE]), cor_dist=m))
+    m <- data.frame(); for (i in ID) {
+    
+      dis <- NULL; for (j in rownames(data)) {
+
+        # Distances are transformed to negative.
+        dis0 <- -do.call(dist, c(x=list(data[c(i, j), ]), arg.dist))[1]
+        dis <- c(dis, dis0)
+
+      }; m <- rbind(m, dis)
+
+    }; row.names(m) <- ID; colnames(m) <- rownames(data)
+    if (!is.null(v)) v <- -v
+    na <- sub_na(mat=t(m), ID=ID, p=p, n=n, v=v); m <- -m
+
+  } 
+  return(sub_matrix=cbind(data[na, ], ann[na, , drop=FALSE]))
 
 }
 
@@ -1034,8 +1046,8 @@ video <- function(gg, cs.g, sam.uni, tis.trans, sub.title.size=NULL, bar.value.s
 
 }
 
+library(SummarizedExperiment); library(shiny); library(shinydashboard); library(grImport); library(rsvg); library(ggplot2); library(DT); library(gridExtra); library(ggdendro); library(WGCNA); library(grid); library(xml2); library(plotly); library(data.table); library(genefilter); library(flashClust); library(visNetwork); library(reshape2); library(igraph); library(animation); library(av); library(shinyWidgets); library(yaml)
 
-library(SummarizedExperiment); library(shiny); library(shinydashboard); library(grImport); library(rsvg); library(ggplot2); library(DT); library(gridExtra); library(ggdendro); library(WGCNA); library(grid); library(xml2); library(plotly); library(data.table); library(genefilter); library(flashClust); library(visNetwork); library(reshape2); library(igraph); library(animation); library(av); library(shinyWidgets)
 
 # Import input matrix.
 fread.df <- function(input, isRowGene, header, sep, fill, rep.aggr='mean', check.names=FALSE) {
@@ -1054,7 +1066,7 @@ fread.df <- function(input, isRowGene, header, sep, fill, rep.aggr='mean', check
   na <- as.data.frame(na); rownames(na) <- rna
   idx <- colSums(apply(na, 2, is.na))!=0
   gene2 <- na[!idx]; colnames(gene2) <- cna <- cna[!idx]
-  gene3 <- as.data.frame(df1)[idx] 
+  gene3 <- as.data.frame(df1)[idx]
   form <- grepl("__", cna); if (sum(form)==0) { colnames(gene2) <- paste0(cna, '__', 'con'); con.na <- FALSE } else con.na <- TRUE
   if (ncol(gene3)>0) { colnames(gene3)[1] <- 'ann'; gene3 <- gene3[1] }
   if(sum(is.na(as.numeric(as.matrix(gene2))))>=1) return('Make sure all values in data matrix are numeric.')
@@ -1077,35 +1089,119 @@ fread.df <- function(input, isRowGene, header, sep, fill, rep.aggr='mean', check
 
 }
 
+# Separate colour ingredients.
+col_sep <- function(color) {
+
+  color <- gsub(' |\\.|-|;|,|/', '_', color)
+  color <- strsplit(color, '_')[[1]]
+  color <- color[color!='']; return(color)
+
+}
 
 # enableWGCNAThreads()
 shinyServer(function(input, output, session) {
 
-  output$dld.sgl <- downloadHandler(
-    filename=function(){"single_aSVG_data.zip" },
-    fil.na <- paste0(tempdir(), '/single_aSVG_data.zip'),
-    content=function(fil.na){
-      zip(fil.na, c('example/arabidopsis_thaliana.root.cross_shm.svg', 'example/expr_arab.txt'))
+  cfg <- reactiveValues(lis.dat=NULL, lis.dld=NULL, lis.par=NULL, na.def=NULL, dat.def=NULL, svg.def=NULL, dat.ipt=NULL, na.cus=NULL)
+
+  observe({
+
+    lis.cfg <- yaml.load_file('config/config.yaml')
+    lis.dat <- lis.cfg[grepl('^dataset\\d+', names(lis.cfg))]
+    lis.dld <- lis.cfg[grepl('download_single|download_multiple', names(lis.cfg))]
+    if (is.null(input$config)) lis.par <- lis.cfg[!grepl('^dataset\\d+|download_single|download_multiple', names(lis.cfg))] else lis.par <- yaml.load_file(input$config$datapath[1])
+    if (!any(lis.par$hide.legend %in% c('Yes', 'No'))) lis.par$hide.legend <- ifelse(lis.par$hide.legend==TRUE, 'Yes', 'No')
+    for (i in seq_along(lis.par)) {
+
+      lis0 <- lis.par[[i]]; if (length(lis0)>1) { 
+ 
+        name <- default <- NULL; for (j in seq_along(lis0)) {
+
+          pair <- strsplit(lis0[j], ':')[[1]]
+          name <- c(name, pair[1]); default <- c(default, pair[2])
+
+        }; df0 <- data.frame(name=name, default=default)
+        rownames(df0) <- df0$name; lis.par[[i]] <- df0
+
+      } 
+
     }
+    # Separate data, svg.
+    na.ipt <- dat.ipt <- svg.ipt <- NULL; for (i in lis.dat) { 
+ 
+      na.ipt <- c(na.ipt, i$name); dat.ipt <- c(dat.ipt, i$data)
+      # svg.ipt <- c(svg.ipt, i$svg); names(dat.ipt) <- names(svg.ipt) <- na.ipt
+      svg.ipt <- c(svg.ipt, list(i$svg))
+
+    }; names(dat.ipt) <- names(svg.ipt) <- na.ipt
+
+    # Separate data, svg of default and customization. 
+    na.def <- na.ipt[!grepl('^none$|^customData$|^customComputedData$', na.ipt)]
+    dat.def <- dat.ipt[na.def]; svg.def <- svg.ipt[na.def]
+na.cus <- c('customData', 'customComputedData')
+    cfg$lis.dat <- lis.dat; cfg$lis.dld <- lis.dld; cfg$lis.par <- lis.par; cfg$na.def <- na.def; cfg$svg.def <- svg.def; cfg$dat.ipt <- dat.ipt; cfg$na.cus <- na.cus
+
+    updateSelectInput(session, 'fileIn', 'Step 1: data sets', na.ipt, lis.par$default.dataset)
+    updateRadioButtons(session, inputId='dimName', label='Step 4: is column or row gene?', choices=c("None", "Row", "Column"), selected=lis.par$col.row.gene, inline=TRUE)
+    updateSelectInput(session, 'sep', 'Step 5: separator', c("None", "Tab", "Space", "Comma", "Semicolon"), lis.par$separator)
+    updateNumericInput(session, inputId="A", label="Value (A) to exceed:", value=as.numeric(lis.par$data.matrix['A', 'default']))
+    updateNumericInput(session, inputId="P", label="Proportion (P) of samples with values >= A:", value=as.numeric(lis.par$data.matrix['P', 'default']))
+    updateNumericInput(session, inputId="CV1", label="Min coefficient of variation (CV1):", value=as.numeric(lis.par$data.matrix['CV1', 'default']))
+    updateNumericInput(session, inputId="CV2", label="Max coefficient of variation (CV2):", value=as.numeric(lis.par$data.matrix['CV2', 'default']))
+    updateRadioButtons(session, inputId='log', label='Log/exp:', choices=c("No", "log2", "exp2"), selected=lis.par$log.exp, inline=TRUE)
+    updateRadioButtons(session, inputId='scale', label='Scale by:', choices=c('No', 'Row', 'Column'), selected=lis.par$data.matrix.scale, inline=TRUE)
+    updateRadioButtons(session, inputId='hide.lgd', label="Hide legend:", choices=c('Yes', 'No'), selected=lis.par$hide.legend, inline=TRUE)
+    updateRadioButtons(session, inputId='measure', label="Measure:", choices=c('correlation', 'distance'), selected=lis.par$mhm['measure', 'default'], inline=TRUE)
+    updateRadioButtons(session, inputId="cor.abs", label="Cor.absolute:", choices=c('No', 'Yes'), selected=lis.par$mhm['cor.absolute', 'default'], inline=TRUE)
+    updateRadioButtons(session, inputId="thr", label="Select by:", choices=c('proportion'='p', 'number'='n', 'value'='v'), selected=lis.par$mhm['select.by', 'default'], inline=TRUE)
+    updateNumericInput(session, inputId='mhm.v', label='Cutoff: ', value=as.numeric(lis.par$mhm['cutoff', 'default']), min=-Inf, max=Inf, step=NA)
+    updateRadioButtons(session, inputId="mat.scale", label="Scale by:", choices=c("No", "Column", "Row"), selected=lis.par$mhm['scale', 'default'], inline=TRUE)
+    updateRadioButtons(session, inputId="mhm.but", label="Show plot:", choices=c("Yes", "No"), selected=lis.par$mhm['show', 'default'], inline=TRUE)
+    updateSelectInput(session, inputId="net.type", label="Network type:", choices=c('signed', 'unsigned', 'signed hybrid', 'distance'), selected=lis.par$network['net.type', 'default'])
+    updateNumericInput(session, "min.size", "Minmum module size:", value=as.numeric(lis.par$network['min.size', 'default']), min=15, max=5000)
+    updateSelectInput(session, "gen.sel", "Select a target gene:", c("None"), selected=lis.par$network['target.gene', 'default'])
+    updateSelectInput(session, "ds","Module splitting sensitivity level:", 3:2, selected=lis.par$network['ds', 'default'])
+    updateSelectInput(session, "TOM.in", "Adjcency threshold:", c("None", sort(seq(0, 1, 0.002), decreasing=TRUE)), selected=lis.par$network['adj.threshold', 'default'])
+    updateTextInput(session, "color.net", "Color scheme:", lis.par$network['color', 'default'], placeholder=paste0('Eg: ', lis.par$network['color', 'default']))
+    updateRadioButtons(session, inputId="cpt.nw", label="Show plot:", choices=c("Yes", "No"), selected=lis.par$network['show', 'default'], inline=TRUE)
+
+  })
+
+  observe({ 
+
+    dld.exp <- reactiveValues(sgl=NULL, mul=NULL)
+    dld.exp$sgl <- cfg$lis.dld$download_single
+    dld.exp$mul <- cfg$lis.dld$download_multiple
+
+    output$dld.cfg <- downloadHandler(
+      filename=function(){ "config_par.yaml" },
+      content=function(file=paste0(tempdir(), '/config_par.yaml')){ 
+ 
+        lis.cfg <- yaml.load_file('config/config.yaml')
+        lis.par <- lis.cfg[c("default.dataset", "col.row.gene", "separator", "hide.legend", "data.matrix", "shm.img", "shm.anm", "shm.video", "legend", "mhm", "network")]
+        write_yaml(lis.par, file)
+
+      }
+    )
+    output$dld.sgl <- downloadHandler(
+      filename=function(){ "single_aSVG_data.zip" },
+      content=function(file=paste0(tempdir(), '/single_aSVG_data.zip')){ zip(file, c(dld.exp$sgl$data, dld.exp$sgl$svg)) }
+    )
+    output$dld.mul <- downloadHandler(   
+      filename=function(){ "multiple_aSVG_data.zip" },
+      content=function(file=paste0(tempdir(), '/multiple_aSVG_data.zip')){ zip(file, c(dld.exp$mul$data, dld.exp$mul$svg)) }
   )
-  output$dld.mul <- downloadHandler(   
-    filename=function(){"multiple_aSVG_data.zip" },
-    fil.na <- paste0(tempdir(), '/multiple_aSVG_data.zip'),
-    content=function(fil.na){
-      zip(fil.na, c('example/random_data_multiple_aSVG.txt', 'example/arabidopsis_thaliana.organ_shm1.svg', 'example/arabidopsis_thaliana.organ_shm2.svg'))
-    }
-  )
+  })
 
   # Instruction.
-  output$sum <-renderUI({ includeHTML("file/summary.html") })
-  output$input <-renderUI({ includeHTML("file/input.html") })
-  output$input1 <-renderUI({ includeHTML("file/input1.html") })
-  output$matrix <-renderUI({ includeHTML("file/matrix.html") })
-  output$shm.ins <-renderUI({ includeHTML("file/shm.html") })
-  output$mhm.ins <-renderUI({ includeHTML("file/mhm.html") })
-  output$net.ins <-renderUI({ includeHTML("file/net.html") })
+  output$dld <-renderUI({ includeHTML("instruction/download.html") })
+  output$sum <-renderUI({ includeHTML("instruction/summary.html") })
+  output$input <-renderUI({ includeHTML("instruction/input.html") })
+  output$matrix <-renderUI({ includeHTML("instruction/data_matrix.html") })
+  output$shm.ins <-renderUI({ includeHTML("instruction/spatial_heatmap.html") })
+  output$mhm.ins <-renderUI({ includeHTML("instruction/matrix_heatmap.html") })
+  output$net.ins <-renderUI({ includeHTML("instruction/network.html") })
   # Acknowledgement.
-  output$ack <-renderUI({ includeHTML("file/acknowledgement.html") })
+  output$ack <-renderUI({ includeHTML("instruction/acknowledgement.html") })
 
   # Filter parameters.
   fil <- reactiveValues(P=0, A=0, CV1=-Inf, CV2=Inf)
@@ -1116,22 +1212,22 @@ shinyServer(function(input, output, session) {
     updateRadioButtons(session, inputId="dimName", label="Step 4: is column or row gene?", 
     inline=TRUE, choices=c("None", "Row", "Column"), selected="None")
     updateSelectInput(session, 'sep', 'Step 5: separator', c("None", "Tab", "Space", "Comma", "Semicolon"), "None")
-    updateRadioButtons(session, inputId='log', label='Log/exp transform:', choices=c("No", "log2", "exp2"), selected="No", inline=TRUE)
-    updateRadioButtons(session, 'scale', label='Scale by:', choices=c('No', 'Row', 'Column'), selected='Row', inline=TRUE)
-    updateRadioButtons(session, inputId='cs.v', label='Color scale based on:', choices=c("Selected rows"="sel.gen", "All rows"="w.mat"), selected="sel.gen", inline=TRUE)
-    updateNumericInput(session, inputId="height", label="Overall height:", value=400, min=0.1, max=Inf, step=NA)
-    updateNumericInput(session, inputId="width", label="Overall width:", value=760, min=0.1, max=Inf, step=NA)
-    updateNumericInput(session, inputId="col.n", label="Columns:", value=2, min=1, max=Inf, step=1)
+    updateRadioButtons(session, inputId='log', label='Log/exp transform:', choices=c("No", "log2", "exp2"), selected=cfg$lis.par$data.matrix['log.exp', 'default'], inline=TRUE)
+    updateRadioButtons(session, 'scale', label='Scale by:', choices=c('No', 'Row', 'Column'), selected=cfg$lis.par$data.matrix['scale', 'default'], inline=TRUE)
+    updateRadioButtons(session, inputId='cs.v', label='Color scale based on:', choices=c("Selected rows", "All rows"), selected=cfg$lis.par$shm.img['color.scale', 'default'], inline=TRUE)
+    updateNumericInput(session, inputId="height", label="Overall height:", value=as.numeric(cfg$lis.par$shm.img['height', 'default']), min=0.1, max=Inf, step=NA)
+    updateNumericInput(session, inputId="width", label="Overall width:", value=as.numeric(cfg$lis.par$shm.img['width', 'default']), min=0.1, max=Inf, step=NA)
+    updateNumericInput(session, inputId="col.n", label="Columns:", value=as.numeric(cfg$lis.par$shm.img['columns', 'default']), min=1, max=Inf, step=1)
 
   })
 
   observe({
 
     input$fileIn; input$geneInpath; input$log
-    updateNumericInput(session, inputId="A", label="Value (A) to exceed:", value=0) 
-    updateNumericInput(session, inputId="P", label="Proportion (P) of samples with values >= A:", value=0, min=0, max=1)
-    updateNumericInput(session, inputId="CV1", label="Min coefficient of variation (CV1):", value=-10^4)
-    updateNumericInput(session, inputId="CV2", label="Max coefficient of variation (CV2):", value=10^4,) 
+    updateNumericInput(session, inputId="A", label="Value (A) to exceed:", value=as.numeric(cfg$lis.par$data.matrix['A', 'default'])) 
+    updateNumericInput(session, inputId="P", label="Proportion (P) of samples with values >= A:", value=as.numeric(cfg$lis.par$data.matrix['P', 'default']), min=0, max=1)
+    updateNumericInput(session, inputId="CV1", label="Min coefficient of variation (CV1):", value=as.numeric(cfg$lis.par$data.matrix['CV1', 'default']))
+    updateNumericInput(session, inputId="CV2", label="Max coefficient of variation (CV2):", value=as.numeric(cfg$lis.par$data.matrix['CV2', 'default'])) 
     fil$P <- 0; fil$A <- 0; fil$CV1 <- -Inf; fil$CV2 <- Inf
 
   })
@@ -1153,33 +1249,23 @@ shinyServer(function(input, output, session) {
 
   geneIn0 <- reactive({
 
-    if (input$fileIn=="none") return(NULL)  
+    if (input$fileIn=="none") return(NULL)
     withProgress(message="Loading data: ", value = 0, {
-    if (grepl("_Mustroph$|_Prudencio$|_Merkin$|_Cardoso.Moreira$|_Census$", input$fileIn)) {
+    if (any(input$fileIn %in% cfg$na.def)) {
 
-        incProgress(0.5, detail="Loading matrix. Please wait.")
-        if (input$fileIn=="brain_Prudencio") { df.te <- fread.df(input="example/expr_human.txt", isRowGene=TRUE, header=TRUE, sep="\t", fill=TRUE) }
-        if (input$fileIn=="mouse_Merkin") df.te <- fread.df(input="example/expr_mouse.txt", isRowGene=TRUE, header=TRUE, sep="\t", fill=TRUE)
-        if (input$fileIn=="chicken_Cardoso.Moreira") df.te <- fread.df(input="example/expr_chicken.txt", isRowGene=TRUE, header=TRUE, sep="\t", fill=TRUE)
-        if (input$fileIn=="shoot_Mustroph") df.te <- fread.df(input="example/expr_arab.txt", isRowGene=TRUE, header=TRUE, sep="\t", fill=TRUE)
-        if (input$fileIn=="organ_Mustroph") df.te <- fread.df(input="example/expr_arab.txt", isRowGene=TRUE, header=TRUE, sep="\t", fill=TRUE)
-        if (input$fileIn=="root_Mustroph") df.te <- fread.df(input="example/expr_arab.txt", isRowGene=TRUE, header=TRUE, sep="\t", fill=TRUE)
-        if (input$fileIn=="shoot_root_Mustroph") df.te <- fread.df(input="example/expr_arab.txt", isRowGene=TRUE, header=TRUE, sep="\t", fill=TRUE)
-        if (input$fileIn=="root_roottip_Mustroph") df.te <- fread.df(input="example/expr_arab.txt", isRowGene=TRUE, header=TRUE, sep="\t", fill=TRUE)
-        if (input$fileIn=="map_Census") df.te <- fread.df(input="example/us_population2018.txt", isRowGene=TRUE, header=TRUE, sep="\t", fill=TRUE); return(df.te)
+      incProgress(0.5, detail="Loading matrix. Please wait.")
+      df.te <- fread.df(input=cfg$dat.ipt[input$fileIn], isRowGene=TRUE, header=TRUE, sep="\t", fill=TRUE); return(df.te)
 
     }
 
-    if ((input$fileIn=="custom_computed_data"|input$fileIn=="custom_data") & 
-    (is.null(input$geneInpath)|input$dimName=="None"|input$sep=="None")) return(NULL)
-    if ((input$fileIn=="custom_computed_data"|input$fileIn=="custom_data") & 
+    if (any(input$fileIn %in% cfg$na.cus) & 
     !is.null(input$geneInpath) & input$dimName!="None" & input$sep!="None") {
 
       incProgress(0.25, detail="Importing matrix. Please wait.")
       geneInpath <- input$geneInpath; if (input$sep=="Tab") sep <- "\t" else if (input$sep=="Space") sep <- " " else if (input$sep=="Comma") sep <- "," else if (input$sep=="Semicolon") sep <- ";"
       df.upl <- fread.df(input=geneInpath$datapath, isRowGene=(input$dimName=='Row'), header=TRUE, sep=sep, fill=TRUE, rep.aggr='mean'); return(df.upl)
    
-    } 
+    }
 
     })
 
@@ -1219,11 +1305,11 @@ shinyServer(function(input, output, session) {
   observeEvent(input$search.but, {
     
     if (is.null(geneIn1())) return()
-    if (input$search=='') sel <- 1 else {
+    if (input$search=='') sel <- as.numeric(cfg$lis.par$data.matrix['row.selected', 'default']) else {
 
       gens <- strsplit(gsub(' |\\.|-|;|,|/|\\|', '_', input$search), '_')[[1]]
        sel <- which(rownames(geneIn1()[['gene2']]) %in% gens)
-       if (length(sel)==0) sel <- 1
+       if (length(sel)==0) sel <- as.numeric(cfg$lis.par$data.matrix['row.selected', 'default'])
 
      }; sear$id <- sel
 
@@ -1251,14 +1337,14 @@ shinyServer(function(input, output, session) {
     })
     cat('Preparing data matrix... \n')
     if (is.null(sear$id)) rows <- seq_len(nrow(gene2)) else rows <- sear$id
-    if (all(rows==1)) rows <- seq_len(nrow(gene2))
+    if (length(rows)==1 & rows[1]==as.numeric(cfg$lis.par$data.matrix['row.selected', 'default'])) rows <- seq_len(nrow(gene2))
     return(list(gene1=gene1[rows, input$col.na], gene2=gene2[rows, input$col.na], gene3=gene3[rows, , drop=FALSE]))
 
   })
   output$dt <- renderDataTable({
 
     if (is.null(geneIn())) return()
-    if (((input$fileIn=="custom_computed_data"|input$fileIn=="custom_data") & is.null(geneIn()))|input$fileIn=="none") return(NULL)
+    if ((any(input$fileIn %in% cfg$na.cus) & is.null(geneIn()))|input$fileIn=="none") return(NULL)
 
     withProgress(message="Data table: ", value = 0, {
 
@@ -1268,9 +1354,10 @@ shinyServer(function(input, output, session) {
       gene <- geneIn(); gene.dt <- cbind.data.frame(gene[["gene2"]][, , drop=FALSE], gene[["gene3"]][, , drop=FALSE], stringsAsFactors=FALSE) 
 
    }; cat('Presenting data matrix... \n')
-   if (is.null(sear$id)) sel <- 1 else sel <- sear$id
-   if (all(sel==1)) rows <- seq_len(nrow(gene.dt)) else rows <- sel 
-   datatable(gene.dt, selection=list(mode="multiple", target="row", selected=seq_along(sel)),  
+   if (is.null(sear$id)) sel <- as.numeric(cfg$lis.par$data.matrix['row.selected', 'default']) else sel <- sear$id
+   if (length(sel)==1 & sel[1]==as.numeric(cfg$lis.par$data.matrix['row.selected', 'default']) & nrow(gene.dt)>1) sel <- sel else if (nrow(gene.dt)==1)  sel <- 1 else if (length(sel)>1) sel <- seq_along(sel)
+
+   datatable(gene.dt, selection=list(mode="multiple", target="row", selected=sel),
     filter="top", extensions=c('Scroller'), options=list(pageLength=5, lengthMenu=c(5, 15, 20), autoWidth=TRUE, scrollCollapse=TRUE, deferRender=TRUE, scrollX=TRUE, scrollY=200, scroller=TRUE, searchHighlight=FALSE, searching=FALSE), class='cell-border strip hover') %>% formatStyle(0, backgroundColor="orange", cursor='pointer') %>% 
     formatRound(colnames(geneIn()[["gene2"]]), 2)
 
@@ -1312,8 +1399,8 @@ shinyServer(function(input, output, session) {
 
     if (any(is.na(gID$geneID))) return()
     if (is.null(geneIn())|sum(gID$geneID[1]!='none')==0) return(NULL)
-    if (input$cs.v=="sel.gen" & is.null(input$dt_rows_selected)) return(NULL)
-    if (input$fileIn!="none") { if (input$cs.v=="sel.gen") gene <- geneIn()[["gene2"]][gID$geneID, ]
+    if (input$cs.v=="Selected rows" & is.null(input$dt_rows_selected)) return(NULL)
+    if (input$fileIn!="none") { if (input$cs.v=="Selected rows") gene <- geneIn()[["gene2"]][gID$geneID, ]
     if (input$cs.v=="w.mat") gene <- geneIn()[["gene2"]] }
     seq(min(gene), max(gene), len=1000) # len must be same with that from the function "spatial_hm()". Otherwise the mapping of a gene value to the colour bar is not accurate. 
 
@@ -1333,7 +1420,7 @@ shinyServer(function(input, output, session) {
   observe({
     
     if (is.null(input$col.but)) return()
-    if(input$col.but==0) color$col <- colorRampPalette(c('yellow', 'orange', 'red'))(length(geneV()))
+    if(input$col.but==0) color$col <- colorRampPalette(col_sep(cfg$lis.par$shm.img['color', 'default']))(length(geneV()))
 
   })
   # As long as a button is used, observeEvent should be used. All variables inside 'observeEvent' trigger code evaluation, not only 'eventExpr'.  
@@ -1347,10 +1434,9 @@ shinyServer(function(input, output, session) {
   shm.bar <- reactive({
 
     if (is.null(gID$all)) return(NULL)
-    if ((grepl("_Mustroph$|_Merkin$|_Cardoso.Moreira$|_Prudencio$|_Census$", input$fileIn) & !is.null(geneIn()))|((input$fileIn=="custom_computed_data"|input$fileIn=="custom_data") & (!is.null(input$svgInpath)|!is.null(input$svgInpath1)) & !is.null(geneIn()))) {
+    if ((any(input$fileIn %in% cfg$na.def) & !is.null(geneIn()))|(any(input$fileIn %in% cfg$na.cus) & (!is.null(input$svgInpath)|!is.null(input$svgInpath1)) & !is.null(geneIn()))) {
 
       if (length(color$col=="none")==0|input$color==""|is.null(geneV())) return(NULL)
-      # if(input$col.but==0) color$col <- colorRampPalette(c('yellow', 'orange', 'red'))(length(geneV()))
 
       withProgress(message="Color scale: ", value = 0, {
 
@@ -1378,16 +1464,29 @@ shinyServer(function(input, output, session) {
 
   svg.path <- reactive({
 
-    if (input$fileIn=="custom_computed_data"|input$fileIn=="custom_data") { 
-      
+    if (input$fileIn=='none') return()
+    if (any(input$fileIn %in% cfg$na.cus)) {
+
       if (is.null(input$svgInpath1)) svgIn.df <- input$svgInpath else svgIn.df <- input$svgInpath1
-        svg.path <- svgIn.df$datapath; svg.na <- svgIn.df$name
-        if (!is.null(input$svgInpath1)) validate(need(try(all(grepl('_shm\\d+', svg.na, perl=TRUE))), "Suffixes of aSVGs should be indexed as '_shm1', '_shm2', '_shm3', ..."))
-        ord <- order(gsub('.*_(shm.*)$', '\\1', svg.na))
-        svg.path <- svg.path[ord]; svg.na <- svg.na[ord]
+      svg.path <- svgIn.df$datapath; svg.na <- svgIn.df$name
+
+    } else { 
+
+      svg.path <- cfg$svg.def[[input$fileIn]]
+      svg.na <- NULL; for (i in svg.path) {
+      
+        str <- strsplit(i, '/')[[1]]; svg.na <- c(svg.na, str[length(str)])
+
+      }
+
+    }
+    if (length(svg.na)>1) {
+
+      validate(need(try(all(grepl('_shm\\d+\\.svg$', svg.na, perl=TRUE))), "Suffixes of aSVGs should be indexed as '_shm1.svg', '_shm2.svg', '_shm3i.svg', ..."))
+      ord <- order(gsub('.*_(shm.*)$', '\\1', svg.na))
+      svg.path <- svg.path[ord]; svg.na <- svg.na[ord]
     
-    } else if (input$fileIn=="brain_Prudencio") { svg.path <- "example/homo_sapiens.brain.svg"; svg.na <- "homo_sapiens.brain.svg" } else if (input$fileIn=="mouse_Merkin") { svg.path <- "example/mus_musculus.male.svg"; svg.na <- "mus_musculus.male.svg" } else if (input$fileIn=="chicken_Cardoso.Moreira") { svg.path <- "example/gallus_gallus.svg"; svg.na <- "gallus_gallus.svg" } else if (input$fileIn=="shoot_Mustroph") { svg.path <- "example/arabidopsis_thaliana.shoot_shm.svg"; svg.na <- "arabidopsis_thaliana.shoot_shm.svg" } else if (input$fileIn=="organ_Mustroph") { svg.path <- "example/arabidopsis_thaliana.organ_shm.svg"; svg.na <- "arabidopsis_thaliana.organ_shm.svg" } else if (input$fileIn=="root_Mustroph") { svg.path <- "example/arabidopsis_thaliana.root.cross_shm.svg"; svg.na <- "arabidopsis_thaliana.root.cross_shm.svg" } else if (input$fileIn=="shoot_root_Mustroph") { svg.path <- "example/arabidopsis_thaliana.shoot.root_shm.svg"; svg.na <- "arabidopsis_thaliana.shoot.root_shm.svg" } else if (input$fileIn=="root_roottip_Mustroph") { svg.path <- "example/arabidopsis_thaliana.root.roottip_shm.svg"; svg.na <- "arabidopsis_thaliana.root.roottip_shm.svg" } else if (input$fileIn=="map_Census") { svg.path <- "example/us_map_shm.svg"; svg.na <- "us_map_shm.svg" } else return(NULL)
-    cat('Access aSVG path... \n')
+    }; cat('Access aSVG path... \n')
     return(list(svg.path=svg.path, svg.na=svg.na))
 
   })
@@ -1401,8 +1500,8 @@ shinyServer(function(input, output, session) {
   
   svg.df <- reactive({ 
 
-    if (((input$fileIn=="custom_computed_data"|input$fileIn=="custom_data") & 
-    (!is.null(input$svgInpath)|!is.null(input$svgInpath1)))|(grepl("_Mustroph$|_Merkin$|_Cardoso.Moreira$|_Prudencio$|_Census$", input$fileIn) & is.null(input$svgInpath))) {
+    if ((any(input$fileIn %in% cfg$na.cus) & 
+    (!is.null(input$svgInpath)|!is.null(input$svgInpath1)))|(any(input$fileIn %in% cfg$na.def) & is.null(input$svgInpath))) {
 
       withProgress(message="Tissue heatmap: ", value=0, {
     
@@ -1453,9 +1552,9 @@ shinyServer(function(input, output, session) {
   gs.new <- reactive({ 
 
     if.con <- is.null(svg.df())|is.null(geneIn())|is.null(gID$new)|length(gID$new)==0|is.null(gID$all)|is.null(input$dt_rows_selected)|color$col[1]=='none'
-    if (is.null(if.con)) return(); if (is.na(if.con)|if.con==TRUE) return(NULL)
+    if (length(if.con==FALSE)==0) if (length(if.con)==0) return(); if (is.na(if.con)|if.con==TRUE) return(NULL)
 
-    if (input$cs.v=="sel.gen") ID <- gID$geneID
+    if (input$cs.v=="Selected rows") ID <- gID$geneID
     if (input$cs.v=="w.mat") ID <- gID$new
     if (is.null(ID)|length(gID$new)>1|length(ID)>1|ID[1]=='none') return()
     # Avoid repetitive computation.  
@@ -1474,7 +1573,7 @@ shinyServer(function(input, output, session) {
 
         svg.df <- svg.df.lis[[i]]; g.df <- svg.df[["df"]]; w.h <- svg.df[['w.h']]
         tis.path <- svg.df[["tis.path"]]; fil.cols <- svg.df[['fil.cols']]
-        if (input$pre.scale=='Y') mar <- (1-w.h/w.h.max*0.99)/2 else mar <- NULL
+        if (input$pre.scale=='Yes') mar <- (1-w.h/w.h.max*0.99)/2 else mar <- NULL
         cat('New grob/ggplot:', ID, ' \n')
         grob.lis <- grob_list(gene=gene, con.na=geneIn0()[['con.na']], geneV=geneV(), coord=g.df, ID=ID, legend.col=fil.cols, cols=color$col, tis.path=tis.path, tis.trans=input$tis, sub.title.size=18, mar.lb=mar, legend.nrow=2, legend.key.size=0.04) # Only gID$new is used.
         validate(need(!is.null(grob.lis), paste0(svg.na[i], ': no spatial features that have matching sample identifiers in data are detected!')))
@@ -1497,10 +1596,11 @@ shinyServer(function(input, output, session) {
     grob$all <- grob$gg.all <- grob$lgd.all <- NULL; gs.all <- reactive({ 
 
       if.con <- is.null(svg.df())|is.null(geneIn())|is.null(input$dt_rows_selected)|color$col[1]=='none'|is.null(input$pre.scale)|gID$geneID[1]=='none'
-      if (is.null(if.con)) return(); if (is.na(if.con)|if.con==TRUE) return(NULL)
+
+      if (length(if.con==FALSE)==0) if (length(if.con)==0) return(); if (is.na(if.con)|if.con==TRUE) return(NULL)
       withProgress(message="Spatial heatmap: ", value=0, {
       incProgress(0.25, detail="preparing data.")
-      #if (input$cs.v=="sel.gen") gene <- geneIn()[["gene2"]][input$dt_rows_selected, ]
+      #if (input$cs.v=="Selected rows") gene <- geneIn()[["gene2"]][input$dt_rows_selected, ]
       #if (input$cs.v=="w.mat") gene <- geneIn()[["gene2"]]
       gene <- geneIn()[["gene2"]][gID$geneID, ]
       svg.df.lis <- svg.df(); grob.lis.all <- w.h.all <- NULL
@@ -1511,7 +1611,7 @@ shinyServer(function(input, output, session) {
 
         svg.df <- svg.df.lis[[i]]; g.df <- svg.df[["df"]]
         tis.path <- svg.df[["tis.path"]]; fil.cols <- svg.df[['fil.cols']]; w.h <- svg.df[['w.h']]
-        if (input$pre.scale=='Y') mar <- (1-w.h/w.h.max*0.99)/2 else mar <- NULL
+        if (input$pre.scale=='Yes') mar <- (1-w.h/w.h.max*0.99)/2 else mar <- NULL
         cat('All grob/ggplot:', gID$geneID, ' \n')
         svg.na <- names(svg.df.lis)
         incProgress(0.75, detail=paste0('preparing ', paste0(gID$geneID, collapse=';')))
@@ -1531,12 +1631,14 @@ shinyServer(function(input, output, session) {
   # Avoid repetitive computation under input$cs.v=='gen.sel'.
   observeEvent(list(gID$geneID), {
     
-    if (is.null(input$cs.v)|gID$geneID[1]=='none') return(); if (input$cs.v=='w.mat') return() 
+    if.con <-  is.null(input$cs.v)|gID$geneID[1]=='none'|input$cs.v=='w.mat'
+
+    if (length(if.con==FALSE)==0) if (length(if.con)==0) return(); if (is.na(if.con)|if.con==TRUE) return(NULL)
     ID <- gID$geneID
     grob$all <- grob$gg.all <- grob$lgd.all <- NULL; gs.all <- reactive({ 
 
       if.con <- is.null(svg.df())|is.null(geneIn())|is.null(input$dt_rows_selected)|color$col[1]=='none'|is.null(input$pre.scale)
-      if (is.null(if.con)) return(); if (is.na(if.con)|if.con==TRUE) return(NULL)
+      if (length(if.con==FALSE)==0) if (length(if.con)==0) return(); if (is.na(if.con)|if.con==TRUE) return(NULL)
       withProgress(message="Spatial heatmap: ", value=0, {
       incProgress(0.25, detail="preparing data.")
       gene <- geneIn()[["gene2"]][gID$geneID, ]
@@ -1548,7 +1650,7 @@ shinyServer(function(input, output, session) {
 
         svg.df <- svg.df.lis[[i]]; g.df <- svg.df[["df"]]
         tis.path <- svg.df[["tis.path"]]; fil.cols <- svg.df[['fil.cols']]; w.h <- svg.df[['w.h']]
-        if (input$pre.scale=='Y') mar <- (1-w.h/w.h.max*0.99)/2 else mar <- NULL
+        if (input$pre.scale=='Yes') mar <- (1-w.h/w.h.max*0.99)/2 else mar <- NULL
         cat('All grob/ggplot of row selection:', ID, ' \n')
         svg.na <- names(svg.df.lis)
         incProgress(0.75, detail=paste0('preparing ', paste0(ID, collapse=';')))
@@ -1593,13 +1695,13 @@ shinyServer(function(input, output, session) {
     validate(need(col.n>=1 & as.integer(col.n)==col.n & !is.na(col.n), 'No. of columns should be a positive integer !'))
 
   })
-  observeEvent(list(size=input$lgd.key.size, lgd.row=input$lgd.row, tis.trans=input$tis, lgd.label=input$lgd.label, lgd.lab.size=input$lgd.lab.size), {
+  observeEvent(list(input$lgd.key.size, input$lgd.row, input$tis, input$lgd.label, input$lgd.lab.size), {
 
     lgd.key.size <- input$lgd.key.size; lgd.row <- input$lgd.row
     lgd.label <- input$lgd.label; label.size <- input$lgd.lab.size
     if (is.null(grob$lgd.all)|is.null(lgd.key.size)|is.null(lgd.row)|is.null(lgd.label)) return()
     cat('Adjust legend size/rows... \n')
-    grob$lgd.all <- gg_lgd(gg.all=grob$lgd.all, size.key=lgd.key.size, size.text.key=NULL, row=lgd.row, sam.dat=sam(), tis.trans=input$tis, position.text.key='right', label=(lgd.label=='Y'), label.size=label.size)
+    grob$lgd.all <- gg_lgd(gg.all=grob$lgd.all, size.key=lgd.key.size, size.text.key=NULL, row=lgd.row, sam.dat=sam(), tis.trans=input$tis, position.text.key='right', label=(lgd.label=='Yes'), label.size=label.size)
   
   })
   observeEvent(list(grob.all=grob$all, gen.con=input$gen.con), {
@@ -1627,11 +1729,11 @@ shinyServer(function(input, output, session) {
     
     cat('Adding value legend... \n')
     if.con <- is.null(grob$gg.all)|is.null(sam())|is.null(input$val.lgd)|is.null(input$val.lgd.feat)|input$val.lgd==0
-    if (length(if.con)==0) return(); if (is.na(if.con)|if.con==TRUE) return(NULL)
+    if (length(if.con==FALSE)==0) if (length(if.con)==0) return(); if (is.na(if.con)|if.con==TRUE) return(NULL)
     gg.all <- grob$gg.all1
     if ((input$val.lgd %% 2)==1) {
 
-      gg.all <- gg_2lgd(gg.all=gg.all, sam.dat=sam(), tis.trans=input$tis, position.2nd='bottom', legend.nrow.2nd=input$val.lgd.row, legend.key.size.2nd=input$val.lgd.key, legend.text.size.2nd=input$val.lgd.text, add.feature.2nd=(input$val.lgd.feat=='Y'))
+      gg.all <- gg_2lgd(gg.all=gg.all, sam.dat=sam(), tis.trans=input$tis, position.2nd='bottom', legend.nrow.2nd=input$val.lgd.row, legend.key.size.2nd=input$val.lgd.key, legend.text.size.2nd=input$val.lgd.text, add.feature.2nd=(input$val.lgd.feat=='Yes'))
       grob$all1 <- gg.all <- lapply(gg.all, function(x) { x+theme(legend.position="bottom") } )
       tmp <- tempfile()
       png(tmp); grob$all1 <- lapply(gg.all, ggplotGrob)
@@ -1653,13 +1755,13 @@ shinyServer(function(input, output, session) {
   observe({
  
     if.con <- is.null(geneIn())|is.null(input$dt_rows_selected)|is.null(svg.df())|gID$geneID[1]=="none"|is.null(grob$all1)
-    if (length(if.con)==0) return(); if (is.na(if.con)|if.con==TRUE) return(NULL)
+    if (length(if.con==FALSE)==0) if (length(if.con)==0) return(); if (is.na(if.con)|if.con==TRUE) return(NULL)
     
     output$shm <- renderPlot(width=as.numeric(input$width)/2*as.numeric(input$col.n), height=as.numeric(input$height)*length(input$dt_rows_selected), {
     
     if (col.reorder$col.re=='N') return()
     if.con <-  is.null(input$dt_rows_selected)|is.null(svg.df())|gID$geneID[1]=="none"|is.null(grob$all1)
-    if (length(if.con)==0) return(); if (is.na(if.con)|if.con==TRUE) return(NULL)
+    if (length(if.con==FALSE)==0) if (length(if.con)==0) return(); if (is.na(if.con)|if.con==TRUE) return(NULL)
     if (is.na(color$col[1])|length(color$col=="none")==0|input$color=="") return(NULL)
     r.na <- rownames(geneIn()[["gene2"]])
     grob.na <- names(grob$all1)
@@ -1681,7 +1783,7 @@ shinyServer(function(input, output, session) {
       cs.arr <- arrangeGrob(grobs=list(grobTree(cs.grob)), layout_matrix=cbind(1), widths=unit(1, "npc"))
       # Legend size in downloaded SHM is reduced.
       lgd.lis <- grob$lgd.all; lgd.lis <- gg_lgd(gg.all=lgd.lis, sam.dat=sam(), tis.trans=input$tis, label=FALSE)
-      lgd.lis <- gg_lgd(gg.all=lgd.lis, size.key=input$lgd.key.size*0.5, size.text.key=NULL, label.size=input$lgd.lab.size, row=input$lgd.row, sam.dat=sam(), tis.trans=input$tis, position.text.key='right', label=(input$lgd.label=='Y'))
+      lgd.lis <- gg_lgd(gg.all=lgd.lis, size.key=input$lgd.key.size*0.5, size.text.key=NULL, label.size=input$lgd.lab.size, row=input$lgd.row, sam.dat=sam(), tis.trans=input$tis, position.text.key='right', label=(input$lgd.label=='Yes'))
       if (input$lgd.w>0) {
   
         grob.lgd.lis <- lapply(lgd.lis, ggplotGrob)
@@ -1706,38 +1808,38 @@ shinyServer(function(input, output, session) {
   observe({
   
     input$fileIn; geneIn(); input$adj.modInpath; input$A; input$p; input$cv1; input$cv2; input$dt_rows_selected; input$tis; input$gen.con  
-    updateRadioButtons(session, inputId='ext', label='File type:', choices=c('NA'='NA', "png"="png", "jpg"="jpg", "pdf"="pdf"), selected="NA", inline=TRUE)
-    updateRadioButtons(session, inputId="ggly.but", label="Show animation:", choices=c("Yes"="Y", "No"="N"), selected="N", inline=TRUE)
-    updateRadioButtons(session, inputId="vdo.but", label="Show video:", choices=c("Yes"="Y", "No"="N"), selected="N", inline=TRUE)
+    updateRadioButtons(session, inputId='ext', label='File type:', choices=c('NA', "png", "jpg", "pdf"), selected=cfg$lis.par$shm.img['file.type', 'default'], inline=TRUE)
+    updateRadioButtons(session, inputId="ggly.but", label="Show animation:", choices=c("Yes", "No"), selected=cfg$lis.par$shm.anm['show', 'default'], inline=TRUE)
+    updateRadioButtons(session, inputId="vdo.but", label="Show video:", choices=c("Yes", "No"), selected=cfg$lis.par$shm.video['show', 'default'], inline=TRUE)
 
   })
 
   observe({
    input$lgd.key.size; input$lgd.row; input$tis; input$lgd.label; input$lgd.lab.size
-   updateRadioButtons(session, inputId="vdo.but", label="Show video:", choices=c("Yes"="Y", "No"="N"), selected="N", inline=TRUE)
+   updateRadioButtons(session, inputId="vdo.but", label="Show video:", choices=c("Yes", "No"), selected=cfg$lis.par$shm.video['show', 'default'], inline=TRUE)
   })
 
 
  output$shm.ui <- renderUI({
 
-      box(title="Spatial Heatmap", status="primary", solidHeader=TRUE, collapsible=TRUE, width=ifelse(input$hide.lgd=='N', 9, 12), height=NULL, 
+      box(title="Spatial Heatmap", status="primary", solidHeader=TRUE, collapsible=TRUE, width=ifelse(input$hide.lgd=='No', 9, 12), height=NULL, 
       tabBox(title="", width=12, id='shm_all', selected='shm1', side='right', 
       tabPanel(title='Video', value='shm3', 
-      fluidRow(splitLayout(cellWidths=c('1%', '15%', '1%', '15%', '1%', '7%', '1%', '7%', '1%', '13%', '1%', '16%'), '', 
-      radioButtons(inputId="vdo.but", label="Show video:", choices=c("Yes"="Y", "No"="N"), selected="N", inline=TRUE), '',
-      numericInput(inputId='vdo.itvl', label='Transition time (s):', value=1, min=0.1, max=Inf, step=1, width=270), '',
-      numericInput(inputId='vdo.height', label='Height:', value=0.99, min=0.1, max=0.99, step=0.1, width=270), '',
-      numericInput(inputId='vdo.width', label='Width:', value=0.92, min=0.1, max=0.92, step=0.1, width=270), '',
-      numericInput(inputId='vdo.res', label='Resolution (dpi):', value=400, min=1, max=1000, step=5, width=270), '',
-      radioButtons(inputId="vdo.val.lgd", label="Add values to legend:", choices=c("Yes"="Y", "No"="N"), selected="N", inline=TRUE)
+      fluidRow(splitLayout(cellWidths=c('1%', '15%', '1%', '15%', '1%', '8%', '1%', '8%', '1%', '13%', '1%', '16%'), '', 
+      radioButtons(inputId="vdo.but", label="Show video:", choices=c("Yes", "No"), selected=cfg$lis.par$shm.video['show', 'default'], inline=TRUE), '',
+      numericInput(inputId='vdo.itvl', label='Transition time (s):', value=as.numeric(cfg$lis.par$shm.video['transition', 'default']), min=0.1, max=Inf, step=1, width=270), '',
+      numericInput(inputId='vdo.height', label='Height:', value=as.numeric(cfg$lis.par$shm.video['height', 'default']), min=0.1, max=0.99, step=0.1, width=270), '',
+      numericInput(inputId='vdo.width', label='Width:', value=as.numeric(cfg$lis.par$shm.video['width', 'default']), min=0.1, max=0.92, step=0.1, width=270), '',
+      numericInput(inputId='vdo.res', label='Resolution (dpi):', value=as.numeric(cfg$lis.par$shm.video['dpi', 'default']), min=1, max=1000, step=5, width=270), '',
+      radioButtons(inputId="vdo.val.lgd", label="Add values to legend:", choices=c("Yes", "No"), selected=cfg$lis.par$shm.video['value.legend', 'default'], inline=TRUE)
 
       )), uiOutput('video.dim'), textOutput('tran.vdo'), htmlOutput('ffm'), 
       fluidRow(splitLayout(cellWidths=c("1%", "7%", "91%", "1%"), "", plotOutput("bar3"), uiOutput('video'), ""))),
       
       tabPanel(title='Animation', value='shm2', 
       fluidRow(splitLayout(cellWidths=c('1%', '15%', '1%', '15%', '1%', '10%', '1%', '10%', '1%', '13%'), '', 
-      radioButtons(inputId="ggly.but", label="Show animation:", choices=c("Yes"="Y", "No"="N"), selected="N", inline=TRUE), '',
-      numericInput(inputId='t', label='Transition time (s):', value=2, min=0.1, max=Inf, step=NA, width=270), '',
+      radioButtons(inputId="ggly.but", label="Show animation:", choices=c("Yes", "No"), selected=as.numeric(cfg$lis.par$shm.img['show', 'default']), inline=TRUE), '',
+      numericInput(inputId='t', label='Transition time (s):', value=as.numeric(cfg$lis.par$shm.anm['transition', 'default']), min=0.1, max=Inf, step=NA, width=270), '',
       uiOutput('anm.h'), '', uiOutput('anm.w'), '', uiOutput('dld.anm.but')
       )), textOutput('tran'), uiOutput('sld.fm'),
       fluidRow(splitLayout(cellWidths=c("1%", "7%", "91%", "1%"), "", plotOutput("bar2"), htmlOutput("ggly"), ""))
@@ -1745,17 +1847,17 @@ shinyServer(function(input, output, session) {
 
       tabPanel(title="Image", value='shm1',  
       fluidRow(column(10, splitLayout(cellWidths=c('14%', '1%', '14%', '1%', '9%', '1%', '32%', '1%', '15%'),
-      numericInput(inputId='height', label='Overall height:', value=400, min=1, max=Inf, step=NA, width=170), '',
-      numericInput(inputId='width', label='Overall width:', value=760, min=1, max=Inf, step=NA, width=170), '',
-      numericInput(inputId='col.n', label='Columns:', value=2, min=1, max=Inf, step=1, width=150), '',
-      radioButtons(inputId="gen.con", label="Display by:", choices=c("Gene"="gene", "Condition"="con", "None"="none"), selected="gene", inline=TRUE), '', 
-     radioButtons(inputId="pre.scale", label="Preserve.scale:", choices=c("Yes"="Y", "No"="N"), selected="Y", inline=TRUE)
+      numericInput(inputId='height', label='Overall height:', value=as.numeric(cfg$lis.par$shm.img['height', 'default']), min=1, max=Inf, step=NA, width=170), '',
+      numericInput(inputId='width', label='Overall width:', value=as.numeric(cfg$lis.par$shm.img['width', 'default']), min=1, max=Inf, step=NA, width=170), '',
+      numericInput(inputId='col.n', label='Columns:', value=as.numeric(cfg$lis.par$shm.img['columns', 'default']), min=1, max=Inf, step=1, width=150), '',
+      radioButtons(inputId="gen.con", label="Display by:", choices=c("Gene"="gene", "Condition"="con", "None"="none"), selected=cfg$lis.par$shm.img['display.by', 'default'], inline=TRUE), '', 
+     radioButtons(inputId="pre.scale", label="Preserve.scale:", choices=c("Yes", "No"), selected=cfg$lis.par$shm.img['preserve.scale', 'default'], inline=TRUE)
       )),
       column(1,
       dropdownButton(inputId='dropdown', label='Color key', circle=FALSE, icon=NULL, status='primary', inline=FALSE, width=250, 
-      fluidRow(splitLayout(cellWidths=c('1%', '70%', '25%'), '', textInput("color", "Color scheme:", "yellow,orange,red", placeholder='Eg: "yellow,orange,red"', width=200),
+      fluidRow(splitLayout(cellWidths=c('1%', '70%', '25%'), '', textInput("color", "Color scheme:", cfg$lis.par$shm.img['color', 'default'], placeholder=paste0('Eg: ', cfg$lis.par$shm.img['color', 'default']), width=200),
       actionButton("col.but", "Go", icon=icon("refresh")))), 
-      radioButtons(inputId='cs.v', label='Color scale based on:', choices=c("Selected rows"="sel.gen", "All rows"="w.mat"), selected="sel.gen", inline=TRUE)
+      radioButtons(inputId='cs.v', label='Color scale based on:', choices=c("Selected rows", "All rows"), selected=cfg$lis.par$shm.img['color.scale', 'default'], inline=TRUE)
       ))
       ), textOutput('h.w.c'), textOutput('msg.col'),
 
@@ -1764,20 +1866,21 @@ shinyServer(function(input, output, session) {
       fluidRow(column(1, offset=0, style='padding-left:0px; padding-right:0px; padding-top:0px; padding-bottom:5px',
       dropdownButton(inputId='dropdown', label='Download', circle=FALSE, icon=NULL, status='primary', inline=FALSE, width=800,
       fluidRow(splitLayout(cellWidths=c('27%', '1%', '14%', '1%', '11%', '1%', '17%', '1%', '14%'), 
-      radioButtons(inputId='ext', label='File type:', choices=c('NA'='NA', "png"="png", "jpg"="jpg", "pdf"="pdf"), selected="NA", inline=TRUE), '',
-      numericInput(inputId='res', label='Resolustion (dpi):', value=300, min=10, max=Inf, step=10, width=150), '',
-      numericInput(inputId='lgd.w', label='Legend width:', value=0.7, min=0, max=1, step=0.1, width=150), '',
-      numericInput(inputId='lgd.ratio', label='Legend aspect ratio:', value=1, min=0.0001, max=Inf, step=0.1, width=140), '', downloadButton("dld.shm", "Download")
+      radioButtons(inputId='ext', label='File type:', choices=c('NA', "png", "jpg", "pdf"), selected=cfg$lis.par$shm.img['file.type', 'default'], inline=TRUE), '',
+      numericInput(inputId='res', label='Resolustion (dpi):', value=as.numeric(cfg$lis.par$shm.img['dpi', 'default']), min=10, max=Inf, step=10, width=150), '',
+      numericInput(inputId='lgd.w', label='Legend width:', value=as.numeric(cfg$lis.par$shm.img['legend.width', 'default']), min=0, max=1, step=0.1, width=150), '',
+      numericInput(inputId='lgd.ratio', label='Legend aspect ratio:', value=as.numeric(cfg$lis.par$shm.img['legend.aspect.ratio', 'default']), min=0.0001, max=Inf, step=0.1, width=140), '', downloadButton("dld.shm", "Download")
       )))
       ),  
       column(1, offset=0, style='padding-left:40px; padding-right:0px; padding-top:0px; padding-bottom:5px',
       dropdownButton(inputId='value.lgd', label='Value legend', circle=FALSE, icon=NULL, status='primary', inline=FALSE, width=500,
       fluidRow(splitLayout(cellWidths=c('1%', '25%', '1%', '13%', '1%', '17%', '1%', '14%', '1%', '28%'), '', 
       actionButton("val.lgd", "Add/Remove", icon=icon("refresh")), '',  
-      numericInput(inputId='val.lgd.row', label='Rows:', value=1, min=1, max=Inf, step=1, width=150), '',
-      numericInput(inputId='val.lgd.key', label='Key size:', value=0.03, min=0.0001, max=1, step=0.01, width=150), '',
-      numericInput(inputId='val.lgd.text', label='Text size:', value=10, min=0.0001, max=Inf, step=1, width=140), '',
-      radioButtons(inputId='val.lgd.feat', label='Include feature:', choices=c('No'='N', "Yes"="Y"), selected="N", inline=TRUE)
+      numericInput(inputId='val.lgd.row', label='Rows:', value=as.numeric(cfg$lis.par$shm.img['value.legend.rows', 'default']), min=1, max=Inf, step=1, width=150), '',
+      numericInput(inputId='val.lgd.key', label='Key size:', value=as.numeric(cfg$lis.par$shm.img['value.legend.key', 'default']), min=0.0001, max=1, step=0.01, width=150), '',
+      numericInput(inputId='val.lgd.text', label='Text size:', value=as.numeric(cfg$lis.par$shm.img['value.legend.text', 'default']), min=0.0001, max=Inf, step=1, width=140), '',
+      radioButtons(inputId='val.lgd.feat', label='Include feature:', choices=c('No', 'Yes'), selected=cfg$lis.par$shm.img['include.feature', 'default'], inline=TRUE)
+
       ))
       ))
       ),
@@ -1788,8 +1891,9 @@ shinyServer(function(input, output, session) {
   })
 
   output$shms.o <- renderUI({
-
-    if (is.null(input$svgInpath1)) return(NULL)
+ 
+    if (is.null(svg.path())) return(NULL)
+    if (length(svg.path()$svg.na)==1) return(NULL)
     selectInput('shms.in', label='aSVG for legend:', choices=as.list(svg.path()[['svg.na']], selected=svg.path()[['svg.na']][1]))
 
   })
@@ -1799,12 +1903,14 @@ shinyServer(function(input, output, session) {
     validate(need(try(as.integer(input$lgd.row)==input$lgd.row & input$lgd.row>0), 'Legend key rows should be a positive integer!'))
     validate(need(try(input$lgd.key.size>0&input$lgd.key.size<1), 'Legend key size should be between 0 and 1!'))
     svg.path <- svg.path()
-    if (is.null(svg.path())|is.null(grob$lgd.all)) return(ggplot())
+    if (is.null(svg.path())|is.null(grob$lgd.all)|(length(svg.path$svg.na)>1 & is.null(input$shms.in))) return(ggplot())
 
       # Width and height in original SVG.
-      if (!is.null(input$svgInpath1)) svg.na <- input$shms.in else svg.na <- 1
+      if (length(svg.path$svg.na)>1) svg.na <- input$shms.in else svg.na <- 1
+
       w.h <- svg.df()[[svg.na]][['w.h']]
       w.h <- as.numeric(gsub("^(\\d+\\.\\d+|\\d+).*", "\\1", w.h)); r <- w.h[1]/w.h[2]
+      if (is.na(r)) return()
       cat('Plotting legend plot... \n')
       g.lgd <- grob$lgd.all[[svg.na]]; g.lgd <- g.lgd+coord_fixed(ratio=r); return(g.lgd)
 
@@ -1813,15 +1919,15 @@ shinyServer(function(input, output, session) {
   output$lgd.ui <- renderUI({ 
     
     if (is.null(input$hide.lgd)) return(NULL) 
-    if (input$hide.lgd=='Y') return(NULL)
+    if (input$hide.lgd=='Yes') return(NULL)
     box(title="Legend Plot", status="primary", solidHeader=TRUE, collapsible=TRUE, uiOutput('shms.o'),
     splitLayout(cellWidths=c("43%", "1%", '43%'),
-    numericInput(inputId='lgd.row', label='Legend key rows:', value=2, min=1, max=Inf, step=1, width=150), '',
-    numericInput(inputId='lgd.key.size', label='Legend key size:', value=0.04, min=0, max=1, step=0.02, width=150)
+    numericInput(inputId='lgd.row', label='Legend key rows:', value=as.numeric(cfg$lis.par$legend['key.row', 'default']), min=1, max=Inf, step=1, width=150), '',
+    numericInput(inputId='lgd.key.size', label='Legend key size:', value=as.numeric(cfg$lis.par$legend['key.size', 'default']), min=0, max=1, step=0.02, width=150)
     ),
     splitLayout(cellWidths=c("43%", "1%", '43%'),
-    radioButtons(inputId="lgd.label", label="Label feature:", choices=c("Yes"="Y", "No"="N"), selected="N", inline=TRUE), '',
-    numericInput(inputId='lgd.lab.size', label='Label size:', value=2.5, min=0, max=Inf, step=0.5, width=150)
+    radioButtons(inputId="lgd.label", label="Label feature:", choices=c("Yes", "No"), selected=cfg$lis.par$legend['label', 'default'], inline=TRUE), '',
+    numericInput(inputId='lgd.lab.size', label='Label size:', value=as.numeric(cfg$lis.par$legend['label.size', 'default']), min=0, max=Inf, step=0.5, width=150)
     ),
     splitLayout(cellWidths=c("99%", "1%"), plotOutput("lgd"), ""), width=3) 
 
@@ -1847,8 +1953,8 @@ shinyServer(function(input, output, session) {
   observeEvent(list(log=input$log, tis=input$tis, col.but=input$col.but, cs.v=input$cs.v, pre.scale=input$pre.scale, ggly.but=input$ggly.but, gID.new=gID$new), {
 
     if (is.null(input$ggly.but)) return() 
-    if (input$ggly.but=='N') return()
-    if (is.null(geneIn())|is.null(gID$new)|is.null(input$dt_rows_selected)|is.null(svg.df())|gID$geneID[1]=="none"|is.null(grob$gg.all1)|input$ggly.but=='N') return(NULL)
+    if (input$ggly.but=='No') return()
+    if (is.null(geneIn())|is.null(gID$new)|is.null(input$dt_rows_selected)|is.null(svg.df())|gID$geneID[1]=="none"|is.null(grob$gg.all1)|input$ggly.but=='No') return(NULL)
     if (length(color$col=="none")==0|input$color=="") return(NULL)
 
     withProgress(message="Animation: ", value=0, {
@@ -1880,11 +1986,11 @@ shinyServer(function(input, output, session) {
   
   })
 
-  # As long as the variable of 'reactive' is used in the 'ui.R', changes of elements in 'reactive' would cause chain change all the way to 'ui.R'. E.g. the change in "input$ggly.but=='N'" leads to changes in 'output$ggly' and 'ui.R', not necessarily changes in 'output$ggly' call changes in 'gly.url'.
+  # As long as the variable of 'reactive' is used in the 'ui.R', changes of elements in 'reactive' would cause chain change all the way to 'ui.R'. E.g. the change in "input$ggly.but=='No'" leads to changes in 'output$ggly' and 'ui.R', not necessarily changes in 'output$ggly' call changes in 'gly.url'.
   gly.url <- reactive({ 
     
     if (is.null(input$ggly.but)) return() 
-    if (is.null(grob$gg.all1)|input$ggly.but=='N'|gID$geneID[1]=='none'|is.null(pat.all())) return(NULL)
+    if (is.null(grob$gg.all1)|input$ggly.but=='No'|gID$geneID[1]=='none'|is.null(pat.all())) return(NULL)
     gg.all <- grob$gg.all1; na <- names(gg.all)
     # Only take the selected genes.
     na <- na[grepl(paste0('^', pat.all(), '_\\d+$'), na)]; na1 <- na[as.integer(input$fm)]
@@ -1899,7 +2005,7 @@ shinyServer(function(input, output, session) {
   observe({
 
     if (is.null(input$ggly.but)|is.null(input$fm)) return() 
-    if (input$ggly.but=='N'|is.null(gly.url())) return()
+    if (input$ggly.but=='No'|is.null(gly.url())) return()
     if (is.null(svg.df())|is.null(geneIn())|is.null(input$dt_rows_selected)|color$col[1]=='none') return(NULL)
     
     gg.all <- grob$gg.all1; na <- names(gg.all)
@@ -1908,9 +2014,13 @@ shinyServer(function(input, output, session) {
     na2 <- list.files('www/ggly', pattern=paste0(na1, '\\.html$')); if (length(na2)==0) return(NULL)
     gg <- gg.all[[na1]]
     dat <- layer_data(gg); x.max <- max(dat$x); y.max <- max(dat$y)
-    w <- 770; h <- y.max/x.max*w
-    if (h>550) { h <- 550; w <- x.max/y.max*h }
-    
+    w <- cfg$lis.par$shm.anm['width', 'default']
+    if (w!='NA') w <- as.numeric(w) else w <- NA
+    h <- cfg$lis.par$shm.anm['height', 'default']
+    if (h!='NA') h <- as.numeric(h) else h <- NA
+    if (!is.na(w)) {
+      h <- y.max/x.max*w; if (h>550) { h <- 550; w <- x.max/y.max*h }
+    } else if (is.na(w) & !is.na(h)) { w <- x.max/y.max*h }
     output$anm.w <- renderUI({
 
       numericInput(inputId='width.ly', label='Width:', value=w, min=1, max=Inf, step=NA, width=170)
@@ -1930,7 +2040,7 @@ shinyServer(function(input, output, session) {
   
   output$ggly <- renderUI({ 
 
-    if (input$ggly.but=='N'|is.null(gly.url())) return()
+    if (input$ggly.but=='No'|is.null(gly.url())) return()
     if (is.null(svg.df())|is.null(geneIn())|is.null(input$dt_rows_selected)|color$col[1]=='none') return(NULL)
     withProgress(message="Animation: ", value=0, {
     incProgress(0.75, detail="plotting...")
@@ -1945,7 +2055,7 @@ shinyServer(function(input, output, session) {
 
   anm.dld <- reactive({
     
-    if (input$ggly.but=='N'|is.null(gly.url())) return()
+    if (input$ggly.but=='No'|is.null(gly.url())) return()
     if (is.null(svg.df())|is.null(geneIn())|is.null(input$dt_rows_selected)|color$col[1]=='none') return(NULL) 
     withProgress(message="Downloading animation: ", value=0, {
     incProgress(0.1, detail="in progress...")
@@ -1970,7 +2080,7 @@ shinyServer(function(input, output, session) {
 
   output$video.dim <- renderUI({
 
-    selectInput("vdo.dim", label="Fixed dimension:", choices=c('1920x1080', '1280x800', '320x568', '1280x1024', '1280x720', '320x480', '480x360', '600x600', '800x600', '640x480'), selected='640x480', width=110)
+    selectInput("vdo.dim", label="Fixed dimension:", choices=c('1920x1080', '1280x800', '320x568', '1280x1024', '1280x720', '320x480', '480x360', '600x600', '800x600', '640x480'), selected=cfg$lis.par$shm.video['dimension', 'default'], width=110)
 
   })
 
@@ -1984,7 +2094,7 @@ shinyServer(function(input, output, session) {
   observeEvent(list(log=input$log, tis=input$tis, col.but=input$col.but, cs.v=input$cs.v, pre.scale=input$pre.scale, vdo.but=input$vdo.but, vdo.dim=input$vdo.dim, vdo.itvl=input$vdo.itvl, vdo.height=input$vdo.height, vdo.width=input$vdo.width, vdo.res=input$vdo.res, vdo.val.lgd=input$'vdo.val.lgd'), {
 
     if (is.null(input$vdo.but)) return(NULL) 
-    if (input$vdo.but=='N'|is.null(pat.all())) return(NULL)
+    if (input$vdo.but=='No'|is.null(pat.all())) return(NULL)
     if (is.null(svg.df())|is.null(geneIn())|is.null(input$dt_rows_selected)|color$col[1]=='none') return(NULL)
     validate(need(try(!is.na(input$vdo.itvl)&input$vdo.itvl>0), 'Transition time should be a positive numeric!'))
     validate(need(try(!is.na(input$vdo.height)&input$vdo.height>0&input$vdo.height<=0.99), 'Height should be between 0.1 and 0.99!'))
@@ -2000,8 +2110,8 @@ shinyServer(function(input, output, session) {
     res <- input$vdo.res; dim <- input$vdo.dim
     if (dim %in% c('1280x800', '1280x1024', '1280x720')&res>450) res <- 450
     if (dim=='1920x1080'&res>300) res <- 300
-    selectInput("vdo.dim", label="Fixed dimension:", choices=c('1920x1080', '1280x800', '320x568', '1280x1024', '1280x720', '320x480', '480x360', '600x600', '800x600', '640x480'), selected='640x480', width=110)
-    vdo <- video(gg=gg.all1, cs.g=shm.bar(), sam.uni=sam(), tis.trans=input$tis, lgd.key.size=input$lgd.key.size, lgd.text.size=NULL, position.text.key='right', legend.value.vdo=(input$'vdo.val.lgd'=='Y'), label=(input$lgd.label=='Y'), label.size=input$lgd.lab.size, sub.title.size=8, bar.value.size=6, lgd.row=input$lgd.row, width=input$vdo.width, height=input$vdo.height, video.dim=dim, interval=input$vdo.itvl, res=res, out.dir='./www/video'); if (is.null(vdo)) return()
+    # selectInput("vdo.dim", label="Fixed dimension:", choices=c('1920x1080', '1280x800', '320x568', '1280x1024', '1280x720', '320x480', '480x360', '600x600', '800x600', '640x480'), selected='640x480', width=110)
+    vdo <- video(gg=gg.all1, cs.g=shm.bar(), sam.uni=sam(), tis.trans=input$tis, lgd.key.size=input$lgd.key.size, lgd.text.size=NULL, position.text.key='right', legend.value.vdo=(input$'vdo.val.lgd'=='Yes'), label=(input$lgd.label=='Yes'), label.size=input$lgd.lab.size, sub.title.size=8, bar.value.size=6, lgd.row=input$lgd.row, width=input$vdo.width, height=input$vdo.height, video.dim=dim, interval=input$vdo.itvl, res=res, out.dir='./www/video'); if (is.null(vdo)) return()
     cat('Presenting video... \n')
     incProgress(0.95, detail="Presenting video...")
     w.h <- as.numeric(strsplit(input$vdo.dim, 'x')[[1]])
@@ -2024,26 +2134,26 @@ shinyServer(function(input, output, session) {
   observe({
   
     input$fileIn; geneIn(); input$adj.modInpath; input$A; input$p; input$cv1; input$cv2; input$dt_rows_selected
-    updateRadioButtons(session, inputId="mhm.but", label="Show plot:", choices=c("Yes"="Y", "No"="N"), selected="N", inline=TRUE)
+    updateRadioButtons(session, inputId="mhm.but", label="Show plot:", choices=c("Yes", "No"), selected=cfg$lis.par$mhm['show', 'default'], inline=TRUE)
 
   })
 
   # Calculate whole correlation or distance matrix.
   cor.dis <- reactive({
 
-    if (is.null(geneIn())|input$mhm.but=='N') return()
-    if (((input$fileIn=="custom_computed_data"|input$fileIn=="custom_data") & is.null(geneIn()))|input$fileIn=="none") return(NULL)
+    if (is.null(geneIn())|input$mhm.but=='No') return()
+    if ((any(input$fileIn %in% cfg$na.cus) & is.null(geneIn()))|input$fileIn=="none") return(NULL)
     
     withProgress(message="Compute similarity/distance matrix: ", value = 0, {
 
       incProgress(0.5, detail="Please wait...")
       gene <- geneIn()[['gene1']]
-      if (input$measure=='cor') {
+      if (input$measure=='correlation') {
       
         m <- cor(x=t(gene))
         if (input$cor.abs==TRUE) { m <- abs(m) }; return(m)
 
-      } else if (input$measure=='dis') { return(-as.matrix(dist(x=gene))) }
+      } else if (input$measure=='distance') { return(-as.matrix(dist(x=gene))) }
 
     })
 
@@ -2052,7 +2162,7 @@ shinyServer(function(input, output, session) {
   # Subset nearest neighbours for target genes based on correlation or distance matrix.
   submat <- reactive({
     
-    if (is.null(cor.dis())|input$mhm.but=='N') return()
+    if (is.null(cor.dis())|input$mhm.but=='No') return()
     gene <- geneIn()[["gene1"]]; rna <- rownames(gene)
     gen.tar<- gID$geneID; mat <- cor.dis()
     # Validate filtering parameters in matrix heatmap. 
@@ -2065,11 +2175,11 @@ shinyServer(function(input, output, session) {
 
       validate(need(try(mhm.v>=1 & as.integer(mhm.v)==mhm.v & !is.na(mhm.v)), 'Number should be a positive integer !'))
 
-    } else if (input$thr=='v' & measure=='cor') {
+    } else if (input$thr=='v' & measure=='correlation') {
 
       validate(need(try(mhm.v>-1 & mhm.v <1), 'Correlation value should be between -1 to 1 !'))
 
-    } else if (input$thr=='v' & measure=='dis') {
+    } else if (input$thr=='v' & measure=='distance') {
 
       validate(need(try(mhm.v>=0), 'Distance value should be non-negative !'))
 
@@ -2080,7 +2190,7 @@ shinyServer(function(input, output, session) {
       incProgress(0.5, detail="Please wait...")
       arg <- list(p=NULL, n=NULL, v=NULL)
       arg[names(arg) %in% input$thr] <- input$mhm.v
-      if (input$measure=='dis' & input$thr=='v') arg['v'] <- -arg[['v']]
+      if (input$measure=='distance' & input$thr=='v') arg['v'] <- -arg[['v']]
       if (!all(gen.tar %in% rownames(mat))) return()    
       gen.na <- do.call(sub_na, c(mat=list(mat), ID=list(gen.tar), arg))
       if (any(is.na(gen.na))) return() 
@@ -2094,10 +2204,9 @@ shinyServer(function(input, output, session) {
   # Plot matrix heatmap.
   output$HMly <- renderPlotly({
    
-    if (is.null(submat())|input$mhm.but=='N') return()
+    if (is.null(submat())|input$mhm.but=='No') return()
     gene <- geneIn()[["gene1"]]; rna <- rownames(gene)
     gen.tar<- gID$geneID
-    print(list(2, rna[1:5], gID$geneID, submat()[1:5, 1:2]))    
     withProgress(message="Matrix heatmap:", value=0, {
       incProgress(0.7, detail="Plotting...")
       if (input$mat.scale=="Column") scale.hm <- 'column' else if (input$mat.scale=="Row") scale.hm <- 'row' else scale.hm <- 'no'
@@ -2110,7 +2219,7 @@ shinyServer(function(input, output, session) {
 
   adj.mod <- reactive({ 
 
-    if (input$fileIn=="custom_computed_data") {
+    if (input$fileIn=="customComputedData") {
 
       name <- input$adj.modInpath$name; path <- input$adj.modInpath$datapath
       path1 <- path[name=="adj.txt"]; path2 <- path[name=="mod.txt"]
@@ -2133,7 +2242,7 @@ shinyServer(function(input, output, session) {
   
   adj.tree <- reactive({ 
     #gene <- geneIn()[["gene2"]]; if (!(input$gen.sel %in% rownames(gene))) return() # Avoid unnecessary computing of 'adj', since 'input$gen.sel' is a cerain true gene id of an irrelevant expression matrix, not 'None', when switching from one defaul example's matrix heatmap to another example.
-    if (input$fileIn=="custom_data"|grepl("_Mustroph$|_Merkin$|_Cardoso.Moreira$|_Prudencio$|_Census$", input$fileIn)) {
+    if (input$fileIn=="customData"|any(input$fileIn %in% cfg$na.def)) {
 
       gene <- geneIn()[["gene1"]]; if (is.null(gene)) return()
       type <- input$net.type; sft <- if (type=='distance') 1 else 6
@@ -2154,14 +2263,14 @@ shinyServer(function(input, output, session) {
   observe({
     
     input$gen.sel; input$measure; input$cor.abs; input$thr; input$mhm.v
-    updateSelectInput(session, 'ds', "Module splitting sensitivity level:", 3:2, selected="3")
+    updateSelectInput(session, 'ds', "Module splitting sensitivity level:", 3:2, selected=cfg$lis.par$network['ds', 'default'])
 
   })
 
   mcol <- reactive({
 
-    if (!is.null(adj.tree()) & (input$fileIn=="custom_data"|grepl("_Mustroph$|_Merkin$|_Cardoso.Moreira$|_Prudencio$|_Census$", input$fileIn))) { 
-      
+    if (!is.null(adj.tree()) & (input$fileIn=="customData"|any(input$fileIn %in% cfg$na.def))) { 
+
     withProgress(message="Computing dendrogram:", value=0, {
       incProgress(0.7, detail="hierarchical clustering.")
       mod4 <- adj.tree()[['mod4']]
@@ -2183,10 +2292,9 @@ shinyServer(function(input, output, session) {
   observe({
   
     geneIn(); gID$geneID; input$TOM.in; input$gen.sel; input$ds; input$adj.modInpath; input$A; input$p; input$cv1; input$cv2; input$min.size; input$net.type
-    updateRadioButtons(session, inputId="cpt.nw", label="Show plot:", choices=c("Yes"="Y", "No"="N"), selected="N", inline=TRUE)
+    updateRadioButtons(session, inputId="cpt.nw", label="Show plot:", choices=c("Yes", "No"), selected=cfg$lis.par$network['show', 'default'], inline=TRUE)
 
   })
-
 
   col.sch.net <- reactive({ 
 
@@ -2194,7 +2302,7 @@ shinyServer(function(input, output, session) {
     col <- gsub(' |\\.|-|;|,|/', '_', input$color.net)
     col <- strsplit(col, '_')[[1]]
     col <- col[col!='']; col1 <- col[!col %in% colors()]
-    if (length(col1>0)) validate(need(try(col1 %in% colors()), paste0('Colors not valid: ', col1, ' !'))); col
+    if (length(col1>0)) validate(need(try(col1 %in% colors()), paste0('Colors not valid: ', paste0(col1, collapse=', '), '!'))); col
 
   }); color.net <- reactiveValues(col.net="none")
 
@@ -2210,7 +2318,7 @@ shinyServer(function(input, output, session) {
   visNet <- reactive({
 
     if (input$TOM.in=="None") return(NULL)
-    if (input$fileIn=="custom_computed_data") { adj <- adj.mod()[[1]]; mods <- adj.mod()[[2]] } else if (input$fileIn=="custom_data"|grepl("_Mustroph$|_Merkin$|_Cardoso.Moreira$|_Prudencio$|_Census$", input$fileIn)) { adj <- adj.tree()[[1]]; mods <- mcol() }
+    if (input$fileIn=="customComputedData") { adj <- adj.mod()[[1]]; mods <- adj.mod()[[2]] } else if (input$fileIn=="customData"|any(input$fileIn %in% cfg$na.def)) { adj <- adj.tree()[[1]]; mods <- mcol() }
     gene <- submat(); if (!(input$gen.sel %in% rownames(gene))) return() # Avoid unnecessary computing of 'adj', since 'input$gen.sel' is a cerain true gene id of an irrelevant expression matrix, not 'None', when switching from one defaul example's network to another example.
     lab <- mods[, input$ds][rownames(gene)==input$gen.sel]
     if (lab=="0") { showModal(modalDialog(title="Module", "The selected gene is not assigned to any module. Please select a different gene.")); return() }
@@ -2238,11 +2346,11 @@ shinyServer(function(input, output, session) {
 
   output$bar.net <- renderPlot({  
 
-    if (input$TOM.in=="None"|input$cpt.nw=="N") return(NULL)
+    if (input$TOM.in=="None"|input$cpt.nw=="No") return(NULL)
     if (length(color.net$col.net=="none")==0) return(NULL)
     gene <- geneIn()[["gene1"]]; if (!(input$gen.sel %in% rownames(gene))) return() # Avoid unnecessary computing of 'adj', since 'input$gen.sel' is a cerain true gene id of an irrelevant expression matrix, not 'None', when switching from one defaul example's network to another example.
-    if(input$col.but.net==0) color.net$col.net <- colorRampPalette(c('yellow', 'orange', 'red'))(len.cs.net) # color.net$col.net is changed alse outside renderPlot, since it is a reactive value.
-   
+    if(input$col.but.net==0) color.net$col.net <- colorRampPalette(col_sep(cfg$lis.par$network['color', 'default']))(len.cs.net) # color.net$col.net is changed alse outside renderPlot, since it is a reactive value.
+
       withProgress(message="Color scale: ", value = 0, {
       incProgress(0.25, detail="Preparing data. Please wait.")
       incProgress(0.75, detail="Plotting. Please wait.")
@@ -2265,7 +2373,7 @@ shinyServer(function(input, output, session) {
 
   vis.net <- reactive({ 
     
-    if (input$TOM.in=="None"|input$cpt.nw=="N") return(NULL)
+    if (input$TOM.in=="None"|input$cpt.nw=="No") return(NULL)
     gene <- geneIn()[["gene1"]]; if (!(input$gen.sel %in% rownames(gene))) return() # Avoid unnecessary computing of 'adj', since 'input$gen.sel' is a cerain true gene id of an irrelevant expression matrix, not 'None', when switching from one defaul example's network to another example.
 
     withProgress(message="Network:", value=0.5, {
@@ -2286,7 +2394,7 @@ shinyServer(function(input, output, session) {
   output$vis <- renderVisNetwork({
 
     if (input$fileIn=="none"|(input$fileIn=="Your own" & is.null(geneIn()))|input$TOM.in=="None"|input$gen.sel=="None") return(NULL)
-    if (input$cpt.nw=="N") return(NULL)
+    if (input$cpt.nw=="No") return(NULL)
 
     withProgress(message="Network:", value=0.5, {
 
