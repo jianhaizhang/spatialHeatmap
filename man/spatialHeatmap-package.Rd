@@ -280,15 +280,14 @@ se.sub.mat <- submatrix(data=se.fil.chk, ann='ann', ID=c('ENSGALG00000019846', '
 
 # In the following, "df.sub.mat" and "se.sub.mat" is used in the same way, so only "se.sub.mat" illustrated.
 
-# The subsetted matrix and the complete correlation matrix are returned in a list, and partial is shown below.
-se.sub.mat[['sub_matrix']][c('ENSGALG00000019846', 'ENSGALG00000000112'), c(1:2, 63)] # Subsetted matrix.
-se.sub.mat[['cor_dist']][c('ENSGALG00000019846', 'ENSGALG00000000112'), 1:3] # Correlation matrix.
+# The subsetted matrix is partially shown below.
+se.sub.mat[c('ENSGALG00000019846', 'ENSGALG00000000112'), c(1:2, 63)]
 
 # Static matrix heatmap.
-matrix_hm(ID=c('ENSGALG00000019846', 'ENSGALG00000000112'), data=se.sub.mat[['sub_matrix']], angleCol=80, angleRow=35, cexRow=0.8, cexCol=0.8, margin=c(8, 10), static=TRUE, arg.lis1=list(offsetRow=0.01, offsetCol=0.01))
+matrix_hm(ID=c('ENSGALG00000019846', 'ENSGALG00000000112'), data=se.sub.mat, angleCol=80, angleRow=35, cexRow=0.8, cexCol=0.8, margin=c(8, 10), static=TRUE, arg.lis1=list(offsetRow=0.01, offsetCol=0.01))
 
 # Interactive matrix heatmap.
-\donttest{ matrix_hm(ID=c('ENSGALG00000019846', 'ENSGALG00000000112'), data=se.sub.mat[['sub_matrix']], angleCol=80, angleRow=35, cexRow=0.8, cexCol=0.8, margin=c(8, 10), static=FALSE, arg.lis1=list(offsetRow=0.01, offsetCol=0.01)) }
+\donttest{ matrix_hm(ID=c('ENSGALG00000019846', 'ENSGALG00000000112'), data=se.sub.mat, angleCol=80, angleRow=35, cexRow=0.8, cexCol=0.8, margin=c(8, 10), static=FALSE, arg.lis1=list(offsetRow=0.01, offsetCol=0.01)) }
 
 ## Network 
 
@@ -297,7 +296,7 @@ matrix_hm(ID=c('ENSGALG00000019846', 'ENSGALG00000000112'), data=se.sub.mat[['su
 # Adjacency matrix and module identification
 
 # The modules are identified by "adj_mod". It returns a list containing an adjacency matrix and a data frame of module assignment. 
-adj.mod <- adj_mod(data=se.sub.mat[['sub_matrix']])
+adj.mod <- adj_mod(data=se.sub.mat)
 
 # The adjacency matrix is a measure of co-expression similarity between genes, where larger value denotes more similarity.
 adj.mod[['adj']][1:3, 1:3]
@@ -306,10 +305,10 @@ adj.mod[['adj']][1:3, 1:3]
 adj.mod[['mod']][1:3, ]
 
 # Static network. In the graph, nodes are genes and edges are adjacencies between genes. The thicker edge denotes higher adjacency (co-expression similarity) while larger node indicates higher gene connectivity (sum of a gene's adjacency with all its direct neighbors). The target gene is labeled by "_target".
-network(ID="ENSGALG00000019846", data=se.sub.mat[['sub_matrix']], adj.mod=adj.mod, adj.min=0.7, vertex.label.cex=1.5, vertex.cex=4, static=TRUE)
+network(ID="ENSGALG00000019846", data=se.sub.mat, adj.mod=adj.mod, adj.min=0.7, vertex.label.cex=1.5, vertex.cex=4, static=TRUE)
 
 # Interactive network. Same with static mode, the target gene ID is appended "_target".  
-\donttest{ network(ID="ENSGALG00000019846", data=se.sub.mat[['sub_matrix']], adj.mod=adj.mod, static=FALSE) }
+\donttest{ network(ID="ENSGALG00000019846", data=se.sub.mat, adj.mod=adj.mod, static=FALSE) }
 
 ## Shiny App
 

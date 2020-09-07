@@ -83,16 +83,16 @@
 #' # Toy data2.
 #' se.sub.mat <- submatrix(data=se.fil.chk, ann='ann', ID=c('ENSGALG00000019846', 'ENSGALG00000000112'), p=0.1) 
 
-#' # The subsetted matrix and the complete correlation matrix are returned in a list, and partial is shown below.
-#' se.sub.mat[['sub_matrix']][c('ENSGALG00000019846', 'ENSGALG00000000112'), c(1:2, 63)] # Subsetted matrix.
-#' se.sub.mat[['cor_dist']][c('ENSGALG00000019846', 'ENSGALG00000000112'), 1:3] # Correlation matrix.
+#' # The subsetted matrix is shown below.
+#' se.sub.mat[c('ENSGALG00000019846', 'ENSGALG00000000112'), c(1:2, 63)]
+
 #'
 #' ## Matrix heatmap.
 #' # Static matrix heatmap.
-#' matrix_hm(ID=c('ENSGALG00000019846', 'ENSGALG00000000112'), data=se.sub.mat[['sub_matrix']], angleCol=80, angleRow=35, cexRow=0.8, cexCol=0.8, margin=c(8, 10), static=TRUE, arg.lis1=list(offsetRow=0.01, offsetCol=0.01))
+#' matrix_hm(ID=c('ENSGALG00000019846', 'ENSGALG00000000112'), data=se.sub.mat, angleCol=80, angleRow=35, cexRow=0.8, cexCol=0.8, margin=c(8, 10), static=TRUE, arg.lis1=list(offsetRow=0.01, offsetCol=0.01))
 
 #' # Interactive matrix heatmap.
-#' \donttest{ matrix_hm(ID=c('ENSGALG00000019846', 'ENSGALG00000000112'), data=se.sub.mat[['sub_matrix']], angleCol=80, angleRow=35, cexRow=0.8, cexCol=0.8, margin=c(8, 10), static=FALSE, arg.lis1=list(offsetRow=0.01, offsetCol=0.01)) }
+#' \donttest{ matrix_hm(ID=c('ENSGALG00000019846', 'ENSGALG00000000112'), data=se.sub.mat, angleCol=80, angleRow=35, cexRow=0.8, cexCol=0.8, margin=c(8, 10), static=FALSE, arg.lis1=list(offsetRow=0.01, offsetCol=0.01)) }
 
 
 #' @author Jianhai Zhang \email{jzhan067@@ucr.edu; zhang.jianhai@@hotmail.com} \cr Dr. Thomas Girke \email{thomas.girke@@ucr.edu}

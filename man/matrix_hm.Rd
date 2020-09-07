@@ -119,15 +119,14 @@ se.fil.chk <- filter_data(data=se.aggr.chk, sam.factor='organism_part', con.fact
 df.sub.mat <- submatrix(data=df.fil.chk, ID=c('ENSGALG00000019846', 'ENSGALG00000000112'), p=0.1)
 # Toy data2.
 se.sub.mat <- submatrix(data=se.fil.chk, ann='ann', ID=c('ENSGALG00000019846', 'ENSGALG00000000112'), p=0.1) 
-# The subsetted matrix and the complete correlation matrix are returned in a list, and partial is shown below.
-se.sub.mat[['sub_matrix']][c('ENSGALG00000019846', 'ENSGALG00000000112'), c(1:2, 63)] # Subsetted matrix.
-se.sub.mat[['cor_dist']][c('ENSGALG00000019846', 'ENSGALG00000000112'), 1:3] # Correlation matrix.
+# The subsetted matrix is shown below.
+se.sub.mat[c('ENSGALG00000019846', 'ENSGALG00000000112'), c(1:2, 63)]
 
 ## Matrix heatmap.
 # Static matrix heatmap.
-matrix_hm(ID=c('ENSGALG00000019846', 'ENSGALG00000000112'), data=se.sub.mat[['sub_matrix']], angleCol=80, angleRow=35, cexRow=0.8, cexCol=0.8, margin=c(8, 10), static=TRUE, arg.lis1=list(offsetRow=0.01, offsetCol=0.01))
+matrix_hm(ID=c('ENSGALG00000019846', 'ENSGALG00000000112'), data=se.sub.mat, angleCol=80, angleRow=35, cexRow=0.8, cexCol=0.8, margin=c(8, 10), static=TRUE, arg.lis1=list(offsetRow=0.01, offsetCol=0.01))
 # Interactive matrix heatmap.
-\donttest{ matrix_hm(ID=c('ENSGALG00000019846', 'ENSGALG00000000112'), data=se.sub.mat[['sub_matrix']], angleCol=80, angleRow=35, cexRow=0.8, cexCol=0.8, margin=c(8, 10), static=FALSE, arg.lis1=list(offsetRow=0.01, offsetCol=0.01)) }
+\donttest{ matrix_hm(ID=c('ENSGALG00000019846', 'ENSGALG00000000112'), data=se.sub.mat, angleCol=80, angleRow=35, cexRow=0.8, cexCol=0.8, margin=c(8, 10), static=FALSE, arg.lis1=list(offsetRow=0.01, offsetCol=0.01)) }
 }
 \references{
 Martin Morgan, Valerie Obenchain, Jim Hester and Hervé Pagès (2018). SummarizedExperiment: SummarizedExperiment container. R package version 1.10.1 \cr Andrie de Vries and Brian D. Ripley (2016). ggdendro: Create Dendrograms and Tree Diagrams Using 'ggplot2'. R package version 0.1-20. https://CRAN.R-project.org/package=ggdendro \cr H. Wickham. ggplot2: Elegant Graphics for Data Analysis. Springer-Verlag New York, 2016. \cr Carson Sievert (2018) plotly for R. https://plotly-book.cpsievert.me \cr Langfelder P and Horvath S, WGCNA: an R package for weighted correlation network analysis. BMC Bioinformatics 2008, 9:559 doi:10.1186/1471-2105-9-559 \cr R Core Team (2018). R: A language and environment for statistical computing. R Foundation for Statistical Computing, Vienna, Austria. URL https://www.R-project.org/ \cr Gregory R. Warnes, Ben Bolker, Lodewijk Bonebakker, Robert Gentleman, Wolfgang Huber Andy Liaw, Thomas Lumley, Martin Maechler, Arni Magnusson, Steffen Moeller, Marc Schwartz and Bill Venables (2019). gplots: Various R Programming Tools for Plotting Data. R package version 3.0.1.1.  https://CRAN.R-project.org/package=gplots \cr Hadley Wickham (2007). Reshaping Data with the reshape Package. Journal of Statistical Software, 21(12), 1-20. URL http://www.jstatsoft.org/v21/i12/ 

@@ -12,7 +12,7 @@
 #' @param cor.absolute Logical, TRUE or FALSE. Use absolute values or not. Only applies to \code{fun='cor'}. Default is FALSE, meaning the correlation coefficient preserves the negative sign when selecting items. 
 #' @param arg.cor A list of arguments passed to \code{\link[stats]{cor}} in the "stats" package. Default is \code{list(method="pearson")}.
 #' @param arg.dist A list of arguments passed to \code{\link[stats]{dist}} in the "stats" package. Default is \code{list(method="euclidean")}.
-#' @return A two-componet list containing the subsetted matrix of target items and their nearest neighbors, and the complete correlation matrix or distance matrix.
+#' @return The subsetted matrix of target items and their nearest neighbors.
 
 #' @examples
 
@@ -77,10 +77,8 @@
 #' # Toy data2.
 #' se.sub.mat <- submatrix(data=se.fil.chk, ann='ann', ID=c('ENSGALG00000019846', 'ENSGALG00000000112'), p=0.1) 
 
-#' # The subsetted matrix and the complete correlation matrix are returned in a list, and partial is shown below.
-#' se.sub.mat[['sub_matrix']][c('ENSGALG00000019846', 'ENSGALG00000000112'), c(1:2, 63)] # Subsetted matrix.
-#' se.sub.mat[['cor_dist']][c('ENSGALG00000019846', 'ENSGALG00000000112'), 1:3] # Correlation matrix.
-
+#' # The subsetted matrix partially is shown below.
+#' se.sub.mat[c('ENSGALG00000019846', 'ENSGALG00000000112'), c(1:2, 63)]
 
 #' @author Jianhai Zhang \email{zhang.jianhai@@hotmail.com; jzhan067@@ucr.edu} \cr Dr. Thomas Girke \email{thomas.girke@@ucr.edu}
 
@@ -120,19 +118,31 @@ submatrix <- function(data, ann=NULL, ID, p=0.3, n=NULL, v=NULL, fun='cor', cor.
 
   if (fun=='cor') {
 
-    m <- do.call(cor, c(x=list(t(data)), arg.cor))
+    dat.t <- t(data)
+    m <- do.call(cor, c(x=list(dat.t[, ID]), y=list(dat.t), arg.cor)); m <- t(m)
     if (cor.absolute==TRUE) { m1 <- m; m <- abs(m) }
     na <- sub_na(mat=m, ID=ID, p=p, n=n, v=v)
     if (cor.absolute==TRUE) m <- m1
+    m <- t(m)
 
   } else if (fun=='dist') { 
-    
-    m <- -as.matrix(do.call(dist, c(x=list(data), arg.dist)))
-    if (!is.null(v)) v <- -v
-    na <- sub_na(mat=m, ID=ID, p=p, n=n, v=v); m <- -m
 
-  }; sub.m <- m[na, na] 
-  return(list(sub_matrix=cbind(data[na, ], ann[na, , drop=FALSE]), cor_dist=m))
+    m <- data.frame(); for (i in ID) {
+    
+      dis <- NULL; for (j in rownames(data)) {
+
+        # Distances are transformed to negative.
+        dis0 <- -do.call(dist, c(x=list(data[c(i, j), ]), arg.dist))[1]
+        dis <- c(dis, dis0)
+
+      }; m <- rbind(m, dis)
+
+    }; row.names(m) <- ID; colnames(m) <- rownames(data)
+    if (!is.null(v)) v <- -v
+    na <- sub_na(mat=t(m), ID=ID, p=p, n=n, v=v); m <- -m
+
+  } 
+  return(sub_matrix=cbind(data[na, ], ann[na, , drop=FALSE]))
 
 }
 
