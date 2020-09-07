@@ -1180,7 +1180,7 @@ version. In the network plot shown below the nodes and edges represent genes and
 between them, respectively. The thickness of the edges denotes the adjacency levels, while the size of 
 the nodes indicates the degree of connectivity of each item. If a gene of interest has 
 been assigned under `ID`, then its ID is labeled in the plot with the tag: '*_target'.
-^[<font color='red'>ThG: color scheme is a poor choice since the labels are unreadable in the dark brown 
+^[<font color='red'>ThG: the color scheme of the nodes is a poor choice since the labels are unreadable in the dark brown 
 nodes. Also the color scheme is not explained.</font>]  
 
 ```{r inter, eval=TRUE, echo=TRUE, warnings=FALSE, fig.cap=("Static network. Node size denotes gene connectivity while edge thickness stands for co-expression similarity.") }
