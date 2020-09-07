@@ -1131,9 +1131,9 @@ sharing highly similar expression profiles. Internally, the network module ident
 includes five major steps. First, a correlation matrix is computed using 
 distance or correlation-based similarity metrics. Second,
 the obtained matrix is transformed into an adjacency matrix defining the
-connections among nodes. Third, the adjacency matrix is used to calculate a
+connections among items. Third, the adjacency matrix is used to calculate a
 topological overlap matrix (TOM) where shared neighborhood information among
-nodes is used to preserve robust connections, while removing spurious
+items is used to preserve robust connections, while removing spurious
 connections. Fourth, the distance transformed TOM is used for hierarchical
 clustering. To maximize time performance, the hierarchical clustering is
 performed with the `flashClust` package [@flashClust]. Fifth, network modules
@@ -1143,8 +1143,8 @@ values increase the stringency of the module identification process.
 To simplify the network module idenification process with WGCNA, the individual steps 
 can be executed with a single function called `adj_mod`. The result is a list 
 containing the adjacency matrix and the final module assignments stored in a 
-`data.frame`. Since the [interactive network](#inter_net) feature used below performs 
-best on smaller modules, only modules are returned that were obtained with stringent `ds`
+`data.frame`. Since the [interactive network](#inter_net) feature used in the visualization
+step below performs best on smaller modules, only modules are returned that were obtained with stringent `ds`
 settings (here `ds=2` and `ds=3`). 
 ^[<font color='red'>The help file for adj_mod contains many typos and grammar mistakes. Please
 improve its writeup.</font>] 
