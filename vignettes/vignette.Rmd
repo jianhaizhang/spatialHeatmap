@@ -1078,7 +1078,7 @@ assay data sets. The run-time in R for a correlation search is very fast since
 there is no R-based looping necessary (simply do: cor(query_vec, matrix)) as it 
 runs on the C/Fortran level, meaning speed is not a concern here.</font>]
 
-The following example uses as query the two genes: `RCA` and `HRE2`. The `ann`
+The following example uses as query the two genes: 'RCA' and 'HRE2'. The `ann`
 argument corresponds to the column name in the `rowData` slot containing gene
 annotation information. The latter is only relevant if users want to see these
 annotations when mousing over a node in the [interactive network](#inter_net)
@@ -1088,7 +1088,12 @@ plot generated in the next section.
 sub.mat <- submatrix(data=se.fil.arab, ann='Target.Description', ID=c('RCA', 'HRE2'), p=0.1)
 ```
 
-The subsetted matrix (target genes and nearest neighbors) and the complete PCC matrix are returned in a list, and partial is shown below.   
+The result from the previous step is stored in a list where the first component contains
+the assay matrix subsetted to the genes sharing similar assay profiles as the query genes 'RCA' 
+and 'HRE2'. The second slot contains the corresponding correlation matrix. ^[Again why would you 
+compute the full similarity matrix for all genes in the assay and then even return it heer. If 
+you need to return it, then compute it only for the filtered results meaning it should have 
+dim= 62 x 62 and not 319 x 319.]
 
 ```{r eval=TRUE, echo=TRUE, warnings=FALSE}
 sub.mat[['sub_matrix']][c('RCA', 'HRE2'), c(1:3, 37)] # Subsetted data matrix.
