@@ -1095,7 +1095,7 @@ you need to return it, then compute it only for the filtered results meaning it
 should have dim= 62 x 62 and not 319 x 319.</font>] ^[<font color='blue'>The returned value is changed to only the submatted matrix.</font>]
 
 ```{r eval=TRUE, echo=TRUE, warnings=FALSE}
-sub.mat[c('RCA', 'HRE2'), c(1:3, 37)] # Subsetted assay matrix
+sub.mat[['sub_matrix']][c('RCA', 'HRE2'), c(1:3, 37)] # Subsetted assay matrix
 ```
 
 <a name="mhm1"></a>
@@ -1109,7 +1109,7 @@ will launch the interactive mode, where users can zoom into the heatmap by
 selecting subsections in the image or zoom out by double clicking.  
 
 ```{r static, eval=TRUE, echo=TRUE, warnings=FALSE, fig.cap=("Matrix Heatmap. Rows are genes and columns are samples. The input genes are tagged by black lines."), out.width='100%'}
-matrix_hm(ID=c('RCA', 'HRE2'), data=sub.mat, angleCol=80, angleRow=35, cexRow=0.8, cexCol=0.8, margin=c(10, 6), static=TRUE, arg.lis1=list(offsetRow=0.01, offsetCol=0.01))
+matrix_hm(ID=c('RCA', 'HRE2'), data=sub.mat[['sub_matrix']], angleCol=80, angleRow=35, cexRow=0.8, cexCol=0.8, margin=c(10, 6), static=TRUE, arg.lis1=list(offsetRow=0.01, offsetCol=0.01))
 ```   
 
 ^[<font color='red'>ThG: the interactive mode doesn't work for me. Am I supposed to get a URL like under
@@ -1147,7 +1147,7 @@ settings (here `ds=2` and `ds=3`).
 improve its writeup.</font>] 
 
 ```{r eval=TRUE, echo=TRUE, warnings=FALSE, results=FALSE}
-adj.mod <- adj_mod(data=sub.mat)
+adj.mod <- adj_mod(data=sub.mat[['sub_matrix']])
 ```
 
 A slice of the adjacency matrix is shown below.    
@@ -1181,7 +1181,7 @@ been assigned under `ID`, then its ID is labeled in the plot with the tag: '*_ta
 nodes. Also the color scheme is not explained.</font>]  
 
 ```{r inter, eval=TRUE, echo=TRUE, warnings=FALSE, fig.cap=("Static network. Node size denotes gene connectivity while edge thickness stands for co-expression similarity.") }
-network(ID="HRE2", data=sub.mat, adj.mod=adj.mod, adj.min=0.90, vertex.label.cex=1.2, vertex.cex=2, static=TRUE)
+network(ID="HRE2", data=sub.mat[['sub_matrix']], adj.mod=adj.mod, adj.min=0.90, vertex.label.cex=1.2, vertex.cex=2, static=TRUE)
 ```   
 
 <a name="inter_net"></a>
@@ -1191,7 +1191,7 @@ If the subsetted expression matrix contains gene/protein annotation information 
 column, then it will be shown when moving the cursor over a network node.    
 
 ```{r eval=FALSE, echo=TRUE, warnings=FALSE}
-network(ID="HRE2", data=sub.mat,  adj.mod=adj.mod, static=FALSE)
+network(ID="HRE2", data=sub.mat[['sub_matrix']],  adj.mod=adj.mod, static=FALSE)
 ```
 ^[<font color='red'>ThG: the interactive view shows only an empty shiny like window. Even when trying to change
 the settings in the menu on the left nothing happens.</font>]
