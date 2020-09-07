@@ -1051,7 +1051,7 @@ SHMs are suitable for comparing assay profiles among small number of items
 (_e.g._ few genes or proteins) across cell types and conditions. To also
 support analysis routines of larger number of items, `spatialHeatmap` integrates
 functionalities for identifying groups of items with similar and/or dissimilar 
-assay profiles, and subsequently analyzing the results with visualization 
+assay profiles, and subsequently analyzing the results with data mining methods 
 methods that scale to larger numbers of items than SHMs, such as hierarchical
 clustering and network analysis methods. The following introduces both
 approaches using as sample data the gene expression data from Arabidopsis
@@ -1106,75 +1106,79 @@ the rows and columns are sorted by the corresponding hierarchical clustering
 dendrograms (Figure \@ref(fig:static)). The position of the query genes ('RCA'
 and 'HRE2') is indicated in the heatmap by black lines. Setting `static=FALSE`
 will launch the interactive mode, where users can zoom into the heatmap by
-selecting subsections or double clicking on areas of interest.
+selecting subsections in the image or zoom out by double clicking.  
 
 ```{r static, eval=TRUE, echo=TRUE, warnings=FALSE, fig.cap=("Matrix Heatmap. Rows are genes and columns are samples. The input genes are tagged by black lines."), out.width='100%'}
 matrix_hm(ID=c('RCA', 'HRE2'), data=sub.mat, angleCol=80, angleRow=35, cexRow=0.8, cexCol=0.8, margin=c(10, 6), static=TRUE, arg.lis1=list(offsetRow=0.01, offsetCol=0.01))
 ```   
 
+^[<font color='red'>ThG: the interactive mode doesn't work for me. Am I supposed to get a URL like under
+the network plot? Right now it opens RStudio but doesn't show there anything.</font>] 
+
 # Network Graphs {#net}
 
-In this section, network analysis is applied on the subsetted gene expression matrix from last section. It includes network module identification and visualization of modules in form of network graphs.  
+## Module Identification
 
-## Adjacency Matrix and Module Identification
-
-<font color='blue'>jianhai-reply: the blue text are responses to ThG-Comments. </font>
-
-<font color='red'>[ThG-Comment: this section needs major improvements. The intent was
-to identify for a target gene nearest neighbors based on some similarity metric for gene
-expression profiles (e.g. correlation), and then hierarchically cluster them and visualize
-the result in a heatmap. Instead you are subjecting the entire expression matrix to 
-clustering/WGCNA and then plot the target gene in the context of a single
-cluster/module. This is hugely inefficient compared to doing it only for the nearest
-neighbors instead. Just think about what will happen if a user imports an expression 
-matrix for all transcripts from human. With your approach they will not be able to 
-complete this step since they will run out of memory on their system.]</font>
-
-<font color='blue'>
 <a name="ds"></a>
-The WGCNA network analysis [@Langfelder2008-sg] is applied on the subsetted gene expression matrix to identify gene modules, which are clusters of genes showing highly similar expression profiles. First, a correlation matrix or distance matrix is computed on the subsetted matrix, which defaults to Pearson correlation or euclidean distance respectively. Then the computed matrix is transformed to an adjacency matrix. The adjacency matrix is characterized by sale-free topology, where only a small number of genes are expected to have many connections with other genes and thus dominate the whole network [@Ravasz2002-db]. Values in this adjacency matrix denotes expression similarity between genes. The larger value, the higher similarity.^[You need to describe how this adjency matrix is generated and what it
-represents. It also needs to mention what type of disance/correlation method is used
-initially to generate the downstream matrix.] ^[Without
-defining how adjacency is defined here readers will not be able to understand
-what was done here, especially since this section is mainly about hierarchical 
-clustering.] 
-
-Next, the adjacency matrix is used to calculate an advanced similarity measure of topological overlap matrix (TOM), which quantifies expression similarity for a pair of genes in the context of all other genes. Then, the `TOM` transformed distance matrix `1-TOM` is used for hierarchical clustering with `flashClust` [@flashClust]. Lastly, network modules are identified with the `dynamicTreeCut` package [@dynamicTreeCut]. It provides an argument `deepSplit` (`ds`) for rough control over sensitivity to module splitting. The `ds` has four alternative values `0`, `1`, `2`, `3`, and each generates an alternative set of modules. The higher the value, the more and smaller modules are produced, thus there are four alternative sets of modules generated with varying sizes.^[What is the meaning of the sensitivity levels, how are they 
-generated and how should the user interpret them?] ^[Unclear for what you need
-WGCNA here. I thought this section uses hierarchical clustering. The latter is
-certainly used by WGCNA but it remains a mystery what exactly you are doing
-here. I would expect to use here only hierarchical clustering, e.g. with
-flashClust. WGCNA seems more suitable for the next section.] 
-
-</font>
-
-The whole process above of identifying modules is implemented in the function `adj_mod`. It returns a list containing the adjacency matrix and a data frame of module assignment. Since the [interactive network](#inter_net) below performs better on smaller modules, only modules resulting from `ds=2` and `ds=3` are returned.  
+Network analysis is performed with the WGCNA algorithm [@Langfelder2008-sg; @Ravasz2002-db] 
+using as input the subsetted assay matrix generated in the previous section. The objective 
+is to identify network modules that can be visualized in the following step in form of network graphs. Applied to the 
+gene expression sample data used here, these network modules represent groups of genes 
+sharing highly similar expression profiles. Internally, the network module identification
+includes five major steps. First, a correlation matrix is computed using 
+distance or correlation-based similarity metrics. Second,
+the obtained matrix is transformed into an adjacency matrix defining the
+connections among items. Third, the adjacency matrix is used to calculate a
+topological overlap matrix (TOM) where shared neighborhood information among
+items is used to preserve robust connections, while removing spurious
+connections. Fourth, the distance transformed TOM is used for hierarchical
+clustering. To maximize time performance, the hierarchical clustering is
+performed with the `flashClust` package [@flashClust]. Fifth, network modules
+are identified with the `dynamicTreeCut` package [@dynamicTreeCut]. Its
+`ds` (`deepSplit`) argument can be assigned integer values from `0` to `3`, where higher 
+values increase the stringency of the module identification process. 
+To simplify the network module idenification process with WGCNA, the individual steps 
+can be executed with a single function called `adj_mod`. The result is a list 
+containing the adjacency matrix and the final module assignments stored in a 
+`data.frame`. Since the [interactive network](#inter_net) feature used in the visualization
+step below performs best on smaller modules, only modules are returned that were obtained with stringent `ds`
+settings (here `ds=2` and `ds=3`). 
+^[<font color='red'>The help file for adj_mod contains many typos and grammar mistakes. Please
+improve its writeup.</font>] 
 
 ```{r eval=TRUE, echo=TRUE, warnings=FALSE, results=FALSE}
 adj.mod <- adj_mod(data=sub.mat)
 ```
 
-Partial of the adjacency matrix is shown below.    
+A slice of the adjacency matrix is shown below.    
 
 ```{r eval=TRUE, echo=TRUE, warnings=FALSE}
 adj.mod[['adj']][1:3, 1:3]
 ```
 
-The module assignment is a data frame. The first column is `ds=2` while the second is `ds=3`. The numbers in each column are module labels with `0` meaning genes not assigned to any modules. First three rows are shown below.  
+The module assignments are stored in a `data frame`. Its columns contain the results
+for the `ds=2` and `ds=3` settings. Integer values $>0$ are the module labels, while $0$ 
+indicates unassigned items. The following returns the first three rows of the module 
+assignment result.  
 
 ```{r eval=TRUE, echo=TRUE, warnings=FALSE}
 adj.mod[['mod']][1:3, ] 
 ```
 
 
-<font color='red'>[ThG-Comment: both the previous section and this section need
-                   to clearly explain what is done to arrive at a given network 
-                   module and what it represents. Once this is done I will edit 
-                   the text.]</font>
-
 ## Module Visualization
 
-To visualize modules, a target gene should be selected first, usually a gene from the SHMs. Then the module containing the target gene is internally selected based on the `ds`, which defaults to `3`. There are two modes to visualize the selected module, static or interactive. Figure \@ref(fig:inter) is the static network containing gene `HRE2`, which is generated by `static=TRUE`. Nodes are genes and edges are adjacencies between genes. The thicker edge denotes higher adjacency while larger node indicates higher gene connectivity (sum of a gene\'s adjacency with all its direct neighbours). The target gene is labeled by '_target'.  
+Network modules can be visualized with the `network` function. To plot a module containing
+an item (gene) of interest, its ID (_e.g._ 'HRE2') needs to be provided under the corresponding argument. 
+Typically, this could be one of the items chosen for the above SHM plots. There are two 
+modes to visualize the selected module: static or interactive. Figure \@ref(fig:inter)
+was generated with `static=TRUE`. Setting `static=FALSE` will generate the interactive
+version. In this network nodes and edges represent genes and adjacencies between them, 
+respectively. The thickness of the edges denotes the adjacency levels, while the size of 
+the nodes indicates the degree of connectivity of each item. If a gene of interest has 
+been assigned under `ID`, then its ID is labeled in the plot with the tag: '*_target'.
+^[<font color='red'>ThG: color scheme is a poor choice since the labels are unreadable in the dark brown 
+nodes. Also the color scheme is not explained.</font>]  
 
 ```{r inter, eval=TRUE, echo=TRUE, warnings=FALSE, fig.cap=("Static network. Node size denotes gene connectivity while edge thickness stands for co-expression similarity.") }
 network(ID="HRE2", data=sub.mat, adj.mod=adj.mod, adj.min=0.90, vertex.label.cex=1.2, vertex.cex=2, static=TRUE)
@@ -1183,11 +1187,14 @@ network(ID="HRE2", data=sub.mat, adj.mod=adj.mod, adj.min=0.90, vertex.label.cex
 <a name="inter_net"></a>
 Setting `static=FALSE` launches the interactive network. There is an interactive color bar to denote gene connectivity. The color ingredients must only be separated by comma, e.g. `yellow,orange,red`, which means gene connectivity increases from yellow to red. If too many edges (*e.g.*: > 300) are displayed, the network could get stuck. So the 'Adjacency threshold' option sets a threthold to filter out weak edges. If not too many edges retained (*e.g.*: < 300), users can check 'Yes' under 'Show plot', then the network would be responsive smoothly. To maintain acceptable performance, users are advised to choose a stringent threshold (*e.g.* 0.9) initially, then decrease the value gradually. The interactive feature allows users to zoom in and out, or drag a gene around. All the gene IDs in the network module are listed in 'Select by id' in decreasing order according to gene connectivity. Same with static mode, the target gene ID is appended '_target'.  
 
-If gene annotation is appended as a column in the subsetted expression matrix, it will be detected by the function `network` automatically, and is seen by mousing over a node.    
+If the subsetted expression matrix contains gene/protein annotation information in the last
+column, then it will be shown when moving the cursor over a network node.    
 
 ```{r eval=FALSE, echo=TRUE, warnings=FALSE}
 network(ID="HRE2", data=sub.mat,  adj.mod=adj.mod, static=FALSE)
 ```
+^[<font color='red'>ThG: the interactive view shows only an empty shiny like window. Even when trying to change
+the settings in the menu on the right nothing happens.</font>]
 
 # Shiny App {#shiny}
 
