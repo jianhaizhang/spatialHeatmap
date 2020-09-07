@@ -1051,7 +1051,7 @@ SHMs are suitable for comparing assay profiles among small number of items
 (_e.g._ few genes or proteins) across cell types and conditions. To also
 support analysis routines of larger number of items, `spatialHeatmap` integrates
 functionalities for identifying groups of items with similar and/or dissimilar 
-assay profiles, and subsequently analyzing the results with visualization 
+assay profiles, and subsequently analyzing the results with data mining methods 
 methods that scale to larger numbers of items than SHMs, such as hierarchical
 clustering and network analysis methods. The following introduces both
 approaches using as sample data the gene expression data from Arabidopsis
@@ -1108,8 +1108,8 @@ containing only the genes that share profile similarities with the query genes
 the rows and columns are sorted by the corresponding hierarchical clustering
 dendrograms (Figure \@ref(fig:static)). The position of the query genes ('RCA'
 and 'HRE2') is indicated in the heatmap by black lines. Setting `static=FALSE`
-will launche the interactive mode, where users can zoom into the heatmap by
-selecting subsections or double clicking on areas of interest.
+will launch the interactive mode, where users can zoom into the heatmap by
+selecting subsections in the image or double clicking on areas of interest.
 
 ```{r static, eval=TRUE, echo=TRUE, warnings=FALSE, fig.cap=("Matrix Heatmap. Rows are genes and columns are samples. The input genes are tagged by black lines."), out.width='100%'}
 matrix_hm(ID=c('RCA', 'HRE2'), data=sub.mat[['sub_matrix']], angleCol=80, angleRow=35, cexRow=0.8, cexCol=0.8, margin=c(10, 6), static=TRUE, arg.lis1=list(offsetRow=0.01, offsetCol=0.01))
@@ -1121,37 +1121,40 @@ In this section, network analysis is applied on the subsetted gene expression ma
 
 ## Adjacency Matrix and Module Identification
 
-<font color='blue'>jianhai-reply: the blue text are responses to ThG-Comments. </font>
-
-<font color='red'>[ThG-Comment: this section needs major improvements. The intent was
-to identify for a target gene nearest neighbors based on some similarity metric for gene
-expression profiles (e.g. correlation), and then hierarchically cluster them and visualize
-the result in a heatmap. Instead you are subjecting the entire expression matrix to 
-clustering/WGCNA and then plot the target gene in the context of a single
-cluster/module. This is hugely inefficient compared to doing it only for the nearest
-neighbors instead. Just think about what will happen if a user imports an expression 
-matrix for all transcripts from human. With your approach they will not be able to 
-complete this step since they will run out of memory on their system.]</font>
-
-<font color='blue'>
 <a name="ds"></a>
-The WGCNA network analysis [@Langfelder2008-sg] is applied on the subsetted gene expression matrix to identify gene modules, which are clusters of genes showing highly similar expression profiles. First, a correlation matrix or distance matrix is computed on the subsetted matrix, which defaults to Pearson correlation or euclidean distance respectively. Then the computed matrix is transformed to an adjacency matrix. The adjacency matrix is characterized by sale-free topology, where only a small number of genes are expected to have many connections with other genes and thus dominate the whole network [@Ravasz2002-db]. Values in this adjacency matrix denotes expression similarity between genes. The larger value, the higher similarity.^[You need to describe how this adjency matrix is generated and what it
-represents. It also needs to mention what type of disance/correlation method is used
-initially to generate the downstream matrix.] ^[Without
-defining how adjacency is defined here readers will not be able to understand
-what was done here, especially since this section is mainly about hierarchical 
-clustering.] 
+Network analysis is performed with the WGCNA algorithm [@Langfelder2008-sg]
+using as input the subsetted assay matrix generated in the previous section
+(here gene expression matrix). The objective of this network analysis step is
+the identification of network modules. In the context of the sample data used
+here, the network modules represent groups of genes sharing highly similar
+expression profiles that can be visualized in form of correlation-based network
+graphs. First, a correlation matrix or distance matrix is computed on the
+subsetted matrix using Pearson correlation coefficients or Euclidean distances,
+respectively. Subsequently, the obtained matrix is transformed to an adjacency
+matrix. A characteristic feature of adjacency matrix-based networks is a sale-free
+topology, where only a small number of items have many connections with other
+items. Thus, a low degree of interconnectivity is a dominating feature of the
+overall network [@Ravasz2002-db]. The values in the adjacency matrix denote
+profile similarities among genes, where larger values indicate higher
+similarity.
 
-Next, the adjacency matrix is used to calculate an advanced similarity measure of topological overlap matrix (TOM), which quantifies expression similarity for a pair of genes in the context of all other genes. Then, the `TOM` transformed distance matrix `1-TOM` is used for hierarchical clustering with `flashClust` [@flashClust]. Lastly, network modules are identified with the `dynamicTreeCut` package [@dynamicTreeCut]. It provides an argument `deepSplit` (`ds`) for rough control over sensitivity to module splitting. The `ds` has four alternative values `0`, `1`, `2`, `3`, and each generates an alternative set of modules. The higher the value, the more and smaller modules are produced, thus there are four alternative sets of modules generated with varying sizes.^[What is the meaning of the sensitivity levels, how are they 
-generated and how should the user interpret them?] ^[Unclear for what you need
-WGCNA here. I thought this section uses hierarchical clustering. The latter is
-certainly used by WGCNA but it remains a mystery what exactly you are doing
-here. I would expect to use here only hierarchical clustering, e.g. with
-flashClust. WGCNA seems more suitable for the next section.] 
+Next, the adjacency matrix is used to calculate a topological overlap matrix
+(TOM). This advanced similarity measure quantifies expression similarities for
+each pair of genes in the context of all other genes. Next, the distance
+transformed TOM matrix ($1-TOM$) is used for hierarchical clustering with
+`flashClust` [@flashClust]. Finally, network modules are identified with the
+`dynamicTreeCut` package [@dynamicTreeCut]. It provides an argument `deepSplit`
+(`ds`) for rough control over sensitivity to module splitting. The `ds` has
+four alternative values `0`, `1`, `2`, `3`, and each generates an alternative
+set of modules.  The higher the value, the more and smaller modules are
+produced, thus there are four alternative sets of modules generated with
+varying sizes.
 
-</font>
-
-The whole process above of identifying modules is implemented in the function `adj_mod`. It returns a list containing the adjacency matrix and a data frame of module assignment. Since the [interactive network](#inter_net) below performs better on smaller modules, only modules resulting from `ds=2` and `ds=3` are returned.  
+The whole process above of identifying modules is implemented in the function
+`adj_mod`. It returns a list containing the adjacency matrix and a data frame
+of module assignment. Since the [interactive network](#inter_net) below
+performs better on smaller modules, only modules resulting from `ds=2` and
+`ds=3` are returned.  
 
 ```{r eval=TRUE, echo=TRUE, warnings=FALSE, results=FALSE}
 adj.mod <- adj_mod(data=sub.mat[['sub_matrix']])
