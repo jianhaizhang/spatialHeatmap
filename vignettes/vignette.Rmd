@@ -1115,72 +1115,71 @@ selecting subsections in the image or double clicking on areas of interest.
 matrix_hm(ID=c('RCA', 'HRE2'), data=sub.mat[['sub_matrix']], angleCol=80, angleRow=35, cexRow=0.8, cexCol=0.8, margin=c(10, 6), static=TRUE, arg.lis1=list(offsetRow=0.01, offsetCol=0.01))
 ```   
 
+^[ThG: the interactive mode doesn't work for me. Am I supposed to get a URL like under
+the network plot? Right now it opens RStudio but doesn't show there anything.] 
+
 # Network Graphs {#net}
 
-In this section, network analysis is applied on the subsetted gene expression matrix from last section. It includes network module identification and visualization of modules in form of network graphs.  
-
-## Adjacency Matrix and Module Identification
+## Module Identification
 
 <a name="ds"></a>
-Network analysis is performed with the WGCNA algorithm [@Langfelder2008-sg]
-using as input the subsetted assay matrix generated in the previous section
-(here gene expression matrix). The objective of this network analysis step is
-the identification of network modules. In the context of the sample data used
-here, the network modules represent groups of genes sharing highly similar
-expression profiles that can be visualized in form of correlation-based network
-graphs. First, a correlation matrix or distance matrix is computed on the
-subsetted matrix using Pearson correlation coefficients or Euclidean distances,
-respectively. Subsequently, the obtained matrix is transformed to an adjacency
-matrix. A characteristic feature of adjacency matrix-based networks is a sale-free
-topology, where only a small number of items have many connections with other
-items. Thus, a low degree of interconnectivity is a dominating feature of the
-overall network [@Ravasz2002-db]. The values in the adjacency matrix denote
-profile similarities among genes, where larger values indicate higher
-similarity.
-
-Next, the adjacency matrix is used to calculate a topological overlap matrix
-(TOM). This advanced similarity measure quantifies expression similarities for
-each pair of genes in the context of all other genes. Next, the distance
-transformed TOM matrix ($1-TOM$) is used for hierarchical clustering with
-`flashClust` [@flashClust]. Finally, network modules are identified with the
-`dynamicTreeCut` package [@dynamicTreeCut]. It provides an argument `deepSplit`
-(`ds`) for rough control over sensitivity to module splitting. The `ds` has
-four alternative values `0`, `1`, `2`, `3`, and each generates an alternative
-set of modules.  The higher the value, the more and smaller modules are
-produced, thus there are four alternative sets of modules generated with
-varying sizes.
-
-The whole process above of identifying modules is implemented in the function
-`adj_mod`. It returns a list containing the adjacency matrix and a data frame
-of module assignment. Since the [interactive network](#inter_net) below
-performs better on smaller modules, only modules resulting from `ds=2` and
-`ds=3` are returned.  
+Network analysis is performed with the WGCNA algorithm [@Langfelder2008-sg; @Ravasz2002-db] 
+using as input the subsetted assay matrix generated in the previous section. The objective 
+is to identify network modules that can be visualized in the following step in form of network graphs. Applied to the 
+gene expression sample data used here, these network modules represent groups of genes 
+sharing highly similar expression profiles. Internally, the network module identification
+includes five major steps. First, a correlation matrix is computed using 
+distance or correlation-based similarity metrics. Second,
+the obtained matrix is transformed into an adjacency matrix defining the
+connections among nodes. Third, the adjacency matrix is used to calculate a
+topological overlap matrix (TOM) where shared neighborhood information among
+nodes is used to preserve robust connections, while removing spurious
+connections. Fourth, the distance transformed TOM is used for hierarchical
+clustering. To maximize time performance, the hierarchical clustering is
+performed with the `flashClust` package [@flashClust]. Fifth, network modules
+are identified with the `dynamicTreeCut` package [@dynamicTreeCut]. Its
+`ds` (`deepSplit`) argument can be assigned integer values from `0` to `3`, where higher 
+values increase the stringency of the module identification process. 
+To simplify the network module idenification process with WGCNA, the individual steps 
+can be executed with a single function called `adj_mod`. The result is a list 
+containing the adjacency matrix and the final module assignments stored in a 
+`data.frame`. Since the [interactive network](#inter_net) feature used below performs 
+best on smaller modules, only modules are returned that were obtained with stringent `ds`
+settings (here `ds=2` and `ds=3`).  
 
 ```{r eval=TRUE, echo=TRUE, warnings=FALSE, results=FALSE}
 adj.mod <- adj_mod(data=sub.mat[['sub_matrix']])
 ```
 
-Partial of the adjacency matrix is shown below.    
+A slice of the adjacency matrix is shown below.    
 
 ```{r eval=TRUE, echo=TRUE, warnings=FALSE}
 adj.mod[['adj']][1:3, 1:3]
 ```
 
-The module assignment is a data frame. The first column is `ds=2` while the second is `ds=3`. The numbers in each column are module labels with `0` meaning genes not assigned to any modules. First three rows are shown below.  
+The module assignments are stored in a `data frame`. Its columns contain the results
+for the `ds=2` and `ds=3` settings. Integer values $>0$ are the module labels, while $0$ 
+indicates unassigned items. The following returns the first three rows of the module 
+assignment result.  
 
 ```{r eval=TRUE, echo=TRUE, warnings=FALSE}
 adj.mod[['mod']][1:3, ] 
 ```
 
 
-<font color='red'>[ThG-Comment: both the previous section and this section need
-                   to clearly explain what is done to arrive at a given network 
-                   module and what it represents. Once this is done I will edit 
-                   the text.]</font>
-
 ## Module Visualization
 
-To visualize modules, a target gene should be selected first, usually a gene from the SHMs. Then the module containing the target gene is internally selected based on the `ds`, which defaults to `3`. There are two modes to visualize the selected module, static or interactive. Figure \@ref(fig:inter) is the static network containing gene `HRE2`, which is generated by `static=TRUE`. Nodes are genes and edges are adjacencies between genes. The thicker edge denotes higher adjacency while larger node indicates higher gene connectivity (sum of a gene\'s adjacency with all its direct neighbours). The target gene is labeled by '_target'.  
+Network modules can be visualized with the `network` function. To plot a module containing
+an item (gene) of interest, its ID (_e.g._ 'HRE2') needs to be provided under the corresponding argument. 
+Typically, this could be one of the items chosen for the above SHM plots. There are two 
+modes to visualize the selected module: static or interactive. Figure \@ref(fig:inter)
+was generated with `static=TRUE`. Setting `static=FALSE` will generate the interactive
+version. In this network nodes and edges represent genes and adjacencies between them, 
+respectively. The thickness of the edges denotes the adjacency levels, while the size of 
+the nodes indicates the degree of connectivity of each item. If a gene of interest has 
+been assigned under `ID`, then its ID is labeled in the plot with the tag: '*_target'.
+^[ThG: color scheme is a poor choice since the labels are unreadable in the dark brown 
+nodes. Also the color scheme is not explained.]  
 
 ```{r inter, eval=TRUE, echo=TRUE, warnings=FALSE, fig.cap=("Static network. Node size denotes gene connectivity while edge thickness stands for co-expression similarity.") }
 network(ID="HRE2", data=sub.mat[['sub_matrix']], adj.mod=adj.mod, adj.min=0.90, vertex.label.cex=1.2, vertex.cex=2, static=TRUE)
@@ -1189,11 +1188,14 @@ network(ID="HRE2", data=sub.mat[['sub_matrix']], adj.mod=adj.mod, adj.min=0.90, 
 <a name="inter_net"></a>
 Setting `static=FALSE` launches the interactive network. There is an interactive color bar to denote gene connectivity. The color ingredients must only be separated by comma, e.g. `yellow,orange,red`, which means gene connectivity increases from yellow to red. If too many edges (*e.g.*: > 300) are displayed, the network could get stuck. So the 'Adjacency threshold' option sets a threthold to filter out weak edges. If not too many edges retained (*e.g.*: < 300), users can check 'Yes' under 'Show plot', then the network would be responsive smoothly. To maintain acceptable performance, users are advised to choose a stringent threshold (*e.g.* 0.9) initially, then decrease the value gradually. The interactive feature allows users to zoom in and out, or drag a gene around. All the gene IDs in the network module are listed in 'Select by id' in decreasing order according to gene connectivity. Same with static mode, the target gene ID is appended '_target'.  
 
-If gene annotation is appended as a column in the subsetted expression matrix, it will be detected by the function `network` automatically, and is seen by mousing over a node.    
+If the subsetted expression matrix contains gene/protein annotation information in the last
+column, then it will be shown when moving the cursor over a network node.    
 
 ```{r eval=FALSE, echo=TRUE, warnings=FALSE}
 network(ID="HRE2", data=sub.mat[['sub_matrix']],  adj.mod=adj.mod, static=FALSE)
 ```
+^[ThG: the interactive view shows only an empty shiny like window. Even when changing
+the settings in the menu on the left nothing happens.]
 
 # Shiny App {#shiny}
 
