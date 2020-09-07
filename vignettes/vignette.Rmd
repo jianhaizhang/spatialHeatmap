@@ -1053,7 +1053,7 @@ support analysis routines of larger number of items, `spatialHeatmap` integrates
 functionalities for identifying groups of items with similar and/or dissimilar 
 assay profiles, and subsequently analyzing the results with visualization 
 methods that scale to larger numbers of items than SHMs, such as hierarchical
-clustering and network analysis methods. The following introduced both
+clustering and network analysis methods. The following introduces both
 approaches using as sample data the gene expression data from Arabidopsis
 shoots from the previous section.
 
