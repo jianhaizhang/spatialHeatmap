@@ -1088,20 +1088,28 @@ plot generated in the next section.
 sub.mat <- submatrix(data=se.fil.arab, ann='Target.Description', ID=c('RCA', 'HRE2'), p=0.1)
 ```
 
-The result from the previous step is stored in a list where the first component contains
-the assay matrix subsetted to the genes sharing similar assay profiles as the query genes 'RCA' 
-and 'HRE2'. The second slot contains the corresponding correlation matrix. ^[Again why would you 
-compute the full similarity matrix for all genes in the assay and then even return it heer. If 
-you need to return it, then compute it only for the filtered results meaning it should have 
-dim= 62 x 62 and not 319 x 319.]
+The result from the previous step is stored in a list where the first component
+contains the assay matrix subsetted to the genes sharing similar assay profiles
+with the query genes 'RCA' and 'HRE2'. The second slot contains the corresponding
+PCC similarity matrix. ^[<font color='red'> Again why would you compute the full
+similarity matrix for all genes in the assay and then even return it here. If
+you need to return it, then compute it only for the filtered results meaning it
+should have dim= 62 x 62 and not 319 x 319.</font>]
 
 ```{r eval=TRUE, echo=TRUE, warnings=FALSE}
-sub.mat[['sub_matrix']][c('RCA', 'HRE2'), c(1:3, 37)] # Subsetted data matrix.
-sub.mat[['cor_dist']][1:3, 1:3] # Correlation matrix.
+sub.mat[['sub_matrix']][c('RCA', 'HRE2'), c(1:3, 37)] # Subsetted assay matrix
+sub.mat[['cor_dist']][1:3, 1:3] # PCC similarity matrix
 ```
 
 <a name="mhm1"></a>
-Hierarchical clustering is applied on the subsetted matrix and results are displayed as matrix heatmap in either static or interactive mode. Figure \@ref(fig:static) is the static mode on gene `RCA` and `HRE2`. The rows (genes) and columns (samples) are sorted by hierarchical clustering dendrograms. Target genes are labeled by black lines. It is manifest that the two target genes belong to two separate patterns respectively. Setting `static=FALSE` launches the interactive mode, where users can zoom in for details by drawing a rectangle, and zoom out by double clicking the heatmap.
+Subsequently, hierarchical clustering is applied to the subsetted assay matrix
+containing only the genes that share profile similarities with the query genes
+'RCA' and 'HRE2'.  The clustering result is displayed as a matrix heatmap where
+the rows and columns are sorted by the corresponding hierarchical clustering
+dendrograms (Figure \@ref(fig:static)). The position of the query genes ('RCA'
+and 'HRE2') is indicated in the heatmap by black lines. Setting `static=FALSE`
+will launche the interactive mode, where users can zoom into the heatmap by
+selecting subsections or double clicking on areas of interest.
 
 ```{r static, eval=TRUE, echo=TRUE, warnings=FALSE, fig.cap=("Matrix Heatmap. Rows are genes and columns are samples. The input genes are tagged by black lines."), out.width='100%'}
 matrix_hm(ID=c('RCA', 'HRE2'), data=sub.mat[['sub_matrix']], angleCol=80, angleRow=35, cexRow=0.8, cexCol=0.8, margin=c(10, 6), static=TRUE, arg.lis1=list(offsetRow=0.01, offsetCol=0.01))
