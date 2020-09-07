@@ -1115,8 +1115,8 @@ selecting subsections in the image or double clicking on areas of interest.
 matrix_hm(ID=c('RCA', 'HRE2'), data=sub.mat[['sub_matrix']], angleCol=80, angleRow=35, cexRow=0.8, cexCol=0.8, margin=c(10, 6), static=TRUE, arg.lis1=list(offsetRow=0.01, offsetCol=0.01))
 ```   
 
-^[ThG: the interactive mode doesn't work for me. Am I supposed to get a URL like under
-the network plot? Right now it opens RStudio but doesn't show there anything.] 
+^[<font color='red'>ThG: the interactive mode doesn't work for me. Am I supposed to get a URL like under
+the network plot? Right now it opens RStudio but doesn't show there anything.</font>] 
 
 # Network Graphs {#net}
 
@@ -1145,7 +1145,9 @@ can be executed with a single function called `adj_mod`. The result is a list
 containing the adjacency matrix and the final module assignments stored in a 
 `data.frame`. Since the [interactive network](#inter_net) feature used below performs 
 best on smaller modules, only modules are returned that were obtained with stringent `ds`
-settings (here `ds=2` and `ds=3`).  
+settings (here `ds=2` and `ds=3`). 
+^[<font color='red'>The help file for adj_mod contains many typos and grammar mistakes. Please
+improve its writeup.</font>] 
 
 ```{r eval=TRUE, echo=TRUE, warnings=FALSE, results=FALSE}
 adj.mod <- adj_mod(data=sub.mat[['sub_matrix']])
@@ -1178,8 +1180,8 @@ version. In this network nodes and edges represent genes and adjacencies between
 respectively. The thickness of the edges denotes the adjacency levels, while the size of 
 the nodes indicates the degree of connectivity of each item. If a gene of interest has 
 been assigned under `ID`, then its ID is labeled in the plot with the tag: '*_target'.
-^[ThG: color scheme is a poor choice since the labels are unreadable in the dark brown 
-nodes. Also the color scheme is not explained.]  
+^[<font color='red'>ThG: color scheme is a poor choice since the labels are unreadable in the dark brown 
+nodes. Also the color scheme is not explained.</font>]  
 
 ```{r inter, eval=TRUE, echo=TRUE, warnings=FALSE, fig.cap=("Static network. Node size denotes gene connectivity while edge thickness stands for co-expression similarity.") }
 network(ID="HRE2", data=sub.mat[['sub_matrix']], adj.mod=adj.mod, adj.min=0.90, vertex.label.cex=1.2, vertex.cex=2, static=TRUE)
@@ -1194,8 +1196,8 @@ column, then it will be shown when moving the cursor over a network node.
 ```{r eval=FALSE, echo=TRUE, warnings=FALSE}
 network(ID="HRE2", data=sub.mat[['sub_matrix']],  adj.mod=adj.mod, static=FALSE)
 ```
-^[ThG: the interactive view shows only an empty shiny like window. Even when changing
-the settings in the menu on the left nothing happens.]
+^[<font color='red'>ThG: the interactive view shows only an empty shiny like window. Even when trying to change
+the settings in the menu on the right nothing happens.</font>]
 
 # Shiny App {#shiny}
 
