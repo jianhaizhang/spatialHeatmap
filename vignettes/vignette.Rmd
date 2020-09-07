@@ -1176,8 +1176,8 @@ an item (gene) of interest, its ID (_e.g._ 'HRE2') needs to be provided under th
 Typically, this could be one of the items chosen for the above SHM plots. There are two 
 modes to visualize the selected module: static or interactive. Figure \@ref(fig:inter)
 was generated with `static=TRUE`. Setting `static=FALSE` will generate the interactive
-version. In this network nodes and edges represent genes and adjacencies between them, 
-respectively. The thickness of the edges denotes the adjacency levels, while the size of 
+version. In the network plot shown below the nodes and edges represent genes and adjacencies 
+between them, respectively. The thickness of the edges denotes the adjacency levels, while the size of 
 the nodes indicates the degree of connectivity of each item. If a gene of interest has 
 been assigned under `ID`, then its ID is labeled in the plot with the tag: '*_target'.
 ^[<font color='red'>ThG: color scheme is a poor choice since the labels are unreadable in the dark brown 
@@ -1197,7 +1197,7 @@ column, then it will be shown when moving the cursor over a network node.
 network(ID="HRE2", data=sub.mat[['sub_matrix']],  adj.mod=adj.mod, static=FALSE)
 ```
 ^[<font color='red'>ThG: the interactive view shows only an empty shiny like window. Even when trying to change
-the settings in the menu on the right nothing happens.</font>]
+the settings in the menu on the left nothing happens.</font>]
 
 # Shiny App {#shiny}
 
