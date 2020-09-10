@@ -2330,9 +2330,11 @@ na.cus <- c('customData', 'customComputedData')
 
   visNet <- reactive({
 
+    if (input$fileIn=='customComputedData' & is.null(geneIn())) return
     if (input$TOM.in=="None") return(NULL)
     if (input$fileIn=="customComputedData") { adj <- adj.mod()[[1]]; mods <- adj.mod()[[2]] } else if (input$fileIn=="customData"|any(input$fileIn %in% cfg$na.def)) { adj <- adj.tree()[[1]]; mods <- mcol() }
-    gene <- submat(); if (!(input$gen.sel %in% rownames(gene))) return() # Avoid unnecessary computing of 'adj', since 'input$gen.sel' is a cerain true gene id of an irrelevant expression matrix, not 'None', when switching from one defaul example's network to another example.
+    if (input$fileIn=='customComputedData') gene <- geneIn()$gene2 else gene <- submat()
+    if (!(input$gen.sel %in% rownames(gene))) return() # Avoid unnecessary computing of 'adj', since 'input$gen.sel' is a cerain true gene id of an irrelevant expression matrix, not 'None', when switching from one defaul example's network to another example.
     lab <- mods[, input$ds][rownames(gene)==input$gen.sel]
     if (lab=="0") { showModal(modalDialog(title="Module", "The selected gene is not assigned to any module. Please select a different gene.")); return() }
     idx.m <- mods[, input$ds]==lab; adj.m <- adj[idx.m, idx.m]; gen.na <- colnames(adj.m) 
