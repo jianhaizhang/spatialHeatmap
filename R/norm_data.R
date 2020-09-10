@@ -1,16 +1,16 @@
 #' Normalize Sequencing Count Matrix
 #' 
-#' This function normalizes sequencing count data. It accepts the count matrix and sample metadata (optional) in form of \code{SummarizedExperiment} or \code{data frame} object. In either class, the columns and rows of the count matix should be sample/conditions and genes respectively.  
+#' This function normalizes sequencing count data. It accepts the count matrix and sample metadata (optional) in form of \code{SummarizedExperiment} or \code{data.frame}. In either class, the columns and rows of the count matix should be sample/conditions and genes respectively.  
 
 #' @inheritParams filter_data   
 
-#' @param norm.fun One of the normalizing functions: "CNF", "ESF", "VST", "rlog". Specifically, "CNF" stands for \code{\link[edgeR]{calcNormFactors}} from edgeR (McCarthy et al. 2012), and "EST", "VST", and "rlog" is equivalent to \code{\link[DESeq2]{estimateSizeFactors}}, \code{\link[DESeq2]{varianceStabilizingTransformation}}, and \code{\link[DESeq2]{rlog}} from DESeq2 respectively (Love, Huber, and Anders 2014). If "none", no normalisation is applied. Default is "CNF". The parameters of each normalisation function are specified through \code{parameter.list}.
+#' @param norm.fun One of the normalizing functions: "CNF", "ESF", "VST", "rlog". Specifically, "CNF" stands for \code{\link[edgeR]{calcNormFactors}} from edgeR (McCarthy et al. 2012), and "EST", "VST", and "rlog" is equivalent to \code{\link[DESeq2]{estimateSizeFactors}}, \code{\link[DESeq2]{varianceStabilizingTransformation}}, and \code{\link[DESeq2]{rlog}} from DESeq2 respectively (Love, Huber, and Anders 2014). If "none", no normalization is applied. The default is "CNF". The parameters of each normalization function are provided through \code{parameter.list}.
 
-#' @param parameter.list A list of parameters for each normalizing function specified in \code{norm.fun}. Default is NULL and it means "list(method='TMM')", "list(type='ratio')", "list(fitType='parametric', blind=TRUE)", "list(fitType='parametric', blind=TRUE)" is internally set for "CNF", "ESF", "VST", "rlog" respectively. Note the slot name of each element in the list is required. \emph{E.g.} "list(method='TMM')" is expected while "list('TMM')" would cause errors. \cr Complete parameters of "CNF": https://www.rdocumentation.org/packages/edgeR/versions/3.14.0/topics/calcNormFactors \cr Complete parameters of "ESF": https://www.rdocumentation.org/packages/DESeq2/versions/1.12.3/topics/estimateSizeFactors \cr Complete parameters of "VST": https://www.rdocumentation.org/packages/DESeq2/versions/1.12.3/topics/varianceStabilizingTransformation \cr Complete parameters of "rlog": https://www.rdocumentation.org/packages/DESeq2/versions/1.12.3/topics/rlog
+#' @param parameter.list A list of parameters for each normalizing function assigned in \code{norm.fun}. The default is NULL and \code{list(method='TMM')}, \code{list(type='ratio')}, \code{list(fitType='parametric', blind=TRUE)}, \code{list(fitType='parametric', blind=TRUE)} is internally set for "CNF", "ESF", "VST", "rlog" respectively. Note the slot name of each element in the list is required. \emph{E.g.} \code{list(method='TMM')} is expected while \code{list('TMM')} would cause errors. \cr Complete parameters of "CNF": https://www.rdocumentation.org/packages/edgeR/versions/3.14.0/topics/calcNormFactors \cr Complete parameters of "ESF": https://www.rdocumentation.org/packages/DESeq2/versions/1.12.3/topics/estimateSizeFactors \cr Complete parameters of "VST": https://www.rdocumentation.org/packages/DESeq2/versions/1.12.3/topics/varianceStabilizingTransformation \cr Complete parameters of "rlog": https://www.rdocumentation.org/packages/DESeq2/versions/1.12.3/topics/rlog
 
-#' @param data.trans One of "log2", "exp2", and "none", corresponding to transform the count matrix by "log2", "2-based exponent", and "no transformation" respecitvely. Default is "none".
+#' @param data.trans One of "log2", "exp2", and "none", corresponding to transform the count matrix by "log2", "2-based exponent", and "no transformation" respecitvely. The default is "none".
 
-#' @return If the input data is \code{SummarizedExperiment}, the retured value is also a \code{SummarizedExperiment} object containing normalized data matrix and metadata (optional). If the input data is a \code{data frame}, the returned value is a \code{data frame} of normalized data and metadata (optional). 
+#' @return If the input data is \code{SummarizedExperiment}, the retured value is also a \code{SummarizedExperiment} containing normalized data matrix and metadata (optional). If the input data is a \code{data.frame}, the returned value is a \code{data.frame} of normalized data and metadata (optional). 
 
 #' @aliases  
 
@@ -18,12 +18,16 @@
 
 #' @examples
 
-#' ## In the following examples, the 2 toy data come from an RNA-seq analysis on developments of 7 chicken organs under 9 time points (Cardoso-Moreira et al. 2019). For conveninece, they are included in this package. The complete raw count data are downloaded using the R package ExpressionAtlas (Keays 2019) with the accession number "E-MTAB-6769". Toy data1 is used as a "data frame" input to exemplify data with simple samples/conditions, while toy data2 as "SummarizedExperiment" to illustrate data involving complex samples/conditions.  
-#'
+#' ## In the following examples, the 2 toy data come from an RNA-seq analysis on development of 7 chicken organs under 9 time points (Cardoso-Moreira et al. 2019). For conveninece, they are included in this package. The complete raw count data are downloaded using the R package ExpressionAtlas (Keays 2019) with the accession number "E-MTAB-6769". Toy data1 is used as a "data frame" input to exemplify data of simple samples/conditions, while toy data2 as "SummarizedExperiment" to illustrate data involving complex samples/conditions.   
+#' 
+#' ## Set up toy data.
+#' 
 #' # Access toy data1.
 #' cnt.chk.simple <- system.file('extdata/shinyApp/example/count_chicken_simple.txt', package='spatialHeatmap')
 #' df.chk <- read.table(cnt.chk.simple, header=TRUE, row.names=1, sep='\t', check.names=FALSE)
+#' # Columns follow the namig scheme "sample__condition", where "sample" and "condition" stands for organs and time points respectively.
 #' df.chk[1:3, ]
+#'
 #' # A column of gene annotation can be appended to the data frame, but is not required.  
 #' ann <- paste0('ann', seq_len(nrow(df.chk))); ann[1:3]
 #' df.chk <- cbind(df.chk, ann=ann)
@@ -33,7 +37,7 @@
 #' cnt.chk <- system.file('extdata/shinyApp/example/count_chicken.txt', package='spatialHeatmap')
 #' count.chk <- read.table(cnt.chk, header=TRUE, row.names=1, sep='\t')
 #' count.chk[1:3, 1:5]
-
+#'
 #' # Store toy data2 in "SummarizedExperiment".
 #' library(SummarizedExperiment)
 #' se.chk <- SummarizedExperiment(assay=count.chk)

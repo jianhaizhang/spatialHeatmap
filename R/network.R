@@ -1,34 +1,34 @@
-#' Visualize A Target Assayed Item in Network Graphs
+#' Visualize a Target Assayed Item in a Network Graph
 #'
-#' This function exhibits a target assayed item (gene, protein, metabolite, \emph{etc}) in the context of corresponding network module as static and interactive network graphs. See function \code{\link{adj_mod}} for module identification. In the network graph, nodes are items and edges are adjacencies between items. The thicker edge denotes higher adjacency (coexpression similarity) between nodes while larger node indicates higher connectivity (sum of a node's adjacency with all its direct neighbours). \cr In the interactive mode, there is an interactive color bar to denote node connectivity. The color ingredients could be separated by comma, semicolon, single space, dot, hypen, or, underscore. \emph{E.g.} "yellow,orange,red", which means node connectivity increases from yellow to red. If too many edges (\emph{e.g.}: > 300) are displayed, the network could get stuck. So the "Adjacency threshold" option sets a threthold to filter out weak edges and all remaining edges are displayed. If not too many (\emph{e.g.}: < 300), users can check "Yes" under "Show plot", then the network will be displayed and would be responsive smoothly. To maintain acceptable performance, users are advised to choose a stringent threshold (\emph{e.g.} 0.9) initially, then decrease the value gradually. The interactive feature allows users to zoom in and out, or drag a node around. All the node IDs in the network module are listed in "Select by id" in decreasing order according to node connectivity. The input item ID is appended "_target" as a label. By clicking an ID in this list, users can identify the corresponding node in the network. If the input data has item annotations, then the annotation can be seen by hovering the cursor over a node. 
+#' This function exhibits a target assayed item (gene, protein, metabolite, \emph{etc}) in the context of corresponding network module as static or interactive network graphs. See function \code{\link{adj_mod}} for module identification. In the network graph, nodes are items and edges are adjacencies (coexpression similarities) between items. The thicker edge denotes higher adjacency between nodes while larger node indicates higher connectivity (sum of a node's adjacencies with all its direct neighbours). \cr In the interactive mode, there is an interactive color bar to denote node connectivity. The color ingredients could be separated by comma, semicolon, single space, dot, hypen, or, underscore. \emph{E.g.} "yellow,orange,red", which means node connectivity increases from yellow to red. If too many edges (\emph{e.g.}: > 300) are displayed, the system may get crashed. So the "Adjacency threshold" option sets a threthold to filter out weak edges. If not too many (\emph{e.g.}: < 300), users can check "Yes" under "Show plot", then the network will be displayed and would be responsive smoothly. By default, all edges are removed (Adjacency threshold=1). To maintain acceptable performance, users are advised to choose a stringent threshold (\emph{e.g.} 0.9) initially, then decrease the value gradually. The interactive feature allows users to zoom in and out, or drag a node around. All the node IDs in the network module are listed in "Select by id" in decreasing order according to node connectivity. The input item ID is appended "_target" as a label. By clicking an ID in this list, users can identify the corresponding node in the network. If the input data has item annotations, then the annotation can be seen by hovering the cursor over a node. 
 
 #' @inheritParams matrix_hm
-#' @param ds One of "2" or "3", the module splitting sensitivity level. Default is "3". See function \code{\link{adj_mod}} for details.
+#' @param ds One of "2" or "3", the module splitting sensitivity level. The former indicates larger but less modules while the latter denotes smaller but more modules. Default is "3". See function \code{\link{adj_mod}} for details.
 #' @param adj.min Minimum adjacency between nodes, edges with adjacency below which will be removed. Default is 0. Applicable to static network.
 #' @param con.min Minimun connectivity of a node, nodes with connectivity below which will be removed. Default is 0. Applicable to static network.
-#' @param node.col A vector of color ingredients for constructing node color scale in the static image. The default is c("mediumorchid1", "chocolate4").
-#' @param edge.col A vector of color ingredients for constructing edge color scale in the static image. The default is c("yellow", "blue").
-#' @param vertex.label.cex The size of node label. The default is 1.
+#' @param node.col A vector of color ingredients for constructing node color scale in the static image. The default is c("turquoise", "violet"), where node connectivity increases from "turquoise" to "violet".
+#' @param edge.col A vector of color ingredients for constructing edge color scale in the static image. The default is c("yellow", "blue"), where edge adjacency increases from "yellow" to "blue".
+#' @param vertex.label.cex The size of node label in the static and interactive networks. The default is 1.
 #' @param vertex.cex The size of node in the static image. The default is 3.
 #' @param edge.cex The size of edge in the static image. The default is 10.
 #' @param layout The layout of the network in static image, either "circle" or "fr". The "fr" stands for force-directed layout algorithm by Fruchterman and Reingold. The default is "circle".
 #' @param main The title in the static image. Default is NULL.
-#' @param static Logical, TRUE or FALSE, displaying static or interactive network respectively.
-#' @param ... Other arguments passed to the generic function \code{\link[graphics]{plot}}, \emph{e.g.}: "asp=1". 
+#' @param static Logical, TRUE returns a static network while FALSE returns an interactive network.
+#' @param ... Other arguments passed to the generic function \code{\link[graphics]{plot}}, \emph{e.g.}: \code{asp=1}. 
 #' @return A static or interactive network graph.
 
 #' @examples
 
-#' ## In the following examples, the 2 toy data come from an RNA-seq analysis on developments of 7 chicken organs under 9 time points (Cardoso-Moreira et al. 2019). For conveninece, they are included in this package. The complete raw count data are downloaded using the R package ExpressionAtlas (Keays 2019) with the accession number "E-MTAB-6769". Toy data1 is used as a "data frame" input to exemplify data with simple samples/conditions, while toy data2 as "SummarizedExperiment" to illustrate data involving complex samples/conditions.   
-#' 
+#' ## In the following examples, the 2 toy data come from an RNA-seq analysis on development of 7 chicken organs under 9 time points (Cardoso-Moreira et al. 2019). For conveninece, they are included in this package. The complete raw count data are downloaded using the R package ExpressionAtlas (Keays 2019) with the accession number "E-MTAB-6769". Toy data1 is used as a "data frame" input to exemplify data of simple samples/conditions, while toy data2 as "SummarizedExperiment" to illustrate data involving complex samples/conditions.   
+#' library(spatialHeatmap)
 #' ## Set up toy data.
 #' 
 #' # Access toy data1.
 #' cnt.chk.simple <- system.file('extdata/shinyApp/example/count_chicken_simple.txt', package='spatialHeatmap')
 #' df.chk <- read.table(cnt.chk.simple, header=TRUE, row.names=1, sep='\t', check.names=FALSE)
-#' # Note the naming scheme "sample__condition" in columns, where "sample" and "condition" stands for organs and time points respectively.
+#' # Columns follow the namig scheme "sample__condition", where "sample" and "condition" stands for organs and time points respectively.
 #' df.chk[1:3, ]
-#' 
+#'
 #' # A column of gene annotation can be appended to the data frame, but is not required.  
 #' ann <- paste0('ann', seq_len(nrow(df.chk))); ann[1:3]
 #' df.chk <- cbind(df.chk, ann=ann)
@@ -39,12 +39,12 @@
 #' count.chk <- read.table(cnt.chk, header=TRUE, row.names=1, sep='\t')
 #' count.chk[1:3, 1:5]
 #'
-#' # A targets file describing samples and conditions is required for toy data2. It should be made based on the experiment design, which is accessible through the accession number "E-MTAB-6769" in R package ExpressionAtlas. An example targets file is included in this package. 
+#' # A targets file describing samples and conditions is required for toy data2. It should be made based on the experiment design, which is accessible through the accession number "E-MTAB-6769" in the R package ExpressionAtlas. An example targets file is included in this package and accessed below. 
 
 #' # Access the example targets file. 
 #' tar.chk <- system.file('extdata/shinyApp/example/target_chicken.txt', package='spatialHeatmap')
 #' target.chk <- read.table(tar.chk, header=TRUE, row.names=1, sep='\t')
-#' # Note every column in toy data2 corresponds with a row in targets file. 
+#' # Every column in toy data2 corresponds with a row in targets file. 
 #' target.chk[1:5, ]
 #' # Store toy data2 in "SummarizedExperiment".
 #' library(SummarizedExperiment)
@@ -52,7 +52,7 @@
 #' # The "rowData" slot can store a data frame of gene annotation, but not required.
 #' rowData(se.chk) <- DataFrame(ann=ann)
 #'
-#' ## As conventions, raw sequencing count data should be normalized, aggregated, and filtered fo reduce noise.
+#' ## As conventions, raw sequencing count data should be normalized, aggregated, and filtered to reduce noise.
 #'
 #' # Normalize count data.
 #' # The normalizing function "calcNormFactors" (McCarthy et al. 2012) with default settings is used.  
@@ -68,13 +68,13 @@
 #' se.aggr.chk <- aggr_rep(data=se.nor.chk, sam.factor='organism_part', con.factor='age', aggr='mean')
 #' assay(se.aggr.chk)[1:3, 1:3]
 
-#' # Filter genes with low counts and low variance. Genes with counts over 5 (log2 unit) in at least 1% samples (pOA), and coefficient of variance (CV) between 0.2 and 100 are retained.
+#' # Filter out genes with low counts and low variance. Genes with counts over 5 (log2 unit) in at least 1% samples (pOA), and coefficient of variance (CV) between 0.2 and 100 are retained.
 #' # Filter toy data1.
 #' df.fil.chk <- filter_data(data=df.aggr.chk, pOA=c(0.01, 5), CV=c(0.2, 100), dir=NULL)
 #' # Filter toy data2.
 #' se.fil.chk <- filter_data(data=se.aggr.chk, sam.factor='organism_part', con.factor='age', pOA=c(0.01, 5), CV=c(0.2, 100), dir=NULL)
 #'
-#' ## Select nearest neighbors for target genes 'ENSGALG00000019846' and 'ENSGALG00000000112', which are usually genes from spatial heatmaps.
+#' ## Select nearest neighbors for target genes 'ENSGALG00000019846' and 'ENSGALG00000000112', which are usually genes visualized in spatial heatmaps.
 #' # Toy data1.
 #' df.sub.mat <- submatrix(data=df.fil.chk, ID=c('ENSGALG00000019846', 'ENSGALG00000000112'), p=0.1)
 #' # Toy data2.
@@ -82,24 +82,24 @@
 #'
 #' # In the following, "df.sub.mat" and "se.sub.mat" is used in the same way, so only "se.sub.mat" illustrated.
 #'
-#' # The subsetted matrix is shown below.
+#' # The subsetted matrix is partially shown below.
 #' se.sub.mat[c('ENSGALG00000019846', 'ENSGALG00000000112'), c(1:2, 63)]
-#'
+
 #' ## Adjacency matrix and module identification
 
 #' # The modules are identified by "adj_mod". It returns a list containing an adjacency matrix and a data frame of module assignment. 
 #' adj.mod <- adj_mod(data=se.sub.mat)
 
-#' # The adjacency matrix is a measure of co-expression similarity between genes, where larger value denotes more similarity.
+#' # The adjacency matrix is a measure of co-expression similarity between genes, where larger value denotes higher similarity.
 #' adj.mod[['adj']][1:3, 1:3]
 
-#' # The modules are identified at two alternative sensitivity levels (ds=2 or 3). From 2 to 3, more modules are identified but module sizes are smaller. The two sets of module assignment are returned in a data frame. The first column is ds=2 while the second is ds=3. The numbers in each column are module labels with "0" meaning genes not assigned to any module.
+#' # The modules are identified at two alternative sensitivity levels (ds=2 or 3). From 2 to 3, more modules are identified but module sizes are smaller. The two sets of module assignment are returned in a data frame. The first column is ds=2 while the second is ds=3. The numbers in each column are module labels, where "0" means genes not assigned to any module.
 #' adj.mod[['mod']][1:3, ]
 
 #' # Static network. In the graph, nodes are genes and edges are adjacencies between genes. The thicker edge denotes higher adjacency (co-expression similarity) while larger node indicates higher gene connectivity (sum of a gene's adjacency with all its direct neighbors). The target gene is labeled by "_target".
 #' network(ID="ENSGALG00000019846", data=se.sub.mat, adj.mod=adj.mod, adj.min=0.7, vertex.label.cex=1.5, vertex.cex=4, static=TRUE)
 
-#' # Interactive network. Same with static mode, the target gene ID is appended "_target".  
+#' # Interactive network. The target gene ID is appended "_target".  
 #' \donttest{ network(ID="ENSGALG00000019846", data=se.sub.mat, adj.mod=adj.mod, static=FALSE) }
 
 
@@ -118,7 +118,7 @@
 #' @importFrom shinydashboard dashboardSidebar dashboardPage dashboardHeader sidebarMenu menuItem menuSubItem dashboardBody tabItems tabItem box
 #' @importFrom visNetwork visNetworkOutput visNetwork visOptions renderVisNetwork visIgraphLayout
 
-network <- function(ID, data, adj.mod, ds="3", adj.min=0, con.min=0, node.col=c("mediumorchid1", "chocolate4"), edge.col=c("yellow", "blue"), vertex.label.cex=1, vertex.cex=3, edge.cex=10, layout="circle", main=NULL, static=TRUE, ...) {
+network <- function(ID, data, adj.mod, ds="3", adj.min=0, con.min=0, node.col=c("turquoise", "violet"), edge.col=c("yellow", "blue"), vertex.label.cex=1, vertex.cex=3, edge.cex=10, layout="circle", main=NULL, static=TRUE, ...) {
 
   options(stringsAsFactors=FALSE)
   if (is(data, 'data.frame')|is(data, 'matrix')|is(data, 'DFrame')) {
@@ -194,22 +194,22 @@ network <- function(ID, data, adj.mod, ds="3", adj.min=0, con.min=0, node.col=c(
 
     ui <- shinyUI(dashboardPage(
 
-      dashboardHeader(),
+      dashboardHeader(title='Interactive Network'),
 
       dashboardSidebar(
   
       sidebarMenu(
 
-        menuItem("Network", icon=icon("dashboard"), 
+        menuItem("Network", icon=icon("list"), 
         selectInput("ds","Module splitting sensitivity level:", 3:2, selected="3", width=190),
-        selectInput("adj.in", "Adjcency threshold:", c("None", sort(seq(0, 1, 0.002), decreasing=TRUE)), "None", width=190), 
+        selectInput("adj.in", "Adjcency threshold:", c("None", sort(seq(0, 1, 0.002), decreasing=TRUE)), 1, width=190), 
         htmlOutput("edge"),
         div(style="display:inline-block;width:75%;text-align:left;",textInput("color.net", "Color scheme:", "yellow,orange,red", placeholder="Eg: yellow,orange,red", width=200)),
         div(style="display:inline-block;width:25%;text-align:left;", actionButton("col.but.net", "Go", icon=icon("refresh"), style="padding:7px; font-size:90%; margin-left: 0px")),
-        radioButtons("cpt.nw", "Show plot:", c("Yes"="Y", "No"="N"), "N", inline=TRUE),
-        menuSubItem("View", tabName="net")
-
-        )
+        radioButtons("cpt.nw", "Show plot:", c("Yes"="Y", "No"="N"), "Y", inline=TRUE),
+        menuSubItem("View graph", tabName="net")
+        ),
+        menuItem("Instruction", tabName="ins", icon=icon("info"))
 
      )
 
@@ -221,8 +221,10 @@ network <- function(ID, data, adj.mod, ds="3", adj.min=0, con.min=0, node.col=c(
 
         tabItem(tabName="net", 
         box(title="Interactive Network", status="primary", solidHeader=TRUE, collapsible=TRUE, fluidRow(splitLayout(cellWidths=c("1%", "6%", "91%", "2%"), "", plotOutput("bar.net"), visNetworkOutput("vis"), "")), width=12)
+        ),
+        tabItem(tabName="ins", 
+        box(title=NULL, status="primary", solidHeader=TRUE, collapsible=TRUE, HTML('Initially, all edges are filtered out by the default adjcency threshold of 1. This default setting protects the browser from crash in case of large modules, since large modules could have too many edges. <br/> <br/> To display edges, users are advised to decrease adjcency threshold from 1 gradually. There is a message indicating total edges to show corresponding to each input adjcency threshold. If the total edges are less than 300, the network would be interactive smoothly. Otherwise, the interactivity depends on users\' system RAM. The network is removed every time the adjcency threshold is changed, which is a protection against browser crash. Simply checking "Yes" under "Show plot" would display the network again.'), width=12),
         )
-
         )
 
      )
@@ -232,17 +234,13 @@ network <- function(ID, data, adj.mod, ds="3", adj.min=0, con.min=0, node.col=c(
   server <- shinyServer(function(input, output, session) {
 
     observe({
-
       input$ds
-      updateSelectInput(session, "adj.in", "Adjcency threshold:", c("None", sort(seq(0, 1, 0.002), decreasing=TRUE)), "None")
-      updateRadioButtons(session, "cpt.nw", "Show plot:", c("Yes"="Y", "No"="N"), "N", inline=TRUE)
-
+      updateSelectInput(session, "adj.in", "Adjcency threshold:", c("None", sort(seq(0, 1, 0.002), decreasing=TRUE)), 1)
+      updateRadioButtons(session, "cpt.nw", "Show plot:", c("Yes"="Y", "No"="N"), "Y", inline=TRUE)
     })
 
     observe({
-
-      input$adj.in; updateRadioButtons(session, "cpt.nw", "Show plot:", c("Yes"="Y", "No"="N"), "N", inline=TRUE)
-
+      input$adj.in; updateRadioButtons(session, "cpt.nw", "Show plot:", c("Yes"="Y", "No"="N"), ifelse(as.numeric(input$adj.in)==1, "Y", "N"), inline=TRUE)
     })
 
     color_scale <- y <- NULL 
@@ -290,7 +288,7 @@ network <- function(ID, data, adj.mod, ds="3", adj.min=0, con.min=0, node.col=c(
           incProgress(0.25, detail="Preparing data. Please wait.")
           incProgress(0.75, detail="Plotting. Please wait.")
           node.v <- visNet()[["node"]]$value; v.net <- seq(min(node.v), max(node.v), len=len)
-          cs.net <- col_bar(geneV=v.net, cols=color.net$col.net, width=1, mar=c(3, 0.1, 3, 0.1)); return(cs.net)
+          cs.net <- col_bar(geneV=v.net, cols=color.net$col.net, width=1); return(cs.net)
 
         })
 
@@ -299,8 +297,8 @@ network <- function(ID, data, adj.mod, ds="3", adj.min=0, con.min=0, node.col=c(
     output$edge <- renderUI({ 
 
       if (input$adj.in=="None") return(NULL)
-      HTML(paste0("&nbsp&nbsp&nbsp&nbsp Total edges to display (If > 300, the <br/> 
-      &nbsp&nbsp&nbsp App can possibly get stuck.): ", nrow((visNet()[["link"]]))))
+      span(style = "color:yellow;font-weight:bold;", HTML(paste0("&nbsp&nbsp&nbsp&nbsp Total edges to display (If > 300, the <br/> 
+      &nbsp&nbsp&nbsp App can possibly get stuck.): ", nrow((visNet()[["link"]])))))
 
     })
 

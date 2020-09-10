@@ -46,6 +46,7 @@
 #' lis.par <- custom_shiny(lis.par.tmp=TRUE)
 #' # Change default values.
 #' lis.par$shm.img['color', ] <- 'yellow,orange,blue'
+#' # The default dataset upon the app is launched.
 #' lis.par$default.dataset <- 'shoot'
 
 #' \donttest{
@@ -66,14 +67,16 @@
 
 custom_shiny <- function(..., lis.par=NULL, lis.par.tmp=FALSE, lis.dld.single=NULL, lis.dld.mul=NULL, custom=TRUE, custom.computed=TRUE, example=FALSE, app.dir='.') {
 
-  na.par <- c("default.dataset", "col.row.gene", "separator", "hide.legend", "data.matrix", "shm.img", "shm.anm", "shm.video", "legend", "mhm", "network")
+  # Default config file.
+  cfg.def <- yaml.load_file(system.file('extdata/shinyApp/config/config.yaml', package='spatialHeatmap'))
+  # Default parameters.
+  lis.par.def <- cfg.def[!grepl('^dataset\\d+|download_single|download_multiple', names(cfg.def))]
+  # Return parameter template.
   if (lis.par.tmp==TRUE) {
 
-    cfg.def <- yaml.load_file(system.file('extdata/shinyApp/config/config.yaml', package='spatialHeatmap'))
-    lis.par <- cfg.def[na.par]
-    for (i in seq_along(lis.par)) {
+    for (i in seq_along(lis.par.def)) {
 
-      lis0 <- lis.par[[i]]; if (length(lis0)>1) { 
+      lis0 <- lis.par.def[[i]]; if (length(lis0)>1) { 
  
         name <- default <- NULL; for (j in seq_along(lis0)) {
 
@@ -81,11 +84,11 @@ custom_shiny <- function(..., lis.par=NULL, lis.par.tmp=FALSE, lis.dld.single=NU
           name <- c(name, pair[1]); default <- c(default, pair[2])
 
         }; df0 <- data.frame(default=default)
-        rownames(df0) <- name; lis.par[[i]] <- df0
+        rownames(df0) <- name; lis.par.def[[i]] <- df0
 
       } 
 
-    }; return(lis.par)
+    }; return(lis.par.def)
 
   }
   app.dir <- normalizePath(app.dir)
@@ -98,15 +101,9 @@ custom_shiny <- function(..., lis.par=NULL, lis.par.tmp=FALSE, lis.dld.single=NU
   system(paste0('rm -fr ', app.dir, '/rsconnect')) 
   system(paste0('rm -fr ', app.dir, '/html_shm/*html')) 
   system(paste0('rm -fr ', app.dir, '/html_shm/lib/*'))
-  # Separate lists.
   lis.dat <- list(...)
   # Load default parameter list.
-  if (is.null(lis.par)) { 
- 
-    cfg.def <- yaml.load_file(system.file('extdata/shinyApp/config/config.yaml', package='spatialHeatmap'))
-    lis.par <- cfg.def[na.par]
-
-  } else {
+  if (is.null(lis.par)) { lis.par <- lis.par.def } else {
   
     for (i in seq_along(lis.par)) {
 

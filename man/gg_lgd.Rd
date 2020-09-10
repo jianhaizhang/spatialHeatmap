@@ -32,11 +32,11 @@ gg_lgd(
 
 \item{size.text.key}{A numeric of legend text size.}
 
-\item{angle.text.key}{A value of angle of key text in legend plot. Default is NULL, equivalent to 0.}
+\item{angle.text.key}{A value of key text angle in legend plot. The default is NULL, equivalent to 0.}
 
 \item{position.text.key}{The position of key text in legend plot, one of "top", "right", "bottom", "left". Default is NULL, equivalent to "right".}
 
-\item{legend.value.vdo}{Logical TRUE or FALSE. If TRUE, the numeric values of matching spatial features are added to legend, which applies to the video. The default is NULL.}
+\item{legend.value.vdo}{Logical TRUE or FALSE. If TRUE, the numeric values of matching spatial features are added to video legend. The default is NULL.}
 
 \item{sub.title.size}{The title size of ggplot.}
 
@@ -44,9 +44,9 @@ gg_lgd(
 
 \item{col}{An integer of columns in legend key.}
 
-\item{label}{Logical. If TRUE, spatial features having matching samples are labeled by feature identifiers. Default is FALSE. It is useful when spatial features are labeled by similar colors.}
+\item{label}{Logical. If TRUE, spatial features having matching samples are labeled by feature identifiers. The default is FALSE. It is useful when spatial features are labeled by similar colors.}
 
-\item{label.size}{The size of spatial feature labels in legend plot. Default is 4.}
+\item{label.size}{The size of spatial feature labels in legend plot. The default is 4.}
 
 \item{label.angle}{The angle of spatial feature labels in legend plot. Default is 0.}
 
@@ -56,7 +56,7 @@ gg_lgd(
 
 \item{opacity}{The transparency of colored spatial features in legend plot. Default is 1. If 0, features are totally transparent.}
 
-\item{key}{Logical. Default is TRUE and keys are added in legend plot.}
+\item{key}{Logical. The default is TRUE and keys are added in legend plot. If \code{label} is TRUE, the keys could be removed.}
 
 \item{sam.dat}{A vector of samples in the data matrix.}
 

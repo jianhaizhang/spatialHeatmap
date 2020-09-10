@@ -1,11 +1,10 @@
 library(shiny); library(shinydashboard); library(yaml); library(plotly); library(visNetwork); library(DT); library(shinyWidgets)
 
-# Separate colour ingredients.
 
 shinyUI(dashboardPage(
  
   # includeCSS("style.css"),
-  dashboardHeader(title="spatialHeatmap (2020-08-10)", titleWidth=300),
+  dashboardHeader(title=textOutput('title'), titleWidth=350),
 
   dashboardSidebar(
   

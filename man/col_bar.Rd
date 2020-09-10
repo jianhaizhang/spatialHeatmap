@@ -20,9 +20,9 @@ col_bar(
 
 \item{width}{A numeric between 0 and 1, used to reduce the widths of bins in the color bar so as to avoid overlaps.}
 
-\item{bar.title.size}{A numeric of color bar title size. Default is 0.}
+\item{bar.title.size}{A numeric of color bar title size. The default is 0.}
 
-\item{bar.value.size}{A numeric of value size in the color bar y-axis. Default is 10.}
+\item{bar.value.size}{A numeric of value size in the color bar y-axis. The default is 10.}
 
 \item{mar}{A 4-length numeric vector specifying margins of the color bar, in the "top", "right", "bottom", "left" order. The unit is "cm". Default is "c(3, 0.1, 3, 0.1)".}
 }

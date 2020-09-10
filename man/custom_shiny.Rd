@@ -70,6 +70,7 @@ lis.dld.mul <- list(data=data.path2, svg=c(svg.path2.1, svg.path2.2))
 lis.par <- custom_shiny(lis.par.tmp=TRUE)
 # Change default values.
 lis.par$shm.img['color', ] <- 'yellow,orange,blue'
+# The default dataset upon the app is launched.
 lis.par$default.dataset <- 'shoot'
 \donttest{
 # Create custom Shiny app by feeding this function these datasets and parameters.

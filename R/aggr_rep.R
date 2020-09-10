@@ -1,12 +1,12 @@
 #' Aggregate "Sample__Condition" Replicates in Data Matrix
 #'
-#' This function aggregates "sample__condition" (see \code{data} argument) replicates by mean or median. The input data is either a \code{data frame} or a \code{SummarizedExperiment}. 
+#' This function aggregates "sample__condition" (see \code{data} argument) replicates by mean or median. The input data is either a \code{data.frame} or \code{SummarizedExperiment}. 
 
-#' @param aggr Aggregate "sample__condition" replicates by "mean" or "median". Default is "mean". If the \code{data} argument is a \code{SummarizedExperiment}, the "sample__condition" replicates are internally formed by connecting samples and conditions with "__" in \code{colData} slot, and are subsequently used to replace the original column names in \code{assay} slot. If no condition specified to \code{con.factor}, the data are aggregated by sample replicates. If "none", no aggregation is applied.  
+#' @param aggr Aggregate "sample__condition" replicates by "mean" or "median". The default is "mean". If the \code{data} argument is a \code{SummarizedExperiment}, the "sample__condition" replicates are internally formed by connecting samples and conditions with "__" in \code{colData} slot, and are subsequently replace the original column names in \code{assay} slot. If no condition specified to \code{con.factor}, the data are aggregated by sample replicates. If "none", no aggregation is applied.  
 
 #' @inheritParams filter_data
 
-#' @return The returned value is the same class with the input data, a \code{data frame} or \code{SummarizedExperiment}. In either case, the column names of the data matrix follows the "sample__condition" scheme.
+#' @return The returned value is the same class with the input data, a \code{data.frame} or \code{SummarizedExperiment}. In either case, the column names of the data matrix follows the "sample__condition" scheme.
 
 #' @examples
 
@@ -14,12 +14,16 @@
 #'
 #' ## Set up toy data.
 #'
+#' ## In the following examples, the 2 toy data come from an RNA-seq analysis on development of 7 chicken organs under 9 time points (Cardoso-Moreira et al. 2019). For conveninece, they are included in this package. The complete raw count data are downloaded using the R package ExpressionAtlas (Keays 2019) with the accession number "E-MTAB-6769". Toy data1 is used as a "data frame" input to exemplify data of simple samples/conditions, while toy data2 as "SummarizedExperiment" to illustrate data involving complex samples/conditions.   
+#' 
+#' ## Set up toy data.
+#' 
 #' # Access toy data1.
 #' cnt.chk.simple <- system.file('extdata/shinyApp/example/count_chicken_simple.txt', package='spatialHeatmap')
 #' df.chk <- read.table(cnt.chk.simple, header=TRUE, row.names=1, sep='\t', check.names=FALSE)
-#' # Note the naming scheme "sample__condition" in columns, where "sample" and "condition" stands for organs and time points respectively.
+#' # Columns follow the namig scheme "sample__condition", where "sample" and "condition" stands for organs and time points respectively.
 #' df.chk[1:3, ]
-
+#'
 #' # A column of gene annotation can be appended to the data frame, but is not required.  
 #' ann <- paste0('ann', seq_len(nrow(df.chk))); ann[1:3]
 #' df.chk <- cbind(df.chk, ann=ann)
@@ -29,13 +33,13 @@
 #' cnt.chk <- system.file('extdata/shinyApp/example/count_chicken.txt', package='spatialHeatmap')
 #' count.chk <- read.table(cnt.chk, header=TRUE, row.names=1, sep='\t')
 #' count.chk[1:3, 1:5]
-
-#' # A targets file describing samples and conditions is required for toy data2. It should be made based on the experiment design, which is accessible through the accession number "E-MTAB-6769" in R package ExpressionAtlas. The example targets file is included in this package. 
+#'
+#' # A targets file describing samples and conditions is required for toy data2. It should be made based on the experiment design, which is accessible through the accession number "E-MTAB-6769" in the R package ExpressionAtlas. An example targets file is included in this package and accessed below. 
 
 #' # Access the example targets file. 
 #' tar.chk <- system.file('extdata/shinyApp/example/target_chicken.txt', package='spatialHeatmap')
 #' target.chk <- read.table(tar.chk, header=TRUE, row.names=1, sep='\t')
-#' # Note every column in toy data2 corresponds with a row in targets file. 
+#' # Every column in toy data2 corresponds with a row in targets file. 
 #' target.chk[1:5, ]
 #' # Store toy data2 in "SummarizedExperiment".
 #' library(SummarizedExperiment)

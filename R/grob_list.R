@@ -7,16 +7,16 @@
 #' @param ID All gene ids selected after the App is launched.
 #' @param cols All the color codes used to construct the color bar.
 #' @param tis.path All the tissues/paths extracted from the SVG.
-#' @param tis.trans A character vector of tissue/spatial feature identifiers. These tissues may cover other tissues and should be set transparent. \emph{E.g} c("brain", "heart").
-#' @param sub.title.size A numeric. The subtitle font size of each individual spatial heatmap. Default is 11.
-#' @param sam.legend "identical", "all", or a character vector of tissue names from the aSVG image to show in the legend plot. Default is "identical", meaning all the identical/matching tissues between the data matrix and aSVG image. If "all", all tissues in the aSVG image are shown.
+#' @param tis.trans A character vector of tissue/spatial feature identifiers that will be set transparent. \emph{E.g} c("brain", "heart"). This argument is used when target features are covered by  overlapping features and the latter should be transparent.
+#' @param sub.title.size A numeric of the subtitle font size of each individual spatial heatmap. The default is 11.
+#' @param sam.legend One of "identical", "all", or a character vector of tissue/spatial feature identifiers from the aSVG file. The default is "identical" and all the identical/matching tissues/spatial features between the data and aSVG file are indicated in the legend plot. If "all", all tissues/spatial features in the aSVG are shown. If a vector, only the tissues/spatial features in the vector are shown.
 #' @param legend.col A character vector of colors for the keys in the legend plot. The lenght must be equal to the number of target samples shown in the legend. 
-#' @param legend.ncol An integer, the total columns of items in the legend plot. Default is NULL. If both \code{legend.ncol} and \code{legend.nrow} are used, the product of the two arguments should be equal or larger than the total number of matching spatial features.
-#' @param legend.nrow An integer, the total rows of the items in the legend plot. Default is NULL. It is applicable to the legend plot. If both \code{legend.ncol} and \code{legend.nrow} are used, the product of the two arguments should be equal or larger than the total number of matching spatial features.
-#' @param legend.key.size A numeric (in "npc"). Default is 0.02. Size of the legend key, applicable to the legend plot.
-#' @param legend.text.size A numeric. Default is 12. Size of the legend label, applicable to the legend plot.
-#' @param line.size A numeric. The size of the shape outlines. Default is 0.2.
-#' @param line.color A character. The color of shape outlines. Default is "grey70".
+#' @param legend.ncol An integer of the total columns of keys in the legend plot. The default is NULL. If both \code{legend.ncol} and \code{legend.nrow} are used, the product of the two arguments should be equal or larger than the total number of shown spatial features.
+#' @param legend.nrow An integer of the total rows of keys in the legend plot. The default is NULL. It is only applicable to the legend plot. If both \code{legend.ncol} and \code{legend.nrow} are used, the product of the two arguments should be equal or larger than the total number of matching spatial features.
+#' @param legend.key.size A numeric of the legend key size ("npc"), applicable to the legend plot. The default is 0.02. 
+#' @param legend.text.size A numeric of the legend label size, applicable to the legend plot. The default is 12.
+#' @param line.size A numeric of the shape outline size. Default is 0.2.
+#' @param line.color A character of the shape outline color. Default is "grey70".
 #' @param mar.lb A two-component numeric vector. The first and second numeric is left/right and bottom/top margin (npc) respectively.
 #' @param legend.plot.title The title of the legend plot. The default is NULL. 
 #' @param legend.plot.title.size The title size of the legend plot. The default is 11.

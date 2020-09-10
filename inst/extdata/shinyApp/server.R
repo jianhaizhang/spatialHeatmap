@@ -213,7 +213,8 @@ adj_mod <- function(data, type='signed', power=if (type=='distance') 1 else 6, a
   }; colnames(mcol) <- as.character(2:3); rownames(mcol) <- colnames(adj) <- rownames(adj) <- colnames(data)
   if (!is.null(dir)) { 
 
-    path <- paste0(dir, "/local_mode_result/"); if (!dir.exists(path)) dir.create(path)
+    dir <- normalizePath(dir); if (!dir.exists(dir)) stop(paste0(dir, ' does not exist!'))
+    path <- paste0(dir, "/customComputedData/"); if (!dir.exists(path)) dir.create(path)
     write.table(adj, paste0(path, "adj.txt"), sep="\t", row.names=TRUE, col.names=TRUE)
     write.table(mcol, paste0(path, "mod.txt"), sep="\t", row.names=TRUE, col.names=TRUE)
     
@@ -222,11 +223,10 @@ adj_mod <- function(data, type='signed', power=if (type=='distance') 1 else 6, a
 }
 
 
-
 filter_data <- function(data, pOA=c(0, 0), CV=c(-Inf, Inf), ann=NULL, sam.factor, con.factor,  dir=NULL) {
 
   options(stringsAsFactors=FALSE)
-  if (is(data, 'data.frame')|is(data, 'matrix')) {
+  if (is(data, 'data.frame')|is(data, 'matrix')|is(data, 'DFrame')) {
 
     data <- as.data.frame(data); rna <- rownames(data); cna <- make.names(colnames(data))
     if (!identical(cna, colnames(data))) cat('Syntactically valid column names are made! \n')
@@ -246,14 +246,13 @@ filter_data <- function(data, pOA=c(0, 0), CV=c(-Inf, Inf), ann=NULL, sam.factor
 
   }
 
-  ffun <- filterfun(pOverA(p=ifelse(is.na(pOA[1]), 0, pOA[1]), A=ifelse(is.na(pOA[2]), -Inf, pOA[2])), cv(ifelse(is.na(CV[1]), -Inf, CV[1]), ifelse(is.na(CV[2]), Inf, CV[2])))
-  filtered <- genefilter(expr=expr, flist=ffun); expr <- expr[filtered, , drop=FALSE] # Subset one row in a matrix, the result is a numeric vector not a matrix, so drop=FALSE.
+  ffun <- filterfun(pOverA(p=pOA[1], A=pOA[2]), cv(CV[1], CV[2]))
+  filtered <- genefilter(expr, ffun); expr <- expr[filtered, , drop=FALSE] # Subset one row in a matrix, the result is a numeric vector not a matrix, so drop=FALSE.
   row.meta <- row.meta[filtered, , drop=FALSE]
 
   if (!is.null(dir)) { 
 
-    path <- paste0(dir, "/local_mode_result/"); if (!dir.exists(path)) dir.create(path)
-
+    dir <- normalizePath(dir); if (!dir.exists(dir)) stop(paste0(dir, ' does not exist!'))
     if (is(data, 'data.frame')|is(data, 'matrix')) {
 
       expr1 <- cbind.data.frame(expr, row.meta, stringsAsFactors=FALSE)
@@ -261,14 +260,14 @@ filter_data <- function(data, pOA=c(0, 0), CV=c(-Inf, Inf), ann=NULL, sam.factor
     }  else if (is(data, 'SummarizedExperiment')) {
       
       if (ncol(row.meta)>0 & !is.null(ann)) {
-        
+
         expr1 <- cbind.data.frame(expr, row.meta[, ann], stringsAsFactors=FALSE)
         colnames(expr1)[ncol(expr1)] <- ann
       
       } else expr1 <- expr
 
     }
-    write.table(expr1, paste0(path, "processed_data.txt"), sep="\t", row.names=TRUE, col.names=TRUE)
+    write.table(expr1, paste0(dir, "/customData.txt"), sep="\t", row.names=TRUE, col.names=TRUE)
       
   }
 
@@ -280,6 +279,7 @@ filter_data <- function(data, pOA=c(0, 0), CV=c(-Inf, Inf), ann=NULL, sam.factor
   }
 
 }
+
 
 
 norm_data <- function(data, norm.fun='CNF', parameter.list=NULL, data.trans='none') { 
@@ -841,7 +841,7 @@ grob_gg <- function(gs) {
 }
 
 # Subset data matrix by correlation or distance measure.
-submatrix <- function(data, ann=NULL, ID, p=0.3, n=NULL, v=NULL, fun='cor', cor.absolute=FALSE, arg.cor=list(method="pearson"), arg.dist=list(method="euclidean")) {
+submatrix <- function(data, ann=NULL, ID, p=0.3, n=NULL, v=NULL, fun='cor', cor.absolute=FALSE, arg.cor=list(method="pearson"), arg.dist=list(method="euclidean"), dir=NULL) {
 
   options(stringsAsFactors=FALSE)
   if (is(data, 'data.frame')|is(data, 'matrix')|is(data, 'DFrame')) {
@@ -890,7 +890,14 @@ submatrix <- function(data, ann=NULL, ID, p=0.3, n=NULL, v=NULL, fun='cor', cor.
     if (!is.null(v)) v <- -v
     na <- sub_na(mat=t(m), ID=ID, p=p, n=n, v=v); m <- -m
 
-  } 
+  }
+  if (!is.null(dir)) { 
+
+    dir <- normalizePath(dir); if (!dir.exists(dir)) stop(paste0(dir, ' does not exist!'))
+    dir <- paste0(dir, "/customComputedData/"); if (!dir.exists(dir)) dir.create(dir)
+    write.table(se.sub.mat, paste0(dir, '/sub_matrix.txt'), col.names=TRUE, row.names=TRUE, sep='\t')
+
+  }
   return(sub_matrix=cbind(data[na, ], ann[na, , drop=FALSE]))
 
 }
@@ -1046,7 +1053,6 @@ video <- function(gg, cs.g, sam.uni, tis.trans, sub.title.size=NULL, bar.value.s
 
 }
 
-library(SummarizedExperiment); library(shiny); library(shinydashboard); library(grImport); library(rsvg); library(ggplot2); library(DT); library(gridExtra); library(ggdendro); library(WGCNA); library(grid); library(xml2); library(plotly); library(data.table); library(genefilter); library(flashClust); library(visNetwork); library(reshape2); library(igraph); library(animation); library(av); library(shinyWidgets); library(yaml)
 
 
 # Import input matrix.
@@ -1105,6 +1111,11 @@ shinyServer(function(input, output, session) {
 
   observe({
 
+    withProgress(message="Loading dependencies: ", value=0, {
+    incProgress(0.8, detail="in progress...")
+    library(SummarizedExperiment); library(shiny); library(shinydashboard); library(grImport); library(rsvg); library(ggplot2); library(DT); library(gridExtra); library(ggdendro); library(WGCNA); library(grid); library(xml2); library(plotly); library(data.table); library(genefilter); library(flashClust); library(visNetwork); library(reshape2); library(igraph); library(animation); library(av); library(shinyWidgets); library(yaml)
+  })
+
     lis.cfg <- yaml.load_file('config/config.yaml')
     lis.dat <- lis.cfg[grepl('^dataset\\d+', names(lis.cfg))]
     lis.dld <- lis.cfg[grepl('download_single|download_multiple', names(lis.cfg))]
@@ -1140,6 +1151,8 @@ shinyServer(function(input, output, session) {
 na.cus <- c('customData', 'customComputedData')
     cfg$lis.dat <- lis.dat; cfg$lis.dld <- lis.dld; cfg$lis.par <- lis.par; cfg$na.def <- na.def; cfg$svg.def <- svg.def; cfg$dat.ipt <- dat.ipt; cfg$na.cus <- na.cus
 
+    output$title <- renderText({ lis.par$title['title', 'default'] })
+    output$title.w <- renderText({ lis.par$title['width', 'default'] })
     updateSelectInput(session, 'fileIn', 'Step 1: data sets', na.ipt, lis.par$default.dataset)
     updateRadioButtons(session, inputId='dimName', label='Step 4: is column or row gene?', choices=c("None", "Row", "Column"), selected=lis.par$col.row.gene, inline=TRUE)
     updateSelectInput(session, 'sep', 'Step 5: separator', c("None", "Tab", "Space", "Comma", "Semicolon"), lis.par$separator)

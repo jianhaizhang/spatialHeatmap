@@ -3,19 +3,19 @@
 #' @param gg.all A list of spatial heatmaps of ggplot.
 #' @param size.key A numeric of legend key size. If \code{size.text} is NULL, it also applies to legend text size.
 #' @param size.text.key A numeric of legend text size.
-#' @param angle.text.key A value of angle of key text in legend plot. Default is NULL, equivalent to 0.
+#' @param angle.text.key A value of key text angle in legend plot. The default is NULL, equivalent to 0.
 #' @param position.text.key The position of key text in legend plot, one of "top", "right", "bottom", "left". Default is NULL, equivalent to "right".
-#' @param legend.value.vdo Logical TRUE or FALSE. If TRUE, the numeric values of matching spatial features are added to legend, which applies to the video. The default is NULL.
+#' @param legend.value.vdo Logical TRUE or FALSE. If TRUE, the numeric values of matching spatial features are added to video legend. The default is NULL.
 #' @param sub.title.size The title size of ggplot.
 #' @param row An integer of rows in legend key.
 #' @param col An integer of columns in legend key.
-#' @param label Logical. If TRUE, spatial features having matching samples are labeled by feature identifiers. Default is FALSE. It is useful when spatial features are labeled by similar colors. 
-#' @param label.size The size of spatial feature labels in legend plot. Default is 4.
+#' @param label Logical. If TRUE, spatial features having matching samples are labeled by feature identifiers. The default is FALSE. It is useful when spatial features are labeled by similar colors. 
+#' @param label.size The size of spatial feature labels in legend plot. The default is 4.
 #' @param label.angle The angle of spatial feature labels in legend plot. Default is 0.
 #' @param hjust The value to horizontally adjust positions of spatial feature labels in legend plot. Default is 0.
 #' @param vjust The value to vertically adjust positions of spatial feature labels in legend plot. Default is 0.
 #' @param opacity The transparency of colored spatial features in legend plot. Default is 1. If 0, features are totally transparent.
-#' @param key Logical. Default is TRUE and keys are added in legend plot.
+#' @param key Logical. The default is TRUE and keys are added in legend plot. If \code{label} is TRUE, the keys could be removed. 
 #' @param sam.dat A vector of samples in the data matrix.
 #' @param tis.trans A vector of tissues to be transparent.
 #' @return A list of ggplots.

@@ -135,59 +135,53 @@ Maintainer: \packageMaintainer{spatialHeatmap}
 }
 \examples{
 
-## In the following examples, the 2 toy data come from an RNA-seq analysis on developments of 7 chicken organs under 9 time points (Cardoso-Moreira et al. 2019). For conveninece, they are included in this package. The complete raw count data are downloaded using the R package ExpressionAtlas (Keays 2019) with the accession number "E-MTAB-6769". Toy data1 is used as a "data frame" input to exemplify data with simple samples/conditions, while toy data2 as "SummarizedExperiment" to illustrate data involving complex samples/conditions.   
-
+## In the following examples, the 2 toy data come from an RNA-seq analysis on development of 7 chicken organs under 9 time points (Cardoso-Moreira et al. 2019). For conveninece, they are included in this package. The complete raw count data are downloaded using the R package ExpressionAtlas (Keays 2019) with the accession number "E-MTAB-6769". Toy data1 is used as a "data frame" input 
+to exemplify data of simple samples/conditions, while toy data2 as "SummarizedExperiment" to illustrate data involving complex samples/conditions.   
+library(spatialHeatmap)
 ## Set up toy data.
-
+     
 # Access toy data1.
 cnt.chk.simple <- system.file('extdata/shinyApp/example/count_chicken_simple.txt', package='spatialHeatmap')
 df.chk <- read.table(cnt.chk.simple, header=TRUE, row.names=1, sep='\t', check.names=FALSE)
-# Note the naming scheme "sample__condition" in columns, where "sample" and "condition" stands for organs and time points respectively.
+# Columns follow the namig scheme "sample__condition", where "sample" and "condition" stands for organs and time points respectively.
 df.chk[1:3, ]
-
-# A column of gene annotation can be appended to the data frame, but is not required. 
+     
+# A column of gene annotation can be appended to the data frame, but is not required.  
 ann <- paste0('ann', seq_len(nrow(df.chk))); ann[1:3]
-df.chk <- cbind(df.chk, ann=ann)
-df.chk[1:3, ]
-
+df.chk <- cbind(df.chk, ann=ann); df.chk[1:3, ]
+     
 # Access toy data2. 
 cnt.chk <- system.file('extdata/shinyApp/example/count_chicken.txt', package='spatialHeatmap')
 count.chk <- read.table(cnt.chk, header=TRUE, row.names=1, sep='\t')
 count.chk[1:3, 1:5]
-
-# A targets file describing samples and conditions is required for toy data2. It should be made based on the experiment design, which is accessible through the accession number "E-MTAB-6769" in R package ExpressionAtlas. An example targets file is included in this package. 
-
+     
+# A targets file describing samples and conditions is required for toy data2. It should be made based on the experiment design, which is accessible through the accession number "E-MTAB-6769" in the R package ExpressionAtlas. An example targets file is included in this package and accessed below. 
 # Access the example targets file. 
 tar.chk <- system.file('extdata/shinyApp/example/target_chicken.txt', package='spatialHeatmap')
 target.chk <- read.table(tar.chk, header=TRUE, row.names=1, sep='\t')
-# Note every column in toy data2 corresponds with a row in targets file. 
+# Every column in toy data2 corresponds with a row in targets file. 
 target.chk[1:5, ]
 # Store toy data2 in "SummarizedExperiment".
+
 library(SummarizedExperiment)
 se.chk <- SummarizedExperiment(assay=count.chk, colData=target.chk)
 # The "rowData" slot can store a data frame of gene annotation, but not required.
 rowData(se.chk) <- DataFrame(ann=ann)
-
+     
 ## As conventions, raw sequencing count data should be normalized, aggregated, and filtered to reduce noise.
-
+     
 # Normalize count data.
-
 # The normalizing function "calcNormFactors" (McCarthy et al. 2012) with default settings is used.  
 df.nor.chk <- norm_data(data=df.chk, norm.fun='CNF', data.trans='log2')
 se.nor.chk <- norm_data(data=se.chk, norm.fun='CNF', data.trans='log2')
-
 # Aggregate count data.
-
-# Aggregate "sample_condition" replicates in toy data1.
+# Aggregate "sample__condition" replicates in toy data1.
 df.aggr.chk <- aggr_rep(data=df.nor.chk, aggr='mean')
 df.aggr.chk[1:3, ]
-
 # Aggregate "sample_condition" replicates in toy data2, where "sample" is "organism_part" and "condition" is "age". 
 se.aggr.chk <- aggr_rep(data=se.nor.chk, sam.factor='organism_part', con.factor='age', aggr='mean')
 assay(se.aggr.chk)[1:3, 1:3]
-
-# Filter genes with low counts and low variance. Genes with counts over 5 (log2 unit) in at least 1% samples (pOA), and coefficient of variance (CV) between 0.2 and 100 are retained.
-
+# Filter out genes with low counts and low variance. Genes with counts over 5 (log2 unit) in at least 1% samples (pOA), and coefficient of variance (CV) between 0.2 and 100 are retained.
 # Filter toy data1.
 df.fil.chk <- filter_data(data=df.aggr.chk, pOA=c(0.01, 5), CV=c(0.2, 100), dir=NULL)
 # Filter toy data2.
@@ -195,11 +189,11 @@ se.fil.chk <- filter_data(data=se.aggr.chk, sam.factor='organism_part', con.fact
 
 ## Spatial heatmaps.
 
-# To plot spatial heatmaps, a pair of formatted data and pre-annotated SVG (aSVG) are required. If the data is a "data frame", the formatting is to use the naming scheme "sample_condition" in column names. If "SummarizedExperiment", the "sample" and "condition" replicates should be defined in the "colData" slot. In the aSVG, each spatial feature has a unique identifier. The numeric values are mapped to spatial features and translated into colors according to their identifiers programatically. The mapped images are called spatial heatmaps.
+# To make spatial heatmaps, a pair of formatted data and pre-annotated SVG (aSVG) file are required. If the data is a "data frame", the formatting is to use the naming scheme "sample__condition" in column names. If "SummarizedExperiment", the "sample" and "condition" replicates should be defined in the "colData" slot. In the aSVG, each spatial feature has a unique identifier. The numeric values are mapped to spatial features and translated into colors according to their identifiers programatically. The mapped images are called spatial heatmaps.
 
-# The following shows how to download the corresponding pre-annotated aSVG image from the EBI SVG repository based on above tissues and species involved, i.e. c('heart', 'brain') and c('gallus') respectively. See the function "return_feature" for details. An empty directory is recommended so as to avoid overwriting existing SVG files. Here "~/test" is used. 
+# The following shows how to download the corresponding pre-annotated aSVG file from the EBI SVG repository based on above tissues and species involved, i.e. c('heart', 'brain') and c('gallus') respectively. See the function "return_feature" for details. An empty directory is recommended so as to avoid overwriting existing SVG files. Here "~/test" is used. 
 
-# To meet the package building requirements, the code of querying aSVG remotely is not evaluated. The matching aSVG (gallus_gallus.svg) is included in this package and accessed for plotting spaital heatmaps.
+# To meet the package building requirements, the code of querying aSVG remotely is not evaluated. The matching aSVG "gallus_gallus.svg" is included in this package and accessed.
 
 \donttest{
 # Make an empty directory "~/test" if not exist.
@@ -272,7 +266,7 @@ update_feature(feature=feature.df.new, dir='~/test')
 
 ## Matrix heatmap
 
-# The matrix heatmap and following network are supplements to the core feature of spatial heatmap. First, nearest neighbors are selected for each target gene according to correlation (default) or distance measure independently. There are three alternative parameters used for the selection: "p" is the proportion of top nearest neighbors, "n" is the number of top nearest neighbors, and "v" is a cutoff value for correlation or distance. Then target genes and their nearest neighbors are hierarchically clustered and visualized in static or interactive matrix heatmap, where target genes are labeled by black lines. If the data is "SummarizedExperiment", the argument "ann" is the column name of gene annotation in  "rowData" slot. It is only relevant if users want to see annotation when mousing over a node in the interactive network below, so it is optional. Here "ann='ann'" is set and the corresponding annotation is appended to selected nearest neighbors.
+# The matrix heatmap and following network are supplements to the core feature of spatial heatmap. First, nearest neighbors are selected for each target gene according to correlation (default) or distance measure independently. There are three alternative parameters used for the selection: "p" is the proportion of top nearest neighbors, "n" is the number of top nearest neighbors, and "v" is a specific cutoff value for correlation or distance. Then target genes and their nearest neighbors are hierarchically clustered and visualized in static or interactive matrix heatmap, where target genes are labeled by black lines. If the data is "SummarizedExperiment", the argument "ann" is the column name of gene annotation in  "rowData" slot. It is only relevant if users want to see annotation when mousing over a node in the interactive network below, so it is optional. Here "ann='ann'" is set and the corresponding annotation is appended to selected nearest neighbors.
 
 # Select nearest neighbors for target genes 'ENSGALG00000019846' and 'ENSGALG00000000112'.
 df.sub.mat <- submatrix(data=df.fil.chk, ID=c('ENSGALG00000019846', 'ENSGALG00000000112'), p=0.1)
@@ -291,7 +285,7 @@ matrix_hm(ID=c('ENSGALG00000019846', 'ENSGALG00000000112'), data=se.sub.mat, ang
 
 ## Network 
 
-# Network analysis with WGCNA (Langfelder and Horvath 2008) is applied on all genes in the matrix heatmap. The gene module containing a specifc target gene is visualized in static and interactive network graphs. Briefly, a correlation matrix or distance matrix is computed on all genes in matrix heatmap, and transformed to an adjacency matrix and topological overlap matrix (TOM) sequentially, which are advanced measures to quantify coexpression similarity. Then network modules are identified by hierarchinally clustering the TOM-transformed dissimilarity matrix 1-TOM, which are clusters of genes with highly similar coexpression profiles. The module containing a target gene is finally displayed as network graphs. Refer to function "adj_mod" for details.
+# Network analysis with WGCNA (Langfelder and Horvath 2008) is applied on the subsetted matix visualized in the matrix heatmap. The gene module containing a specifc target gene is visualized in static and interactive network graphs. Briefly, a correlation matrix or distance matrix is computed on all genes in matrix heatmap, and transformed to an adjacency matrix and topological overlap matrix (TOM) sequentially, which are advanced measures to quantify coexpression similarity. Then network modules are identified by hierarchinally clustering the TOM-transformed dissimilarity matrix 1-TOM, which are clusters of genes with highly similar coexpression profiles. The module containing a target gene is finally displayed as network graphs. Refer to function "adj_mod" for details.
 
 # Adjacency matrix and module identification
 
@@ -301,10 +295,10 @@ adj.mod <- adj_mod(data=se.sub.mat)
 # The adjacency matrix is a measure of co-expression similarity between genes, where larger value denotes more similarity.
 adj.mod[['adj']][1:3, 1:3]
 
-# The modules are identified at two alternative sensitivity levels (ds=2 or 3). From 2 to 3, more modules are identified but module sizes are smaller. The two sets of module assignment are returned in a data frame. The first column is ds=2 while the second is ds=3. The numbers in each column are module labels with "0" meaning genes not assigned to any module.
+# The modules are identified at two alternative sensitivity levels (ds=2 or 3). From 2 to 3, more modules are identified but module sizes are smaller. The two sets of module assignment are returned in a data frame. The first column is ds=2 while the second is ds=3. The numbers in each column are module labels, where "0" indicates genes not assigned to any module.
 adj.mod[['mod']][1:3, ]
 
-# Static network. In the graph, nodes are genes and edges are adjacencies between genes. The thicker edge denotes higher adjacency (co-expression similarity) while larger node indicates higher gene connectivity (sum of a gene's adjacency with all its direct neighbors). The target gene is labeled by "_target".
+# Static network. In the graph, nodes are genes and edges are adjacencies between genes. The thicker edge denotes higher adjacency (co-expression similarity) while larger node indicates higher gene connectivity (sum of a gene's adjacency with all its direct neighbors). The target gene is labeled by "_target". The node connectivity increases from "turquoise" to "violet", and the adjacency increases from "yellow" to "blue".
 network(ID="ENSGALG00000019846", data=se.sub.mat, adj.mod=adj.mod, adj.min=0.7, vertex.label.cex=1.5, vertex.cex=4, static=TRUE)
 
 # Interactive network. Same with static mode, the target gene ID is appended "_target".  
@@ -315,10 +309,12 @@ network(ID="ENSGALG00000019846", data=se.sub.mat, adj.mod=adj.mod, adj.min=0.7, 
 # In additon to generating spatial heatmaps and corresponding gene context plots from R, spatialHeatmap includes a Shiny App (https://shiny.rstudio.com/) that provides access to the same functionalities from an intuitive-to-use web browser interface. Apart from being very user-friendly, this App conveniently organizes the results of the entire visualization workflow in a single browser window with options to adjust the parameters of the individual components interactively. This app is launched by the function "shiny_all" without any parameters. Upon launched, the app automatically displays a pre-formatted example. 
 \donttest{shiny_all()}
 
-# The gene expression data and aSVG image files are uploaded to the Shiny App as tabular text (e.g. in CSV or TSV format) and SVG file, respectively. To also allow users to upload gene expression data stored in "SummarizedExperiment" objects, one can export them from R to a tabular file with the "filter_data" function. In this function call, the user sets a desired directory path under "dir" (see below). Within this directory the tabular file will be written to "local_mode_result/processed_data.txt" in TSV format. The column names in the exported tabular file preserve the experimental design information from the "colData" slot by concatenating the corresponding sample and condition information separated by double underscores. An example of this format is shown in below.
+# The gene expression data and aSVG image files are uploaded to the Shiny App as tabular text (e.g. in CSV or TSV format) and SVG file, respectively. To also allow users to upload gene expression data stored in "SummarizedExperiment" objects, one can export them from R to a tabular file with the "filter_data" function. In this function call, the user sets a desired directory path under "dir" (see below). Within this directory the tabular file will be written to "customData.txt" in TSV format. The column names in the exported tabular file preserve the experimental design information from the "colData" slot by concatenating the corresponding sample and condition information separated by double underscores. An example of this format is shown in below.
 
 # To interactively view functional descriptions by moving the cursor over network nodes, the corresponding annotation column needs to be present in the "rowData" slot and its column name assigned to the "ann" argument. In the exported tabular file the extra annotation column is appended to the expression matrix.
 \donttest{ se.fil.chk <- filter_data(data=se.aggr.chk, sam.factor='organism_part', con.factor='age', pOA=c(0.01, 5), CV=c(0.2, 100), dir='./'); assay(se.fil.chk)[1:3, 1:3] }
+
+# The Shiny app can be customized by including user-provided default examples and default parameters. See the fucntion "custom_shiny" for details.
 
 
 }

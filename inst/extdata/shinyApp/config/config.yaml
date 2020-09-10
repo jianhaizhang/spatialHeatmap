@@ -52,6 +52,9 @@ dataset13:
   name: map_Census
   data: example/us_population2018.txt
   svg: example/us_map_shm.svg
+title:
+- title:spatialHeatmap (2020-09-09)
+- width:350
 default.dataset: organ_Mustroph
 col.row.gene: None
 separator: None

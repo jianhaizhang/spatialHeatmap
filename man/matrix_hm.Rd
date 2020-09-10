@@ -28,17 +28,17 @@ matrix_hm(
 
 \item{data}{The subsetted data matrix returned by the function \code{\link{submatrix}}, where rows are assayed items and columns are samples/conditions.}
 
-\item{scale}{"row", "column", or "no", meaing scale the heatmap by row, column, or no scale respectively. Default is "no".}
+\item{scale}{One of "row", "column", or "no", corresponding to scale the heatmap by row, column, or no scale respectively. Default is "no".}
 
 \item{col}{A character vector of color ingredients for constructing the color scale. The default is c('yellow', 'orange', 'red').}
 
 \item{main}{The title of the matrix heatmap.}
 
-\item{title.size}{A numeric value, the size of the title.}
+\item{title.size}{A numeric value of the title size.}
 
-\item{cexCol}{A numeric value, the size of column names. Default is 1.}
+\item{cexCol}{A numeric value of column name size. Default is 1.}
 
-\item{cexRow}{A numeric value, the size of row names. Default is 1.}
+\item{cexRow}{A numeric value of row name size. Default is 1.}
 
 \item{angleCol}{The angle of column names. The default is 45.}
 
@@ -48,11 +48,11 @@ matrix_hm(
 
 \item{sep.width}{The width of two lines labeling the row of \code{ID}. The default is 0.02.}
 
-\item{static}{Logical, TRUE gives the static mode and FALSE interactive mode.}
+\item{static}{Logical, TRUE returns the static visualization and FALSE returns the interactive.}
 
-\item{margin}{A vector of two numbers, specifying bottom and right margins respectively. The default is "c(10, 10)".}
+\item{margin}{A vector of two numbers, specifying bottom and right margins respectively. The default is c(10, 10).}
 
-\item{arg.lis1}{A list of additional arguments passed to the \code{\link[gplots]{heatmap.2}} function from "gplots" package. E.g. list(xlab='sample', ylab='gene'). The default is an empty list.}
+\item{arg.lis1}{A list of additional arguments passed to the \code{\link[gplots]{heatmap.2}} function from "gplots" package. \emph{E.g.} list(xlab='sample', ylab='gene'). The default is an empty list.}
 
 \item{arg.lis2}{A list of additional arguments passed to the \code{\link[ggplot2]{ggplot}} function from "ggplot2" package. The default is an empty list.}
 }
@@ -60,17 +60,17 @@ matrix_hm(
 A static image or an interactive instance lauched on the web browser.
 }
 \description{
-This function visualizes the input assayed items (gene, protein, metabolite, \emph{etc}) in the context of their nearest neighbors, where the rows and columns are sorted by hierarchical clustering dendrograms and the row of target item is tagged by two lines. The matrix heatmap can be dispalyed in static or a web-browser based interactive mode. If the latter, users can zoom in and out by drawing a rectangle and by double clicking the image, respectively. Users can scale heatmap by row or column.
+This function visualizes the input assayed items (gene, protein, metabolite, \emph{etc}) in context of their nearest neighbors, which are subsetted by \code{submatrix}. The visualization is in form of  static or interactive matrix heatmap, where rows and columns are sorted by hierarchical clustering dendrograms and the row of target items are tagged by two lines. In the interactive heatmap, users can zoom in and out by drawing a rectangle and by double clicking the image, respectively.
 }
 \examples{
-## In the following examples, the 2 toy data come from an RNA-seq analysis on developments of 7 chicken organs under 9 time points (Cardoso-Moreira et al. 2019). For conveninece, they are included in this package. The complete raw count data are downloaded using the R package ExpressionAtlas (Keays 2019) with the accession number "E-MTAB-6769". Toy data1 is used as a "data frame" input to exemplify data with simple samples/conditions, while toy data2 as "SummarizedExperiment" to illustrate data involving complex samples/conditions.   
-
+## In the following examples, the 2 toy data come from an RNA-seq analysis on development of 7 chicken organs under 9 time points (Cardoso-Moreira et al. 2019). For conveninece, they are included in this package. The complete raw count data are downloaded using the R package ExpressionAtlas (Keays 2019) with the accession number "E-MTAB-6769". Toy data1 is used as a "data frame" input to exemplify data of simple samples/conditions, while toy data2 as "SummarizedExperiment" to illustrate data involving complex samples/conditions.   
+library(spatialHeatmap)
 ## Set up toy data.
 
 # Access toy data1.
 cnt.chk.simple <- system.file('extdata/shinyApp/example/count_chicken_simple.txt', package='spatialHeatmap')
 df.chk <- read.table(cnt.chk.simple, header=TRUE, row.names=1, sep='\t', check.names=FALSE)
-# Note the naming scheme "sample__condition" in columns, where "sample" and "condition" stands for organs and time points respectively.
+# Columns follow the namig scheme "sample__condition", where "sample" and "condition" stands for organs and time points respectively.
 df.chk[1:3, ]
 
 # A column of gene annotation can be appended to the data frame, but is not required.  
@@ -83,11 +83,11 @@ cnt.chk <- system.file('extdata/shinyApp/example/count_chicken.txt', package='sp
 count.chk <- read.table(cnt.chk, header=TRUE, row.names=1, sep='\t')
 count.chk[1:3, 1:5]
 
-# A targets file describing samples and conditions is required for toy data2. It should be made based on the experiment design, which is accessible through the accession number "E-MTAB-6769" in R package ExpressionAtlas. An example targets file is included in this package. 
+# A targets file describing samples and conditions is required for toy data2. It should be made based on the experiment design, which is accessible through the accession number "E-MTAB-6769" in the R package ExpressionAtlas. An example targets file is included in this package and accessed below. 
 # Access the example targets file. 
 tar.chk <- system.file('extdata/shinyApp/example/target_chicken.txt', package='spatialHeatmap')
 target.chk <- read.table(tar.chk, header=TRUE, row.names=1, sep='\t')
-# Note every column in toy data2 corresponds with a row in targets file. 
+# Every column in toy data2 corresponds with a row in targets file. 
 target.chk[1:5, ]
 # Store toy data2 in "SummarizedExperiment".
 library(SummarizedExperiment)
@@ -95,7 +95,7 @@ se.chk <- SummarizedExperiment(assay=count.chk, colData=target.chk)
 # The "rowData" slot can store a data frame of gene annotation, but not required.
 rowData(se.chk) <- DataFrame(ann=ann)
 
-## As conventions, raw sequencing count data should be normalized, aggregated, and filtered fo reduce noise.
+## As conventions, raw sequencing count data should be normalized, aggregated, and filtered to reduce noise.
 
 # Normalize count data.
 # The normalizing function "calcNormFactors" (McCarthy et al. 2012) with default settings is used.  
@@ -108,7 +108,7 @@ df.aggr.chk[1:3, ]
 # Aggregate "sample_condition" replicates in toy data2, where "sample" is "organism_part" and "condition" is "age". 
 se.aggr.chk <- aggr_rep(data=se.nor.chk, sam.factor='organism_part', con.factor='age', aggr='mean')
 assay(se.aggr.chk)[1:3, 1:3]
-# Filter genes with low counts and low variance. Genes with counts over 5 (log2 unit) in at least 1\% samples (pOA), and coefficient of variance (CV) between 0.2 and 100 are retained.
+# Filter out genes with low counts and low variance. Genes with counts over 5 (log2 unit) in at least 1\% samples (pOA), and coefficient of variance (CV) between 0.2 and 100 are retained.
 # Filter toy data1.
 df.fil.chk <- filter_data(data=df.aggr.chk, pOA=c(0.01, 5), CV=c(0.2, 100), dir=NULL)
 # Filter toy data2.
@@ -119,7 +119,10 @@ se.fil.chk <- filter_data(data=se.aggr.chk, sam.factor='organism_part', con.fact
 df.sub.mat <- submatrix(data=df.fil.chk, ID=c('ENSGALG00000019846', 'ENSGALG00000000112'), p=0.1)
 # Toy data2.
 se.sub.mat <- submatrix(data=se.fil.chk, ann='ann', ID=c('ENSGALG00000019846', 'ENSGALG00000000112'), p=0.1) 
-# The subsetted matrix is shown below.
+
+# In the following, "df.sub.mat" and "se.sub.mat" is used in the same way, so only "se.sub.mat" illustrated.
+
+# The subsetted matrix is partially shown below.
 se.sub.mat[c('ENSGALG00000019846', 'ENSGALG00000000112'), c(1:2, 63)]
 
 ## Matrix heatmap.

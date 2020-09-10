@@ -6,7 +6,8 @@ tmp/
 *.ps.xml$
 # *.html
 rsconnect/
-local_mode_result/
+sub_matrix.txt
+customComputedData/
 # vignette.html
 vignette_files/
 vignette_cache/

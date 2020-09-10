@@ -203,7 +203,9 @@ directly. The aSVG images developed by the `spatialHeatmap` project are
 available in its own repository called [spatialHeatmap aSVG
 Repository](https://github.com/jianhaizhang/spatialHeatmap_aSVG_Repository){target="_blank"},
 where users can contribute their aSVG images that are formatted according to
-our guidlines.^[Naming the subdirectory 'UCR' where you store the images in the repos 
+our guidlines.
+
+<font color='blue'>jianhai: I will discuss with you on slack on this topic.</font> ^[Naming the subdirectory 'UCR' where you store the images in the repos 
 is a poor choice as it indicates a personal rather than a community solution. Perhaps name it just 
 'svg_images'? Also try to include there more images. The current collection is so 
 small that it is of questionable value.]
@@ -1095,7 +1097,7 @@ you need to return it, then compute it only for the filtered results meaning it
 should have dim= 62 x 62 and not 319 x 319.</font>] ^[<font color='blue'>The returned value is changed to only the submatted matrix.</font>]
 
 ```{r eval=TRUE, echo=TRUE, warnings=FALSE}
-sub.mat[['sub_matrix']][c('RCA', 'HRE2'), c(1:3, 37)] # Subsetted assay matrix
+sub.mat[c('RCA', 'HRE2'), c(1:3, 37)] # Subsetted assay matrix
 ```
 
 <a name="mhm1"></a>
@@ -1109,11 +1111,11 @@ will launch the interactive mode, where users can zoom into the heatmap by
 selecting subsections in the image or zoom out by double clicking.  
 
 ```{r static, eval=TRUE, echo=TRUE, warnings=FALSE, fig.cap=("Matrix Heatmap. Rows are genes and columns are samples. The input genes are tagged by black lines."), out.width='100%'}
-matrix_hm(ID=c('RCA', 'HRE2'), data=sub.mat[['sub_matrix']], angleCol=80, angleRow=35, cexRow=0.8, cexCol=0.8, margin=c(10, 6), static=TRUE, arg.lis1=list(offsetRow=0.01, offsetCol=0.01))
+matrix_hm(ID=c('RCA', 'HRE2'), data=sub.mat, angleCol=80, angleRow=35, cexRow=0.8, cexCol=0.8, margin=c(10, 6), static=TRUE, arg.lis1=list(offsetRow=0.01, offsetCol=0.01))
 ```   
 
-^[<font color='red'>ThG: the interactive mode doesn't work for me. Am I supposed to get a URL like under
-the network plot? Right now it opens RStudio but doesn't show there anything.</font>] 
+<font color='blue'>jianhai: It works on my tmux session, where `getOption("browser")` retruns "xdg-open". First, try to run `library(plotly); subplot(plot_ly(economics, x = ~date, y = ~unemploy))`. If nothing shown, it suggests the issue is related to RStudio settings. Second, a universal solution is `mhm <- matrix_hm(...);` `htmlwidgets::saveWidget(widget=mhm, file='mhm.html', selfcontained=FALSE);` `browseURL('mhm.html')`, where "..." denotes the passed arguments. This solution saves the interactive heatmap to "mhm.html". I have added this solution to the example section of the help in case some users also have this issue. </font> ^[<font color='red'>ThG: the interactive mode doesn't work for me. Am I supposed to get a URL like under
+the network plot? Right now it opens RStudio but doesn't show there anything.</font>]
 
 # Network Graphs {#net}
 
@@ -1122,7 +1124,7 @@ the network plot? Right now it opens RStudio but doesn't show there anything.</f
 <a name="ds"></a>
 Network analysis is performed with the WGCNA algorithm [@Langfelder2008-sg; @Ravasz2002-db] 
 using as input the subsetted assay matrix generated in the previous section. The objective 
-is to identify network modules that can be visualized in the following step in form of network graphs. Applied to the 
+is to identify network modules that can be visualized in the following step in form of network graphs.^[<font color='blue'>Should the objective emphasize explore the target item in context of NNs rather than only network visualization? To achieve such exploration, the matrix heatmap using hierarchical clustering is basic/traditional and WGCNA using TOM is advanced. </font>] Applied to the 
 gene expression sample data used here, these network modules represent groups of genes 
 sharing highly similar expression profiles. Internally, the network module identification
 includes five major steps. First, a correlation matrix is computed using 
@@ -1144,10 +1146,12 @@ containing the adjacency matrix and the final module assignments stored in a
 step below performs best on smaller modules, only modules are returned that were obtained with stringent `ds`
 settings (here `ds=2` and `ds=3`). 
 ^[<font color='red'>The help file for adj_mod contains many typos and grammar mistakes. Please
-improve its writeup.</font>] 
+improve its writeup.</font>]
+
+^[<font color='blue'>I have improved the adj_mod help file as well as all other help files. Please let know if further improvement is needed.</font>]
 
 ```{r eval=TRUE, echo=TRUE, warnings=FALSE, results=FALSE}
-adj.mod <- adj_mod(data=sub.mat[['sub_matrix']])
+adj.mod <- adj_mod(data=sub.mat)
 ```
 
 A slice of the adjacency matrix is shown below.    
@@ -1175,13 +1179,12 @@ modes to visualize the selected module: static or interactive. Figure \@ref(fig:
 was generated with `static=TRUE`. Setting `static=FALSE` will generate the interactive
 version. In the network plot shown below the nodes and edges represent genes and adjacencies 
 between them, respectively. The thickness of the edges denotes the adjacency levels, while the size of 
-the nodes indicates the degree of connectivity of each item. If a gene of interest has 
+the nodes indicates the degree of connectivity of each item. <font color='blue'> In addition, the adjacency and connectivity levels are also indicated by colors. For example, in Figure \@ref(fig:inter) connectivity increases from "turquoise" to "violet" while adjacency increases from "yellow" to "blue". </font> ^[<font color='red'>ThG: the color scheme of the nodes is a poor choice since the labels are unreadable in the dark brown 
+nodes. Also the color scheme is not explained.</font>] If a gene of interest has 
 been assigned under `ID`, then its ID is labeled in the plot with the tag: '*_target'.
-^[<font color='red'>ThG: the color scheme of the nodes is a poor choice since the labels are unreadable in the dark brown 
-nodes. Also the color scheme is not explained.</font>]  
 
 ```{r inter, eval=TRUE, echo=TRUE, warnings=FALSE, fig.cap=("Static network. Node size denotes gene connectivity while edge thickness stands for co-expression similarity.") }
-network(ID="HRE2", data=sub.mat[['sub_matrix']], adj.mod=adj.mod, adj.min=0.90, vertex.label.cex=1.2, vertex.cex=2, static=TRUE)
+network(ID="HRE2", data=sub.mat, adj.mod=adj.mod, adj.min=0.90, vertex.label.cex=1.2, vertex.cex=2, static=TRUE)
 ```   
 
 <a name="inter_net"></a>
@@ -1191,28 +1194,22 @@ If the subsetted expression matrix contains gene/protein annotation information 
 column, then it will be shown when moving the cursor over a network node.    
 
 ```{r eval=FALSE, echo=TRUE, warnings=FALSE}
-network(ID="HRE2", data=sub.mat[['sub_matrix']],  adj.mod=adj.mod, static=FALSE)
+network(ID="HRE2", data=sub.mat,  adj.mod=adj.mod, static=FALSE)
 ```
+<font color='blue'>jianhai: It was set empty since too many edges could lead to browser crash. Now the solution is upon launched all nodes are shown and no edges are shown (adjacency threshold is set 1 by default). Users could decrease the threshold to shown edges. The instruction page is added to tell how to operate in details. </font>
 ^[<font color='red'>ThG: the interactive view shows only an empty shiny like window. Even when trying to change
 the settings in the menu on the left nothing happens.</font>]
 
 # Shiny App {#shiny}
 
-In additon to running `spatialHeatmap` from R, the package includes a [Shiny
-App](https://shiny.rstudio.com/) that provides access to the same
-functionalities from an intuitive-to-use web browser interface. Apart from
-being very user-friendly, this App conveniently organizes the results of the
-entire visualization workflow in a single browser window with options to adjust
-the parameters of the individual components interactively. For instance, genes
-can be selected and replotted in the SHM simply by clicking the corresponding
-rows in the expression table included in the same window. 
-^[ThG: the text you inserted in this paragraph is covered already in the R
+ <font color='blue'>In additon to running `spatialHeatmap` in command mode from R, the package includes a GUI through the [Shiny
+App](https://shiny.rstudio.com/) that provides an intuitive-to-use web browser interface. </font> <font color='blue'>jianhai: duplicate text was removed. </font> ^[ThG: the text you inserted in this paragraph is covered already in the R
 section. If we state that the shiny app provides the same functionalities then
 this doesn't need to be mentioned again.]
 This representation is very efficient in guiding the interpretation of the results 
 in a visual and user-friendly manner. For testing purposes, the `spatialHeatmap` 
 Shiny App also includes ready-to-use sample expression data and aSVG images 
-along with embedded user instructions.
+along with embedded user instructions.   
 
 
 ## Local System 
@@ -1248,8 +1245,8 @@ as tabular (_e.g._ in CSV or TSV format) and SVG files, respectively. To
 also allow users to upload gene expression data stored in
 `SummarizedExperiment` objects, one can export them from R to a tabular file
 with the `filter_data` function. In this function call, the user sets the
-desired directory path under `dir`. Within this directory the tabular file will 
-be written to `local_mode_result/processed_data.txt` in TSV format. The
+desired directory path under `dir`. <font color='blue'>Within this directory the tabular file will 
+be written to `customData.txt` in TSV format </font>. The
 column names in the exported tabular file preserve the experimental design information from 
 the `colData` slot by concatenating the corresponding sample and condition information 
 separated by double underscores. An example of this format is shown in Table \@ref(tab:humtab). 
@@ -1264,6 +1261,8 @@ cursor over network nodes, the corresponding annotation column needs to be
 present in the `rowData` slot and its column name assigned to the `ann`
 argument. In the exported tabular file, the extra annotation column is appended
 to the expression matrix.   
+
+
 <font color='red'>
 ^[I wasn't able to get the network panel in the shiny app to work. Only the 
 SHM and matrix heatmap panels returned a result. I am also wondering why showing all
@@ -1282,6 +1281,9 @@ servers or cloud services, such as AWS, GCP or
 `spatialHeatmap` online is available
 [here](https://www.plantsecretome.org/software/spatialheatmap){target="_blank"}.
 
+<font color='blue'>In either local or server application, if the subsetted matrix contains too many rows such as more than 10,000 in local mode, the app might collapse, which depends on the system RAM. The solution is to increase subsetting strigency in the Matrix Heatmap panel so as to reduce the subsetted matrix, which would avoid system crash most of the time. In rare cases users have to use very large submatted matrix, the "customComputedData" under "Step1: data sets" is suggested. Refer to function `adj_mode` and `submatrix` for more details. Note, if only the SHM panle is used, there is no such potential issue. </font>
+
+<font color='blue'>jianhai: I have made a note of the SQLite or HDF5 database development.</font>
 <font color='red'>
 ^[What you wrote here should be resolved now with the recent updates focusing the hierarchical
 clustering and network analysis to the NNs of a query gene(s). What you should address at some 
