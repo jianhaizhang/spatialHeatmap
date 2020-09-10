@@ -1263,6 +1263,7 @@ argument. In the exported tabular file, the extra annotation column is appended
 to the expression matrix.   
 
 
+<font color='blue'>jianhai: to show the network, Select a target gene, the adjacency threshold, and "Yes" under "Show plot" should be seletcted. The most intensive computation lies in the TOM of WGCNA, which is done on the subsetted matrix. If the subsetted matrix has 10,000+ rows, the system very likely crashes during the TOM computation. So it can probably happen if users provide large matrix. This is the first reason why network is not shown by default. The second reason is most of the time users are likely to use the SHM only and do not care the matrix heatmap or network. If network and matrix heatmap are updated in real time with SHMs, the overall speed would be reduced obviousely. Users could click as many as 3 genes per second, each click will trigger SHM update. If they submit 10+ genes in the search box, SHMs are also updated. If these updates are synced to matrix heatmap and network, the app is likely running slowly. The current strategy is remove matrix heatmap and network every time SHMs/input genes are updated, which is also applied to animation and video. If users want to see them then check "Yes" under "Show plot". This design ensures optimal performance on the core featue of SHM. Does it makes sense? </font>
 <font color='red'>
 ^[I wasn't able to get the network panel in the shiny app to work. Only the 
 SHM and matrix heatmap panels returned a result. I am also wondering why showing all

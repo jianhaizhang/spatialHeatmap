@@ -4,7 +4,7 @@
 
 <div align="justify">
 
-<p><b>The network is shown only after "Adjacency threshold" is assigned as value and "Yes" is checked under "Show plot".</b></p>
+<p><b>The network is shown only after "Select a target gene" and "Adjacency threshold" is assigned a value respectively and "Yes" is checked under "Show plot".</b></p>
 
 <p>This section applies network analysis on the subsetted matrix in the Matrix Heatmap with WGCNA (Langfelder and Horvath 2008). Briefly, a correlation matrix or distance matrix is computed on all genes in Matrix Heatmap, and transformed to an adjacency matrix and topological overlap matrix (TOM) sequentially, which are advanced measures to quantify coexpression similarity. Then network modules are identified by hierarchinally clustering the TOM-transformed dissimilarity matrix 1-TOM, which are clusters of genes with highly similar coexpression profiles. The module containing a target gene is finally displayed as interactive network graph. Since this is a coexpression analysis, variables of sample/condition should be at least 5. Otherwise, resulting modules are not reliable. Refer to <a href='https://jianhaizhang.github.io/SVG_tutorial_file/vignette.html'>package vignette</a> for details. </p>
 

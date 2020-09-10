@@ -153,7 +153,7 @@ submatrix <- function(data, ann=NULL, ID, p=0.3, n=NULL, v=NULL, fun='cor', cor.
     write.table(data[na, ], paste0(dir, '/sub_matrix.txt'), col.names=TRUE, row.names=TRUE, sep='\t')
 
   }
-  return(sub_matrix=cbind(data[na, ], ann[na, , drop=FALSE]))
+  return(cbind(data[na, ], ann[na, , drop=FALSE]))
 
 }
 
