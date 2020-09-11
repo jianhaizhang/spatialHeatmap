@@ -1177,6 +1177,10 @@ na.cus <- c('customData', 'customComputedData')
     updateTextInput(session, "color.net", "Color scheme:", lis.par$network['color', 'default'], placeholder=paste0('Eg: ', lis.par$network['color', 'default']))
     updateRadioButtons(session, inputId="cpt.nw", label="Show plot:", choices=c("Yes", "No"), selected=lis.par$network['show', 'default'], inline=TRUE)
 
+  output$edge <- renderUI({ 
+    span(style="color:black;font-weight:NULL;", HTML("Remaining edges to display (If > 300, the app might get stuck.): 0"))
+  })
+
   })
 
   observe({ 
@@ -2376,16 +2380,18 @@ na.cus <- c('customData', 'customComputedData')
 
   })
 
-  output$edge <- renderUI({ 
+  observeEvent(visNet(), {
 
-    if (input$TOM.in=="None") return(NULL)
-    if (input$fileIn=="none"|(input$fileIn=="Your own" & is.null(geneIn()))|
-    input$gen.sel=="None") return(NULL)
-    HTML(paste0("&nbsp&nbsp&nbsp&nbsp Total edges to display (If > 300, the <br/> 
-    &nbsp&nbsp&nbsp App can possibly get stuck.): ", dim((visNet()[["link"]]))[1]))
+    output$edge <- renderUI({ 
+
+      if (input$TOM.in=="None"|is.null(visNet())) return(NULL)
+      if (input$fileIn=="none"|(input$fileIn=="Your own" & is.null(geneIn()))|
+      input$gen.sel=="None") return(NULL)
+      span(style = "color:black;font-weight:NULL;", HTML(paste0("Remaining edges to display (If > 300, the app might get stuck.): ", dim((visNet()[["link"]]))[1])))
+
+    })
 
   })
-
   vis.net <- reactive({ 
     
     if (input$TOM.in=="None"|input$cpt.nw=="No") return(NULL)
