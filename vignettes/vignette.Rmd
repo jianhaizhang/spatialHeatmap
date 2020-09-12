@@ -1103,7 +1103,7 @@ RStudio session instead of a browser window or providing a URL. The interactive 
 next section works though. You probably want to run both the same same way. 
 </font>]
 
-# Network Graphs {#net
+# Network Graphs {#net}
 ## Module Identification
 
 <a name="ds"></a>
@@ -1211,7 +1211,7 @@ The Shiny App of `spatialHeatmap` can be launched from an R session with the fol
 function call. 
 
 ```{r eval=FALSE, echo=TRUE, warnings=FALSE}
-shiny_alloeURL('mhm.html')
+shiny_all()
 ```   
 
 The dashboard panels of the Shiny App are organized as follows:
