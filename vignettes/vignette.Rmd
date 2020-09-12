@@ -1121,7 +1121,7 @@ topological overlap matrix (TOM) where shared neighborhood information among
 items is used to preserve robust connections, while removing spurious
 connections. Fourth, the distance transformed TOM is used for hierarchical
 clustering. To maximize time performance, the hierarchical clustering is
-performed with the `flashClust` package [@flashClust]. Fifth, network modules
+performed with the `flashClust` package [@Langfelder2012-nv]. Fifth, network modules
 are identified with the `dynamicTreeCut` package [@dynamicTreeCut]. Its `ds`
 (`deepSplit`) argument can be assigned integer values from `0` to `3`, where
 higher values increase the stringency of the module identification process.  To
