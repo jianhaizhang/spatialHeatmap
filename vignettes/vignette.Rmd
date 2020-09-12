@@ -1234,15 +1234,16 @@ include_graphics('img/shiny.png')
 After launching, the Shiny App displays by default one of the included data sets. 
 
 The assay data and aSVG images are uploaded to the Shiny App
-as tabular (_e.g._ in CSV or TSV format) and SVG files, respectively. To
+as tabular files (_e.g._ in CSV or TSV format) and SVG files, respectively. To
 also allow users to upload gene expression data stored in
 `SummarizedExperiment` objects, one can export them from R to a tabular file
 with the `filter_data` function. In this function call, the user sets the
-desired directory path under `dir`. <font color='blue'>Within this directory the tabular file will 
-be written to `customData.txt` in TSV format </font>. The
-column names in the exported tabular file preserve the experimental design information from 
-the `colData` slot by concatenating the corresponding sample and condition information 
-separated by double underscores. An example of this format is shown in Table \@ref(tab:humtab). 
+desired directory path under `dir`. Within this directory
+the tabular file will be written to a file called `customData.txt` in TSV format. 
+The column names in this file preserve the experimental design
+information from the `colData` slot by concatenating the corresponding sample
+and condition information separated by double underscores. An example of this
+format is shown in Table \@ref(tab:humtab). 
 
 ```{r eval=FALSE, echo=TRUE, warnings=FALSE}
 se.fil.arab <- filter_data(data=se.aggr.sh, ann="Target.Description", sam.factor='samples', con.factor='conditions', pOA=c(0.03, 6), CV=c(0.30, 100), dir='./')
