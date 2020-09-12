@@ -4,7 +4,7 @@ The spatialHeatmap package provides functionalities for visualizing cell-, tissu
 
 
 <center><img title="Overview of spatialHeatmap" src="https://github.com/jianhaizhang/spatialHeatmap/blob/master/vignettes/img/spatialHeatmap_Design.jpg" ></center>
-
+__Figure 1: Overview of spatialHeatmap__
 
 # Installation 
 
