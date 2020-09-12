@@ -1032,8 +1032,10 @@ rownames(df.random) <- paste0('gene', 1:10) # Assign row names
 df.random[1:3, ]
 ```
 
+<font color='blue'>
 Next the paths to the aSVG files are obtained, here for younger and older plants using `*_shm1` 
-and `*_shm1`, respectively.  
+and `*_shm1`, respectively, which are made from @Mustroph2009-nu.   
+</font>
 
 ```{r eval=TRUE, echo=TRUE, warnings=FALSE}
 svg.sh1 <- system.file("extdata/shinyApp/example", "arabidopsis_thaliana.organ_shm1.svg", package="spatialHeatmap")
