@@ -25,7 +25,7 @@ BiocManager::install("jianhaizhang/spatialHeatmap", build_vignettes=TRUE, depend
 
 # Usage
 
-See user vignette [here]()
+See user vignette [here](https://github.com/jianhaizhang/spatialHeatmap/tree/master/vignettes)
 
 
 
