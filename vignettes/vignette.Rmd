@@ -1236,10 +1236,10 @@ After launching, the Shiny App displays by default one of the included data sets
 The assay data and aSVG images are uploaded to the Shiny App as tabular files
 (_e.g._ in CSV or TSV format) and SVG files, respectively. To also allow users
 to upload gene expression data stored in `SummarizedExperiment` objects, one
-can export them from R to a tabular file with the `filter_data` function, where
-the user specifies the directory path under the `dir` argument and a tablular
-file in TSV format (`customData.txt`) will be exported to this directory. The
-column names in this file preserve the experimental design information from the
+can export it from R to a tabular file with the `filter_data` function, where
+the user specifies the directory path under the `dir` argument. This will create
+in the target directory a tablular file named `customData.txt` in TSV format. 
+The column names in this file preserve the experimental design information from the
 `colData` slot by concatenating the corresponding sample and condition
 information separated by double underscores. An example of this format is shown
 in Table \@ref(tab:humtab). 
@@ -1274,32 +1274,16 @@ servers or cloud services, such as AWS, GCP or
 `spatialHeatmap` online is available
 [here](https://www.plantsecretome.org/software/spatialheatmap){target="_blank"}.
 
-<font color='blue'>In either local or server application, if the subsetted matrix contains too many rows such as more than 10,000 in local mode, the app might collapse, which depends on the system RAM. The solution is to increase subsetting strigency in the Matrix Heatmap panel so as to reduce the subsetted matrix, which would avoid system crash most of the time. In rare cases users have to use very large submatted matrix, the "customComputedData" under "Step1: data sets" is suggested. Refer to function `adj_mode` and `submatrix` for more details. Note, if only the SHM panle is used, there is no such potential issue. </font>
-
-<font color='blue'>jianhai: I have made a note of the SQLite or HDF5 database development.</font>
-<font color='red'>
-^[What you wrote here should be resolved now with the recent updates focusing the hierarchical
-clustering and network analysis to the NNs of a query gene(s). What you should address at some 
-point, however, is that the expression data can be read from an SQLite or HDF5 database to 
-support more complex data sets (e.g. all tissue specific Arabidopsis data sets in GEO) on the 
-server (and client) side of web deployments.]
-</font> 
-
 ## Custom Shiny App
-<font color='blue'>
 
-The `spatialHeatmap` package also enables users to create customized Shiny apps
-through the function `custom_shiny`. Specifically, users have options to
-include their own example data and aSVGs, set their preferred default values
-(*e.g.* color scheme, image dimension). See the help file of `custom_shiny` for
-details. ^[<font color='blue'>I didn't include example code snippet of using
-this functionality, since this vignette is already long enough. Is it
-reasonable? </font>] In addition, on the Shiny app a template of default
-parameters in yaml format is provided for download. Users can change the
-parameters in this file and upload it back to the app, then the default
-settings are changed accordingly.  
-
-</font>
+The `spatialHeatmap` package also allows users to create customized Shiny App
+instances using the `custom_shiny` function. This function provides options to include
+custom example data and aSVGs, and define default values within most visualization
+panels (*e.g.* color schemes, image dimensions, etc.). For details users want
+to consult the help file of the `custom_shiny` function. To maximize
+flexibilty, the default parameters are stored in a yaml file on the Shiny App.
+This makes it easy to refine and optimize default parameters simply by changing
+this yaml file.
 
 # Supplementary Section {#sup} 
 
