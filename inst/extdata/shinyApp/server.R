@@ -1177,9 +1177,10 @@ na.cus <- c('customData', 'customComputedData')
     updateNumericInput(session, "min.size", "Minmum module size:", value=as.numeric(lis.par$network['min.size', 'default']), min=15, max=5000)
     updateSelectInput(session, "ds","Module splitting sensitivity level:", 3:2, selected=lis.par$network['ds', 'default'])
     updateTextInput(session, "color.net", "Color scheme:", lis.par$network['color', 'default'], placeholder=paste0('Eg: ', lis.par$network['color', 'default']))
-  output$edge <- renderUI({ 
-    span(style="color:black;font-weight:NULL;", HTML("Remaining edges to display (If > 300, the app might get stuck.):<br/>0"))
-  })
+    updateNumericInput(session, "max.edg", "Maximun edges:", value=cfg$lis.par$network['max.edges', 'default'], min=1,max=1000)
+  #output$edge <- renderUI({ 
+   # span(style="color:black;font-weight:NULL;", HTML("Remaining edges to display (If > 300, the app might get stuck.):<br/>0"))
+  #})
 
   })
 
@@ -2371,8 +2372,8 @@ na.cus <- c('customData', 'customComputedData')
   })
 
   visNet <- reactive({
-
-    if (input$fileIn=="None") return()
+    
+    input$cpt.nw; if (input$fileIn=="None") return()
     if (input$fileIn=='customComputedData' & is.null(geneIn())) return()
     # if (input$adj.in=="None") return(NULL)
     if (input$fileIn=="customComputedData") { adj <- adj.mod()[['adj']]; mods <- adj.mod()[['mcol']] } else if (input$fileIn=="customData"|input$fileIn %in% cfg$na.def) { 
@@ -2391,11 +2392,15 @@ na.cus <- c('customData', 'customComputedData')
       incProgress(0.8, detail="making network data frame")
       cat('Extracting nodes and edges... \n')
       # Identify adjcency threshold with edges < max number (e.g. 300) 
-      ID <- input$gen.sel; adjs <- 1; lin <- 0; while (lin<60) {
+      ID <- input$gen.sel; adjs <- 1; lin <- 0; adj.lin.vec <- NULL
+      while (lin<input$max.edg) {
           
-          if (adjs<=10^-15) { adjs <- 0; break}; adjs <- adjs-0.1 
+          adjs <- adjs-0.002; if (adjs<=10^-15) adjs <- 0
           nod.lin <- nod_lin(ds=input$ds, lab=lab, mods=mods, adj=adj, geneID=ID, adj.min=adjs)
           lin <- nrow(nod.lin[['link']])
+          vec0 <- adjs; names(vec0) <- lin
+          adj.lin.vec <- c(adj.lin.vec, vec0)
+          if (adjs==0) break
 
         } 
         nod.lin <- nod_lin(ds=input$ds, lab=lab, mods=mods, adj=adj, geneID=ID, adj.min=ifelse(input$adj.in %in% c('None', '1'), adjs, input$adj.in))
@@ -2433,10 +2438,10 @@ na.cus <- c('customData', 'customComputedData')
  
     if (input$fileIn=="None") return()
     geneIn(); gID$geneID; input$gen.sel; input$ds; input$adj.modInpath; input$A; input$p; input$cv1; input$cv2; input$min.size; input$net.type
-    input$gen.sel; input$measure; input$cor.abs; input$thr; input$mhm.v
+    input$gen.sel; input$measure; input$cor.abs; input$thr; input$mhm.v; input$cpt.nw
     print(visNet()[["adjs1"]])
-     if (input$adj.in %in% c('None', 1) & is.null(visNet()[["adjs1"]])) updateSelectInput(session, "adj.in", "Adjacency threshold:", sort(seq(0, 1, 0.002), decreasing=TRUE), visNet()[["adjs"]]) else if (!is.null(visNet()[["adjs1"]])) updateSelectInput(session, "adj.in", "Adjacency threshold:", sort(seq(0, 1, 0.002), decreasing=TRUE), visNet()[["adjs1"]])
-    print(visNet()[["adjs"]])
+     if ((input$adj.in %in% c('None', 1) & is.null(visNet()[["adjs1"]]))|(input$cpt.nw!=cfg$lis.par$network['max.edges', 'default'] & is.null(visNet()[["adjs1"]]))) { updateSelectInput(session, "adj.in", "Adjacency threshold:", sort(seq(0, 1, 0.002), decreasing=TRUE), visNet()[["adjs"]]) } else if (!is.null(visNet()[["adjs1"]])) updateSelectInput(session, "adj.in", "Adjacency threshold:", sort(seq(0, 1, 0.002), decreasing=TRUE), visNet()[["adjs1"]])
+    print(list(2, visNet()[["adjs"]]))
   })
   output$bar.net <- renderPlot({  
 

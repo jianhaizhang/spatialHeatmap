@@ -99,7 +99,8 @@ shinyUI(dashboardPage(
       tags$span(style="color:brown;font-weight:NULL", selectInput("adj.in", "Adjacency threshold:", sort(seq(0, 1, 0.002), decreasing=TRUE), selected=1, width=150))
       ),
       column(2, offset=0, style='padding-left:10px; padding-right:0px; padding-top:0px; padding-bottom:5px',
-      htmlOutput("edge")
+      numericInput("max.edg", "Maximun edges:", value=50, min=1, max=1000, width=150)
+      #htmlOutput("edge")
       ),
       column(1, offset=0, style='padding-left:10px; padding-right:0px; padding-top:0px; padding-bottom:5px',
       actionButton("cpt.nw", "Update", icon=icon("refresh"), style="color: #fff; background-color:purple;border-color: #2e6da4")
