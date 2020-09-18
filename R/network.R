@@ -14,6 +14,7 @@
 #' @param layout The layout of the network in static image, either "circle" or "fr". The "fr" stands for force-directed layout algorithm by Fruchterman and Reingold. The default is "circle".
 #' @param main The title in the static image. Default is NULL.
 #' @param static Logical, TRUE returns a static network while FALSE returns an interactive network.
+#' @param top.edges The number of top edges to show upon loading the interactive network. If this number is too large such as 500, the network may crash dependending on the computer RAM. The default is 100. 
 #' @param ... Other arguments passed to the generic function \code{\link[graphics]{plot}}, \emph{e.g.}: \code{asp=1}. 
 #' @return A static or interactive network graph.
 
@@ -118,7 +119,7 @@
 #' @importFrom shinydashboard dashboardSidebar dashboardPage dashboardHeader sidebarMenu menuItem menuSubItem dashboardBody tabItems tabItem box
 #' @importFrom visNetwork visNetworkOutput visNetwork visOptions renderVisNetwork visIgraphLayout
 
-network <- function(ID, data, adj.mod, ds="3", adj.min=0, con.min=0, node.col=c("turquoise", "violet"), edge.col=c("yellow", "blue"), vertex.label.cex=1, vertex.cex=3, edge.cex=10, layout="circle", main=NULL, static=TRUE, ...) {
+network <- function(ID, data, adj.mod, ds="3", adj.min=0, con.min=0, node.col=c("turquoise", "violet"), edge.col=c("yellow", "blue"), vertex.label.cex=1, vertex.cex=3, edge.cex=10, layout="circle", main=NULL, static=TRUE, top.edges=100, ...) {
 
   options(stringsAsFactors=FALSE)
   if (is(data, 'data.frame')|is(data, 'matrix')|is(data, 'DFrame')) {
@@ -201,11 +202,11 @@ network <- function(ID, data, adj.mod, ds="3", adj.min=0, con.min=0, node.col=c(
       sidebarMenu(
 
         menuItem("Network", icon=icon("list"), 
-        selectInput("ds","Module splitting sensitivity level:", 3:2, selected="3", width=190),
-        selectInput("adj.in", "Adjcency threshold:", c("None", sort(seq(0, 1, 0.002), decreasing=TRUE)), 1, width=190), 
-        htmlOutput("edge"),
         div(style="display:inline-block;width:75%;text-align:left;",textInput("color.net", "Color scheme:", "yellow,orange,red", placeholder="Eg: yellow,orange,red", width=200)),
         div(style="display:inline-block;width:25%;text-align:left;", actionButton("col.but.net", "Go", icon=icon("refresh"), style="padding:7px; font-size:90%; margin-left: 0px")),
+        selectInput("ds","Module splitting sensitivity level:", 3:2, selected="3", width=190),
+        selectInput("adj.in", "Adjacency threshold:", c("None", sort(seq(0, 1, 0.002), decreasing=TRUE)), 1, width=190), 
+        htmlOutput("edge"),
         radioButtons("cpt.nw", "Show plot:", c("Yes"="Y", "No"="N"), "Y", inline=TRUE),
         menuSubItem("View graph", tabName="net")
         ),
@@ -223,7 +224,7 @@ network <- function(ID, data, adj.mod, ds="3", adj.min=0, con.min=0, node.col=c(
         box(title="Interactive Network", status="primary", solidHeader=TRUE, collapsible=TRUE, fluidRow(splitLayout(cellWidths=c("1%", "6%", "91%", "2%"), "", plotOutput("bar.net"), visNetworkOutput("vis"), "")), width=12)
         ),
         tabItem(tabName="ins", 
-        box(title=NULL, status="primary", solidHeader=TRUE, collapsible=TRUE, HTML('Initially, all edges are filtered out by the default adjcency threshold of 1. This default setting protects the browser from crash in case of large modules, since large modules could have too many edges. <br/> <br/> To display edges, users are advised to decrease adjcency threshold from 1 gradually. There is a message indicating total edges to show corresponding to each input adjcency threshold. If the total edges are less than 300, the network would be interactive smoothly. Otherwise, the interactivity depends on users\' system RAM. The network is removed every time the adjcency threshold is changed, which is a protection against browser crash. Simply checking "Yes" under "Show plot" would display the network again.'), width=12),
+        box(title=NULL, status="primary", solidHeader=TRUE, collapsible=TRUE, HTML('By default, less than 100 of the top edges are shown, since too many edges might crash the session. <br/> <br/> To display more edges, the adjcency threshold should be decreased gradually. Meanwhile, there is a message reporting left edges to show corresponding to each input adjcency threshold. If the remaining edges are less than 300, the network would be interactive smoothly. Otherwise, the interactivity depends on users\' system RAM. The network is removed every time more than 300 edges are left. In that case, simply checking "Yes" under "Show plot" would display the network again.'), width=12),
         )
         )
 
@@ -232,16 +233,6 @@ network <- function(ID, data, adj.mod, ds="3", adj.min=0, con.min=0, node.col=c(
   ))
 
   server <- shinyServer(function(input, output, session) {
-
-    observe({
-      input$ds
-      updateSelectInput(session, "adj.in", "Adjcency threshold:", c("None", sort(seq(0, 1, 0.002), decreasing=TRUE)), 1)
-      updateRadioButtons(session, "cpt.nw", "Show plot:", c("Yes"="Y", "No"="N"), "Y", inline=TRUE)
-    })
-
-    observe({
-      input$adj.in; updateRadioButtons(session, "cpt.nw", "Show plot:", c("Yes"="Y", "No"="N"), ifelse(as.numeric(input$adj.in)==1, "Y", "N"), inline=TRUE)
-    })
 
     color_scale <- y <- NULL 
     col.sch.net <- reactive({ if(input$color.net=="") { return(NULL) }
@@ -261,9 +252,22 @@ network <- function(ID, data, adj.mod, ds="3", adj.min=0, con.min=0, node.col=c(
       withProgress(message="Computing network:", value=0, {
    
         incProgress(0.8, detail="making network data frame")
-        nod.lin <- nod_lin(ds=ds, lab=lab, mods=mods, adj=adj, geneID=ID, adj.min=input$adj.in)
-        node <- nod.lin[['node']]; colnames(node) <- c('id', 'value')
+        adjs <- 1; lin <- 0; while (lin<top.edges) {
+          
+          if (adjs<=10^-15) { adjs <- 0; break}; adjs <- adjs-0.1 
+          nod.lin <- nod_lin(ds=ds, lab=lab, mods=mods, adj=adj, geneID=ID, adj.min=adjs)
+          lin <- nrow(nod.lin[['link']])
+
+        }
+        nod.lin <- nod_lin(ds=ds, lab=lab, mods=mods, adj=adj, geneID=ID, adj.min=ifelse(input$adj.in %in% c('None', '1'), adjs, input$adj.in))
         link1 <- nod.lin[['link']]; colnames(link1)[3] <- 'value'
+        adj.sel <- NULL; if (nrow(link1)==0) {
+        
+          nod.lin <- nod_lin(ds=ds, lab=lab, mods=mods, adj=adj, geneID=ID, adj.min=adjs)
+          link1 <- nod.lin[['link']]; colnames(link1)[3] <- 'value'; adj.sel <- adjs
+
+        }
+        node <- nod.lin[['node']]; colnames(node) <- c('id', 'value')
         if (nrow(link1)!=0) { 
         
           link1$title <- link1$value # 'length' is not well indicative of adjacency value, so replaced by 'value'.
@@ -271,12 +275,21 @@ network <- function(ID, data, adj.mod, ds="3", adj.min=0, con.min=0, node.col=c(
         
         }; node <- cbind(node, label=node$id, font.size=vertex.label.cex*20, borderWidth=2, color.border="black", color.highlight.background="orange", color.highlight.border="darkred", color=NA, stringsAsFactors=FALSE)
         if (!is.null(ann)) node <- cbind(node, title=ann[node$id, ], stringsAsFactors=FALSE)
-        net.lis <- list(node=node, link=link1)
+        net.lis <- list(node=node, link=link1, adjs=adjs, adj.sel=adj.sel)
 
       }); net.lis
 
     })
 
+    observe({
+      input$ds
+      if (input$adj.in %in% c('None', 1)|!is.null(visNet()[["adj.sel"]])) updateSelectInput(session, "adj.in", "Adjacency threshold:", c("None", sort(seq(0, 1, 0.002), decreasing=TRUE)), visNet()[["adjs"]])
+      updateRadioButtons(session, "cpt.nw", "Show plot:", c("Yes"="Y", "No"="N"), ifelse(nrow(visNet()[["link"]])<top.edges, "Y", "N"), inline=TRUE)
+    })
+
+    observe({
+      input$adj.in; updateRadioButtons(session, "cpt.nw", "Show plot:", c("Yes"="Y", "No"="N"), ifelse(nrow(visNet()[["link"]])<top.edges, "Y", "N"), inline=TRUE)
+    })
     output$bar.net <- renderPlot({  
 
       if (input$adj.in=="None"|input$cpt.nw=="N") return(NULL)
@@ -297,8 +310,7 @@ network <- function(ID, data, adj.mod, ds="3", adj.min=0, con.min=0, node.col=c(
     output$edge <- renderUI({ 
 
       if (input$adj.in=="None") return(NULL)
-      span(style = "color:yellow;font-weight:bold;", HTML(paste0("&nbsp&nbsp&nbsp&nbsp Total edges to display (If > 300, the <br/> 
-      &nbsp&nbsp&nbsp App can possibly get stuck.): ", nrow((visNet()[["link"]])))))
+      span(style="color:yellow;font-weight:bold;", HTML(paste0("Edges left to display (If > 300, the <br/> App can possibly get stuck):<br/>", nrow((visNet()[["link"]])))))
 
     })
 

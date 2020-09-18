@@ -1112,8 +1112,12 @@ shinyServer(function(input, output, session) {
   observe({
 
     withProgress(message="Loading dependencies: ", value=0, {
-    incProgress(0.8, detail="in progress...")
-    library(SummarizedExperiment); library(shiny); library(shinydashboard); library(grImport); library(rsvg); library(ggplot2); library(DT); library(gridExtra); library(ggdendro); library(WGCNA); library(grid); library(xml2); library(plotly); library(data.table); library(genefilter); library(flashClust); library(visNetwork); library(reshape2); library(igraph); library(animation); library(av); library(shinyWidgets); library(yaml)
+    incProgress(0.3, detail="in progress...")
+    library(SummarizedExperiment); library(shiny); library(shinydashboard); library(grImport); library(rsvg); library(ggplot2); 
+    incProgress(0.6, detail="in progress...")
+    library(DT); library(gridExtra); library(ggdendro); library(WGCNA); library(grid); library(xml2); library(plotly); library(data.table); library(genefilter); library(flashClust); library(visNetwork); 
+    incProgress(0.9, detail="in progress...")
+    library(reshape2); library(igraph); library(animation); library(av); library(shinyWidgets); library(yaml)
   })
 
     lis.cfg <- yaml.load_file('config/config.yaml')
@@ -1168,17 +1172,13 @@ na.cus <- c('customData', 'customComputedData')
     updateRadioButtons(session, inputId="thr", label="Select by:", choices=c('proportion'='p', 'number'='n', 'value'='v'), selected=lis.par$mhm['select.by', 'default'], inline=TRUE)
     updateNumericInput(session, inputId='mhm.v', label='Cutoff: ', value=as.numeric(lis.par$mhm['cutoff', 'default']), min=-Inf, max=Inf, step=NA)
     updateRadioButtons(session, inputId="mat.scale", label="Scale by:", choices=c("No", "Column", "Row"), selected=lis.par$mhm['scale', 'default'], inline=TRUE)
-    updateRadioButtons(session, inputId="mhm.but", label="Show plot:", choices=c("Yes", "No"), selected=lis.par$mhm['show', 'default'], inline=TRUE)
+    #updateRadioButtons(session, inputId="mhm.but", label="Show plot:", choices=c("Yes", "No"), selected=lis.par$mhm['show', 'default'], inline=TRUE)
     updateSelectInput(session, inputId="net.type", label="Network type:", choices=c('signed', 'unsigned', 'signed hybrid', 'distance'), selected=lis.par$network['net.type', 'default'])
     updateNumericInput(session, "min.size", "Minmum module size:", value=as.numeric(lis.par$network['min.size', 'default']), min=15, max=5000)
-    updateSelectInput(session, "gen.sel", "Select a target gene:", c("None"), selected=lis.par$network['target.gene', 'default'])
     updateSelectInput(session, "ds","Module splitting sensitivity level:", 3:2, selected=lis.par$network['ds', 'default'])
-    updateSelectInput(session, "TOM.in", "Adjcency threshold:", c("None", sort(seq(0, 1, 0.002), decreasing=TRUE)), selected=lis.par$network['adj.threshold', 'default'])
     updateTextInput(session, "color.net", "Color scheme:", lis.par$network['color', 'default'], placeholder=paste0('Eg: ', lis.par$network['color', 'default']))
-    updateRadioButtons(session, inputId="cpt.nw", label="Show plot:", choices=c("Yes", "No"), selected=lis.par$network['show', 'default'], inline=TRUE)
-
   output$edge <- renderUI({ 
-    span(style="color:black;font-weight:NULL;", HTML("Remaining edges to display (If > 300, the app might get stuck.): 0"))
+    span(style="color:black;font-weight:NULL;", HTML("Remaining edges to display (If > 300, the app might get stuck.):<br/>0"))
   })
 
   })
@@ -1472,10 +1472,10 @@ na.cus <- c('customData', 'customComputedData')
 
   observe({
 
-    if (is.null(gID$all)) return(NULL)
-    input$fileIn; geneIn(); input$adj.modInpath; input$A; input$p; input$cv1; input$cv2; input$min.size; input$net.type
-    r.na <- rownames(geneIn()[["gene2"]]); gen.sel <- r.na[input$dt_rows_selected]
-    updateSelectInput(session, "gen.sel", choices=c("None", gen.sel), selected="None")
+    if (is.null(geneIn())) return(NULL)
+    r.na <- rownames(geneIn()[["gene2"]]); gens.sel <- r.na[input$dt_rows_selected]
+    if (length(gens.sel)==0) return()
+    updateSelectInput(session, inputId="gen.sel", label="Select a target gene:", choices=c("None", gens.sel), selected=gens.sel[1])
 
   })
 
@@ -2151,7 +2151,8 @@ na.cus <- c('customData', 'customComputedData')
   observe({
   
     input$fileIn; geneIn(); input$adj.modInpath; input$A; input$p; input$cv1; input$cv2; input$dt_rows_selected
-    updateRadioButtons(session, inputId="mhm.but", label="Show plot:", choices=c("Yes", "No"), selected=cfg$lis.par$mhm['show', 'default'], inline=TRUE)
+    updateActionButton(session, inputId='mhm.but', label='Update', icon=icon("refresh"))
+    #updateRadioButtons(session, inputId="mhm.but", label="Show plot:", choices=c("Yes", "No"), selected=cfg$lis.par$mhm['show', 'default'], inline=TRUE)
 
   })
 
@@ -2165,6 +2166,7 @@ na.cus <- c('customData', 'customComputedData')
 
       incProgress(0.5, detail="Please wait...")
       gene <- geneIn()[['gene1']]
+      cat('Correlation/distance matrix...\n')
       if (input$measure=='correlation') {
       
         m <- cor(x=t(gene))
@@ -2178,7 +2180,8 @@ na.cus <- c('customData', 'customComputedData')
 
   # Subset nearest neighbours for target genes based on correlation or distance matrix.
   submat <- reactive({
-    
+  
+    if (input$fileIn=="None") return()
     if (is.null(cor.dis())|input$mhm.but=='No') return()
     gene <- geneIn()[["gene1"]]; rna <- rownames(gene)
     gen.tar<- gID$geneID; mat <- cor.dis()
@@ -2209,6 +2212,7 @@ na.cus <- c('customData', 'customComputedData')
       arg[names(arg) %in% input$thr] <- input$mhm.v
       if (input$measure=='distance' & input$thr=='v') arg['v'] <- -arg[['v']]
       if (!all(gen.tar %in% rownames(mat))) return()    
+      cat('Subsetting nearest neighbors...\n')
       gen.na <- do.call(sub_na, c(mat=list(mat), ID=list(gen.tar), arg))
       if (any(is.na(gen.na))) return() 
       validate(need(try(length(gen.na)>=2), paste0('Only ', gen.na, ' selected!'))); return(gene[gen.na, ])
@@ -2216,23 +2220,40 @@ na.cus <- c('customData', 'customComputedData')
     })
 
   })
-
-
+  mhm <- reactiveValues(hm=NULL)
   # Plot matrix heatmap.
-  output$HMly <- renderPlotly({
-   
-    if (is.null(submat())|input$mhm.but=='No') return()
+  observe({
+
+    if (input$mhm.but!=0) return() 
+    if (is.null(submat())) return()
+    gene <- geneIn()[["gene1"]]; rna <- rownames(gene)
+    gen.tar <- gID$geneID; if (length(gen.tar)>1) return()
+    withProgress(message="Matrix heatmap:", value=0, {
+      incProgress(0.7, detail="Plotting...")
+      if (input$mat.scale=="Column") scale.hm <- 'column' else if (input$mat.scale=="Row") scale.hm <- 'row' else scale.hm <- 'no'
+      cat('Initial matrix heatmap...\n')
+      mhm$hm <- matrix_hm(ID=gen.tar, data=submat(), scale=scale.hm, main='Target Genes and Their Nearest Neighbours', title.size=10, static=FALSE)
+
+    })
+
+  })
+  hmly <- eventReactive(input$mhm.but, {
+    
+    #if (is.null(submat())|input$mhm.but=='No') return()
+    if (is.null(submat())) return()
     gene <- geneIn()[["gene1"]]; rna <- rownames(gene)
     gen.tar<- gID$geneID
     withProgress(message="Matrix heatmap:", value=0, {
       incProgress(0.7, detail="Plotting...")
       if (input$mat.scale=="Column") scale.hm <- 'column' else if (input$mat.scale=="Row") scale.hm <- 'row' else scale.hm <- 'no'
+      cat('Matrix heatmap...\n')
       matrix_hm(ID=gen.tar, data=submat(), scale=scale.hm, main='Target Genes and Their Nearest Neighbours', title.size=10, static=FALSE)
 
     })
 
   })
 
+  output$HMly <- renderPlotly({ if (input$mhm.but!=0) hmly() else if (input$mhm.but==0) mhm$hm else return() })
 
   adj.mod <- reactive({ 
 
@@ -2256,62 +2277,80 @@ na.cus <- c('customData', 'customComputedData')
     }
 
   })
-  
-  adj.tree <- reactive({ 
+
     #gene <- geneIn()[["gene2"]]; if (!(input$gen.sel %in% rownames(gene))) return() # Avoid unnecessary computing of 'adj', since 'input$gen.sel' is a cerain true gene id of an irrelevant expression matrix, not 'None', when switching from one defaul example's matrix heatmap to another example.
+    adj.mods <- reactiveValues(lis=NULL)
+    observe({
+    
+      if (input$fileIn=="None") return()
+      if (is.null(submat())|input$cpt.nw!=0|length(gID$geneID)>1) return()
+
     if (input$fileIn=="customData"|any(input$fileIn %in% cfg$na.def)) {
 
       gene <- geneIn()[["gene1"]]; if (is.null(gene)) return()
       type <- input$net.type; sft <- if (type=='distance') 1 else 6
-
       withProgress(message="Computing: ", value = 0, {
         incProgress(0.3, detail="adjacency matrix.")
         incProgress(0.5, detail="topological overlap matrix.")
         incProgress(0.1, detail="dynamic tree cutting.")
-        adjMod <- adj_mod(data=submat(), type=type, minSize=input$min.size, dir=NULL)
-        adj <- adjMod[['adj']]; mod4 <- adjMod[['mod']]
+        cat('Initial adjacency matrix and modules...\n')
+        adj.mods$lis <- adj_mod(data=submat(), type=type, minSize=input$min.size, dir=NULL)
 
-      }); return(list(adj=adj, mod4=mod4))
+      })
+
+    }
+    
+    })
+
+  # er <- eventReactive(exp, {}). If its reactive value "er()" is called before eventReactive is triggered, the code execution stops where "er()" is called.
+  observeEvent(input$cpt.nw, { 
+    #gene <- geneIn()[["gene2"]]; if (!(input$gen.sel %in% rownames(gene))) return() # Avoid unnecessary computing of 'adj', since 'input$gen.sel' is a cerain true gene id of an irrelevant expression matrix, not 'None', when switching from one defaul example's matrix heatmap to another example.
+    if (is.null(submat())|input$cpt.nw==0) return()
+    if (input$fileIn=="customData"|any(input$fileIn %in% cfg$na.def)) {
+
+      gene <- geneIn()[["gene1"]]; if (is.null(gene)) return()
+      type <- input$net.type; sft <- if (type=='distance') 1 else 6
+      withProgress(message="Computing: ", value = 0, {
+        incProgress(0.3, detail="adjacency matrix.")
+        incProgress(0.5, detail="topological overlap matrix.")
+        incProgress(0.1, detail="dynamic tree cutting.")
+        cat('Adjacency and modules... \n')
+        adj.mods$lis <- adjMod <- adj_mod(data=submat(), type=type, minSize=input$min.size, dir=NULL)
+
+      })
 
     }
 
   })
 
   observe({
-    
+ 
     input$gen.sel; input$measure; input$cor.abs; input$thr; input$mhm.v
     updateSelectInput(session, 'ds', "Module splitting sensitivity level:", 3:2, selected=cfg$lis.par$network['ds', 'default'])
 
   })
 
-  mcol <- reactive({
+  #mcol <- reactive({
 
-    if (!is.null(adj.tree()) & (input$fileIn=="customData"|any(input$fileIn %in% cfg$na.def))) { 
+   # if ((input$cpt.nw!=0|!is.null(adj.mods$lis)) & (input$fileIn=="customData"|any(input$fileIn %in% cfg$na.def))) { 
 
-    withProgress(message="Computing dendrogram:", value=0, {
-      incProgress(0.7, detail="hierarchical clustering.")
-      mod4 <- adj.tree()[['mod4']]
-      
-    }); return(mod4) 
+    #withProgress(message="Computing dendrogram:", value=0, {
+     # incProgress(0.7, detail="hierarchical clustering.")
+      #if (input$cpt.nw!=0) mod4 <- adj.mods$lis[['mod']] else mod4 <- adj.mods$lis[['mod']]
+ 
+    #}); return(mod4) 
     
-  }
+ # }
 
-  })
+ #})
 
-  observe({
+
+  #observe({
   
-    geneIn(); gID$geneID; input$gen.sel; input$ds; input$adj.modInpath; input$A; input$p; input$cv1; input$cv2; input$min.size; input$net.type
-    input$gen.sel; input$measure; input$cor.abs; input$thr; input$mhm.v
-    updateSelectInput(session, "TOM.in", label="Adjacency threshold:", choices=c("None", sort(seq(0, 1, 0.002), decreasing=TRUE)), selected="None")
-
-  })
-
-  observe({
+   # geneIn(); gID$geneID; input$adj.in; input$gen.sel; input$ds; input$adj.modInpath; input$A; input$p; input$cv1; input$cv2; input$min.size; input$net.type
+    #updateRadioButtons(session, inputId="cpt.nw", label="Show plot:", choices=c("Yes", "No"), selected=ifelse(nrow(visNet()[["link"]])<120, "Yes", "No"), inline=TRUE)
   
-    geneIn(); gID$geneID; input$TOM.in; input$gen.sel; input$ds; input$adj.modInpath; input$A; input$p; input$cv1; input$cv2; input$min.size; input$net.type
-    updateRadioButtons(session, inputId="cpt.nw", label="Show plot:", choices=c("Yes", "No"), selected=cfg$lis.par$network['show', 'default'], inline=TRUE)
-
-  })
+  #})
 
   col.sch.net <- reactive({ 
 
@@ -2327,28 +2366,55 @@ na.cus <- c('customData', 'customComputedData')
   observeEvent(input$col.but.net, {
 
     if (is.null(col.sch.net())) return (NULL)
-
-      color.net$col.net <- colorRampPalette(col.sch.net())(len.cs.net)
+    color.net$col.net <- colorRampPalette(col.sch.net())(len.cs.net)
 
   })
 
   visNet <- reactive({
 
-    if (input$fileIn=='customComputedData' & is.null(geneIn())) return
-    if (input$TOM.in=="None") return(NULL)
-    if (input$fileIn=="customComputedData") { adj <- adj.mod()[[1]]; mods <- adj.mod()[[2]] } else if (input$fileIn=="customData"|any(input$fileIn %in% cfg$na.def)) { adj <- adj.tree()[[1]]; mods <- mcol() }
+    if (input$fileIn=="None") return()
+    if (input$fileIn=='customComputedData' & is.null(geneIn())) return()
+    # if (input$adj.in=="None") return(NULL)
+    if (input$fileIn=="customComputedData") { adj <- adj.mod()[['adj']]; mods <- adj.mod()[['mcol']] } else if (input$fileIn=="customData"|input$fileIn %in% cfg$na.def) { 
+      adj <- adj.mods$lis[['adj']]; mods <- adj.mods$lis[['mod']]
+    }
     if (input$fileIn=='customComputedData') gene <- geneIn()$gene2 else gene <- submat()
     if (!(input$gen.sel %in% rownames(gene))) return() # Avoid unnecessary computing of 'adj', since 'input$gen.sel' is a cerain true gene id of an irrelevant expression matrix, not 'None', when switching from one defaul example's network to another example.
     lab <- mods[, input$ds][rownames(gene)==input$gen.sel]
-    if (lab=="0") { showModal(modalDialog(title="Module", "The selected gene is not assigned to any module. Please select a different gene.")); return() }
+    validate(need(try(length(lab)==1 & !is.na(lab) & nrow(mods)==nrow(gene)), 'Click "Update" to display new network!'))
+    if (length(lab)>1|is.na(lab)) return() # When input$fileIn is changed, gene is changed also, but mods is not since it is controled by observeEvent.
+    if (lab=="0") { showModal(modalDialog(title="Warning", 'The selected gene is not assigned to any module. Please select a different one or adjust the "Minmum module size"')); return() }
     idx.m <- mods[, input$ds]==lab; adj.m <- adj[idx.m, idx.m]; gen.na <- colnames(adj.m) 
     idx.sel <- grep(paste0("^", input$gen.sel, "$"), gen.na); gen.na[idx.sel] <- paste0(input$gen.sel, "_target")
     colnames(adj.m) <- rownames(adj.m) <- gen.na
     withProgress(message="Computing network:", value=0, { 
       incProgress(0.8, detail="making network data frame")
-      nod.lin <- nod_lin(ds=input$ds, lab=lab, mods=mods, adj=adj, geneID=input$gen.sel, adj.min=input$TOM.in)
-      node <- nod.lin[['node']]; colnames(node) <- c('id', 'value')
-      link1 <- nod.lin[['link']]; colnames(link1)[3] <- 'value'
+      cat('Extracting nodes and edges... \n')
+      # Identify adjcency threshold with edges < max number (e.g. 300) 
+      ID <- input$gen.sel; adjs <- 1; lin <- 0; while (lin<60) {
+          
+          if (adjs<=10^-15) { adjs <- 0; break}; adjs <- adjs-0.1 
+          nod.lin <- nod_lin(ds=input$ds, lab=lab, mods=mods, adj=adj, geneID=ID, adj.min=adjs)
+          lin <- nrow(nod.lin[['link']])
+
+        } 
+        nod.lin <- nod_lin(ds=input$ds, lab=lab, mods=mods, adj=adj, geneID=ID, adj.min=ifelse(input$adj.in %in% c('None', '1'), adjs, input$adj.in))
+        link1 <- nod.lin[['link']]; colnames(link1)[3] <- 'value'
+        # Help users find the thickest edges.
+        adjs1 <- NULL; if (nrow(link1)==0) {
+
+          adjs1 <- 1; lins1 <- 0; while (lins1==0) {
+          
+            if (adjs1<=10^-15) { adjs1 <- 0; break}; adjs1 <- adjs1-0.002 
+            nod.lin <- nod_lin(ds=input$ds, lab=lab, mods=mods, adj=adj, geneID=ID, adj.min=adjs1)
+            lins1 <- nrow(nod.lin[['link']])
+
+          } 
+          nod.lin <- nod_lin(ds=input$ds, lab=lab, mods=mods, adj=adj, geneID=ID, adj.min=adjs1)
+          link1 <- nod.lin[['link']]; colnames(link1)[3] <- 'value'
+
+        }
+        node <- nod.lin[['node']]; colnames(node) <- c('id', 'value') 
       if (nrow(link1)!=0) { 
         
         link1$title <- link1$value # 'length' is not well indicative of adjacency value, so replaced by 'value'.
@@ -2357,15 +2423,25 @@ na.cus <- c('customData', 'customComputedData')
       }; ann <- geneIn()[[2]]
       if (!is.null(ann)) node <- cbind(node, title=ann[node$id, ], borderWidth=2, color.border="black", color.highlight.background="orange", color.highlight.border="darkred", color=NA, stringsAsFactors=FALSE)
       if (is.null(ann)) node <- cbind(node, borderWidth=2, color.border="black", color.highlight.background="orange", color.highlight.border="darkred", color=NA, stringsAsFactors=FALSE)
-      net.lis <- list(node=node, link=link1)
+      net.lis <- list(node=node, link=link1, adjs=adjs, adjs1=adjs1)
 
     }); net.lis
 
   })
-
+  # The order of reactive expression matters so "updateSelectInput" of "adj.in" should be after visNet().
+  observe({
+ 
+    if (input$fileIn=="None") return()
+    geneIn(); gID$geneID; input$gen.sel; input$ds; input$adj.modInpath; input$A; input$p; input$cv1; input$cv2; input$min.size; input$net.type
+    input$gen.sel; input$measure; input$cor.abs; input$thr; input$mhm.v
+    print(visNet()[["adjs1"]])
+     if (input$adj.in %in% c('None', 1) & is.null(visNet()[["adjs1"]])) updateSelectInput(session, "adj.in", "Adjacency threshold:", sort(seq(0, 1, 0.002), decreasing=TRUE), visNet()[["adjs"]]) else if (!is.null(visNet()[["adjs1"]])) updateSelectInput(session, "adj.in", "Adjacency threshold:", sort(seq(0, 1, 0.002), decreasing=TRUE), visNet()[["adjs1"]])
+    print(visNet()[["adjs"]])
+  })
   output$bar.net <- renderPlot({  
 
-    if (input$TOM.in=="None"|input$cpt.nw=="No") return(NULL)
+    #if (input$adj.in=="None"|input$cpt.nw=="No") return(NULL)
+    if (input$adj.in=="None") return(NULL)
     if (length(color.net$col.net=="none")==0) return(NULL)
     gene <- geneIn()[["gene1"]]; if (!(input$gen.sel %in% rownames(gene))) return() # Avoid unnecessary computing of 'adj', since 'input$gen.sel' is a cerain true gene id of an irrelevant expression matrix, not 'None', when switching from one defaul example's network to another example.
     if(input$col.but.net==0) color.net$col.net <- colorRampPalette(col_sep(cfg$lis.par$network['color', 'default']))(len.cs.net) # color.net$col.net is changed alse outside renderPlot, since it is a reactive value.
@@ -2373,8 +2449,10 @@ na.cus <- c('customData', 'customComputedData')
       withProgress(message="Color scale: ", value = 0, {
       incProgress(0.25, detail="Preparing data. Please wait.")
       incProgress(0.75, detail="Plotting. Please wait.")
-      node <- visNet()[["node"]]; node.v <- node$value; v.net <- seq(min(node.v), max(node.v), len=len.cs.net)
-        cs.net <- col_bar(geneV=v.net, cols=color.net$col.net, width=1); return(cs.net) # '((max(v.net)-min(v.net))/len.cs.net)*0.7' avoids bar overlap.
+      node <- visNet()[["node"]]; if (is.null(node)) return()
+      node.v <- node$value; v.net <- seq(min(node.v), max(node.v), len=len.cs.net)
+      cat('Network bar... \n')
+      cs.net <- col_bar(geneV=v.net, cols=color.net$col.net, width=1); return(cs.net) # '((max(v.net)-min(v.net))/len.cs.net)*0.7' avoids bar overlap.
 
       })
 
@@ -2384,28 +2462,31 @@ na.cus <- c('customData', 'customComputedData')
 
     output$edge <- renderUI({ 
 
-      if (input$TOM.in=="None"|is.null(visNet())) return(NULL)
+      if (input$adj.in=="None"|is.null(visNet())) return(NULL)
       if (input$fileIn=="none"|(input$fileIn=="Your own" & is.null(geneIn()))|
       input$gen.sel=="None") return(NULL)
-      span(style = "color:black;font-weight:NULL;", HTML(paste0("Remaining edges to display (If > 300, the app might get stuck.): ", dim((visNet()[["link"]]))[1])))
+      cat('Remaining edges... \n')
+      span(style = "color:black;font-weight:NULL;", HTML(paste0("Remaining edges to display (If > 300, the app might get stuck):<br/>", dim((visNet()[["link"]]))[1])))
 
     })
 
   })
   vis.net <- reactive({ 
     
-    if (input$TOM.in=="None"|input$cpt.nw=="No") return(NULL)
+    #if (input$adj.in=="None"|input$cpt.nw=="No") return(NULL)
+    if (input$adj.in=="None") return(NULL)
     gene <- geneIn()[["gene1"]]; if (!(input$gen.sel %in% rownames(gene))) return() # Avoid unnecessary computing of 'adj', since 'input$gen.sel' is a cerain true gene id of an irrelevant expression matrix, not 'None', when switching from one defaul example's network to another example.
-
     withProgress(message="Network:", value=0.5, {
     incProgress(0.3, detail="prepare for plotting.")
     # Match colours with gene connectivity by approximation.
-    node <- visNet()[["node"]]; node.v <- node$value; v.net <- seq(min(node.v), max(node.v), len=len.cs.net)
+    node <- visNet()[["node"]]; if (is.null(node)) return() 
+    node.v <- node$value; v.net <- seq(min(node.v), max(node.v), len=len.cs.net)
     col.nod <- NULL; for (i in node$value) {
 
       ab <- abs(i-v.net); col.nod <- c(col.nod, color.net$col.net[which(ab==min(ab))[1]])
 
     }; node$color <- col.nod
+    cat('Network... \n')
     visNetwork(node, visNet()[["link"]], height="300px", width="100%", background="", main=paste0("Network Module Containing ", input$gen.sel), submain="", footer= "") %>% visIgraphLayout(physics=FALSE, smooth=TRUE) %>% visOptions(highlightNearest=list(enabled=TRUE, hover=TRUE), nodesIdSelection=TRUE)
 
     })
@@ -2414,13 +2495,13 @@ na.cus <- c('customData', 'customComputedData')
 
   output$vis <- renderVisNetwork({
 
-    if (input$fileIn=="none"|(input$fileIn=="Your own" & is.null(geneIn()))|input$TOM.in=="None"|input$gen.sel=="None") return(NULL)
-    if (input$cpt.nw=="No") return(NULL)
+    if (input$fileIn=="none"|is.null(vis.net())) return(NULL)
+    # if (input$cpt.nw=="No") return(NULL)
 
     withProgress(message="Network:", value=0.5, {
 
       incProgress(0.3, detail="plotting.")
-      vis.net()
+      cat('Rendering network...\n'); vis.net()
 
     })
 

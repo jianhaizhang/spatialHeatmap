@@ -107,15 +107,12 @@ mhm:
 - select.by:p
 - cutoff:0.2
 - scale:No
-- show:No
 network:
+- color:yellow,orange,red
 - net.type:signed
 - min.size:15
-- target.gene:None
 - ds:3
-- adj.threshold:None
-- color:yellow,orange,red
-- show:No
+- max.edges:50
 download_single:
   data: example/ucr_shm_mean_mas.txt
   svg: example/arabidopsis_thaliana.shoot_shm.svg

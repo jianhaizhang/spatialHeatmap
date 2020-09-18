@@ -19,6 +19,7 @@ network(
   layout = "circle",
   main = NULL,
   static = TRUE,
+  top.edges = 100,
   ...
 )
 }
@@ -48,6 +49,8 @@ network(
 \item{main}{The title in the static image. Default is NULL.}
 
 \item{static}{Logical, TRUE returns a static network while FALSE returns an interactive network.}
+
+\item{top.edges}{The number of top edges to show upon loading the interactive network. If this number is too large such as 500, the network may crash dependending on the computer RAM. The default is 100.}
 
 \item{...}{Other arguments passed to the generic function \code{\link[graphics]{plot}}, \emph{e.g.}: \code{asp=1}.}
 }

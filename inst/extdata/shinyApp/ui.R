@@ -71,36 +71,38 @@ shinyUI(dashboardPage(
       radioButtons(inputId="thr", label="Select by:", choices=c('proportion'='p', 'number'='n', 'value'='v'), selected='p', inline=TRUE), '',
       numericInput(inputId='mhm.v', label='Cutoff: ', value=0.2, min=-Inf, max=Inf, step=NA, width=NULL), '',
       radioButtons(inputId="mat.scale", label="Scale by:", choices=c("No", "Column", "Row"), selected='No', inline=TRUE), '',
-      radioButtons(inputId="mhm.but", label="Show plot:", choices=c("Yes", "No"), selected='No', inline=TRUE)
+      # radioButtons(inputId="mhm.but", label="Show plot:", choices=c("Yes", "No"), selected='No', inline=TRUE)
+      actionButton("mhm.but", "Update", icon=icon("refresh"), style="color: #fff; background-color:purple;border-color: #2e6da4")
+      # submitButton(text="Update", icon=icon("refresh"), width = NULL) 
       )),
       plotlyOutput("HMly")), br(),
       box(title="Interactive Network", status="primary", solidHeader=TRUE, collapsible=TRUE, width=12,
       HTML(paste0('Display network by selecting a value in', tags$span(style="color:brown", ' "Select a target gene",'), tags$span(style="color:brown", ' "Adjacency threshold"'), ' and checking "Yes" under', tags$span(style="color:brown", ' "Show plot."'))), br(), br(), 
       fluidRow(
       # If column widths are not integers, columns are vertically aligned.
+      column(2, offset=0, style='padding-left:10px; padding-right:0px; padding-top:0px; padding-bottom:5px',
+      textInput("color.net", "Color scheme:", 'yellow,orange,red', placeholder='Eg: yellow,orange,red', width=150), actionButton("col.but.net", "Go", icon=icon("refresh"))
+      ),
       column(1, offset=0, style='padding-left:10px; padding-right:0px; padding-top:0px; padding-bottom:5px',
       selectInput(inputId="net.type", label="Network type:", choices=c('signed', 'unsigned', 'signed hybrid', 'distance'), selected='signed', width=100)
       ),
       column(1, offset=0, style='padding-left:10px; padding-right:0px; padding-top:0px; padding-bottom:5px',
       numericInput("min.size", "Minmum module size:", value=15, min=15, max=5000, width=150)
       ),
-      column(1, offset=0, style='padding-left:10px; padding-right:0px; padding-top:0px; padding-bottom:5px',
-      tags$span(style="color:brown;font-weight:NULL", selectInput("gen.sel","Select a target gene:", c("None"), selected='None', width=150))
+      column(2, offset=0, style='padding-left:10px; padding-right:0px; padding-top:0px; padding-bottom:5px',
+      tags$span(style="color:brown;font-weight:NULL", selectInput("gen.sel", "Select a target gene:", c("None"), selected='None', width=150))
       ),
       column(2, offset=0, style='padding-left:10px; padding-right:0px; padding-top:0px; padding-bottom:5px',
       selectInput("ds","Module splitting sensitivity level:", 3:2, selected=3, width=170)
       ),
       column(1, offset=0, style='padding-left:10px; padding-right:0px; padding-top:0px; padding-bottom:5px',
-      tags$span(style="color:brown;font-weight:NULL", selectInput("TOM.in", "Adjcency threshold:", c("None", sort(seq(0, 1, 0.002), decreasing=TRUE)), selected='None', width=150))
+      tags$span(style="color:brown;font-weight:NULL", selectInput("adj.in", "Adjacency threshold:", sort(seq(0, 1, 0.002), decreasing=TRUE), selected=1, width=150))
       ),
       column(2, offset=0, style='padding-left:10px; padding-right:0px; padding-top:0px; padding-bottom:5px',
       htmlOutput("edge")
       ),
-      column(2, offset=0, style='padding-left:10px; padding-right:0px; padding-top:0px; padding-bottom:5px',
-      textInput("color.net", "Color scheme:", 'yellow,orange,red', placeholder='Eg: yellow,orange,red', width=150), actionButton("col.but.net", "Go", icon=icon("refresh"))
-      ),
       column(1, offset=0, style='padding-left:10px; padding-right:0px; padding-top:0px; padding-bottom:5px',
-      tags$span(style="color:brown;font-weight:NULL", radioButtons(inputId="cpt.nw", label="Show plot:", choices=c("Yes", "No"), selected='No', inline=TRUE))
+      actionButton("cpt.nw", "Update", icon=icon("refresh"), style="color: #fff; background-color:purple;border-color: #2e6da4")
       )
       ),
       fluidRow(splitLayout(cellWidths=c("1%", "6%", "91%", "2%"), "", plotOutput("bar.net"), visNetworkOutput("vis"), ""))
