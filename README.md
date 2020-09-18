@@ -1,17 +1,11 @@
-# Summary
+# Overview
 
-This R package spatialHeatmap is designed to intuitively visualise values from a data matrix onto an SVG image provided by users and promote hypothesis generation.  
+The `spatialHeatmap` package provides functionalities for visualizing cell-, tissue- and organ-specific data of biological assays by coloring the corresponding spatial features defined in anatomical images according to a numeric color key. The color scheme used to represent the assay values can be customized by the user. This core functionality of the package is called a spatial heatmap (SHM) plot. It is enhanced with visualization tools for groups of measured items (e.g. gene modules) sharing related abundance profiles, including matrix heatmaps combined with hierarchical clustering dendrograms and network representations. The functionalities of `spatialHeatmap` can be used either in a command-driven mode from within R or a graphical user interface (GUI) provided by a Shiny App that is also part of this package. While the R-based mode provides flexibility to customize and automate analysis routines, the Shiny App includes a variety of convenience features that will appeal to experimentalists and other users less familiar with R. Moreover, the Shiny App can be used on both local computers as well as centralized server-based deployments (e.g. cloud-based or custom servers) that can be accessed remotely as a public web service for using `spatialHeatmap’s` functionalities with community and/or private data. The functionalities of the `spatialHeatmap` package are illustrated in Figure 1.
 
-The core feature Spatial Heatmap is to map expression profile of a target gene under different conditions to different tissues on a formatted SVG image, where different tissues are predefined. After mapping, the expression profile is represented as different colours across tissues in the image, which are called spatial heatmaps. This feature allows to input multiple target genes. If so, the spatial heatmaps of different genes are generated sequentially on the same page. There is also an option to display these spatial heatmaps by genes or by conditions, which makes it flexible for users to compare expression profiles of the same gene across conditions or different genes across the same condition. In the multiple-layer tissues, if some tissues are covered by front tissues and thus not visible in the spatial heatmaps, then front tissues can be set transparent to exhibit convered ones.  
 
-The data matrix is in the form of “SummarizedExperiment” (Morgan et al. 2018). The “assays” slot contains the gene expression matrix with columns and rows being tissue/conditions and genes respectively, and the “colData” slot contains replicates of samples and conditions. The tissues are pre-defined in an SVG image. To visualise the data successfully, the data matrix and SVG image should meet the format requirements, which includes tissue ids in the SVG image must be identical to tissue names in the “colData”, same tissues should be grouped in the SVG image, etc.  
+<center><img title="Overview of spatialHeatmap" src="https://github.com/jianhaizhang/spatialHeatmap/blob/master/vignettes/img/spatialHeatmap_Design.jpg" ></center>
 
-In addition, the accessory features of Matrix Heatmap and Network display the target gene in the context of corresponding gene module, which make this package more informative. All the utilities can be implemented step-by-step or lanuched as an interactive Shiny App (Chang et al., n.d.; Chang and Borges Ribeiro 2018).  
-
-# Application Scope
-
-The application is not limited to biological data. It is applicable as long as a pair of formatted data matrix in “SummariaedExperiment” and SVG image are provided. Other exmaples include population data collected in different years across different cities, health data of an individual under different conditions, ect.
-
+**Figure 1: Overview of `spatialHeatmap`**
 
 # Installation 
 
@@ -31,12 +25,12 @@ To obtain the most recent updates immediately, one can install it directly from 
 if (!requireNamespace("BiocManager", quietly=TRUE))
     install.packages("BiocManager")
 BiocManager::install("jianhaizhang/spatialHeatmap", build_vignettes=TRUE, dependencies=TRUE)
-
 ```
 
+# Usage
 
-Morgan, Martin, Valerie Obenchain, Jim Hester, and Hervé Pagès. 2018. SummarizedExperiment: SummarizedExperiment Container.  
-Chang, Winston, and Barbara Borges Ribeiro. 2018. Shinydashboard: Create Dashboards with ’Shiny’. https://CRAN.R-project.org/package=shinydashboard.  
-Chang, Winston, Joe Cheng, JJ Allaire, Yihui Xie, and Jonathan McPherson. n.d. Shiny: Web Application Framework for R. https://CRAN.R-project.org/package=shiny.
+See user vignette [here](https://github.com/jianhaizhang/spatialHeatmap/tree/master/vignettes).
+
+
 
 
