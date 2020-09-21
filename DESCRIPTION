@@ -3,9 +3,9 @@ Type: Package
 Title: spatialHeatmap
 Version: 0.99.0
 Date: 2018-09-07
-Author: Jianhai Zhang (PhD student at Genetics, Genomics and Bioinformatics, University of California, Riverside), Dr. Thomas Girke (professor at Department of Botany and Plant Sciences, University of California, Riverside)
-Maintainer: Jianhai Zhang <jzhan067@ucr.edu> <zhang.jianhai@hotmail.com>
-Description: This package is designed to allow users to visualise custom data matrix on SVG images in an intuitive way, and therefore promote hypothesis generation.
+Author: Jianhai Zhang, Thomas Girke
+Maintainer: Jianhai Zhang <jzhan067@ucr.edu>
+Description: The spatialHeatmap package provides functionalities for visualizing cell-, tissue- and organ-specific data of biological assays by coloring the corresponding spatial features defined in anatomical images according to a numeric color key.
 License: Artistic-2.0
 Encoding: UTF-8
 biocViews: Visualization, Microarray, Sequencing, GeneExpression, DataRepresentation, Network, Clustering, GraphAndNetwork
