@@ -1,21 +1,13 @@
 options(shiny.maxRequestSize=7*1024^3, stringsAsFactors=FALSE) 
 
 # Import internal functions.
-#filter_data <- get('filter_data', envir=asNamespace('spatialHeatmap'), inherits=FALSE)
-#svg_df <- get('svg_df', envir=asNamespace('spatialHeatmap'), inherits=FALSE)
-#nod_lin <- get('nod_lin', envir=asNamespace('spatialHeatmap'), inherits=FALSE)
-#grob_list <- get('grob_list', envir=asNamespace('spatialHeatmap'), inherits=FALSE)
-#col_bar <- get('col_bar', envir=asNamespace('spatialHeatmap'), inherits=FALSE)
-#lay_shm <- get('lay_shm', envir=asNamespace('spatialHeatmap'), inherits=FALSE)
-#adj_mod <- get('adj_mod', envir=asNamespace('spatialHeatmap'), inherits=FALSE)
-#matrix_hm <- get('matrix_hm', envir=asNamespace('spatialHeatmap'), inherits=FALSE)
-#network <- get('network', envir=asNamespace('spatialHeatmap'), inherits=FALSE)
 
 # source('~/tissue_specific_gene/function/fun.R')
 
 # Right before submit the package the following functions will be deleted, and they will be imported as above. They are listed here now for the convenience of functionality development.
 
 
+#sort_gen_con <- get('sort_gen_con', envir=asNamespace('spatialHeatmap'), inherits=FALSE)
 sort_gen_con <- function(ID.sel, na.all, con.all, by='gene') {
 
   # Sort vector of letter and number mixture.
@@ -84,6 +76,7 @@ sort_gen_con <- function(ID.sel, na.all, con.all, by='gene') {
 
 }
 
+#matrix_hm <- get('matrix_hm', envir=asNamespace('spatialHeatmap'), inherits=FALSE)
 matrix_hm <- function(ID, data, scale='no', col=c('yellow', 'orange', 'red'), main=NULL, title.size=10, cexCol=1, cexRow=1, angleCol=45, angleRow=45, sep.color="black", sep.width=0.02, static=TRUE, margin=c(10, 10), arg.lis1=list(), arg.lis2=list()) {
 
   options(stringsAsFactors=FALSE)
@@ -142,6 +135,7 @@ matrix_hm <- function(ID, data, scale='no', col=c('yellow', 'orange', 'red'), ma
 
 }
 
+#sub_na <- get('sub_na', envir=asNamespace('spatialHeatmap'), inherits=FALSE)
 # Function to extract nearest genes.
 sub_na <- function(mat, ID, p=0.3, n=NULL, v=NULL) {
 
@@ -167,6 +161,7 @@ sub_na <- function(mat, ID, p=0.3, n=NULL, v=NULL) {
 
 }
 
+#adj_mod <- get('adj_mod', envir=asNamespace('spatialHeatmap'), inherits=FALSE)
 adj_mod <- function(data, type='signed', power=if (type=='distance') 1 else 6, arg.adj=list(), TOMType='unsigned', arg.tom=list(), method='complete', minSize=15, arg.cut=list(), dir=NULL) {
 
   options(stringsAsFactors=FALSE)
@@ -222,6 +217,8 @@ adj_mod <- function(data, type='signed', power=if (type=='distance') 1 else 6, a
 
 }
 
+
+#filter_data <- get('filter_data', envir=asNamespace('spatialHeatmap'), inherits=FALSE)
 
 filter_data <- function(data, pOA=c(0, 0), CV=c(-Inf, Inf), ann=NULL, sam.factor, con.factor,  dir=NULL) {
 
@@ -403,6 +400,7 @@ aggr_rep <- function(data, sam.factor, con.factor, aggr='mean') {
 }
 
 
+#col_bar <- get('col_bar', envir=asNamespace('spatialHeatmap'), inherits=FALSE)
 col_bar <- function(geneV, cols, width, bar.title.size=0, bar.value.size=10, mar=c(0.07, 0.01, 0.05, 0.1)) {        
 
   color_scale <- y <- NULL
@@ -414,6 +412,7 @@ col_bar <- function(geneV, cols, width, bar.title.size=0, bar.value.size=10, mar
 }
 
 
+#lay_shm <- get('lay_shm', envir=asNamespace('spatialHeatmap'), inherits=FALSE)
 lay_shm <- function(lay.shm, con, ncol, ID.sel, grob.list, width, height, shiny) {
   
   width <- as.numeric(width); height <- as.numeric(height); ncol <- as.numeric(ncol); con <- unique(con)
@@ -427,7 +426,7 @@ lay_shm <- function(lay.shm, con, ncol, ID.sel, grob.list, width, height, shiny)
     # Sort conditions under each gene.
     #na.sort <- sort_gen_con(ID.sel=ID.sel, na.all=grob.all.na, con.all=con, by=lay.shm)
     # grob.list <- grob.list[na.sort]
-    if (shiny==TRUE & length(grob.list)>=1) return(grid.arrange(grobs=grob.list, layout_matrix=lay, newpage=TRUE))
+    if (shiny==TRUE & length(grob.list)>=1) return(list(shm=grid.arrange(grobs=grob.list, layout_matrix=lay, newpage=TRUE), lay=lay))
        
     g.tr <- lapply(grob.list[seq_len(length(grob.list))], grobTree)
     n.col <- ncol(lay); n.row <- nrow(lay)
@@ -441,7 +440,7 @@ lay_shm <- function(lay.shm, con, ncol, ID.sel, grob.list, width, height, shiny)
     lay <- NULL; for (i in seq_len(length(con))) { lay <- rbind(lay, m+(i-1)*length(ID.sel)) }
     # na.sort <- sort_gen_con(ID.sel=ID.sel, na.all=grob.all.na, con.all=con, by='con')
     # grob.list <- grob.list[na.sort]
-    if (shiny==TRUE & length(grob.list)>=1) return(grid.arrange(grobs=grob.list, layout_matrix=lay, newpage=TRUE))
+    if (shiny==TRUE & length(grob.list)>=1) return(list(shm=grid.arrange(grobs=grob.list, layout_matrix=lay, newpage=TRUE), lay=lay))
     g.tr <- lapply(grob.list, grobTree); g.tr <- g.tr[names(grob.list)]
     n.col <- ncol(lay); n.row <- nrow(lay)
     g.arr <- arrangeGrob(grobs=g.tr, layout_matrix=lay, widths=unit(rep(width/n.col, n.col), "npc"), heights=unit(rep(height/n.row, n.row), "npc")) 
@@ -450,6 +449,7 @@ lay_shm <- function(lay.shm, con, ncol, ID.sel, grob.list, width, height, shiny)
 
 }
 
+#nod_lin <- get('nod_lin', envir=asNamespace('spatialHeatmap'), inherits=FALSE)
 nod_lin <- function(ds, lab, mods, adj, geneID, adj.min) {
 
   from <- to <- NULL
@@ -466,6 +466,7 @@ nod_lin <- function(ds, lab, mods, adj, geneID, adj.min) {
 
 }
 
+#path_br <- get('path_br', envir=asNamespace('spatialHeatmap'), inherits=FALSE)
 
 # Break combined path to a group (g=TRUE) or siblings (g=FALSE).
 
@@ -525,6 +526,7 @@ path_br <- function(node, g=TRUE) {
 
 
 
+#path_br_all <- get('path_br_all', envir=asNamespace('spatialHeatmap'), inherits=FALSE)
 # The outline or tissue nodes are checked for combines paths. If combined paths are detected, those outside a group are broken to a group while those inside a group are broken as siblings.  
 path_br_all <- function(node.parent) {
 
@@ -552,6 +554,7 @@ path_br_all <- function(node.parent) {
 }
 
 
+#svg_attr <- get('svg_attr', envir=asNamespace('spatialHeatmap'), inherits=FALSE)
 # 'a' nodes are not removed.
 svg_attr <- function(doc, feature) {
 
@@ -601,6 +604,7 @@ svg_attr <- function(doc, feature) {
 }
 
 
+#svg_df <- get('svg_df', envir=asNamespace('spatialHeatmap'), inherits=FALSE)
 svg_df <- function(svg.path, feature) {
 
   # Make sure the style is correct. If the stroke width is not the same across polygons such as '0.0002px', '0.216px', some stroke outlines cannot be recognised by 'PostScriptTrace'. Then some polygons are missing. Since the ggplot is based on 'stroke' not 'fill'.
@@ -710,6 +714,7 @@ svg_df <- function(svg.path, feature) {
 }
 
 
+#grob_list <- get('grob_list', envir=asNamespace('spatialHeatmap'), inherits=FALSE)
 grob_list <- function(gene, con.na=TRUE, geneV, coord, ID, cols, tis.path, tis.trans=NULL, sub.title.size, sam.legend='identical', legend.col, legend.ncol=NULL, legend.nrow=NULL, legend.position='bottom', legend.direction=NULL, legend.key.size=0.02, legend.text.size=12, legend.plot.title=NULL, legend.plot.title.size=11, line.size=0.2, line.color='grey70', mar.lb=NULL, ...) {
 
 # con.na=TRUE; sam.legend='identical'; legend.title=NULL; legend.ncol=NULL; legend.nrow=NULL; legend.position='bottom'; legend.direction=NULL; legend.key.size=0.5; legend.text.size=8; legend.title.size=8; line.size=0.2; line.color='grey70'; mar.lb=NULL
@@ -823,6 +828,7 @@ grob_list <- function(gene, con.na=TRUE, geneV, coord, ID, cols, tis.path, tis.t
 }
 
 
+#grob_gg <- get('grob_gg', envir=asNamespace('spatialHeatmap'), inherits=FALSE)
 # Separate SHMs of grobs and ggplot. Different SHMs of same 'gene_condition' are indexed with suffixed of '_1', '_2', ...
 grob_gg <- function(gs) {
  
@@ -840,6 +846,7 @@ grob_gg <- function(gs) {
 
 }
 
+#submatrix <- get('submatrix', envir=asNamespace('spatialHeatmap'), inherits=FALSE)
 # Subset data matrix by correlation or distance measure.
 submatrix <- function(data, ann=NULL, ID, p=0.3, n=NULL, v=NULL, fun='cor', cor.absolute=FALSE, arg.cor=list(method="pearson"), arg.dist=list(method="euclidean"), dir=NULL) {
 
@@ -902,6 +909,7 @@ submatrix <- function(data, ann=NULL, ID, p=0.3, n=NULL, v=NULL, fun='cor', cor.
 
 }
 
+#gg_lgd <- get('gg_lgd', envir=asNamespace('spatialHeatmap'), inherits=FALSE)
 # Adjust legend key size and rows in ggplot.
 gg_lgd <- function(gg.all, size.key=NULL, size.text.key=8, angle.text.key=NULL, position.text.key=NULL, legend.value.vdo=NULL, sub.title.size=NULL, row=NULL, col=NULL, label=FALSE, label.size=3, label.angle=0, hjust=0, vjust=0, opacity=1, key=TRUE, sam.dat, tis.trans=NULL) {
 
@@ -961,6 +969,7 @@ gg_lgd <- function(gg.all, size.key=NULL, size.text.key=8, angle.text.key=NULL, 
 
 }
 
+#gg_2lgd <- get('gg_2lgd', envir=asNamespace('spatialHeatmap'), inherits=FALSE)
 # Add value keys SHMs.
 gg_2lgd <- function(gg.all, sam.dat, tis.trans, position.2nd='bottom', legend.nrow.2nd=NULL, legend.ncol.2nd=NULL, legend.key.size.2nd=0.03, add.feature.2nd=FALSE, legend.text.size.2nd=10, angle.text.key.2nd=0, position.text.key.2nd='right') {
 
@@ -987,6 +996,7 @@ gg_2lgd <- function(gg.all, sam.dat, tis.trans, position.2nd='bottom', legend.nr
 
 }
 
+#html_ly <- get('html_ly', envir=asNamespace('spatialHeatmap'), inherits=FALSE)
 # Prepare interactive SHMs in html.
 html_ly <- function(gg, cs.g, tis.trans, sam.uni, anm.width, anm.height, selfcontained=FALSE, out.dir) {
 
@@ -1018,7 +1028,7 @@ html_ly <- function(gg, cs.g, tis.trans, sam.uni, anm.width, anm.height, selfcon
       if (any(idx.tis)) g2l$data[[i]]$name <- tis.show1[idx.tis] else g2l$data[[i]]$showlegend <- FALSE
 
     }; ggly <- as_widget(g2l)
-    subly <- subplot(csly, ggly, nrows=1, shareX=F, shareY=F, margin=0, widths=c(0.05, 0.95))
+    subly <- subplot(csly, ggly, nrows=1, shareX=FALSE, shareY=FALSE, margin=0, widths=c(0.05, 0.95))
     subly$width <- anm.width; subly$height <- anm.height
     saveWidget(subly, na.hl, selfcontained=selfcontained, libdir="lib") 
     system(paste0('mv ', na.hl, ' ', dir))
@@ -1028,6 +1038,7 @@ html_ly <- function(gg, cs.g, tis.trans, sam.uni, anm.width, anm.height, selfcon
 
 }
 
+#video <- get('video', envir=asNamespace('spatialHeatmap'), inherits=FALSE)
 # Make videos.
 video <- function(gg, cs.g, sam.uni, tis.trans, sub.title.size=NULL, bar.value.size=NULL, lgd.key.size=0.02, lgd.text.size=8, angle.text.key=NULL, position.text.key=NULL, lgd.row=2, lgd.col=NULL, legend.value.vdo=NULL, label=FALSE, label.size=4, label.angle=0, hjust=0, vjust=0, opacity=1, key=TRUE, width=0.92, height=0.99, video.dim='640x480', res=500, interval=1, framerate=1, out.dir) {
 
@@ -1057,7 +1068,7 @@ video <- function(gg, cs.g, sam.uni, tis.trans, sub.title.size=NULL, bar.value.s
 
 # Import input matrix.
 fread.df <- function(input, isRowGene, header, sep, fill, rep.aggr='mean', check.names=FALSE) {
-        
+  
   df0 <- fread(input=input, header=header, sep=sep, fill=fill)
   cna <- make.names(colnames(df0))
   if (cna[1]=='V1') cna <- cna[-1] else cna <- cna[-ncol(df0)] 
@@ -1155,7 +1166,7 @@ shinyServer(function(input, output, session) {
 na.cus <- c('customData', 'customComputedData')
     cfg$lis.dat <- lis.dat; cfg$lis.dld <- lis.dld; cfg$lis.par <- lis.par; cfg$na.def <- na.def; cfg$svg.def <- svg.def; cfg$dat.ipt <- dat.ipt; cfg$na.cus <- na.cus
 
-    output$title <- renderText({ lis.par$title['title', 'default'] })
+    output$spatialHeatmap <- renderText({ lis.par$title['title', 'default'] })
     output$title.w <- renderText({ lis.par$title['width', 'default'] })
     updateSelectInput(session, 'fileIn', 'Step 1: data sets', na.ipt, lis.par$default.dataset)
     updateRadioButtons(session, inputId='dimName', label='Step 4: is column or row gene?', choices=c("None", "Row", "Column"), selected=lis.par$col.row.gene, inline=TRUE)
@@ -1177,7 +1188,7 @@ na.cus <- c('customData', 'customComputedData')
     updateNumericInput(session, "min.size", "Minmum module size:", value=as.numeric(lis.par$network['min.size', 'default']), min=15, max=5000)
     updateSelectInput(session, "ds","Module splitting sensitivity level:", 3:2, selected=lis.par$network['ds', 'default'])
     updateTextInput(session, "color.net", "Color scheme:", lis.par$network['color', 'default'], placeholder=paste0('Eg: ', lis.par$network['color', 'default']))
-    updateNumericInput(session, "max.edg", "Maximun edges:", value=cfg$lis.par$network['max.edges', 'default'], min=1,max=1000)
+    updateNumericInput(session, "max.edg", "Maximun edges (too many edges may crash the app):", value=cfg$lis.par$network['max.edges', 'default'], min=1, max=500)
   #output$edge <- renderUI({ 
    # span(style="color:black;font-weight:NULL;", HTML("Remaining edges to display (If > 300, the app might get stuck.):<br/>0"))
   #})
@@ -1325,9 +1336,10 @@ na.cus <- c('customData', 'customComputedData')
     if (is.null(geneIn1())) return()
     if (input$search=='') sel <- as.numeric(cfg$lis.par$data.matrix['row.selected', 'default']) else {
 
-      gens <- strsplit(gsub(' |\\.|-|;|,|/|\\|', '_', input$search), '_')[[1]]
-       sel <- which(rownames(geneIn1()[['gene2']]) %in% gens)
-       if (length(sel)==0) sel <- as.numeric(cfg$lis.par$data.matrix['row.selected', 'default'])
+      gens <- strsplit(gsub(' |,', '_', input$search), '_')[[1]]
+      pat <- paste0('^', gens, '$', collapse='|')
+      sel <- which(grepl(pat, x=rownames(geneIn1()[['gene2']]), ignore.case=TRUE, perl=TRUE))
+      if (length(sel)==0) sel <- as.numeric(cfg$lis.par$data.matrix['row.selected', 'default'])
 
      }; sear$id <- sel
 
@@ -1376,7 +1388,7 @@ na.cus <- c('customData', 'customComputedData')
    if (length(sel)==1 & sel[1]==as.numeric(cfg$lis.par$data.matrix['row.selected', 'default']) & nrow(gene.dt)>1) sel <- sel else if (nrow(gene.dt)==1)  sel <- 1 else if (length(sel)>1) sel <- seq_along(sel)
 
    datatable(gene.dt, selection=list(mode="multiple", target="row", selected=sel),
-    filter="top", extensions=c('Scroller'), options=list(pageLength=5, lengthMenu=c(5, 15, 20), autoWidth=TRUE, scrollCollapse=TRUE, deferRender=TRUE, scrollX=TRUE, scrollY=200, scroller=TRUE, searchHighlight=FALSE, searching=FALSE), class='cell-border strip hover') %>% formatStyle(0, backgroundColor="orange", cursor='pointer') %>% 
+   filter="top", extensions=c('Scroller'), options=list(pageLength=5, lengthMenu=c(5, 15, 20), autoWidth=TRUE, scrollCollapse=TRUE, deferRender=TRUE, scrollX=TRUE, scrollY=200, scroller=TRUE, searchHighlight=FALSE, search=list(regex=TRUE, smart=FALSE, caseInsensitive=TRUE), searching=FALSE), class='cell-border strip hover') %>% formatStyle(0, backgroundColor="orange", cursor='pointer') %>% 
     formatRound(colnames(geneIn()[["gene2"]]), 2)
 
     })
@@ -1535,7 +1547,7 @@ na.cus <- c('customData', 'customComputedData')
             svg.df.lis <- c(svg.df.lis, list(df_tis))
    
           }; names(svg.df.lis) <- svg.na; 
-          return(svg.df.lis)
+         return(svg.df.lis)
 
       })
 
@@ -1791,7 +1803,12 @@ na.cus <- c('customData', 'customComputedData')
     con <- unique(gsub(pat.all, '\\2\\3', names(grob.lis.p))); if (length(con)==0) return()
     cat('Plotting spatial heatmaps... \n')
     lay <- input$gen.con; ID <- gID$geneID; ncol <- input$col.n
-    shm <- lay_shm(lay.shm=lay, con=con, ncol=ncol, ID.sel=ID, grob.list=grob.lis.p, width=input$width, height=input$height, shiny=TRUE)
+    shm.lay <- lay_shm(lay.shm=lay, con=con, ncol=ncol, ID.sel=ID, grob.list=grob.lis.p, width=input$width, height=input$height, shiny=TRUE); shm <- shm.lay$shm
+    # Adjust the dimension in chicken example. 
+    #svg.df <- svg.df(); w.all <- h.all <- 0
+    # for (i in svg.df) { w.all <- w.all+i$w.h['width']; h.all <- h.all+i$w.h['height'] }
+    #shm.row <- nrow(shm.lay$lay)
+    #if (length(svg.df)==1) updateNumericInput(session, inputId="height", label="Overall height:", value=as.numeric(h.all/w.all*shm.row*input$width), min=0.1, max=Inf, step=NA)
     if (input$ext!='NA') {
       
       validate(need(try(input$res>0), 'Resolution should be a positive numeric!'))
@@ -2214,6 +2231,7 @@ na.cus <- c('customData', 'customComputedData')
       if (input$measure=='distance' & input$thr=='v') arg['v'] <- -arg[['v']]
       if (!all(gen.tar %in% rownames(mat))) return()    
       cat('Subsetting nearest neighbors...\n')
+      validate(need(try(ncol(gene)>4), 'The "sample__condition" variables in the Data Matrix are less than 5, so no coexpression analysis is applied!'))
       gen.na <- do.call(sub_na, c(mat=list(mat), ID=list(gen.tar), arg))
       if (any(is.na(gen.na))) return() 
       validate(need(try(length(gen.na)>=2), paste0('Only ', gen.na, ' selected!'))); return(gene[gen.na, ])
@@ -2254,11 +2272,18 @@ na.cus <- c('customData', 'customComputedData')
 
   })
 
-  output$HMly <- renderPlotly({ if (input$mhm.but!=0) hmly() else if (input$mhm.but==0) mhm$hm else return() })
+  output$HMly <- renderPlotly({ 
+   
+    if (is.null(input$dt_rows_selected)) return()
+    if (is.null(gID$geneID)|is.null(submat())) return()
+    if (gID$geneID=='none'|is.na(gID$geneID)) return()
+    if (input$mhm.but!=0) hmly() else if (input$mhm.but==0) mhm$hm else return() 
+  
+  })
 
   adj.mod <- reactive({ 
 
-    if (input$fileIn=="customComputedData") {
+    if (input$fileIn=="customComputedData" & !is.null(input$adj.modInpath)) {
 
       name <- input$adj.modInpath$name; path <- input$adj.modInpath$datapath
       path1 <- path[name=="adj.txt"]; path2 <- path[name=="mod.txt"]
@@ -2316,7 +2341,7 @@ na.cus <- c('customData', 'customComputedData')
         incProgress(0.5, detail="topological overlap matrix.")
         incProgress(0.1, detail="dynamic tree cutting.")
         cat('Adjacency and modules... \n')
-        adj.mods$lis <- adjMod <- adj_mod(data=submat(), type=type, minSize=input$min.size, dir=NULL)
+        adj.mods$lis <- adj_mod(data=submat(), type=type, minSize=input$min.size)
 
       })
 
@@ -2372,7 +2397,7 @@ na.cus <- c('customData', 'customComputedData')
   })
 
   visNet <- reactive({
-    
+ 
     input$cpt.nw; if (input$fileIn=="None") return()
     if (input$fileIn=='customComputedData' & is.null(geneIn())) return()
     # if (input$adj.in=="None") return(NULL)
@@ -2384,7 +2409,7 @@ na.cus <- c('customData', 'customComputedData')
     lab <- mods[, input$ds][rownames(gene)==input$gen.sel]
     validate(need(try(length(lab)==1 & !is.na(lab) & nrow(mods)==nrow(gene)), 'Click "Update" to display new network!'))
     if (length(lab)>1|is.na(lab)) return() # When input$fileIn is changed, gene is changed also, but mods is not since it is controled by observeEvent.
-    if (lab=="0") { showModal(modalDialog(title="Warning", 'The selected gene is not assigned to any module. Please select a different one or adjust the "Minmum module size"')); return() }
+    validate(need(try(lab!='0'), 'Warning: the selected gene is not assigned to any module. Please select a different one or adjust the "Minmum module size"!'))
     idx.m <- mods[, input$ds]==lab; adj.m <- adj[idx.m, idx.m]; gen.na <- colnames(adj.m) 
     idx.sel <- grep(paste0("^", input$gen.sel, "$"), gen.na); gen.na[idx.sel] <- paste0(input$gen.sel, "_target")
     colnames(adj.m) <- rownames(adj.m) <- gen.na
@@ -2393,6 +2418,8 @@ na.cus <- c('customData', 'customComputedData')
       cat('Extracting nodes and edges... \n')
       # Identify adjcency threshold with edges < max number (e.g. 300) 
       ID <- input$gen.sel; adjs <- 1; lin <- 0; adj.lin.vec <- NULL
+      validate(need(try(as.integer(input$max.edg)==input$max.edg), 'The number of edges should be an integer!'))
+      # Compute the min adj.
       while (lin<input$max.edg) {
           
           adjs <- adjs-0.002; if (adjs<=10^-15) adjs <- 0
@@ -2402,33 +2429,42 @@ na.cus <- c('customData', 'customComputedData')
           adj.lin.vec <- c(adj.lin.vec, vec0)
           if (adjs==0) break
 
-        } 
-        nod.lin <- nod_lin(ds=input$ds, lab=lab, mods=mods, adj=adj, geneID=ID, adj.min=ifelse(input$adj.in %in% c('None', '1'), adjs, input$adj.in))
-        link1 <- nod.lin[['link']]; colnames(link1)[3] <- 'value'
-        # Help users find the thickest edges.
-        adjs1 <- NULL; if (nrow(link1)==0) {
+      }; cat('Adjacency-edge pairs done! \n')
+      # The first version of links computed from the min adj or the input adj, which is subjected to the following check.
+      nod.lin <- nod_lin(ds=input$ds, lab=lab, mods=mods, adj=adj, geneID=ID, adj.min=ifelse(input$adj.in==1, adjs, input$adj.in))
+      link1 <- nod.lin[['link']]; colnames(link1)[3] <- 'value'
+      # If the links are 0 due to the input adj, change the "adjs" to the value bringing 1 or 2 links.
+      lins <- NULL; if (nrow(link1)==0) {
 
-          adjs1 <- 1; lins1 <- 0; while (lins1==0) {
-          
-            if (adjs1<=10^-15) { adjs1 <- 0; break}; adjs1 <- adjs1-0.002 
-            nod.lin <- nod_lin(ds=input$ds, lab=lab, mods=mods, adj=adj, geneID=ID, adj.min=adjs1)
-            lins1 <- nrow(nod.lin[['link']])
+        adjs <- adj.lin.vec[names(adj.lin.vec)>=1][1]
+        nod.lin <- nod_lin(ds=input$ds, lab=lab, mods=mods, adj=adj, geneID=ID, adj.min=adjs)
+        link1 <- nod.lin[['link']]; colnames(link1)[3] <- 'value'; lins <- nrow(link1)
 
-          } 
-          nod.lin <- nod_lin(ds=input$ds, lab=lab, mods=mods, adj=adj, geneID=ID, adj.min=adjs1)
-          link1 <- nod.lin[['link']]; colnames(link1)[3] <- 'value'
+      } else if (nrow(link1)>input$max.edg) {
+       
+        # If the links are larger than max links due to the input adj, change the "adjs" to the value producing max links.
+        adjs <- adjs+0.002
+        nod.lin <- nod_lin(ds=input$ds, lab=lab, mods=mods, adj=adj, geneID=ID, adj.min=adjs)
+        link1 <- nod.lin[['link']]; colnames(link1)[3] <- 'value'; lins <- nrow(link1)
 
-        }
-        node <- nod.lin[['node']]; colnames(node) <- c('id', 'value') 
+      } else if (nrow(link1)<=input$max.edg & input$adj.in!=1) {
+        
+        # If 0<link total<max links, use the input adj.
+        adjs <- input$adj.in
+        nod.lin <- nod_lin(ds=input$ds, lab=lab, mods=mods, adj=adj, geneID=ID, adj.min=adjs)
+        link1 <- nod.lin[['link']]; colnames(link1)[3] <- 'value'; lins <- nrow(link1)
+
+      }
+      node <- nod.lin[['node']]; colnames(node) <- c('id', 'value') 
       if (nrow(link1)!=0) { 
         
         link1$title <- link1$value # 'length' is not well indicative of adjacency value, so replaced by 'value'.
         link1$color <- 'lightblue'
         
-      }; ann <- geneIn()[[2]]
+      }; ann <- geneIn()[['gene3']]
       if (!is.null(ann)) node <- cbind(node, title=ann[node$id, ], borderWidth=2, color.border="black", color.highlight.background="orange", color.highlight.border="darkred", color=NA, stringsAsFactors=FALSE)
       if (is.null(ann)) node <- cbind(node, borderWidth=2, color.border="black", color.highlight.background="orange", color.highlight.border="darkred", color=NA, stringsAsFactors=FALSE)
-      net.lis <- list(node=node, link=link1, adjs=adjs, adjs1=adjs1)
+      net.lis <- list(node=node, link=link1, adjs=adjs, lins=lins)
 
     }); net.lis
 
@@ -2439,9 +2475,10 @@ na.cus <- c('customData', 'customComputedData')
     if (input$fileIn=="None") return()
     geneIn(); gID$geneID; input$gen.sel; input$ds; input$adj.modInpath; input$A; input$p; input$cv1; input$cv2; input$min.size; input$net.type
     input$gen.sel; input$measure; input$cor.abs; input$thr; input$mhm.v; input$cpt.nw
-    print(visNet()[["adjs1"]])
-     if ((input$adj.in %in% c('None', 1) & is.null(visNet()[["adjs1"]]))|(input$cpt.nw!=cfg$lis.par$network['max.edges', 'default'] & is.null(visNet()[["adjs1"]]))) { updateSelectInput(session, "adj.in", "Adjacency threshold:", sort(seq(0, 1, 0.002), decreasing=TRUE), visNet()[["adjs"]]) } else if (!is.null(visNet()[["adjs1"]])) updateSelectInput(session, "adj.in", "Adjacency threshold:", sort(seq(0, 1, 0.002), decreasing=TRUE), visNet()[["adjs1"]])
-    print(list(2, visNet()[["adjs"]]))
+     #if ((input$adj.in==1 & is.null(visNet()[["adjs1"]]))|(input$cpt.nw!=cfg$lis.par$network['max.edges', 'default'] & is.null(visNet()[["adjs1"]]))) { updateSelectInput(session, "adj.in", "Adjacency threshold:", sort(seq(0, 1, 0.002), decreasing=TRUE), visNet()[["adjs"]]) } else if (!is.null(visNet()[["adjs1"]])) updateSelectInput(session, "adj.in", "Adjacency threshold:", sort(seq(0, 1, 0.002), decreasing=TRUE), visNet()[["adjs1"]])
+     lins <- visNet()[["lins"]]
+     if (input$adj.in==1|is.null(lins)|is.numeric(lins)) updateSelectInput(session, "adj.in", "Adjacency threshold (the  smaller, the more edges):", sort(seq(0, 1, 0.002), decreasing=TRUE), as.numeric(visNet()[["adjs"]])) 
+  
   })
   output$bar.net <- renderPlot({  
 
@@ -2471,7 +2508,7 @@ na.cus <- c('customData', 'customComputedData')
       if (input$fileIn=="none"|(input$fileIn=="Your own" & is.null(geneIn()))|
       input$gen.sel=="None") return(NULL)
       cat('Remaining edges... \n')
-      span(style = "color:black;font-weight:NULL;", HTML(paste0("Remaining edges to display (If > 300, the app might get stuck):<br/>", dim((visNet()[["link"]]))[1])))
+      span(style = "color:black;font-weight:NULL;", HTML(paste0("Remaining edges: ", dim((visNet()[["link"]]))[1])))
 
     })
 
@@ -2500,6 +2537,7 @@ na.cus <- c('customData', 'customComputedData')
 
   output$vis <- renderVisNetwork({
 
+    if (is.null(input$dt_rows_selected)) return()
     if (input$fileIn=="none"|is.null(vis.net())) return(NULL)
     # if (input$cpt.nw=="No") return(NULL)
 

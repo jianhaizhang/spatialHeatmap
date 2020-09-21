@@ -9,6 +9,8 @@
 #' @inheritParams col_bar
 #' @inheritParams html_ly
 #' @inheritParams gg_lgd
+#' @inheritParams gg_2lgd
+#' @inheritParams htmlwidgets::saveWidget
 
 #' @param ID A character vector of assyed items (\emph{e.g.} genes, proteins) whose abudance values are used to color the aSVG.
 #' @param col.com A character vector of the color components used to build the color scale. The default is c('yellow', 'orange', 'red').
@@ -41,7 +43,6 @@
 
 #' ## In the following examples, the 2 toy data come from an RNA-seq analysis on development of 7 chicken organs under 9 time points (Cardoso-Moreira et al. 2019). For conveninece, they are included in this package. The complete raw count data are downloaded using the R package ExpressionAtlas (Keays 2019) with the accession number "E-MTAB-6769". Toy data1 is used as a "data frame" input to exemplify data of simple samples/conditions, while toy data2 as "SummarizedExperiment" to illustrate data involving complex samples/conditions.   
 #'
-#' library(spatialHeatmap)
 #' ## Set up toy data.
 #' 
 #' # Access toy data1.

@@ -2,7 +2,6 @@
 % Please edit documentation in R/norm_data.R
 \name{norm_data}
 \alias{norm_data}
-\alias{}
 \title{Normalize Sequencing Count Matrix}
 \usage{
 norm_data(data, norm.fun = "CNF", parameter.list = NULL, data.trans = "none")

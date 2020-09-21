@@ -4,7 +4,8 @@
 #' @param cs.g The color key of ggplot.
 #' @param sam.uni A vector of unique samples extracted from data matrix.
 #' @inheritParams htmlwidgets::saveWidget
-
+#' @inheritParams grob_list
+#' @inheritParams spatial_hm
 #' @return HTML files of spatial heatmaps are saved in 'animaiton_shm'.
 #' @keywords Internal
 
@@ -48,7 +49,7 @@ html_ly <- function(gg, cs.g, tis.trans, sam.uni, anm.width, anm.height, selfcon
       if (any(idx.tis)) g2l$data[[i]]$name <- tis.show1[idx.tis] else g2l$data[[i]]$showlegend <- FALSE
 
     }; ggly <- as_widget(g2l)
-    subly <- subplot(csly, ggly, nrows=1, shareX=F, shareY=F, margin=0, widths=c(0.05, 0.95))
+    subly <- subplot(csly, ggly, nrows=1, shareX=FALSE, shareY=FALSE, margin=0, widths=c(0.05, 0.95))
     subly$width <- anm.width; subly$height <- anm.height
     saveWidget(subly, na.hl, selfcontained=selfcontained, libdir="lib") 
     system(paste0('mv ', na.hl, ' ', dir))

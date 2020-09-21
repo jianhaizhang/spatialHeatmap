@@ -1,6 +1,10 @@
 
 .shiny-output-error-validation { color: red }
 
+#DataTables_Table_0_filter { float: left }
+.dataTables_filter input { margin-left: 0.5em; width: 450px}
+
+
 .shiny-notification {
   position: fixed; opacity: 1; font-size: 30px; 
   top: 35%; left: 30%; height: 150px; width: 700px

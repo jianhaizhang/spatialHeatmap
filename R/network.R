@@ -1,8 +1,9 @@
 #' Visualize a Target Assayed Item in a Network Graph
 #'
-#' This function exhibits a target assayed item (gene, protein, metabolite, \emph{etc}) in the context of corresponding network module as static or interactive network graphs. See function \code{\link{adj_mod}} for module identification. In the network graph, nodes are items and edges are adjacencies (coexpression similarities) between items. The thicker edge denotes higher adjacency between nodes while larger node indicates higher connectivity (sum of a node's adjacencies with all its direct neighbours). \cr In the interactive mode, there is an interactive color bar to denote node connectivity. The color ingredients could be separated by comma, semicolon, single space, dot, hypen, or, underscore. \emph{E.g.} "yellow,orange,red", which means node connectivity increases from yellow to red. If too many edges (\emph{e.g.}: > 300) are displayed, the system may get crashed. So the "Adjacency threshold" option sets a threthold to filter out weak edges. If not too many (\emph{e.g.}: < 300), users can check "Yes" under "Show plot", then the network will be displayed and would be responsive smoothly. By default, all edges are removed (Adjacency threshold=1). To maintain acceptable performance, users are advised to choose a stringent threshold (\emph{e.g.} 0.9) initially, then decrease the value gradually. The interactive feature allows users to zoom in and out, or drag a node around. All the node IDs in the network module are listed in "Select by id" in decreasing order according to node connectivity. The input item ID is appended "_target" as a label. By clicking an ID in this list, users can identify the corresponding node in the network. If the input data has item annotations, then the annotation can be seen by hovering the cursor over a node. 
+#' This function exhibits a target assayed item (gene, protein, metabolite, \emph{etc}) in the context of corresponding network module as static or interactive network graphs. See function \code{\link{adj_mod}} for module identification. In the network graph, nodes are items and edges are adjacencies (coexpression similarities) between items. The thicker edge denotes higher adjacency between nodes while larger node indicates higher connectivity (sum of a node's adjacencies with all its direct neighbours). \cr In the interactive mode, there is an interactive color bar to denote node connectivity. The color ingredients can only be separated by comma, semicolon, single space, dot, hypen, or, underscore. \emph{E.g.} "yellow,orange,red", which means node connectivity increases from yellow to red. If too many edges (\emph{e.g.}: > 500) are displayed, the app may get crashed, depending on the computer RAM. So the "Adjacency threshold" option sets a threthold to filter out weak edges. Meanwhile, the "Maximun edges" limits the total of shown edges. In case a very low adjacency threshold is choosen and introduces too many edges that exceed the Maximun edges, the app will internally increase the adjacency threshold until the edge total is within the Maximun edges, which is a protection against too many edges. The adjacency threshold of 1 produces no edges, in this case the app wil internally decrease this threshold until the number of edges reaches the Maximun edges. If adjacency threshold of 0.998 is selected and no edge is left, this app will also internally update the edges to 1 or 2. To maintain acceptable performance, users are advised to choose a stringent threshold (\emph{e.g.} 0.9) initially, then decrease the value gradually. The interactive feature allows users to zoom in and out, or drag a node around. All the node IDs in the network module are listed in "Select by id" in decreasing order according to node connectivity. The input item ID is appended "_target" as a label. By clicking an ID in this list, users can identify the corresponding node in the network. If the input data has item annotations, then the annotation can be seen by hovering the cursor over a node. 
 
 #' @inheritParams matrix_hm
+#' @param adj.mod The two-component list returned by \code{\link{adj_mod}} with the adjacency matrix and module assignment respectively.
 #' @param ds One of "2" or "3", the module splitting sensitivity level. The former indicates larger but less modules while the latter denotes smaller but more modules. Default is "3". See function \code{\link{adj_mod}} for details.
 #' @param adj.min Minimum adjacency between nodes, edges with adjacency below which will be removed. Default is 0. Applicable to static network.
 #' @param con.min Minimun connectivity of a node, nodes with connectivity below which will be removed. Default is 0. Applicable to static network.
@@ -13,15 +14,14 @@
 #' @param edge.cex The size of edge in the static image. The default is 10.
 #' @param layout The layout of the network in static image, either "circle" or "fr". The "fr" stands for force-directed layout algorithm by Fruchterman and Reingold. The default is "circle".
 #' @param main The title in the static image. Default is NULL.
-#' @param static Logical, TRUE returns a static network while FALSE returns an interactive network.
-#' @param top.edges The number of top edges to show upon loading the interactive network. If this number is too large such as 500, the network may crash dependending on the computer RAM. The default is 100. 
+#' @param static Logical, TRUE returns a static network while FALSE returns an interactive network. 
 #' @param ... Other arguments passed to the generic function \code{\link[graphics]{plot}}, \emph{e.g.}: \code{asp=1}. 
 #' @return A static or interactive network graph.
 
 #' @examples
 
 #' ## In the following examples, the 2 toy data come from an RNA-seq analysis on development of 7 chicken organs under 9 time points (Cardoso-Moreira et al. 2019). For conveninece, they are included in this package. The complete raw count data are downloaded using the R package ExpressionAtlas (Keays 2019) with the accession number "E-MTAB-6769". Toy data1 is used as a "data frame" input to exemplify data of simple samples/conditions, while toy data2 as "SummarizedExperiment" to illustrate data involving complex samples/conditions.   
-#' library(spatialHeatmap)
+#' 
 #' ## Set up toy data.
 #' 
 #' # Access toy data1.
@@ -115,12 +115,13 @@
 #' @export network
 #' @importFrom SummarizedExperiment assay
 #' @importFrom igraph V E graph_from_data_frame delete_edges delete_vertices as_data_frame layout_in_circle layout_with_fr
-#' @importFrom shiny shinyApp shinyUI selectInput htmlOutput div textInput icon actionButton radioButtons fluidRow splitLayout plotOutput shinyServer reactive reactiveValues observeEvent showModal modalDialog withProgress incProgress renderPlot renderUI HTML observe updateSelectInput updateRadioButtons 
+#' @importFrom shiny shinyApp shinyUI selectInput htmlOutput div textInput icon actionButton radioButtons fluidRow splitLayout plotOutput shinyServer reactive reactiveValues observeEvent withProgress incProgress renderPlot renderUI HTML observe updateSelectInput updateRadioButtons numericInput validate need span
 #' @importFrom shinydashboard dashboardSidebar dashboardPage dashboardHeader sidebarMenu menuItem menuSubItem dashboardBody tabItems tabItem box
 #' @importFrom visNetwork visNetworkOutput visNetwork visOptions renderVisNetwork visIgraphLayout
 
-network <- function(ID, data, adj.mod, ds="3", adj.min=0, con.min=0, node.col=c("turquoise", "violet"), edge.col=c("yellow", "blue"), vertex.label.cex=1, vertex.cex=3, edge.cex=10, layout="circle", main=NULL, static=TRUE, top.edges=100, ...) {
+network <- function(ID, data, adj.mod, ds="3", adj.min=0, con.min=0, node.col=c("turquoise", "violet"), edge.col=c("yellow", "blue"), vertex.label.cex=1, vertex.cex=3, edge.cex=10, layout="circle", main=NULL, static=TRUE, ...) {
 
+  tags <- NULL
   options(stringsAsFactors=FALSE)
   if (is(data, 'data.frame')|is(data, 'matrix')|is(data, 'DFrame')) {
 
@@ -205,9 +206,9 @@ network <- function(ID, data, adj.mod, ds="3", adj.min=0, con.min=0, node.col=c(
         div(style="display:inline-block;width:75%;text-align:left;",textInput("color.net", "Color scheme:", "yellow,orange,red", placeholder="Eg: yellow,orange,red", width=200)),
         div(style="display:inline-block;width:25%;text-align:left;", actionButton("col.but.net", "Go", icon=icon("refresh"), style="padding:7px; font-size:90%; margin-left: 0px")),
         selectInput("ds","Module splitting sensitivity level:", 3:2, selected="3", width=190),
-        selectInput("adj.in", "Adjacency threshold:", c("None", sort(seq(0, 1, 0.002), decreasing=TRUE)), 1, width=190), 
+        selectInput("adj.in", "Adjacency threshold (the smaller, the more edges):", sort(seq(0, 1, 0.002), decreasing=TRUE), 1, width=190),
+        tags$span(style="color:yellow", numericInput("max.edg", "Maximun edges (too many edges may crash the app):", value=10, min=1, max=500, width=200)),
         htmlOutput("edge"),
-        radioButtons("cpt.nw", "Show plot:", c("Yes"="Y", "No"="N"), "Y", inline=TRUE),
         menuSubItem("View graph", tabName="net")
         ),
         menuItem("Instruction", tabName="ins", icon=icon("info"))
@@ -217,14 +218,15 @@ network <- function(ID, data, adj.mod, ds="3", adj.min=0, con.min=0, node.col=c(
      ),
 
      dashboardBody(
- 
+       
+       tags$head(tags$style('.shiny-output-error-validation { color: red }')),
        tabItems(
 
         tabItem(tabName="net", 
         box(title="Interactive Network", status="primary", solidHeader=TRUE, collapsible=TRUE, fluidRow(splitLayout(cellWidths=c("1%", "6%", "91%", "2%"), "", plotOutput("bar.net"), visNetworkOutput("vis"), "")), width=12)
         ),
         tabItem(tabName="ins", 
-        box(title=NULL, status="primary", solidHeader=TRUE, collapsible=TRUE, HTML('By default, less than 100 of the top edges are shown, since too many edges might crash the session. <br/> <br/> To display more edges, the adjcency threshold should be decreased gradually. Meanwhile, there is a message reporting left edges to show corresponding to each input adjcency threshold. If the remaining edges are less than 300, the network would be interactive smoothly. Otherwise, the interactivity depends on users\' system RAM. The network is removed every time more than 300 edges are left. In that case, simply checking "Yes" under "Show plot" would display the network again.'), width=12),
+        box(title=NULL, status="primary", solidHeader=TRUE, collapsible=TRUE, HTML('By default, only top edges are shown, since too many edges might crash the session. To display more edges, the adjcency threshold should be decreased gradually. <br/> <br/> The "Maximun edges" limits the total of shown edges. In case a very low adjacency threshold is choosen and introduces too many edges that exceed the Maximun edges, the app will internally increase the adjacency threshold until the edge total is within the Maximun edges, which is a protection against too many edges. The adjacency threshold of 1 produces no edges, in this case the app wil internally decrease this threshold until the number of edges reaches the Maximun edges. If adjacency threshold of 0.998 is selected and no edge is left, this app will also internally update the edges to 1 or 2.'), width=12),
         )
         )
 
@@ -248,26 +250,48 @@ network <- function(ID, data, adj.mod, ds="3", adj.min=0, con.min=0, node.col=c(
     
     visNet <- reactive({
 
-      if (input$adj.in=="None") return(NULL)
       withProgress(message="Computing network:", value=0, {
    
         incProgress(0.8, detail="making network data frame")
-        adjs <- 1; lin <- 0; while (lin<top.edges) {
+        adjs <- 1; lin <- 0; adj.lin.vec <- NULL
+        validate(need(try(as.integer(input$max.edg)==input$max.edg), 'The number of edges should be an integer!'))
+        # Compute the min adj.
+        while (lin<input$max.edg) {
           
-          if (adjs<=10^-15) { adjs <- 0; break}; adjs <- adjs-0.1 
-          nod.lin <- nod_lin(ds=ds, lab=lab, mods=mods, adj=adj, geneID=ID, adj.min=adjs)
+          adjs <- adjs-0.002; if (adjs<=10^-15) adjs <- 0
+          nod.lin <- nod_lin(ds=input$ds, lab=lab, mods=mods, adj=adj, geneID=ID, adj.min=adjs)
           lin <- nrow(nod.lin[['link']])
+          vec0 <- adjs; names(vec0) <- lin
+          adj.lin.vec <- c(adj.lin.vec, vec0)
+          if (adjs==0) break
 
         }
-        nod.lin <- nod_lin(ds=ds, lab=lab, mods=mods, adj=adj, geneID=ID, adj.min=ifelse(input$adj.in %in% c('None', '1'), adjs, input$adj.in))
+        # The first version of links computed from the min adj or the input adj, which is subjected to the following check.
+        nod.lin <- nod_lin(ds=input$ds, lab=lab, mods=mods, adj=adj, geneID=ID, adj.min=ifelse(input$adj.in==1, adjs, input$adj.in))
+
         link1 <- nod.lin[['link']]; colnames(link1)[3] <- 'value'
-        adj.sel <- NULL; if (nrow(link1)==0) {
-        
-          nod.lin <- nod_lin(ds=ds, lab=lab, mods=mods, adj=adj, geneID=ID, adj.min=adjs)
-          link1 <- nod.lin[['link']]; colnames(link1)[3] <- 'value'; adj.sel <- adjs
+        # If the links are 0 due to the input adj, change the "adjs" to the value bringing 1 or 2 links.
+        lins <- NULL; if (nrow(link1)==0) {
 
-        }
-        node <- nod.lin[['node']]; colnames(node) <- c('id', 'value')
+          adjs <- adj.lin.vec[names(adj.lin.vec)>=1][1]
+          nod.lin <- nod_lin(ds=input$ds, lab=lab, mods=mods, adj=adj, geneID=ID, adj.min=adjs)
+          link1 <- nod.lin[['link']]; colnames(link1)[3] <- 'value'; lins <- nrow(link1)
+ 
+        } else if (nrow(link1)>input$max.edg) {
+       
+          # If the links are larger than max links due to the input adj, change the "adjs" to the value producing max links.
+          adjs <- adjs+0.002
+          nod.lin <- nod_lin(ds=input$ds, lab=lab, mods=mods, adj=adj, geneID=ID, adj.min=adjs)
+          link1 <- nod.lin[['link']]; colnames(link1)[3] <- 'value'; lins <- nrow(link1)
+
+        } else if (nrow(link1)<=input$max.edg & input$adj.in!=1) {
+        
+          # If 0<link total<max links, use the input adj.
+          adjs <- input$adj.in
+          nod.lin <- nod_lin(ds=input$ds, lab=lab, mods=mods, adj=adj, geneID=ID, adj.min=adjs)
+          link1 <- nod.lin[['link']]; colnames(link1)[3] <- 'value'; lins <- nrow(link1)
+ 
+        }; node <- nod.lin[['node']]; colnames(node) <- c('id', 'value')
         if (nrow(link1)!=0) { 
         
           link1$title <- link1$value # 'length' is not well indicative of adjacency value, so replaced by 'value'.
@@ -275,24 +299,20 @@ network <- function(ID, data, adj.mod, ds="3", adj.min=0, con.min=0, node.col=c(
         
         }; node <- cbind(node, label=node$id, font.size=vertex.label.cex*20, borderWidth=2, color.border="black", color.highlight.background="orange", color.highlight.border="darkred", color=NA, stringsAsFactors=FALSE)
         if (!is.null(ann)) node <- cbind(node, title=ann[node$id, ], stringsAsFactors=FALSE)
-        net.lis <- list(node=node, link=link1, adjs=adjs, adj.sel=adj.sel)
+
+        net.lis <- list(node=node, link=link1, adjs=adjs, lins=lins)
 
       }); net.lis
 
     })
 
     observe({
-      input$ds
-      if (input$adj.in %in% c('None', 1)|!is.null(visNet()[["adj.sel"]])) updateSelectInput(session, "adj.in", "Adjacency threshold:", c("None", sort(seq(0, 1, 0.002), decreasing=TRUE)), visNet()[["adjs"]])
-      updateRadioButtons(session, "cpt.nw", "Show plot:", c("Yes"="Y", "No"="N"), ifelse(nrow(visNet()[["link"]])<top.edges, "Y", "N"), inline=TRUE)
+      input$ds; lins <- visNet()[["lins"]]
+      if (input$adj.in==1|is.null(lins)|is.numeric(lins)) updateSelectInput(session, "adj.in", "Adjacency threshold (the  smaller, the more edges):", sort(seq(0, 1, 0.002), decreasing=TRUE), as.numeric(visNet()[["adjs"]]))
     })
 
-    observe({
-      input$adj.in; updateRadioButtons(session, "cpt.nw", "Show plot:", c("Yes"="Y", "No"="N"), ifelse(nrow(visNet()[["link"]])<top.edges, "Y", "N"), inline=TRUE)
-    })
     output$bar.net <- renderPlot({  
 
-      if (input$adj.in=="None"|input$cpt.nw=="N") return(NULL)
       if (length(color.net$col.net=="none")==0) return(NULL)
       if(input$col.but.net==0) color.net$col.net <- colorRampPalette(c('yellow', 'orange', 'red'))(len)
      
@@ -309,14 +329,12 @@ network <- function(ID, data, adj.mod, ds="3", adj.min=0, con.min=0, node.col=c(
 
     output$edge <- renderUI({ 
 
-      if (input$adj.in=="None") return(NULL)
-      span(style="color:yellow;font-weight:bold;", HTML(paste0("Edges left to display (If > 300, the <br/> App can possibly get stuck):<br/>", nrow((visNet()[["link"]])))))
+      span(style="color:yellow;font-weight:bold;", HTML(paste0("Edges left to display: ", nrow((visNet()[["link"]])))))
 
     })
 
     vis.net <- reactive({ 
 
-      if (input$adj.in=="None"|input$cpt.nw=="N") return(NULL)
       withProgress(message="Network:", value=0.5, {
 
         incProgress(0.3, detail="prepare for plotting.")
@@ -337,7 +355,6 @@ network <- function(ID, data, adj.mod, ds="3", adj.min=0, con.min=0, node.col=c(
 
     output$vis <- renderVisNetwork({
 
-      if (input$adj.in=="None"|input$cpt.nw=="N") return(NULL)
       withProgress(message="Network:", value=0.5, {
 
         incProgress(0.3, detail="plotting.")

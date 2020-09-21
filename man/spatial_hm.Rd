@@ -135,6 +135,22 @@ spatial_hm(
 
 \item{legend.2nd}{Logical, TRUE or FALSE. If TRUE, the secondary legend is added to each spatial heatmap, which are the numeric values of each matching spatial features. The default its FALSE. Only applies to the static image.}
 
+\item{position.2nd}{The position of the secondary legend. One of "top", "right", "bottom", "left", or a two-component numeric vector. The default is "bottom". Applies to the static image and video.}
+
+\item{legend.nrow.2nd}{An integer of rows of the secondary legend keys. Applies to the static image and video.}
+
+\item{legend.ncol.2nd}{An integer of columns of the secondary legend keys. Applies to the static image and video.}
+
+\item{legend.key.size.2nd}{A numeric of legend key size. The default is 0.03. Applies to the static image and video.}
+
+\item{legend.text.size.2nd}{A numeric of the secondary legend text size. The default is 10. Applies to the static image and video.}
+
+\item{angle.text.key.2nd}{A value of angle of key text in the secondary legend. Default is 0. Applies to the static image and video.}
+
+\item{position.text.key.2nd}{The position of key text in the secondary legend, one of "top", "right", "bottom", "left". Default is "right". Applies to the static image and video.}
+
+\item{add.feature.2nd}{Logical TRUE or FALSE. Add feature identifiers to the secondary legend or not. The default is FALSE. Applies to the static image.}
+
 \item{label}{Logical. If TRUE, spatial features having matching samples are labeled by feature identifiers. The default is FALSE. It is useful when spatial features are labeled by similar colors.}
 
 \item{label.size}{The size of spatial feature labels in legend plot. The default is 4.}
@@ -193,7 +209,6 @@ See the package vignette (\code{browseVignettes('spatialHeatmap')}).
 \examples{
 ## In the following examples, the 2 toy data come from an RNA-seq analysis on development of 7 chicken organs under 9 time points (Cardoso-Moreira et al. 2019). For conveninece, they are included in this package. The complete raw count data are downloaded using the R package ExpressionAtlas (Keays 2019) with the accession number "E-MTAB-6769". Toy data1 is used as a "data frame" input to exemplify data of simple samples/conditions, while toy data2 as "SummarizedExperiment" to illustrate data involving complex samples/conditions.   
 
-library(spatialHeatmap)
 ## Set up toy data.
 
 # Access toy data1.

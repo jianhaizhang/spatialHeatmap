@@ -30,6 +30,7 @@
 
 gg_lgd <- function(gg.all, size.key=NULL, size.text.key=8, angle.text.key=NULL, position.text.key=NULL, legend.value.vdo=NULL, sub.title.size=NULL, row=NULL, col=NULL, label=FALSE, label.size=3, label.angle=0, hjust=0, vjust=0, opacity=1, key=TRUE, sam.dat, tis.trans=NULL) {
 
+  tissue <- x0 <- y0 <- NULL
   # Function to remove feature labels. 
   rm_label <- function(g) {
         

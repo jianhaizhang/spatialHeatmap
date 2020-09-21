@@ -48,7 +48,6 @@ This function creates customized Shiny App with user-provided data, aSVG files, 
 \examples{
 # The pre-packaged examples are used for illustration popurse.
 # Get one data path and one aSVG path and assembly them into a list for creating default dataset.
-library(spatialHeatmap)
 data.path1 <- system.file('extdata/shinyApp/example/expr_arab.txt', package='spatialHeatmap')
 svg.path1 <- system.file('extdata/shinyApp/example/arabidopsis_thaliana.shoot_shm.svg', package='spatialHeatmap')
 # The list with name slots of "name", "data", and "svg".

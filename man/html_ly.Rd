@@ -20,11 +20,19 @@ html_ly(
 
 \item{cs.g}{The color key of ggplot.}
 
+\item{tis.trans}{A character vector of tissue/spatial feature identifiers that will be set transparent. \emph{E.g} c("brain", "heart"). This argument is used when target features are covered by  overlapping features and the latter should be transparent.}
+
 \item{sam.uni}{A vector of unique samples extracted from data matrix.}
+
+\item{anm.width}{The width of spatial heatmaps in HTML files. Default is 650.}
+
+\item{anm.height}{The height of spatial heatmaps in HTML files. Default is 550.}
 
 \item{selfcontained}{Whether to save the HTML as a single self-contained file
 (with external resources base64 encoded) or a file with external resources
 placed in an adjacent directory.}
+
+\item{out.dir}{The directory to save interactive spatial heatmaps as independent HTML files and videos. Default is NULL, and the HTML files and videos are not saved.}
 }
 \value{
 HTML files of spatial heatmaps are saved in 'animaiton_shm'.

@@ -36,6 +36,7 @@
 
 grob_list <- function(gene, con.na=TRUE, geneV, coord, ID, cols, tis.path, tis.trans=NULL, sub.title.size, sam.legend='identical', legend.col, legend.ncol=NULL, legend.nrow=NULL, legend.position='bottom', legend.direction=NULL, legend.key.size=0.02, legend.text.size=12, legend.plot.title=NULL, legend.plot.title.size=11, line.size=0.2, line.color='grey70', mar.lb=NULL, ...) {
 
+  value <- feature <- NULL
   g_list <- function(con, lgd=FALSE, ...) {
 
     x <- y <- tissue <- NULL; tis.df <- unique(coord[, 'tissue'])

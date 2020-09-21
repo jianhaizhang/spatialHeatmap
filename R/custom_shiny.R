@@ -20,7 +20,7 @@
 
 #' # The pre-packaged examples are used for illustration popurse.
 #' # Get one data path and one aSVG path and assembly them into a list for creating default dataset.
-#' library(spatialHeatmap)
+
 #' data.path1 <- system.file('extdata/shinyApp/example/expr_arab.txt', package='spatialHeatmap')
 #' svg.path1 <- system.file('extdata/shinyApp/example/arabidopsis_thaliana.shoot_shm.svg', package='spatialHeatmap')
 #' # The list with name slots of "name", "data", and "svg".
@@ -64,6 +64,7 @@
 
 #' @export custom_shiny
 #' @importFrom yaml yaml.load_file write_yaml
+#' @importFrom grDevices colors
 
 custom_shiny <- function(..., lis.par=NULL, lis.par.tmp=FALSE, lis.dld.single=NULL, lis.dld.mul=NULL, custom=TRUE, custom.computed=TRUE, example=FALSE, app.dir='.') {
 

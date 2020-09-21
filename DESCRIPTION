@@ -13,10 +13,12 @@ VignetteBuilder: knitr
 Suggests: knitr, rmarkdown, BiocStyle, RUnit, BiocGenerics, data.table, ExpressionAtlas, DT, reshape2, Biobase, GEOquery
 Depends: 
 Imports:
+   av,
    DESeq2,
    edgeR,
    WGCNA,  
-   flashClust, 
+   flashClust,
+   htmlwidgets, 
    genefilter, 
    ggplot2,
    ggdendro, 

@@ -12,8 +12,6 @@
 
 #' @return If the input data is \code{SummarizedExperiment}, the retured value is also a \code{SummarizedExperiment} containing normalized data matrix and metadata (optional). If the input data is a \code{data.frame}, the returned value is a \code{data.frame} of normalized data and metadata (optional). 
 
-#' @aliases  
-
 #' @seealso \code{\link[edgeR]{calcNormFactors}} in edgeR, and \code{\link[DESeq2]{estimateSizeFactors}}, \code{\link[DESeq2]{varianceStabilizingTransformation}}, \code{\link[DESeq2]{rlog}} in DESeq2.
 
 #' @examples

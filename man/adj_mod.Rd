@@ -39,7 +39,7 @@ will be used for clustering. See \code{\link[WGCNA]{TOMsimilarityFromExpr}} for 
 
 \item{minSize}{The expected minimum module size. The default is 15. Refer to "WGCNA" for more details.}
 
-\item{arg.cut}{A list of additional arguments passed to \code{\link[WGCNA]{cutreeHybrid}}, \emph{e.g.} \code{list(verbose=2)}. The default is an empty list \code{list()}.}
+\item{arg.cut}{A list of additional arguments passed to \code{\link[dynamicTreeCut]{cutreeHybrid}}, \emph{e.g.} \code{list(verbose=2)}. The default is an empty list \code{list()}.}
 
 \item{dir}{The directory to save the results. In this directory, a folder "customComputedData" is created automatically, where the adjacency matrix and module assignments are saved as TSV-format files "adj.txt" and "mod.txt" respectively. This argument should be the same with the \code{dir} in \code{\link{submatrix}} so that the "sub_matrix.txt" generated in \code{\link{submatrix}} is saved in the same folder. This argument is designed since the computation is intensive for large data matrix (\emph{e.g.} > 10,000 genes). Therefore, to avoid system crash when using the Shiny app (see \code{\link{shiny_all}}), "adj.txt" and "mod.txt" can be computed in advance and then uploaded to the app. In addition, the saved files can be used repetitively and therefore avoid repetitive computation. The default is NULL and no file is saved. This argument is used only when the "customComputedData" is chosen in the Shiny app. \cr The large matrix issue could be resolved by increasing the subsetting strigency to get smaller matrix in \code{\link{submatrix}} in most cases. Only in rare cases users cannot avoid very large subsetted matrix, this argument is recommended.}
 }
@@ -57,7 +57,6 @@ These procedures are wrapped in \code{adj_mod} for convenience. The result is a 
 
 \examples{
 ## In the following examples, the 2 toy data come from an RNA-seq analysis on development of 7 chicken organs under 9 time points (Cardoso-Moreira et al. 2019). For conveninece, they are included in this package. The complete raw count data are downloaded using the R package ExpressionAtlas (Keays 2019) with the accession number "E-MTAB-6769". Toy data1 is used as a "data frame" input to exemplify data of simple samples/conditions, while toy data2 as "SummarizedExperiment" to illustrate data involving complex samples/conditions.   
-library(spatialHeatmap)
 ## Set up toy data.
 
 # Access toy data1.

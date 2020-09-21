@@ -5,7 +5,8 @@ shinyUI(dashboardPage(
   
   # tags$header(tags$title('spatialHeatmap')),
   # includeCSS("style.css"),
-  dashboardHeader(title=textOutput('title'), titleWidth=350),
+  # tags$header(HTML('<title>spatialHeatmap</title>')),
+  dashboardHeader(title=textOutput('spatialHeatmap'), titleWidth=350),
 
   dashboardSidebar(
   
@@ -35,6 +36,7 @@ shinyUI(dashboardPage(
   dashboardBody(
  
    tags$head(tags$link(rel="stylesheet", type="text/css", href="style.css")),
+   tags$script(src="javascript.js"),
 
     tabItems(
       tabItem(tabName="hm_net", 
@@ -77,7 +79,6 @@ shinyUI(dashboardPage(
       )),
       plotlyOutput("HMly")), br(),
       box(title="Interactive Network", status="primary", solidHeader=TRUE, collapsible=TRUE, width=12,
-      HTML(paste0('Display network by selecting a value in', tags$span(style="color:brown", ' "Select a target gene",'), tags$span(style="color:brown", ' "Adjacency threshold"'), ' and checking "Yes" under', tags$span(style="color:brown", ' "Show plot."'))), br(), br(), 
       fluidRow(
       # If column widths are not integers, columns are vertically aligned.
       column(2, offset=0, style='padding-left:10px; padding-right:0px; padding-top:0px; padding-bottom:5px',
@@ -96,11 +97,11 @@ shinyUI(dashboardPage(
       selectInput("ds","Module splitting sensitivity level:", 3:2, selected=3, width=170)
       ),
       column(1, offset=0, style='padding-left:10px; padding-right:0px; padding-top:0px; padding-bottom:5px',
-      tags$span(style="color:brown;font-weight:NULL", selectInput("adj.in", "Adjacency threshold:", sort(seq(0, 1, 0.002), decreasing=TRUE), selected=1, width=150))
+      selectInput("adj.in", "Adjacency threshold (the smaller, the more edges):", sort(seq(0, 1, 0.002), decreasing=TRUE), selected=1, width=200)
       ),
       column(2, offset=0, style='padding-left:10px; padding-right:0px; padding-top:0px; padding-bottom:5px',
-      numericInput("max.edg", "Maximun edges:", value=50, min=1, max=1000, width=150)
-      #htmlOutput("edge")
+      tags$span(style="color:brown", numericInput("max.edg", "Maximun edges (too many edges may crash the app):", value=50, min=1, max=500, width=200)),
+      htmlOutput("edge")
       ),
       column(1, offset=0, style='padding-left:10px; padding-right:0px; padding-top:0px; padding-bottom:5px',
       actionButton("cpt.nw", "Update", icon=icon("refresh"), style="color: #fff; background-color:purple;border-color: #2e6da4")

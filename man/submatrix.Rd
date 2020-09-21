@@ -49,7 +49,7 @@ Given a vector of target assayed items (gene, protein, metabolite, \emph{etc}), 
 }
 \examples{
 ## In the following examples, the 2 toy data come from an RNA-seq analysis on development of 7 chicken organs under 9 time points (Cardoso-Moreira et al. 2019). For conveninece, they are included in this package. The complete raw count data are downloaded using the R package ExpressionAtlas (Keays 2019) with the accession number "E-MTAB-6769". Toy data1 is used as a "data frame" input to exemplify data of simple samples/conditions, while toy data2 as "SummarizedExperiment" to illustrate data involving complex samples/conditions.   
-library(spatialHeatmap)
+
 ## Set up toy data.
 
 # Access toy data1.

@@ -19,7 +19,6 @@ network(
   layout = "circle",
   main = NULL,
   static = TRUE,
-  top.edges = 100,
   ...
 )
 }
@@ -27,6 +26,8 @@ network(
 \item{ID}{A vector of target item identifiers in the data.}
 
 \item{data}{The subsetted data matrix returned by the function \code{\link{submatrix}}, where rows are assayed items and columns are samples/conditions.}
+
+\item{adj.mod}{The two-component list returned by \code{\link{adj_mod}} with the adjacency matrix and module assignment respectively.}
 
 \item{ds}{One of "2" or "3", the module splitting sensitivity level. The former indicates larger but less modules while the latter denotes smaller but more modules. Default is "3". See function \code{\link{adj_mod}} for details.}
 
@@ -50,19 +51,17 @@ network(
 
 \item{static}{Logical, TRUE returns a static network while FALSE returns an interactive network.}
 
-\item{top.edges}{The number of top edges to show upon loading the interactive network. If this number is too large such as 500, the network may crash dependending on the computer RAM. The default is 100.}
-
 \item{...}{Other arguments passed to the generic function \code{\link[graphics]{plot}}, \emph{e.g.}: \code{asp=1}.}
 }
 \value{
 A static or interactive network graph.
 }
 \description{
-This function exhibits a target assayed item (gene, protein, metabolite, \emph{etc}) in the context of corresponding network module as static or interactive network graphs. See function \code{\link{adj_mod}} for module identification. In the network graph, nodes are items and edges are adjacencies (coexpression similarities) between items. The thicker edge denotes higher adjacency between nodes while larger node indicates higher connectivity (sum of a node's adjacencies with all its direct neighbours). \cr In the interactive mode, there is an interactive color bar to denote node connectivity. The color ingredients could be separated by comma, semicolon, single space, dot, hypen, or, underscore. \emph{E.g.} "yellow,orange,red", which means node connectivity increases from yellow to red. If too many edges (\emph{e.g.}: > 300) are displayed, the system may get crashed. So the "Adjacency threshold" option sets a threthold to filter out weak edges. If not too many (\emph{e.g.}: < 300), users can check "Yes" under "Show plot", then the network will be displayed and would be responsive smoothly. By default, all edges are removed (Adjacency threshold=1). To maintain acceptable performance, users are advised to choose a stringent threshold (\emph{e.g.} 0.9) initially, then decrease the value gradually. The interactive feature allows users to zoom in and out, or drag a node around. All the node IDs in the network module are listed in "Select by id" in decreasing order according to node connectivity. The input item ID is appended "_target" as a label. By clicking an ID in this list, users can identify the corresponding node in the network. If the input data has item annotations, then the annotation can be seen by hovering the cursor over a node.
+This function exhibits a target assayed item (gene, protein, metabolite, \emph{etc}) in the context of corresponding network module as static or interactive network graphs. See function \code{\link{adj_mod}} for module identification. In the network graph, nodes are items and edges are adjacencies (coexpression similarities) between items. The thicker edge denotes higher adjacency between nodes while larger node indicates higher connectivity (sum of a node's adjacencies with all its direct neighbours). \cr In the interactive mode, there is an interactive color bar to denote node connectivity. The color ingredients can only be separated by comma, semicolon, single space, dot, hypen, or, underscore. \emph{E.g.} "yellow,orange,red", which means node connectivity increases from yellow to red. If too many edges (\emph{e.g.}: > 500) are displayed, the app may get crashed, depending on the computer RAM. So the "Adjacency threshold" option sets a threthold to filter out weak edges. Meanwhile, the "Maximun edges" limits the total of shown edges. In case a very low adjacency threshold is choosen and introduces too many edges that exceed the Maximun edges, the app will internally increase the adjacency threshold until the edge total is within the Maximun edges, which is a protection against too many edges. The adjacency threshold of 1 produces no edges, in this case the app wil internally decrease this threshold until the number of edges reaches the Maximun edges. If adjacency threshold of 0.998 is selected and no edge is left, this app will also internally update the edges to 1 or 2. To maintain acceptable performance, users are advised to choose a stringent threshold (\emph{e.g.} 0.9) initially, then decrease the value gradually. The interactive feature allows users to zoom in and out, or drag a node around. All the node IDs in the network module are listed in "Select by id" in decreasing order according to node connectivity. The input item ID is appended "_target" as a label. By clicking an ID in this list, users can identify the corresponding node in the network. If the input data has item annotations, then the annotation can be seen by hovering the cursor over a node.
 }
 \examples{
 ## In the following examples, the 2 toy data come from an RNA-seq analysis on development of 7 chicken organs under 9 time points (Cardoso-Moreira et al. 2019). For conveninece, they are included in this package. The complete raw count data are downloaded using the R package ExpressionAtlas (Keays 2019) with the accession number "E-MTAB-6769". Toy data1 is used as a "data frame" input to exemplify data of simple samples/conditions, while toy data2 as "SummarizedExperiment" to illustrate data involving complex samples/conditions.   
-library(spatialHeatmap)
+
 ## Set up toy data.
 
 # Access toy data1.

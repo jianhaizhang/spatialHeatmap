@@ -34,7 +34,7 @@ word-wrap: initial !important;
 
 ```{r global_options, include=FALSE}
 ## ThG: chunk added to enable global knitr options. The below turns on
-## caching qor faster vignette re-build during text editing.
+## caching for faster vignette re-build during text editing.
 knitr::opts_chunk$set(cache=TRUE)
 ```
 <!-- 
@@ -55,8 +55,6 @@ BiocStyle::markdown(css.files=c('file/custom.css'))
 ```{r setup0, eval=TRUE, echo=FALSE, message=FALSE, warning=FALSE}
 library(knitr); opts_chunk$set(message=FALSE, warning=FALSE)
 ```
-
-<font color='red'>[ThG-Comment: to-dos are now mostly listed as margin notes on right.]</font> 
 
 # Introduction 
 
@@ -122,7 +120,7 @@ corresponding cell types or tissues represented in a chosen SVG image. In the
 gene profiling field, this feature supports comparisons of the expression
 values among multiple genes by plotting their SHMs next to each
 other. Similarly, one can display the expression values of a single or multiple
-genes across multiple conditions in the same plot (Figure \@ref(fig:humshm)). This level of flexibility is
+genes across multiple conditions in the same plot (Figure \@ref(fig:mul)). This level of flexibility is
 very efficient for visualizing complicated expression patterns across genes,
 cell types and conditions. In case of more complex anatomical images with
 overlapping multiple layer tissues, it is important to visually expose the
@@ -130,7 +128,7 @@ tissue layer of interest in the plots. To address this, several default and
 customizable layer viewing options are provided. They allow to hide features in
 the top layers by making them transparent in order to expose features below
 them. This transparency viewing feature is highlighted below in the mouse
-example (Figure \@ref(fig:musshm1)). Moreover, one can plot multiple distinct 
+example (Figure \@ref(fig:musshm)). Moreover, one can plot multiple distinct 
 aSVGs in a single SHM plot as shown in Figure \@ref(fig:arabshm). This is 
 particularly useful for displaying abundance trends across multiple development 
 stages, where each is represented by its own aSVG image. In addition to
@@ -555,8 +553,11 @@ The preprocessed expression values for any gene in the `assay` slot of
 brain where the assayed featured are colored by the corresponding expression
 values in `se.fil.hum`.  
 
+<!--
+This image is hidden to meet the 5MB requirement on vignette.
+-->
 <a name='hum_single'></a>
-```{r humshm, eval=TRUE, echo=TRUE, warnings=FALSE, fig.wide=TRUE, fig.cap=("SHM of human brain. Only cerebellum and frontal cortex are colored, because they are present in both the aSVG and the expression data. The legend plot on the right maps the feature labels to the corresponding spatial regions in the image."), out.width="100%" }
+```{r humshm, eval=TRUE, echo=TRUE, warnings=FALSE, fig.wide=TRUE, fig.cap=("SHM of human brain. Only cerebellum and frontal cortex are colored, because they are present in both the aSVG and the expression data. The legend plot on the right maps the feature labels to the corresponding spatial regions in the image."), out.width="100%", fig.show='hide' }
 shm.df <- spatial_hm(svg.path=svg.hum, data=se.fil.hum, ID=c('ENSG00000268433'), height=0.7, legend.r=1.5, legend.key.size=0.02, legend.text.size=12, legend.nrow=2)
 ```
 
@@ -573,7 +574,7 @@ shm.df[['mapped_feature']]
 In the above example, the normalized expression values of gene `ENSG00000268433` 
 are colored in the frontal cortex and cerebellum, where the different conditions, 
 here normal and ALS, are given in separate SHMs plotted next to 
-each other (Figure \@ref(fig:humshm)). The color and feature mappings are defined
+each other. The color and feature mappings are defined
 by the corresponding color key and legend plot on the left and right, respectively.
 
 ### SHM: Multiple Genes
@@ -598,7 +599,7 @@ spatial_hm(svg.path=svg.hum, data=se.fil.hum, ID=c('ENSG00000268433', 'ENSG00000
 
 SHMs can be saved to interactive HTML files as well as video files. To trigger
 this export behavior, the argument `out.dir` needs to be assinged a directory
-path where the HTML, SVG image and video files will be stored.  Each HTML file
+path where the HTML and video files will be stored. Each HTML file
 contains an interactive SHM with zoom in and out functionality. Hovering over
 graphics features will display data, gene, condition and other information. The
 video will play the SHM subplots in the order specified under the `lay.shm`
@@ -738,24 +739,27 @@ of an SHM. In this case the plot includes expression data for 8 tissues across 3
 mouse strains. 
 
 ```{r musshm, eval=TRUE, echo=TRUE, warnings=FALSE, fig.wide=TRUE, fig.cap=("SHM of mouse organs. This is a multiple-layer image where the shapes of the 'skeletal muscle' is set transparent to expose 'lung' and 'heart'."), out.width="100%" }
-spatial_hm(svg.path=svg.mus, data=se.fil.mus, ID=c('ENSMUSG00000000263'), height=0.7, legend.text.size=10, sub.title.size=9, ncol=3, tis.trans=c('skeletal muscle'), legend.nrow=4, line.size=0.2, line.color='grey70')
+spatial_hm(svg.path=svg.mus, data=se.fil.mus, ID=c('ENSMUSG00000000263'), height=0.7, legend.width=0.7, legend.text.size=10, sub.title.size=9, ncol=3, tis.trans=c('skeletal muscle'), legend.nrow=4, line.size=0.2, line.color='grey70')
 ```
 
-The SHM plots in Figures \@ref(fig:musshm) and \@ref(fig:musshm1) demonstrate
+The SHM plots in Figures \@ref(fig:musshm) and below demonstrate
 the usage of the transparency feature via the `tis.trans` parameter. The
 corresponding mouse organ aSVG image includes overlapping tissue layers. In
 this case the skelectal muscle layer partially overlaps with lung and heart
 tissues. To view lung and heart in Figure \@ref(fig:musshm), the skelectal
 muscle tissue is set transparent with `tis.trans=c('skeletal muscle')`. To view
 in the same aSVG the skeletal muscle tissue instead, `tis.trans` is assigned
-`NULL` for generating the SHM plot of Figure \@ref(fig:musshm1).
+`NULL` as shown below.  
 
 To fine control the visual effects in feature rich aSVGs, the `line.size` and
 `line.color` parameters are useful. This way one can adjust the thickness and 
 color of complex structures.
 
 
-```{r musshm1, eval=TRUE, echo=TRUE, warnings=FALSE, fig.wide=TRUE, fig.cap=("SHM of mouse organs. This is a multiple-layer image where the view onto 'lung' and 'heart' is obstructed by displaying the 'skeletal muscle' tissue."), out.width="100%" }
+<!--
+This image is hidden to meet the 5MB requirement on vignette.
+-->
+```{r musshm1, eval=TRUE, echo=TRUE, warnings=FALSE, fig.wide=TRUE, fig.cap=("SHM of mouse organs. This is a multiple-layer image where the view onto 'lung' and 'heart' is obstructed by displaying the 'skeletal muscle' tissue."), out.width="100%", fig.show='hide' }
 spatial_hm(svg.path=svg.mus, data=se.fil.mus, ID=c('ENSMUSG00000000263'), height=0.6, legend.text.size=10, sub.title.size=9, ncol=3, tis.trans=NULL, legend.ncol=2, line.size=0.2, line.color='grey70')
 ```
 
@@ -1100,7 +1104,7 @@ selecting subsections in the image or zoom out by double clicking.
 matrix_hm(ID=c('RCA', 'HRE2'), data=sub.mat, angleCol=80, angleRow=35, cexRow=0.8, cexCol=0.8, margin=c(10, 6), static=TRUE, arg.lis1=list(offsetRow=0.01, offsetCol=0.01))
 ```   
 
-^[<font color='red'>ThG: I tried all of your suggestions. However, they all open just some
+<font color='blue'>jianhai: This is likely a issue specific to your RStudio, and I will communicate with you on Slack. </font>^[<font color='red'>ThG: I tried all of your suggestions. However, they all open just some
 RStudio session instead of a browser window or providing a URL. The interactive network in the 
 next section works though. You probably want to run both the same same way. 
 </font>]
@@ -1189,7 +1193,7 @@ node.
 ```{r eval=FALSE, echo=TRUE, warnings=FALSE}
 network(ID="HRE2", data=sub.mat,  adj.mod=adj.mod, static=FALSE)
 ```
-^[<font color='red'>ThG: now I get the nodes of the graph but I am not able to show
+<font color='blue'>jianhai: resovled. </font>^[<font color='red'>ThG: now I get the nodes of the graph but I am not able to show
 edges. When I change the Adjacency threshold the graph simply disappears.</font>]
 
 # Shiny App {#shiny}
@@ -1257,7 +1261,7 @@ present in the `rowData` slot and its column name assigned to the `ann`
 argument. In the exported tabular file, the extra annotation column is appended
 to the expression matrix.   
 
-
+<font color='blue'>jianhai: 10,000 is just a strict extimate. It is possible a user upload 50k genes and the subsetted matrix has 10k genes. </font>
 <font color='red'>
 ^[I don't understand your point with 10,000 genes. We don't have this situation in this example.
 Right now I am still not able to get a network plot even after following your instructions. 
@@ -1281,7 +1285,7 @@ servers or cloud services, such as AWS, GCP or
 The `spatialHeatmap` package also allows users to create customized Shiny App
 instances using the `custom_shiny` function. This function provides options to include
 custom example data and aSVGs, and define default values within most visualization
-panels (*e.g.* color schemes, image dimensions, etc.). For details users want
+panels (*e.g.* color schemes, image dimensions). For details users want
 to consult the help file of the `custom_shiny` function. To maximize
 flexibilty, the default parameters are stored in a yaml file on the Shiny App.
 This makes it easy to refine and optimize default parameters simply by changing
