@@ -1104,11 +1104,6 @@ selecting subsections in the image or zoom out by double clicking.
 matrix_hm(ID=c('RCA', 'HRE2'), data=sub.mat, angleCol=80, angleRow=35, cexRow=0.8, cexCol=0.8, margin=c(10, 6), static=TRUE, arg.lis1=list(offsetRow=0.01, offsetCol=0.01))
 ```   
 
-<font color='blue'>jianhai: This is likely a issue specific to your RStudio, and I will communicate with you on Slack. </font>^[<font color='red'>ThG: I tried all of your suggestions. However, they all open just some
-RStudio session instead of a browser window or providing a URL. The interactive network in the 
-next section works though. You probably want to run both the same same way. 
-</font>]
-
 # Network Graphs {#net}
 ## Module Identification
 
@@ -1193,8 +1188,6 @@ node.
 ```{r eval=FALSE, echo=TRUE, warnings=FALSE}
 network(ID="HRE2", data=sub.mat,  adj.mod=adj.mod, static=FALSE)
 ```
-<font color='blue'>jianhai: resovled. </font>^[<font color='red'>ThG: now I get the nodes of the graph but I am not able to show
-edges. When I change the Adjacency threshold the graph simply disappears.</font>]
 
 # Shiny App {#shiny}
 
@@ -1261,13 +1254,6 @@ present in the `rowData` slot and its column name assigned to the `ann`
 argument. In the exported tabular file, the extra annotation column is appended
 to the expression matrix.   
 
-<font color='blue'>jianhai: 10,000 is just a strict extimate. It is possible a user upload 50k genes and the subsetted matrix has 10k genes. </font>
-<font color='red'>
-^[I don't understand your point with 10,000 genes. We don't have this situation in this example.
-Right now I am still not able to get a network plot even after following your instructions. 
-I would just show all of this by default and provide instructions in the plot what to do 
-when working with larger matrices.]
-</font>
 
 ## Server Deployment
 
