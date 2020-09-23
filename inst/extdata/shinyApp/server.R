@@ -1,11 +1,10 @@
 options(shiny.maxRequestSize=7*1024^3, stringsAsFactors=FALSE) 
 
-# Import internal functions.
 # source('~/tissue_specific_gene/function/fun.R')
 
 # Right before submit the package the following functions will be deleted, and they will be imported as above. They are listed here now for the convenience of functionality development.
 
-
+# Import internal functions.
 sort_gen_con <- get('sort_gen_con', envir=asNamespace('spatialHeatmap'), inherits=FALSE)
 
 matrix_hm <- get('matrix_hm', envir=asNamespace('spatialHeatmap'), inherits=FALSE)
