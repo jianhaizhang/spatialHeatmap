@@ -20,7 +20,7 @@ shinyUI(dashboardPage(
       fileInput("svgInpath1", "Step 2B: upload multiple aSVG files", accept=".svg", multiple=TRUE),
       fileInput("geneInpath", "Step 3: upload formatted data matrix", accept=c(".txt", ".csv"), multiple=FALSE),
       radioButtons(inputId='dimName', label='Step 4: is column or row gene?', choices=c("None", "Row", "Column"), selected='None', inline=TRUE),
-      selectInput('sep', 'Step 5: separator', c("None", "Tab", "Space", "Comma", "Semicolon"), 'None'),
+      # selectInput('sep', 'Step 5: separator', c("None", "Tab", "Space", "Comma", "Semicolon"), 'None'),
       h4(strong("Custom computed data")),
       fileInput("adj.modInpath", "Upload the adjacency matrix and module definition file", accept=".txt", multiple=TRUE)
 

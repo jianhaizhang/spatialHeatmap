@@ -11,7 +11,7 @@ customComputedData/
 # vignette.html
 vignette_files/
 vignette_cache/
-inst/extdata/shinyApp/test*.R
+inst/extdata/shinyApp/test*
 html_shm/
 !inst/extdata/shinyApp/html_shm/README.txt
 inst/extdata/shinyApp/www/ggly/*

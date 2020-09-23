@@ -54,7 +54,7 @@ html_ly <- get('html_ly', envir=asNamespace('spatialHeatmap'), inherits=FALSE)
 video <- get('video', envir=asNamespace('spatialHeatmap'), inherits=FALSE)
 
 # Import input matrix.
-fread.df <- function(input, isRowGene, header, sep, fill, rep.aggr='mean', check.names=FALSE) {
+fread.df <- function(input, isRowGene, header, sep='auto', fill, rep.aggr='mean', check.names=FALSE) {
   
   df0 <- fread(input=input, header=header, sep=sep, fill=fill)
   cna <- make.names(colnames(df0))
@@ -157,7 +157,7 @@ na.cus <- c('customData', 'customComputedData')
     output$title.w <- renderText({ lis.par$title['width', 'default'] })
     updateSelectInput(session, 'fileIn', 'Step 1: data sets', na.ipt, lis.par$default.dataset)
     updateRadioButtons(session, inputId='dimName', label='Step 4: is column or row gene?', choices=c("None", "Row", "Column"), selected=lis.par$col.row.gene, inline=TRUE)
-    updateSelectInput(session, 'sep', 'Step 5: separator', c("None", "Tab", "Space", "Comma", "Semicolon"), lis.par$separator)
+    # updateSelectInput(session, 'sep', 'Step 5: separator', c("None", "Tab", "Space", "Comma", "Semicolon"), lis.par$separator)
     updateNumericInput(session, inputId="A", label="Value (A) to exceed:", value=as.numeric(lis.par$data.matrix['A', 'default']))
     updateNumericInput(session, inputId="P", label="Proportion (P) of samples with values >= A:", value=as.numeric(lis.par$data.matrix['P', 'default']))
     updateNumericInput(session, inputId="CV1", label="Min coefficient of variation (CV1):", value=as.numeric(lis.par$data.matrix['CV1', 'default']))
@@ -227,7 +227,7 @@ na.cus <- c('customData', 'customComputedData')
     input$fileIn; input$geneInpath
     updateRadioButtons(session, inputId="dimName", label="Step 4: is column or row gene?", 
     inline=TRUE, choices=c("None", "Row", "Column"), selected="None")
-    updateSelectInput(session, 'sep', 'Step 5: separator', c("None", "Tab", "Space", "Comma", "Semicolon"), "None")
+    # updateSelectInput(session, 'sep', 'Step 5: separator', c("None", "Tab", "Space", "Comma", "Semicolon"), "None")
     updateRadioButtons(session, inputId='log', label='Log/exp transform:', choices=c("No", "log2", "exp2"), selected=cfg$lis.par$data.matrix['log.exp', 'default'], inline=TRUE)
     updateRadioButtons(session, 'scale', label='Scale by:', choices=c('No', 'Row', 'Column'), selected=cfg$lis.par$data.matrix['scale', 'default'], inline=TRUE)
     updateRadioButtons(session, inputId='cs.v', label='Color scale based on:', choices=c("Selected rows", "All rows"), selected=cfg$lis.par$shm.img['color.scale', 'default'], inline=TRUE)
@@ -270,16 +270,17 @@ na.cus <- c('customData', 'customComputedData')
     if (any(input$fileIn %in% cfg$na.def)) {
 
       incProgress(0.5, detail="Loading matrix. Please wait.")
-      df.te <- fread.df(input=cfg$dat.ipt[input$fileIn], isRowGene=TRUE, header=TRUE, sep="\t", fill=TRUE); return(df.te)
+      df.te <- fread.df(input=cfg$dat.ipt[input$fileIn], isRowGene=TRUE, header=TRUE, fill=TRUE); return(df.te)
 
     }
 
     if (any(input$fileIn %in% cfg$na.cus) & 
-    !is.null(input$geneInpath) & input$dimName!="None" & input$sep!="None") {
+    !is.null(input$geneInpath) & input$dimName!="None") {
 
       incProgress(0.25, detail="Importing matrix. Please wait.")
-      geneInpath <- input$geneInpath; if (input$sep=="Tab") sep <- "\t" else if (input$sep=="Space") sep <- " " else if (input$sep=="Comma") sep <- "," else if (input$sep=="Semicolon") sep <- ";"
-      df.upl <- fread.df(input=geneInpath$datapath, isRowGene=(input$dimName=='Row'), header=TRUE, sep=sep, fill=TRUE, rep.aggr='mean'); return(df.upl)
+      geneInpath <- input$geneInpath
+      #if (input$sep=="Tab") sep <- "\t" else if (input$sep=="Space") sep <- " " else if (input$sep=="Comma") sep <- "," else if (input$sep=="Semicolon") sep <- ";"
+      df.upl <- fread.df(input=geneInpath$datapath, isRowGene=(input$dimName=='Row'), header=TRUE, fill=TRUE, rep.aggr='mean'); return(df.upl)
    
     }
 
@@ -1263,7 +1264,7 @@ na.cus <- c('customData', 'customComputedData')
    
     if (is.null(input$dt_rows_selected)) return()
     if (is.null(gID$geneID)|is.null(submat())) return()
-    if (gID$geneID=='none'|is.na(gID$geneID)) return()
+    if (gID$geneID[1]=='none'|is.na(gID$geneID[1])) return()
     if (input$mhm.but!=0) hmly() else if (input$mhm.but==0) mhm$hm else return() 
   
   })
