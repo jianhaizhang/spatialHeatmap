@@ -1,7 +1,6 @@
 options(shiny.maxRequestSize=7*1024^3, stringsAsFactors=FALSE) 
 
 # source('~/tissue_specific_gene/function/fun.R')
-
 # Right before submit the package the following functions will be deleted, and they will be imported as above. They are listed here now for the convenience of functionality development.
 
 # Import internal functions.
