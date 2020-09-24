@@ -3,8 +3,7 @@ library(shiny); library(shinydashboard); library(yaml); library(plotly); library
 
 shinyUI(dashboardPage(
   
-  # tags$header(tags$title('spatialHeatmap')),
-  # includeCSS("style.css"),
+  # tags$header(tags$title('spatialHeatmap')), # includeCSS("style.css"),
   # tags$header(HTML('<title>spatialHeatmap</title>')),
   dashboardHeader(title=textOutput('spatialHeatmap'), titleWidth=350),
 
