@@ -109,7 +109,7 @@ svg_df <- function(svg.path, feature) {
   # Get coordinates from '.ps.xml'.
   nodeset <- chdn1[which(xml_attr(chdn1, 'type')=='stroke')]
   # In new operating system, there are double 'fill', no 'stroke', thus only use 'fill' of odd numbers.
-  if (xml_length(nodeset)==0) {
+  if (xml_length(nodeset)[1]==0) {
     if (tab %% 2==0) nodeset <- chdn1[seq(1, tab, by=2)] else return('Relative coordinates detected in aSVG file!')
   }
   df <- NULL; for (i in seq_along(nodeset)) {
