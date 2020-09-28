@@ -1,7 +1,7 @@
 Package: spatialHeatmap
 Type: Package
 Title: spatialHeatmap
-Version: 0.99.0
+Version: 0.99.1
 Date: 2018-09-07
 Author: Jianhai Zhang, Thomas Girke
 Maintainer: Jianhai Zhang <jzhan067@ucr.edu>
