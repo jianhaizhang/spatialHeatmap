@@ -79,8 +79,7 @@ svg_df <- function(svg.path, feature) {
     } else { tit <- c(tit, df.attr[i, 'title']); id.all <- c(id.all, df.attr[i, 'id']) }
 
   }; tis.path <- gsub("_\\d+$", "", tit)  
-
-  style <- 'fill:#46e8e8;fill-opacity:1;stroke:#000000;stroke-width:3;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1' # 'fill' is not necessary. In Inkscape, "group" or move an object adds transforms (relative positions), and this can lead to related polygons uncolored in the spatial heatmaps. Solution: ungroup and regroup to get rid of transforms and get absolute positions.
+ style <- 'fill:#46e8e8;fill-opacity:1;stroke:#000000;stroke-width:3;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1' # 'fill' is not necessary. In Inkscape, "group" or move an object adds transforms (relative positions), and this can lead to related polygons uncolored in the spatial heatmaps. Solution: ungroup and regroup to get rid of transforms and get absolute positions.
   # Change 'style' of all polygons.
   xml_set_attr(chdn.out, 'style', style); xml_set_attr(chdn.ply, 'style', style)  
   # xml_set_attr(out, 'style', style); xml_set_attr(ply, 'style', style)  
@@ -93,12 +92,11 @@ svg_df <- function(svg.path, feature) {
   rsvg_ps(svg.inter, file=sub("svg$", "ps", svg.inter)) # Only the paths inside canvas of SVG are valid.
   p1 <- sub("svg$", "ps", svg.inter); p2 <- paste0(sub("svg$", "ps", svg.inter), ".xml"); PostScriptTrace(p1, p2) 
   chdn1 <- xml_children(read_xml(p2)) # Use internal svg to get coordinates.
-     
   # Detect groups that use relative coordinates ("transform", "matrix" in Inkscape.), which leads to some plygons missing in ".ps.xml" file.
   # EBI SVG, if the outline shapes and tissue shapes are separate, they must be in two layers NOT two groups. Otherwise, 'fill' and 'stroke' in '.ps.xml' can be  messy.
   fil.stk <- xml_attr(chdn1[-length(chdn1)], 'type'); tab <- table(fil.stk)
   w <- which(fil.stk=='fill')%%2==0
-  if (any(w) & tab['fill'] > tab['stroke']) { 
+  if ('stroke' %in% names(tab)) if (any(w) & tab['fill'] > tab['stroke']) { 
  
     # Index of wrong path.
     w1 <- which(w)[1]
@@ -109,10 +107,13 @@ svg_df <- function(svg.path, feature) {
   }
   
   # Get coordinates from '.ps.xml'.
-  stroke <- chdn1[which(xml_attr(chdn1, 'type')=='stroke')]
-  df <- NULL; for (i in seq_along(stroke)) {
+  nodeset <- chdn1[which(xml_attr(chdn1, 'type')=='stroke')]
+  if (xml_length(nodeset)[1]==0) {
+    if (tab %% 2==0) nodeset <- chdn1[seq(1, tab, by=2)] else return('Relative coordinates detected in aSVG file!')
+  }
+  df <- NULL; for (i in seq_along(nodeset)) {
 
-    xy <- xml_children(stroke[[i]])[-1]
+    xy <- xml_children(nodeset[[i]])[-1]
     x <- as.numeric(xml_attr(xy, 'x'))
     y <- as.numeric(xml_attr(xy, 'y'))
     df0 <- cbind(tissue=tit[i], data.frame(x=x, y=y), stringsAsFactors=TRUE) # The coordinates should not be factor.
@@ -124,5 +125,4 @@ svg_df <- function(svg.path, feature) {
   lis <- list(df=df, tis.path=sub('_\\d+$', '', tit), fil.cols=fil.cols, w.h=w.h); return(lis)
 
 }
-
 

@@ -2,9 +2,7 @@
 % Please edit documentation in R/custom_shiny.R
 \name{custom_shiny}
 \alias{custom_shiny}
-\title{Create Customized Shiny App of Spaital Heatmap
- 
-This function creates customized Shiny App with user-provided data, aSVG files, and default parameters. Default settings are defined in the "config.yaml" file in the "config" folder of the app, and can be edited directly in a yaml file editor.}
+\title{Create Customized Shiny App of Spaital Heatmap}
 \usage{
 custom_shiny(
   ...,
@@ -41,8 +39,6 @@ custom_shiny(
 If \code{lis.par.tmp==TRUE}, the template of default paramter list is returned. Otherwise, a customized Shiny app is generated in the path of \code{app.dir}.
 }
 \description{
-Create Customized Shiny App of Spaital Heatmap
- 
 This function creates customized Shiny App with user-provided data, aSVG files, and default parameters. Default settings are defined in the "config.yaml" file in the "config" folder of the app, and can be edited directly in a yaml file editor.
 }
 \examples{

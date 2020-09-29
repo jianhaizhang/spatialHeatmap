@@ -3,7 +3,8 @@ library(shiny); library(shinydashboard); library(yaml); library(plotly); library
 
 shinyUI(dashboardPage(
   
-  # tags$header(tags$title('spatialHeatmap')), # includeCSS("style.css"),
+  # tags$header(tags$title('spatialHeatmap')),
+  # includeCSS("style.css"),
   # tags$header(HTML('<title>spatialHeatmap</title>')),
   dashboardHeader(title=textOutput('spatialHeatmap'), titleWidth=350),
 
@@ -14,7 +15,8 @@ shinyUI(dashboardPage(
       menuItem("Input", icon=icon("list"),
       menuSubItem("View", tabName="hm_net"), br(),
       fileInput("config", "Optional: upload a config file", accept=".yaml", multiple=FALSE),
-      selectInput("fileIn", "Step1: data sets", c('None', 'customData', 'customComputedData'), 'None'),
+      fileInput("tar.sql", "Optional: upload tar/sql files", accept=c(".sql", ".tar"), multiple=TRUE),
+      selectInput("fileIn", "Step1: data sets", c('none', 'customData', 'customComputedData'), 'none'),
       fileInput("svgInpath", "Step 2A: upload one aSVG file", accept=".svg", multiple=FALSE),
       fileInput("svgInpath1", "Step 2B: upload multiple aSVG files", accept=".svg", multiple=TRUE),
       fileInput("geneInpath", "Step 3: upload formatted data matrix", accept=c(".txt", ".csv"), multiple=FALSE),

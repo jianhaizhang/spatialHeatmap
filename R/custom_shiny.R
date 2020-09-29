@@ -1,5 +1,5 @@
 #' Create Customized Shiny App of Spaital Heatmap
-#'  
+#'
 #' This function creates customized Shiny App with user-provided data, aSVG files, and default parameters. Default settings are defined in the "config.yaml" file in the "config" folder of the app, and can be edited directly in a yaml file editor.  
 
 #' @param ... Separate lists of paired data matrix and aSVG files, which are included as default datasets in the Shiny app. Each list must have three elements with name slots of "name", "data", and "svg" respectively. For example, \code{ list(name='dataset1', data='./data1.txt', svg='./root_shm.svg') }. The "name" element (\emph{e.g.} 'dataset1') is listed under "Step 1: data sets" in the app, while "data" and "svg" are the paths of data matrix and aSVG files. If multiple aSVGs (\emph{e.g.} growth stages) are included in one list, the respective paths are stored in a vector in the "svg" slot (see example below). After calling this function, the data and aSVGs are copied to the "example" folder in the app. See detailed examples below.
@@ -68,6 +68,7 @@
 
 custom_shiny <- function(..., lis.par=NULL, lis.par.tmp=FALSE, lis.dld.single=NULL, lis.dld.mul=NULL, custom=TRUE, custom.computed=TRUE, example=FALSE, app.dir='.') {
 
+  options(stringsAsFactors=FALSE)
   # Default config file.
   cfg.def <- yaml.load_file(system.file('extdata/shinyApp/config/config.yaml', package='spatialHeatmap'))
   # Default parameters.
@@ -102,6 +103,7 @@ custom_shiny <- function(..., lis.par=NULL, lis.par.tmp=FALSE, lis.dld.single=NU
   system(paste0('rm -fr ', app.dir, '/rsconnect')) 
   system(paste0('rm -fr ', app.dir, '/html_shm/*html')) 
   system(paste0('rm -fr ', app.dir, '/html_shm/lib/*'))
+  system(paste0('rm -fr ', app.dir, '/example/*\\.sql'))
   lis.dat <- list(...)
   # Load default parameter list.
   if (is.null(lis.par)) { lis.par <- lis.par.def } else {
@@ -135,56 +137,39 @@ custom_shiny <- function(..., lis.par=NULL, lis.par.tmp=FALSE, lis.dld.single=NU
     }; exp <- lis.dat.def[-idx.rm]
 
   }
-  col_check <- function(element, vec.all) {
-
-    col0 <- vec.all[grepl('^color:', vec.all)]
-    color <- gsub('.*:(.*)', '\\1', col0)
-    color <- gsub(' |\\.|-|;|,|/', '_', color)
-    color <- strsplit(color, '_')[[1]]
-    color <- color[color!='']; color1 <- color[!color %in% colors()]
-    if (length(color1)>0) stop(paste0('Colors in ', element, ' not valid: ', paste0(color1, collapse=', '), '!'))
-
-  }
   # Validate colours.
   col_check('shm.img', lis.par$shm.img)
   col_check('network', lis.par$network)
-  # Copy user-provided files, and change data/svg path.
-  cp_file <- function(lis, folder) {
 
-    if (is.null(lis)) return()
-    for (i in seq_along(lis)) { 
+  # Copy data/svg in list of tar or sql. 
+  idx <- NULL; for (i in seq_along(lis.dat)) {
 
-      lis0 <- lis[[i]]; for (k in seq_along(lis0)) {
+    lis0 <- lis.dat[i]; if (length(lis0[[1]])==2) { 
+  
+      idx <- c(idx, i); for (j in lis0[[1]]) {
 
-        # Copy files.
-        vec <- lis0[[k]]; if (!all(file.exists(vec))) next
-        files <- NULL; for (v in vec) files <- c(files, v)
-        # cat('Copying files: \n'); print(files)
-        system(paste0('cp ', paste0(files, collapse=' '), ' ', app.dir, '/', folder))
-        # Shorten paths.
-        if (length(vec)==1) { 
-          
-          str <- strsplit(vec, '/')[[1]]
-          lis[[i]][[k]] <- paste0(folder, '/', str[length(str)])
-        
-        } else if (length(vec)>1) {
-
-          svgs <- NULL; for (j in seq_along(vec)) {
-
-            str <- strsplit(vec[j], '/')[[1]]
-            svgs <- c(svgs, paste0(folder, '/', str[length(str)]))
-
-          }; lis[[i]][[k]] <- svgs
-        
-        }
+        if (grepl('\\.sql$', j)) system(paste0('cp ', j , ' ', app.dir, '/example'))
+        if (grepl('\\.tar$', j)) system(paste0('tar -xf ', j, ' -C ', app.dir, '/example'))
 
       }
 
-    }; return(lis)
+    }
+
+  }; if (is.null(idx)) lis.dat <- cp_file(lis.dat, 'example') else lis.dat <- cp_file(lis.dat[-idx], 'example')
+
+  pa.pair <- paste0(app.dir, '/example/df_pair.txt')
+  lis.dat1 <- NULL; if (file.exists(pa.pair)) { df.pair <- read_fr(pa.pair)
+  lis.dat1 <- pair2lis(df.pair) }
+  sql <- list.files(paste0(app.dir, '/example'), pattern='\\.sql', full.names=TRUE)
+  if (length(sql)>0) for (i in sql) {
+
+    con <- dbConnect(RSQLite::SQLite(), i)
+    if ('df_pair' %in% dbListTables(con)) {
+    lis.dat1 <- c(lis.dat1, pair2lis(dbReadTable(con, "df_pair", row.names=TRUE), sql=TRUE))
+    }; dbDisconnect(con)
 
   }
 
-  lis.dat <- cp_file(lis.dat, 'example')
   if (!is.null(lis.dld.single)) lis.dld1 <- cp_file(lis.dld.single, 'example') else {
     # Use default download files.
     lis.dld1 <- list(data="example/expr_arab.txt", svg="example/arabidopsis_thaliana.root.cross_shm.svg")
@@ -198,7 +183,7 @@ custom_shiny <- function(..., lis.par=NULL, lis.par.tmp=FALSE, lis.dld.single=NU
   if (custom==TRUE) lis.cus1 <- list(name='customData', data='none', svg='none')
   if (custom.computed==TRUE) lis.cus2 <- list(name='customComputedData', data='none', svg='none')
   # All data sets.
-  lis.dat <- c(list(list(name='none', data='none', svg='none'), lis.cus1, lis.cus2), lis.dat, exp)
+  lis.dat <- c(list(list(name='none', data='none', svg='none'), lis.cus1, lis.cus2), lis.dat, lis.dat1, exp)
   # Name the complete list.
   names(lis.dat) <- paste0('dataset', seq_along(lis.dat))
   lis.all <- c(lis.dat, lis.par, lis.dld)
@@ -206,5 +191,116 @@ custom_shiny <- function(..., lis.par=NULL, lis.par.tmp=FALSE, lis.dld.single=NU
 
 }
 
+read_fr <- function(input, header=TRUE, sep='auto', fill=TRUE, check.names=FALSE) {
+  
+  options(stringsAsFactors=FALSE)
+  df0 <- fread(input=input, header=header, sep=sep, fill=fill, check.names=check.names)
+  cna <- make.names(colnames(df0))
+  if (cna[1]=='V1') cna <- cna[-1] else cna <- cna[-ncol(df0)] 
+  df1 <- as.data.frame(df0); rownames(df1) <- df1[, 1]
+  # Subsetting identical column names in a matrix will not trigger numbers to be appened.
+  df1 <- df1[, -1]; colnames(df1) <- cna; rna <- rownames(df1)
+  # Applies to data frame of numeric-character mixture.
+  na <- vapply(seq_len(ncol(df1)), function(i) { tryCatch({ as.numeric(df1[, i]) }, warning=function(w) { return(rep(NA, nrow(df1)))
+    }, error=function(e) { stop("Please make sure input data are numeric!") }) }, FUN.VALUE=numeric(nrow(df1)) )
+  na <- as.data.frame(na); rownames(na) <- rna
+  idx <- colSums(apply(na, 2, is.na))!=0
+  row.meta <- df1[idx]; expr <- na[!idx]
+  colnames(expr) <- cna[!idx]; return(cbind(expr, row.meta))
 
+}
+
+df.pair <- data.frame(row.names=c('shoot', 'map', 'growth'), data=c('expr_arab.txt', 'us_population2018.txt', 'random_data_multiple_aSVGs.txt'), aSVG=c('arabidopsis_thaliana.shoot_shm.svg', 'us_map_shm.svg', 'arabidopsis_thaliana.organ_shm1.svg;arabidopsis_thaliana.organ_shm2.svg'))
+write.table(df.pair, 'df_pair.txt', sep='\t', row.names=T, col.names=T)
+read_fr('df_pair.txt', header=T)
+
+lis.dat <- list(list('~/test3/data.sql', '~/test3/aSVGs.tar'), list('~/test3/data.tar', '~/test3/aSVGs.tar'), list(name='shoot', data=data.path1, svg=svg.path1), list(name='growthStage', data=data.path2, svg=c(svg.path2.1, svg.path2.2))) 
+
+df.pair1 <- data.frame(row.names=c('shoot', 'map', 'growth'), data=c('expr_arab', 'us_population2018', 'random_data_multiple_aSVGs'), aSVG=c('arabidopsis_thaliana.shoot_shm.svg', 'us_map_shm.svg', 'arabidopsis_thaliana.organ_shm1.svg;arabidopsis_thaliana.organ_shm2.svg'))
+write.table(df.pair1, '~/test3/df_pair1.txt', sep='\t', row.names=T, col.names=T)
+  library(RSQLite)
+  con <- dbConnect(RSQLite::SQLite(), "~/test3/data.sql")
+  df.pair1 <- read_fr('~/test3/df_pair1.txt')
+  dbWriteTable(con, "df_pair", df.pair1, row.names=T, overwrite=T) 
+  df.arab <- read_fr('~/shiny/example/expr_arab.txt')
+  df.map <- read_fr('~/shiny/example/us_population2018.txt')
+  df.growth <- read_fr('~/shiny/example/random_data_multiple_aSVGs.txt')
+  dbWriteTable(con, "expr_arab", df.arab, row.names=TRUE, overwrite=T) 
+  dbWriteTable(con, "us_population2018", df.map, row.names=TRUE, overwrite=T) 
+  dbWriteTable(con, "random_data_multiple_aSVGs", row.names=TRUE, df.growth, overwrite=T) 
+
+#' Check vilidaty of color indredients in the yaml file
+#'
+#' @keywords Internal
+
+col_check <- function(element, vec.all) {
+
+  col0 <- vec.all[grepl('^color:', vec.all)]
+  color <- gsub('.*:(.*)', '\\1', col0)
+  color <- gsub(' |\\.|-|;|,|/', '_', color)
+  color <- strsplit(color, '_')[[1]]
+  color <- color[color!='']; color1 <- color[!color %in% colors()]
+  if (length(color1)>0) stop(paste0('Colors in ', element, ' not valid: ', paste0(color1, collapse=', '), '!'))
+
+}
+
+
+#' Convert the data-aSVG pair from data frame to list
+#'
+#' @keywords Internal
+pair2lis <- function(df.pair, sql=FALSE) { 
+
+  na.all <- rownames(df.pair); dat.all <- df.pair[, 'data']
+  svg.all <- df.pair[, 'aSVG']
+  lis.dat0 <- NULL; for (i in seq_len(nrow(df.pair))) {
+
+    svg <- svg.all[i]; if (grepl(';| |,', svg)) {
+
+      strs <- strsplit(svg, ';| |,')[[1]]; svg <- strs[strs!='']
+
+  }
+  # Data of txt file and sqlite are recognised by 'example/' in the dataset list.
+  if (sql==FALSE) lis.dat0 <- c(lis.dat0, list(list(name=na.all[i], data=paste0('example/', dat.all[i]), svg=paste0('example/', svg)))) else lis.dat0 <- c(lis.dat0, list(list(name=na.all[i], data=dat.all[i], svg=paste0('example/', svg))))
+
+  }; return(lis.dat0)
+
+}
+
+#' Copy user-provided files, and change data/svg path.
+#'
+#' @keywords Internal
+cp_file <- function(lis, folder) {
+
+  if (is.null(lis)) return()
+  for (i in seq_along(lis)) { 
+
+    lis0 <- lis[[i]]; for (k in seq_along(lis0)) {
+
+      # Copy files.
+      vec <- lis0[[k]]; if (!all(file.exists(vec))) next
+      files <- NULL; for (v in vec) files <- c(files, v)
+      # cat('Copying files: \n'); print(files)
+      system(paste0('cp ', paste0(files, collapse=' '), ' ', app.dir, '/', folder))
+      # Shorten paths.
+      if (length(vec)==1) { 
+          
+        str <- strsplit(vec, '/')[[1]]
+        lis[[i]][[k]] <- paste0(folder, '/', str[length(str)])
+        
+      } else if (length(vec)>1) {
+
+        svgs <- NULL; for (j in seq_along(vec)) {
+
+          str <- strsplit(vec[j], '/')[[1]]
+          svgs <- c(svgs, paste0(folder, '/', str[length(str)]))
+
+        }; lis[[i]][[k]] <- svgs
+        
+      }
+
+    }
+
+  }; return(lis)
+
+}
 

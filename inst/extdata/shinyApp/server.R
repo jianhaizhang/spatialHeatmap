@@ -54,16 +54,20 @@ html_ly <- get('html_ly', envir=asNamespace('spatialHeatmap'), inherits=FALSE)
 video <- get('video', envir=asNamespace('spatialHeatmap'), inherits=FALSE)
 
 # Import input matrix.
-fread.df <- function(input, isRowGene, header, sep='auto', fill, rep.aggr='mean', check.names=FALSE) {
+fread.df <- function(input, isRowGene, header=TRUE, sep='auto', fill=TRUE, rep.aggr='mean', check.names=FALSE) {
   
-  df0 <- fread(input=input, header=header, sep=sep, fill=fill)
-  cna <- make.names(colnames(df0))
-  if (cna[1]=='V1') cna <- cna[-1] else cna <- cna[-ncol(df0)] 
-  df1 <- as.data.frame(df0); rownames(df1) <- df1[, 1]
-  # Subsetting identical column names in a matrix will not trigger appending numbers.
-  df1 <- as.matrix(df1[, -1]); colnames(df1) <- cna
-  if(isRowGene==FALSE) df1 <- t(df1)
-  cna <- colnames(df1); rna <- rownames(df1)
+  if (!is(input, 'data.frame') & !is(input, 'matrix')) { 
+    
+    df0 <- fread(input=input, header=header, sep=sep, fill=fill, check.names=check.names)
+    cna <- make.names(colnames(df0))
+    if (cna[1]=='V1') cna <- cna[-1] else cna <- cna[-ncol(df0)] 
+    df1 <- as.data.frame(df0); rownames(df1) <- df1[, 1]
+    # Subsetting identical column names in a matrix will not trigger appending numbers.
+    df1 <- as.matrix(df1[, -1]); colnames(df1) <- cna
+    if(isRowGene==FALSE) df1 <- t(df1)
+    cna <- colnames(df1); rna <- rownames(df1) 
+  
+  } else { df1 <- input; rna <- rownames(df1); cna <- colnames(df1) }
   
   # Isolate data and annotation.
   na <- vapply(seq_len(ncol(df1)), function(i) { tryCatch({ as.numeric(df1[, i]) }, warning=function(w) { return(rep(NA, nrow(df1))) }, error=function(e) { stop("Please make sure input data are numeric!") }) }, FUN.VALUE=numeric(nrow(df1)) )
@@ -105,7 +109,7 @@ col_sep <- function(color) {
 # enableWGCNAThreads()
 shinyServer(function(input, output, session) {
 
-  cfg <- reactiveValues(lis.dat=NULL, lis.dld=NULL, lis.par=NULL, na.def=NULL, dat.def=NULL, svg.def=NULL, dat.ipt=NULL, na.cus=NULL)
+  cfg <- reactiveValues(lis.dat=NULL, lis.dld=NULL, lis.par=NULL, na.def=NULL, dat.def=NULL, svg.def=NULL, pa.upl=NULL, pa.sql.upl=NULL, na.cus=NULL)
 
   observe({
 
@@ -115,7 +119,7 @@ shinyServer(function(input, output, session) {
     incProgress(0.6, detail="in progress...")
     library(DT); library(gridExtra); library(ggdendro); library(WGCNA); library(grid); library(xml2); library(plotly); library(data.table); library(genefilter); library(flashClust); library(visNetwork); 
     incProgress(0.9, detail="in progress...")
-    library(reshape2); library(igraph); library(animation); library(av); library(shinyWidgets); library(yaml)
+    library(reshape2); library(igraph); library(animation); library(av); library(shinyWidgets); library(yaml); library(RSQLite)
   })
 
     lis.cfg <- yaml.load_file('config/config.yaml')
@@ -147,17 +151,44 @@ shinyServer(function(input, output, session) {
 
     }; names(dat.ipt) <- names(svg.ipt) <- na.ipt
 
+    df.tar.sql <- input$tar.sql; dat.upl <- svg.upl <- NULL
+    if (sum(grepl('\\.sql$', df.tar.sql$datapath))==1 & sum(grepl('\\.tar$', df.tar.sql$datapath))==1) {
+
+      cat('Processing uploaded tar/sql... \n')
+      p <- df.tar.sql$datapath[1]; strs <- strsplit(p, '/')[[1]]
+      cfg$pa.upl <- pa.svg <- paste0(strs[grep('\\.sql$', strs, invert=TRUE)], collapse='/')
+      svg.tar <- df.tar.sql$datapath[grep('\\.tar', df.tar.sql$datapath)]
+      system(paste0('tar -xf', ' ', svg.tar, ' -C ', pa.svg))
+      cfg$pa.sql.upl <- sql.pa <- df.tar.sql$datapath[grep('\\.sql', df.tar.sql$datapath)]
+      con <- dbConnect(RSQLite::SQLite(), sql.pa)
+      validate(need(try('df_pair' %in% dbListTables(con)), 'The "df_pair" file is not detected in the SQLite database!'))
+      df.pair.upl <- dbReadTable(con, 'df_pair', row.names=TRUE)
+      dbDisconnect(con)
+      rna <- rownames(df.pair.upl); dat.upl <- df.pair.upl$data
+      svg.upl <- as.list(df.pair.upl$aSVG); names(dat.upl) <- names(svg.upl) <- rna
+
+      for (i in seq_along(svg.upl)) {
+
+        svg0 <- svg.upl[[i]]; if (grepl(';| |,', svg0)) {
+
+          strs <- strsplit(svg0, ';| |,')[[1]]; svg.upl[[i]] <- strs[strs!='']
+
+         }
+
+    }
+
+  }
     # Separate data, svg of default and customization. 
     na.def <- na.ipt[!grepl('^none$|^customData$|^customComputedData$', na.ipt)]
-    dat.def <- dat.ipt[na.def]; svg.def <- svg.ipt[na.def]
-na.cus <- c('customData', 'customComputedData')
-    cfg$lis.dat <- lis.dat; cfg$lis.dld <- lis.dld; cfg$lis.par <- lis.par; cfg$na.def <- na.def; cfg$svg.def <- svg.def; cfg$dat.ipt <- dat.ipt; cfg$na.cus <- na.cus
+    na.cus <- c('customData', 'customComputedData')
+    dat.def <- c(dat.upl, dat.ipt[na.def]); svg.def <- c(svg.upl, svg.ipt[na.def])
+    dat.def <- dat.def[unique(names(dat.def))]; svg.def <- svg.def[unique(names(svg.def))]
+    cfg$lis.dat <- lis.dat; cfg$lis.dld <- lis.dld; cfg$lis.par <- lis.par; cfg$na.def <- na.def; cfg$svg.def <- svg.def; cfg$dat.def <- dat.def; cfg$na.cus <- na.cus
 
     output$spatialHeatmap <- renderText({ lis.par$title['title', 'default'] })
     output$title.w <- renderText({ lis.par$title['width', 'default'] })
     updateSelectInput(session, 'fileIn', 'Step 1: data sets', na.ipt, lis.par$default.dataset)
     updateRadioButtons(session, inputId='dimName', label='Step 4: is column or row gene?', choices=c("None", "Row", "Column"), selected=lis.par$col.row.gene, inline=TRUE)
-    # updateSelectInput(session, 'sep', 'Step 5: separator', c("None", "Tab", "Space", "Comma", "Semicolon"), lis.par$separator)
     updateNumericInput(session, inputId="A", label="Value (A) to exceed:", value=as.numeric(lis.par$data.matrix['A', 'default']))
     updateNumericInput(session, inputId="P", label="Proportion (P) of samples with values >= A:", value=as.numeric(lis.par$data.matrix['P', 'default']))
     updateNumericInput(session, inputId="CV1", label="Min coefficient of variation (CV1):", value=as.numeric(lis.par$data.matrix['CV1', 'default']))
@@ -170,15 +201,11 @@ na.cus <- c('customData', 'customComputedData')
     updateRadioButtons(session, inputId="thr", label="Select by:", choices=c('proportion'='p', 'number'='n', 'value'='v'), selected=lis.par$mhm['select.by', 'default'], inline=TRUE)
     updateNumericInput(session, inputId='mhm.v', label='Cutoff: ', value=as.numeric(lis.par$mhm['cutoff', 'default']), min=-Inf, max=Inf, step=NA)
     updateRadioButtons(session, inputId="mat.scale", label="Scale by:", choices=c("No", "Column", "Row"), selected=lis.par$mhm['scale', 'default'], inline=TRUE)
-    #updateRadioButtons(session, inputId="mhm.but", label="Show plot:", choices=c("Yes", "No"), selected=lis.par$mhm['show', 'default'], inline=TRUE)
     updateSelectInput(session, inputId="net.type", label="Network type:", choices=c('signed', 'unsigned', 'signed hybrid', 'distance'), selected=lis.par$network['net.type', 'default'])
     updateNumericInput(session, "min.size", "Minmum module size:", value=as.numeric(lis.par$network['min.size', 'default']), min=15, max=5000)
     updateSelectInput(session, "ds","Module splitting sensitivity level:", 3:2, selected=lis.par$network['ds', 'default'])
     updateTextInput(session, "color.net", "Color scheme:", lis.par$network['color', 'default'], placeholder=paste0('Eg: ', lis.par$network['color', 'default']))
     updateNumericInput(session, "max.edg", "Maximun edges (too many edges may crash the app):", value=cfg$lis.par$network['max.edges', 'default'], min=1, max=500)
-  #output$edge <- renderUI({ 
-   # span(style="color:black;font-weight:NULL;", HTML("Remaining edges to display (If > 300, the app might get stuck.):<br/>0"))
-  #})
 
   })
 
@@ -227,7 +254,6 @@ na.cus <- c('customData', 'customComputedData')
     input$fileIn; input$geneInpath
     updateRadioButtons(session, inputId="dimName", label="Step 4: is column or row gene?", 
     inline=TRUE, choices=c("None", "Row", "Column"), selected="None")
-    # updateSelectInput(session, 'sep', 'Step 5: separator', c("None", "Tab", "Space", "Comma", "Semicolon"), "None")
     updateRadioButtons(session, inputId='log', label='Log/exp transform:', choices=c("No", "log2", "exp2"), selected=cfg$lis.par$data.matrix['log.exp', 'default'], inline=TRUE)
     updateRadioButtons(session, 'scale', label='Scale by:', choices=c('No', 'Row', 'Column'), selected=cfg$lis.par$data.matrix['scale', 'default'], inline=TRUE)
     updateRadioButtons(session, inputId='cs.v', label='Color scale based on:', choices=c("Selected rows", "All rows"), selected=cfg$lis.par$shm.img['color.scale', 'default'], inline=TRUE)
@@ -270,7 +296,33 @@ na.cus <- c('customData', 'customComputedData')
     if (any(input$fileIn %in% cfg$na.def)) {
 
       incProgress(0.5, detail="Loading matrix. Please wait.")
-      df.te <- fread.df(input=cfg$dat.ipt[input$fileIn], isRowGene=TRUE, header=TRUE, fill=TRUE); return(df.te)
+      dat.na <- cfg$dat.def[input$fileIn]
+      if ('example' %in% strsplit(dat.na, '/')[[1]]) df.te <- fread.df(input=dat.na, isRowGene=TRUE) else {
+        
+        pa.sql <- list.files('example', '.*\\.sql', full.names=TRUE)
+        if (length(pa.sql)>0) { 
+
+          con1 <- dbConnect(RSQLite::SQLite(), pa.sql)
+          dat.db1 <- dat.na %in% dbListTables(con1)
+          dat.sql <- dbReadTable(con1, dat.na, row.names=TRUE)
+          dbDisconnect(con1); df.te <- fread.df(input=dat.sql, isRowGene=TRUE)
+
+        } 
+        if (!is.null(input$tar.sql)) { 
+
+          con2 <- dbConnect(RSQLite::SQLite(), cfg$pa.sql.upl)
+          dat.db2 <- dat.na %in% dbListTables(con2)
+          if (length(pa.sql)>0) validate(need(try(!(dat.db1 & dat.db2)), 'The selected data is duplcated in the internal and uploaded SQLite databases!'))
+          if (dat.db2) {
+
+            dat.sql <- dbReadTable(con2, dat.na, row.names=TRUE)
+            dbDisconnect(con2); df.te <- fread.df(input=dat.sql, isRowGene=TRUE)
+
+          }
+ 
+        }
+
+      }; return(df.te)
 
     }
 
@@ -279,8 +331,7 @@ na.cus <- c('customData', 'customComputedData')
 
       incProgress(0.25, detail="Importing matrix. Please wait.")
       geneInpath <- input$geneInpath
-      #if (input$sep=="Tab") sep <- "\t" else if (input$sep=="Space") sep <- " " else if (input$sep=="Comma") sep <- "," else if (input$sep=="Semicolon") sep <- ";"
-      df.upl <- fread.df(input=geneInpath$datapath, isRowGene=(input$dimName=='Row'), header=TRUE, fill=TRUE, rep.aggr='mean'); return(df.upl)
+      df.upl <- fread.df(input=geneInpath$datapath, isRowGene=(input$dimName=='Row')); return(df.upl)
    
     }
 
@@ -491,16 +542,18 @@ na.cus <- c('customData', 'customComputedData')
     } else { 
 
       svg.path <- cfg$svg.def[[input$fileIn]]
-      svg.na <- NULL; for (i in svg.path) {
-      
-        str <- strsplit(i, '/')[[1]]; svg.na <- c(svg.na, str[length(str)])
+      svg.na <- NULL; for (i in seq_along(svg.path)) {
+        # Extract svg names. 
+        str <- strsplit(svg.path[[i]], '/')[[1]]; svg.na <- c(svg.na, str[length(str)])
+        # Complete uploaded svg paths.
+        if (all(!grepl('example/', svg.path[[i]]))) svg.path[[i]] <- paste0(cfg$pa.upl, '/', svg.path[[i]])
 
       }
 
     }
     if (length(svg.na)>1) {
 
-      validate(need(try(all(grepl('_shm\\d+\\.svg$', svg.na, perl=TRUE))), "Suffixes of aSVGs should be indexed as '_shm1.svg', '_shm2.svg', '_shm3i.svg', ..."))
+      validate(need(try(all(grepl('_shm\\d+\\.svg$', svg.na, perl=TRUE))), "Suffixes of aSVGs should be indexed as '_shm1.svg', '_shm2.svg', '_shm3.svg', ..."))
       ord <- order(gsub('.*_(shm.*)$', '\\1', svg.na))
       svg.path <- svg.path[ord]; svg.na <- svg.na[ord]
     
@@ -534,7 +587,7 @@ na.cus <- c('customData', 'customComputedData')
             validate(need(!is.character(df_tis), paste0(svg.na[i], ': ', df_tis)))
             svg.df.lis <- c(svg.df.lis, list(df_tis))
    
-          }; names(svg.df.lis) <- svg.na; 
+          }; names(svg.df.lis) <- svg.na 
          return(svg.df.lis)
 
       })
