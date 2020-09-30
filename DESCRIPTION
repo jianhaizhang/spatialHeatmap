@@ -1,7 +1,7 @@
 Package: spatialHeatmap
 Type: Package
 Title: spatialHeatmap
-Version: 0.99.6
+Version: 0.99.7
 Date: 2018-09-07
 Authors@R: c(
   person(given="Jianhai", family="Zhang", role=c("aut", "trl", "cre"), email="jzhan067@ucr.edu", comment=""),
@@ -27,8 +27,3 @@ BugReports: https://github.com/jianhaizhang/spatialHeatmap/issues
 URL: https://github.com/jianhaizhang/spatialHeatmap
 Video: NA
 RoxygenNote: 7.1.0
-NeedsCompilation: no
-Packaged: 2020-09-29 21:29:56 UTC; jzhan067
-Author: Jianhai Zhang [aut, trl, cre],
-  Thomas Thomas [aut]
-Maintainer: Jianhai Zhang <jzhan067@ucr.edu>
