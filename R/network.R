@@ -15,7 +15,7 @@
 #' @param layout The layout of the network in static image, either "circle" or "fr". The "fr" stands for force-directed layout algorithm by Fruchterman and Reingold. The default is "circle".
 #' @param main The title in the static image. Default is NULL.
 #' @param static Logical, TRUE returns a static network while FALSE returns an interactive network. 
-#' @param ... Other arguments passed to the generic function \code{\link[graphics:plot]{plot}}, \emph{e.g.}: \code{asp=1}. 
+#' @param ... Other arguments passed to the generic function \code{\link[graphics]{plot.default}}, \emph{e.g.}: \code{asp=1}. 
 #' @return A static or interactive network graph.
 
 #' @examples
