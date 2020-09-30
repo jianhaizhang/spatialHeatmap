@@ -90,10 +90,10 @@ aggr_rep <- function(data, sam.factor, con.factor, aggr='mean') {
 
   }
   # To keep colnames, "X" should be a character, not a factor.
-  if (aggr=='mean') mat <- sapply(X=unique(fct), function(x) rowMeans(mat[, fct==x, drop=FALSE]))
+  if (aggr=='mean') mat <- vapply(unique(fct), function(x) rowMeans(mat[, fct==x, drop=FALSE]), numeric(nrow(mat)))
   if (aggr=='median') {
   
-    mat <- sapply(X=unique(fct), function(x) Biobase::rowMedians(mat[, fct==x, drop=FALSE]))
+    mat <- vapply(unique(fct), function(x) Biobase::rowMedians(mat[, fct==x, drop=FALSE]), numeric(nrow(mat)))
     rownames(mat) <- rownames(data)
 
   }

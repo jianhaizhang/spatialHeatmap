@@ -1,5 +1,5 @@
 #' Create Customized Shiny App of Spaital Heatmap
-#'  
+#'
 #' This function creates customized Shiny App with user-provided data, aSVG files, and default parameters. Default settings are defined in the "config.yaml" file in the "config" folder of the app, and can be edited directly in a yaml file editor.  
 
 #' @param ... Separate lists of paired data matrix and aSVG files, which are included as default datasets in the Shiny app. Each list must have three elements with name slots of "name", "data", and "svg" respectively. For example, \code{ list(name='dataset1', data='./data1.txt', svg='./root_shm.svg') }. The "name" element (\emph{e.g.} 'dataset1') is listed under "Step 1: data sets" in the app, while "data" and "svg" are the paths of data matrix and aSVG files. If multiple aSVGs (\emph{e.g.} growth stages) are included in one list, the respective paths are stored in a vector in the "svg" slot (see example below). After calling this function, the data and aSVGs are copied to the "example" folder in the app. See detailed examples below.
@@ -135,61 +135,16 @@ custom_shiny <- function(..., lis.par=NULL, lis.par.tmp=FALSE, lis.dld.single=NU
     }; exp <- lis.dat.def[-idx.rm]
 
   }
-  col_check <- function(element, vec.all) {
-
-    col0 <- vec.all[grepl('^color:', vec.all)]
-    color <- gsub('.*:(.*)', '\\1', col0)
-    color <- gsub(' |\\.|-|;|,|/', '_', color)
-    color <- strsplit(color, '_')[[1]]
-    color <- color[color!='']; color1 <- color[!color %in% colors()]
-    if (length(color1)>0) stop(paste0('Colors in ', element, ' not valid: ', paste0(color1, collapse=', '), '!'))
-
-  }
   # Validate colours.
   col_check('shm.img', lis.par$shm.img)
   col_check('network', lis.par$network)
   # Copy user-provided files, and change data/svg path.
-  cp_file <- function(lis, folder) {
-
-    if (is.null(lis)) return()
-    for (i in seq_along(lis)) { 
-
-      lis0 <- lis[[i]]; for (k in seq_along(lis0)) {
-
-        # Copy files.
-        vec <- lis0[[k]]; if (!all(file.exists(vec))) next
-        files <- NULL; for (v in vec) files <- c(files, v)
-        # cat('Copying files: \n'); print(files)
-        system(paste0('cp ', paste0(files, collapse=' '), ' ', app.dir, '/', folder))
-        # Shorten paths.
-        if (length(vec)==1) { 
-          
-          str <- strsplit(vec, '/')[[1]]
-          lis[[i]][[k]] <- paste0(folder, '/', str[length(str)])
-        
-        } else if (length(vec)>1) {
-
-          svgs <- NULL; for (j in seq_along(vec)) {
-
-            str <- strsplit(vec[j], '/')[[1]]
-            svgs <- c(svgs, paste0(folder, '/', str[length(str)]))
-
-          }; lis[[i]][[k]] <- svgs
-        
-        }
-
-      }
-
-    }; return(lis)
-
-  }
-
-  lis.dat <- cp_file(lis.dat, 'example')
-  if (!is.null(lis.dld.single)) lis.dld1 <- cp_file(lis.dld.single, 'example') else {
+  lis.dat <- cp_file(lis.dat, app.dir, 'example')
+  if (!is.null(lis.dld.single)) lis.dld1 <- cp_file(lis.dld.single, app.dir, 'example') else {
     # Use default download files.
     lis.dld1 <- list(data="example/expr_arab.txt", svg="example/arabidopsis_thaliana.root.cross_shm.svg")
   }
-  if (!is.null(lis.dld.mul)) lis.dld2 <- cp_file(lis.dld.mul, 'example') else {
+  if (!is.null(lis.dld.mul)) lis.dld2 <- cp_file(lis.dld.mul, app.dir, 'example') else {
     # Use default download files. 
     lis.dld2 <- list(data="example/random_data_multiple_aSVGs.txt", svg=c('example/arabidopsis_thaliana.organ_shm1.svg', 'example/arabidopsis_thaliana.organ_shm2.svg'))
 
@@ -206,5 +161,58 @@ custom_shiny <- function(..., lis.par=NULL, lis.par.tmp=FALSE, lis.dld.single=NU
 
 }
 
+#' Check validity of color indgredients. 
+#'
+#' @keywords Internal
+#' @noRd
 
+col_check <- function(element, vec.all) {
 
+  col0 <- vec.all[grepl('^color:', vec.all)]
+  color <- gsub('.*:(.*)', '\\1', col0)
+	color <- gsub(' |\\.|-|;|,|/', '_', color)	
+  color <- strsplit(color, '_')[[1]]
+  color <- color[color!='']; color1 <- color[!color %in% colors()]
+  if (length(color1)>0) stop(paste0('Colors in ', element, ' not valid: ', paste0(color1, collapse=', '), '!'))
+
+}	
+
+#' Copy user-provided files, and change data/svg path.
+#'
+#' @keywords Internal
+#' @noRd
+
+cp_file <- function(lis, app.dir, folder) {
+
+  if (is.null(lis)) return()
+  for (i in seq_along(lis)) { 
+
+    lis0 <- lis[[i]]; for (k in seq_along(lis0)) {
+
+      # Copy files.
+      vec <- lis0[[k]]; if (!all(file.exists(vec))) next
+      files <- NULL; for (v in vec) files <- c(files, v)
+      # cat('Copying files: \n'); print(files)
+      system(paste0('cp ', paste0(files, collapse=' '), ' ', app.dir, '/', folder))
+      # Shorten paths.
+      if (length(vec)==1) { 
+          
+        str <- strsplit(vec, '/')[[1]]
+        lis[[i]][[k]] <- paste0(folder, '/', str[length(str)])
+        
+      } else if (length(vec)>1) {
+
+        svgs <- NULL; for (j in seq_along(vec)) {
+
+          str <- strsplit(vec[j], '/')[[1]]
+          svgs <- c(svgs, paste0(folder, '/', str[length(str)]))
+
+        }; lis[[i]][[k]] <- svgs
+        
+      }
+
+    }
+
+  }; return(lis)
+
+}

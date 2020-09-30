@@ -112,7 +112,7 @@ return_feature <- function(feature, species, keywords.any=TRUE, remote=TRUE, dir
 
       svgs1.rm <- svgs1[svgs.na1 %in% svgs.na] 
       cat(paste0('Overwriting: ', svgs1.rm, '\n')) 
-      sapply(svgs, function (i) file.copy(i, dir, overwrite=TRUE)); row.names(df) <- NULL;  return(df)
+      vapply(svgs, function(i) file.copy(i, dir, overwrite=TRUE), logical(1)); row.names(df) <- NULL;  return(df)
 
     }
 
@@ -190,7 +190,7 @@ return_feature <- function(feature, species, keywords.any=TRUE, remote=TRUE, dir
     svgs.cp <- svgs[svgs.na %in% unique(df.final$SVG)]
     svgs.rm <- svgs1[svgs.na1 %in% unique(df.final$SVG)]
     cat(paste0('Overwriting: ', svgs.rm, '\n'))
-    sapply(svgs.cp, function (i) file.copy(i, dir, overwrite=TRUE))
+    vapply(svgs.cp, function (i) file.copy(i, dir, overwrite=TRUE), logical(1))
     if (dir.exists(tmp)) unlink(tmp, recursive=TRUE)
 
   }; return(df.final)
