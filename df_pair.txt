@@ -1,0 +1,4 @@
+"data"	"aSVG"
+"shoot"	"expr_arab.txt"	"arabidopsis_thaliana.shoot_shm.svg"
+"map"	"us_population2018.txt"	"us_map_shm.svg"
+"growth"	"random_data_multiple_aSVGs.txt"	"arabidopsis_thaliana.organ_shm1.svg;arabidopsis_thaliana.organ_shm2.svg"

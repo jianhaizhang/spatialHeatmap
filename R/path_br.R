@@ -4,6 +4,7 @@
 #' @param node An object of class "xml_node" without children nodes.
 #' @param g Logical, TRUE or FALSE. Default is TRUE. If TRUE the combined path is broken into a group. Otherwise, as siblings.
 #' @return Nothing is returned. The broken paths are updated in the root.
+#' @keywords Internal
 
 #' @author Jianhai Zhang \email{jzhan067@@ucr.edu; zhang.jianhai@@hotmail.com} \cr Dr. Thomas Girke \email{thomas.girke@@ucr.edu}
 #' @noRd

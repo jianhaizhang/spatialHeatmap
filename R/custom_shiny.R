@@ -65,6 +65,7 @@
 #' @export custom_shiny
 #' @importFrom yaml yaml.load_file write_yaml
 #' @importFrom grDevices colors
+#' @importFrom RSQLite SQLite dbConnect dbListTables dbReadTable dbDisconnect
 
 custom_shiny <- function(..., lis.par=NULL, lis.par.tmp=FALSE, lis.dld.single=NULL, lis.dld.mul=NULL, custom=TRUE, custom.computed=TRUE, example=FALSE, app.dir='.') {
 
@@ -155,7 +156,7 @@ custom_shiny <- function(..., lis.par=NULL, lis.par.tmp=FALSE, lis.dld.single=NU
 
     }
 
-  }; if (is.null(idx)) lis.dat <- cp_file(lis.dat, 'example') else lis.dat <- cp_file(lis.dat[-idx], 'example')
+  }; if (is.null(idx)) lis.dat <- cp_file(lis.dat, app.dir, 'example') else lis.dat <- cp_file(lis.dat[-idx], app.dir, 'example')
 
   pa.pair <- paste0(app.dir, '/example/df_pair.txt')
   lis.dat1 <- NULL; if (file.exists(pa.pair)) { df.pair <- read_fr(pa.pair)
@@ -170,11 +171,11 @@ custom_shiny <- function(..., lis.par=NULL, lis.par.tmp=FALSE, lis.dld.single=NU
 
   }
 
-  if (!is.null(lis.dld.single)) lis.dld1 <- cp_file(lis.dld.single, 'example') else {
+  if (!is.null(lis.dld.single)) lis.dld1 <- cp_file(lis.dld.single, app.dir, 'example') else {
     # Use default download files.
     lis.dld1 <- list(data="example/expr_arab.txt", svg="example/arabidopsis_thaliana.root.cross_shm.svg")
   }
-  if (!is.null(lis.dld.mul)) lis.dld2 <- cp_file(lis.dld.mul, 'example') else {
+  if (!is.null(lis.dld.mul)) lis.dld2 <- cp_file(lis.dld.mul, app.dir, 'example') else {
     # Use default download files. 
     lis.dld2 <- list(data="example/random_data_multiple_aSVGs.txt", svg=c('example/arabidopsis_thaliana.organ_shm1.svg', 'example/arabidopsis_thaliana.organ_shm2.svg'))
 
@@ -192,28 +193,11 @@ custom_shiny <- function(..., lis.par=NULL, lis.par.tmp=FALSE, lis.dld.single=NU
 }
 
 
-df.pair <- data.frame(row.names=c('shoot', 'map', 'growth'), data=c('expr_arab.txt', 'us_population2018.txt', 'random_data_multiple_aSVGs.txt'), aSVG=c('arabidopsis_thaliana.shoot_shm.svg', 'us_map_shm.svg', 'arabidopsis_thaliana.organ_shm1.svg;arabidopsis_thaliana.organ_shm2.svg'))
-write.table(df.pair, 'df_pair.txt', sep='\t', row.names=T, col.names=T)
-read_fr('df_pair.txt', header=T)
 
-lis.dat <- list(list('~/test3/data.sql', '~/test3/aSVGs.tar'), list('~/test3/data.tar', '~/test3/aSVGs.tar'), list(name='shoot', data=data.path1, svg=svg.path1), list(name='growthStage', data=data.path2, svg=c(svg.path2.1, svg.path2.2))) 
-
-df.pair1 <- data.frame(row.names=c('shoot', 'map', 'growth'), data=c('expr_arab', 'us_population2018', 'random_data_multiple_aSVGs'), aSVG=c('arabidopsis_thaliana.shoot_shm.svg', 'us_map_shm.svg', 'arabidopsis_thaliana.organ_shm1.svg;arabidopsis_thaliana.organ_shm2.svg'))
-write.table(df.pair1, '~/test3/df_pair1.txt', sep='\t', row.names=T, col.names=T)
-  library(RSQLite)
-  con <- dbConnect(RSQLite::SQLite(), "~/test3/data.sql")
-  df.pair1 <- read_fr('~/test3/df_pair1.txt')
-  dbWriteTable(con, "df_pair", df.pair1, row.names=T, overwrite=T) 
-  df.arab <- read_fr('~/shiny/example/expr_arab.txt')
-  df.map <- read_fr('~/shiny/example/us_population2018.txt')
-  df.growth <- read_fr('~/shiny/example/random_data_multiple_aSVGs.txt')
-  dbWriteTable(con, "expr_arab", df.arab, row.names=TRUE, overwrite=T) 
-  dbWriteTable(con, "us_population2018", df.map, row.names=TRUE, overwrite=T) 
-  dbWriteTable(con, "random_data_multiple_aSVGs", row.names=TRUE, df.growth, overwrite=T) 
-
-#' Check vilidaty of color indredients in the yaml file
+#' Check validity of color indredients in the yaml file
 #'
 #' @keywords Internal
+#' @noRd
 
 col_check <- function(element, vec.all) {
 
@@ -230,6 +214,8 @@ col_check <- function(element, vec.all) {
 #' Convert the data-aSVG pair from data frame to list
 #'
 #' @keywords Internal
+#' @noRd
+
 pair2lis <- function(df.pair, sql=FALSE) { 
 
   na.all <- rownames(df.pair); dat.all <- df.pair[, 'data']
@@ -251,7 +237,9 @@ pair2lis <- function(df.pair, sql=FALSE) {
 #' Copy user-provided files, and change data/svg path.
 #'
 #' @keywords Internal
-cp_file <- function(lis, folder) {
+#' @noRd
+
+cp_file <- function(lis, app.dir, folder) {
 
   if (is.null(lis)) return()
   for (i in seq_along(lis)) { 

@@ -121,15 +121,7 @@ adj_mod <- function(data, type='signed', power=if (type=='distance') 1 else 6, a
   options(stringsAsFactors=FALSE)
   # Get data matrix.
   if (is(data, 'data.frame')|is(data, 'matrix')|is(data, 'DFrame')) {
-
-    data <- as.data.frame(data); rna <- rownames(data); cna <- make.names(colnames(data)) 
-    if (any(duplicated(cna))) stop('Please use function \'aggr_rep\' to aggregate replicates!')
-    na <- vapply(seq_len(ncol(data)), function(i) { tryCatch({ as.numeric(data[, i]) }, warning=function(w) { return(rep(NA, nrow(data)))
-    }, error=function(e) { stop("Please make sure input data are numeric!") }) }, FUN.VALUE=numeric(nrow(data)) )
-    na <- as.data.frame(na); rownames(na) <- rna
-    idx <- colSums(apply(na, 2, is.na))!=0
-    data <- na[!idx]; colnames(data) <- cna[!idx]; data <- t(data)
-
+    dat.lis <- check_data(data=data); data <- t(dat.lis$dat)
   } else if (is(data, 'SummarizedExperiment')) { data <- t(assay(data)) 
 
     if (any(duplicated(rownames(data)))) stop('Please use function \'aggr_rep\' to aggregate replicates!')

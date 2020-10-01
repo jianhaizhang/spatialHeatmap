@@ -30,7 +30,7 @@ video <- function(gg, cs.g, sam.uni, tis.trans, sub.title.size=NULL, bar.value.s
 
   # Test if "av" works.
   test <- function() {
-    av_capture_graphics(expr=for (i in seq_along(1:2)) plot(i), output=paste0(tempdir(check=TRUE), '/tmp.mp4'))
+    av_capture_graphics(expr=for (i in seq_len(2)) plot(i), output=paste0(tempdir(check=TRUE), '/tmp.mp4'))
   }; try(test())
   ffm <- tryCatch({ test() }, error=function(e){ return('error') }, warning=function(w) { return('warning') } )
   if (grepl('error|warning', ffm)) return()
