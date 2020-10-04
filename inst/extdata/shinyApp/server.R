@@ -1,4 +1,5 @@
-options(shiny.maxRequestSize=7*1024^3, stringsAsFactors=FALSE) 
+
+options(stringsAsFactors=FALSE) 
 
 # source('~/tissue_specific_gene/function/fun.R')
 
@@ -6,6 +7,7 @@ options(shiny.maxRequestSize=7*1024^3, stringsAsFactors=FALSE)
 
 # Import internal functions.
 sort_gen_con <- get('sort_gen_con', envir=asNamespace('spatialHeatmap'), inherits=FALSE)
+read_hdf5 <- get('read_hdf5', envir=asNamespace('spatialHeatmap'), inherits=FALSE)
 
 matrix_hm <- get('matrix_hm', envir=asNamespace('spatialHeatmap'), inherits=FALSE)
 
@@ -54,7 +56,7 @@ html_ly <- get('html_ly', envir=asNamespace('spatialHeatmap'), inherits=FALSE)
 video <- get('video', envir=asNamespace('spatialHeatmap'), inherits=FALSE)
 
 # Import input matrix.
-fread.df <- function(input, isRowGene, header=TRUE, sep='auto', fill=TRUE, rep.aggr='mean', check.names=FALSE) {
+fread.df <- function(input, isRowGene=TRUE, header=TRUE, sep='auto', fill=TRUE, rep.aggr='mean', check.names=FALSE) {
   
   if (!is(input, 'data.frame') & !is(input, 'matrix')) { 
     
@@ -106,10 +108,37 @@ col_sep <- function(color) {
 
 }
 
+# Check/process "sample__condition" in the se extracted from tar.
+se_from_db <- function(se) {
+  dat <- assay(se); cold <- colData(se)
+  form <- grepl("__", colnames(dat))
+  if (sum(form)==0) {
+    if (all(c('sample', 'condition') %in% colnames(cold))) { 
+      cna <- colnames(dat) <- paste0(cold$sample, '__', cold$condition)
+      if (any(duplicated(cna))) return('Duplicated "sample__condition" replicates are detected in the selected dataset!')
+    } else if ('sample' %in% colnames(cold)) {
+      if (any(duplicated(cold$sample))) return('The "sample" should not be duplicated in the absence of "condition"!')
+      colnames(dat) <- cold$sample
+    }
+  }; return(dat)
+}
+
+# Extract target svgs in tar into tmp folder, and return the paths. 
+extr_svg <- function(file, name) {
+
+  dir <- paste0(tempdir(check=TRUE), '/svg_shm')
+  if (!dir.exists(dir)) dir.create(dir)
+  system(paste0('tar -xf ', file, ' -C ', dir, ' ', name))
+  return(paste0(dir, '/', name))
+
+}
+
+
+
 # enableWGCNAThreads()
 shinyServer(function(input, output, session) {
 
-  cfg <- reactiveValues(lis.dat=NULL, lis.dld=NULL, lis.par=NULL, na.def=NULL, dat.def=NULL, svg.def=NULL, pa.upl=NULL, pa.sql.upl=NULL, na.cus=NULL)
+  cfg <- reactiveValues(lis.dat=NULL, lis.dld=NULL, lis.par=NULL, na.def=NULL, dat.def=NULL, svg.def=NULL, pa.upl=NULL, pa.dat.upl=NULL, pa.svg.upl=NULL, na.cus=NULL)
 
   observe({
 
@@ -119,13 +148,18 @@ shinyServer(function(input, output, session) {
     incProgress(0.6, detail="in progress...")
     library(DT); library(gridExtra); library(ggdendro); library(WGCNA); library(grid); library(xml2); library(plotly); library(data.table); library(genefilter); library(flashClust); library(visNetwork); 
     incProgress(0.9, detail="in progress...")
-    library(reshape2); library(igraph); library(animation); library(av); library(shinyWidgets); library(yaml); library(RSQLite)
+    library(reshape2); library(igraph); library(animation); library(av); library(shinyWidgets); library(yaml); library(HDF5Array)
   })
 
     lis.cfg <- yaml.load_file('config/config.yaml')
     lis.dat <- lis.cfg[grepl('^dataset\\d+', names(lis.cfg))]
     lis.dld <- lis.cfg[grepl('download_single|download_multiple', names(lis.cfg))]
     if (is.null(input$config)) lis.par <- lis.cfg[!grepl('^dataset\\d+|download_single|download_multiple', names(lis.cfg))] else lis.par <- yaml.load_file(input$config$datapath[1])
+    upl.size <- toupper(lis.par$max.upload.size)
+    num <- as.numeric(gsub('(\\d+)(G|M)', '\\1', upl.size))
+    if (grepl('\\d+G$', upl.size)) max.size <- num*1024^3
+    if (grepl('\\d+M$', upl.size)) max.size <- num*1024^2 
+    options(shiny.maxRequestSize=max.size) 
     if (!any(lis.par$hide.legend %in% c('Yes', 'No'))) lis.par$hide.legend <- ifelse(lis.par$hide.legend==TRUE, 'Yes', 'No')
     for (i in seq_along(lis.par)) {
 
@@ -142,28 +176,26 @@ shinyServer(function(input, output, session) {
       } 
 
     }
+
     # Separate data, svg.
     na.ipt <- dat.ipt <- svg.ipt <- NULL; for (i in lis.dat) { 
  
       na.ipt <- c(na.ipt, i$name); dat.ipt <- c(dat.ipt, i$data)
-      # svg.ipt <- c(svg.ipt, i$svg); names(dat.ipt) <- names(svg.ipt) <- na.ipt
       svg.ipt <- c(svg.ipt, list(i$svg))
 
     }; names(dat.ipt) <- names(svg.ipt) <- na.ipt
 
-    df.tar.sql <- input$tar.sql; dat.upl <- svg.upl <- NULL
-    if (sum(grepl('\\.sql$', df.tar.sql$datapath))==1 & sum(grepl('\\.tar$', df.tar.sql$datapath))==1) {
+    df.tar <- input$tar; dat.upl <- svg.upl <- NULL
+    if (sum(grepl('\\.tar$', df.tar$datapath))==2) {
 
-      cat('Processing uploaded tar/sql... \n')
-      p <- df.tar.sql$datapath[1]; strs <- strsplit(p, '/')[[1]]
-      cfg$pa.upl <- pa.svg <- paste0(strs[grep('\\.sql$', strs, invert=TRUE)], collapse='/')
-      svg.tar <- df.tar.sql$datapath[grep('\\.tar', df.tar.sql$datapath)]
-      system(paste0('tar -xf', ' ', svg.tar, ' -C ', pa.svg))
-      cfg$pa.sql.upl <- sql.pa <- df.tar.sql$datapath[grep('\\.sql', df.tar.sql$datapath)]
-      con <- dbConnect(RSQLite::SQLite(), sql.pa)
-      validate(need(try('df_pair' %in% dbListTables(con)), 'The "df_pair" file is not detected in the SQLite database!'))
-      df.pair.upl <- dbReadTable(con, 'df_pair', row.names=TRUE)
-      dbDisconnect(con)
+      cat('Processing uploaded tar... \n')
+      p <- df.tar$datapath[1]; strs <- strsplit(p, '/')[[1]]
+      cfg$pa.upl <- pa.svg <- paste0(strs[grep('\\.tar$', strs, invert=TRUE)], collapse='/')
+      dat.idx <- grepl('data_shm.tar$', df.tar$name) 
+      cfg$pa.svg.upl <- df.tar$datapath[!dat.idx]
+      # system(paste0('tar -xf', ' ', svg.tar, ' -C ', pa.svg))
+      cfg$pa.dat.upl <- dat.pa <- df.tar$datapath[dat.idx]
+      df.pair.upl <- read_hdf5(dat.pa, 'df_pair')[[1]]
       rna <- rownames(df.pair.upl); dat.upl <- df.pair.upl$data
       svg.upl <- as.list(df.pair.upl$aSVG); names(dat.upl) <- names(svg.upl) <- rna
 
@@ -183,11 +215,12 @@ shinyServer(function(input, output, session) {
     na.cus <- c('customData', 'customComputedData')
     dat.def <- c(dat.upl, dat.ipt[na.def]); svg.def <- c(svg.upl, svg.ipt[na.def])
     dat.def <- dat.def[unique(names(dat.def))]; svg.def <- svg.def[unique(names(svg.def))]
-    cfg$lis.dat <- lis.dat; cfg$lis.dld <- lis.dld; cfg$lis.par <- lis.par; cfg$na.def <- na.def; cfg$svg.def <- svg.def; cfg$dat.def <- dat.def; cfg$na.cus <- na.cus
+    cfg$lis.dat <- lis.dat; cfg$lis.dld <- lis.dld; cfg$lis.par <- lis.par; cfg$na.def <- names(dat.def); cfg$svg.def <- svg.def; cfg$dat.def <- dat.def; cfg$na.cus <- na.cus
 
     output$spatialHeatmap <- renderText({ lis.par$title['title', 'default'] })
     output$title.w <- renderText({ lis.par$title['width', 'default'] })
-    updateSelectInput(session, 'fileIn', 'Step 1: data sets', na.ipt, lis.par$default.dataset)
+    dat.nas <- c('none', 'customData', 'customComputedData', names(dat.def))
+    updateSelectInput(session, 'fileIn', 'Step 1: data sets', dat.nas, lis.par$default.dataset)
     updateRadioButtons(session, inputId='dimName', label='Step 4: is column or row gene?', choices=c("None", "Row", "Column"), selected=lis.par$col.row.gene, inline=TRUE)
     updateNumericInput(session, inputId="A", label="Value (A) to exceed:", value=as.numeric(lis.par$data.matrix['A', 'default']))
     updateNumericInput(session, inputId="P", label="Proportion (P) of samples with values >= A:", value=as.numeric(lis.par$data.matrix['P', 'default']))
@@ -220,7 +253,7 @@ shinyServer(function(input, output, session) {
       content=function(file=paste0(tempdir(), '/config_par.yaml')){ 
  
         lis.cfg <- yaml.load_file('config/config.yaml')
-        lis.par <- lis.cfg[c("default.dataset", "col.row.gene", "separator", "hide.legend", "data.matrix", "shm.img", "shm.anm", "shm.video", "legend", "mhm", "network")]
+        lis.par <- lis.cfg[c("max.upload.size", "default.dataset", "col.row.gene", "separator", "hide.legend", "data.matrix", "shm.img", "shm.anm", "shm.video", "legend", "mhm", "network")]
         write_yaml(lis.par, file)
 
       }
@@ -297,35 +330,29 @@ shinyServer(function(input, output, session) {
 
       incProgress(0.5, detail="Loading matrix. Please wait.")
       dat.na <- cfg$dat.def[input$fileIn]
-      if ('example' %in% strsplit(dat.na, '/')[[1]]) df.te <- fread.df(input=dat.na, isRowGene=TRUE) else {
-        
-        pa.sql <- list.files('example', '.*\\.sql', full.names=TRUE)
-        if (length(pa.sql)>0) { 
-
-          con1 <- dbConnect(RSQLite::SQLite(), pa.sql)
-          dat.db1 <- dat.na %in% dbListTables(con1)
-          dat.sql <- dbReadTable(con1, dat.na, row.names=TRUE)
-          dbDisconnect(con1); df.te <- fread.df(input=dat.sql, isRowGene=TRUE)
-
-        } 
-        if (!is.null(input$tar.sql)) { 
-
-          con2 <- dbConnect(RSQLite::SQLite(), cfg$pa.sql.upl)
-          dat.db2 <- dat.na %in% dbListTables(con2)
-          if (length(pa.sql)>0) validate(need(try(!(dat.db1 & dat.db2)), 'The selected data is duplcated in the internal and uploaded SQLite databases!'))
-          if (dat.db2) {
-
-            dat.sql <- dbReadTable(con2, dat.na, row.names=TRUE)
-            dbDisconnect(con2); df.te <- fread.df(input=dat.sql, isRowGene=TRUE)
-
+      if ('example' %in% strsplit(dat.na, '/')[[1]]) df.te <- fread.df(input=dat.na, isRowGene=TRUE) else { 
+        # Exrtact data from uploaded tar.
+        if (!is.null(input$tar)) if (file.exists(cfg$pa.dat.upl)) {
+          cat('Extracting uploaded data... \n')
+          # The prefix is input$fileIn.
+          dat <- read_hdf5(cfg$pa.dat.upl, prefix=input$fileIn)[[1]]
+          if (is(dat, 'SummarizedExperiment')) {
+            dat <- se_from_db(dat)
+            validate(need(try(!is.character(dat)), dat))
           }
- 
         }
-
+        # The uploaded tar takes precedence over internal tar.
+        if (is.null(input$tar)) { 
+          cat('Extracting internal data... \n')
+          dat <- read_hdf5('example/data_shm.tar', input$fileIn)[[1]]
+          if (is(dat, 'SummarizedExperiment')) {
+            dat <- se_from_db(dat)
+            validate(need(try(!is.character(dat)), dat))
+          } 
+        }; df.te <- fread.df(input=dat)
       }; return(df.te)
 
     }
-
     if (any(input$fileIn %in% cfg$na.cus) & 
     !is.null(input$geneInpath) & input$dimName!="None") {
 
@@ -540,13 +567,22 @@ shinyServer(function(input, output, session) {
       svg.path <- svgIn.df$datapath; svg.na <- svgIn.df$name
 
     } else { 
-
+      # Single or multiple svg paths.
       svg.path <- cfg$svg.def[[input$fileIn]]
       svg.na <- NULL; for (i in seq_along(svg.path)) {
         # Extract svg names. 
-        str <- strsplit(svg.path[[i]], '/')[[1]]; svg.na <- c(svg.na, str[length(str)])
+        str <- strsplit(svg.path[[i]], '/')[[1]]
+        na0 <- str[length(str)]; svg.na <- c(svg.na, na0)
         # Complete uploaded svg paths.
-        if (all(!grepl('example/', svg.path[[i]]))) svg.path[[i]] <- paste0(cfg$pa.upl, '/', svg.path[[i]])
+        if (all(!grepl('example/', svg.path[[i]]))) {
+          # The upload svgs take precedence over internal svgs in tar.
+          if (!is.null(cfg$pa.svg.upl)) svg.path[[i]] <- extr_svg(file=cfg$pa.svg.upl, name=na0) else {
+            tar.all <- list.files('example', pattern='\\.tar$', full.names=TRUE)
+            tar.svg <- tar.all[!grepl('data_shm.tar$', tar.all)][1]
+            svg.path[[i]] <-extr_svg(file=tar.svg, name=na0)
+          } 
+ 
+        }
 
       }
 
@@ -647,11 +683,12 @@ shinyServer(function(input, output, session) {
         if (input$pre.scale=='Yes') mar <- (1-w.h/w.h.max*0.99)/2 else mar <- NULL
         cat('New grob/ggplot:', ID, ' \n')
         grob.lis <- grob_list(gene=gene, con.na=geneIn0()[['con.na']], geneV=geneV(), coord=g.df, ID=ID, legend.col=fil.cols, cols=color$col, tis.path=tis.path, tis.trans=input$tis, sub.title.size=18, mar.lb=mar, legend.nrow=2, legend.key.size=0.04) # Only gID$new is used.
-        validate(need(!is.null(grob.lis), paste0(svg.na[i], ': no spatial features that have matching sample identifiers in data are detected!')))
+        msg <- paste0(svg.na[i], ': no spatial features that have matching sample identifiers in data are detected!')
+        if (is.null(grob.lis)) cat(msg, '\n')
+        validate(need(!is.null(grob.lis), msg))
         grob.lis.all <- c(grob.lis.all, list(grob.lis))
 
-      }; names(grob.lis.all) <- svg.na
-      return(grob.lis.all)
+      }; names(grob.lis.all) <- svg.na; return(grob.lis.all)
 
     })
 
@@ -687,11 +724,12 @@ shinyServer(function(input, output, session) {
         svg.na <- names(svg.df.lis)
         incProgress(0.75, detail=paste0('preparing ', paste0(gID$geneID, collapse=';')))
         grob.lis <- grob_list(gene=gene, con.na=geneIn0()[['con.na']], geneV=geneV(), coord=g.df, ID=gID$geneID, legend.col=fil.cols, cols=color$col, tis.path=tis.path, tis.trans=input$tis, sub.title.size=18, mar.lb=mar, legend.nrow=2, legend.key.size=0.04) # All gene IDs are used.
-        validate(need(!is.null(grob.lis), paste0(svg.na[i], ': no spatial features that have matching sample identifiers in data are detected!')))
+        msg <- paste0(svg.na[i], ': no spatial features that have matching sample identifiers in data are detected!')
+        if (is.null(grob.lis)) cat(msg, '\n')
+        validate(need(!is.null(grob.lis), msg))
         grob.lis.all <- c(grob.lis.all, list(grob.lis))
 
-      }; names(grob.lis.all) <- svg.na
-      return(grob.lis.all)
+      }; names(grob.lis.all) <- svg.na; return(grob.lis.all)
 
       })
 
@@ -726,11 +764,12 @@ shinyServer(function(input, output, session) {
         svg.na <- names(svg.df.lis)
         incProgress(0.75, detail=paste0('preparing ', paste0(ID, collapse=';')))
         grob.lis <- grob_list(gene=gene, con.na=geneIn0()[['con.na']], geneV=geneV(), coord=g.df, ID=ID, legend.col=fil.cols, cols=color$col, tis.path=tis.path, tis.trans=input$tis, sub.title.size=18, mar.lb=mar, legend.nrow=2, legend.key.size=0.04) # All gene IDs are used.
-        validate(need(!is.null(grob.lis), paste0(svg.na[i], ': no spatial features that have matching sample identifiers in data are detected!')))
+        msg <- paste0(svg.na[i], ': no spatial features that have matching sample identifiers in data are detected!')
+        if (is.null(grob.lis)) cat(msg, '\n')
+        validate(need(!is.null(grob.lis), msg))
         grob.lis.all <- c(grob.lis.all, list(grob.lis))
 
-      }; names(grob.lis.all) <- svg.na
-      return(grob.lis.all)
+      }; names(grob.lis.all) <- svg.na; return(grob.lis.all)
 
       })
 
@@ -773,7 +812,7 @@ shinyServer(function(input, output, session) {
     if (is.null(grob$lgd.all)|is.null(lgd.key.size)|is.null(lgd.row)|is.null(lgd.label)) return()
     cat('Adjust legend size/rows... \n')
     grob$lgd.all <- gg_lgd(gg.all=grob$lgd.all, size.key=lgd.key.size, size.text.key=NULL, row=lgd.row, sam.dat=sam(), tis.trans=input$tis, position.text.key='right', label=(lgd.label=='Yes'), label.size=label.size)
-  
+ 
   })
   observeEvent(list(grob.all=grob$all, gen.con=input$gen.con), {
   
@@ -974,20 +1013,17 @@ shinyServer(function(input, output, session) {
 
   })
 
-  output$lgd <- renderPlot(width='auto', height = "auto", {
-
+  output$lgd <- renderPlot(width='auto', height="auto", {
     validate(need(try(as.integer(input$lgd.row)==input$lgd.row & input$lgd.row>0), 'Legend key rows should be a positive integer!'))
     validate(need(try(input$lgd.key.size>0&input$lgd.key.size<1), 'Legend key size should be between 0 and 1!'))
     svg.path <- svg.path()
     if (is.null(svg.path())|is.null(grob$lgd.all)|(length(svg.path$svg.na)>1 & is.null(input$shms.in))) return(ggplot())
-
       # Width and height in original SVG.
       if (length(svg.path$svg.na)>1) svg.na <- input$shms.in else svg.na <- 1
 
       w.h <- svg.df()[[svg.na]][['w.h']]
       w.h <- as.numeric(gsub("^(\\d+\\.\\d+|\\d+).*", "\\1", w.h)); r <- w.h[1]/w.h[2]
-      if (is.na(r)) return()
-      cat('Plotting legend plot... \n')
+      if (is.na(r)) return(); cat('Plotting legend plot... \n')
       g.lgd <- grob$lgd.all[[svg.na]]; g.lgd <- g.lgd+coord_fixed(ratio=r); return(g.lgd)
 
   })

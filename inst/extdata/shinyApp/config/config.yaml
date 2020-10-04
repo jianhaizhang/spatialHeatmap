@@ -11,48 +11,54 @@ dataset3:
   data: none
   svg: none
 dataset4:
-  name: shoot
+  name: brain_Prudencio
+  data: example/expr_human.txt
+  svg: example/homo_sapiens.brain.svg
+dataset5:
+  name: mouse_Merkin
+  data: example/expr_mouse.txt
+  svg: example/mus_musculus.male.svg
+dataset6:
+  name: chicken_Cardoso.Moreira
+  data: example/expr_chicken.txt
+  svg: example/gallus_gallus.svg
+dataset7:
+  name: shoot_Mustroph
   data: example/expr_arab.txt
   svg: example/arabidopsis_thaliana.shoot_shm.svg
-dataset5:
-  name: growthStage
+dataset8:
+  name: organ_Mustroph
+  data: example/expr_arab.txt
+  svg: example/arabidopsis_thaliana.organ_shm.svg
+dataset9:
+  name: root_Mustroph
+  data: example/expr_arab.txt
+  svg: example/arabidopsis_thaliana.root.cross_shm.svg
+dataset10:
+  name: shootRoot_Mustroph
+  data: example/expr_arab.txt
+  svg: example/arabidopsis_thaliana.shoot.root_shm.svg
+dataset11:
+  name: rootRootTip_Mustroph
+  data: example/expr_arab.txt
+  svg: example/arabidopsis_thaliana.root.roottip_shm.svg
+dataset12:
+  name: growthStage_Mustroph
   data: example/random_data_multiple_aSVGs.txt
   svg:
   - example/arabidopsis_thaliana.organ_shm1.svg
   - example/arabidopsis_thaliana.organ_shm2.svg
-dataset6:
-  name: shoot
-  data: example/expr_arab.txt
-  svg: example/arabidopsis_thaliana.shoot_shm.svg
-dataset7:
-  name: map
+dataset13:
+  name: map_Census
   data: example/us_population2018.txt
   svg: example/us_map_shm.svg
-dataset8:
-  name: growth
-  data: example/random_data_multiple_aSVGs.txt
-  svg:
-  - example/arabidopsis_thaliana.organ_shm1.svg
-  - example/arabidopsis_thaliana.organ_shm2.svg
-dataset9:
-  name: shoot
-  data: expr_arab
-  svg: example/arabidopsis_thaliana.shoot_shm.svg
-dataset10:
-  name: map
-  data: us_population2018
-  svg: example/us_map_shm.svg
-dataset11:
-  name: growth
-  data: random_data_multiple_aSVGs
-  svg:
-  - example/arabidopsis_thaliana.organ_shm1.svg
-  - example/arabidopsis_thaliana.organ_shm2.svg
 title:
 - title:spatialHeatmap (2020-09-20)
 - width:350
+max.upload.size: 5G 
 default.dataset: organ_Mustroph
 col.row.gene: None
+separator: None
 hide.legend: 'No'
 data.matrix:
 - A:0
@@ -109,8 +115,8 @@ network:
 - ds:3
 - max.edges:10
 download_single:
-  data: example/expr_arab.txt
-  svg: example/arabidopsis_thaliana.root.cross_shm.svg
+  data: example/ucr_shm_mean_mas.txt
+  svg: example/arabidopsis_thaliana.shoot_shm.svg
 download_multiple:
   data: example/random_data_multiple_aSVGs.txt
   svg:

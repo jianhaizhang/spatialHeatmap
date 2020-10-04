@@ -2,18 +2,18 @@
 % Please edit documentation in R/read_fr.R
 \name{read_fr}
 \alias{read_fr}
-\title{A Wrapper of "fread"}
+\title{Import Data from Tabular Files}
 \usage{
 read_fr(input, header = TRUE, sep = "auto", fill = TRUE, check.names = FALSE)
 }
 \arguments{
-\item{input}{ A single character string. The value is inspected and deferred to either \code{file=} (if no \\n present), \code{text=} (if at least one \\n is present) or \code{cmd=} (if no \\n is present, at least one space is present, and it isn't a file name). Exactly one of \code{input=}, \code{file=}, \code{text=}, or \code{cmd=} should be used in the same call. }
+\item{input}{The file path.}
 
-\item{header}{ Does the first data line contain column names? Defaults according to whether every non-empty field on the first data line is type character. If so, or TRUE is supplied, any empty column names are given a default name. }
+\item{header}{One of TRUE, FALSE, or "auto". Default is TRUE. Does the first data line contain column names, according to whether every non-empty field on the first data line is type character? If "auto" or TRUE is supplied, any empty column names are given a default name.}
 
 \item{sep}{ The separator between columns. Defaults to the character in the set \code{[,\\t |;:]} that separates the sample of rows into the most number of lines with the same number of fields. Use \code{NULL} or \code{""} to specify no separator; i.e. each line a single character column like \code{base::readLines} does.}
 
-\item{fill}{logical (default is \code{FALSE}). If \code{TRUE} then in case the rows have unequal length, blank fields are implicitly filled.}
+\item{fill}{Logical (default is TRUE). If TRUE then in case the rows have unequal length, blank fields are implicitly filled.}
 
 \item{check.names}{default is \code{FALSE}. If \code{TRUE} then the names of the variables in the \code{data.table} are checked to ensure that they are syntactically valid variable names. If necessary they are adjusted (by \code{\link{make.names}}) so that they are, and also to ensure that there are no duplicates.}
 }
@@ -21,7 +21,7 @@ read_fr(input, header = TRUE, sep = "auto", fill = TRUE, check.names = FALSE)
 A data frame.
 }
 \description{
-This function imports a tabular file with \code{\link[data.table]{fread}}, where the column names are arranged internally.
+This function reads data from a tabular file, which is a wrapper of \code{\link[data.table]{fread}}.
 }
 \references{
 Matt Dowle and Arun Srinivasan (2019). data.table: Extension of `data.frame`. R package version 1.12.8. https://CRAN.R-project.org/package=data.table
@@ -29,4 +29,3 @@ Matt Dowle and Arun Srinivasan (2019). data.table: Extension of `data.frame`. R 
 \author{
 Jianhai Zhang \email{jzhan067@ucr.edu; zhang.jianhai@hotmail.com} \cr Dr. Thomas Girke \email{thomas.girke@ucr.edu}
 }
-\keyword{Internal}

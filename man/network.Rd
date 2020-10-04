@@ -51,7 +51,7 @@ network(
 
 \item{static}{Logical, TRUE returns a static network while FALSE returns an interactive network.}
 
-\item{...}{Other arguments passed to the generic function \code{\link[graphics:plot]{plot}}, \emph{e.g.}: \code{asp=1}.}
+\item{...}{Other arguments passed to the generic function \code{\link[graphics]{plot.default}}, \emph{e.g.}: \code{asp=1}.}
 }
 \value{
 A static or interactive network graph.

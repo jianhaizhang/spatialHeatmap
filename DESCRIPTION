@@ -1,50 +1,28 @@
 Package: spatialHeatmap
 Type: Package
 Title: spatialHeatmap
-Version: 0.99.0
+Version: 0.99.9
 Date: 2018-09-07
-Author: Jianhai Zhang, Thomas Girke
-Maintainer: Jianhai Zhang <jzhan067@ucr.edu>
+Authors@R: c(
+  person(given="Jianhai", family="Zhang", role=c("aut", "trl", "cre"), email="jzhan067@ucr.edu", comment=""),
+  person(given="Thomas", family="Thomas", role="aut", comment="")
+  )
 Description: The spatialHeatmap package provides functionalities for visualizing cell-, tissue- and organ-specific data of biological assays by coloring the corresponding spatial features defined in anatomical images according to a numeric color key.
 License: Artistic-2.0
 Encoding: UTF-8
-biocViews: Visualization, Microarray, Sequencing, GeneExpression, DataRepresentation, Network, Clustering, GraphAndNetwork
+biocViews: Visualization, Microarray, Sequencing, GeneExpression,
+        DataRepresentation, Network, Clustering, GraphAndNetwork,
+        CellBasedAssays, ATACSeq, DNASeq, TissueMicroarray, SingleCell,
+        CellBiology, GeneTarget
 VignetteBuilder: knitr
-Suggests: knitr, rmarkdown, BiocStyle, RUnit, BiocGenerics, ExpressionAtlas, DT, reshape2, Biobase, GEOquery
-Depends: 
-Imports:
-   RSQLite,
-   data.table,
-   av,
-   DESeq2,
-   edgeR,
-   WGCNA,  
-   flashClust,
-   htmlwidgets, 
-   genefilter, 
-   ggplot2,
-   ggdendro, 
-   grImport,
-   grid, 
-   gridExtra,
-   gplots,
-   igraph,
-   rsvg, 
-   shiny,
-   dynamicTreeCut,
-   grDevices,
-   graphics,
-   ggplotify,
-   plotly,
-   rols,
-   stats,  
-   SummarizedExperiment,
-   shinydashboard,
-   utils,
-   visNetwork,
-   methods,
-   xml2,
-   yaml
+Suggests: knitr, rmarkdown, BiocStyle, RUnit, BiocGenerics,
+        ExpressionAtlas, DT, reshape2, Biobase, GEOquery
+Depends:
+Imports: HDF5Array, data.table, av, DESeq2, edgeR, WGCNA, flashClust, htmlwidgets, genefilter,
+        ggplot2, ggdendro, grImport, grid, gridExtra, gplots, igraph,
+        rsvg, shiny, dynamicTreeCut, grDevices, graphics, ggplotify,
+        plotly, rols, stats, SummarizedExperiment, shinydashboard,
+        utils, visNetwork, methods, xml2, yaml
 BugReports: https://github.com/jianhaizhang/spatialHeatmap/issues
 URL: https://github.com/jianhaizhang/spatialHeatmap
 Video: NA

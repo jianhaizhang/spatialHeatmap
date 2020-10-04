@@ -1,16 +1,19 @@
-#' A Wrapper of "fread"
+#' Import Data from Tabular Files
 #'
-#' This function imports a tabular file with \code{\link[data.table]{fread}}, where the column names are arranged internally.
+#' This function reads data from a tabular file, which is a wrapper of \code{\link[data.table]{fread}}.
 
+#' @param input The file path.
+#' @param header One of TRUE, FALSE, or "auto". Default is TRUE. Does the first data line contain column names, according to whether every non-empty field on the first data line is type character? If "auto" or TRUE is supplied, any empty column names are given a default name. 
 #' @inheritParams data.table::fread
+#' @param fill Logical (default is TRUE). If TRUE then in case the rows have unequal length, blank fields are implicitly filled.
 
-#' @return A data frame. 
-#' @keywords Internal
+#' @return A data frame.
 
 #' @author Jianhai Zhang \email{jzhan067@@ucr.edu; zhang.jianhai@@hotmail.com} \cr Dr. Thomas Girke \email{thomas.girke@@ucr.edu}
 #' @references
 #' Matt Dowle and Arun Srinivasan (2019). data.table: Extension of `data.frame`. R package version 1.12.8. https://CRAN.R-project.org/package=data.table
 
+#' @export read_fr
 #' @importFrom data.table fread
 
 read_fr <- function(input, header=TRUE, sep='auto', fill=TRUE, check.names=FALSE) {

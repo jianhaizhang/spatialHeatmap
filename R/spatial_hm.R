@@ -252,13 +252,14 @@ spatial_hm <- function(svg.path, data, sam.factor=NULL, con.factor=NULL, ID, lay
     w.h.all <- NULL; for (i in seq_along(svg.df.lis)) { w.h.all <- c(w.h.all, svg.df.lis[[i]][['w.h']]); w.h.max <- max(w.h.all) }
     # A set of SHMs are made for each SVG, and all sets of SHMs are placed in a list.
     grob.lis.all <- NULL; for (i in seq_along(svg.df.lis)) {
-
-      cat('Grobs:', names(svg.df.lis)[i], '... \n')
+      
+      na0 <- names(svg.df.lis)[i]; cat('Grobs:', na0, '... \n')
       svg.df <- svg.df.lis[[i]]; g.df <- svg.df[["df"]]; w.h <- svg.df[['w.h']]
       tis.path <- svg.df[["tis.path"]]; fil.cols <- svg.df[['fil.cols']]
       if (preserve.scale==TRUE) mar <- (1-w.h/w.h.max*0.99)/2 else mar <- NULL
       grob.lis <- grob_list(gene=gene, con.na=con.na, geneV=geneV, coord=g.df, ID=ID, legend.col=fil.cols, cols=col, tis.path=tis.path, tis.trans=tis.trans, sub.title.size=sub.title.size, sam.legend=sam.legend, legend.ncol=legend.ncol, legend.nrow=legend.nrow, legend.position=legend.position, legend.direction=legend.direction, legend.key.size=legend.key.size, legend.text.size=legend.text.size, legend.plot.title=legend.plot.title, legend.plot.title.size=legend.plot.title.size, line.size=line.size, line.color=line.color, mar.lb=mar, ...)
-      grob.lis.all <- c(grob.lis.all, list(grob.lis))
+      msg <- paste0(na0, ': no spatial features that have matching sample identifiers in data are detected!')
+      if (is.null(grob.lis)) stop(msg); grob.lis.all <- c(grob.lis.all, list(grob.lis))
 
     }; names(grob.lis.all) <- names(svg.df.lis) 
 

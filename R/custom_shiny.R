@@ -65,7 +65,6 @@
 #' @export custom_shiny
 #' @importFrom yaml yaml.load_file write_yaml
 #' @importFrom grDevices colors
-#' @importFrom RSQLite SQLite dbConnect dbListTables dbReadTable dbDisconnect
 
 custom_shiny <- function(..., lis.par=NULL, lis.par.tmp=FALSE, lis.dld.single=NULL, lis.dld.mul=NULL, custom=TRUE, custom.computed=TRUE, example=FALSE, app.dir='.') {
 
@@ -104,7 +103,7 @@ custom_shiny <- function(..., lis.par=NULL, lis.par.tmp=FALSE, lis.dld.single=NU
   system(paste0('rm -fr ', app.dir, '/rsconnect')) 
   system(paste0('rm -fr ', app.dir, '/html_shm/*html')) 
   system(paste0('rm -fr ', app.dir, '/html_shm/lib/*'))
-  system(paste0('rm -fr ', app.dir, '/example/*\\.sql'))
+  system(paste0('rm -fr ', app.dir, '/example/*\\.tar'))
   lis.dat <- list(...)
   # Load default parameter list.
   if (is.null(lis.par)) { lis.par <- lis.par.def } else {
@@ -141,35 +140,22 @@ custom_shiny <- function(..., lis.par=NULL, lis.par.tmp=FALSE, lis.dld.single=NU
   # Validate colours.
   col_check('shm.img', lis.par$shm.img)
   col_check('network', lis.par$network)
+  # Copy data/svg in list of two tar files. 
+  idx <- lis.dat1 <- NULL; for (i in seq_along(lis.dat)) {
 
-  # Copy data/svg in list of tar or sql. 
-  idx <- NULL; for (i in seq_along(lis.dat)) {
-
-    lis0 <- lis.dat[i]; if (length(lis0[[1]])==2) { 
+    lis0 <- lis.dat[[i]]; if (length(lis0)==2) { 
   
-      idx <- c(idx, i); for (j in lis0[[1]]) {
+      idx <- c(idx, i); for (j in lis0) {
 
-        if (grepl('\\.sql$', j)) system(paste0('cp ', j , ' ', app.dir, '/example'))
-        if (grepl('\\.tar$', j)) system(paste0('tar -xf ', j, ' -C ', app.dir, '/example'))
+        j <- normalizePath(j)
+        if (grepl('data_shm.tar$', j)) lis.dat1 <- pair2lis(read_hdf5(j, 'df_pair')[[1]], db=TRUE)
+        if (grepl('\\.tar$', j)) system(paste0('cp ', j, ' ', app.dir, '/example')) else stop('Compressed data and aSVGs should be two independent ".tar" files respectively!')
 
       }
 
     }
 
   }; if (is.null(idx)) lis.dat <- cp_file(lis.dat, app.dir, 'example') else lis.dat <- cp_file(lis.dat[-idx], app.dir, 'example')
-
-  pa.pair <- paste0(app.dir, '/example/df_pair.txt')
-  lis.dat1 <- NULL; if (file.exists(pa.pair)) { df.pair <- read_fr(pa.pair)
-  lis.dat1 <- pair2lis(df.pair) }
-  sql <- list.files(paste0(app.dir, '/example'), pattern='\\.sql', full.names=TRUE)
-  if (length(sql)>0) for (i in sql) {
-
-    con <- dbConnect(RSQLite::SQLite(), i)
-    if ('df_pair' %in% dbListTables(con)) {
-    lis.dat1 <- c(lis.dat1, pair2lis(dbReadTable(con, "df_pair", row.names=TRUE), sql=TRUE))
-    }; dbDisconnect(con)
-
-  }
 
   if (!is.null(lis.dld.single)) lis.dld1 <- cp_file(lis.dld.single, app.dir, 'example') else {
     # Use default download files.
@@ -193,6 +179,44 @@ custom_shiny <- function(..., lis.par=NULL, lis.par.tmp=FALSE, lis.dld.single=NU
 }
 
 
+dat.lis <- list(df_pair=df.pair, arab=dat.arab, chicken=se.chk, growth=dat.growth)
+write_hdf5(dat.lis, dir='~/test5')
+
+lis.dat3 <- list(data='~/test4/data_shm.tar', svg='~/test4/aSVGs.tar')
+custom_shiny(lis.dat1, lis.dat2, lis.par=lis.par, lis.dld.single=lis.dld.single, lis.dld.mul=lis.dld.mul, app.dir='~/shiny')
+
+df.pair <- data.frame(row.names=c('arab', 'chicken', 'growth'), data=c('expr_arab', 'expr_chicken', 'random_data_multiple_aSVGs'), aSVG=c('arabidopsis_thaliana.shoot_shm.svg', 'gallus_gallus.svg', 'arabidopsis_thaliana.organ_shm1.svg;arabidopsis_thaliana.organ_shm2.svg'))
+write.table(df.pair, '~/test3/df_pair.txt', sep='\t', row.names=T, col.names=T)
+read_fr('~/test3/df_pair.txt', header=T)
+
+pa.arab <- system.file("extdata/shinyApp/example", 'expr_arab.txt', package="spatialHeatmap")
+dat.arab <- read_fr(pa.arab)
+pa.growth <- system.file("extdata/shinyApp/example", 'random_data_multiple_aSVGs.txt', package="spatialHeatmap")
+dat.growth <- read_fr(pa.growth)
+ 
+     # Access toy data2. 
+     cnt.chk <- system.file('extdata/shinyApp/example/count_chicken.txt', package='spatialHeatmap')
+     count.chk <- read.table(cnt.chk, header=TRUE, row.names=1, sep='\t')
+     count.chk[1:3, 1:5]
+     
+     # A targets file describing samples and conditions is required for toy data2. It should be made based on the experiment design, which is accessible through the accession number "E-MTAB-6769" in the R package ExpressionAtlas. An example targets file is included in this package and accessed below. 
+     # Access the example targets file. 
+     tar.chk <- system.file('extdata/shinyApp/example/target_chicken.txt', package='spatialHeatmap')
+     target.chk <- read.table(tar.chk, header=TRUE, row.names=1, sep='\t')
+     # Every column in toy data2 corresponds with a row in targets file. 
+     target.chk[1:5, ]
+     # Store toy data2 in "SummarizedExperiment".
+     library(SummarizedExperiment)
+     se.chk <- SummarizedExperiment(assay=count.chk, colData=target.chk)
+     # The "rowData" slot can store a data frame of gene annotation, but not required.
+     ann <- paste0('ann', seq_len(nrow(se.chk))); ann[1:3]
+     rowData(se.chk) <- DataFrame(ann=ann)
+
+dat.lis1 <- read_hdf5('~/test5/data_shm.tar', names(dat.lis))
+
+  df.arab <- read_fr('~/shiny/example/expr_arab.txt')
+  df.map <- read_fr('~/shiny/example/us_population2018.txt')
+  df.growth <- read_fr('~/shiny/example/random_data_multiple_aSVGs.txt')
 
 #' Check validity of color indredients in the yaml file
 #'
@@ -216,7 +240,7 @@ col_check <- function(element, vec.all) {
 #' @keywords Internal
 #' @noRd
 
-pair2lis <- function(df.pair, sql=FALSE) { 
+pair2lis <- function(df.pair, db=FALSE) { 
 
   na.all <- rownames(df.pair); dat.all <- df.pair[, 'data']
   svg.all <- df.pair[, 'aSVG']
@@ -226,9 +250,9 @@ pair2lis <- function(df.pair, sql=FALSE) {
 
       strs <- strsplit(svg, ';| |,')[[1]]; svg <- strs[strs!='']
 
-  }
-  # Data of txt file and sqlite are recognised by 'example/' in the dataset list.
-  if (sql==FALSE) lis.dat0 <- c(lis.dat0, list(list(name=na.all[i], data=paste0('example/', dat.all[i]), svg=paste0('example/', svg)))) else lis.dat0 <- c(lis.dat0, list(list(name=na.all[i], data=dat.all[i], svg=paste0('example/', svg))))
+    }
+  # Data of txt file and db are distinguished by 'example/' in the dataset list.
+  if (db==FALSE) lis.dat0 <- c(lis.dat0, list(list(name=na.all[i], data=paste0('example/', dat.all[i]), svg=paste0('example/', svg)))) else lis.dat0 <- c(lis.dat0, list(list(name=na.all[i], data=dat.all[i], svg=svg)))
 
   }; return(lis.dat0)
 

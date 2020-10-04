@@ -29,7 +29,7 @@ check_data <- function(data, sam.factor=NULL, con.factor=NULL, usage='other') {
     row.meta <- data[idx] # aggr_rep filter_data, submatrix 
     dat <- na[!idx]; colnames(dat) <- fct.cna <- cna[!idx]
     # spatial_hm
-    form <- grepl("__", fct.cna); if (sum(form)==0) { colnames(dat) <- paste0(fct.cna, '__', 'con'); con.na <- FALSE } else con.na <- TRUE
+    if (usage=='shm') { form <- grepl("__", fct.cna); if (sum(form)==0) { colnames(dat) <- paste0(fct.cna, '__', 'con'); con.na <- FALSE } else con.na <- TRUE }
 
   } else if (is(data, 'SummarizedExperiment')) {
 
@@ -40,7 +40,7 @@ check_data <- function(data, sam.factor=NULL, con.factor=NULL, usage='other') {
     # filter_data
     row.meta <- as.data.frame(rowData(data))[, , drop=FALSE]
     # Factors teated by paste0/make.names are vectors.
-    if (!is.null(sam.factor) & !is.null(con.factor)) { fct.cna <- paste0(col.meta[, sam.factor], '__', col.meta[, con.factor]); con.na <- TRUE } 
+    if (!is.null(sam.factor) & !is.null(con.factor)) { fct.cna <- colnames(dat) <- paste0(col.meta[, sam.factor], '__', col.meta[, con.factor]); con.na <- TRUE } 
 
     if (usage=='shm') {
 

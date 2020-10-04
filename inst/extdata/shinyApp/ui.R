@@ -15,7 +15,7 @@ shinyUI(dashboardPage(
       menuItem("Input", icon=icon("list"),
       menuSubItem("View", tabName="hm_net"), br(),
       fileInput("config", "Optional: upload a config file", accept=".yaml", multiple=FALSE),
-      fileInput("tar.sql", "Optional: upload tar/sql files", accept=c(".sql", ".tar"), multiple=TRUE),
+      fileInput("tar", "Optional: upload data/aSVGs in tar files", accept=c(".tar"), multiple=TRUE),
       selectInput("fileIn", "Step1: data sets", c('none', 'customData', 'customComputedData'), 'none'),
       fileInput("svgInpath", "Step 2A: upload one aSVG file", accept=".svg", multiple=FALSE),
       fileInput("svgInpath1", "Step 2B: upload multiple aSVG files", accept=".svg", multiple=TRUE),
