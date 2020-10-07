@@ -190,18 +190,18 @@ se.fil.chk <- filter_data(data=se.aggr.chk, sam.factor='organism_part', con.fact
 
 # To make spatial heatmaps, a pair of formatted data and pre-annotated SVG (aSVG) file are required. If the data is a "data frame", the formatting is to use the naming scheme "sample__condition" in column names. If "SummarizedExperiment", the "sample" and "condition" replicates should be defined in the "colData" slot. In the aSVG, each spatial feature has a unique identifier. The numeric values are mapped to spatial features and translated into colors according to their identifiers programatically. The mapped images are called spatial heatmaps.
 
-# The following shows how to download the corresponding pre-annotated aSVG file from the EBI SVG repository based on above tissues and species involved, i.e. c('heart', 'brain') and c('gallus') respectively. See the function "return_feature" for details. An empty directory is recommended so as to avoid overwriting existing SVG files. Here "~/test" is used. 
+# The following shows how to download the corresponding pre-annotated aSVG file from the EBI SVG repository based on above tissues and species involved, i.e. c('heart', 'brain') and c('gallus') respectively. See the function "return_feature" for details. An empty directory is recommended so as to avoid overwriting existing SVG files. Here "tmp.dir" is used. 
 
 # To meet the package building requirements, the code of querying aSVG remotely is not evaluated. The matching aSVG "gallus_gallus.svg" is included in this package and accessed.
 
 \donttest{
-# Make an empty directory "~/test" if not exist.
-if (!dir.exists('~/test')) dir.create('~/test')
+# Make an empty directory "tmp.dir" if not exist.
+tmp.dir <- paste0(tempdir(check=TRUE), '/shm')
 # Query aSVGs from remote.
-feature.df <- return_feature(feature=c('heart', 'brain'), species=c('gallus'), dir='~/test', match.only=FALSE, remote=TRUE)
+feature.df <- return_feature(feature=c('heart', 'brain'), species=c('gallus'), dir=tmp.dir, match.only=FALSE, remote=TRUE)
 feature.df
 # The path of matching aSVG.
-svg.chk <- '~/test/gallus_gallus.svg'
+svg.chk <- paste0(tmp.dir, '/gallus_gallus.svg')
 }
 
 # Get the matching aSVG path from the package.
@@ -210,10 +210,10 @@ svg.chk <- system.file("extdata/shinyApp/example", "gallus_gallus.svg", package=
 # Plot spatial heatmaps on gene "ENSGALG00000019846". In the middle are spatial heatmaps. Only aSVG features with matching countparts in data are colored. On the right is the legend plot, only the matching features are labeled.
 # Toy data1. 
 spatial_hm(svg.path=svg.chk, data=df.fil.chk, ID='ENSGALG00000019846', height=0.4, legend.r=1.9, sub.title.size=7, ncol=3)
-# Save spaital heatmaps as HTML and video files by assigning "~/test" to "out.dir". 
+# Save spaital heatmaps as HTML and video files by assigning "tmp.dir" to "out.dir". 
 \donttest{    
-if (!dir.exists('~/test')) dir.create('~/test')
-spatial_hm(svg.path=svg.chk, data=df.fil.chk, ID='ENSGALG00000019846', height=0.4, legend.r=1.9, sub.title.size=7, ncol=3, out.dir='~/test')
+tmp.dir <- paste0(tempdir(check=TRUE), '/shm')
+spatial_hm(svg.path=svg.chk, data=df.fil.chk, ID='ENSGALG00000019846', height=0.4, legend.r=1.9, sub.title.size=7, ncol=3, out.dir=tmp.dir)
 }
 # Toy data2.
 spatial_hm(svg.path=svg.chk, data=se.fil.chk, ID='ENSGALG00000019846', legend.r=1.9, legend.nrow=2, sub.title.size=7, ncol=3)
@@ -242,15 +242,15 @@ svg2 <- system.file("extdata/shinyApp/example", "arabidopsis_thaliana.organ_shm2
 # Spatial heatmaps.
 spatial_hm(svg.path=c(svg1, svg2), data=df.test, ID=c('gene1'), height=0.8, legend.r=1.6, preserve.scale=TRUE) 
 
-## If users want to use custom identifiers for spatial features in the aSVG file, the function "update_feature" should be used. For illustration purpose, the aSVG "gallus_gallus.svg" in this package is copied to '~/test' as example.
+## If users want to use custom identifiers for spatial features in the aSVG file, the function "update_feature" should be used. For illustration purpose, the aSVG "gallus_gallus.svg" in this package is copied to 'tmp.dir' as example.
 
 \donttest{
-# Make an empty directory "~/test" if not exist.
-if (!dir.exists('~/test')) dir.create('~/test')
+# Make an empty directory "tmp.dir" if not exist.
+tmp.dir <- paste0(tempdir(check=TRUE), '/shm')
 # Make a copy of "gallus_gallus.svg".
-file.copy(from=svg.chk, to='~/test', overwrite=FALSE)
+file.copy(from=svg.chk, to=tmp.dir, overwrite=FALSE)
 # Query "gallus_gallus.svg".
-feature.df <- return_feature(feature=c('heart', 'brain'), species=c('gallus'), dir='~/test', match.only=TRUE, remote=TRUE)
+feature.df <- return_feature(feature=c('heart', 'brain'), species=c('gallus'), dir=tmp.dir, match.only=TRUE, remote=TRUE)
 feature.df
 
 # New features.
@@ -259,7 +259,7 @@ ft.new <- c('BRAIN', 'HEART')
 feature.df.new <- cbind(featureNew=ft.new, feature.df)
 feature.df.new
 # Update features.
-update_feature(feature=feature.df.new, dir='~/test')
+update_feature(feature=feature.df.new, dir=tmp.dir)
 }
 
 

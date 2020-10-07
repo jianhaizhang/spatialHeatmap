@@ -57,6 +57,7 @@ return_feature <- function(feature, species, keywords.any=TRUE, remote=TRUE, dir
   dir.check <- !is.null(dir) 
   if (dir.check) dir.check <- !(is.na(dir)) else stop("\'dir\' is not valid!") 
   if (dir.check) { dir.check <- dir.exists(dir); if (!dir.check) stop("\'dir\' is not valid!") } else stop("\'dir\'is not valid!")
+  if (!is.vector(feature) & is.vector(species)) stop('"feature" and "species" must be two vectors respectively!')
 
   # Parse and return features.
   ftr.return <- function(svgs, desc=desc) { 

@@ -64,15 +64,9 @@
 norm_data <- function(data, norm.fun='CNF', parameter.list=NULL, data.trans='none') { 
   
   if (is(data, 'data.frame')|is(data, 'matrix')|is(data, 'DFrame')) {
-
-    data <- as.data.frame(data); rna <- rownames(data); cna <- colnames(data) 
-    na <- vapply(seq_len(ncol(data)), function(i) { tryCatch({ as.numeric(data[, i]) }, warning=function(w) { return(rep(NA, nrow(data)))
-    }, error=function(e) { stop("Please make sure input data are numeric!") }) }, FUN.VALUE=numeric(nrow(data)) )
-    na <- as.data.frame(na); rownames(na) <- rna
-    idx <- colSums(apply(na, 2, is.na))!=0
-    ann <- data[idx]; expr <- na[!idx]; colnames(expr) <- cna[!idx]
-
-  } else if (is(data, 'SummarizedExperiment')) { expr <- SummarizedExperiment::assay(data) }
+    dat.lis <- check_data(data=data, usage='norm'); expr <- dat.lis$dat; ann <- dat.lis$row.meta
+  } else if (is(data, 'SummarizedExperiment')) { expr <- SummarizedExperiment::assay(data) } else {
+stop('Accepted data classes are "data.frame", "matrix", "DFrame", or "SummarizedExperiment", except that "spatial_hm" also accepts a "vector".') }
   
   if (is.null(norm.fun)) norm.fun <- 'no'
   if (!(norm.fun %in% c("CNF", "ESF", "VST", "rlog"))) { 

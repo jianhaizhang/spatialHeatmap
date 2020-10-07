@@ -76,26 +76,9 @@
 filter_data <- function(data, pOA=c(0, 0), CV=c(-Inf, Inf), ann=NULL, sam.factor, con.factor,  dir=NULL) {
 
   options(stringsAsFactors=FALSE)
-  if (is(data, 'data.frame')|is(data, 'matrix')|is(data, 'DFrame')) {
-
-    data <- as.data.frame(data); rna <- rownames(data); cna <- make.names(colnames(data))
-    if (!identical(cna, colnames(data))) cat('Syntactically valid column names are made! \n')
-    na <- vapply(seq_len(ncol(data)), function(i) { tryCatch({ as.numeric(data[, i]) }, warning=function(w) { return(rep(NA, nrow(data)))
-    }, error=function(e) { stop("Please make sure input data are numeric!") }) }, FUN.VALUE=numeric(nrow(data)) )
-    na <- as.data.frame(na); rownames(na) <- rna
-    idx <- colSums(apply(na, 2, is.na))!=0
-    row.meta <- data[idx]; expr <- na[!idx]; colnames(expr) <- cna[!idx]
-
-  } else if (is(data, 'SummarizedExperiment')) {
-
-    expr <- assay(data); col.meta <- as.data.frame(colData(data))
-    row.meta <- as.data.frame(rowData(data), stringsAsFactors=FALSE)[, , drop=FALSE]
-    # Factors teated by paste0/make.names are vectors.
-    if (!is.null(sam.factor) & !is.null(con.factor)) { cna <- paste0(col.meta[, sam.factor], '__', col.meta[, con.factor]) } else if (!is.null(sam.factor) & is.null(con.factor)) { cna <- as.vector(col.meta[, sam.factor]) } else if (is.null(sam.factor) & !is.null(con.factor)) { cna <- as.vector(col.meta[, con.factor]) } else cna <- colnames(expr)
-    colnames(expr) <- make.names(cna); if (!identical(cna, make.names(cna))) cat('Syntactically valid column names are made! \n')
-
-  }
-
+  # Process data.
+  dat.lis <- check_data(data=data, sam.factor=sam.factor, con.factor=con.factor, usage='filter')
+  expr <- dat.lis$dat; row.meta <- dat.lis$row.meta; col.meta <- dat.lis$col.meta
   ffun <- filterfun(pOverA(p=pOA[1], A=pOA[2]), cv(CV[1], CV[2]))
   filtered <- genefilter(expr, ffun); expr <- expr[filtered, , drop=FALSE] # Subset one row in a matrix, the result is a numeric vector not a matrix, so drop=FALSE.
   row.meta <- row.meta[filtered, , drop=FALSE]

@@ -40,6 +40,7 @@ update_feature <- function(feature, dir) {
   dir.check <- !is.null(dir) 
   if (dir.check) dir.check <- !(is.na(dir)) else stop("\'dir\' is not valid!") 
   if (dir.check) { dir.check <- dir.exists(dir); if (!dir.check) stop("\'dir\' is not valid!") } else stop("\'dir\'is not valid!")
+  if (!is(feature, 'data.frame')) stop('"feature" must be a "data.frame"!')
   feature[, 1] <- as.character(feature[, 1])
   feature$index <- as.numeric(feature$index)
   feature$index1 <- as.numeric(feature$index1)

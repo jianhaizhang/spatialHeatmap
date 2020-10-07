@@ -70,40 +70,25 @@
 aggr_rep <- function(data, sam.factor, con.factor, aggr='mean') {
 
   options(stringsAsFactors=FALSE)
-  if (is(data, 'data.frame')|is(data, 'matrix')|is(data, 'DFrame')) {
+  # Process data.
+  dat.lis <- check_data(data=data, sam.factor=sam.factor, con.factor=con.factor, usage='aggr')
+  mat <- dat.lis$dat; fct.cna <- dat.lis$fct.cna; row.meta <- dat.lis$row.meta; col.meta <- dat.lis$col.meta
 
-    data <- as.data.frame(data); rna <- rownames(data); cna <- make.names(colnames(data))
-    if (!identical(cna, colnames(data))) cat('Syntactically valid column names are made! \n')
-    na <- vapply(seq_len(ncol(data)), function(i) { tryCatch({ as.numeric(data[, i]) }, warning=function(w) { return(rep(NA, nrow(data)))
-    }, error=function(e) { stop("Please make sure input data are numeric!") }) }, FUN.VALUE=numeric(nrow(data)) )
-    na <- as.data.frame(na); rownames(na) <- rna
-    idx <- colSums(apply(na, 2, is.na))!=0
-    ann <- data[idx]; mat <- na[!idx]; fct <- colnames(mat) <- cna[!idx]
-
-  } else if (is(data, 'SummarizedExperiment')) {
-
-    mat <- assay(data); col.meta <- as.data.frame(colData(data))
-    # Factors teated by paste0/make.names are vectrs.
-    if (!is.null(sam.factor) & !is.null(con.factor)) { fct <- paste0(col.meta[, sam.factor], '__', col.meta[, con.factor]) } else if (!is.null(sam.factor) & is.null(con.factor)) {  fct <- as.vector(col.meta[, sam.factor]) } else if (is.null(sam.factor) & !is.null(con.factor)) { fct <- as.vector(col.meta[, con.factor]) } else fct <- colnames(mat)
-    if (!identical(fct, make.names(fct))) cat('Syntactically valid column names are made! \n')
-    fct <- colnames(mat) <- make.names(fct) 
-
-  }
   # To keep colnames, "X" should be a character, not a factor.
-  if (aggr=='mean') mat <- vapply(unique(fct), function(x) rowMeans(mat[, fct==x, drop=FALSE]), numeric(nrow(mat)))
+  if (aggr=='mean') mat <- vapply(unique(fct.cna), function(x) rowMeans(mat[, fct.cna==x, drop=FALSE]), numeric(nrow(mat)))
   if (aggr=='median') {
   
-    mat <- vapply(unique(fct), function(x) Biobase::rowMedians(mat[, fct==x, drop=FALSE]), numeric(nrow(mat)))
+    mat <- vapply(unique(fct.cna), function(x) Biobase::rowMedians(mat[, fct.cna==x, drop=FALSE]), numeric(nrow(mat)))
     rownames(mat) <- rownames(data)
 
   }
   
-  if (is(data, 'data.frame')|is(data, 'matrix')) { return(cbind(mat, ann)) } else if (is(data, 'SummarizedExperiment')) { 
+  if (is(data, 'data.frame')|is(data, 'matrix')) { return(cbind(mat, row.meta)) } else if (is(data, 'SummarizedExperiment')) { 
   
-    col.meta <- col.meta[!duplicated(fct), ]; rownames(col.meta) <- NULL
+    col.meta <- col.meta[!duplicated(fct.cna), ]; rownames(col.meta) <- NULL
     data <- SummarizedExperiment(assays=list(expr=mat), rowData=rowData(data), colData=col.meta); return(data)
 
-  } 
+  }
 
 }
 

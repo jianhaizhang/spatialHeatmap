@@ -99,23 +99,17 @@
 submatrix <- function(data, ann=NULL, ID, p=0.3, n=NULL, v=NULL, fun='cor', cor.absolute=FALSE, arg.cor=list(method="pearson"), arg.dist=list(method="euclidean"), dir=NULL) {
 
   options(stringsAsFactors=FALSE)
+  # Process data.
   if (is(data, 'data.frame')|is(data, 'matrix')|is(data, 'DFrame')) {
-
-    data <- as.data.frame(data); rna <- rownames(data); cna <- make.names(colnames(data)) 
-    if (any(duplicated(cna))) stop('Please use function \'aggr_rep\' to aggregate replicates!')
-    na <- vapply(seq_len(ncol(data)), function(i) { tryCatch({ as.numeric(data[, i]) }, warning=function(w) { return(rep(NA, nrow(data)))
-    }, error=function(e) { stop("Please make sure input data are numeric!") }) }, FUN.VALUE=numeric(nrow(data)) )
-    na <- as.data.frame(na); rownames(na) <- rna
-    idx <- colSums(apply(na, 2, is.na))!=0; ann <- data[idx]
-    data <- na[!idx]; colnames(data) <- cna[!idx]
-
+    dat.lis <- check_data(data=data); data <- dat.lis$dat; ann <- dat.lis$row.meta
   } else if (is(data, 'SummarizedExperiment')) { 
 
     ann <- rowData(data)[ann]; data <- as.data.frame(assay(data)) 
     if (any(duplicated(rownames(data)))) stop('Please use function \'aggr_rep\' to aggregate replicates!')
 
-  }; if (nrow(data)<5) cat('Warning: variables of sample/condition are less than 5! \n')
+  } else { stop('Accepted data classes are "data.frame", "matrix", "DFrame", or "SummarizedExperiment", except that "spatial_hm" also accepts a "vector".') }
 
+  if (nrow(data)<5) cat('Warning: variables of sample/condition are less than 5! \n')
   na <- NULL; len <- nrow(data)
   if (len>=50000) cat('More than 50,000 rows are detected in data. Computation may take a long time! \n')
   if (sum(c(!is.null(p), !is.null(n), !is.null(v)))>1) return('Please only use one of \'p\', \'n\', \'v\' as the threshold!')

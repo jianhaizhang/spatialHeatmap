@@ -121,23 +121,18 @@
 
 network <- function(ID, data, adj.mod, ds="3", adj.min=0, con.min=0, node.col=c("turquoise", "violet"), edge.col=c("yellow", "blue"), vertex.label.cex=1, vertex.cex=3, edge.cex=10, layout="circle", main=NULL, static=TRUE, ...) {
 
-  tags <- NULL
   options(stringsAsFactors=FALSE)
   if (is(data, 'data.frame')|is(data, 'matrix')|is(data, 'DFrame')) {
 
-    data <- as.data.frame(data); rna <- rownames(data); cna <- make.names(colnames(data)) 
-    na <- vapply(seq_len(ncol(data)), function(i) { tryCatch({ as.numeric(data[, i]) }, warning=function(w) { return(rep(NA, nrow(data)))
-    }, error=function(e) { stop("Please make sure input data are numeric!") }) }, FUN.VALUE=numeric(nrow(data)) )
-    na <- as.data.frame(na); rownames(na) <- rna
-    idx <- colSums(apply(na, 2, is.na))!=0
-    gene <- na[!idx]; colnames(gene) <- cna[!idx]
-    if (any(idx)) ann <- data[which(idx)[1]] else ann <- NULL
+    dat.lis <- check_data(data=data); gene <- dat.lis$dat; ann <- dat.lis$row.meta
+    if (ncol(ann)>0) ann <- ann[1] else ann <- NULL
 
   } else if (is(data, 'SummarizedExperiment')) { 
 
     gene <- assay(data); if (!is.null(rowData(data)) & !is.null(ann)) { ann <- rowData(data)[, ann, drop=FALSE]; rownames(gene) <- rownames(ann) <- make.names(rownames(gene)) } else ann <- NULL
 
-  }; from <- to <- width <- size <- NULL 
+  } else { stop('Accepted data classes are "data.frame", "matrix", "DFrame", or "SummarizedExperiment", except that "spatial_hm" also accepts a "vector".') } 
+  from <- to <- width <- size <- tags <- NULL 
   adj <- adj.mod[["adj"]]; mods <- adj.mod[["mod"]]
   if (length(ID)!=1) return('Only one ID is required!')
   if (!ID %in% rownames(gene)) return('ID is not in data!')

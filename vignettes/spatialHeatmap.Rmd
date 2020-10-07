@@ -398,15 +398,18 @@ sapiens', 'brain')`, respectively. To return matching aSVGs, the argument
 matching the query keywords are returned and saved under `dir`. Otherwise, all
 aSVGs are returned regardless of the keywords. To avoid overwriting of existing
 SVG files, it is recommended to start with an empty target directory, here
-`~/test`. To search a local directory for matching aSVG images, the argument
+`tmp.dir`. To search a local directory for matching aSVG images, the argument
 setting `remote=FALSE` needs to be used, while specifying the path of the
 corresponding directory under `dir`. All or only matching features are returned
 if `match.only` is set to `FALSE` or `TRUE`, respectively.
 
 
+<!--
+Code chunk not evaluated to save time building this vignette.
+-->
 ```{r eval=FALSE, echo=TRUE, warnings=FALSE }
-dir.create('~/test') # Create empty directory
-feature.df <- return_feature(feature=c('frontal cortex', 'cerebellum'), species=c('homo sapiens', 'brain'), keywords.any=TRUE, return.all=FALSE, dir='~/test', remote=TRUE, match.only=TRUE, desc=FALSE) # Query aSVGs
+tmp.dir <- paste0(tempdir(check=TRUE), '/shm')  # Create empty directory
+feature.df <- return_feature(feature=c('frontal cortex', 'cerebellum'), species=c('homo sapiens', 'brain'), keywords.any=TRUE, return.all=FALSE, dir=tmp.dir, remote=TRUE, match.only=TRUE, desc=FALSE) # Query aSVGs
 feature.df[1:8, ] # Return first 8 rows for checking
 unique(feature.df$SVG) # Return all matching aSVGs
 ```
@@ -606,14 +609,14 @@ video will play the SHM subplots in the order specified under the `lay.shm`
 argument. 
 
 The following example saves the interactive HTML and video files under  
-a directory named `~/test`.  
+a directory named `tmp.dir`.  
 
 <!--
 Code chunk not evaluated to save time building this vignette.
 -->
 ```{r eval=FALSE, echo=TRUE, warnings=FALSE }
-if (!dir.exists('~/test')) dir.create('~/test')
-spatial_hm(svg.path=svg.hum, data=se.fil.hum, ID=c('ENSG00000268433', 'ENSG00000006047'), lay.shm='con', width=0.8, height=1, legend.r=1.5, legend.nrow=2, out.dir='~/test')
+tmp.dir <- paste0(tempdir(check=TRUE), '/shm')
+spatial_hm(svg.path=svg.hum, data=se.fil.hum, ID=c('ENSG00000268433', 'ENSG00000006047'), lay.shm='con', width=0.8, height=1, legend.r=1.5, legend.nrow=2, out.dir=tmp.dir)
 ```
 
 ### SHM: Customization
@@ -662,11 +665,14 @@ colData(rse.mus)[1:3, ]
 The following example shows how to download from the above described [SVG
 repositories](#data_repo) an aSVG image that matches the tissues and species
 assayed in the gene expression data set downloaded in the previous subsection.
-As before the image is saved to a directory named `~/test`.
+As before the image is saved to a directory named `tmp.dir`.
 
+<!--
+Code chunk not evaluated to save time building this vignette.
+-->
 ```{r eval=FALSE, echo=TRUE, warnings=FALSE }
-if (!dir.exists('~/test')) dir.create('~/test')
-feature.df <- return_feature(feature=c('heart', 'kidney'), species=c('Mus musculus'), keywords.any=TRUE, return.all=FALSE, dir='~/test', remote=TRUE, match.only=FALSE)
+tmp.dir <- paste0(tempdir(check=TRUE), '/shm')
+feature.df <- return_feature(feature=c('heart', 'kidney'), species=c('Mus musculus'), keywords.any=TRUE, return.all=FALSE, dir=tmp.dir, remote=TRUE, match.only=FALSE)
 ```
 
 To build this vignettes according to the R/Bioconductor package requirements, the
@@ -801,13 +807,15 @@ colData(rse.chk)[1:3, ]
 The following example shows how to download from the above introduced [SVG
 repositories](#data_repo) an aSVG image that matches the tissues and species
 assayed in the gene expression data set downloaded in the previous subsection.
-As before the image is saved to a directory named `~/test`.
+As before the image is saved to a directory named `tmp.dir`.
 
+<!--
+Code chunk not evaluated to save time building this vignette.
+-->
 ```{r eval=FALSE, echo=TRUE, warnings=FALSE }
-# Make an empty directory "~/test" if not exist.
-if (!dir.exists('~/test')) dir.create('~/test')
+tmp.dir <- paste0(tempdir(check=TRUE), '/shm')
 # Query aSVGs.
-feature.df <- return_feature(feature=c('heart', 'kidney'), species=c('gallus'), keywords.any=TRUE, return.all=FALSE, dir='~/test', remote=TRUE, match.only=FALSE)
+feature.df <- return_feature(feature=c('heart', 'kidney'), species=c('gallus'), keywords.any=TRUE, return.all=FALSE, dir=tmp.dir, remote=TRUE, match.only=FALSE)
 ```
 
 To build this vignettes according to the R/Bioconductor package requirements, the
@@ -1481,23 +1489,24 @@ deposit their own aSVGs to this repository to share them with the community.
 ### Update aSVG features {#update}
 
 To create and edit existing feature identifiers in aSVGs, the `update_feature` function
-can be used. The demonstration below, creates an empty folder `~/test1` and copies
+can be used. The demonstration below, creates an empty folder `tmp.dir1` and copies
 into it the `homo_sapiens.brain.svg` image provided by the `spatialHeatmap`
 package. Subsequently, selected feature annotations are updated in this file. 
 
-<!-- To avoid creating '~/test1' in users' computer, the following code chunks are not evaluated when building this vignette. -->
-
+<!--
+Code chunk not evaluated to save time building this vignette.
+-->
 ```{r eval=FALSE, echo=TRUE, warnings=FALSE }
-if (!dir.exists('~/test1')) dir.create('~/test1') # Create an empty directory
+tmp.dir1 <- paste0(tempdir(check=TRUE), '/shm1')
 svg.hum <- system.file("extdata/shinyApp/example", 'homo_sapiens.brain.svg', package="spatialHeatmap") 
-file.copy(from=svg.hum, to='~/test1', overwrite=FALSE) # Copy "homo_sapiens.brain.svg" file into '~/test1'
+file.copy(from=svg.hum, to=tmp.dir1, overwrite=FALSE) # Copy "homo_sapiens.brain.svg" file into 'tmp.dir1'
 ```
 
 Query the above aSVG with feature and species keywords, and return the resulting matches
 in a `data.frame`.
 
 ```{r eval=FALSE, echo=TRUE, warnings=FALSE }
-feature.df <- return_feature(feature=c('frontal cortex'), species=c('homo sapiens', 'brain'), dir='~/test1', remote=FALSE, keywords.any=FALSE)
+feature.df <- return_feature(feature=c('frontal cortex'), species=c('homo sapiens', 'brain'), dir=tmp.dir1, remote=FALSE, keywords.any=FALSE)
 feature.df
 ``` 
 
@@ -1521,10 +1530,10 @@ feature.df.new <- cbind(featureNew=f.new, feature.df)
 feature.df.new
 ```
 
-Finally, the features are updated in the aSVG file(s) located in the `~/test1` directory.
+Finally, the features are updated in the aSVG file(s) located in the `tmp.dir1` directory.
 
 ```{r eval=FALSE, echo=TRUE, warnings=FALSE } 
-update_feature(feature=feature.df.new, dir='~/test1')
+update_feature(feature=feature.df.new, dir=tmp.dir)
 ```
 
 <br/>

@@ -1,8 +1,7 @@
 Package: spatialHeatmap
 Type: Package
 Title: spatialHeatmap
-Version: 0.99.13
-Date: 2018-09-07
+Version: 0.99.14
 Authors@R: c(
   person(given="Jianhai", family="Zhang", role=c("aut", "trl", "cre"), email="jzhan067@ucr.edu", comment=""),
   person(given="Thomas", family="Thomas", role="aut", comment="")
@@ -25,5 +24,4 @@ Imports: av, DESeq2, edgeR, WGCNA, flashClust, htmlwidgets, genefilter,
         utils, visNetwork, methods, xml2, yaml
 BugReports: https://github.com/jianhaizhang/spatialHeatmap/issues
 URL: https://github.com/jianhaizhang/spatialHeatmap
-Video: NA
 RoxygenNote: 7.1.0
