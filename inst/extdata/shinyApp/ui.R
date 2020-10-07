@@ -62,7 +62,12 @@ shinyUI(dashboardPage(
       column(10, uiOutput('col.order'))
       ),
       fluidRow(splitLayout(cellWidths=c("1%", "43%", "10%"), '', textInput(inputId='search', label='Search:', value='', placeholder='Muliple IDs must only be separated by space or comma.', width='100%'), actionButton('search.but', 'Submit'))),
-      fluidRow(splitLayout(cellWidths=c("1%", "98%", "1%"), "", dataTableOutput("dt"), ""))
+      fluidRow(splitLayout(cellWidths=c("1%", "98%", "1%"), "", dataTableOutput("dt"), "")),
+      uiOutput('svg'), 
+      fluidRow(splitLayout(cellWidths=c("1%", "49%", "49%", "1%"), "", uiOutput('lis'), uiOutput('lis1'), ""))
+
+
+
       ),
       fluidRow(column(10), column(2, radioButtons(inputId='hide.lgd', label="Hide legend:", choices=c('Yes', 'No'), selected='No', inline=TRUE))),
       uiOutput('shm.ui'), uiOutput('lgd.ui'), 

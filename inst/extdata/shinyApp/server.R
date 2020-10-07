@@ -186,7 +186,9 @@ shinyServer(function(input, output, session) {
     }; names(dat.ipt) <- names(svg.ipt) <- na.ipt
 
     df.tar <- input$tar; dat.upl <- svg.upl <- NULL
-    if (sum(grepl('\\.tar$', df.tar$datapath))==2) {
+    tar.num <- grepl('\\.tar$', df.tar$datapath)
+    if (!is.null(df.tar)) validate(need(try(sum(tar.num)==2), 'Two tar files of data and aSVGs respectively are expected!'))
+    if (sum(tar.num)==2) {
 
       cat('Processing uploaded tar... \n')
       p <- df.tar$datapath[1]; strs <- strsplit(p, '/')[[1]]
@@ -216,7 +218,7 @@ shinyServer(function(input, output, session) {
     dat.def <- c(dat.upl, dat.ipt[na.def]); svg.def <- c(svg.upl, svg.ipt[na.def])
     dat.def <- dat.def[unique(names(dat.def))]; svg.def <- svg.def[unique(names(svg.def))]
     cfg$lis.dat <- lis.dat; cfg$lis.dld <- lis.dld; cfg$lis.par <- lis.par; cfg$na.def <- names(dat.def); cfg$svg.def <- svg.def; cfg$dat.def <- dat.def; cfg$na.cus <- na.cus
-
+    print(list(cfg$na.def, cfg$svg.def, cfg$dat.def))
     output$spatialHeatmap <- renderText({ lis.par$title['title', 'default'] })
     output$title.w <- renderText({ lis.par$title['width', 'default'] })
     dat.nas <- c('none', 'customData', 'customComputedData', names(dat.def))
@@ -515,8 +517,9 @@ shinyServer(function(input, output, session) {
   color <- reactiveValues(col="none")
   observe({
     
-    if (is.null(input$col.but)) return()
-    if(input$col.but==0) color$col <- colorRampPalette(col_sep(cfg$lis.par$shm.img['color', 'default']))(length(geneV()))
+    col0 <- cfg$lis.par$shm.img['color', 'default']
+    if (is.null(input$col.but)|is.null(col0)) return()
+    if(input$col.but==0) color$col <- colorRampPalette(col_sep(col0))(length(geneV()))
 
   })
   # As long as a button is used, observeEvent should be used. All variables inside 'observeEvent' trigger code evaluation, not only 'eventExpr'.  
@@ -623,14 +626,43 @@ shinyServer(function(input, output, session) {
             validate(need(!is.character(df_tis), paste0(svg.na[i], ': ', df_tis)))
             svg.df.lis <- c(svg.df.lis, list(df_tis))
    
-          }; names(svg.df.lis) <- svg.na 
-         return(svg.df.lis)
+          }; names(svg.df.lis) <- svg.na; return(svg.df.lis)
 
       })
 
     }
 
   })
+
+  observe({
+
+  output$svg <- renderUI({
+
+    nas <- names(cfg$svg.def)
+    selectInput('svg', label='Customize matching between dataset and aSVG:', choices=nas, selected=nas[1])
+
+  })
+
+library(sortable)
+labels <- list("one", "two", "three",
+  htmltools::tags$div(htmltools::em("Complex"), " html tag without a name"),
+  "five" = htmltools::tags$div(htmltools::em("Complex"), " html tag with name: 'five'")
+)
+
+output$lis <- renderUI({
+rank_list(text="Drag samples in any desired order", labels=sam(), input_id="sam")
+})
+
+output$lis1 <- renderUI({
+
+rank_list(
+  text = "Drag spatial features in any desired order",
+  labels = labels, input_id="sf"
+)
+
+})
+
+})
 
 
   observe({
@@ -1009,7 +1041,8 @@ shinyServer(function(input, output, session) {
  
     if (is.null(svg.path())) return(NULL)
     if (length(svg.path()$svg.na)==1) return(NULL)
-    selectInput('shms.in', label='aSVG for legend:', choices=as.list(svg.path()[['svg.na']], selected=svg.path()[['svg.na']][1]))
+    svg.pa <- svg.path()[['svg.na']]
+    selectInput('shms.in', label='aSVG for legend:', choices=svg.pa, selected=svg.pa[1])
 
   })
 
