@@ -12,7 +12,7 @@ custom_shiny(
   lis.dld.mul = NULL,
   custom = TRUE,
   custom.computed = TRUE,
-  example = FALSE,
+  example = TRUE,
   app.dir = "."
 )
 }
@@ -31,7 +31,7 @@ custom_shiny(
 
 \item{custom.computed}{Logical, TRUE or FALSE. If TRUE (default), the "customComputdData" option under "Step 1: data sets" is included, which allows to upload computed datasets from local computer. See \code{\link{adj_mod}}.}
 
-\item{example}{Logical, TRUE or FALSE. If TRUE, the default examples in "spatialHeatmap" package are included in the app as well as those provided to \code{...} by users.}
+\item{example}{Logical, TRUE or FALSE. If TRUE (default), the default examples in "spatialHeatmap" package are included in the app as well as those provided to \code{...} by users.}
 
 \item{app.dir}{The directory to create the Shiny app. Default is current work directory \code{'.'}.}
 }
@@ -68,11 +68,14 @@ lis.par$shm.img['color', ] <- 'yellow,orange,blue'
 # The default dataset upon the app is launched.
 lis.par$default.dataset <- 'shoot'
 \donttest{
-# Create custom Shiny app by feeding this function these datasets and parameters.
-custom_shiny(lis.dat1, lis.dat2, lis.par=lis.par, lis.dld.single=lis.dld.single, lis.dld.mul=lis.dld.mul, app.dir='.')
+# Create customized Shiny app by feeding this function these datasets and parameters.
+if (!dir.exists('~/test_shiny')) dir.create('~/test_shiny')
+custom_shiny(lis.dat1, lis.dat2, lis.par=lis.par, lis.dld.single=lis.dld.single, lis.dld.mul=lis.dld.mul, app.dir='~/test_shiny')
 # Lauch the app.
-shiny::runApp('.') 
+shiny::runApp('~/test_shiny')
 }
+
+# The customized Shiny app is able to take database backend as well. Examples are demonstrated in the function "write_hdf5".
 }
 \references{
 Jeremy Stephens, Kirill Simonov, Yihui Xie, Zhuoer Dong, Hadley Wickham, Jeffrey Horner, reikoch, Will Beasley, Brendan O'Connor and Gregory R. Warnes (2020). yaml: Methods to Convert R Data to YAML and Back. R package version 2.2.1. https://CRAN.R-project.org/package=yaml

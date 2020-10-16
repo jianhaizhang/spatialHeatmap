@@ -23,6 +23,10 @@ A data frame.
 \description{
 This function reads data from a tabular file, which is a wrapper of \code{\link[data.table]{fread}}.
 }
+\examples{
+sh.tar <- system.file('extdata/shinyApp/example/target_arab.txt', package='spatialHeatmap')
+target.sh <- read_fr(sh.tar); target.sh[60:63, ]
+}
 \references{
 Matt Dowle and Arun Srinivasan (2019). data.table: Extension of `data.frame`. R package version 1.12.8. https://CRAN.R-project.org/package=data.table
 }

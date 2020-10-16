@@ -53,7 +53,7 @@ dataset13:
   data: example/us_population2018.txt
   svg: example/us_map_shm.svg
 title:
-- title:spatialHeatmap (2020-09-20)
+- title:spatialHeatmap (2020-10-15)
 - width:350
 max.upload.size: 5G 
 default.dataset: organ_Mustroph

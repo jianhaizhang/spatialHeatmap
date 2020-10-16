@@ -7,6 +7,7 @@ options(stringsAsFactors=FALSE)
 
 # Import internal functions.
 sort_gen_con <- get('sort_gen_con', envir=asNamespace('spatialHeatmap'), inherits=FALSE)
+
 read_hdf5 <- get('read_hdf5', envir=asNamespace('spatialHeatmap'), inherits=FALSE)
 
 matrix_hm <- get('matrix_hm', envir=asNamespace('spatialHeatmap'), inherits=FALSE)
@@ -128,12 +129,40 @@ extr_svg <- function(file, name) {
 
   dir <- paste0(tempdir(check=TRUE), '/svg_shm')
   if (!dir.exists(dir)) dir.create(dir)
-  system(paste0('tar -xf ', file, ' -C ', dir, ' ', name))
-  return(paste0(dir, '/', name))
+  sys <- system(paste0('tar -xf ', file, ' -C ', dir, ' ', name))
+  if (sys==0) return(paste0(dir, '/', name)) else return()
 
 }
 
+# Extract svg path/na from uploaded or internal tar files.
+svg_pa_na <- function(svg.path, pa.svg.upl) {
+  svg.na <- NULL; for (i in seq_along(svg.path)) {
+    # Extract svg names. 
+    str <- strsplit(svg.path[[i]], '/')[[1]]
+    na0 <- str[length(str)]
+    if (!grepl('\\.svg$', na0)) return('No aSVG file is detected! Solution: 1) select another aSVG and rematch it to data; 2) add an aSVG file for the selected data in the backend aSVG tar file or uploaded aSVG tar file.')
+    svg.na <- c(svg.na, na0)
+    # Complete uploaded svg paths.
+    if (!grepl('example/', svg.path[[i]])) {
+      # The data/svg precedence: uploaded tar > internal tar > default examples. The duplicated data/svgs are removed according to this precedence when processing data/svg upstream.
+      pa0 <- NULL; if (!is.null(pa.svg.upl)) pa0 <- extr_svg(file=pa.svg.upl, name=na0)
+      if (is.null(pa.svg.upl)|is.null(pa0)) {
+        tar.all <- list.files('example', pattern='\\.tar$', full.names=TRUE)
+        tar.svg <- tar.all[!grepl('data_shm.tar$', tar.all)][1]
+        pa0 <- extr_svg(file=tar.svg, name=na0)
+      }; if (is.null(pa0)) return(paste0("This aSVG file is not detected: ", na0, "!")) else svg.path[[i]] <- pa0
+    }
+  }; return(list(svg.path=svg.path, svg.na=svg.na))
+}
 
+# Check suffixes if multiple svgs.
+svg_suffix <- function(svg.path, svg.na) {
+  if (length(svg.na)>1) {
+    if (!all(grepl('_shm\\d+\\.svg$', svg.na, perl=TRUE))) return("Suffixes of aSVGs should be indexed as '_shm1.svg', '_shm2.svg', '_shm3.svg', ...")
+    ord <- order(gsub('.*_(shm.*)$', '\\1', svg.na))
+    svg.path <- svg.path[ord]; svg.na <- svg.na[ord]  
+  }; return(list(svg.path=svg.path, svg.na=svg.na))
+}
 
 # enableWGCNAThreads()
 shinyServer(function(input, output, session) {
@@ -144,11 +173,11 @@ shinyServer(function(input, output, session) {
 
     withProgress(message="Loading dependencies: ", value=0, {
     incProgress(0.3, detail="in progress...")
-    library(SummarizedExperiment); library(shiny); library(shinydashboard); library(grImport); library(rsvg); library(ggplot2); 
+    library(SummarizedExperiment); library(shiny); library(shinydashboard); library(grImport); library(rsvg); library(ggplot2); library(DT) 
     incProgress(0.6, detail="in progress...")
-    library(DT); library(gridExtra); library(ggdendro); library(WGCNA); library(grid); library(xml2); library(plotly); library(data.table); library(genefilter); library(flashClust); library(visNetwork); 
+    library(gridExtra); library(ggdendro); library(WGCNA); library(grid); library(xml2); library(plotly); library(data.table); library(genefilter); library(flashClust); library(visNetwork); 
     incProgress(0.9, detail="in progress...")
-    library(reshape2); library(igraph); library(animation); library(av); library(shinyWidgets); library(yaml); library(HDF5Array)
+    library(reshape2); library(igraph); library(animation); library(av); library(shinyWidgets); library(yaml); library(HDF5Array); library(sortable)
   })
 
     lis.cfg <- yaml.load_file('config/config.yaml')
@@ -161,20 +190,15 @@ shinyServer(function(input, output, session) {
     if (grepl('\\d+M$', upl.size)) max.size <- num*1024^2 
     options(shiny.maxRequestSize=max.size) 
     if (!any(lis.par$hide.legend %in% c('Yes', 'No'))) lis.par$hide.legend <- ifelse(lis.par$hide.legend==TRUE, 'Yes', 'No')
+    # Organise configuration parameters in a data frame.
     for (i in seq_along(lis.par)) {
-
-      lis0 <- lis.par[[i]]; if (length(lis0)>1) { 
- 
+      lis0 <- lis.par[[i]]; if (length(lis0)>1) {
         name <- default <- NULL; for (j in seq_along(lis0)) {
-
           pair <- strsplit(lis0[j], ':')[[1]]
           name <- c(name, pair[1]); default <- c(default, pair[2])
-
         }; df0 <- data.frame(name=name, default=default)
         rownames(df0) <- df0$name; lis.par[[i]] <- df0
-
-      } 
-
+      }
     }
 
     # Separate data, svg.
@@ -198,27 +222,22 @@ shinyServer(function(input, output, session) {
       # system(paste0('tar -xf', ' ', svg.tar, ' -C ', pa.svg))
       cfg$pa.dat.upl <- dat.pa <- df.tar$datapath[dat.idx]
       df.pair.upl <- read_hdf5(dat.pa, 'df_pair')[[1]]
-      rna <- rownames(df.pair.upl); dat.upl <- df.pair.upl$data
-      svg.upl <- as.list(df.pair.upl$aSVG); names(dat.upl) <- names(svg.upl) <- rna
+      pair.na <- df.pair.upl$name; dat.upl <- df.pair.upl$data
+      svg.upl <- as.list(df.pair.upl$aSVG); names(dat.upl) <- names(svg.upl) <- pair.na
 
       for (i in seq_along(svg.upl)) {
-
         svg0 <- svg.upl[[i]]; if (grepl(';| |,', svg0)) {
-
           strs <- strsplit(svg0, ';| |,')[[1]]; svg.upl[[i]] <- strs[strs!='']
-
-         }
-
+        }
+      }
     }
-
-  }
     # Separate data, svg of default and customization. 
     na.def <- na.ipt[!grepl('^none$|^customData$|^customComputedData$', na.ipt)]
     na.cus <- c('customData', 'customComputedData')
     dat.def <- c(dat.upl, dat.ipt[na.def]); svg.def <- c(svg.upl, svg.ipt[na.def])
+    # If data/svg are duplicated between the server and upload, the data/svg on server side is removed.
     dat.def <- dat.def[unique(names(dat.def))]; svg.def <- svg.def[unique(names(svg.def))]
     cfg$lis.dat <- lis.dat; cfg$lis.dld <- lis.dld; cfg$lis.par <- lis.par; cfg$na.def <- names(dat.def); cfg$svg.def <- svg.def; cfg$dat.def <- dat.def; cfg$na.cus <- na.cus
-    print(list(cfg$na.def, cfg$svg.def, cfg$dat.def))
     output$spatialHeatmap <- renderText({ lis.par$title['title', 'default'] })
     output$title.w <- renderText({ lis.par$title['width', 'default'] })
     dat.nas <- c('none', 'customData', 'customComputedData', names(dat.def))
@@ -334,26 +353,21 @@ shinyServer(function(input, output, session) {
       dat.na <- cfg$dat.def[input$fileIn]
       if ('example' %in% strsplit(dat.na, '/')[[1]]) df.te <- fread.df(input=dat.na, isRowGene=TRUE) else { 
         # Exrtact data from uploaded tar.
-        if (!is.null(input$tar)) if (file.exists(cfg$pa.dat.upl)) {
+        dat <- NULL; if (!is.null(cfg$pa.dat.upl)) if (file.exists(cfg$pa.dat.upl)) {
           cat('Extracting uploaded data... \n')
-          # The prefix is input$fileIn.
-          dat <- read_hdf5(cfg$pa.dat.upl, prefix=input$fileIn)[[1]]
-          if (is(dat, 'SummarizedExperiment')) {
-            dat <- se_from_db(dat)
-            validate(need(try(!is.character(dat)), dat))
-          }
+          # The prefix is not input$fileIn. The returned value of read_hdf5 is either data.frame or SE.
+          dat <- read_hdf5(cfg$pa.dat.upl, prefix=dat.na)[[1]]
         }
-        # The uploaded tar takes precedence over internal tar.
-        if (is.null(input$tar)) { 
+        if (is.null(dat)|is.character(dat)|is.null(input$tar)) {
           cat('Extracting internal data... \n')
-          dat <- read_hdf5('example/data_shm.tar', input$fileIn)[[1]]
-          if (is(dat, 'SummarizedExperiment')) {
-            dat <- se_from_db(dat)
-            validate(need(try(!is.character(dat)), dat))
-          } 
+          dat <- read_hdf5('example/data_shm.tar', dat.na)[[1]]
+        }
+        validate(need(try(is(dat, 'data.frame')|is(dat, 'SummarizedExperiment')), 'The selected data is empty! Solution: 1) select another data, then rematch its samples to the selected aSVG; 2) include a data for the selected aSVG file in the backend database or the uploaded database.'))
+        if (is(dat, 'SummarizedExperiment')) {
+          dat <- se_from_db(dat)
+          validate(need(try(!is.character(dat)), dat))
         }; df.te <- fread.df(input=dat)
       }; return(df.te)
-
     }
     if (any(input$fileIn %in% cfg$na.cus) & 
     !is.null(input$geneInpath) & input$dimName!="None") {
@@ -561,53 +575,128 @@ shinyServer(function(input, output, session) {
 
   })
 
+  svg.na.mat <- reactiveValues(svg.path=NULL, svg.na=NULL)
   svg.path <- reactive({
-
     if (input$fileIn=='none') return()
     if (any(input$fileIn %in% cfg$na.cus)) {
-
       if (is.null(input$svgInpath1)) svgIn.df <- input$svgInpath else svgIn.df <- input$svgInpath1
       svg.path <- svgIn.df$datapath; svg.na <- svgIn.df$name
-
-    } else { 
-      # Single or multiple svg paths.
-      svg.path <- cfg$svg.def[[input$fileIn]]
-      svg.na <- NULL; for (i in seq_along(svg.path)) {
-        # Extract svg names. 
-        str <- strsplit(svg.path[[i]], '/')[[1]]
-        na0 <- str[length(str)]; svg.na <- c(svg.na, na0)
-        # Complete uploaded svg paths.
-        if (all(!grepl('example/', svg.path[[i]]))) {
-          # The upload svgs take precedence over internal svgs in tar.
-          if (!is.null(cfg$pa.svg.upl)) svg.path[[i]] <- extr_svg(file=cfg$pa.svg.upl, name=na0) else {
-            tar.all <- list.files('example', pattern='\\.tar$', full.names=TRUE)
-            tar.svg <- tar.all[!grepl('data_shm.tar$', tar.all)][1]
-            svg.path[[i]] <-extr_svg(file=tar.svg, name=na0)
-          } 
- 
-        }
-
-      }
-
-    }
-    if (length(svg.na)>1) {
-
-      validate(need(try(all(grepl('_shm\\d+\\.svg$', svg.na, perl=TRUE))), "Suffixes of aSVGs should be indexed as '_shm1.svg', '_shm2.svg', '_shm3.svg', ..."))
-      ord <- order(gsub('.*_(shm.*)$', '\\1', svg.na))
-      svg.path <- svg.path[ord]; svg.na <- svg.na[ord]
-    
+    } else {
+      # Extract svg path and name: single or multiple svg paths are treated same way.
+      lis <- svg_pa_na(cfg$svg.def[[input$fileIn]], cfg$pa.svg.upl)
+      validate(need(try(!is.character(lis)), lis))
+      svg.path <- lis$svg.path; svg.na <- lis$svg.na
     }; cat('Access aSVG path... \n')
-    return(list(svg.path=svg.path, svg.na=svg.na))
-
+    # If multiple svgs, check suffixes.
+    lis <- svg_suffix(svg.path, svg.na)
+    validate(need(try(!is.character(lis)), lis)); return(lis)
   })
 
   sam <- reactive({ 
-
     cname <- colnames(geneIn()[["gene2"]]); idx <- grep("__", cname); c.na <- cname[idx]
     if (length(grep("__", c.na))>=1) gsub("(.*)(__)(.*$)", "\\1", c.na) else return(NULL) 
-
   })
+
+  output$svg <- renderUI({
+    nas <- names(cfg$svg.def)
+    selectInput('svg', label='aSVGs to re-match:', choices=nas, selected=input$fileIn)
+  })
+
+  # The object scope in reactive expression is restricted to the reactive evironment, thus sf.sep and sam.sep are moved outside 'observe'.
+  sf.sep <- 'only_above_features_are_re-matched'
+  sam.sep <- 'only_above_samples_are_re-matched'
+  observeEvent(input$svg, {
+    if (input$fileIn=='none'|is.null(cfg$svg.def)|is.null(input$svg)) return()
+    if (!(any(input$fileIn %in% cfg$na.def) & is.null(input$svgInpath))) return()
+    # Single or multiple svg paths are treated same way.
+    lis <- svg_pa_na(cfg$svg.def[[input$svg]], cfg$pa.svg.upl)
+    validate(need(try(!is.character(lis)), lis))
+    svg.path <- lis$svg.path; svg.na <- lis$svg.na
+    cat('Access aSVG path for re-matching... \n')
+    # If multiple svgs, check suffixes.
+    lis <- svg_suffix(svg.path, svg.na)
+    validate(need(try(!is.character(lis)), lis))
+    svg.path <- lis$svg.path; svg.na <- lis$svg.na
+ 
+  withProgress(message="Tissue heatmap: ", value=0, {  
+    incProgress(0.5, detail="Extracting coordinates. Please wait.") 
+    # Whether a single or multiple SVGs, all are returned in a list.
+    sf.all <- NULL; for (i in seq_along(svg.na)) { 
+      cat('Extract all spatial features for re-matching:', svg.na[i], '\n')
+      df_tis <- svg_df(svg.path=svg.path[i], feature=sam())
+      validate(need(!is.character(df_tis), paste0(svg.na[i], ': ', df_tis)))
+      sf.all <- c(sf.all, df_tis$tis.path)
+    }
+  })
+  # paths and gs are dropped to bottom. 
+  sf.all <- unique(sf.all); pas.idx <- grepl('^path\\d+|^g\\d+', sf.all)
+  sf.all <- c(sf.all[!pas.idx], sf.all[pas.idx])
+  # Matching samples are raised to top.
+  sam.all <- unique(sam()); inter <- intersect(sam.all, sf.all)
+  cat('Adding separators to samples and features for re-matching... \n')
+  if (length(inter)!=0) { 
+    int.idx1 <- sam.all %in% inter; inter1 <- sam.all[int.idx1]
+    sam.all <- c(inter1, sam.sep, sam.all[!int.idx1])
+    int.idx2 <- sf.all %in% inter; sf.all <- c(inter1, sf.sep, sf.all[!int.idx2])
+  } else { sf.all <- c(sf.sep, sf.all); sam.all <- c(sam.sep, sam.all) }
+  output$sam <- renderUI({
+    rank_list(text="Drag samples in any desired order to match right", labels=sam.all, input_id="sam")
+  })
+
+  output$sf <- renderUI({
+    rank_list(text="Drag spatial features in any desired order to match left", labels=sf.all, input_id="sf"
+    )
+  }); svg.na.mat$svg.path <- svg.path; svg.na.mat$svg.na <- svg.na
+
+})
+    
+  observeEvent(input$fileIn, {
+    cna.match$cna <- NULL
+    svg.na.mat$svg.path <- svg.na.mat$svg.na <- NULL
+  })
+  # Reactive object in "observeEvent" is not accessible outside observeEvent. The solution is eventReactive. 
+  svg.path1 <- reactive({
+    if (!is.null(svg.na.mat$svg.path) & !is.null(svg.na.mat$svg.na)) { svg.path <- svg.na.mat$svg.path; svg.na <- svg.na.mat$svg.na } else { svg.path <- svg.path()$svg.path; svg.na <- svg.path()$svg.na }
+    return(list(svg.path=svg.path, svg.na=svg.na))
+  })
+
+  cna.match <- reactiveValues(cna=NULL)
+  observeEvent(input$match, {
   
+    sam <- input$sam; sf <- input$sf
+    cna <- colnames(geneIn()[["gene2"]])
+    w.sf <- which(sf %in% sf.sep); w.sam <- which(sam %in% sam.sep)
+    # If no "renderText", the validate message is not assigned to any reactive values and thus not seen on the user interface.
+    output$msg.match <- renderText({
+    validate(need(try(w.sf==w.sam), 'Samples and features should be one-to-one re-matched!')); NULL })
+    sf <- sf[-w.sf]; w.sf <- w.sf-1; sam <- sam[-w.sam]; w.sam <- w.sam-1
+    output$msg.match <- renderText({
+    validate(need(try(w.sf!=0|w.sam!=0), 'No samples or features are re-matched!')); NULL })
+    if (w.sf>0) {
+      cat('Re-match samples and features... \n')
+      sf.mat <- sf[seq_len(w.sf)]
+      cna <- colnames(geneIn()[["gene2"]]);
+      # If sf1 is re-matched to sam1, and sf1 is included in all sams, sf1 in all sams is replaced by sam1. 
+      sam.idx1 <- sam.idx2 <- list(); for (i in seq_len(w.sf)){
+        if (sam[i]==sf[i]) next
+        idx1 <- list(grep(paste0('^', sam[i], '__'), cna))
+        names(idx1) <- sf.mat[i]; sam.idx1 <- c(sam.idx1, idx1)
+        if (sf[i] %in% sam) {
+          idx2 <- list(grep(paste0('^', sf[i], '__'), cna))
+          names(idx2) <- sam[i]; sam.idx2 <- c(sam.idx2, idx2)
+        }
+      }
+      # sf1 is re-matched to sam1.
+      if (length(sam.idx1)>0) for (i in seq_along(sam.idx1)) {
+        cna[sam.idx1[[i]]] <- sub('.*__', paste0(names(sam.idx1)[i], '__'), cna[sam.idx1[[i]]])
+      }
+      # sf1 in sams is replaced by sam1.
+      if (length(sam.idx2)>0) for (i in seq_along(sam.idx2)) {
+        cna[sam.idx2[[i]]] <- sub('.*__', paste0(names(sam.idx2)[i], '__'), cna[sam.idx2[[i]]])
+      }; cna.match$cna <- cna 
+    }
+  })
+
   svg.df <- reactive({ 
 
     if ((any(input$fileIn %in% cfg$na.cus) & 
@@ -615,11 +704,10 @@ shinyServer(function(input, output, session) {
 
       withProgress(message="Tissue heatmap: ", value=0, {
     
-        incProgress(0.5, detail="Extracting coordinates. Please wait.") 
-          svg.path <- svg.path()[['svg.path']]
-          svg.na <- svg.path()[['svg.na']]; svg.df.lis <- NULL
+        incProgress(0.5, detail="Extracting coordinates. Please wait.")
+          svg.path <- svg.path1()$svg.path; svg.na <- svg.path1()$svg.na
           # Whether a single or multiple SVGs, all are returned in a list.
-          for (i in seq_along(svg.na)) {
+         svg.df.lis <- NULL; for (i in seq_along(svg.na)) {
          
             cat('Coordinate:', svg.na[i], '\n')
             df_tis <- svg_df(svg.path=svg.path[i], feature=sam())
@@ -633,36 +721,6 @@ shinyServer(function(input, output, session) {
     }
 
   })
-
-  observe({
-
-  output$svg <- renderUI({
-
-    nas <- names(cfg$svg.def)
-    selectInput('svg', label='Customize matching between dataset and aSVG:', choices=nas, selected=nas[1])
-
-  })
-
-library(sortable)
-labels <- list("one", "two", "three",
-  htmltools::tags$div(htmltools::em("Complex"), " html tag without a name"),
-  "five" = htmltools::tags$div(htmltools::em("Complex"), " html tag with name: 'five'")
-)
-
-output$lis <- renderUI({
-rank_list(text="Drag samples in any desired order", labels=sam(), input_id="sam")
-})
-
-output$lis1 <- renderUI({
-
-rank_list(
-  text = "Drag spatial features in any desired order",
-  labels = labels, input_id="sf"
-)
-
-})
-
-})
 
 
   observe({
@@ -689,7 +747,6 @@ rank_list(
   observeEvent(input$fileIn, { grob$all <- grob$gg.all1 <- grob$gg.all1 <- grob$gg.all <- grob$lgd.all <- NULL })
   # Avoid repetitive computation under input$cs.v=='w.mat'.
   gs.new <- reactive({ 
-
     if.con <- is.null(svg.df())|is.null(geneIn())|is.null(gID$new)|length(gID$new)==0|is.null(gID$all)|is.null(input$dt_rows_selected)|color$col[1]=='none'
     if (length(if.con==FALSE)==0) if (length(if.con)==0) return(); if (is.na(if.con)|if.con==TRUE) return(NULL)
 
@@ -714,10 +771,13 @@ rank_list(
         tis.path <- svg.df[["tis.path"]]; fil.cols <- svg.df[['fil.cols']]
         if (input$pre.scale=='Yes') mar <- (1-w.h/w.h.max*0.99)/2 else mar <- NULL
         cat('New grob/ggplot:', ID, ' \n')
+        if (!is.null(cna.match$cna)) { 
+		  if (ncol(gene)==length(cna.match$cna)) colnames(gene) <- cna.match$cna 
+        }
         grob.lis <- grob_list(gene=gene, con.na=geneIn0()[['con.na']], geneV=geneV(), coord=g.df, ID=ID, legend.col=fil.cols, cols=color$col, tis.path=tis.path, tis.trans=input$tis, sub.title.size=18, mar.lb=mar, legend.nrow=2, legend.key.size=0.04) # Only gID$new is used.
         msg <- paste0(svg.na[i], ': no spatial features that have matching sample identifiers in data are detected!')
         if (is.null(grob.lis)) cat(msg, '\n')
-        validate(need(!is.null(grob.lis), msg))
+        output$msg.shm <- ({ validate(need(!is.null(grob.lis), msg)) })
         grob.lis.all <- c(grob.lis.all, list(grob.lis))
 
       }; names(grob.lis.all) <- svg.na; return(grob.lis.all)
@@ -731,7 +791,7 @@ rank_list(
   # Use "observeEvent" to replace "observe" and list events (input$log, input$tis, ...), since if the events are in "observe", every time a new gene is clicked, "input$dt_rows_selected" causes the evaluation of all code in "observe", and the evaluation is duplicated with "gs.new".
   col.reorder <- reactiveValues(col.re='Y')
   observeEvent(input$col.na, { if (input$col.cfm>0) col.reorder$col.re <- 'N' })
-  observeEvent(list(input$log, input$tis, input$col.but, input$cs.v, input$pre.scale, input$col.cfm, input$scale), {
+  observeEvent(list(input$log, input$tis, input$col.but, input$cs.v, input$pre.scale, input$col.cfm, input$scale, input$match), {
     
     grob$all <- grob$gg.all <- grob$lgd.all <- NULL; gs.all <- reactive({ 
 
@@ -748,17 +808,21 @@ rank_list(
       for (i in seq_along(svg.df.lis)) { w.h.all <- c(w.h.all, svg.df.lis[[i]][['w.h']]); w.h.max <- max(w.h.all) }
       # A set of SHMs are made for each SVG, and all sets of SHMs are placed in a list.
       for (i in seq_along(svg.df.lis)) {
-
+        
         svg.df <- svg.df.lis[[i]]; g.df <- svg.df[["df"]]
         tis.path <- svg.df[["tis.path"]]; fil.cols <- svg.df[['fil.cols']]; w.h <- svg.df[['w.h']]
         if (input$pre.scale=='Yes') mar <- (1-w.h/w.h.max*0.99)/2 else mar <- NULL
         cat('All grob/ggplot:', gID$geneID, ' \n')
         svg.na <- names(svg.df.lis)
         incProgress(0.75, detail=paste0('preparing ', paste0(gID$geneID, collapse=';')))
+        if (!is.null(cna.match$cna)) { 
+		  if (ncol(gene)!=length(cna.match$cna)) return()
+          colnames(gene) <- cna.match$cna 
+        }
         grob.lis <- grob_list(gene=gene, con.na=geneIn0()[['con.na']], geneV=geneV(), coord=g.df, ID=gID$geneID, legend.col=fil.cols, cols=color$col, tis.path=tis.path, tis.trans=input$tis, sub.title.size=18, mar.lb=mar, legend.nrow=2, legend.key.size=0.04) # All gene IDs are used.
         msg <- paste0(svg.na[i], ': no spatial features that have matching sample identifiers in data are detected!')
         if (is.null(grob.lis)) cat(msg, '\n')
-        validate(need(!is.null(grob.lis), msg))
+        output$msg.shm <- ({ validate(need(!is.null(grob.lis), msg)) })
         grob.lis.all <- c(grob.lis.all, list(grob.lis))
 
       }; names(grob.lis.all) <- svg.na; return(grob.lis.all)
@@ -795,10 +859,14 @@ rank_list(
         cat('All grob/ggplot of row selection:', ID, ' \n')
         svg.na <- names(svg.df.lis)
         incProgress(0.75, detail=paste0('preparing ', paste0(ID, collapse=';')))
+        if (!is.null(cna.match$cna)) { 
+		  if (ncol(gene)!=length(cna.match$cna)) return()
+          colnames(gene) <- cna.match$cna 
+        }
         grob.lis <- grob_list(gene=gene, con.na=geneIn0()[['con.na']], geneV=geneV(), coord=g.df, ID=ID, legend.col=fil.cols, cols=color$col, tis.path=tis.path, tis.trans=input$tis, sub.title.size=18, mar.lb=mar, legend.nrow=2, legend.key.size=0.04) # All gene IDs are used.
         msg <- paste0(svg.na[i], ': no spatial features that have matching sample identifiers in data are detected!')
         if (is.null(grob.lis)) cat(msg, '\n')
-        validate(need(!is.null(grob.lis), msg))
+        output$msg.shm <- ({ validate(need(!is.null(grob.lis), msg)) })
         grob.lis.all <- c(grob.lis.all, list(grob.lis))
 
       }; names(grob.lis.all) <- svg.na; return(grob.lis.all)
@@ -859,10 +927,6 @@ rank_list(
   })
   # Add value legend to SHMs.
   # 'observeEvent' is able to avoid infinite cycles while 'observe' may cause such cycles. E.g. in the latter, 'is.null(grob$gg.all)' and 'grob$gg.all1 <- gg.all <- gg_2lgd()' would induce each other and form infinit circles.
-  observe({
-
-
-  })
   observeEvent(list(val.lgd=input$val.lgd, row=input$val.lgd.row, key=input$val.lgd.key, text=input$val.lgd.text, feat=input$val.lgd.feat), {
     
     validate(need(try(as.integer(input$val.lgd.row)==input$val.lgd.row & input$val.lgd.row>0), 'Legend key rows should be a positive integer!'))
@@ -895,7 +959,6 @@ rank_list(
   observeEvent(input$col.cfm, { col.reorder$col.re <- 'Y' })
   # In "observe" and "observeEvent", if one code return (NULL), then all the following code stops. If one code changes, all the code renews.
   observe({
- 
     if.con <- is.null(geneIn())|is.null(input$dt_rows_selected)|is.null(svg.df())|gID$geneID[1]=="none"|is.null(grob$all1)
     if (length(if.con==FALSE)==0) if (length(if.con)==0) return(); if (is.na(if.con)|if.con==TRUE) return(NULL)
     
@@ -1030,7 +1093,7 @@ rank_list(
 
       ))
       ))
-      ),
+      ), verbatimTextOutput('msg.shm'),
       fluidRow(splitLayout(cellWidths=c("1%", "7%", "91%", "1%"), "", plotOutput("bar1"), plotOutput("shm", height='auto'), "")))
 
       ))
@@ -1039,9 +1102,9 @@ rank_list(
 
   output$shms.o <- renderUI({
  
-    if (is.null(svg.path())) return(NULL)
-    if (length(svg.path()$svg.na)==1) return(NULL)
-    svg.pa <- svg.path()[['svg.na']]
+    if (is.null(svg.path1())) return(NULL)
+    if (length(svg.path1()$svg.na)==1) return(NULL)
+    svg.pa <- svg.path1()[['svg.na']]
     selectInput('shms.in', label='aSVG for legend:', choices=svg.pa, selected=svg.pa[1])
 
   })
@@ -1049,8 +1112,8 @@ rank_list(
   output$lgd <- renderPlot(width='auto', height="auto", {
     validate(need(try(as.integer(input$lgd.row)==input$lgd.row & input$lgd.row>0), 'Legend key rows should be a positive integer!'))
     validate(need(try(input$lgd.key.size>0&input$lgd.key.size<1), 'Legend key size should be between 0 and 1!'))
-    svg.path <- svg.path()
-    if (is.null(svg.path())|is.null(grob$lgd.all)|(length(svg.path$svg.na)>1 & is.null(input$shms.in))) return(ggplot())
+    svg.path <- svg.path1()
+    if (is.null(svg.path1())|is.null(grob$lgd.all)|(length(svg.path$svg.na)>1 & is.null(input$shms.in))) return(ggplot())
       # Width and height in original SVG.
       if (length(svg.path$svg.na)>1) svg.na <- input$shms.in else svg.na <- 1
 

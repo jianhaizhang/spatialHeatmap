@@ -11,7 +11,7 @@
 #' @param lis.dld.mul A list of paired data matrix and multiple aSVG files, which would be downloadable on the app for testing. The multiple aSVG files could be multiple growth stages of a plant. The list should have two elements with name slots of "data" and "svg" respectively, which are the paths of the data matrix and aSVG files repectively. After the function call, the specified data and aSVGs are copied to the "example" folder in the app. Note the two name slots should not be changed. E.g. \code{list(data='./data_download.txt', svg=c('./root_young_download_shm.svg', './root_old_download_shm.svg'))}.
 #' @param custom Logical, TRUE or FALSE. If TRUE (default), the "customData" option under "Step 1: data sets" is included, which allows to upload datasets from local computer.
 #' @param custom.computed Logical, TRUE or FALSE. If TRUE (default), the "customComputdData" option under "Step 1: data sets" is included, which allows to upload computed datasets from local computer. See \code{\link{adj_mod}}. 
-#' @param example Logical, TRUE or FALSE. If TRUE, the default examples in "spatialHeatmap" package are included in the app as well as those provided to \code{...} by users.
+#' @param example Logical, TRUE or FALSE. If TRUE (default), the default examples in "spatialHeatmap" package are included in the app as well as those provided to \code{...} by users.
 #' @param app.dir The directory to create the Shiny app. Default is current work directory \code{'.'}.
 
 #' @return If \code{lis.par.tmp==TRUE}, the template of default paramter list is returned. Otherwise, a customized Shiny app is generated in the path of \code{app.dir}. 
@@ -50,11 +50,14 @@
 #' lis.par$default.dataset <- 'shoot'
 
 #' \donttest{
-#' # Create custom Shiny app by feeding this function these datasets and parameters.
-#' custom_shiny(lis.dat1, lis.dat2, lis.par=lis.par, lis.dld.single=lis.dld.single, lis.dld.mul=lis.dld.mul, app.dir='.')
+#' # Create customized Shiny app by feeding this function these datasets and parameters.
+#' if (!dir.exists('~/test_shiny')) dir.create('~/test_shiny')
+#' custom_shiny(lis.dat1, lis.dat2, lis.par=lis.par, lis.dld.single=lis.dld.single, lis.dld.mul=lis.dld.mul, app.dir='~/test_shiny')
 #' # Lauch the app.
-#' shiny::runApp('.') 
+#' shiny::runApp('~/test_shiny')
 #' }
+#'
+#' # The customized Shiny app is able to take database backend as well. Examples are demonstrated in the function "write_hdf5".
 
 #' @author Jianhai Zhang \email{jzhan067@@ucr.edu; zhang.jianhai@@hotmail.com} \cr Dr. Thomas Girke \email{thomas.girke@@ucr.edu}
 
@@ -66,7 +69,7 @@
 #' @importFrom yaml yaml.load_file write_yaml
 #' @importFrom grDevices colors
 
-custom_shiny <- function(..., lis.par=NULL, lis.par.tmp=FALSE, lis.dld.single=NULL, lis.dld.mul=NULL, custom=TRUE, custom.computed=TRUE, example=FALSE, app.dir='.') {
+custom_shiny <- function(..., lis.par=NULL, lis.par.tmp=FALSE, lis.dld.single=NULL, lis.dld.mul=NULL, custom=TRUE, custom.computed=TRUE, example=TRUE, app.dir='.') {
 
   options(stringsAsFactors=FALSE)
   # Default config file.
@@ -140,7 +143,7 @@ custom_shiny <- function(..., lis.par=NULL, lis.par.tmp=FALSE, lis.dld.single=NU
   # Validate colours.
   col_check('shm.img', lis.par$shm.img)
   col_check('network', lis.par$network)
-  # Copy data/svg in list of two tar files. 
+  # Copy data/svg in list of two tar files and isolate data/svg list of tar file. 
   idx <- lis.dat1 <- NULL; for (i in seq_along(lis.dat)) {
 
     lis0 <- lis.dat[[i]]; if (length(lis0)==2) { 
@@ -155,8 +158,14 @@ custom_shiny <- function(..., lis.par=NULL, lis.par.tmp=FALSE, lis.dld.single=NU
 
     }
 
-  }; if (is.null(idx)) lis.dat <- cp_file(lis.dat, app.dir, 'example') else lis.dat <- cp_file(lis.dat[-idx], app.dir, 'example')
-
+  }
+  if (is.null(idx)) lis.dat <- cp_file(lis.dat, app.dir, 'example') else { 
+    lis.dat <- cp_file(lis.dat[-idx], app.dir, 'example')
+    # Data in tar file take precedence over in list.
+    na.all <- vapply(lis.dat, function(x) { na <- NULL; na <- c(na, x$name) }, character(1)) 
+    na.all1 <- vapply(lis.dat1, function(x) { na <- NULL; na <- c(na, x$name) }, character(1))
+    lis.dat <- lis.dat[!(na.all %in% na.all1)]
+  }
   if (!is.null(lis.dld.single)) lis.dld1 <- cp_file(lis.dld.single, app.dir, 'example') else {
     # Use default download files.
     lis.dld1 <- list(data="example/expr_arab.txt", svg="example/arabidopsis_thaliana.root.cross_shm.svg")
@@ -178,45 +187,6 @@ custom_shiny <- function(..., lis.par=NULL, lis.par.tmp=FALSE, lis.dld.single=NU
 
 }
 
-
-dat.lis <- list(df_pair=df.pair, arab=dat.arab, chicken=se.chk, growth=dat.growth)
-write_hdf5(dat.lis, dir='~/test5')
-
-lis.dat3 <- list(data='~/test4/data_shm.tar', svg='~/test4/aSVGs.tar')
-custom_shiny(lis.dat1, lis.dat2, lis.par=lis.par, lis.dld.single=lis.dld.single, lis.dld.mul=lis.dld.mul, app.dir='~/shiny')
-
-df.pair <- data.frame(row.names=c('arab', 'chicken', 'growth'), data=c('expr_arab', 'expr_chicken', 'random_data_multiple_aSVGs'), aSVG=c('arabidopsis_thaliana.shoot_shm.svg', 'gallus_gallus.svg', 'arabidopsis_thaliana.organ_shm1.svg;arabidopsis_thaliana.organ_shm2.svg'))
-write.table(df.pair, '~/test3/df_pair.txt', sep='\t', row.names=T, col.names=T)
-read_fr('~/test3/df_pair.txt', header=T)
-
-pa.arab <- system.file("extdata/shinyApp/example", 'expr_arab.txt', package="spatialHeatmap")
-dat.arab <- read_fr(pa.arab)
-pa.growth <- system.file("extdata/shinyApp/example", 'random_data_multiple_aSVGs.txt', package="spatialHeatmap")
-dat.growth <- read_fr(pa.growth)
- 
-     # Access toy data2. 
-     cnt.chk <- system.file('extdata/shinyApp/example/count_chicken.txt', package='spatialHeatmap')
-     count.chk <- read.table(cnt.chk, header=TRUE, row.names=1, sep='\t')
-     count.chk[1:3, 1:5]
-     
-     # A targets file describing samples and conditions is required for toy data2. It should be made based on the experiment design, which is accessible through the accession number "E-MTAB-6769" in the R package ExpressionAtlas. An example targets file is included in this package and accessed below. 
-     # Access the example targets file. 
-     tar.chk <- system.file('extdata/shinyApp/example/target_chicken.txt', package='spatialHeatmap')
-     target.chk <- read.table(tar.chk, header=TRUE, row.names=1, sep='\t')
-     # Every column in toy data2 corresponds with a row in targets file. 
-     target.chk[1:5, ]
-     # Store toy data2 in "SummarizedExperiment".
-     library(SummarizedExperiment)
-     se.chk <- SummarizedExperiment(assay=count.chk, colData=target.chk)
-     # The "rowData" slot can store a data frame of gene annotation, but not required.
-     ann <- paste0('ann', seq_len(nrow(se.chk))); ann[1:3]
-     rowData(se.chk) <- DataFrame(ann=ann)
-
-dat.lis1 <- read_hdf5('~/test5/data_shm.tar', names(dat.lis))
-
-  df.arab <- read_fr('~/shiny/example/expr_arab.txt')
-  df.map <- read_fr('~/shiny/example/us_population2018.txt')
-  df.growth <- read_fr('~/shiny/example/random_data_multiple_aSVGs.txt')
 
 #' Check validity of color indredients in the yaml file
 #'
@@ -242,10 +212,10 @@ col_check <- function(element, vec.all) {
 
 pair2lis <- function(df.pair, db=FALSE) { 
 
-  na.all <- rownames(df.pair); dat.all <- df.pair[, 'data']
+  na.all <- as.vector(df.pair$name); dat.all <- as.vector(df.pair$data)
   svg.all <- df.pair[, 'aSVG']
   lis.dat0 <- NULL; for (i in seq_len(nrow(df.pair))) {
-
+    # Separate multiple aSVGs.
     svg <- svg.all[i]; if (grepl(';| |,', svg)) {
 
       strs <- strsplit(svg, ';| |,')[[1]]; svg <- strs[strs!='']
