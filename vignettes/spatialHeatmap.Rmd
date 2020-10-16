@@ -1287,7 +1287,9 @@ this yaml file.
 
 ## Database Backend
 
-To maintain scalability, the customized Shiny app is designed to work with HDF5-based database [@rhdf5; @hdf5array], which enables users to incorporate data and aSVGs in a batch. The database is constructed with the function `write_hdf5`. Basically, the accepted data formats are `data.frame` or `SummarizedExperiment`. Each data set is saved in an independent HDF5 database. Meanwhile, a pairing table describing matchings between data and aSVGs is required. All individual databases and the pairing table are then compressed in the file "data_shm.tar". Accordingly, all aSVG files should be compressed in another tar file such as "aSVGs.tar". Finally, these two tar files are included in the Shiny app by feeding their paths in a list to `custom_shiny`. The detailed examples of the database utility are documented in the help file of `write_hdf5`. 
+To maintain scalability, the customized Shiny app is designed to work with HDF5-based database [@rhdf5; @hdf5array], which enables users to incorporate data and aSVGs in a batch. The database is constructed with the function `write_hdf5`. Basically, the accepted data formats are `data.frame` or `SummarizedExperiment`. Each data set is saved in an independent HDF5 database. Meanwhile, a pairing table describing matchings between data and aSVGs is required. All individual databases and the pairing table are then compressed in the file "data_shm.tar". Accordingly, all aSVG files should be compressed in another tar file such as "aSVGs.tar". Finally, these two tar files are included in the Shiny app by feeding their paths in a list to `custom_shiny`.   
+
+Except for user-provided data, the database is able to store data sets downloaded from GEO and Expression Atlas. The detailed examples of the database utility are documented in the help file of `write_hdf5`. 
 
 
 # Supplementary Section {#sup} 
