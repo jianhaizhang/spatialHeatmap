@@ -4,6 +4,7 @@
 #' @param usage One of "shm", "aggr", "filter", "norm", "other". The default is "other". If the "data" is SummarizedExperiment, this argument is only relevant to "aggr_rep", "filter_data", "spatial_hm".
 #' @return A list of 4 components: dat, fct.cna, col.meta, row.meta, con.na
 #' @keywords Internal
+#' @noRd
 
 #' @author Jianhai Zhang \email{jzhan067@@ucr.edu; zhang.jianhai@@hotmail.com} \cr Dr. Thomas Girke \email{thomas.girke@@ucr.edu}
 

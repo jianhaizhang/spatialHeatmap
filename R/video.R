@@ -11,8 +11,21 @@
 #' @param width The image width in video in "npc", ranging from 0 to 0.92. Default is 0.92.
 #' @param height The image height in video in "npc", ranging from 0 to 0.99. Default is 0.99.
 #' @inheritParams spatial_hm
-#' @inheritParams gg_lgd
-#' @inheritParams col_bar
+
+#' @param angle.text.key A value of key text angle in legend plot. The default is NULL, equivalent to 0.
+#' @param position.text.key The position of key text in legend plot, one of "top", "right", "bottom", "left". Default is NULL, equivalent to "right".
+#' @param legend.value.vdo Logical TRUE or FALSE. If TRUE, the numeric values of matching spatial features are added to video legend. The default is NULL.
+#' @param sub.title.size The title size of ggplot.
+#' @param label Logical. If TRUE, spatial features having matching samples are labeled by feature identifiers. The default is FALSE. It is useful when spatial features are labeled by similar colors. 
+#' @param label.size The size of spatial feature labels in legend plot. The default is 4.
+#' @param label.angle The angle of spatial feature labels in legend plot. Default is 0.
+#' @param hjust The value to horizontally adjust positions of spatial feature labels in legend plot. Default is 0.
+#' @param vjust The value to vertically adjust positions of spatial feature labels in legend plot. Default is 0.
+#' @param opacity The transparency of colored spatial features in legend plot. Default is 1. If 0, features are totally transparent.
+#' @param key Logical. The default is TRUE and keys are added in legend plot. If \code{label} is TRUE, the keys could be removed. 
+#' @param tis.trans A vector of tissues to be transparent.
+
+
 #' @return A video is saved in \code{out.dir}.
 #' @keywords Internal
 #' @noRd

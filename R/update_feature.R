@@ -8,13 +8,18 @@
 
 #' @examples
 
-#' # The following shows how to download a chicken aSVG containing spatial features of 'brain' and 'heart' from the EBI aSVG repository directly (https://github.com/ebi-gene-expression-group/anatomogram/tree/master/src/svg). An empty directory is recommended so as to avoid overwriting existing SVG files with the same names. Here "~/test" is used. 
+#' # The following shows how to download a chicken aSVG containing spatial features of 'brain'
+#' # and 'heart' from the EBI aSVG repository directly 
+#' # (https://github.com/ebi-gene-expression-group/anatomogram/tree/master/src/svg). An empty
+#' # directory is recommended so as to avoid overwriting existing SVG files with the same names.
+#' # Here "~/test" is used. 
 #'
 #' \donttest{
 #' # Make an empty directory "~/test" if not exist.
 #' if (!dir.exists('~/test')) dir.create('~/test')
 #' # Query the remote EBI aSVG repo.
-#' feature.df <- return_feature(feature=c('heart', 'brain'), species=c('gallus'), dir='~/test', match.only=TRUE, remote=TRUE)
+#' feature.df <- return_feature(feature=c('heart', 'brain'), species=c('gallus'), dir='~/test',
+#' match.only=TRUE, remote=TRUE)
 #' feature.df
 #'
 #' # New features.
@@ -29,7 +34,7 @@
 
 #' @references
 #' Hadley Wickham, Jim Hester and Jeroen Ooms (2019). xml2: Parse XML. R package version 1.2.2. https://CRAN.R-project.org/package=xml2
-#' Cardoso-Moreira, Margarida, Jean Halbert, Delphine Valloton, Britta Velten, Chunyan Chen, Yi Shao, Angélica Liechti, et al. 2019. "Gene Expression Across Mammalian Organ Development." Nature 571 (7766): 505-9
+#' \cr Cardoso-Moreira, Margarida, Jean Halbert, Delphine Valloton, Britta Velten, Chunyan Chen, Yi Shao, Angélica Liechti, et al. 2019. "Gene Expression Across Mammalian Organ Development." Nature 571 (7766): 505-9
 
 #' @export update_feature
 #' @importFrom xml2 read_xml xml_children xml_length xml_attr xml_set_attr xml_name xml_add_child xml_set_text write_xml

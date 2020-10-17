@@ -193,7 +193,8 @@ placed in an adjacent directory.}
 
 \item{legend.value.vdo}{Logical TRUE or FALSE. If TRUE, the numeric values of matching spatial features are added to video legend. The default is NULL.}
 
-\item{...}{Other arguments passed to \code{\link[ggplot2]{ggplot}}.}
+\item{...}{additional element specifications not part of base ggplot2. In general,
+these should also be defined in the \verb{element tree} argument.}
 }
 \value{
 An image of spatial heatmap(s), a two-component list of the spatial heatmap(s) in \code{ggplot} format and a data frame of mapping between assayed samples and aSVG features.
@@ -207,14 +208,21 @@ See the package vignette (\code{browseVignettes('spatialHeatmap')}).
 }
 
 \examples{
-## In the following examples, the 2 toy data come from an RNA-seq analysis on development of 7 chicken organs under 9 time points (Cardoso-Moreira et al. 2019). For conveninece, they are included in this package. The complete raw count data are downloaded using the R package ExpressionAtlas (Keays 2019) with the accession number "E-MTAB-6769". Toy data1 is used as a "data frame" input to exemplify data of simple samples/conditions, while toy data2 as "SummarizedExperiment" to illustrate data involving complex samples/conditions.   
+## In the following examples, the 2 toy data come from an RNA-seq analysis on development of 7
+## chicken organs under 9 time points (Cardoso-Moreira et al. 2019). For conveninece, they are
+## included in this package. The complete raw count data are downloaded using the R package
+## ExpressionAtlas (Keays 2019) with the accession number "E-MTAB-6769". Toy data1 is used as
+## a "data frame" input to exemplify data of simple samples/conditions, while toy data2 as
+## "SummarizedExperiment" to illustrate data involving complex samples/conditions.   
 
 ## Set up toy data.
 
 # Access toy data1.
-cnt.chk.simple <- system.file('extdata/shinyApp/example/count_chicken_simple.txt', package='spatialHeatmap')
+cnt.chk.simple <- system.file('extdata/shinyApp/example/count_chicken_simple.txt',
+package='spatialHeatmap')
 df.chk <- read.table(cnt.chk.simple, header=TRUE, row.names=1, sep='\t', check.names=FALSE)
-# Columns follow the namig scheme "sample__condition", where "sample" and "condition" stands for organs and time points respectively.
+# Columns follow the namig scheme "sample__condition", where "sample" and "condition" stands
+# for organs and time points respectively.
 df.chk[1:3, ]
 
 # A column of gene annotation can be appended to the data frame, but is not required.  
@@ -227,7 +235,10 @@ cnt.chk <- system.file('extdata/shinyApp/example/count_chicken.txt', package='sp
 count.chk <- read.table(cnt.chk, header=TRUE, row.names=1, sep='\t')
 count.chk[1:3, 1:5]
 
-# A targets file describing samples and conditions is required for toy data2. It should be made based on the experiment design, which is accessible through the accession number "E-MTAB-6769" in the R package ExpressionAtlas. An example targets file is included in this package and accessed below. 
+# A targets file describing samples and conditions is required for toy data2. It should be made
+# based on the experiment design, which is accessible through the accession number 
+# "E-MTAB-6769" in the R package ExpressionAtlas. An example targets file is included in this
+# package and accessed below. 
 # Access the example targets file. 
 tar.chk <- system.file('extdata/shinyApp/example/target_chicken.txt', package='spatialHeatmap')
 target.chk <- read.table(tar.chk, header=TRUE, row.names=1, sep='\t')
@@ -239,44 +250,59 @@ se.chk <- SummarizedExperiment(assay=count.chk, colData=target.chk)
 # The "rowData" slot can store a data frame of gene annotation, but not required.
 rowData(se.chk) <- DataFrame(ann=ann)
 
-## As conventions, raw sequencing count data should be normalized, aggregated, and filtered to reduce noise.
+## As conventions, raw sequencing count data should be normalized, aggregated, and filtered to
+## reduce noise.
 
 # Normalize count data.
-# The normalizing function "calcNormFactors" (McCarthy et al. 2012) with default settings is used.  
+# The normalizing function "calcNormFactors" (McCarthy et al. 2012) with default settings
+# is used.  
 df.nor.chk <- norm_data(data=df.chk, norm.fun='CNF', data.trans='log2')
 se.nor.chk <- norm_data(data=se.chk, norm.fun='CNF', data.trans='log2')
 # Aggregate count data.
 # Aggregate "sample__condition" replicates in toy data1.
 df.aggr.chk <- aggr_rep(data=df.nor.chk, aggr='mean')
 df.aggr.chk[1:3, ]
-# Aggregate "sample_condition" replicates in toy data2, where "sample" is "organism_part" and "condition" is "age". 
-se.aggr.chk <- aggr_rep(data=se.nor.chk, sam.factor='organism_part', con.factor='age', aggr='mean')
+# Aggregate "sample_condition" replicates in toy data2, where "sample" is "organism_part" and
+# "condition" is "age". 
+se.aggr.chk <- aggr_rep(data=se.nor.chk, sam.factor='organism_part', con.factor='age',
+aggr='mean')
 assay(se.aggr.chk)[1:3, 1:3]
-# Filter out genes with low counts and low variance. Genes with counts over 5 (log2 unit) in at least 1\% samples (pOA), and coefficient of variance (CV) between 0.2 and 100 are retained.
+# Filter out genes with low counts and low variance. Genes with counts over 5 (log2 unit) in
+# at least 1\% samples (pOA), and coefficient of variance (CV) between 0.2 and 100 are retained.
 # Filter toy data1.
 df.fil.chk <- filter_data(data=df.aggr.chk, pOA=c(0.01, 5), CV=c(0.2, 100), dir=NULL)
 # Filter toy data2.
-se.fil.chk <- filter_data(data=se.aggr.chk, sam.factor='organism_part', con.factor='age', pOA=c(0.01, 5), CV=c(0.2, 100), dir=NULL)
+se.fil.chk <- filter_data(data=se.aggr.chk, sam.factor='organism_part', con.factor='age',
+pOA=c(0.01, 5), CV=c(0.2, 100), dir=NULL)
 
 ## Spatial heatmaps.
 
-# The target chicken aSVG is downloaded from the EBI aSVG repository (https://github.com/ebi-gene-expression-group/anatomogram/tree/master/src/svg) directly with function "return_feature". It is included in this package and accessed as below. Details on how this aSVG is selected are documented in function "return_feature".
-svg.chk <- system.file("extdata/shinyApp/example", "gallus_gallus.svg", package="spatialHeatmap")
+# The target chicken aSVG is downloaded from the EBI aSVG repository
+# (https://github.com/ebi-gene-expression-group/anatomogram/tree/master/src/svg) directly with
+# function "return_feature". It is included in this package and accessed as below. Details on
+# how this aSVG is selected are documented in function "return_feature".
+svg.chk <- system.file("extdata/shinyApp/example", "gallus_gallus.svg",
+package="spatialHeatmap")
 # Plot spatial heatmaps on gene "ENSGALG00000019846".
 # Toy data1. 
-spatial_hm(svg.path=svg.chk, data=df.fil.chk, ID='ENSGALG00000019846', height=0.4, legend.r=1.9, sub.title.size=7, ncol=3)
+spatial_hm(svg.path=svg.chk, data=df.fil.chk, ID='ENSGALG00000019846', height=0.4,
+legend.r=1.9, sub.title.size=7, ncol=3)
 # Save spaital heatmaps as HTML and video files by assigning "out.dir" "~/test". 
 \donttest{
 if (!dir.exists('~/test')) dir.create('~/test')
-spatial_hm(svg.path=svg.chk, data=df.fil.chk, ID='ENSGALG00000019846', height=0.4, legend.r=1.9, sub.title.size=7, ncol=3, out.dir='~/test')
+spatial_hm(svg.path=svg.chk, data=df.fil.chk, ID='ENSGALG00000019846', height=0.4,
+legend.r=1.9, sub.title.size=7, ncol=3, out.dir='~/test')
 }
 # Toy data2.
-spatial_hm(svg.path=svg.chk, data=se.fil.chk, ID='ENSGALG00000019846', legend.r=1.9, legend.nrow=2, sub.title.size=7, ncol=3)
+spatial_hm(svg.path=svg.chk, data=se.fil.chk, ID='ENSGALG00000019846', legend.r=1.9,
+legend.nrow=2, sub.title.size=7, ncol=3)
 
-# The data can also come as as a simple named vector. The following gives an example on a vector of 3 random values. 
+# The data can also come as as a simple named vector. The following gives an example on a
+# vector of 3 random values. 
 # Random values.
 vec <- sample(1:100, 3)
-# Name the vector. The last name is assumed as a random sample without a matching feature in aSVG.
+# Name the vector. The last name is assumed as a random sample without a matching feature
+# in aSVG.
 names(vec) <- c('brain', 'heart', 'notMapped')
 vec
 # Plot.
@@ -286,24 +312,28 @@ spatial_hm(svg.path=svg.chk, data=vec, ID='geneX', height=0.6, legend.r=1.5, nco
 
 # Make up a random numeric data frame.
 df.test <- data.frame(matrix(sample(x=1:100, size=50, replace=TRUE), nrow=10))
-colnames(df.test) <- c('shoot_totalA__condition1', 'shoot_totalA__condition2', 'shoot_totalB__condition1', 'shoot_totalB__condition2', 'notMapped')
+colnames(df.test) <- c('shoot_totalA__condition1', 'shoot_totalA__condition2', 
+'shoot_totalB__condition1', 'shoot_totalB__condition2', 'notMapped')
 rownames(df.test) <- paste0('gene', 1:10) # Assign row names 
 df.test[1:3, ]
 # aSVG of development stage 1.
-svg1 <- system.file("extdata/shinyApp/example", "arabidopsis_thaliana.organ_shm1.svg", package="spatialHeatmap")
+svg1 <- system.file("extdata/shinyApp/example", "arabidopsis_thaliana.organ_shm1.svg",
+package="spatialHeatmap")
 # aSVG of development stage 2.
-svg2 <- system.file("extdata/shinyApp/example", "arabidopsis_thaliana.organ_shm2.svg", package="spatialHeatmap")
+svg2 <- system.file("extdata/shinyApp/example", "arabidopsis_thaliana.organ_shm2.svg",
+package="spatialHeatmap")
 # Spatial heatmaps. 
-spatial_hm(svg.path=c(svg1, svg2), data=df.test, ID=c('gene1'), height=0.8, legend.r=1.6, preserve.scale=TRUE) 
+spatial_hm(svg.path=c(svg1, svg2), data=df.test, ID=c('gene1'), height=0.8, legend.r=1.6,
+preserve.scale=TRUE) 
 }
 \references{
 https://www.gimp.org/tutorials/ \cr https://inkscape.org/en/doc/tutorials/advanced/tutorial-advanced.en.html \cr http://www.microugly.com/inkscape-quickguide/
 Martin Morgan, Valerie Obenchain, Jim Hester and Hervé Pagès (2018). SummarizedExperiment: SummarizedExperiment container. R package version 1.10.1 \cr H. Wickham. ggplot2: Elegant Graphics for Data Analysis. Springer-Verlag New York, 2016. \cr Jeroen Ooms (2018). rsvg: Render SVG Images into PDF, PNG, PostScript, or Bitmap Arrays. R package version 1.3. https://CRAN.R-project.org/package=rsvg \cr R. Gentleman, V. Carey, W. Huber and F. Hahne (2017). genefilter: genefilter: methods for filtering genes from high-throughput experiments. R package version 1.58.1 \cr Paul Murrell (2009). Importing Vector Graphics: The grImport Package for R. Journal of Statistical Software, 30(4), 1-37. URL http://www.jstatsoft.org/v30/i04/ \cr Baptiste Auguie (2017). gridExtra: Miscellaneous Functions for "Grid" Graphics. R package version 2.3. https://CRAN.R-project.org/package=gridExtra \cr R Core Team (2018). R: A language and environment for statistical computing. R Foundation for Statistical Computing, Vienna, Austria. RL https://www.R-project.org/ \cr https://github.com/ebi-gene-expression-group/anatomogram/tree/master/src/svg 
-Yu, G., 2020. ggplotify:  Convert Plot to ’grob’ or ’ggplot’ Object. R package version 0.0.5.URLhttps://CRAN.R-project.org/package=ggplotify30
-Keays, Maria. 2019. ExpressionAtlas: Download Datasets from EMBL-EBI Expression Atlas
-Love, Michael I., Wolfgang Huber, and Simon Anders. 2014. "Moderated Estimation of Fold Change and Dispersion for RNA-Seq Data with DESeq2." Genome Biology 15 (12): 550. doi:10.1186/s13059-014-0550-8
-Guangchuang Yu (2020). ggplotify: Convert Plot to 'grob' or 'ggplot' Object. R package version 0.0.5. https://CRAN.R-project.org/package=ggplotify
-Cardoso-Moreira, Margarida, Jean Halbert, Delphine Valloton, Britta Velten, Chunyan Chen, Yi Shao, Angélica Liechti, et al. 2019. “Gene Expression Across Mammalian Organ Development.” Nature 571 (7766): 505–9
+\cr Yu, G., 2020. ggplotify:  Convert Plot to ’grob’ or ’ggplot’ Object. R package version 0.0.5.URLhttps://CRAN.R-project.org/package=ggplotify30
+\cr Keays, Maria. 2019. ExpressionAtlas: Download Datasets from EMBL-EBI Expression Atlas
+\cr Love, Michael I., Wolfgang Huber, and Simon Anders. 2014. "Moderated Estimation of Fold Change and Dispersion for RNA-Seq Data with DESeq2." Genome Biology 15 (12): 550. doi:10.1186/s13059-014-0550-8
+\cr Guangchuang Yu (2020). ggplotify: Convert Plot to 'grob' or 'ggplot' Object. R package version 0.0.5. https://CRAN.R-project.org/package=ggplotify
+\cr Cardoso-Moreira, Margarida, Jean Halbert, Delphine Valloton, Britta Velten, Chunyan Chen, Yi Shao, Angélica Liechti, et al. 2019. “Gene Expression Across Mammalian Organ Development.” Nature 571 (7766): 505–9
 }
 \author{
 Jianhai Zhang \email{jzhan067@ucr.edu; zhang.jianhai@hotmail.com} \cr Dr. Thomas Girke \email{thomas.girke@ucr.edu}

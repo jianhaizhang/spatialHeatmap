@@ -981,13 +981,13 @@ target.sh[60:63, ]
 Return all samples present in target file.     
 
 ```{r eval=TRUE, echo=TRUE, warnings=FALSE}
-unique(target.sh[, 'samples'])
+unique(target.sh[, 'sample'])
 ```
 
 Return all conditions present in target file.  
 
 ```{r eval=TRUE, echo=TRUE, warnings=FALSE}
-unique(target.sh[, 'conditions'])
+unique(target.sh[, 'condition'])
 ```
 
 Load custom target data into `colData` slot.  
@@ -1006,8 +1006,8 @@ latter, the following code will retain genes with expression values larger than
 coefficient of variance (CV) between 0.30 and 100 (CV=c(0.30, 100)).   
 
 ```{r eval=TRUE, echo=TRUE, warnings=FALSE }
-se.aggr.sh <- aggr_rep(data=se.sh, sam.factor='samples', con.factor='conditions', aggr='mean') # Replicate agggregation using mean
-se.fil.arab <- filter_data(data=se.aggr.sh, sam.factor='samples', con.factor='conditions', pOA=c(0.03, 6), CV=c(0.30, 100), dir=NULL) # Filtering of genes with low intensities and variance
+se.aggr.sh <- aggr_rep(data=se.sh, sam.factor='sample', con.factor='condition', aggr='mean') # Replicate agggregation using mean
+se.fil.arab <- filter_data(data=se.aggr.sh, sam.factor='sample', con.factor='condition', pOA=c(0.03, 6), CV=c(0.30, 100), dir=NULL) # Filtering of genes with low intensities and variance
 ```
 
 ### SHM: Microarray 
@@ -1252,7 +1252,7 @@ information separated by double underscores. An example of this format is shown
 in Table \@ref(tab:humtab). 
 
 ```{r eval=FALSE, echo=TRUE, warnings=FALSE}
-se.fil.arab <- filter_data(data=se.aggr.sh, ann="Target.Description", sam.factor='samples', con.factor='conditions', pOA=c(0.03, 6), CV=c(0.30, 100), dir='./')
+se.fil.arab <- filter_data(data=se.aggr.sh, ann="Target.Description", sam.factor='sample', con.factor='condition', pOA=c(0.03, 6), CV=c(0.30, 100), dir='./')
 ```
 
 To interactively access gene-, transcript- or protein-level annotations in the plots and
