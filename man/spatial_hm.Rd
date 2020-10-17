@@ -26,7 +26,7 @@ spatial_hm(
   legend.plot = "all",
   sam.legend = "identical",
   bar.value.size = 10,
-  legend.plot.title = NULL,
+  legend.plot.title = "Legend",
   legend.plot.title.size = 11,
   legend.ncol = NULL,
   legend.nrow = NULL,
@@ -111,7 +111,7 @@ spatial_hm(
 
 \item{bar.value.size}{A numeric of value size in the color bar y-axis. The default is 10.}
 
-\item{legend.plot.title}{The title of the legend plot. The default is NULL.}
+\item{legend.plot.title}{The title of the legend plot. The default is 'Legend'.}
 
 \item{legend.plot.title.size}{The title size of the legend plot. The default is 11.}
 

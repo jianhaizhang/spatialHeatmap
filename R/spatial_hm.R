@@ -42,7 +42,7 @@
 #' @param legend.text.size A numeric of the legend label size, applicable to the legend plot. The default is 12.
 #' @param line.size A numeric of the shape outline size. Default is 0.2.
 #' @param line.color A character of the shape outline color. Default is "grey70".
-#' @param legend.plot.title The title of the legend plot. The default is NULL. 
+#' @param legend.plot.title The title of the legend plot. The default is 'Legend'. 
 #' @param legend.plot.title.size The title size of the legend plot. The default is 11.
 
 
@@ -221,7 +221,7 @@
 #' @importFrom methods is
 #' @importFrom ggplotify as.ggplot
 
-spatial_hm <- function(svg.path, data, sam.factor=NULL, con.factor=NULL, ID, lay.shm="gene", ncol=2, col.com=c('yellow', 'orange', 'red'), col.bar='selected', bar.width=0.08, legend.width=1, bar.title.size=0, trans.scale=NULL, tis.trans=NULL, width=1, height=1, legend.r=1, sub.title.size=11, legend.plot='all', sam.legend='identical', bar.value.size=10, legend.plot.title=NULL, legend.plot.title.size=11, legend.ncol=NULL, legend.nrow=NULL, legend.position='bottom', legend.direction=NULL, legend.key.size=0.02, legend.text.size=12, angle.text.key=NULL, position.text.key=NULL, legend.2nd=FALSE, position.2nd='bottom', legend.nrow.2nd=NULL, legend.ncol.2nd=NULL, legend.key.size.2nd=0.03, legend.text.size.2nd=10, angle.text.key.2nd=0, position.text.key.2nd='right', add.feature.2nd=FALSE, label=FALSE, label.size=4, label.angle=0, hjust=0, vjust=0, opacity=1, key=TRUE, line.size=0.2, line.color='grey70', preserve.scale=TRUE, verbose=TRUE, out.dir=NULL, anm.width=650, anm.height=550, selfcontained=FALSE, video.dim='640x480', res=500, interval=1, framerate=1, legend.value.vdo=NULL, ...) {
+spatial_hm <- function(svg.path, data, sam.factor=NULL, con.factor=NULL, ID, lay.shm="gene", ncol=2, col.com=c('yellow', 'orange', 'red'), col.bar='selected', bar.width=0.08, legend.width=1, bar.title.size=0, trans.scale=NULL, tis.trans=NULL, width=1, height=1, legend.r=1, sub.title.size=11, legend.plot='all', sam.legend='identical', bar.value.size=10, legend.plot.title='Legend', legend.plot.title.size=11, legend.ncol=NULL, legend.nrow=NULL, legend.position='bottom', legend.direction=NULL, legend.key.size=0.02, legend.text.size=12, angle.text.key=NULL, position.text.key=NULL, legend.2nd=FALSE, position.2nd='bottom', legend.nrow.2nd=NULL, legend.ncol.2nd=NULL, legend.key.size.2nd=0.03, legend.text.size.2nd=10, angle.text.key.2nd=0, position.text.key.2nd='right', add.feature.2nd=FALSE, label=FALSE, label.size=4, label.angle=0, hjust=0, vjust=0, opacity=1, key=TRUE, line.size=0.2, line.color='grey70', preserve.scale=TRUE, verbose=TRUE, out.dir=NULL, anm.width=650, anm.height=550, selfcontained=FALSE, video.dim='640x480', res=500, interval=1, framerate=1, legend.value.vdo=NULL, ...) {
 
   x <- y <- color_scale <- tissue <- NULL; options(stringsAsFactors=FALSE)
   # Extract and filter data.

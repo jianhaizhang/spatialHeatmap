@@ -8,7 +8,7 @@ tmp/
 rsconnect/
 sub_matrix.txt
 customComputedData/
-vignette.html
+spatialHeatmap.html
 vignette_files/
 vignette_cache/
 inst/extdata/shinyApp/test*
