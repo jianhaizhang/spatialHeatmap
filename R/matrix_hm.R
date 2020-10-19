@@ -151,9 +151,15 @@ matrix_hm <- function(ID, data, scale='no', col=c('yellow', 'orange', 'red'), ma
 
   options(stringsAsFactors=FALSE)
   if (is(data, 'data.frame')|is(data, 'matrix')|is(data, 'DFrame')) {
-    dat.lis <- check_data(data=data); gene <- dat.lis$dat
-  } else if (is(data, 'SummarizedExperiment')) { gene <- assay(data) } else { 
-  stop('Accepted data classes are "data.frame", "matrix", "DFrame", or "SummarizedExperiment", except that "spatial_hm" also accepts a "vector".') }
+
+    data <- as.data.frame(data); rna <- rownames(data); cna <- make.names(colnames(data)) 
+    na <- vapply(seq_len(ncol(data)), function(i) { tryCatch({ as.numeric(data[, i]) }, warning=function(w) { return(rep(NA, nrow(data)))
+    }, error=function(e) { stop("Please make sure input data are numeric!") }) }, FUN.VALUE=numeric(nrow(data)) )
+    na <- as.data.frame(na); rownames(na) <- rna
+    idx <- colSums(apply(na, 2, is.na))!=0
+    gene <- na[!idx]; colnames(gene) <- cna[!idx]
+
+  } else if (is(data, 'SummarizedExperiment')) { gene <- assay(data) }
   mod <- as.matrix(gene)
  
   if (static==TRUE) {
@@ -198,10 +204,3 @@ matrix_hm <- function(ID, data, scale='no', col=c('yellow', 'orange', 'red'), ma
    }
 
 }
-
-
-
-
-
-
-

@@ -223,8 +223,9 @@
 
 spatial_hm <- function(svg.path, data, sam.factor=NULL, con.factor=NULL, ID, lay.shm="gene", ncol=2, col.com=c('yellow', 'orange', 'red'), col.bar='selected', bar.width=0.08, legend.width=1, bar.title.size=0, trans.scale=NULL, tis.trans=NULL, width=1, height=1, legend.r=1, sub.title.size=11, legend.plot='all', sam.legend='identical', bar.value.size=10, legend.plot.title='Legend', legend.plot.title.size=11, legend.ncol=NULL, legend.nrow=NULL, legend.position='bottom', legend.direction=NULL, legend.key.size=0.02, legend.text.size=12, angle.text.key=NULL, position.text.key=NULL, legend.2nd=FALSE, position.2nd='bottom', legend.nrow.2nd=NULL, legend.ncol.2nd=NULL, legend.key.size.2nd=0.03, legend.text.size.2nd=10, angle.text.key.2nd=0, position.text.key.2nd='right', add.feature.2nd=FALSE, label=FALSE, label.size=4, label.angle=0, hjust=0, vjust=0, opacity=1, key=TRUE, line.size=0.2, line.color='grey70', preserve.scale=TRUE, verbose=TRUE, out.dir=NULL, anm.width=650, anm.height=550, selfcontained=FALSE, video.dim='640x480', res=500, interval=1, framerate=1, legend.value.vdo=NULL, ...) {
 
-  x <- y <- color_scale <- tissue <- NULL; options(stringsAsFactors=FALSE)
+  x <- y <- color_scale <- tissue <- NULL  
   # Extract and filter data.
+  options(stringsAsFactors=FALSE) 
   if (is.vector(data)) {
 
     vec.na <- make.names(names(data)); if (is.null(vec.na)) stop("Please provide names for the input data!")
@@ -235,14 +236,30 @@ spatial_hm <- function(svg.path, data, sam.factor=NULL, con.factor=NULL, ID, lay
     if (is.null(ID)) stop('Please provide a name for the data!')
     gene <- as.data.frame(matrix(data, nrow=1, dimnames=list(ID, vec.na)))
 
-  } else if (is(data, 'data.frame')|is(data, 'matrix')|is(data, 'SummarizedExperiment')) {
+  } else if (is(data, 'data.frame')|is(data, 'matrix')) {
 
-    # Process data.
-    dat.lis <- check_data(data=data, sam.factor=sam.factor, con.factor=con.factor, usage='shm')
-    gene <- as.data.frame(dat.lis$dat); con.na <- dat.lis$con.na
+    data <- as.data.frame(data); rna <- rownames(data); cna <- make.names(colnames(data))
+    if (!identical(cna, colnames(data))) cat('Syntactically valid column names are made! \n')
+    if (any(duplicated(cna))) stop('Please make sure column names are unique!')
+    na <- vapply(seq_len(ncol(data)), function(i) { tryCatch({ as.numeric(data[, i]) }, warning=function(w) { return(rep(NA, nrow(data)))
+    }, error=function(e) { stop("Please make sure input data are numeric!") }) }, FUN.VALUE=numeric(nrow(data)) )
+    na <- as.data.frame(na); rownames(na) <- rna
+    idx <- colSums(apply(na, 2, is.na))!=0
+    gene <- na[!idx]; colnames(gene) <- cna <- cna[!idx]
+    form <- grepl("__", cna); if (sum(form)==0) { colnames(gene) <- paste0(cna, '__', 'con'); con.na <- FALSE } else con.na <- TRUE
 
-  } else { stop('Accepted data classes are "data.frame", "matrix", "DFrame", or "SummarizedExperiment", except that "spatial_hm" also accepts a "vector".') }
+  } else if (is(data, 'SummarizedExperiment')) {
 
+    gene <- assay(data); r.na <- rownames(gene); gene <- apply(gene, 2, as.numeric) # This step removes rownames of gene2.
+    rownames(gene) <- r.na; cna <- colnames(gene) <- make.names(colnames(gene))
+    if (!identical(cna, colnames(gene))) cat('Syntactically valid column names are made! \n')
+    col.meta <- as.data.frame(colData(data), stringsAsFactors=FALSE)
+    # Factors teated by paste0/make.names are vecters.
+    if (!is.null(sam.factor) & !is.null(con.factor)) { cna.tar <- paste0(col.meta[, sam.factor], '__', col.meta[, con.factor]); con.na <- TRUE } else if (!is.null(sam.factor) & is.null(con.factor)) { sam.na <- as.vector(col.meta[, sam.factor]); cna.tar <- paste0(sam.na, "__", "con"); con.na <- FALSE } else if (is.null(sam.factor)) { form <- grepl("__", cna); if (sum(form)==0) { cna.tar <- paste0(cna, '__', 'con'); con.na <- FALSE } else con.na <- TRUE }
+    if (exists('cna.tar')) { colnames(gene) <- make.names(cna.tar); if (!identical(cna.tar, make.names(cna.tar))) cat('Syntactically valid column names are made! \n') }
+    if (any(duplicated(colnames(gene)))) stop('Please use function \'aggr_rep\' to aggregate \'sample__condition\' replicates!')
+
+  }; gene <- as.data.frame(gene)
   if (!is.null(trans.scale)) if (trans.scale=='log2') { 
           
       g.min <- min(gene) 

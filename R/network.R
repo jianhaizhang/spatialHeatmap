@@ -150,18 +150,23 @@
 
 network <- function(ID, data, adj.mod, ds="3", adj.min=0, con.min=0, node.col=c("turquoise", "violet"), edge.col=c("yellow", "blue"), vertex.label.cex=1, vertex.cex=3, edge.cex=10, layout="circle", main=NULL, static=TRUE, ...) {
 
+  tags <- NULL
   options(stringsAsFactors=FALSE)
   if (is(data, 'data.frame')|is(data, 'matrix')|is(data, 'DFrame')) {
 
-    dat.lis <- check_data(data=data); gene <- dat.lis$dat; ann <- dat.lis$row.meta
-    if (ncol(ann)>0) ann <- ann[1] else ann <- NULL
+    data <- as.data.frame(data); rna <- rownames(data); cna <- make.names(colnames(data)) 
+    na <- vapply(seq_len(ncol(data)), function(i) { tryCatch({ as.numeric(data[, i]) }, warning=function(w) { return(rep(NA, nrow(data)))
+    }, error=function(e) { stop("Please make sure input data are numeric!") }) }, FUN.VALUE=numeric(nrow(data)) )
+    na <- as.data.frame(na); rownames(na) <- rna
+    idx <- colSums(apply(na, 2, is.na))!=0
+    gene <- na[!idx]; colnames(gene) <- cna[!idx]
+    if (any(idx)) ann <- data[which(idx)[1]] else ann <- NULL
 
   } else if (is(data, 'SummarizedExperiment')) { 
 
     gene <- assay(data); if (!is.null(rowData(data)) & !is.null(ann)) { ann <- rowData(data)[, ann, drop=FALSE]; rownames(gene) <- rownames(ann) <- make.names(rownames(gene)) } else ann <- NULL
 
-  } else { stop('Accepted data classes are "data.frame", "matrix", "DFrame", or "SummarizedExperiment", except that "spatial_hm" also accepts a "vector".') } 
-  from <- to <- width <- size <- NULL 
+  }; from <- to <- width <- size <- NULL 
   adj <- adj.mod[["adj"]]; mods <- adj.mod[["mod"]]
   if (length(ID)!=1) return('Only one ID is required!')
   if (!ID %in% rownames(gene)) return('ID is not in data!')
@@ -231,7 +236,7 @@ network <- function(ID, data, adj.mod, ds="3", adj.min=0, con.min=0, node.col=c(
         div(style="display:inline-block;width:25%;text-align:left;", actionButton("col.but.net", "Go", icon=icon("refresh"), style="padding:7px; font-size:90%; margin-left: 0px")),
         selectInput("ds","Module splitting sensitivity level:", 3:2, selected="3", width=190),
         selectInput("adj.in", "Adjacency threshold (the smaller, the more edges):", sort(seq(0, 1, 0.002), decreasing=TRUE), 1, width=190),
-        tags$span(style="color:yellow", numericInput(inputId="max.edg", label="Maximun edges (too many edges may crash the app):", value=10, min=1, max=500, width=200)),
+        tags$span(style="color:yellow", numericInput("max.edg", "Maximun edges (too many edges may crash the app):", value=10, min=1, max=500, width=200)),
         htmlOutput("edge"),
         menuSubItem("View graph", tabName="net")
         ),
@@ -393,7 +398,6 @@ network <- function(ID, data, adj.mod, ds="3", adj.min=0, con.min=0, node.col=c(
   }
 
 }
-
 
 
 
