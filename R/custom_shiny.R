@@ -18,7 +18,7 @@
 
 #' @examples
 
-#' # The pre-packaged examples are used for illustration popurse.
+#' # The pre-packaged examples are used for illustration purpose.
 #' # Get one data path and one aSVG path and assembly them into a list for creating default dataset.
 
 #' data.path1 <- system.file('extdata/shinyApp/example/expr_arab.txt', package='spatialHeatmap')
@@ -56,15 +56,16 @@
 #' lis.par <- custom_shiny(lis.par.tmp=TRUE)
 #' # Change default values.
 #' lis.par$shm.img['color', ] <- 'yellow,orange,blue'
-#' # The default dataset upon the app is launched.
+#' # The default dataset to show upon the app is launched.
 #' lis.par$default.dataset <- 'shoot'
 
 #' \donttest{
+#' if (!dir.exists('~/test_shiny')) dir.create('~/test_shiny')
 #' # Create custom Shiny app by feeding this function these datasets and parameters.
 #' custom_shiny(lis.dat1, lis.dat2, lis.par=lis.par, lis.dld.single=lis.dld.single, 
-#' lis.dld.mul=lis.dld.mul, app.dir='.')
+#' lis.dld.mul=lis.dld.mul, app.dir='~/test_shiny')
 #' # Lauch the app.
-#' shiny::runApp('.') 
+#' shiny::runApp('~/test_shiny') 
 #' }
 
 #' @author Jianhai Zhang \email{jzhan067@@ucr.edu; zhang.jianhai@@hotmail.com} \cr Dr. Thomas Girke \email{thomas.girke@@ucr.edu}
