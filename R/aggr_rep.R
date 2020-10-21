@@ -10,21 +10,18 @@
 
 #' @examples
 
-#' ## In the following examples, the 2 toy data come from an RNA-seq analysis on developments of 7
-#' ## chicken organs under 9 time points (Cardoso-Moreira et al. 2019). For conveninece, they are
-#' ## included in this package. The complete raw count data are downloaded using the R package 
-#' ## ExpressionAtlas (Keays 2019) with the accession number "E-MTAB-6769". Toy data1 is used as a
-#' ## "data frame" input to exemplify data with simple samples/conditions, while toy data2 as 
-#' ## "SummarizedExperiment" to illustrate data involving complex samples/conditions.   
+#' ## In the following examples, the 2 toy data come from an RNA-seq analysis on developments of 7 chicken organs under 9 time points (Cardoso-Moreira et al. 2019). For conveninece, they are included in this package. The complete raw count data are downloaded using the R package ExpressionAtlas (Keays 2019) with the accession number "E-MTAB-6769". Toy data1 is used as a "data frame" input to exemplify data with simple samples/conditions, while toy data2 as "SummarizedExperiment" to illustrate data involving complex samples/conditions.   
 #'
+#' ## Set up toy data.
+#'
+#' ## In the following examples, the 2 toy data come from an RNA-seq analysis on development of 7 chicken organs under 9 time points (Cardoso-Moreira et al. 2019). For conveninece, they are included in this package. The complete raw count data are downloaded using the R package ExpressionAtlas (Keays 2019) with the accession number "E-MTAB-6769". Toy data1 is used as a "data frame" input to exemplify data of simple samples/conditions, while toy data2 as "SummarizedExperiment" to illustrate data involving complex samples/conditions.   
+#' 
 #' ## Set up toy data.
 #' 
 #' # Access toy data1.
-#' cnt.chk.simple <- system.file('extdata/shinyApp/example/count_chicken_simple.txt', 
-#' package='spatialHeatmap')
+#' cnt.chk.simple <- system.file('extdata/shinyApp/example/count_chicken_simple.txt', package='spatialHeatmap')
 #' df.chk <- read.table(cnt.chk.simple, header=TRUE, row.names=1, sep='\t', check.names=FALSE)
-#' # Columns follow the namig scheme "sample__condition", where "sample" and "condition" stands
-#' # for organs and time points respectively.
+#' # Columns follow the namig scheme "sample__condition", where "sample" and "condition" stands for organs and time points respectively.
 #' df.chk[1:3, ]
 #'
 #' # A column of gene annotation can be appended to the data frame, but is not required.  
@@ -37,10 +34,7 @@
 #' count.chk <- read.table(cnt.chk, header=TRUE, row.names=1, sep='\t')
 #' count.chk[1:3, 1:5]
 #'
-#' # A targets file describing samples and conditions is required for toy data2. It should be made
-#' # based on the experiment design, which is accessible through the accession number "E-MTAB-6769"
-#' # in the R package ExpressionAtlas. An example targets file is included in this package and 
-#' # accessed below. 
+#' # A targets file describing samples and conditions is required for toy data2. It should be made based on the experiment design, which is accessible through the accession number "E-MTAB-6769" in the R package ExpressionAtlas. An example targets file is included in this package and accessed below. 
 
 #' # Access the example targets file. 
 #' tar.chk <- system.file('extdata/shinyApp/example/target_chicken.txt', package='spatialHeatmap')
@@ -57,8 +51,7 @@
 #' df.aggr.chk <- aggr_rep(data=df.chk, aggr='mean')
 #' df.aggr.chk[1:3, ]
 #'
-#' # Aggregate "sample_condition" replicates in toy data2, where "sample" is "organism_part" and
-#' # "condition" is "age". 
+#' # Aggregate "sample_condition" replicates in toy data2, where "sample" is "organism_part" and "condition" is "age". 
 #' se.aggr.chk <- aggr_rep(data=se.chk, sam.factor='organism_part', con.factor='age', aggr='mean')
 #' assay(se.aggr.chk)[1:3, 1:3]
 
@@ -66,10 +59,10 @@
 
 #' @references
 #' SummarizedExperiment: SummarizedExperiment container. R package version 1.10.1 \cr R Core Team (2018). R: A language and environment for statistical computing. R Foundation for Statistical Computing, Vienna, Austria. URL https://www.R-project.org/
-#' \cr Keays, Maria. 2019. ExpressionAtlas: Download Datasets from EMBL-EBI Expression Atlas
-#' \cr Love, Michael I., Wolfgang Huber, and Simon Anders. 2014. "Moderated Estimation of Fold Change and Dispersion for RNA-Seq Data with DESeq2." Genome Biology 15 (12): 550. doi:10.1186/s13059-014-0550-8
-#' \cr McCarthy, Davis J., Chen, Yunshun, Smyth, and Gordon K. 2012. "Differential Expression Analysis of Multifactor RNA-Seq Experiments with Respect to Biological Variation." Nucleic Acids Research 40 (10): 4288–97
-#' \cr Cardoso-Moreira, Margarida, Jean Halbert, Delphine Valloton, Britta Velten, Chunyan Chen, Yi Shao, Angélica Liechti, et al. 2019. “Gene Expression Across Mammalian Organ Development.” Nature 571 (7766): 505–9
+#' Keays, Maria. 2019. ExpressionAtlas: Download Datasets from EMBL-EBI Expression Atlas
+#' Love, Michael I., Wolfgang Huber, and Simon Anders. 2014. "Moderated Estimation of Fold Change and Dispersion for RNA-Seq Data with DESeq2." Genome Biology 15 (12): 550. doi:10.1186/s13059-014-0550-8
+#' McCarthy, Davis J., Chen, Yunshun, Smyth, and Gordon K. 2012. "Differential Expression Analysis of Multifactor RNA-Seq Experiments with Respect to Biological Variation." Nucleic Acids Research 40 (10): 4288–97
+#' Cardoso-Moreira, Margarida, Jean Halbert, Delphine Valloton, Britta Velten, Chunyan Chen, Yi Shao, Angélica Liechti, et al. 2019. “Gene Expression Across Mammalian Organ Development.” Nature 571 (7766): 505–9
 
 #' @export aggr_rep
 #' @importFrom SummarizedExperiment assay rowData colData SummarizedExperiment
@@ -113,4 +106,5 @@ aggr_rep <- function(data, sam.factor, con.factor, aggr='mean') {
   } 
 
 }
+
 

@@ -9,7 +9,6 @@
 
 #' @return An image of ggplot.
 #' @keywords Internal
-#' @noRd
 
 #' @author Jianhai Zhang \email{jzhan067@@ucr.edu; zhang.jianhai@@hotmail.com} \cr Dr. Thomas Girke \email{thomas.girke@@ucr.edu}
 

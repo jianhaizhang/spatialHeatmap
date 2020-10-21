@@ -22,21 +22,14 @@
 
 #' @examples
 
-#' ## In the following examples, the 2 toy data come from an RNA-seq analysis on development of 7
-#' ## chicken organs under 9 time points (Cardoso-Moreira et al. 2019). For conveninece, they are 
-#' ## included in this package. The complete raw count data are downloaded using the R package 
-#' ## ExpressionAtlas (Keays 2019) with the accession number "E-MTAB-6769". Toy data1 is used as a 
-#' ## "data frame" input to exemplify data of simple samples/conditions, while toy data2 as 
-#' ## "SummarizedExperiment" to illustrate data involving complex samples/conditions.   
+#' ## In the following examples, the 2 toy data come from an RNA-seq analysis on development of 7 chicken organs under 9 time points (Cardoso-Moreira et al. 2019). For conveninece, they are included in this package. The complete raw count data are downloaded using the R package ExpressionAtlas (Keays 2019) with the accession number "E-MTAB-6769". Toy data1 is used as a "data frame" input to exemplify data of simple samples/conditions, while toy data2 as "SummarizedExperiment" to illustrate data involving complex samples/conditions.   
 
 #' ## Set up toy data.
 #' 
 #' # Access toy data1.
-#' cnt.chk.simple <- system.file('extdata/shinyApp/example/count_chicken_simple.txt', 
-#' package='spatialHeatmap')
+#' cnt.chk.simple <- system.file('extdata/shinyApp/example/count_chicken_simple.txt', package='spatialHeatmap')
 #' df.chk <- read.table(cnt.chk.simple, header=TRUE, row.names=1, sep='\t', check.names=FALSE)
-#' # Columns follow the namig scheme "sample__condition", where "sample" and "condition" stands 
-#' # for organs and time points respectively.
+#' # Columns follow the namig scheme "sample__condition", where "sample" and "condition" stands for organs and time points respectively.
 #' df.chk[1:3, ]
 #'
 #' # A column of gene annotation can be appended to the data frame, but is not required.  
@@ -49,10 +42,7 @@
 #' count.chk <- read.table(cnt.chk, header=TRUE, row.names=1, sep='\t')
 #' count.chk[1:3, 1:5]
 #'
-#' # A targets file describing samples and conditions is required for toy data2. It should be 
-#' # made based on the experiment design, which is accessible through the accession number 
-#' # "E-MTAB-6769" in the R package ExpressionAtlas. An example targets file is included in this
-#' # package and accessed below. 
+#' # A targets file describing samples and conditions is required for toy data2. It should be made based on the experiment design, which is accessible through the accession number "E-MTAB-6769" in the R package ExpressionAtlas. An example targets file is included in this package and accessed below. 
 
 #' # Access the example targets file. 
 #' tar.chk <- system.file('extdata/shinyApp/example/target_chicken.txt', package='spatialHeatmap')
@@ -65,12 +55,10 @@
 #' # The "rowData" slot can store a data frame of gene annotation, but not required.
 #' rowData(se.chk) <- DataFrame(ann=ann)
 #'
-#' ## As conventions, raw sequencing count data should be normalized, aggregated, and filtered to
-#' ## reduce noise.
+#' ## As conventions, raw sequencing count data should be normalized, aggregated, and filtered to reduce noise.
 #'
 #' # Normalize count data.
-#' # The normalizing function "calcNormFactors" (McCarthy et al. 2012) with default settings 
-#' # is used.  
+#' # The normalizing function "calcNormFactors" (McCarthy et al. 2012) with default settings is used.  
 #' df.nor.chk <- norm_data(data=df.chk, norm.fun='CNF', data.trans='log2')
 #' se.nor.chk <- norm_data(data=se.chk, norm.fun='CNF', data.trans='log2')
 
@@ -79,58 +67,46 @@
 #' df.aggr.chk <- aggr_rep(data=df.nor.chk, aggr='mean')
 #' df.aggr.chk[1:3, ]
 
-#' # Aggregate "sample_condition" replicates in toy data2, where "sample" is "organism_part" and
-#' # "condition" is "age". 
-#' se.aggr.chk <- aggr_rep(data=se.nor.chk, sam.factor='organism_part', con.factor='age', 
-#' aggr='mean')
+#' # Aggregate "sample_condition" replicates in toy data2, where "sample" is "organism_part" and "condition" is "age". 
+#' se.aggr.chk <- aggr_rep(data=se.nor.chk, sam.factor='organism_part', con.factor='age', aggr='mean')
 #' assay(se.aggr.chk)[1:3, 1:3]
 
-#' # Filter out genes with low counts and low variance. Genes with counts over 5 (log2 unit) in 
-#' # at least 1% samples (pOA), and coefficient of variance (CV) between 0.2 and 100 are retained.
+#' # Filter out genes with low counts and low variance. Genes with counts over 5 (log2 unit) in at least 1% samples (pOA), and coefficient of variance (CV) between 0.2 and 100 are retained.
 #' # Filter toy data1.
 #' df.fil.chk <- filter_data(data=df.aggr.chk, pOA=c(0.01, 5), CV=c(0.2, 100), dir=NULL)
 #' # Filter toy data2.
-#' se.fil.chk <- filter_data(data=se.aggr.chk, sam.factor='organism_part', con.factor='age', 
-#' pOA=c(0.01, 5), CV=c(0.2, 100), dir=NULL)
+#' se.fil.chk <- filter_data(data=se.aggr.chk, sam.factor='organism_part', con.factor='age', pOA=c(0.01, 5), CV=c(0.2, 100), dir=NULL)
 #'
-#' ## Select nearest neighbors for target genes 'ENSGALG00000019846' and 'ENSGALG00000000112', 
-#' ## which are usually genes visualized in spatial heatmaps.
+#' ## Select nearest neighbors for target genes 'ENSGALG00000019846' and 'ENSGALG00000000112', which are usually genes visualized in spatial heatmaps.
 #' # Toy data1.
 #' df.sub.mat <- submatrix(data=df.fil.chk, ID=c('ENSGALG00000019846', 'ENSGALG00000000112'), p=0.1)
 #' # Toy data2.
-#' se.sub.mat <- submatrix(data=se.fil.chk, ann='ann', ID=c('ENSGALG00000019846', 
-#' 'ENSGALG00000000112'), p=0.1) 
+#' se.sub.mat <- submatrix(data=se.fil.chk, ann='ann', ID=c('ENSGALG00000019846', 'ENSGALG00000000112'), p=0.1) 
 #'
-#' # In the following, "df.sub.mat" and "se.sub.mat" is used in the same way, so only 
-#' # "se.sub.mat" illustrated.
+#' # In the following, "df.sub.mat" and "se.sub.mat" is used in the same way, so only "se.sub.mat" illustrated.
 #'
 #' # The subsetted matrix is partially shown below.
 #' se.sub.mat[c('ENSGALG00000019846', 'ENSGALG00000000112'), c(1:2, 63)]
 
 #' ## Adjacency matrix and module identification
 
-#' # The modules are identified by "adj_mod". It returns a list containing an adjacency matrix and
-#' # a data frame of module assignment. 
+#' # The modules are identified by "adj_mod". It returns a list containing an adjacency matrix and a data frame of module assignment. 
 #' adj.mod <- adj_mod(data=se.sub.mat)
 
-#' # The adjacency matrix is a measure of co-expression similarity between genes, where larger 
-#' # value denotes higher similarity.
+#' # The adjacency matrix is a measure of co-expression similarity between genes, where larger value denotes higher similarity.
 #' adj.mod[['adj']][1:3, 1:3]
 
-#' # The modules are identified at two alternative sensitivity levels (ds=2 or 3). From 2 to 3, 
-#' # more modules are identified but module sizes are smaller. The two sets of module assignment
-#' # are returned in a data frame. The first column is ds=2 while the second is ds=3. The numbers
-#' # in each column are module labels, where "0" means genes not assigned to any module.
+#' # The modules are identified at two alternative sensitivity levels (ds=2 or 3). From 2 to 3, more modules are identified but module sizes are smaller. The two sets of module assignment are returned in a data frame. The first column is ds=2 while the second is ds=3. The numbers in each column are module labels, where "0" means genes not assigned to any module.
 #' adj.mod[['mod']][1:3, ]
 
 #' @author Jianhai Zhang \email{zhang.jianhai@@hotmail.com; jzhan067@@ucr.edu} \cr Dr. Thomas Girke \email{thomas.girke@@ucr.edu}
 
 #' @references 
 #' Langfelder P and Horvath S, WGCNA: an R package for weighted correlation network analysis. BMC Bioinformatics 2008, 9:559 doi:10.1186/1471-2105-9-559 \cr Peter Langfelder, Steve Horvath (2012). Fast R Functions for Robust Correlations and Hierarchical Clustering. Journal of Statistical Software, 46(11), 1-17. URL http://www.jstatsoft.org/v46/i11/ \cr R Core Team (2018). R: A language and environment for statistical computing. R Foundation for Statistical Computing, Vienna, Austria. URL https://www.R-project.org/ \cr Peter Langfelder, Bin Zhang and with contributions from Steve Horvath (2016). dynamicTreeCut: Methods for Detection of Clusters in Hierarchical Clustering Dendrograms. R package version 1.63-1. https://CRAN.R-project.org/package=dynamicTreeCut \cr Martin Morgan, Valerie Obenchain, Jim Hester and Hervé Pagès (2018). SummarizedExperiment: SummarizedExperiment container. R package version 1.10.1 
-#' \cr Keays, Maria. 2019. ExpressionAtlas: Download Datasets from EMBL-EBI Expression Atlas
-#' \cr Love, Michael I., Wolfgang Huber, and Simon Anders. 2014. "Moderated Estimation of Fold Change and Dispersion for RNA-Seq Data with DESeq2." Genome Biology 15 (12): 550. doi:10.1186/s13059-014-0550-8
-#' \cr Cardoso-Moreira, Margarida, Jean Halbert, Delphine Valloton, Britta Velten, Chunyan Chen, Yi Shao, Angélica Liechti, et al. 2019. “Gene Expression Across Mammalian Organ Development.” Nature 571 (7766): 505–9
-#' \cr Ravasz, E, A L Somera, D A Mongru, Z N Oltvai, and A L Barabási. 2002. “Hierarchical Organization of Modularity in Metabolic Networks.” Science 297 (5586): 1551–5. 
+#' Keays, Maria. 2019. ExpressionAtlas: Download Datasets from EMBL-EBI Expression Atlas
+#' Love, Michael I., Wolfgang Huber, and Simon Anders. 2014. "Moderated Estimation of Fold Change and Dispersion for RNA-Seq Data with DESeq2." Genome Biology 15 (12): 550. doi:10.1186/s13059-014-0550-8
+#' Cardoso-Moreira, Margarida, Jean Halbert, Delphine Valloton, Britta Velten, Chunyan Chen, Yi Shao, Angélica Liechti, et al. 2019. “Gene Expression Across Mammalian Organ Development.” Nature 571 (7766): 505–9
+#' Ravasz, E, A L Somera, D A Mongru, Z N Oltvai, and A L Barabási. 2002. “Hierarchical Organization of Modularity in Metabolic Networks.” Science 297 (5586): 1551–5. 
 
 #' @export adj_mod
 #' @importFrom WGCNA adjacency TOMsimilarity 

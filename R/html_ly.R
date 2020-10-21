@@ -4,11 +4,10 @@
 #' @param cs.g The color key of ggplot.
 #' @param sam.uni A vector of unique samples extracted from data matrix.
 #' @inheritParams htmlwidgets::saveWidget
+#' @inheritParams grob_list
 #' @inheritParams spatial_hm
-#' @param tis.trans A character vector of tissue/spatial feature identifiers that will be set transparent. \emph{E.g} c("brain", "heart"). This argument is used when target features are covered by  overlapping features and the latter should be transparent.
 #' @return HTML files of spatial heatmaps are saved in 'animaiton_shm'.
 #' @keywords Internal
-#' @noRd
 
 #' @author Jianhai Zhang \email{jzhan067@@ucr.edu; zhang.jianhai@@hotmail.com} \cr Dr. Thomas Girke \email{thomas.girke@@ucr.edu}
 

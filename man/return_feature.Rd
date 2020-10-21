@@ -39,31 +39,23 @@ A data frame containing information on target features and aSVGs.
 This function parses a collection of aSVG files and returns those containing target features in a data frame. Successful spatial heatmap plotting requires the aSVG features of interest have matching samples (cells, tissues, \emph{etc}) in the data. To meet this requirement, the returned features could be used to replace target sample counterparts in the data. Alternatively, the target samples in the data could be used to replace matching features in the aSVG through function \code{\link{update_feature}}. Refer to function \code{\link{spatial_hm}} for more details on aSVG files.
 }
 \examples{
-# This function is able to work on the EBI aSVG repository directly: https://github.com/
-# ebi-gene-expression-group/anatomogram/tree/master/src/svg. The following shows how to
-# download a chicken aSVG containing spatial features of 'brain' and 'heart'. An empty
-# directory is recommended so as to avoid overwriting existing SVG files. 
-# Here "~/test" is used. 
+# This function is able to work on the EBI aSVG repository directly: https://github.com/ebi-gene-expression-group/anatomogram/tree/master/src/svg. The following shows how to download a chicken aSVG containing spatial features of 'brain' and 'heart'. An empty directory is recommended so as to avoid overwriting existing SVG files. Here "~/test" is used. 
 
 \donttest{
 # Make an empty directory "~/test" if not exist.
 if (!dir.exists('~/test')) dir.create('~/test')
 # Query the remote EBI aSVG repo.
-feature.df <- return_feature(feature=c('heart', 'brain'), species=c('gallus'), dir='~/test',
-match.only=FALSE, remote=TRUE)
+feature.df <- return_feature(feature=c('heart', 'brain'), species=c('gallus'), dir='~/test', match.only=FALSE, remote=TRUE)
 feature.df
 # The path of downloaded aSVG.
 svg.chk <- '~/test/gallus_gallus.svg'
 }
 
-# The spatialHeatmap package has a small aSVG collection and can be used to demonstrate the
-# local query.
+# The spatialHeatmap package has a small aSVG collection and can be used to demonstrate the local query.
 # Get the path of local aSVGs from the package.
 svg.dir <- system.file("extdata/shinyApp/example", package="spatialHeatmap")
-# Query the local aSVG repo. The "species" argument is set NULL on purpose so as to illustrate
-# how to select the target aSVG among all matching aSVGs.
-feature.df <- return_feature(feature=c('heart', 'brain'), species=NULL, dir=svg.dir, 
-match.only=FALSE, remote=FALSE)
+# Query the local aSVG repo. The "species" argument is set NULL on purpose so as to illustrate how to select the target aSVG among all matching aSVGs.
+feature.df <- return_feature(feature=c('heart', 'brain'), species=NULL, dir=svg.dir, match.only=FALSE, remote=FALSE)
 # All matching aSVGs.
 unique(feature.df$SVG)
 # Select the target aSVG of chicken.
@@ -71,9 +63,9 @@ subset(feature.df, SVG=='gallus_gallus.svg')
 }
 \references{
 Laurent Gatto (2019). rols: An R interface to the Ontology Lookup Service. R package version 2.14.0. http://lgatto.github.com/rols/
-\cr Hadley Wickham, Jim Hester and Jeroen Ooms (2019). xml2: Parse XML. R package version 1.2.2. https://CRAN.R-project.org/package=xml2
-\cr R Core Team (2019). R: A language and environment for statistical computing. R Foundation for Statistical Computing, Vienna, Austria. URL https://www.R-project.org/.
-\cr Cardoso-Moreira, Margarida, Jean Halbert, Delphine Valloton, Britta Velten, Chunyan Chen, Yi Shao, Angélica Liechti, et al. 2019. "Gene Expression Across Mammalian Organ Development." Nature 571 (7766): 505-9
+Hadley Wickham, Jim Hester and Jeroen Ooms (2019). xml2: Parse XML. R package version 1.2.2. https://CRAN.R-project.org/package=xml2
+R Core Team (2019). R: A language and environment for statistical computing. R Foundation for Statistical Computing, Vienna, Austria. URL https://www.R-project.org/.
+Cardoso-Moreira, Margarida, Jean Halbert, Delphine Valloton, Britta Velten, Chunyan Chen, Yi Shao, Angélica Liechti, et al. 2019. "Gene Expression Across Mammalian Organ Development." Nature 571 (7766): 505-9
 }
 \author{
 Jianhai Zhang \email{jzhan067@ucr.edu; zhang.jianhai@hotmail.com} \cr Dr. Thomas Girke \email{thomas.girke@ucr.edu}
