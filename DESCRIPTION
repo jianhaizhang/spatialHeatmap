@@ -24,5 +24,4 @@ Imports: av, DESeq2, edgeR, WGCNA, flashClust, htmlwidgets, genefilter,
         utils, visNetwork, methods, xml2, yaml
 BugReports: https://github.com/jianhaizhang/spatialHeatmap/issues
 URL: https://github.com/jianhaizhang/spatialHeatmap
-Video: NA
 RoxygenNote: 7.1.0

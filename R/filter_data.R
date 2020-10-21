@@ -20,14 +20,21 @@
 
 #' @examples
 
-#' ## In the following examples, the 2 toy data come from an RNA-seq analysis on development of 7 chicken organs under 9 time points (Cardoso-Moreira et al. 2019). For conveninece, they are included in this package. The complete raw count data are downloaded using the R package ExpressionAtlas (Keays 2019) with the accession number "E-MTAB-6769". Toy data1 is used as a "data frame" input to exemplify data of simple samples/conditions, while toy data2 as "SummarizedExperiment" to illustrate data involving complex samples/conditions.   
+#' ## In the following examples, the 2 toy data come from an RNA-seq analysis on development of 7
+#' ## chicken organs under 9 time points (Cardoso-Moreira et al. 2019). For conveninece, they are
+#' ## included in this package. The complete raw count data are downloaded using the R package 
+#' ## ExpressionAtlas (Keays 2019) with the accession number "E-MTAB-6769". Toy data1 is used as
+#' ## a "data frame" input to exemplify data of simple samples/conditions, while toy data2 as 
+#' ## "SummarizedExperiment" to illustrate data involving complex samples/conditions.   
 #' 
 #' ## Set up toy data.
 #' 
 #' # Access toy data1.
-#' cnt.chk.simple <- system.file('extdata/shinyApp/example/count_chicken_simple.txt', package='spatialHeatmap')
+#' cnt.chk.simple <- system.file('extdata/shinyApp/example/count_chicken_simple.txt', 
+#' package='spatialHeatmap')
 #' df.chk <- read.table(cnt.chk.simple, header=TRUE, row.names=1, sep='\t', check.names=FALSE)
-#' # Columns follow the namig scheme "sample__condition", where "sample" and "condition" stands for organs and time points respectively.
+#' # Columns follow the namig scheme "sample__condition", where "sample" and "condition" stands
+#' # for organs and time points respectively.
 #' df.chk[1:3, ]
 #'
 #' # A column of gene annotation can be appended to the data frame, but is not required.  
@@ -40,7 +47,10 @@
 #' count.chk <- read.table(cnt.chk, header=TRUE, row.names=1, sep='\t')
 #' count.chk[1:3, 1:5]
 #'
-#' # A targets file describing samples and conditions is required for toy data2. It should be made based on the experiment design, which is accessible through the accession number "E-MTAB-6769" in the R package ExpressionAtlas. An example targets file is included in this package and accessed below. 
+#' # A targets file describing samples and conditions is required for toy data2. It should be 
+#' # made based on the experiment design, which is accessible through the accession number 
+#' # "E-MTAB-6769" in the R package ExpressionAtlas. An example targets file is included in 
+#' # this package and accessed below. 
 
 #' # Access the example targets file. 
 #' tar.chk <- system.file('extdata/shinyApp/example/target_chicken.txt', package='spatialHeatmap')
@@ -53,19 +63,21 @@
 #' # The "rowData" slot can store a data frame of gene annotation, but not required.
 #' rowData(se.chk) <- DataFrame(ann=ann)
 #'
-#' # Filter out genes with low counts and low variance. Genes with counts over 5 (log2 unit) in at least 1% samples (pOA), and coefficient of variance (CV) between 0.2 and 100 are retained.
+#' # Filter out genes with low counts and low variance. Genes with counts over 5 (log2 unit) in 
+#' # at least 1% samples (pOA), and coefficient of variance (CV) between 0.2 and 100 are retained.
 #' # Filter toy data1.
 #' df.fil.chk <- filter_data(data=df.chk, pOA=c(0.01, 5), CV=c(0.2, 100), dir=NULL)
 #' # Filter toy data2.
-#' se.fil.chk <- filter_data(data=se.chk, sam.factor='organism_part', con.factor='age', pOA=c(0.01, 5), CV=c(0.2, 100), dir=NULL)
+#' se.fil.chk <- filter_data(data=se.chk, sam.factor='organism_part', con.factor='age', 
+#' pOA=c(0.01, 5), CV=c(0.2, 100), dir=NULL)
 
 #' @author Jianhai Zhang \email{jzhan067@@ucr.edu; zhang.jianhai@@hotmail.com} \cr Dr. Thomas Girke \email{thomas.girke@@ucr.edu}
 
 #' @references
 #' Gentleman, R, V Carey, W Huber, and F Hahne. 2018. "Genefilter: Methods for Filtering Genes from High-Throughput Experiments." http://bioconductor.uib.no/2.7/bioc/html/genefilter.html \cr Matt Dowle and Arun Srinivasan (2017). data.table: Extension of `data.frame`. R package version 1.10.4. https://CRAN.R-project.org/package=data.table \cr Martin Morgan, Valerie Obenchain, Jim Hester and Hervé Pagès (2018). SummarizedExperiment: SummarizedExperiment container. R package version 1.10.1 \cr R Core Team (2018). R: A language and environment for statistical computing. R Foundation for Statistical Computing, Vienna, Austria. URL https://www.R-project.org/
-#' Keays, Maria. 2019. ExpressionAtlas: Download Datasets from EMBL-EBI Expression Atlas
-#' Love, Michael I., Wolfgang Huber, and Simon Anders. 2014. "Moderated Estimation of Fold Change and Dispersion for RNA-Seq Data with DESeq2." Genome Biology 15 (12): 550. doi:10.1186/s13059-014-0550-8
-#' Cardoso-Moreira, Margarida, Jean Halbert, Delphine Valloton, Britta Velten, Chunyan Chen, Yi Shao, Angélica Liechti, et al. 2019. “Gene Expression Across Mammalian Organ Development.” Nature 571 (7766): 505–9
+#' \cr Keays, Maria. 2019. ExpressionAtlas: Download Datasets from EMBL-EBI Expression Atlas
+#' \cr Love, Michael I., Wolfgang Huber, and Simon Anders. 2014. "Moderated Estimation of Fold Change and Dispersion for RNA-Seq Data with DESeq2." Genome Biology 15 (12): 550. doi:10.1186/s13059-014-0550-8
+#' \cr Cardoso-Moreira, Margarida, Jean Halbert, Delphine Valloton, Britta Velten, Chunyan Chen, Yi Shao, Angélica Liechti, et al. 2019. “Gene Expression Across Mammalian Organ Development.” Nature 571 (7766): 505–9
 
 
 #' @export filter_data
@@ -129,7 +141,6 @@ filter_data <- function(data, pOA=c(0, 0), CV=c(-Inf, Inf), ann=NULL, sam.factor
   }
 
 }
-
 
 
 
