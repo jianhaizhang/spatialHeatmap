@@ -9,7 +9,7 @@ Authors@R: c(
   person(given="Bing", family="Yang", role="aut", email="yangbi@missouri.edu", comment=""),
   person(given="Wolf", family="Frommer", role="aut", email="frommew@hhu.de", comment=""),
   person(given="Julia", family="Bailey-Serres", role="aut", email="julia.bailey@ucr.edu", comment=""),
-  person(given="Thomas", family="Thomas", role="aut", comment="")
+  person(given="Thomas", family="Girke", role="aut", comment="")
   )
 Description: The spatialHeatmap package provides functionalities for visualizing cell-, tissue- and organ-specific data of biological assays by coloring the corresponding spatial features defined in anatomical images according to a numeric color key.
 License: Artistic-2.0
