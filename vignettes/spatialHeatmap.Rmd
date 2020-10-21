@@ -81,7 +81,7 @@ functionalities of the `spatialHeatmap` package are illustrated in Figure
 \@ref(fig:illus).   
 
 
-```{r illus, echo=FALSE, fig.wide=TRUE, out.width="100%", fig.cap=("Overview of spatialHeatmap. (A) The _saptialHeatmap_ package plots numeric assay data onto spatially annotated images. A wide range of omics technologies is supported including genomic, transcriptomic, proteomic and metabolomic profiling data. The assay data can be provided as numeric vectors, tabular data, or _SummarizedExperiment_ objects. The latter is a widely used data container for organizing both assay data as well as associated annotation and experimental design data. (B) Anatomical and other spatial images need to be provided as annotated SVG (aSVG) files where the spatial features and the corresponding data components of the assay data have matching labels (_e.g._ tissue labels). (C) The assay data are used to color the matching spatial features in one or more aSVG images according to a color key. The result is called a spatial heatmap (SHM) plot. Multiple measurements can be visualized in the same plot, such as several factors (_e.g._ genes, proteins, metabolites), treatment conditions, growth stages and more. (D) Data mining graphics, such as matrix heatmaps and network graphs, are integrated to facilitate the identification of factors with similar assay profiles. The functionalities of _spatialHeatmap_ can be accessed from local computers via the R console or a graphical user interface based on Shiny. In addtion, the latter can be deployed as a web service on custom servers or cloud-based systems.")}
+```{r illus, echo=FALSE, fig.wide=FALSE, fig.cap=("Overview of spatialHeatmap. (A) The _saptialHeatmap_ package plots numeric assay data onto spatially annotated images. A wide range of omics technologies is supported including genomic, transcriptomic, proteomic and metabolomic profiling data. The assay data can be provided as numeric vectors, tabular data, or _SummarizedExperiment_ objects. The latter is a widely used data container for organizing both assay data as well as associated annotation and experimental design data. (B) Anatomical and other spatial images need to be provided as annotated SVG (aSVG) files where the spatial features and the corresponding data components of the assay data have matching labels (_e.g._ tissue labels). (C) The assay data are used to color the matching spatial features in one or more aSVG images according to a color key. The result is called a spatial heatmap (SHM) plot. Multiple measurements can be visualized in the same plot, such as several factors (_e.g._ genes, proteins, metabolites), treatment conditions, growth stages and more. (D) Data mining graphics, such as matrix heatmaps and network graphs, are integrated to facilitate the identification of factors with similar assay profiles. The functionalities of _spatialHeatmap_ can be accessed from local computers via the R console or a graphical user interface based on Shiny. In addtion, the latter can be deployed as a web service on custom servers or cloud-based systems.")}
 
 include_graphics('img/spatialHeatmap_Design.jpg')
 
@@ -398,18 +398,15 @@ sapiens', 'brain')`, respectively. To return matching aSVGs, the argument
 matching the query keywords are returned and saved under `dir`. Otherwise, all
 aSVGs are returned regardless of the keywords. To avoid overwriting of existing
 SVG files, it is recommended to start with an empty target directory, here
-`tmp.dir`. To search a local directory for matching aSVG images, the argument
+`~/test`. To search a local directory for matching aSVG images, the argument
 setting `remote=FALSE` needs to be used, while specifying the path of the
 corresponding directory under `dir`. All or only matching features are returned
 if `match.only` is set to `FALSE` or `TRUE`, respectively.
 
 
-<!--
-Code chunk not evaluated to save time building this vignette.
--->
 ```{r eval=FALSE, echo=TRUE, warnings=FALSE }
-tmp.dir <- paste0(tempdir(check=TRUE), '/shm')  # Create empty directory
-feature.df <- return_feature(feature=c('frontal cortex', 'cerebellum'), species=c('homo sapiens', 'brain'), keywords.any=TRUE, return.all=FALSE, dir=tmp.dir, remote=TRUE, match.only=TRUE, desc=FALSE) # Query aSVGs
+dir.create('~/test') # Create empty directory
+feature.df <- return_feature(feature=c('frontal cortex', 'cerebellum'), species=c('homo sapiens', 'brain'), keywords.any=TRUE, return.all=FALSE, dir='~/test', remote=TRUE, match.only=TRUE, desc=FALSE) # Query aSVGs
 feature.df[1:8, ] # Return first 8 rows for checking
 unique(feature.df$SVG) # Return all matching aSVGs
 ```
@@ -609,14 +606,14 @@ video will play the SHM subplots in the order specified under the `lay.shm`
 argument. 
 
 The following example saves the interactive HTML and video files under  
-a directory named `tmp.dir`.  
+a directory named `~/test`.  
 
 <!--
 Code chunk not evaluated to save time building this vignette.
 -->
 ```{r eval=FALSE, echo=TRUE, warnings=FALSE }
-tmp.dir <- paste0(tempdir(check=TRUE), '/shm')
-spatial_hm(svg.path=svg.hum, data=se.fil.hum, ID=c('ENSG00000268433', 'ENSG00000006047'), lay.shm='con', width=0.8, height=1, legend.r=1.5, legend.nrow=2, out.dir=tmp.dir)
+if (!dir.exists('~/test')) dir.create('~/test')
+spatial_hm(svg.path=svg.hum, data=se.fil.hum, ID=c('ENSG00000268433', 'ENSG00000006047'), lay.shm='con', width=0.8, height=1, legend.r=1.5, legend.nrow=2, out.dir='~/test')
 ```
 
 ### SHM: Customization
@@ -665,14 +662,11 @@ colData(rse.mus)[1:3, ]
 The following example shows how to download from the above described [SVG
 repositories](#data_repo) an aSVG image that matches the tissues and species
 assayed in the gene expression data set downloaded in the previous subsection.
-As before the image is saved to a directory named `tmp.dir`.
+As before the image is saved to a directory named `~/test`.
 
-<!--
-Code chunk not evaluated to save time building this vignette.
--->
 ```{r eval=FALSE, echo=TRUE, warnings=FALSE }
-tmp.dir <- paste0(tempdir(check=TRUE), '/shm')
-feature.df <- return_feature(feature=c('heart', 'kidney'), species=c('Mus musculus'), keywords.any=TRUE, return.all=FALSE, dir=tmp.dir, remote=TRUE, match.only=FALSE)
+if (!dir.exists('~/test')) dir.create('~/test')
+feature.df <- return_feature(feature=c('heart', 'kidney'), species=c('Mus musculus'), keywords.any=TRUE, return.all=FALSE, dir='~/test', remote=TRUE, match.only=FALSE)
 ```
 
 To build this vignettes according to the R/Bioconductor package requirements, the
@@ -807,15 +801,13 @@ colData(rse.chk)[1:3, ]
 The following example shows how to download from the above introduced [SVG
 repositories](#data_repo) an aSVG image that matches the tissues and species
 assayed in the gene expression data set downloaded in the previous subsection.
-As before the image is saved to a directory named `tmp.dir`.
+As before the image is saved to a directory named `~/test`.
 
-<!--
-Code chunk not evaluated to save time building this vignette.
--->
 ```{r eval=FALSE, echo=TRUE, warnings=FALSE }
-tmp.dir <- paste0(tempdir(check=TRUE), '/shm')
+# Make an empty directory "~/test" if not exist.
+if (!dir.exists('~/test')) dir.create('~/test')
 # Query aSVGs.
-feature.df <- return_feature(feature=c('heart', 'kidney'), species=c('gallus'), keywords.any=TRUE, return.all=FALSE, dir=tmp.dir, remote=TRUE, match.only=FALSE)
+feature.df <- return_feature(feature=c('heart', 'kidney'), species=c('gallus'), keywords.any=TRUE, return.all=FALSE, dir='~/test', remote=TRUE, match.only=FALSE)
 ```
 
 To build this vignettes according to the R/Bioconductor package requirements, the
@@ -981,13 +973,13 @@ target.sh[60:63, ]
 Return all samples present in target file.     
 
 ```{r eval=TRUE, echo=TRUE, warnings=FALSE}
-unique(target.sh[, 'sample'])
+unique(target.sh[, 'samples'])
 ```
 
 Return all conditions present in target file.  
 
 ```{r eval=TRUE, echo=TRUE, warnings=FALSE}
-unique(target.sh[, 'condition'])
+unique(target.sh[, 'conditions'])
 ```
 
 Load custom target data into `colData` slot.  
@@ -1006,8 +998,8 @@ latter, the following code will retain genes with expression values larger than
 coefficient of variance (CV) between 0.30 and 100 (CV=c(0.30, 100)).   
 
 ```{r eval=TRUE, echo=TRUE, warnings=FALSE }
-se.aggr.sh <- aggr_rep(data=se.sh, sam.factor='sample', con.factor='condition', aggr='mean') # Replicate agggregation using mean
-se.fil.arab <- filter_data(data=se.aggr.sh, sam.factor='sample', con.factor='condition', pOA=c(0.03, 6), CV=c(0.30, 100), dir=NULL) # Filtering of genes with low intensities and variance
+se.aggr.sh <- aggr_rep(data=se.sh, sam.factor='samples', con.factor='conditions', aggr='mean') # Replicate agggregation using mean
+se.fil.arab <- filter_data(data=se.aggr.sh, sam.factor='samples', con.factor='conditions', pOA=c(0.03, 6), CV=c(0.30, 100), dir=NULL) # Filtering of genes with low intensities and variance
 ```
 
 ### SHM: Microarray 
@@ -1252,7 +1244,7 @@ information separated by double underscores. An example of this format is shown
 in Table \@ref(tab:humtab). 
 
 ```{r eval=FALSE, echo=TRUE, warnings=FALSE}
-se.fil.arab <- filter_data(data=se.aggr.sh, ann="Target.Description", sam.factor='sample', con.factor='condition', pOA=c(0.03, 6), CV=c(0.30, 100), dir='./')
+se.fil.arab <- filter_data(data=se.aggr.sh, ann="Target.Description", sam.factor='samples', con.factor='conditions', pOA=c(0.03, 6), CV=c(0.30, 100), dir='./')
 ```
 
 To interactively access gene-, transcript- or protein-level annotations in the plots and
@@ -1489,24 +1481,23 @@ deposit their own aSVGs to this repository to share them with the community.
 ### Update aSVG features {#update}
 
 To create and edit existing feature identifiers in aSVGs, the `update_feature` function
-can be used. The demonstration below, creates an empty folder `tmp.dir1` and copies
+can be used. The demonstration below, creates an empty folder `~/test1` and copies
 into it the `homo_sapiens.brain.svg` image provided by the `spatialHeatmap`
 package. Subsequently, selected feature annotations are updated in this file. 
 
-<!--
-Code chunk not evaluated to save time building this vignette.
--->
+<!-- To avoid creating '~/test1' in users' computer, the following code chunks are not evaluated when building this vignette. -->
+
 ```{r eval=FALSE, echo=TRUE, warnings=FALSE }
-tmp.dir1 <- paste0(tempdir(check=TRUE), '/shm1')
+if (!dir.exists('~/test1')) dir.create('~/test1') # Create an empty directory
 svg.hum <- system.file("extdata/shinyApp/example", 'homo_sapiens.brain.svg', package="spatialHeatmap") 
-file.copy(from=svg.hum, to=tmp.dir1, overwrite=FALSE) # Copy "homo_sapiens.brain.svg" file into 'tmp.dir1'
+file.copy(from=svg.hum, to='~/test1', overwrite=FALSE) # Copy "homo_sapiens.brain.svg" file into '~/test1'
 ```
 
 Query the above aSVG with feature and species keywords, and return the resulting matches
 in a `data.frame`.
 
 ```{r eval=FALSE, echo=TRUE, warnings=FALSE }
-feature.df <- return_feature(feature=c('frontal cortex'), species=c('homo sapiens', 'brain'), dir=tmp.dir1, remote=FALSE, keywords.any=FALSE)
+feature.df <- return_feature(feature=c('frontal cortex'), species=c('homo sapiens', 'brain'), dir='~/test1', remote=FALSE, keywords.any=FALSE)
 feature.df
 ``` 
 
@@ -1530,10 +1521,10 @@ feature.df.new <- cbind(featureNew=f.new, feature.df)
 feature.df.new
 ```
 
-Finally, the features are updated in the aSVG file(s) located in the `tmp.dir1` directory.
+Finally, the features are updated in the aSVG file(s) located in the `~/test1` directory.
 
 ```{r eval=FALSE, echo=TRUE, warnings=FALSE } 
-update_feature(feature=feature.df.new, dir=tmp.dir)
+update_feature(feature=feature.df.new, dir='~/test1')
 ```
 
 <br/>
