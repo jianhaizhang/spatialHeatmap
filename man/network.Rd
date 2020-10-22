@@ -60,14 +60,21 @@ A static or interactive network graph.
 This function exhibits a target assayed item (gene, protein, metabolite, \emph{etc}) in the context of corresponding network module as static or interactive network graphs. See function \code{\link{adj_mod}} for module identification. In the network graph, nodes are items and edges are adjacencies (coexpression similarities) between items. The thicker edge denotes higher adjacency between nodes while larger node indicates higher connectivity (sum of a node's adjacencies with all its direct neighbours). \cr In the interactive mode, there is an interactive color bar to denote node connectivity. The color ingredients can only be separated by comma, semicolon, single space, dot, hypen, or, underscore. \emph{E.g.} "yellow,orange,red", which means node connectivity increases from yellow to red. If too many edges (\emph{e.g.}: > 500) are displayed, the app may get crashed, depending on the computer RAM. So the "Adjacency threshold" option sets a threthold to filter out weak edges. Meanwhile, the "Maximun edges" limits the total of shown edges. In case a very low adjacency threshold is choosen and introduces too many edges that exceed the Maximun edges, the app will internally increase the adjacency threshold until the edge total is within the Maximun edges, which is a protection against too many edges. The adjacency threshold of 1 produces no edges, in this case the app wil internally decrease this threshold until the number of edges reaches the Maximun edges. If adjacency threshold of 0.998 is selected and no edge is left, this app will also internally update the edges to 1 or 2. To maintain acceptable performance, users are advised to choose a stringent threshold (\emph{e.g.} 0.9) initially, then decrease the value gradually. The interactive feature allows users to zoom in and out, or drag a node around. All the node IDs in the network module are listed in "Select by id" in decreasing order according to node connectivity. The input item ID is appended "_target" as a label. By clicking an ID in this list, users can identify the corresponding node in the network. If the input data has item annotations, then the annotation can be seen by hovering the cursor over a node.
 }
 \examples{
-## In the following examples, the 2 toy data come from an RNA-seq analysis on development of 7 chicken organs under 9 time points (Cardoso-Moreira et al. 2019). For conveninece, they are included in this package. The complete raw count data are downloaded using the R package ExpressionAtlas (Keays 2019) with the accession number "E-MTAB-6769". Toy data1 is used as a "data frame" input to exemplify data of simple samples/conditions, while toy data2 as "SummarizedExperiment" to illustrate data involving complex samples/conditions.   
+## In the following examples, the 2 toy data come from an RNA-seq analysis on development of 7
+## chicken organs under 9 time points (Cardoso-Moreira et al. 2019). For conveninece, they are
+## included in this package. The complete raw count data are downloaded using the R package
+## ExpressionAtlas (Keays 2019) with the accession number "E-MTAB-6769". Toy data1 is used as
+## a "data frame" input to exemplify data of simple samples/conditions, while toy data2 as
+## "SummarizedExperiment" to illustrate data involving complex samples/conditions.   
 
 ## Set up toy data.
 
 # Access toy data1.
-cnt.chk.simple <- system.file('extdata/shinyApp/example/count_chicken_simple.txt', package='spatialHeatmap')
+cnt.chk.simple <- system.file('extdata/shinyApp/example/count_chicken_simple.txt', 
+package='spatialHeatmap')
 df.chk <- read.table(cnt.chk.simple, header=TRUE, row.names=1, sep='\t', check.names=FALSE)
-# Columns follow the namig scheme "sample__condition", where "sample" and "condition" stands for organs and time points respectively.
+# Columns follow the namig scheme "sample__condition", where "sample" and "condition" stands
+# for organs and time points respectively.
 df.chk[1:3, ]
 
 # A column of gene annotation can be appended to the data frame, but is not required.  
@@ -80,7 +87,10 @@ cnt.chk <- system.file('extdata/shinyApp/example/count_chicken.txt', package='sp
 count.chk <- read.table(cnt.chk, header=TRUE, row.names=1, sep='\t')
 count.chk[1:3, 1:5]
 
-# A targets file describing samples and conditions is required for toy data2. It should be made based on the experiment design, which is accessible through the accession number "E-MTAB-6769" in the R package ExpressionAtlas. An example targets file is included in this package and accessed below. 
+# A targets file describing samples and conditions is required for toy data2. It should be made
+# based on the experiment design, which is accessible through the accession number 
+# "E-MTAB-6769" in the R package ExpressionAtlas. An example targets file is included in this
+# package and accessed below. 
 # Access the example targets file. 
 tar.chk <- system.file('extdata/shinyApp/example/target_chicken.txt', package='spatialHeatmap')
 target.chk <- read.table(tar.chk, header=TRUE, row.names=1, sep='\t')
@@ -92,52 +102,71 @@ se.chk <- SummarizedExperiment(assay=count.chk, colData=target.chk)
 # The "rowData" slot can store a data frame of gene annotation, but not required.
 rowData(se.chk) <- DataFrame(ann=ann)
 
-## As conventions, raw sequencing count data should be normalized, aggregated, and filtered to reduce noise.
+## As conventions, raw sequencing count data should be normalized, aggregated, and filtered to
+## reduce noise.
 
 # Normalize count data.
-# The normalizing function "calcNormFactors" (McCarthy et al. 2012) with default settings is used.  
+# The normalizing function "calcNormFactors" (McCarthy et al. 2012) with default settings
+# is used. 
 df.nor.chk <- norm_data(data=df.chk, norm.fun='CNF', data.trans='log2')
 se.nor.chk <- norm_data(data=se.chk, norm.fun='CNF', data.trans='log2')
 # Aggregate count data.
 # Aggregate "sample__condition" replicates in toy data1.
 df.aggr.chk <- aggr_rep(data=df.nor.chk, aggr='mean')
 df.aggr.chk[1:3, ]
-# Aggregate "sample_condition" replicates in toy data2, where "sample" is "organism_part" and "condition" is "age". 
-se.aggr.chk <- aggr_rep(data=se.nor.chk, sam.factor='organism_part', con.factor='age', aggr='mean')
+# Aggregate "sample_condition" replicates in toy data2, where "sample" is "organism_part" and
+# "condition" is "age". 
+se.aggr.chk <- aggr_rep(data=se.nor.chk, sam.factor='organism_part', con.factor='age',
+aggr='mean')
 assay(se.aggr.chk)[1:3, 1:3]
-# Filter out genes with low counts and low variance. Genes with counts over 5 (log2 unit) in at least 1\% samples (pOA), and coefficient of variance (CV) between 0.2 and 100 are retained.
+# Filter out genes with low counts and low variance. Genes with counts over 5 (log2 unit) in
+# at least 1\% samples (pOA), and coefficient of variance (CV) between 0.2 and 100 are retained.
 # Filter toy data1.
 df.fil.chk <- filter_data(data=df.aggr.chk, pOA=c(0.01, 5), CV=c(0.2, 100), dir=NULL)
 # Filter toy data2.
-se.fil.chk <- filter_data(data=se.aggr.chk, sam.factor='organism_part', con.factor='age', pOA=c(0.01, 5), CV=c(0.2, 100), dir=NULL)
+se.fil.chk <- filter_data(data=se.aggr.chk, sam.factor='organism_part', con.factor='age',
+pOA=c(0.01, 5), CV=c(0.2, 100), dir=NULL)
 
-## Select nearest neighbors for target genes 'ENSGALG00000019846' and 'ENSGALG00000000112', which are usually genes visualized in spatial heatmaps.
+## Select nearest neighbors for target genes 'ENSGALG00000019846' and 'ENSGALG00000000112',
+## which are usually genes visualized in spatial heatmaps.
 # Toy data1.
-df.sub.mat <- submatrix(data=df.fil.chk, ID=c('ENSGALG00000019846', 'ENSGALG00000000112'), p=0.1)
+df.sub.mat <- submatrix(data=df.fil.chk, ID=c('ENSGALG00000019846', 'ENSGALG00000000112'),
+p=0.1)
 # Toy data2.
-se.sub.mat <- submatrix(data=se.fil.chk, ann='ann', ID=c('ENSGALG00000019846', 'ENSGALG00000000112'), p=0.1) 
+se.sub.mat <- submatrix(data=se.fil.chk, ann='ann', ID=c('ENSGALG00000019846', 
+'ENSGALG00000000112'), p=0.1) 
 
-# In the following, "df.sub.mat" and "se.sub.mat" is used in the same way, so only "se.sub.mat" illustrated.
+# In the following, "df.sub.mat" and "se.sub.mat" is used in the same way, so only
+# "se.sub.mat" illustrated.
 
 # The subsetted matrix is partially shown below.
 se.sub.mat[c('ENSGALG00000019846', 'ENSGALG00000000112'), c(1:2, 63)]
 ## Adjacency matrix and module identification
-# The modules are identified by "adj_mod". It returns a list containing an adjacency matrix and a data frame of module assignment. 
+# The modules are identified by "adj_mod". It returns a list containing an adjacency matrix
+# and a data frame of module assignment. 
 adj.mod <- adj_mod(data=se.sub.mat)
-# The adjacency matrix is a measure of co-expression similarity between genes, where larger value denotes higher similarity.
+# The adjacency matrix is a measure of co-expression similarity between genes, where larger
+# value denotes higher similarity.
 adj.mod[['adj']][1:3, 1:3]
-# The modules are identified at two alternative sensitivity levels (ds=2 or 3). From 2 to 3, more modules are identified but module sizes are smaller. The two sets of module assignment are returned in a data frame. The first column is ds=2 while the second is ds=3. The numbers in each column are module labels, where "0" means genes not assigned to any module.
+# The modules are identified at two alternative sensitivity levels (ds=2 or 3). From 2 to 3,
+# more modules are identified but module sizes are smaller. The two sets of module assignment
+# are returned in a data frame. The first column is ds=2 while the second is ds=3. The numbers
+# in each column are module labels, where "0" means genes not assigned to any module.
 adj.mod[['mod']][1:3, ]
-# Static network. In the graph, nodes are genes and edges are adjacencies between genes. The thicker edge denotes higher adjacency (co-expression similarity) while larger node indicates higher gene connectivity (sum of a gene's adjacency with all its direct neighbors). The target gene is labeled by "_target".
-network(ID="ENSGALG00000019846", data=se.sub.mat, adj.mod=adj.mod, adj.min=0.7, vertex.label.cex=1.5, vertex.cex=4, static=TRUE)
+# Static network. In the graph, nodes are genes and edges are adjacencies between genes. 
+# The thicker edge denotes higher adjacency (co-expression similarity) while larger node
+# indicates higher gene connectivity (sum of a gene's adjacency with all its direct neighbors).
+# The target gene is labeled by "_target".
+network(ID="ENSGALG00000019846", data=se.sub.mat, adj.mod=adj.mod, adj.min=0.7, 
+vertex.label.cex=1.5, vertex.cex=4, static=TRUE)
 # Interactive network. The target gene ID is appended "_target".  
 \donttest{ network(ID="ENSGALG00000019846", data=se.sub.mat, adj.mod=adj.mod, static=FALSE) }
 }
 \references{
 Martin Morgan, Valerie Obenchain, Jim Hester and Hervé Pagès (2018). SummarizedExperiment: SummarizedExperiment container. R package version 1.10.1 \cr Csardi G, Nepusz T: The igraph software package for complex network research, InterJournal, Complex Systems 1695. 2006. http://igraph.org \cr R Core Team (2018). R: A language and environment for statistical computing. R Foundation for Statistical Computing, Vienna, Austria. URL https://www.R-project.org/ \cr Winston Chang, Joe Cheng, JJ Allaire, Yihui Xie and Jonathan McPherson (2018). shiny: Web Application Framework for R. R package version 1.1.0. https://CRAN.R-project.org/package=shiny \cr Winston Chang and Barbara Borges Ribeiro (2018). shinydashboard: Create Dashboards with 'Shiny'. R package version 0.7.1. https://CRAN.R-project.org/package=shinydashboard \cr Almende B.V., Benoit Thieurmel and Titouan Robert (2018). visNetwork: Network Visualization using 'vis.js' Library. R package version 2.0.4. https://CRAN.R-project.org/package=visNetwork
-Keays, Maria. 2019. ExpressionAtlas: Download Datasets from EMBL-EBI Expression Atlas
-Love, Michael I., Wolfgang Huber, and Simon Anders. 2014. "Moderated Estimation of Fold Change and Dispersion for RNA-Seq Data with DESeq2." Genome Biology 15 (12): 550. doi:10.1186/s13059-014-0550-8
-Cardoso-Moreira, Margarida, Jean Halbert, Delphine Valloton, Britta Velten, Chunyan Chen, Yi Shao, Angélica Liechti, et al. 2019. “Gene Expression Across Mammalian Organ Development.” Nature 571 (7766): 505–9
+\cr Keays, Maria. 2019. ExpressionAtlas: Download Datasets from EMBL-EBI Expression Atlas
+\cr Love, Michael I., Wolfgang Huber, and Simon Anders. 2014. "Moderated Estimation of Fold Change and Dispersion for RNA-Seq Data with DESeq2." Genome Biology 15 (12): 550. doi:10.1186/s13059-014-0550-8
+\cr Cardoso-Moreira, Margarida, Jean Halbert, Delphine Valloton, Britta Velten, Chunyan Chen, Yi Shao, Angélica Liechti, et al. 2019. “Gene Expression Across Mammalian Organ Development.” Nature 571 (7766): 505–9
 }
 \author{
 Jianhai Zhang \email{jzhan067@ucr.edu; zhang.jianhai@hotmail.com} \cr Dr. Thomas Girke \email{thomas.girke@ucr.edu}

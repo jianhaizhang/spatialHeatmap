@@ -20,14 +20,21 @@
 
 #' @examples
 
-#' ## In the following examples, the 2 toy data come from an RNA-seq analysis on development of 7 chicken organs under 9 time points (Cardoso-Moreira et al. 2019). For conveninece, they are included in this package. The complete raw count data are downloaded using the R package ExpressionAtlas (Keays 2019) with the accession number "E-MTAB-6769". Toy data1 is used as a "data frame" input to exemplify data of simple samples/conditions, while toy data2 as "SummarizedExperiment" to illustrate data involving complex samples/conditions.   
+#' ## In the following examples, the 2 toy data come from an RNA-seq analysis on development of 7
+#' ## chicken organs under 9 time points (Cardoso-Moreira et al. 2019). For conveninece, they are
+#' ## included in this package. The complete raw count data are downloaded using the R package 
+#' ## ExpressionAtlas (Keays 2019) with the accession number "E-MTAB-6769". Toy data1 is used as
+#' ## a "data frame" input to exemplify data of simple samples/conditions, while toy data2 as 
+#' ## "SummarizedExperiment" to illustrate data involving complex samples/conditions.   
 #' 
 #' ## Set up toy data.
 #' 
 #' # Access toy data1.
-#' cnt.chk.simple <- system.file('extdata/shinyApp/example/count_chicken_simple.txt', package='spatialHeatmap')
+#' cnt.chk.simple <- system.file('extdata/shinyApp/example/count_chicken_simple.txt', 
+#' package='spatialHeatmap')
 #' df.chk <- read.table(cnt.chk.simple, header=TRUE, row.names=1, sep='\t', check.names=FALSE)
-#' # Columns follow the namig scheme "sample__condition", where "sample" and "condition" stands for organs and time points respectively.
+#' # Columns follow the namig scheme "sample__condition", where "sample" and "condition" stands
+#' # for organs and time points respectively.
 #' df.chk[1:3, ]
 #'
 #' # A column of gene annotation can be appended to the data frame, but is not required.  
@@ -40,7 +47,10 @@
 #' count.chk <- read.table(cnt.chk, header=TRUE, row.names=1, sep='\t')
 #' count.chk[1:3, 1:5]
 #'
-#' # A targets file describing samples and conditions is required for toy data2. It should be made based on the experiment design, which is accessible through the accession number "E-MTAB-6769" in the R package ExpressionAtlas. An example targets file is included in this package and accessed below. 
+#' # A targets file describing samples and conditions is required for toy data2. It should be 
+#' # made based on the experiment design, which is accessible through the accession number 
+#' # "E-MTAB-6769" in the R package ExpressionAtlas. An example targets file is included in 
+#' # this package and accessed below. 
 
 #' # Access the example targets file. 
 #' tar.chk <- system.file('extdata/shinyApp/example/target_chicken.txt', package='spatialHeatmap')
@@ -53,19 +63,21 @@
 #' # The "rowData" slot can store a data frame of gene annotation, but not required.
 #' rowData(se.chk) <- DataFrame(ann=ann)
 #'
-#' # Filter out genes with low counts and low variance. Genes with counts over 5 (log2 unit) in at least 1% samples (pOA), and coefficient of variance (CV) between 0.2 and 100 are retained.
+#' # Filter out genes with low counts and low variance. Genes with counts over 5 (log2 unit) in 
+#' # at least 1% samples (pOA), and coefficient of variance (CV) between 0.2 and 100 are retained.
 #' # Filter toy data1.
 #' df.fil.chk <- filter_data(data=df.chk, pOA=c(0.01, 5), CV=c(0.2, 100), dir=NULL)
 #' # Filter toy data2.
-#' se.fil.chk <- filter_data(data=se.chk, sam.factor='organism_part', con.factor='age', pOA=c(0.01, 5), CV=c(0.2, 100), dir=NULL)
+#' se.fil.chk <- filter_data(data=se.chk, sam.factor='organism_part', con.factor='age', 
+#' pOA=c(0.01, 5), CV=c(0.2, 100), dir=NULL)
 
 #' @author Jianhai Zhang \email{jzhan067@@ucr.edu; zhang.jianhai@@hotmail.com} \cr Dr. Thomas Girke \email{thomas.girke@@ucr.edu}
 
 #' @references
 #' Gentleman, R, V Carey, W Huber, and F Hahne. 2018. "Genefilter: Methods for Filtering Genes from High-Throughput Experiments." http://bioconductor.uib.no/2.7/bioc/html/genefilter.html \cr Matt Dowle and Arun Srinivasan (2017). data.table: Extension of `data.frame`. R package version 1.10.4. https://CRAN.R-project.org/package=data.table \cr Martin Morgan, Valerie Obenchain, Jim Hester and Hervé Pagès (2018). SummarizedExperiment: SummarizedExperiment container. R package version 1.10.1 \cr R Core Team (2018). R: A language and environment for statistical computing. R Foundation for Statistical Computing, Vienna, Austria. URL https://www.R-project.org/
-#' Keays, Maria. 2019. ExpressionAtlas: Download Datasets from EMBL-EBI Expression Atlas
-#' Love, Michael I., Wolfgang Huber, and Simon Anders. 2014. "Moderated Estimation of Fold Change and Dispersion for RNA-Seq Data with DESeq2." Genome Biology 15 (12): 550. doi:10.1186/s13059-014-0550-8
-#' Cardoso-Moreira, Margarida, Jean Halbert, Delphine Valloton, Britta Velten, Chunyan Chen, Yi Shao, Angélica Liechti, et al. 2019. “Gene Expression Across Mammalian Organ Development.” Nature 571 (7766): 505–9
+#' \cr Keays, Maria. 2019. ExpressionAtlas: Download Datasets from EMBL-EBI Expression Atlas
+#' \cr Love, Michael I., Wolfgang Huber, and Simon Anders. 2014. "Moderated Estimation of Fold Change and Dispersion for RNA-Seq Data with DESeq2." Genome Biology 15 (12): 550. doi:10.1186/s13059-014-0550-8
+#' \cr Cardoso-Moreira, Margarida, Jean Halbert, Delphine Valloton, Britta Velten, Chunyan Chen, Yi Shao, Angélica Liechti, et al. 2019. “Gene Expression Across Mammalian Organ Development.” Nature 571 (7766): 505–9
 
 
 #' @export filter_data
@@ -73,36 +85,19 @@
 #' @importFrom genefilter filterfun pOverA cv genefilter
 #' @importFrom utils write.table
 
-filter_data <- function(data, pOA=c(0, 0), CV=c(-Inf, Inf), ann=NULL, sam.factor, con.factor,  dir=NULL) {
+filter_data <- function(data, pOA=c(0, 0), CV=c(-Inf, Inf), ann=NULL, sam.factor, con.factor, dir=NULL) {
 
   options(stringsAsFactors=FALSE)
-  if (is(data, 'data.frame')|is(data, 'matrix')|is(data, 'DFrame')) {
-
-    data <- as.data.frame(data); rna <- rownames(data); cna <- make.names(colnames(data))
-    if (!identical(cna, colnames(data))) cat('Syntactically valid column names are made! \n')
-    na <- vapply(seq_len(ncol(data)), function(i) { tryCatch({ as.numeric(data[, i]) }, warning=function(w) { return(rep(NA, nrow(data)))
-    }, error=function(e) { stop("Please make sure input data are numeric!") }) }, FUN.VALUE=numeric(nrow(data)) )
-    na <- as.data.frame(na); rownames(na) <- rna
-    idx <- colSums(apply(na, 2, is.na))!=0
-    row.meta <- data[idx]; expr <- na[!idx]; colnames(expr) <- cna[!idx]
-
-  } else if (is(data, 'SummarizedExperiment')) {
-
-    expr <- assay(data); col.meta <- as.data.frame(colData(data))
-    row.meta <- as.data.frame(rowData(data), stringsAsFactors=FALSE)[, , drop=FALSE]
-    # Factors teated by paste0/make.names are vectors.
-    if (!is.null(sam.factor) & !is.null(con.factor)) { cna <- paste0(col.meta[, sam.factor], '__', col.meta[, con.factor]) } else if (!is.null(sam.factor) & is.null(con.factor)) { cna <- as.vector(col.meta[, sam.factor]) } else if (is.null(sam.factor) & !is.null(con.factor)) { cna <- as.vector(col.meta[, con.factor]) } else cna <- colnames(expr)
-    colnames(expr) <- make.names(cna); if (!identical(cna, make.names(cna))) cat('Syntactically valid column names are made! \n')
-
-  }
-
+  # Process data.
+  dat.lis <- check_data(data=data, sam.factor=sam.factor, con.factor=con.factor, usage='filter')
+  expr <- dat.lis$dat; row.meta <- dat.lis$row.meta; col.meta <- dat.lis$col.meta
   ffun <- filterfun(pOverA(p=pOA[1], A=pOA[2]), cv(CV[1], CV[2]))
   filtered <- genefilter(expr, ffun); expr <- expr[filtered, , drop=FALSE] # Subset one row in a matrix, the result is a numeric vector not a matrix, so drop=FALSE.
   row.meta <- row.meta[filtered, , drop=FALSE]
-
   if (!is.null(dir)) { 
 
-    dir <- normalizePath(dir); if (!dir.exists(dir)) stop(paste0(dir, ' does not exist!'))
+    dir <- normalizePath(dir, winslash="/", mustWork=FALSE)
+    if (!dir.exists(dir)) stop(paste0(dir, ' does not exist!'))
     if (is(data, 'data.frame')|is(data, 'matrix')) {
 
       expr1 <- cbind.data.frame(expr, row.meta, stringsAsFactors=FALSE)

@@ -5,7 +5,7 @@ options(shiny.maxRequestSize=7*1024^3, stringsAsFactors=FALSE)
 
 # Import internal functions.
 sort_gen_con <- get('sort_gen_con', envir=asNamespace('spatialHeatmap'), inherits=FALSE)
-
+test_ffm <- get('test_ffm', envir=asNamespace('spatialHeatmap'), inherits=FALSE)
 matrix_hm <- get('matrix_hm', envir=asNamespace('spatialHeatmap'), inherits=FALSE)
 
 # Function to extract nearest genes.
@@ -189,7 +189,7 @@ na.cus <- c('customData', 'customComputedData')
 
     output$dld.cfg <- downloadHandler(
       filename=function(){ "config_par.yaml" },
-      content=function(file=paste0(tempdir(), '/config_par.yaml')){ 
+      content=function(file=paste0(normalizePath(tempdir(check=TRUE), winslash="/", mustWork=FALSE), '/config_par.yaml')){ 
  
         lis.cfg <- yaml.load_file('config/config.yaml')
         lis.par <- lis.cfg[c("default.dataset", "col.row.gene", "separator", "hide.legend", "data.matrix", "shm.img", "shm.anm", "shm.video", "legend", "mhm", "network")]
@@ -199,11 +199,11 @@ na.cus <- c('customData', 'customComputedData')
     )
     output$dld.sgl <- downloadHandler(
       filename=function(){ "single_aSVG_data.zip" },
-      content=function(file=paste0(tempdir(), '/single_aSVG_data.zip')){ zip(file, c(dld.exp$sgl$data, dld.exp$sgl$svg)) }
+      content=function(file=paste0(normalizePath(tempdir(check=TRUE), winslash="/", mustWork=FALSE), '/single_aSVG_data.zip')){ zip(file, c(dld.exp$sgl$data, dld.exp$sgl$svg)) }
     )
     output$dld.mul <- downloadHandler(   
       filename=function(){ "multiple_aSVG_data.zip" },
-      content=function(file=paste0(tempdir(), '/multiple_aSVG_data.zip')){ zip(file, c(dld.exp$mul$data, dld.exp$mul$svg)) }
+      content=function(file=paste0(normalizePath(tempdir(check=TRUE), winslash="/", mustWork=FALSE), '/multiple_aSVG_data.zip')){ zip(file, c(dld.exp$mul$data, dld.exp$mul$svg)) }
   )
   })
 
@@ -752,7 +752,7 @@ na.cus <- c('customData', 'customComputedData')
 
       gg.all <- gg_2lgd(gg.all=gg.all, sam.dat=sam(), tis.trans=input$tis, position.2nd='bottom', legend.nrow.2nd=input$val.lgd.row, legend.key.size.2nd=input$val.lgd.key, legend.text.size.2nd=input$val.lgd.text, add.feature.2nd=(input$val.lgd.feat=='Yes'))
       grob$all1 <- gg.all <- lapply(gg.all, function(x) { x+theme(legend.position="bottom") } )
-      tmp <- tempfile()
+      tmp <- normalizePath(tempfile(), winslash='/', mustWork=FALSE)
       png(tmp); grob$all1 <- lapply(gg.all, ggplotGrob)
       dev.off(); if (file.exists(tmp)) do.call(file.remove, list(tmp))
     
@@ -760,7 +760,7 @@ na.cus <- c('customData', 'customComputedData')
 
       cat('Remove value legend... \n')
       grob$gg.all1 <- gg.all <- lapply(gg.all, function(x) { x+theme(legend.position="none") })
-      tmp <- tempfile(); png(tmp); grob$all1 <- lapply(gg.all, ggplotGrob) 
+      tmp <- normalizePath(tempfile(), winslash='/', mustWork=FALSE); png(tmp); grob$all1 <- lapply(gg.all, ggplotGrob) 
       dev.off(); if (file.exists(tmp)) do.call(file.remove, list(tmp))
 
     }
@@ -813,8 +813,8 @@ na.cus <- c('customData', 'customComputedData')
     # In 'arrangeGrob', if numbers in 'layout_matrix' are more than items in 'grobs', there is no difference. The width/height of each subplot is decided by 'widths' and 'heights'.
     lgd.arr <- arrangeGrob(grobs=lgd.tr, layout_matrix=matrix(seq_along(lgd.lis), ncol=1), widths=unit(1, "npc"), heights=unit(rep(1/length(lgd.lis)/input$lgd.ratio, length(lgd.lis)), "npc"))
     w.lgd <- (1-0.08)/(ncol+1)*input$lgd.w # Legend is reduced.
-    png(paste0(tempdir(check=TRUE), '/tmp.png')); shm1 <- grid.arrange(cs.arr, shm, lgd.arr, ncol=3, widths=unit(c(0.08-0.005, 1-0.08-w.lgd, w.lgd), 'npc')); dev.off() } else { png(paste0(tempdir(check=TRUE), '/tmp.png')); shm1 <- grid.arrange(cs.arr, shm, ncol=2, widths=unit(c(0.08-0.005, 1-0.08), 'npc')); dev.off() }
-    ggsave(paste0(tempdir(check=TRUE), '/shm.', input$ext), plot=shm1, device=input$ext, width=input$width/72, height=input$height/72, dpi=input$res, unit='in') }
+    png(paste0(normalizePath(tempdir(check=TRUE), winslash="/", mustWork=FALSE), '/tmp.png')); shm1 <- grid.arrange(cs.arr, shm, lgd.arr, ncol=3, widths=unit(c(0.08-0.005, 1-0.08-w.lgd, w.lgd), 'npc')); dev.off() } else { png(paste0(normalizePath(tempdir(check=TRUE), winslash="/", mustWork=FALSE), '/tmp.png')); shm1 <- grid.arrange(cs.arr, shm, ncol=2, widths=unit(c(0.08-0.005, 1-0.08), 'npc')); dev.off() }
+    ggsave(paste0(normalizePath(tempdir(check=TRUE), winslash="/", mustWork=FALSE), '/shm.', input$ext), plot=shm1, device=input$ext, width=input$width/72, height=input$height/72, dpi=input$res, unit='in') }
     
     })
 
@@ -822,8 +822,8 @@ na.cus <- c('customData', 'customComputedData')
 
   output$dld.shm <- downloadHandler(
     filename=function() { paste0('shm.', input$ext) },
-    content=function(file) { file0 <- paste0(tempdir(check=TRUE), '/shm.', input$ext); 
-    cat("Downloading 'shm' from", tempdir(check=TRUE), '...\n')
+    content=function(file) { file0 <- paste0(normalizePath(tempdir(check=TRUE), winslash="/", mustWork=FALSE), '/shm.', input$ext); 
+    cat("Downloading 'shm' from", normalizePath(tempdir(check=TRUE), winslash="/", mustWork=FALSE), '...\n')
     file.copy(file0, file, overwrite=TRUE) }
   )
 
@@ -963,14 +963,25 @@ na.cus <- c('customData', 'customComputedData')
 
   })
 
-  observeEvent(list(fineIn=input$fileIn, log=input$log, tis=input$tis, col.but=input$col.but, cs.v=input$cs.v, pre.scale=input$pre.scale), {
-    if (dir.exists('www/ggly/')) { system('rm -fr www/ggly/lib'); system('rm -f www/ggly/*html') } else dir.create('www/ggly/')
-    if (dir.exists('html_shm/')) { system('rm -fr html_shm/lib'); system('rm -f html_shm/*html') } else dir.create('html_shm/')
-    if (dir.exists('www/video/')) system('rm -fr www/video/*.mp4') else dir.create('www/video/')
-  })
+  ggly_rm <- function() {
+    if (dir.exists('www/ggly/')) {
+      cat("Removing animation files in 'www/ggly/' ... \n")
+      unlink('www/ggly/lib', recursive=TRUE)
+      file.remove(list.files('www/ggly/', '*.html$', full.names=TRUE))
+    } else dir.create('www/ggly')
+  }
+  vdo_rm <- function() {
+    if (dir.exists('www/video/')) {
+      cat("Removing video file in 'www/video/' ... \n")
+      file.remove(list.files('www/video/', '*.mp4$', full.names=TRUE))
+    } else dir.create('www/video/')
+  }
+  observeEvent(list(fineIn=input$fileIn, log=input$log, tis=input$tis, col.but=input$col.but, cs.v=input$cs.v, pre.scale=input$pre.scale), { ggly_rm(); vdo_rm() })
 
   observeEvent(list(width.ly=input$width.ly, height.ly=input$height.ly), {
-    if (dir.exists('html_shm/')) { system('rm -fr html_shm/lib'); system('rm -f html_shm/*html') } else dir.create('html_shm/')
+    if (dir.exists('html_shm/')) { unlink('html_shm/lib', recursive=TRUE)
+      file.remove(list.files('html_shm/', '*.html$', full.names=TRUE))
+    } else dir.create('html_shm/')
   })
   observeEvent(list(log=input$log, tis=input$tis, col.but=input$col.but, cs.v=input$cs.v, pre.scale=input$pre.scale, ggly.but=input$ggly.but, gID.new=gID$new), {
 
@@ -992,10 +1003,10 @@ na.cus <- c('customData', 'customComputedData')
       gly$sizingPolicy$padding <- 0
       cat('Animation: saving', na0, '\n')
       saveWidget(gly, na0, selfcontained=FALSE, libdir="lib")
-      system(paste0('mv ', na0, ' www/ggly/'))
+      file.rename(na0, paste0('www/ggly/', na0))
 
-    }; if (!dir.exists('www/ggly/lib')) system('mv lib/ www/ggly/') else if (dir.exists('lib/')) system('rm -rf lib')
-
+    }
+    if (!dir.exists('www/ggly/lib')) file.rename('lib', 'www/ggly/lib') else if (dir.exists('lib/')) unlink('lib', recursive=TRUE)
     })
 
   })
@@ -1096,7 +1107,7 @@ na.cus <- c('customData', 'customComputedData')
   output$dld.anm <- downloadHandler( 
     # The rest code will run only after 'anm.dld()' is done.
     filename=function(){ anm.dld(); "html_shm.zip" },
-    fil.na <- paste0(tempdir(), '/html_shm.zip'),
+    fil.na <- paste0(normalizePath(tempdir(check=TRUE), winslash="/", mustWork=FALSE), '/html_shm.zip'),
     content=function(fil.na){ cat('Downloading animation... \n'); zip(fil.na, 'html_shm/') }
   )
 
@@ -1107,10 +1118,8 @@ na.cus <- c('customData', 'customComputedData')
   })
 
   output$ffm <- renderText({
-    
-    ffm <- tryCatch({ system('which ffmpeg', intern=TRUE) }, error=function(e){ return('error') }, warning=function(w) { return('warning') } )
-    if (!grepl('ffmpeg', ffm)) paste("<span style=\"color:red\">Error: \"ffmpeg\" is not detected!\"</span>")
-
+    ffm <- tryCatch({ test_ffm() }, error=function(e){ return('error') }, warning=function(w) { return('warning') } )
+    if (grepl('error|warning', ffm)) paste("<span style=\"color:red\">Error: \"ffmpeg\" is not detected!\"</span>")
   })
 
   observeEvent(list(log=input$log, tis=input$tis, col.but=input$col.but, cs.v=input$cs.v, pre.scale=input$pre.scale, vdo.but=input$vdo.but, vdo.dim=input$vdo.dim, vdo.itvl=input$vdo.itvl, vdo.height=input$vdo.height, vdo.width=input$vdo.width, vdo.res=input$vdo.res, vdo.val.lgd=input$'vdo.val.lgd'), {
@@ -1537,14 +1546,7 @@ na.cus <- c('customData', 'customComputedData')
 
   })
 
-  onStop(function() { 
-
-    if (dir.exists('www/ggly/')) {  cat("Removing animation files in 'www/ggly/' ... \n"); system('rm -fr www/ggly/lib/*'); system('rm -f www/ggly/*html') }
-    if (dir.exists('html_shm/lib')) {  cat("Removing animation files in 'html_shm/lib/' ... \n"); system('rm -fr html_shm/lib/*'); system('rm -f html_shm/*html') }
-    if (dir.exists('www/video/')) {  cat("Removing video file in 'www/video/' ... \n"); system('rm -fr www/video/.mp4*') }
-    cat("Session stopped\n")
-
-  })
+  onStop(function() { ggly_rm(); vdo_rm(); cat("Session stopped! \n") })
 
 })
 

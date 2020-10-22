@@ -84,8 +84,9 @@ svg_df <- function(svg.path, feature) {
   xml_set_attr(chdn.out, 'style', style); xml_set_attr(chdn.ply, 'style', style)  
   # xml_set_attr(out, 'style', style); xml_set_attr(ply, 'style', style)  
   # Export internal SVG.
-  tmp <- tempdir(check=TRUE); svg.inter <- paste0(tmp, '/internal.svg')
-  if (grepl("~", svg.inter)) svg.inter <- normalizePath(svg.inter)
+  tmp <- normalizePath(tempdir(check=TRUE), winslash="/", mustWork=FALSE);
+  svg.inter <- paste0(tmp, '/internal.svg')
+  if (grepl("~", svg.inter)) svg.inter <- normalizePath(svg.inter, winslash="/", mustWork=FALSE)
   write_xml(doc, file=svg.inter)
   
   # SVG file conversion. 

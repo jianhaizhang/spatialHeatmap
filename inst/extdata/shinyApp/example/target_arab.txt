@@ -1,4 +1,4 @@
-"col.name"	"samples"	"conditions"
+"col.name"	"sample"	"condition"
 "root_control_total_rep1"	"GSM362168"	"root_total"	"control"
 "root_control_total_rep2"	"GSM362169"	"root_total"	"control"
 "root_control_total_rep3"	"GSM362170"	"root_total"	"control"
