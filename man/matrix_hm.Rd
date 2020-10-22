@@ -63,13 +63,20 @@ A static image or an interactive instance lauched on the web browser.
 This function visualizes the input assayed items (gene, protein, metabolite, \emph{etc}) in context of their nearest neighbors, which are subsetted by \code{submatrix}. The visualization is in form of  static or interactive matrix heatmap, where rows and columns are sorted by hierarchical clustering dendrograms and the row of target items are tagged by two lines. In the interactive heatmap, users can zoom in and out by drawing a rectangle and by double clicking the image, respectively.
 }
 \examples{
-## In the following examples, the 2 toy data come from an RNA-seq analysis on development of 7 chicken organs under 9 time points (Cardoso-Moreira et al. 2019). For conveninece, they are included in this package. The complete raw count data are downloaded using the R package ExpressionAtlas (Keays 2019) with the accession number "E-MTAB-6769". Toy data1 is used as a "data frame" input to exemplify data of simple samples/conditions, while toy data2 as "SummarizedExperiment" to illustrate data involving complex samples/conditions.   
+## In the following examples, the 2 toy data come from an RNA-seq analysis on development of 7
+## chicken organs under 9 time points (Cardoso-Moreira et al. 2019). For conveninece, they are
+## included in this package. The complete raw count data are downloaded using the R package
+## ExpressionAtlas (Keays 2019) with the accession number "E-MTAB-6769". Toy data1 is used as
+## a "data frame" input to exemplify data of simple samples/conditions, while toy data2 as
+## "SummarizedExperiment" to illustrate data involving complex samples/conditions.   
 ## Set up toy data.
 
 # Access toy data1.
-cnt.chk.simple <- system.file('extdata/shinyApp/example/count_chicken_simple.txt', package='spatialHeatmap')
+cnt.chk.simple <- system.file('extdata/shinyApp/example/count_chicken_simple.txt', 
+package='spatialHeatmap')
 df.chk <- read.table(cnt.chk.simple, header=TRUE, row.names=1, sep='\t', check.names=FALSE)
-# Columns follow the namig scheme "sample__condition", where "sample" and "condition" stands for organs and time points respectively.
+# Columns follow the namig scheme "sample__condition", where "sample" and "condition" stands
+# for organs and time points respectively.
 df.chk[1:3, ]
 
 # A column of gene annotation can be appended to the data frame, but is not required.  
@@ -82,7 +89,10 @@ cnt.chk <- system.file('extdata/shinyApp/example/count_chicken.txt', package='sp
 count.chk <- read.table(cnt.chk, header=TRUE, row.names=1, sep='\t')
 count.chk[1:3, 1:5]
 
-# A targets file describing samples and conditions is required for toy data2. It should be made based on the experiment design, which is accessible through the accession number "E-MTAB-6769" in the R package ExpressionAtlas. An example targets file is included in this package and accessed below. 
+# A targets file describing samples and conditions is required for toy data2. It should be 
+# made based on the experiment design, which is accessible through the accession number
+# "E-MTAB-6769" in the R package ExpressionAtlas. An example targets file is included in
+# this package and accessed below. 
 # Access the example targets file. 
 tar.chk <- system.file('extdata/shinyApp/example/target_chicken.txt', package='spatialHeatmap')
 target.chk <- read.table(tar.chk, header=TRUE, row.names=1, sep='\t')
@@ -94,53 +104,69 @@ se.chk <- SummarizedExperiment(assay=count.chk, colData=target.chk)
 # The "rowData" slot can store a data frame of gene annotation, but not required.
 rowData(se.chk) <- DataFrame(ann=ann)
 
-## As conventions, raw sequencing count data should be normalized, aggregated, and filtered to reduce noise.
+## As conventions, raw sequencing count data should be normalized, aggregated, and filtered
+## to reduce noise.
 
 # Normalize count data.
-# The normalizing function "calcNormFactors" (McCarthy et al. 2012) with default settings is used.  
+# The normalizing function "calcNormFactors" (McCarthy et al. 2012) with default settings
+# is used.  
 df.nor.chk <- norm_data(data=df.chk, norm.fun='CNF', data.trans='log2')
 se.nor.chk <- norm_data(data=se.chk, norm.fun='CNF', data.trans='log2')
 # Aggregate count data.
 # Aggregate "sample__condition" replicates in toy data1.
 df.aggr.chk <- aggr_rep(data=df.nor.chk, aggr='mean')
 df.aggr.chk[1:3, ]
-# Aggregate "sample_condition" replicates in toy data2, where "sample" is "organism_part" and "condition" is "age". 
-se.aggr.chk <- aggr_rep(data=se.nor.chk, sam.factor='organism_part', con.factor='age', aggr='mean')
+# Aggregate "sample_condition" replicates in toy data2, where "sample" is "organism_part"
+# and "condition" is "age". 
+se.aggr.chk <- aggr_rep(data=se.nor.chk, sam.factor='organism_part', con.factor='age',
+aggr='mean')
 assay(se.aggr.chk)[1:3, 1:3]
-# Filter out genes with low counts and low variance. Genes with counts over 5 (log2 unit) in at least 1\% samples (pOA), and coefficient of variance (CV) between 0.2 and 100 are retained.
+# Filter out genes with low counts and low variance. Genes with counts over 5 (log2 unit) in
+# at least 1\% samples (pOA), and coefficient of variance (CV) between 0.2 and 100 are retained.
 # Filter toy data1.
 df.fil.chk <- filter_data(data=df.aggr.chk, pOA=c(0.01, 5), CV=c(0.2, 100), dir=NULL)
 # Filter toy data2.
-se.fil.chk <- filter_data(data=se.aggr.chk, sam.factor='organism_part', con.factor='age', pOA=c(0.01, 5), CV=c(0.2, 100), dir=NULL)
+se.fil.chk <- filter_data(data=se.aggr.chk, sam.factor='organism_part', con.factor='age',
+pOA=c(0.01, 5), CV=c(0.2, 100), dir=NULL)
 
-## Select nearest neighbors for target genes 'ENSGALG00000019846' and 'ENSGALG00000000112', which are usually genes visualized in spatial heatmaps.
+## Select nearest neighbors for target genes 'ENSGALG00000019846' and 'ENSGALG00000000112',
+## which are usually genes visualized in spatial heatmaps.
 # Toy data1.
 df.sub.mat <- submatrix(data=df.fil.chk, ID=c('ENSGALG00000019846', 'ENSGALG00000000112'), p=0.1)
 # Toy data2.
-se.sub.mat <- submatrix(data=se.fil.chk, ann='ann', ID=c('ENSGALG00000019846', 'ENSGALG00000000112'), p=0.1) 
+se.sub.mat <- submatrix(data=se.fil.chk, ann='ann', ID=c('ENSGALG00000019846', 
+'ENSGALG00000000112'), p=0.1) 
 
-# In the following, "df.sub.mat" and "se.sub.mat" is used in the same way, so only "se.sub.mat" illustrated.
+# In the following, "df.sub.mat" and "se.sub.mat" is used in the same way, so only 
+# "se.sub.mat" illustrated.
 
 # The subsetted matrix is partially shown below.
 se.sub.mat[c('ENSGALG00000019846', 'ENSGALG00000000112'), c(1:2, 63)]
 
 ## Matrix heatmap.
 # Static matrix heatmap.
-matrix_hm(ID=c('ENSGALG00000019846', 'ENSGALG00000000112'), data=se.sub.mat, angleCol=80, angleRow=35, cexRow=0.8, cexCol=0.8, margin=c(8, 10), static=TRUE, arg.lis1=list(offsetRow=0.01, offsetCol=0.01))
+matrix_hm(ID=c('ENSGALG00000019846', 'ENSGALG00000000112'), data=se.sub.mat, angleCol=80,
+angleRow=35, cexRow=0.8, cexCol=0.8, margin=c(8, 10), static=TRUE, 
+arg.lis1=list(offsetRow=0.01, offsetCol=0.01))
 # Interactive matrix heatmap.
-\donttest{ matrix_hm(ID=c('ENSGALG00000019846', 'ENSGALG00000000112'), data=se.sub.mat, angleCol=80, angleRow=35, cexRow=0.8, cexCol=0.8, margin=c(8, 10), static=FALSE, arg.lis1=list(offsetRow=0.01, offsetCol=0.01)) }
-# In case the interactive heatmap is not automatically opened, run the following code snippet. It saves the heatmap as an HTML file according to the value assigned to the "file" argument.
+\donttest{ matrix_hm(ID=c('ENSGALG00000019846', 'ENSGALG00000000112'), data=se.sub.mat, 
+angleCol=80, angleRow=35, cexRow=0.8, cexCol=0.8, margin=c(8, 10), static=FALSE, 
+arg.lis1=list(offsetRow=0.01, offsetCol=0.01)) }
+# In case the interactive heatmap is not automatically opened, run the following code snippet.
+# It saves the heatmap as an HTML file according to the value assigned to the "file" argument.
 \donttest{
-mhm <- matrix_hm(ID=c('ENSGALG00000019846', 'ENSGALG00000000112'), data=se.sub.mat, angleCol=80, angleRow=35, cexRow=0.8, cexCol=0.8, margin=c(8, 10), static=FALSE, arg.lis1=list(offsetRow=0.01, offsetCol=0.01))
+mhm <- matrix_hm(ID=c('ENSGALG00000019846', 'ENSGALG00000000112'), data=se.sub.mat, 
+angleCol=80, angleRow=35, cexRow=0.8, cexCol=0.8, margin=c(8, 10), static=FALSE, 
+arg.lis1=list(offsetRow=0.01, offsetCol=0.01))
 htmlwidgets::saveWidget(widget=mhm, file='mhm.html', selfcontained=FALSE)
 browseURL('mhm.html')
 }
 }
 \references{
 Martin Morgan, Valerie Obenchain, Jim Hester and Hervé Pagès (2018). SummarizedExperiment: SummarizedExperiment container. R package version 1.10.1 \cr Andrie de Vries and Brian D. Ripley (2016). ggdendro: Create Dendrograms and Tree Diagrams Using 'ggplot2'. R package version 0.1-20. https://CRAN.R-project.org/package=ggdendro \cr H. Wickham. ggplot2: Elegant Graphics for Data Analysis. Springer-Verlag New York, 2016. \cr Carson Sievert (2018) plotly for R. https://plotly-book.cpsievert.me \cr Langfelder P and Horvath S, WGCNA: an R package for weighted correlation network analysis. BMC Bioinformatics 2008, 9:559 doi:10.1186/1471-2105-9-559 \cr R Core Team (2018). R: A language and environment for statistical computing. R Foundation for Statistical Computing, Vienna, Austria. URL https://www.R-project.org/ \cr Gregory R. Warnes, Ben Bolker, Lodewijk Bonebakker, Robert Gentleman, Wolfgang Huber Andy Liaw, Thomas Lumley, Martin Maechler, Arni Magnusson, Steffen Moeller, Marc Schwartz and Bill Venables (2019). gplots: Various R Programming Tools for Plotting Data. R package version 3.0.1.1.  https://CRAN.R-project.org/package=gplots \cr Hadley Wickham (2007). Reshaping Data with the reshape Package. Journal of Statistical Software, 21(12), 1-20. URL http://www.jstatsoft.org/v21/i12/ 
-Keays, Maria. 2019. ExpressionAtlas: Download Datasets from EMBL-EBI Expression Atlas
-Love, Michael I., Wolfgang Huber, and Simon Anders. 2014. "Moderated Estimation of Fold Change and Dispersion for RNA-Seq Data with DESeq2." Genome Biology 15 (12): 550. doi:10.1186/s13059-014-0550-8
-Cardoso-Moreira, Margarida, Jean Halbert, Delphine Valloton, Britta Velten, Chunyan Chen, Yi Shao, Angélica Liechti, et al. 2019. “Gene Expression Across Mammalian Organ Development.” Nature 571 (7766): 505–9
+\cr Keays, Maria. 2019. ExpressionAtlas: Download Datasets from EMBL-EBI Expression Atlas
+\cr Love, Michael I., Wolfgang Huber, and Simon Anders. 2014. "Moderated Estimation of Fold Change and Dispersion for RNA-Seq Data with DESeq2." Genome Biology 15 (12): 550. doi:10.1186/s13059-014-0550-8
+\cr Cardoso-Moreira, Margarida, Jean Halbert, Delphine Valloton, Britta Velten, Chunyan Chen, Yi Shao, Angélica Liechti, et al. 2019. “Gene Expression Across Mammalian Organ Development.” Nature 571 (7766): 505–9
 }
 \author{
 Jianhai Zhang \email{jzhan067@ucr.edu; zhang.jianhai@hotmail.com} \cr Dr. Thomas Girke \email{thomas.girke@ucr.edu}

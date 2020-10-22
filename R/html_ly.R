@@ -4,10 +4,11 @@
 #' @param cs.g The color key of ggplot.
 #' @param sam.uni A vector of unique samples extracted from data matrix.
 #' @inheritParams htmlwidgets::saveWidget
-#' @inheritParams grob_list
 #' @inheritParams spatial_hm
+#' @param tis.trans A character vector of tissue/spatial feature identifiers that will be set transparent. \emph{E.g} c("brain", "heart"). This argument is used when target features are covered by  overlapping features and the latter should be transparent.
 #' @return HTML files of spatial heatmaps are saved in 'animaiton_shm'.
 #' @keywords Internal
+#' @noRd
 
 #' @author Jianhai Zhang \email{jzhan067@@ucr.edu; zhang.jianhai@@hotmail.com} \cr Dr. Thomas Girke \email{thomas.girke@@ucr.edu}
 
@@ -24,8 +25,8 @@ html_ly <- function(gg, cs.g, tis.trans, sam.uni, anm.width, anm.height, selfcon
   gg.na <- names(gg); cs.lis <- gg2list(cs.g, tooltip='color_scale')
   cs.lis$layout$title$text <- NULL 
   csly <- as_widget(cs.lis, tooltip='color_scale') 
-  dir <- paste0(normalizePath(out.dir), '/html_shm')
-  if (!dir.exists(dir)) dir.create(dir)
+  dir <- paste0(normalizePath(out.dir, winslash="/", mustWork=FALSE), '/html_shm')
+  if (!dir.exists(dir)) dir.create(dir, recursive=TRUE)
   rd1 <- '1. Double click the "html" files to display the interactive spatial heatmaps in a web browser.'
   rd2 <- '2. All files in the "lib" folder are required to display the spatial heatmaps, so the "html" files cannot work independently.'
   writeLines(text=c(rd1, rd2), con=paste0(dir, '/README.txt'))
@@ -51,11 +52,14 @@ html_ly <- function(gg, cs.g, tis.trans, sam.uni, anm.width, anm.height, selfcon
     }; ggly <- as_widget(g2l)
     subly <- subplot(csly, ggly, nrows=1, shareX=FALSE, shareY=FALSE, margin=0, widths=c(0.05, 0.95))
     subly$width <- anm.width; subly$height <- anm.height
-    saveWidget(subly, na.hl, selfcontained=selfcontained, libdir="lib") 
-    system(paste0('mv ', na.hl, ' ', dir))
+    saveWidget(subly, na.hl, selfcontained=selfcontained, libdir="lib")
+    file.rename(na.hl, paste0(dir, '/', na.hl)) 
 
-  }; system(paste0('rm -fr ', dir, '/lib')) # Use '-fr' to avoid errors if no target directory.
-  if (dir.exists('lib')) system(paste0('mv lib ', dir))
+  }; unlink(paste0(dir, '/lib'), recursive=TRUE) 
+  if (dir.exists('lib')) { lib1 <- paste0(dir, '/lib')
+   if (dir.exists(lib1)) unlink(lib1, recursive=TRUE)
+   file.rename('lib', lib1) 
+  }
 
 }
 
