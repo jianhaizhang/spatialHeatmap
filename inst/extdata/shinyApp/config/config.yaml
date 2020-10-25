@@ -83,6 +83,8 @@ shm.img:
 - value.legend.key:0.03
 - value.legend.text:10
 - include.feature:No
+- line.color:grey70
+- line.size:0.2
 shm.anm:
 - show:No
 - transition:2

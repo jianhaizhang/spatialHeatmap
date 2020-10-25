@@ -592,12 +592,11 @@ na.cus <- c('customData', 'customComputedData')
         tis.path <- svg.df[["tis.path"]]; fil.cols <- svg.df[['fil.cols']]
         if (input$pre.scale=='Yes') mar <- (1-w.h/w.h.max*0.99)/2 else mar <- NULL
         cat('New grob/ggplot:', ID, ' \n')
-        grob.lis <- grob_list(gene=gene, con.na=geneIn0()[['con.na']], geneV=geneV(), coord=g.df, ID=ID, legend.col=fil.cols, cols=color$col, tis.path=tis.path, tis.trans=input$tis, sub.title.size=18, mar.lb=mar, legend.nrow=2, legend.key.size=0.04) # Only gID$new is used.
+        grob.lis <- grob_list(gene=gene, con.na=geneIn0()[['con.na']], geneV=geneV(), coord=g.df, ID=ID, legend.col=fil.cols, cols=color$col, tis.path=tis.path, tis.trans=input$tis, sub.title.size=18, mar.lb=mar, legend.nrow=2, legend.key.size=0.04, line.size=input$line.size, line.color=input$line.color) # Only gID$new is used.
         validate(need(!is.null(grob.lis), paste0(svg.na[i], ': no spatial features that have matching sample identifiers in data are detected!')))
         grob.lis.all <- c(grob.lis.all, list(grob.lis))
 
-      }; names(grob.lis.all) <- svg.na
-      return(grob.lis.all)
+      }; names(grob.lis.all) <- svg.na; return(grob.lis.all)
 
     })
 
@@ -608,7 +607,7 @@ na.cus <- c('customData', 'customComputedData')
   # Use "observeEvent" to replace "observe" and list events (input$log, input$tis, ...), since if the events are in "observe", every time a new gene is clicked, "input$dt_rows_selected" causes the evaluation of all code in "observe", and the evaluation is duplicated with "gs.new".
   col.reorder <- reactiveValues(col.re='Y')
   observeEvent(input$col.na, { if (input$col.cfm>0) col.reorder$col.re <- 'N' })
-  observeEvent(list(input$log, input$tis, input$col.but, input$cs.v, input$pre.scale, input$col.cfm, input$scale), {
+  observeEvent(list(input$log, input$tis, input$col.but, input$cs.v, input$pre.scale, input$col.cfm, input$scale, input$line.size, input$line.color), {
     
     grob$all <- grob$gg.all <- grob$lgd.all <- NULL; gs.all <- reactive({ 
 
@@ -632,12 +631,11 @@ na.cus <- c('customData', 'customComputedData')
         cat('All grob/ggplot:', gID$geneID, ' \n')
         svg.na <- names(svg.df.lis)
         incProgress(0.75, detail=paste0('preparing ', paste0(gID$geneID, collapse=';')))
-        grob.lis <- grob_list(gene=gene, con.na=geneIn0()[['con.na']], geneV=geneV(), coord=g.df, ID=gID$geneID, legend.col=fil.cols, cols=color$col, tis.path=tis.path, tis.trans=input$tis, sub.title.size=18, mar.lb=mar, legend.nrow=2, legend.key.size=0.04) # All gene IDs are used.
+        grob.lis <- grob_list(gene=gene, con.na=geneIn0()[['con.na']], geneV=geneV(), coord=g.df, ID=gID$geneID, legend.col=fil.cols, cols=color$col, tis.path=tis.path, tis.trans=input$tis, sub.title.size=18, mar.lb=mar, legend.nrow=2, legend.key.size=0.04, line.size=input$line.size, line.color=input$line.color) # All gene IDs are used.
         validate(need(!is.null(grob.lis), paste0(svg.na[i], ': no spatial features that have matching sample identifiers in data are detected!')))
         grob.lis.all <- c(grob.lis.all, list(grob.lis))
 
-      }; names(grob.lis.all) <- svg.na
-      return(grob.lis.all)
+      }; names(grob.lis.all) <- svg.na; return(grob.lis.all)
 
       })
 
@@ -671,12 +669,11 @@ na.cus <- c('customData', 'customComputedData')
         cat('All grob/ggplot of row selection:', ID, ' \n')
         svg.na <- names(svg.df.lis)
         incProgress(0.75, detail=paste0('preparing ', paste0(ID, collapse=';')))
-        grob.lis <- grob_list(gene=gene, con.na=geneIn0()[['con.na']], geneV=geneV(), coord=g.df, ID=ID, legend.col=fil.cols, cols=color$col, tis.path=tis.path, tis.trans=input$tis, sub.title.size=18, mar.lb=mar, legend.nrow=2, legend.key.size=0.04) # All gene IDs are used.
+        grob.lis <- grob_list(gene=gene, con.na=geneIn0()[['con.na']], geneV=geneV(), coord=g.df, ID=ID, legend.col=fil.cols, cols=color$col, tis.path=tis.path, tis.trans=input$tis, sub.title.size=18, mar.lb=mar, legend.nrow=2, legend.key.size=0.04, line.size=input$line.size, line.color=input$line.color) # All gene IDs are used.
         validate(need(!is.null(grob.lis), paste0(svg.na[i], ': no spatial features that have matching sample identifiers in data are detected!')))
         grob.lis.all <- c(grob.lis.all, list(grob.lis))
 
-      }; names(grob.lis.all) <- svg.na
-      return(grob.lis.all)
+      }; names(grob.lis.all) <- svg.na; return(grob.lis.all)
 
       })
 
@@ -885,7 +882,7 @@ na.cus <- c('customData', 'customComputedData')
 
       fluidRow(splitLayout(cellWidths=c('100%'),  checkboxGroupInput(inputId="tis", label="Select tissues to be transparent:", choices='', selected='', inline=TRUE))),
 
-      fluidRow(column(1, offset=0, style='padding-left:0px; padding-right:0px; padding-top:0px; padding-bottom:5px',
+      fluidRow(column(1, offset=0, style='padding-left:0px; padding-right:50px; padding-top:0px; padding-bottom:5px',
       dropdownButton(inputId='dropdown', label='Download', circle=FALSE, icon=NULL, status='primary', inline=FALSE, width=800,
       fluidRow(splitLayout(cellWidths=c('27%', '1%', '14%', '1%', '11%', '1%', '17%', '1%', '14%'), 
       radioButtons(inputId='ext', label='File type:', choices=c('NA', "png", "jpg", "pdf"), selected=cfg$lis.par$shm.img['file.type', 'default'], inline=TRUE), '',
@@ -894,7 +891,7 @@ na.cus <- c('customData', 'customComputedData')
       numericInput(inputId='lgd.ratio', label='Legend aspect ratio:', value=as.numeric(cfg$lis.par$shm.img['legend.aspect.ratio', 'default']), min=0.0001, max=Inf, step=0.1, width=140), '', downloadButton("dld.shm", "Download")
       )))
       ),  
-      column(1, offset=0, style='padding-left:40px; padding-right:0px; padding-top:0px; padding-bottom:5px',
+      column(1, offset=0, style='padding-left:50px; padding-right:80px; padding-top:0px; padding-bottom:5px',
       dropdownButton(inputId='value.lgd', label='Value legend', circle=FALSE, icon=NULL, status='primary', inline=FALSE, width=500,
       fluidRow(splitLayout(cellWidths=c('1%', '25%', '1%', '13%', '1%', '17%', '1%', '14%', '1%', '28%'), '', 
       actionButton("val.lgd", "Add/Remove", icon=icon("refresh")), '',  
@@ -902,8 +899,12 @@ na.cus <- c('customData', 'customComputedData')
       numericInput(inputId='val.lgd.key', label='Key size:', value=as.numeric(cfg$lis.par$shm.img['value.legend.key', 'default']), min=0.0001, max=1, step=0.01, width=150), '',
       numericInput(inputId='val.lgd.text', label='Text size:', value=as.numeric(cfg$lis.par$shm.img['value.legend.text', 'default']), min=0.0001, max=Inf, step=1, width=140), '',
       radioButtons(inputId='val.lgd.feat', label='Include feature:', choices=c('No', 'Yes'), selected=cfg$lis.par$shm.img['include.feature', 'default'], inline=TRUE)
-
       ))
+      )),
+      column(1, offset=0, style='padding-left:40px; padding-right:50px; padding-top:0px; padding-bottom:5px',
+      dropdownButton(inputId='line', label='Shape outline', circle=FALSE, icon=NULL, status='primary', inline=FALSE, width=250,
+      selectInput('line.color', label='Line color:', choices=c('grey70', 'black', 'red', 'green', 'blue'), selected=cfg$lis.par$shm.img['line.color', 'default']),
+      numericInput(inputId='line.size', label='Line size:', value=as.numeric(cfg$lis.par$shm.img['line.size', 'default']), min=0.05, max=Inf, step=0.05, width=150)
       ))
       ),
       fluidRow(splitLayout(cellWidths=c("1%", "7%", "91%", "1%"), "", plotOutput("bar1"), plotOutput("shm", height='auto'), "")))
@@ -916,7 +917,7 @@ na.cus <- c('customData', 'customComputedData')
  
     if (is.null(svg.path())) return(NULL)
     if (length(svg.path()$svg.na)==1) return(NULL)
-    selectInput('shms.in', label='aSVG for legend:', choices=as.list(svg.path()[['svg.na']], selected=svg.path()[['svg.na']][1]))
+    selectInput('shms.in', label='aSVG for legend:', choices=svg.path()[['svg.na']], selected=svg.path()[['svg.na']][1])
 
   })
 

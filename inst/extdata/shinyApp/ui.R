@@ -41,7 +41,7 @@ shinyUI(dashboardPage(
       tabItem(tabName="hm_net", 
 
       box(title="Data Matrix", status="primary", solidHeader=TRUE, collapsible=TRUE, height=NULL, width=12,
-      fluidRow(column(1, offset=0, style='padding-left:10px; padding-right:0px; padding-top:0px; padding-bottom:5px',
+      fluidRow(column(1, offset=0, style='padding-left:10px; padding-right:10px; padding-top:0px; padding-bottom:5px',
       dropdownButton(inputId='drdn.fil', label='Filter', circle=FALSE, icon=NULL, status='primary',
       fluidRow(splitLayout(cellWidths=c('1%', '15%', '1%', '30%', '1%', '25%', '1%', '25%', '12%', '10%'), '',
       numericInput(inputId="A", label="Value (A) to exceed:", value=0), '',
@@ -51,13 +51,13 @@ shinyUI(dashboardPage(
       actionButton(inputId='fil.but', label="Submit"), verbatimTextOutput("fil.par")
       ))
       )),
-      column(1, offset=0, style='padding-left:0px; padding-right:0px; padding-top:0px; padding-bottom:5px',
+      column(1, offset=0, style='padding-left:10px; padding-right:10px; padding-top:0px; padding-bottom:5px',
       dropdownButton(inputId='drdn.scale', label='Transform', circle=FALSE, icon=NULL, status='primary', width=400,
       fluidRow(splitLayout(cellWidths=c('1%', '40%', '1%', '50%'), '',
       radioButtons(inputId='log', label='Log/exp:', choices=c("No", "log2", "exp2"), selected='No', inline=TRUE), '',
       radioButtons(inputId='scale', label='Scale by:', choices=c('No', 'Row', 'Column'), selected='No', inline=TRUE)
       )))),
-      column(10, uiOutput('col.order'))
+      column(10, offset=0, style='padding-left:40px; padding-right:10px; padding-top:0px; padding-bottom:5px', uiOutput('col.order'))
       ),
       fluidRow(splitLayout(cellWidths=c("1%", "43%", "10%"), '', textInput(inputId='search', label='Search:', value='', placeholder='Muliple IDs must only be separated by space or comma.', width='100%'), actionButton('search.but', 'Submit'))),
       fluidRow(splitLayout(cellWidths=c("1%", "98%", "1%"), "", dataTableOutput("dt"), ""))
