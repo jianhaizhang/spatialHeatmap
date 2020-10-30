@@ -2,8 +2,14 @@
 test_filter_data <- function() {
 # The example data (E-GEOD-67196) is an RNA-seq data measured in cerebellum and frontal cortex of human brain across normal and amyotrophic lateral sclerosis (ALS) subjects (Prudencio et al. 2015). 
 library(ExpressionAtlas); library(SummarizedExperiment) 
-rse.hum <- getAtlasData('E-GEOD-67196')[[1]][[1]]; assay(rse.hum)[1:3, 1:3]
 
+cache.pa <- '~/.cache/shm' # The path of cache.
+rse.hum <- read_cache(cache.pa, 'rse.hum') # Read data from cache.
+if (is.null(rse.hum)) { # Save downloaded data to cache if it is not cached.
+  rse.hum <- getAtlasData('E-GEOD-67196')[[1]][[1]]
+  save_cache(dir=cache.pa, overwrite=TRUE, rse.hum)
+}
+assay(rse.hum)[1:3, 1:3]
 # A targets file describing replicates of samples and conditions is required, which is made based on the "colData" slot in the downloaded "RangedSummarizedExperiment" and available in spatialHeatmap. See the "se" parameter for details. 
 tar.hum <- system.file('extdata/shinyApp/example/target_human.txt', package='spatialHeatmap')
 target.hum <- read.table(tar.hum, header=TRUE, row.names=1, sep='\t')

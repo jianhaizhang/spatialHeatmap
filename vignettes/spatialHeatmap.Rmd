@@ -81,7 +81,7 @@ functionalities of the `spatialHeatmap` package are illustrated in Figure
 \@ref(fig:illus).   
 
 
-```{r illus, echo=FALSE, fig.wide=TRUE, out.width="100%", fig.cap=("Overview of spatialHeatmap. (A) The _saptialHeatmap_ package plots numeric assay data onto spatially annotated images. A wide range of omics technologies is supported including genomic, transcriptomic, proteomic and metabolomic profiling data. The assay data can be provided as numeric vectors, tabular data, or _SummarizedExperiment_ objects. The latter is a widely used data container for organizing both assay data as well as associated annotation and experimental design data. (B) Anatomical and other spatial images need to be provided as annotated SVG (aSVG) files where the spatial features and the corresponding data components of the assay data have matching labels (_e.g._ tissue labels). (C) The assay data are used to color the matching spatial features in one or more aSVG images according to a color key. The result is called a spatial heatmap (SHM) plot. Multiple measurements can be visualized in the same plot, such as several factors (_e.g._ genes, proteins, metabolites), treatment conditions, growth stages and more. (D) Data mining graphics, such as matrix heatmaps and network graphs, are integrated to facilitate the identification of factors with similar assay profiles. The functionalities of _spatialHeatmap_ can be accessed from local computers via the R console or a graphical user interface based on Shiny. In addtion, the latter can be deployed as a web service on custom servers or cloud-based systems.")}
+```{r illus, echo=FALSE, fig.wide=TRUE, out.width="100%", fig.cap=("Overview of spatialHeatmap. (A) The _saptialHeatmap_ package plots numeric assay data onto spatially annotated images. A wide range of omics technologies is supported including genomic, transcriptomic, proteomic and metabolomic profiling data. The assay data can be provided as numeric vectors, tabular data, or _SummarizedExperiment_ objects. The latter is a widely used data container for organizing both assay data as well as associated annotation and experimental design data. (B) Anatomical and other spatial images need to be provided as annotated SVG (aSVG) files where the spatial features and the corresponding data components of the assay data have matching labels (_e.g._ tissue labels). (C) The assay data are used to color the matching spatial features in one or more aSVG images according to a color key. The result is called a spatial heatmap (SHM) plot. Multiple measurements can be visualized in the same plot, such as several factors (_e.g._ genes, proteins, metabolites), treatment conditions, growth stages and more. (D) Data mining graphics, such as matrix heatmaps and network graphs, are integrated to facilitate the identification of factors with similar assay profiles. The functionalities of _spatialHeatmap_ can be accessed from local computers via the R console or a graphical user interface based on Shiny. In addition, the latter can be deployed as a web service on custom servers or cloud-based systems.")}
 
 include_graphics('img/spatialHeatmap_Design.jpg')
 
@@ -351,10 +351,17 @@ the `ExpressionAtlas` package are used [@ebi].
 
 The following example searches the Expression Atlas for expression data derived from
 specific tissues and species of interest, here _'cerebellum'_ and _'Homo sapiens'_,
-respectively.
+respectively.  
+
+To avoid repetitive downloading, the downloaded data sets are cached in `~/.cache/shm` in all the following examples.  
 
 ```{r eval=TRUE, echo=TRUE, message=FALSE, warnings=FALSE }
-all.hum <- searchAtlasExperiments(properties="cerebellum", species="Homo sapiens")
+cache.pa <- '~/.cache/shm' # The path of cache.
+all.hum <- read_cache(cache.pa, 'all.hum') # Retrieve data from cache.
+if (is.null(all.hum)) { # Save downloaded data to cache if it is not cached.
+  all.hum <- searchAtlasExperiments(properties="cerebellum", species="Homo sapiens")
+  save_cache(dir=cache.pa, overwrite=TRUE, all.hum)
+}
 ```
 
 The search result is stored in a `DFrame` containing `r nrow(all.hum)`
@@ -374,9 +381,12 @@ The `getAtlasData` function allows to download the chosen RNA-Seq experiment
 from the Expression Atlas and import it into a `RangedSummarizedExperiment`
 object of a user\'s R session.   
 
-
 ```{r eval=TRUE, echo=TRUE, warnings=FALSE }
-rse.hum <- getAtlasData('E-GEOD-67196')[[1]][[1]]
+rse.hum <- read_cache(cache.pa, 'rse.hum') # Read data from cache.
+if (is.null(rse.hum)) { # Save downloaded data to cache if it is not cached.
+  rse.hum <- getAtlasData('E-GEOD-67196')[[1]][[1]]
+  save_cache(dir=cache.pa, overwrite=TRUE, rse.hum)
+}
 ```
 
 The design of the downloaded RNA-Seq experiment is described in the `colData` slot of 
@@ -643,14 +653,22 @@ mammalian species [@Merkin2012-ak]. The following searches the Expression
 Atlas for expression data from _'heart'_ and _'Mus musculus'_.
 
 ```{r eval=TRUE, echo=TRUE, warnings=FALSE }
-all.mus <- searchAtlasExperiments(properties="heart", species="Mus musculus")
+all.mus <- read_cache(cache.pa, 'all.mus') # Retrieve data from cache.
+if (is.null(all.mus)) { # Save downloaded data to cache if it is not cached.
+  all.mus <- searchAtlasExperiments(properties="heart", species="Mus musculus")
+  save_cache(dir=cache.pa, overwrite=TRUE, all.mus)
+}
 ```
 
 Among the many matching entries, accession 'E-MTAB-2801' will be downloaded.  
 
 ```{r eval=TRUE, echo=TRUE, warnings=FALSE }
 all.mus[7, ]
-rse.mus <- getAtlasData('E-MTAB-2801')[[1]][[1]]
+rse.mus <- read_cache(cache.pa, 'rse.mus') # Read data from cache.
+if (is.null(rse.mus)) { # Save downloaded data to cache if it is not cached.
+  rse.mus <- getAtlasData('E-MTAB-2801')[[1]][[1]]
+  save_cache(dir=cache.pa, overwrite=TRUE, rse.mus)
+}
 ```
 
 The design of the downloaded RNA-Seq experiment is described in the `colData` slot of 
@@ -785,14 +803,22 @@ The following searches the Expression Atlas for expression data from _'heart'_
 and _'gallus'_.
 
 ```{r eval=TRUE, echo=TRUE, warnings=FALSE }
-all.chk <- searchAtlasExperiments(properties="heart", species="gallus")
+all.chk <- read_cache(cache.pa, 'all.chk') # Retrieve data from cache.
+if (is.null(all.chk)) { # Save downloaded data to cache if it is not cached.
+  all.chk <- searchAtlasExperiments(properties="heart", species="gallus")
+  save_cache(dir=cache.pa, overwrite=TRUE, all.chk)
+}
 ```
 
 Among the matching entries, accession 'E-MTAB-6769' will be downloaded.  
 
 ```{r eval=TRUE, echo=TRUE, warnings=FALSE }
 all.chk[3, ]
-rse.chk <- getAtlasData('E-MTAB-6769')[[1]][[1]]
+rse.chk <- read_cache(cache.pa, 'rse.chk') # Read data from cache.
+if (is.null(rse.chk)) { # Save downloaded data to cache if it is not cached.
+  rse.chk <- getAtlasData('E-MTAB-6769')[[1]][[1]]
+  save_cache(dir=cache.pa, overwrite=TRUE, rse.chk)
+}
 ```
 
 The design of the downloaded RNA-Seq experiment is described in the `colData`
@@ -906,16 +932,20 @@ set.
 The GSE14502 data set will be downloaded with the `getGEO` function from the
 `GEOquery` package. Intermediately, the expression data is stored in an
 `ExpressionSet` container [@biobase], and then converted to a
-`SummarizedExperiment` object.
+`SummarizedExperiment` object.  
 
 ```{r eval=TRUE, echo=TRUE, warnings=FALSE}
-gset <- getGEO("GSE14502", GSEMatrix=TRUE, getGPL=TRUE)[[1]]
+gset <- read_cache(cache.pa, 'gset') # Retrieve data from cache.
+if (is.null(gset)) { # Save downloaded data to cache if it is not cached.
+  gset <- getGEO("GSE14502", GSEMatrix=TRUE, getGPL=TRUE)[[1]]
+  save_cache(dir=cache.pa, overwrite=TRUE, gset)
+}
 se.sh <- as(gset, "SummarizedExperiment")
 ```
 
 The gene symbol identifiers are extracted from the `rowData` component to be used 
 as row names. Similarly, one can work with AGI identifiers by providing below `AGI` 
-under `Gene.Symbol`.
+under `Gene.Symbol`.  
 
 ```{r eval=TRUE, echo=TRUE, warnings=FALSE}
 rownames(se.sh) <- make.names(rowData(se.sh)[, 'Gene.Symbol'])

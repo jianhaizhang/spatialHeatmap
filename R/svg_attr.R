@@ -22,7 +22,6 @@ svg_attr <- function(doc, feature) {
   # Break combined path to a group or siblings.
   path_br_all(out); path_br_all(ply)
 
-
   # If out is not a group, it is assigned an empty node.
   if (xml_name(out)!='g') { xml_add_child(out, 'empty', .where=0); out1 <- xml_children(out)[[1]]; xml_remove(xml_children(out)[[1]], free=FALSE); out <- out1 }
   # If ply is not a group, it is assigned an empty node.
@@ -43,21 +42,34 @@ svg_attr <- function(doc, feature) {
     tit.dup <- unique(title[dup]) 
     if (length(intersect(tit.dup, unique(feature)))>0) return(paste0('Duplicated title text detected: ', paste0(tit.dup, collapse=' '), '!')) else {
 
-      w <- title %in% tit.dup
-      title[w] <- paste0(title[w], seq_len(sum(w)))
+      w <- title %in% tit.dup; title[w] <- paste0(title[w], seq_len(sum(w)))
 
     }
   
   }
   # Style inside groups are ignored. 
   sty <- c(xml_attr(chdn.out, 'style'), xml_attr(chdn.ply, 'style'))
-  sty[!grepl('fill:', sty)] <- 'none'
-  w1 <- grepl(';', sty); st <- sty[w1]; st <- strsplit(st, ';')
-  st1 <- NULL; for (i in st) { st1 <- c(st1, i[grepl('fill:', i)]) }; sty[w1] <- st1
-  # If only keep part of the string, the pattern should cover everything in the string, e.g. the '.*' on both ends.
-  fil.cols <- gsub('.*(fill:)(.*).*', '\\2', sty)
-  df.attr <- data.frame(index=idx, index1=idx1, parent=parent, name=nas, id=ids, title=title, fil.cols=fil.cols)
-  df.attr <- subset(df.attr, name!='a')    
-  return(list(df.attr=df.attr, out=out, ply=ply))
+  sty[!grepl(':', sty)] <- 'none'
+  # Extract attribute values such as fill colors or stroke widths.
+  sty_val <- function(style, attr) {
+
+    w1 <- grepl(attr, style); st <- style[w1]; st <- strsplit(st, ';')
+    st1 <- NULL; for (i in st) { st1 <- c(st1, i[grepl(attr, i)]) }; style[w1] <- st1
+    # If only keep part of the string, the pattern should cover everything in the string, e.g. the '.*' on both ends.
+    value <- gsub(paste0(".*(", attr, ")(.*).*"), '\\2', style); return(value)
+  
+  }; fil.cols <- sty_val(sty, 'fill:')
+  fil.cols[!grepl('^#', fil.cols)] <- 'none'
+  stro.w <- sty_val(sty, 'stroke-width:')
+  # Convert real width to numeric.
+  for (i in seq_along(stro.w)) {
+
+    num <- tryCatch({ as.numeric(stro.w[i]) }, error=function(e){ return('error') }, warning=function(w) { return('warning') } )
+    stro.w[i] <- ifelse(is.numeric(num), num, 0)
+
+  }
+
+  df.attr <- data.frame(index=idx, index1=idx1, parent=parent, name=nas, id=ids, title=title, fil.cols=fil.cols, stroke.width=as.numeric(stro.w))
+  df.attr <- subset(df.attr, name!='a'); return(list(df.attr=df.attr, out=out, ply=ply))
 
 }

@@ -165,7 +165,7 @@ spatial_hm(
 
 \item{key}{Logical. The default is TRUE and keys are added in legend plot. If \code{label} is TRUE, the keys could be removed.}
 
-\item{line.size}{A numeric of the shape outline size. Default is 0.2.}
+\item{line.size}{The thickness of each shape outline in the aSVG is maintained in spatial heatmaps, \emph{i.e.} the stroke widths in Inkscape. This argument is the extra thickness added to all outlines. Default is 0.2 in case stroke widths in the aSVG are 0.}
 
 \item{line.color}{A character of the shape outline color. Default is "grey70".}
 

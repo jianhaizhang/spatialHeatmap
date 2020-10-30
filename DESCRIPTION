@@ -22,10 +22,10 @@ VignetteBuilder: knitr
 Suggests: knitr, rmarkdown, BiocStyle, RUnit, BiocGenerics, data.table,
         ExpressionAtlas, DT, reshape2, Biobase, GEOquery, shinyWidgets
 Depends:
-Imports: av, DESeq2, edgeR, WGCNA, flashClust, htmlwidgets, genefilter,
+Imports: av, BiocFileCache, DESeq2, edgeR, WGCNA, flashClust, htmlwidgets, genefilter,
         ggplot2, ggdendro, grImport, grid, gridExtra, gplots, igraph,
         rsvg, shiny, dynamicTreeCut, grDevices, graphics, ggplotify,
-        plotly, rols, stats, SummarizedExperiment, shinydashboard,
+        plotly, rols, rappdirs, stats, SummarizedExperiment, shinydashboard,
         utils, visNetwork, methods, xml2, yaml
 BugReports: https://github.com/jianhaizhang/spatialHeatmap/issues
 URL: https://github.com/jianhaizhang/spatialHeatmap

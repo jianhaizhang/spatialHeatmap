@@ -3,7 +3,12 @@
 # Human brain data. 
 # Access data.
 library(ExpressionAtlas)
-rse.hum <- getAtlasData('E-GEOD-67196')[[1]][[1]]
+cache.pa <- '~/.cache/shm' # The path of cache.
+rse.hum <- read_cache(cache.pa, 'rse.hum') # Read data from cache.
+if (is.null(rse.hum)) { # Save downloaded data to cache if it is not cached.
+  rse.hum <- getAtlasData('E-GEOD-67196')[[1]][[1]]
+  save_cache(dir=cache.pa, overwrite=TRUE, rse.hum)
+}
 # Targets file.
 brain.pa <- system.file('extdata/shinyApp/example/target_human.txt', package='spatialHeatmap')
 target.hum <- read.table(brain.pa, header=TRUE, row.names=1, sep='\t')
@@ -20,7 +25,11 @@ expr.hum <- assay(se.fil.hum)
 write.table(expr.hum, 'expr_human.txt', col.names=TRUE, row.names=TRUE, sep='\t')
 
 # Mouse organ.
-rse.mus <- getAtlasData('E-MTAB-2801')[[1]][[1]]
+rse.mus <- read_cache(cache.pa, 'rse.mus') # Read data from cache.
+if (is.null(rse.mus)) { # Save downloaded data to cache if it is not cached.
+  rse.mus <- getAtlasData('E-MTAB-2801')[[1]][[1]]
+  save_cache(dir=cache.pa, overwrite=TRUE, rse.mus)
+}
 pa.mus <- system.file('extdata/shinyApp/example/target_mouse.txt', package='spatialHeatmap')
 # target.mus <- read.table(pa.mus, header=TRUE, row.names=1, sep='\t')
 colData(rse.mus) <- DataFrame(target.mus)
@@ -36,7 +45,11 @@ expr.mus <- rbind(expr.mus[2, , drop=FALSE], expr.mus[-2, ])
 write.table(expr.mus, 'expr_mouse.txt', col.names=TRUE, row.names=TRUE, sep='\t')
 
 # Chicken organ.
-rse.chk <- getAtlasData('E-MTAB-6769')[[1]][[1]]
+rse.chk <- read_cache(cache.pa, 'rse.chk') # Read data from cache.
+if (is.null(rse.chk)) { # Save downloaded data to cache if it is not cached.
+  rse.chk <- getAtlasData('E-MTAB-6769')[[1]][[1]]
+  save_cache(dir=cache.pa, overwrite=TRUE, rse.chk)
+}
 pa.chk <- system.file('extdata/shinyApp/example/target_chicken.txt', package='spatialHeatmap')
 target.chk <- read.table(pa.chk, header=TRUE, row.names=1, sep='\t')
 colData(rse.chk) <- DataFrame(target.chk)
@@ -51,7 +64,11 @@ write.table(expr.chk, 'expr_chicken.txt', col.names=TRUE, row.names=TRUE, sep='\
 
 # Arabidopsis shoot. 
 library(GEOquery)
-gset <- getGEO("GSE14502", GSEMatrix=TRUE, getGPL=TRUE)[[1]]
+gset <- read_cache(cache.pa, 'gset') # Retrieve data from cache.
+if (is.null(gset)) { # Save downloaded data to cache if it is not cached.
+  gset <- getGEO("GSE14502", GSEMatrix=TRUE, getGPL=TRUE)[[1]]
+  save_cache(dir=cache.pa, overwrite=TRUE, gset)
+}
 se.sh <- as(gset, "SummarizedExperiment")
 rownames(se.sh) <- make.names(rowData(se.sh)[, 'Gene.Symbol'])
 pa.sh <- system.file('extdata/shinyApp/example/target_arab.txt', package='spatialHeatmap')
@@ -71,7 +88,11 @@ write.table(expr.sh, 'expr_arab.txt', col.names=TRUE, row.names=TRUE, sep='\t')
 ## Toy data.
 # Download the chicken data.
 library(ExpressionAtlas)
-rse.chk <- getAtlasData('E-MTAB-6769')[[1]][[1]]
+rse.chk <- read_cache(cache.pa, 'rse.chk') # Read data from cache.
+if (is.null(rse.chk)) { # Save downloaded data to cache if it is not cached.
+  rse.chk <- getAtlasData('E-MTAB-6769')[[1]][[1]]
+  save_cache(dir=cache.pa, overwrite=TRUE, rse.chk)
+}
 # Targets file.
 chk.tar <- system.file('extdata/shinyApp/example/target_chicken.txt', package='spatialHeatmap')
 target.chk <- read.table(chk.tar, header=TRUE, row.names=1, sep='\t')

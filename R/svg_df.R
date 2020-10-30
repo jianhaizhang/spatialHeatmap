@@ -122,9 +122,12 @@ svg_df <- function(svg.path, feature) {
     df <- rbind(df, df0)
 
   }; fil.cols <- df.attr$fil.cols; names(fil.cols) <- df.attr$title
+  stroke.w <- df.attr$stroke.width; names(stroke.w) <- df.attr$title
   w.h <- c(max(abs(df$x)), max(abs(df$y))) 
   names(w.h) <- c('width', 'height')
-  lis <- list(df=df, tis.path=sub('_\\d+$', '', tit), fil.cols=fil.cols, w.h=w.h); return(lis)
+  lis <- list(df=df, tis.path=sub('_\\d+$', '', tit), fil.cols=fil.cols, stroke.w= stroke.w, w.h=w.h); return(lis)
 
 }
+
+
 
