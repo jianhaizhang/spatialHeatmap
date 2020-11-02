@@ -4,18 +4,18 @@
 \alias{update_feature}
 \title{Update aSVG Spatial Features}
 \usage{
-update_feature(feature, dir)
+update_feature(df.new, dir)
 }
 \arguments{
-\item{feature}{The data frame returned by \code{\link{return_feature}} with the user-provided features added as the first column.}
+\item{df.new}{The custom feature identifiers, stroke (outline) widths, and/or feature colors, should be included in the data frame returned by \link{return_feature} as independent columns, and the corresponding column names should be "featureNew", "strokeNew", and "colorNew" respectively in order to be recognized. \cr To color the corresponding features, the identifiers in "featureNew" should be the same with matching sample identifiers. The numeric values in "strokeNew" would be the outline widths of corresponding features. The colors in "colorNew" would be the default colors for highlighting target features in the legend plot.}
 
 \item{dir}{The directory path where the aSVG files to update. It should be the same with \code{dir} in \code{\link{return_feature}}.}
 }
 \value{
-Nothing is returned. The aSVG files of interest in \code{dir} are updated with new features, and are ready to use in function \code{\link{spatial_hm}}.
+Nothing is returned. The aSVG files of interest in \code{dir} are updated with provided attributes, and are ready to use in function \code{\link{spatial_hm}}.
 }
 \description{
-Successful spatial heatmap plotting requires the aSVG features of interest have matching samples (cells, tissues, \emph{etc}) in the data. This function is designed to replace existing features in aSVG files with user-provided features. Note this function treats the first column in the feature data frame as user-provided features, so custom features must be the first column.
+Successful spatial heatmap plotting requires the aSVG features of interest have matching samples (cells, tissues, \emph{etc}) in the data. If this requirement is not fulfiled, either the sample identifiers in the data or the spatial feature identifiers in the aSVG should be changed. This function is designed to replace existing feature identifiers, stroke (outline) widths, and/or feature colors in aSVG files with user-provided entries.
 }
 \examples{
 # The following shows how to download a chicken aSVG containing spatial features of 'brain'
@@ -32,18 +32,22 @@ feature.df <- return_feature(feature=c('heart', 'brain'), species=c('gallus'), d
 match.only=TRUE, remote=TRUE)
 feature.df
 
-# New features.
+# New features, stroke widths, colors.
 ft.new <- c('BRAIN', 'HEART')
-# Add new features to the first column.
-feature.df.new <- cbind(featureNew=ft.new, feature.df)
+stroke.new <- c(0.05, 0.1)
+col.new <- c('green', 'red')
+# Include new features, stroke widths, colors to the feature data frame.
+feature.df.new <- cbind(featureNew=ft.new, strokeNew=stroke.new, colorNew=col.new, feature.df)
 feature.df.new
+
 # Update features.
-update_feature(feature=feature.df.new, dir='~/test')
+update_feature(df.new=feature.df.new, dir='~/test')
 }
 }
 \references{
 Hadley Wickham, Jim Hester and Jeroen Ooms (2019). xml2: Parse XML. R package version 1.2.2. https://CRAN.R-project.org/package=xml2
 \cr Cardoso-Moreira, Margarida, Jean Halbert, Delphine Valloton, Britta Velten, Chunyan Chen, Yi Shao, Angélica Liechti, et al. 2019. "Gene Expression Across Mammalian Organ Development." Nature 571 (7766): 505-9
+\cr Gregory R. Warnes, Ben Bolker, Lodewijk Bonebakker, Robert Gentleman, Wolfgang Huber, Andy Liaw, Thomas Lumley, Martin Maechler, Arni Magnusson, Steffen Moeller, Marc Schwartz and Bill Venables (2020). gplots: Various R Programming Tools for Plotting Data. R package version 3.0.3. https://CRAN.R-project.org/package=gplots
 }
 \author{
 Jianhai Zhang \email{jzhan067@ucr.edu; zhang.jianhai@hotmail.com} \cr Dr. Thomas Girke \email{thomas.girke@ucr.edu}

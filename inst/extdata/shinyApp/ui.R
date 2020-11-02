@@ -3,7 +3,8 @@ library(shiny); library(shinydashboard); library(yaml); library(plotly); library
 
 shinyUI(dashboardPage(
   
-  # tags$header(tags$title('spatialHeatmap')), # includeCSS("style.css"),
+  # tags$header(tags$title('spatialHeatmap')),
+  # includeCSS("style.css"),
   # tags$header(HTML('<title>spatialHeatmap</title>')),
   dashboardHeader(title=textOutput('spatialHeatmap'), titleWidth=350),
 
@@ -14,12 +15,12 @@ shinyUI(dashboardPage(
       menuItem("Input", icon=icon("list"),
       menuSubItem("View", tabName="hm_net"), br(),
       fileInput("config", "Optional: upload a config file", accept=".yaml", multiple=FALSE),
-      selectInput("fileIn", "Step1: data sets", c('None', 'customData', 'customComputedData'), 'None'),
+      fileInput("tar", "Optional: upload batched data/aSVGs in two tar files", accept=c(".tar"), multiple=TRUE),
+      selectInput("fileIn", "Step1: data sets", c('none', 'customData', 'customComputedData'), 'none'),
       fileInput("svgInpath", "Step 2A: upload one aSVG file", accept=".svg", multiple=FALSE),
       fileInput("svgInpath1", "Step 2B: upload multiple aSVG files", accept=".svg", multiple=TRUE),
       fileInput("geneInpath", "Step 3: upload formatted data matrix", accept=c(".txt", ".csv"), multiple=FALSE),
       radioButtons(inputId='dimName', label='Step 4: is column or row gene?', choices=c("None", "Row", "Column"), selected='None', inline=TRUE),
-      # selectInput('sep', 'Step 5: separator', c("None", "Tab", "Space", "Comma", "Semicolon"), 'None'),
       h4(strong("Custom computed data")),
       fileInput("adj.modInpath", "Upload the adjacency matrix and module definition file", accept=".txt", multiple=TRUE)
 
@@ -39,8 +40,16 @@ shinyUI(dashboardPage(
 
     tabItems(
       tabItem(tabName="hm_net", 
-
       box(title="Data Matrix", status="primary", solidHeader=TRUE, collapsible=TRUE, height=NULL, width=12,
+      tabBox(title=NULL, id=NULL, height=NULL, width=12, selected="Data", side="right",
+      tabPanel("Re-match",
+      uiOutput('svg'), 
+      actionButton("match", "Update", icon=icon("refresh"), style="color: #fff; background-color:purple;border-color: #2e6da4"),
+      verbatimTextOutput('msg.match'), 
+      fluidRow(splitLayout(cellWidths=c("1%", "49%", "49%", "1%"), "", uiOutput('sam'), uiOutput('sf'), ""))
+
+      ),
+      tabPanel("Data",
       fluidRow(column(1, offset=0, style='padding-left:10px; padding-right:10px; padding-top:0px; padding-bottom:5px',
       dropdownButton(inputId='drdn.fil', label='Filter', circle=FALSE, icon=NULL, status='primary',
       fluidRow(splitLayout(cellWidths=c('1%', '15%', '1%', '30%', '1%', '25%', '1%', '25%', '12%', '10%'), '',
@@ -61,7 +70,9 @@ shinyUI(dashboardPage(
       ),
       fluidRow(splitLayout(cellWidths=c("1%", "43%", "10%"), '', textInput(inputId='search', label='Search:', value='', placeholder='Muliple IDs must only be separated by space or comma.', width='100%'), actionButton('search.but', 'Submit'))),
       fluidRow(splitLayout(cellWidths=c("1%", "98%", "1%"), "", dataTableOutput("dt"), ""))
-      ),
+      )
+    )),
+
       fluidRow(column(10), column(2, radioButtons(inputId='hide.lgd', label="Hide legend:", choices=c('Yes', 'No'), selected='No', inline=TRUE))),
       uiOutput('shm.ui'), uiOutput('lgd.ui'), 
       # 'height=NULL': height is automatic.
@@ -74,7 +85,6 @@ shinyUI(dashboardPage(
       radioButtons(inputId="mat.scale", label="Scale by:", choices=c("No", "Column", "Row"), selected='No', inline=TRUE), '',
       # radioButtons(inputId="mhm.but", label="Show plot:", choices=c("Yes", "No"), selected='No', inline=TRUE)
       actionButton("mhm.but", "Update", icon=icon("refresh"), style="color: #fff; background-color:purple;border-color: #2e6da4")
-      # submitButton(text="Update", icon=icon("refresh"), width = NULL) 
       )),
       plotlyOutput("HMly")), br(),
       box(title="Interactive Network", status="primary", solidHeader=TRUE, collapsible=TRUE, width=12,

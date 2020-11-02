@@ -2,8 +2,8 @@
 #' 
 #' This function parses a collection of aSVG files and returns those containing target features in a data frame. Successful spatial heatmap plotting requires the aSVG features of interest have matching samples (cells, tissues, \emph{etc}) in the data. To meet this requirement, the returned features could be used to replace target sample counterparts in the data. Alternatively, the target samples in the data could be used to replace matching features in the aSVG through function \code{\link{update_feature}}. Refer to function \code{\link{spatial_hm}} for more details on aSVG files.  
 
-#' @param feature A vector of target feature keywords (case insentitive), which is used to select aSVG files from a collection. \emph{E.g.} c('heart', 'brain').
-#' @param species A vector of target species keywords (case insentitive), which is used to select aSVG files from a collection. \emph{E.g.} c('gallus').
+#' @param feature A vector of target feature keywords (case insentitive), which is used to select aSVG files from a collection. \emph{E.g.} c('heart', 'brain'). If NA or NULL, all features of all SVG files matching \code{species} are returned. 
+#' @param species A vector of target species keywords (case insentitive), which is used to select aSVG files from a collection. \emph{E.g.} c('gallus'). If NA or NULL, all SVG files in \code{dir} are queried.
 #' @param keywords.any Logical, TRUE or FALSE. Default is TRUE. The internal searching is case-insensitive. The space, dot, hypen, semicolon, comma, forward slash are treated as separators between words and not counted in searching. If TRUE, every returned hit contains at least one word in the \code{feature} vector and at least one word in the \code{species} vector, which means all the possible hits are returned. \emph{E.g.} "prefrontal cortex" in "homo_sapiens.brain.svg" would be returned if \code{feature=c('frontal')} and \code{species=c('homo')}. If FALSE, every returned hit contains at least one exact element in the \code{feature} vector and all exact elements in the \code{species} vector. \emph{E.g.} "frontal cortex" rather than "prefrontal cortex" in "homo_sapiens.brain.svg" would be returned if \code{feature=c('frontal cortex')} and \code{species=c('homo sapiens', 'brain')}.
 #' @param remote Logical, FALSE or TRUE. If TRUE (default), the remote EBI aSVG repository \url{https://github.com/ebi-gene-expression-group/anatomogram/tree/master/src/svg} and spatialHeatmap aSVG Repository \url{https://github.com/jianhaizhang/spatialHeatmap_aSVG_Repository} developed in this project are queried.
 #' @param dir The directory path of aSVG files. If \code{remote} is TRUE, the returned aSVG files are saved in this directory. Note existing aSVG files with same names as returned ones are overwritten. If \code{remote} is FALSE, user-provided (local) aSVG files should be saved in this directory for query. Default is NULL.
@@ -68,20 +68,17 @@ return_feature <- function(feature, species, keywords.any=TRUE, remote=TRUE, dir
   # Parse and return features.
   ftr.return <- function(svgs, desc=desc) { 
 
-    cat('Accessing features... \n')
-    df <- NULL; for (i in svgs) {
+    cat('Accessing features... \n'); df <- NULL; for (i in svgs) {
 
       doc <- read_xml(i); df0 <- svg_attr(doc, feature=NULL)[['df.attr']]
       # Move ontology with NA or "NULL" to bottom.
       w.na <- which(is.na(df0$id)|df0$id=='NULL'|df0$id=='NA')
       if (length(w.na)>0) df0 <- rbind(df0[-w.na, ], df0[w.na, ])
       na <- strsplit(i, '/')[[1]]; na <- na[grep('.svg$', na)]
-      cat(na); cat(', ')
-      df0$SVG <- na
-      df <- rbind(df, df0)
+      cat(na); cat(', '); df0$SVG <- na; df <- rbind(df, df0)
 
     }; cat('\n')
-    cna <- colnames(df); colnames(df)[cna=='title'] <- 'feature'; df <- df[, c('feature', 'id', 'SVG', 'parent', 'index', 'index1')]
+    cna <- colnames(df); colnames(df)[cna=='title'] <- 'feature'; df <- df[, c('feature', 'stroke', 'color', 'id', 'SVG', 'parent', 'index', 'index1')]
 
     if (desc==TRUE) {
   
@@ -97,7 +94,12 @@ return_feature <- function(feature, species, keywords.any=TRUE, remote=TRUE, dir
     }; return(df)
 
   }
-
+  if (length(species)==0) species <- NULL; if (length(feature)==0) feature <- NULL
+  if (!is.null(species)) if (species[1]==''|is.na(species[1])) species <- NULL
+  if (!is.null(feature)) if (feature[1]==''|is.na(feature[1])) feature <- NULL
+  # Pattern for selecting relevant species.
+  if (length(species)>0 & return.all==FALSE) { species1 <- gsub(' |_|\\.|-|;|,|/', '|', make.names(species))
+  species1 <- paste0(species1, collapse="|") }
   if (remote==TRUE) {
   
     cat('Downloading SVG images... \n')
@@ -110,7 +112,11 @@ return_feature <- function(feature, species, keywords.any=TRUE, remote=TRUE, dir
     tmp4 <- paste0(tmp2, '/spatialHeatmap_aSVG_Repository-master')
     svgs <- list.files(path=tmp3, pattern='.svg$', full.names=TRUE, recursive=TRUE)
     svgs.shm <- list.files(path=tmp4, pattern='.svg$', full.names=TRUE, recursive=TRUE)
-    svgs <- c(svgs, svgs.shm)
+    # Only select relevant svgs to species.
+    svgs <- c(svgs, svgs.shm); if (length(species)>0 & return.all==FALSE) {
+      svgs.sp <- grep(species1, svgs, value=TRUE, ignore.case=TRUE)
+      if (length(svgs.sp)>0) svgs <- svgs.sp
+    }
     df <- ftr.return(svgs=svgs, desc=desc)
     svgs.na <- vapply(svgs, function(i) { str <- strsplit(i, '/')[[1]]; str[length(str)] }, FUN.VALUE=character(1))
     svgs1 <- list.files(path=dir, pattern='.svg$', full.names=TRUE)
@@ -126,13 +132,15 @@ return_feature <- function(feature, species, keywords.any=TRUE, remote=TRUE, dir
   } else {
 
     svgs <- list.files(path=dir, pattern='.svg$', full.names=TRUE)
+    # Only select relevant svgs to species.
+    if (length(species)>0 & return.all==FALSE) {
+      svgs.sp <- grep(species1, svgs, value=TRUE, ignore.case=TRUE)
+      if (length(svgs.sp)>0) svgs <- svgs.sp
+    }
     df <- ftr.return(svgs=svgs, desc=desc)
     if (return.all==TRUE) { row.names(df) <- NULL; return(df) }
 
   }
- 
-  if (!is.null(species)) if (species[1]=='') species <- NULL
-  if (!is.null(feature)) if (feature[1]=='') feature <- NULL
   
   if (keywords.any==FALSE) {
 

@@ -1,5 +1,5 @@
 #' Normalize Sequencing Count Matrix
-#' 
+#'
 #' This function normalizes sequencing count data. It accepts the count matrix and sample metadata (optional) in form of \code{SummarizedExperiment} or \code{data.frame}. In either class, the columns and rows of the count matix should be sample/conditions and genes respectively.  
 
 #' @inheritParams filter_data   

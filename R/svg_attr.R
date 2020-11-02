@@ -41,9 +41,7 @@ svg_attr <- function(doc, feature) {
    
     tit.dup <- unique(title[dup]) 
     if (length(intersect(tit.dup, unique(feature)))>0) return(paste0('Duplicated title text detected: ', paste0(tit.dup, collapse=' '), '!')) else {
-
       w <- title %in% tit.dup; title[w] <- paste0(title[w], seq_len(sum(w)))
-
     }
   
   }
@@ -69,7 +67,7 @@ svg_attr <- function(doc, feature) {
 
   }
 
-  df.attr <- data.frame(index=idx, index1=idx1, parent=parent, name=nas, id=ids, title=title, fil.cols=fil.cols, stroke.width=as.numeric(stro.w))
+  df.attr <- data.frame(index=idx, index1=idx1, parent=parent, name=nas, id=ids, title=title, color=fil.cols, stroke=as.numeric(stro.w))
   df.attr <- subset(df.attr, name!='a'); return(list(df.attr=df.attr, out=out, ply=ply))
 
 }
