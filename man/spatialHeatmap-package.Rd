@@ -308,7 +308,7 @@ ft.new <- c('BRAIN', 'HEART')
 feature.df.new <- cbind(featureNew=ft.new, feature.df)
 feature.df.new
 # Update features.
-update_feature(feature=feature.df.new, dir=tmp.dir)
+update_feature(df.new=feature.df.new, dir=tmp.dir)
 }
 
 
