@@ -14,4 +14,6 @@ input[id='search'] { height: 28px; width: 500px; margin: 3px; padding: 0; font-s
 
 label[for='search']{ display: table-cell; text-align: center; vertical-align: middle;   }
 
-
+.nav-tabs-custom .nav-tabs li.active {
+    border-top-color: #d73925;
+}

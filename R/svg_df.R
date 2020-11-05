@@ -23,9 +23,7 @@ svg_df <- function(svg.path, feature) {
   options(stringsAsFactors=FALSE)
   doc <- read_xml(svg.path); spa <- xml_attr(doc, 'space')
   if (!is.na(spa)) if (spa=='preserve') xml_set_attr(doc, 'xml:space', 'default')
-  # w.h <- c(xml_attr(doc, 'width'), xml_attr(doc, 'height'))
-  # w.h <- as.numeric(gsub("^(\\d+\\.\\d+|\\d+).*", "\\1", w.h))
-  # names(w.h) <- c('width', 'height')
+  # Even though 'out' and 'ply' are not returned by 'svg_attr', the paths in doc are broken accordingly, since the node in doc are pointed, any change on the node is actually changing the doc. 
   svg.attr <- svg_attr(doc, feature=feature); if (is(svg.attr, 'character')) return(svg.attr)
   df.attr <- svg.attr[['df.attr']]; df.attr$title <- make.names(df.attr$title)
   out <- svg.attr[['out']]; ply <- svg.attr[['ply']]
@@ -80,7 +78,7 @@ svg_df <- function(svg.path, feature) {
 
   }; tis.path <- gsub("_\\d+$", "", tit)  
  style <- 'fill:#46e8e8;fill-opacity:1;stroke:#000000;stroke-width:3;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1' # 'fill' is not necessary. In Inkscape, "group" or move an object adds transforms (relative positions), and this can lead to related polygons uncolored in the spatial heatmaps. Solution: ungroup and regroup to get rid of transforms and get absolute positions.
-  # Change 'style' of all polygons.
+  # Change 'style' of all polygons. Since in SVG code, if no fill in style, no fill in ".ps.xml", so is the stroke. 
   xml_set_attr(chdn.out, 'style', style); xml_set_attr(chdn.ply, 'style', style)  
   # xml_set_attr(out, 'style', style); xml_set_attr(ply, 'style', style)  
   # Export internal SVG.
@@ -89,7 +87,8 @@ svg_df <- function(svg.path, feature) {
   if (grepl("~", svg.inter)) svg.inter <- normalizePath(svg.inter, winslash="/", mustWork=FALSE)
   write_xml(doc, file=svg.inter)
   
-  # SVG file conversion. 
+  # SVG file conversion.
+  # In Inkscape, the path of letter "U" is combined by a long and short path: "M -145.74174, ..., 182.19339 Z M -141.22026,175.30862 Z". After broken apart, the short path "M -141.22026,175.30862 Z" still exists, but disappears after "rsvg_ps" and also "PostScriptTrace". As a result, the corresponding coordinates are gone. Since the short path introduces an id, the colors are shifted in SHM. Thus letters/text should be not be broken apart by "path_br".
   rsvg_ps(svg.inter, file=sub("svg$", "ps", svg.inter)) # Only the paths inside canvas of SVG are valid.
   p1 <- sub("svg$", "ps", svg.inter); p2 <- paste0(sub("svg$", "ps", svg.inter), ".xml"); PostScriptTrace(p1, p2) 
   chdn1 <- xml_children(read_xml(p2)) # Use internal svg to get coordinates.
@@ -121,13 +120,12 @@ svg_df <- function(svg.path, feature) {
     df0 <- cbind(tissue=tit[i], data.frame(x=x, y=y), stringsAsFactors=TRUE) # The coordinates should not be factor.
     df <- rbind(df, df0)
 
-  }; fil.cols <- df.attr$fil.cols; names(fil.cols) <- df.attr$title
-  stroke.w <- df.attr$stroke.width; names(stroke.w) <- df.attr$title
+  } # Test if some paths/dots are missing: identical(as.vector(unique(df$tissue)), unique(tit)) 
+  fil.cols <- df.attr$color; names(fil.cols) <- df.attr$title
+  stroke.w <- df.attr$stroke; names(stroke.w) <- df.attr$title
   w.h <- c(max(abs(df$x)), max(abs(df$y))) 
   names(w.h) <- c('width', 'height')
   lis <- list(df=df, tis.path=sub('_\\d+$', '', tit), fil.cols=fil.cols, stroke.w= stroke.w, w.h=w.h); return(lis)
 
 }
-
-
 

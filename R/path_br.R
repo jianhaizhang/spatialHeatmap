@@ -4,6 +4,7 @@
 #' @param node An object of class "xml_node" without children nodes.
 #' @param g Logical, TRUE or FALSE. Default is TRUE. If TRUE the combined path is broken into a group. Otherwise, as siblings.
 #' @return Nothing is returned. The broken paths are updated in the root.
+#' @keywords Internal
 
 #' @author Jianhai Zhang \email{jzhan067@@ucr.edu; zhang.jianhai@@hotmail.com} \cr Dr. Thomas Girke \email{thomas.girke@@ucr.edu}
 #' @noRd
@@ -21,7 +22,7 @@
       d <- xml2::xml_attr(node, 'd') 
       if (grepl('m ', d)) return('Please use absolute coordinates for all paths!')
       if (grepl('Z M', d)) {
-
+ 
         z <- paste0(strsplit(d, 'Z')[[1]], 'Z')
         ids <- paste0(xml2::xml_attr(node, 'id'), '_', seq_along(z))
         # Make node empty.

@@ -1,4 +1,5 @@
-options(shiny.maxRequestSize=7*1024^3, stringsAsFactors=FALSE) 
+
+options(stringsAsFactors=FALSE) 
 
 # source('~/tissue_specific_gene/function/fun.R')
 # Right before submit the package the following functions will be deleted, and they will be imported as above. They are listed here now for the convenience of functionality development.
@@ -6,6 +7,9 @@ options(shiny.maxRequestSize=7*1024^3, stringsAsFactors=FALSE)
 # Import internal functions.
 sort_gen_con <- get('sort_gen_con', envir=asNamespace('spatialHeatmap'), inherits=FALSE)
 test_ffm <- get('test_ffm', envir=asNamespace('spatialHeatmap'), inherits=FALSE)
+
+read_hdf5 <- get('read_hdf5', envir=asNamespace('spatialHeatmap'), inherits=FALSE)
+
 matrix_hm <- get('matrix_hm', envir=asNamespace('spatialHeatmap'), inherits=FALSE)
 
 # Function to extract nearest genes.
@@ -53,16 +57,20 @@ html_ly <- get('html_ly', envir=asNamespace('spatialHeatmap'), inherits=FALSE)
 video <- get('video', envir=asNamespace('spatialHeatmap'), inherits=FALSE)
 
 # Import input matrix.
-fread.df <- function(input, isRowGene, header, sep='auto', fill, rep.aggr='mean', check.names=FALSE) {
+fread.df <- function(input, isRowGene=TRUE, header=TRUE, sep='auto', fill=TRUE, rep.aggr='mean', check.names=FALSE) {
   
-  df0 <- fread(input=input, header=header, sep=sep, fill=fill)
-  cna <- make.names(colnames(df0))
-  if (cna[1]=='V1') cna <- cna[-1] else cna <- cna[-ncol(df0)] 
-  df1 <- as.data.frame(df0); rownames(df1) <- df1[, 1]
-  # Subsetting identical column names in a matrix will not trigger appending numbers.
-  df1 <- as.matrix(df1[, -1]); colnames(df1) <- cna
-  if(isRowGene==FALSE) df1 <- t(df1)
-  cna <- colnames(df1); rna <- rownames(df1)
+  if (!is(input, 'data.frame') & !is(input, 'matrix')) { 
+    
+    df0 <- fread(input=input, header=header, sep=sep, fill=fill, check.names=check.names)
+    cna <- make.names(colnames(df0))
+    if (cna[1]=='V1') cna <- cna[-1] else cna <- cna[-ncol(df0)] 
+    df1 <- as.data.frame(df0); rownames(df1) <- df1[, 1]
+    # Subsetting identical column names in a matrix will not trigger appending numbers.
+    df1 <- as.matrix(df1[, -1]); colnames(df1) <- cna
+    if(isRowGene==FALSE) df1 <- t(df1)
+    cna <- colnames(df1); rna <- rownames(df1) 
+  
+  } else { df1 <- input; rna <- rownames(df1); cna <- colnames(df1) }
   
   # Isolate data and annotation.
   na <- vapply(seq_len(ncol(df1)), function(i) { tryCatch({ as.numeric(df1[, i]) }, warning=function(w) { return(rep(NA, nrow(df1))) }, error=function(e) { stop("Please make sure input data are numeric!") }) }, FUN.VALUE=numeric(nrow(df1)) )
@@ -101,62 +109,140 @@ col_sep <- function(color) {
 
 }
 
+# Check/process "sample__condition" in the se extracted from tar.
+se_from_db <- function(se) {
+  dat <- assay(se); cold <- colData(se)
+  form <- grepl("__", colnames(dat))
+  if (sum(form)==0) {
+    if (all(c('sample', 'condition') %in% colnames(cold))) { 
+      cna <- colnames(dat) <- paste0(cold$sample, '__', cold$condition)
+      if (any(duplicated(cna))) return('Duplicated "sample__condition" replicates are detected in the selected dataset!')
+    } else if ('sample' %in% colnames(cold)) {
+      if (any(duplicated(cold$sample))) return('The "sample" should not be duplicated in the absence of "condition"!')
+      colnames(dat) <- cold$sample
+    }
+  }; return(dat)
+}
+
+# Extract target svgs in tar into tmp folder, and return the paths. 
+extr_svg <- function(file, name) {
+
+  dir <- paste0(tempdir(check=TRUE), '/svg_shm')
+  if (!dir.exists(dir)) dir.create(dir, recursive=TRUE)
+  sys <- system(paste0('tar -xf ', file, ' -C ', dir, ' ', name))
+  if (sys==0) return(paste0(dir, '/', name)) else return()
+
+}
+
+# Extract svg path/na from uploaded or internal tar files.
+svg_pa_na <- function(svg.path, pa.svg.upl) {
+  svg.na <- NULL; for (i in seq_along(svg.path)) {
+    # Extract svg names. 
+    str <- strsplit(svg.path[[i]], '/')[[1]]
+    na0 <- str[length(str)]
+    if (!grepl('\\.svg$', na0)) return('No aSVG file is detected! Solution: 1) select another aSVG and rematch it to data; 2) add an aSVG file for the selected data in the backend aSVG tar file or uploaded aSVG tar file.')
+    svg.na <- c(svg.na, na0)
+    # Complete uploaded svg paths.
+    if (!grepl('example/', svg.path[[i]])) {
+      # The data/svg precedence: uploaded tar > internal tar > default examples. The duplicated data/svgs are removed according to this precedence when processing data/svg upstream.
+      pa0 <- NULL; if (!is.null(pa.svg.upl)) pa0 <- extr_svg(file=pa.svg.upl, name=na0)
+      if (is.null(pa.svg.upl)|is.null(pa0)) {
+        tar.all <- list.files('example', pattern='\\.tar$', full.names=TRUE)
+        tar.svg <- tar.all[!grepl('data_shm.tar$', tar.all)][1]
+        pa0 <- extr_svg(file=tar.svg, name=na0)
+      }; if (is.null(pa0)) return(paste0("This aSVG file is not detected: ", na0, "!")) else svg.path[[i]] <- pa0
+    }
+  }; return(list(svg.path=svg.path, svg.na=svg.na))
+}
+
+# Check suffixes if multiple svgs.
+svg_suffix <- function(svg.path, svg.na) {
+  if (length(svg.na)>1) {
+    if (!all(grepl('_shm\\d+\\.svg$', svg.na, perl=TRUE))) return("Suffixes of aSVGs should be indexed as '_shm1.svg', '_shm2.svg', '_shm3.svg', ...")
+    ord <- order(gsub('.*_(shm.*)$', '\\1', svg.na))
+    svg.path <- svg.path[ord]; svg.na <- svg.na[ord]  
+  }; return(list(svg.path=svg.path, svg.na=svg.na))
+}
+
 # enableWGCNAThreads()
 shinyServer(function(input, output, session) {
 
-  cfg <- reactiveValues(lis.dat=NULL, lis.dld=NULL, lis.par=NULL, na.def=NULL, dat.def=NULL, svg.def=NULL, dat.ipt=NULL, na.cus=NULL)
+  cfg <- reactiveValues(lis.dat=NULL, lis.dld=NULL, lis.par=NULL, na.def=NULL, dat.def=NULL, svg.def=NULL, pa.upl=NULL, pa.dat.upl=NULL, pa.svg.upl=NULL, na.cus=NULL)
 
   observe({
 
     withProgress(message="Loading dependencies: ", value=0, {
     incProgress(0.3, detail="in progress...")
-    library(SummarizedExperiment); library(shiny); library(shinydashboard); library(grImport); library(rsvg); library(ggplot2); 
+    library(SummarizedExperiment); library(shiny); library(shinydashboard); library(grImport); library(rsvg); library(ggplot2); library(DT) 
     incProgress(0.6, detail="in progress...")
-    library(DT); library(gridExtra); library(ggdendro); library(WGCNA); library(grid); library(xml2); library(plotly); library(data.table); library(genefilter); library(flashClust); library(visNetwork); 
+    library(gridExtra); library(ggdendro); library(WGCNA); library(grid); library(xml2); library(plotly); library(data.table); library(genefilter); library(flashClust); library(visNetwork); 
     incProgress(0.9, detail="in progress...")
-    library(reshape2); library(igraph); library(animation); library(av); library(shinyWidgets); library(yaml)
+    library(reshape2); library(igraph); library(animation); library(av); library(shinyWidgets); library(yaml); library(HDF5Array); library(sortable)
   })
 
     lis.cfg <- yaml.load_file('config/config.yaml')
     lis.dat <- lis.cfg[grepl('^dataset\\d+', names(lis.cfg))]
     lis.dld <- lis.cfg[grepl('download_single|download_multiple', names(lis.cfg))]
     if (is.null(input$config)) lis.par <- lis.cfg[!grepl('^dataset\\d+|download_single|download_multiple', names(lis.cfg))] else lis.par <- yaml.load_file(input$config$datapath[1])
+    upl.size <- toupper(lis.par$max.upload.size)
+    num <- as.numeric(gsub('(\\d+)(G|M)', '\\1', upl.size))
+    if (grepl('\\d+G$', upl.size)) max.size <- num*1024^3
+    if (grepl('\\d+M$', upl.size)) max.size <- num*1024^2 
+    options(shiny.maxRequestSize=max.size) 
     if (!any(lis.par$hide.legend %in% c('Yes', 'No'))) lis.par$hide.legend <- ifelse(lis.par$hide.legend==TRUE, 'Yes', 'No')
+    # Organise configuration parameters in a data frame.
     for (i in seq_along(lis.par)) {
-
-      lis0 <- lis.par[[i]]; if (length(lis0)>1) { 
- 
+      lis0 <- lis.par[[i]]; if (length(lis0)>1) {
         name <- default <- NULL; for (j in seq_along(lis0)) {
-
           pair <- strsplit(lis0[j], ':')[[1]]
           name <- c(name, pair[1]); default <- c(default, pair[2])
-
         }; df0 <- data.frame(name=name, default=default)
         rownames(df0) <- df0$name; lis.par[[i]] <- df0
-
-      } 
-
+      }
     }
+
     # Separate data, svg.
     na.ipt <- dat.ipt <- svg.ipt <- NULL; for (i in lis.dat) { 
  
       na.ipt <- c(na.ipt, i$name); dat.ipt <- c(dat.ipt, i$data)
-      # svg.ipt <- c(svg.ipt, i$svg); names(dat.ipt) <- names(svg.ipt) <- na.ipt
       svg.ipt <- c(svg.ipt, list(i$svg))
 
     }; names(dat.ipt) <- names(svg.ipt) <- na.ipt
 
+    df.tar <- input$tar; dat.upl <- svg.upl <- NULL
+    tar.num <- grepl('\\.tar$', df.tar$datapath)
+    if (!is.null(df.tar)) validate(need(try(sum(tar.num)==2), 'Two tar files of data and aSVGs respectively are expected!'))
+    if (sum(tar.num)==2) {
+
+      cat('Processing uploaded tar... \n')
+      p <- df.tar$datapath[1]; strs <- strsplit(p, '/')[[1]]
+      cfg$pa.upl <- pa.svg <- paste0(strs[grep('\\.tar$', strs, invert=TRUE)], collapse='/')
+      dat.idx <- grepl('data_shm.tar$', df.tar$name) 
+      cfg$pa.svg.upl <- df.tar$datapath[!dat.idx]
+      # system(paste0('tar -xf', ' ', svg.tar, ' -C ', pa.svg))
+      cfg$pa.dat.upl <- dat.pa <- df.tar$datapath[dat.idx]
+      df.pair.upl <- read_hdf5(dat.pa, 'df_pair')[[1]]
+      pair.na <- df.pair.upl$name; dat.upl <- df.pair.upl$data
+      svg.upl <- as.list(df.pair.upl$aSVG); names(dat.upl) <- names(svg.upl) <- pair.na
+
+      for (i in seq_along(svg.upl)) {
+        svg0 <- svg.upl[[i]]; if (grepl(';| |,', svg0)) {
+          strs <- strsplit(svg0, ';| |,')[[1]]; svg.upl[[i]] <- strs[strs!='']
+        }
+      }
+    }
     # Separate data, svg of default and customization. 
     na.def <- na.ipt[!grepl('^none$|^customData$|^customComputedData$', na.ipt)]
-    dat.def <- dat.ipt[na.def]; svg.def <- svg.ipt[na.def]
-na.cus <- c('customData', 'customComputedData')
-    cfg$lis.dat <- lis.dat; cfg$lis.dld <- lis.dld; cfg$lis.par <- lis.par; cfg$na.def <- na.def; cfg$svg.def <- svg.def; cfg$dat.ipt <- dat.ipt; cfg$na.cus <- na.cus
-
+    na.cus <- c('customData', 'customComputedData')
+    dat.def <- c(dat.upl, dat.ipt[na.def]); svg.def <- c(svg.upl, svg.ipt[na.def])
+    # If data/svg are duplicated between the server and upload, the data/svg on server side is removed.
+    dat.def <- dat.def[unique(names(dat.def))]; svg.def <- svg.def[unique(names(svg.def))]
+    cfg$lis.dat <- lis.dat; cfg$lis.dld <- lis.dld; cfg$lis.par <- lis.par; cfg$na.def <- names(dat.def); cfg$svg.def <- svg.def; cfg$dat.def <- dat.def; cfg$na.cus <- na.cus
     output$spatialHeatmap <- renderText({ lis.par$title['title', 'default'] })
     output$title.w <- renderText({ lis.par$title['width', 'default'] })
-    updateSelectInput(session, 'fileIn', 'Step 1: data sets', na.ipt, lis.par$default.dataset)
+    dat.nas <- c('none', 'customData', 'customComputedData', names(dat.def))
+    updateSelectInput(session, 'fileIn', 'Step 1: data sets', dat.nas, lis.par$default.dataset)
     updateRadioButtons(session, inputId='dimName', label='Step 4: is column or row gene?', choices=c("None", "Row", "Column"), selected=lis.par$col.row.gene, inline=TRUE)
-    # updateSelectInput(session, 'sep', 'Step 5: separator', c("None", "Tab", "Space", "Comma", "Semicolon"), lis.par$separator)
     updateNumericInput(session, inputId="A", label="Value (A) to exceed:", value=as.numeric(lis.par$data.matrix['A', 'default']))
     updateNumericInput(session, inputId="P", label="Proportion (P) of samples with values >= A:", value=as.numeric(lis.par$data.matrix['P', 'default']))
     updateNumericInput(session, inputId="CV1", label="Min coefficient of variation (CV1):", value=as.numeric(lis.par$data.matrix['CV1', 'default']))
@@ -169,15 +255,11 @@ na.cus <- c('customData', 'customComputedData')
     updateRadioButtons(session, inputId="thr", label="Select by:", choices=c('proportion'='p', 'number'='n', 'value'='v'), selected=lis.par$mhm['select.by', 'default'], inline=TRUE)
     updateNumericInput(session, inputId='mhm.v', label='Cutoff: ', value=as.numeric(lis.par$mhm['cutoff', 'default']), min=-Inf, max=Inf, step=NA)
     updateRadioButtons(session, inputId="mat.scale", label="Scale by:", choices=c("No", "Column", "Row"), selected=lis.par$mhm['scale', 'default'], inline=TRUE)
-    #updateRadioButtons(session, inputId="mhm.but", label="Show plot:", choices=c("Yes", "No"), selected=lis.par$mhm['show', 'default'], inline=TRUE)
     updateSelectInput(session, inputId="net.type", label="Network type:", choices=c('signed', 'unsigned', 'signed hybrid', 'distance'), selected=lis.par$network['net.type', 'default'])
     updateNumericInput(session, "min.size", "Minmum module size:", value=as.numeric(lis.par$network['min.size', 'default']), min=15, max=5000)
     updateSelectInput(session, "ds","Module splitting sensitivity level:", 3:2, selected=lis.par$network['ds', 'default'])
     updateTextInput(session, "color.net", "Color scheme:", lis.par$network['color', 'default'], placeholder=paste0('Eg: ', lis.par$network['color', 'default']))
     updateNumericInput(session, "max.edg", "Maximun edges (too many edges may crash the app):", value=cfg$lis.par$network['max.edges', 'default'], min=1, max=500)
-  #output$edge <- renderUI({ 
-   # span(style="color:black;font-weight:NULL;", HTML("Remaining edges to display (If > 300, the app might get stuck.):<br/>0"))
-  #})
 
   })
 
@@ -192,7 +274,7 @@ na.cus <- c('customData', 'customComputedData')
       content=function(file=paste0(normalizePath(tempdir(check=TRUE), winslash="/", mustWork=FALSE), '/config_par.yaml')){ 
  
         lis.cfg <- yaml.load_file('config/config.yaml')
-        lis.par <- lis.cfg[c("default.dataset", "col.row.gene", "separator", "hide.legend", "data.matrix", "shm.img", "shm.anm", "shm.video", "legend", "mhm", "network")]
+        lis.par <- lis.cfg[c("max.upload.size", "default.dataset", "col.row.gene", "separator", "hide.legend", "data.matrix", "shm.img", "shm.anm", "shm.video", "legend", "mhm", "network")]
         write_yaml(lis.par, file)
 
       }
@@ -226,7 +308,6 @@ na.cus <- c('customData', 'customComputedData')
     input$fileIn; input$geneInpath
     updateRadioButtons(session, inputId="dimName", label="Step 4: is column or row gene?", 
     inline=TRUE, choices=c("None", "Row", "Column"), selected="None")
-    # updateSelectInput(session, 'sep', 'Step 5: separator', c("None", "Tab", "Space", "Comma", "Semicolon"), "None")
     updateRadioButtons(session, inputId='log', label='Log/exp transform:', choices=c("No", "log2", "exp2"), selected=cfg$lis.par$data.matrix['log.exp', 'default'], inline=TRUE)
     updateRadioButtons(session, 'scale', label='Scale by:', choices=c('No', 'Row', 'Column'), selected=cfg$lis.par$data.matrix['scale', 'default'], inline=TRUE)
     updateRadioButtons(session, inputId='cs.v', label='Color scale based on:', choices=c("Selected rows", "All rows"), selected=cfg$lis.par$shm.img['color.scale', 'default'], inline=TRUE)
@@ -269,17 +350,31 @@ na.cus <- c('customData', 'customComputedData')
     if (any(input$fileIn %in% cfg$na.def)) {
 
       incProgress(0.5, detail="Loading matrix. Please wait.")
-      df.te <- fread.df(input=cfg$dat.ipt[input$fileIn], isRowGene=TRUE, header=TRUE, fill=TRUE); return(df.te)
-
+      dat.na <- cfg$dat.def[input$fileIn]
+      if ('example' %in% strsplit(dat.na, '/')[[1]]) df.te <- fread.df(input=dat.na, isRowGene=TRUE) else { 
+        # Exrtact data from uploaded tar.
+        dat <- NULL; if (!is.null(cfg$pa.dat.upl)) if (file.exists(cfg$pa.dat.upl)) {
+          cat('Extracting uploaded data... \n')
+          # The prefix is not input$fileIn. The returned value of read_hdf5 is either data.frame or SE.
+          dat <- read_hdf5(cfg$pa.dat.upl, prefix=dat.na)[[1]]
+        }
+        if (is.null(dat)|is.character(dat)|is.null(input$tar)) {
+          cat('Extracting internal data... \n')
+          dat <- read_hdf5('example/data_shm.tar', dat.na)[[1]]
+        }
+        validate(need(try(is(dat, 'data.frame')|is(dat, 'SummarizedExperiment')), 'The selected data is empty! Solution: 1) select another data, then rematch its samples to the selected aSVG; 2) include a data for the selected aSVG file in the backend database or the uploaded database.'))
+        if (is(dat, 'SummarizedExperiment')) {
+          dat <- se_from_db(dat)
+          validate(need(try(!is.character(dat)), dat))
+        }; df.te <- fread.df(input=dat)
+      }; return(df.te)
     }
-
     if (any(input$fileIn %in% cfg$na.cus) & 
     !is.null(input$geneInpath) & input$dimName!="None") {
 
       incProgress(0.25, detail="Importing matrix. Please wait.")
       geneInpath <- input$geneInpath
-      #if (input$sep=="Tab") sep <- "\t" else if (input$sep=="Space") sep <- " " else if (input$sep=="Comma") sep <- "," else if (input$sep=="Semicolon") sep <- ";"
-      df.upl <- fread.df(input=geneInpath$datapath, isRowGene=(input$dimName=='Row'), header=TRUE, fill=TRUE, rep.aggr='mean'); return(df.upl)
+      df.upl <- fread.df(input=geneInpath$datapath, isRowGene=(input$dimName=='Row')); return(df.upl)
    
     }
 
@@ -436,8 +531,9 @@ na.cus <- c('customData', 'customComputedData')
   color <- reactiveValues(col="none")
   observe({
     
-    if (is.null(input$col.but)) return()
-    if(input$col.but==0) color$col <- colorRampPalette(col_sep(cfg$lis.par$shm.img['color', 'default']))(length(geneV()))
+    col0 <- cfg$lis.par$shm.img['color', 'default']
+    if (is.null(input$col.but)|is.null(col0)) return()
+    if(input$col.but==0) color$col <- colorRampPalette(col_sep(col0))(length(geneV()))
 
   })
   # As long as a button is used, observeEvent should be used. All variables inside 'observeEvent' trigger code evaluation, not only 'eventExpr'.  
@@ -479,42 +575,129 @@ na.cus <- c('customData', 'customComputedData')
 
   })
 
+  svg.na.mat <- reactiveValues(svg.path=NULL, svg.na=NULL)
   svg.path <- reactive({
-
     if (input$fileIn=='none') return()
     if (any(input$fileIn %in% cfg$na.cus)) {
-
       if (is.null(input$svgInpath1)) svgIn.df <- input$svgInpath else svgIn.df <- input$svgInpath1
       svg.path <- svgIn.df$datapath; svg.na <- svgIn.df$name
-
-    } else { 
-
-      svg.path <- cfg$svg.def[[input$fileIn]]
-      svg.na <- NULL; for (i in svg.path) {
-      
-        str <- strsplit(i, '/')[[1]]; svg.na <- c(svg.na, str[length(str)])
-
-      }
-
-    }
-    if (length(svg.na)>1) {
-
-      validate(need(try(all(grepl('_shm\\d+\\.svg$', svg.na, perl=TRUE))), "Suffixes of aSVGs should be indexed as '_shm1.svg', '_shm2.svg', '_shm3i.svg', ..."))
-      ord <- order(gsub('.*_(shm.*)$', '\\1', svg.na))
-      svg.path <- svg.path[ord]; svg.na <- svg.na[ord]
-    
+    } else {
+      # Extract svg path and name: single or multiple svg paths are treated same way.
+      lis <- svg_pa_na(cfg$svg.def[[input$fileIn]], cfg$pa.svg.upl)
+      validate(need(try(!is.character(lis)), lis))
+      svg.path <- lis$svg.path; svg.na <- lis$svg.na
     }; cat('Access aSVG path... \n')
-    return(list(svg.path=svg.path, svg.na=svg.na))
-
+    # If multiple svgs, check suffixes.
+    lis <- svg_suffix(svg.path, svg.na)
+    validate(need(try(!is.character(lis)), lis)); return(lis)
   })
 
   sam <- reactive({ 
-
     cname <- colnames(geneIn()[["gene2"]]); idx <- grep("__", cname); c.na <- cname[idx]
     if (length(grep("__", c.na))>=1) gsub("(.*)(__)(.*$)", "\\1", c.na) else return(NULL) 
-
   })
+
+  output$svg <- renderUI({
+    nas <- names(cfg$svg.def)
+    selectInput('svg', label='aSVGs to re-match:', choices=nas, selected=input$fileIn)
+  })
+
+  # The object scope in reactive expression is restricted to the reactive evironment, thus sf.sep and sam.sep are moved outside 'observe'.
+  sf.sep <- 'only_above_features_are_re-matched'
+  sam.sep <- 'only_above_samples_are_re-matched'
+  observeEvent(list(input$svg), {
+    if (input$fileIn=='none'|is.null(cfg$svg.def)|is.null(input$svg)) return()
+    if (!(any(input$fileIn %in% cfg$na.def) & is.null(input$svgInpath))) return()
+    # Single or multiple svg paths are treated same way.
+    lis <- svg_pa_na(cfg$svg.def[[input$svg]], cfg$pa.svg.upl)
+    output$msg.match <- renderText({ validate(need(try(!is.character(lis)), lis)) })
+    validate(need(try(!is.character(lis)), lis))
+    svg.path <- lis$svg.path; svg.na <- lis$svg.na
+    cat('Access aSVG path for re-matching... \n')
+    # If multiple svgs, check suffixes.
+    lis <- svg_suffix(svg.path, svg.na)
+    validate(need(try(!is.character(lis)), lis))
+    svg.path <- lis$svg.path; svg.na <- lis$svg.na
+ 
+  withProgress(message="Tissue heatmap: ", value=0, {  
+    incProgress(0.5, detail="Extracting coordinates. Please wait.") 
+    # Whether a single or multiple SVGs, all are returned in a list.
+    sf.all <- NULL; for (i in seq_along(svg.na)) { 
+      cat('Extract all spatial features for re-matching:', svg.na[i], '\n')
+      df_tis <- svg_df(svg.path=svg.path[i], feature=sam())
+      validate(need(!is.character(df_tis), paste0(svg.na[i], ': ', df_tis)))
+      sf.all <- c(sf.all, df_tis$tis.path)
+    }
+  })
+  # paths and gs are dropped to bottom. 
+  sf.all <- unique(sf.all); pas.idx <- grepl('^path\\d+|^g\\d+', sf.all)
+  sf.all <- c(sf.all[!pas.idx], sf.all[pas.idx])
+  # Matching samples are raised to top.
+  sam.all <- unique(sam()); inter <- intersect(sam.all, sf.all)
+  cat('Adding separators to samples and features for re-matching... \n')
+  if (length(inter)!=0) { 
+    int.idx1 <- sam.all %in% inter; inter1 <- sam.all[int.idx1]
+    sam.all <- c(inter1, sam.sep, sam.all[!int.idx1])
+    int.idx2 <- sf.all %in% inter; sf.all <- c(inter1, sf.sep, sf.all[!int.idx2])
+  } else { sf.all <- c(sf.sep, sf.all); sam.all <- c(sam.sep, sam.all) }
+  output$sam <- renderUI({
+    rank_list(text="Drag samples in any desired order to match right", labels=sam.all, input_id="sam")
+  })
+
+  output$sf <- renderUI({
+    rank_list(text="Drag spatial features in any desired order to match left", labels=sf.all, input_id="sf"
+    )
+  }); svg.na.mat$svg.path <- svg.path; svg.na.mat$svg.na <- svg.na
+
+})
+    
+  observeEvent(input$fileIn, {
+    cna.match$cna <- NULL
+    svg.na.mat$svg.path <- svg.na.mat$svg.na <- NULL
+  })
+  # Reactive object in "observeEvent" is not accessible outside observeEvent. The solution is eventReactive. 
+  svg.path1 <- reactive({
+    if (!is.null(svg.na.mat$svg.path) & !is.null(svg.na.mat$svg.na)) { svg.path <- svg.na.mat$svg.path; svg.na <- svg.na.mat$svg.na } else { svg.path <- svg.path()$svg.path; svg.na <- svg.path()$svg.na }
+    return(list(svg.path=svg.path, svg.na=svg.na))
+  })
+
+  cna.match <- reactiveValues(cna=NULL)
+  observeEvent(input$match, {
   
+    sam <- input$sam; sf <- input$sf
+    cna <- colnames(geneIn()[["gene2"]])
+    w.sf <- which(sf %in% sf.sep); w.sam <- which(sam %in% sam.sep)
+    # If no "renderText", the validate message is not assigned to any reactive values and thus not seen on the user interface.
+    output$msg.match <- renderText({
+    validate(need(try(w.sf==w.sam), 'Samples and features should be one-to-one re-matched!')); NULL })
+    sf <- sf[-w.sf]; w.sf <- w.sf-1; sam <- sam[-w.sam]; w.sam <- w.sam-1
+    output$msg.match <- renderText({
+    validate(need(try(w.sf!=0|w.sam!=0), 'No samples or features are re-matched!')); NULL })
+    if (w.sf>0) {
+      cat('Re-match samples and features... \n')
+      sf.mat <- sf[seq_len(w.sf)]
+      cna <- colnames(geneIn()[["gene2"]]);
+      # If sf1 is re-matched to sam1, and sf1 is included in all sams, sf1 in all sams is replaced by sam1. 
+      sam.idx1 <- sam.idx2 <- list(); for (i in seq_len(w.sf)){
+        if (sam[i]==sf[i]) next
+        idx1 <- list(grep(paste0('^', sam[i], '__'), cna))
+        names(idx1) <- sf.mat[i]; sam.idx1 <- c(sam.idx1, idx1)
+        if (sf[i] %in% sam) {
+          idx2 <- list(grep(paste0('^', sf[i], '__'), cna))
+          names(idx2) <- sam[i]; sam.idx2 <- c(sam.idx2, idx2)
+        }
+      }
+      # sf1 is re-matched to sam1.
+      if (length(sam.idx1)>0) for (i in seq_along(sam.idx1)) {
+        cna[sam.idx1[[i]]] <- sub('.*__', paste0(names(sam.idx1)[i], '__'), cna[sam.idx1[[i]]])
+      }
+      # sf1 in sams is replaced by sam1.
+      if (length(sam.idx2)>0) for (i in seq_along(sam.idx2)) {
+        cna[sam.idx2[[i]]] <- sub('.*__', paste0(names(sam.idx2)[i], '__'), cna[sam.idx2[[i]]])
+      }; cna.match$cna <- cna 
+    }
+  })
+
   svg.df <- reactive({ 
 
     if ((any(input$fileIn %in% cfg$na.cus) & 
@@ -522,19 +705,17 @@ na.cus <- c('customData', 'customComputedData')
 
       withProgress(message="Tissue heatmap: ", value=0, {
     
-        incProgress(0.5, detail="Extracting coordinates. Please wait.") 
-          svg.path <- svg.path()[['svg.path']]
-          svg.na <- svg.path()[['svg.na']]; svg.df.lis <- NULL
+        incProgress(0.5, detail="Extracting coordinates. Please wait.")
+          svg.path <- svg.path1()$svg.path; svg.na <- svg.path1()$svg.na
           # Whether a single or multiple SVGs, all are returned in a list.
-          for (i in seq_along(svg.na)) {
+         svg.df.lis <- NULL; for (i in seq_along(svg.na)) {
          
             cat('Coordinate:', svg.na[i], '\n')
             df_tis <- svg_df(svg.path=svg.path[i], feature=sam())
             validate(need(!is.character(df_tis), paste0(svg.na[i], ': ', df_tis)))
             svg.df.lis <- c(svg.df.lis, list(df_tis))
    
-          }; names(svg.df.lis) <- svg.na; 
-         return(svg.df.lis)
+          }; names(svg.df.lis) <- svg.na; return(svg.df.lis)
 
       })
 
@@ -567,7 +748,6 @@ na.cus <- c('customData', 'customComputedData')
   observeEvent(input$fileIn, { grob$all <- grob$gg.all1 <- grob$gg.all1 <- grob$gg.all <- grob$lgd.all <- NULL })
   # Avoid repetitive computation under input$cs.v=='w.mat'.
   gs.new <- reactive({ 
-
     if.con <- is.null(svg.df())|is.null(geneIn())|is.null(gID$new)|length(gID$new)==0|is.null(gID$all)|is.null(input$dt_rows_selected)|color$col[1]=='none'
     if (length(if.con==FALSE)==0) if (length(if.con)==0) return(); if (is.na(if.con)|if.con==TRUE) return(NULL)
 
@@ -592,8 +772,13 @@ na.cus <- c('customData', 'customComputedData')
         tis.path <- svg.df[["tis.path"]]; fil.cols <- svg.df[['fil.cols']]
         if (input$pre.scale=='Yes') mar <- (1-w.h/w.h.max*0.99)/2 else mar <- NULL
         cat('New grob/ggplot:', ID, ' \n')
+        if (!is.null(cna.match$cna)) { 
+		      if (ncol(gene)==length(cna.match$cna)) colnames(gene) <- cna.match$cna 
+        }
         grob.lis <- grob_list(gene=gene, con.na=geneIn0()[['con.na']], geneV=geneV(), coord=g.df, ID=ID, legend.col=fil.cols, cols=color$col, tis.path=tis.path, tis.trans=input$tis, sub.title.size=18, mar.lb=mar, legend.nrow=2, legend.key.size=0.04, line.size=input$line.size+svg.df[['stroke.w']], line.color=input$line.color) # Only gID$new is used.
-        validate(need(!is.null(grob.lis), paste0(svg.na[i], ': no spatial features that have matching sample identifiers in data are detected!')))
+        msg <- paste0(svg.na[i], ': no spatial features that have matching sample identifiers in data are detected!')
+        if (is.null(grob.lis)) cat(msg, '\n')
+        output$msg.shm <- ({ validate(need(!is.null(grob.lis), msg)) })
         grob.lis.all <- c(grob.lis.all, list(grob.lis))
 
       }; names(grob.lis.all) <- svg.na; return(grob.lis.all)
@@ -607,7 +792,7 @@ na.cus <- c('customData', 'customComputedData')
   # Use "observeEvent" to replace "observe" and list events (input$log, input$tis, ...), since if the events are in "observe", every time a new gene is clicked, "input$dt_rows_selected" causes the evaluation of all code in "observe", and the evaluation is duplicated with "gs.new".
   col.reorder <- reactiveValues(col.re='Y')
   observeEvent(input$col.na, { if (input$col.cfm>0) col.reorder$col.re <- 'N' })
-  observeEvent(list(input$log, input$tis, input$col.but, input$cs.v, input$pre.scale, input$col.cfm, input$scale, input$line.size, input$line.color), {
+  observeEvent(list(input$log, input$tis, input$col.but, input$cs.v, input$pre.scale, input$col.cfm, input$scale, input$match, input$line.size, input$line.color), {
     
     grob$all <- grob$gg.all <- grob$lgd.all <- NULL; gs.all <- reactive({ 
 
@@ -624,15 +809,21 @@ na.cus <- c('customData', 'customComputedData')
       for (i in seq_along(svg.df.lis)) { w.h.all <- c(w.h.all, svg.df.lis[[i]][['w.h']]); w.h.max <- max(w.h.all) }
       # A set of SHMs are made for each SVG, and all sets of SHMs are placed in a list.
       for (i in seq_along(svg.df.lis)) {
-
+        
         svg.df <- svg.df.lis[[i]]; g.df <- svg.df[["df"]]
         tis.path <- svg.df[["tis.path"]]; fil.cols <- svg.df[['fil.cols']]; w.h <- svg.df[['w.h']]
         if (input$pre.scale=='Yes') mar <- (1-w.h/w.h.max*0.99)/2 else mar <- NULL
         cat('All grob/ggplot:', gID$geneID, ' \n')
         svg.na <- names(svg.df.lis)
         incProgress(0.75, detail=paste0('preparing ', paste0(gID$geneID, collapse=';')))
-        grob.lis <- grob_list(gene=gene, con.na=geneIn0()[['con.na']], geneV=geneV(), coord=g.df, ID=gID$geneID, legend.col=fil.cols, cols=color$col, tis.path=tis.path, tis.trans=input$tis, sub.title.size=18, mar.lb=mar, legend.nrow=2, legend.key.size=0.04, line.size=input$line.size, line.color=input$line.color) # All gene IDs are used.
-        validate(need(!is.null(grob.lis), paste0(svg.na[i], ': no spatial features that have matching sample identifiers in data are detected!')))
+        if (!is.null(cna.match$cna)) { 
+		      if (ncol(gene)!=length(cna.match$cna)) return()
+          colnames(gene) <- cna.match$cna 
+        }
+        grob.lis <- grob_list(gene=gene, con.na=geneIn0()[['con.na']], geneV=geneV(), coord=g.df, ID=gID$geneID, legend.col=fil.cols, cols=color$col, tis.path=tis.path, tis.trans=input$tis, sub.title.size=18, mar.lb=mar, legend.nrow=2, legend.key.size=0.04, line.size=input$line.size+svg.df[['stroke.w']], line.color=input$line.color) # All gene IDs are used.
+        msg <- paste0(svg.na[i], ': no spatial features that have matching sample identifiers in data are detected!')
+        if (is.null(grob.lis)) cat(msg, '\n')
+        output$msg.shm <- ({ validate(need(!is.null(grob.lis), msg)) })
         grob.lis.all <- c(grob.lis.all, list(grob.lis))
 
       }; names(grob.lis.all) <- svg.na; return(grob.lis.all)
@@ -669,8 +860,14 @@ na.cus <- c('customData', 'customComputedData')
         cat('All grob/ggplot of row selection:', ID, ' \n')
         svg.na <- names(svg.df.lis)
         incProgress(0.75, detail=paste0('preparing ', paste0(ID, collapse=';')))
-        grob.lis <- grob_list(gene=gene, con.na=geneIn0()[['con.na']], geneV=geneV(), coord=g.df, ID=ID, legend.col=fil.cols, cols=color$col, tis.path=tis.path, tis.trans=input$tis, sub.title.size=18, mar.lb=mar, legend.nrow=2, legend.key.size=0.04, line.size=input$line.size, line.color=input$line.color) # All gene IDs are used.
-        validate(need(!is.null(grob.lis), paste0(svg.na[i], ': no spatial features that have matching sample identifiers in data are detected!')))
+        if (!is.null(cna.match$cna)) { 
+		      if (ncol(gene)!=length(cna.match$cna)) return()
+          colnames(gene) <- cna.match$cna 
+        }
+        grob.lis <- grob_list(gene=gene, con.na=geneIn0()[['con.na']], geneV=geneV(), coord=g.df, ID=ID, legend.col=fil.cols, cols=color$col, tis.path=tis.path, tis.trans=input$tis, sub.title.size=18, mar.lb=mar, legend.nrow=2, legend.key.size=0.04, line.size=input$line.size+svg.df[['stroke.w']], line.color=input$line.color) # All gene IDs are used.
+        msg <- paste0(svg.na[i], ': no spatial features that have matching sample identifiers in data are detected!')
+        if (is.null(grob.lis)) cat(msg, '\n')
+        output$msg.shm <- ({ validate(need(!is.null(grob.lis), msg)) })
         grob.lis.all <- c(grob.lis.all, list(grob.lis))
 
       }; names(grob.lis.all) <- svg.na; return(grob.lis.all)
@@ -716,7 +913,7 @@ na.cus <- c('customData', 'customComputedData')
     if (is.null(grob$lgd.all)|is.null(lgd.key.size)|is.null(lgd.row)|is.null(lgd.label)) return()
     cat('Adjust legend size/rows... \n')
     grob$lgd.all <- gg_lgd(gg.all=grob$lgd.all, size.key=lgd.key.size, size.text.key=NULL, row=lgd.row, sam.dat=sam(), tis.trans=input$tis, position.text.key='right', label=(lgd.label=='Yes'), label.size=label.size)
-  
+ 
   })
   observeEvent(list(grob.all=grob$all, gen.con=input$gen.con), {
   
@@ -731,10 +928,6 @@ na.cus <- c('customData', 'customComputedData')
   })
   # Add value legend to SHMs.
   # 'observeEvent' is able to avoid infinite cycles while 'observe' may cause such cycles. E.g. in the latter, 'is.null(grob$gg.all)' and 'grob$gg.all1 <- gg.all <- gg_2lgd()' would induce each other and form infinit circles.
-  observe({
-
-
-  })
   observeEvent(list(val.lgd=input$val.lgd, row=input$val.lgd.row, key=input$val.lgd.key, text=input$val.lgd.text, feat=input$val.lgd.feat), {
     
     validate(need(try(as.integer(input$val.lgd.row)==input$val.lgd.row & input$val.lgd.row>0), 'Legend key rows should be a positive integer!'))
@@ -767,7 +960,6 @@ na.cus <- c('customData', 'customComputedData')
   observeEvent(input$col.cfm, { col.reorder$col.re <- 'Y' })
   # In "observe" and "observeEvent", if one code return (NULL), then all the following code stops. If one code changes, all the code renews.
   observe({
- 
     if.con <- is.null(geneIn())|is.null(input$dt_rows_selected)|is.null(svg.df())|gID$geneID[1]=="none"|is.null(grob$all1)
     if (length(if.con==FALSE)==0) if (length(if.con)==0) return(); if (is.na(if.con)|if.con==TRUE) return(NULL)
     
@@ -906,8 +1098,7 @@ na.cus <- c('customData', 'customComputedData')
       selectInput('line.color', label='Line color:', choices=c('grey70', 'black', 'red', 'green', 'blue'), selected=cfg$lis.par$shm.img['line.color', 'default']),
       numericInput(inputId='line.size', label='Line size:', value=as.numeric(cfg$lis.par$shm.img['line.size', 'default']), min=0.05, max=Inf, step=0.05, width=150)
       ))
-      ),
-      fluidRow(splitLayout(cellWidths=c("1%", "7%", "91%", "1%"), "", plotOutput("bar1"), plotOutput("shm", height='auto'), "")))
+      ), verbatimTextOutput('msg.shm'),      fluidRow(splitLayout(cellWidths=c("1%", "7%", "91%", "1%"), "", plotOutput("bar1"), plotOutput("shm", height='auto'), "")))
 
       ))
   
@@ -915,26 +1106,24 @@ na.cus <- c('customData', 'customComputedData')
 
   output$shms.o <- renderUI({
  
-    if (is.null(svg.path())) return(NULL)
-    if (length(svg.path()$svg.na)==1) return(NULL)
-    selectInput('shms.in', label='aSVG for legend:', choices=svg.path()[['svg.na']], selected=svg.path()[['svg.na']][1])
+    if (is.null(svg.path1())) return(NULL)
+    if (length(svg.path1()$svg.na)==1) return(NULL)
+    svg.pa <- svg.path1()[['svg.na']]
+    selectInput('shms.in', label='aSVG for legend:', choices=svg.pa, selected=svg.pa[1])
 
   })
 
-  output$lgd <- renderPlot(width='auto', height = "auto", {
-
+  output$lgd <- renderPlot(width='auto', height="auto", {
     validate(need(try(as.integer(input$lgd.row)==input$lgd.row & input$lgd.row>0), 'Legend key rows should be a positive integer!'))
     validate(need(try(input$lgd.key.size>0&input$lgd.key.size<1), 'Legend key size should be between 0 and 1!'))
-    svg.path <- svg.path()
-    if (is.null(svg.path())|is.null(grob$lgd.all)|(length(svg.path$svg.na)>1 & is.null(input$shms.in))) return(ggplot())
-
+    svg.path <- svg.path1()
+    if (is.null(svg.path1())|is.null(grob$lgd.all)|(length(svg.path$svg.na)>1 & is.null(input$shms.in))) return(ggplot())
       # Width and height in original SVG.
       if (length(svg.path$svg.na)>1) svg.na <- input$shms.in else svg.na <- 1
 
       w.h <- svg.df()[[svg.na]][['w.h']]
       w.h <- as.numeric(gsub("^(\\d+\\.\\d+|\\d+).*", "\\1", w.h)); r <- w.h[1]/w.h[2]
-      if (is.na(r)) return()
-      cat('Plotting legend plot... \n')
+      if (is.na(r)) return(); cat('Plotting legend plot... \n')
       g.lgd <- grob$lgd.all[[svg.na]]; g.lgd <- g.lgd+coord_fixed(ratio=r); return(g.lgd)
 
   })
@@ -969,13 +1158,13 @@ na.cus <- c('customData', 'customComputedData')
       cat("Removing animation files in 'www/ggly/' ... \n")
       unlink('www/ggly/lib', recursive=TRUE)
       file.remove(list.files('www/ggly/', '*.html$', full.names=TRUE))
-    } else dir.create('www/ggly')
+    } else dir.create('www/ggly', recursive=TRUE)
   }
   vdo_rm <- function() {
     if (dir.exists('www/video/')) {
       cat("Removing video file in 'www/video/' ... \n")
       file.remove(list.files('www/video/', '*.mp4$', full.names=TRUE))
-    } else dir.create('www/video/')
+    } else dir.create('www/video/', recursive=TRUE)
   }
   observeEvent(list(fineIn=input$fileIn, log=input$log, tis=input$tis, col.but=input$col.but, cs.v=input$cs.v, pre.scale=input$pre.scale), { ggly_rm(); vdo_rm() })
 

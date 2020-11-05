@@ -53,8 +53,9 @@ dataset13:
   data: example/us_population2018.txt
   svg: example/us_map_shm.svg
 title:
-- title:spatialHeatmap (2020-09-20)
+- title:spatialHeatmap (2020-11-01)
 - width:350
+max.upload.size: 5G 
 default.dataset: organ_Mustroph
 col.row.gene: None
 separator: None
@@ -84,7 +85,7 @@ shm.img:
 - value.legend.text:10
 - include.feature:No
 - line.color:grey70
-- line.size:0.2
+- line.size:0.1
 shm.anm:
 - show:No
 - transition:2

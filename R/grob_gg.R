@@ -24,6 +24,3 @@ grob_gg <- function(gs) {
   return(list(grob=grob.all, gg=gg.all, lgd.all=lgd.all))
 
 }
-
-
-

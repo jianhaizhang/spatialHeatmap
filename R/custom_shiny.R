@@ -11,7 +11,7 @@
 #' @param lis.dld.mul A list of paired data matrix and multiple aSVG files, which would be downloadable on the app for testing. The multiple aSVG files could be multiple growth stages of a plant. The list should have two elements with name slots of "data" and "svg" respectively, which are the paths of the data matrix and aSVG files repectively. After the function call, the specified data and aSVGs are copied to the "example" folder in the app. Note the two name slots should not be changed. \emph{E.g.} list(data='./data_download.txt', svg=c('./root_young_download_shm.svg', './root_old_download_shm.svg')).
 #' @param custom Logical, TRUE or FALSE. If TRUE (default), the "customData" option under "Step 1: data sets" is included, which allows to upload datasets from local computer.
 #' @param custom.computed Logical, TRUE or FALSE. If TRUE (default), the "customComputdData" option under "Step 1: data sets" is included, which allows to upload computed datasets from local computer. See \code{\link{adj_mod}}. 
-#' @param example Logical, TRUE or FALSE. If TRUE, the default examples in "spatialHeatmap" package are included in the app as well as those provided to \code{...} by users.
+#' @param example Logical, TRUE or FALSE. If TRUE (default), the default examples in "spatialHeatmap" package are included in the app as well as those provided to \code{...} by users.
 #' @param app.dir The directory to create the Shiny app. Default is current work directory \code{'.'}.
 
 #' @return If \code{lis.par.tmp==TRUE}, the template of default paramter list is returned. Otherwise, a customized Shiny app is generated in the path of \code{app.dir}. 
@@ -67,6 +67,8 @@
 #' # Lauch the app.
 #' shiny::runApp('~/test_shiny/shinyApp') 
 #' }
+#'
+#' # The customized Shiny app is able to take database backend as well. Examples are demonstrated in the function "write_hdf5".
 
 #' @author Jianhai Zhang \email{jzhan067@@ucr.edu; zhang.jianhai@@hotmail.com} \cr Dr. Thomas Girke \email{thomas.girke@@ucr.edu}
 
@@ -78,8 +80,9 @@
 #' @importFrom yaml yaml.load_file write_yaml
 #' @importFrom grDevices colors
 
-custom_shiny <- function(..., lis.par=NULL, lis.par.tmp=FALSE, lis.dld.single=NULL, lis.dld.mul=NULL, custom=TRUE, custom.computed=TRUE, example=FALSE, app.dir='.') {
+custom_shiny <- function(..., lis.par=NULL, lis.par.tmp=FALSE, lis.dld.single=NULL, lis.dld.mul=NULL, custom=TRUE, custom.computed=TRUE, example=TRUE, app.dir='.') {
 
+  options(stringsAsFactors=FALSE)
   # Default config file.
   cfg.def <- yaml.load_file(system.file('extdata/shinyApp/config/config.yaml', package='spatialHeatmap'))
   # Default parameters.
@@ -151,8 +154,29 @@ custom_shiny <- function(..., lis.par=NULL, lis.par.tmp=FALSE, lis.dld.single=NU
   # Validate colours.
   col_check('shm.img', lis.par$shm.img)
   col_check('network', lis.par$network)
-  # Copy user-provided files, and change data/svg path.
-  lis.dat <- cp_file(lis.dat, app.dir, 'example')
+  # Copy data/svg in list of two tar files and isolate data/svg list of tar file. 
+  idx <- lis.dat1 <- NULL; for (i in seq_along(lis.dat)) {
+
+    lis0 <- lis.dat[[i]]; if (length(lis0)==2) { 
+  
+      idx <- c(idx, i); for (j in lis0) {
+
+        j <- normalizePath(j)
+        if (grepl('data_shm.tar$', j)) lis.dat1 <- pair2lis(read_hdf5(j, 'df_pair')[[1]], db=TRUE)
+        if (grepl('\\.tar$', j)) system(paste0('cp ', j, ' ', app.dir, '/example')) else stop('Compressed data and aSVGs should be two independent ".tar" files respectively!')
+
+      }
+
+    }
+
+  }
+  if (is.null(idx)) lis.dat <- cp_file(lis.dat, app.dir, 'example') else { 
+    lis.dat <- cp_file(lis.dat[-idx], app.dir, 'example')
+    # Data in tar file take precedence over in list.
+    na.all <- vapply(lis.dat, function(x) { na <- NULL; na <- c(na, x$name) }, character(1)) 
+    na.all1 <- vapply(lis.dat1, function(x) { na <- NULL; na <- c(na, x$name) }, character(1))
+    lis.dat <- lis.dat[!(na.all %in% na.all1)]
+  }
   if (!is.null(lis.dld.single)) lis.dld1 <- cp_file(lis.dld.single, app.dir, 'example') else {
     # Use default download files.
     lis.dld1 <- list(data="example/expr_arab.txt", svg="example/arabidopsis_thaliana.root.cross_shm.svg")
@@ -166,7 +190,7 @@ custom_shiny <- function(..., lis.par=NULL, lis.par.tmp=FALSE, lis.dld.single=NU
   if (custom==TRUE) lis.cus1 <- list(name='customData', data='none', svg='none')
   if (custom.computed==TRUE) lis.cus2 <- list(name='customComputedData', data='none', svg='none')
   # All data sets.
-  lis.dat <- c(list(list(name='none', data='none', svg='none'), lis.cus1, lis.cus2), lis.dat, exp)
+  lis.dat <- c(list(list(name='none', data='none', svg='none'), lis.cus1, lis.cus2), lis.dat, lis.dat1, exp)
   # Name the complete list.
   names(lis.dat) <- paste0('dataset', seq_along(lis.dat))
   lis.all <- c(lis.dat, lis.par, lis.dld)
@@ -174,7 +198,7 @@ custom_shiny <- function(..., lis.par=NULL, lis.par.tmp=FALSE, lis.dld.single=NU
 
 }
 
-#' Check validity of color indgredients. 
+#' Check validity of color indredients in the yaml file
 #'
 #' @keywords Internal
 #' @noRd
@@ -183,12 +207,37 @@ col_check <- function(element, vec.all) {
 
   col0 <- vec.all[grepl('^color:', vec.all)]
   color <- gsub('.*:(.*)', '\\1', col0)
-	color <- gsub(' |\\.|-|;|,|/', '_', color)	
+  color <- gsub(' |\\.|-|;|,|/', '_', color)
   color <- strsplit(color, '_')[[1]]
   color <- color[color!='']; color1 <- color[!color %in% colors()]
   if (length(color1)>0) stop(paste0('Colors in ', element, ' not valid: ', paste0(color1, collapse=', '), '!'))
 
-}	
+}
+
+
+#' Convert the data-aSVG pair from data frame to list
+#'
+#' @keywords Internal
+#' @noRd
+
+pair2lis <- function(df.pair, db=FALSE) { 
+
+  na.all <- as.vector(df.pair$name); dat.all <- as.vector(df.pair$data)
+  svg.all <- df.pair[, 'aSVG']
+  lis.dat0 <- NULL; for (i in seq_len(nrow(df.pair))) {
+    # Separate multiple aSVGs.
+    svg <- svg.all[i]; if (grepl(';| |,', svg)) {
+
+      strs <- strsplit(svg, ';| |,')[[1]]; svg <- strs[strs!='']
+
+    }
+  # Data of txt file and db are distinguished by 'example/' in the dataset list.
+  if (db==FALSE) lis.dat0 <- c(lis.dat0, list(list(name=na.all[i], data=paste0('example/', dat.all[i]), svg=paste0('example/', svg)))) else lis.dat0 <- c(lis.dat0, list(list(name=na.all[i], data=dat.all[i], svg=svg)))
+
+  }; return(lis.dat0)
+
+}
+
 
 #' Copy user-provided files, and change data/svg path.
 #'

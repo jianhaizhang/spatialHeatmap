@@ -16,9 +16,9 @@ return_feature(
 )
 }
 \arguments{
-\item{feature}{A vector of target feature keywords (case insentitive), which is used to select aSVG files from a collection. \emph{E.g.} c('heart', 'brain').}
+\item{feature}{A vector of target feature keywords (case insentitive), which is used to select aSVG files from a collection. \emph{E.g.} c('heart', 'brain'). If NA or NULL, all features of all SVG files matching \code{species} are returned.}
 
-\item{species}{A vector of target species keywords (case insentitive), which is used to select aSVG files from a collection. \emph{E.g.} c('gallus').}
+\item{species}{A vector of target species keywords (case insentitive), which is used to select aSVG files from a collection. \emph{E.g.} c('gallus'). If NA or NULL, all SVG files in \code{dir} are queried.}
 
 \item{keywords.any}{Logical, TRUE or FALSE. Default is TRUE. The internal searching is case-insensitive. The space, dot, hypen, semicolon, comma, forward slash are treated as separators between words and not counted in searching. If TRUE, every returned hit contains at least one word in the \code{feature} vector and at least one word in the \code{species} vector, which means all the possible hits are returned. \emph{E.g.} "prefrontal cortex" in "homo_sapiens.brain.svg" would be returned if \code{feature=c('frontal')} and \code{species=c('homo')}. If FALSE, every returned hit contains at least one exact element in the \code{feature} vector and all exact elements in the \code{species} vector. \emph{E.g.} "frontal cortex" rather than "prefrontal cortex" in "homo_sapiens.brain.svg" would be returned if \code{feature=c('frontal cortex')} and \code{species=c('homo sapiens', 'brain')}.}
 

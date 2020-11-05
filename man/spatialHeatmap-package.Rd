@@ -135,6 +135,9 @@ Maintainer: \packageMaintainer{spatialHeatmap}
   Almende B.V., Benoit Thieurmel and Titouan Robert (2017). visNetwork: Network
   Visualization using 'vis.js' Library. R package version 2.0.1.
   https://CRAN.R-project.org/package=visNetwork
+
+  Lori Shepherd and Martin Morgan (2020). BiocFileCache: Manage Files Across 
+  Sessions. R package version 1.12.1.
 }
 %%~~ Optionally other standard keywords, one per line, from file KEYWORDS in the R ~~
 %%~~ documentation directory ~~
