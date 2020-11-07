@@ -76,7 +76,7 @@ svg_df <- function(svg.path, feature) {
 
     } else { tit <- c(tit, df.attr[i, 'title']); id.all <- c(id.all, df.attr[i, 'id']) }
 
-  }; tis.path <- gsub("_\\d+$", "", tit)  
+  }; tis.path <- gsub("_\\d+$", "", tit)
  style <- 'fill:#46e8e8;fill-opacity:1;stroke:#000000;stroke-width:3;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1' # 'fill' is not necessary. In Inkscape, "group" or move an object adds transforms (relative positions), and this can lead to related polygons uncolored in the spatial heatmaps. Solution: ungroup and regroup to get rid of transforms and get absolute positions.
   # Change 'style' of all polygons. Since in SVG code, if no fill in style, no fill in ".ps.xml", so is the stroke. 
   xml_set_attr(chdn.out, 'style', style); xml_set_attr(chdn.ply, 'style', style)  
@@ -112,6 +112,7 @@ svg_df <- function(svg.path, feature) {
   if (xml_length(nodeset)[1]==0) {
     if (tab %% 2==0) nodeset <- chdn1[seq(1, tab, by=2)] else return('Relative coordinates detected in aSVG file!')
   }
+  if (length(tit)!=length(nodeset)) return('Some shape(s) are missing!')
   df <- NULL; for (i in seq_along(nodeset)) {
 
     xy <- xml_children(nodeset[[i]])[-1]

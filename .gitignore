@@ -10,6 +10,7 @@ sub_matrix.txt
 customComputedData/
 spatialHeatmap.html
 vignette_files/
+spatialHeatmap_files/
 vignette_cache/
 inst/extdata/shinyApp/test*
 html_shm/

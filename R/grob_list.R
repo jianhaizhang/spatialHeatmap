@@ -37,58 +37,66 @@
 
 grob_list <- function(gene, con.na=TRUE, geneV, coord, ID, cols, tis.path, tis.trans=NULL, sub.title.size, sam.legend='identical', legend.col, legend.ncol=NULL, legend.nrow=NULL, legend.position='bottom', legend.direction=NULL, legend.key.size=0.02, legend.text.size=12, legend.plot.title=NULL, legend.plot.title.size=11, line.size=0.2, line.color='grey70', mar.lb=NULL, ...) {
 
-  value <- feature <- NULL
+  # save(gene, con.na, geneV, coord, ID, cols, tis.path, tis.trans, sub.title.size, sam.legend, legend.col, legend.ncol, legend.nrow, legend.position, legend.direction, legend.key.size, legend.text.size, legend.plot.title, legend.plot.title.size, line.size, line.color, mar.lb, file='all')
+  
+  # Main function to create SHMs and legend plot
   g_list <- function(con, lgd=FALSE, ...) {
 
-    x <- y <- tissue <- NULL; tis.df <- unique(coord[, 'tissue'])
-    if (lgd==FALSE) { 
-
-      g.col <- NULL; con.idx <- grep(paste0("^", con, "$"), cons)
+    value <- feature <- x <- y <- tissue <- NULL; tis.df <- as.vector(unique(coord[, 'tissue']))
+    # tis.path and tis.df have the same length by default.
+    # Assign default colours to each path.
+    g.col <- rep(NA, length(tis.path)); names(g.col) <- tis.df
+    for (i in seq_along(g.col)) {
+      g.col0 <- legend.col[sub('_\\d+$', '', names(g.col)[i])]
+      if (g.col0=='none') next
+      if (!is.na(g.col0)) g.col[i] <- g.col0
+    }
+    if (lgd==FALSE) {
+      con.idx <- grep(paste0("^", con, "$"), cons)
+      # Target tissues and colors in data columns.
       tis.col1 <- tis.col[con.idx]; scol1 <- scol[con.idx]
-
-      for (i in tis.path) {
-
-        tis.idx <- which(tis.col1 %in% i); if (length(tis.idx)==1) { g.col <- c(g.col, scol1[tis.idx])
-        } else if (length(tis.idx)==0) { g.col <- c(g.col, NA) }
-
-      }; names(g.col) <- tis.df
+      for (i in unique(tis.path)) {
+        # Map target colors to target tissues.
+        tis.idx <- which(tis.col1 %in% i); if (length(tis.idx)==1) {
+          pat <- paste0(paste0('^', i, '$'), '|', paste0('^', i, '_\\d+$'))
+          g.col[grep(pat, tis.df)] <- scol1[tis.idx] # names(g.col) is tis.df 
+        }
+      }
     # Make selected tissues transparent by setting their colours as NA.
     if (!is.null(tis.trans)) for (i in tis.df) { if (sub('_\\d+$', '', i) %in% tis.trans) g.col[i] <- NA }
-    
-    } else g.col <- rep(NA, length(tis.path))
-    names(g.col) <- tis.df # The colors might be internally re-ordered alphabetically during mapping, so give them names to fix the match with tissues. E.g. c('yellow', 'blue') can be re-ordered to c('blue', 'yellow'), which makes tissue mapping wrong. Correct: colours are not re-ordered. The 'tissue' in 'data=coord' are internally re-ordered according to a factor. Therfore, 'tissue' should be a factor with the right order. Otherwise, disordered mapping can happen.
+    } # The colors might be internally re-ordered alphabetically during mapping, so give them names to fix the match with tissues. E.g. c('yellow', 'blue') can be re-ordered to c('blue', 'yellow'), which makes tissue mapping wrong. Correct: colours are not re-ordered. The 'tissue' in 'data=coord' are internally re-ordered according to a factor. Therfore, 'tissue' should be a factor with the right order. Otherwise, disordered mapping can happen.
 
     # Show selected or all samples in legend.
     if (length(sam.legend)==1) if (sam.legend=='identical') sam.legend <- intersect(sam.uni, unique(tis.path)) else if (sam.legend=='all') sam.legend <- unique(tis.path)
     
-    if (lgd==FALSE) {
+    if (lgd==FALSE) { # Legend plot.
     
       sam.legend <- setdiff(sam.legend, tis.trans) 
       leg.idx <- !duplicated(tis.path) & (tis.path %in% sam.legend)
-      # Legends are set for each SHM and then removed in 'ggplotGrob', but a copy with legend is saved separately for later used in video.
-      scl.fil <- scale_fill_manual(values=g.col, breaks=as.character(tis.df)[leg.idx], labels=tis.path[leg.idx], guide=guide_legend(title=NULL, ncol=legend.ncol, nrow=legend.nrow))
+      # Bottom legends are set for each SHM and then removed in 'ggplotGrob', but a copy with legend is saved separately for later used in video.
+      scl.fil <- scale_fill_manual(values=g.col, breaks=tis.df[leg.idx], labels=tis.path[leg.idx], guide=guide_legend(title=NULL, ncol=legend.ncol, nrow=legend.nrow))
    
     } else { 
 
-      # Select legend key colours if identical samples between SVG and matrix have colors of "none".
-      legend.col <- legend.col[sam.legend] 
-      if (any(legend.col=='none')) {
+      # Assign legend key colours if identical samples between SVG and matrix have colors of "none".
+      legend.col1 <- legend.col[sam.legend] 
+      if (any(legend.col1=='none')) {
        
-         n <- sum(legend.col=='none'); col.all <- grDevices::colors()[grep('honeydew|aliceblue|white|gr(a|e)y', grDevices::colors(), invert=TRUE)]
+         n <- sum(legend.col1=='none'); col.all <- grDevices::colors()[grep('honeydew|aliceblue|white|gr(a|e)y', grDevices::colors(), invert=TRUE)]
          col.none <- col.all[seq(from=1, to=length(col.all), by=floor(length(col.all)/n))]
-         legend.col[legend.col=='none'] <- col.none[seq_len(n)]
+         legend.col1[legend.col1=='none'] <- col.none[seq_len(n)]
 
        }
        # Map legend colours to tissues.
        sam.legend <- setdiff(sam.legend, tis.trans) 
        leg.idx <- !duplicated(tis.path) & (tis.path %in% sam.legend)
-       legend.col <- legend.col[sam.legend] # Exclude transparent tissues. 
+       legend.col1 <- legend.col1[sam.legend] # Exclude transparent tissues. 
+       # Copy colors across same numbered tissues.
        for (i in seq_along(g.col)) {
-
-         g.col0 <- legend.col[sub('_\\d+', '', names(g.col)[i])]
+         if (!is.na(g.col[i])) next
+         g.col0 <- legend.col1[sub('_\\d+$', '', names(g.col)[i])]
          if (!is.na(g.col0)) g.col[i] <- g.col0
-
-       }; scl.fil <- scale_fill_manual(values=g.col, breaks=as.character(tis.df)[leg.idx], labels=tis.path[leg.idx], guide=guide_legend(title=NULL, ncol=legend.ncol, nrow=legend.nrow)) 
+       }; scl.fil <- scale_fill_manual(values=g.col, breaks=tis.df[leg.idx], labels=tis.path[leg.idx], guide=guide_legend(title=NULL, ncol=legend.ncol, nrow=legend.nrow)) 
 
     }
     lgd.par <- theme(legend.position=legend.position, legend.direction=legend.direction, legend.background = element_rect(fill=alpha(NA, 0)), legend.key.size=unit(legend.key.size, "npc"), legend.text=element_text(size=legend.text.size), legend.margin=margin(l=0.1, r=0.1, unit='npc'))
@@ -113,6 +121,7 @@ grob_list <- function(gene, con.na=TRUE, geneV, coord, ID, cols, tis.path, tis.t
     }; return(g)
 
   }
+
   # Map colours to samples according to expression level.
   cname <- colnames(gene); form <- grep('__', cname) # Only take the column names with "__".
   cons <- gsub("(.*)(__)(.*)", "\\3", cname[form]); con.uni <- unique(cons)
@@ -131,14 +140,14 @@ grob_list <- function(gene, con.na=TRUE, geneV, coord, ID, cols, tis.path, tis.t
     c.na1 <- c.na[grepl(paste0('^(', paste0(tis.tar,collapse='|'), ')__'), c.na)]
     # Only conditions paired with valid tissues (have matching samples in data) are used. 
     con.vld <- gsub("(.*)(__)(.*)", "\\3", c.na1); con.vld.uni <- unique(con.vld)
-    g.lis <- NULL; grob.na0 <- paste0(k, "_", con.vld.uni); g.lis <- lapply(con.vld.uni, g_list)
+    g.lis <- NULL; grob.na0 <- paste0(k, "_", con.vld.uni); g.lis <- lapply(con.vld.uni, g_list, ...)
     # Repress popups by saving it to a png file, then delete it.
     tmp <- normalizePath(tempfile(), winslash='/', mustWork=FALSE)
     png(tmp); grob <- lapply(g.lis, function(x) { x <- x+theme(legend.position="none"); ggplotGrob(x) })
     dev.off(); if (file.exists(tmp)) do.call(file.remove, list(tmp))
     names(g.lis) <- names(grob) <- grob.na0; grob.lis <- c(grob.lis, grob); g.lis.all <- c(g.lis.all, g.lis)
 
-  }; g.lgd <- g_list(con=NULL, lgd=TRUE)
+  }; g.lgd <- g_list(con=NULL, lgd=TRUE, ...)
   return(list(grob.lis=grob.lis, g.lgd=g.lgd, g.lis.all=g.lis.all))
 
 }
@@ -153,4 +162,8 @@ line_size <- function(coord, line.size) {
     coord$line.size[grepl(pat, coord$tissue)] <- line.size[i]
   }; return(coord)
 }
+
+
+
+
 
