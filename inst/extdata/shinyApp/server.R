@@ -5,7 +5,22 @@ options(stringsAsFactors=FALSE)
 # Right before submit the package the following functions will be deleted, and they will be imported as above. They are listed here now for the convenience of functionality development.
 
 # Import internal functions.
+cord_parent <- get('cord_parent', envir=asNamespace('spatialHeatmap'), inherits=FALSE)
+
+use <- get('use', envir=asNamespace('spatialHeatmap'), inherits=FALSE)
+
+cord <- get('cord', envir=asNamespace('spatialHeatmap'), inherits=FALSE)
+
+xy0 <- get('xy0', envir=asNamespace('spatialHeatmap'), inherits=FALSE)
+
+xy <- get('xy', envir=asNamespace('spatialHeatmap'), inherits=FALSE)
+
+tit_id <- get('tit_id', envir=asNamespace('spatialHeatmap'), inherits=FALSE)
+
+out_ply <- get('out_ply', envir=asNamespace('spatialHeatmap'), inherits=FALSE)
+
 sort_gen_con <- get('sort_gen_con', envir=asNamespace('spatialHeatmap'), inherits=FALSE)
+
 test_ffm <- get('test_ffm', envir=asNamespace('spatialHeatmap'), inherits=FALSE)
 
 read_hdf5 <- get('read_hdf5', envir=asNamespace('spatialHeatmap'), inherits=FALSE)
@@ -182,8 +197,8 @@ shinyServer(function(input, output, session) {
 
     lis.cfg <- yaml.load_file('config/config.yaml')
     lis.dat <- lis.cfg[grepl('^dataset\\d+', names(lis.cfg))]
-    lis.dld <- lis.cfg[grepl('download_single|download_multiple', names(lis.cfg))]
-    if (is.null(input$config)) lis.par <- lis.cfg[!grepl('^dataset\\d+|download_single|download_multiple', names(lis.cfg))] else lis.par <- yaml.load_file(input$config$datapath[1])
+    lis.dld <- lis.cfg[grepl('download_single|download_multiple|download_spatial_temporal', names(lis.cfg))]
+    if (is.null(input$config)) lis.par <- lis.cfg[!grepl('^dataset\\d+|download_single|download_multiple|download_spatial_temporal', names(lis.cfg))] else lis.par <- yaml.load_file(input$config$datapath[1])
     upl.size <- toupper(lis.par$max.upload.size)
     num <- as.numeric(gsub('(\\d+)(G|M)', '\\1', upl.size))
     if (grepl('\\d+G$', upl.size)) max.size <- num*1024^3
@@ -265,9 +280,10 @@ shinyServer(function(input, output, session) {
 
   observe({ 
 
-    dld.exp <- reactiveValues(sgl=NULL, mul=NULL)
+    dld.exp <- reactiveValues(sgl=NULL, mul=NULL, st=NULL)
     dld.exp$sgl <- cfg$lis.dld$download_single
     dld.exp$mul <- cfg$lis.dld$download_multiple
+    dld.exp$st <- cfg$lis.dld$download_spatial_temporal
 
     output$dld.cfg <- downloadHandler(
       filename=function(){ "config_par.yaml" },
@@ -280,12 +296,14 @@ shinyServer(function(input, output, session) {
       }
     )
     output$dld.sgl <- downloadHandler(
-      filename=function(){ "single_aSVG_data.zip" },
-      content=function(file=paste0(normalizePath(tempdir(check=TRUE), winslash="/", mustWork=FALSE), '/single_aSVG_data.zip')){ zip(file, c(dld.exp$sgl$data, dld.exp$sgl$svg)) }
+      filename=function(){ "single_aSVG_data.zip" },  content=function(file=paste0(normalizePath(tempdir(check=TRUE), winslash="/", mustWork=FALSE), '/single_aSVG_data.zip')){ zip(file, c(dld.exp$sgl$data, dld.exp$sgl$svg)) }
     )
     output$dld.mul <- downloadHandler(   
-      filename=function(){ "multiple_aSVG_data.zip" },
-      content=function(file=paste0(normalizePath(tempdir(check=TRUE), winslash="/", mustWork=FALSE), '/multiple_aSVG_data.zip')){ zip(file, c(dld.exp$mul$data, dld.exp$mul$svg)) }
+      filename=function(){ "multiple_aSVG_data.zip" }, content=function(file=paste0(normalizePath(tempdir(check=TRUE), winslash="/", mustWork=FALSE), '/multiple_aSVG_data.zip')){ zip(file, c(dld.exp$mul$data, dld.exp$mul$svg)) }
+  )
+    output$dld.st <- downloadHandler(   
+      filename=function(){ "spatiotemporal_aSVG_data.zip" },
+content=function(file=paste0(normalizePath(tempdir(check=TRUE), winslash="/", mustWork=FALSE), '/spatiotemporal_aSVG_data.zip')){ zip(file, c(dld.exp$st$data, dld.exp$st$svg)) }
   )
   })
 
@@ -775,7 +793,8 @@ shinyServer(function(input, output, session) {
         if (!is.null(cna.match$cna)) { 
 		      if (ncol(gene)==length(cna.match$cna)) colnames(gene) <- cna.match$cna 
         }
-        grob.lis <- grob_list(gene=gene, con.na=geneIn0()[['con.na']], geneV=geneV(), coord=g.df, ID=ID, legend.col=fil.cols, cols=color$col, tis.path=tis.path, tis.trans=input$tis, sub.title.size=18, mar.lb=mar, legend.nrow=2, legend.key.size=0.04, line.size=input$line.size+svg.df[['stroke.w']], line.color=input$line.color) # Only gID$new is used.
+        size.key <- as.numeric(cfg$lis.par$legend['key.size', 'default'])
+        grob.lis <- grob_list(gene=gene, con.na=geneIn0()[['con.na']], geneV=geneV(), coord=g.df, ID=ID, legend.col=fil.cols, cols=color$col, tis.path=tis.path, ft.trans=input$tis, sub.title.size=18, mar.lb=mar, legend.nrow=as.numeric(cfg$lis.par$legend['key.row', 'default']), legend.key.size=size.key, legend.text.size=8*size.key*33, line.size=input$line.size+svg.df[['stroke.w']], line.color=input$line.color) # Only gID$new is used.
         msg <- paste0(svg.na[i], ': no spatial features that have matching sample identifiers in data are detected!')
         if (is.null(grob.lis)) cat(msg, '\n')
         output$msg.shm <- ({ validate(need(!is.null(grob.lis), msg)) })
@@ -820,7 +839,8 @@ shinyServer(function(input, output, session) {
 		      if (ncol(gene)!=length(cna.match$cna)) return()
           colnames(gene) <- cna.match$cna 
         }
-        grob.lis <- grob_list(gene=gene, con.na=geneIn0()[['con.na']], geneV=geneV(), coord=g.df, ID=gID$geneID, legend.col=fil.cols, cols=color$col, tis.path=tis.path, tis.trans=input$tis, sub.title.size=18, mar.lb=mar, legend.nrow=2, legend.key.size=0.04, line.size=input$line.size+svg.df[['stroke.w']], line.color=input$line.color) # All gene IDs are used.
+        size.key <- as.numeric(cfg$lis.par$legend['key.size', 'default'])
+        grob.lis <- grob_list(gene=gene, con.na=geneIn0()[['con.na']], geneV=geneV(), coord=g.df, ID=gID$geneID, legend.col=fil.cols, cols=color$col, tis.path=tis.path, ft.trans=input$tis, sub.title.size=18, mar.lb=mar, legend.nrow=as.numeric(cfg$lis.par$legend['key.row', 'default']), legend.key.size=size.key, legend.text.size=8*size.key*33, line.size=input$line.size+svg.df[['stroke.w']], line.color=input$line.color) # All gene IDs are used.
         msg <- paste0(svg.na[i], ': no spatial features that have matching sample identifiers in data are detected!')
         if (is.null(grob.lis)) cat(msg, '\n')
         output$msg.shm <- ({ validate(need(!is.null(grob.lis), msg)) })
@@ -864,7 +884,8 @@ shinyServer(function(input, output, session) {
 		      if (ncol(gene)!=length(cna.match$cna)) return()
           colnames(gene) <- cna.match$cna 
         }
-        grob.lis <- grob_list(gene=gene, con.na=geneIn0()[['con.na']], geneV=geneV(), coord=g.df, ID=ID, legend.col=fil.cols, cols=color$col, tis.path=tis.path, tis.trans=input$tis, sub.title.size=18, mar.lb=mar, legend.nrow=2, legend.key.size=0.04, line.size=input$line.size+svg.df[['stroke.w']], line.color=input$line.color) # All gene IDs are used.
+        size.key <- as.numeric(cfg$lis.par$legend['key.size', 'default'])
+        grob.lis <- grob_list(gene=gene, con.na=geneIn0()[['con.na']], geneV=geneV(), coord=g.df, ID=ID, legend.col=fil.cols, cols=color$col, tis.path=tis.path, ft.trans=input$tis, sub.title.size=18, mar.lb=mar, legend.nrow=as.numeric(cfg$lis.par$legend['key.row', 'default']), legend.key.size=size.key, legend.text.size=8*size.key*33, line.size=input$line.size+svg.df[['stroke.w']], line.color=input$line.color) # All gene IDs are used.
         msg <- paste0(svg.na[i], ': no spatial features that have matching sample identifiers in data are detected!')
         if (is.null(grob.lis)) cat(msg, '\n')
         output$msg.shm <- ({ validate(need(!is.null(grob.lis), msg)) })
@@ -912,7 +933,7 @@ shinyServer(function(input, output, session) {
     lgd.label <- input$lgd.label; label.size <- input$lgd.lab.size
     if (is.null(grob$lgd.all)|is.null(lgd.key.size)|is.null(lgd.row)|is.null(lgd.label)) return()
     cat('Adjust legend size/rows... \n')
-    grob$lgd.all <- gg_lgd(gg.all=grob$lgd.all, size.key=lgd.key.size, size.text.key=NULL, row=lgd.row, sam.dat=sam(), tis.trans=input$tis, position.text.key='right', label=(lgd.label=='Yes'), label.size=label.size)
+    grob$lgd.all <- gg_lgd(gg.all=grob$lgd.all, size.key=lgd.key.size, size.text.key=NULL, row=lgd.row, sam.dat=sam(), ft.trans=input$tis, position.text.key='right', label=(lgd.label=='Yes'), label.size=label.size)
  
   })
   observeEvent(list(grob.all=grob$all, gen.con=input$gen.con), {
@@ -940,7 +961,7 @@ shinyServer(function(input, output, session) {
     gg.all <- grob$gg.all1
     if ((input$val.lgd %% 2)==1) {
 
-      gg.all <- gg_2lgd(gg.all=gg.all, sam.dat=sam(), tis.trans=input$tis, position.2nd='bottom', legend.nrow.2nd=input$val.lgd.row, legend.key.size.2nd=input$val.lgd.key, legend.text.size.2nd=input$val.lgd.text, add.feature.2nd=(input$val.lgd.feat=='Yes'))
+      gg.all <- gg_2lgd(gg.all=gg.all, sam.dat=sam(), ft.trans=input$tis, position.2nd='bottom', legend.nrow.2nd=input$val.lgd.row, legend.key.size.2nd=input$val.lgd.key, legend.text.size.2nd=input$val.lgd.text, add.feature.2nd=(input$val.lgd.feat=='Yes'))
       grob$all1 <- gg.all <- lapply(gg.all, function(x) { x+theme(legend.position="bottom") } )
       tmp <- normalizePath(tempfile(), winslash='/', mustWork=FALSE)
       png(tmp); grob$all1 <- lapply(gg.all, ggplotGrob)
@@ -993,8 +1014,8 @@ shinyServer(function(input, output, session) {
       cs.grob <- ggplotGrob(shm.bar())
       cs.arr <- arrangeGrob(grobs=list(grobTree(cs.grob)), layout_matrix=cbind(1), widths=unit(1, "npc"))
       # Legend size in downloaded SHM is reduced.
-      lgd.lis <- grob$lgd.all; lgd.lis <- gg_lgd(gg.all=lgd.lis, sam.dat=sam(), tis.trans=input$tis, label=FALSE)
-      lgd.lis <- gg_lgd(gg.all=lgd.lis, size.key=input$lgd.key.size*0.5, size.text.key=NULL, label.size=input$lgd.lab.size, row=input$lgd.row, sam.dat=sam(), tis.trans=input$tis, position.text.key='right', label=(input$lgd.label=='Yes'))
+      lgd.lis <- grob$lgd.all; lgd.lis <- gg_lgd(gg.all=lgd.lis, sam.dat=sam(), ft.trans=input$tis, label=FALSE)
+      lgd.lis <- gg_lgd(gg.all=lgd.lis, size.key=input$lgd.key.size*0.5, size.text.key=NULL, label.size=input$lgd.lab.size, row=input$lgd.row, sam.dat=sam(), ft.trans=input$tis, position.text.key='right', label=(input$lgd.label=='Yes'))
       if (input$lgd.w>0) {
   
         grob.lgd.lis <- lapply(lgd.lis, ggplotGrob)
@@ -1287,7 +1308,7 @@ shinyServer(function(input, output, session) {
     gg <- gg.all[gg.na]
     pro <- 0.1; for (i in seq_along(gg.na)) {
     incProgress(pro+0.2, detail=paste0('preparing ', gg.na[i], '.html...'))
-    html_ly(gg=gg[i], cs.g=shm.bar(), tis.trans=input$tis, sam.uni=sam(), anm.width=input$width.ly, anm.height=input$height.ly, out.dir='.') }
+    html_ly(gg=gg[i], cs.g=shm.bar(), ft.trans=input$tis, sam.uni=sam(), anm.width=input$width.ly, anm.height=input$height.ly, out.dir='.') }
 
    })
 
@@ -1332,7 +1353,7 @@ shinyServer(function(input, output, session) {
     if (dim %in% c('1280x800', '1280x1024', '1280x720')&res>450) res <- 450
     if (dim=='1920x1080'&res>300) res <- 300
     # selectInput("vdo.dim", label="Fixed dimension:", choices=c('1920x1080', '1280x800', '320x568', '1280x1024', '1280x720', '320x480', '480x360', '600x600', '800x600', '640x480'), selected='640x480', width=110)
-    vdo <- video(gg=gg.all1, cs.g=shm.bar(), sam.uni=sam(), tis.trans=input$tis, lgd.key.size=input$lgd.key.size, lgd.text.size=NULL, position.text.key='right', legend.value.vdo=(input$'vdo.val.lgd'=='Yes'), label=(input$lgd.label=='Yes'), label.size=input$lgd.lab.size, sub.title.size=8, bar.value.size=6, lgd.row=input$lgd.row, width=input$vdo.width, height=input$vdo.height, video.dim=dim, interval=input$vdo.itvl, res=res, out.dir='./www/video'); if (is.null(vdo)) return()
+    vdo <- video(gg=gg.all1, cs.g=shm.bar(), sam.uni=sam(), ft.trans=input$tis, lgd.key.size=input$lgd.key.size, lgd.text.size=NULL, position.text.key='right', legend.value.vdo=(input$'vdo.val.lgd'=='Yes'), label=(input$lgd.label=='Yes'), label.size=input$lgd.lab.size, sub.title.size=8, bar.value.size=6, lgd.row=input$lgd.row, width=input$vdo.width, height=input$vdo.height, video.dim=dim, interval=input$vdo.itvl, res=res, out.dir='./www/video'); if (is.null(vdo)) return()
     cat('Presenting video... \n')
     incProgress(0.95, detail="Presenting video...")
     w.h <- as.numeric(strsplit(input$vdo.dim, 'x')[[1]])

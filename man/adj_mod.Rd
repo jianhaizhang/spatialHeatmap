@@ -20,7 +20,7 @@ adj_mod(
 \arguments{
 \item{data}{The subsetted data matrix returned by the function \code{\link{submatrix}}, where rows are assayed items and columns are samples/conditions.}
 
-\item{type}{The network type, one of "unsigned", "signed", "signed hybrid", "distance". Correlation and distance are transformed as follows: for \code{type="unsigned"}, \code{adjacency=|cor|^power}; for \code{type="signed"}, \code{adjacency=(0.5 * (1+cor) )^power}; for \code{type="signed hybrid"}, if cor>0 \code{adjacency=cor^power}, otherwise adjacency=0; and for \code{type="distance"}, \code{adjacency=(1-(dist/max(dist))^2)^power}. Refer to "WGCNA" (Langfelder and Horvath 2008) for more details.}
+\item{type}{The network type, one of "unsigned", "signed", "signed hybrid", "distance". Correlation and distance are transformed as follows: for \code{type="unsigned"}, \code{adjacency=|cor|^power}; for \code{type="signed"}, \code{adjacency=(0.5 * (1+cor) )^power}; for \code{type="signed hybrid"}, if cor>0 \code{adjacency=cor^power}, otherwise adjacency=0; and for \code{type="distance"}, \code{adjacency=(1-(dist/max(dist))^2)^power}. Refer to \pkg{WGCNA} (Langfelder and Horvath 2008) for more details.}
 
 \item{power}{A numeric of soft thresholding power for generating the adjacency matrix. The default is 1 for \code{type=='distance'} and 6 for other network types.}
 
@@ -37,7 +37,7 @@ will be used for clustering. See \code{\link[WGCNA]{TOMsimilarityFromExpr}} for 
           \code{"complete"}, \code{"average"}, \code{"mcquitty"}, \code{"median"} or
           \code{"centroid"}. }
 
-\item{minSize}{The expected minimum module size. The default is 15. Refer to "WGCNA" for more details.}
+\item{minSize}{The expected minimum module size. The default is 15. Refer to \pkg{WGCNA} for more details.}
 
 \item{arg.cut}{A list of additional arguments passed to \code{\link[dynamicTreeCut]{cutreeHybrid}}, \emph{e.g.} \code{list(verbose=2)}. The default is an empty list \code{list()}.}
 
@@ -47,7 +47,7 @@ will be used for clustering. See \code{\link[WGCNA]{TOMsimilarityFromExpr}} for 
 A list containing the adjacency matrix and module assignment, which should be provided to \code{\link{network}}. The module assignment is a data frame. The first column is \code{ds=2} while the second is \code{ds=3} (see the "Details" section). The numbers in each column are module labels, where "0" means items not assigned to any modules. If \code{dir} is specified, both adjacency matrix and module assignment are automatically saved in the folder "customComputedData" as "adj.txt" and "mod.txt" respectively, which can be uploaded under "customComputedData" in the Shiny app (see \code{\link{shiny_all}}).
 }
 \description{
-The objective is to explore target items (gene, protein, metabolite, \emph{etc}) in context of their neighbors sharing highly similar abundance profiles in a more advanced approach than \code{\link{matrix_hm}}. This advanced approach is the WGCNA algorithm (Langfelder and Horvath 2008; Ravasz et al. 2002). It takes the assay matrix subsetted by \code{\link{submatrix}} as input and splits the items into network modules, \emph{i.e.} groups of items showing most similar coexpression profiles.
+The objective is to explore target items (gene, protein, metabolite, \emph{etc}) in context of their neighbors sharing highly similar abundance profiles in a more advanced approach than \code{\link{matrix_hm}}. This advanced approach is the \pkg{WGCNA} algorithm (Langfelder and Horvath 2008; Ravasz et al. 2002). It takes the assay matrix subsetted by \code{\link{submatrix}} as input and splits the items into network modules, \emph{i.e.} groups of items showing most similar coexpression profiles.
 }
 \section{Details}{
 

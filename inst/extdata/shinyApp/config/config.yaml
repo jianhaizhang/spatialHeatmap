@@ -43,17 +43,22 @@ dataset11:
   data: example/expr_arab.txt
   svg: example/arabidopsis_thaliana.root.roottip_shm.svg
 dataset12:
+  name: spatiotemporal_Narsai
+  data: example/expr_coleoptile_samTimeCon.txt
+  svg:
+  - example/oryza.sativa_coleoptile.ANT_shm.svg
+dataset13:
   name: growthStage_Mustroph
   data: example/random_data_multiple_aSVGs.txt
   svg:
   - example/arabidopsis_thaliana.organ_shm1.svg
   - example/arabidopsis_thaliana.organ_shm2.svg
-dataset13:
+dataset14:
   name: map_Census
   data: example/us_population2018.txt
   svg: example/us_map_shm.svg
 title:
-- title:spatialHeatmap (2020-11-01)
+- title:spatialHeatmap (2020-11-19)
 - width:350
 max.upload.size: 5G 
 default.dataset: organ_Mustroph
@@ -117,10 +122,13 @@ network:
 - ds:3
 - max.edges:10
 download_single:
-  data: example/ucr_shm_mean_mas.txt
+  data: example/expr_arab.txt
   svg: example/arabidopsis_thaliana.shoot_shm.svg
 download_multiple:
   data: example/random_data_multiple_aSVGs.txt
   svg:
   - example/arabidopsis_thaliana.organ_shm1.svg
   - example/arabidopsis_thaliana.organ_shm2.svg
+download_spatial_temporal:
+  data: example/expr_coleoptile_samTimeCon.txt
+  svg: example/oryza.sativa_coleoptile.ANT_shm.svg

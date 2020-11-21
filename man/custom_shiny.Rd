@@ -10,6 +10,7 @@ custom_shiny(
   lis.par.tmp = FALSE,
   lis.dld.single = NULL,
   lis.dld.mul = NULL,
+  lis.dld.st = NULL,
   custom = TRUE,
   custom.computed = TRUE,
   example = TRUE,
@@ -25,7 +26,9 @@ custom_shiny(
 
 \item{lis.dld.single}{A list of paired data matrix and single aSVG file, which would be downloadable on the app for testing. The list should have two elements with name slots of "data" and "svg" respectively, which are the paths of the data matrix and aSVG file repectively. After the function call, the specified data and aSVG are copied to the "example" folder in the app. Note the two name slots should not be changed. \emph{E.g.} \code{list(data='./data_download.txt', svg='./root_download_shm.svg')}.}
 
-\item{lis.dld.mul}{A list of paired data matrix and multiple aSVG files, which would be downloadable on the app for testing. The multiple aSVG files could be multiple growth stages of a plant. The list should have two elements with name slots of "data" and "svg" respectively, which are the paths of the data matrix and aSVG files repectively. After the function call, the specified data and aSVGs are copied to the "example" folder in the app. Note the two name slots should not be changed. \emph{E.g.} list(data='./data_download.txt', svg=c('./root_young_download_shm.svg', './root_old_download_shm.svg')).}
+\item{lis.dld.mul}{A list of paired data matrix and multiple aSVG files, which would be downloadable on the app for testing. The multiple aSVG files could be multiple growth stages of a plant. The list should have two elements with name slots of "data" and "svg" respectively, which are the paths of the data matrix and aSVG files repectively. The data and aSVG should only include the spatial dimension, no temporal dimension. After the function call, the specified data and aSVGs are copied to the "example" folder in the app. Note the two name slots should not be changed. \emph{E.g.} list(data='./data_download.txt', svg=c('./root_young_download_shm.svg', './root_old_download_shm.svg')).}
+
+\item{lis.dld.st}{A list of paired data matrix and single aSVG file, which would be downloadable on the app for testing. The list should have two elements with name slots of "data" and "svg" respectively, which are the paths of the data matrix and aSVG file repectively. Compared with \code{lis.dld.single}, the only difference is the data and aSVG include spatial and temporal dimension. See the example section for details. After the function call, the specified data and aSVG are copied to the "example" folder in the app. Note the two name slots should not be changed. \emph{E.g.} \code{list(data='./data_download.txt', svg='./root_download_shm.svg')}.}
 
 \item{custom}{Logical, TRUE or FALSE. If TRUE (default), the "customData" option under "Step 1: data sets" is included, which allows to upload datasets from local computer.}
 
@@ -42,13 +45,24 @@ If \code{lis.par.tmp==TRUE}, the template of default paramter list is returned. 
 This function creates customized Shiny App with user-provided data, aSVG files, and default parameters. Default settings are defined in the "config.yaml" file in the "config" folder of the app, and can be edited directly in a yaml file editor.
 }
 \examples{
-# The pre-packaged examples are used for illustration purpose.
+# The examples build on pre-packaged examples in spatialHeatmap.
+
 # Get one data path and one aSVG path and assembly them into a list for creating default dataset.
 data.path1 <- system.file('extdata/shinyApp/example/expr_arab.txt', package='spatialHeatmap')
 svg.path1 <- system.file('extdata/shinyApp/example/arabidopsis_thaliana.shoot_shm.svg', 
 package='spatialHeatmap')
 # The list with name slots of "name", "data", and "svg".
 lis.dat1 <- list(name='shoot', data=data.path1, svg=svg.path1)
+
+# Get the paths of spatial-temporal data and aSVG files and assembly them into a list for 
+# creating default dataset.
+data.path.st <- system.file('extdata/shinyApp/example/expr_coleoptile_samTimeCon.txt', 
+package='spatialHeatmap')
+svg.path.st <- system.file('extdata/shinyApp/example/oryza.sativa_coleoptile.ANT_shm.svg', 
+package='spatialHeatmap')
+# The list with name slots of "name", "data", and "svg".
+lis.dat.st <- list(name='spatialTemporal', data=data.path.st, svg=svg.path.st)
+
 # Get one data path and two aSVG paths and assembly them into a list for creating default 
 # dataset, which include two growth stages.
 data.path2 <- system.file('extdata/shinyApp/example/random_data_multiple_aSVGs.txt', 
@@ -60,6 +74,7 @@ package='spatialHeatmap')
 # The list with name slots of "name", "data", and "svg", where the two aSVG paths are stored
 # in a vector in "svg".
 lis.dat2 <- list(name='growthStage', data=data.path2, svg=c(svg.path2.1, svg.path2.2))
+
 # Get one data path and one aSVG path and assembly them into a list for creating downloadable
 # dataset.
 data.path.dld1 <- system.file('extdata/shinyApp/example/expr_arab.txt', 
@@ -69,8 +84,13 @@ package='spatialHeatmap')
 # The list with name slots of "data", and "svg".
 lis.dld.single <- list(name='organ', data=data.path.dld1, svg=svg.path.dld1)
 # For demonstration purpose, the same data and aSVGs are used to make the list for creating 
-# downloadable dataset, which include two growth stages. 
+# downloadable dataset of two growth stages. 
 lis.dld.mul <- list(data=data.path2, svg=c(svg.path2.1, svg.path2.2))
+
+# For demonstration purpose, the same spatial-temporal data and aSVG are used to create the
+# downloadable spatial-temporal dataset.
+lis.dld.st <- list(data=data.path.st, svg=svg.path.st)
+
 # Retrieve the default parameters.
 lis.par <- custom_shiny(lis.par.tmp=TRUE)
 # Change default values.
@@ -80,8 +100,8 @@ lis.par$default.dataset <- 'shoot'
 \donttest{
 if (!dir.exists('~/test_shiny')) dir.create('~/test_shiny')
 # Create custom Shiny app by feeding this function these datasets and parameters.
-custom_shiny(lis.dat1, lis.dat2, lis.par=lis.par, lis.dld.single=lis.dld.single, 
-lis.dld.mul=lis.dld.mul, app.dir='~/test_shiny')
+custom_shiny(lis.dat1, lis.dat2, lis.dat.st, lis.par=lis.par, lis.dld.single=lis.dld.single, 
+lis.dld.mul=lis.dld.mul, lis.dld.st=lis.dld.st, app.dir='~/test_shiny')
 # Lauch the app.
 shiny::runApp('~/test_shiny/shinyApp') 
 }

@@ -2,7 +2,7 @@
 #'
 #' @param gg.all A list of spatial heatmaps of ggplot.
 #' @param sam.dat A vector of samples in the data matrix.
-#' @param tis.trans A vector of tissues to be transparent.
+#' @param ft.trans A vector of tissues to be transparent.
 #' @param position.2nd The position of the secondary legend. One of "top", "right", "bottom", "left", or a two-component numeric vector. The default is "bottom". Applies to the static image and video.
 #' @param legend.nrow.2nd An integer of rows of the secondary legend keys. Applies to the static image and video.
 #' @param legend.ncol.2nd An integer of columns of the secondary legend keys. Applies to the static image and video.
@@ -23,7 +23,7 @@
 
 #' @importFrom ggplot2 theme layer_data scale_fill_manual unit element_text guide_legend margin
 
-gg_2lgd <- function(gg.all, sam.dat, tis.trans, position.2nd='bottom', legend.nrow.2nd=NULL, legend.ncol.2nd=NULL, legend.key.size.2nd=0.03, add.feature.2nd=FALSE, legend.text.size.2nd=10, angle.text.key.2nd=0, position.text.key.2nd='right') {
+gg_2lgd <- function(gg.all, sam.dat, ft.trans, position.2nd='bottom', legend.nrow.2nd=NULL, legend.ncol.2nd=NULL, legend.key.size.2nd=0.03, add.feature.2nd=FALSE, legend.text.size.2nd=10, angle.text.key.2nd=0, position.text.key.2nd='right') {
 
   for (i in seq_along(gg.all)) {
 
@@ -32,9 +32,9 @@ gg_2lgd <- function(gg.all, sam.dat, tis.trans, position.2nd='bottom', legend.nr
     names(g.col) <- dat$tissue; df.val <- round(dat$value, 2)
     df.tis <- as.vector(dat$tissue); tis.path <- dat$feature
     g.col <- g.col[!duplicated(names(g.col))]; tis.path <- dat$feature
-    sam.legend <- intersect(unique(sam.dat), unique(tis.path))
-    sam.legend <- setdiff(sam.legend, tis.trans) 
-    leg.idx <- !duplicated(tis.path) & (tis.path %in% sam.legend)
+    ft.legend <- intersect(unique(sam.dat), unique(tis.path))
+    ft.legend <- setdiff(ft.legend, ft.trans) 
+    leg.idx <- !duplicated(tis.path) & (tis.path %in% ft.legend)
     df.tar <- df.tis[leg.idx]; lab <- val.tar <- df.val[leg.idx]
     path.tar <- tis.path[leg.idx]
     if (add.feature.2nd==TRUE) lab <- paste0(path.tar, ' (', val.tar, ')') 

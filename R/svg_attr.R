@@ -4,7 +4,7 @@
 
 #' @param doc An object of class "xml_document", i.e. the imported SVG file in R.
 #' @param feature A character vector of features/samples extracted from the data. If some of the input features are duplicated in SVG file, then a reminder message is returned.
-
+#' @param br TRUE or FALSE. If TRUE, combined paths are broken apart and all styles are updated.
 #' @return A 3-component list of attribute data frame, the outline node, and the sample node. 
 #' @noRd
 
@@ -15,33 +15,48 @@
 
 #' @importFrom xml2 xml_length xml_children xml_name xml_attr xml_remove xml_text
 
-svg_attr <- function(doc, feature) {
+svg_attr <- function(doc, feature, br=TRUE) {
 
-  options(stringsAsFactors=FALSE); name <- NULL
+  options(stringsAsFactors=FALSE); name <- element <- NULL
   len <- xml_length(doc); out <- xml_children(doc)[[len-1]]; ply <- xml_children(doc)[[len]]
-  # Break combined path to a group or siblings.
-  path_br_all(out); path_br_all(ply)
 
-  # If out is not a group, it is assigned an empty node.
+  # If out is not a group, it is assigned an empty node. The "metadata" element should not be changed. "out" might be the "metadata" element, so before deleting elements in path_br make sure "out" has an empty element, so does "ply".
   if (xml_name(out)!='g') { xml_add_child(out, 'empty', .where=0); out1 <- xml_children(out)[[1]]; xml_remove(xml_children(out)[[1]], free=FALSE); out <- out1 }
   # If ply is not a group, it is assigned an empty node.
   if (xml_name(ply)!='g') { xml_add_child(ply, 'empty', .where=0); ply1 <- xml_children(ply)[[1]]; xml_remove(xml_children(ply)[[1]], free=FALSE); ply <- ply1 }
+  # EBI SVG, if the outline shapes and tissue shapes are separate, they must be in two layers NOT two groups. Otherwise, 'fill' and 'stroke' in '.ps.xml' can be  messy.
+  if (length(xml_children(out))>0 & length(xml_children(ply))>0) {
+    g.mode <- xml_attr(out, 'groupmode')=='layer' & xml_attr(ply, 'groupmode')=='layer'
+    msg <- 'If outline and regular spatial features are in two separate groups, the two groups must have the "groupmode" of "layer"!'
+    if (is.na(g.mode)) return(msg) else if (g.mode==FALSE) return(msg)
+  }
+  # Break combined path to a group or siblings.
+  if (br==TRUE) path_br_all(out); path_br_all(ply)
   chdn.out <- xml_children(out); chdn.ply <- xml_children(ply)
+  chdn.all <- c(chdn.out, chdn.ply)
+  id.mat <- NULL; for (i in chdn.all) {
+    idx <- grepl('^matrix',xml_attr(i, 'transform'))
+     if (idx==TRUE) id.mat <- c(id.mat, xml_attr(i, 'id'))
+  }
+  if (grepl('^matrix',xml_attr(out, 'transform'))) id.mat <- c(id.mat, xml_attr(out, 'id'))
+  if (grepl('^matrix',xml_attr(ply, 'transform'))) id.mat <- c(id.mat, xml_attr(ply, 'id'))
+  if (!is.null(id.mat)) { cat('\n'); cat("Recommendation: please remove the 'transform' attribute with a 'matrix' value in the following groups by ungrouping and regrouping the respective groups in Inkscape. Otherwise, colors in spatial heatmap might be shifted! \n"); cat(id.mat, '\n\n') }
   
   ## Exrtact basic attributes into a data frame.
   idx <- seq_len(length(chdn.out)+length(chdn.ply))
   idx1 <- c(seq_len(length(chdn.out)), seq_len(length(chdn.ply)))
-  parent <- c(rep(xml_attr(out, 'id'), length(chdn.out)), rep(xml_attr(ply, 'id'), length(chdn.ply)))
+  parent <- make.names(c(rep(xml_attr(out, 'id'), length(chdn.out)), rep(xml_attr(ply, 'id'), length(chdn.ply))))
   nas <- c(xml_name(chdn.out), xml_name(chdn.ply))
   ids <- make.names(c(xml_attr(chdn.out, 'id'), xml_attr(chdn.ply, 'id')))
   if (any(duplicated(ids))) return(paste0('Duplicated node ids detected: ', paste0(ids[duplicated(ids)], collapse=' '), '!'))
-  title <- c(xml_text(chdn.out), xml_text(chdn.ply)) # Use original names, no 'make.names'. '' after applied to 'make.names' becomes 'X'.
+  title <- make.names(c(vapply(chdn.out, tit_id, character(1)), vapply(chdn.ply, tit_id, character(1)))) # Use original names, no 'make.names'. '' after applied to 'make.names' becomes 'X'.
   w <- which(title=='X'|title==''); title[w] <- ids[w]
+  # Duplicated titles.
   dup <- duplicated(title); if (any(dup)) {
    
     tit.dup <- unique(title[dup]) 
-    if (length(intersect(tit.dup, unique(feature)))>0) return(paste0('Duplicated title text detected: ', paste0(tit.dup, collapse=' '), '!')) else {
-      w <- title %in% tit.dup; title[w] <- paste0(title[w], seq_len(sum(w)))
+    if (length(intersect(tit.dup, unique(make.names(feature))))>0) return(paste0('Duplicated title text detected: ', paste0(tit.dup, collapse=' '), '!')) else {
+      cat('Duplicated title text detected:', title[dup], '\n'); w <- title %in% tit.dup; title[w] <- paste0(title[w], seq_len(sum(w)))
     }
   
   }
@@ -66,8 +81,17 @@ svg_attr <- function(doc, feature) {
     stro.w[i] <- ifelse(is.numeric(num), num, 0)
 
   }
-
-  df.attr <- data.frame(index=idx, index1=idx1, parent=parent, name=nas, id=ids, title=title, color=fil.cols, stroke=as.numeric(stro.w))
-  df.attr <- subset(df.attr, name!='a'); return(list(df.attr=df.attr, out=out, ply=ply))
+  df.attr <- data.frame(index=idx, index1=idx1, parent=parent, element=nas, id=ids, feature=title, color=fil.cols, stroke=as.numeric(stro.w))
+  df.attr <- subset(df.attr, element!='a')
+  # 'fill' is not necessary. In Inkscape, resizing a "group" causes "matrix" in "transform" (relative positions) attribute, and this can lead to related polygons uncolored in the spatial heatmaps. Solution: ungroup and regroup to get rid of transforms and get absolute positions.
+  # Change 'style' of all polygons. Since in SVG code, if no fill in style, no fill in ".ps.xml", so is the stroke.
+  # "stroke" >= 0.51 px always introduces coordinates in .ps.xml, no matter "fill" is "none" or not. If "stroke" < 0.5 px, even though "fill" is not "none" there is no coordinates in ps.xml. E.g. irregular paths of dots.
+  if (br==TRUE) {
+    style <- 'fill:#46e8e8;fill-opacity:1;stroke:#000000;stroke-width:3;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1' 
+    for (i in chdn.all) {
+      xml_set_attr(i, 'style', style)
+      if (xml_name(i)=='g') xml_set_attr(xml_children(i), 'style', style)
+    }
+  }; return(list(df.attr=df.attr, out=out, ply=ply))
 
 }

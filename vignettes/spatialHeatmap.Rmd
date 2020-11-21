@@ -80,11 +80,8 @@ _spatialHeatmap's_ functionalities with community and/or private data. The
 functionalities of the `spatialHeatmap` package are illustrated in Figure
 \@ref(fig:illus).   
 
-
-```{r illus, echo=FALSE, fig.wide=TRUE, out.width="100%", fig.cap=("Overview of spatialHeatmap. (A) The _saptialHeatmap_ package plots numeric assay data onto spatially annotated images. A wide range of omics technologies is supported including genomic, transcriptomic, proteomic and metabolomic profiling data. The assay data can be provided as numeric vectors, tabular data, or _SummarizedExperiment_ objects. The latter is a widely used data container for organizing both assay data as well as associated annotation and experimental design data. (B) Anatomical and other spatial images need to be provided as annotated SVG (aSVG) files where the spatial features and the corresponding data components of the assay data have matching labels (_e.g._ tissue labels). (C) The assay data are used to color the matching spatial features in one or more aSVG images according to a color key. The result is called a spatial heatmap (SHM) plot. Multiple measurements can be visualized in the same plot, such as several factors (_e.g._ genes, proteins, metabolites), treatment conditions, growth stages and more. (D) Data mining graphics, such as matrix heatmaps and network graphs, are integrated to facilitate the identification of factors with similar assay profiles. The functionalities of _spatialHeatmap_ can be accessed from local computers via the R console or a graphical user interface based on Shiny. In addition, the latter can be deployed as a web service on custom servers or cloud-based systems.")}
-
+```{r illus, echo=FALSE, fig.wide=TRUE, out.width="100%", fig.cap=("Overview of spatialHeatmap. (A) The _saptialHeatmap_ package plots numeric assay data onto spatially annotated images. A wide range of omics technologies is supported including genomic, transcriptomic, proteomic and metabolomic profiling data. The assay data can be provided as numeric vectors, tabular data, or _SummarizedExperiment_ objects. The latter is a widely used data container for organizing both assay data as well as associated annotation and experimental design data. (B) Anatomical and other spatial images need to be provided as annotated SVG (aSVG) files where the spatial features and the corresponding data components of the assay data have matching labels (_e.g._ tissue labels). (C) The assay data are used to color the matching spatial features in one or more aSVG images according to a color key. The result is called a spatial heatmap (SHM) or spatiotemporal heatmap (STHM) plot. Multiple measurements can be visualized in the same plot, such as several factors (_e.g._ genes, proteins, metabolites), treatment conditions, growth stages and more. (D) Data mining graphics, such as matrix heatmaps and network graphs, are integrated to facilitate the identification of factors with similar assay profiles. The functionalities of _spatialHeatmap_ can be accessed from local computers via the R console or a graphical user interface based on Shiny. In addition, the latter can be deployed as a web service on custom servers or cloud-based systems.")}
 include_graphics('img/spatialHeatmap_Design.jpg')
-
 ```
 
 As anatomical images the package supports both tissue maps from public
@@ -128,7 +125,7 @@ tissue layer of interest in the plots. To address this, several default and
 customizable layer viewing options are provided. They allow to hide features in
 the top layers by making them transparent in order to expose features below
 them. This transparency viewing feature is highlighted below in the mouse
-example (Figure \@ref(fig:musshm)). Moreover, one can plot multiple distinct 
+example (Figure \@ref(fig:musshm)). Except for spatial data, this package also works on spatiotemporal data and generates spatiotemporal heatmaps (STHMs, Figure \@ref(fig:clpshm)). Moreover, one can plot multiple distinct 
 aSVGs in a single SHM plot as shown in Figure \@ref(fig:arabshm). This is 
 particularly useful for displaying abundance trends across multiple development 
 stages, where each is represented by its own aSVG image. In addition to
@@ -296,7 +293,7 @@ names obtained from the above aSVG image. In addition, a non-matching entry
 (here 'notMapped') is included for demonstration purposes. Note, the numbers
 are mapped to features via matching names among the numeric vector and the aSVG,
 respectively. Accordingly, only numbers and features with matching name
-counterparts can be colored in the aSVG image.  Entries without name matches
+counterparts can be colored in the aSVG image. Entries without name matches
 are indicated by a message printed to the R console, here "notMapped". This
 behavior can be turned off with `verbose=FALSE` in the corresponding function
 call. In addition, a summary of the numeric assay to feature mappings is stored
@@ -318,23 +315,25 @@ painted onto the corresponding features in the aSVG, where the path to the image
 file is defined by `svg.path=svg.hum`. The remaining arguments used here include:
 `ID` for defining the title of the plot; `ncol` for setting the column-wise layout 
 of the plot excluding the feature legend plot on the right; and `height` for defining 
-the height of the SHM relative to its width. In the given example
+the height of the SHM relative to its width. In addition, the outline feature `g4320` covers all tissue features due to its default color, so it is set transparent through `ft.trans`. More details of the transparency function is explained in the mouse example (Figure \@ref(fig:musshm)). In the given example
 (Figure \@ref(fig:toyshm)) only three features in `my_vec` ('occipital lobe', 
 'parietal lobe', and 'temporal lobe') have matching entries in the corresponding 
 aSVG.   
 
 ```{r toyshm, eval=TRUE, echo=TRUE, warnings=FALSE, fig.wide=TRUE, fig.cap=("SHM of human brain with toy data. The plots from left to right represent: color key, SHM and legend. The colors in the first two plots depict the user provided numeric values, whereas in the legend plot they are used to map the feature labels to the corresponding spatial regions in the image. "), out.width="100%" }
-shm.df <- spatial_hm(svg.path=svg.hum, data=my_vec, ID='toy', ncol=1, height=0.9, width=0.8, sub.title.size=20, legend.nrow=2)
+shm.lis <- spatial_hm(svg.path=svg.hum, data=my_vec, ID='toy', ncol=1, height=0.9, width=0.8, sub.title.size=20, legend.nrow=2, ft.trans=c('g4320'))
 ```
 
 The named numeric values in `my_vec`, that have name matches with the features in the 
-chosen aSVG, are stored in the `mapped_feature` slot.
+chosen aSVG, are stored in the `mapped_feature` slot. The attributes of features are stored in `feature_attribute` slot.  
 
 ```{r eval=TRUE, echo=TRUE, warnings=FALSE} 
-# The SHM and mapped features are stored in a list
-names(shm.df)
+# The SHM, mapped features, and feature attributes are stored in a list
+names(shm.lis)
 # Mapped features
-shm.df[['mapped_feature']]
+shm.lis[['mapped_feature']]
+# Feature attributes
+shm.lis[['feature_attribute']][1:3, ]
 ```
 
 ## Human Brain {#hum} 
@@ -571,17 +570,17 @@ This image is hidden to meet the 5MB requirement on vignette.
 -->
 <a name='hum_single'></a>
 ```{r humshm, eval=TRUE, echo=TRUE, warnings=FALSE, fig.wide=TRUE, fig.cap=("SHM of human brain. Only cerebellum and frontal cortex are colored, because they are present in both the aSVG and the expression data. The legend plot on the right maps the feature labels to the corresponding spatial regions in the image."), out.width="100%", fig.show='hide' }
-shm.df <- spatial_hm(svg.path=svg.hum, data=se.fil.hum, ID=c('ENSG00000268433'), height=0.7, legend.r=1.5, legend.key.size=0.02, legend.text.size=12, legend.nrow=2)
+shm.lis <- spatial_hm(svg.path=svg.hum, data=se.fil.hum, ID=c('ENSG00000268433'), height=0.7, legend.r=1.5, legend.key.size=0.02, legend.text.size=12, legend.nrow=2, ft.trans=c('g4320'))
 ```
 
 The plotting instructions of the SHM along with the corresponding 
-mapped features are stored as a `list`, here named `shm.df`. Its components
-can be accessed as follows.
+mapped features and feature attributes are stored as a `list`, here named `shm.lis`. Its components
+can be accessed as follows.  
 
 ```{r eval=TRUE, echo=TRUE, warnings=FALSE }
-names(shm.df)
-# Mapped features
-shm.df[['mapped_feature']]
+names(shm.lis) # All slots.
+shm.lis[['mapped_feature']] # Mapped features.
+shm.lis[['feature_attribute']][1:3, ] # Feature attributes.
 ```
 
 In the above example, the normalized expression values of gene `ENSG00000268433` 
@@ -605,7 +604,7 @@ assigning `lay.shm='none'`. With this setting the SHM subplots are organized acc
 to the gene and condition ordering under `ID` and `data`, respectively.  </font> 
 
 ```{r mul, eval=TRUE, echo=TRUE, warnings=FALSE, fig.wide=TRUE, fig.cap=("SHMs of two genes. The subplots are organized by \"condition\" with the `lay.shm='con'` setting."), out.width="100%" }
-spatial_hm(svg.path=svg.hum, data=se.fil.hum, ID=c('ENSG00000268433', 'ENSG00000006047'), lay.shm='con', width=0.8, height=1, legend.r=1.5, legend.nrow=2)
+spatial_hm(svg.path=svg.hum, data=se.fil.hum, ID=c('ENSG00000268433', 'ENSG00000006047'), lay.shm='con', width=0.8, height=1, legend.r=1.5, legend.nrow=2, ft.trans=c('g4320'))
 ```
 
 ### SHM: HTML and Video
@@ -626,7 +625,7 @@ Code chunk not evaluated to save time building this vignette.
 -->
 ```{r eval=FALSE, echo=TRUE, warnings=FALSE }
 tmp.dir <- paste0(normalizePath(tempdir(check=TRUE), winslash="/"), '/shm')
-spatial_hm(svg.path=svg.hum, data=se.fil.hum, ID=c('ENSG00000268433', 'ENSG00000006047'), lay.shm='con', width=0.8, height=1, legend.r=1.5, legend.nrow=2, out.dir=tmp.dir)
+spatial_hm(svg.path=svg.hum, data=se.fil.hum, ID=c('ENSG00000268433', 'ENSG00000006047'), lay.shm='con', width=0.8, height=1, legend.r=1.5, legend.nrow=2, out.dir=tmp.dir, ft.trans=c('g4320'))
 ```
 
 ### SHM: Customization
@@ -763,17 +762,17 @@ of an SHM. In this case the plot includes expression data for 8 tissues across 3
 mouse strains. 
 
 ```{r musshm, eval=TRUE, echo=TRUE, warnings=FALSE, fig.wide=TRUE, fig.cap=("SHM of mouse organs. This is a multiple-layer image where the shapes of the 'skeletal muscle' is set transparent to expose 'lung' and 'heart'."), out.width="100%" }
-spatial_hm(svg.path=svg.mus, data=se.fil.mus, ID=c('ENSMUSG00000000263'), height=0.7, legend.width=0.7, legend.text.size=10, sub.title.size=9, ncol=3, tis.trans=c('skeletal muscle'), legend.nrow=4, line.size=0.2, line.color='grey70')
+shm.lis <- spatial_hm(svg.path=svg.mus, data=se.fil.mus, ID=c('ENSMUSG00000000263'), height=0.7, legend.width=0.7, legend.text.size=10, sub.title.size=9, ncol=3, ft.trans=c('skeletal muscle', 'path4204'), legend.nrow=4, line.size=0.2, line.color='grey70')
 ```
 
 The SHM plots in Figures \@ref(fig:musshm) and below demonstrate
-the usage of the transparency feature via the `tis.trans` parameter. The
+the usage of the transparency feature via the `ft.trans` parameter. Except for the outline layer `path4204` interfering with other tissues, the
 corresponding mouse organ aSVG image includes overlapping tissue layers. In
 this case the skelectal muscle layer partially overlaps with lung and heart
 tissues. To view lung and heart in Figure \@ref(fig:musshm), the skelectal
-muscle tissue is set transparent with `tis.trans=c('skeletal muscle')`. To view
-in the same aSVG the skeletal muscle tissue instead, `tis.trans` is assigned
-`NULL` as shown below.  
+muscle tissue and outline are set transparent with `ft.trans=c('skeletal muscle', 'path4204')`. To view
+in the same aSVG the skeletal muscle tissue instead, `ft.trans` is assigned
+only `path4204` as shown below.  
 
 To fine control the visual effects in feature rich aSVGs, the `line.size` and
 `line.color` parameters are useful. This way one can adjust the thickness and 
@@ -784,7 +783,7 @@ color of complex structures.
 This image is hidden to meet the 5MB requirement on vignette.
 -->
 ```{r musshm1, eval=TRUE, echo=TRUE, warnings=FALSE, fig.wide=TRUE, fig.cap=("SHM of mouse organs. This is a multiple-layer image where the view onto 'lung' and 'heart' is obstructed by displaying the 'skeletal muscle' tissue."), out.width="100%", fig.show='hide' }
-spatial_hm(svg.path=svg.mus, data=se.fil.mus, ID=c('ENSMUSG00000000263'), height=0.6, legend.text.size=10, sub.title.size=9, ncol=3, tis.trans=NULL, legend.ncol=2, line.size=0.2, line.color='grey70')
+spatial_hm(svg.path=svg.mus, data=se.fil.mus, ID=c('ENSMUSG00000000263'), height=0.6, legend.text.size=10, sub.title.size=9, ncol=3, legend.ncol=2, line.size=0.2, line.color='grey70', ft.trans='path4204')
 ```
 
 ## Chicken Organs {#chk}
@@ -829,72 +828,6 @@ colData(rse.chk)[1:3, ]
 ```
 
 ```{r eval=FALSE, echo=TRUE, warnings=FALSE } 
-# Draft of the spatial-temporal data: https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE115373
-
-rse.clp <- getAtlasData('E-GEOD-115371')[[1]][[1]]
-
-cdat <- colData(rse.clp)
-
-sub_tar <- function(df.tar, column, old, new, sub.row) {
-
-  if (length(old)!=length(new)) stop('The number of entries in "old" must be the same with "new"!')
-  
-  if (missing(sub.row)) sub.row <- seq_len(nrow(df.tar))
-  df.tar[, column] <- as.vector(df.tar[, column])
-  clm <- df.tar[sub.row, column]
-  for (i in seq_along(old)) { clm[clm %in% old[i]] <- new[i] }
-  df.tar[sub.row, column] <- clm; return(df.tar)
-
-}
-
-row <- cdat$stimulus==cdat[46, 'stimulus']
-old <- '72 hour anaerobic environment; 24 hour aerobic environment'
-new <- '72N24A'
-tar <- sub_tar(cdat, 'stimulus', '72 hour anaerobic environment; 24 hour aerobic environment', '72N24A')
-tar <- as.data.frame(tar)
-unique(tar$stimulus)
-
-tar <- sub_tar(tar, 'stimulus', 'anaerobic environment', 'anaerobic')
-unique(tar$stimulus)
-tar <- sub_tar(tar, 'stimulus', 'none', 'aerobic')
-unique(tar$stimulus)
-
-tar <- sub_tar(tar, 'age', unique(tar$age), c('0h', '1h', '3h', '12h', '24h', '48h', '72h', '96h'))
-unique(tar$age)
-
-tar <- sub_tar(tar, 'organism_part', unique(tar$organism_part), c('embryo', 'embryoColeoptile', 'coleoptile'))
-unique(tar$organism_part)
-
-as.data.frame(tar[, c('organism_part', 'age', 'stimulus')])
-tar$samTime <- paste0(tar$organism_part, tar$age) 
-
-tar <- sub_tar(tar, 'samTime', 'coleoptile96h', 'coleoptile72N24A', tar$stimulus=='72N24A')
-unique(tar$samTime)
-
-as.data.frame(tar[, c('organism_part', 'age', 'stimulus', 'samTime')])
-
-tar$con <- tar$stimulus
-tar <- sub_tar(tar, 'con', c('aerobic', 'anaerobic'), c('A', 'N'))
-unique(tar$con)
-tar$samTimeCon <- paste0(tar$samTime, tar$con)
-tar <- sub_tar(tar, 'samTimeCon', c('coleoptile72N24A72N24A'), c('coleoptile72N24A'))
-unique(tar$samTimeCon)
-
-colData(rse.clp) <- DataFrame(tar)
-se.nor.clp <- norm_data(data=rse.clp, norm.fun='ESF', data.trans='log2')
-
-se.aggr.clp <- aggr_rep(data=se.nor.clp, sam.factor='samTimeCon', con.factor=NULL, aggr='mean')
-
-se.fil.clp <- filter_data(data=se.aggr.clp, sam.factor='samTimeCon', con.factor=NULL, pOA=c(0.06, 7), CV=c(0.7, 100), dir=NULL)
-
-svg.clp.ant <- '~/SVG_tutorial_file/svg_repo/coleoptile/coleoptile_ANT.svg'
-shm.df <- spatial_hm(svg.path=svg.clp.ant, data=se.fil.clp, ID=c('Os12g0630200', 'Os12g0628600'), legend.r=1, legend.key.size=0.02, legend.text.size=12, legend.nrow=16, ncol=1)
-
-svg.clp.n <- '~/SVG_tutorial_file/svg_repo/coleoptile/coleoptile_N.svg'
-shm.df <- spatial_hm(svg.path=svg.clp.n, data=se.fil.clp, ID=c('Os12g0630200'), height=0.7, legend.r=1.5, legend.key.size=0.02, legend.text.size=12, legend.nrow=5)
-
-svg.clp.an <- '~/SVG_tutorial_file/svg_repo/coleoptile/coleoptile_AN.svg'
-shm.df <- spatial_hm(svg.path=svg.clp.an, data=se.fil.clp, ID=c('Os12g0630200'), height=0.7, legend.r=1.5, legend.key.size=0.02, legend.text.size=12, legend.nrow=5, line.color='black')
     inter1 <- function(env1=parent.frame()) {
 
         z <- env1$z+1; return(z)
@@ -903,122 +836,27 @@ shm.df <- spatial_hm(svg.path=svg.clp.an, data=se.fil.clp, ID=c('Os12g0630200'),
         z <- inter1(); return(z)
     };
 test <- function(x, y) {
+    print(vapply(match.call(), deparse, character(1))[-1])
+    print(deparse(match.call()))
+    print(names(deparse(match.call())))
     z <- y+1;
- print(inter(z=z))
+ #print(inter(z=z))
     #cat(ls(), '\n')
 }
 test(2, 3)
-
-
-
 
   options(stringsAsFactors=FALSE)
   doc <- read_xml(svg.path); spa <- xml_attr(doc, 'space')
   if (!is.na(spa)) if (spa=='preserve') xml_set_attr(doc, 'xml:space', 'default')
   # Even though 'out' and 'ply' are not returned by 'svg_attr', the paths in doc are broken accordingly, since the node in doc are pointed, any change on the node is actually changing the doc. 
   svg.attr <- svg_attr(doc, feature=feature); if (is(svg.attr, 'character')) return(svg.attr)
-  df.attr <- svg.attr[['df.attr']]; df.attr$title <- make.names(df.attr$title)
-  out <- svg.attr[['out']]; ply <- svg.attr[['ply']]
-  # Paths in 'a' node are recognised in .ps.xml file, so all 'a' nodes in or out groups are removed. 
-  chdn.out <- xml_children(out); chdn.ply <- xml_children(ply)
-  chdn.all <- c(chdn.out, chdn.ply)
-  for (i in chdn.all) {
+# Copy doc. In the copy all children of out and ply are deleted and each child is inserted back to out or ply to extract coordinates. The benefit is if a child has no coordinates in ps.xml, this child is detected and it does not count in tis.path, so length(tis.path)==length(df$tissue) is secured. The drawback is time-consuming.
+doc0 <- xml_new_root(doc, .copy=TRUE)
 
-    na <- xml_name(i)
-    if (na=='a') xml_remove(i, free=FALSE) else if (na=='g') {
 
-      chil <- xml_children(i); for (j in chil) {
 
-        na1 <- xml_name(j); if (na1=='a') xml_remove(j, free=FALSE) else if (na1=='g') return(paste0('Nested group detected in ', xml_attr(i, 'id'), '!'))
 
-      }
-
-    }
- 
-  }
-  # Renew the children after deletion of 'a' nodes.
-  chdn.out <- xml_children(out); chdn.ply <- xml_children(ply)
-  chdn.all <- c(chdn.out, chdn.ply)
-
-  # Get ids and titles for every path, including paths inside groups, except for 'a' nodes.
-  tit <- id.all <- NULL; for (i in seq_along(chdn.all)) {
-
-    if (df.attr[i, 'name']=='g') {
-
-     na <- xml_name(xml_children(chdn.all[[i]]))
-     tit0 <- rep(df.attr[i, 'title'], xml_length(chdn.all[[i]])-sum(na=='title')); tit0 <- paste0(tit0, '_', seq_along(tit0)); tit <- c(tit, tit0)
-     id0 <- rep(df.attr[i, 'id'], xml_length(chdn.all[[i]])-sum(na=='title')); id.all <- c(id.all, id0)
-     # If the styles in paths of a group are different with group style, they can lead to messy 'fill' and 'stroke' in '.ps.xml', so they are set NULL. This step is super important.
-     xml_set_attr(xml_children(chdn.all[[i]]), 'style', NULL)
-
-    } else if (df.attr[i, 'name']=='use') {
-
-      ref <- paste0('#', df.attr[, 'id'])
-      w <- which(ref %in% xml_attr(chdn.all[[i]], 'href'))
-      # If reference is inside a group. A group contains no groups, so the use node has 1 shape.
-      if (length(w)==0) { tit <- c(tit, df.attr[i, 'title']); id.all <- c(id.all, df.attr[i, 'id']) }
-      # If reference is outside a group.
-      if (length(w)>0) if (df.attr[w, 'name']=='g') {
-
-        na <- xml_name(xml_children(chdn.all[[w]]))
-        tit0 <- rep(df.attr[i, 'title'], xml_length(chdn.all[[w]])-sum(na=='title')); tit0 <- paste0(tit0, '_', seq_along(tit0)); tit <- c(tit, tit0)
-        id0 <- rep(df.attr[i, 'id'], xml_length(chdn.all[[w]])-sum(na=='title')); id.all <- c(id.all, id0)
-
-      } else { tit <- c(tit, df.attr[i, 'title']); id.all <- c(id.all, df.attr[i, 'id']) }
-
-    } else { tit <- c(tit, df.attr[i, 'title']); id.all <- c(id.all, df.attr[i, 'id']) }
-
-  }; tis.path <- gsub("_\\d+$", "", tit)
- style <- 'fill:#46e8e8;fill-opacity:1;stroke:#000000;stroke-width:3;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1' # 'fill' is not necessary. In Inkscape, "group" or move an object adds transforms (relative positions), and this can lead to related polygons uncolored in the spatial heatmaps. Solution: ungroup and regroup to get rid of transforms and get absolute positions.
-  # Change 'style' of all polygons. Since in SVG code, if no fill in style, no fill in ".ps.xml", so is the stroke. 
-  xml_set_attr(chdn.out, 'style', style); xml_set_attr(chdn.ply, 'style', style)  
-  # xml_set_attr(out, 'style', style); xml_set_attr(ply, 'style', style)  
-  # Export internal SVG.
-  tmp <- normalizePath(tempdir(check=TRUE), winslash="/", mustWork=FALSE);
-  svg.inter <- paste0(tmp, '/internal.svg')
-  if (grepl("~", svg.inter)) svg.inter <- normalizePath(svg.inter, winslash="/", mustWork=FALSE)
-  write_xml(doc, file=svg.inter)
-  
-  # SVG file conversion.
-  # In Inkscape, the path of letter "U" is combined by a long and short path: "M -145.74174, ..., 182.19339 Z M -141.22026,175.30862 Z". After broken apart, the short path "M -141.22026,175.30862 Z" still exists, but disappears after "rsvg_ps" and also "PostScriptTrace". As a result, the corresponding coordinates are gone. Since the short path introduces an id, the colors are shifted in SHM. Thus letters/text should be not be broken apart by "path_br".
-  rsvg_ps(svg.inter, file=sub("svg$", "ps", svg.inter)) # Only the paths inside canvas of SVG are valid.
-  p1 <- sub("svg$", "ps", svg.inter); p2 <- paste0(sub("svg$", "ps", svg.inter), ".xml"); PostScriptTrace(p1, p2) 
-  chdn1 <- xml_children(read_xml(p2)) # Use internal svg to get coordinates.
-  # Detect groups that use relative coordinates ("transform", "matrix" in Inkscape.), which leads to some plygons missing in ".ps.xml" file.
-  # EBI SVG, if the outline shapes and tissue shapes are separate, they must be in two layers NOT two groups. Otherwise, 'fill' and 'stroke' in '.ps.xml' can be  messy.
-  fil.stk <- xml_attr(chdn1[-length(chdn1)], 'type'); tab <- table(fil.stk)
-  w <- which(fil.stk=='fill')%%2==0
-  # In new operating system, there are double 'fill', no 'stroke'.
-  if ('stroke' %in% names(tab)) if (any(w) & tab['fill'] > tab['stroke']) { 
- 
-    # Index of wrong path.
-    w1 <- which(w)[1]
-    # Wrong path and related group.
-    tis.wrg <- paste0(id.all[c(w1-1, w1)], collapse='; ')
-    return(paste0("Error detected in '", tis.wrg, "' in SVG image. Please ungroup and regroup the respective group they belong to.")) 
-
-  }
-  # Get coordinates from '.ps.xml'.
-  nodeset <- chdn1[which(xml_attr(chdn1, 'type')=='stroke')]
-  # In new operating system, there are double 'fill', no 'stroke', thus only use 'fill' of odd numbers.
-  if (xml_length(nodeset)[1]==0) {
-    if (tab %% 2==0) nodeset <- chdn1[seq(1, tab, by=2)] else return('Relative coordinates detected in aSVG file!')
-  }
-  if (length(tit)!=length(nodeset)) return('Some shape(s) are missing!')
-  df <- NULL; for (i in seq_along(nodeset)) {
-
-    xy <- xml_children(nodeset[[i]])[-1]
-    x <- as.numeric(xml_attr(xy, 'x'))
-    y <- as.numeric(xml_attr(xy, 'y'))
-    df0 <- cbind(tissue=tit[i], data.frame(x=x, y=y), stringsAsFactors=TRUE) # The coordinates should not be factor.
-    df <- rbind(df, df0)
-
-  } # Test if some paths/dots are missing: identical(as.vector(unique(df$tissue)), unique(tit)) 
-  fil.cols <- df.attr$color; names(fil.cols) <- df.attr$title
-  stroke.w <- df.attr$stroke; names(stroke.w) <- df.attr$title
-  w.h <- c(max(abs(df$x)), max(abs(df$y))) 
-  names(w.h) <- c('width', 'height')
-  lis <- list(df=df, tis.path=sub('_\\d+$', '', tit), fil.cols=fil.cols, stroke.w= stroke.w, w.h=w.h); return(lis)
+      
 
 
 
@@ -1028,45 +866,70 @@ test(2, 3)
 
 
 
-doc <- read_xml(svg.path); spa <- xml_attr(doc, 'space')
-len <- xml_length(doc); out <- xml_children(doc)[[len-1]]; node.parent <- ply <- xml_children(doc)[[len]]
-
-
- len <- xml_length(node.parent); chdn <- xml_children(node.parent)
-  for (i in seq_len(len)) {
-
-    nod0 <- chdn[[i]]; na <- xml_name(nod0); id <- xml_attr(nod0, 'id')
-      # "xml_remove" does not affect "chdn" since it is "xml_nodeset", but affects "node.parent" and "doc" since they are "xml_node". There is no need to return "node.parent", since even in nested functions oprations on node are still effective on "doc" and "node.parent" such as "xml_remove" in "rm_dot".
-      if (na %in% c('text', 'flowRoot')|(na=='g' & xml_length(nod0)==0)) { xml_remove(nod0); cat('Removing "text", "flowRoot" nodes, and empty "g" nodes:', id, '! \n'); next } # These nodes do not have coordinates after "PostScriptTrace" and thus lead to color shifting in SHM.
-      rm_dot <- function(node) {
-
-        d <- xml_attr(node, 'd'); if (!is.na(d)) cords <- grep('\\d+', strsplit(d, ',|-| ')[[1]], value=TRUE) else cords <- 0
-        # Dots/tiny paths may only introduce "stoke" no "fill".
-        if (length(cords)<4) { xml_remove(node); cat('Removing tiny paths and dots:', xml_attr(node, 'id'), '! \n'); return('yes') } else return('no')
-        
-      } 
-      if (!na %in% c('g', 'use', 'title', 'ellipse', 'rect')) { dot <- rm_dot(nod0); if (dot=='yes') next }
-      # 'a' node and 'text' path/group are ignored.
-      if (na=='a'|grepl('^text', id, ignore.case=TRUE)) next
-      if (na!='g') path_br(nod0, g=TRUE) else {
-
-        nod0.chl <- xml_children(nod0); nas <- xml_name(nod0.chl)
-        if ('g' %in% nas) return(paste0('Nested group detected in ', xml_attr(nod0, 'id'), '!'))
-        if ('use' %in% nas) return(paste0('The "use" node is detected in ', xml_attr(nod0, 'id'), '!'))
-        for (j in seq_along(nod0.chl)) {
-
-          nod1 <- nod0.chl[[j]]; if (!xml_name(nod1) %in% c('title', 'ellipse', 'rect')) dot <- rm_dot(nod1)
-          if (dot=='yes') next; if (xml_name(nod1)=='a') next
-          path_br(nod1, g=FALSE)
-
-        }
-
-      }
-
-  }
 
 
 
+
+
+
+out.ply0 <- out_ply(doc0)
+out0 <- out.ply0$out; ply0 <- out.ply0$ply
+chdn.out0 <- out.ply0$chdn.out; chdn.ply0 <- out.ply0$chdn.ply
+chdn.all0 <- c(chdn.out0, chdn.ply0)
+id.all0 <- out.ply0$id.all; na.all0 <- out.ply0$na.all
+
+df.out0 <- cord(doc0, out0, ply0, out0)
+df.ply0 <- cord(doc0, out0, ply0, ply0)
+
+
+
+df.out <- cord_parent(svg.path, 'out', feature=NULL)
+df.ply <- cord_parent(svg.path, 'ply', feature=NULL)
+
+update_use(chdn.all, id.all, ply, chdn.ply)
+write_xml(doc, 'shm_up.svg')
+
+rsvg_ps('test.svg', 'test.svg.ps')
+PostScriptTrace('/home/jzhan067/spatialHeatmap/vignettes/test.svg.ps', '/home/jzhan067/spatialHeatmap/vignettes/test.svg.ps.xml')
+
+library(ggplot2)
+ggplot(df.ply$df, aes(x = x, y = y)) + geom_polygon(aes(fill=NULL, group =tissue))
+
+svg.path <- '~/anatomogram/src/svg/homo_sapiens.male.svg'
+library(xml2); library(rsvg); library(grImport)
+source('../R/path_br_all.R'); source('../R/path_br.R')
+source('../R/svg_attr.R')
+
+
+
+
+
+
+
+
+
+
+id.mat <- NULL; for (i in chdn.all) {
+ idx <- grepl('^matrix',xml_attr(i, 'transform'))
+ if (idx==TRUE) id.mat <- c(id.mat, xml_attr(i, 'id'))
+}
+
+if (grepl('^matrix',xml_attr(out, 'transform'))) id.mat <- c(id.mat, xml_attr(out, 'id'))
+if (grepl('^matrix',xml_attr(ply, 'transform'))) id.mat <- c(id.mat, xml_attr(ply, 'id'))
+
+tran.mat1 <- xml_attr(chdn.out, 'id')[grep('^matrix', xml_attr(chdn.out, 'transform'))]
+tran.mat2 <- xml_attr(chdn.ply, 'id')[grep('^matrix', xml_attr(chdn.ply, 'transform'))]
+xml_attr(out, 'transform'), 
+
+for (i in unique(tis.path)) {
+    if (nrow(subset(df, grepl(paste0('^', i), tissue)))!=nrow(subset(df.all, grepl(paste0('^', i), tissue)))) print(i)
+}
+
+for (i in unique(tis.path)) {
+    sub <- subset(df, grepl(paste0('^', i), tissue))
+    sub.all <- subset(df.all, grepl(paste0('^', i), tissue))
+    if (!identical(sub, sub.all)) print(i)
+}
 
 ```
 
@@ -1093,7 +956,7 @@ step.
 
 ```{r eval=TRUE, echo=TRUE, warnings=FALSE }
 feature.df <- return_feature(feature=c('heart', 'kidney'), species=c('gallus'), keywords.any=TRUE, return.all=FALSE, dir=svg.dir, remote=FALSE, match.only=FALSE)
-feature.df
+feature.df[1:3, ] # A slice of the features.
 ```
 
 Obtain path of target aSVG on user system.   
@@ -1149,7 +1012,7 @@ se.fil.chk <- filter_data(data=se.aggr.chk, sam.factor='organism_part', con.fact
 
 The expression profile for gene `ENSGALG00000006346` is plotted across nine time
 points in four organs in form of a composite SHM with 9 panels. Their layout in
-three columns is controlled with the argument setting `ncol=3`. 
+three columns is controlled with the argument setting `ncol=3`. The target organs are labeled by text in legend plot via `label=TRUE`.   
 
 ```{r chkshm, eval=TRUE, echo=TRUE, warnings=FALSE, fig.wide=TRUE, fig.cap=("Time course of chicken organs. The SHM shows the expression profile of a single gene across nine time points and four organs."), out.width="100%" }
 spatial_hm(svg.path=svg.chk, data=se.fil.chk, ID='ENSGALG00000006346', width=0.9, legend.width=0.9, legend.r=1.5, sub.title.size=9, ncol=3, legend.nrow=2, label=TRUE)
@@ -1291,14 +1154,259 @@ across six cell types (Figure \@ref(fig:shshm)).
 spatial_hm(svg.path=svg.sh, data=se.fil.arab, ID=c("HRE2"), height=0.7, legend.nrow=3, legend.text.size=11)
 ```
 
-### SHM: Development {#mul_svg}
+# Spatiotemporal Heatmaps (STHMs) 
 
-The `spatial_hm` function can arrange multiple aSVGs in a single SHM plot, such
-as aSVGs from different development stages. To organize the subplots, the names
-of the aSVG files are expected to include the following suffixes: `*_shm1.svg`,
-`*_shm2.svg`, *etc*.  The paths to the aSVG files are provided under the
-`svg.path` argument.  By default, every aSVG image will have a legend plot on
-the right.  The `legend` argument provides fine control over which legend plots
+The above examples are SHMs plotted at the single spatial dimension. This section showcases the application of SHMs at spatial and temporal dimesions, *i.e.* data assayed in spatial feature(s) across different development stages.  
+
+The data at single spatial dimension contains only two factors: samples and conditions. By contrast, the spatiotemporal data contains three factors: samples, conditions, and times (development stages). There are three alternatives to organize the three factors: 1) combine samples and conditions; 2) combine samples and times; or 3) combine samples, conditions, and times. More details are provided in the [Supplementary Section](#spa.tem).  
+
+Which option to choose depends on the specific data and aSVGs, and the chosen one should achieve optimal visualization. In this example, the third is the best choice and will be showcased in the first part. Meanwhile, for demonstration purpose the second choice will also be illustrated in the second part. In the spatiotemporal application, different development stages can be represented in different aSVG images, and this feature will be presented in the third part.   
+
+## Sample-Time-Condition Factor
+
+### Gene Expression Data
+
+The data is from the transcriptome analysis on rice coleoptile during germinating and developing stages under anoxia and re-oxygenation [@Narsai2017-ql], which is also downloaded with `ExpressionAtlas`.   
+
+```{r eval=TRUE, echo=TRUE, warnings=FALSE}
+rse.clp <- read_cache(cache.pa, 'rse.clp') # Retrieve data from cache.
+if (is.null(rse.clp)) { # Save downloaded data to cache if it is not cached.
+  rse.clp <- getAtlasData('E-GEOD-115371')[[1]][[1]]
+  save_cache(dir=cache.pa, overwrite=TRUE, rse.clp)
+}
+```
+
+### Experimental Design
+
+The targets file was prepared according to the experiment design stored in `colData` slot of `res.clp` and pre-packaged in `spatialHeatmap`.  
+
+```{r eval=TRUE, echo=TRUE, warnings=FALSE}
+clp.tar <- system.file('extdata/shinyApp/example/target_coleoptile.txt', package='spatialHeatmap')
+target.clp <- read_fr(clp.tar)
+```
+
+Inspect the tissues, conditions, and times.  
+
+```{r eval=TRUE, echo=TRUE, warnings=FALSE}
+target.clp[1:3, c(6, 7, 9:12)] # A slice of the targets file.
+unique(target.clp[, 'age']) # All development stages.
+unique(target.clp[, 'organism_part']) # All tissues.
+unique(target.clp[, 'stimulus']) # All conditions.
+```
+
+Combined sample-time-condition factor.  
+
+```{r eval=TRUE, echo=TRUE, warnings=FALSE}
+unique(target.clp[, 'samTimeCon']) # Tissue-time-condition factors.
+```
+
+### aSVG Image
+
+Similar with the Arabidopsis Shoot example, the aSVG image has been generated in Inkscape from 
+the corresponding figure in @Narsai2017-ql according to the [SVG tutorial](https://jianhaizhang.github.io/SVG_tutorial_file/){target="_blank"}, and the resulting custom figure
+has been included in `spatialHeatmap`.   
+
+Query the aSVG files.  
+
+```{r eval=TRUE, echo=TRUE, warnings=FALSE }
+feature.df <- return_feature(feature=c('embryo0hA', 'embryoColeoptile1hA'), species=c('oryza', 'sativa'), keywords.any=FALSE, return.all=FALSE, dir=svg.dir, remote=FALSE, match.only=FALSE)
+feature.df[1:2, ] # The first two rows of the query results.
+```
+
+Only one aSVG file `oryza.sativa_coleoptile.ANT_shm.svg` is retrieved.  
+
+```{r eval=TRUE, echo=TRUE, warnings=FALSE } 
+unique(feature.df$SVG)
+```
+
+<a name='idt'></a>
+Note no matter how the factors are combined, the composite factors of interest should always have matching counterparts in the aSVG file.  
+
+```{r eval=TRUE, echo=TRUE, warnings=FALSE } 
+unique(target.clp$samTimeCon) %in% unique(feature.df$feature)
+```
+
+Obtain full path of the retrieved aSVG on user system.   
+
+```{r eval=TRUE, echo=TRUE, warnings=FALSE }
+svg.clp1 <- system.file("extdata/shinyApp/example", "oryza.sativa_coleoptile.ANT_shm.svg", package="spatialHeatmap")
+```
+
+### Preprocess Assay Data
+
+Load the custom target data into `colData` slot.  
+
+```{r eval=TRUE, echo=TRUE, warnings=FALSE}
+colData(rse.clp) <- DataFrame(target.clp)
+```
+
+The raw RNA-Seq count are preprocessed with the following steps: (1)
+normalization, (2) aggregation of replicates, and (3) filtering of reliable
+expression data. The details of these steps are explained in the above
+sub-section on human data. The normalization step is same for combined factors sample-time and sample-time-condition, while the aggregation and filtering are different. The difference is reflected by `sam.factor` and `con.factor`, and subsequently the column names in resulting `assay` slot of the `SummarizedExperiment` object.   
+
+```{r eval=TRUE, echo=TRUE, warnings=FALSE }
+se.nor.clp <- norm_data(data=rse.clp, norm.fun='ESF', data.trans='log2') # Normalization
+```
+
+<a name='sam.time.con1'></a>
+Aggregation and filtering by sample-time-condition factor.  
+
+```{r eval=TRUE, echo=TRUE, warnings=FALSE }
+se.aggr.clp1 <- aggr_rep(data=se.nor.clp, sam.factor='samTimeCon', con.factor=NULL, aggr='mean') # Replicate agggregation using mean
+se.fil.clp1 <- filter_data(data=se.aggr.clp1, sam.factor='samTimeCon', con.factor=NULL, pOA=c(0.07, 7), CV=c(0.7, 100), dir=NULL) # Filtering of genes with low counts and varince.
+```
+
+<a name='sam.time.con2'></a>
+Since conditions and times are combined with tissues, the resulting data table loses the double underscore string. 
+
+```{r eval=TRUE, echo=TRUE, warnings=FALSE }
+assay(se.fil.clp1)[1:3, 1:3] # A slice of the resulting data table.
+```
+
+### STHM: combine sample, time, and condition
+
+The expression profile of gene `Os12g0630200` and `Os01g0106300` in coleoptile is plotted across eight time
+points under anoxia and re-oxygenation in form of a composite STHM.   
+
+```{r clpshm, eval=TRUE, echo=TRUE, warnings=FALSE, fig.wide=TRUE, fig.cap=("Spatiotemporal heatmap at sample-time-condition factor. Gene expression profile of two genes in coleoptile across eight time points under anoxia and re-oxygenation is visualized in a composite image."), out.width="100%" }
+shm.lis <- spatial_hm(svg.path=svg.clp1, data=se.fil.clp1, ID=c('Os12g0630200', 'Os01g0106300'), legend.r=0.7, legend.key.size=0.01, legend.text.size=8, legend.nrow=8, ncol=1, width=0.8, line.size=0)
+```
+
+This STHM example is also deployed as an interacive Shiny app, where STHMs are provided in form of static images, interactive HTML files, and video files. Click [here](https://tgirke.shinyapps.io/spatiotemporalHeatmap/){target="_blank"} to see this app.   
+
+<!--
+<iframe width='700px' height='700px' src='https://tgirke.shinyapps.io/spatiotemporalHeatmap/'></iframe>
+-->
+
+## Sample-Time Factor
+
+This part showcases the usage of sample-time factor. The sample-condition factor could be applied similarly. To obtain optimal result, the data under aerobic is excluded. Since most steps are similar with the sample-time-condition factor, the following process is reduced to minimum.  
+
+### Gene Expression Data
+
+The same RNA-seq count data from @Narsai2017-ql is downloaded.  
+
+```{r eval=TRUE, echo=TRUE, warnings=FALSE}
+rse.clp <- read_cache(cache.pa, 'rse.clp') # Retrieve data from cache.
+if (is.null(rse.clp)) { # Save downloaded data to cache if it is not cached.
+  rse.clp <- getAtlasData('E-GEOD-115371')[[1]][[1]]
+  save_cache(dir=cache.pa, overwrite=TRUE, rse.clp)
+}
+```
+
+### Experimental Design
+
+The same targets file with sample-time factor is imported.   
+
+```{r eval=TRUE, echo=TRUE, warnings=FALSE}
+clp.tar <- system.file('extdata/shinyApp/example/target_coleoptile.txt', package='spatialHeatmap')
+target.clp <- read_fr(clp.tar)
+```
+
+Inspect the samples, conditions, and times.  
+
+```{r eval=TRUE, echo=TRUE, warnings=FALSE}
+target.clp[1:3, c(6, 7, 9:12)] # A slice of the targets file.
+unique(target.clp[, 'age']) # All development stages.
+unique(target.clp[, 'organism_part']) # All tissues.
+unique(target.clp[, 'stimulus']) # All conditions.
+```
+
+Combined sample-time factor, which is the essential difference with sample-time-condition example.  
+
+```{r eval=TRUE, echo=TRUE, warnings=FALSE}
+unique(target.clp[, 'samTime']) # Tissue-time factor.
+```
+
+### aSVG Image
+
+Similarly the custom aSVG image was generated in Inkscape from 
+the corresponding figure in @Narsai2017-ql according to the [SVG tutorial](https://jianhaizhang.github.io/SVG_tutorial_file/){target="_blank"} and included in `spatialHeatmap`.   
+
+Query the aSVG files.  
+
+```{r eval=TRUE, echo=TRUE, warnings=FALSE }
+feature.df <- return_feature(feature=c('embryo0h', 'embryoColeoptile1h'), species=c('oryza', 'sativa'), keywords.any=FALSE, return.all=FALSE, dir=svg.dir, remote=FALSE, match.only=FALSE)
+feature.df[1:2, ] # The first two rows of the query results.
+```
+
+Only one aSVG file `oryza.sativa_coleoptile.NT_shm.svg` is retrieved.  
+
+```{r eval=TRUE, echo=TRUE, warnings=FALSE } 
+unique(feature.df$SVG)
+```
+
+Note no matter how the factors are combined, the composite factor of interest should always have matching counterparts in the aSVG file.  
+
+```{r eval=TRUE, echo=TRUE, warnings=FALSE } 
+unique(target.clp$samTime) %in% unique(feature.df$feature)
+```
+
+Obtain full path of the retrieved aSVG on user system.   
+
+```{r eval=TRUE, echo=TRUE, warnings=FALSE }
+svg.clp2 <- system.file("extdata/shinyApp/example", "oryza.sativa_coleoptile.NT_shm.svg", package="spatialHeatmap")
+```
+
+### Preprocess Assay Data
+
+Load the custom target data into `colData` slot.  
+
+```{r eval=TRUE, echo=TRUE, warnings=FALSE}
+colData(rse.clp) <- DataFrame(target.clp)
+```
+
+The raw RNA-Seq count are preprocessed with the following steps: (1)
+normalization, (2) aggregation of replicates, and (3) filtering of reliable
+expression data. The normalization step is the same for composite factors sample-time and sample-time-condition, while the aggregation and filtering are different. The difference is reflected by `sam.factor` and `con.factor`, and subsequently the column names in the `assay` slot of the resulting `SummarizedExperiment` object.   
+
+```{r eval=TRUE, echo=TRUE, warnings=FALSE }
+se.nor.clp <- norm_data(data=rse.clp, norm.fun='ESF', data.trans='log2') # Normalization
+```
+
+Aggregation and filtering by sample-time factor.  
+
+```{r eval=TRUE, echo=TRUE, warnings=FALSE }
+se.aggr.clp2 <- aggr_rep(data=se.nor.clp, sam.factor='samTime', con.factor='stimulus', aggr='mean') # Replicate agggregation using mean. 
+se.fil.clp2 <- filter_data(data=se.aggr.clp2, sam.factor='samTime', con.factor='stimulus', pOA=c(0.07, 7), CV=c(0.7, 100), dir=NULL) # Filtering of genes with low counts and varince.
+```
+
+The resulting data table preserves the double underscore string, which is different from the sample-time-condition example.   
+
+```{r eval=TRUE, echo=TRUE, warnings=FALSE }
+df.fil.clp <- assay(se.fil.clp2) 
+df.fil.clp[1:3, 1:3] # A slice of the resulting data table.
+```
+
+The optimal viusalization on complete data is achieved on sample-time-condition factor. To also obtain the best result on sample-time factor, the data under aerobic is excluded. 
+
+<a name='sam.time'></a>
+```{r eval=TRUE, echo=TRUE, warnings=FALSE }
+df.fil.clp1 <- df.fil.clp[, !grepl('__aerobic', colnames(df.fil.clp))] # Exclude aerobic data.  
+df.fil.clp1[1:3, 1:3] # A slice of the data table without aerobic data.
+```
+
+### STHM: combine sample and time
+
+The expression profile of gene `Os12g0630200` in coleoptile is plotted across eight time
+points under anoxia and re-oxygenation respectively.   
+
+<!--
+This image is hidden to meet the 5MB requirement on vignette.
+-->
+
+```{r clpshm1, eval=TRUE, echo=TRUE, warnings=FALSE, fig.wide=TRUE, fig.cap=("Spatiotemporal heatmap at sample-time factor. Gene expression profile of one gene in coleoptile across eight time points under anoxia and re-oxygenation is visualized in two images."), out.width="100%", fig.show='show'}
+shm.lis <- spatial_hm(svg.path=svg.clp2, data=df.fil.clp1, ID=c('Os12g0630200'), legend.r=0.9, legend.key.size=0.02, legend.text.size=9, legend.nrow=8, ncol=1, line.size=0)
+```
+
+## Multiple aSVGs {#mul_svg}
+
+In the spatiotemporal application, different development stages may need to be represented in separate aSVG images. In that case, the `spatial_hm` function is able to arrange multiple aSVGs in a single SHM plot. To organize the subplots, the names
+of the separate aSVG files are expected to include the following suffixes: `*_shm1.svg`,
+`*_shm2.svg`, *etc*. The paths to the aSVG files are provided under the
+`svg.path` argument. By default, every aSVG image will have a legend plot on
+the right. The `legend` argument provides fine control over which legend plots
 to display. 
 
 As a simple toy example, the following stores random numbers in a 
@@ -1311,10 +1419,8 @@ rownames(df.random) <- paste0('gene', 1:10) # Assign row names
 df.random[1:3, ]
 ```
 
-<font color='blue'>
 Next the paths to the aSVG files are obtained, here for younger and older plants using `*_shm1` 
 and `*_shm1`, respectively, which are made from @Mustroph2009-nu.   
-</font>
 
 ```{r eval=TRUE, echo=TRUE, warnings=FALSE}
 svg.sh1 <- system.file("extdata/shinyApp/example", "arabidopsis_thaliana.organ_shm1.svg", package="spatialHeatmap")
@@ -1322,11 +1428,18 @@ svg.sh2 <- system.file("extdata/shinyApp/example", "arabidopsis_thaliana.organ_s
 ```
 
 The following generates the corresponding SHMs plot for `gene1`. The orginal 
-image dimensions can be preserved by assigning `TRUE` to the `preserve.scale` argument.    
+image dimensions can be preserved by assigning `TRUE` to the `preserve.scale` argument.   
 
-```{r arabshm, eval=TRUE, echo=TRUE, warnings=FALSE, fig.wide=TRUE, fig.cap=('SHMs of Arabidopsis at two growth stages. The expression profile of gene1 under condition1 and condition2 is plotted for two growth stages (top and bottom row).'), out.width="100%"}
+
+<!--
+This image is hidden to meet the 5MB requirement on vignette.
+-->
+
+```{r arabshm, eval=TRUE, echo=TRUE, warnings=FALSE, fig.wide=TRUE, fig.cap=('Spatial heatmap of Arabidopsis at two growth stages. The expression profile of gene1 under condition1 and condition2 is plotted for two growth stages (top and bottom row).'), out.width="100%", fig.show='show'}
 spatial_hm(svg.path=c(svg.sh1, svg.sh2), data=df.random, ID=c('gene1'), width=0.7, legend.r=0.9, legend.width=1, preserve.scale=TRUE) 
 ```
+
+Note in Figure \@ref(fig:arabshm) shoots have thicker outlines than roots. This is another function of `spatial_hm`, *i.e.* preserves the outline thicknesses defined in aSVG files. This feature is particularly useful in cellular SHMs where different cell types have different cell-wall thicknesses. The outline widths can be updated with `update_feature` programatically or with Inkscape manually. The former is illustrated in the Supplementary Section.   
 
 # Matrix Heatmaps {#mhm}
 
@@ -1584,7 +1697,11 @@ such as many genes or proteins. In contrast to this, the
 simplicity this less complex container is often useful for testing or when
 dealing with simple data sets.
 
+In data assayed only at spatial dimension, there are two factors samples and conditions, while data assayed at spatial and temporal dimension contains an additional factor time points or development stages. The `spatialHeatmap` is able to work with both data types. In this section, the application of SHMs on spatial data is explained first in terms of the three object types, which is more popular. Later, the spatiotemporal usage of SHMs is presented in a specific subsection.    
+
 ### Object Types
+
+This subsection refers to data assayed only at spatial dimension, where two factors samples and conditions are involved.   
 
 #### `vector`
 
@@ -1609,7 +1726,7 @@ To keep the build time and storage size of this package to a minimum, the
 the corresponding SHM is not shown in this vignette. 
 
 ```{r vecshm, eval=FALSE, echo=TRUE, warnings=FALSE, fig.wide=FALSE, fig.cap=c('SHMs on a vector. \'occipital lobe\' and \'parietal lobe\' are 2 aSVG features and \'condition1\' and \'condition2\' are conditions.')}
-spatial_hm(svg.path=svg.hum, data=vec, ID='toy', ncol=1, legend.r=1.2, sub.title.size=14)
+spatial_hm(svg.path=svg.hum, data=vec, ID='toy', ncol=1, legend.r=1.2, sub.title.size=14, ft.trans='g4320')
 ```
 
 #### `data.frame`  
@@ -1650,7 +1767,6 @@ df.test$ann <- paste0('ann', 1:20)
 df.test[1:3, ]
 ```
 
-
 #### `SummarizedExperiment` 
 
 The `SummarizedExperiment` class is a much more extensible and flexible container 
@@ -1680,7 +1796,7 @@ the `spatial_hm` function, the target file should meet the following requirement
    the condition column is empty, then the same condition is assumed under the
    corresponding features/samples entry.
  
-3. The feature/sample names must have matching entries in to corresponding aSVG
+3. The feature/sample names must have matching entries in corresponding aSVG
    to be considered in the final SHM. Note, the double underscore is a special
    string that is reserved for specific purposes in *spatialHeatmap*, and thus
    should be avoided for naming feature/samples and conditions. 
@@ -1738,8 +1854,17 @@ With the fully configured `SummarizedExperiment` object, a similar SHM is plotte
 in the previous examples. 
 
 ```{r seshm, eval=FALSE, echo=TRUE, warnings=FALSE, fig.wide=FALSE, fig.cap=c('SHMs on a SummarizedExperiment. \'occipital lobe\' and \'parietal lobe\' are 2 aSVG features and \'condition1\' and \'condition2\' are conditions.')}
-spatial_hm(svg.path=svg.hum, data=se.aggr, ID=c('gene1'), ncol=1, legend.r=1.2, sub.title.size=14)
+spatial_hm(svg.path=svg.hum, data=se.aggr, ID=c('gene1'), ncol=1, legend.r=1.2, sub.title.size=14, ft.trans=c('g4320'))
 ```
+
+### Spatiotemporal Data {#spa.tem}
+
+The above explanations on the three object types are applicable to data at a single spatial dimension directly. If the data is measured at spatial and temporal dimension, there are three factors: samples, conditions, and time points such as development stages. The three object types are still applicable, but the formatting convention is slightly different.  
+
+Specifically, there are three options to format the spatiotemporal data: 1) Combine samples and conditions. In `vector` names and `data.frame` column names, the composite sample-condition factor and time factor should be concatenated by double underscore, while in `SummarizedExperiment` the former and latter should be regarded as the "sample" and "condition" columns respectively; 2) Combine samples and times. In `vector` names and `data.frame` column names, the composite sample-time factor and condition factor should be concatenated by double underscore (see [here](#sam.time)), while in `SummarizedExperiment` the former and latter should be regarded as the "sample" and "condition" columns respectively; or 3) Combine samples, conditions, and times. The composite sample-time-condition factor will be the full names in `vector` and full column names in `data.frame` without the double underscore (see [here](#sam.time.con2)), while in `SummarizedExperiment` they will be the "sample" column and the "condition" column will be ignored (see [here](#sam.time.con1)).   
+
+Which option to choose depends on the specific data and aSVGs, and the chosen option is expected to achieve optimal visualization. Regardless of the options, the pivotal requirement that target spatial features in aSVG must have matching counterparts in data should always be fulfilled (see [here](#idt)).   
+
 
 ## aSVG File
 
@@ -1747,17 +1872,17 @@ spatial_hm(svg.path=svg.hum, data=se.aggr, ID=c('gene1'), ncol=1, legend.r=1.2, 
 
 A public aSVG repository, that can be used by `spatialHeatmap` directly, is the one
 maintained by the [EBI Gene Expression
-Group](https://github.com/ebi-gene-expression-group/anatomogram/tree/master/src/svg).
+Group](https://github.com/ebi-gene-expression-group/anatomogram/tree/master/src/svg){target="_blank"}.
 It contains annatomical aSVG images from different species. The same aSVG
 images are also used by the web service of the Expression Atlas project. In addition, the
 `spatialHeatmap` has its own repository called [spatialHeatmap aSVG
-Repository](https://github.com/jianhaizhang/spatialHeatmap_aSVG_Repository),
+Repository](https://github.com/jianhaizhang/spatialHeatmap_aSVG_Repository){target="_blank"},
 that stores custom aSVG files developed for this project (*e.g.* Figure
 \@ref(fig:shshm)).  
 
 If users cannot find a suitable aSVG image in these two repositories, we have developed 
-a step-by-step [SVG tutorial](https://jianhaizhang.github.io/SVG_tutorial_file/) for creating
-custom aSVG images. For example, the [BAR eFP browser](http://bar.utoronto.ca/) at University 
+a step-by-step [SVG tutorial](https://jianhaizhang.github.io/SVG_tutorial_file/){target="_blank"} for creating
+custom aSVG images. For example, the [BAR eFP browser](http://bar.utoronto.ca/){target="_blank"} at University 
 of Toronto contains many anatomical images. These images can be used as templates in the SVG 
 tutorial to construct custom aSVGs.  
 
@@ -1791,26 +1916,29 @@ feature.df
 ``` 
 
 Subsequently, create a character vector of new feature identifiers corresponding to 
-each of the returned features. In the following examples spaces in strings will be 
-filled with dots. This character vector must be added to the first column of the 
-feature `data.frame`. The latter is used by the `update_feature` function to look 
-up new features. 
-
+each of the returned features. 
 
 Sample code that creates new feature names and stores them in a character vector.
 
 ```{r eval=FALSE, echo=TRUE, warnings=FALSE } 
-f.new <- c('prefrontal.cortex', 'frontal.cortex')
+f.new <- c('prefrontalCortex', 'frontalCortex')
 ```
 
-Next, new features are added to the first column of the feature `data.frame`.
+Similarly, if the stroke (outline thickness) or color need to update, make vectors respectively and make sure each entry corresponds to each returned feature.  
 
 ```{r eval=FALSE, echo=TRUE, warnings=FALSE } 
-feature.df.new <- cbind(featureNew=f.new, feature.df)
+s.new <- c('0.05', '0.1') # New strokes.
+c.new <- c('red', 'green') # New colors.
+```
+
+Next, new features, strokes, and colors are added to the feature `data.frame` as three columns with the names `featureNew`, `strokeNew`, and `colorNew` respectively. The three column names are used by the `update_feature` function to look up new entries.  
+
+```{r eval=FALSE, echo=TRUE, warnings=FALSE } 
+feature.df.new <- cbind(featureNew=f.new, strokeNew=s.new, colorNew=c.new, feature.df)
 feature.df.new
 ```
 
-Finally, the features are updated in the aSVG file(s) located in the `tmp.dir1` directory.
+Finally, the features, strokes, and colors are updated in the aSVG file(s) located in the `tmp.dir1` directory.
 
 ```{r eval=FALSE, echo=TRUE, warnings=FALSE } 
 update_feature(df.new=feature.df.new, dir=tmp.dir1)

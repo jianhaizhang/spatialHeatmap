@@ -17,7 +17,7 @@
 #' @param opacity The transparency of colored spatial features in legend plot. Default is 1. If 0, features are totally transparent.
 #' @param key Logical. The default is TRUE and keys are added in legend plot. If \code{label} is TRUE, the keys could be removed. 
 #' @param sam.dat A vector of samples in the data matrix.
-#' @param tis.trans A vector of tissues to be transparent.
+#' @param ft.trans A vector of tissues to be transparent.
 #' @return A list of ggplots.
 #' @keywords Internal
 #' @noRd
@@ -29,7 +29,7 @@
 
 #' @importFrom ggplot2 theme layer_data scale_fill_manual unit element_text guide_legend
 
-gg_lgd <- function(gg.all, size.key=NULL, size.text.key=8, angle.text.key=NULL, position.text.key=NULL, legend.value.vdo=NULL, sub.title.size=NULL, row=NULL, col=NULL, label=FALSE, label.size=3, label.angle=0, hjust=0, vjust=0, opacity=1, key=TRUE, sam.dat, tis.trans=NULL) {
+gg_lgd <- function(gg.all, size.key=NULL, size.text.key=8, angle.text.key=NULL, position.text.key=NULL, legend.value.vdo=NULL, sub.title.size=NULL, row=NULL, col=NULL, label=FALSE, label.size=3, label.angle=0, hjust=0, vjust=0, opacity=1, key=TRUE, sam.dat, ft.trans=NULL) {
 
   tissue <- x0 <- y0 <- NULL
   # Function to remove feature labels. 
@@ -55,9 +55,9 @@ gg_lgd <- function(gg.all, size.key=NULL, size.text.key=8, angle.text.key=NULL, 
       dat <- g$data; g.col <- lay.dat$fill
       names(g.col) <- dat$tissue; df.tis <- as.vector(dat$tissue); df.val <- round(dat$value, 2)
       g.col <- g.col[!duplicated(names(g.col))]; tis.path <- dat$feature
-      sam.legend <- intersect(unique(sam.dat), unique(tis.path))
-      sam.legend <- setdiff(sam.legend, tis.trans) 
-      leg.idx <- !duplicated(tis.path) & (tis.path %in% sam.legend)
+      ft.legend <- intersect(unique(sam.dat), unique(tis.path))
+      ft.legend <- setdiff(ft.legend, ft.trans) 
+      leg.idx <- !duplicated(tis.path) & (tis.path %in% ft.legend)
       df.tar <- df.tis[leg.idx]; lab <- path.tar <- tis.path[leg.idx]; val.tar <- df.val[leg.idx]
       if (sum(legend.value.vdo)==1) lab <- paste0(path.tar, ' (', val.tar, ')') 
       if (opacity!=1) g.col <- alpha(g.col, opacity)

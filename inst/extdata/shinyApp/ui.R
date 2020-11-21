@@ -13,7 +13,7 @@ shinyUI(dashboardPage(
     sidebarMenu(
 
       menuItem("Input", icon=icon("list"),
-      menuSubItem("View", tabName="hm_net"), br(),
+      menuSubItem("View", tabName="hm_net"), #br(),
       fileInput("config", "Optional: upload a config file", accept=".yaml", multiple=FALSE),
       fileInput("tar", "Optional: upload batched data/aSVGs in two tar files", accept=c(".tar"), multiple=TRUE),
       selectInput("fileIn", "Step1: data sets", c('none', 'customData', 'customComputedData'), 'none'),
@@ -134,7 +134,8 @@ shinyUI(dashboardPage(
       box(title="Download", status="primary", solidHeader=TRUE, collapsible=TRUE,
       htmlOutput("dld"), downloadButton("dld.cfg", "Download config file"), 
       downloadButton("dld.sgl", "Download single aSVG/data"), 
-      downloadButton("dld.mul", "Download multiple aSVGs/data"), width=12)
+      downloadButton("dld.mul", "Download multiple aSVGs/data"),
+      downloadButton("dld.st", "Download spatiotemporal aSVG/data"), width=12),
       ) 
 
       )

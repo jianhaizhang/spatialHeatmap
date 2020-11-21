@@ -7,9 +7,9 @@
 #' @param ID All gene ids selected after the App is launched.
 #' @param cols All the color codes used to construct the color bar.
 #' @param tis.path All the tissues/paths extracted from the SVG.
-#' @param tis.trans A character vector of tissue/spatial feature identifiers that will be set transparent. \emph{E.g} c("brain", "heart"). This argument is used when target features are covered by  overlapping features and the latter should be transparent.
+#' @param ft.trans A character vector of tissue/spatial feature identifiers that will be set transparent. \emph{E.g} c("brain", "heart"). This argument is used when target features are covered by  overlapping features and the latter should be transparent.
 #' @param sub.title.size A numeric of the subtitle font size of each individual spatial heatmap. The default is 11.
-#' @param sam.legend One of "identical", "all", or a character vector of tissue/spatial feature identifiers from the aSVG file. The default is "identical" and all the identical/matching tissues/spatial features between the data and aSVG file are indicated in the legend plot. If "all", all tissues/spatial features in the aSVG are shown. If a vector, only the tissues/spatial features in the vector are shown.
+#' @param ft.legend One of "identical", "all", or a character vector of tissue/spatial feature identifiers from the aSVG file. The default is "identical" and all the identical/matching tissues/spatial features between the data and aSVG file are indicated in the legend plot. If "all", all tissues/spatial features in the aSVG are shown. If a vector, only the tissues/spatial features in the vector are shown.
 #' @param legend.col A character vector of colors for the keys in the legend plot. The lenght must be equal to the number of target samples shown in the legend. 
 #' @param legend.ncol An integer of the total columns of keys in the legend plot. The default is NULL. If both \code{legend.ncol} and \code{legend.nrow} are used, the product of the two arguments should be equal or larger than the total number of shown spatial features.
 #' @param legend.nrow An integer of the total rows of keys in the legend plot. The default is NULL. It is only applicable to the legend plot. If both \code{legend.ncol} and \code{legend.nrow} are used, the product of the two arguments should be equal or larger than the total number of matching spatial features.
@@ -35,9 +35,9 @@
 
 #' @importFrom ggplot2 ggplot aes theme element_blank margin element_rect scale_y_continuous scale_x_continuous ggplotGrob geom_polygon scale_fill_manual ggtitle element_text labs guide_legend alpha coord_fixed
 
-grob_list <- function(gene, con.na=TRUE, geneV, coord, ID, cols, tis.path, tis.trans=NULL, sub.title.size, sam.legend='identical', legend.col, legend.ncol=NULL, legend.nrow=NULL, legend.position='bottom', legend.direction=NULL, legend.key.size=0.02, legend.text.size=12, legend.plot.title=NULL, legend.plot.title.size=11, line.size=0.2, line.color='grey70', mar.lb=NULL, ...) {
+grob_list <- function(gene, con.na=TRUE, geneV, coord, ID, cols, tis.path, ft.trans=NULL, sub.title.size, ft.legend='identical', legend.col, legend.ncol=NULL, legend.nrow=NULL, legend.position='bottom', legend.direction=NULL, legend.key.size=0.02, legend.text.size=12, legend.plot.title=NULL, legend.plot.title.size=11, line.size=0.2, line.color='grey70', mar.lb=NULL, ...) {
 
-  # save(gene, con.na, geneV, coord, ID, cols, tis.path, tis.trans, sub.title.size, sam.legend, legend.col, legend.ncol, legend.nrow, legend.position, legend.direction, legend.key.size, legend.text.size, legend.plot.title, legend.plot.title.size, line.size, line.color, mar.lb, file='all')
+  # save(gene, con.na, geneV, coord, ID, cols, tis.path, ft.trans, sub.title.size, ft.legend, legend.col, legend.ncol, legend.nrow, legend.position, legend.direction, legend.key.size, legend.text.size, legend.plot.title, legend.plot.title.size, line.size, line.color, mar.lb, file='all')
   
   # Main function to create SHMs and legend plot
   g_list <- function(con, lgd=FALSE, ...) {
@@ -62,24 +62,23 @@ grob_list <- function(gene, con.na=TRUE, geneV, coord, ID, cols, tis.path, tis.t
           g.col[grep(pat, tis.df)] <- scol1[tis.idx] # names(g.col) is tis.df 
         }
       }
-    # Make selected tissues transparent by setting their colours as NA.
-    if (!is.null(tis.trans)) for (i in tis.df) { if (sub('_\\d+$', '', i) %in% tis.trans) g.col[i] <- NA }
     } # The colors might be internally re-ordered alphabetically during mapping, so give them names to fix the match with tissues. E.g. c('yellow', 'blue') can be re-ordered to c('blue', 'yellow'), which makes tissue mapping wrong. Correct: colours are not re-ordered. The 'tissue' in 'data=coord' are internally re-ordered according to a factor. Therfore, 'tissue' should be a factor with the right order. Otherwise, disordered mapping can happen.
-
+    # Make selected tissues transparent by setting their colours as NA.
+    if (!is.null(ft.trans)) for (i in tis.df) { if (sub('_\\d+$', '', i) %in% ft.trans) g.col[i] <- NA }
     # Show selected or all samples in legend.
-    if (length(sam.legend)==1) if (sam.legend=='identical') sam.legend <- intersect(sam.uni, unique(tis.path)) else if (sam.legend=='all') sam.legend <- unique(tis.path)
+    if (length(ft.legend)==1) if (ft.legend=='identical') ft.legend <- intersect(sam.uni, unique(tis.path)) else if (ft.legend=='all') ft.legend <- unique(tis.path)
     
     if (lgd==FALSE) { # Legend plot.
     
-      sam.legend <- setdiff(sam.legend, tis.trans) 
-      leg.idx <- !duplicated(tis.path) & (tis.path %in% sam.legend)
+      ft.legend <- setdiff(ft.legend, ft.trans) 
+      leg.idx <- !duplicated(tis.path) & (tis.path %in% ft.legend)
       # Bottom legends are set for each SHM and then removed in 'ggplotGrob', but a copy with legend is saved separately for later used in video.
       scl.fil <- scale_fill_manual(values=g.col, breaks=tis.df[leg.idx], labels=tis.path[leg.idx], guide=guide_legend(title=NULL, ncol=legend.ncol, nrow=legend.nrow))
    
     } else { 
 
       # Assign legend key colours if identical samples between SVG and matrix have colors of "none".
-      legend.col1 <- legend.col[sam.legend] 
+      legend.col1 <- legend.col[ft.legend] 
       if (any(legend.col1=='none')) {
        
          n <- sum(legend.col1=='none'); col.all <- grDevices::colors()[grep('honeydew|aliceblue|white|gr(a|e)y', grDevices::colors(), invert=TRUE)]
@@ -88,9 +87,9 @@ grob_list <- function(gene, con.na=TRUE, geneV, coord, ID, cols, tis.path, tis.t
 
        }
        # Map legend colours to tissues.
-       sam.legend <- setdiff(sam.legend, tis.trans) 
-       leg.idx <- !duplicated(tis.path) & (tis.path %in% sam.legend)
-       legend.col1 <- legend.col1[sam.legend] # Exclude transparent tissues. 
+       ft.legend <- setdiff(ft.legend, ft.trans) 
+       leg.idx <- !duplicated(tis.path) & (tis.path %in% ft.legend)
+       legend.col1 <- legend.col1[ft.legend] # Exclude transparent tissues. 
        # Copy colors across same numbered tissues.
        for (i in seq_along(g.col)) {
          if (!is.na(g.col[i])) next
@@ -109,7 +108,7 @@ grob_list <- function(gene, con.na=TRUE, geneV, coord, ID, cols, tis.path, tis.t
     idx1 <- col.na %in% colnames(gene); df0 <- coord[idx1, ]
     df0$value <- unlist(gene[df0$gene[1], col.na[idx1]])
     coord[idx1, ] <- df0; coord <- line_size(coord, line.size)
-    # If "data" is not in ggplot(), g$data slot is empty.
+    # If "data" is not in ggplot(), g$data slot is empty. x, y, and group should be in the same aes(). 
     g <- ggplot(data=coord, aes(x=x, y=y, value=value, group=tissue, text=paste0('feature: ', feature, '\n', 'value: ', value)), ...)+geom_polygon(aes(fill=tissue), color=line.color, size=coord$line.size, linetype='solid')+scl.fil+theme(axis.text=element_blank(), axis.ticks=element_blank(), panel.grid=element_blank(), panel.background=element_rect(fill="white", colour="grey80"), axis.title.x=element_text(size=16, face="bold"), plot.title=element_text(hjust=0.5, size=sub.title.size), legend.box.margin=margin(-20, 0, 2, 0, unit='pt'))+labs(x="", y="")+scale_y_continuous(expand=c(0.01, 0.01))+scale_x_continuous(expand=c(0.01, 0.01))+lgd.par
     if (is.null(mar.lb)) g <- g+theme(plot.margin=margin(0.005, 0.005, 0.005, 0.005, "npc")) else g <- g+theme(plot.margin=margin(mar.lb[2], mar.lb[1], mar.lb[2], mar.lb[1], "npc"))
     if (con.na==FALSE) g.tit <- ggtitle(k) else g.tit <- ggtitle(paste0(k, "_", con)); g <- g+g.tit
@@ -125,7 +124,7 @@ grob_list <- function(gene, con.na=TRUE, geneV, coord, ID, cols, tis.path, tis.t
   # Map colours to samples according to expression level.
   cname <- colnames(gene); form <- grep('__', cname) # Only take the column names with "__".
   cons <- gsub("(.*)(__)(.*)", "\\3", cname[form]); con.uni <- unique(cons)
-  sam.uni <- unique(gsub("(.*)(__)(.*)", "\\1", cname)); tis.trans <- make.names(tis.trans)
+  sam.uni <- unique(gsub("(.*)(__)(.*)", "\\1", cname)); ft.trans <- make.names(ft.trans)
   grob.na <- grob.lis <- g.lis.all <- NULL; for (k in ID) {
 
     scol <- NULL; for (i in gene[k, ]) { 
@@ -162,7 +161,6 @@ line_size <- function(coord, line.size) {
     coord$line.size[grepl(pat, coord$tissue)] <- line.size[i]
   }; return(coord)
 }
-
 
 
 

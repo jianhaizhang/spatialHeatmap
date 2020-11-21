@@ -64,13 +64,12 @@ return_feature <- function(feature, species, keywords.any=TRUE, remote=TRUE, dir
   options(stringsAsFactors=FALSE); SVG <- parent <- NULL
   dir <- normalizePath(dir, winslash = "/", mustWork=FALSE)
   if (!is.vector(feature) & is.vector(species)) stop('"feature" and "species" must be two vectors respectively!')
-
   # Parse and return features.
   ftr.return <- function(svgs, desc=desc) { 
 
     cat('Accessing features... \n'); df <- NULL; for (i in svgs) {
 
-      doc <- read_xml(i); df0 <- svg_attr(doc, feature=NULL)[['df.attr']]
+      doc <- read_xml(i); df0 <- svg_attr(doc, feature=NULL, TRUE)[['df.attr']]
       # Move ontology with NA or "NULL" to bottom.
       w.na <- which(is.na(df0$id)|df0$id=='NULL'|df0$id=='NA')
       if (length(w.na)>0) df0 <- rbind(df0[-w.na, ], df0[w.na, ])
@@ -78,7 +77,8 @@ return_feature <- function(feature, species, keywords.any=TRUE, remote=TRUE, dir
       cat(na); cat(', '); df0$SVG <- na; df <- rbind(df, df0)
 
     }; cat('\n')
-    cna <- colnames(df); colnames(df)[cna=='title'] <- 'feature'; df <- df[, c('feature', 'stroke', 'color', 'id', 'SVG', 'parent', 'index', 'index1')]
+    cna <- colnames(df); df <- df[, c('feature', 'stroke', 'color', 'id', 'element', 'parent', 'index1', 'SVG')]
+    colnames(df)[colnames(df)=='index1'] <- 'order'
 
     if (desc==TRUE) {
   

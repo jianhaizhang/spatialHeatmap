@@ -8,7 +8,8 @@
 
 #' @param lis.par.tmp Logical, TRUE or FALSE. Default is FALSE. If TRUE the template of default paramter list is returned, and users can set customized default values then assign this list to \code{ lis.par }. Note, only the default values in the list can be changed while the hierarchy of the list should be preserved. Otherwise, it cannot be recognized by the internal program. 
 #' @param lis.dld.single A list of paired data matrix and single aSVG file, which would be downloadable on the app for testing. The list should have two elements with name slots of "data" and "svg" respectively, which are the paths of the data matrix and aSVG file repectively. After the function call, the specified data and aSVG are copied to the "example" folder in the app. Note the two name slots should not be changed. \emph{E.g.} \code{list(data='./data_download.txt', svg='./root_download_shm.svg')}.
-#' @param lis.dld.mul A list of paired data matrix and multiple aSVG files, which would be downloadable on the app for testing. The multiple aSVG files could be multiple growth stages of a plant. The list should have two elements with name slots of "data" and "svg" respectively, which are the paths of the data matrix and aSVG files repectively. After the function call, the specified data and aSVGs are copied to the "example" folder in the app. Note the two name slots should not be changed. \emph{E.g.} list(data='./data_download.txt', svg=c('./root_young_download_shm.svg', './root_old_download_shm.svg')).
+#' @param lis.dld.mul A list of paired data matrix and multiple aSVG files, which would be downloadable on the app for testing. The multiple aSVG files could be multiple growth stages of a plant. The list should have two elements with name slots of "data" and "svg" respectively, which are the paths of the data matrix and aSVG files repectively. The data and aSVG should only include the spatial dimension, no temporal dimension. After the function call, the specified data and aSVGs are copied to the "example" folder in the app. Note the two name slots should not be changed. \emph{E.g.} list(data='./data_download.txt', svg=c('./root_young_download_shm.svg', './root_old_download_shm.svg')).
+#' @param lis.dld.st A list of paired data matrix and single aSVG file, which would be downloadable on the app for testing. The list should have two elements with name slots of "data" and "svg" respectively, which are the paths of the data matrix and aSVG file repectively. Compared with \code{lis.dld.single}, the only difference is the data and aSVG include spatial and temporal dimension. See the example section for details. After the function call, the specified data and aSVG are copied to the "example" folder in the app. Note the two name slots should not be changed. \emph{E.g.} \code{list(data='./data_download.txt', svg='./root_download_shm.svg')}.
 #' @param custom Logical, TRUE or FALSE. If TRUE (default), the "customData" option under "Step 1: data sets" is included, which allows to upload datasets from local computer.
 #' @param custom.computed Logical, TRUE or FALSE. If TRUE (default), the "customComputdData" option under "Step 1: data sets" is included, which allows to upload computed datasets from local computer. See \code{\link{adj_mod}}. 
 #' @param example Logical, TRUE or FALSE. If TRUE (default), the default examples in "spatialHeatmap" package are included in the app as well as those provided to \code{...} by users.
@@ -18,15 +19,24 @@
 
 #' @examples
 
-#' # The pre-packaged examples are used for illustration purpose.
+#' # The examples build on pre-packaged examples in spatialHeatmap.
+#'
 #' # Get one data path and one aSVG path and assembly them into a list for creating default dataset.
-
 #' data.path1 <- system.file('extdata/shinyApp/example/expr_arab.txt', package='spatialHeatmap')
 #' svg.path1 <- system.file('extdata/shinyApp/example/arabidopsis_thaliana.shoot_shm.svg', 
 #' package='spatialHeatmap')
 #' # The list with name slots of "name", "data", and "svg".
 #' lis.dat1 <- list(name='shoot', data=data.path1, svg=svg.path1)
-
+#'
+#' # Get the paths of spatiotemporal data and aSVG files and assembly them into a list for 
+#' # creating default dataset.
+#' data.path.st <- system.file('extdata/shinyApp/example/expr_coleoptile_samTimeCon.txt', 
+#' package='spatialHeatmap')
+#' svg.path.st <- system.file('extdata/shinyApp/example/oryza.sativa_coleoptile.ANT_shm.svg', 
+#' package='spatialHeatmap')
+#' # The list with name slots of "name", "data", and "svg".
+#' lis.dat.st <- list(name='spatialTemporal', data=data.path.st, svg=svg.path.st)
+#'
 #' # Get one data path and two aSVG paths and assembly them into a list for creating default 
 #' # dataset, which include two growth stages.
 #' data.path2 <- system.file('extdata/shinyApp/example/random_data_multiple_aSVGs.txt', 
@@ -38,7 +48,7 @@
 #' # The list with name slots of "name", "data", and "svg", where the two aSVG paths are stored
 #' # in a vector in "svg".
 #' lis.dat2 <- list(name='growthStage', data=data.path2, svg=c(svg.path2.1, svg.path2.2))
-
+#'
 #' # Get one data path and one aSVG path and assembly them into a list for creating downloadable
 #' # dataset.
 #' data.path.dld1 <- system.file('extdata/shinyApp/example/expr_arab.txt', 
@@ -49,9 +59,13 @@
 #' lis.dld.single <- list(name='organ', data=data.path.dld1, svg=svg.path.dld1)
 
 #' # For demonstration purpose, the same data and aSVGs are used to make the list for creating 
-#' # downloadable dataset, which include two growth stages. 
+#' # downloadable dataset of two growth stages. 
 #' lis.dld.mul <- list(data=data.path2, svg=c(svg.path2.1, svg.path2.2))
-
+#'
+#' # For demonstration purpose, the same spatiotemporal data and aSVG are used to create the
+#' # downloadable spatiotemporal dataset.
+#' lis.dld.st <- list(data=data.path.st, svg=svg.path.st)
+#'
 #' # Retrieve the default parameters.
 #' lis.par <- custom_shiny(lis.par.tmp=TRUE)
 #' # Change default values.
@@ -62,8 +76,8 @@
 #' \donttest{
 #' if (!dir.exists('~/test_shiny')) dir.create('~/test_shiny')
 #' # Create custom Shiny app by feeding this function these datasets and parameters.
-#' custom_shiny(lis.dat1, lis.dat2, lis.par=lis.par, lis.dld.single=lis.dld.single, 
-#' lis.dld.mul=lis.dld.mul, app.dir='~/test_shiny')
+#' custom_shiny(lis.dat1, lis.dat2, lis.dat.st, lis.par=lis.par, lis.dld.single=lis.dld.single, 
+#' lis.dld.mul=lis.dld.mul, lis.dld.st=lis.dld.st, app.dir='~/test_shiny')
 #' # Lauch the app.
 #' shiny::runApp('~/test_shiny/shinyApp') 
 #' }
@@ -80,13 +94,13 @@
 #' @importFrom yaml yaml.load_file write_yaml
 #' @importFrom grDevices colors
 
-custom_shiny <- function(..., lis.par=NULL, lis.par.tmp=FALSE, lis.dld.single=NULL, lis.dld.mul=NULL, custom=TRUE, custom.computed=TRUE, example=TRUE, app.dir='.') {
+custom_shiny <- function(..., lis.par=NULL, lis.par.tmp=FALSE, lis.dld.single=NULL, lis.dld.mul=NULL, lis.dld.st=NULL, custom=TRUE, custom.computed=TRUE, example=TRUE, app.dir='.') {
 
   options(stringsAsFactors=FALSE)
   # Default config file.
   cfg.def <- yaml.load_file(system.file('extdata/shinyApp/config/config.yaml', package='spatialHeatmap'))
   # Default parameters.
-  lis.par.def <- cfg.def[!grepl('^dataset\\d+|download_single|download_multiple', names(cfg.def))]
+  lis.par.def <- cfg.def[!grepl('^dataset\\d+|download_single|download_multiple|download_spatial_temporal', names(cfg.def))]
   # Return parameter template.
   if (lis.par.tmp==TRUE) {
 
@@ -185,7 +199,11 @@ custom_shiny <- function(..., lis.par=NULL, lis.par.tmp=FALSE, lis.dld.single=NU
     # Use default download files. 
     lis.dld2 <- list(data="example/random_data_multiple_aSVGs.txt", svg=c('example/arabidopsis_thaliana.organ_shm1.svg', 'example/arabidopsis_thaliana.organ_shm2.svg'))
 
-  }; lis.dld <- list(download_single=lis.dld1, download_multiple=lis.dld2)
+  } 
+  if (!is.null(lis.dld.st)) lis.dld3 <- cp_file(lis.dld.st, app.dir, 'example') else {
+    # Use default download files.
+    lis.dld3 <- list(data="example/expr_coleoptile_samTimeCon.txt", svg="example/oryza.sativa_coleoptile.ANT_shm.svg")
+  }; lis.dld <- list(download_single=lis.dld1, download_multiple=lis.dld2, download_spatial_temporal=lis.dld3)
   lis.cus1 <- lis.cus2 <- NULL
   if (custom==TRUE) lis.cus1 <- list(name='customData', data='none', svg='none')
   if (custom.computed==TRUE) lis.cus2 <- list(name='customComputedData', data='none', svg='none')

@@ -47,7 +47,7 @@
 
 update_feature <- function(df.new, dir) {
 
-  options(stringsAsFactors=FALSE); SVG <- parent <- NULL
+  options(stringsAsFactors=FALSE); SVG <- parent <- feature <- NULL
   dir <- normalizePath(dir, winslash = "/", mustWork=FALSE)
   if (!is(df.new, 'data.frame')) stop('"df.new" must be a "data.frame"!')
   idx.upd <- grep('featureNew|colorNew|strokeNew', colnames(df.new), ignore.case=TRUE)
@@ -58,25 +58,37 @@ update_feature <- function(df.new, dir) {
   df.upd <- as.data.frame(apply(df.upd, 2, as.vector))
   if ('strokenew' %in% cna.new) df.upd$strokenew <- as.numeric(df.upd$strokenew)
   df.new <- cbind(df.upd, df.old)
-  df.new$index <- as.numeric(df.new$index)
-  df.new$index1 <- as.numeric(df.new$index1)
+  # df.new$index <- as.numeric(df.new$index)
+  # df.new$index1 <- as.numeric(df.new$index1)
   svgs.na <- unique(df.new$SVG)
   # Update each SVG file in order.
   for (i in svgs.na) {
-
     df0 <- subset(df.new, SVG==i)
     if ('featurenew' %in% cna.new) {
       dup <- duplicated(df0[, 'featurenew'])
       if (any(dup)) stop(paste0("Duplicated feature \'", paste0(df0[, 'featurenew'][dup], collapse=', '), "\' detected in ", i, "!"))
-    }
-    path.in <- paste0(dir, '/', i); doc <- read_xml(path.in); len <- xml_length(doc)
-    out <- xml_children(doc)[[len-1]]; ply <- xml_children(doc)[[len]]
+    } 
+    path.in <- paste0(dir, '/', i); doc <- read_xml(path.in)
+    lis <- svg_attr(doc, NULL, FALSE); df.attr <- lis$df.attr
+    out <- lis$out; ply <- lis$ply
+    # Combine new columns in df.new to df.attr.
+    int.ft <- intersect(df.attr$feature, df0$feature)
+    if (length(int.ft)==0) stop('No matching spatial features detected for ', i, '!')
+    ft.no <- setdiff(df0$feature, int.ft)
+    if (length(ft.no)>0) cat(ft.no, 'No matching spatial features detected for ', ft.no, '!\n')
+    df.attr <- subset(df.attr, feature %in% int.ft)
+    df0 <- subset(df0, feature %in% int.ft)
+    df.attr <- df.attr[order(df.attr$feature), ]
+    df0 <- df0[order(df0$feature), ]
+    df.sub <- cbind(df0[cna.new], df.attr)
+    # len <- xml_length(doc) out <- xml_children(doc)[[len-1]]; ply <- xml_children(doc)[[len]]
     # Update features for two parent layers.
     for (k in list(out, ply)) { 
 
       # Check if the parent needs to be updated. 
-      df1 <- subset(df0, parent==xml_attr(k, 'id')); if (nrow(df1)==0) next
-      cat(paste0('Updating attributes',   ' in ', path.in, '\n'))
+      p.id <- make.names(xml_attr(k, 'id')); if (is.na(p.id)) next
+      df1 <- subset(df.sub, parent==p.id); if (nrow(df1)==0) next
+      cat(paste0('Updating attributes', ' in ', path.in, '\n'))
       # Update features by order.
       for (j in seq_len(nrow(df1))) {
  
@@ -86,7 +98,7 @@ update_feature <- function(df.new, dir) {
         # If there is no "title" node, new feature is added to "id", and no need to add a "title" node. Otherwise, added to the text in title.
           if (!('title' %in% nas)) {
 
-            if (xml_attr(nod0, 'id')!=df1$feature[j]) {
+            if (make.names(xml_attr(nod0, 'id'))!=df1$feature[j]) {
               cat(df1$feature[j], 'is not updated! \n'); next
             } else { xml_set_attr(nod0, 'id', df1[j, 'featurenew']) }
           
@@ -97,8 +109,8 @@ update_feature <- function(df.new, dir) {
 
         }; sty0 <- xml_attr(nod0, 'style')
         if ('strokenew' %in% cna.new) {
-          stk <- paste0('stroke:', df1$strokenew[j])
-          sty0 <- col_str(sty0, '^stroke:', stk)
+          stk <- paste0('stroke-width:', df1$strokenew[j])
+          sty0 <- col_str(sty0, '^stroke-width:', stk)
           #xml_set_attr(nod0, 'style', sty.new)
         } # Update stroke width.
         if ('colornew' %in% cna.new) {

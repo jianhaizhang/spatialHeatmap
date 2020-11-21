@@ -5,7 +5,7 @@
 #' @param sam.uni A vector of unique samples extracted from data matrix.
 #' @inheritParams htmlwidgets::saveWidget
 #' @inheritParams spatial_hm
-#' @param tis.trans A character vector of tissue/spatial feature identifiers that will be set transparent. \emph{E.g} c("brain", "heart"). This argument is used when target features are covered by  overlapping features and the latter should be transparent.
+#' @param ft.trans A character vector of tissue/spatial feature identifiers that will be set transparent. \emph{E.g} c("brain", "heart"). This argument is used when target features are covered by  overlapping features and the latter should be transparent.
 #' @return HTML files of spatial heatmaps are saved in 'animaiton_shm'.
 #' @keywords Internal
 #' @noRd
@@ -20,7 +20,7 @@
 #' @importFrom htmlwidgets saveWidget
 
 
-html_ly <- function(gg, cs.g, tis.trans, sam.uni, anm.width, anm.height, selfcontained=FALSE, out.dir) {
+html_ly <- function(gg, cs.g, ft.trans, sam.uni, anm.width, anm.height, selfcontained=FALSE, out.dir) {
 
   gg.na <- names(gg); cs.lis <- gg2list(cs.g, tooltip='color_scale')
   cs.lis$layout$title$text <- NULL 
@@ -37,9 +37,9 @@ html_ly <- function(gg, cs.g, tis.trans, sam.uni, anm.width, anm.height, selfcon
     g <- gg[[i]]; lay.dat <- layer_data(g)
     dat <- g$data; g.col <- lay.dat$fill; names(g.col) <- dat$tissue
     g.col <- g.col[!duplicated(names(g.col))]; tis.path <- dat$feature
-    sam.legend <- intersect(sam.uni, unique(tis.path))
-    sam.legend <- setdiff(sam.legend, tis.trans) 
-    leg.idx <- !duplicated(tis.path) & (tis.path %in% sam.legend)
+    ft.legend <- intersect(sam.uni, unique(tis.path))
+    ft.legend <- setdiff(ft.legend, ft.trans) 
+    leg.idx <- !duplicated(tis.path) & (tis.path %in% ft.legend)
     tis.show <- as.vector(dat$tissue)[leg.idx]
     tis.show1 <- tis.path[leg.idx]
     g2l <- gg2list(g, tooltip="text")
