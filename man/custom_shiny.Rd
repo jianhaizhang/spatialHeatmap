@@ -54,7 +54,7 @@ package='spatialHeatmap')
 # The list with name slots of "name", "data", and "svg".
 lis.dat1 <- list(name='shoot', data=data.path1, svg=svg.path1)
 
-# Get the paths of spatial-temporal data and aSVG files and assembly them into a list for 
+# Get the paths of spatiotemporal data and aSVG files and assembly them into a list for 
 # creating default dataset.
 data.path.st <- system.file('extdata/shinyApp/example/expr_coleoptile_samTimeCon.txt', 
 package='spatialHeatmap')
@@ -87,8 +87,8 @@ lis.dld.single <- list(name='organ', data=data.path.dld1, svg=svg.path.dld1)
 # downloadable dataset of two growth stages. 
 lis.dld.mul <- list(data=data.path2, svg=c(svg.path2.1, svg.path2.2))
 
-# For demonstration purpose, the same spatial-temporal data and aSVG are used to create the
-# downloadable spatial-temporal dataset.
+# For demonstration purpose, the same spatiotemporal data and aSVG are used to create the
+# downloadable spatiotemporal dataset.
 lis.dld.st <- list(data=data.path.st, svg=svg.path.st)
 
 # Retrieve the default parameters.
