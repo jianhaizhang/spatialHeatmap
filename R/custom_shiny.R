@@ -82,7 +82,8 @@
 #' shiny::runApp('~/test_shiny/shinyApp') 
 #' }
 #'
-#' # The customized Shiny app is able to take database backend as well. Examples are demonstrated in the function "write_hdf5".
+#' # The customized Shiny app is able to take database backend as well. Examples are 
+#' # demonstrated in the function "write_hdf5".
 
 #' @author Jianhai Zhang \email{jzhan067@@ucr.edu; zhang.jianhai@@hotmail.com} \cr Dr. Thomas Girke \email{thomas.girke@@ucr.edu}
 
