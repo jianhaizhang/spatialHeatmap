@@ -106,7 +106,8 @@ lis.dld.mul=lis.dld.mul, lis.dld.st=lis.dld.st, app.dir='~/test_shiny')
 shiny::runApp('~/test_shiny/shinyApp') 
 }
 
-# The customized Shiny app is able to take database backend as well. Examples are demonstrated in the function "write_hdf5".
+# The customized Shiny app is able to take database backend as well. Examples are 
+# demonstrated in the function "write_hdf5".
 }
 \references{
 Jeremy Stephens, Kirill Simonov, Yihui Xie, Zhuoer Dong, Hadley Wickham, Jeffrey Horner, reikoch, Will Beasley, Brendan O'Connor and Gregory R. Warnes (2020). yaml: Methods to Convert R Data to YAML and Back. R package version 2.2.1. https://CRAN.R-project.org/package=yaml
