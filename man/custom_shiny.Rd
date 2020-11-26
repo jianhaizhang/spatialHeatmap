@@ -49,7 +49,7 @@ This function creates customized Shiny App with user-provided data, aSVG files, 
 
 # Get one data path and one aSVG path and assembly them into a list for creating default dataset.
 data.path1 <- system.file('extdata/shinyApp/example/expr_arab.txt', package='spatialHeatmap')
-svg.path1 <- system.file('extdata/shinyApp/example/arabidopsis_thaliana.shoot_shm.svg', 
+svg.path1 <- system.file('extdata/shinyApp/example/arabidopsis.thaliana_shoot_shm.svg', 
 package='spatialHeatmap')
 # The list with name slots of "name", "data", and "svg".
 lis.dat1 <- list(name='shoot', data=data.path1, svg=svg.path1)
@@ -61,15 +61,15 @@ package='spatialHeatmap')
 svg.path.st <- system.file('extdata/shinyApp/example/oryza.sativa_coleoptile.ANT_shm.svg', 
 package='spatialHeatmap')
 # The list with name slots of "name", "data", and "svg".
-lis.dat.st <- list(name='spatialTemporal', data=data.path.st, svg=svg.path.st)
+lis.dat.st <- list(name='spatiotemporal', data=data.path.st, svg=svg.path.st)
 
 # Get one data path and two aSVG paths and assembly them into a list for creating default 
 # dataset, which include two growth stages.
 data.path2 <- system.file('extdata/shinyApp/example/random_data_multiple_aSVGs.txt', 
 package='spatialHeatmap')
-svg.path2.1 <- system.file('extdata/shinyApp/example/arabidopsis_thaliana.organ_shm1.svg', 
+svg.path2.1 <- system.file('extdata/shinyApp/example/arabidopsis.thaliana_organ_shm1.svg', 
 package='spatialHeatmap')
-svg.path2.2 <- system.file('extdata/shinyApp/example/arabidopsis_thaliana.organ_shm2.svg', 
+svg.path2.2 <- system.file('extdata/shinyApp/example/arabidopsis.thaliana_organ_shm2.svg', 
 package='spatialHeatmap')
 # The list with name slots of "name", "data", and "svg", where the two aSVG paths are stored
 # in a vector in "svg".
@@ -79,7 +79,7 @@ lis.dat2 <- list(name='growthStage', data=data.path2, svg=c(svg.path2.1, svg.pat
 # dataset.
 data.path.dld1 <- system.file('extdata/shinyApp/example/expr_arab.txt', 
 package='spatialHeatmap')
-svg.path.dld1 <- system.file('extdata/shinyApp/example/arabidopsis_thaliana.organ_shm.svg', 
+svg.path.dld1 <- system.file('extdata/shinyApp/example/arabidopsis.thaliana_organ_shm.svg', 
 package='spatialHeatmap')
 # The list with name slots of "data", and "svg".
 lis.dld.single <- list(name='organ', data=data.path.dld1, svg=svg.path.dld1)

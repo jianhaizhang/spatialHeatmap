@@ -2,9 +2,12 @@
 % Please edit documentation in R/shiny_all.R
 \name{shiny_all}
 \alias{shiny_all}
+\alias{shiny_shm}
 \title{Integrated Shiny App}
 \usage{
 shiny_all()
+
+shiny_shm()
 }
 \value{
 A web browser based Shiny app.
@@ -21,7 +24,7 @@ No argument is required, this function launches the Shiny app directly.
 }
 
 \examples{
-\donttest{ shiny_all() }
+\donttest{ shiny_shm() }
 }
 \references{
 https://www.w3schools.com/graphics/svg_intro.asp  

@@ -2,7 +2,7 @@
 #'
 #' The input are a pair of annotated SVG (aSVG) file and formatted data (\code{vector}, \code{data.frame}, \code{SummarizedExperiment}). In the former, spatial features are represented by shapes and assigned unique identifiers, while the latter are numeric values measured from these spatial features and organized in specific formats. In biological cases, aSVGs are anatomical or cell structures, and data are measurements of genes, proteins, metabolites, \emph{etc}. in different samples (\emph{e.g.} cells, tissues). Data are mapped to the aSVG according to identifiers of assay samples and aSVG features. Only the data from samples having matching counterparts in aSVG features are mapped. The mapped features are filled with colors translated from the data, and the resulting images are termed spatial heatmaps. Note, "sample" and "feature" are two equivalent terms referring to cells, tissues, organs \emph{etc.} where numeric values are measured. Matching means a target sample in data and a target spatial feature in aSVG have the same identifier. \cr This function is designed as much flexible as to achieve optimal visualization. For example, subplots of spatial heatmaps can be organized by gene or condition for easy comparison, in multi-layer anotomical structures selected tissues can be set transparent to expose burried features, color scale is customizable to highlight difference among features. This function also works with many other types of spatial data, such as population data plotted to geographic maps.
 
-#' @param svg.path The path of aSVG file(s). \emph{E.g.}: system.file("extdata/shinyApp/example", "gallus_gallus.svg", package="spatialHeatmap"). Multiple aSVGs are also accepted, such as aSVGs depicting organs development across mutiple times. In this case, the aSVGs should be indexed with suffixes "_shm1", "_shm2", ..., such as "arabidopsis_thaliana.organ_shm1.svg", "arabidopsis_thaliana.organ_shm2.svg", and the paths of these aSVGs be provided in a character vector.  \cr See \code{\link{return_feature}} for details on how to directly download aSVGs from the EBI aSVG repository \url{https://github.com/ebi-gene-expression-group/anatomogram/tree/master/src/svg} and spatialHeatmap aSVG Repository \url{https://github.com/jianhaizhang/spatialHeatmap_aSVG_Repository} developed in this project.
+#' @param svg.path The path of aSVG file(s). \emph{E.g.}: system.file("extdata/shinyApp/example", "gallus_gallus.svg", package="spatialHeatmap"). Multiple aSVGs are also accepted, such as aSVGs depicting organs development across mutiple times. In this case, the aSVGs should be indexed with suffixes "_shm1", "_shm2", ..., such as "arabidopsis.thaliana_organ_shm1.svg", "arabidopsis.thaliana_organ_shm2.svg", and the paths of these aSVGs be provided in a character vector.  \cr See \code{\link{return_feature}} for details on how to directly download aSVGs from the EBI aSVG repository \url{https://github.com/ebi-gene-expression-group/anatomogram/tree/master/src/svg} and spatialHeatmap aSVG Repository \url{https://github.com/jianhaizhang/spatialHeatmap_aSVG_Repository} developed in this project.
 
 #' @param bar.title.size A numeric of color bar title size. The default is 0. 
 #' @param bar.value.size A numeric of value size in the color bar y-axis. The default is 10.
@@ -53,8 +53,7 @@
 #' @param trans.scale One of "log2", "exp2", "row", "column", or NULL, which means transform the data by "log2" or "2-base expoent", scale by "row" or "column", or no manipuation respectively. This argument should be used if colors across samples cannot be distinguished due to low variance or outliers. 
 #' @param bar.width The width of color bar that ranges from 0 to 1. The default is 0.08.
 #' @param legend.width The width of legend plot that ranges from 0 to 1 (default).
-#' @param width A numeric of overall width of all subplots, between 0 and 1. The default is 1. 
-#' @param height A numeric of overall height of all subplots, between 0 and 1. The default is 1. 
+#' @param width,height Two numerics of overall width and height of all subplots respectively, both of which are between 0 and 1. The default is 1 and 1 respectivly. 
 #' @param legend.plot A vector of suffix(es) of aSVG file name(s) such as c('shm1', 'shm2'). Only aSVG(s) whose suffix(es) are assigned to this arugment will have a legend plot on the right. The default is 'all' and each aSVG will have a legend plot. If NULL, no legend plot is shown. Only applicable if multiple aSVG files are provided to \code{svg.path}.
 #' @param legend.r A numeric to adjust the dimension of the legend plot. The default is 1. The larger, the higher ratio of width to height.
 #' @param legend.2nd Logical, TRUE or FALSE. If TRUE, the secondary legend is added to each spatial heatmap, which are the numeric values of each matching spatial features. The default its FALSE. Only applies to the static image.
@@ -63,8 +62,8 @@
 #' @param preserve.scale Logical, TRUE or FALSE. If TRUE, the relative dimension of single or multiple aSVGs are preserved. The original dimension (width/height) is specified in the top-most element "svg" in the aSVG file. The default is FALSE.
 #' @param verbose Logical, FALSE or TRUE. If TRUE the samples in data not colored in spatial heatmaps are printed to R console. Default is TRUE.
 #' @param out.dir The directory to save interactive spatial heatmaps as independent HTML files and videos. Default is NULL, and the HTML files and videos are not saved.
-#' @param anm.width The width of spatial heatmaps in HTML files. Default is 650.
-#' @param anm.height The height of spatial heatmaps in HTML files. Default is 550.
+#' @param anm.width,anm.height The width and height of spatial heatmaps in HTML files. Default is 650 and 550 respectively.
+
 #' @param video.dim A single character of the dimension of video frame in form of 'widthxheight', such as '1920x1080', '1280x800', '320x568', '1280x1024', '1280x720', '320x480', '480x360', '600x600', '800x600', '640x480' (default). The aspect ratio of spatial heatmaps are decided by \code{width} and \code{height}. 
 #' @param interval The time interval (seconds) between spatial heatmap frames in the video. Default is 1.
 #' @param framerate An integer of video framerate in frames per seconds. Default is 1. Larger values make the video smoother. 
@@ -191,10 +190,10 @@
 #' df.test[1:3, ]
 
 #' # aSVG of development stage 1.
-#' svg1 <- system.file("extdata/shinyApp/example", "arabidopsis_thaliana.organ_shm1.svg",
+#' svg1 <- system.file("extdata/shinyApp/example", "arabidopsis.thaliana_organ_shm1.svg",
 #' package="spatialHeatmap")
 #' # aSVG of development stage 2.
-#' svg2 <- system.file("extdata/shinyApp/example", "arabidopsis_thaliana.organ_shm2.svg",
+#' svg2 <- system.file("extdata/shinyApp/example", "arabidopsis.thaliana_organ_shm2.svg",
 #' package="spatialHeatmap")
 #' # Spatial heatmaps. 
 #' spatial_hm(svg.path=c(svg1, svg2), data=df.test, ID=c('gene1'), height=0.8, legend.r=1.6,
@@ -230,7 +229,7 @@
 spatial_hm <- function(svg.path, data, sam.factor=NULL, con.factor=NULL, ID, lay.shm="gene", ncol=2, col.com=c('yellow', 'orange', 'red'), col.bar='selected', bar.width=0.08, legend.width=1, bar.title.size=0, trans.scale=NULL, ft.trans=NULL, tis.trans=ft.trans, width=1, height=1, legend.r=1, sub.title.size=11, legend.plot='all', ft.legend='identical', bar.value.size=10, legend.plot.title='Legend', legend.plot.title.size=11, legend.ncol=NULL, legend.nrow=NULL, legend.position='bottom', legend.direction=NULL, legend.key.size=0.02, legend.text.size=12, angle.text.key=NULL, position.text.key=NULL, legend.2nd=FALSE, position.2nd='bottom', legend.nrow.2nd=NULL, legend.ncol.2nd=NULL, legend.key.size.2nd=0.03, legend.text.size.2nd=10, angle.text.key.2nd=0, position.text.key.2nd='right', add.feature.2nd=FALSE, label=FALSE, label.size=4, label.angle=0, hjust=0, vjust=0, opacity=1, key=TRUE, line.size=0.2, line.color='grey70', preserve.scale=FALSE, verbose=TRUE, out.dir=NULL, anm.width=650, anm.height=550, selfcontained=FALSE, video.dim='640x480', res=500, interval=1, framerate=1, legend.value.vdo=NULL, ...) {
 
   calls <- names(vapply(match.call(), deparse, character(1))[-1])
-  if("tis.trans" %in% calls) { ft.trans <- tis.trans; cat('"tis.trans" is deprecated and replaced by "ft.trans"! \n') }
+  if("tis.trans" %in% calls) { ft.trans <- tis.trans; warning('"tis.trans" is deprecated and replaced by "ft.trans"! \n') }
   x <- y <- color_scale <- tissue <- NULL; options(stringsAsFactors=FALSE)
   # Extract and filter data.
   if (is.vector(data)) {

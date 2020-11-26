@@ -25,23 +25,23 @@ dataset6:
 dataset7:
   name: shoot_Mustroph
   data: example/expr_arab.txt
-  svg: example/arabidopsis_thaliana.shoot_shm.svg
+  svg: example/arabidopsis.thaliana_shoot_shm.svg
 dataset8:
   name: organ_Mustroph
   data: example/expr_arab.txt
-  svg: example/arabidopsis_thaliana.organ_shm.svg
+  svg: example/arabidopsis.thaliana_organ_shm.svg
 dataset9:
   name: root_Mustroph
   data: example/expr_arab.txt
-  svg: example/arabidopsis_thaliana.root.cross_shm.svg
+  svg: example/arabidopsis.thaliana_root.cross_shm.svg
 dataset10:
   name: shootRoot_Mustroph
   data: example/expr_arab.txt
-  svg: example/arabidopsis_thaliana.shoot.root_shm.svg
+  svg: example/arabidopsis.thaliana_shoot.root_shm.svg
 dataset11:
   name: rootRootTip_Mustroph
   data: example/expr_arab.txt
-  svg: example/arabidopsis_thaliana.root.roottip_shm.svg
+  svg: example/arabidopsis.thaliana_root.roottip_shm.svg
 dataset12:
   name: spatiotemporal_Narsai
   data: example/expr_coleoptile_samTimeCon.txt
@@ -51,14 +51,14 @@ dataset13:
   name: growthStage_Mustroph
   data: example/random_data_multiple_aSVGs.txt
   svg:
-  - example/arabidopsis_thaliana.organ_shm1.svg
-  - example/arabidopsis_thaliana.organ_shm2.svg
+  - example/arabidopsis.thaliana_organ_shm1.svg
+  - example/arabidopsis.thaliana_organ_shm2.svg
 dataset14:
   name: map_Census
   data: example/us_population2018.txt
   svg: example/us_map_shm.svg
 title:
-- title:spatialHeatmap (2020-11-19)
+- title:spatialHeatmap (2020-11-25)
 - width:350
 max.upload.size: 5G 
 default.dataset: organ_Mustroph
@@ -123,12 +123,12 @@ network:
 - max.edges:10
 download_single:
   data: example/expr_arab.txt
-  svg: example/arabidopsis_thaliana.shoot_shm.svg
+  svg: example/arabidopsis.thaliana_shoot_shm.svg
 download_multiple:
   data: example/random_data_multiple_aSVGs.txt
   svg:
-  - example/arabidopsis_thaliana.organ_shm1.svg
-  - example/arabidopsis_thaliana.organ_shm2.svg
+  - example/arabidopsis.thaliana_organ_shm1.svg
+  - example/arabidopsis.thaliana_organ_shm2.svg
 download_spatial_temporal:
   data: example/expr_coleoptile_samTimeCon.txt
   svg: example/oryza.sativa_coleoptile.ANT_shm.svg

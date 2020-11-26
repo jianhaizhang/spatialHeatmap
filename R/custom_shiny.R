@@ -23,7 +23,7 @@
 #'
 #' # Get one data path and one aSVG path and assembly them into a list for creating default dataset.
 #' data.path1 <- system.file('extdata/shinyApp/example/expr_arab.txt', package='spatialHeatmap')
-#' svg.path1 <- system.file('extdata/shinyApp/example/arabidopsis_thaliana.shoot_shm.svg', 
+#' svg.path1 <- system.file('extdata/shinyApp/example/arabidopsis.thaliana_shoot_shm.svg', 
 #' package='spatialHeatmap')
 #' # The list with name slots of "name", "data", and "svg".
 #' lis.dat1 <- list(name='shoot', data=data.path1, svg=svg.path1)
@@ -35,15 +35,15 @@
 #' svg.path.st <- system.file('extdata/shinyApp/example/oryza.sativa_coleoptile.ANT_shm.svg', 
 #' package='spatialHeatmap')
 #' # The list with name slots of "name", "data", and "svg".
-#' lis.dat.st <- list(name='spatialTemporal', data=data.path.st, svg=svg.path.st)
+#' lis.dat.st <- list(name='spatiotemporal', data=data.path.st, svg=svg.path.st)
 #'
 #' # Get one data path and two aSVG paths and assembly them into a list for creating default 
 #' # dataset, which include two growth stages.
 #' data.path2 <- system.file('extdata/shinyApp/example/random_data_multiple_aSVGs.txt', 
 #' package='spatialHeatmap')
-#' svg.path2.1 <- system.file('extdata/shinyApp/example/arabidopsis_thaliana.organ_shm1.svg', 
+#' svg.path2.1 <- system.file('extdata/shinyApp/example/arabidopsis.thaliana_organ_shm1.svg', 
 #' package='spatialHeatmap')
-#' svg.path2.2 <- system.file('extdata/shinyApp/example/arabidopsis_thaliana.organ_shm2.svg', 
+#' svg.path2.2 <- system.file('extdata/shinyApp/example/arabidopsis.thaliana_organ_shm2.svg', 
 #' package='spatialHeatmap')
 #' # The list with name slots of "name", "data", and "svg", where the two aSVG paths are stored
 #' # in a vector in "svg".
@@ -53,7 +53,7 @@
 #' # dataset.
 #' data.path.dld1 <- system.file('extdata/shinyApp/example/expr_arab.txt', 
 #' package='spatialHeatmap')
-#' svg.path.dld1 <- system.file('extdata/shinyApp/example/arabidopsis_thaliana.organ_shm.svg', 
+#' svg.path.dld1 <- system.file('extdata/shinyApp/example/arabidopsis.thaliana_organ_shm.svg', 
 #' package='spatialHeatmap')
 #' # The list with name slots of "data", and "svg".
 #' lis.dld.single <- list(name='organ', data=data.path.dld1, svg=svg.path.dld1)
@@ -149,10 +149,10 @@ custom_shiny <- function(..., lis.par=NULL, lis.par.tmp=FALSE, lis.dld.single=NU
   if (example==FALSE) { 
 
     # If exclude default examples and no download files are provided, default download files are retained.
-    pat.dld <- 'dummyfile|expr_arab.txt|arabidopsis_thaliana.root.cross_shm.svg|random_data_multiple_aSVGs.txt|arabidopsis_thaliana.organ_shm1.svg|arabidopsis_thaliana.organ_shm2.svg'
+    pat.dld <- 'dummyfile|expr_arab.txt|arabidopsis.thaliana_root.cross_shm.svg|random_data_multiple_aSVGs.txt|arabidopsis.thaliana_organ_shm1.svg|arabidopsis.thaliana_organ_shm2.svg'
     file.remove(grep(pat.dld, list.files(paste0(app.dir, '/example'), '*', full.names=TRUE), invert=TRUE, value=TRUE))
-    if (!is.null(lis.dld.single)) file.remove(list.files(paste0(app.dir, '/example'), 'expr_arab.txt|arabidopsis_thaliana.root.cross_shm.svg', full.names=TRUE))
-    if (!is.null(lis.dld.mul)) file.remove(list.files(paste0(app.dir, '/example'), 'random_data_multiple_aSVGs.txt|arabidopsis_thaliana.organ_shm1.svg|arabidopsis_thaliana.organ_shm2.svg', full.names=TRUE))
+    if (!is.null(lis.dld.single)) file.remove(list.files(paste0(app.dir, '/example'), 'expr_arab.txt|arabidopsis.thaliana_root.cross_shm.svg', full.names=TRUE))
+    if (!is.null(lis.dld.mul)) file.remove(list.files(paste0(app.dir, '/example'), 'random_data_multiple_aSVGs.txt|arabidopsis.thaliana_organ_shm1.svg|arabidopsis.thaliana_organ_shm2.svg', full.names=TRUE))
     exp <- NULL
 
   } else {
@@ -193,11 +193,11 @@ custom_shiny <- function(..., lis.par=NULL, lis.par.tmp=FALSE, lis.dld.single=NU
   }
   if (!is.null(lis.dld.single)) lis.dld1 <- cp_file(lis.dld.single, app.dir, 'example') else {
     # Use default download files.
-    lis.dld1 <- list(data="example/expr_arab.txt", svg="example/arabidopsis_thaliana.root.cross_shm.svg")
+    lis.dld1 <- list(data="example/expr_arab.txt", svg="example/arabidopsis.thaliana_root.cross_shm.svg")
   }
   if (!is.null(lis.dld.mul)) lis.dld2 <- cp_file(lis.dld.mul, app.dir, 'example') else {
     # Use default download files. 
-    lis.dld2 <- list(data="example/random_data_multiple_aSVGs.txt", svg=c('example/arabidopsis_thaliana.organ_shm1.svg', 'example/arabidopsis_thaliana.organ_shm2.svg'))
+    lis.dld2 <- list(data="example/random_data_multiple_aSVGs.txt", svg=c('example/arabidopsis.thaliana_organ_shm1.svg', 'example/arabidopsis.thaliana_organ_shm2.svg'))
 
   } 
   if (!is.null(lis.dld.st)) lis.dld3 <- cp_file(lis.dld.st, app.dir, 'example') else {

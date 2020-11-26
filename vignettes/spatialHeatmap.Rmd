@@ -569,7 +569,7 @@ values in `se.fil.hum`.
 This image is hidden to meet the 5MB requirement on vignette.
 -->
 <a name='hum_single'></a>
-```{r humshm, eval=TRUE, echo=TRUE, warnings=FALSE, fig.wide=TRUE, fig.cap=("SHM of human brain. Only cerebellum and frontal cortex are colored, because they are present in both the aSVG and the expression data. The legend plot on the right maps the feature labels to the corresponding spatial regions in the image."), out.width="100%", fig.show='hide' }
+```{r humshm, eval=TRUE, echo=TRUE, warnings=FALSE, fig.wide=TRUE, fig.cap=("SHM of human brain. Only cerebellum and frontal cortex are colored, because they are present in both the aSVG and the expression data. The legend plot on the right maps the feature labels to the corresponding spatial regions in the image."), out.width="100%", fig.show='show' }
 shm.lis <- spatial_hm(svg.path=svg.hum, data=se.fil.hum, ID=c('ENSG00000268433'), height=0.7, legend.r=1.5, legend.key.size=0.02, legend.text.size=12, legend.nrow=2, ft.trans=c('g4320'))
 ```
 
@@ -782,8 +782,8 @@ color of complex structures.
 <!--
 This image is hidden to meet the 5MB requirement on vignette.
 -->
-```{r musshm1, eval=TRUE, echo=TRUE, warnings=FALSE, fig.wide=TRUE, fig.cap=("SHM of mouse organs. This is a multiple-layer image where the view onto 'lung' and 'heart' is obstructed by displaying the 'skeletal muscle' tissue."), out.width="100%", fig.show='hide' }
-spatial_hm(svg.path=svg.mus, data=se.fil.mus, ID=c('ENSMUSG00000000263'), height=0.6, legend.text.size=10, sub.title.size=9, ncol=3, legend.ncol=2, line.size=0.2, line.color='grey70', ft.trans='path4204')
+```{r, musshm1, eval=TRUE, echo=TRUE, warnings=FALSE, fig.wide=TRUE, fig.cap=("SHM of mouse organs. This is a multiple-layer image where the view onto 'lung' and 'heart' is obstructed by displaying the 'skeletal muscle' tissue."), out.width="100%", fig.show='show' }
+spatial_hm(svg.path=svg.mus, data=se.fil.mus, ID=c('ENSMUSG00000000263'), height=0.6, legend.text.size=10, sub.title.size=9, ncol=3, legend.ncol=2, line.size=0.1, line.color='grey70', ft.trans='path4204')
 ```
 
 ## Chicken Organs {#chk}
@@ -825,112 +825,6 @@ slot of `rse.chk`. The following returns only its first three rows.
 
 ```{r eval=TRUE, echo=TRUE, warnings=FALSE } 
 colData(rse.chk)[1:3, ]
-```
-
-```{r eval=FALSE, echo=TRUE, warnings=FALSE } 
-    inter1 <- function(env1=parent.frame()) {
-
-        z <- env1$z+1; return(z)
-    };
-    inter <- function(z) {
-        z <- inter1(); return(z)
-    };
-test <- function(x, y) {
-    print(vapply(match.call(), deparse, character(1))[-1])
-    print(deparse(match.call()))
-    print(names(deparse(match.call())))
-    z <- y+1;
- #print(inter(z=z))
-    #cat(ls(), '\n')
-}
-test(2, 3)
-
-  options(stringsAsFactors=FALSE)
-  doc <- read_xml(svg.path); spa <- xml_attr(doc, 'space')
-  if (!is.na(spa)) if (spa=='preserve') xml_set_attr(doc, 'xml:space', 'default')
-  # Even though 'out' and 'ply' are not returned by 'svg_attr', the paths in doc are broken accordingly, since the node in doc are pointed, any change on the node is actually changing the doc. 
-  svg.attr <- svg_attr(doc, feature=feature); if (is(svg.attr, 'character')) return(svg.attr)
-# Copy doc. In the copy all children of out and ply are deleted and each child is inserted back to out or ply to extract coordinates. The benefit is if a child has no coordinates in ps.xml, this child is detected and it does not count in tis.path, so length(tis.path)==length(df$tissue) is secured. The drawback is time-consuming.
-doc0 <- xml_new_root(doc, .copy=TRUE)
-
-
-
-
-      
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-out.ply0 <- out_ply(doc0)
-out0 <- out.ply0$out; ply0 <- out.ply0$ply
-chdn.out0 <- out.ply0$chdn.out; chdn.ply0 <- out.ply0$chdn.ply
-chdn.all0 <- c(chdn.out0, chdn.ply0)
-id.all0 <- out.ply0$id.all; na.all0 <- out.ply0$na.all
-
-df.out0 <- cord(doc0, out0, ply0, out0)
-df.ply0 <- cord(doc0, out0, ply0, ply0)
-
-
-
-df.out <- cord_parent(svg.path, 'out', feature=NULL)
-df.ply <- cord_parent(svg.path, 'ply', feature=NULL)
-
-update_use(chdn.all, id.all, ply, chdn.ply)
-write_xml(doc, 'shm_up.svg')
-
-rsvg_ps('test.svg', 'test.svg.ps')
-PostScriptTrace('/home/jzhan067/spatialHeatmap/vignettes/test.svg.ps', '/home/jzhan067/spatialHeatmap/vignettes/test.svg.ps.xml')
-
-library(ggplot2)
-ggplot(df.ply$df, aes(x = x, y = y)) + geom_polygon(aes(fill=NULL, group =tissue))
-
-svg.path <- '~/anatomogram/src/svg/homo_sapiens.male.svg'
-library(xml2); library(rsvg); library(grImport)
-source('../R/path_br_all.R'); source('../R/path_br.R')
-source('../R/svg_attr.R')
-
-
-
-
-
-
-
-
-
-
-id.mat <- NULL; for (i in chdn.all) {
- idx <- grepl('^matrix',xml_attr(i, 'transform'))
- if (idx==TRUE) id.mat <- c(id.mat, xml_attr(i, 'id'))
-}
-
-if (grepl('^matrix',xml_attr(out, 'transform'))) id.mat <- c(id.mat, xml_attr(out, 'id'))
-if (grepl('^matrix',xml_attr(ply, 'transform'))) id.mat <- c(id.mat, xml_attr(ply, 'id'))
-
-tran.mat1 <- xml_attr(chdn.out, 'id')[grep('^matrix', xml_attr(chdn.out, 'transform'))]
-tran.mat2 <- xml_attr(chdn.ply, 'id')[grep('^matrix', xml_attr(chdn.ply, 'transform'))]
-xml_attr(out, 'transform'), 
-
-for (i in unique(tis.path)) {
-    if (nrow(subset(df, grepl(paste0('^', i), tissue)))!=nrow(subset(df.all, grepl(paste0('^', i), tissue)))) print(i)
-}
-
-for (i in unique(tis.path)) {
-    sub <- subset(df, grepl(paste0('^', i), tissue))
-    sub.all <- subset(df.all, grepl(paste0('^', i), tissue))
-    if (!identical(sub, sub.all)) print(i)
-}
-
 ```
 
 ### aSVG Image  
@@ -1098,7 +992,7 @@ feature.df[1:3, ]
 Obtain full path of target aSVG on user system.   
 
 ```{r eval=TRUE, echo=TRUE, warnings=FALSE }
-svg.sh <- system.file("extdata/shinyApp/example", "arabidopsis_thaliana.shoot_shm.svg", package="spatialHeatmap")
+svg.sh <- system.file("extdata/shinyApp/example", "arabidopsis.thaliana_shoot_shm.svg", package="spatialHeatmap")
 ```
 
 ### Experimental Design
@@ -1423,8 +1317,8 @@ Next the paths to the aSVG files are obtained, here for younger and older plants
 and `*_shm1`, respectively, which are made from @Mustroph2009-nu.   
 
 ```{r eval=TRUE, echo=TRUE, warnings=FALSE}
-svg.sh1 <- system.file("extdata/shinyApp/example", "arabidopsis_thaliana.organ_shm1.svg", package="spatialHeatmap")
-svg.sh2 <- system.file("extdata/shinyApp/example", "arabidopsis_thaliana.organ_shm2.svg", package="spatialHeatmap")
+svg.sh1 <- system.file("extdata/shinyApp/example", "arabidopsis.thaliana_organ_shm1.svg", package="spatialHeatmap")
+svg.sh2 <- system.file("extdata/shinyApp/example", "arabidopsis.thaliana_organ_shm2.svg", package="spatialHeatmap")
 ```
 
 The following generates the corresponding SHMs plot for `gene1`. The orginal 
@@ -1603,7 +1497,7 @@ The Shiny App of `spatialHeatmap` can be launched from an R session with the fol
 function call. 
 
 ```{r eval=FALSE, echo=TRUE, warnings=FALSE}
-shiny_all()
+shiny_shm()
 ```   
 
 The dashboard panels of the Shiny App are organized as follows:

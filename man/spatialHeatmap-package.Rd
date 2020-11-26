@@ -143,7 +143,7 @@ Maintainer: \packageMaintainer{spatialHeatmap}
 %%~~ documentation directory ~~
 \keyword{ spatial heatmap}
 \seealso{
- \code{\link{norm_data}}, \code{\link{aggr_rep}}, \code{\link{filter_data}}, \code{\link{spatial_hm}}, \code{\link{submatrix}}, \code{\link{adj_mod}}, \code{\link{matrix_hm}}, \code{\link{network}}, \code{\link{return_feature}}, \code{\link{update_feature}}, \code{\link{shiny_all}}, \code{\link{custom_shiny}}
+ \code{\link{norm_data}}, \code{\link{aggr_rep}}, \code{\link{filter_data}}, \code{\link{spatial_hm}}, \code{\link{submatrix}}, \code{\link{adj_mod}}, \code{\link{matrix_hm}}, \code{\link{network}}, \code{\link{return_feature}}, \code{\link{update_feature}}, \code{\link{shiny_shm}}, \code{\link{custom_shiny}}
 }
 \examples{
 
@@ -282,10 +282,10 @@ rownames(df.test) <- paste0('gene', 1:10) # Assign row names
 df.test[1:3, ]
 
 # aSVG of development stage 1.
-svg1 <- system.file("extdata/shinyApp/example", "arabidopsis_thaliana.organ_shm1.svg",
+svg1 <- system.file("extdata/shinyApp/example", "arabidopsis.thaliana_organ_shm1.svg",
 package="spatialHeatmap")
 # aSVG of development stage 2.
-svg2 <- system.file("extdata/shinyApp/example", "arabidopsis_thaliana.organ_shm2.svg",
+svg2 <- system.file("extdata/shinyApp/example", "arabidopsis.thaliana_organ_shm2.svg",
 package="spatialHeatmap")
 # Spatial heatmaps.
 spatial_hm(svg.path=c(svg1, svg2), data=df.test, ID=c('gene1'), height=0.8, legend.r=1.6, 
@@ -396,9 +396,9 @@ vertex.label.cex=1.5, vertex.cex=4, static=TRUE)
 # same functionalities from an intuitive-to-use web browser interface. Apart from being very 
 # user-friendly, this App conveniently organizes the results of the entire visualization 
 # workflow in a single browser window with options to adjust the parameters of the individual
-# components interactively. This app is launched by the function "shiny_all" without any 
+# components interactively. This app is launched by the function "shiny_shm" without any 
 # parameters. Upon launched, the app automatically displays a pre-formatted example. 
-\donttest{shiny_all()}
+\donttest{shiny_shm()}
 
 # The gene expression data and aSVG image files are uploaded to the Shiny App as tabular 
 # text (e.g. in CSV or TSV format) and SVG file, respectively. To also allow users to upload

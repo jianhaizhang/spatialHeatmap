@@ -14,7 +14,7 @@
 
 #' @param con.factor The column name corresponding to conditions in the \code{colData} of \code{SummarizedExperiment}. Could be NULL if column names of in the \code{assay} slot already follows the scheme "sample__condition", or no condition is associated with the data.
 
-#' @param dir The directory path where the filtered data matrix is saved as a TSV-format file "customData.txt", which is ready to upload to the Shiny app launched by \code{\link{shiny_all}}. In the "customData.txt", the rows are assayed items and column names are in the syntax "sample__condition". If gene annotation is provided to \code{ann}, it is appended to "customData.txt". The default is NULL and no file is saved. This argument is used only when the data is stored in \code{SummarizedExperiment} and need to be uploaded to the "customData" in the Shiny app.
+#' @param dir The directory path where the filtered data matrix is saved as a TSV-format file "customData.txt", which is ready to upload to the Shiny app launched by \code{\link{shiny_shm}}. In the "customData.txt", the rows are assayed items and column names are in the syntax "sample__condition". If gene annotation is provided to \code{ann}, it is appended to "customData.txt". The default is NULL and no file is saved. This argument is used only when the data is stored in \code{SummarizedExperiment} and need to be uploaded to the "customData" in the Shiny app.
 
 #' @return The returned value is the same class with the input data, a \code{data.frame} or \code{SummarizedExperiment}. In either case, the column names of the data matrix follows the "sample__condition" scheme. If \code{dir} is specified, the filtered data matrix is saved in a TSV-format file "customData.txt". 
 

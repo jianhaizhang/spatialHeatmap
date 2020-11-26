@@ -14,7 +14,7 @@
 #' No argument is required, this function launches the Shiny app directly. 
 
 #' @examples
-#' \donttest{ shiny_all() }
+#' \donttest{ shiny_shm() }
 
 #' @author Jianhai Zhang \email{jzhan067@@ucr.edu; zhang.jianhai@@hotmail.com} \cr Dr. Thomas Girke \email{thomas.girke@@ucr.edu}
 
@@ -78,8 +78,11 @@
 
 shiny_all <- function() {
 
-    path <- system.file("extdata/shinyApp", package="spatialHeatmap")
-    runApp(path)
+  if (as.character(match.call()[[1]])=="shiny_all") warning('"shiny_all()" is deprecated and replaced by "shiny_shm()"!', call. = FALSE)
+  path <- system.file("extdata/shinyApp", package="spatialHeatmap"); runApp(path)
 
 }
 
+#' @export
+#' @rdname shiny_all
+shiny_shm <- shiny_all
