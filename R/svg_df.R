@@ -107,13 +107,14 @@ svg_df <- function(svg.path, feature=NULL) {
   }
   # Extract coordinates for each path independently. If many paths are included in an SVG, coordinates or fill/stroke order errors may arise if all coordinates are extracted as a whole. If extracted independently for each path, little errors are raised, but the speed is slow.
   if (length(nodeset)!=tit.len) {
-    cat('Extracting coordinates for each shape independently, which is slow... \n')
+    cat('Extracting coordinates for each shape independently, which is slow ... \n')
     df.out <- cord_parent(svg.path, 'out', feature)
     if (is(df.out, 'character')) return(df.out)
     df.ply <- cord_parent(svg.path, 'ply', feature)
     if (is(df.ply, 'character')) return(df.ply)
     df <- rbind(df.out$df, df.ply$df); id.no <- c(df.out$ids, df.ply$ids)
     if (!is.null(id.no)) { cat('No coordinates were extracted for these element(s):', id.no, '!\n') }
+    # tis.path <- sub('_\\d+$', '', df$tissue) introduces a potential bug, since the original single-path tissues can have '_\\d+$' pattern. Solution: in upstream append '__1', '__2', ... to the paths in a group.
     tis.path <- sub('_\\d+$', '', df$tissue)
     lis <- list(df=df, tis.path=tis.path, fil.cols=fil.cols[unique(tis.path)], stroke.w=stroke.w[unique(tis.path)], w.h=w.h, df.attr=subset(df.attr, feature %in% tis.path))
     return(lis)
@@ -131,6 +132,7 @@ svg_df <- function(svg.path, feature=NULL) {
   stroke.w <- df.attr$stroke; names(stroke.w) <- df.attr$feature
   w.h <- c(max(abs(df$x)), max(abs(df$y))) 
   names(w.h) <- c('width', 'height')
+  # tis.path=sub('_\\d+$', '', tit) introduces a potential bug, since the original single-path tissues can have '_\\d+$' pattern. Solution: in upstream append '__1', '__2', ... to the paths in a group.
   lis <- list(df=df, tis.path=sub('_\\d+$', '', tit), fil.cols=fil.cols, stroke.w=stroke.w, w.h=w.h, df.attr=df.attr); return(lis)
 
 }

@@ -10,6 +10,7 @@ return_feature(
   keywords.any = TRUE,
   remote = TRUE,
   dir = NULL,
+  svg.path = NULL,
   desc = FALSE,
   match.only = TRUE,
   return.all = FALSE
@@ -25,6 +26,8 @@ return_feature(
 \item{remote}{Logical, FALSE or TRUE. If TRUE (default), the remote EBI aSVG repository \url{https://github.com/ebi-gene-expression-group/anatomogram/tree/master/src/svg} and spatialHeatmap aSVG Repository \url{https://github.com/jianhaizhang/spatialHeatmap_aSVG_Repository} developed in this project are queried.}
 
 \item{dir}{The directory path of aSVG files. If \code{remote} is TRUE, the returned aSVG files are saved in this directory. Note existing aSVG files with same names as returned ones are overwritten. If \code{remote} is FALSE, user-provided (local) aSVG files should be saved in this directory for query. Default is NULL.}
+
+\item{svg.path}{The path of a specific aSVG file. If the provided aSVG file exists, only features of this file are returned and there will be no querying process. Default is NULL.}
 
 \item{desc}{Logical, FALSE or TRUE. Default is FALSE. If TRUE, the feature descriptions from the R package "rols" (Laurent Gatto 2019) are added. If too many features are returned, this process takes a long time.}
 

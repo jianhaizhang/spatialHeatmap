@@ -7,6 +7,7 @@
 #' @param keywords.any Logical, TRUE or FALSE. Default is TRUE. The internal searching is case-insensitive. The space, dot, hypen, semicolon, comma, forward slash are treated as separators between words and not counted in searching. If TRUE, every returned hit contains at least one word in the \code{feature} vector and at least one word in the \code{species} vector, which means all the possible hits are returned. \emph{E.g.} "prefrontal cortex" in "homo_sapiens.brain.svg" would be returned if \code{feature=c('frontal')} and \code{species=c('homo')}. If FALSE, every returned hit contains at least one exact element in the \code{feature} vector and all exact elements in the \code{species} vector. \emph{E.g.} "frontal cortex" rather than "prefrontal cortex" in "homo_sapiens.brain.svg" would be returned if \code{feature=c('frontal cortex')} and \code{species=c('homo sapiens', 'brain')}.
 #' @param remote Logical, FALSE or TRUE. If TRUE (default), the remote EBI aSVG repository \url{https://github.com/ebi-gene-expression-group/anatomogram/tree/master/src/svg} and spatialHeatmap aSVG Repository \url{https://github.com/jianhaizhang/spatialHeatmap_aSVG_Repository} developed in this project are queried.
 #' @param dir The directory path of aSVG files. If \code{remote} is TRUE, the returned aSVG files are saved in this directory. Note existing aSVG files with same names as returned ones are overwritten. If \code{remote} is FALSE, user-provided (local) aSVG files should be saved in this directory for query. Default is NULL.
+#' @param svg.path The path of a specific aSVG file. If the provided aSVG file exists, only features of this file are returned and there will be no querying process. Default is NULL.
 #' @param desc Logical, FALSE or TRUE. Default is FALSE. If TRUE, the feature descriptions from the R package "rols" (Laurent Gatto 2019) are added. If too many features are returned, this process takes a long time.
 #' @param match.only Logical, TRUE or FALSE. If TRUE (default), only target features are returned. If FALSE, all features in the matching aSVG files are returned, and the matching features are moved on the top of the data frame. 
 #' @param return.all Logical, FALSE or TRUE. Default is FALSE. If TRUE, all features together with all respective aSVG files are returned, regardless of \code{feature} and \code{species}.
@@ -59,13 +60,11 @@
 #' @importFrom rols term termDesc
 #' @importFrom utils download.file unzip
 
-return_feature <- function(feature, species, keywords.any=TRUE, remote=TRUE, dir=NULL, desc=FALSE, match.only=TRUE, return.all=FALSE) {
+return_feature <- function(feature, species, keywords.any=TRUE, remote=TRUE, dir=NULL, svg.path=NULL, desc=FALSE, match.only=TRUE, return.all=FALSE) {
 
-  options(stringsAsFactors=FALSE); SVG <- parent <- NULL
-  dir <- normalizePath(dir, winslash = "/", mustWork=FALSE)
-  if (!is.vector(feature) & is.vector(species)) stop('"feature" and "species" must be two vectors respectively!')
+  options(stringsAsFactors=FALSE)
   # Parse and return features.
-  ftr.return <- function(svgs, desc=desc) { 
+  ftr_return <- function(svgs, desc=desc) { 
 
     cat('Accessing features... \n'); df <- NULL; for (i in svgs) {
 
@@ -94,6 +93,14 @@ return_feature <- function(feature, species, keywords.any=TRUE, remote=TRUE, dir
     }; return(df)
 
   }
+  # Parse the provided svg file.
+  if (!is.null(svg.path)) {
+    if (file.exists(svg.path)) return(ftr_return(svg.path, desc)) else stop('The provided aSVG file does not exists!')
+  }
+  # Query aSVG repo.
+  SVG <- parent <- NULL
+  dir <- normalizePath(dir, winslash = "/", mustWork=FALSE)
+  if (!is.vector(feature) & is.vector(species)) stop('"feature" and "species" must be two vectors respectively!')
   if (length(species)==0) species <- NULL; if (length(feature)==0) feature <- NULL
   if (!is.null(species)) if (species[1]==''|is.na(species[1])) species <- NULL
   if (!is.null(feature)) if (feature[1]==''|is.na(feature[1])) feature <- NULL
@@ -117,7 +124,7 @@ return_feature <- function(feature, species, keywords.any=TRUE, remote=TRUE, dir
       svgs.sp <- grep(species1, svgs, value=TRUE, ignore.case=TRUE)
       if (length(svgs.sp)>0) svgs <- svgs.sp
     }
-    df <- ftr.return(svgs=svgs, desc=desc)
+    df <- ftr_return(svgs=svgs, desc=desc)
     svgs.na <- vapply(svgs, function(i) { str <- strsplit(i, '/')[[1]]; str[length(str)] }, FUN.VALUE=character(1))
     svgs1 <- list.files(path=dir, pattern='.svg$', full.names=TRUE)
     svgs.na1 <- list.files(path=dir, pattern='.svg$', full.names=FALSE)
@@ -137,7 +144,7 @@ return_feature <- function(feature, species, keywords.any=TRUE, remote=TRUE, dir
       svgs.sp <- grep(species1, svgs, value=TRUE, ignore.case=TRUE)
       if (length(svgs.sp)>0) svgs <- svgs.sp
     }
-    df <- ftr.return(svgs=svgs, desc=desc)
+    df <- ftr_return(svgs=svgs, desc=desc)
     if (return.all==TRUE) { row.names(df) <- NULL; return(df) }
 
   }

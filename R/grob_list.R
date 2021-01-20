@@ -62,7 +62,9 @@ grob_list <- function(gene, con.na=TRUE, geneV, coord, ID, cols, tis.path, ft.tr
           g.col[grep(pat, tis.df)] <- scol1[tis.idx] # names(g.col) is tis.df 
         }
       }
-    } # The colors might be internally re-ordered alphabetically during mapping, so give them names to fix the match with tissues. E.g. c('yellow', 'blue') can be re-ordered to c('blue', 'yellow'), which makes tissue mapping wrong. Correct: colours are not re-ordered. The 'tissue' in 'data=coord' are internally re-ordered according to a factor. Therfore, 'tissue' should be a factor with the right order. Otherwise, disordered mapping can happen.
+    } 
+    # The colors might be internally re-ordered alphabetically during mapping, so give them names to fix the match with tissues. E.g. c('yellow', 'blue') can be re-ordered to c('blue', 'yellow'), which makes tissue mapping wrong. Correct: colours are not re-ordered. The 'tissue' in 'data=coord' are internally re-ordered according to a factor. Therfore, 'tissue' should be a factor with the right order. Otherwise, disordered mapping can happen. Alternatively, name the colors with corresponding tissue names.
+    # aes() is passed to either ggplot() or specific layer. Aesthetics supplied to ggplot() are used as defaults for every layer.
     # Make selected tissues transparent by setting their colours as NA.
     if (!is.null(ft.trans)) for (i in tis.df) { if (sub('_\\d+$', '', i) %in% ft.trans) g.col[i] <- NA }
     # Show selected or all samples in legend.
@@ -101,8 +103,24 @@ grob_list <- function(gene, con.na=TRUE, geneV, coord, ID, cols, tis.path, ft.tr
     lgd.par <- theme(legend.position=legend.position, legend.direction=legend.direction, legend.background = element_rect(fill=alpha(NA, 0)), legend.key.size=unit(legend.key.size, "npc"), legend.text=element_text(size=legend.text.size), legend.margin=margin(l=0.1, r=0.1, unit='npc'))
     ## Add 'feature' and 'value' to coordinate data frame, since the resulting ggplot object is used in 'ggplotly'. Otherwise, the coordinate data frame is applied to 'ggplot' directly by skipping the following code.
     coord$gene <- k; coord$condition <- con; coord$value <- NA
-    ft.pat <- paste0('(', paste0(unique(tis.path), collapse='|'), ')(_\\d+)$')
-    coord$feature <- gsub(ft.pat, '\\1', coord$tissue)    
+    uni.tis.pa <- unique(tis.path)
+    if (length(uni.tis.pa)<=800) {
+      ft.pat <- paste0('(', paste0(uni.tis.pa, collapse='|'), ')(_\\d+)$')
+      coord$feature <- gsub(ft.pat, '\\1', coord$tissue)
+    } else { # gsub cannot handle more than 950 concatenated patterns, so 800 patterns are selected every run.
+      idx <- NULL; n1 <- 800; coord$feature <- as.vector(coord$tissue) 
+      interval <- seq(1, length(uni.tis.pa), n1)
+      # Indices of all tissues appended with '_\\d+$'.
+      idx.sel <- grep('_\\d+$', coord$tissue)
+      for (i in interval) {
+        n2 <- i+n1-1; if (n2>length(uni.tis.pa)) n2 <- length(uni.tis.pa) 
+        ft.pat <- paste0('(', paste0(uni.tis.pa[i:n2], collapse='|'), ')(_\\d+)$')
+        idx0 <- grep(ft.pat, coord$tissue[idx.sel])
+        # Remove '_\\d+$' for tissues appended with '_\\d+$'.
+        if (length(idx)>0) coord$feature[idx.sel][-idx] <- gsub(ft.pat, '\\1', coord$tissue[idx.sel][-idx]) else coord$feature[idx.sel] <- gsub(ft.pat, '\\1', coord$tissue[idx.sel])
+        idx <- c(idx, idx0)
+      }
+    }
     # Assign values to each tissue.
     col.na <- paste0(coord$feature, '__', coord$condition)
     idx1 <- col.na %in% colnames(gene); df0 <- coord[idx1, ]

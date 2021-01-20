@@ -19,7 +19,7 @@ target.hum[c(1:3, 41:42), 4:5]
 colData(rse.hum) <- DataFrame(target.hum)
 
 # The count matrix is normalised with estimateSizeFactors (type="ratio").
-se.nor.hum <- norm_data(data=rse.hum, norm.fun='ESF', data.trans='log2')
+se.nor.hum <- norm_data(data=rse.hum, norm.fun='ESF')
 # Average replicates of concatenated sample__condition.
 se.aggr.hum <- aggr_rep(data=se.nor.hum, sam.factor='organism_part', con.factor='disease')
 assay(se.aggr.hum)[49939:49942, ] # The concatenated tissue__conditions are the column names of the output data matrix.

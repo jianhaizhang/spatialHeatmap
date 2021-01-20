@@ -25,7 +25,7 @@ write.table(target.hum, 'target_human.txt', col.names=TRUE, row.names=TRUE, sep=
 
 colData(rse.hum) <- DataFrame(target.hum)
 # Normalise.
-se.nor.hum <- norm_data(data=rse.hum, norm.fun='ESF', data.trans='log2')
+se.nor.hum <- norm_data(data=rse.hum, norm.fun='ESF')
 # Aggregate.
 se.aggr.hum <- aggr_rep(data=se.nor.hum, sam.factor='organism_part', con.factor='disease', aggr='mean')
 # Filter.
@@ -54,7 +54,7 @@ write.table(target.mus, 'target_mouse.txt', col.names=TRUE, row.names=TRUE, sep=
 
 colData(rse.mus) <- DataFrame(target.mus)
 
-se.nor.mus <- norm_data(data=rse.mus, norm.fun='ESF', data.trans='log2')
+se.nor.mus <- norm_data(data=rse.mus, norm.fun='ESF')
 # Average the tissue-condition replicates.
 se.aggr.mus <- aggr_rep(data=se.nor.mus, sam.factor='organism_part', con.factor='strain', aggr='mean')
 se.fil.mus <- filter_data(data=se.aggr.mus, sam.factor='organism_part', con.factor='strain', pOA=c(0.15, 5), CV=c(1.7, 100), dir=NULL)
@@ -81,7 +81,7 @@ target.chk <- df.con
 write.table(target.chk, 'target_chicken.txt', col.names=TRUE, row.names=TRUE, sep='\t')
 
 colData(rse.chk) <- DataFrame(target.chk)
-se.nor.chk <- norm_data(data=rse.chk, norm.fun='ESF', data.trans='log2')
+se.nor.chk <- norm_data(data=rse.chk, norm.fun='ESF')
 # Average the tissue-condition replicates.
 se.aggr.chk <- aggr_rep(data=se.nor.chk, sam.factor='organism_part', con.factor='age', aggr='mean')
 se.fil.chk <- filter_data(data=se.aggr.chk, sam.factor='organism_part', con.factor='age', pOA=c(0.05, 5), CV=c(1.5, 100), dir=NULL)
@@ -150,44 +150,35 @@ cdat <- colData(rse.clp)
 
 # Edit condition entries.
 old <- c('none', 'anaerobic environment', '72 hour anaerobic environment; 24 hour aerobic environment')
-new <- c('aerobic', 'anaerobic', '72N24A')
+new <- c('aerobic', 'anaerobic', 'NA')
 tar <- edit_tar(cdat, 'stimulus', old, new)
 tar <- as.data.frame(tar)
 unique(tar$stimulus)
-
-# Edit time entries.
-tar <- edit_tar(tar, 'age', unique(tar$age), c('0h', '1h', '3h', '12h', '24h', '48h', '72h', '96h'))
-unique(tar$age)
-
-# Edit spatial feature entries.
-tar <- edit_tar(tar, 'organism_part', unique(tar$organism_part), c('embryo', 'embryoColeoptile', 'coleoptile'))
-unique(tar$organism_part)
-# Create tissue-time composite factor. 
-tar$samTime <- paste0(tar$organism_part, tar$age) 
-
-# Add tissue-time composite factor to targets file.
-tar <- edit_tar(tar, 'samTime', 'coleoptile96h', 'coleoptile72N24A', tar$stimulus=='72N24A')
-unique(tar$samTime)
-
-tar[1:3, c('organism_part', 'age', 'stimulus', 'samTime')]
 
 # Copy stimulus as a condition column.
 tar$con <- tar$stimulus
 # Edit contidion column.
 tar <- edit_tar(tar, 'con', c('aerobic', 'anaerobic'), c('A', 'N'))
 unique(tar$con)
-# Create tissue-time-condition factor.
-tar$samTimeCon <- paste0(tar$samTime, tar$con)
-# Add tissue-time-condition factor to targets file.
-tar <- edit_tar(tar, 'samTimeCon', c('coleoptile72N24A72N24A'), c('coleoptile72N24A'))
-unique(tar$samTimeCon)
+
+# Edit time entries.
+tar <- edit_tar(tar, 'age', unique(tar$age), c('0h', '1h', '3h', '12h', '24h', '48h', '72h', '96h'))
+tar <- edit_tar(tar, 'age', '96h', '72N24A', tar$stimulus=='NA')
+unique(tar$age)
+
+# Edit spatial feature entries.
+tar <- edit_tar(tar, 'organism_part', unique(tar$organism_part), c('embryo', 'embryoColeoptile', 'coleoptile'))
+unique(tar$organism_part)
+
 # Export targets file.
 write.table(tar, 'target_coleoptile.txt', sep='\t')
 
-# Load targets file to SummarizedExperiment.
-colData(rse.clp) <- DataFrame(tar)
+# Create tissue-time-condition factor.
+rse.clp <- com_factor(rse.clp, tar, factors2com=c('organism_part', 'age', 'con'), factor.new='samTimeCon')
+colData(rse.clp)[1:3, ]
+
 # Normalize data.
-se.nor.clp <- norm_data(data=rse.clp, norm.fun='ESF', data.trans='log2')
+se.nor.clp <- norm_data(data=rse.clp, norm.fun='ESF')
 # Aggregate data.
 se.aggr.clp <- aggr_rep(data=se.nor.clp, sam.factor='samTimeCon', con.factor=NULL, aggr='mean')
 # Filter genes with low counts and low variance.

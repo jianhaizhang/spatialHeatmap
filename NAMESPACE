@@ -2,6 +2,7 @@
 
 export(adj_mod)
 export(aggr_rep)
+export(com_factor)
 export(custom_shiny)
 export(edit_tar)
 export(filter_data)

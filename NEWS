@@ -1,6 +1,6 @@
 
 
-Changes in version 1.1.2
+Changes in version 1.1.5
 
  1. The spatial heatmaps are able to maitain outline (stroke) widths defined in aSVG. The stroke widths can be updated with "update_feature".
  2. The Shiny app is able to take HDF5 database backend, which contains data and aSVG files. The HDF5 database can also be uploaded on the user interface.

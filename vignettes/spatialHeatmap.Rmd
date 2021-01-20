@@ -519,7 +519,7 @@ The following example uses the `ESF` normalization option. This method has been
 chosen mainly due to its good time performance.   
 
 ```{r eval=TRUE, echo=TRUE, warnings=FALSE }
-se.nor.hum <- norm_data(data=rse.hum, norm.fun='ESF', data.trans='log2')
+se.nor.hum <- norm_data(data=rse.hum, norm.fun='ESF', log2.trans=TRUE)
 ```
 
 Replicates are aggregated with the `aggr_rep` function, where the summary
@@ -750,7 +750,7 @@ expression data. The details of these steps are explained in the sub-section
 above using data from human.
 
 ```{r eval=TRUE, echo=TRUE, warnings=FALSE }
-se.nor.mus <- norm_data(data=rse.mus, norm.fun='ESF', data.trans='log2') # Normalization
+se.nor.mus <- norm_data(data=rse.mus, norm.fun='ESF', log2.trans=TRUE) # Normalization
 se.aggr.mus <- aggr_rep(data=se.nor.mus, sam.factor='organism_part', con.factor='strain', aggr='mean') # Aggregation of replicates
 se.fil.mus <- filter_data(data=se.aggr.mus, sam.factor='organism_part', con.factor='strain', pOA=c(0.01, 5), CV=c(0.6, 100), dir=NULL) # Filtering of genes with low counts and variance 
 ```
@@ -897,7 +897,7 @@ expression data. The details of these steps are explained in the above
 sub-section on human data.
 
 ```{r eval=TRUE, echo=TRUE, warnings=FALSE }
-se.nor.chk <- norm_data(data=rse.chk, norm.fun='ESF', data.trans='log2') # Normalization
+se.nor.chk <- norm_data(data=rse.chk, norm.fun='ESF', log2.trans=TRUE) # Normalization
 se.aggr.chk <- aggr_rep(data=se.nor.chk, sam.factor='organism_part', con.factor='age', aggr='mean') # Replicate agggregation using mean 
 se.fil.chk <- filter_data(data=se.aggr.chk, sam.factor='organism_part', con.factor='age', pOA=c(0.01, 5), CV=c(0.6, 100), dir=NULL) # Filtering of genes with low counts and varince
 ```
@@ -1048,7 +1048,7 @@ across six cell types (Figure \@ref(fig:shshm)).
 spatial_hm(svg.path=svg.sh, data=se.fil.arab, ID=c("HRE2"), height=0.7, legend.nrow=3, legend.text.size=11)
 ```
 
-# Spatiotemporal Heatmaps (STHMs) 
+# Spatiotemporal Heatmaps (STHMs) {#sthm} 
 
 The above examples are SHMs plotted at the single spatial dimension. This section showcases the application of SHMs at spatial and temporal dimesions, *i.e.* data assayed in spatial feature(s) across different development stages.  
 
@@ -1072,26 +1072,43 @@ if (is.null(rse.clp)) { # Save downloaded data to cache if it is not cached.
 
 ### Experimental Design
 
-The targets file was prepared according to the experiment design stored in `colData` slot of `res.clp` and pre-packaged in `spatialHeatmap`.  
+The targets file was prepared according to the experiment design stored in `colData` slot of `res.clp` by using the convenient function `edit_tar`, and pre-packaged in `spatialHeatmap`.  
 
 ```{r eval=TRUE, echo=TRUE, warnings=FALSE}
 clp.tar <- system.file('extdata/shinyApp/example/target_coleoptile.txt', package='spatialHeatmap')
 target.clp <- read_fr(clp.tar)
 ```
 
-Inspect the tissues, conditions, and times.  
+The helper function `edit_tar` is designed to edit entries in the targets file. Below is an example of editing the tissue entries.   
 
 ```{r eval=TRUE, echo=TRUE, warnings=FALSE}
-target.clp[1:3, c(6, 7, 9:12)] # A slice of the targets file.
+cdat <- colData(rse.clp) # Original targets file.
+unique(cdat$organism_part) # Original tissues.
+cdat <- edit_tar(cdat, column='organism_part', old=c('plant embryo', 'plant embryo coleoptile'), new=c('embryo', 'embryoColeoptile')) # Replace old entries with desired ones.
+unique(cdat$organism_part) # New tissue entries. 
+```
+
+Inspect the tissues, conditions, and times, where "A" and "N" denote "aerobic" and "anaerobic" respectively.   
+
+```{r eval=TRUE, echo=TRUE, warnings=FALSE}
+target.clp[1:3, c(6, 7, 9, 10)] # A slice of the targets file.
 unique(target.clp[, 'age']) # All development stages.
 unique(target.clp[, 'organism_part']) # All tissues.
 unique(target.clp[, 'stimulus']) # All conditions.
 ```
 
-Combined sample-time-condition factor.  
+Combine sample, time, condition factors using the helper function `com_factor`. The targets file including the new composite factors (`samTimeCon`) is loaded to the `colData` slot in `rse.clp` internally.   
 
 ```{r eval=TRUE, echo=TRUE, warnings=FALSE}
-unique(target.clp[, 'samTimeCon']) # Tissue-time-condition factors.
+rse.clp <- com_factor(rse.clp, target.clp, factors2com=c('organism_part', 'age', 'con'), sep='.', factor.new='samTimeCon')
+colData(rse.clp)[1:3, c(6, 7, 9:11)]
+```
+
+Inspect the sample-time-condition composite factors. At least one of the composite factors should have a matching feature counterpart in the aSVG file, otherwise no aSVG file will be returned in the next section.  
+
+```{r eval=TRUE, echo=TRUE, warnings=FALSE}
+target.clp <- colData(rse.clp)
+unique(target.clp$samTimeCon)
 ```
 
 ### aSVG Image
@@ -1100,10 +1117,10 @@ Similar with the Arabidopsis Shoot example, the aSVG image has been generated in
 the corresponding figure in @Narsai2017-ql according to the [SVG tutorial](https://jianhaizhang.github.io/SVG_tutorial_file/){target="_blank"}, and the resulting custom figure
 has been included in `spatialHeatmap`.   
 
-Query the aSVG files.  
+Query the aSVG files with one composite factor `embryo.0h.A`.   
 
 ```{r eval=TRUE, echo=TRUE, warnings=FALSE }
-feature.df <- return_feature(feature=c('embryo0hA', 'embryoColeoptile1hA'), species=c('oryza', 'sativa'), keywords.any=FALSE, return.all=FALSE, dir=svg.dir, remote=FALSE, match.only=FALSE)
+feature.df <- return_feature(feature=c('embryo.0h.A', 'embryoColeoptile.1h.A'), species=c('oryza', 'sativa'), keywords.any=FALSE, return.all=FALSE, dir=svg.dir, remote=FALSE, match.only=FALSE)
 feature.df[1:2, ] # The first two rows of the query results.
 ```
 
@@ -1114,7 +1131,7 @@ unique(feature.df$SVG)
 ```
 
 <a name='idt'></a>
-Note no matter how the factors are combined, the composite factors of interest should always have matching counterparts in the aSVG file.  
+Note no matter how the factors are combined, the composite factors of interest should always have matching counterparts in the aSVG file. In this example, all composite factors are matched to the aSVG.   
 
 ```{r eval=TRUE, echo=TRUE, warnings=FALSE } 
 unique(target.clp$samTimeCon) %in% unique(feature.df$feature)
@@ -1128,11 +1145,6 @@ svg.clp1 <- system.file("extdata/shinyApp/example", "oryza.sativa_coleoptile.ANT
 
 ### Preprocess Assay Data
 
-Load the custom target data into `colData` slot.  
-
-```{r eval=TRUE, echo=TRUE, warnings=FALSE}
-colData(rse.clp) <- DataFrame(target.clp)
-```
 
 The raw RNA-Seq count are preprocessed with the following steps: (1)
 normalization, (2) aggregation of replicates, and (3) filtering of reliable
@@ -1140,7 +1152,7 @@ expression data. The details of these steps are explained in the above
 sub-section on human data. The normalization step is same for combined factors sample-time and sample-time-condition, while the aggregation and filtering are different. The difference is reflected by `sam.factor` and `con.factor`, and subsequently the column names in resulting `assay` slot of the `SummarizedExperiment` object.   
 
 ```{r eval=TRUE, echo=TRUE, warnings=FALSE }
-se.nor.clp <- norm_data(data=rse.clp, norm.fun='ESF', data.trans='log2') # Normalization
+se.nor.clp <- norm_data(data=rse.clp, norm.fun='ESF', log2.trans=TRUE) # Normalization
 ```
 
 <a name='sam.time.con1'></a>
@@ -1152,7 +1164,7 @@ se.fil.clp1 <- filter_data(data=se.aggr.clp1, sam.factor='samTimeCon', con.facto
 ```
 
 <a name='sam.time.con2'></a>
-Since conditions and times are combined with tissues, the resulting data table loses the double underscore string. 
+Since all three factors (conditions, times, tissues) are combined, the resulting data table loses the double underscore string. 
 
 ```{r eval=TRUE, echo=TRUE, warnings=FALSE }
 assay(se.fil.clp1)[1:3, 1:3] # A slice of the resulting data table.
@@ -1201,16 +1213,18 @@ target.clp <- read_fr(clp.tar)
 Inspect the samples, conditions, and times.  
 
 ```{r eval=TRUE, echo=TRUE, warnings=FALSE}
-target.clp[1:3, c(6, 7, 9:12)] # A slice of the targets file.
+target.clp[1:3, c(6, 7, 9, 10)] # A slice of the targets file.
 unique(target.clp[, 'age']) # All development stages.
 unique(target.clp[, 'organism_part']) # All tissues.
 unique(target.clp[, 'stimulus']) # All conditions.
 ```
 
-Combined sample-time factor, which is the essential difference with sample-time-condition example.  
+Combine sample and time factors, which is the essential difference with sample-time-condition example.  
 
 ```{r eval=TRUE, echo=TRUE, warnings=FALSE}
-unique(target.clp[, 'samTime']) # Tissue-time factor.
+rse.clp <- com_factor(rse.clp, target.clp, factors2com=c('organism_part', 'age'), factor.new='samTime')
+target.clp <- colData(rse.clp)
+target.clp[1:3, ]
 ```
 
 ### aSVG Image
@@ -1221,7 +1235,7 @@ the corresponding figure in @Narsai2017-ql according to the [SVG tutorial](https
 Query the aSVG files.  
 
 ```{r eval=TRUE, echo=TRUE, warnings=FALSE }
-feature.df <- return_feature(feature=c('embryo0h', 'embryoColeoptile1h'), species=c('oryza', 'sativa'), keywords.any=FALSE, return.all=FALSE, dir=svg.dir, remote=FALSE, match.only=FALSE)
+feature.df <- return_feature(feature=c('embryo.0h', 'embryoColeoptile1h'), species=c('oryza', 'sativa'), keywords.any=FALSE, return.all=FALSE, dir=svg.dir, remote=FALSE, match.only=FALSE)
 feature.df[1:2, ] # The first two rows of the query results.
 ```
 
@@ -1245,18 +1259,13 @@ svg.clp2 <- system.file("extdata/shinyApp/example", "oryza.sativa_coleoptile.NT_
 
 ### Preprocess Assay Data
 
-Load the custom target data into `colData` slot.  
-
-```{r eval=TRUE, echo=TRUE, warnings=FALSE}
-colData(rse.clp) <- DataFrame(target.clp)
-```
 
 The raw RNA-Seq count are preprocessed with the following steps: (1)
 normalization, (2) aggregation of replicates, and (3) filtering of reliable
 expression data. The normalization step is the same for composite factors sample-time and sample-time-condition, while the aggregation and filtering are different. The difference is reflected by `sam.factor` and `con.factor`, and subsequently the column names in the `assay` slot of the resulting `SummarizedExperiment` object.   
 
 ```{r eval=TRUE, echo=TRUE, warnings=FALSE }
-se.nor.clp <- norm_data(data=rse.clp, norm.fun='ESF', data.trans='log2') # Normalization
+se.nor.clp <- norm_data(data=rse.clp, norm.fun='ESF', log2.trans=TRUE) # Normalization
 ```
 
 Aggregation and filtering by sample-time factor.  
@@ -1266,7 +1275,7 @@ se.aggr.clp2 <- aggr_rep(data=se.nor.clp, sam.factor='samTime', con.factor='stim
 se.fil.clp2 <- filter_data(data=se.aggr.clp2, sam.factor='samTime', con.factor='stimulus', pOA=c(0.07, 7), CV=c(0.7, 100), dir=NULL) # Filtering of genes with low counts and varince.
 ```
 
-The resulting data table preserves the double underscore string, which is different from the sample-time-condition example.   
+Since only sample and time factors are combined, the resulting data table preserves the double underscore string, which is different from the sample-time-condition example.   
 
 ```{r eval=TRUE, echo=TRUE, warnings=FALSE }
 df.fil.clp <- assay(se.fil.clp2) 
@@ -1334,6 +1343,10 @@ spatial_hm(svg.path=c(svg.sh1, svg.sh2), data=df.random, ID=c('gene1'), width=0.
 ```
 
 Note in Figure \@ref(fig:arabshm) shoots have thicker outlines than roots. This is another function of `spatial_hm`, *i.e.* preserves the outline thicknesses defined in aSVG files. This feature is particularly useful in cellular SHMs where different cell types have different cell-wall thicknesses. The outline widths can be updated with `update_feature` programatically or with Inkscape manually. The former is illustrated in the Supplementary Section.   
+
+# Multi-Factor Spatial Heatmaps
+
+In principle, the `spatialHeatmap` is extendable to as many factors (*e.g.* samples, conditions, times) as possible. The most common scenario involves only two factors of samples and conditions ([Section 3](#shm)). If more factors are relevant such as development stages, geographical locations, genotypes, *etc*, all or selected factors should be combined to generate composite factors. The [spatiotemporal section](#sthm) is an illustration of three factors. Similar combining strategies should be appied in cases of four or more factors. A rule of thumb is the composite factors of interest must have a matching counterpart in the aSVG file, otherwise target spatial features are not painted in spatial heatmaps.   
 
 # Matrix Heatmaps {#mhm}
 
@@ -1573,10 +1586,6 @@ Except for user-provided data, the database is able to store data sets downloade
 
 # Supplementary Section {#sup} 
 
-To generate SHMs with custom data, proper formatting of the numeric (assay)
-data and aSVG images is required. A tabular target file describing the
-numeric data can also be provided but is optional. This section provides
-additional details on these three input types.
 
 ## Numeric Data {#data_form}
 

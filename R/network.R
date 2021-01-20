@@ -69,8 +69,8 @@
 #' # Normalize count data.
 #' # The normalizing function "calcNormFactors" (McCarthy et al. 2012) with default settings
 #' # is used. 
-#' df.nor.chk <- norm_data(data=df.chk, norm.fun='CNF', data.trans='log2')
-#' se.nor.chk <- norm_data(data=se.chk, norm.fun='CNF', data.trans='log2')
+#' df.nor.chk <- norm_data(data=df.chk, norm.fun='CNF', log2.trans=TRUE)
+#' se.nor.chk <- norm_data(data=se.chk, norm.fun='CNF', log2.trans=TRUE)
 
 #' # Aggregate count data.
 #' # Aggregate "sample__condition" replicates in toy data1.

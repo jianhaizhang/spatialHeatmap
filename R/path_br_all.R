@@ -19,7 +19,7 @@ path_br_all <- function(node.parent) {
 
     nod0 <- chdn[[i]]; na <- xml_name(nod0); id <- xml_attr(nod0, 'id')
       # "xml_remove" does not affect "chdn" since it is "xml_nodeset", but affects "node.parent" and "doc" since they are "xml_node". There is no need to return "node.parent", since even in nested functions oprations on node are still effective on "doc" and "node.parent" such as "xml_remove" in "rm_dot".
-      if (na %in% c('text', 'title', 'flowRoot')|(na=='g' & xml_length(nod0)==0)) { xml_remove(nod0); cat('Removing "title", "text", "flowRoot" nodes, and empty "g" element:', id, '! \n'); next } # These nodes do not have coordinates after "PostScriptTrace" and thus lead to color shifting in SHM.
+      if (na %in% c('text', 'title', 'flowRoot')|(na=='g' & xml_length(nod0)==0)) { xml_remove(nod0); cat('Removing "title", "text", "flowRoot", and empty "g" element:', id, '! \n'); next } # These nodes do not have coordinates after "PostScriptTrace" and thus lead to color shifting in SHM.
       # 'a' node and 'text' path/group are ignored.
       if (grepl('^text', id, ignore.case=TRUE)) next
       if (na!='g') path_br(nod0, g=TRUE) else {

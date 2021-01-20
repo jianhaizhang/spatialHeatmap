@@ -46,7 +46,6 @@ check_data <- function(data, sam.factor=NULL, con.factor=NULL, usage='other') {
     if (usage=='shm') {
 
       if (!is.null(sam.factor) & is.null(con.factor)) { sam.na <- as.vector(col.meta[, sam.factor]); fct.cna <- paste0(sam.na, "__", "con"); con.na <- FALSE } else if (is.null(sam.factor)) { form <- grepl("__", cna); if (sum(form)==0) { fct.cna <- paste0(cna, '__', 'con'); con.na <- FALSE } else con.na <- TRUE }
-    
       if (!is.null(fct.cna)) { colnames(dat) <- make.names(fct.cna); if (!identical(fct.cna, make.names(fct.cna))) cat('Syntactically valid column names are made! \n') }
       if (any(duplicated(colnames(dat)))) stop('Please use function \'aggr_rep\' to aggregate \'sample__condition\' replicates!')
     

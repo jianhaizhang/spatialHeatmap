@@ -8,6 +8,8 @@
 
 #' @param CV It specifies parameters of the filter function \code{\link[genefilter]{cv}} from the package \pkg{genefilter} (Gentleman et al. 2018), which filters genes according to the coefficient of variation (CV). The input is a vector of two numbers that specify the CV range. The default is c(-Inf, Inf), which means no filtering is applied. \cr \emph{E.g.} c(0.1, 5) means genes with CV between 0.1 and 5 are kept.
 
+#' @param top.CV The proportion of top coefficient of variations (CVs), which ranges from 0 to 1. Only row items with CVs in this proportion are kept. \emph{E.g.} if the proportion is 0.7, only row items with CVs ranked in the top 70\% are retained. Default is 1, which means all items are retained. Note this argument takes precedence over \code{CV}.
+
 #' @param ann The column name of row item (gene, proteins, \emph{etc}.) annotation in the \code{rowData} slot of \code{SummarizedExperiment}. The default is NULL. In \code{\link{filter_data}}, this argument is only relevant if \code{dir} is specified, while in \code{\link{network}} it is only relevant if users want to see annotation when mousing over a node. 
 
 #' @param sam.factor The column name corresponding to samples in the \code{colData} of \code{SummarizedExperiment}. If the original column names in the \code{assay} slot already follows the scheme "sample__condition", then the \code{colData} slot is not required and accordingly this argument could be NULL. 
@@ -15,6 +17,8 @@
 #' @param con.factor The column name corresponding to conditions in the \code{colData} of \code{SummarizedExperiment}. Could be NULL if column names of in the \code{assay} slot already follows the scheme "sample__condition", or no condition is associated with the data.
 
 #' @param dir The directory path where the filtered data matrix is saved as a TSV-format file "customData.txt", which is ready to upload to the Shiny app launched by \code{\link{shiny_shm}}. In the "customData.txt", the rows are assayed items and column names are in the syntax "sample__condition". If gene annotation is provided to \code{ann}, it is appended to "customData.txt". The default is NULL and no file is saved. This argument is used only when the data is stored in \code{SummarizedExperiment} and need to be uploaded to the "customData" in the Shiny app.
+
+#' @param verbose TRUE or FALSE. If TRUE (default), the summary of statistics is printed. 
 
 #' @return The returned value is the same class with the input data, a \code{data.frame} or \code{SummarizedExperiment}. In either case, the column names of the data matrix follows the "sample__condition" scheme. If \code{dir} is specified, the filtered data matrix is saved in a TSV-format file "customData.txt". 
 
@@ -85,30 +89,40 @@
 #' @importFrom genefilter filterfun pOverA cv genefilter
 #' @importFrom utils write.table
 
-filter_data <- function(data, pOA=c(0, 0), CV=c(-Inf, Inf), ann=NULL, sam.factor, con.factor, dir=NULL) {
+filter_data <- function(data, pOA=c(0, 0), CV=c(-Inf, Inf), top.CV=1, ann=NULL, sam.factor, con.factor, dir=NULL, verbose=TRUE) {
 
   options(stringsAsFactors=FALSE)
+  if (top.CV>1|top.CV<0) stop('"top.CV" should be between 0 and 1!')
   # Process data.
   dat.lis <- check_data(data=data, sam.factor=sam.factor, con.factor=con.factor, usage='filter')
   expr <- dat.lis$dat; row.meta <- dat.lis$row.meta; col.meta <- dat.lis$col.meta
+  if (verbose==TRUE) { cat('All values before filtering:\n'); print(summary(unlist(as.data.frame(expr)))) }
+  expr.t <- as.data.frame(t(expr)); cv.all <- sort(sapply(expr.t, sd)/sapply(expr.t, mean), decreasing=TRUE)
+  if (verbose==TRUE) { cat('All coefficient of variances (CVs) before filtering:\n'); print(summary(cv.all)) }
+  if (top.CV<1) {
+    cv.min <- cv.all[ceiling(length(cv.all)*top.CV)]
+    CV <- c(cv.min, Inf)
+  }
   ffun <- filterfun(pOverA(p=pOA[1], A=pOA[2]), cv(CV[1], CV[2]))
   filtered <- genefilter(expr, ffun); expr <- expr[filtered, , drop=FALSE] # Subset one row in a matrix, the result is a numeric vector not a matrix, so drop=FALSE.
+  if (verbose==TRUE) { cat('All values after filtering:\n'); print(summary(unlist(as.data.frame(expr)))) }
+  expr.t <- as.data.frame(t(expr))
+  if (verbose==TRUE) {
+    cv.all <- sort(sapply(expr.t, sd)/sapply(expr.t, mean), decreasing=TRUE)
+    cat('All coefficient of variances (CVs) after filtering:\n'); print(summary(cv.all))
+  }
   row.meta <- row.meta[filtered, , drop=FALSE]
   if (!is.null(dir)) { 
 
     dir <- normalizePath(dir, winslash="/", mustWork=FALSE)
     if (!dir.exists(dir)) stop(paste0(dir, ' does not exist!'))
     if (is(data, 'data.frame')|is(data, 'matrix')) {
-
       expr1 <- cbind.data.frame(expr, row.meta, stringsAsFactors=FALSE)
-
     }  else if (is(data, 'SummarizedExperiment')) {
       
       if (ncol(row.meta)>0 & !is.null(ann)) {
-
         expr1 <- cbind.data.frame(expr, row.meta[, ann], stringsAsFactors=FALSE)
         colnames(expr1)[ncol(expr1)] <- ann
-      
       } else expr1 <- expr
 
     }
@@ -119,7 +133,8 @@ filter_data <- function(data, pOA=c(0, 0), CV=c(-Inf, Inf), ann=NULL, sam.factor
   if (is(data, 'data.frame')|is(data, 'matrix')) { return(cbind(expr, row.meta)) } else if (is(data, 'SummarizedExperiment')) {
   
     rownames(col.meta) <- NULL # If row names present in colData(data), if will become column names of assay(data).
-    expr <- SummarizedExperiment(assays=list(expr=expr), rowData=row.meta, colData=col.meta); return(expr)
+    expr <- SummarizedExperiment(assays=list(expr=expr), rowData=row.meta, colData=col.meta)
+    if (!is.null(assayNames(data))) assayNames(expr) <- assayNames(data)[1]; return(expr)
 
   }
 

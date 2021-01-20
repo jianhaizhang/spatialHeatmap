@@ -8,10 +8,12 @@ filter_data(
   data,
   pOA = c(0, 0),
   CV = c(-Inf, Inf),
+  top.CV = 1,
   ann = NULL,
   sam.factor,
   con.factor,
-  dir = NULL
+  dir = NULL,
+  verbose = TRUE
 )
 }
 \arguments{
@@ -21,6 +23,8 @@ filter_data(
 
 \item{CV}{It specifies parameters of the filter function \code{\link[genefilter]{cv}} from the package \pkg{genefilter} (Gentleman et al. 2018), which filters genes according to the coefficient of variation (CV). The input is a vector of two numbers that specify the CV range. The default is c(-Inf, Inf), which means no filtering is applied. \cr \emph{E.g.} c(0.1, 5) means genes with CV between 0.1 and 5 are kept.}
 
+\item{top.CV}{The proportion of top coefficient of variations (CVs), which ranges from 0 to 1. Only row items with CVs in this proportion are kept. \emph{E.g.} if the proportion is 0.7, only row items with CVs ranked in the top 70\% are retained. Default is 1, which means all items are retained. Note this argument takes precedence over \code{CV}.}
+
 \item{ann}{The column name of row item (gene, proteins, \emph{etc}.) annotation in the \code{rowData} slot of \code{SummarizedExperiment}. The default is NULL. In \code{\link{filter_data}}, this argument is only relevant if \code{dir} is specified, while in \code{\link{network}} it is only relevant if users want to see annotation when mousing over a node.}
 
 \item{sam.factor}{The column name corresponding to samples in the \code{colData} of \code{SummarizedExperiment}. If the original column names in the \code{assay} slot already follows the scheme "sample__condition", then the \code{colData} slot is not required and accordingly this argument could be NULL.}
@@ -28,6 +32,8 @@ filter_data(
 \item{con.factor}{The column name corresponding to conditions in the \code{colData} of \code{SummarizedExperiment}. Could be NULL if column names of in the \code{assay} slot already follows the scheme "sample__condition", or no condition is associated with the data.}
 
 \item{dir}{The directory path where the filtered data matrix is saved as a TSV-format file "customData.txt", which is ready to upload to the Shiny app launched by \code{\link{shiny_shm}}. In the "customData.txt", the rows are assayed items and column names are in the syntax "sample__condition". If gene annotation is provided to \code{ann}, it is appended to "customData.txt". The default is NULL and no file is saved. This argument is used only when the data is stored in \code{SummarizedExperiment} and need to be uploaded to the "customData" in the Shiny app.}
+
+\item{verbose}{TRUE or FALSE. If TRUE (default), the summary of statistics is printed.}
 }
 \value{
 The returned value is the same class with the input data, a \code{data.frame} or \code{SummarizedExperiment}. In either case, the column names of the data matrix follows the "sample__condition" scheme. If \code{dir} is specified, the filtered data matrix is saved in a TSV-format file "customData.txt".

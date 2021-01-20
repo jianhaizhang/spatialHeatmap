@@ -124,8 +124,8 @@
 #' # Normalize count data.
 #' # The normalizing function "calcNormFactors" (McCarthy et al. 2012) with default settings
 #' # is used.  
-#' df.nor.chk <- norm_data(data=df.chk, norm.fun='CNF', data.trans='log2')
-#' se.nor.chk <- norm_data(data=se.chk, norm.fun='CNF', data.trans='log2')
+#' df.nor.chk <- norm_data(data=df.chk, norm.fun='CNF', log2.trans=TRUE)
+#' se.nor.chk <- norm_data(data=se.chk, norm.fun='CNF', log2.trans=TRUE)
 
 #' # Aggregate count data.
 #' # Aggregate "sample__condition" replicates in toy data1.
@@ -300,7 +300,7 @@ spatial_hm <- function(svg.path, data, sam.factor=NULL, con.factor=NULL, ID, lay
       df_tis <- svg.df.lis[[j]] 
       g.df <- df_tis[['df']]; tis.path <- df_tis[['tis.path']]
 
-      not.map <- setdiff(sam.uni, unique(tis.path)); if (verbose==TRUE & length(not.map)>0) cat('Features not mapped:', paste0(not.map, collapse=', '), '\n')
+      not.map <- setdiff(sam.uni, unique(tis.path)); if (verbose==TRUE & length(not.map)>0) cat('Features in data not mapped:', paste0(not.map, collapse=', '), '\n')
       sam.com <- intersect(unique(tis.path), sam.uni) 
       if (length(sam.com)==0) next 
 
