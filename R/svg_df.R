@@ -1,6 +1,7 @@
 #' Extract Coordinates, Sample Names, and Colors from the SVG File
 #'
-#' @param svg.path The path of an SVG file.
+#' @param svg.path The path of an SVG file. 
+#' @inheritParams spatial_hm 
 #' @inheritParams svg_attr
 
 #' @return A 3-length list, the first component is a data frame of the coordinates, the second is a vector of all sample/path names, and the third is the fill colors.
@@ -16,8 +17,10 @@
 #' @importFrom rsvg rsvg_ps 
 #' @importFrom grImport PostScriptTrace 
 #' @importFrom xml2 xml_length xml_children xml_name xml_attr xml_remove xml_text
+#' @importFrom data.table setDF rbindlist
+#' @importFrom parallel detectCores mclapply
 
-svg_df <- function(svg.path, feature=NULL) {
+svg_df <- function(svg.path, feature=NULL, cores) {
 
   # Make sure the style is correct. If the stroke width is not the same across polygons such as '0.0002px', '0.216px', some stroke outlines cannot be recognised by 'PostScriptTrace'. Then some polygons are missing. Since the ggplot is based on 'stroke' not 'fill'.
   options(stringsAsFactors=FALSE)
@@ -33,7 +36,6 @@ svg_df <- function(svg.path, feature=NULL) {
   chdn.all <- c(chdn.out, chdn.ply)
   na.no <- na.all[!na.all %in% c('g', 'path', 'rect', 'ellipse', 'use', 'title')]
   if (length(na.no)>0) { cat('\n\n'); cat('Warning: accepted SVG elements are "g", "path", "rect", "ellipse", "use", and "title". Please remove these elements in Inkscape:', na.no, '\n\n') }
-
   # Get ids and titles for every path, including paths inside groups, except for 'a' nodes.
   tit <- id.all <- NULL; for (i in seq_along(chdn.all)) {
 
@@ -42,7 +44,8 @@ svg_df <- function(svg.path, feature=NULL) {
      na <- xml_name(xml_children(chdn.all[[i]]))
      len <- xml_length(chdn.all[[i]])-sum(na=='title')
      tit0 <- rep(df.attr[i, 'feature'], len)
-     if (len>1) tit0 <- paste0(tit0, '_', seq_along(tit0))
+     # Add the distinct pattern '__\\d+$' to each path in a group for easy recognition downstream.
+     if (len>1) tit0 <- paste0(tit0, '__', seq_along(tit0))
      tit <- c(tit, tit0)
      id0 <- rep(df.attr[i, 'id'], len); id.all <- c(id.all, id0)
      # If the styles in paths of a group are different with group style, they can lead to messy 'fill' and 'stroke' in '.ps.xml', so they are set NULL. This step is super important.
@@ -60,14 +63,14 @@ svg_df <- function(svg.path, feature=NULL) {
         na <- xml_name(xml_children(chdn.all[[w]]))
         # Length of the reference group (g).
         len.r <- xml_length(chdn.all[[w]])-sum(na %in% c('a', 'title'))
-        tit0 <- rep(df.attr[i, 'feature'], len.r); tit0 <- paste0(tit0, '_', seq_along(tit0)); tit <- c(tit, tit0)
+        tit0 <- rep(df.attr[i, 'feature'], len.r); tit0 <- paste0(tit0, '__', seq_along(tit0)); tit <- c(tit, tit0)
         id0 <- rep(df.attr[i, 'id'], len.r); id.all <- c(id.all, id0)
 
       } else { tit <- c(tit, df.attr[i, 'feature']); id.all <- c(id.all, df.attr[i, 'id']) }
 
     } else { tit <- c(tit, df.attr[i, 'feature']); id.all <- c(id.all, df.attr[i, 'id']) }
 
-  }; tis.path <- gsub("_\\d+$", "", tit)
+  }; tis.path <- gsub("__\\d+$", "", tit)
  # style <- 'fill:#46e8e8;fill-opacity:1;stroke:#000000;stroke-width:3;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1' # 'fill' is not necessary. In Inkscape, resizing a "group" causes "matrix" in "transform" (relative positions) attribute, and this can lead to related polygons uncolored in the spatial heatmaps. Solution: ungroup and regroup to get rid of transforms and get absolute positions.
   # Change 'style' of all polygons. Since in SVG code, if no fill in style, no fill in ".ps.xml", so is the stroke.
   # "stroke" >= 0.51 px always introduces coordinates in .ps.xml, no matter "fill" is "none" or not. If "stroke" < 0.5 px, even though "fill" is not "none" there is no coordinates in ps.xml. E.g. irregular paths of dots. 
@@ -114,8 +117,8 @@ svg_df <- function(svg.path, feature=NULL) {
     if (is(df.ply, 'character')) return(df.ply)
     df <- rbind(df.out$df, df.ply$df); id.no <- c(df.out$ids, df.ply$ids)
     if (!is.null(id.no)) { cat('No coordinates were extracted for these element(s):', id.no, '!\n') }
-    # tis.path <- sub('_\\d+$', '', df$tissue) introduces a potential bug, since the original single-path tissues can have '_\\d+$' pattern. Solution: in upstream append '__1', '__2', ... to the paths in a group.
-    tis.path <- sub('_\\d+$', '', df$tissue)
+    # tis.path <- sub('_\\d+$', '', df$tissue) introduces a potential bug, since the original single-path tissues can have '_\\d+$' pattern. Solution: in upstream append '__1', '__2', ... to the paths in a group, since '__\\d+$' is assumed distinct and not used by users.
+    tis.path <- sub('__\\d+$', '', df$tissue)
     lis <- list(df=df, tis.path=tis.path, fil.cols=fil.cols[unique(tis.path)], stroke.w=stroke.w[unique(tis.path)], w.h=w.h, df.attr=subset(df.attr, feature %in% tis.path))
     return(lis)
   }
@@ -127,13 +130,14 @@ svg_df <- function(svg.path, feature=NULL) {
   #  if (sum(tab) %% 2==0) nodeset <- chdn1[seq(1, sum(tab), by=2)] else return('Relative coordinates detected in aSVG file!')
   #}
   #if (length(tit)!=length(nodeset)) return('some shape(s) are missing!')
-  df <- xy0(nodeset, tit) # Test if some paths/dots are missing: identical(as.vector(unique(df$tissue)), unique(tit)) 
-  fil.cols <- df.attr$color; names(fil.cols) <- df.attr$feature
+  # Assign stroke to every path including paths inside groups, since in cases of many shapes it is time-consuming to check every stroke against all tissues in the coordinate data frame to assign strokes after the coordinate data frame is done.
   stroke.w <- df.attr$stroke; names(stroke.w) <- df.attr$feature
+  df <- xy0(nodeset, tit, stroke.w, cores) # Test if some paths/dots are missing: identical(as.vector(unique(df$tissue)), unique(tit)) 
+  fil.cols <- df.attr$color; names(fil.cols) <- df.attr$feature
   w.h <- c(max(abs(df$x)), max(abs(df$y))) 
   names(w.h) <- c('width', 'height')
   # tis.path=sub('_\\d+$', '', tit) introduces a potential bug, since the original single-path tissues can have '_\\d+$' pattern. Solution: in upstream append '__1', '__2', ... to the paths in a group.
-  lis <- list(df=df, tis.path=sub('_\\d+$', '', tit), fil.cols=fil.cols, stroke.w=stroke.w, w.h=w.h, df.attr=df.attr); return(lis)
+  lis <- list(df=df, tis.path=sub('__\\d+$', '', tit), fil.cols=fil.cols, w.h=w.h, df.attr=df.attr); return(lis)
 
 }
 
@@ -210,19 +214,25 @@ xy <- function(doc, parent, node, tis, use=FALSE) {
 #' Extract coordinates for a nodeset
 #' @param nodeset Node sets generated by xml_children.
 #' @param tis The title/id corresponds to each node.
+#' @param stroke.w A vector of line sizes corresponding to each tissue, which are named by tissue names extracted from the SVG file.
 #' @keywords Internal
 #' @noRd
 
-xy0 <- function(nodeset, tis) {     
-  df <- NULL; for (i in seq_along(nodeset)) {
-    cld0 <- nodeset[[i]]
-    x <- as.numeric(xml_attr(xml_children(cld0)[-1], 'x'))
-    y <- as.numeric(xml_attr(xml_children(cld0)[-1], 'y'))
-    df0 <- cbind(tissue=tis[i], data.frame(x=x, y=y), stringsAsFactors=TRUE) # The coordinates should not be factor.
-    df <- rbind(df, df0)
-  }; return(df) 
-}
 
+xy0 <- function(nodeset, tis, stroke.w, cores) {
+  fun <- function(i, nodeset, tis, stroke.w) {
+    nod <- nodeset[[i]]; tis0 <- tis[i]
+    x <- as.numeric(xml_attr(xml_children(nod)[-1], 'x'))
+    y <- as.numeric(xml_attr(xml_children(nod)[-1], 'y'))
+    stk <- stroke.w[sub('__\\d+$', '', tis0)]
+    names(stk) <- NULL
+    df0 <- cbind(tissue=tis0, data.frame(x=x, y=y, line.size=stk), stringsAsFactors=TRUE) # The coordinates should not be factor.
+    return(df0)
+  }
+  # "lapply" is faster than "for" loop. "mclapply" is the same with "lapply" except that "mclapply" employs forking parallelization on UNIX-alike systems, not windowns (calls lapply).
+  # df <- setDF(rbindlist(lapply(seq_along(tis), fun, nodeset, tis, stroke.w))); return(df)
+  df <- setDF(rbindlist(mclapply(seq_along(tis), fun, nodeset, tis, stroke.w, mc.cores=cores))); return(df)
+}
 
 #' Extract coordinates for each path in outline or tissue layer
 #' @param doc The document of SVG containing all nodes.
@@ -253,7 +263,7 @@ cord <- function(doc, out, ply, parent) {
       len <- use(chdn.all1, id.all1, use.node) # Number of the paths in reference of a group.
       if (!is.null(len)) {
         if (len=='no') ids <- c(ids, id0); next
-        if (is.numeric(len)) tis <- paste0(tis, '_', seq_len(len))
+        if (is.numeric(len)) tis <- paste0(tis, '__', seq_len(len))
       }
       df0 <- xy(doc=doc1, tis=tis, use=TRUE)
       if (!is(df0, 'data.frame')) { if (df0=='no') ids <- c(ids, id0) } else df <- rbind(df, df0)
@@ -265,7 +275,7 @@ cord <- function(doc, out, ply, parent) {
       cld0 <- xml_children(nod0); nas0 <- xml_name(cld0)
       cld1 <- cld0[!nas0 %in% c('a', 'title', 'text', 'flowRoot', 'use')]
       if (length(cld1)>1) { # Each child of the group is inserted back to the group.
-        tis.all <- paste0(tis, '_', seq_along(cld1))
+        tis.all <- paste0(tis, '__', seq_along(cld1))
         for (j in seq_along(cld1)) {
           xml_remove(xml_children(out)); xml_remove(xml_children(ply))
           xml_remove(xml_children(nod0)); xml_add_child(nod0, cld1[[j]])

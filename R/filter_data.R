@@ -107,8 +107,8 @@ filter_data <- function(data, pOA=c(0, 0), CV=c(-Inf, Inf), top.CV=1, ann=NULL, 
   filtered <- genefilter(expr, ffun); expr <- expr[filtered, , drop=FALSE] # Subset one row in a matrix, the result is a numeric vector not a matrix, so drop=FALSE.
   if (verbose==TRUE) { cat('All values after filtering:\n'); print(summary(unlist(as.data.frame(expr)))) }
   expr.t <- as.data.frame(t(expr))
-  if (verbose==TRUE) {
-    cv.all <- sort(sapply(expr.t, sd)/sapply(expr.t, mean), decreasing=TRUE)
+  if (verbose==TRUE & nrow(expr)>0) {
+    cv.all <- sort(vapply(expr.t, sd, numeric(1))/vapply(expr.t, mean, numeric(1)), decreasing=TRUE)
     cat('All coefficient of variances (CVs) after filtering:\n'); print(summary(cv.all))
   }
   row.meta <- row.meta[filtered, , drop=FALSE]

@@ -11,8 +11,6 @@ custom_shiny(
   lis.dld.single = NULL,
   lis.dld.mul = NULL,
   lis.dld.st = NULL,
-  custom = TRUE,
-  custom.computed = TRUE,
   example = TRUE,
   app.dir = "."
 )
@@ -22,7 +20,7 @@ custom_shiny(
 
 \item{lis.par}{A list of default parameters of the Shiny app. See \code{ lis.par.tmp }. Default is NULL, which means default parameters are adopted.}
 
-\item{lis.par.tmp}{Logical, TRUE or FALSE. Default is FALSE. If TRUE the template of default paramter list is returned, and users can set customized default values then assign this list to \code{ lis.par }. Note, only the default values in the list can be changed while the hierarchy of the list should be preserved. Otherwise, it cannot be recognized by the internal program.}
+\item{lis.par.tmp}{Logical, TRUE or FALSE. Default is FALSE. If TRUE the template of default paramter list is returned, and users can set customized default values then assign this list to \code{ lis.par }. Note, only the existing values in the list can be changed while the hierarchy of the list should be preserved. Otherwise, it cannot be recognized by the internal program.}
 
 \item{lis.dld.single}{A list of paired data matrix and single aSVG file, which would be downloadable on the app for testing. The list should have two elements with name slots of "data" and "svg" respectively, which are the paths of the data matrix and aSVG file repectively. After the function call, the specified data and aSVG are copied to the "example" folder in the app. Note the two name slots should not be changed. \emph{E.g.} \code{list(data='./data_download.txt', svg='./root_download_shm.svg')}.}
 
@@ -30,13 +28,9 @@ custom_shiny(
 
 \item{lis.dld.st}{A list of paired data matrix and single aSVG file, which would be downloadable on the app for testing. The list should have two elements with name slots of "data" and "svg" respectively, which are the paths of the data matrix and aSVG file repectively. Compared with \code{lis.dld.single}, the only difference is the data and aSVG include spatial and temporal dimension. See the example section for details. After the function call, the specified data and aSVG are copied to the "example" folder in the app. Note the two name slots should not be changed. \emph{E.g.} \code{list(data='./data_download.txt', svg='./root_download_shm.svg')}.}
 
-\item{custom}{Logical, TRUE or FALSE. If TRUE (default), the "customData" option under "Step 1: data sets" is included, which allows to upload datasets from local computer.}
-
-\item{custom.computed}{Logical, TRUE or FALSE. If TRUE (default), the "customComputdData" option under "Step 1: data sets" is included, which allows to upload computed datasets from local computer. See \code{\link{adj_mod}}.}
-
 \item{example}{Logical, TRUE or FALSE. If TRUE (default), the default examples in "spatialHeatmap" package are included in the app as well as those provided to \code{...} by users.}
 
-\item{app.dir}{The directory to create the Shiny app. Default is current work directory \code{'.'}.}
+\item{app.dir}{The directory to create the Shiny app. Default is current work directory \code{.}.}
 }
 \value{
 If \code{lis.par.tmp==TRUE}, the template of default paramter list is returned. Otherwise, a customized Shiny app is generated in the path of \code{app.dir}.

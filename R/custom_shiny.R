@@ -10,10 +10,9 @@
 #' @param lis.dld.single A list of paired data matrix and single aSVG file, which would be downloadable on the app for testing. The list should have two elements with name slots of "data" and "svg" respectively, which are the paths of the data matrix and aSVG file repectively. After the function call, the specified data and aSVG are copied to the "example" folder in the app. Note the two name slots should not be changed. \emph{E.g.} \code{list(data='./data_download.txt', svg='./root_download_shm.svg')}.
 #' @param lis.dld.mul A list of paired data matrix and multiple aSVG files, which would be downloadable on the app for testing. The multiple aSVG files could be multiple growth stages of a plant. The list should have two elements with name slots of "data" and "svg" respectively, which are the paths of the data matrix and aSVG files repectively. The data and aSVG should only include the spatial dimension, no temporal dimension. After the function call, the specified data and aSVGs are copied to the "example" folder in the app. Note the two name slots should not be changed. \emph{E.g.} list(data='./data_download.txt', svg=c('./root_young_download_shm.svg', './root_old_download_shm.svg')).
 #' @param lis.dld.st A list of paired data matrix and single aSVG file, which would be downloadable on the app for testing. The list should have two elements with name slots of "data" and "svg" respectively, which are the paths of the data matrix and aSVG file repectively. Compared with \code{lis.dld.single}, the only difference is the data and aSVG include spatial and temporal dimension. See the example section for details. After the function call, the specified data and aSVG are copied to the "example" folder in the app. Note the two name slots should not be changed. \emph{E.g.} \code{list(data='./data_download.txt', svg='./root_download_shm.svg')}.
-#' @param custom Logical, TRUE or FALSE. If TRUE (default), the "customData" option under "Step 1: data sets" is included, which allows to upload datasets from local computer.
-#' @param custom.computed Logical, TRUE or FALSE. If TRUE (default), the "customComputdData" option under "Step 1: data sets" is included, which allows to upload computed datasets from local computer. See \code{\link{adj_mod}}. 
+
 #' @param example Logical, TRUE or FALSE. If TRUE (default), the default examples in "spatialHeatmap" package are included in the app as well as those provided to \code{...} by users.
-#' @param app.dir The directory to create the Shiny app. Default is current work directory \code{'.'}.
+#' @param app.dir The directory to create the Shiny app. Default is current work directory \code{.}.
 
 #' @return If \code{lis.par.tmp==TRUE}, the template of default paramter list is returned. Otherwise, a customized Shiny app is generated in the path of \code{app.dir}. 
 
@@ -95,7 +94,7 @@
 #' @importFrom yaml yaml.load_file write_yaml
 #' @importFrom grDevices colors
 
-custom_shiny <- function(..., lis.par=NULL, lis.par.tmp=FALSE, lis.dld.single=NULL, lis.dld.mul=NULL, lis.dld.st=NULL, custom=TRUE, custom.computed=TRUE, example=TRUE, app.dir='.') {
+custom_shiny <- function(..., lis.par=NULL, lis.par.tmp=FALSE, lis.dld.single=NULL, lis.dld.mul=NULL, lis.dld.st=NULL, example=TRUE, app.dir='.') {
 
   options(stringsAsFactors=FALSE)
   # Default config file.
@@ -148,42 +147,32 @@ custom_shiny <- function(..., lis.par=NULL, lis.par.tmp=FALSE, lis.dld.single=NU
 
   # Include default examples or not.
   if (example==FALSE) { 
-
     # If exclude default examples and no download files are provided, default download files are retained.
     pat.dld <- 'dummyfile|expr_arab.txt|arabidopsis.thaliana_root.cross_shm.svg|random_data_multiple_aSVGs.txt|arabidopsis.thaliana_organ_shm1.svg|arabidopsis.thaliana_organ_shm2.svg'
     file.remove(grep(pat.dld, list.files(paste0(app.dir, '/example'), '*', full.names=TRUE), invert=TRUE, value=TRUE))
     if (!is.null(lis.dld.single)) file.remove(list.files(paste0(app.dir, '/example'), 'expr_arab.txt|arabidopsis.thaliana_root.cross_shm.svg', full.names=TRUE))
     if (!is.null(lis.dld.mul)) file.remove(list.files(paste0(app.dir, '/example'), 'random_data_multiple_aSVGs.txt|arabidopsis.thaliana_organ_shm1.svg|arabidopsis.thaliana_organ_shm2.svg', full.names=TRUE))
     exp <- NULL
-
   } else {
-
     # Include all default examples.
     cfg.def <- yaml.load_file(system.file('extdata/shinyApp/config/config.yaml', package='spatialHeatmap'))
     lis.dat.def <- cfg.def[grepl('^dataset\\d+', names(cfg.def))]
     idx.rm <- NULL; for (i in seq_along(lis.dat.def)) {
     if (any(lis.dat.def[[i]]$svg=='none')) idx.rm <- c(idx.rm, i)
     }; exp <- lis.dat.def[-idx.rm]
-
   }
   # Validate colours.
   col_check('shm.img', lis.par$shm.img)
   col_check('network', lis.par$network)
   # Copy data/svg in list of two tar files and isolate data/svg list of tar file. 
   idx <- lis.dat1 <- NULL; for (i in seq_along(lis.dat)) {
-
     lis0 <- lis.dat[[i]]; if (length(lis0)==2) { 
-  
       idx <- c(idx, i); for (j in lis0) {
-
-        j <- normalizePath(j)
+        j <- normalizePath(j, winslash="/")
         if (grepl('data_shm.tar$', j)) lis.dat1 <- pair2lis(read_hdf5(j, 'df_pair')[[1]], db=TRUE)
-        if (grepl('\\.tar$', j)) system(paste0('cp ', j, ' ', app.dir, '/example')) else stop('Compressed data and aSVGs should be two independent ".tar" files respectively!')
-
+        if (grepl('\\.tar$', j)) file.copy(j, paste0(app.dir, '/example'), overwrite=TRUE, recursive=TRUE) else stop('Compressed data and aSVGs should be two independent ".tar" files respectively!')
       }
-
     }
-
   }
   if (is.null(idx)) lis.dat <- cp_file(lis.dat, app.dir, 'example') else { 
     lis.dat <- cp_file(lis.dat[-idx], app.dir, 'example')
@@ -205,11 +194,15 @@ custom_shiny <- function(..., lis.par=NULL, lis.par.tmp=FALSE, lis.dld.single=NU
     # Use default download files.
     lis.dld3 <- list(data="example/expr_coleoptile_samTimeCon.txt", svg="example/oryza.sativa_coleoptile.ANT_shm.svg")
   }; lis.dld <- list(download_single=lis.dld1, download_multiple=lis.dld2, download_spatial_temporal=lis.dld3)
-  lis.cus1 <- lis.cus2 <- NULL
-  if (custom==TRUE) lis.cus1 <- list(name='customData', data='none', svg='none')
-  if (custom.computed==TRUE) lis.cus2 <- list(name='customComputedData', data='none', svg='none')
+  # Custom options are always included.
+  # lis.cus1 <- lis.cus2 <- NULL
+  # if (custom==TRUE) 
+  lis.cus1 <- list(name='customData', data='none', svg='none')
+  # if (custom.computed==TRUE) 
+  lis.cus2 <- list(name='customComputedData', data='none', svg='none')
   # All data sets.
   lis.dat <- c(list(list(name='none', data='none', svg='none'), lis.cus1, lis.cus2), lis.dat, lis.dat1, exp)
+  lis.dat <- lis.dat[!vapply(lis.dat, is.null, logical(1))]
   # Name the complete list.
   names(lis.dat) <- paste0('dataset', seq_along(lis.dat))
   lis.all <- c(lis.dat, lis.par, lis.dld)

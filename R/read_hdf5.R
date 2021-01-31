@@ -26,16 +26,17 @@ read_hdf5 <- function(file, prefix) {
   dir <- paste0(tempdir(check=TRUE), '/data_shm')
   if (!dir.exists(dir)) dir.create(dir)
   # Check existence of data in prefix.
-  system(paste0('tar -xf ', file, ' -C ', dir, ' df_pair_assays.h5 ', 'df_pair_se.rds'))
+  untar(file, c('df_pair_assays.h5', 'df_pair_se.rds'), exdir=dir, tar='tar')
   df.pair <- as.data.frame(assay(loadHDF5SummarizedExperiment(dir=dir, prefix='df_pair_')))
   valid <- prefix[!prefix %in% df.pair$data]
   if (length(valid)==1) if (valid!='df_pair') return("The data defined in 'prefix' is not detected!")
   valid <- valid[valid!='df_pair']
   if (length(valid)>0) return(paste0("The data defined in 'prefix' is not detected: ", paste0(valid, collapse=', '), "!"))
   lis <- list(); for (i in prefix) {
-
-    sys <- system(paste0('tar -xf ', file, ' -C ', dir, ' ', paste0(i, c('_assays.h5', '_se.rds'), collapse=' ')))
-    if (sys!=0) { # The data is not detected.
+    fil0 <- paste0(i, c('_assays.h5', '_se.rds')) 
+    untar(file, fil0, exdir=dir, tar='tar')
+    # sys <- system(paste0('tar -xf ', file, ' -C ', dir, ' ', paste0(i, c('_assays.h5', '_se.rds'), collapse=' ')))
+    if (sum(file.exists(paste0(dir, '/', fil0)))!=2) { # The data is not detected.
       cat(paste0('This data is not detected: ', i, '!'), '\n')
       dat <- list('none'); names(dat) <- 'none'; lis <- c(lis, dat); next
     }

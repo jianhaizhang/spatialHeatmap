@@ -31,7 +31,10 @@ svg_attr <- function(doc, feature, br=TRUE) {
     if (is.na(g.mode)) return(msg) else if (g.mode==FALSE) return(msg)
   }
   # Break combined path to a group or siblings.
-  if (br==TRUE) path_br_all(out); path_br_all(ply)
+  if (br==TRUE) { 
+    res1 <- path_br_all(out); if (is.character(res1)) return(res1)
+    res2 <- path_br_all(ply); if (is.character(res2)) return(res2) 
+  }
   chdn.out <- xml_children(out); chdn.ply <- xml_children(ply)
   chdn.all <- c(chdn.out, chdn.ply)
   id.mat <- NULL; for (i in chdn.all) {

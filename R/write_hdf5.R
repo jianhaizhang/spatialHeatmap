@@ -205,7 +205,7 @@
 
 write_hdf5 <- function(dat.lis, dir='./data_shm', replace=FALSE, chunkdim=NULL, level=NULL, verbose=FALSE, svg.dir=NULL) {
 
-  options(stringsAsFactors=FALSE); dir <- normalizePath(dir)
+  options(stringsAsFactors=FALSE); dir <- normalizePath(dir, winslash="/", mustWork=FALSE)
   na.all <- names(dat.lis)
   if (!'df_pair' %in% na.all) stop('The "df_pair" data frame is required!')
   if (is.null(na.all)) stop('Every name slot of the data list should be assigned a value!')
@@ -251,12 +251,12 @@ write_hdf5 <- function(dat.lis, dir='./data_shm', replace=FALSE, chunkdim=NULL, 
 
   }; wd <- getwd(); setwd(dir)
   file.tar <- paste0(tempdir(check=TRUE), '/data_shm.tar')
-  system(paste0('tar -cf ', file.tar, ' *assays.h5 *se.rds'))
-  file.remove(list.files(dir, pattern='\\.h5$|\\.rds$|\\.tar$', full.names=TRUE))
-  system(paste0('mv ', file.tar, ' .'))
+  tar(file.tar, files=list.files(dir, 'assays.h5$|se.rds$', full.names=FALSE), tar="tar")
+  file.remove(list.files(dir, pattern='\\.h5$|\\.rds$', full.names=TRUE))
+  file.rename(file.tar, paste0(dir, '/data_shm.tar'))
   if (!is.null(svg.dir)) if (dir.exists(svg.dir)) {
     setwd(svg.dir); cat('aSVGs in progress... \n')
-    system(paste0('tar -cf ', paste0(dir, '/aSVGs.tar'), ' *.svg'))
+    tar(paste0(dir, '/aSVGs.tar'), files=list.files(svg.dir, '\\.svg$', full.names=FALSE), tar="tar")
   }; setwd(wd); cat('Done! \n')
 
 }

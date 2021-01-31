@@ -50,6 +50,7 @@
 #' @param ID A character vector of assyed items (\emph{e.g.} genes, proteins) whose abudance values are used to color the aSVG.
 #' @param col.com A character vector of the color components used to build the color scale. The default is c('yellow', 'orange', 'red').
 #' @param col.bar One of "selected" or "all", the former uses values of \code{ID} to build the color scale while the latter uses all values from the data. The default is "selected".
+#' @param cores The number of CPU cores for parallelization, relevant for aSVG files with size larger than 5M. The default is NA, and the number of used cores is 1 or 2 depending on the availability. 
 #' @param trans.scale One of "log2", "exp2", "row", "column", or NULL, which means transform the data by "log2" or "2-base expoent", scale by "row" or "column", or no manipuation respectively. This argument should be used if colors across samples cannot be distinguished due to low variance or outliers. 
 #' @param bar.width The width of color bar that ranges from 0 to 1. The default is 0.08.
 #' @param legend.width The width of legend plot that ranges from 0 to 1 (default).
@@ -226,7 +227,7 @@
 #' @importFrom methods is
 #' @importFrom ggplotify as.ggplot
 
-spatial_hm <- function(svg.path, data, sam.factor=NULL, con.factor=NULL, ID, lay.shm="gene", ncol=2, col.com=c('yellow', 'orange', 'red'), col.bar='selected', bar.width=0.08, legend.width=1, bar.title.size=0, trans.scale=NULL, ft.trans=NULL, tis.trans=ft.trans, width=1, height=1, legend.r=1, sub.title.size=11, legend.plot='all', ft.legend='identical', bar.value.size=10, legend.plot.title='Legend', legend.plot.title.size=11, legend.ncol=NULL, legend.nrow=NULL, legend.position='bottom', legend.direction=NULL, legend.key.size=0.02, legend.text.size=12, angle.text.key=NULL, position.text.key=NULL, legend.2nd=FALSE, position.2nd='bottom', legend.nrow.2nd=NULL, legend.ncol.2nd=NULL, legend.key.size.2nd=0.03, legend.text.size.2nd=10, angle.text.key.2nd=0, position.text.key.2nd='right', add.feature.2nd=FALSE, label=FALSE, label.size=4, label.angle=0, hjust=0, vjust=0, opacity=1, key=TRUE, line.size=0.2, line.color='grey70', preserve.scale=FALSE, verbose=TRUE, out.dir=NULL, anm.width=650, anm.height=550, selfcontained=FALSE, video.dim='640x480', res=500, interval=1, framerate=1, legend.value.vdo=NULL, ...) {
+spatial_hm <- function(svg.path, data, sam.factor=NULL, con.factor=NULL, ID, lay.shm="gene", ncol=2, col.com=c('yellow', 'orange', 'red'), col.bar='selected', cores=NA, bar.width=0.08, legend.width=1, bar.title.size=0, trans.scale=NULL, ft.trans=NULL, tis.trans=ft.trans, width=1, height=1, legend.r=1, sub.title.size=11, legend.plot='all', ft.legend='identical', bar.value.size=10, legend.plot.title='Legend', legend.plot.title.size=11, legend.ncol=NULL, legend.nrow=NULL, legend.position='bottom', legend.direction=NULL, legend.key.size=0.02, legend.text.size=12, angle.text.key=NULL, position.text.key=NULL, legend.2nd=FALSE, position.2nd='bottom', legend.nrow.2nd=NULL, legend.ncol.2nd=NULL, legend.key.size.2nd=0.03, legend.text.size.2nd=10, angle.text.key.2nd=0, position.text.key.2nd='right', add.feature.2nd=FALSE, label=FALSE, label.size=4, label.angle=0, hjust=0, vjust=0, opacity=1, key=TRUE, line.size=0.2, line.color='grey70', preserve.scale=FALSE, verbose=TRUE, out.dir=NULL, anm.width=650, anm.height=550, selfcontained=FALSE, video.dim='640x480', res=500, interval=1, framerate=1, legend.value.vdo=NULL, ...) {
 
   calls <- names(vapply(match.call(), deparse, character(1))[-1])
   if("tis.trans" %in% calls) { ft.trans <- tis.trans; warning('"tis.trans" is deprecated and replaced by "ft.trans"! \n') }
@@ -262,7 +263,10 @@ spatial_hm <- function(svg.path, data, sam.factor=NULL, con.factor=NULL, ID, lay
     bar.len=1000
     if (col.bar=="all") geneV <- seq(min(gene), max(gene), len=bar.len) else if (col.bar=="selected") geneV <- seq(min(gene[ID, , drop=FALSE]), max(gene[ID, , drop=FALSE]), len=bar.len)
     col <- colorRampPalette(col.com)(length(geneV))
-    cs.g <- col_bar(geneV=geneV, cols=col, width=1, bar.title.size=bar.title.size, bar.value.size=bar.value.size); cs.grob <- ggplotGrob(cs.g)    
+    cs.g <- col_bar(geneV=geneV, cols=col, width=1, bar.title.size=bar.title.size, bar.value.size=bar.value.size)
+     tmp <- normalizePath(tempfile(), winslash='/', mustWork=FALSE)
+    png(tmp); cs.grob <- ggplotGrob(cs.g); dev.off()
+    if (file.exists(tmp)) do.call(file.remove, list(tmp))
 
     # Only take the column names with "__".
     cname <- colnames(gene); form <- grepl('__', cname)
@@ -281,12 +285,19 @@ spatial_hm <- function(svg.path, data, sam.factor=NULL, con.factor=NULL, ID, lay
     }
     ord <- order(gsub('.*_(shm.*).svg$', '\\1', svg.na))
     svg.path <- svg.path[ord]; svg.na <- svg.na[ord]
+    # Determine cores.
+    cores <- as.integer(cores); n.cor <- detectCores(logical=TRUE); fil.size <- file.size(svg.path)
+    if (!is.na(n.cor)) { 
+      if (fil.size > 5242880 & n.cor > 2 & is.na(cores)) cores <- 2 else if (fil.size <= 5242880 & is.na(cores)) cores <- 1 else if (n.cor > 1 & !is.na(cores)) {
+      if (cores >= n.cor) cores <- n.cor - 1
+      } 
+    } else { if (is.na(cores)) cores <- 1 }
 
     # Coordinates of each SVG are extracted and placed in a list.
     df.attr <- svg.df.lis <- NULL; for (i in seq_along(svg.na)) {
           
       cat('Coordinates:', svg.na[i], '... \n')
-      df_tis <- svg_df(svg.path=svg.path[i], feature=sam.uni)
+      df_tis <- svg_df(svg.path=svg.path[i], feature=sam.uni, cores=cores)
       if (is.character(df_tis)) stop(paste0(svg.na[i], ': ', df_tis))
       svg.df.lis <- c(svg.df.lis, list(df_tis))
       df.attr0 <- df_tis$df.attr[, c('feature', 'stroke', 'color', 'id', 'element', 'parent', 'index1')]
@@ -328,7 +339,7 @@ spatial_hm <- function(svg.path, data, sam.factor=NULL, con.factor=NULL, ID, lay
       svg.df <- svg.df.lis[[i]]; g.df <- svg.df[["df"]]; w.h <- svg.df[['w.h']]
       tis.path <- svg.df[["tis.path"]]; fil.cols <- svg.df[['fil.cols']]
       if (preserve.scale==TRUE) mar <- (1-w.h/w.h.max*0.99)/2 else mar <- NULL 
-      grob.lis <- grob_list(gene=gene, con.na=con.na, geneV=geneV, coord=g.df, ID=ID, legend.col=fil.cols, cols=col, tis.path=tis.path, ft.trans=ft.trans, sub.title.size=sub.title.size, ft.legend=ft.legend, legend.ncol=legend.ncol, legend.nrow=legend.nrow, legend.position=legend.position, legend.direction=legend.direction, legend.key.size=legend.key.size, legend.text.size=legend.text.size, legend.plot.title=legend.plot.title, legend.plot.title.size=legend.plot.title.size, line.size=line.size+svg.df[['stroke.w']], line.color=line.color, mar.lb=mar, ...)
+      grob.lis <- grob_list(gene=gene, con.na=con.na, geneV=geneV, coord=g.df, ID=ID, legend.col=fil.cols, cols=col, tis.path=tis.path, ft.trans=ft.trans, sub.title.size=sub.title.size, ft.legend=ft.legend, legend.ncol=legend.ncol, legend.nrow=legend.nrow, legend.position=legend.position, legend.direction=legend.direction, legend.key.size=legend.key.size, legend.text.size=legend.text.size, legend.plot.title=legend.plot.title, legend.plot.title.size=legend.plot.title.size, line.size=line.size, line.color=line.color, mar.lb=mar, cores=cores, ...)
       msg <- paste0(na0, ': no spatial features that have matching sample identifiers in data are detected!')
       if (is.null(grob.lis)) stop(msg); grob.lis.all <- c(grob.lis.all, list(grob.lis))
 
@@ -353,7 +364,7 @@ spatial_hm <- function(svg.path, data, sam.factor=NULL, con.factor=NULL, ID, lay
     g.arr <- lay_shm(lay.shm=lay.shm, con=con.idx, ncol=ncol, ID.sel=ID, grob.list=grob.all, width=width, height=height, shiny=FALSE)
     cs.arr <- arrangeGrob(grobs=list(grobTree(cs.grob)), layout_matrix=cbind(1), widths=unit(1, "npc")) # "mm" is fixed, "npc" is scalable.
     # Select legend plot.
-    cat('SHMs and legend...', '\n')
+    cat('SHMs and legend ...', '\n')
     if (!is.null(legend.plot)) { if (length(svg.na)>1 & legend.plot!='all') na.lgd <- svg.na[grep(paste0('_(', paste0(legend.plot, collapse='|'), ').svg$'), svg.na)] else na.lgd <- svg.na
     lgd.lis <- NULL; for (i in na.lgd) { lgd.lis <- c(lgd.lis, list(grob.lis.all[[i]][['g.lgd']])) }; names(lgd.lis) <- na.lgd
     # Add labels to target shapes in legend plots.
