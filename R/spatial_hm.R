@@ -54,7 +54,8 @@
 #' @param trans.scale One of "log2", "exp2", "row", "column", or NULL, which means transform the data by "log2" or "2-base expoent", scale by "row" or "column", or no manipuation respectively. This argument should be used if colors across samples cannot be distinguished due to low variance or outliers. 
 #' @param bar.width The width of color bar that ranges from 0 to 1. The default is 0.08.
 #' @param legend.width The width of legend plot that ranges from 0 to 1 (default).
-#' @param width,height Two numerics of overall width and height of all subplots respectively, both of which are between 0 and 1. The default is 1 and 1 respectivly. 
+#' @param width,height Two numerics of overall width and height of all subplots respectively, both of which are between 0 and 1. The default is 1 and 1 respectivly.
+#' @param sub.margin A 4-length numeric vector of the margins on each subplot, which are between 0 and 1. The order is top, right, bottom, left and the unit \code{npc} is used internally. The default is \code{c(0.005, 0.005, 0.005, 0.005)}. If provided, \code{preserve.scale} is ignored.
 #' @param legend.plot A vector of suffix(es) of aSVG file name(s) such as c('shm1', 'shm2'). Only aSVG(s) whose suffix(es) are assigned to this arugment will have a legend plot on the right. The default is 'all' and each aSVG will have a legend plot. If NULL, no legend plot is shown. Only applicable if multiple aSVG files are provided to \code{svg.path}.
 #' @param legend.r A numeric to adjust the dimension of the legend plot. The default is 1. The larger, the higher ratio of width to height.
 #' @param legend.2nd Logical, TRUE or FALSE. If TRUE, the secondary legend is added to each spatial heatmap, which are the numeric values of each matching spatial features. The default its FALSE. Only applies to the static image.
@@ -227,11 +228,12 @@
 #' @importFrom methods is
 #' @importFrom ggplotify as.ggplot
 
-spatial_hm <- function(svg.path, data, sam.factor=NULL, con.factor=NULL, ID, lay.shm="gene", ncol=2, col.com=c('yellow', 'orange', 'red'), col.bar='selected', cores=NA, bar.width=0.08, legend.width=1, bar.title.size=0, trans.scale=NULL, ft.trans=NULL, tis.trans=ft.trans, width=1, height=1, legend.r=1, sub.title.size=11, legend.plot='all', ft.legend='identical', bar.value.size=10, legend.plot.title='Legend', legend.plot.title.size=11, legend.ncol=NULL, legend.nrow=NULL, legend.position='bottom', legend.direction=NULL, legend.key.size=0.02, legend.text.size=12, angle.text.key=NULL, position.text.key=NULL, legend.2nd=FALSE, position.2nd='bottom', legend.nrow.2nd=NULL, legend.ncol.2nd=NULL, legend.key.size.2nd=0.03, legend.text.size.2nd=10, angle.text.key.2nd=0, position.text.key.2nd='right', add.feature.2nd=FALSE, label=FALSE, label.size=4, label.angle=0, hjust=0, vjust=0, opacity=1, key=TRUE, line.size=0.2, line.color='grey70', preserve.scale=FALSE, verbose=TRUE, out.dir=NULL, anm.width=650, anm.height=550, selfcontained=FALSE, video.dim='640x480', res=500, interval=1, framerate=1, legend.value.vdo=NULL, ...) {
+spatial_hm <- function(svg.path, data, sam.factor=NULL, con.factor=NULL, ID, lay.shm="gene", ncol=2, col.com=c('yellow', 'orange', 'red'), col.bar='selected', cores=NA, bar.width=0.08, legend.width=1, bar.title.size=0, trans.scale=NULL, ft.trans=NULL, tis.trans=ft.trans, width=1, height=1, sub.margin=NULL, legend.r=1, sub.title.size=11, legend.plot='all', ft.legend='identical', bar.value.size=10, legend.plot.title='Legend', legend.plot.title.size=11, legend.ncol=NULL, legend.nrow=NULL, legend.position='bottom', legend.direction=NULL, legend.key.size=0.02, legend.text.size=12, angle.text.key=NULL, position.text.key=NULL, legend.2nd=FALSE, position.2nd='bottom', legend.nrow.2nd=NULL, legend.ncol.2nd=NULL, legend.key.size.2nd=0.03, legend.text.size.2nd=10, angle.text.key.2nd=0, position.text.key.2nd='right', add.feature.2nd=FALSE, label=FALSE, label.size=4, label.angle=0, hjust=0, vjust=0, opacity=1, key=TRUE, line.size=0.2, line.color='grey70', preserve.scale=FALSE, verbose=TRUE, out.dir=NULL, anm.width=650, anm.height=550, selfcontained=FALSE, video.dim='640x480', res=500, interval=1, framerate=1, legend.value.vdo=NULL, ...) {
 
   calls <- names(vapply(match.call(), deparse, character(1))[-1])
   if("tis.trans" %in% calls) { ft.trans <- tis.trans; warning('"tis.trans" is deprecated and replaced by "ft.trans"! \n') }
   x <- y <- color_scale <- tissue <- NULL; options(stringsAsFactors=FALSE)
+  if (!is.null(sub.margin)) if (!is.numeric(sub.margin) | length(sub.margin)!=4 | any(sub.margin >= 1) | any(sub.margin < 0)) stop('"sub.margin" must be a 4-length numeric vector between 0 (inclusive) and 1 (exclusive)!')
   # Extract and filter data.
   if (is.vector(data)) {
     vec.na <- make.names(names(data)); if (is.null(vec.na)) stop("Please provide names for the input data!")
@@ -285,19 +287,10 @@ spatial_hm <- function(svg.path, data, sam.factor=NULL, con.factor=NULL, ID, lay
     }
     ord <- order(gsub('.*_(shm.*).svg$', '\\1', svg.na))
     svg.path <- svg.path[ord]; svg.na <- svg.na[ord]
-    # Determine cores.
-    cores <- as.integer(cores); n.cor <- detectCores(logical=TRUE); fil.size <- file.size(svg.path)
-    if (!is.na(n.cor)) { 
-      if (fil.size > 5242880 & n.cor > 2 & is.na(cores)) cores <- 2 else if (fil.size <= 5242880 & is.na(cores)) cores <- 1 else if (n.cor > 1 & !is.na(cores)) {
-      if (cores >= n.cor) cores <- n.cor - 1
-      } 
-    } else { if (is.na(cores)) cores <- 1 }
-
     # Coordinates of each SVG are extracted and placed in a list.
     df.attr <- svg.df.lis <- NULL; for (i in seq_along(svg.na)) {
-          
       cat('Coordinates:', svg.na[i], '... \n')
-      df_tis <- svg_df(svg.path=svg.path[i], feature=sam.uni, cores=cores)
+      df_tis <- svg_df(svg.path=svg.path[i], feature=sam.uni, cores=deter_core(cores, svg.path[i]))
       if (is.character(df_tis)) stop(paste0(svg.na[i], ': ', df_tis))
       svg.df.lis <- c(svg.df.lis, list(df_tis))
       df.attr0 <- df_tis$df.attr[, c('feature', 'stroke', 'color', 'id', 'element', 'parent', 'index1')]
@@ -338,8 +331,8 @@ spatial_hm <- function(svg.path, data, sam.factor=NULL, con.factor=NULL, ID, lay
       na0 <- names(svg.df.lis)[i]; cat('Grobs:', na0, '... \n')
       svg.df <- svg.df.lis[[i]]; g.df <- svg.df[["df"]]; w.h <- svg.df[['w.h']]
       tis.path <- svg.df[["tis.path"]]; fil.cols <- svg.df[['fil.cols']]
-      if (preserve.scale==TRUE) mar <- (1-w.h/w.h.max*0.99)/2 else mar <- NULL 
-      grob.lis <- grob_list(gene=gene, con.na=con.na, geneV=geneV, coord=g.df, ID=ID, legend.col=fil.cols, cols=col, tis.path=tis.path, ft.trans=ft.trans, sub.title.size=sub.title.size, ft.legend=ft.legend, legend.ncol=legend.ncol, legend.nrow=legend.nrow, legend.position=legend.position, legend.direction=legend.direction, legend.key.size=legend.key.size, legend.text.size=legend.text.size, legend.plot.title=legend.plot.title, legend.plot.title.size=legend.plot.title.size, line.size=line.size, line.color=line.color, mar.lb=mar, cores=cores, ...)
+      if (preserve.scale==TRUE & is.null(sub.margin)) sub.margin <- (1-w.h/w.h.max*0.99)/2 
+      grob.lis <- grob_list(gene=gene, con.na=con.na, geneV=geneV, coord=g.df, ID=ID, legend.col=fil.cols, cols=col, tis.path=tis.path, ft.trans=ft.trans, sub.title.size=sub.title.size, ft.legend=ft.legend, legend.ncol=legend.ncol, legend.nrow=legend.nrow, legend.position=legend.position, legend.direction=legend.direction, legend.key.size=legend.key.size, legend.text.size=legend.text.size, legend.plot.title=legend.plot.title, legend.plot.title.size=legend.plot.title.size, line.size=line.size, line.color=line.color, mar.lb=sub.margin, cores=deter_core(cores, svg.path[i]), ...)
       msg <- paste0(na0, ': no spatial features that have matching sample identifiers in data are detected!')
       if (is.null(grob.lis)) stop(msg); grob.lis.all <- c(grob.lis.all, list(grob.lis))
 
@@ -400,6 +393,20 @@ spatial_hm <- function(svg.path, data, sam.factor=NULL, con.factor=NULL, ID, lay
 
 }
 
+#' Determine the number of CPU cores.
+#' @param cores The input number of cores.
+#' @param svg.path The path of SVG file.
+#' @keywords Internal
+#' @noRd
+#' @importFrom parallel detectCores
 
+deter_core <- function(cores, svg.path) {
+  cores <- as.integer(cores); n.cor <- detectCores(logical=TRUE); fil.size <- file.size(svg.path)
+  if (!is.na(n.cor)) { 
+    if (fil.size >= 3145728 & n.cor > 2 & is.na(cores)) cores <- 2 else if (fil.size < 3145728 & is.na(cores)) cores <- 1 else if (n.cor > 1 & !is.na(cores)) {
+      if (cores >= n.cor) cores <- n.cor - 1
+    } 
+  } else { if (is.na(cores)) cores <- 1 }; return(cores)
+}
 
 

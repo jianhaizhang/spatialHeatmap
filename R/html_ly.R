@@ -27,7 +27,7 @@ html_ly <- function(gg, cs.g, ft.trans, sam.uni, anm.width, anm.height, selfcont
   csly <- as_widget(cs.lis, tooltip='color_scale') 
   dir <- paste0(normalizePath(out.dir, winslash="/", mustWork=FALSE), '/html_shm')
   if (!dir.exists(dir)) dir.create(dir, recursive=TRUE)
-  rd1 <- '1. Double click the "html" files to display the interactive spatial heatmaps in a web browser.'
+  rd1 <- '1. Double click the "html" files to display the interactive spatial heatmaps on a web browser.'
   rd2 <- '2. All files in the "lib" folder are required to display the spatial heatmaps, so the "html" files cannot work independently.'
   writeLines(text=c(rd1, rd2), con=paste0(dir, '/README.txt'))
   for (i in gg.na) {

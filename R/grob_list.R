@@ -37,23 +37,21 @@
 #' @importFrom ggplot2 ggplot aes theme element_blank margin element_rect scale_y_continuous scale_x_continuous ggplotGrob geom_polygon scale_fill_manual ggtitle element_text labs guide_legend alpha coord_fixed
 #' @importFrom parallel detectCores mclapply
 
-grob_list <- function(gene, con.na=TRUE, geneV, coord, ID, cols, tis.path, ft.trans=NULL, sub.title.size, ft.legend='identical', legend.col, legend.ncol=NULL, legend.nrow=NULL, legend.position='bottom', legend.direction=NULL, legend.key.size=0.02, legend.text.size=12, legend.plot.title=NULL, legend.plot.title.size=11, line.size=0.2, line.color='grey70', mar.lb=NULL, cores, ...) {
+grob_list <- function(gene, con.na=TRUE, geneV, coord, ID, cols, tis.path, ft.trans=NULL, sub.title.size, ft.legend='identical', legend.col, legend.ncol=NULL, legend.nrow=NULL, legend.position='bottom', legend.direction=NULL, legend.key.size=0.02, legend.text.size=12, legend.plot.title=NULL, legend.plot.title.size=11, line.size=0.2, line.color='grey70', mar.lb=NULL, cores=2, ...) {
 
-  # save(gene, con.na, geneV, coord, ID, cols, tis.path, ft.trans, sub.title.size, ft.legend, legend.col, legend.ncol, legend.nrow, legend.position, legend.direction, legend.key.size, legend.text.size, legend.plot.title, legend.plot.title.size, line.size, line.color, mar.lb, file='all')
+   # save(gene, con.na, geneV, coord, ID, cols, tis.path, ft.trans, sub.title.size, ft.legend, legend.col, legend.ncol, legend.nrow, legend.position, legend.direction, legend.key.size, legend.text.size, legend.plot.title, legend.plot.title.size, line.size, line.color, mar.lb, cores, file='all')
   
   # Main function to create SHMs and legend plot
   g_list <- function(con, lgd=FALSE, ...) {
     if (is.null(con)) cat('Legend plot ... \n') else cat(con, ' ')
     value <- feature <- x <- y <- tissue <- NULL; tis.df <- as.vector(unique(coord[, 'tissue']))
-    # tis.path and tis.df have the same length by default.
+    # tis.path and tis.df have the same length by default, but not entries, since tis.df is appended '__\\d+' at the end.
     # Assign default colours to each path.
     g.col <- rep(NA, length(tis.path)); names(g.col) <- tis.df
-    for (i in seq_along(g.col)) {
-      g.col0 <- legend.col[sub('__\\d+$', '', names(g.col)[i])]
-      if (g.col0=='none') next
-      if (!is.na(g.col0)) g.col[i] <- g.col0
-    }
     if (lgd==FALSE) {
+      # Keep text colors in the main SHM.
+      g.col <- legend.col[grep('_LGD$', names(legend.col), ignore.case=TRUE)][sub('__\\d+$', '', names(g.col))]
+      names(g.col) <- tis.df # Resolves legend.col['tissue'] is NA by default.      
       con.idx <- grep(paste0("^", con, "$"), cons)
       # Target tissues and colors in data columns.
       tis.col1 <- tis.col[con.idx]; scol1 <- scol[con.idx]
@@ -66,35 +64,47 @@ grob_list <- function(gene, con.na=TRUE, geneV, coord, ID, cols, tis.path, ft.tr
       }
     } 
     # The colors might be internally re-ordered alphabetically during mapping, so give them names to fix the match with tissues. E.g. c('yellow', 'blue') can be re-ordered to c('blue', 'yellow'), which makes tissue mapping wrong. Correct: colours are not re-ordered. The 'tissue' in 'data=coord' are internally re-ordered according to a factor. Therfore, 'tissue' should be a factor with the right order. Otherwise, disordered mapping can happen. Alternatively, name the colors with corresponding tissue names.
-    # aes() is passed to either ggplot() or specific layer. Aesthetics supplied to ggplot() are used as defaults for every layer.
-    # Make selected tissues transparent by setting their colours as NA.
-    if (!is.null(ft.trans)) for (i in tis.df) { if (sub('__\\d+$', '', i) %in% ft.trans) g.col[i] <- NA }
+    # aes() is passed to either ggplot() or specific layer. Aesthetics supplied to ggplot() are used as defaults for every layer. 
     # Show selected or all samples in legend.
     if (length(ft.legend)==1) if (ft.legend=='identical') ft.legend <- intersect(sam.uni, unique(tis.path)) else if (ft.legend=='all') ft.legend <- unique(tis.path)
     
-    if (lgd==FALSE) { # Legend plot.    
+    if (lgd==FALSE) { # Legend plot.
+      # Make selected tissues transparent by setting their colours NA.
+      if (!is.null(ft.trans)) g.col[sub('__\\d+$', '', tis.df) %in% ft.trans] <- NA # This step should not be merged with 'lgd=T'.
       ft.legend <- setdiff(ft.legend, ft.trans) 
       leg.idx <- !duplicated(tis.path) & (tis.path %in% ft.legend)
       # Bottom legends are set for each SHM and then removed in 'ggplotGrob', but a copy with legend is saved separately for later used in video.
       scl.fil <- scale_fill_manual(values=g.col, breaks=tis.df[leg.idx], labels=tis.path[leg.idx], guide=guide_legend(title=NULL, ncol=legend.ncol, nrow=legend.nrow))
     } else { 
       # Assign legend key colours if identical samples between SVG and matrix have colors of "none".
-      legend.col1 <- legend.col[ft.legend] 
+      legend.col1 <- legend.col[ft.legend] # Only includes matching samples. 
       if (any(legend.col1=='none')) {
          n <- sum(legend.col1=='none'); col.all <- grDevices::colors()[grep('honeydew|aliceblue|white|gr(a|e)y', grDevices::colors(), invert=TRUE)]
          col.none <- col.all[seq(from=1, to=length(col.all), by=floor(length(col.all)/n))]
          legend.col1[legend.col1=='none'] <- col.none[seq_len(n)]
        }
        # Map legend colours to tissues.
+       # Exclude transparent tissues.
        ft.legend <- setdiff(ft.legend, ft.trans) 
        leg.idx <- !duplicated(tis.path) & (tis.path %in% ft.legend)
-       legend.col1 <- legend.col1[ft.legend] # Exclude transparent tissues. 
-       # Copy colors across same numbered tissues.
-       for (i in seq_along(g.col)) {
-         if (!is.na(g.col[i])) next
-         g.col0 <- legend.col1[sub('__\\d+$', '', names(g.col)[i])]
-         if (!is.na(g.col0)) g.col[i] <- g.col0
-       }; scl.fil <- scale_fill_manual(values=g.col, breaks=tis.df[leg.idx], labels=tis.path[leg.idx], guide=guide_legend(title=NULL, ncol=legend.ncol, nrow=legend.nrow)) 
+       legend.col1 <- legend.col1[ft.legend]
+       # Keep all colors in the original SVG.
+       g.col <- legend.col[sub('__\\d+$', '', names(g.col))]
+       names(g.col) <- tis.df # Resolves legend.col['tissue'] is NA by default.
+       g.col[g.col=='none'] <- NA 
+       # Make selected tissues transparent by setting their colours NA.
+       if (!is.null(ft.trans)) g.col[sub('__\\d+$', '', tis.df) %in% ft.trans] <- NA
+       # Copy colors across same numbered tissues. 
+       g.col <- lapply(seq_along(g.col), function(x) {
+         # In lapply each run must return sth.
+         if (!is.na(g.col[x])) return(g.col[x])
+         g.col0 <- legend.col1[sub('__\\d+$', '', names(g.col[x]))]
+         if (!is.na(g.col0)) g.col[x] <- g.col0
+         return(g.col[x])
+         } 
+       ); g.col <- unlist(g.col)
+       # No matter the tissues in coordinate data frame are vector or factor, the coloring are decided by the named color vector (order of colors does not matter as long as names are right) in scale_fill_manual.
+       scl.fil <- scale_fill_manual(values=g.col, breaks=tis.df[leg.idx], labels=tis.path[leg.idx], guide=guide_legend(title=NULL, ncol=legend.ncol, nrow=legend.nrow)) 
     }
     lgd.par <- theme(legend.position=legend.position, legend.direction=legend.direction, legend.background = element_rect(fill=alpha(NA, 0)), legend.key.size=unit(legend.key.size, "npc"), legend.text=element_text(size=legend.text.size), legend.margin=margin(l=0.1, r=0.1, unit='npc'))
     ## Add 'feature' and 'value' to coordinate data frame, since the resulting ggplot object is used in 'ggplotly'. Otherwise, the coordinate data frame is applied to 'ggplot' directly by skipping the following code.
@@ -126,6 +136,7 @@ grob_list <- function(gene, con.na=TRUE, geneV, coord, ID, cols, tis.path, ft.tr
   cname <- colnames(gene); form <- grep('__', cname) # Only take the column names with "__".
   cons <- gsub("(.*)(__)(.*)", "\\3", cname[form]); con.uni <- unique(cons)
   sam.uni <- unique(gsub("(.*)(__)(.*)", "\\1", cname)); ft.trans <- make.names(ft.trans)
+
   grob.na <- grob.lis <- g.lis.all <- NULL; for (k in ID) {
 
     scol <- NULL; for (i in gene[k, ]) { 

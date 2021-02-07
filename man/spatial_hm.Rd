@@ -23,6 +23,7 @@ spatial_hm(
   tis.trans = ft.trans,
   width = 1,
   height = 1,
+  sub.margin = NULL,
   legend.r = 1,
   sub.title.size = 11,
   legend.plot = "all",
@@ -104,6 +105,8 @@ spatial_hm(
 \item{tis.trans}{This argument is deprecated and replaced by \code{ft.trans}.}
 
 \item{width, height}{Two numerics of overall width and height of all subplots respectively, both of which are between 0 and 1. The default is 1 and 1 respectivly.}
+
+\item{sub.margin}{A 4-length numeric vector of the margins on each subplot, which are between 0 and 1. The order is top, right, bottom, left and the unit \code{npc} is used internally. The default is \code{c(0.005, 0.005, 0.005, 0.005)}. If provided, \code{preserve.scale} is ignored.}
 
 \item{legend.r}{A numeric to adjust the dimension of the legend plot. The default is 1. The larger, the higher ratio of width to height.}
 

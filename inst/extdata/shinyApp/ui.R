@@ -1,12 +1,9 @@
 library(shiny); library(shinydashboard); library(yaml); library(plotly); library(visNetwork); library(DT); library(shinyWidgets)
 
-
 shinyUI(dashboardPage(
   
-  # tags$header(tags$title('spatialHeatmap')),
   # includeCSS("style.css"),
-  # tags$header(HTML('<title>spatialHeatmap</title>')),
-  dashboardHeader(title=textOutput('spatialHeatmap'), titleWidth=350),
+  dashboardHeader(title=textOutput('spatialHeatmap')$attribs$id, titleWidth=350),
 
   dashboardSidebar(
   
@@ -37,7 +34,14 @@ shinyUI(dashboardPage(
  
    tags$head(tags$link(rel="stylesheet", type="text/css", href="style.css")),
    tags$script(src="javascript.js"),
-
+   # tit <- textOutput('spatialHeatmap')$attribs$id,
+   # tit <- paste0('<span class="myClass">', tit, '</span>'),
+   # To place title on the right of dashboard header.
+   tags$script(HTML('
+     $(document).ready(function() {
+       $("header").find("nav").append(\'<span class="myClass"> </span>\');
+     })
+    ')),
     tabItems(
       tabItem(tabName="hm_net", 
       box(title="Data Matrix", status="primary", solidHeader=TRUE, collapsible=TRUE, height=NULL, width=12,
@@ -52,13 +56,13 @@ shinyUI(dashboardPage(
       tabPanel("Data",
       fluidRow(column(1, offset=0, style='padding-left:10px; padding-right:10px; padding-top:0px; padding-bottom:5px',
       dropdownButton(inputId='drdn.fil', label='Filter', circle=FALSE, icon=NULL, status='primary',
-      fluidRow(splitLayout(cellWidths=c('1%', '15%', '1%', '30%', '1%', '25%', '1%', '25%', '12%', '10%'), '',
+      fluidRow(splitLayout(cellWidths=c('1%', '15%', '1%', '33%', '1%', '27%', '1%', '27%'), '',
       numericInput(inputId="A", label="Value (A) to exceed:", value=0), '',
       numericInput(inputId="P", label="Proportion (P) of samples with values >= A:", value=0), '',
       numericInput(inputId="CV1", label="Min coefficient of variation (CV1):", value=-10^4), '', 
-      numericInput(inputId="CV2", label="Max coefficient of variation (CV2):", value=10^4), 
+      numericInput(inputId="CV2", label="Max coefficient of variation (CV2):", value=10^4)
+      )),
       actionButton(inputId='fil.but', label="Submit"), verbatimTextOutput("fil.par")
-      ))
       )),
       column(1, offset=0, style='padding-left:10px; padding-right:10px; padding-top:0px; padding-bottom:5px',
       dropdownButton(inputId='drdn.scale', label='Transform', circle=FALSE, icon=NULL, status='primary', width=400,
@@ -118,6 +122,7 @@ shinyUI(dashboardPage(
       ),
       fluidRow(splitLayout(cellWidths=c("1%", "6%", "91%", "2%"), "", plotOutput("bar.net"), visNetworkOutput("vis"), ""))
       )
+
 
       ),
 

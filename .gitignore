@@ -1,6 +1,7 @@
 *~
 *.swo
 *.swp
+*.swn
 tmp/
 *.ps$
 *.ps.xml$

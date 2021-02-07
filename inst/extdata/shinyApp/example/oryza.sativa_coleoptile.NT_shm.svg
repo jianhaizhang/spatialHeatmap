@@ -14,7 +14,7 @@
               width="437.54968"
               height="205.8131"
               viewBox="0 0 437.54968 205.81309"
-              sodipodi:docname="oryza.sativa_coleoptile.AT_shm.svg"
+              sodipodi:docname="oryza.sativa_coleoptile.NT_shm.svg"
               inkscape:version="0.92.3 (unknown)">
              <metadata
                            id="metadata8">
@@ -24,7 +24,7 @@
                                                     <dc:format>image/svg+xml</dc:format>
                                                     <dc:type
                                                                   rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
-                                                    <dc:title></dc:title>
+                                                    <dc:title />
                                        </cc:Work>
                           </rdf:RDF>
              </metadata>
@@ -43,9 +43,9 @@
                            inkscape:window-height="1056"
                            id="namedview4"
                            showgrid="false"
-                           inkscape:zoom="1.8767396"
-                           inkscape:cx="231.72638"
-                           inkscape:cy="113.91865"
+                           inkscape:zoom="1.5944956"
+                           inkscape:cx="202.63521"
+                           inkscape:cy="71.291532"
                            inkscape:window-x="65"
                            inkscape:window-y="24"
                            inkscape:window-maximized="1"
@@ -59,12 +59,12 @@
                            transform="translate(-0.09264778,-230.61928)">
                           <path
                                         inkscape:connector-curvature="0"
-                                        id="rect1033"
+                                        id="rect1033_LGD"
                                         d="M 8.8130821,287.03964 H 40.085332 V 294.95189 H 8.8130821 Z"
                                         style="opacity:1;fill:#3f1d38;fill-opacity:1;fill-rule:evenodd;stroke:#000000;stroke-width:0.2;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" />
                           <g
                                         transform="translate(-489.87849,269.16418)"
-                                        id="text1037"
+                                        id="text1037_LGD"
                                         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:16px;line-height:1.25;font-family:sans-serif;-inkscape-font-specification:'sans-serif, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:start;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:start;fill:#3f1d38;fill-opacity:1;stroke:#000000;stroke-width:0.2;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
                                         aria-label="5mm">
                                        <path
@@ -85,7 +85,7 @@
                           </g>
                           <g
                                         transform="translate(203.96646,87.63191)"
-                                        id="text1178"
+                                        id="text1178_LGD"
                                         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:20px;line-height:1.25;font-family:sans-serif;-inkscape-font-specification:'sans-serif, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:start;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:start;fill:#3f1d38;fill-opacity:1;stroke:#000000;stroke-width:0.2;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
                                         aria-label="h: hour">
                                        <path
@@ -121,7 +121,7 @@
                           </g>
                           <g
                                         transform="translate(282.36385,-46.84545)"
-                                        id="text1186"
+                                        id="text1186_LGD"
                                         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:20px;line-height:1.25;font-family:sans-serif;-inkscape-font-specification:'sans-serif, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:start;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:start;fill:#3f1d38;fill-opacity:1;stroke:#000000;stroke-width:0.2;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
                                         aria-label="A: aerobic">
                                        <path
@@ -172,7 +172,7 @@
                           </g>
                           <g
                                         transform="translate(449.78579,-94.46609)"
-                                        id="text1190"
+                                        id="text1190_LGD"
                                         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:20px;line-height:1.25;font-family:sans-serif;-inkscape-font-specification:'sans-serif, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:start;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:start;fill:#3f1d38;fill-opacity:1;stroke:#000000;stroke-width:0.2;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
                                         aria-label="N: Anaerobic">
                                        <path
@@ -233,13 +233,13 @@
                           </g>
                           <path
                                         inkscape:connector-curvature="0"
-                                        id="rect1324"
+                                        id="rect1324_LGD"
                                         d="M 119.3652,237.24883 H 148.3768 V 242.52366 H 119.3652 Z"
                                         style="opacity:1;fill:#c25f00;fill-opacity:1;fill-rule:evenodd;stroke:#000000;stroke-width:0.2;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" />
                           <path
                                         inkscape:transform-center-y="-4.1445146"
                                         inkscape:transform-center-x="0.37677406"
-                                        id="rect1324-9"
+                                        id="rect1324-9_LGD"
                                         d="M 314.45166,237.85527 H 343.46326 V 243.13011 H 314.45166 Z"
                                         style="opacity:1;fill:#2e93a2;fill-opacity:1;fill-rule:evenodd;stroke:#000000;stroke-width:0.2;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
                                         inkscape:connector-curvature="0" />
@@ -267,31 +267,31 @@
                           <path
                                         sodipodi:nodetypes="cccccccccccccccccccccccccccccccccccccccccccccccccccccc"
                                         inkscape:connector-curvature="0"
-                                        id="coleoptile72N24A"
+                                        id="coleoptile.72N24A"
                                         d="M 357.06068,387.70828 358.07954,385.74774 359.74467,383.28336 361.74281,380.95219 364.2738,378.68763 366.00552,377.28892 367.53744,375.15757 368.46991,372.49337 371.00089,366.16591 373.26546,357.64049 374.66416,346.9171 377.06193,327.7349 377.86119,314.1475 378.59385,296.96345 V 292.56752 L 377.9278,288.83765 376.99533,285.30759 375.13039,280.71186 373.26546,276.91538 371.60033,272.71927 369.7354,267.92372 368.07028,263.5944 366.67157,259.79793 365.40608,256.00145 364.60682,251.13929 364.74003,246.27714 365.33948,241.48159 365.80571,238.48437 367.13781,250.47324 368.07028,254.53614 368.60311,257.79978 369.33577,260.66379 370.66787,263.92743 373.8649,269.92187 375.33021,273.51853 377.32835,278.11427 379.12668,281.57772 379.92594,284.70815 380.39218,287.57216 381.19144,291.76827 381.45786,297.09666 381.72427,308.95232 381.59107,327.00224 381.25804,332.46384 379.85934,342.92081 378.39403,354.24364 376.72891,363.16869 375.2636,369.96239 372.13317,377.15571 369.06935,381.61824 366.67157,384.41564 364.60682,386.34719 361.67621,389.2778 357.06068,387.70828"
                                         style="opacity:1;fill:none;fill-opacity:1;fill-rule:evenodd;stroke:#000000;stroke-width:0.40000001;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" />
                           <path
                                         inkscape:transform-center-y="-3.5669133"
                                         inkscape:transform-center-x="3.9196692"
-                                        id="rect1324-9-8-1"
+                                        id="rect1324-9-8-1_LGD"
                                         d="M 40.58964,430.9055 H 342.40408 V 435.44522 H 40.58964 Z"
                                         style="opacity:1;fill:#2e93a2;fill-opacity:1;fill-rule:evenodd;stroke:#000000;stroke-width:0.2;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
                                         inkscape:connector-curvature="0" />
                           <path
                                         inkscape:connector-curvature="0"
-                                        id="rect1324-46-7"
+                                        id="rect1324-46-7_LGD"
                                         d="M 392.19254,430.97837 H 409.82726 V 436.33237 H 392.19254 Z"
                                         style="opacity:1;fill:#c25f00;fill-opacity:1;fill-rule:evenodd;stroke:#000000;stroke-width:0.2;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" />
                           <path
                                         inkscape:transform-center-y="-4.0997725"
                                         inkscape:transform-center-x="0.52452769"
-                                        id="rect1324-9-9-7"
+                                        id="rect1324-9-9-7_LGD"
                                         d="M 351.95154,431.04642 H 392.34025 V 436.26432 H 351.95154 Z"
                                         style="opacity:1;fill:#2e93a2;fill-opacity:1;fill-rule:evenodd;stroke:#000000;stroke-width:0.2;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
                                         inkscape:connector-curvature="0" />
                           <g
                                         transform="translate(-454.90783,-73.666856)"
-                                        id="text2357"
+                                        id="text2357_LGD"
                                         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:16px;line-height:1.25;font-family:sans-serif;-inkscape-font-specification:'sans-serif, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:start;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:start;fill:#000000;fill-opacity:1;stroke:#000000;stroke-width:0.2;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
                                         aria-label="0h">
                                        <path
@@ -307,7 +307,7 @@
                           </g>
                           <g
                                         transform="translate(-448.90783,-75.666856)"
-                                        id="text2361"
+                                        id="text2361_LGD"
                                         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:16px;line-height:1.25;font-family:sans-serif;-inkscape-font-specification:'sans-serif, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:start;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:start;fill:#000000;fill-opacity:1;stroke:#000000;stroke-width:0.2;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
                                         aria-label="1hN">
                                        <path
@@ -328,7 +328,7 @@
                           </g>
                           <g
                                         transform="translate(-455.70338,-76.958166)"
-                                        id="text2365"
+                                        id="text2365_LGD"
                                         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:16px;line-height:1.25;font-family:sans-serif;-inkscape-font-specification:'sans-serif, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:start;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:start;fill:#000000;fill-opacity:1;stroke:#000000;stroke-width:0.2;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
                                         aria-label="3hN">
                                        <path
@@ -349,7 +349,7 @@
                           </g>
                           <g
                                         transform="translate(-463.29448,-76.023846)"
-                                        id="text2369"
+                                        id="text2369_LGD"
                                         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:16px;line-height:1.25;font-family:sans-serif;-inkscape-font-specification:'sans-serif, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:start;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:start;fill:#000000;fill-opacity:1;stroke:#000000;stroke-width:0.2;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
                                         aria-label="12hN">
                                        <path
@@ -375,7 +375,7 @@
                           </g>
                           <g
                                         transform="translate(-481.00952,-77.622366)"
-                                        id="text2373"
+                                        id="text2373_LGD"
                                         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:16px;line-height:1.25;font-family:sans-serif;-inkscape-font-specification:'sans-serif, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:start;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:start;fill:#000000;fill-opacity:1;stroke:#000000;stroke-width:0.2;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
                                         aria-label="24hN">
                                        <path
@@ -401,7 +401,7 @@
                           </g>
                           <g
                                         transform="translate(-489.93643,-79.220876)"
-                                        id="text2377"
+                                        id="text2377_LGD"
                                         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:16px;line-height:1.25;font-family:sans-serif;-inkscape-font-specification:'sans-serif, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:start;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:start;fill:#000000;fill-opacity:1;stroke:#000000;stroke-width:0.2;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
                                         aria-label="48hN">
                                        <path
@@ -427,7 +427,7 @@
                           </g>
                           <g
                                         transform="translate(-505.9216,-79.622366)"
-                                        id="text2381"
+                                        id="text2381_LGD"
                                         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:16px;line-height:1.25;font-family:sans-serif;-inkscape-font-specification:'sans-serif, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:start;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:start;fill:#000000;fill-opacity:1;stroke:#000000;stroke-width:0.2;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
                                         aria-label="72hN">
                                        <path
@@ -453,7 +453,7 @@
                           </g>
                           <g
                                         transform="translate(-517.06815,-79.995896)"
-                                        id="text2385"
+                                        id="text2385_LGD"
                                         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:16px;line-height:1.25;font-family:sans-serif;-inkscape-font-specification:'sans-serif, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:start;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:start;fill:#000000;fill-opacity:1;stroke:#000000;stroke-width:0.2;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
                                         aria-label="96hN">
                                        <path
@@ -479,7 +479,7 @@
                           </g>
                           <g
                                         transform="translate(-514.87409,-81.713966)"
-                                        id="text2389"
+                                        id="text2389_LGD"
                                         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:16px;line-height:1.25;font-family:sans-serif;-inkscape-font-specification:'sans-serif, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:start;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:start;fill:#000000;fill-opacity:1;stroke:#000000;stroke-width:0.2;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
                                         aria-label="72hN24hA">
                                        <path
@@ -525,7 +525,7 @@
                           </g>
                           <g
                                         transform="translate(-0.25563897,-57.85127)"
-                                        id="embryo0h"
+                                        id="embryo.0h"
                                         style="stroke:#000000;stroke-width:0.2;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1">
                                        <path
                                                      style="opacity:1;fill:none;fill-opacity:1;fill-rule:evenodd;stroke:#000000;stroke-width:0.2;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
@@ -535,7 +535,7 @@
                           </g>
                           <g
                                         transform="translate(-0.25563897,-57.85127)"
-                                        id="embryoColeoptile1h"
+                                        id="embryoColeoptile.1h"
                                         style="stroke:#000000;stroke-width:0.2;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1">
                                        <path
                                                      style="opacity:1;fill:none;fill-opacity:1;fill-rule:evenodd;stroke:#000000;stroke-width:0.2;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
@@ -545,7 +545,7 @@
                           </g>
                           <g
                                         transform="translate(-0.25563897,-57.85127)"
-                                        id="embryoColeoptile3h"
+                                        id="embryoColeoptile.3h"
                                         style="stroke:#000000;stroke-width:0.2;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1">
                                        <path
                                                      style="opacity:1;fill:none;fill-opacity:1;fill-rule:evenodd;stroke:#000000;stroke-width:0.2;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
@@ -555,7 +555,7 @@
                           </g>
                           <g
                                         transform="translate(-0.25563897,-57.85127)"
-                                        id="embryoColeoptile12h"
+                                        id="embryoColeoptile.12h"
                                         style="stroke:#000000;stroke-width:0.2;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1">
                                        <path
                                                      style="opacity:1;fill:none;fill-opacity:1;fill-rule:evenodd;stroke:#000000;stroke-width:0.2;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
@@ -565,7 +565,7 @@
                           </g>
                           <g
                                         transform="translate(-0.25563897,-57.85127)"
-                                        id="embryoColeoptile24h"
+                                        id="embryoColeoptile.24h"
                                         style="stroke:#000000;stroke-width:0.2;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1">
                                        <path
                                                      style="opacity:1;fill:none;fill-opacity:1;fill-rule:evenodd;stroke:#000000;stroke-width:0.2;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
@@ -575,7 +575,7 @@
                           </g>
                           <g
                                         transform="translate(-0.25563897,-57.85127)"
-                                        id="coleoptile48h"
+                                        id="coleoptile.48h"
                                         style="stroke:#000000;stroke-width:0.2;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1">
                                        <path
                                                      style="opacity:1;fill:none;fill-opacity:1;fill-rule:evenodd;stroke:#000000;stroke-width:0.2;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
@@ -585,7 +585,7 @@
                           </g>
                           <g
                                         transform="translate(-0.25563897,-57.85127)"
-                                        id="coleoptile72h"
+                                        id="coleoptile.72h"
                                         style="stroke:#000000;stroke-width:0.2;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1">
                                        <path
                                                      style="opacity:1;fill:none;fill-opacity:1;fill-rule:evenodd;stroke:#000000;stroke-width:0.2;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
@@ -596,7 +596,7 @@
                           </g>
                           <g
                                         transform="translate(-0.25563897,-57.85127)"
-                                        id="coleoptile96h"
+                                        id="coleoptile.96h"
                                         style="stroke:#000000;stroke-width:0.2;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1">
                                        <path
                                                      style="opacity:1;fill:none;fill-opacity:1;fill-rule:evenodd;stroke:#000000;stroke-width:0.2;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"

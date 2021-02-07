@@ -1,10 +1,15 @@
 
 options(stringsAsFactors=FALSE) 
 
-# source('~/tissue_specific_gene/function/fun.R')
+# source('~/sample_specific_expression/function/fun.R')
+# Every variable in every container should be checked at the beginning. E.g. input$fileIn in reactive({}). These checks will avoid amost all errors/warnings.
 # Right before submit the package the following functions will be deleted, and they will be imported as above. They are listed here now for the convenience of functionality development.
 
 # Import internal functions.
+deter_core <- get('deter_core', envir=asNamespace('spatialHeatmap'), inherits=FALSE)
+
+norm_data <- get('norm_data', envir=asNamespace('spatialHeatmap'), inherits=FALSE)
+
 cord_parent <- get('cord_parent', envir=asNamespace('spatialHeatmap'), inherits=FALSE)
 
 use <- get('use', envir=asNamespace('spatialHeatmap'), inherits=FALSE)
@@ -85,8 +90,7 @@ fread.df <- function(input, isRowGene=TRUE, header=TRUE, sep='auto', fill=TRUE, 
     if(isRowGene==FALSE) df1 <- t(df1)
     cna <- colnames(df1); rna <- rownames(df1) 
   
-  } else { df1 <- input; rna <- rownames(df1); cna <- colnames(df1) }
-  
+  } else { df1 <- input; rna <- rownames(df1); cna <- colnames(df1) } 
   # Isolate data and annotation.
   na <- vapply(seq_len(ncol(df1)), function(i) { tryCatch({ as.numeric(df1[, i]) }, warning=function(w) { return(rep(NA, nrow(df1))) }, error=function(e) { stop("Please make sure input data are numeric!") }) }, FUN.VALUE=numeric(nrow(df1)) )
   na <- as.data.frame(na); rownames(na) <- rna
@@ -141,12 +145,11 @@ se_from_db <- function(se) {
 
 # Extract target svgs in tar into tmp folder, and return the paths. 
 extr_svg <- function(file, name) {
-
   dir <- paste0(tempdir(check=TRUE), '/svg_shm')
   if (!dir.exists(dir)) dir.create(dir, recursive=TRUE)
-  sys <- system(paste0('tar -xf ', file, ' -C ', dir, ' ', name))
-  if (sys==0) return(paste0(dir, '/', name)) else return()
-
+  untar(file, exdir=dir, tar='tar')
+  pa <- paste0(dir, '/', name) 
+  if (file.exists(pa)) return(pa) else return()
 }
 
 # Extract svg path/na from uploaded or internal tar files.
@@ -186,16 +189,17 @@ shinyServer(function(input, output, session) {
 
   observe({
 
-    withProgress(message="Loading dependencies: ", value=0, {
-    incProgress(0.3, detail="in progress...")
+    withProgress(message="loading dependencies: ", value=0, {
+    incProgress(0.3, detail="in progress ...")
     library(SummarizedExperiment); library(shiny); library(shinydashboard); library(grImport); library(rsvg); library(ggplot2); library(DT) 
-    incProgress(0.6, detail="in progress...")
+    incProgress(0.6, detail="in progress ...")
     library(gridExtra); library(ggdendro); library(WGCNA); library(grid); library(xml2); library(plotly); library(data.table); library(genefilter); library(flashClust); library(visNetwork); 
     incProgress(0.9, detail="in progress...")
-    library(reshape2); library(igraph); library(animation); library(av); library(shinyWidgets); library(yaml); library(HDF5Array); library(sortable)
+    library(reshape2); library(igraph); library(animation); library(av); library(shinyWidgets); library(yaml); library(HDF5Array); library(sortable); library(parallel)
   })
 
     lis.cfg <- yaml.load_file('config/config.yaml')
+    lis.cfg <- lis.cfg[!vapply(lis.cfg, is.null, logical(1))]
     lis.dat <- lis.cfg[grepl('^dataset\\d+', names(lis.cfg))]
     lis.dld <- lis.cfg[grepl('download_single|download_multiple|download_spatial_temporal', names(lis.cfg))]
     if (is.null(input$config)) lis.par <- lis.cfg[!grepl('^dataset\\d+|download_single|download_multiple|download_spatial_temporal', names(lis.cfg))] else lis.par <- yaml.load_file(input$config$datapath[1])
@@ -248,14 +252,16 @@ shinyServer(function(input, output, session) {
     }
     # Separate data, svg of default and customization. 
     na.def <- na.ipt[!grepl('^none$|^customData$|^customComputedData$', na.ipt)]
+    #if (na.cus) 
     na.cus <- c('customData', 'customComputedData')
+
     dat.def <- c(dat.upl, dat.ipt[na.def]); svg.def <- c(svg.upl, svg.ipt[na.def])
     # If data/svg are duplicated between the server and upload, the data/svg on server side is removed.
     dat.def <- dat.def[unique(names(dat.def))]; svg.def <- svg.def[unique(names(svg.def))]
     cfg$lis.dat <- lis.dat; cfg$lis.dld <- lis.dld; cfg$lis.par <- lis.par; cfg$na.def <- names(dat.def); cfg$svg.def <- svg.def; cfg$dat.def <- dat.def; cfg$na.cus <- na.cus
     output$spatialHeatmap <- renderText({ lis.par$title['title', 'default'] })
     output$title.w <- renderText({ lis.par$title['width', 'default'] })
-    dat.nas <- c('none', 'customData', 'customComputedData', names(dat.def))
+    dat.nas <- c('none', 'customData', names(dat.def), 'customComputedData')
     updateSelectInput(session, 'fileIn', 'Step 1: data sets', dat.nas, lis.par$default.dataset)
     updateRadioButtons(session, inputId='dimName', label='Step 4: is column or row gene?', choices=c("None", "Row", "Column"), selected=lis.par$col.row.gene, inline=TRUE)
     updateNumericInput(session, inputId="A", label="Value (A) to exceed:", value=as.numeric(lis.par$data.matrix['A', 'default']))
@@ -367,7 +373,7 @@ content=function(file=paste0(normalizePath(tempdir(check=TRUE), winslash="/", mu
     withProgress(message="Loading data: ", value = 0, {
     if (any(input$fileIn %in% cfg$na.def)) {
 
-      incProgress(0.5, detail="Loading matrix. Please wait.")
+      incProgress(0.5, detail="loading matrix, please wait ...")
       dat.na <- cfg$dat.def[input$fileIn]
       if ('example' %in% strsplit(dat.na, '/')[[1]]) df.te <- fread.df(input=dat.na, isRowGene=TRUE) else { 
         # Exrtact data from uploaded tar.
@@ -387,10 +393,10 @@ content=function(file=paste0(normalizePath(tempdir(check=TRUE), winslash="/", mu
         }; df.te <- fread.df(input=dat)
       }; return(df.te)
     }
-    if (any(input$fileIn %in% cfg$na.cus) & 
+    if (input$fileIn %in% cfg$na.cus & 
     !is.null(input$geneInpath) & input$dimName!="None") {
 
-      incProgress(0.25, detail="Importing matrix. Please wait.")
+      incProgress(0.25, detail="importing matrix, please wait ...")
       geneInpath <- input$geneInpath
       df.upl <- fread.df(input=geneInpath$datapath, isRowGene=(input$dimName=='Row')); return(df.upl)
    
@@ -450,20 +456,17 @@ content=function(file=paste0(normalizePath(tempdir(check=TRUE), winslash="/", mu
     gene1 <- geneIn1()[['gene1']]; gene2 <- geneIn1()[['gene2']]; gene3 <- geneIn1()[['gene3']]; input$fil.but
     if (!identical(sort(input$col.na), sort(colnames(gene2)))) return()
     # Input variables in "isolate" will not triger re-excution, but if the whole reactive object is trigered by "input$fil.but" then code inside "isolate" will re-excute.
-    isolate({
-  
+    isolate({ 
       se <- SummarizedExperiment(assays=list(expr=as.matrix(gene2)), rowData=gene3)
       if (ncol(gene3)>0) ann.col <- colnames(gene3)[1] else ann.col <- NULL
       # If scaled by row, sd is 1, mean is 0, cv is Inf.
-      se <- filter_data(data=se, ann=ann.col, sam.factor=NULL, con.factor=NULL, pOA=c(fil$P, fil$A), CV=c(ifelse(input$scale=='Row', -Inf, fil$CV1), ifelse(input$scale=='Row', Inf, fil$CV2)), dir=NULL)
+      se <- filter_data(data=se, ann=ann.col, sam.factor=NULL, con.factor=NULL, pOA=c(fil$P, fil$A), CV=c(ifelse(input$scale=='Row', -Inf, fil$CV1), ifelse(input$scale=='Row', Inf, fil$CV2)), dir=NULL, verbose=FALSE)
       if (nrow(se)==0) { validate(need(try(nrow(se)>0), 'All rows are filtered out!')); return() }
       # In case of all rows are filtered, the app continues to work without refreshing after the filter parameters are reduced.
-      se <- filter_data(data=se, ann=ann.col, sam.factor=NULL, con.factor=NULL, pOA=c(fil$P, fil$A), CV=c(ifelse(input$scale=='Row', -Inf, fil$CV1), ifelse(input$scale=='Row', Inf, fil$CV2)), dir=NULL)
-
+      se <- filter_data(data=se, ann=ann.col, sam.factor=NULL, con.factor=NULL, pOA=c(fil$P, fil$A), CV=c(ifelse(input$scale=='Row', -Inf, fil$CV1), ifelse(input$scale=='Row', Inf, fil$CV2)), dir=NULL, verbose=FALSE)
       gene2 <- as.data.frame(assay(se), stringsAsfactors=FALSE); colnames(gene2) <- make.names(colnames(gene2))
       gene1 <- gene1[rownames(gene2), ]
       gene3 <- as.data.frame(rowData(se))[, , drop=FALSE]
-      
     })
     cat('Preparing data matrix... \n')
     if (is.null(sear$id)) rows <- seq_len(nrow(gene2)) else rows <- sear$id
@@ -474,11 +477,11 @@ content=function(file=paste0(normalizePath(tempdir(check=TRUE), winslash="/", mu
   output$dt <- renderDataTable({
 
     if (is.null(geneIn())) return()
-    if ((any(input$fileIn %in% cfg$na.cus) & is.null(geneIn()))|input$fileIn=="none") return(NULL)
+    if ((input$fileIn %in% cfg$na.cus & is.null(geneIn()))|input$fileIn=="none") return(NULL)
 
     withProgress(message="Data table: ", value = 0, {
 
-      incProgress(0.5, detail="Displaying. Please wait.")
+      incProgress(0.5, detail="displaying, please wait ...")
       if (input$fileIn!="none") {
 
       gene <- geneIn(); gene.dt <- cbind.data.frame(gene[["gene2"]][, , drop=FALSE], gene[["gene3"]][, , drop=FALSE], stringsAsFactors=FALSE) 
@@ -531,7 +534,7 @@ content=function(file=paste0(normalizePath(tempdir(check=TRUE), winslash="/", mu
     if (is.null(geneIn())|sum(gID$geneID[1]!='none')==0) return(NULL)
     if (input$cs.v=="Selected rows" & is.null(input$dt_rows_selected)) return(NULL)
     if (input$fileIn!="none") { if (input$cs.v=="Selected rows") gene <- geneIn()[["gene2"]][gID$geneID, ]
-    if (input$cs.v=="w.mat") gene <- geneIn()[["gene2"]] }
+    if (input$cs.v=="All rows") gene <- geneIn()[["gene2"]] }
     seq(min(gene), max(gene), len=1000) # len must be same with that from the function "spatial_hm()". Otherwise the mapping of a gene value to the colour bar is not accurate. 
 
   })
@@ -556,22 +559,20 @@ content=function(file=paste0(normalizePath(tempdir(check=TRUE), winslash="/", mu
   })
   # As long as a button is used, observeEvent should be used. All variables inside 'observeEvent' trigger code evaluation, not only 'eventExpr'.  
   observeEvent(input$col.but, {
-
     if (is.null(col.sch())) return (NULL)
     if (input$fileIn!="none") { color$col <- colorRampPalette(col.sch())(length(geneV())) }
-
   })
 
   shm.bar <- reactive({
 
     if (is.null(gID$all)) return(NULL)
-    if ((any(input$fileIn %in% cfg$na.def) & !is.null(geneIn()))|(any(input$fileIn %in% cfg$na.cus) & (!is.null(input$svgInpath)|!is.null(input$svgInpath1)) & !is.null(geneIn()))) {
+    if ((any(input$fileIn %in% cfg$na.def) & !is.null(geneIn()))|(input$fileIn %in% cfg$na.cus & (!is.null(input$svgInpath)|!is.null(input$svgInpath1)) & !is.null(geneIn()))) {
 
       if (length(color$col=="none")==0|input$color==""|is.null(geneV())) return(NULL)
 
       withProgress(message="Color scale: ", value = 0, {
 
-        incProgress(0.75, detail="Plotting. Please wait.")
+        incProgress(0.75, detail="plotting, please wait ...")
         cat('Colour key... \n')
         cs.g <- col_bar(geneV=geneV(), cols=color$col, width=1); return(cs.g)
 
@@ -596,7 +597,7 @@ content=function(file=paste0(normalizePath(tempdir(check=TRUE), winslash="/", mu
   svg.na.mat <- reactiveValues(svg.path=NULL, svg.na=NULL)
   svg.path <- reactive({
     if (input$fileIn=='none') return()
-    if (any(input$fileIn %in% cfg$na.cus)) {
+    if (input$fileIn %in% cfg$na.cus) {
       if (is.null(input$svgInpath1)) svgIn.df <- input$svgInpath else svgIn.df <- input$svgInpath1
       svg.path <- svgIn.df$datapath; svg.na <- svgIn.df$name
     } else {
@@ -638,11 +639,11 @@ content=function(file=paste0(normalizePath(tempdir(check=TRUE), winslash="/", mu
     svg.path <- lis$svg.path; svg.na <- lis$svg.na
  
   withProgress(message="Tissue heatmap: ", value=0, {  
-    incProgress(0.5, detail="Extracting coordinates. Please wait.") 
+    incProgress(0.5, detail="extracting coordinates, please wait ...") 
     # Whether a single or multiple SVGs, all are returned in a list.
     sf.all <- NULL; for (i in seq_along(svg.na)) { 
       cat('Extract all spatial features for re-matching:', svg.na[i], '\n')
-      df_tis <- svg_df(svg.path=svg.path[i], feature=sam())
+      df_tis <- svg_df(svg.path=svg.path[i], feature=sam(), cores=deter_core(2, svg.path[i]))
       validate(need(!is.character(df_tis), paste0(svg.na[i], ': ', df_tis)))
       sf.all <- c(sf.all, df_tis$tis.path)
     }
@@ -718,18 +719,18 @@ content=function(file=paste0(normalizePath(tempdir(check=TRUE), winslash="/", mu
 
   svg.df <- reactive({ 
 
-    if ((any(input$fileIn %in% cfg$na.cus) & 
+    if ((input$fileIn %in% cfg$na.cus & 
     (!is.null(input$svgInpath)|!is.null(input$svgInpath1)))|(any(input$fileIn %in% cfg$na.def) & is.null(input$svgInpath))) {
 
       withProgress(message="Tissue heatmap: ", value=0, {
     
-        incProgress(0.5, detail="Extracting coordinates. Please wait.")
+        incProgress(0.5, detail="extracting coordinates, please wait ...")
           svg.path <- svg.path1()$svg.path; svg.na <- svg.path1()$svg.na
           # Whether a single or multiple SVGs, all are returned in a list.
          svg.df.lis <- NULL; for (i in seq_along(svg.na)) {
          
             cat('Coordinate:', svg.na[i], '\n')
-            df_tis <- svg_df(svg.path=svg.path[i], feature=sam())
+            df_tis <- svg_df(svg.path=svg.path[i], feature=sam(), cores=deter_core(2, svg.path[i]))
             validate(need(!is.character(df_tis), paste0(svg.na[i], ': ', df_tis)))
             svg.df.lis <- c(svg.df.lis, list(df_tis))
    
@@ -764,20 +765,20 @@ content=function(file=paste0(normalizePath(tempdir(check=TRUE), winslash="/", mu
 
   grob <- reactiveValues(all=NULL, all1=NULL, gg.all=NULL, gg.all1=NULL, lgd.all=NULL)
   observeEvent(input$fileIn, { grob$all <- grob$gg.all1 <- grob$gg.all1 <- grob$gg.all <- grob$lgd.all <- NULL })
-  # Avoid repetitive computation under input$cs.v=='w.mat'.
+  # Avoid repetitive computation under input$cs.v=='All rows'.
   gs.new <- reactive({ 
     if.con <- is.null(svg.df())|is.null(geneIn())|is.null(gID$new)|length(gID$new)==0|is.null(gID$all)|is.null(input$dt_rows_selected)|color$col[1]=='none'
     if (length(if.con==FALSE)==0) if (length(if.con)==0) return(); if (is.na(if.con)|if.con==TRUE) return(NULL)
 
     if (input$cs.v=="Selected rows") ID <- gID$geneID
-    if (input$cs.v=="w.mat") ID <- gID$new
+    if (input$cs.v=="All rows") ID <- gID$new
     if (is.null(ID)|length(gID$new)>1|length(ID)>1|ID[1]=='none') return()
     # Avoid repetitive computation.  
     pat.new <- paste0('^', gID$new, '_(', pat.con(), ')_\\d+$')
     if (any(grepl(pat.new, names(grob$all)))) return()
     withProgress(message="Tissue heatmap: ", value=0, {
  
-      incProgress(0.25, detail="preparing data.")
+      incProgress(0.25, detail="preparing data ...")
       gene <- geneIn()[["gene2"]]
       svg.df.lis <- svg.df(); grob.lis.all <- w.h.all <- NULL
       # Get max width/height of multiple SVGs, and dimensions of other SVGs can be set relative to this max width/height.
@@ -791,10 +792,11 @@ content=function(file=paste0(normalizePath(tempdir(check=TRUE), winslash="/", mu
         if (input$pre.scale=='Yes') mar <- (1-w.h/w.h.max*0.99)/2 else mar <- NULL
         cat('New grob/ggplot:', ID, ' \n')
         if (!is.null(cna.match$cna)) { 
-		      if (ncol(gene)==length(cna.match$cna)) colnames(gene) <- cna.match$cna 
+		  if (ncol(gene)==length(cna.match$cna)) colnames(gene) <- cna.match$cna 
         }
         size.key <- as.numeric(cfg$lis.par$legend['key.size', 'default'])
-        grob.lis <- grob_list(gene=gene, con.na=geneIn0()[['con.na']], geneV=geneV(), coord=g.df, ID=ID, legend.col=fil.cols, cols=color$col, tis.path=tis.path, ft.trans=input$tis, sub.title.size=18, mar.lb=mar, legend.nrow=as.numeric(cfg$lis.par$legend['key.row', 'default']), legend.key.size=size.key, legend.text.size=8*size.key*33, line.size=input$line.size+svg.df[['stroke.w']], line.color=input$line.color) # Only gID$new is used.
+        # cores: the orders in svg.path(), names(svg.df.lis) are same.
+        grob.lis <- grob_list(gene=gene, con.na=geneIn0()[['con.na']], geneV=geneV(), coord=g.df, ID=ID, legend.col=fil.cols, cols=color$col, tis.path=tis.path, ft.trans=input$tis, sub.title.size=18, mar.lb=mar, legend.nrow=as.numeric(cfg$lis.par$legend['key.row', 'default']), legend.key.size=size.key, legend.text.size=8*size.key*33, line.size=input$line.size, line.color=input$line.color, cores=deter_core(2, svg.path()$svg.path[i])) # Only gID$new is used.
         msg <- paste0(svg.na[i], ': no spatial features that have matching sample identifiers in data are detected!')
         if (is.null(grob.lis)) cat(msg, '\n')
         output$msg.shm <- ({ validate(need(!is.null(grob.lis), msg)) })
@@ -819,9 +821,9 @@ content=function(file=paste0(normalizePath(tempdir(check=TRUE), winslash="/", mu
 
       if (length(if.con==FALSE)==0) if (length(if.con)==0) return(); if (is.na(if.con)|if.con==TRUE) return(NULL)
       withProgress(message="Spatial heatmap: ", value=0, {
-      incProgress(0.25, detail="preparing data.")
+      incProgress(0.25, detail="preparing data ...")
       #if (input$cs.v=="Selected rows") gene <- geneIn()[["gene2"]][input$dt_rows_selected, ]
-      #if (input$cs.v=="w.mat") gene <- geneIn()[["gene2"]]
+      #if (input$cs.v=="All rows") gene <- geneIn()[["gene2"]]
       gene <- geneIn()[["gene2"]][gID$geneID, ]
       svg.df.lis <- svg.df(); grob.lis.all <- w.h.all <- NULL
       # Get max width/height of multiple SVGs, and dimensions of other SVGs can be set relative to this max width/height.
@@ -840,7 +842,7 @@ content=function(file=paste0(normalizePath(tempdir(check=TRUE), winslash="/", mu
           colnames(gene) <- cna.match$cna 
         }
         size.key <- as.numeric(cfg$lis.par$legend['key.size', 'default'])
-        grob.lis <- grob_list(gene=gene, con.na=geneIn0()[['con.na']], geneV=geneV(), coord=g.df, ID=gID$geneID, legend.col=fil.cols, cols=color$col, tis.path=tis.path, ft.trans=input$tis, sub.title.size=18, mar.lb=mar, legend.nrow=as.numeric(cfg$lis.par$legend['key.row', 'default']), legend.key.size=size.key, legend.text.size=8*size.key*33, line.size=input$line.size+svg.df[['stroke.w']], line.color=input$line.color) # All gene IDs are used.
+        grob.lis <- grob_list(gene=gene, con.na=geneIn0()[['con.na']], geneV=geneV(), coord=g.df, ID=gID$geneID, legend.col=fil.cols, cols=color$col, tis.path=tis.path, ft.trans=input$tis, sub.title.size=18, mar.lb=mar, legend.nrow=as.numeric(cfg$lis.par$legend['key.row', 'default']), legend.key.size=size.key, legend.text.size=8*size.key*33, line.size=input$line.size, line.color=input$line.color, cores=deter_core(2, svg.path()$svg.path[i])) # All gene IDs are used.
         msg <- paste0(svg.na[i], ': no spatial features that have matching sample identifiers in data are detected!')
         if (is.null(grob.lis)) cat(msg, '\n')
         output$msg.shm <- ({ validate(need(!is.null(grob.lis), msg)) })
@@ -857,7 +859,7 @@ content=function(file=paste0(normalizePath(tempdir(check=TRUE), winslash="/", mu
   # Avoid repetitive computation under input$cs.v=='gen.sel'.
   observeEvent(list(gID$geneID), {
     
-    if.con <-  is.null(input$cs.v)|gID$geneID[1]=='none'|input$cs.v=='w.mat'
+    if.con <-  is.null(input$cs.v)|gID$geneID[1]=='none'|input$cs.v=='All rows'
 
     if (length(if.con==FALSE)==0) if (length(if.con)==0) return(); if (is.na(if.con)|if.con==TRUE) return(NULL)
     ID <- gID$geneID
@@ -866,7 +868,7 @@ content=function(file=paste0(normalizePath(tempdir(check=TRUE), winslash="/", mu
       if.con <- is.null(svg.df())|is.null(geneIn())|is.null(input$dt_rows_selected)|color$col[1]=='none'|is.null(input$pre.scale)
       if (length(if.con==FALSE)==0) if (length(if.con)==0) return(); if (is.na(if.con)|if.con==TRUE) return(NULL)
       withProgress(message="Spatial heatmap: ", value=0, {
-      incProgress(0.25, detail="preparing data.")
+      incProgress(0.25, detail="preparing data ...")
       gene <- geneIn()[["gene2"]][gID$geneID, ]
       svg.df.lis <- svg.df(); grob.lis.all <- w.h.all <- NULL
       # Get max width/height of multiple SVGs, and dimensions of other SVGs can be set relative to this max width/height.
@@ -885,7 +887,7 @@ content=function(file=paste0(normalizePath(tempdir(check=TRUE), winslash="/", mu
           colnames(gene) <- cna.match$cna 
         }
         size.key <- as.numeric(cfg$lis.par$legend['key.size', 'default'])
-        grob.lis <- grob_list(gene=gene, con.na=geneIn0()[['con.na']], geneV=geneV(), coord=g.df, ID=ID, legend.col=fil.cols, cols=color$col, tis.path=tis.path, ft.trans=input$tis, sub.title.size=18, mar.lb=mar, legend.nrow=as.numeric(cfg$lis.par$legend['key.row', 'default']), legend.key.size=size.key, legend.text.size=8*size.key*33, line.size=input$line.size+svg.df[['stroke.w']], line.color=input$line.color) # All gene IDs are used.
+        grob.lis <- grob_list(gene=gene, con.na=geneIn0()[['con.na']], geneV=geneV(), coord=g.df, ID=ID, legend.col=fil.cols, cols=color$col, tis.path=tis.path, ft.trans=input$tis, sub.title.size=18, mar.lb=mar, legend.nrow=as.numeric(cfg$lis.par$legend['key.row', 'default']), legend.key.size=size.key, legend.text.size=8*size.key*33, line.size=input$line.size, line.color=input$line.color, cores=deter_core(2, svg.path()$svg.path[i])) # All gene IDs are used.
         msg <- paste0(svg.na[i], ': no spatial features that have matching sample identifiers in data are detected!')
         if (is.null(grob.lis)) cat(msg, '\n')
         output$msg.shm <- ({ validate(need(!is.null(grob.lis), msg)) })
@@ -1202,7 +1204,7 @@ content=function(file=paste0(normalizePath(tempdir(check=TRUE), winslash="/", mu
     if (length(color$col=="none")==0|input$color=="") return(NULL)
 
     withProgress(message="Animation: ", value=0, {
-    incProgress(0.25, detail="preparing frames...") 
+    incProgress(0.25, detail="preparing frames ...") 
     gg.all <- grob$gg.all1; na <- names(gg.all)
     # Only take the selected genes.
     na <- na[grepl(paste0('^', pat.all(), '_\\d+$'), na)]; gg.all <- gg.all[na]
@@ -1287,7 +1289,7 @@ content=function(file=paste0(normalizePath(tempdir(check=TRUE), winslash="/", mu
     if (input$ggly.but=='No'|is.null(gly.url())) return()
     if (is.null(svg.df())|is.null(geneIn())|is.null(input$dt_rows_selected)|color$col[1]=='none') return(NULL)
     withProgress(message="Animation: ", value=0, {
-    incProgress(0.75, detail="plotting...")
+    incProgress(0.75, detail="plotting ...")
     gly.url <- gly.url(); cat('Animation: plotting', gly.url, '\n')
     tags$iframe(src=gly.url, height=input$height.ly, width=input$width.ly, scrolling='auto')
   
@@ -1302,7 +1304,7 @@ content=function(file=paste0(normalizePath(tempdir(check=TRUE), winslash="/", mu
     if (input$ggly.but=='No'|is.null(gly.url())) return()
     if (is.null(svg.df())|is.null(geneIn())|is.null(input$dt_rows_selected)|color$col[1]=='none') return(NULL) 
     withProgress(message="Downloading animation: ", value=0, {
-    incProgress(0.1, detail="in progress...")
+    incProgress(0.1, detail="in progress ...")
     gg.all <- grob$gg.all1; na <- names(gg.all)
     gg.na <- na[grepl(paste0('^', pat.all(), '_\\d+$'), na)]
     gg <- gg.all[gg.na]
@@ -1344,7 +1346,7 @@ content=function(file=paste0(normalizePath(tempdir(check=TRUE), winslash="/", mu
     validate(need(try(!is.na(input$vdo.res)&input$vdo.res>=1&input$vdo.res<=700), 'Resolution should be between 1 and 700!'))
     
     withProgress(message="Video: ", value=0, {
-    incProgress(0.75, detail="in progress...")
+    incProgress(0.75, detail="in progress ...")
     gg.all <- grob$gg.all1; na <- names(gg.all)
     pat <- paste0('^', pat.all(), '_\\d+$'); na <- na[grepl(pat, na)]
     gg.all1 <- gg.all[na]
@@ -1383,56 +1385,43 @@ content=function(file=paste0(normalizePath(tempdir(check=TRUE), winslash="/", mu
 
   # Calculate whole correlation or distance matrix.
   cor.dis <- reactive({
-
+    if (input$fileIn %in% cfg$na.cus & is.null(input$svgInpath) & is.null(input$svgInpath1)) return()
+    if (is.null(input$mhm.but)) return() 
     if (is.null(geneIn())|input$mhm.but=='No') return()
-    if ((any(input$fileIn %in% cfg$na.cus) & is.null(geneIn()))|input$fileIn=="none") return(NULL)
-    
+    if ((input$fileIn %in% cfg$na.cus & is.null(geneIn()))|input$fileIn=="none") return(NULL)
     withProgress(message="Compute similarity/distance matrix: ", value = 0, {
-
-      incProgress(0.5, detail="Please wait...")
+      incProgress(0.5, detail="please wait ...")
       gene <- geneIn()[['gene1']]
+      # Too many genes may crash the app.
+      if (nrow(gene)>15000 & input$mhm.but==0) return()
       cat('Correlation/distance matrix...\n')
       if (input$measure=='correlation') {
-      
         m <- cor(x=t(gene))
         if (input$cor.abs==TRUE) { m <- abs(m) }; return(m)
-
       } else if (input$measure=='distance') { return(-as.matrix(dist(x=gene))) }
-
     })
-
   })
 
   # Subset nearest neighbours for target genes based on correlation or distance matrix.
-  submat <- reactive({
-  
+  submat <- reactive({  
     if (input$fileIn=="None") return()
+    if (is.null(input$mhm.but)) return()
     if (is.null(cor.dis())|input$mhm.but=='No') return()
     gene <- geneIn()[["gene1"]]; rna <- rownames(gene)
     gen.tar<- gID$geneID; mat <- cor.dis()
     # Validate filtering parameters in matrix heatmap. 
     measure <- input$measure; cor.abs <- input$cor.abs; mhm.v <- input$mhm.v; thr <- input$thr
     if (input$thr=='p') {
-
       validate(need(try(mhm.v>0 & mhm.v<=1), 'Proportion should be between 0 to 1 !'))
-
     } else if (input$thr=='n') {
-
       validate(need(try(mhm.v>=1 & as.integer(mhm.v)==mhm.v & !is.na(mhm.v)), 'Number should be a positive integer !'))
-
     } else if (input$thr=='v' & measure=='correlation') {
-
       validate(need(try(mhm.v>-1 & mhm.v <1), 'Correlation value should be between -1 to 1 !'))
-
     } else if (input$thr=='v' & measure=='distance') {
-
       validate(need(try(mhm.v>=0), 'Distance value should be non-negative !'))
-
     }
-
     withProgress(message="Selecting nearest neighbours: ", value = 0, {
-
-      incProgress(0.5, detail="Please wait...")
+      incProgress(0.5, detail="please wait ...")
       arg <- list(p=NULL, n=NULL, v=NULL)
       arg[names(arg) %in% input$thr] <- input$mhm.v
       if (input$measure=='distance' & input$thr=='v') arg['v'] <- -arg[['v']]
@@ -1442,20 +1431,18 @@ content=function(file=paste0(normalizePath(tempdir(check=TRUE), winslash="/", mu
       gen.na <- do.call(sub_na, c(mat=list(mat), ID=list(gen.tar), arg))
       if (any(is.na(gen.na))) return() 
       validate(need(try(length(gen.na)>=2), paste0('Only ', gen.na, ' selected!'))); return(gene[gen.na, ])
-
     })
-
   })
   mhm <- reactiveValues(hm=NULL)
   # Plot matrix heatmap.
   observe({
-
+    if (is.null(input$mhm.but)) return() # Matrix heatmap sections is removed.
     if (input$mhm.but!=0) return() 
     if (is.null(submat())) return()
     gene <- geneIn()[["gene1"]]; rna <- rownames(gene)
     gen.tar <- gID$geneID; if (length(gen.tar)>1) return()
     withProgress(message="Matrix heatmap:", value=0, {
-      incProgress(0.7, detail="Plotting...")
+      incProgress(0.7, detail="Plotting ...")
       if (input$mat.scale=="Column") scale.hm <- 'column' else if (input$mat.scale=="Row") scale.hm <- 'row' else scale.hm <- 'no'
       cat('Initial matrix heatmap...\n')
       mhm$hm <- matrix_hm(ID=gen.tar, data=submat(), scale=scale.hm, main='Target Genes and Their Nearest Neighbours', title.size=10, static=FALSE)
@@ -1470,7 +1457,7 @@ content=function(file=paste0(normalizePath(tempdir(check=TRUE), winslash="/", mu
     gene <- geneIn()[["gene1"]]; rna <- rownames(gene)
     gen.tar<- gID$geneID
     withProgress(message="Matrix heatmap:", value=0, {
-      incProgress(0.7, detail="Plotting...")
+      incProgress(0.7, detail="plotting ...")
       if (input$mat.scale=="Column") scale.hm <- 'column' else if (input$mat.scale=="Row") scale.hm <- 'row' else scale.hm <- 'no'
       cat('Matrix heatmap...\n')
       matrix_hm(ID=gen.tar, data=submat(), scale=scale.hm, main='Target Genes and Their Nearest Neighbours', title.size=10, static=FALSE)
@@ -1496,7 +1483,7 @@ content=function(file=paste0(normalizePath(tempdir(check=TRUE), winslash="/", mu
       path1 <- path[name=="adj.txt"]; path2 <- path[name=="mod.txt"]
 
       withProgress(message="Loading: ", value = 0, {
-        incProgress(0.5, detail="adjacency matrix and module definition.")
+        incProgress(0.5, detail="adjacency matrix and module definition ...")
         adj <- fread(path1, sep="\t", header=TRUE, fill=TRUE); c.na <- colnames(adj)[-ncol(adj)]
         r.na <- as.data.frame(adj[, 1])[, 1];  adj <- as.data.frame(adj)[, -1] 
         rownames(adj) <- r.na; colnames(adj) <- c.na
@@ -1516,6 +1503,7 @@ content=function(file=paste0(normalizePath(tempdir(check=TRUE), winslash="/", mu
     observe({
     
       if (input$fileIn=="None") return()
+      if (is.null(input$cpt.nw)) return() # Network section is removed.
       if (is.null(submat())|input$cpt.nw!=0|length(gID$geneID)>1) return()
 
     if (input$fileIn=="customData"|any(input$fileIn %in% cfg$na.def)) {
@@ -1523,9 +1511,9 @@ content=function(file=paste0(normalizePath(tempdir(check=TRUE), winslash="/", mu
       gene <- geneIn()[["gene1"]]; if (is.null(gene)) return()
       type <- input$net.type; sft <- if (type=='distance') 1 else 6
       withProgress(message="Computing: ", value = 0, {
-        incProgress(0.3, detail="adjacency matrix.")
-        incProgress(0.5, detail="topological overlap matrix.")
-        incProgress(0.1, detail="dynamic tree cutting.")
+        incProgress(0.3, detail="adjacency matrix ...")
+        incProgress(0.5, detail="topological overlap matrix ...")
+        incProgress(0.1, detail="dynamic tree cutting ...")
         cat('Initial adjacency matrix and modules...\n')
         adj.mods$lis <- adj_mod(data=submat(), type=type, minSize=input$min.size, dir=NULL)
 
@@ -1537,6 +1525,7 @@ content=function(file=paste0(normalizePath(tempdir(check=TRUE), winslash="/", mu
 
   # er <- eventReactive(exp, {}). If its reactive value "er()" is called before eventReactive is triggered, the code execution stops where "er()" is called.
   observeEvent(input$cpt.nw, { 
+    if (input$fileIn %in% cfg$na.cus & is.null(input$svgInpath) & is.null(input$svgInpath1)) return()
     #gene <- geneIn()[["gene2"]]; if (!(input$gen.sel %in% rownames(gene))) return() # Avoid unnecessary computing of 'adj', since 'input$gen.sel' is a cerain true gene id of an irrelevant expression matrix, not 'None', when switching from one defaul example's matrix heatmap to another example.
     if (is.null(submat())|input$cpt.nw==0) return()
     if (input$fileIn=="customData"|any(input$fileIn %in% cfg$na.def)) {
@@ -1544,9 +1533,9 @@ content=function(file=paste0(normalizePath(tempdir(check=TRUE), winslash="/", mu
       gene <- geneIn()[["gene1"]]; if (is.null(gene)) return()
       type <- input$net.type; sft <- if (type=='distance') 1 else 6
       withProgress(message="Computing: ", value = 0, {
-        incProgress(0.3, detail="adjacency matrix.")
-        incProgress(0.5, detail="topological overlap matrix.")
-        incProgress(0.1, detail="dynamic tree cutting.")
+        incProgress(0.3, detail="adjacency matrix ...")
+        incProgress(0.5, detail="topological overlap matrix ...")
+        incProgress(0.1, detail="dynamic tree cutting ...")
         cat('Adjacency and modules... \n')
         adj.mods$lis <- adj_mod(data=submat(), type=type, minSize=input$min.size)
 
@@ -1612,6 +1601,7 @@ content=function(file=paste0(normalizePath(tempdir(check=TRUE), winslash="/", mu
       adj <- adj.mods$lis[['adj']]; mods <- adj.mods$lis[['mod']]
     }
     if (input$fileIn=='customComputedData') gene <- geneIn()$gene2 else gene <- submat()
+    if (is.null(input$gen.sel)) return() # Matrix heatmap section is removed.
     if (!(input$gen.sel %in% rownames(gene))) return() # Avoid unnecessary computing of 'adj', since 'input$gen.sel' is a cerain true gene id of an irrelevant expression matrix, not 'None', when switching from one defaul example's network to another example.
     lab <- mods[, input$ds][rownames(gene)==input$gen.sel]
     validate(need(try(length(lab)==1 & !is.na(lab) & nrow(mods)==nrow(gene)), 'Click "Update" to display new network!'))
@@ -1621,7 +1611,7 @@ content=function(file=paste0(normalizePath(tempdir(check=TRUE), winslash="/", mu
     idx.sel <- grep(paste0("^", input$gen.sel, "$"), gen.na); gen.na[idx.sel] <- paste0(input$gen.sel, "_target")
     colnames(adj.m) <- rownames(adj.m) <- gen.na
     withProgress(message="Computing network:", value=0, { 
-      incProgress(0.8, detail="making network data frame")
+      incProgress(0.8, detail="making network data frame ...")
       cat('Extracting nodes and edges... \n')
       # Identify adjcency threshold with edges < max number (e.g. 300) 
       ID <- input$gen.sel; adjs <- 1; lin <- 0; adj.lin.vec <- NULL
@@ -1683,8 +1673,9 @@ content=function(file=paste0(normalizePath(tempdir(check=TRUE), winslash="/", mu
     geneIn(); gID$geneID; input$gen.sel; input$ds; input$adj.modInpath; input$A; input$p; input$cv1; input$cv2; input$min.size; input$net.type
     input$gen.sel; input$measure; input$cor.abs; input$thr; input$mhm.v; input$cpt.nw
      #if ((input$adj.in==1 & is.null(visNet()[["adjs1"]]))|(input$cpt.nw!=cfg$lis.par$network['max.edges', 'default'] & is.null(visNet()[["adjs1"]]))) { updateSelectInput(session, "adj.in", "Adjacency threshold:", sort(seq(0, 1, 0.002), decreasing=TRUE), visNet()[["adjs"]]) } else if (!is.null(visNet()[["adjs1"]])) updateSelectInput(session, "adj.in", "Adjacency threshold:", sort(seq(0, 1, 0.002), decreasing=TRUE), visNet()[["adjs1"]])
-     lins <- visNet()[["lins"]]
-     if (input$adj.in==1|is.null(lins)|is.numeric(lins)) updateSelectInput(session, "adj.in", "Adjacency threshold (the  smaller, the more edges):", sort(seq(0, 1, 0.002), decreasing=TRUE), as.numeric(visNet()[["adjs"]])) 
+    lins <- visNet()[["lins"]]
+    if (is.null(input$adj.in)) return() # Network section is removed. 
+    if (input$adj.in==1|is.null(lins)|is.numeric(lins)) updateSelectInput(session, "adj.in", "Adjacency threshold (the  smaller, the more edges):", sort(seq(0, 1, 0.002), decreasing=TRUE), as.numeric(visNet()[["adjs"]])) 
   
   })
   output$bar.net <- renderPlot({  
@@ -1696,8 +1687,8 @@ content=function(file=paste0(normalizePath(tempdir(check=TRUE), winslash="/", mu
     if(input$col.but.net==0) color.net$col.net <- colorRampPalette(col_sep(cfg$lis.par$network['color', 'default']))(len.cs.net) # color.net$col.net is changed alse outside renderPlot, since it is a reactive value.
 
       withProgress(message="Color scale: ", value = 0, {
-      incProgress(0.25, detail="Preparing data. Please wait.")
-      incProgress(0.75, detail="Plotting. Please wait.")
+      incProgress(0.25, detail="preparing data, please wait ...")
+      incProgress(0.75, detail="plotting, please wait ...")
       node <- visNet()[["node"]]; if (is.null(node)) return()
       node.v <- node$value; v.net <- seq(min(node.v), max(node.v), len=len.cs.net)
       cat('Network bar... \n')
@@ -1726,7 +1717,7 @@ content=function(file=paste0(normalizePath(tempdir(check=TRUE), winslash="/", mu
     if (input$adj.in=="None") return(NULL)
     gene <- geneIn()[["gene1"]]; if (!(input$gen.sel %in% rownames(gene))) return() # Avoid unnecessary computing of 'adj', since 'input$gen.sel' is a cerain true gene id of an irrelevant expression matrix, not 'None', when switching from one defaul example's network to another example.
     withProgress(message="Network:", value=0.5, {
-    incProgress(0.3, detail="prepare for plotting.")
+    incProgress(0.3, detail="prepare for plotting ...")
     # Match colours with gene connectivity by approximation.
     node <- visNet()[["node"]]; if (is.null(node)) return() 
     node.v <- node$value; v.net <- seq(min(node.v), max(node.v), len=len.cs.net)
@@ -1750,12 +1741,13 @@ content=function(file=paste0(normalizePath(tempdir(check=TRUE), winslash="/", mu
 
     withProgress(message="Network:", value=0.5, {
 
-      incProgress(0.3, detail="plotting.")
+      incProgress(0.3, detail="plotting ...")
       cat('Rendering network...\n'); vis.net()
 
     })
 
   })
+
 
   onStop(function() { ggly_rm(); vdo_rm(); cat("Session stopped! \n") })
 

@@ -17,3 +17,14 @@ label[for='search']{ display: table-cell; text-align: center; vertical-align: mi
 .nav-tabs-custom .nav-tabs li.active {
     border-top-color: #d73925;
 }
+
+/* Text on the right of dashborad header */
+.myClass { 
+        font-size: 20px;
+        line-height: 50px;
+        text-align: center;
+        font-family: "Helvetica Neue",Helvetica,Arial,sans-serif;
+        padding: 0 15px;
+        overflow: hidden;
+        color: white;
+      }
