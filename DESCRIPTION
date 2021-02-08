@@ -25,7 +25,7 @@ Depends:
 Imports: av, BiocFileCache, data.table, DESeq2, edgeR, WGCNA, flashClust, htmlwidgets, genefilter,
         ggplot2, ggdendro, grImport, grid, gridExtra, gplots, igraph, HDF5Array,
         rsvg, shiny, dynamicTreeCut, grDevices, graphics, ggplotify, parallel, 
-        plotly, rols, rappdirs, stats, SummarizedExperiment, shinydashboard,
+        plotly, rols, rappdirs, stats, SummarizedExperiment, shinydashboard, S4Vectors,
         utils, visNetwork, methods, xml2, yaml
 BugReports: https://github.com/jianhaizhang/spatialHeatmap/issues
 URL: https://github.com/jianhaizhang/spatialHeatmap

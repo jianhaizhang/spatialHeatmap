@@ -11,11 +11,11 @@ com_factor(se, target, factors2com, sep = ".", factor.new)
 
 \item{target}{A \code{data.frame} object of targets file.}
 
+\item{factors2com}{A character vector of column names or a numeric vector of column indeces in the targets file. Entries in these columns are combined.}
+
 \item{sep}{The separator in the combined factors. One of \code{_}, and \code{.} (default).}
 
 \item{factor.new}{The column name of the new combined factors.}
-
-\item{factors2om}{A character vector of column names or a numeric vector of column indeces in the targets file. Entries in these columns are combined.}
 }
 \value{
 If \code{se} is provided, a \code{SummarizedExperiment} object is returned, where the \code{colData} slot contains the new column of combined factors. Otherwise, a\code{data.frame} object is returned, where the new column of combined factors is appended.

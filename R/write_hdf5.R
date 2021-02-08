@@ -202,6 +202,7 @@
 #' @export write_hdf5
 #' @importFrom SummarizedExperiment assay rowData colData SummarizedExperiment
 #' @importFrom HDF5Array saveHDF5SummarizedExperiment
+#' @importFrom utils untar tar
 
 write_hdf5 <- function(dat.lis, dir='./data_shm', replace=FALSE, chunkdim=NULL, level=NULL, verbose=FALSE, svg.dir=NULL) {
 

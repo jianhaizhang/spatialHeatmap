@@ -19,6 +19,7 @@
 #' @export read_hdf5
 #' @importFrom SummarizedExperiment rowData assay
 #' @importFrom HDF5Array loadHDF5SummarizedExperiment
+#' @importFrom utils untar
 
 read_hdf5 <- function(file, prefix) {
 

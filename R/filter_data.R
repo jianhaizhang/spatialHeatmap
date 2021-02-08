@@ -85,9 +85,10 @@
 
 
 #' @export filter_data
-#' @importFrom SummarizedExperiment assay rowData colData SummarizedExperiment
+#' @importFrom SummarizedExperiment assay rowData colData SummarizedExperiment assayNames
 #' @importFrom genefilter filterfun pOverA cv genefilter
 #' @importFrom utils write.table
+#' @importFrom stats sd
 
 filter_data <- function(data, pOA=c(0, 0), CV=c(-Inf, Inf), top.CV=1, ann=NULL, sam.factor, con.factor, dir=NULL, verbose=TRUE) {
 
@@ -97,7 +98,7 @@ filter_data <- function(data, pOA=c(0, 0), CV=c(-Inf, Inf), top.CV=1, ann=NULL, 
   dat.lis <- check_data(data=data, sam.factor=sam.factor, con.factor=con.factor, usage='filter')
   expr <- dat.lis$dat; row.meta <- dat.lis$row.meta; col.meta <- dat.lis$col.meta
   if (verbose==TRUE) { cat('All values before filtering:\n'); print(summary(unlist(as.data.frame(expr)))) }
-  expr.t <- as.data.frame(t(expr)); cv.all <- sort(sapply(expr.t, sd)/sapply(expr.t, mean), decreasing=TRUE)
+  expr.t <- as.data.frame(t(expr)); cv.all <- sort(vapply(expr.t, sd, numeric(1))/vapply(expr.t, mean, numeric(1)), decreasing=TRUE)
   if (verbose==TRUE) { cat('All coefficient of variances (CVs) before filtering:\n'); print(summary(cv.all)) }
   if (top.CV<1) {
     cv.min <- cv.all[ceiling(length(cv.all)*top.CV)]
@@ -134,7 +135,7 @@ filter_data <- function(data, pOA=c(0, 0), CV=c(-Inf, Inf), top.CV=1, ann=NULL, 
   
     rownames(col.meta) <- NULL # If row names present in colData(data), if will become column names of assay(data).
     expr <- SummarizedExperiment(assays=list(expr=expr), rowData=row.meta, colData=col.meta)
-    if (!is.null(assayNames(data))) assayNames(expr) <- assayNames(data)[1]; return(expr)
+    if (!is.null(assayNames(data))) SummarizedExperiment::assayNames(expr) <- assayNames(data)[1]; return(expr)
 
   }
 
