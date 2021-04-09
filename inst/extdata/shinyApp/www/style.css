@@ -1,4 +1,11 @@
 
+/* Text on the top header */
+span.myClass {display:table; margin:0 auto; 
+ font-size: 20px; line-height: 50px; text-align: center;
+ font-family: "Helvetica Neue",Helvetica,Arial,sans-serif;
+ padding: 0 0px; overflow: hidden; color: white; width:100px; height: 100%;
+}
+
 .shiny-output-error-validation { color: red }
 
 #DataTables_Table_0_filter { float: left }
@@ -12,19 +19,113 @@
 
 input[id='search'] { height: 28px; width: 500px; margin: 3px; padding: 0; font-size: inherit; border: 1px solid #CCCCCC }
 
-label[for='search']{ display: table-cell; text-align: center; vertical-align: middle;   }
+label[for='search'] { display: table-cell; text-align: center; vertical-align: middle;   }
 
 .nav-tabs-custom .nav-tabs li.active {
     border-top-color: #d73925;
 }
 
-/* Text on the right of dashborad header */
-.myClass { 
-        font-size: 20px;
-        line-height: 50px;
-        text-align: center;
-        font-family: "Helvetica Neue",Helvetica,Arial,sans-serif;
-        padding: 0 15px;
-        overflow: hidden;
-        color: white;
-      }
+/* Scroll horizontally. */
+/* .same-row {max-width: 2000px; display: table-cell; padding-right: 10px;} */
+
+/* Padding of columns. */
+.col-sm-9 {position: relative; min-height: 1px; padding-right: 6px; padding-left: 2px;}
+.col-sm-3 {position: relative; min-height: 1px; padding-right: 2px; padding-left: 0px;}
+.col-sm-12 {position: relative; min-height: 1px; padding-right: 2px; padding-left: 2px;}
+
+/* Padding of box. */
+.box-body { padding: 2px;}
+
+.box.box-solid.box-primary>.box-header { color: #fff; background: #3c8dbc; background-color: #3c8dbc;}
+
+.btn-primary {background-color: #3498DB;border-color: #367fa9;}
+
+
+/* Tab colors. */
+
+/* All tabs. */
+/* .tabbable > .nav > li > a {background-color: grey; color:black} */
+/* .tabbable > .nav > li > a[data-value='shm'] {background-color: #2471A3; color:white} */
+.tabbable > .nav > li > a {background-color: #2471A3; color:white}
+
+
+.tabbable > .nav > li[class=active] > a {background-color:#337ab7; color:white}
+
+.nav-pills>li.active>a, .nav-pills>li.active>a:focus, .nav-pills>li.active>a:hover {border-top-color:red;}
+
+/* Avoid overflowing in fluidrow and splitLayout. */
+.shiny-split-layout > div {overflow: visible;}
+
+/* Customized tooltip. */
+.tp {
+  width: 100%;
+  width: -moz-available;          /* WebKit-based browsers will ignore this. */
+  width: -webkit-fill-available;  /* Mozilla-based browsers will ignore this. */
+  width: fill-available;
+  position: relative;
+  display: inline-block;
+  border-bottom: 0px dotted black;
+}
+
+/* Tooltip arrow. */
+.tp .tpt::after {
+  content: "";
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  margin-left: -5px;
+  border-width: 5px;
+  border-style: solid;
+  border-color:  black transparent transparent transparent; /* Affect arrow direction. */
+}
+
+/* Tooltip speed. */
+.tp .tpt {
+  visibility: hidden;
+  width: auto;
+  background-color: black;
+  color: #fff;
+  text-align: center;
+  border-radius: 6px;
+  padding: 5px 5px 5px 5px;
+  position: absolute;
+  z-index: 1;
+  bottom: 80%;
+  left: 30%;
+  margin-left: -60px;
+  /* Fade in tooltip - takes 1 second to go from 0% to 100% opac: */
+  opacity: 0; transition: opacity 1s;
+}
+
+.tp:hover .tpt {
+  visibility: visible;
+  opacity: 1;
+} 
+
+/* Suppress tooltip overflowing. */
+span {
+    display: inline-block; white-space: normal
+}
+
+/* plotOutput images take all available space in column/div. */
+#shm img {
+  max-width: 100%; width: 100%; height: auto
+}
+
+/* Full-screen SHMs takes all space. */
+#shm:-webkit-full-screen {
+  height: 100%;width: 100%;
+  margin: 0;
+  overflow-x: scroll;overflow-y: scroll;overflow:auto;
+}
+#shm:-ms-fullscreen {
+  height: 100%;width: 100%;
+  overflow-x: scroll;overflow-y: scroll;overflow:auto;
+}
+#shm:fullscreen {
+  height: 100%;width: 100%;
+  overflow-x: scroll;overflow-y: scroll;overflow:auto;
+}
+
+
+

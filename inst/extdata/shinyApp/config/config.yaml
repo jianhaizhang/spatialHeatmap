@@ -64,7 +64,6 @@ max.upload.size: 5G
 default.dataset: organ_Mustroph
 col.row.gene: None
 separator: None
-hide.legend: 'No'
 data.matrix:
 - A:0
 - P:0
@@ -78,7 +77,9 @@ shm.img:
 - width:580
 - columns:2
 - display.by:gene
-- preserve.scale:No
+- scale.plots:2
+- title.size:15
+- relative.size:1
 - color:yellow,orange,red
 - color.scale:Selected rows
 - file.type:NA
@@ -102,13 +103,18 @@ shm.video:
 - height:0.9
 - width:0.92
 - dpi:400
+- key.rows:2
+- key.size:0.04
 - value.legend:No
+- feature.label:No
+- label.size:2
 - dimension:640x480
 legend:
 - key.row:2
 - key.size:0.04
 - label:No
 - label.size:2.5
+- aspect.ratio:1
 mhm:
 - measure:correlation
 - cor.absolute:No
@@ -132,3 +138,6 @@ download_multiple:
 download_spatial_temporal:
   data: example/expr_coleoptile_samTimeCon.txt
   svg: example/oryza.sativa_coleoptile.ANT_shm.svg
+download_batched_data_aSVGs:
+  data: example/aSVGs_shm.tar
+  svg: example/data_shm.tar

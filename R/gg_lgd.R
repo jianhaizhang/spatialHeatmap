@@ -18,6 +18,7 @@
 #' @param key Logical. The default is TRUE and keys are added in legend plot. If \code{label} is TRUE, the keys could be removed. 
 #' @param sam.dat A vector of samples in the data matrix.
 #' @param ft.trans A vector of tissues to be transparent.
+#' @param aspect.ratio The ratio of width to height. The default is 1.
 #' @return A list of ggplots.
 #' @keywords Internal
 #' @noRd
@@ -29,20 +30,16 @@
 
 #' @importFrom ggplot2 theme layer_data scale_fill_manual unit element_text guide_legend
 
-gg_lgd <- function(gg.all, size.key=NULL, size.text.key=8, angle.text.key=NULL, position.text.key=NULL, legend.value.vdo=NULL, sub.title.size=NULL, row=NULL, col=NULL, label=FALSE, label.size=3, label.angle=0, hjust=0, vjust=0, opacity=1, key=TRUE, sam.dat, ft.trans=NULL) {
+gg_lgd <- function(gg.all, size.key=NULL, size.text.key=8, angle.text.key=NULL, position.text.key=NULL, legend.value.vdo=NULL, sub.title.size=NULL, row=NULL, col=NULL, label=FALSE, label.size=3, label.angle=0, hjust=0, vjust=0, opacity=1, key=TRUE, sam.dat, ft.trans=NULL, aspect.ratio = NULL) {
 
   tissue <- x0 <- y0 <- NULL
   # Function to remove feature labels. 
-  rm_label <- function(g) {
-        
+  rm_label <- function(g) {    
     g.layer <- g$layer; if (length(g.layer)==1) return(g) 
     for (k in rev(seq_along(g.layer))) {
-
       na.lay <- unique(names(as.list(g.layer[[k]])$geom_params))
       if (all(c('check_overlap', 'angle', 'size') %in% na.lay)) g$layers[[k]] <- NULL
-
     }; return(g)
-
   }
   for (i in seq_along(gg.all)) {
   
@@ -82,9 +79,11 @@ gg_lgd <- function(gg.all, size.key=NULL, size.text.key=8, angle.text.key=NULL, 
 
       }; gg.all[[i]] <- rm_label(g)
 
-    }; if (label==FALSE) { gg.all[[i]] <- rm_label(g) }
-
-  }; return(gg.all)
+    } # if 
+    if (label==FALSE) { gg.all[[i]] <- rm_label(g) }
+    if (!is.null(aspect.ratio)) if (aspect.ratio > 0) gg.all[[i]] <- g + theme(aspect.ratio=1/aspect.ratio) 
+  } # for 
+  return(gg.all)
 
 }
 

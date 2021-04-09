@@ -139,7 +139,7 @@ stop('Accepted data classes are "data.frame", "matrix", "DFrame", or "Summarized
     }
 
   } else if (min(expr)<0 | !all(round(expr)==expr)) stop('Nornalization only applies to data matrix of all non-negative integers! \n')
-
+  if (log2.trans == FALSE) expr <- round(expr)
   if (is(data, 'data.frame')|is(data, 'matrix')) { return(cbind(expr, ann)) } else if (is(data, 'SummarizedExperiment')) { SummarizedExperiment::assay(data) <- expr; return(data) }
 
 } 

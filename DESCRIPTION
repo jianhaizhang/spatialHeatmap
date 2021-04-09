@@ -3,7 +3,7 @@ Type: Package
 Title: spatialHeatmap
 Version: 1.1.5
 Authors@R: c(
-  person(given="Jianhai", family="Zhang", role=c("aut", "trl", "cre"), email="jzhan067@ucr.edu", comment=""),
+  person(given="Jianhai", family="Zhang", role=c("aut", "trl", "cre"), email="jianhai.zhang@email.ucr.edu", comment=""),
   person(given="Jordan", family="Hayes", role="aut", email="jhayes@ucr.edu", comment=""),
   person(given="Le", family="Zhang", role="aut", email="lzhan140@ucr.edu", comment=""),
   person(given="Bing", family="Yang", role="aut", email="yangbi@missouri.edu", comment=""),
@@ -29,4 +29,4 @@ Imports: av, BiocFileCache, data.table, DESeq2, edgeR, WGCNA, flashClust, htmlwi
         utils, visNetwork, methods, xml2, yaml
 BugReports: https://github.com/jianhaizhang/spatialHeatmap/issues
 URL: https://github.com/jianhaizhang/spatialHeatmap
-RoxygenNote: 7.1.0
+RoxygenNote: 7.1.1

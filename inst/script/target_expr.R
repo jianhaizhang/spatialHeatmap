@@ -36,6 +36,34 @@ expr.hum <- assay(se.fil.hum)
 write.table(expr.hum, 'expr_human.txt', col.names=TRUE, row.names=TRUE, sep='\t')
 
 
+
+colData(rse.hum) <- DataFrame(target.hum)
+# Normalise.
+se.nor.hum <- norm_data(data=rse.hum, norm.fun='ESF', log2.trans = FALSE)
+
+# Aggregate.
+se.aggr.hum <- aggr_rep(data=se.nor.hum, sam.factor='organism_part', con.factor='disease', aggr='mean')
+
+# Filter.
+se.fil.hum <- filter_data(data=se.nor.hum, sam.factor='organism_part', con.factor='disease', pOA=c(0.7, 50), CV=c(0.5, 100), dir=NULL); se.fil.hum
+# Data matrix.
+expr.hum <- assay(se.fil.hum)
+# colnames(expr.hum) <- gsub("_", ".", colnames(expr.hum))
+write.table(expr.hum, 'expr_human.txt', col.names=TRUE, row.names=TRUE, sep='\t')
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 ## Make target file/Shiny app data-mouse organ example.
 
 # Select "E-MTAB-2801".
@@ -89,6 +117,19 @@ se.fil.chk <- filter_data(data=se.aggr.chk, sam.factor='organism_part', con.fact
 expr.chk <- assay(se.fil.chk)
 # colnames(expr.chk) <- gsub("_", ".", colnames(expr.chk))
 write.table(expr.chk, 'expr_chicken.txt', col.names=TRUE, row.names=TRUE, sep='\t')
+
+
+
+colData(rse.chk) <- DataFrame(target.chk)
+se.nor.chk <- norm_data(data=rse.chk, norm.fun='ESF', log2.trans = FALSE)
+se.fil.chk <- filter_data(data=se.nor.chk, sam.factor='organism_part', con.factor='age', pOA=c(0.3, 700), CV=c(0.5, 100), dir=NULL); se.fil.chk
+# Data matrix.
+expr.chk <- assay(se.fil.chk)
+# colnames(expr.chk) <- gsub("_", ".", colnames(expr.chk))
+write.table(expr.chk, 'expr_chicken.txt', col.names=TRUE, row.names=TRUE, sep='\t')
+
+
+
 
 
 ## Make targets file/Shiny app data for the Arabidopsis shoot example.

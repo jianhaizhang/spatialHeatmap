@@ -21,25 +21,32 @@
 #' @export read_fr
 #' @importFrom data.table fread
 
-read_fr <- function(input, header=TRUE, sep='auto', fill=TRUE, check.names=FALSE) {
-  
+read_fr <- function(input, header = TRUE, sep = 'auto', fill = TRUE, check.names = FALSE) {
+      
   options(stringsAsFactors=FALSE)
-  df0 <- fread(input=input, header=header, sep=sep, fill=fill, check.names=check.names)
+  df0 <- tryCatch({
+    fread(input=input, header=header, sep=sep, fill=fill, check.names=check.names)
+  }, error = function(error_condition) {
+    # Deals with only one column with row names.
+    fread(input = input, header = FALSE, sep = sep, fill = FALSE, check.names = check.names)
+  })
   cna <- make.names(colnames(df0))
+  # Covert factors to character. Only data.frame works not matrix.
+  df0 <- as.data.frame(df0)
+  fct.idx <- vapply(df0, is.factor, logical(1))
+  df0[fct.idx] <- lapply(df0[fct.idx], as.character)
+
   if (cna[1]=='V1') cna <- cna[-1] else cna <- cna[-ncol(df0)] 
   df1 <- as.data.frame(df0); rownames(df1) <- df1[, 1]
   # Subsetting identical column names in a matrix will not trigger numbers to be appened.
-  df1 <- df1[, -1]; colnames(df1) <- cna; rna <- rownames(df1)
+  df1 <- df1[, -1, drop = FALSE]; colnames(df1) <- cna; rna <- rownames(df1)
   # Applies to data frame of numeric-character mixture.
   na <- vapply(seq_len(ncol(df1)), function(i) { tryCatch({ as.numeric(df1[, i]) }, warning=function(w) { return(rep(NA, nrow(df1)))
-    }) }, FUN.VALUE=numeric(nrow(df1)) )
+  }) }, FUN.VALUE=numeric(nrow(df1)) )
   na <- as.data.frame(na); rownames(na) <- rna
   idx <- colSums(apply(na, 2, is.na))!=0
   row.meta <- df1[idx]; expr <- na[!idx]
+  if (ncol(row.meta) == 1) colnames(row.meta) <- gsub('\\"', '', readLines(input, 1))
   colnames(expr) <- cna[!idx]; return(cbind(expr, row.meta))
 
 }
-
-
-
-

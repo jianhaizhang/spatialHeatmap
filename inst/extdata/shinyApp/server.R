@@ -1,12 +1,14 @@
 
 options(stringsAsFactors=FALSE) 
 
-# source('~/sample_specific_expression/function/fun.R')
+source('~/tissue_specific_gene/function/fun.R')
 # Every variable in every container should be checked at the beginning. E.g. input$fileIn in reactive({}). These checks will avoid amost all errors/warnings.
 # Right before submit the package the following functions will be deleted, and they will be imported as above. They are listed here now for the convenience of functionality development.
 
 # Import internal functions.
 deter_core <- get('deter_core', envir=asNamespace('spatialHeatmap'), inherits=FALSE)
+
+rela_size <- get('rela_size', envir=asNamespace('spatialHeatmap'), inherits=FALSE)
 
 norm_data <- get('norm_data', envir=asNamespace('spatialHeatmap'), inherits=FALSE)
 
@@ -56,10 +58,9 @@ svg_attr <- get('svg_attr', envir=asNamespace('spatialHeatmap'), inherits=FALSE)
 
 svg_df <- get('svg_df', envir=asNamespace('spatialHeatmap'), inherits=FALSE)
 
-grob_list <- get('grob_list', envir=asNamespace('spatialHeatmap'), inherits=FALSE)
-
-# Separate SHMs of grobs and ggplot. Different SHMs of same 'gene_condition' are indexed with suffixed of '_1', '_2', ...
-grob_gg <- get('grob_gg', envir=asNamespace('spatialHeatmap'), inherits=FALSE)
+# Separate SHMs of grob and ggplot. Different SHMs (under different SVGs) of same 'gene_condition' are indexed with suffixed of '_1', '_2', ...
+gg_shm <- get('gg_shm', envir=asNamespace('spatialHeatmap'), inherits=FALSE)
+grob_shm <- get('grob_shm', envir=asNamespace('spatialHeatmap'), inherits=FALSE)
 
 # Subset data matrix by correlation or distance measure.
 submatrix <- get('submatrix', envir=asNamespace('spatialHeatmap'), inherits=FALSE)
@@ -75,47 +76,65 @@ html_ly <- get('html_ly', envir=asNamespace('spatialHeatmap'), inherits=FALSE)
 
 # Make videos.
 video <- get('video', envir=asNamespace('spatialHeatmap'), inherits=FALSE)
-
-# Import input matrix.
-fread.df <- function(input, isRowGene=TRUE, header=TRUE, sep='auto', fill=TRUE, rep.aggr='mean', check.names=FALSE) {
+# Shown popup window. 
+modal <- function(title = NULL, msg) {
+  modalDialog(title = title, span(msg),
+    footer = tagList(modalButton("Dismiss")), size = c("m")
+  )
+}
+# Import input matrix, able to deal with/separate numeric matrix, character matrix, and mixture of both.
+fread_df <- function(input, isRowGene=TRUE, header=TRUE, sep='auto', fill=TRUE, rep.aggr='mean', check.names=FALSE) {
   
   if (!is(input, 'data.frame') & !is(input, 'matrix')) { 
-    
-    df0 <- fread(input=input, header=header, sep=sep, fill=fill, check.names=check.names)
+  df0 <- tryCatch({
+    fread(input=input, header=header, sep=sep, fill=fill, check.names=check.names)
+  }, error = function(error_condition) {
+    # Deals with only one column with row names.
+    fread(input = input, header = FALSE, sep = sep, fill = FALSE, check.names = check.names)
+  }) 
     cna <- make.names(colnames(df0))
     if (cna[1]=='V1') cna <- cna[-1] else cna <- cna[-ncol(df0)] 
     df1 <- as.data.frame(df0); rownames(df1) <- df1[, 1]
-    # Subsetting identical column names in a matrix will not trigger appending numbers.
-    df1 <- as.matrix(df1[, -1]); colnames(df1) <- cna
+    df1 <- df1[, -1, drop = FALSE]; colnames(df1) <- cna
     if(isRowGene==FALSE) df1 <- t(df1)
     cna <- colnames(df1); rna <- rownames(df1) 
-  
-  } else { df1 <- input; rna <- rownames(df1); cna <- colnames(df1) } 
-  # Isolate data and annotation.
+  } else { df1 <- input; rna <- rownames(df1); cna <- colnames(df1) }
+  # Covert factors to character. Only data.frame works not matrix.
+  fct.idx <- vapply(df1, is.factor, logical(1))
+  df1[fct.idx] <- lapply(df1[fct.idx], as.character) 
+  # Subsetting identical column names in a matrix will not trigger appending numbers.
+  df1 <- as.matrix(df1)
+  # Isolate data and row metadata.
   na <- vapply(seq_len(ncol(df1)), function(i) { tryCatch({ as.numeric(df1[, i]) }, warning=function(w) { return(rep(NA, nrow(df1))) }, error=function(e) { stop("Please make sure input data are numeric!") }) }, FUN.VALUE=numeric(nrow(df1)) )
   na <- as.data.frame(na); rownames(na) <- rna
   idx <- colSums(apply(na, 2, is.na))!=0
-  gene2 <- na[!idx]; colnames(gene2) <- cna <- cna[!idx]
-  gene3 <- as.data.frame(df1)[idx]
-  form <- grepl("__", cna); if (sum(form)==0) { colnames(gene2) <- paste0(cna, '__', 'con'); con.na <- FALSE } else con.na <- TRUE
-  if (ncol(gene3)>0) { colnames(gene3)[1] <- 'ann'; gene3 <- gene3[1] }
-  if(sum(is.na(as.numeric(as.matrix(gene2))))>=1) return('Make sure all values in data matrix are numeric.')
+  df.num <- na[!idx]; colnames(df.num) <- cna <- cna[!idx]
+  df.met <- as.data.frame(df1)[idx]
+  # Only one column is selected for row metadata.
+  if (ncol(df.met) > 0) {
+    met.idx <- grep('metadata', colnames(df.met), ignore.case = TRUE)[1]
+    if (!is.na(met.idx)) df.met <- df.met[, met.idx, drop = FALSE] else { colnames(df.met)[1] <- 'metadata'; df.met <- df.met[, 1, drop = FALSE] }
+  }
+  # Only row metadata.
+  if (ncol(df.num) == 0) {
+    return(list(df.aggr = NULL, df.met=as.data.frame(df.met), df.rep = NULL, con.na = FALSE))
+  }
+  form <- grepl("__", cna); if (sum(form)==0) { colnames(df.num) <- paste0(cna, '__', 'con'); con.na <- FALSE } else con.na <- TRUE
+  if(sum(is.na(as.numeric(as.matrix(df.num))))>=1) return('Make sure all values in data matrix are numeric.')
   
-  gen.rep <- gene2; rna <- rownames(gen.rep); gen.rep <-apply(gen.rep, 2, as.numeric); rownames(gen.rep) <- rna
+  df.rep <- df.num; rna <- rownames(df.rep); df.rep <- apply(df.rep, 2, as.numeric); rownames(df.rep) <- rna
   # Aggregate replicates.
   if (any(duplicated(cna)) & !is.null(rep.aggr)) {
 
     # To keep colnames, "X" should be a character, not a factor.
-    if (rep.aggr=='mean') gene2 <- sapply(X=unique(cna), function(x) rowMeans(gene2[, cna==x, drop=FALSE]))
+    if (rep.aggr=='mean') df.num <- sapply(X=unique(cna), function(x) rowMeans(df.num[, cna==x, drop=FALSE]))
     if (rep.aggr=='median') {
-
-      gene2 <- sapply(X=unique(cna), function(x) Biobase::rowMedians(gene2[, cna==x, drop=FALSE]))
-      rownames(gene2) <- rna
-
+      df.num <- sapply(X=unique(cna), function(x) Biobase::rowMedians(df.num[, cna==x, drop=FALSE]))
+      rownames(df.num) <- rna
     }
 
-  }; gene2 <-apply(gene2, 2, as.numeric); rownames(gene2) <- rna 
-  return(list(gene2=as.data.frame(gene2), gene3=as.data.frame(gene3), gen.rep=as.data.frame(gen.rep), con.na=con.na))
+  }; df.aggr <-apply(df.num, 2, as.numeric); rownames(df.aggr) <- rna 
+  return(list(df.aggr=as.data.frame(df.aggr), df.met=as.data.frame(df.met), df.rep=as.data.frame(df.rep), con.na=con.na))
 
 }
 
@@ -189,26 +208,30 @@ shinyServer(function(input, output, session) {
 
   observe({
 
-    withProgress(message="loading dependencies: ", value=0, {
+    withProgress(message="Loading dependencies: ", value=0, {
     incProgress(0.3, detail="in progress ...")
-    library(SummarizedExperiment); library(shiny); library(shinydashboard); library(grImport); library(rsvg); library(ggplot2); library(DT) 
+    library(SummarizedExperiment); library(shiny); library(shinydashboard); library(shinydashboardPlus); library(grImport); library(rsvg); library(ggplot2); library(DT) 
     incProgress(0.6, detail="in progress ...")
     library(gridExtra); library(ggdendro); library(WGCNA); library(grid); library(xml2); library(plotly); library(data.table); library(genefilter); library(flashClust); library(visNetwork); 
+    showModal(modal(title = HTML('<center><b>Welcome to spatialHeatmap!</b><center>'), msg = strong('Please wait for the landing page to finish!')))
     incProgress(0.9, detail="in progress...")
-    library(reshape2); library(igraph); library(animation); library(av); library(shinyWidgets); library(yaml); library(HDF5Array); library(sortable); library(parallel)
+    library(reshape2); library(igraph); library(animation); library(av); library(shinyWidgets); library(yaml); library(HDF5Array); library(sortable); library(shinyBS); library(shinyjs)
+    # DEG
+    library(UpSetR)
   })
 
     lis.cfg <- yaml.load_file('config/config.yaml')
     lis.cfg <- lis.cfg[!vapply(lis.cfg, is.null, logical(1))]
+    # Separate data sets, download files, and parameters.
     lis.dat <- lis.cfg[grepl('^dataset\\d+', names(lis.cfg))]
-    lis.dld <- lis.cfg[grepl('download_single|download_multiple|download_spatial_temporal', names(lis.cfg))]
-    if (is.null(input$config)) lis.par <- lis.cfg[!grepl('^dataset\\d+|download_single|download_multiple|download_spatial_temporal', names(lis.cfg))] else lis.par <- yaml.load_file(input$config$datapath[1])
+    lis.dld <- lis.cfg[grepl('download_single|download_multiple|download_spatial_temporal|download_batched_data_aSVGs', names(lis.cfg))]
+    if (is.null(input$config)) lis.par <- lis.cfg[!grepl('^dataset\\d+|download_single|download_multiple|download_spatial_temporal|download_batched_data_aSVGs', names(lis.cfg))] else lis.par <- yaml.load_file(input$config$datapath[1])
     upl.size <- toupper(lis.par$max.upload.size)
     num <- as.numeric(gsub('(\\d+)(G|M)', '\\1', upl.size))
     if (grepl('\\d+G$', upl.size)) max.size <- num*1024^3
     if (grepl('\\d+M$', upl.size)) max.size <- num*1024^2 
     options(shiny.maxRequestSize=max.size) 
-    if (!any(lis.par$hide.legend %in% c('Yes', 'No'))) lis.par$hide.legend <- ifelse(lis.par$hide.legend==TRUE, 'Yes', 'No')
+    # if (!any(lis.par$hide.legend %in% c('Yes', 'No'))) lis.par$hide.legend <- ifelse(lis.par$hide.legend==TRUE, 'Yes', 'No')
     # Organise configuration parameters in a data frame.
     for (i in seq_along(lis.par)) {
       lis0 <- lis.par[[i]]; if (length(lis0)>1) {
@@ -221,16 +244,14 @@ shinyServer(function(input, output, session) {
     }
 
     # Separate data, svg.
-    na.ipt <- dat.ipt <- svg.ipt <- NULL; for (i in lis.dat) { 
- 
+    na.ipt <- dat.ipt <- svg.ipt <- NULL; for (i in lis.dat) {  
       na.ipt <- c(na.ipt, i$name); dat.ipt <- c(dat.ipt, i$data)
       svg.ipt <- c(svg.ipt, list(i$svg))
-
     }; names(dat.ipt) <- names(svg.ipt) <- na.ipt
 
     df.tar <- input$tar; dat.upl <- svg.upl <- NULL
     tar.num <- grepl('\\.tar$', df.tar$datapath)
-    if (!is.null(df.tar)) validate(need(try(sum(tar.num)==2), 'Two tar files of data and aSVGs respectively are expected!'))
+    if (!is.null(df.tar)) validate(need(try(sum(tar.num)==2), 'Two separate tar files of data and aSVGs respectively are expected!'))
     if (sum(tar.num)==2) {
 
       cat('Processing uploaded tar... \n')
@@ -262,15 +283,14 @@ shinyServer(function(input, output, session) {
     output$spatialHeatmap <- renderText({ lis.par$title['title', 'default'] })
     output$title.w <- renderText({ lis.par$title['width', 'default'] })
     dat.nas <- c('none', 'customData', names(dat.def), 'customComputedData')
-    updateSelectInput(session, 'fileIn', 'Step 1: data sets', dat.nas, lis.par$default.dataset)
-    updateRadioButtons(session, inputId='dimName', label='Step 4: is column or row gene?', choices=c("None", "Row", "Column"), selected=lis.par$col.row.gene, inline=TRUE)
-    updateNumericInput(session, inputId="A", label="Value (A) to exceed:", value=as.numeric(lis.par$data.matrix['A', 'default']))
-    updateNumericInput(session, inputId="P", label="Proportion (P) of samples with values >= A:", value=as.numeric(lis.par$data.matrix['P', 'default']))
-    updateNumericInput(session, inputId="CV1", label="Min coefficient of variation (CV1):", value=as.numeric(lis.par$data.matrix['CV1', 'default']))
-    updateNumericInput(session, inputId="CV2", label="Max coefficient of variation (CV2):", value=as.numeric(lis.par$data.matrix['CV2', 'default']))
-    updateRadioButtons(session, inputId='log', label='Log/exp:', choices=c("No", "log2", "exp2"), selected=lis.par$log.exp, inline=TRUE)
-    updateRadioButtons(session, inputId='scale', label='Scale by:', choices=c('No', 'Row', 'Column'), selected=lis.par$data.matrix.scale, inline=TRUE)
-    updateRadioButtons(session, inputId='hide.lgd', label="Hide legend:", choices=c('Yes', 'No'), selected=lis.par$hide.legend, inline=TRUE)
+    updateSelectInput(session, 'fileIn', NULL, dat.nas, lis.par$default.dataset)
+    updateRadioButtons(session, inputId='dimName', label='Step 2B: is column or row gene?', choices=c("None", "Row", "Column"), selected=lis.par$col.row.gene, inline=TRUE)
+    updateNumericInput(session, inputId="A", label="Value (A) to exceed", value=as.numeric(lis.par$data.matrix['A', 'default']))
+    updateNumericInput(session, inputId="P", label="Proportion (P) of samples with values >= A", value=as.numeric(lis.par$data.matrix['P', 'default']))
+    updateNumericInput(session, inputId="CV1", label="Min coefficient of variation (CV1)", value=as.numeric(lis.par$data.matrix['CV1', 'default']))
+    updateNumericInput(session, inputId="CV2", label="Max coefficient of variation (CV2)", value=as.numeric(lis.par$data.matrix['CV2', 'default']))
+    updateRadioButtons(session, inputId='log', label='Log/exp transform', choices=c("No", "log2", "exp2"), selected=lis.par$log.exp, inline=TRUE)
+    updateRadioButtons(session, inputId='scale', label='Scale by', choices=c('No', 'Row', 'Column'), selected=lis.par$data.matrix.scale, inline=TRUE)
     updateRadioButtons(session, inputId='measure', label="Measure:", choices=c('correlation', 'distance'), selected=lis.par$mhm['measure', 'default'], inline=TRUE)
     updateRadioButtons(session, inputId="cor.abs", label="Cor.absolute:", choices=c('No', 'Yes'), selected=lis.par$mhm['cor.absolute', 'default'], inline=TRUE)
     updateRadioButtons(session, inputId="thr", label="Select by:", choices=c('proportion'='p', 'number'='n', 'value'='v'), selected=lis.par$mhm['select.by', 'default'], inline=TRUE)
@@ -286,19 +306,18 @@ shinyServer(function(input, output, session) {
 
   observe({ 
 
-    dld.exp <- reactiveValues(sgl=NULL, mul=NULL, st=NULL)
+    dld.exp <- reactiveValues(sgl=NULL, mul=NULL, st=NULL, bat = NULL)
     dld.exp$sgl <- cfg$lis.dld$download_single
     dld.exp$mul <- cfg$lis.dld$download_multiple
     dld.exp$st <- cfg$lis.dld$download_spatial_temporal
+    dld.exp$bat <- cfg$lis.dld$download_batched_data_aSVGs
 
     output$dld.cfg <- downloadHandler(
       filename=function(){ "config_par.yaml" },
-      content=function(file=paste0(normalizePath(tempdir(check=TRUE), winslash="/", mustWork=FALSE), '/config_par.yaml')){ 
- 
+ content=function(file=paste0(normalizePath(tempdir(check=TRUE), winslash="/", mustWork=FALSE), '/config_par.yaml')){  
         lis.cfg <- yaml.load_file('config/config.yaml')
         lis.par <- lis.cfg[c("max.upload.size", "default.dataset", "col.row.gene", "separator", "hide.legend", "data.matrix", "shm.img", "shm.anm", "shm.video", "legend", "mhm", "network")]
         write_yaml(lis.par, file)
-
       }
     )
     output$dld.sgl <- downloadHandler(
@@ -310,6 +329,10 @@ shinyServer(function(input, output, session) {
     output$dld.st <- downloadHandler(   
       filename=function(){ "spatiotemporal_aSVG_data.zip" },
 content=function(file=paste0(normalizePath(tempdir(check=TRUE), winslash="/", mustWork=FALSE), '/spatiotemporal_aSVG_data.zip')){ zip(file, c(dld.exp$st$data, dld.exp$st$svg)) }
+  )
+    output$dld.bat <- downloadHandler(   
+      filename=function(){ "batched_data_aSVGs.zip" },
+content=function(file=paste0(normalizePath(tempdir(check=TRUE), winslash="/", mustWork=FALSE), '/batched_data_aSVGs.zip')){ zip(file, c(dld.exp$bat$data, dld.exp$bat$svg)) }
   )
   })
 
@@ -324,20 +347,29 @@ content=function(file=paste0(normalizePath(tempdir(check=TRUE), winslash="/", mu
   # Acknowledgement.
   output$ack <-renderUI({ includeHTML("instruction/acknowledgement.html") })
 
+  observe({
+    toggleState(id = "geneInpath", condition = input$fileIn == 'customData')
+    toggleState(id = "dimName", condition = input$fileIn == 'customData')
+    toggleState(id = "target", condition = input$fileIn == 'customData')
+    toggleState(id = "met", condition = input$fileIn == 'customData')
+    toggleState(id = "svgInpath1", condition = input$fileIn == 'customData')
+    toggleState(id = "svgInpath2", condition = input$fileIn == 'customData')
+  })
+
   # Filter parameters.
   fil <- reactiveValues(P=0, A=0, CV1=-Inf, CV2=Inf)
-
+  #log_exp_server('data', list(input$fileIn, input$geneInpath, cfg))
   observe({
 
     input$fileIn; input$geneInpath
-    updateRadioButtons(session, inputId="dimName", label="Step 4: is column or row gene?", 
+    updateRadioButtons(session, inputId="dimName", label="Step 2B: is column or row gene?", 
     inline=TRUE, choices=c("None", "Row", "Column"), selected="None")
-    updateRadioButtons(session, inputId='log', label='Log/exp transform:', choices=c("No", "log2", "exp2"), selected=cfg$lis.par$data.matrix['log.exp', 'default'], inline=TRUE)
-    updateRadioButtons(session, 'scale', label='Scale by:', choices=c('No', 'Row', 'Column'), selected=cfg$lis.par$data.matrix['scale', 'default'], inline=TRUE)
-    updateRadioButtons(session, inputId='cs.v', label='Color scale based on:', choices=c("Selected rows", "All rows"), selected=cfg$lis.par$shm.img['color.scale', 'default'], inline=TRUE)
-    updateNumericInput(session, inputId="height", label="Overall height:", value=as.numeric(cfg$lis.par$shm.img['height', 'default']), min=0.1, max=Inf, step=NA)
-    updateNumericInput(session, inputId="width", label="Overall width:", value=as.numeric(cfg$lis.par$shm.img['width', 'default']), min=0.1, max=Inf, step=NA)
-    updateNumericInput(session, inputId="col.n", label="Columns:", value=as.numeric(cfg$lis.par$shm.img['columns', 'default']), min=1, max=Inf, step=1)
+    updateRadioButtons(session, inputId='log', label='Log/exp transform', choices=c("No", "log2", "exp2"), selected=cfg$lis.par$data.matrix['log.exp', 'default'], inline=TRUE)
+    updateRadioButtons(session, 'scale', label='Scale by', choices=c('No', 'Row', 'Column'), selected=cfg$lis.par$data.matrix['scale', 'default'], inline=TRUE)
+    updateRadioButtons(session, inputId='cs.v', label='Color key based on', choices=c("Selected rows", "All rows"), selected=cfg$lis.par$shm.img['color.scale', 'default'], inline=TRUE)
+    # updateNumericInput(session, inputId="height", label="Overall height", value=as.numeric(cfg$lis.par$shm.img['height', 'default']), min=0.1, max=Inf, step=NA)
+    # updateNumericInput(session, inputId="width", label="Overall width", value=as.numeric(cfg$lis.par$shm.img['width', 'default']), min=0.1, max=Inf, step=NA)
+    updateNumericInput(session, inputId="col.n", label="Columns", value=as.numeric(cfg$lis.par$shm.img['columns', 'default']), min=1, max=Inf, step=1)
 
   })
 
@@ -375,7 +407,7 @@ content=function(file=paste0(normalizePath(tempdir(check=TRUE), winslash="/", mu
 
       incProgress(0.5, detail="loading matrix, please wait ...")
       dat.na <- cfg$dat.def[input$fileIn]
-      if ('example' %in% strsplit(dat.na, '/')[[1]]) df.te <- fread.df(input=dat.na, isRowGene=TRUE) else { 
+      if ('example' %in% strsplit(dat.na, '/')[[1]]) df.te <- fread_df(input=dat.na, isRowGene=TRUE) else { 
         # Exrtact data from uploaded tar.
         dat <- NULL; if (!is.null(cfg$pa.dat.upl)) if (file.exists(cfg$pa.dat.upl)) {
           cat('Extracting uploaded data... \n')
@@ -390,16 +422,37 @@ content=function(file=paste0(normalizePath(tempdir(check=TRUE), winslash="/", mu
         if (is(dat, 'SummarizedExperiment')) {
           dat <- se_from_db(dat)
           validate(need(try(!is.character(dat)), dat))
-        }; df.te <- fread.df(input=dat)
+        }; df.te <- fread_df(input=dat)
       }; return(df.te)
     }
     if (input$fileIn %in% cfg$na.cus & 
     !is.null(input$geneInpath) & input$dimName!="None") {
-
       incProgress(0.25, detail="importing matrix, please wait ...")
-      geneInpath <- input$geneInpath
-      df.upl <- fread.df(input=geneInpath$datapath, isRowGene=(input$dimName=='Row')); return(df.upl)
-   
+      geneInpath <- input$geneInpath$datapath; targetInpath <- input$target$datapath; metInpath <- input$met$datapath
+      # Keep replicates unchaged, and compared with targets/metadata files.
+      df.upl <- fread_df(read_fr(geneInpath), rep.aggr = NULL)
+      df.rep <- df.upl$df.rep; df.met <- df.upl$df.met
+      if (!is.null(targetInpath)) {
+        df.tar <- read_fr(targetInpath)
+        # If errors detected, modalDialog terminates the app, while validate only stops the current step. 
+        if (nrow(df.tar) != ncol(df.rep)) showModal(modal(msg = 'Ensure "columns" in the data matrix corresponds with "rows" in the targets file respectively!'))
+        validate(need(try(nrow(df.tar) == ncol(df.rep)), 'Ensure "columns" in the data matrix corresponds with "rows" in the targets file respectively!'))
+        # Check feature/factor columns in targets file.
+        cna.tar <- colnames(df.tar) <- tolower(colnames(df.tar))
+        if (all(c('feature', 'factor') %in% cna.tar)) cna <- paste0(df.tar$feature, '__', df.tar$factor) else if ('feature' %in% cna.tar) cna <- paste0(df.tar$feature, '__', 'con')
+        colnames(df.rep) <- cna
+      }     
+
+      if (!is.null(metInpath)) df.met <- read_fr(metInpath); 
+      if (nrow(df.met) != nrow(df.rep)) showModal(modal(msg = 'Ensure "rows" in the data matrix corresponds with "rows" in the row metadata file respectively!'))
+      validate(need(try(nrow(df.met) == nrow(df.rep)), 'Ensure "rows" in the data matrix corresponds with "rows" in the row metadata file respectively!'))
+      rownames(df.met) <- rownames(df.rep)
+      # Aggregate replicates after targets file is processed.
+      df.upl1 <- fread_df(df.rep, rep.aggr = 'mean')
+      df.upl$df.aggr <- df.upl1$df.aggr
+      df.upl$df.rep <- df.rep; df.upl$df.met <- df.met 
+      df.upl$con.na <- df.upl1$con.na
+      if ((!is.null(input$svgInpath1) | !is.null(input$svgInpath2))) return(df.upl) 
     }
 
     })
@@ -409,70 +462,80 @@ content=function(file=paste0(normalizePath(tempdir(check=TRUE), winslash="/", mu
   # Transform data.
   geneIn1 <- reactive({
 
-    if (is.null(geneIn0())|is.null(input$scale)) return(NULL)
-    gene1 <- gene2 <- geneIn0()[['gene2']] 
-    if (input$log=='log2') {
-   
-      g.min <- min(gene2)
-      if (g.min<0) gene2 <- gene2-g.min+1; if (g.min==0) gene2 <- gene2+1; gene2 <- log2(gene2)
-
-    }; if (input$log=='exp2') gene2 <- 2^gene2
+    if (is.null(geneIn0())|is.null(input$scale) | is.null(input$log)) return(NULL)
+    # print(input$log)
+    # req(input$log)
+    df.aggr <- df.aggr.tran <- geneIn0()[['df.aggr']] 
+    if (input$log=='log2') { 
+      g.min <- min(df.aggr.tran)
+      if (g.min<0) df.aggr.tran <- df.aggr.tran-g.min+1; if (g.min==0) df.aggr.tran <- df.aggr.tran+1; df.aggr.tran <- log2(df.aggr.tran)
+    }; if (input$log=='exp2') df.aggr.tran <- 2^df.aggr.tran
     # Scale by row/column
-    if (input$scale=='Row') { gene2 <- t(scale(t(gene2))) } else if (input$scale=='Column') { gene2 <- scale(gene2) }
+    if (input$scale=='Row') { df.aggr.tran <- t(scale(t(df.aggr.tran))) } else if (input$scale=='Column') { df.aggr.tran <- scale(df.aggr.tran) }
 
-    gene3 <- geneIn0()[['gene3']]; gen.rep <- geneIn0()[['gen.rep']]
-    return(list(gene1=gene1, gene2=gene2, gene3=gene3, gen.rep=gen.rep))
+    df.met <- geneIn0()[['df.met']]; df.rep <- geneIn0()[['df.rep']]
+    return(list(df.aggr=df.aggr, df.aggr.tran=df.aggr.tran, df.met=df.met, df.rep=df.rep))
 
   })
 
   output$col.order <- renderUI({
-
     if (is.null(geneIn1())) return()
-    col.nas <- colnames(geneIn1()[['gene2']])
-    dropdownButton(inputId='dropdown', label='Re-order columns', circle=FALSE, icon=NULL, status='primary',
-    actionButton("col.cfm", "Confirm", icon=icon("refresh")), 
-    selectizeInput(inputId="col.na", label='', choices=col.nas, selected=col.nas, multiple=TRUE, options= list(plugins=list('remove_button', 'drag_drop')))
+    col.nas <- colnames(geneIn1()[['df.aggr.tran']])
+    column(12, actionButton("col.cfm", "Confirm", icon=icon("refresh")), 
+    selectizeInput(inputId="col.na", label='', choices=col.nas, selected=col.nas, multiple=TRUE, options= list(plugins=list('drag_drop')))
     )
-  
   })
   sear <- reactiveValues(id=NULL)
   observeEvent(input$fileIn, { sear$id <- NULL })
   observeEvent(input$search.but, {
-    
     if (is.null(geneIn1())) return()
     if (input$search=='') sel <- as.numeric(cfg$lis.par$data.matrix['row.selected', 'default']) else {
-
       gens <- strsplit(gsub(' |,', '_', input$search), '_')[[1]]
       pat <- paste0('^', gens, '$', collapse='|')
-      sel <- which(grepl(pat, x=rownames(geneIn1()[['gene2']]), ignore.case=TRUE, perl=TRUE))
+      sel <- which(grepl(pat, x=rownames(geneIn1()[['df.aggr.tran']]), ignore.case=TRUE, perl=TRUE))
       if (length(sel)==0) sel <- as.numeric(cfg$lis.par$data.matrix['row.selected', 'default'])
-
      }; sear$id <- sel
-
   })
+
+  col.reorder <- reactiveValues(col.re='Y', col.na.re = NULL)
+  observe({
+    if (is.null(geneIn1())) return()
+    # input$col.na is NULL on loading.
+    if (is.null(input$col.na)) col.reorder$col.na.re <- colnames(geneIn1()$df.aggr.tran) else col.reorder$col.na.re <- input$col.na
+  })
+
   geneIn <- reactive({
     
     if (is.null(geneIn1())) return(NULL)    
-    gene1 <- geneIn1()[['gene1']]; gene2 <- geneIn1()[['gene2']]; gene3 <- geneIn1()[['gene3']]; input$fil.but
-    if (!identical(sort(input$col.na), sort(colnames(gene2)))) return()
+    df.aggr <- geneIn1()[['df.aggr']]; df.aggr.tran <- geneIn1()[['df.aggr.tran']]; df.met <- geneIn1()[['df.met']]; input$fil.but
+    # When input$fileIn changes, col.reorder$col.na.re of last session still exists and causes errors.
+    if (!identical(sort(col.reorder$col.na.re), sort(colnames(df.aggr.tran)))) return()
     # Input variables in "isolate" will not triger re-excution, but if the whole reactive object is trigered by "input$fil.but" then code inside "isolate" will re-excute.
     isolate({ 
-      se <- SummarizedExperiment(assays=list(expr=as.matrix(gene2)), rowData=gene3)
-      if (ncol(gene3)>0) ann.col <- colnames(gene3)[1] else ann.col <- NULL
+      se <- SummarizedExperiment(assays=list(expr=as.matrix(df.aggr.tran)), rowData=df.met)
+      if (ncol(df.met)>0) ann.col <- colnames(df.met)[1] else ann.col <- NULL
       # If scaled by row, sd is 1, mean is 0, cv is Inf.
       se <- filter_data(data=se, ann=ann.col, sam.factor=NULL, con.factor=NULL, pOA=c(fil$P, fil$A), CV=c(ifelse(input$scale=='Row', -Inf, fil$CV1), ifelse(input$scale=='Row', Inf, fil$CV2)), dir=NULL, verbose=FALSE)
       if (nrow(se)==0) { validate(need(try(nrow(se)>0), 'All rows are filtered out!')); return() }
-      # In case of all rows are filtered, the app continues to work without refreshing after the filter parameters are reduced.
+      # In case all rows are filtered, the app continues to work without refreshing after the filter parameters are reduced.
       se <- filter_data(data=se, ann=ann.col, sam.factor=NULL, con.factor=NULL, pOA=c(fil$P, fil$A), CV=c(ifelse(input$scale=='Row', -Inf, fil$CV1), ifelse(input$scale=='Row', Inf, fil$CV2)), dir=NULL, verbose=FALSE)
-      gene2 <- as.data.frame(assay(se), stringsAsfactors=FALSE); colnames(gene2) <- make.names(colnames(gene2))
-      gene1 <- gene1[rownames(gene2), ]
-      gene3 <- as.data.frame(rowData(se))[, , drop=FALSE]
+      df.aggr.tran <- as.data.frame(assay(se), stringsAsfactors=FALSE)
+      colnames(df.aggr.tran) <- make.names(colnames(df.aggr.tran))
+       df.aggr <- df.aggr[rownames(df.aggr.tran), ]
+       df.met <- as.data.frame(rowData(se))[, , drop=FALSE]
     })
     cat('Preparing data matrix... \n')
-    if (is.null(sear$id)) rows <- seq_len(nrow(gene2)) else rows <- sear$id
-    if (length(rows)==1 & rows[1]==as.numeric(cfg$lis.par$data.matrix['row.selected', 'default'])) rows <- seq_len(nrow(gene2))
-    return(list(gene1=gene1[rows, input$col.na], gene2=gene2[rows, input$col.na], gene3=gene3[rows, , drop=FALSE]))
+    if (is.null(sear$id)) rows <- seq_len(nrow(df.aggr.tran)) else rows <- sear$id
+    if (length(rows)==1 & rows[1]==as.numeric(cfg$lis.par$data.matrix['row.selected', 'default'])) rows <- seq_len(nrow(df.aggr.tran))
+    df.aggr.tran.order <- df.aggr.tran[rows, col.reorder$col.na.re, drop=FALSE]
+    return(list(df.aggr=df.aggr, df.aggr.tran=df.aggr.tran, df.aggr.tran.order = df.aggr.tran.order, df.met=df.met[rows, , drop=FALSE]))
 
+  })
+  
+# Avoid unnecessay correlation/distance computation if geneIn() updates due to column reordering. For example, correlation/distance, extracting coordinates, which only depend on the df.aggr.
+  df.net <- reactive({
+    if (is.null(geneIn())) return()
+    return(list(df.aggr = geneIn()[['df.aggr']], df.met = geneIn()[['df.met']]))
   })
   output$dt <- renderDataTable({
 
@@ -483,58 +546,57 @@ content=function(file=paste0(normalizePath(tempdir(check=TRUE), winslash="/", mu
 
       incProgress(0.5, detail="displaying, please wait ...")
       if (input$fileIn!="none") {
-
-      gene <- geneIn(); gene.dt <- cbind.data.frame(gene[["gene2"]][, , drop=FALSE], gene[["gene3"]][, , drop=FALSE], stringsAsFactors=FALSE) 
-
+      df.all <- geneIn(); gene.dt <- cbind.data.frame(df.all[["df.met"]][, , drop=FALSE], df.all[["df.aggr.tran"]][, , drop=FALSE], stringsAsFactors=FALSE) 
    }; cat('Presenting data matrix... \n')
    if (is.null(sear$id)) sel <- as.numeric(cfg$lis.par$data.matrix['row.selected', 'default']) else sel <- sear$id
    if (length(sel)==1 & sel[1]==as.numeric(cfg$lis.par$data.matrix['row.selected', 'default']) & nrow(gene.dt)>1) sel <- sel else if (nrow(gene.dt)==1)  sel <- 1 else if (length(sel)>1) sel <- seq_along(sel)
-
    datatable(gene.dt, selection=list(mode="multiple", target="row", selected=sel),
-   filter="top", extensions=c('Scroller'), options=list(pageLength=5, lengthMenu=c(5, 15, 20), autoWidth=TRUE, scrollCollapse=TRUE, deferRender=TRUE, scrollX=TRUE, scrollY=200, scroller=TRUE, searchHighlight=FALSE, search=list(regex=TRUE, smart=FALSE, caseInsensitive=TRUE), searching=FALSE), class='cell-border strip hover') %>% formatStyle(0, backgroundColor="orange", cursor='pointer') %>% 
-    formatRound(colnames(geneIn()[["gene2"]]), 2)
-
+   filter="top", extensions=c('Scroller'), plugins = "ellipsis",
+   options=list(pageLength=5, lengthMenu=c(5, 15, 20), autoWidth=TRUE, scrollCollapse=TRUE, deferRender=TRUE, scrollX=TRUE, scrollY=200, scroller=TRUE, searchHighlight=FALSE, search=list(regex=TRUE, smart=FALSE, caseInsensitive=TRUE), searching=FALSE, columnDefs = list(list(targets = c(1), render = JS("$.fn.dataTable.render.ellipsis(5, false)")))), 
+   class='cell-border strip hover') %>% formatStyle(0, backgroundColor="orange", cursor='pointer') %>% 
+   formatRound(colnames(geneIn()[["df.aggr.tran"]]), 2)
     })
-
   })
 
-  gID <- reactiveValues(geneID="none", new=NULL, all=NULL)
-  observe({ input$geneInpath; input$fileIn; gID$geneID <- "none" })
-  observe({ if (is.null(geneIn())) gID$geneID <- "none" })
+  gID <- reactiveValues(geneSel="none", new=NULL, all=NULL)
+  observe({ input$geneInpath; input$fileIn; gID$geneSel <- "none" })
+  observe({ if (is.null(geneIn())) gID$geneSel <- "none" })
   # To make the "gID$new" and "gID$all" updated with the new "input$fileIn", since the selected row is fixed (3rd row), the "gID$new" is not updated when "input$fileIn" is changed, and the downstream is not updated either. The shoot/root examples use the same data matrix, so the "gID$all" is the same (pre-selected 3rd row) when change from the default "shoot" to others like "organ". As a result, the "gene$new" is null and downstream is not updated. Also the "gene$new" is the same when change from shoot to organ, and downstream is not updated, thus "gene$new" and "gene$all" are both set NULL above upon new "input$fileIn".  
   observeEvent(input$fileIn, {
 
     if (is.null(input$dt_rows_selected)) return()
     gID$all <- gID$new <- NULL
-    r.na <- rownames(geneIn()[["gene2"]]); gID$geneID <- r.na[input$dt_rows_selected]
-    # Avoid multiple selected rows from last input$fileIn. Must be behind gID$geneID. 
+    r.na <- rownames(geneIn()[["df.aggr.tran"]]); gID$geneSel <- r.na[input$dt_rows_selected]
+    # Avoid multiple selected rows from last input$fileIn. Must be behind gID$geneSel. 
     if (length(input$dt_rows_selected)>1) return()
-    gID$new <- setdiff(gID$geneID, gID$all); gID$all <- c(gID$all, gID$new)
-    if (is.null(r.na)) gID$geneID <- "none"
+    gID$new <- setdiff(gID$geneSel, gID$all); gID$all <- c(gID$all, gID$new)
+    if (is.null(r.na)) gID$geneSel <- "none"
+    cat('New file:', input$fileIn, '\n')
+    cat('New ID:', gID$new, 'Selected ID:', gID$geneSel, 'All ID:', gID$all, '\n')
     })
   observeEvent(list(input$dt_rows_selected, geneIn()), {
- 
     if (is.null(input$dt_rows_selected)) return()
-    r.na <- rownames(geneIn()[["gene2"]]); gID$geneID <- r.na[input$dt_rows_selected]
-    if (any(is.na(gID$geneID))) gID$geneID <- "none"
-    gID$new <- setdiff(gID$geneID, gID$all); gID$all <- c(gID$all, gID$new)
-    
+    r.na <- rownames(geneIn()[["df.aggr.tran"]]); gID$geneSel <- r.na[input$dt_rows_selected]
+    if (any(is.na(gID$geneSel))) gID$geneSel <- "none"
+    gID$new <- setdiff(gID$geneSel, gID$all); gID$all <- c(gID$all, gID$new) 
+    cat('Change in data matrix/selected rows:', '\n')
+    cat('New ID:', gID$new, 'Selected ID:', gID$geneSel, 'All ID:', gID$all, '\n')
   })
   observeEvent(list(input$search.but), {
   
     if (is.null(input$search.but)|is.null(sear$id)|is.null(geneIn())) return()
-    gID$geneID <- rownames(geneIn()[["gene2"]])[sear$id]
-    if (any(is.na(gID$geneID))) gID$geneID <- "none"
+    gID$geneSel <- rownames(geneIn()[["df.aggr.tran"]])[sear$id]
+    if (any(is.na(gID$geneSel))) gID$geneSel <- "none"
  
   })
 
   geneV <- reactive({
 
-    if (any(is.na(gID$geneID))) return()
-    if (is.null(geneIn())|sum(gID$geneID[1]!='none')==0) return(NULL)
+    if (any(is.na(gID$geneSel))) return()
+    if (is.null(geneIn())|sum(gID$geneSel[1]!='none')==0) return(NULL)
     if (input$cs.v=="Selected rows" & is.null(input$dt_rows_selected)) return(NULL)
-    if (input$fileIn!="none") { if (input$cs.v=="Selected rows") gene <- geneIn()[["gene2"]][gID$geneID, ]
-    if (input$cs.v=="All rows") gene <- geneIn()[["gene2"]] }
+    if (input$fileIn!="none") { if (input$cs.v=="Selected rows") gene <- geneIn()[["df.aggr.tran"]][gID$geneSel, ]
+    if (input$cs.v=="All rows") gene <- geneIn()[["df.aggr.tran"]] }
     seq(min(gene), max(gene), len=1000) # len must be same with that from the function "spatial_hm()". Otherwise the mapping of a gene value to the colour bar is not accurate. 
 
   })
@@ -566,7 +628,7 @@ content=function(file=paste0(normalizePath(tempdir(check=TRUE), winslash="/", mu
   shm.bar <- reactive({
 
     if (is.null(gID$all)) return(NULL)
-    if ((any(input$fileIn %in% cfg$na.def) & !is.null(geneIn()))|(input$fileIn %in% cfg$na.cus & (!is.null(input$svgInpath)|!is.null(input$svgInpath1)) & !is.null(geneIn()))) {
+    if ((any(input$fileIn %in% cfg$na.def) & !is.null(geneIn()))|(input$fileIn %in% cfg$na.cus & (!is.null(input$svgInpath1)|!is.null(input$svgInpath2)) & !is.null(geneIn()))) {
 
       if (length(color$col=="none")==0|input$color==""|is.null(geneV())) return(NULL)
 
@@ -588,17 +650,17 @@ content=function(file=paste0(normalizePath(tempdir(check=TRUE), winslash="/", mu
   observe({
 
     if (is.null(geneIn())) return(NULL)
-    r.na <- rownames(geneIn()[["gene2"]]); gens.sel <- r.na[input$dt_rows_selected]
+    r.na <- rownames(geneIn()[["df.aggr.tran"]]); gens.sel <- r.na[input$dt_rows_selected]
     if (length(gens.sel)==0) return()
     updateSelectInput(session, inputId="gen.sel", label="Select a target gene:", choices=c("None", gens.sel), selected=gens.sel[1])
 
   })
 
-  svg.na.mat <- reactiveValues(svg.path=NULL, svg.na=NULL)
+  svg.na.rematch <- reactiveValues(svg.path=NULL, svg.na=NULL)
   svg.path <- reactive({
     if (input$fileIn=='none') return()
     if (input$fileIn %in% cfg$na.cus) {
-      if (is.null(input$svgInpath1)) svgIn.df <- input$svgInpath else svgIn.df <- input$svgInpath1
+      if (is.null(input$svgInpath2)) svgIn.df <- input$svgInpath1 else svgIn.df <- input$svgInpath2
       svg.path <- svgIn.df$datapath; svg.na <- svgIn.df$name
     } else {
       # Extract svg path and name: single or multiple svg paths are treated same way.
@@ -612,33 +674,58 @@ content=function(file=paste0(normalizePath(tempdir(check=TRUE), winslash="/", mu
   })
 
   sam <- reactive({ 
-    cname <- colnames(geneIn()[["gene2"]]); idx <- grep("__", cname); c.na <- cname[idx]
+    cname <- colnames(df.net()$df.aggr); idx <- grep("__", cname); c.na <- cname[idx]
     if (length(grep("__", c.na))>=1) gsub("(.*)(__)(.*$)", "\\1", c.na) else return(NULL) 
   })
 
   output$svg <- renderUI({
     nas <- names(cfg$svg.def)
-    selectInput('svg', label='aSVGs to re-match:', choices=nas, selected=input$fileIn)
+    selectInput('svg', label='Choose an aSVG to re-match', choices=nas, selected=input$fileIn)
   })
+
+library(htmltools)
+
+ft_svg <- function(x) {
+ span(class = "panel panel-default",
+   div(class = "panel-heading", x), 
+   div(class = "panel-body", id = x)
+  )
+}
+
+ft_js <- function(x) {
+  sortable_js(css_id = x,
+    options = sortable_options(
+      multiDrag = NULL, sort = FALSE, animation = 1000, direction = NULL, 
+      group = list(name = "sortGroup1", put = TRUE),
+      onSort = sortable_js_capture_input(x)
+    )
+  )
+}
+
+ft2tag <- function(ft){
+  lapply(ft, function(i) { tag("span", list(class = class(i), tags$span(class = "glyphicon glyphicon-move"), i)) }
+  )
+}
 
   # The object scope in reactive expression is restricted to the reactive evironment, thus sf.sep and sam.sep are moved outside 'observe'.
   sf.sep <- 'only_above_features_are_re-matched'
   sam.sep <- 'only_above_samples_are_re-matched'
+  ft.reorder <- reactiveValues(ft.dat = NULL, ft.svg = NULL, ft.rematch = NULL)
   observeEvent(list(input$svg), {
     if (input$fileIn=='none'|is.null(cfg$svg.def)|is.null(input$svg)) return()
-    if (!(any(input$fileIn %in% cfg$na.def) & is.null(input$svgInpath))) return()
+    if (!(any(input$fileIn %in% cfg$na.def) & is.null(input$svgInpath1))) return()
     # Single or multiple svg paths are treated same way.
     lis <- svg_pa_na(cfg$svg.def[[input$svg]], cfg$pa.svg.upl)
     output$msg.match <- renderText({ validate(need(try(!is.character(lis)), lis)) })
     validate(need(try(!is.character(lis)), lis))
     svg.path <- lis$svg.path; svg.na <- lis$svg.na
-    cat('Access aSVG path for re-matching... \n')
+    cat('Access aSVG path for re-matching ... \n')
     # If multiple svgs, check suffixes.
     lis <- svg_suffix(svg.path, svg.na)
     validate(need(try(!is.character(lis)), lis))
     svg.path <- lis$svg.path; svg.na <- lis$svg.na
  
-  withProgress(message="Tissue heatmap: ", value=0, {  
+  withProgress(message="Spatial heatmap re-matching: ", value=0, {  
     incProgress(0.5, detail="extracting coordinates, please wait ...") 
     # Whether a single or multiple SVGs, all are returned in a list.
     sf.all <- NULL; for (i in seq_along(svg.na)) { 
@@ -653,38 +740,70 @@ content=function(file=paste0(normalizePath(tempdir(check=TRUE), winslash="/", mu
   sf.all <- c(sf.all[!pas.idx], sf.all[pas.idx])
   # Matching samples are raised to top.
   sam.all <- unique(sam()); inter <- intersect(sam.all, sf.all)
-  cat('Adding separators to samples and features for re-matching... \n')
+  cat('Adding separators to samples and features for re-matching ... \n')
   if (length(inter)!=0) { 
     int.idx1 <- sam.all %in% inter; inter1 <- sam.all[int.idx1]
     sam.all <- c(inter1, sam.sep, sam.all[!int.idx1])
     int.idx2 <- sf.all %in% inter; sf.all <- c(inter1, sf.sep, sf.all[!int.idx2])
   } else { sf.all <- c(sf.sep, sf.all); sam.all <- c(sam.sep, sam.all) }
+  ft.reorder$ft.dat <- sam.all1 <- sam.all[sam.all != sam.sep]
+  ft.reorder$ft.svg <- sf.all1 <- sf.all[sf.all != sf.sep]
+
+  cat('Preparing interface of data/aSVG features ... \n')
+  output$ft.match <- renderUI({
+      fluidRow(
+      span(class = "panel panel-default", style = 'margin-left:0px',
+        div(class = "panel-heading", strong("Features in aSVG")),
+        div(class = "panel-body", id = "ftSVG", ft2tag(sf.all1))
+      ),
+      div(class = "panel panel-default",
+        div(class = "panel-heading", strong("Features in data")),
+        lapply(sam.all1, ft_svg)
+      ), lapply(c('ftSVG', sam.all1), ft_js) # Items are interchangeable across ftSVG and sam.all1.
+      )
+  }) 
+
+  output$ft.re <- renderText({
+    input$root_p35S
+    # lapply(sam.all1, function(x) print(input[[x]]))
+  })
+
+
   output$sam <- renderUI({
-    rank_list(text="Drag samples in any desired order to match right", labels=sam.all, input_id="sam")
+    rank_list(text="Drag features in data in any desired order to match right", labels=sam.all, input_id="sam")
   })
 
   output$sf <- renderUI({
-    rank_list(text="Drag spatial features in any desired order to match left", labels=sf.all, input_id="sf"
+    rank_list(text="Drag features in aSVG in any desired order to match left", labels=sf.all, input_id="sf"
     )
-  }); svg.na.mat$svg.path <- svg.path; svg.na.mat$svg.na <- svg.na
+  }); svg.na.rematch$svg.path <- svg.path; svg.na.rematch$svg.na <- svg.na
 
-})
-    
+  })
+
+#  ft.rematch <- reactive({
+  observeEvent(input$match, {
+    if (is.null(ft.reorder$ft.dat) | is.null(ft.reorder$ft.svg)) return()
+    ft.dat <- ft.reorder$ft.dat
+    lis0 <- lapply(ft.dat, function(x) input[[x]])
+    names(lis0) <- ft.dat; ft.reorder$ft.rematch <- lis0
+  })  
   observeEvent(input$fileIn, {
+    ft.reorder$ft.dat <- ft.reorder$ft.svg <- ft.reorder$ft.rematch <- NULL
     cna.match$cna <- NULL
-    svg.na.mat$svg.path <- svg.na.mat$svg.na <- NULL
+    svg.na.rematch$svg.path <- svg.na.rematch$svg.na <- NULL
   })
   # Reactive object in "observeEvent" is not accessible outside observeEvent. The solution is eventReactive. 
+  # svg.path1 stores the final svg path/na after re-matching, and will be used in SHMs.
   svg.path1 <- reactive({
-    if (!is.null(svg.na.mat$svg.path) & !is.null(svg.na.mat$svg.na)) { svg.path <- svg.na.mat$svg.path; svg.na <- svg.na.mat$svg.na } else { svg.path <- svg.path()$svg.path; svg.na <- svg.path()$svg.na }
+    if (!is.null(svg.na.rematch$svg.path) & !is.null(svg.na.rematch$svg.na)) { svg.path <- svg.na.rematch$svg.path; svg.na <- svg.na.rematch$svg.na } else { svg.path <- svg.path()$svg.path; svg.na <- svg.path()$svg.na }
     return(list(svg.path=svg.path, svg.na=svg.na))
   })
 
   cna.match <- reactiveValues(cna=NULL)
-  observeEvent(input$match, {
+  observeEvent(input$match1, {
   
     sam <- input$sam; sf <- input$sf
-    cna <- colnames(geneIn()[["gene2"]])
+    cna <- colnames(geneIn()[["df.aggr.tran"]])
     w.sf <- which(sf %in% sf.sep); w.sam <- which(sam %in% sam.sep)
     # If no "renderText", the validate message is not assigned to any reactive values and thus not seen on the user interface.
     output$msg.match <- renderText({
@@ -693,9 +812,9 @@ content=function(file=paste0(normalizePath(tempdir(check=TRUE), winslash="/", mu
     output$msg.match <- renderText({
     validate(need(try(w.sf!=0|w.sam!=0), 'No samples or features are re-matched!')); NULL })
     if (w.sf>0) {
-      cat('Re-match samples and features... \n')
+      cat('Re-match samples and features ... \n')
       sf.mat <- sf[seq_len(w.sf)]
-      cna <- colnames(geneIn()[["gene2"]]);
+      cna <- colnames(geneIn()[["df.aggr.tran"]]);
       # If sf1 is re-matched to sam1, and sf1 is included in all sams, sf1 in all sams is replaced by sam1. 
       sam.idx1 <- sam.idx2 <- list(); for (i in seq_len(w.sf)){
         if (sam[i]==sf[i]) next
@@ -717,240 +836,315 @@ content=function(file=paste0(normalizePath(tempdir(check=TRUE), winslash="/", mu
     }
   })
 
-  svg.df <- reactive({ 
-
+  svg.df <- reactive({
+    if (input$fileIn %in% cfg$na.cus & is.null(input$geneInpath) & input$dimName == "None") return()
     if ((input$fileIn %in% cfg$na.cus & 
-    (!is.null(input$svgInpath)|!is.null(input$svgInpath1)))|(any(input$fileIn %in% cfg$na.def) & is.null(input$svgInpath))) {
-
+    (!is.null(input$svgInpath1)|!is.null(input$svgInpath2)))|(any(input$fileIn %in% cfg$na.def) & is.null(input$svgInpath1))) {
       withProgress(message="Tissue heatmap: ", value=0, {
-    
         incProgress(0.5, detail="extracting coordinates, please wait ...")
           svg.path <- svg.path1()$svg.path; svg.na <- svg.path1()$svg.na
           # Whether a single or multiple SVGs, all are returned in a list.
          svg.df.lis <- NULL; for (i in seq_along(svg.na)) {
-         
             cat('Coordinate:', svg.na[i], '\n')
             df_tis <- svg_df(svg.path=svg.path[i], feature=sam(), cores=deter_core(2, svg.path[i]))
             validate(need(!is.character(df_tis), paste0(svg.na[i], ': ', df_tis)))
             svg.df.lis <- c(svg.df.lis, list(df_tis))
-   
           }; names(svg.df.lis) <- svg.na; return(svg.df.lis)
-
       })
-
     }
-
   })
 
 
   observe({
-
-    input$fileIn; geneIn(); input$adj.modInpath; svg.df(); input$hide.lgd 
-    tis.tran <- NULL; for (i in seq_along(svg.df())) { tis.tran <- c(tis.tran, svg.df()[[i]][['tis.path']]) }
-    updateCheckboxGroupInput(session, inputId="tis", label='Select tissues to be transparent:', choices=intersect(unique(sam()), unique(tis.tran)), selected='', inline=TRUE)
-
+    if (!is.null(ft.reorder$ft.rematch)) return()
+    input$fileIn; geneIn(); input$adj.modInpath; svg.df(); input$lgdB; 
+    ft.path.all <- NULL; for (i in seq_along(svg.df())) { ft.path.all <- c(ft.path.all, svg.df()[[i]][['tis.path']]) }
+    updateCheckboxGroupInput(session, inputId="tis", label='Select features to be transparent', choices=intersect(unique(sam()), unique(ft.path.all)), selected='', inline=TRUE)
+  })
+  observe({
+    input$svg; svg.df <- svg.df(); ft.svg.reorder <- ft.reorder$ft.svg; input$match
+    if (is.null(svg.df) | is.null(ft.svg.reorder)) return()
+    ft.path.all <- NULL; for (i in seq_along(svg.df())) { ft.path.all <- c(ft.path.all, svg.df()[[i]][['tis.path']]) }
+    updateCheckboxGroupInput(session, inputId="tis", label='Select features to be transparent', choices=intersect(unique(ft.svg.reorder), unique(ft.path.all)), selected='', inline=TRUE)
   })
 
   con <- reactive({ 
-
-    cname <- colnames(geneIn()[["gene2"]]); idx <- grep("__", cname); c.na <- cname[idx]
+    cname <- colnames(df.net()$df.aggr); idx <- grep("__", cname); c.na <- cname[idx]
     if (length(grep("__", c.na))>=1) gsub("(.*)(__)(.*$)", "\\3", c.na) else return(NULL) 
-
   })
 
   # General selected gene/condition pattern.
   pat.con <- reactive({ con.uni <- unique(con()); if (is.null(con.uni)) return(NULL); paste0(con.uni, collapse='|') })
-  pat.gen <- reactive({ if (is.null(gID$geneID)) return(); if (gID$geneID[1]=='none') return(NULL);  paste0(gID$geneID, collapse='|') })
+  pat.gen <- reactive({ if (is.null(gID$geneSel)) return(); if (gID$geneSel[1]=='none') return(NULL);  paste0(gID$geneSel, collapse='|') })
   pat.all <- reactive({ if (is.null(pat.con())|is.null(pat.gen())) return(NULL); paste0('(', pat.gen(), ')_(', pat.con(), ')') })
 
-  grob <- reactiveValues(all=NULL, all1=NULL, gg.all=NULL, gg.all1=NULL, lgd.all=NULL)
-  observeEvent(input$fileIn, { grob$all <- grob$gg.all1 <- grob$gg.all1 <- grob$gg.all <- grob$lgd.all <- NULL })
+  # SHM ggplots, grobs legends are stored in gg.all, grob.all, lgd.all respectively for various purposes. grob.gg.all is used in relative scale of multiple SVGs, and the rescaled SVGs are stored in gg.all/grob.all finally. 
+  shm <- reactiveValues(grob.all=NULL, grob.all1=NULL, gg.all=NULL, gg.all1=NULL, lgd.all=NULL, grob.gg.all = NULL)
+  observeEvent(input$fileIn, { shm$grob.all <- shm$grob.all1 <- shm$gg.all1 <- shm$gg.all <- shm$lgd.all <- shm$grob.gg.all <- NULL })
+  
   # Avoid repetitive computation under input$cs.v=='All rows'.
   gs.new <- reactive({ 
     if.con <- is.null(svg.df())|is.null(geneIn())|is.null(gID$new)|length(gID$new)==0|is.null(gID$all)|is.null(input$dt_rows_selected)|color$col[1]=='none'
     if (length(if.con==FALSE)==0) if (length(if.con)==0) return(); if (is.na(if.con)|if.con==TRUE) return(NULL)
-
-    if (input$cs.v=="Selected rows") ID <- gID$geneID
+    scale.shm <- input$scale.shm 
+    if (!is.numeric(scale.shm)) return()
+    if (scale.shm <= 0) return()
+    # If color key is build on selected rows, all SHMs should be computed upon selected rows are changed. This action is done through a separate observeEvent triggered by gID$geneSel. So in this "reactive" only one gene is accepted each time.
+    if (input$cs.v=="Selected rows") ID <- gID$geneSel
     if (input$cs.v=="All rows") ID <- gID$new
-    if (is.null(ID)|length(gID$new)>1|length(ID)>1|ID[1]=='none') return()
+    if (is.null(ID)) return()
+    if (length(gID$new)>1|length(ID)>1|ID[1]=='none') return()
     # Avoid repetitive computation.  
     pat.new <- paste0('^', gID$new, '_(', pat.con(), ')_\\d+$')
-    if (any(grepl(pat.new, names(grob$all)))) return()
-    withProgress(message="Tissue heatmap: ", value=0, {
- 
+    if (any(grepl(pat.new, names(shm$grob.all)))) return()
+    withProgress(message="Tissue heatmap: ", value=0, { 
       incProgress(0.25, detail="preparing data ...")
-      gene <- geneIn()[["gene2"]]
-      svg.df.lis <- svg.df(); grob.lis.all <- w.h.all <- NULL
+      gene <- geneIn()[["df.aggr.tran"]]
+      # When input$fileIn updates, ID is from last session while gene is from new session.
+      if (!ID %in% rownames(gene)) return()
+      svg.df.lis <- svg.df(); 
+      #w.h.all <- NULL
       # Get max width/height of multiple SVGs, and dimensions of other SVGs can be set relative to this max width/height.
-      for (i in seq_along(svg.df.lis)) { w.h.all <- c(w.h.all, svg.df.lis[[i]][['w.h']]); w.h.max <- max(w.h.all) }
+      # for (i in seq_along(svg.df.lis)) { w.h.all <- c(w.h.all, svg.df.lis[[i]][['w.h']]); w.h.max <- max(w.h.all) }
       # A set of SHMs are made for each SVG, and all sets of SHMs are placed in a list.
-      svg.na <- names(svg.df.lis)
+      svg.na <- names(svg.df.lis); grob.all <- gg.all <- lgd.all <- grob.gg.all <- NULL
       for (i in seq_along(svg.df.lis)) {
 
         svg.df <- svg.df.lis[[i]]; g.df <- svg.df[["df"]]; w.h <- svg.df[['w.h']]
         tis.path <- svg.df[["tis.path"]]; fil.cols <- svg.df[['fil.cols']]
-        if (input$pre.scale=='Yes') mar <- (1-w.h/w.h.max*0.99)/2 else mar <- NULL
+        # if (input$preScale=='Yes') mar <- (1-w.h/w.h.max*0.99)/2 else mar <- NULL
         cat('New grob/ggplot:', ID, ' \n')
         if (!is.null(cna.match$cna)) { 
 		  if (ncol(gene)==length(cna.match$cna)) colnames(gene) <- cna.match$cna 
         }
         size.key <- as.numeric(cfg$lis.par$legend['key.size', 'default'])
-        # cores: the orders in svg.path(), names(svg.df.lis) are same.
-        grob.lis <- grob_list(gene=gene, con.na=geneIn0()[['con.na']], geneV=geneV(), coord=g.df, ID=ID, legend.col=fil.cols, cols=color$col, tis.path=tis.path, ft.trans=input$tis, sub.title.size=18, mar.lb=mar, legend.nrow=as.numeric(cfg$lis.par$legend['key.row', 'default']), legend.key.size=size.key, legend.text.size=8*size.key*33, line.size=input$line.size, line.color=input$line.color, cores=deter_core(2, svg.path()$svg.path[i])) # Only gID$new is used.
+        # Cores: the orders in svg.path(), names(svg.df.lis) are same.
+        gg.lis <- gg_shm(gene=gene, con.na=geneIn0()[['con.na']], geneV=geneV(), coord=g.df, ID=ID, legend.col=fil.cols, cols=color$col, tis.path=tis.path, ft.trans=input$tis, sub.title.size=15 * scale.shm, aspect.ratio = svg.df$aspect.r, legend.nrow=as.numeric(cfg$lis.par$legend['key.row', 'default']), legend.key.size=size.key, legend.text.size=8*size.key*33, line.size=input$line.size, line.color=input$line.color, lis.rematch = ft.reorder$ft.rematch) # Only gID$new is used.
         msg <- paste0(svg.na[i], ': no spatial features that have matching sample identifiers in data are detected!')
-        if (is.null(grob.lis)) cat(msg, '\n')
-        output$msg.shm <- ({ validate(need(!is.null(grob.lis), msg)) })
-        grob.lis.all <- c(grob.lis.all, list(grob.lis))
-
-      }; names(grob.lis.all) <- svg.na; return(grob.lis.all)
-
-    })
+        if (is.null(gg.lis)) cat(msg, '\n')
+        output$msg.shm <- ({ validate(need(!is.null(gg.lis), msg)) })
+       # Append suffix '_i' for the SHMs of ggplot under SVG[i], and store them in a list.
+       ggs <- gg.lis$g.lis.all; names(ggs) <- paste0(names(ggs), '_', i)
+       gg.all <- c(gg.all, ggs)
+       # Store legend of ggplot in a list.
+       lgd.all <- c(lgd.all, list(gg.lis$g.lgd))
+       # Same names with ggs: append suffix '_i' for the SHMs of grob under SVG[i], and store them in a list.
+       grob.lis <- grob_shm(ggs, cores=deter_core(2, svg.path()$svg.path[i])) 
+       grob.all <- c(grob.all, grob.lis)
+       # All ggplots/grobs are stored in nested lists under each SVG for use in relatice scale.
+        lis0 <- list(grob.lis = grob.lis, gg.lis = ggs, lgd.lis = gg.lis$g.lgd)
+       grob.gg.all <- c(grob.gg.all, list(lis0)) 
+     }; names(lgd.all) <- names(grob.gg.all) <- svg.na
+     return(list(gg.all = gg.all, grob.all = grob.all, lgd.all = lgd.all, grob.gg.all = grob.gg.all))
+    }) # withProgress
 
   })
 
   # Extension of 'observeEvent': any of 'input$log; input$tis; input$col.but; input$cs.v' causes evaluation of all code. 
-  # input$tis as an argument in "grob_list" will not cause evaluation of all code, thus it is listed here.
+  # input$tis as an argument in "gg_shm" will not cause evaluation of all code, thus it is listed here.
   # Use "observeEvent" to replace "observe" and list events (input$log, input$tis, ...), since if the events are in "observe", every time a new gene is clicked, "input$dt_rows_selected" causes the evaluation of all code in "observe", and the evaluation is duplicated with "gs.new".
-  col.reorder <- reactiveValues(col.re='Y')
   observeEvent(input$col.na, { if (input$col.cfm>0) col.reorder$col.re <- 'N' })
-  observeEvent(list(input$log, input$tis, input$col.but, input$cs.v, input$pre.scale, input$col.cfm, input$scale, input$match, input$line.size, input$line.color), {
-    
-    grob$all <- grob$gg.all <- grob$lgd.all <- NULL; gs.all <- reactive({ 
-
-      if.con <- is.null(svg.df())|is.null(geneIn())|is.null(input$dt_rows_selected)|color$col[1]=='none'|is.null(input$pre.scale)|gID$geneID[1]=='none'
-
+  # Update SHMs, above theme().
+  observeEvent(list(input$log, input$tis, input$col.but, input$cs.v, input$col.cfm, input$scale, input$match, input$line.size, input$line.color), {
+    shm$grob.all <- shm$gg.all <- shm$lgd.all <- shm$grob.gg.all <- NULL; gs.all <- reactive({ 
+      cat('Updating all SHMs ... \n')
+      if.con <- is.null(svg.df())|is.null(geneIn())|is.null(input$dt_rows_selected)|color$col[1]=='none'|gID$geneSel[1]=='none'
       if (length(if.con==FALSE)==0) if (length(if.con)==0) return(); if (is.na(if.con)|if.con==TRUE) return(NULL)
+      scale.shm <- input$scale.shm
+      if (!is.numeric(scale.shm)) return()
+      if (scale.shm <= 0) return()
       withProgress(message="Spatial heatmap: ", value=0, {
       incProgress(0.25, detail="preparing data ...")
-      #if (input$cs.v=="Selected rows") gene <- geneIn()[["gene2"]][input$dt_rows_selected, ]
-      #if (input$cs.v=="All rows") gene <- geneIn()[["gene2"]]
-      gene <- geneIn()[["gene2"]][gID$geneID, ]
-      svg.df.lis <- svg.df(); grob.lis.all <- w.h.all <- NULL
+      #if (input$cs.v=="Selected rows") gene <- geneIn()[["df.aggr.tran"]][input$dt_rows_selected, ]
+      #if (input$cs.v=="All rows") gene <- geneIn()[["df.aggr.tran"]]
+      gene <- geneIn()[["df.aggr.tran"]][gID$geneSel, ]
+      svg.df.lis <- svg.df()
+      # w.h.all <- NULL
       # Get max width/height of multiple SVGs, and dimensions of other SVGs can be set relative to this max width/height.
-      for (i in seq_along(svg.df.lis)) { w.h.all <- c(w.h.all, svg.df.lis[[i]][['w.h']]); w.h.max <- max(w.h.all) }
+      # for (i in seq_along(svg.df.lis)) { w.h.all <- c(w.h.all, svg.df.lis[[i]][['w.h']]); w.h.max <- max(w.h.all) }
       # A set of SHMs are made for each SVG, and all sets of SHMs are placed in a list.
+      svg.na <- names(svg.df.lis); grob.all <- gg.all <- lgd.all <- gg.grob.lis <- NULL
       for (i in seq_along(svg.df.lis)) {
         
         svg.df <- svg.df.lis[[i]]; g.df <- svg.df[["df"]]
-        tis.path <- svg.df[["tis.path"]]; fil.cols <- svg.df[['fil.cols']]; w.h <- svg.df[['w.h']]
-        if (input$pre.scale=='Yes') mar <- (1-w.h/w.h.max*0.99)/2 else mar <- NULL
-        cat('All grob/ggplot:', gID$geneID, ' \n')
-        svg.na <- names(svg.df.lis)
-        incProgress(0.75, detail=paste0('preparing ', paste0(gID$geneID, collapse=';')))
+        tis.path <- svg.df[["tis.path"]]; fil.cols <- svg.df[['fil.cols']]
+        # w.h <- svg.df[['w.h']]
+        # if (input$preScale=='Yes') mar <- (1-w.h/w.h.max*0.99)/2 else mar <- NULL
+        cat('All grob/ggplot:', gID$geneSel, ' \n')
+        incProgress(0.75, detail=paste0('preparing ', paste0(gID$geneSel, collapse=';')))
         if (!is.null(cna.match$cna)) { 
-		      if (ncol(gene)!=length(cna.match$cna)) return()
+		  if (ncol(gene)!=length(cna.match$cna)) return()
           colnames(gene) <- cna.match$cna 
         }
         size.key <- as.numeric(cfg$lis.par$legend['key.size', 'default'])
-        grob.lis <- grob_list(gene=gene, con.na=geneIn0()[['con.na']], geneV=geneV(), coord=g.df, ID=gID$geneID, legend.col=fil.cols, cols=color$col, tis.path=tis.path, ft.trans=input$tis, sub.title.size=18, mar.lb=mar, legend.nrow=as.numeric(cfg$lis.par$legend['key.row', 'default']), legend.key.size=size.key, legend.text.size=8*size.key*33, line.size=input$line.size, line.color=input$line.color, cores=deter_core(2, svg.path()$svg.path[i])) # All gene IDs are used.
-        msg <- paste0(svg.na[i], ': no spatial features that have matching sample identifiers in data are detected!')
-        if (is.null(grob.lis)) cat(msg, '\n')
-        output$msg.shm <- ({ validate(need(!is.null(grob.lis), msg)) })
-        grob.lis.all <- c(grob.lis.all, list(grob.lis))
-
-      }; names(grob.lis.all) <- svg.na; return(grob.lis.all)
-
-      })
-
-    }); grob.gg.lis <- grob_gg(gs=gs.all())
-    grob$all <- grob.gg.lis[['grob']]; grob$gg.all <- grob.gg.lis[['gg']]; grob$lgd.all <- grob.gg.lis[['lgd.all']]
-
-  })
+        gg.lis <- gg_shm(gene=gene, con.na=geneIn0()[['con.na']], geneV=geneV(), coord=g.df, ID=gID$geneSel, legend.col=fil.cols, cols=color$col, tis.path=tis.path, ft.trans=input$tis, sub.title.size=15 * scale.shm, aspect.ratio = svg.df$aspect.r, legend.nrow=as.numeric(cfg$lis.par$legend['key.row', 'default']), legend.key.size=size.key, legend.text.size=8*size.key*33, line.size=input$line.size, line.color=input$line.color, lis.rematch = ft.reorder$ft.rematch) # All gene IDs are used.
+        msg <- paste0(svg.na[i], ': no matching features are detected between data and aSVG!')
+        if (is.null(gg.lis)) cat(msg, '\n')
+        output$msg.shm <- ({ validate(need(!is.null(gg.lis), msg)) }) 
+       # Append suffix '_i' for the SHMs of ggplot under SVG[i], and store them in a list.
+       ggs <- gg.lis$g.lis.all; names(ggs) <- paste0(names(ggs), '_', i)
+       gg.all <- c(gg.all, ggs)
+       # Store legend of ggplot in a list.
+       lgd.all <- c(lgd.all, list(gg.lis$g.lgd))
+       # Same with ggs: append suffix '_i' for the SHMs of grob under SVG[i], and store them in a list.
+       grob.lis <- grob_shm(ggs, cores=deter_core(2, svg.path()$svg.path[i]))
+       grob.all <- c(grob.all, grob.lis)
+       # All ggplots/grobs are stored in nested lists under each SVG for use in relatice scale.
+       lis0 <- list(grob.lis = grob.lis, gg.lis = ggs, lgd.lis = gg.lis$g.lgd)
+       gg.grob.lis <- c(gg.grob.lis, list(lis0))
+      }; names(lgd.all) <- names(gg.grob.lis) <- svg.na
+      return(list(grob.all = grob.all, gg.all = gg.all, lgd.all = lgd.all, gg.grob.lis = gg.grob.lis))
+     }) # withProgress
+    }) # reactive
+    shm$grob.all <- gs.all()$grob.all; shm$gg.all <- gs.all()$gg.all
+    shm$lgd.all <- gs.all()$lgd.all; shm$grob.gg.all <- gs.all()$gg.grob.lis
+  }) # observeEvent
   # Avoid repetitive computation under input$cs.v=='gen.sel'.
-  observeEvent(list(gID$geneID), {
+  observeEvent(list(gID$geneSel), {
     
-    if.con <-  is.null(input$cs.v)|gID$geneID[1]=='none'|input$cs.v=='All rows'
-
+    cat('Updating all SHMs caused by selected rows ... \n')
+    if.con <-  is.null(input$cs.v)|gID$geneSel[1]=='none'|input$cs.v=='All rows'
     if (length(if.con==FALSE)==0) if (length(if.con)==0) return(); if (is.na(if.con)|if.con==TRUE) return(NULL)
-    ID <- gID$geneID
-    grob$all <- grob$gg.all <- grob$lgd.all <- NULL; gs.all <- reactive({ 
-
-      if.con <- is.null(svg.df())|is.null(geneIn())|is.null(input$dt_rows_selected)|color$col[1]=='none'|is.null(input$pre.scale)
+    ID <- gID$geneSel
+    shm$grob.all <- shm$gg.all <- shm$lgd.all <- shm$grob.gg.all <- NULL; gs.all <- reactive({
+      if.con <- is.null(svg.df())|is.null(geneIn())|is.null(input$dt_rows_selected)|color$col[1]=='none'
       if (length(if.con==FALSE)==0) if (length(if.con)==0) return(); if (is.na(if.con)|if.con==TRUE) return(NULL)
+      scale.shm <- input$scale.shm
+      if (!is.numeric(scale.shm)) return()
+      if (scale.shm <= 0) return()
       withProgress(message="Spatial heatmap: ", value=0, {
       incProgress(0.25, detail="preparing data ...")
-      gene <- geneIn()[["gene2"]][gID$geneID, ]
-      svg.df.lis <- svg.df(); grob.lis.all <- w.h.all <- NULL
+      gene <- geneIn()[["df.aggr.tran"]][gID$geneSel, ]
+      svg.df.lis <- svg.df()
+      # w.h.all <- NULL
       # Get max width/height of multiple SVGs, and dimensions of other SVGs can be set relative to this max width/height.
-      for (i in seq_along(svg.df.lis)) { w.h.all <- c(w.h.all, svg.df.lis[[i]][['w.h']]); w.h.max <- max(w.h.all) }
+      # for (i in seq_along(svg.df.lis)) { w.h.all <- c(w.h.all, svg.df.lis[[i]][['w.h']]); w.h.max <- max(w.h.all) }
       # A set of SHMs are made for each SVG, and all sets of SHMs are placed in a list.
+      svg.na <- names(svg.df.lis); grob.all <- gg.all <- lgd.all <- gg.grob.lis <- NULL
       for (i in seq_along(svg.df.lis)) {
 
         svg.df <- svg.df.lis[[i]]; g.df <- svg.df[["df"]]
-        tis.path <- svg.df[["tis.path"]]; fil.cols <- svg.df[['fil.cols']]; w.h <- svg.df[['w.h']]
-        if (input$pre.scale=='Yes') mar <- (1-w.h/w.h.max*0.99)/2 else mar <- NULL
+        tis.path <- svg.df[["tis.path"]]; fil.cols <- svg.df[['fil.cols']];
+        # w.h <- svg.df[['w.h']]
+        # if (input$preScale=='Yes') mar <- (1-w.h/w.h.max*0.99)/2 else mar <- NULL
         cat('All grob/ggplot of row selection:', ID, ' \n')
-        svg.na <- names(svg.df.lis)
         incProgress(0.75, detail=paste0('preparing ', paste0(ID, collapse=';')))
         if (!is.null(cna.match$cna)) { 
-		      if (ncol(gene)!=length(cna.match$cna)) return()
+		  if (ncol(gene)!=length(cna.match$cna)) return()
           colnames(gene) <- cna.match$cna 
         }
         size.key <- as.numeric(cfg$lis.par$legend['key.size', 'default'])
-        grob.lis <- grob_list(gene=gene, con.na=geneIn0()[['con.na']], geneV=geneV(), coord=g.df, ID=ID, legend.col=fil.cols, cols=color$col, tis.path=tis.path, ft.trans=input$tis, sub.title.size=18, mar.lb=mar, legend.nrow=as.numeric(cfg$lis.par$legend['key.row', 'default']), legend.key.size=size.key, legend.text.size=8*size.key*33, line.size=input$line.size, line.color=input$line.color, cores=deter_core(2, svg.path()$svg.path[i])) # All gene IDs are used.
+        gg.lis <- gg_shm(gene=gene, con.na=geneIn0()[['con.na']], geneV=geneV(), coord=g.df, ID=ID, legend.col=fil.cols, cols=color$col, tis.path=tis.path, ft.trans=input$tis, sub.title.size=15 * scale.shm, aspect.ratio = svg.df$aspect.r, legend.nrow=as.numeric(cfg$lis.par$legend['key.row', 'default']), legend.key.size=size.key, legend.text.size=8*size.key*33, line.size=input$line.size, line.color=input$line.color, lis.rematch = ft.reorder$ft.rematch) # All gene IDs are used.
         msg <- paste0(svg.na[i], ': no spatial features that have matching sample identifiers in data are detected!')
-        if (is.null(grob.lis)) cat(msg, '\n')
-        output$msg.shm <- ({ validate(need(!is.null(grob.lis), msg)) })
-        grob.lis.all <- c(grob.lis.all, list(grob.lis))
-
-      }; names(grob.lis.all) <- svg.na; return(grob.lis.all)
-
-      })
-
-    }); grob.gg.lis <- grob_gg(gs=gs.all())
-    grob$all <- grob.gg.lis[['grob']]; grob$gg.all <- grob.gg.lis[['gg']]; grob$lgd.all <- grob.gg.lis[['lgd.all']]
-
-  })
+        if (is.null(gg.lis)) cat(msg, '\n')
+        output$msg.shm <- ({ validate(need(!is.null(gg.lis), msg)) })
+       # Append suffix '_i' for the SHMs of ggplot under SVG[i], and store them in a list.
+       ggs <- gg.lis$g.lis.all; names(ggs) <- paste0(names(ggs), '_', i)
+       gg.all <- c(gg.all, ggs)
+       # Store legend of ggplot in a list.
+       lgd.all <- c(lgd.all, list(gg.lis$g.lgd))
+       # Same with ggs: append suffix '_i' for the SHMs of grob under SVG[i], and store them in a list.
+       grob.lis <- grob_shm(ggs, cores=deter_core(2, svg.path()$svg.path[i]))
+       grob.all <- c(grob.all, grob.lis)
+       # All ggplots/grobs are stored in nested lists under each SVG for use in relatice scale.
+       lis0 <- list(grob.lis = grob.lis, gg.lis = ggs, lgd.lis = gg.lis$g.lgd)
+       gg.grob.lis <- c(gg.grob.lis, list(lis0))
+      }; names(lgd.all) <- names(gg.grob.lis) <- svg.na
+      return(list(grob.all = grob.all, gg.all = gg.all, lgd.all = lgd.all, gg.grob.lis = gg.grob.lis))
+     }) # withProgress
+    }) # reactive
+    shm$grob.all <- gs.all()$grob.all; shm$gg.all <- gs.all()$gg.all
+    shm$lgd.all <- gs.all()$lgd.all; shm$grob.gg.all <- gs.all()$gg.grob.lis
+  }) # observeEvent
+  
   # when 'color <- reactiveValues(col="none")', upon the app is launched, 'gs.new' is evaluated for 3 time. In the 1st time, 'gID$new'/'gID$all' are NULL, so 'gs.new' is NULL. In the 2nd time, 'color$col[1]=='none'' is TRUE, so NULL is returned to 'gs.new', but 'gID$new'/'gID$all' are 'HRE2'. In the third time, 'color$col[1]=='none'' is FALSE, so 'gs.new' is not NULL, but 'gID$new' is still 'HRE2', so it does not triger evaluation of 'observeEvent' and hence SHMs and legend plot are not returned upon being launched. The solution is to assign colors to 'color$col' in 'observe' upon being launched so that in the 2nd time 'gs.new' is not NULL, and no 3rd time.
   observeEvent(gs.new(), { 
-
     if (is.null(svg.df())|is.null(gID$new)|length(gID$new)==0|is.null(gID$all)|is.null(gs.new())) return(NULL)
-    cat('Updating grobs/ggplots/lgds... \n')
-    grob.gg.lis <- grob_gg(gs=gs.new())
-    grobs <- grob.gg.lis[['grob']]
-    grob.rm <- !names(grob$all) %in% names(grobs)
-    grob$all <- c(grob$all[grob.rm], grobs)
-    ggs <- grob.gg.lis[['gg']]
-    gg.rm <- !names(grob$gg.all) %in% names(ggs)
-    grob$gg.all <- c(grob$gg.all[gg.rm], ggs) 
+    cat('Updating grobs/ggplots/legends based on new ID ... \n')
+    grob.gg.lis <- gs.new()
+    grobs <- grob.gg.lis[['grob.all']]
+    grob.rm <- !names(shm$grob.all) %in% names(grobs)
+    shm$grob.all <- c(shm$grob.all[grob.rm], grobs)
+    # gs.new() becomes NULL at this step.
+    # print(list(0, names(gs.new())))
+    
+    ggs <- grob.gg.lis[['gg.all']]
+    gg.rm <- !names(shm$gg.all) %in% names(ggs)
+    shm$gg.all <- c(shm$gg.all[gg.rm], ggs) 
     lgd0 <- grob.gg.lis[['lgd.all']]
-    grob$lgd.all <- c(grob$lgd.all, lgd0[!names(lgd0) %in% names(grob$lgd.all)])
+    
+    shm$lgd.all <- c(shm$lgd.all, lgd0[!names(lgd0) %in% names(shm$lgd.all)])
+    # gs.new() becomes NULL before this step.
+    # grob.gg.all <- gs.new()$grob.gg.all
+    grob.gg.all <- grob.gg.lis$grob.gg.all
+    if (is.null(shm$grob.gg.all)) shm$grob.gg.all <- grob.gg.all else {
+      svg.na <- names(grob.gg.all)
+      for (i in svg.na) {
+        grobs <- grob.gg.all[[i]][['grob.all']]
+        grob.rm <- !names(shm$grob.gg.all[[i]]$grob.all) %in% names(grobs)
+        shm$grob.gg.all[[i]]$grob.all <- c(shm$grob.gg.all[[i]]$grob.all[grob.rm], grobs) 
+        
+        ggs <- grob.gg.all[[i]][['gg.all']]
+        gg.rm <- !names(shm$grob.gg.all[[i]]$gg.all) %in% names(ggs)
+        shm$grob.gg.all[[i]]$gg.all <- c(shm$grob.gg.all[[i]]$gg.all[gg.rm], ggs)
+      }
+
+    }
+
+  })
   
+  # Update subtitle size through theme().
+  observeEvent(list(input$title.size, input$scale.shm), {
+    cat('Adjust title size ... \n')
+    grob.gg.all <- shm$grob.gg.all; title.size <- input$title.size; scale.shm <- input$scale.shm
+    if (!is.list(grob.gg.all) | !is.numeric(title.size) | is.null(svg.path()) | is.null(lay.shm()) | !is.numeric(scale.shm)) return()
+    if (scale.shm <= 0) return()
+    gg.all <- grob.all <- NULL
+    for (i in seq_along(grob.gg.all)) {
+      gg.lis <- grob.gg.all[[i]]$gg.lis
+      # Also update the central shm$grob.gg.all
+      grob.gg.all[[i]]$gg.lis <- gg.lis <- lapply(gg.lis, function(x) { x + theme(plot.title = element_text(hjust = 0.5, size = title.size * scale.shm)) })
+    gg.all <- c(gg.all, gg.lis)
+    # Also update the central shm$grob.gg.all
+    grob.gg.all[[i]]$grob.lis <- grob.lis <- grob_shm(gg.lis, cores = deter_core(2, svg.path()$svg.path[i]))
+    grob.all <- c(grob.all, grob.lis) 
+    }; shm$grob.all <- grob.all; shm$gg.all <- gg.all
+    shm$grob.gg.all <- grob.gg.all
+    cat('Adjust title size done ... \n')
   })
  
   output$h.w.c <- renderText({
     
-    if (is.null(geneIn())|is.null(input$dt_rows_selected)|is.null(svg.df())|is.null(grob$all)) return(NULL)
+    if (is.null(geneIn())|is.null(input$dt_rows_selected)|is.null(svg.df())|is.null(shm$grob.all)) return(NULL)
 
     height <- input$height; width <- input$width
     col.n <- input$col.n;
-    validate(need(height>=0.1 & !is.na(height), 'Height should be a positive numeric !'))
-    validate(need(width>=0.1 & !is.na(width), 'Width should be a positive numeric !'))
+    # validate(need(height>=0.1 & !is.na(height), 'Height should be a positive numeric !'))
+    # validate(need(width>=0.1 & !is.na(width), 'Width should be a positive numeric !'))
     validate(need(col.n>=1 & as.integer(col.n)==col.n & !is.na(col.n), 'No. of columns should be a positive integer !'))
 
   })
-  observeEvent(list(input$lgd.key.size, input$lgd.row, input$tis, input$lgd.label, input$lgd.lab.size), {
-
+  observeEvent(list(input$lgd.key.size, input$lgd.row, input$tis, input$lgd.label, input$lgd.lab.size, input$lgd.ratio1), {
     lgd.key.size <- input$lgd.key.size; lgd.row <- input$lgd.row
-    lgd.label <- input$lgd.label; label.size <- input$lgd.lab.size
-    if (is.null(grob$lgd.all)|is.null(lgd.key.size)|is.null(lgd.row)|is.null(lgd.label)) return()
-    cat('Adjust legend size/rows... \n')
-    grob$lgd.all <- gg_lgd(gg.all=grob$lgd.all, size.key=lgd.key.size, size.text.key=NULL, row=lgd.row, sam.dat=sam(), ft.trans=input$tis, position.text.key='right', label=(lgd.label=='Yes'), label.size=label.size)
- 
+    lgd.label <- input$lgd.label; label.size <- input$lgd.lab.size; lgd.ratio1 <- input$lgd.ratio1
+    if (is.null(shm$lgd.all)|!is.numeric(lgd.key.size)|!is.numeric(lgd.row)|is.null(lgd.label)|!is.numeric(lgd.ratio1)) return()
+    cat('Adjust legend size/rows/aspect ratio ... \n')
+    shm$lgd.all <- gg_lgd(gg.all=shm$lgd.all, size.key=lgd.key.size, size.text.key=NULL, row=lgd.row, sam.dat=sam(), ft.trans=input$tis, position.text.key='right', label=(lgd.label=='Yes'), label.size=label.size, aspect.ratio = lgd.ratio1) 
   })
-  observeEvent(list(grob.all=grob$all, gen.con=input$gen.con), {
+  observeEvent(list(grob.all=shm$grob.all, gen.con=input$gen.con), {
   
-    if (is.null(gID$all)|is.null(grob$all)|is.null(grob$gg.all)) return()
+    if (is.null(gID$all)|is.null(shm$grob.all)|is.null(shm$gg.all)) return()
     cat('Reordering grobs/ggplots... \n')
-    na.all <- names(grob$all); pat.all <- paste0('^', pat.all(), '(_\\d+$)')
+    na.all <- names(shm$grob.all); pat.all <- paste0('^', pat.all(), '(_\\d+$)')
     # Indexed cons with '_1', '_2', ... at the end.
     con <- unique(gsub(pat.all, '\\2\\3', na.all)); if (length(con)==0) return()
     na.all <- sort_gen_con(ID.sel=gID$all, na.all=na.all, con.all=con, by=input$gen.con)
-    grob$all1 <- grob$all[na.all]; grob$gg.all1 <- grob$gg.all[na.all]
+    # grob1/gg.all1 are used to add/remove 2nd legend.
+    shm$grob.all1 <- shm$grob.all[na.all]; shm$gg.all1 <- shm$gg.all[na.all]
 
   })
   # Add value legend to SHMs.
-  # 'observeEvent' is able to avoid infinite cycles while 'observe' may cause such cycles. E.g. in the latter, 'is.null(grob$gg.all)' and 'grob$gg.all1 <- gg.all <- gg_2lgd()' would induce each other and form infinit circles.
+  # 'observeEvent' is able to avoid infinite cycles while 'observe' may cause such cycles. E.g. in the latter, 'is.null(shm$gg.all)' and 'shm$gg.all1 <- gg.all <- gg_2lgd()' would induce each other and form infinit circles.
   observeEvent(list(val.lgd=input$val.lgd, row=input$val.lgd.row, key=input$val.lgd.key, text=input$val.lgd.text, feat=input$val.lgd.feat), {
     
     validate(need(try(as.integer(input$val.lgd.row)==input$val.lgd.row & input$val.lgd.row>0), 'Legend key rows should be a positive integer!'))
@@ -958,22 +1152,22 @@ content=function(file=paste0(normalizePath(tempdir(check=TRUE), winslash="/", mu
     validate(need(try(input$val.lgd.text>0), 'Legend text size should be a positive numeric!'))
     
     cat('Adding value legend... \n')
-    if.con <- is.null(grob$gg.all)|is.null(sam())|is.null(input$val.lgd)|is.null(input$val.lgd.feat)|input$val.lgd==0
+    if.con <- is.null(shm$gg.all)|is.null(sam())|is.null(input$val.lgd)|is.null(input$val.lgd.feat)|input$val.lgd==0
     if (length(if.con==FALSE)==0) if (length(if.con)==0) return(); if (is.na(if.con)|if.con==TRUE) return(NULL)
-    gg.all <- grob$gg.all1
+    gg.all <- shm$gg.all1
     if ((input$val.lgd %% 2)==1) {
 
       gg.all <- gg_2lgd(gg.all=gg.all, sam.dat=sam(), ft.trans=input$tis, position.2nd='bottom', legend.nrow.2nd=input$val.lgd.row, legend.key.size.2nd=input$val.lgd.key, legend.text.size.2nd=input$val.lgd.text, add.feature.2nd=(input$val.lgd.feat=='Yes'))
-      grob$all1 <- gg.all <- lapply(gg.all, function(x) { x+theme(legend.position="bottom") } )
+      shm$gg.all1 <- gg.all <- lapply(gg.all, function(x) { x+theme(legend.position="bottom") } )
       tmp <- normalizePath(tempfile(), winslash='/', mustWork=FALSE)
-      png(tmp); grob$all1 <- lapply(gg.all, ggplotGrob)
+      png(tmp); shm$grob.all1 <- lapply(gg.all, ggplotGrob)
       dev.off(); if (file.exists(tmp)) do.call(file.remove, list(tmp))
     
     } else if ((input$val.lgd %% 2)==0) { 
 
       cat('Remove value legend... \n')
-      grob$gg.all1 <- gg.all <- lapply(gg.all, function(x) { x+theme(legend.position="none") })
-      tmp <- normalizePath(tempfile(), winslash='/', mustWork=FALSE); png(tmp); grob$all1 <- lapply(gg.all, ggplotGrob) 
+      shm$gg.all1 <- gg.all <- lapply(gg.all, function(x) { x+theme(legend.position="none") })
+      tmp <- normalizePath(tempfile(), winslash='/', mustWork=FALSE); png(tmp); shm$grob.all1 <- lapply(gg.all, ggplotGrob) 
       dev.off(); if (file.exists(tmp)) do.call(file.remove, list(tmp))
 
     }
@@ -982,27 +1176,77 @@ content=function(file=paste0(normalizePath(tempdir(check=TRUE), winslash="/", mu
 
   observeEvent(input$col.cfm, { col.reorder$col.re <- 'Y' })
   # In "observe" and "observeEvent", if one code return (NULL), then all the following code stops. If one code changes, all the code renews.
-  observe({
-    if.con <- is.null(geneIn())|is.null(input$dt_rows_selected)|is.null(svg.df())|gID$geneID[1]=="none"|is.null(grob$all1)
+    lay.shm <- reactive({
+    
+
+    if.con <- is.null(geneIn())|is.null(input$dt_rows_selected)|is.null(svg.df())|gID$geneSel[1]=="none"|is.null(shm$grob.all1)
     if (length(if.con==FALSE)==0) if (length(if.con)==0) return(); if (is.na(if.con)|if.con==TRUE) return(NULL)
-    
-    output$shm <- renderPlot(width=as.numeric(input$width)/2*as.numeric(input$col.n), height=as.numeric(input$height)*length(input$dt_rows_selected), {
-    
-    if (col.reorder$col.re=='N') return()
-    if.con <-  is.null(input$dt_rows_selected)|is.null(svg.df())|gID$geneID[1]=="none"|is.null(grob$all1)
+
+
+if (col.reorder$col.re=='N') return()
+    if.con <-  is.null(input$dt_rows_selected)|is.null(svg.df())|gID$geneSel[1]=="none"|is.null(shm$grob.all1)
     if (length(if.con==FALSE)==0) if (length(if.con)==0) return(); if (is.na(if.con)|if.con==TRUE) return(NULL)
     if (is.na(color$col[1])|length(color$col=="none")==0|input$color=="") return(NULL)
-    r.na <- rownames(geneIn()[["gene2"]])
-    grob.na <- names(grob$all1)
+    r.na <- rownames(geneIn()[["df.aggr.tran"]])
+    grob.na <- names(shm$grob.all1)
     # Select target grobs.
     # Use definite patterns and avoid using '.*' as much as possible. Try to as specific as possible.
     pat.all <- paste0('^', pat.all(), '(_\\d+$)')
-    grob.lis.p <- grob$all1[grepl(pat.all, grob.na)] # grob.lis.p <- grob.lis.p[unique(names(grob.lis.p))]
+    grob.lis.p <- shm$grob.all1[grepl(pat.all, grob.na)] # grob.lis.p <- grob.lis.p[unique(names(grob.lis.p))]
     # Indexed cons with '_1', '_2', ... at the end.
     con <- unique(gsub(pat.all, '\\2\\3', names(grob.lis.p))); if (length(con)==0) return()
     cat('Plotting spatial heatmaps... \n')
-    lay <- input$gen.con; ID <- gID$geneID; ncol <- input$col.n
-    shm.lay <- lay_shm(lay.shm=lay, con=con, ncol=ncol, ID.sel=ID, grob.list=grob.lis.p, width=input$width, height=input$height, shiny=TRUE); shm <- shm.lay$shm
+    lay <- input$gen.con; ID <- gID$geneSel; ncol <- input$col.n
+    # This step is plotting.
+    lay_shm(lay.shm=lay, con=con, ncol=ncol, ID.sel=ID, grob.list=grob.lis.p, lay.mat = TRUE, shiny=TRUE)
+  })
+
+
+  # Relative size in multiple aSVGs.
+  observeEvent(list(input$relaSize), {
+    relaSize <- input$relaSize; svg.df <- svg.df(); grob.gg.all <- shm$grob.gg.all
+    cat('Adjust relative plot size in multiple aSVGs ... \n')
+    if (!is.numeric(relaSize) | !is.list(svg.df) | length(svg.df) == 1 | !is.list(grob.gg.all) | is.null(lay.shm()) | is.null(svg.path())) return()
+    if (relaSize < 0) return()
+    # Get max width/height of multiple SVGs, and dimensions of other SVGs can be set relative to this max width/height.
+    w.h.all <- NULL; for (i in seq_along(svg.df)) { w.h.all <- c(w.h.all, svg.df[[i]][['w.h']]); w.h.max <- max(w.h.all) }
+    gg.all <- grob.all <- NULL
+    for (i in seq_along(grob.gg.all)) {
+      gg.lis <- grob.gg.all[[i]]$gg.lis 
+      # Also update the central shm$grob.gg.all
+      grob.gg.all[[i]]$gg.lis <- gg.lis <- rela_size(svg.df[[i]]$w.h['height'], w.h.max, relaSize, nrow(lay.shm()), gg.lis)
+      gg.all <- c(gg.all, gg.lis)
+      # Also update the central shm$grob.gg.all
+      grob.gg.all[[i]]$grob.lis <- grob.lis <- grob_shm(gg.lis, cores = deter_core(2, svg.path()$svg.path[i]))
+      grob.all <- c(grob.all, grob.lis) 
+    }; shm$grob.all <- grob.all; shm$gg.all <- gg.all; shm$grob.gg.all <- grob.gg.all
+  })
+
+  observe({
+    lay <- lay.shm(); scale.shm <- input$scale.shm
+    if (is.null(lay)|!is.numeric(scale.shm)) return()
+    if (scale.shm <= 0) return()
+    # subplot: height 300, width 250 
+    # Avoid: if one column has all NAs in the layout matrix, the aspect ratio is distroyed. So only take the columns not containing all NAs.
+    col.vld <- sum(unlist(lapply(seq_len(ncol(lay)), function(x) !all(is.na(lay[, x])))))
+    # width/height relate to scrolling in box. 
+    output$shm <- renderPlot(width = col.vld * 250 * scale.shm, height = nrow(lay) * 300 * scale.shm, { 
+    if (col.reorder$col.re=='N') return()
+    if.con <-  is.null(input$dt_rows_selected)|is.null(svg.df())|gID$geneSel[1]=="none"|is.null(shm$grob.all1)
+    if (length(if.con==FALSE)==0) if (length(if.con)==0) return(); if (is.na(if.con)|if.con==TRUE) return(NULL)
+    if (is.na(color$col[1])|length(color$col=="none")==0|input$color=="") return(NULL)
+    r.na <- rownames(geneIn()[["df.aggr.tran"]])
+    grob.na <- names(shm$grob.all1)
+    # Select target grobs.
+    # Use definite patterns and avoid using '.*' as much as possible. Try to as specific as possible.
+    pat.all <- paste0('^', pat.all(), '(_\\d+$)')
+    grob.lis.p <- shm$grob.all1[grepl(pat.all, grob.na)] # grob.lis.p <- grob.lis.p[unique(names(grob.lis.p))]
+    # Indexed cons with '_1', '_2', ... at the end.
+    con <- unique(gsub(pat.all, '\\2\\3', names(grob.lis.p))); if (length(con)==0) return()
+    cat('Plotting spatial heatmaps... \n')
+    lay <- input$gen.con; ID <- gID$geneSel; ncol <- input$col.n
+    # This step is plotting.
+    shm.lay <- lay_shm(lay.shm=lay, con=con, ncol=ncol, ID.sel=ID, grob.list=grob.lis.p, shiny=TRUE); shm <- shm.lay$shm
     # Adjust the dimension in chicken example. 
     #svg.df <- svg.df(); w.all <- h.all <- 0
     # for (i in svg.df) { w.all <- w.all+i$w.h['width']; h.all <- h.all+i$w.h['height'] }
@@ -1016,7 +1260,7 @@ content=function(file=paste0(normalizePath(tempdir(check=TRUE), winslash="/", mu
       cs.grob <- ggplotGrob(shm.bar())
       cs.arr <- arrangeGrob(grobs=list(grobTree(cs.grob)), layout_matrix=cbind(1), widths=unit(1, "npc"))
       # Legend size in downloaded SHM is reduced.
-      lgd.lis <- grob$lgd.all; lgd.lis <- gg_lgd(gg.all=lgd.lis, sam.dat=sam(), ft.trans=input$tis, label=FALSE)
+      lgd.lis <- shm$lgd.all; lgd.lis <- gg_lgd(gg.all=lgd.lis, sam.dat=sam(), ft.trans=input$tis, label=FALSE)
       lgd.lis <- gg_lgd(gg.all=lgd.lis, size.key=input$lgd.key.size*0.5, size.text.key=NULL, label.size=input$lgd.lab.size, row=input$lgd.row, sam.dat=sam(), ft.trans=input$tis, position.text.key='right', label=(input$lgd.label=='Yes'))
       if (input$lgd.w>0) {
   
@@ -1026,7 +1270,8 @@ content=function(file=paste0(normalizePath(tempdir(check=TRUE), winslash="/", mu
     lgd.arr <- arrangeGrob(grobs=lgd.tr, layout_matrix=matrix(seq_along(lgd.lis), ncol=1), widths=unit(1, "npc"), heights=unit(rep(1/length(lgd.lis)/input$lgd.ratio, length(lgd.lis)), "npc"))
     w.lgd <- (1-0.08)/(ncol+1)*input$lgd.w # Legend is reduced.
     png(paste0(normalizePath(tempdir(check=TRUE), winslash="/", mustWork=FALSE), '/tmp.png')); shm1 <- grid.arrange(cs.arr, shm, lgd.arr, ncol=3, widths=unit(c(0.08-0.005, 1-0.08-w.lgd, w.lgd), 'npc')); dev.off() } else { png(paste0(normalizePath(tempdir(check=TRUE), winslash="/", mustWork=FALSE), '/tmp.png')); shm1 <- grid.arrange(cs.arr, shm, ncol=2, widths=unit(c(0.08-0.005, 1-0.08), 'npc')); dev.off() }
-    ggsave(paste0(normalizePath(tempdir(check=TRUE), winslash="/", mustWork=FALSE), '/shm.', input$ext), plot=shm1, device=input$ext, width=input$width/72, height=input$height/72, dpi=input$res, unit='in') }
+    ggsave(paste0(normalizePath(tempdir(check=TRUE), winslash="/", mustWork=FALSE), '/shm.', input$ext), plot=shm1, device=input$ext, width=input$width/72, height=input$height/72, dpi=input$res, unit='in') 
+    }
     
     })
 
@@ -1042,138 +1287,203 @@ content=function(file=paste0(normalizePath(tempdir(check=TRUE), winslash="/", mu
   observe({
   
     input$fileIn; geneIn(); input$adj.modInpath; input$A; input$p; input$cv1; input$cv2; input$dt_rows_selected; input$tis; input$gen.con  
-    updateRadioButtons(session, inputId='ext', label='File type:', choices=c('NA', "png", "jpg", "pdf"), selected=cfg$lis.par$shm.img['file.type', 'default'], inline=TRUE)
-    updateRadioButtons(session, inputId="ggly.but", label="Show animation:", choices=c("Yes", "No"), selected=cfg$lis.par$shm.anm['show', 'default'], inline=TRUE)
-    updateRadioButtons(session, inputId="vdo.but", label="Show video:", choices=c("Yes", "No"), selected=cfg$lis.par$shm.video['show', 'default'], inline=TRUE)
+    updateRadioButtons(session, inputId='ext', label='File type', choices=c('NA', "png", "jpg", "pdf"), selected=cfg$lis.par$shm.img['file.type', 'default'], inline=TRUE)
+    updateRadioButtons(session, inputId="ggly.but", label="Show animation", choices=c("Yes", "No"), selected=cfg$lis.par$shm.anm['show', 'default'], inline=TRUE)
+    updateRadioButtons(session, inputId="vdo.but", label="Show/update video", choices=c("Yes", "No"), selected=cfg$lis.par$shm.video['show', 'default'], inline=TRUE)
 
   })
 
   observe({
-   input$lgd.key.size; input$lgd.row; input$tis; input$lgd.label; input$lgd.lab.size
-   updateRadioButtons(session, inputId="vdo.but", label="Show video:", choices=c("Yes", "No"), selected=cfg$lis.par$shm.video['show', 'default'], inline=TRUE)
+   input$vdo.key.size; input$vdo.key.row; input$vdo.val.lgd; input$tis; input$vdo.lab.size; input$vdo.res; input$vdo.itvl
+   updateRadioButtons(session, inputId="vdo.but", label="Show/update video", choices=c("Yes", "No"), selected=cfg$lis.par$shm.video['show', 'default'], inline=TRUE)
   })
 
 
  output$shm.ui <- renderUI({
 
-      box(title="Spatial Heatmap", status="primary", solidHeader=TRUE, collapsible=TRUE, width=ifelse(input$hide.lgd=='No', 9, 12), height=NULL, 
-      tabBox(title="", width=12, id='shm_all', selected='shm1', side='right', 
-      tabPanel(title='Video', value='shm3', 
-      fluidRow(splitLayout(cellWidths=c('1%', '15%', '1%', '15%', '1%', '8%', '1%', '8%', '1%', '13%', '1%', '16%'), '', 
-      radioButtons(inputId="vdo.but", label="Show video:", choices=c("Yes", "No"), selected=cfg$lis.par$shm.video['show', 'default'], inline=TRUE), '',
-      numericInput(inputId='vdo.itvl', label='Transition time (s):', value=as.numeric(cfg$lis.par$shm.video['transition', 'default']), min=0.1, max=Inf, step=1, width=270), '',
-      numericInput(inputId='vdo.height', label='Height:', value=as.numeric(cfg$lis.par$shm.video['height', 'default']), min=0.1, max=0.99, step=0.1, width=270), '',
-      numericInput(inputId='vdo.width', label='Width:', value=as.numeric(cfg$lis.par$shm.video['width', 'default']), min=0.1, max=0.92, step=0.1, width=270), '',
-      numericInput(inputId='vdo.res', label='Resolution (dpi):', value=as.numeric(cfg$lis.par$shm.video['dpi', 'default']), min=1, max=1000, step=5, width=270), '',
-      radioButtons(inputId="vdo.val.lgd", label="Add values to legend:", choices=c("Yes", "No"), selected=cfg$lis.par$shm.video['value.legend', 'default'], inline=TRUE)
+    column(width = ifelse(input$lgdB %% 2 == 0, 9, 12), 
+      boxPad(color = NULL, title = NULL, solidHeader = FALSE, 
+    
+    tabsetPanel(type = "pills", id=NULL, selected="shm1",
+  
+      tabPanel(title="Image", value='shm1',  
+      navbarPage('Parameters:',
+      tabPanel("Basic",
+      fluidRow(splitLayout(cellWidths=c('11%', '1%', '8%', '1%', '10%', '1%', '10%', '1%', '10%', '1%', '13%'), 
+      div(style = "margin-top: 23px;",
+      actionButton("fs", "Full screen", onclick = "openFullscreen(document.getElementById('shm'))")), '',
+      div(title = 'Number of columns for the subplots.', 
+      numericInput(inputId='col.n', label='Columns', value=as.numeric(cfg$lis.par$shm.img['columns', 'default']), min=1, max=Inf, step=1, width=150)), '',
+      selectInput(inputId = "gen.con", label = "Display by", choices = c("Gene"="gene", "Condition"="con", "None"="none"), selected = cfg$lis.par$shm.img['display.by', 'default'], multiple = FALSE, width = NULL), '',
+      numericInput(inputId='scale.shm', label='Scale plots', value=as.numeric(cfg$lis.par$shm.img['scale.plots', 'default']), min=0.1, max=Inf, step=0.1, width=150), '',
+      numericInput(inputId='title.size', label='Title size', value=as.numeric(cfg$lis.par$shm.img['title.size', 'default']), min=0.1, max=Inf, step=0.5, width=150), '',
+      div(style = "margin-top: 23px;",
+      dropdownButton(inputId='dropdown', label='Color key', circle=FALSE, icon= icon("sliders"), status='primary', inline=FALSE, width=250,
+      fluidRow(splitLayout(cellWidths=c('1%', '60%', '35%'), '', textInput("color", "Color scheme", cfg$lis.par$shm.img['color', 'default'], placeholder=paste0('Eg: ', cfg$lis.par$shm.img['color', 'default']), width=200),
+      actionButton("col.but", "Confirm", icon=NULL, style = "margin-top: 24px;"))), 
+      radioButtons(inputId='cs.v', label='Color key based on', choices=c("Selected rows", "All rows"), selected=cfg$lis.par$shm.img['color.scale', 'default'], inline=TRUE)
+      )) 
+      )), # fluidRow
+      textOutput('h.w.c'), textOutput('msg.col'),
+      fluidRow(splitLayout(cellWidths=c('100%'),  checkboxGroupInput(inputId="tis", label="Select features to be transparent", choices='', selected='', inline=TRUE)))
+      ), # tabPanel
+      tabPanel("Value legend",
+      column(9, offset=0, style='padding-left:50px; padding-right:80px; padding-top:0px; padding-bottom:5px',
+      fluidRow(splitLayout(cellWidths=c('1%', '32%', '1%', '13%', '1%', '17%', '1%', '16%', '1%', '28%'), '', 
+      actionButton("val.lgd", "Add/Remove", icon=icon("refresh"), style = "margin-top: 24px;"), '',  
+      numericInput(inputId='val.lgd.row', label='Rows', value=as.numeric(cfg$lis.par$shm.img['value.legend.rows', 'default']), min=1, max=Inf, step=1, width=150), '',
+      numericInput(inputId='val.lgd.key', label='Key size', value=as.numeric(cfg$lis.par$shm.img['value.legend.key', 'default']), min=0.0001, max=1, step=0.01, width=150), '',
+      numericInput(inputId='val.lgd.text', label='Text size', value=as.numeric(cfg$lis.par$shm.img['value.legend.text', 'default']), min=0.0001, max=Inf, step=1, width=140), '',
+      radioButtons(inputId='val.lgd.feat', label='Include features', choices=c('No', 'Yes'), selected=cfg$lis.par$shm.img['include.feature', 'default'], inline=TRUE)
+      ))) # column
+      ), # tabPanel
+      tabPanel("Shape outline",
+      splitLayout(cellWidths=c('1%', '15%', '1%', '13%'), '', 
+      selectInput('line.color', label='Line color', choices=c('grey70', 'black', 'red', 'green', 'blue'), selected=cfg$lis.par$shm.img['line.color', 'default']), '', 
+      numericInput(inputId='line.size', label='Line size', value=as.numeric(cfg$lis.par$shm.img['line.size', 'default']), min=0.05, max=Inf, step=0.05, width=150) 
+      )), # tabPanel
+     tabPanel("Download",
 
-      )), uiOutput('video.dim'), textOutput('tran.vdo'), htmlOutput('ffm'), 
-      fluidRow(splitLayout(cellWidths=c("1%", "7%", "91%", "1%"), "", plotOutput("bar3"), uiOutput('video'), ""))),
-      
+#     tags$div(title="Download the spatial heatmaps and legend plot.",
+      # h1(strong("Download paramters:"), style = "font-size:20px;"),
+      fluidRow(splitLayout(cellWidths=c('30%', '1%', '18%', '1%', '13%', '1%', '19%', '1%', '16%'),
+      tags$div(class='tp', span(class='tpt', strong('Select a file type to download.')),
+      radioButtons(inputId='ext', label='File type', choices=c('NA', "png", "jpg", "pdf"), selected=cfg$lis.par$shm.img['file.type', 'default'], inline=TRUE)), '', 
+      numericInput(inputId='res', label='Resolution (dpi)', value=as.numeric(cfg$lis.par$shm.img['dpi', 'default']), min=10, max=Inf, step=10, width=150), ''
+      )), # fluidRow
+
+      fluidRow(splitLayout(cellWidths=c('18%', '1%', '25%', '1%', '18%'), 
+      numericInput(inputId='lgd.w', label='Legend plot width', value=as.numeric(cfg$lis.par$shm.img['legend.width', 'default']), min=0, max=1, step=0.1, width=150), '',
+      tags$div(title="Adjust the aspect ratio of legend plot.",
+      numericInput(inputId='lgd.ratio', label='Legend plot aspect ratio', value=as.numeric(cfg$lis.par$shm.img['legend.aspect.ratio', 'default']), min=0.0001, max=Inf, step=0.1, width=140)
+      ), '', downloadButton("dld.shm", "Download", style = "margin-top: 24px;")
+      )) # fluidRow 
+      ), # tabPanel 
+     
+     # navbarMenu("More", # Create dropdown menu.
+     tabPanel("Relative size",
+       tags$div(title="Adjust the relative size in multiple aSVGs.",
+       numericInput(inputId='relaSize', label='Relative sizes', value=as.numeric(cfg$lis.par$shm.img['relative.size', 'default']), min=0.01, max=Inf, step=0.1, width=140))
+      ), # tabPanel
+
+      tabPanel(title="Re-match features", value='rematch',
+        column(12, fluidRow(splitLayout(cellWidths=c('0.2%', "40%", '20%', "30%"), '',
+          uiOutput('svg', style = 'margin-left:-5px'), '', 
+          actionButton("match", "Confirm re-matching", icon=icon("refresh"), style="color: #fff; background-color:#3498DB;border-color: #2e6da4;margin-top: 24px;")
+        ))), verbatimTextOutput('msg.match'),
+        column(12, uiOutput('ft.match'))
+        # verbatimTextOutput('ft.re'),
+      # fluidRow(splitLayout(cellWidths=c("1%", "49%", "49%", "1%"), "", uiOutput('sam'), uiOutput('sf'), "")),
+      )
+      #) # navbarMenu
+      ), # navbarPage 
+                          
+      verbatimTextOutput('msg.shm'),
+      fluidRow(splitLayout(id = 'barSHM', cellWidths=c("1%", "7%", "91%", "1%"), "", plotOutput("bar1"),
+      div(style = 'overflow-y:scroll;height:400px;',
+      plotOutput("shm", height='100%', width = '100%')), ""))
+      ), # tabPanel 
+
       tabPanel(title='Animation', value='shm2', 
-      fluidRow(splitLayout(cellWidths=c('1%', '15%', '1%', '15%', '1%', '10%', '1%', '10%', '1%', '13%'), '', 
-      radioButtons(inputId="ggly.but", label="Show animation:", choices=c("Yes", "No"), selected=as.numeric(cfg$lis.par$shm.img['show', 'default']), inline=TRUE), '',
-      numericInput(inputId='t', label='Transition time (s):', value=as.numeric(cfg$lis.par$shm.anm['transition', 'default']), min=0.1, max=Inf, step=NA, width=270), '',
+      fluidRow(splitLayout(cellWidths=c('1%', '15%', '1%', '16%', '1%', '12%', '1%', '12%', '1%', '13%'), '', 
+      radioButtons(inputId="ggly.but", label="Show animation", choices=c("Yes", "No"), selected=as.numeric(cfg$lis.par$shm.img['show', 'default']), inline=TRUE), '',
+      uiOutput('tran.t'), '',
       uiOutput('anm.h'), '', uiOutput('anm.w'), '', uiOutput('dld.anm.but')
       )), textOutput('tran'), uiOutput('sld.fm'),
       fluidRow(splitLayout(cellWidths=c("1%", "7%", "91%", "1%"), "", plotOutput("bar2"), htmlOutput("ggly"), ""))
       ),
 
-      tabPanel(title="Image", value='shm1',  
-      fluidRow(column(10, splitLayout(cellWidths=c('14%', '1%', '14%', '1%', '9%', '1%', '32%', '1%', '15%'),
-      numericInput(inputId='height', label='Overall height:', value=as.numeric(cfg$lis.par$shm.img['height', 'default']), min=1, max=Inf, step=NA, width=170), '',
-      numericInput(inputId='width', label='Overall width:', value=as.numeric(cfg$lis.par$shm.img['width', 'default']), min=1, max=Inf, step=NA, width=170), '',
-      numericInput(inputId='col.n', label='Columns:', value=as.numeric(cfg$lis.par$shm.img['columns', 'default']), min=1, max=Inf, step=1, width=150), '',
-      radioButtons(inputId="gen.con", label="Display by:", choices=c("Gene"="gene", "Condition"="con", "None"="none"), selected=cfg$lis.par$shm.img['display.by', 'default'], inline=TRUE), '', 
-     radioButtons(inputId="pre.scale", label="Preserve.scale:", choices=c("Yes", "No"), selected=cfg$lis.par$shm.img['preserve.scale', 'default'], inline=TRUE)
-      )),
-      column(1,
-      dropdownButton(inputId='dropdown', label='Color key', circle=FALSE, icon=NULL, status='primary', inline=FALSE, width=250, 
-      fluidRow(splitLayout(cellWidths=c('1%', '70%', '25%'), '', textInput("color", "Color scheme:", cfg$lis.par$shm.img['color', 'default'], placeholder=paste0('Eg: ', cfg$lis.par$shm.img['color', 'default']), width=200),
-      actionButton("col.but", "Go", icon=icon("refresh")))), 
-      radioButtons(inputId='cs.v', label='Color scale based on:', choices=c("Selected rows", "All rows"), selected=cfg$lis.par$shm.img['color.scale', 'default'], inline=TRUE)
-      ))
-      ), textOutput('h.w.c'), textOutput('msg.col'),
-
-      fluidRow(splitLayout(cellWidths=c('100%'),  checkboxGroupInput(inputId="tis", label="Select tissues to be transparent:", choices='', selected='', inline=TRUE))),
-
-      fluidRow(column(1, offset=0, style='padding-left:0px; padding-right:50px; padding-top:0px; padding-bottom:5px',
-      dropdownButton(inputId='dropdown', label='Download', circle=FALSE, icon=NULL, status='primary', inline=FALSE, width=800,
-      fluidRow(splitLayout(cellWidths=c('27%', '1%', '14%', '1%', '11%', '1%', '17%', '1%', '14%'), 
-      radioButtons(inputId='ext', label='File type:', choices=c('NA', "png", "jpg", "pdf"), selected=cfg$lis.par$shm.img['file.type', 'default'], inline=TRUE), '',
-      numericInput(inputId='res', label='Resolustion (dpi):', value=as.numeric(cfg$lis.par$shm.img['dpi', 'default']), min=10, max=Inf, step=10, width=150), '',
-      numericInput(inputId='lgd.w', label='Legend width:', value=as.numeric(cfg$lis.par$shm.img['legend.width', 'default']), min=0, max=1, step=0.1, width=150), '',
-      numericInput(inputId='lgd.ratio', label='Legend aspect ratio:', value=as.numeric(cfg$lis.par$shm.img['legend.aspect.ratio', 'default']), min=0.0001, max=Inf, step=0.1, width=140), '', downloadButton("dld.shm", "Download")
-      )))
-      ),  
-      column(1, offset=0, style='padding-left:50px; padding-right:80px; padding-top:0px; padding-bottom:5px',
-      dropdownButton(inputId='value.lgd', label='Value legend', circle=FALSE, icon=NULL, status='primary', inline=FALSE, width=500,
-      fluidRow(splitLayout(cellWidths=c('1%', '25%', '1%', '13%', '1%', '17%', '1%', '14%', '1%', '28%'), '', 
-      actionButton("val.lgd", "Add/Remove", icon=icon("refresh")), '',  
-      numericInput(inputId='val.lgd.row', label='Rows:', value=as.numeric(cfg$lis.par$shm.img['value.legend.rows', 'default']), min=1, max=Inf, step=1, width=150), '',
-      numericInput(inputId='val.lgd.key', label='Key size:', value=as.numeric(cfg$lis.par$shm.img['value.legend.key', 'default']), min=0.0001, max=1, step=0.01, width=150), '',
-      numericInput(inputId='val.lgd.text', label='Text size:', value=as.numeric(cfg$lis.par$shm.img['value.legend.text', 'default']), min=0.0001, max=Inf, step=1, width=140), '',
-      radioButtons(inputId='val.lgd.feat', label='Include feature:', choices=c('No', 'Yes'), selected=cfg$lis.par$shm.img['include.feature', 'default'], inline=TRUE)
-      ))
-      )),
-      column(1, offset=0, style='padding-left:40px; padding-right:50px; padding-top:0px; padding-bottom:5px',
-      dropdownButton(inputId='line', label='Shape outline', circle=FALSE, icon=NULL, status='primary', inline=FALSE, width=250,
-      selectInput('line.color', label='Line color:', choices=c('grey70', 'black', 'red', 'green', 'blue'), selected=cfg$lis.par$shm.img['line.color', 'default']),
-      numericInput(inputId='line.size', label='Line size:', value=as.numeric(cfg$lis.par$shm.img['line.size', 'default']), min=0.05, max=Inf, step=0.05, width=150)
-      ))
-      ), verbatimTextOutput('msg.shm'),      fluidRow(splitLayout(cellWidths=c("1%", "7%", "91%", "1%"), "", plotOutput("bar1"), plotOutput("shm", height='auto'), "")))
-
+      tabPanel(title='Video', value='shm3',
+      navbarPage('Parameters:',
+      tabPanel("Dimension",
+      fluidRow(splitLayout(cellWidths=c('1%', '8%', '1%', '8%', '1%', '14%'), '', 
+      numericInput(inputId='vdo.height', label='Height', value=as.numeric(cfg$lis.par$shm.video['height', 'default']), min=0.1, max=0.99, step=0.1, width=270), '',
+      numericInput(inputId='vdo.width', label='Width', value=as.numeric(cfg$lis.par$shm.video['width', 'default']), min=0.1, max=0.92, step=0.1, width=270), '', uiOutput('video.dim')
+      )) # fluidRow
+      ),
+      tabPanel("Key",
+      fluidRow(splitLayout(cellWidths=c('1%', '8%', '1%', '10%', '1%', '13%'), '', 
+      numericInput(inputId='vdo.key.row', label='Key rows', value=as.numeric(cfg$lis.par$shm.video['key.rows', 'default']), min=1, max=Inf, step=1, width=270), '',
+      numericInput(inputId='vdo.key.size', label='Key size', value=as.numeric(cfg$lis.par$shm.video['key.size', 'default']), min=0.01, max=Inf, step=0.1, width=270), '',
+      radioButtons(inputId="vdo.val.lgd", label="Key value", choices=c("Yes", "No"), selected=cfg$lis.par$shm.video['value.legend', 'default'], inline=TRUE) 
+      ))),
+      tabPanel("Label",
+      splitLayout(cellWidths=c("15%", "1%", '10%'),
+      radioButtons(inputId="vdo.label", label="Feature label", choices=c("Yes", "No"), selected=cfg$lis.par$shm.video['feature.label', 'default'], inline=TRUE), '',
+      numericInput(inputId='vdo.lab.size', label='Label size', value=as.numeric(cfg$lis.par$shm.video['label.size', 'default']), min=0, max=Inf, step=0.5, width=150)
+      )), # tabPanel
+      tabPanel("More",
+      fluidRow(splitLayout(cellWidths=c('1%', '14%', '1%', '13%'), '', 
+      numericInput(inputId='vdo.itvl', label='Transition time (s)', value=as.numeric(cfg$lis.par$shm.video['transition', 'default']), min=0.1, max=Inf, step=1, width=270), '',
+      numericInput(inputId='vdo.res', label='Resolution (dpi)', value=as.numeric(cfg$lis.par$shm.video['dpi', 'default']), min=1, max=1000, step=5, width=270)
+      )) # fluidRow
+      )
+      ), # navbarPage
+      textOutput('tran.vdo'), htmlOutput('ffm'), 
+      radioButtons(inputId="vdo.but", label="Show/update video", choices=c("Yes", "No"), selected=cfg$lis.par$shm.video['show', 'default'], inline=TRUE),
+      fluidRow(splitLayout(cellWidths=c("1%", "7%", "91%", "1%"), "", plotOutput("bar3"), uiOutput('video'), ""))
+      ) # tabPanel
+      
+    )
       ))
   
   })
 
-  output$shms.o <- renderUI({
+# addPopover(session=session, id="height", title="", content="Check 'Yes' to preserve the aspect ratio defined in the aSVG file.", placement = "bottom", trigger = "hover", options = NULL)  
  
+ 
+ output$shms.o <- renderUI({ 
     if (is.null(svg.path1())) return(NULL)
     if (length(svg.path1()$svg.na)==1) return(NULL)
     svg.pa <- svg.path1()[['svg.na']]
-    selectInput('shms.in', label='aSVG for legend:', choices=svg.pa, selected=svg.pa[1])
-
+    selectInput('shms.in', label='Select plots', choices=svg.pa, selected=svg.pa[1])
   })
 
-  output$lgd <- renderPlot(width='auto', height="auto", {
+  output$lgd <- renderPlot(width='auto', height="auto", { # auto: no need to scroll. 
     validate(need(try(as.integer(input$lgd.row)==input$lgd.row & input$lgd.row>0), 'Legend key rows should be a positive integer!'))
     validate(need(try(input$lgd.key.size>0&input$lgd.key.size<1), 'Legend key size should be between 0 and 1!'))
     svg.path <- svg.path1()
-    if (is.null(svg.path1())|is.null(grob$lgd.all)|(length(svg.path$svg.na)>1 & is.null(input$shms.in))) return(ggplot())
+    if (is.null(svg.path1())|is.null(shm$lgd.all)|(length(svg.path$svg.na)>1 & is.null(input$shms.in))) return(ggplot())
       # Width and height in original SVG.
       if (length(svg.path$svg.na)>1) svg.na <- input$shms.in else svg.na <- 1
 
-      w.h <- svg.df()[[svg.na]][['w.h']]
-      w.h <- as.numeric(gsub("^(\\d+\\.\\d+|\\d+).*", "\\1", w.h)); r <- w.h[1]/w.h[2]
-      if (is.na(r)) return(); cat('Plotting legend plot... \n')
-      g.lgd <- grob$lgd.all[[svg.na]]; g.lgd <- g.lgd+coord_fixed(ratio=r); return(g.lgd)
-
+      # w.h <- svg.df()[[svg.na]][['w.h']]
+      # w.h <- as.numeric(gsub("^(\\d+\\.\\d+|\\d+).*", "\\1", w.h)); r <- w.h[1]/w.h[2]
+      # if (is.na(r)) return(); 
+      cat('Plotting legend plot... \n')
+      g.lgd <- shm$lgd.all[[svg.na]]
+      # g.lgd <- g.lgd+coord_fixed(ratio=r); # Aspect.ratio is fixed allready through theme(aspect.ratio). 
+      return(g.lgd)
   })
 
   output$lgd.ui <- renderUI({ 
     
-    if (is.null(input$hide.lgd)) return(NULL) 
-    if (input$hide.lgd=='Yes') return(NULL)
-    box(title="Legend Plot", status="primary", solidHeader=TRUE, collapsible=TRUE, uiOutput('shms.o'),
-    splitLayout(cellWidths=c("43%", "1%", '43%'),
-    numericInput(inputId='lgd.row', label='Legend key rows:', value=as.numeric(cfg$lis.par$legend['key.row', 'default']), min=1, max=Inf, step=1, width=150), '',
-    numericInput(inputId='lgd.key.size', label='Legend key size:', value=as.numeric(cfg$lis.par$legend['key.size', 'default']), min=0, max=1, step=0.02, width=150)
-    ),
-    splitLayout(cellWidths=c("43%", "1%", '43%'),
-    radioButtons(inputId="lgd.label", label="Label feature:", choices=c("Yes", "No"), selected=cfg$lis.par$legend['label', 'default'], inline=TRUE), '',
-    numericInput(inputId='lgd.lab.size', label='Label size:', value=as.numeric(cfg$lis.par$legend['label.size', 'default']), min=0, max=Inf, step=0.5, width=150)
-    ),
-    splitLayout(cellWidths=c("99%", "1%"), plotOutput("lgd"), ""), width=3) 
+    if (is.null(input$lgdB)) return(NULL) 
+    if (input$lgdB %% 2 == 1) return(NULL)
+    box(title="Legend Plot", status="primary", solidHeader=TRUE, collapsible=TRUE, width = 3,
+    
+    navbarPage('Parameters:',
+    tabPanel("Basic",
+    splitLayout(cellWidths=c("32%", "1%", '32%', '1%', '35%'),
+    numericInput(inputId='lgd.row', label='Key rows', value=as.numeric(cfg$lis.par$legend['key.row', 'default']), min=1, max=Inf, step=1, width=150), '',
+    numericInput(inputId='lgd.key.size', label='Key size', value=as.numeric(cfg$lis.par$legend['key.size', 'default']), min=0, max=1, step=0.02, width=150), '',
+    numericInput(inputId='lgd.ratio1', label='Aspect ratio', value=as.numeric(cfg$lis.par$legend['aspect.ratio', 'default']), min=0.01, max=Inf, step=0.01, width=150)
+    )), # tabPanel
+
+    tabPanel("Feature labels",
+    splitLayout(cellWidths=c("43%", "8%", '43%'),
+    radioButtons(inputId="lgd.label", label="Feature labels", choices=c("Yes", "No"), selected=cfg$lis.par$legend['label', 'default'], inline=TRUE), '',
+    numericInput(inputId='lgd.lab.size', label='Label size', value=as.numeric(cfg$lis.par$legend['label.size', 'default']), min=0, max=Inf, step=0.5, width=150)
+    )) # tabPanel
+    ), # navbarPage
+    uiOutput('shms.o'), splitLayout(cellWidths=c("99%", "1%"), plotOutput("lgd"), "")) # box
 
   })
 
 
   output$tran <- renderText({
-    
-    if (is.null(geneIn())|is.null(input$dt_rows_selected)|is.null(svg.df())|gID$geneID[1]=="none"|is.null(grob$all)) return(NULL)
-    validate(need(try(input$t>=0.1), 'Transition time should be at least 0.1 second!'))
-
+    if (is.null(geneIn())|is.null(input$dt_rows_selected)|is.null(svg.df())|gID$geneSel[1]=="none"|is.null(shm$grob.all)) return(NULL)
+    if (!is.null(input$t)) validate(need(try(input$t>=0.1), 'Transition time should be at least 0.1 second!'))
   })
 
   ggly_rm <- function() {
@@ -1189,23 +1499,23 @@ content=function(file=paste0(normalizePath(tempdir(check=TRUE), winslash="/", mu
       file.remove(list.files('www/video/', '*.mp4$', full.names=TRUE))
     } else dir.create('www/video/', recursive=TRUE)
   }
-  observeEvent(list(fineIn=input$fileIn, log=input$log, tis=input$tis, col.but=input$col.but, cs.v=input$cs.v, pre.scale=input$pre.scale), { ggly_rm(); vdo_rm() })
+  observeEvent(list(fineIn=input$fileIn, log=input$log, tis=input$tis, col.but=input$col.but, cs.v=input$cs.v, preScale=input$preScale), { ggly_rm(); vdo_rm() })
 
   observeEvent(list(width.ly=input$width.ly, height.ly=input$height.ly), {
     if (dir.exists('html_shm/')) { unlink('html_shm/lib', recursive=TRUE)
       file.remove(list.files('html_shm/', '*.html$', full.names=TRUE))
     } else dir.create('html_shm/')
   })
-  observeEvent(list(log=input$log, tis=input$tis, col.but=input$col.but, cs.v=input$cs.v, pre.scale=input$pre.scale, ggly.but=input$ggly.but, gID.new=gID$new), {
+  observeEvent(list(log=input$log, tis=input$tis, col.but=input$col.but, cs.v=input$cs.v, preScale=input$preScale, ggly.but=input$ggly.but, gID.new=gID$new), {
 
     if (is.null(input$ggly.but)) return() 
     if (input$ggly.but=='No') return()
-    if (is.null(geneIn())|is.null(gID$new)|is.null(input$dt_rows_selected)|is.null(svg.df())|gID$geneID[1]=="none"|is.null(grob$gg.all1)|input$ggly.but=='No') return(NULL)
+    if (is.null(geneIn())|is.null(gID$new)|is.null(input$dt_rows_selected)|is.null(svg.df())|gID$geneSel[1]=="none"|is.null(shm$gg.all1)|input$ggly.but=='No') return(NULL)
     if (length(color$col=="none")==0|input$color=="") return(NULL)
 
     withProgress(message="Animation: ", value=0, {
     incProgress(0.25, detail="preparing frames ...") 
-    gg.all <- grob$gg.all1; na <- names(gg.all)
+    gg.all <- shm$gg.all1; na <- names(gg.all)
     # Only take the selected genes.
     na <- na[grepl(paste0('^', pat.all(), '_\\d+$'), na)]; gg.all <- gg.all[na]
     for (i in seq_along(gg.all)) {
@@ -1226,9 +1536,9 @@ content=function(file=paste0(normalizePath(tempdir(check=TRUE), winslash="/", mu
 
   output$sld.fm <- renderUI({
  
-    if (is.null(grob$gg.all)|is.null(pat.all())|is.null(gID$geneID)) return(NULL) 
+    if (is.null(shm$gg.all)|is.null(pat.all())|is.null(gID$geneSel)) return(NULL) 
     gen.con.pat <- paste0('^', pat.all(), '_\\d+$') 
-    sliderInput(inputId='fm', 'Frames', min=1, max=sum(grepl(gen.con.pat, names(grob$gg.all1))), step=1, value=1, animate=animationOptions(interval=input$t*10^3, loop=FALSE, playButton=icon('play'), pauseButton=icon('pause')))
+    sliderInput(inputId='fm', 'Frames', min=1, max=sum(grepl(gen.con.pat, names(shm$gg.all1))), step=1, value=1, animate=animationOptions(interval=input$t*10^3, loop=FALSE, playButton=icon('play'), pauseButton=icon('pause')))
   
   })
 
@@ -1236,8 +1546,8 @@ content=function(file=paste0(normalizePath(tempdir(check=TRUE), winslash="/", mu
   gly.url <- reactive({ 
     
     if (is.null(input$ggly.but)) return() 
-    if (is.null(grob$gg.all1)|input$ggly.but=='No'|gID$geneID[1]=='none'|is.null(pat.all())) return(NULL)
-    gg.all <- grob$gg.all1; na <- names(gg.all)
+    if (is.null(shm$gg.all1)|input$ggly.but=='No'|gID$geneSel[1]=='none'|is.null(pat.all())) return(NULL)
+    gg.all <- shm$gg.all1; na <- names(gg.all)
     # Only take the selected genes.
     na <- na[grepl(paste0('^', pat.all(), '_\\d+$'), na)]; na1 <- na[as.integer(input$fm)]
     na2 <- list.files('www/ggly', pattern=na1)
@@ -1254,7 +1564,7 @@ content=function(file=paste0(normalizePath(tempdir(check=TRUE), winslash="/", mu
     if (input$ggly.but=='No'|is.null(gly.url())) return()
     if (is.null(svg.df())|is.null(geneIn())|is.null(input$dt_rows_selected)|color$col[1]=='none') return(NULL)
     
-    gg.all <- grob$gg.all1; na <- names(gg.all)
+    gg.all <- shm$gg.all1; na <- names(gg.all)
     # Only take the selected genes.
     na <- na[grepl(paste0('^', pat.all(), '_\\d+$'), na)]; na1 <- na[as.integer(input$fm)]
     na2 <- list.files('www/ggly', pattern=paste0(na1, '\\.html$')); if (length(na2)==0) return(NULL)
@@ -1267,22 +1577,21 @@ content=function(file=paste0(normalizePath(tempdir(check=TRUE), winslash="/", mu
     if (!is.na(w)) {
       h <- y.max/x.max*w; if (h>550) { h <- 550; w <- x.max/y.max*h }
     } else if (is.na(w) & !is.na(h)) { w <- x.max/y.max*h }
+    output$tran.t <- renderUI({
+      numericInput(inputId='t', label='Transition time (s)', value=as.numeric(cfg$lis.par$shm.anm['transition', 'default']), min=0.1, max=Inf, step=NA, width=270)
+    }) 
     output$anm.w <- renderUI({
-
-      numericInput(inputId='width.ly', label='Width:', value=w, min=1, max=Inf, step=NA, width=170)
-
+      numericInput(inputId='width.ly', label='Width', value=w, min=1, max=Inf, step=NA, width=170)
     })
     output$anm.h <- renderUI({
-
-      numericInput(inputId='height.ly', label='Height:', value=h, min=1, max=Inf, step=NA, width=170)
-
+      numericInput(inputId='height.ly', label='Height', value=h, min=1, max=Inf, step=NA, width=170)
     })
   output$dld.anm.but <- renderUI({ downloadButton("dld.anm", "Download") })
 
   })
 
   
-  observeEvent(list(log=input$log, tis=input$tis, col.but=input$col.but, cs.v=input$cs.v, pre.scale=input$pre.scale, ggly.but=input$ggly.but, fm=input$fm), {
+  observeEvent(list(log=input$log, tis=input$tis, col.but=input$col.but, cs.v=input$cs.v, preScale=input$preScale, ggly.but=input$ggly.but, fm=input$fm), {
   
   output$ggly <- renderUI({ 
 
@@ -1305,7 +1614,7 @@ content=function(file=paste0(normalizePath(tempdir(check=TRUE), winslash="/", mu
     if (is.null(svg.df())|is.null(geneIn())|is.null(input$dt_rows_selected)|color$col[1]=='none') return(NULL) 
     withProgress(message="Downloading animation: ", value=0, {
     incProgress(0.1, detail="in progress ...")
-    gg.all <- grob$gg.all1; na <- names(gg.all)
+    gg.all <- shm$gg.all1; na <- names(gg.all)
     gg.na <- na[grepl(paste0('^', pat.all(), '_\\d+$'), na)]
     gg <- gg.all[gg.na]
     pro <- 0.1; for (i in seq_along(gg.na)) {
@@ -1325,9 +1634,7 @@ content=function(file=paste0(normalizePath(tempdir(check=TRUE), winslash="/", mu
   )
 
   output$video.dim <- renderUI({
-
-    selectInput("vdo.dim", label="Fixed dimension:", choices=c('1920x1080', '1280x800', '320x568', '1280x1024', '1280x720', '320x480', '480x360', '600x600', '800x600', '640x480'), selected=cfg$lis.par$shm.video['dimension', 'default'], width=110)
-
+    selectInput("vdo.dim", label="Fixed dimension", choices=c('1920x1080', '1280x800', '320x568', '1280x1024', '1280x720', '320x480', '480x360', '600x600', '800x600', '640x480'), selected=cfg$lis.par$shm.video['dimension', 'default'], width=110)
   })
 
   output$ffm <- renderText({
@@ -1335,7 +1642,7 @@ content=function(file=paste0(normalizePath(tempdir(check=TRUE), winslash="/", mu
     if (grepl('error|warning', ffm)) paste("<span style=\"color:red\">Error: \"ffmpeg\" is not detected!\"</span>")
   })
 
-  observeEvent(list(log=input$log, tis=input$tis, col.but=input$col.but, cs.v=input$cs.v, pre.scale=input$pre.scale, vdo.but=input$vdo.but, vdo.dim=input$vdo.dim, vdo.itvl=input$vdo.itvl, vdo.height=input$vdo.height, vdo.width=input$vdo.width, vdo.res=input$vdo.res, vdo.val.lgd=input$'vdo.val.lgd'), {
+  observeEvent(list(log=input$log, tis=input$tis, col.but=input$col.but, cs.v=input$cs.v, preScale=input$preScale, vdo.but=input$vdo.but, vdo.dim=input$vdo.dim, vdo.itvl=input$vdo.itvl, vdo.height=input$vdo.height, vdo.width=input$vdo.width, vdo.res=input$vdo.res, vdo.val.lgd=input$'vdo.val.lgd', input$vdo.label), {
 
     if (is.null(input$vdo.but)) return(NULL) 
     if (input$vdo.but=='No'|is.null(pat.all())) return(NULL)
@@ -1347,7 +1654,7 @@ content=function(file=paste0(normalizePath(tempdir(check=TRUE), winslash="/", mu
     
     withProgress(message="Video: ", value=0, {
     incProgress(0.75, detail="in progress ...")
-    gg.all <- grob$gg.all1; na <- names(gg.all)
+    gg.all <- shm$gg.all1; na <- names(gg.all)
     pat <- paste0('^', pat.all(), '_\\d+$'); na <- na[grepl(pat, na)]
     gg.all1 <- gg.all[na]
     cat('Making video... \n')
@@ -1355,7 +1662,7 @@ content=function(file=paste0(normalizePath(tempdir(check=TRUE), winslash="/", mu
     if (dim %in% c('1280x800', '1280x1024', '1280x720')&res>450) res <- 450
     if (dim=='1920x1080'&res>300) res <- 300
     # selectInput("vdo.dim", label="Fixed dimension:", choices=c('1920x1080', '1280x800', '320x568', '1280x1024', '1280x720', '320x480', '480x360', '600x600', '800x600', '640x480'), selected='640x480', width=110)
-    vdo <- video(gg=gg.all1, cs.g=shm.bar(), sam.uni=sam(), ft.trans=input$tis, lgd.key.size=input$lgd.key.size, lgd.text.size=NULL, position.text.key='right', legend.value.vdo=(input$'vdo.val.lgd'=='Yes'), label=(input$lgd.label=='Yes'), label.size=input$lgd.lab.size, sub.title.size=8, bar.value.size=6, lgd.row=input$lgd.row, width=input$vdo.width, height=input$vdo.height, video.dim=dim, interval=input$vdo.itvl, res=res, out.dir='./www/video'); if (is.null(vdo)) return()
+    vdo <- video(gg=gg.all1, cs.g=shm.bar(), sam.uni=sam(), ft.trans=input$tis, lgd.key.size=input$vdo.key.size, lgd.text.size=NULL, position.text.key='right', legend.value.vdo=(input$'vdo.val.lgd'=='Yes'), label=(input$vdo.label=='Yes'), label.size=input$vdo.lab.size, sub.title.size=8, bar.value.size=6, lgd.row=input$vdo.key.row, width=input$vdo.width, height=input$vdo.height, video.dim=dim, interval=input$vdo.itvl, res=res, out.dir='./www/video'); if (is.null(vdo)) return()
     cat('Presenting video... \n')
     incProgress(0.95, detail="Presenting video...")
     w.h <- as.numeric(strsplit(input$vdo.dim, 'x')[[1]])
@@ -1382,16 +1689,15 @@ content=function(file=paste0(normalizePath(tempdir(check=TRUE), winslash="/", mu
     #updateRadioButtons(session, inputId="mhm.but", label="Show plot:", choices=c("Yes", "No"), selected=cfg$lis.par$mhm['show', 'default'], inline=TRUE)
 
   })
-
   # Calculate whole correlation or distance matrix.
   cor.dis <- reactive({
-    if (input$fileIn %in% cfg$na.cus & is.null(input$svgInpath) & is.null(input$svgInpath1)) return()
+    if (input$fileIn %in% cfg$na.cus & is.null(input$svgInpath1) & is.null(input$svgInpath2)) return()
     if (is.null(input$mhm.but)) return() 
-    if (is.null(geneIn())|input$mhm.but=='No') return()
-    if ((input$fileIn %in% cfg$na.cus & is.null(geneIn()))|input$fileIn=="none") return(NULL)
+    if (is.null(df.net()$df.aggr)|input$mhm.but=='No') return()
+    if ((input$fileIn %in% cfg$na.cus & is.null(df.net()))|input$fileIn=="none") return(NULL)
     withProgress(message="Compute similarity/distance matrix: ", value = 0, {
       incProgress(0.5, detail="please wait ...")
-      gene <- geneIn()[['gene1']]
+      gene <- df.net()$df.aggr
       # Too many genes may crash the app.
       if (nrow(gene)>15000 & input$mhm.but==0) return()
       cat('Correlation/distance matrix...\n')
@@ -1407,8 +1713,8 @@ content=function(file=paste0(normalizePath(tempdir(check=TRUE), winslash="/", mu
     if (input$fileIn=="None") return()
     if (is.null(input$mhm.but)) return()
     if (is.null(cor.dis())|input$mhm.but=='No') return()
-    gene <- geneIn()[["gene1"]]; rna <- rownames(gene)
-    gen.tar<- gID$geneID; mat <- cor.dis()
+    gene <- df.net()$df.aggr; rna <- rownames(gene)
+    gen.tar<- gID$geneSel; mat <- cor.dis()
     # Validate filtering parameters in matrix heatmap. 
     measure <- input$measure; cor.abs <- input$cor.abs; mhm.v <- input$mhm.v; thr <- input$thr
     if (input$thr=='p') {
@@ -1439,8 +1745,8 @@ content=function(file=paste0(normalizePath(tempdir(check=TRUE), winslash="/", mu
     if (is.null(input$mhm.but)) return() # Matrix heatmap sections is removed.
     if (input$mhm.but!=0) return() 
     if (is.null(submat())) return()
-    gene <- geneIn()[["gene1"]]; rna <- rownames(gene)
-    gen.tar <- gID$geneID; if (length(gen.tar)>1) return()
+    gene <- df.net()$df.aggr; rna <- rownames(gene)
+    gen.tar <- gID$geneSel; if (length(gen.tar)>1) return()
     withProgress(message="Matrix heatmap:", value=0, {
       incProgress(0.7, detail="Plotting ...")
       if (input$mat.scale=="Column") scale.hm <- 'column' else if (input$mat.scale=="Row") scale.hm <- 'row' else scale.hm <- 'no'
@@ -1454,8 +1760,8 @@ content=function(file=paste0(normalizePath(tempdir(check=TRUE), winslash="/", mu
     
     #if (is.null(submat())|input$mhm.but=='No') return()
     if (is.null(submat())) return()
-    gene <- geneIn()[["gene1"]]; rna <- rownames(gene)
-    gen.tar<- gID$geneID
+    gene <- df.net()$df.aggr; rna <- rownames(gene)
+    gen.tar<- gID$geneSel
     withProgress(message="Matrix heatmap:", value=0, {
       incProgress(0.7, detail="plotting ...")
       if (input$mat.scale=="Column") scale.hm <- 'column' else if (input$mat.scale=="Row") scale.hm <- 'row' else scale.hm <- 'no'
@@ -1469,8 +1775,8 @@ content=function(file=paste0(normalizePath(tempdir(check=TRUE), winslash="/", mu
   output$HMly <- renderPlotly({ 
    
     if (is.null(input$dt_rows_selected)) return()
-    if (is.null(gID$geneID)|is.null(submat())) return()
-    if (gID$geneID[1]=='none'|is.na(gID$geneID[1])) return()
+    if (is.null(gID$geneSel)|is.null(submat())) return()
+    if (gID$geneSel[1]=='none'|is.na(gID$geneSel[1])) return()
     if (input$mhm.but!=0) hmly() else if (input$mhm.but==0) mhm$hm else return() 
   
   })
@@ -1498,17 +1804,17 @@ content=function(file=paste0(normalizePath(tempdir(check=TRUE), winslash="/", mu
 
   })
 
-    #gene <- geneIn()[["gene2"]]; if (!(input$gen.sel %in% rownames(gene))) return() # Avoid unnecessary computing of 'adj', since 'input$gen.sel' is a cerain true gene id of an irrelevant expression matrix, not 'None', when switching from one defaul example's matrix heatmap to another example.
+    #gene <- geneIn()[["df.aggr.tran"]]; if (!(input$gen.sel %in% rownames(gene))) return() # Avoid unnecessary computing of 'adj', since 'input$gen.sel' is a cerain true gene id of an irrelevant expression matrix, not 'None', when switching from one defaul example's matrix heatmap to another example.
     adj.mods <- reactiveValues(lis=NULL)
     observe({
     
       if (input$fileIn=="None") return()
       if (is.null(input$cpt.nw)) return() # Network section is removed.
-      if (is.null(submat())|input$cpt.nw!=0|length(gID$geneID)>1) return()
+      if (is.null(submat())|input$cpt.nw!=0|length(gID$geneSel)>1) return()
 
     if (input$fileIn=="customData"|any(input$fileIn %in% cfg$na.def)) {
 
-      gene <- geneIn()[["gene1"]]; if (is.null(gene)) return()
+      gene <- df.net()$df.aggr; if (is.null(gene)) return()
       type <- input$net.type; sft <- if (type=='distance') 1 else 6
       withProgress(message="Computing: ", value = 0, {
         incProgress(0.3, detail="adjacency matrix ...")
@@ -1525,12 +1831,12 @@ content=function(file=paste0(normalizePath(tempdir(check=TRUE), winslash="/", mu
 
   # er <- eventReactive(exp, {}). If its reactive value "er()" is called before eventReactive is triggered, the code execution stops where "er()" is called.
   observeEvent(input$cpt.nw, { 
-    if (input$fileIn %in% cfg$na.cus & is.null(input$svgInpath) & is.null(input$svgInpath1)) return()
-    #gene <- geneIn()[["gene2"]]; if (!(input$gen.sel %in% rownames(gene))) return() # Avoid unnecessary computing of 'adj', since 'input$gen.sel' is a cerain true gene id of an irrelevant expression matrix, not 'None', when switching from one defaul example's matrix heatmap to another example.
+    if (input$fileIn %in% cfg$na.cus & is.null(input$svgInpath1) & is.null(input$svgInpath2)) return()
+    #gene <- geneIn()[["df.aggr.tran"]]; if (!(input$gen.sel %in% rownames(gene))) return() # Avoid unnecessary computing of 'adj', since 'input$gen.sel' is a cerain true gene id of an irrelevant expression matrix, not 'None', when switching from one defaul example's matrix heatmap to another example.
     if (is.null(submat())|input$cpt.nw==0) return()
     if (input$fileIn=="customData"|any(input$fileIn %in% cfg$na.def)) {
 
-      gene <- geneIn()[["gene1"]]; if (is.null(gene)) return()
+      gene <- df.net()$df.aggr; if (is.null(gene)) return()
       type <- input$net.type; sft <- if (type=='distance') 1 else 6
       withProgress(message="Computing: ", value = 0, {
         incProgress(0.3, detail="adjacency matrix ...")
@@ -1569,7 +1875,7 @@ content=function(file=paste0(normalizePath(tempdir(check=TRUE), winslash="/", mu
 
   #observe({
   
-   # geneIn(); gID$geneID; input$adj.in; input$gen.sel; input$ds; input$adj.modInpath; input$A; input$p; input$cv1; input$cv2; input$min.size; input$net.type
+   # geneIn(); gID$geneSel; input$adj.in; input$gen.sel; input$ds; input$adj.modInpath; input$A; input$p; input$cv1; input$cv2; input$min.size; input$net.type
     #updateRadioButtons(session, inputId="cpt.nw", label="Show plot:", choices=c("Yes", "No"), selected=ifelse(nrow(visNet()[["link"]])<120, "Yes", "No"), inline=TRUE)
   
   #})
@@ -1595,12 +1901,12 @@ content=function(file=paste0(normalizePath(tempdir(check=TRUE), winslash="/", mu
   visNet <- reactive({
  
     input$cpt.nw; if (input$fileIn=="None") return()
-    if (input$fileIn=='customComputedData' & is.null(geneIn())) return()
+    if (input$fileIn=='customComputedData' & is.null(df.net())) return()
     # if (input$adj.in=="None") return(NULL)
     if (input$fileIn=="customComputedData") { adj <- adj.mod()[['adj']]; mods <- adj.mod()[['mcol']] } else if (input$fileIn=="customData"|input$fileIn %in% cfg$na.def) { 
       adj <- adj.mods$lis[['adj']]; mods <- adj.mods$lis[['mod']]
     }
-    if (input$fileIn=='customComputedData') gene <- geneIn()$gene2 else gene <- submat()
+    if (input$fileIn=='customComputedData') gene <- df.net()$df.aggr else gene <- submat()
     if (is.null(input$gen.sel)) return() # Matrix heatmap section is removed.
     if (!(input$gen.sel %in% rownames(gene))) return() # Avoid unnecessary computing of 'adj', since 'input$gen.sel' is a cerain true gene id of an irrelevant expression matrix, not 'None', when switching from one defaul example's network to another example.
     lab <- mods[, input$ds][rownames(gene)==input$gen.sel]
@@ -1658,9 +1964,9 @@ content=function(file=paste0(normalizePath(tempdir(check=TRUE), winslash="/", mu
         link1$title <- link1$value # 'length' is not well indicative of adjacency value, so replaced by 'value'.
         link1$color <- 'lightblue'
         
-      }; ann <- geneIn()[['gene3']]
-      if (!is.null(ann)) node <- cbind(node, title=ann[node$id, ], borderWidth=2, color.border="black", color.highlight.background="orange", color.highlight.border="darkred", color=NA, stringsAsFactors=FALSE)
-      if (is.null(ann)) node <- cbind(node, borderWidth=2, color.border="black", color.highlight.background="orange", color.highlight.border="darkred", color=NA, stringsAsFactors=FALSE)
+      }; meta <- df.net()$df.met
+      if (ncol(meta) > 0) node <- cbind(node, title=meta[node$id, ], borderWidth=2, color.border="black", color.highlight.background="orange", color.highlight.border="darkred", color=NA, stringsAsFactors=FALSE)
+      if (ncol(meta) == 0) node <- cbind(node, borderWidth=2, color.border="black", color.highlight.background="orange", color.highlight.border="darkred", color=NA, stringsAsFactors=FALSE)
       net.lis <- list(node=node, link=link1, adjs=adjs, lins=lins)
 
     }); net.lis
@@ -1670,7 +1976,7 @@ content=function(file=paste0(normalizePath(tempdir(check=TRUE), winslash="/", mu
   observe({
  
     if (input$fileIn=="None") return()
-    geneIn(); gID$geneID; input$gen.sel; input$ds; input$adj.modInpath; input$A; input$p; input$cv1; input$cv2; input$min.size; input$net.type
+    geneIn(); gID$geneSel; input$gen.sel; input$ds; input$adj.modInpath; input$A; input$p; input$cv1; input$cv2; input$min.size; input$net.type
     input$gen.sel; input$measure; input$cor.abs; input$thr; input$mhm.v; input$cpt.nw
      #if ((input$adj.in==1 & is.null(visNet()[["adjs1"]]))|(input$cpt.nw!=cfg$lis.par$network['max.edges', 'default'] & is.null(visNet()[["adjs1"]]))) { updateSelectInput(session, "adj.in", "Adjacency threshold:", sort(seq(0, 1, 0.002), decreasing=TRUE), visNet()[["adjs"]]) } else if (!is.null(visNet()[["adjs1"]])) updateSelectInput(session, "adj.in", "Adjacency threshold:", sort(seq(0, 1, 0.002), decreasing=TRUE), visNet()[["adjs1"]])
     lins <- visNet()[["lins"]]
@@ -1683,7 +1989,7 @@ content=function(file=paste0(normalizePath(tempdir(check=TRUE), winslash="/", mu
     #if (input$adj.in=="None"|input$cpt.nw=="No") return(NULL)
     if (input$adj.in=="None") return(NULL)
     if (length(color.net$col.net=="none")==0) return(NULL)
-    gene <- geneIn()[["gene1"]]; if (!(input$gen.sel %in% rownames(gene))) return() # Avoid unnecessary computing of 'adj', since 'input$gen.sel' is a cerain true gene id of an irrelevant expression matrix, not 'None', when switching from one defaul example's network to another example.
+    gene <- df.net()$df.aggr; if (!(input$gen.sel %in% rownames(gene))) return() # Avoid unnecessary computing of 'adj', since 'input$gen.sel' is a cerain true gene id of an irrelevant expression matrix, not 'None', when switching from one defaul example's network to another example.
     if(input$col.but.net==0) color.net$col.net <- colorRampPalette(col_sep(cfg$lis.par$network['color', 'default']))(len.cs.net) # color.net$col.net is changed alse outside renderPlot, since it is a reactive value.
 
       withProgress(message="Color scale: ", value = 0, {
@@ -1715,7 +2021,7 @@ content=function(file=paste0(normalizePath(tempdir(check=TRUE), winslash="/", mu
     
     #if (input$adj.in=="None"|input$cpt.nw=="No") return(NULL)
     if (input$adj.in=="None") return(NULL)
-    gene <- geneIn()[["gene1"]]; if (!(input$gen.sel %in% rownames(gene))) return() # Avoid unnecessary computing of 'adj', since 'input$gen.sel' is a cerain true gene id of an irrelevant expression matrix, not 'None', when switching from one defaul example's network to another example.
+    gene <- df.net()$df.aggr; if (!(input$gen.sel %in% rownames(gene))) return() # Avoid unnecessary computing of 'adj', since 'input$gen.sel' is a cerain true gene id of an irrelevant expression matrix, not 'None', when switching from one defaul example's network to another example.
     withProgress(message="Network:", value=0.5, {
     incProgress(0.3, detail="prepare for plotting ...")
     # Match colours with gene connectivity by approximation.
@@ -1748,6 +2054,388 @@ content=function(file=paste0(normalizePath(tempdir(check=TRUE), winslash="/", mu
 
   })
 
+  output$dt.rep <- renderDataTable({
+    if (is.null(geneIn())) return()
+    if ((input$fileIn %in% cfg$na.cus & is.null(geneIn()))|input$fileIn=="none") return(NULL)
+
+    withProgress(message="Data table: ", value = 0, {
+
+      incProgress(0.5, detail="displaying, please wait ...")
+      if (input$fileIn!="none") {
+      gene <- geneIn1(); df.met <- gene[["df.met"]][, , drop=FALSE]
+      gene.rep <- gene[["df.rep"]][, , drop=FALSE]
+      if (nrow(df.met) > 0) gene.dt <- cbind.data.frame(df.met, gene.rep, stringsAsFactors=FALSE) else gene.dt <- gene.rep
+   }; cat('Presenting data matrix... \n')
+   #if (is.null(sear$id)) sel <- as.numeric(cfg$lis.par$data.matrix['row.selected', 'default']) else sel <- sear$id
+   #if (length(sel)==1 & sel[1]==as.numeric(cfg$lis.par$data.matrix['row.selected', 'default']) & nrow(gene.dt)>1) sel <- sel else if (nrow(gene.dt)==1)  sel <- 1 else if (length(sel)>1) sel <- seq_along(sel)
+
+   datatable(gene.dt, selection=list(mode="multiple", target="row", selected=NULL),
+   filter="top", extensions=c('Scroller'), plugins = "ellipsis",
+   options=list(pageLength=5, lengthMenu=c(5, 15, 20), autoWidth=TRUE, scrollCollapse=TRUE, deferRender=TRUE, scrollX=TRUE, scrollY=200, scroller=TRUE, searchHighlight=FALSE, search=list(regex=TRUE, smart=FALSE, caseInsensitive=TRUE), searching=FALSE, columnDefs = list(list(targets = c(1), render = JS("$.fn.dataTable.render.ellipsis(5, false)")))), 
+   class='cell-border strip hover') %>% formatStyle(0, backgroundColor="orange", cursor='pointer') %>% 
+   formatRound(colnames(geneIn()[["df.aggr.tran"]]), 2)
+    })
+
+  })
+
+  ssg.dat <- reactive({
+    # if (input$fileIn!="customData") return(NULL)
+    if (is.null(geneIn0())) return(NULL)
+    gen.lis <- geneIn0()
+    df.rep <- as.matrix(gen.lis[['df.rep']])
+    cna <- colnames(df.rep)
+    sams <- gsub('^(.*)__(.*)$', '\\1', cna)
+    cons <- gsub('^(.*)__(.*)$', '\\2', cna)
+    validate(need(try(length(unique(sams))>1 & length(unique(cons))>1), 'At least 2 samples and 2 conditions are required!')) 
+    cat('Create SummarizedExperiment... \n')
+    se <- SummarizedExperiment(assays=list(expr=df.rep), colData=data.frame(sample=sams, condition=cons, samCon=cna, rep=cna))
+    return(list(se=se, sams=sams, cons=cons))
+  })
+
+  output$ssg.sam <- renderUI({
+    ssg.dat <- ssg.dat(); if (is.null(ssg.dat)) return()
+    cho <- c('all', unique(ssg.dat$sams))
+    selectInput('ssg.sam', label='Select features', choices=cho, selected=cho[2:3], multiple=TRUE)
+  })
+  output$ssg.con <- renderUI({
+    ssg.dat <- ssg.dat(); if (is.null(ssg.dat)) return()
+    cho <- c('all', unique(ssg.dat$cons))
+    selectInput('ssg.con', label='Select factors', choices=cho, selected=cho[2:3], multiple=TRUE)
+  })
+
+sub_se <- function(se, sams, cons) {
+  cna.sel <- NULL
+  for (i in cons) { cna.sel <- c(cna.sel, paste0(sams, '__', i)) }
+  se <- se[, colnames(se) %in% cna.sel]; return(se)
+}
+
+  se <- reactive({
+    # if (input$fileIn!="customData") return(NULL)
+    dat <- ssg.dat(); sam.con <- input$sam.con 
+    if (is.null(geneIn0())|is.null(dat)|is.null(sam.con)) return(NULL)
+    sam <- input$ssg.sam; con <- input$ssg.con; se <- dat$se
+    if (is.null(sam)|is.null(con)) return() 
+    if ('all' %in% sam) sam <- unique(dat$sams)
+    if ('all' %in% con) con <- unique(dat$cons)
+    cat('Subsetting SE with input sample/condition... \n')
+    se <- sub_se(se, sam, con)
+    if (sam.con=='feature') fct <- 'sample' else if (sam.con=='factor') fct <- 'condition' else if (sam.con=='feature__factor') fct <- 'samCon'
+    return(list(se=se, fct=fct))
+  })
+
+  se.nor.rok.dis <- reactive({
+    # if (input$fileIn!="customData") return(NULL)
+    dat <- ssg.dat() 
+    if (is.null(geneIn0())|is.null(dat)) return(NULL)
+    cat('Normalizing data for ROKU/distinct ... \n')
+    nor.meth <- input$rok.dis.nor
+    if (grepl('^CNF-', nor.meth)) {
+      norm.fun <- 'CNF'
+      par.lis <- list(method=sub('.*-', '', nor.meth))
+    } else if (nor.meth=='none') return(list(se.nor=dat$se, fct=se()$fct)) else { norm.fun <- nor.meth; par.lis <- NULL }
+    se.nor <- norm_data(data=dat$se, norm.fun=norm.fun, parameter.list=par.lis, log2.trans=TRUE)
+    return(list(se.nor=se.nor))
+  })
+
+  output$ssg.tar <- renderUI({
+    # if (input$fileIn!="customData") return(NULL)
+    if (is.null(se())) return()
+    lis <- se(); se <- lis$se; fct <- lis$fct
+    if ('ROKU' %in% input$ssg.meth) {
+      validate(need(try(length(unique(colData(se)[, fct]))>2), 'The number of targets (samples/conditions) to compare should be at least 3 for ROKU!')) 
+    }
+    selectInput('ssg.tar', label='Target', choices=unique(colData(se)[, fct]), selected=NULL, multiple=FALSE)
+  }) 
+  # Pairwise comparison coefficients.
+  output$deg.vs <- renderText({
+    dat <- ssg.dat(); sam <- input$ssg.sam; con <- input$ssg.con
+    sam.con <- input$sam.con; tar <- input$ssg.tar
+    if (is.null(dat)|!is.character(sam)|!is.character(con)|!is.character(sam.con)|!is.character(tar)) return()
+    if ('all' %in% sam) sam <- unique(dat$sams)
+    if ('all' %in% con) con <- unique(dat$cons)
+  # Reference, query.
+    if (sam.con == 'feature') {  
+      under <- con; ref <- setdiff(sam, tar)
+    } else if (sam.con == 'factor') {
+      under <- sam; ref <- setdiff(con, tar)
+    } else if (sam.con == 'feature__factor') {
+      coms <- unlist(lapply(sam, function(i) {paste0(i, '__', con)} ))
+      ref <- setdiff(coms, tar)
+    }
+    # Compose title for upset plots.
+    if (sam.con != 'feature__factor') {
+      if (length(ref) > 1) ref <- paste0(paste0(ref, collapse = ', '), ' respectively, under ') else if (length(ref) == 1) ref <- paste0(ref, ' , under ')
+      return(paste0(tar, ' compared with ', ref, paste0(under, collapse = ', ')))
+    } else {
+      return(paste0(tar, ' compared with ', paste0(ref, collapse = ', '), ' respectively.'))
+    }
+  })
+  edg0 <- reactive({
+    # if (input$fileIn!="customData") return(NULL)
+    if (is.null(geneIn0())|is.null(se())) return(NULL)
+    cat('edgeR all ... \n')
+    withProgress(message="edgeR: ", value=0, {
+    incProgress(0.5, detail="in progress ...")
+    edgeR(se=se()$se, method.norm=sub('.*-', '', input$edg.lim.nor), com.factor=se()$fct, method.adjust='BH', return.all=TRUE)
+    })
+  })
+  edg <- eventReactive(input$ssg.update, {
+    # if (input$fileIn!="customData") return(NULL)
+    if (!'edgeR' %in% input$ssg.meth) return(NULL)
+    if (is.null(geneIn0())|is.null(se())|is.null(input$ssg.fc)|is.null(input$ssg.fdr)|is.null(edg0())) return(NULL)
+    cat('edgeR log2/fc ... \n')
+    lvl <- unique(colData(se()$se)[, se()$fct]) 
+    up_dn(sam.all=lvl, df.all=edg0(), log.fc=abs(input$ssg.fc), fdr=input$ssg.fdr, log.na='logFC', fdr.na='FDR')
+  })
+
+  dsq0 <- reactive({
+    # if (input$fileIn!="customData") return(NULL)
+    if (is.null(geneIn0())|is.null(se())) return(NULL)
+    cat('DESeq2... \n')
+    withProgress(message="DESeq2: ", value=0, {
+    incProgress(0.5, detail="in progress ...")
+    deseq2(se=se()$se, com.factor=se()$fct, method.adjust='BH', return.all=TRUE)
+    })
+  })
+  dsq <- eventReactive(input$ssg.update, {
+    # if (input$fileIn!="customData") return(NULL)
+    if (!'DESeq2' %in% input$ssg.meth) return(NULL)
+    if (is.null(geneIn0())|is.null(se())|is.null(input$ssg.fc)|is.null(input$ssg.fdr)|is.null(dsq0())) return(NULL)
+    cat('DESeq2 log2/fc ... \n')
+    lvl <- unique(colData(se()$se)[, se()$fct])
+    up_dn(sam.all=lvl, df.all=dsq0(), log.fc=abs(input$ssg.fc), fdr=input$ssg.fdr, log.na='log2FoldChange', fdr.na='padj')
+  })
+
+  lim0 <- reactive({
+    # if (input$fileIn!="customData") return(NULL)
+    if (is.null(geneIn0())|is.null(se())) return(NULL)
+    cat('limma all ... \n')
+    withProgress(message="limma: ", value=0, {
+    incProgress(0.5, detail="in progress ...") 
+    limma(se=se()$se, method.norm=sub('.*-', '', input$edg.lim.nor), m.array=FALSE, com.factor=se()$fct, method.adjust='BH', return.all=TRUE)
+    })
+  })
+  lim <- eventReactive(input$ssg.update, {
+    # if (input$fileIn!="customData") return(NULL)
+    # if (!'limma' %in% input$ssg.meth) return(NULL)
+    if (is.null(geneIn0())|is.null(se())|is.null(input$ssg.fc)|is.null(input$ssg.fdr)|is.null(lim0())) return(NULL)
+    cat('limma log2/fc ... \n')
+    lvl <- unique(colData(se()$se)[, se()$fct])
+    up_dn(sam.all=lvl, df.all=lim0(), log.fc=abs(input$ssg.fc), fdr=input$ssg.fdr, log.na='logFC', fdr.na='adj.P.Val')
+  })
+
+  rok0 <- reactive({
+    # if (input$fileIn!="customData") return(NULL)
+    lis <- se.nor.rok.dis()
+    if (is.null(geneIn0())|is.null(se())|is.null(lis)) return(NULL)
+    cat('ROKU all ... \n')
+    withProgress(message="ROKU: ", value=0, {
+      incProgress(0.5, detail="in progress ...")
+      # Column names and factors are same between se and se.nor.
+      se.nor <- lis$se.nor[, colnames(se()$se)] 
+      fct <- se()$fct
+      validate(need(try(length(unique(colData(se.nor)[, fct]))>2), 'The number of targets (samples/conditions) to compare should be at least 3 for ROKU!')) 
+      roku(data=se.nor, com.factor=fct, aggr='mean', n=1, log2.trans=FALSE, return.all=TRUE)
+    })
+  })
+  rok <- eventReactive(input$ssg.update, {
+    # if (input$fileIn!="customData") return(NULL)
+    if (!'ROKU' %in% input$ssg.meth) return(NULL)
+    if (is.null(geneIn0())|is.null(se())|is.null(rok0())) return(NULL)
+    cat('ROKU up/down ... \n')
+    up_dn_roku(rok0())
+  })
+
+  dis0 <- reactive({
+    # if (input$fileIn!="customData") return(NULL)
+    lis <- se.nor.rok.dis()
+    if (is.null(geneIn0())|is.null(se())|is.null(lis)) return(NULL)
+    cat('distinct all ... \n')
+    withProgress(message="distinct: ", value=0, {
+      incProgress(0.5, detail="in progress, this method takes longer time ...")
+      se.nor <- lis$se.nor[, colnames(se()$se)] 
+      fct <- se()$fct
+      distt(se.nor, fct, return.all=TRUE)
+    })
+  })
+  dis <- eventReactive(input$ssg.update, {
+    # if (input$fileIn!="customData") return(NULL)
+    if (!'distinct' %in% input$ssg.meth) return(NULL)
+    if (is.null(geneIn0())|is.null(se())|is.null(input$ssg.fc)|is.null(input$ssg.fdr)|is.null(dis0())) return(NULL)
+    cat('distinct log2/fc ... \n')
+    lvl <- unique(colData(se()$se)[, se()$fct])
+    up_dn(sam.all=lvl, df.all=dis0(), log.fc=abs(input$ssg.fc), fdr=input$ssg.fdr, log.na='log2FC', fdr.na='FDR')
+  })
+  
+  output$upset1 <- renderPlot({
+    if (is.null(geneIn0())|is.null(input$ssg.tar)) return(NULL)
+    meth.sel <- c(!is.null(edg()), !is.null(lim()), !is.null(dsq()), !is.null(rok()), !is.null(dis()))
+    validate(need(try(sum(meth.sel)>1), 'At least 2 methods should be selected!'))
+    lis <- list(edgeR=edg(), limma=lim(), DESeq2=dsq(), ROKU=rok(), distinct=dis())[meth.sel]
+    deg.lis <- deg_lis(lis, sam=input$ssg.tar, 'up')
+    validate(need(try(length(deg.lis)>1), 'Over-expressed genes detected in less than two methods, so upset plot is unavailable for the selected target!'))
+    # if (length(deg.lis)<2) return()
+    upset(fromList(deg.lis), order.by="degree", nintersects=40, point.size=3, line.size=1, mb.ratio=c(0.6, 0.4), text.scale=1.5)
+  })
+  output$upset2 <- renderPlot({
+    if (is.null(geneIn0())|is.null(input$ssg.tar)) return(NULL)
+    meth.sel <- c(!is.null(edg()), !is.null(lim()), !is.null(dsq()), !is.null(rok()), !is.null(dis()))
+    validate(need(try(sum(meth.sel)>1), 'At least 2 methods should be selected!'))
+    lis <- list(edgeR=edg(), limma=lim(), DESeq2=dsq(), ROKU=rok(), distinct=dis())[meth.sel]
+    deg.lis <- deg_lis(lis, sam=input$ssg.tar, 'down')
+    validate(need(try(length(deg.lis)>1), 'Under-expressed genes detected in less than two methods, so upset plot is unavailable for the selected target!'))
+    upset(fromList(deg.lis), order.by="degree", nintersects=40, point.size=3, line.size=1, mb.ratio=c(0.6, 0.4), text.scale=1.5)
+  })
+
+  output$ovl1 <- renderPlot({
+    if (is.null(geneIn0())|is.null(input$ssg.tar)) return(NULL)
+    meth.sel <- c(!is.null(edg()), !is.null(lim()), !is.null(dsq()), !is.null(rok()), !is.null(dis()))
+    validate(need(try(sum(meth.sel)>1), 'At least 2 methods should be selected!'))
+    lis <- list(edgeR=edg(), limma=lim(), DESeq2=dsq(), ROKU=rok(), distinct=dis())[meth.sel]
+    deg.lis <- deg_lis(lis, sam=input$ssg.tar, 'up')
+    validate(need(try(length(deg.lis)>1), 'Under-expressed genes detected in less than two methods, so upset plot is unavailable for the selected target!')) 
+    names(deg.lis) <- sub('\\.up$|\\.down$', '', names(deg.lis))
+    mat <- vapply(names(deg.lis), function(x) vapply(names(deg.lis), function(y) length(intersect(deg.lis[[x]], deg.lis[[y]])), numeric(1)), numeric(length(deg.lis)))
+    mel <- reshape2::melt(mat)
+    ggplot(data=mel, aes(x=Var1, y=Var2, fill=value))+geom_tile(colour="white")+scale_fill_gradient(low="lightcyan3", high="darkorange")+theme_minimal()+theme(axis.text=element_text(angle=45, vjust=1, size=10, hjust=1))+coord_fixed()+geom_text(aes(Var2, Var1, label=value), color="black", size=4)+theme(axis.title.x=element_blank(), axis.title.y=element_blank(), panel.grid.major=element_blank(), panel.border=element_blank(), panel.background=element_blank(), axis.ticks=element_blank())
+  })
+
+  output$ovl2 <- renderPlot({
+    if (is.null(geneIn0())|is.null(input$ssg.tar)) return(NULL)
+    meth.sel <- c(!is.null(edg()), !is.null(lim()), !is.null(dsq()), !is.null(rok()), !is.null(dis()))
+    validate(need(try(sum(meth.sel)>1), 'At least 2 methods should be selected!'))
+    lis <- list(edgeR=edg(), limma=lim(), DESeq2=dsq(), ROKU=rok(), distinct=dis())[meth.sel]
+    deg.lis <- deg_lis(lis, sam=input$ssg.tar, 'down')
+    validate(need(try(length(deg.lis)>1), 'Under-expressed genes detected in less than two methods, so upset plot is unavailable for the selected target!'))
+    names(deg.lis) <- sub('\\.up$|\\.down$', '', names(deg.lis)) 
+    mat <- vapply(names(deg.lis), function(x) vapply(names(deg.lis), function(y) length(intersect(deg.lis[[x]], deg.lis[[y]])), numeric(1)), numeric(length(deg.lis)))
+    mel <- reshape2::melt(mat)
+    ggplot(data=mel, aes(x=Var1, y=Var2, fill=value))+geom_tile(colour="white")+scale_fill_gradient(low="lightcyan3", high="darkorange")+theme_minimal()+theme(axis.text=element_text(angle=45, vjust=1, size=10, hjust=1))+coord_fixed()+geom_text(aes(Var2, Var1, label=value), color="black", size=4)+theme(axis.title.x=element_blank(), axis.title.y=element_blank(), panel.grid.major=element_blank(), panel.border=element_blank(), panel.background=element_blank(), axis.ticks=element_blank()) 
+  })
+venn_inter <- function(lis.all, suffix) {
+  library(gplots)
+  gen.all <- unique(unlist(lis.all))
+  zero <- rep(0, length(gen.all))
+  df.all <- as.data.frame(matrix(rep(0, length(gen.all)*length(lis.all)), ncol=length(lis.all)))
+  cna <- names(lis.all)
+  suf <- unique(gsub('(.*)\\.(.*)', '\\2', cna))
+  meth <- unique(gsub('(.*)\\.(.*)', '\\1', cna))
+  names(lis.all) <- colnames(df.all) <- meth
+  rownames(df.all) <- gen.all
+  # Retrieve all overlaps.
+  lis <- venn(lis.all, show.plot=FALSE) 
+  inter <- attributes(lis)$intersections
+  # Translate all overlaps into a data frame.
+  for (i in seq_along(inter)) {
+    lis0 <- inter[[i]]; na0 <- strsplit(names(inter[i]), ':')[[1]]
+    w1 <- which(gen.all %in% lis0); w2 <- which(meth %in% na0)  
+    df.all[w1, w2] <- 1
+  }
+
+  df.all <- cbind(type=suf, total=rowSums(df.all), df.all)
+  df.all <- df.all[order(df.all$total, decreasing=TRUE), ]
+  return(df.all)
+}
+
+
+  dt.deg <- reactive({
+    if (is.null(geneIn0())|is.null(geneIn1())|is.null(input$ssg.tar)) return(NULL)
+    meth.sel <- c(!is.null(edg()), !is.null(lim()), !is.null(dsq()), !is.null(rok()), !is.null(dis()))
+    validate(need(try(sum(meth.sel)>1), 'At least 2 methods should be selected!'))
+    cat('Preparing DEG table ... \n')
+    lis <- list(edgeR=edg(), limma=lim(), DESeq2=dsq(), ROKU=rok(), distinct=dis())[meth.sel]
+    deg.lis1 <- deg_lis(lis, sam=input$ssg.tar, 'up')
+    deg.lis2 <- deg_lis(lis, sam=input$ssg.tar, 'down')
+    df.deg <- rbind(venn_inter(deg.lis1), venn_inter(deg.lis2))
+    df.met <- geneIn1()[["df.met"]][, , drop=FALSE]
+    if (nrow(df.met) > 0) df.deg <- cbind.data.frame(df.met[rownames(df.deg), , drop = FALSE], df.deg, stringsAsFactors=FALSE)
+    df.deg 
+  })
+
+    output$dld.ssg.tab <- downloadHandler(
+      filename=function(){ "tissue_specific_genes.txt" },  content=function(file=paste0(normalizePath(tempdir(check=TRUE), winslash="/", mustWork=FALSE), '/tissue_specific_genes.txt')){
+      write.table(dt.deg(), file, sep='\t', col.names=TRUE, row.names=TRUE) }
+    )
+    
+  output$dt.deg <- renderDataTable({
+      if (is.null(dt.deg())) return()
+      datatable(rbind(dt.deg()), selection=list(mode="multiple", target="row", selected=NULL), filter="top", extensions='Scroller', plugins = "ellipsis",
+      options=list(pageLength=5, lengthMenu=c(5, 15, 20), autoWidth=TRUE, scrollCollapse=TRUE, deferRender=TRUE, scrollX=TRUE, scrollY=200, scroller=TRUE, searchHighlight = TRUE, search=list(regex=TRUE, smart=FALSE, caseInsensitive=TRUE), searching = TRUE, columnDefs = list(list(targets = c(1), render = JS("$.fn.dataTable.render.ellipsis(5, false)")))), 
+      class='cell-border strip hover') %>% formatStyle(0, backgroundColor="orange", cursor='pointer')
+  }) 
+
+
+
+  observeEvent(list(input$dt.deg_rows_selected, geneIn()), {
+    
+    if (is.null(input$dt.deg_rows_selected)) return()
+    r.na <- rownames(dt.deg()); gID$geneSel <- r.na[input$dt.deg_rows_selected]
+    if (any(is.na(gID$geneSel))) gID$geneSel <- "none"
+    gID$new <- setdiff(gID$geneSel, gID$all); gID$all <- c(gID$all, gID$new)
+    
+  })
+
+
+  output$w.table1 <- renderDataTable({
+    
+    if (is.null(geneIn0())|is.null(edg())|is.null(dsq())) return(NULL)
+    if (is.null(geneIn0())) return(NULL)
+    sam.con <- unique(colnames(geneIn()))[1:3]
+    lis.all <- list(edg=edg(), dsq=dsq()); sam.all <- names(lis.all[[1]])
+    sam <- sam.all[1:3]; sam.tar <- sam.all[2]; sam.vs <- sam.all[c(1, 3)]
+    meth <- 'edg'
+    df.up <- lis.all[[meth]][[sam[2]]][[1]]
+    df.dn <- lis.all[[meth]][[sam[2]]][[2]]
+    df.up.dn <- rbind(df.up, df.dn)
+    if (nrow(df.up.dn)==0) return("No SSGs detected.")
+    # print(df.up.dn)
+    pat <- c(paste0('^', sam.tar, '_VS_', sam.vs, '_'), paste0('^', sam.vs, '_VS_', sam.tar, '_'))
+    df.up.dn <- df.up.dn[, c(1, grep(paste0(pat, collapse='|'), colnames(df.up.dn)))]
+    datatable(df.up.dn, selection=list(mode="multiple", target="row", selected=NULL), filter="top", extensions='Scroller', options=list(pageLength=5, lengthMenu=c(5, 15, 20), autoWidth=TRUE, scrollCollapse=TRUE, deferRender=TRUE, scrollX=TRUE, scrollY=200, scroller=TRUE), class='cell-border strip hover') %>% formatStyle(0, backgroundColor="orange", cursor='pointer')
+ 
+  }) 
+
+  output$ssg.sum <- renderPlot({ 
+
+    if (is.null(geneIn0())|is.null(edg())|is.null(dsq())) return(NULL)
+    # if (input$fileIn!="customData") return(NULL)
+    if (is.null(geneIn0())) return(NULL)
+    per=0.5; width=0.85
+    lis.all <- list(edg(), dsq()); sam.all <- names(lis.all[[1]])
+    sam <- sam.all[1:3]
+    lis.aggr <- sig_frq(lis.all=lis.all, per=per, sam=sam)
+    ssg_sum(lis.aggr=lis.aggr, width=width)
+
+  })
+
+
+  output$a.table <- renderDataTable({
+    
+    if (is.null(geneIn0())|is.null(edg())|is.null(dsq())) return(NULL)
+    if (is.null(geneIn0())) return(NULL)
+    per=0.5
+    sam.con <- unique(colnames(geneIn()))[1:3]
+    lis.all <- list(edg=edg(), dsq=dsq()); sam.all <- names(lis.all[[1]])
+    lis.aggr.r <- sig_frq(lis.all=lis.all, per=per)
+    df.sum <- as.data.frame(lis.aggr.r[[1]][[1]][[2]])
+    datatable(df.sum, selection=list(mode="multiple", target="row", selected=NULL), filter="top", extensions='Scroller', options=list(pageLength=5, lengthMenu=c(5, 15, 20), autoWidth=TRUE, scrollCollapse=TRUE, deferRender=TRUE, scrollX=TRUE, scrollY=200, scroller=TRUE), class='cell-border strip hover') %>% formatStyle(0, backgroundColor="orange", cursor='pointer')
+
+  })
+
+    expr.nor <- reactive({
+
+    if (is.null(geneIn0())|is.null(edg())|is.null(dsq())) return(NULL)
+      if (is.null(geneIn0())) return(NULL)
+      df.rep <- geneIn0()[['df.rep']]
+      se <- SummarizedExperiment(assays=list(expr=as.matrix(df.rep)), colData=data.frame(fct=colnames(df.rep)))
+      norm_aggr(se=ssg.dat()$se, method.norm='TMM', log2.trans=TRUE, sample.factor='fct', rep.aggr='mean')
+
+    })
+
+
+    #id.r <- rownames(se)[1]
+
+    #plot_gen(se=se.nor, id=id.r)
 
   onStop(function() { ggly_rm(); vdo_rm(); cat("Session stopped! \n") })
 

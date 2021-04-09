@@ -113,8 +113,7 @@ filter_data <- function(data, pOA=c(0, 0), CV=c(-Inf, Inf), top.CV=1, ann=NULL, 
     cat('All coefficient of variances (CVs) after filtering:\n'); print(summary(cv.all))
   }
   row.meta <- row.meta[filtered, , drop=FALSE]
-  if (!is.null(dir)) { 
-
+  if (!is.null(dir)) {
     dir <- normalizePath(dir, winslash="/", mustWork=FALSE)
     if (!dir.exists(dir)) stop(paste0(dir, ' does not exist!'))
     if (is(data, 'data.frame')|is(data, 'matrix')) {
@@ -127,8 +126,7 @@ filter_data <- function(data, pOA=c(0, 0), CV=c(-Inf, Inf), top.CV=1, ann=NULL, 
       } else expr1 <- expr
 
     }
-    write.table(expr1, paste0(dir, "/customData.txt"), sep="\t", row.names=TRUE, col.names=TRUE)
-      
+    write.table(expr1, paste0(dir, "/customData.txt"), sep="\t", row.names=TRUE, col.names=TRUE)  
   }
 
   if (is(data, 'data.frame')|is(data, 'matrix')) { return(cbind(expr, row.meta)) } else if (is(data, 'SummarizedExperiment')) {

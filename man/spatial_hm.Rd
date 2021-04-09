@@ -21,9 +21,7 @@ spatial_hm(
   trans.scale = NULL,
   ft.trans = NULL,
   tis.trans = ft.trans,
-  width = 1,
-  height = 1,
-  sub.margin = NULL,
+  lis.rematch = NULL,
   legend.r = 1,
   sub.title.size = 11,
   legend.plot = "all",
@@ -57,7 +55,7 @@ spatial_hm(
   key = TRUE,
   line.size = 0.2,
   line.color = "grey70",
-  preserve.scale = FALSE,
+  relative.scale = NULL,
   verbose = TRUE,
   out.dir = NULL,
   anm.width = 650,
@@ -104,9 +102,7 @@ spatial_hm(
 
 \item{tis.trans}{This argument is deprecated and replaced by \code{ft.trans}.}
 
-\item{width, height}{Two numerics of overall width and height of all subplots respectively, both of which are between 0 and 1. The default is 1 and 1 respectivly.}
-
-\item{sub.margin}{A 4-length numeric vector of the margins on each subplot, which are between 0 and 1. The order is top, right, bottom, left and the unit \code{npc} is used internally. The default is \code{c(0.005, 0.005, 0.005, 0.005)}. If provided, \code{preserve.scale} is ignored.}
+\item{lis.rematch}{A list for rematching features. In each slot, the slot name is an existing feature in the data, and the slot contains a vector of features in aSVG that will be rematched to the feature in the slot name. \emph{E.g.} \code{list(featureData1 = c('featureSVG1', 'featureSVG2'), featureData2 = c('featureSVG3'))}, where features \code{c('featureSVG1', 'featureSVG2')}, \code{c('featureSVG3')} in the aSVG are rematched to features \code{'featureData1'}, \code{'featureData2'} in data, respectively.}
 
 \item{legend.r}{A numeric to adjust the dimension of the legend plot. The default is 1. The larger, the higher ratio of width to height.}
 
@@ -175,8 +171,6 @@ spatial_hm(
 \item{line.size}{The thickness of each shape outline in the aSVG is maintained in spatial heatmaps, \emph{i.e.} the stroke widths in Inkscape. This argument is the extra thickness added to all outlines. Default is 0.2 in case stroke widths in the aSVG are 0.}
 
 \item{line.color}{A character of the shape outline color. Default is "grey70".}
-
-\item{preserve.scale}{Logical, TRUE or FALSE. If TRUE, the relative dimension of single or multiple aSVGs are preserved. The original dimension (width/height) is specified in the top-most element "svg" in the aSVG file. The default is FALSE.}
 
 \item{verbose}{Logical, FALSE or TRUE. If TRUE the samples in data not colored in spatial heatmaps are printed to R console. Default is TRUE.}
 

@@ -34,6 +34,7 @@
 
 
 #' @param ft.trans A character vector of tissue/spatial feature identifiers that will be set transparent. \emph{E.g} c("brain", "heart"). This argument is used when target features are covered by  overlapping features and the latter should be transparent.
+#' @param lis.rematch A list for rematching features. In each slot, the slot name is an existing feature in the data, and the slot contains a vector of features in aSVG that will be rematched to the feature in the slot name. \emph{E.g.} \code{list(featureData1 = c('featureSVG1', 'featureSVG2'), featureData2 = c('featureSVG3'))}, where features \code{c('featureSVG1', 'featureSVG2')}, \code{c('featureSVG3')} in the aSVG are rematched to features \code{'featureData1'}, \code{'featureData2'} in data, respectively.
 #' @param tis.trans This argument is deprecated and replaced by \code{ft.trans}. 
 #' @param sub.title.size A numeric of the subtitle font size of each individual spatial heatmap. The default is 11.
 #' @param ft.legend One of "identical", "all", or a character vector of tissue/spatial feature identifiers from the aSVG file. The default is "identical" and all the identical/matching tissues/spatial features between the data and aSVG file are colored in the legend plot. If "all", all tissues/spatial features in the aSVG are shown. If a vector, only the tissues/spatial features in the vector are shown.
@@ -54,14 +55,13 @@
 #' @param trans.scale One of "log2", "exp2", "row", "column", or NULL, which means transform the data by "log2" or "2-base expoent", scale by "row" or "column", or no manipuation respectively. This argument should be used if colors across samples cannot be distinguished due to low variance or outliers. 
 #' @param bar.width The width of color bar that ranges from 0 to 1. The default is 0.08.
 #' @param legend.width The width of legend plot that ranges from 0 to 1 (default).
-#' @param width,height Two numerics of overall width and height of all subplots respectively, both of which are between 0 and 1. The default is 1 and 1 respectivly.
-#' @param sub.margin A 4-length numeric vector of the margins on each subplot, which are between 0 and 1. The order is top, right, bottom, left and the unit \code{npc} is used internally. The default is \code{c(0.005, 0.005, 0.005, 0.005)}. If provided, \code{preserve.scale} is ignored.
+
 #' @param legend.plot A vector of suffix(es) of aSVG file name(s) such as c('shm1', 'shm2'). Only aSVG(s) whose suffix(es) are assigned to this arugment will have a legend plot on the right. The default is 'all' and each aSVG will have a legend plot. If NULL, no legend plot is shown. Only applicable if multiple aSVG files are provided to \code{svg.path}.
 #' @param legend.r A numeric to adjust the dimension of the legend plot. The default is 1. The larger, the higher ratio of width to height.
 #' @param legend.2nd Logical, TRUE or FALSE. If TRUE, the secondary legend is added to each spatial heatmap, which are the numeric values of each matching spatial features. The default its FALSE. Only applies to the static image.
 #' @param lay.shm One of "gene", "con", or "none". If "gene", spatial heatmaps are organized by genes proteins, or metabolites, \emph{etc.} and conditions are sorted whithin each gene. If "con", spatial heatmaps are organized by the conditions/treatments applied to experiments, and genes are sorted winthin each condition. If "none", spaital heatmaps are organized by the gene order in \code{ID} and conditions follow the order they appear in \code{data}. 
 #' @param ncol An integer of the number of columns to display the spatial heatmaps, which does not include the legend plot.
-#' @param preserve.scale Logical, TRUE or FALSE. If TRUE, the relative dimension of single or multiple aSVGs are preserved. The original dimension (width/height) is specified in the top-most element "svg" in the aSVG file. The default is FALSE.
+
 #' @param verbose Logical, FALSE or TRUE. If TRUE the samples in data not colored in spatial heatmaps are printed to R console. Default is TRUE.
 #' @param out.dir The directory to save interactive spatial heatmaps as independent HTML files and videos. Default is NULL, and the HTML files and videos are not saved.
 #' @param anm.width,anm.height The width and height of spatial heatmaps in HTML files. Default is 650 and 550 respectively.
@@ -228,12 +228,12 @@
 #' @importFrom methods is
 #' @importFrom ggplotify as.ggplot
 
-spatial_hm <- function(svg.path, data, sam.factor=NULL, con.factor=NULL, ID, lay.shm="gene", ncol=2, col.com=c('yellow', 'orange', 'red'), col.bar='selected', cores=NA, bar.width=0.08, legend.width=1, bar.title.size=0, trans.scale=NULL, ft.trans=NULL, tis.trans=ft.trans, width=1, height=1, sub.margin=NULL, legend.r=1, sub.title.size=11, legend.plot='all', ft.legend='identical', bar.value.size=10, legend.plot.title='Legend', legend.plot.title.size=11, legend.ncol=NULL, legend.nrow=NULL, legend.position='bottom', legend.direction=NULL, legend.key.size=0.02, legend.text.size=12, angle.text.key=NULL, position.text.key=NULL, legend.2nd=FALSE, position.2nd='bottom', legend.nrow.2nd=NULL, legend.ncol.2nd=NULL, legend.key.size.2nd=0.03, legend.text.size.2nd=10, angle.text.key.2nd=0, position.text.key.2nd='right', add.feature.2nd=FALSE, label=FALSE, label.size=4, label.angle=0, hjust=0, vjust=0, opacity=1, key=TRUE, line.size=0.2, line.color='grey70', preserve.scale=FALSE, verbose=TRUE, out.dir=NULL, anm.width=650, anm.height=550, selfcontained=FALSE, video.dim='640x480', res=500, interval=1, framerate=1, legend.value.vdo=NULL, ...) {
+spatial_hm <- function(svg.path, data, sam.factor=NULL, con.factor=NULL, ID, lay.shm="gene", ncol=2, col.com=c('yellow', 'orange', 'red'), col.bar='selected', cores=NA, bar.width=0.08, legend.width=1, bar.title.size=0, trans.scale=NULL, ft.trans=NULL, tis.trans=ft.trans, lis.rematch = NULL, legend.r=1, sub.title.size=11, legend.plot='all', ft.legend='identical', bar.value.size=10, legend.plot.title='Legend', legend.plot.title.size=11, legend.ncol=NULL, legend.nrow=NULL, legend.position='bottom', legend.direction=NULL, legend.key.size=0.02, legend.text.size=12, angle.text.key=NULL, position.text.key=NULL, legend.2nd=FALSE, position.2nd='bottom', legend.nrow.2nd=NULL, legend.ncol.2nd=NULL, legend.key.size.2nd=0.03, legend.text.size.2nd=10, angle.text.key.2nd=0, position.text.key.2nd='right', add.feature.2nd=FALSE, label=FALSE, label.size=4, label.angle=0, hjust=0, vjust=0, opacity=1, key=TRUE, line.size=0.2, line.color='grey70', relative.scale = NULL, verbose=TRUE, out.dir=NULL, anm.width=650, anm.height=550, selfcontained=FALSE, video.dim='640x480', res=500, interval=1, framerate=1, legend.value.vdo=NULL, ...) {
 
   calls <- names(vapply(match.call(), deparse, character(1))[-1])
   if("tis.trans" %in% calls) { ft.trans <- tis.trans; warning('"tis.trans" is deprecated and replaced by "ft.trans"! \n') }
   x <- y <- color_scale <- tissue <- NULL; options(stringsAsFactors=FALSE)
-  if (!is.null(sub.margin)) if (!is.numeric(sub.margin) | length(sub.margin)!=4 | any(sub.margin >= 1) | any(sub.margin < 0)) stop('"sub.margin" must be a 4-length numeric vector between 0 (inclusive) and 1 (exclusive)!')
+  # if (!is.null(sub.margin)) if (!is.numeric(sub.margin) | length(sub.margin)!=4 | any(sub.margin >= 1) | any(sub.margin < 0)) stop('"sub.margin" must be a 4-length numeric vector between 0 (inclusive) and 1 (exclusive)!')
   # Extract and filter data.
   if (is.vector(data)) {
     vec.na <- make.names(names(data)); if (is.null(vec.na)) stop("Please provide names for the input data!")
@@ -266,9 +266,6 @@ spatial_hm <- function(svg.path, data, sam.factor=NULL, con.factor=NULL, ID, lay
     if (col.bar=="all") geneV <- seq(min(gene), max(gene), len=bar.len) else if (col.bar=="selected") geneV <- seq(min(gene[ID, , drop=FALSE]), max(gene[ID, , drop=FALSE]), len=bar.len)
     col <- colorRampPalette(col.com)(length(geneV))
     cs.g <- col_bar(geneV=geneV, cols=col, width=1, bar.title.size=bar.title.size, bar.value.size=bar.value.size)
-     tmp <- normalizePath(tempfile(), winslash='/', mustWork=FALSE)
-    png(tmp); cs.grob <- ggplotGrob(cs.g); dev.off()
-    if (file.exists(tmp)) do.call(file.remove, list(tmp))
 
     # Only take the column names with "__".
     cname <- colnames(gene); form <- grepl('__', cname)
@@ -289,8 +286,9 @@ spatial_hm <- function(svg.path, data, sam.factor=NULL, con.factor=NULL, ID, lay
     svg.path <- svg.path[ord]; svg.na <- svg.na[ord]
     # Coordinates of each SVG are extracted and placed in a list.
     df.attr <- svg.df.lis <- NULL; for (i in seq_along(svg.na)) {
-      cat('Coordinates:', svg.na[i], '... \n')
-      df_tis <- svg_df(svg.path=svg.path[i], feature=sam.uni, cores=deter_core(cores, svg.path[i]))
+      cat('Coordinates:', svg.na[i], '...', '\n') # '... \n' renders two new lines.
+      cores <- deter_core(cores, svg.path[i]); cat('CPU cores:', cores, '\n')
+      df_tis <- svg_df(svg.path=svg.path[i], feature=sam.uni, cores=cores)
       if (is.character(df_tis)) stop(paste0(svg.na[i], ': ', df_tis))
       svg.df.lis <- c(svg.df.lis, list(df_tis))
       df.attr0 <- df_tis$df.attr[, c('feature', 'stroke', 'color', 'id', 'element', 'parent', 'index1')]
@@ -325,57 +323,94 @@ spatial_hm <- function(svg.path, data, sam.factor=NULL, con.factor=NULL, ID, lay
 
     # Get max width/height of multiple SVGs, and dimensions of other SVGs can be set relative to this max width/height.
     w.h.all <- NULL; for (i in seq_along(svg.df.lis)) { w.h.all <- c(w.h.all, svg.df.lis[[i]][['w.h']]); w.h.max <- max(w.h.all) }
-    # A set of SHMs are made for each SVG, and all sets of SHMs are placed in a list.
-    grob.lis.all <- NULL; for (i in seq_along(svg.df.lis)) {
 
-      na0 <- names(svg.df.lis)[i]; cat('Grobs:', na0, '... \n')
-      svg.df <- svg.df.lis[[i]]; g.df <- svg.df[["df"]]; w.h <- svg.df[['w.h']]
+    # A set of SHMs (gene_con*) are made for each SVG, and all sets of SHMs under different SVGs are placed in 2 lists in form of ggplots and grobs respectively. Different SHMs of same 'gene_condition' under different SVGs are indexed with suffixed of '_1', '_2', ... E.g. SHMs under shm1.svg: gene_condition1_1, gene_condition2_1; SHMs under shm2.svg: gene_condition1_2, gene_condition2_2; the 4 SHMs are stored in 2 separate lists in form of ggplots and grobs respectively. 
+    # The order of ggplot SHMs, grob SHMs, and legends follow the order of SVGs, so all are same.
+    gg.lis.all <- gg.all <- grob.all <- lgd.all <- NULL; for (i in seq_along(svg.df.lis)) {
+      na0 <- names(svg.df.lis)[i]; cat('ggplots/grobs:', na0, '... \n')
+      svg.df <- svg.df.lis[[i]]; g.df <- svg.df[["df"]]; aspect.r <- svg.df[['aspect.r']]
       tis.path <- svg.df[["tis.path"]]; fil.cols <- svg.df[['fil.cols']]
-      if (preserve.scale==TRUE & is.null(sub.margin)) sub.margin <- (1-w.h/w.h.max*0.99)/2 
-      grob.lis <- grob_list(gene=gene, con.na=con.na, geneV=geneV, coord=g.df, ID=ID, legend.col=fil.cols, cols=col, tis.path=tis.path, ft.trans=ft.trans, sub.title.size=sub.title.size, ft.legend=ft.legend, legend.ncol=legend.ncol, legend.nrow=legend.nrow, legend.position=legend.position, legend.direction=legend.direction, legend.key.size=legend.key.size, legend.text.size=legend.text.size, legend.plot.title=legend.plot.title, legend.plot.title.size=legend.plot.title.size, line.size=line.size, line.color=line.color, mar.lb=sub.margin, cores=deter_core(cores, svg.path[i]), ...)
-      msg <- paste0(na0, ': no spatial features that have matching sample identifiers in data are detected!')
-      if (is.null(grob.lis)) stop(msg); grob.lis.all <- c(grob.lis.all, list(grob.lis))
+      # if (preserve.scale==TRUE & is.null(sub.margin)) sub.margin <- (1-w.h/w.h.max*0.99)/2
+      # SHMs/legend of ggplots under one SVG.
+      gg.lis <- gg_shm(gene=gene, con.na=con.na, geneV=geneV, coord=g.df, ID=ID, legend.col=fil.cols, cols=col, tis.path=tis.path, lis.rematch = lis.rematch, ft.trans=ft.trans, sub.title.size=sub.title.size, ft.legend=ft.legend, legend.ncol=legend.ncol, legend.nrow=legend.nrow, legend.position=legend.position, legend.direction=legend.direction, legend.key.size=legend.key.size, legend.text.size=legend.text.size, legend.plot.title=legend.plot.title, legend.plot.title.size=legend.plot.title.size, line.size=line.size, line.color=line.color, aspect.ratio = aspect.r, ...)
+      msg <- paste0(na0, ': no spatial features that have matching sample identifiers in data are detected!'); if (is.null(gg.lis)) stop(msg)
 
-    }; names(grob.lis.all) <- names(svg.df.lis) 
+      # Append suffix '_i' for the SHMs of ggplot under SVG[i], and store them in a list.
+      ggs <- gg.lis$g.lis.all; names(ggs) <- paste0(names(ggs), '_', i)
+      gg.all <- c(gg.all, ggs)
 
-    # Extract SHMs of grob and placed in a list. Different SHMs of same 'gene_condition' are indexed with suffixed of '_1', '_2', ...
-    grob.gg <- grob_gg(gs=grob.lis.all)
-    grob.all <- grob.gg[['grob']]; gg.all <- grob.gg[['gg']]; na.all <- names(grob.all)
+      cores <- deter_core(cores, svg.path[i]); cat('CPU cores:', cores, '\n')
+      # Same names with ggplot: append suffix '_i' for the SHMs of grob under each SVG, and store them in a list.
+      grobs <- grob_shm(ggs, cores=cores); grob.all <- c(grob.all, grobs)
+
+      # Store SHM ggplots and w.h under each SVG in separate list for use in relative scale.
+      lis0 <- list(list(ggs = ggs, w.h = svg.df$w.h)); names(lis0) <- na0
+      gg.lis.all <- c(gg.lis.all, lis0)
+
+      # Store legend of ggplot in a list.
+      lgd.all <- c(lgd.all, list(gg.lis$g.lgd))
+    }; names(lgd.all) <- names(svg.df.lis)
+
     pat.gen <- paste0(ID, collapse='|'); pat.con <- paste0(con.uni, collapse='|')
     # Use definite patterns and avoid using '.*' as much as possible. Try to as specific as possible.
     pat.all <- paste0('^(', pat.gen, ')_(', pat.con, ')(_\\d+$)')
     # Indexed cons with '_1', '_2', ... at the end.
-    con.idx <- unique(gsub(pat.all, '\\2\\3', names(grob.all)))
-    na.all <- sort_gen_con(ID.sel=ID, na.all=na.all, con.all=con.idx, by=lay.shm)
-    grob.all <- grob.all[na.all]; gg.all <- gg.all[na.all]
-    if (legend.2nd==TRUE) {
+    con.idxed <- unique(gsub(pat.all, '\\2\\3', names(gg.all)))
+    # Layout matrix of SHMs for use in relative scale.
+    lay.mat <- lay_shm(lay.shm=lay.shm, con=con.idxed, ncol=ncol, ID.sel=ID, lay.mat = TRUE) 
 
-      gg.all <- gg_2lgd(gg.all=gg.all, sam.dat=sam.uni, ft.trans=ft.trans, position.2nd=position.2nd, legend.nrow.2nd=legend.nrow.2nd, legend.ncol.2nd=legend.ncol.2nd, legend.key.size.2nd=legend.key.size.2nd, add.feature.2nd=add.feature.2nd, legend.text.size.2nd=legend.text.size.2nd, angle.text.key.2nd=angle.text.key.2nd, position.text.key.2nd=position.text.key.2nd)
-      grob.all <- lapply(gg.all, ggplotGrob)
+    # If relative size in multiple SVGs is required, update all SHM ggplots/grobs under each SVG.
+    if (is.numeric(relative.scale) & length(svg.path) > 1) if (relative.scale > 0) {
+      cat('Applying relative image size ... \n')
+      gg.all <- grob.all <- NULL; for (i in seq_along(gg.lis.all)) {
+        lis0 <- gg.lis.all[[i]]
+        ggs <- rela_size(lis0$w.h['height'], w.h.max, relative.scale, nrow(lay.mat), lis0$ggs)
+        gg.all <- c(gg.all, ggs)
+        cores <- deter_core(cores, svg.path[i]) # gg.lis.all has the same names with svg.df.lis.
+        # Same names with ggplot: append suffix '_i' for the SHMs of grob under each SVG, and store them in a list.
+        grobs <- grob_shm(ggs, cores=cores); grob.all <- c(grob.all, grobs)
+        
+      }
+    }; na.all <- names(grob.all)
 
-    }
-    g.arr <- lay_shm(lay.shm=lay.shm, con=con.idx, ncol=ncol, ID.sel=ID, grob.list=grob.all, width=width, height=height, shiny=FALSE)
+    # Arrange color scale grob.
+    tmp <- normalizePath(tempfile(), winslash='/', mustWork=FALSE)
+    png(tmp); cs.grob <- ggplotGrob(cs.g); dev.off()
+    if (file.exists(tmp)) do.call(file.remove, list(tmp))
     cs.arr <- arrangeGrob(grobs=list(grobTree(cs.grob)), layout_matrix=cbind(1), widths=unit(1, "npc")) # "mm" is fixed, "npc" is scalable.
-    # Select legend plot.
-    cat('SHMs and legend ...', '\n')
-    if (!is.null(legend.plot)) { if (length(svg.na)>1 & legend.plot!='all') na.lgd <- svg.na[grep(paste0('_(', paste0(legend.plot, collapse='|'), ').svg$'), svg.na)] else na.lgd <- svg.na
-    lgd.lis <- NULL; for (i in na.lgd) { lgd.lis <- c(lgd.lis, list(grob.lis.all[[i]][['g.lgd']])) }; names(lgd.lis) <- na.lgd
-    # Add labels to target shapes in legend plots.
-    lgd.lis <- gg_lgd(gg.all=lgd.lis, angle.text.key=angle.text.key, position.text.key=position.text.key, label=label, label.size=label.size, label.angle=label.angle, hjust=hjust, vjust=vjust, opacity=opacity, key=key, sam.dat=sam.uni, ft.trans=ft.trans)
-    grob.lgd.lis <- lapply(lgd.lis, ggplotGrob)
-    lgd.tr <- lapply(grob.lgd.lis, grobTree)
 
-    # Number of all rows in SHMs.
-    # if (lay.shm=='gene') row.all <- ceiling(length(con.uni)/ncol)*length(ID)
-    # if (lay.shm=='con') row.all <- ceiling(length(ID)/ncol)*length(con.uni)
-    # In 'arrangeGrob', if numbers in 'layout_matrix' are more than items in 'grobs', there is no difference. The width/height of each subplot is decided by 'widths' and 'heights'.
-    lgd.w <- 0.99; lgd.h <- 0.99/length(na.lgd)/legend.r
-    if (lgd.h*length(na.lgd)>1) { lgd.h <- 0.99/length(na.lgd); lgd.w <- lgd.h*legend.r } 
-    lgd.arr <- arrangeGrob(grobs=lgd.tr, layout_matrix=matrix(seq_along(na.lgd), ncol=1), widths=unit(lgd.w, "npc"), heights=unit(rep(lgd.h, length(na.lgd)), "npc"))
-    w.lgd <- (1-bar.width)/(ncol+1)*legend.width # Legend is reduced.
-    shm.w <- 1-bar.width-w.lgd
-    # A plot pops up when 'grid.arrange' runs.
-    shm <- grid.arrange(cs.arr, g.arr, lgd.arr, ncol=3, widths=unit(c(bar.width-0.005, shm.w, w.lgd), 'npc'))
+    # Arrange SHM grobs.
+    na.all <- sort_gen_con(ID.sel=ID, na.all=na.all, con.all=con.idxed, by=lay.shm)
+    grob.all <- grob.all[na.all]; gg.all <- gg.all[na.all]
+    g.arr <- lay_shm(lay.shm=lay.shm, con=con.idxed, ncol=ncol, ID.sel=ID, grob.list=grob.all, shiny=FALSE)
+
+    if (!is.null(legend.plot)) {
+      # Select legend plot to show. 
+      if (length(svg.na)>1 & legend.plot!='all') na.lgd <- svg.na[grep(paste0('_(', paste0(legend.plot, collapse='|'), ').svg$'), svg.na)] else na.lgd <- svg.na
+      lgd.lis <- lgd.all[na.lgd]
+     
+      if (legend.2nd==TRUE) {
+        gg.all <- gg_2lgd(gg.all=gg.all, sam.dat=sam.uni, ft.trans=ft.trans, position.2nd=position.2nd, legend.nrow.2nd=legend.nrow.2nd, legend.ncol.2nd=legend.ncol.2nd, legend.key.size.2nd=legend.key.size.2nd, add.feature.2nd=add.feature.2nd, legend.text.size.2nd=legend.text.size.2nd, angle.text.key.2nd=angle.text.key.2nd, position.text.key.2nd=position.text.key.2nd)
+        grob.all <- lapply(gg.all, ggplotGrob)
+      }
+      
+      # Add labels to target shapes/adjust keys in legend plots.
+      lgd.lis <- gg_lgd(gg.all=lgd.lis, angle.text.key=angle.text.key, position.text.key=position.text.key, label=label, label.size=label.size, label.angle=label.angle, hjust=hjust, vjust=vjust, opacity=opacity, key=key, sam.dat=sam.uni, ft.trans=ft.trans)
+      grob.lgd.lis <- lapply(lgd.lis, ggplotGrob)
+      lgd.tr <- lapply(grob.lgd.lis, grobTree)
+
+      # Number of all rows in SHMs.
+      # if (lay.shm=='gene') row.all <- ceiling(length(con.uni)/ncol)*length(ID)
+      # if (lay.shm=='con') row.all <- ceiling(length(ID)/ncol)*length(con.uni)
+      # In 'arrangeGrob', if numbers in 'layout_matrix' are more than items in 'grobs', there is no difference. The width/height of each subplot is decided by 'widths' and 'heights'.
+      #lgd.w <- 0.99; lgd.h <- 0.99/length(na.lgd)/legend.r
+      # if (lgd.h*length(na.lgd)>1) { lgd.h <- 0.99/length(na.lgd); lgd.w <- lgd.h*legend.r }
+
+      w.lgd <- (1-bar.width)/(ncol+1); shm.w <- 1-bar.width-w.lgd
+      lgd.arr <- arrangeGrob(grobs=lgd.tr, layout_matrix=matrix(seq_along(na.lgd), ncol=1), widths=unit(0.99, "npc"), heights=unit(rep(w.lgd + (0.99 - w.lgd) * legend.r, length(na.lgd)), "npc"))
+
+      # A plot pops up when 'grid.arrange' runs.
+      shm <- grid.arrange(cs.arr, g.arr, lgd.arr, ncol=3, widths=unit(c(bar.width-0.005, shm.w, w.lgd), 'npc'))
     } else { shm.w <- 1-bar.width; shm <- grid.arrange(cs.arr, g.arr, ncol=2, widths=unit(c(bar.width-0.005, shm.w), 'npc')) }
 
     if (!is.null(out.dir)) { 
@@ -408,5 +443,23 @@ deter_core <- function(cores, svg.path) {
     } 
   } else { if (is.na(cores)) cores <- 1 }; return(cores)
 }
+
+#' Adjust relative SHM size for multiple aSVGs
+#' @param h The image height in target aSVG file.
+#' @param h.max The max image height in all aSVG files.
+#' @param scale The coefficient to adjust the relative size.
+#' @param lay.row The number of rows in the final SHM layout, returned by \code{lay_shm}.
+#' @param gg.lis The list of all SHM ggplots.
+#' @keywords Internal
+#' @noRd
+#' @importFrom ggplot2 theme
+
+rela_size <- function(h, h.max, scale, lay.row, gg.lis) {
+  mar.tb <- ((1 - h / h.max) * (0.99 / lay.row)) / 2 * scale + 0.005
+  gg.lis <- lapply(gg.lis, function(x) { x + theme(plot.margin = margin(mar.tb, 0.005, mar.tb, 0.005, "npc")) })
+  return(gg.lis)
+}
+
+
 
 

@@ -24,6 +24,7 @@ write_hdf5(
 \item{chunkdim}{
     The dimensions of the chunks and the compression level to use for
     writing the assay data to disk.
+
     Passed to the internal calls to \code{writeHDF5Array}.
     See \code{?\link[HDF5Array]{writeHDF5Array}} for more information.
   }
@@ -31,12 +32,18 @@ write_hdf5(
 \item{level}{
     The dimensions of the chunks and the compression level to use for
     writing the assay data to disk.
+
     Passed to the internal calls to \code{writeHDF5Array}.
     See \code{?\link[HDF5Array]{writeHDF5Array}} for more information.
   }
 
 \item{verbose}{
     Set to \code{TRUE} to make the function display progress.
+
+    In the case of \code{saveHDF5SummarizedExperiment()}, \code{verbose}
+    is set to \code{NA} by default, in which case verbosity is controlled
+    by \code{DelayedArray:::get_verbose_block_processing()}.
+    Setting \code{verbose} to \code{TRUE} or \code{FALSE} overrides this.
   }
 
 \item{svg.dir}{The directory path of aSVG files listed in "df_pair". If provded, all SVG files in the directory are compressed in "aSVGs.tar" and saved in \code{dir}. Default is NULL, which requires users to compress the aSVGs in a tar file.}

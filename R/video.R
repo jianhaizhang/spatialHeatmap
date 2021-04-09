@@ -17,7 +17,7 @@
 #' @param legend.value.vdo Logical TRUE or FALSE. If TRUE, the numeric values of matching spatial features are added to video legend. The default is NULL.
 #' @param sub.title.size The title size of ggplot.
 #' @param label Logical. If TRUE, spatial features having matching samples are labeled by feature identifiers. The default is FALSE. It is useful when spatial features are labeled by similar colors. 
-#' @param label.size The size of spatial feature labels in legend plot. The default is 4.
+#' @param label.size The size of spatial feature labels. The default is 4.
 #' @param label.angle The angle of spatial feature labels in legend plot. Default is 0.
 #' @param hjust The value to horizontally adjust positions of spatial feature labels in legend plot. Default is 0.
 #' @param vjust The value to vertically adjust positions of spatial feature labels in legend plot. Default is 0.
