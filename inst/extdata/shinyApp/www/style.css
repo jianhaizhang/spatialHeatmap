@@ -14,7 +14,7 @@ span.myClass {display:table; margin:0 auto;
 
 .shiny-notification {
   position: fixed; opacity: 1; font-size: 30px; 
-  top: 35%; left: 30%; height: 150px; width: 700px
+  top: 35%; left: 24%; height: 150px; width: 650px
 }
 
 input[id='search'] { height: 28px; width: 500px; margin: 3px; padding: 0; font-size: inherit; border: 1px solid #CCCCCC }
@@ -108,21 +108,20 @@ span {
 }
 
 /* plotOutput images take all available space in column/div. */
-#shm img {
+#shmAll-shm img {
   max-width: 100%; width: 100%; height: auto
 }
 
 /* Full-screen SHMs takes all space. */
-#shm:-webkit-full-screen {
-  height: 100%;width: 100%;
-  margin: 0;
+#shmAll-shm:-webkit-full-screen {
+  height: 100%;width: 100%; margin: 0;
   overflow-x: scroll;overflow-y: scroll;overflow:auto;
 }
-#shm:-ms-fullscreen {
+#shmAll-shm:-ms-fullscreen {
   height: 100%;width: 100%;
   overflow-x: scroll;overflow-y: scroll;overflow:auto;
 }
-#shm:fullscreen {
+#shmAll-shm:fullscreen {
   height: 100%;width: 100%;
   overflow-x: scroll;overflow-y: scroll;overflow:auto;
 }

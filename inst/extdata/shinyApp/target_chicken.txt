@@ -1,4 +1,4 @@
-"AtlasAssayGroup"	"organism"	"strain"	"genotype"	"developmental_stage"	"age"	"sex"	"organism_part"
+"AtlasAssayGroup"	"organism"	"strain"	"genotype"	"developmental_stage"	"factor"	"sex"	"feature"
 "ERR2576379"	"g1"	"Gallus gallus"	"Red Junglefowl"	"wild type genotype"	"embryo"	"day10"	"female"	"brain"
 "ERR2576380"	"g1"	"Gallus gallus"	"Red Junglefowl"	"wild type genotype"	"embryo"	"day10"	"female"	"brain"
 "ERR2576381"	"g2"	"Gallus gallus"	"Red Junglefowl"	"wild type genotype"	"embryo"	"day10"	"female"	"cerebellum"

@@ -22,46 +22,11 @@ dataset6:
   name: chicken_Cardoso.Moreira
   data: example/expr_chicken.txt
   svg: example/gallus_gallus.svg
-dataset7:
-  name: shoot_Mustroph
-  data: example/expr_arab.txt
-  svg: example/arabidopsis.thaliana_shoot_shm.svg
-dataset8:
-  name: organ_Mustroph
-  data: example/expr_arab.txt
-  svg: example/arabidopsis.thaliana_organ_shm.svg
-dataset9:
-  name: root_Mustroph
-  data: example/expr_arab.txt
-  svg: example/arabidopsis.thaliana_root.cross_shm.svg
-dataset10:
-  name: shootRoot_Mustroph
-  data: example/expr_arab.txt
-  svg: example/arabidopsis.thaliana_shoot.root_shm.svg
-dataset11:
-  name: rootRootTip_Mustroph
-  data: example/expr_arab.txt
-  svg: example/arabidopsis.thaliana_root.roottip_shm.svg
-dataset12:
-  name: spatiotemporal_Narsai
-  data: example/expr_coleoptile_samTimeCon.txt
-  svg:
-  - example/oryza.sativa_coleoptile.ANT_shm.svg
-dataset13:
-  name: growthStage_Mustroph
-  data: example/random_data_multiple_aSVGs.txt
-  svg:
-  - example/arabidopsis.thaliana_organ_shm1.svg
-  - example/arabidopsis.thaliana_organ_shm2.svg
-dataset14:
-  name: map_Census
-  data: example/us_population2018.txt
-  svg: example/us_map_shm.svg
 title:
 - title:spatialHeatmap
 - width:350
 max.upload.size: 5G 
-default.dataset: organ_Mustroph
+default.dataset: brain_Prudencio
 col.row.gene: None
 separator: None
 data.matrix:

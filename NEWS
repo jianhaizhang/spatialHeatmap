@@ -2,16 +2,16 @@
 
 Changes in version 1.1.5
 
- 1. The spatial heatmaps are able to maitain outline (stroke) widths defined in aSVG. The stroke widths can be updated with "update_feature".
- 2. The Shiny app is able to take HDF5 database backend, which contains data and aSVG files. The HDF5 database can also be uploaded on the user interface.
- 3. Text in aSVGs can be independent from features, i.e. have separate colors, stroke widths, etc. 
- 4. Only "g", "path", "rect", "ellipse", "use", and "title" elements are allowed in aSVG files, and other elements will raise errors or warnings. The "use" element should not in "g", and "g" elements should not have the "transform" attribute with a "matrix" value.                                
- 5. Extraction of shape coordinates includes two alternative methods. If one fails, the other will be used by default. So in most cases though some coordinates are missing due to irregular shapes, spatial heatmaps can still be created.  
- 6. Added spatiotemporal example of rice coleoptile to Shiny app and vignette. 
- 7. In "spatial_hm", the "tis.trans" argument was replaced by "ft.trans". The function "shiny_all" was renamed to "shiny_shm".
- 8. Downloaded gene expression data are cached.
+ + The spatial heatmaps are able to maitain outline (stroke) widths defined in aSVG. The stroke widths can be updated with "update_feature".
+ + The Shiny app is able to take HDF5 database backend, which contains data and aSVG files. The HDF5 database can also be uploaded on the user interface.
+ + Text in aSVGs can be independent from features, i.e. have separate colors, stroke widths, etc. 
+ + Only "g", "path", "rect", "ellipse", "use", and "title" elements are allowed in aSVG files, and other elements will raise errors or warnings. The "use" element should not in "g", and "g" elements should not have the "transform" attribute with a "matrix" value.                                
+ + Extraction of shape coordinates includes two alternative methods. If one fails, the other will be used by default. So in most cases though some coordinates are missing due to irregular shapes, spatial heatmaps can still be created.  
+ + Added spatiotemporal example of rice coleoptile to Shiny app and vignette. 
+ + In "spatial_hm", the "tis.trans" argument was replaced by "ft.trans". The function "shiny_all" was renamed to "shiny_shm".
+ + Downloaded gene expression data are cached.
 
 Changes in version 0.99.0 (2020-09-21)
-  Submitted the first version to Bioconductor
+ + Submitted the first version to Bioconductor
 
 

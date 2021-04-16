@@ -20,7 +20,7 @@ biocViews: Visualization, Microarray, Sequencing, GeneExpression,
         CellBiology, GeneTarget
 VignetteBuilder: knitr
 Suggests: knitr, rmarkdown, BiocStyle, RUnit, BiocGenerics,
-        ExpressionAtlas, DT, reshape2, Biobase, GEOquery, shinyWidgets
+        ExpressionAtlas, DT, reshape2, Biobase, GEOquery, shinyWidgets, shinyjs, htmltools, shinyBS, sortable
 Depends:
 Imports: av, BiocFileCache, data.table, DESeq2, edgeR, WGCNA, flashClust, htmlwidgets, genefilter,
         ggplot2, ggdendro, grImport, grid, gridExtra, gplots, igraph, HDF5Array,

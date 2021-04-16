@@ -25,40 +25,25 @@ write.table(target.hum, 'target_human.txt', col.names=TRUE, row.names=TRUE, sep=
 
 colData(rse.hum) <- DataFrame(target.hum)
 # Normalise.
-se.nor.hum <- norm_data(data=rse.hum, norm.fun='ESF')
-# Aggregate.
-se.aggr.hum <- aggr_rep(data=se.nor.hum, sam.factor='organism_part', con.factor='disease', aggr='mean')
-# Filter.
-se.fil.hum <- filter_data(data=se.aggr.hum, sam.factor='organism_part', con.factor='disease', pOA=c(0.01, 5), CV=c(0.55, 100), dir=NULL)
-# Data matrix.
-expr.hum <- assay(se.fil.hum)
-# colnames(expr.hum) <- gsub("_", ".", colnames(expr.hum))
-write.table(expr.hum, 'expr_human.txt', col.names=TRUE, row.names=TRUE, sep='\t')
-
-
-
-colData(rse.hum) <- DataFrame(target.hum)
-# Normalise.
 se.nor.hum <- norm_data(data=rse.hum, norm.fun='ESF', log2.trans = FALSE)
-
-# Aggregate.
-se.aggr.hum <- aggr_rep(data=se.nor.hum, sam.factor='organism_part', con.factor='disease', aggr='mean')
 
 # Filter.
 se.fil.hum <- filter_data(data=se.nor.hum, sam.factor='organism_part', con.factor='disease', pOA=c(0.7, 50), CV=c(0.5, 100), dir=NULL); se.fil.hum
 # Data matrix.
-expr.hum <- assay(se.fil.hum)
+expr.hum <- as.data.frame(assay(se.fil.hum))
+
+# Row metadata.
+library(org.Hs.eg.db)
+columns(org.Hs.eg.db); keytypes(org.Hs.eg.db)
+row.met <- select(org.Hs.eg.db, keys=rownames(expr.hum), columns=c('ENSEMBL', 'SYMBOL', 'GENENAME'), keytype="ENSEMBL")
+row.met <- row.met[!duplicated(row.met$ENSEMBL), ]
+row.met$metadata <- paste0(row.met$SYMBOL, ': ', row.met$GENENAME)
+# Append row metadata to data matrix.
+expr.hum <- expr.hum[row.met$ENSEMBL, ]
+expr.hum <- cbind(expr.hum, row.met[, 'metadata', drop = FALSE])
+
 # colnames(expr.hum) <- gsub("_", ".", colnames(expr.hum))
 write.table(expr.hum, 'expr_human.txt', col.names=TRUE, row.names=TRUE, sep='\t')
-
-
-
-
-
-
-
-
-
 
 
 
@@ -82,15 +67,24 @@ write.table(target.mus, 'target_mouse.txt', col.names=TRUE, row.names=TRUE, sep=
 
 colData(rse.mus) <- DataFrame(target.mus)
 
-se.nor.mus <- norm_data(data=rse.mus, norm.fun='ESF')
-# Average the tissue-condition replicates.
-se.aggr.mus <- aggr_rep(data=se.nor.mus, sam.factor='organism_part', con.factor='strain', aggr='mean')
-se.fil.mus <- filter_data(data=se.aggr.mus, sam.factor='organism_part', con.factor='strain', pOA=c(0.15, 5), CV=c(1.7, 100), dir=NULL)
+se.nor.mus <- norm_data(data=rse.mus, norm.fun='ESF', log2.trans = FALSE)
+se.fil.mus <- filter_data(data=se.nor.mus, sam.factor='organism_part', con.factor='strain', pOA=c(0.3, 30), CV=c(1.5, 100), dir=NULL); se.fil.mus
 # Data matrix.
-expr.mus <- assay(se.fil.mus)
-expr.mus <- rbind(expr.mus[2, , drop=FALSE], expr.mus[-2, ])
+expr.mus <- as.data.frame(assay(se.fil.mus))
+
+# Row metadata.
+library(org.Mm.eg.db)
+columns(org.Mm.eg.db); keytypes(org.Mm.eg.db)
+row.met <- select(org.Mm.eg.db, keys=rownames(expr.mus), columns=c('ENSEMBL', 'SYMBOL', 'GENENAME'), keytype="ENSEMBL")
+row.met <- row.met[!duplicated(row.met$ENSEMBL), ]
+row.met$metadata <- paste0(row.met$SYMBOL, ': ', row.met$GENENAME)
+# Append row metadata to data matrix.
+expr.mus <- expr.mus[row.met$ENSEMBL, ]
+expr.mus <- cbind(expr.mus, row.met[, 'metadata', drop = FALSE])
+
 # colnames(expr.mus) <- gsub("_", ".", colnames(expr.mus))
 write.table(expr.mus, 'expr_mouse.txt', col.names=TRUE, row.names=TRUE, sep='\t')
+
 
 
 ## Make target file/Shiny app data-chicken organ example.

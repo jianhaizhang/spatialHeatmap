@@ -46,7 +46,7 @@ read_fr <- function(input, header = TRUE, sep = 'auto', fill = TRUE, check.names
   na <- as.data.frame(na); rownames(na) <- rna
   idx <- colSums(apply(na, 2, is.na))!=0
   row.meta <- df1[idx]; expr <- na[!idx]
-  if (ncol(row.meta) == 1) colnames(row.meta) <- gsub('\\"', '', readLines(input, 1))
+  if (ncol(row.meta) == 1 & sum(!idx) == 0) colnames(row.meta) <- gsub('\\"', '', readLines(input, 1))
   colnames(expr) <- cna[!idx]; return(cbind(expr, row.meta))
 
 }
