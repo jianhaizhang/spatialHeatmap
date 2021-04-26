@@ -554,7 +554,8 @@ assay(se.fil.hum)[c(5, 733:734), ]
 ```
 
 ```{r humtab, eval=TRUE, echo=FALSE, warnings=FALSE}
-kable(assay(se.fil.hum)[c(5, 733:734), ], caption='Slice of fully preprocessed expression matrix.')
+cna <- c("cerebellum\\_\\_ALS", "frontal.cortex\\_\\_ALS", "cerebellum\\_\\_normal", "frontal.cortex\\_\\_normal")
+kable(assay(se.fil.hum)[c(5, 733:734), ], caption='Slice of fully preprocessed expression matrix.', col.names=cna, escape=TRUE)
 ```
 
 ### SHM: Single Gene
@@ -982,10 +983,10 @@ The unique set of the matching aSVG files can be returned as follows.
 unique(feature.df$SVG)
 ```
 
-The aSVG file `arabidopsis_thaliana.shoot_shm.svg` is chosen to generate the SHM in this section.
+The aSVG file `arabidopsis.thaliana_shoot_shm.svg` is chosen to generate the SHM in this section.
 
 ```{r eval=TRUE, echo=TRUE, warnings=FALSE }
-feature.df <- subset(feature.df, SVG=='arabidopsis_thaliana.shoot_shm.svg')
+feature.df <- subset(feature.df, SVG=='arabidopsis.thaliana_shoot_shm.svg')
 feature.df[1:3, ]
 ```
 
@@ -1506,8 +1507,7 @@ along with embedded user instructions.
 
 ## Local System 
 
-The Shiny App of `spatialHeatmap` can be launched from an R session with the following
-function call. 
+The Shiny App of `spatialHeatmap` can be launched from an R session with the following function call. 
 
 ```{r eval=FALSE, echo=TRUE, warnings=FALSE}
 shiny_shm()
@@ -1515,7 +1515,7 @@ shiny_shm()
 
 The dashboard panels of the Shiny App are organized as follows:
 
-1. Left Side Panel: menu for instructions, and selecting input files and parameters
+1. Upload: menu for uploading custom files, selecting default files, or downloading example files.  
 2. Data Matrix: scrollable assay matrix uploaded by users
 3. Spatial Heatmap: spatially colored images based on aSVG images selected and/or uploaded by user
 4. Matrix Heatmap: hierarchical clustering results of user selected items along with nearest neighbors showing most similar abundance profiles 

@@ -13,7 +13,7 @@ dataset3:
 dataset4:
   name: brain_Prudencio
   data: example/expr_human.txt
-  svg: example/homo_sapiens.brain.svg
+  svg: example/homo.sapiens_brain.shiny_shm.svg
 dataset5:
   name: mouse_Merkin
   data: example/expr_mouse.txt
@@ -22,6 +22,41 @@ dataset6:
   name: chicken_Cardoso.Moreira
   data: example/expr_chicken.txt
   svg: example/gallus_gallus.svg
+dataset7:
+  name: shoot_Mustroph
+  data: example/expr_arab.txt
+  svg: example/arabidopsis.thaliana_shoot_shm.svg
+dataset8:
+  name: organ_Mustroph
+  data: example/expr_arab.txt
+  svg: example/arabidopsis.thaliana_organ_shm.svg
+dataset9:
+  name: root_Mustroph
+  data: example/expr_arab.txt
+  svg: example/arabidopsis.thaliana_root.cross_shm.svg
+dataset10:
+  name: shootRoot_Mustroph
+  data: example/expr_arab.txt
+  svg: example/arabidopsis.thaliana_shoot.root_shm.svg
+dataset11:
+  name: rootRootTip_Mustroph
+  data: example/expr_arab.txt
+  svg: example/arabidopsis.thaliana_root.roottip_shm.svg
+dataset12:
+  name: spatiotemporal_Narsai
+  data: example/expr_coleoptile_samTimeCon.txt
+  svg:
+  - example/oryza.sativa_coleoptile.ANT_shm.svg
+dataset13:
+  name: growthStage_Mustroph
+  data: example/random_data_multiple_aSVGs.txt
+  svg:
+  - example/arabidopsis.thaliana_organ_shm1.svg
+  - example/arabidopsis.thaliana_organ_shm2.svg
+dataset14:
+  name: map_Census
+  data: example/us_population2018.txt
+  svg: example/us_map_shm.svg
 title:
 - title:spatialHeatmap
 - width:350
@@ -38,19 +73,17 @@ data.matrix:
 - scale:Row
 - row.selected:1
 shm.img:
-- height:350
-- width:580
 - columns:2
 - display.by:gene
-- scale.plots:2
-- title.size:15
+- scale.plots:1.4
+- title.size:12
 - relative.size:1
 - color:yellow,orange,red
 - color.scale:Selected rows
 - file.type:NA
 - dpi:300
-- legend.width:0.7
-- legend.aspect.ratio:1
+- include.legend.plot:Yes
+- legend.plot.size:0.5
 - value.legend.rows:1
 - value.legend.key:0.03
 - value.legend.text:10
@@ -60,13 +93,10 @@ shm.img:
 shm.anm:
 - show:No
 - transition:2
-- height:NA
-- width:770
+- scale.plot:1
 shm.video:
 - show:No
 - transition:1
-- height:0.9
-- width:0.92
 - dpi:400
 - key.rows:2
 - key.size:0.04

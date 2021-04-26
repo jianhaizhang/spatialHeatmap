@@ -139,7 +139,7 @@ svg_df <- function(svg.path, feature=NULL, cores) {
   # Update tis.path.
   tis.path <- sub('__\\d+$', '', unique(df$tissue))
   fil.cols <- df.attr$color; names(fil.cols) <- df.attr$feature
-  w.h <- c(max(abs(df$x)), max(abs(df$y))); aspect.r <- w.h[1]/w.h[2]; names(aspect.r) <- NULL
+  w.h <- c(max(df$x) - min(df$x), max(df$y) - min(df$y)); aspect.r <- w.h[1]/w.h[2]; names(aspect.r) <- NULL
   names(w.h) <- c('width', 'height')
   # tis.path=sub('_\\d+$', '', tit) introduces a potential bug, since the original single-path tissues can have '_\\d+$' pattern. Solution: in upstream append '__1', '__2', ... to the paths in a group.
   lis <- list(df=df, tis.path=tis.path, fil.cols=fil.cols, w.h = w.h, aspect.r = aspect.r, df.attr=df.attr); return(lis)

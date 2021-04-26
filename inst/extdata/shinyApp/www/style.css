@@ -17,6 +17,9 @@ span.myClass {display:table; margin:0 auto;
   top: 35%; left: 24%; height: 150px; width: 650px
 }
 
+/* Animation slider. */
+div.form-group.shiny-input-container { width: 95% }
+
 input[id='search'] { height: 28px; width: 500px; margin: 3px; padding: 0; font-size: inherit; border: 1px solid #CCCCCC }
 
 label[for='search'] { display: table-cell; text-align: center; vertical-align: middle;   }
@@ -55,6 +58,17 @@ label[for='search'] { display: table-cell; text-align: center; vertical-align: m
 
 /* Avoid overflowing in fluidrow and splitLayout. */
 .shiny-split-layout > div {overflow: visible;}
+
+
+.container-fluid {
+  padding-right: 5px; padding-left: 5px;
+}
+
+/*Center image, video. */
+img, video, iframe {
+  display: block; margin: auto;
+}
+
 
 /* Customized tooltip. */
 .tp {
@@ -107,24 +121,55 @@ span {
     display: inline-block; white-space: normal
 }
 
-/* plotOutput images take all available space in column/div. */
-#shmAll-shm img {
+/* plotOutput images take all available space in column/div. 
+#shmAll-shm.img, #barSHM {
   max-width: 100%; width: 100%; height: auto
 }
+*/
+
+/*
+#shmAll-ggly iframe {
+  max-width: 100%; width: 100%; height: 100%
+}
+*/
 
 /* Full-screen SHMs takes all space. */
-#shmAll-shm:-webkit-full-screen {
+#barSHM:-webkit-full-screen {
   height: 100%;width: 100%; margin: 0;
   overflow-x: scroll;overflow-y: scroll;overflow:auto;
+  background-color: white
 }
-#shmAll-shm:-ms-fullscreen {
+#barSHM:-ms-fullscreen {
   height: 100%;width: 100%;
   overflow-x: scroll;overflow-y: scroll;overflow:auto;
+  background-color: white
 }
-#shmAll-shm:fullscreen {
+#barSHM:fullscreen {
   height: 100%;width: 100%;
   overflow-x: scroll;overflow-y: scroll;overflow:auto;
+  background-color: white
 }
 
+/* Modal dialog in the upload tab. */
+#datFormat img {
+  width: 1400px
+}
+
+#datFormat .modal-dialog {
+  width: 100%; height: 100%; margin-left: 5px; margin-right: 5px
+}
+
+
+/* Scrolling bars in SHM box. 
+
+#barSHM div:nth-child(2), #barSHM div:nth-child(4) {
+  overflow-y: auto; overflow-x: auto; height: auto;
+}
+
+*/
+
+#shmAll-ggly {
+  overflow: scroll
+}
 
 

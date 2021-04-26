@@ -601,7 +601,7 @@ deg_lis <- function(lis, sam, deg='up') {
   sam.all <- unique(sam.all)
   meths <- names(lis); if (length(lis)!=length(lis)) stop('Each element in "lis" should have a name!')
   lis.all <- NULL; for (i in meths) {
-    lis0 <- lis[[i]]; paste0('lis0$', sam, '$', sam, '_', deg)  
+    lis0 <- lis[[i]]
     rna <- rownames(lis0[[sam]][[paste0(sam, '_', deg)]])
     if (length(rna)>0) { lis1 <- list(rna); names(lis1) <- paste0(i, '.', deg); lis.all <- c(lis.all, lis1) } else cat('No genes detected in', i, '! \n')
   }; return(lis.all)

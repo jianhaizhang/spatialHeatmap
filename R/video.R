@@ -8,8 +8,6 @@
 #' @param lgd.text.size The size of legend text. Default is 8.
 #' @param lgd.row An integer of legend rows.
 #' @param lgd.col An integer of legend columns.
-#' @param width The image width in video in "npc", ranging from 0 to 0.92. Default is 0.92.
-#' @param height The image height in video in "npc", ranging from 0 to 0.99. Default is 0.99.
 #' @inheritParams spatial_hm
 
 #' @param angle.text.key A value of key text angle in legend plot. The default is NULL, equivalent to 0.
@@ -38,7 +36,7 @@
 #' @importFrom av av_capture_graphics
 #' @importFrom gridExtra grid.arrange
 
-video <- function(gg, cs.g, sam.uni, ft.trans, sub.title.size=NULL, bar.value.size=NULL, lgd.key.size=0.02, lgd.text.size=8, angle.text.key=NULL, position.text.key=NULL, lgd.row=2, lgd.col=NULL, legend.value.vdo=NULL, label=FALSE, label.size=4, label.angle=0, hjust=0, vjust=0, opacity=1, key=TRUE, width=0.92, height=0.99, video.dim='640x480', res=500, interval=1, framerate=1, out.dir) {
+video <- function(gg, cs.g, sam.uni, ft.trans, sub.title.size=NULL, bar.value.size=NULL, lgd.key.size=0.02, lgd.text.size=8, angle.text.key=NULL, position.text.key=NULL, lgd.row=2, lgd.col=NULL, legend.value.vdo=NULL, label=FALSE, label.size=4, label.angle=0, hjust=0, vjust=0, opacity=1, key=TRUE, video.dim='640x480', res=500, interval=1, framerate=1, out.dir) {
 
   try(test_ffm()); ffm <- tryCatch({ test_ffm() }, error=function(e){ return('error') }, warning=function(w) { return('warning') } )
   if (grepl('error|warning', ffm)) return()
@@ -52,8 +50,8 @@ video <- function(gg, cs.g, sam.uni, ft.trans, sub.title.size=NULL, bar.value.si
   res.r=res/144; w.h <- round(as.numeric(strsplit(video.dim, 'x')[[1]])*res.r)
   if (w.h[1] %% 2!=0) w.h[1] <- w.h[1]+1
   if (w.h[2] %% 2!=0) w.h[2] <- w.h[2]+1
-  av_capture_graphics(expr=for (i in na) { print(grid.arrange(cs.g, gg1[[i]],widths=unit(c(0.08, width), 'npc'), 
-  heights=unit(c(0.05, height, 0.05), 'npc'), layout_matrix=lay)) }, 
+  av_capture_graphics(expr=for (i in na) { print(grid.arrange(cs.g, gg1[[i]], widths=unit(c(0.08, 0.92), 'npc'), 
+  heights=unit(c(0.05, 0.99, 0.05), 'npc'), layout_matrix=lay)) }, 
   output=paste0(normalizePath(out.dir, winslash="/", mustWork=FALSE), "/shm.mp4"), width=w.h[1], height=w.h[2], res=res, vfilter=paste0('framerate=fps=', framerate))
 
 }

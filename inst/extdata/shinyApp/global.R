@@ -196,25 +196,28 @@ svg_suffix <- function(svg.path, svg.na) {
 
 ## Rematch features.
 # Create a panel for each data feature, where aSVG features can be dropped.
-ft_dat <- function(x) {
+# ns() is the namespace in shiny modules.
+ft_dat <- function(x, ns) {
  span(class = "panel panel-default",
    div(class = "panel-heading", x), 
-   div(class = "panel-body", id = x)
+   div(class = "panel-body", id = ns(x))
   )
 }
 
 # Allow features are draggable across panels.
-ft_js <- function(x) {
-  sortable_js(css_id = x,
+# ns() is the namespace in shiny modules.
+ft_js <- function(x, ns) {
+  sortable_js(css_id = ns(x),
     options = sortable_options(
       multiDrag = NULL, sort = FALSE, animation = 1000, direction = NULL, 
       group = list(name = "sortGroup1", put = TRUE),
-      onSort = sortable_js_capture_input(x)
+      onSort = sortable_js_capture_input(ns(x))
     )
   )
 }
 
 # Convert aSVG features to draggable items.
+# ns() is the namespace in shiny modules.
 ft2tag <- function(ft){
   lapply(ft, function(i) { tag("span", list(class = class(i), tags$span(class = "glyphicon glyphicon-move"), i)) }
   )
@@ -234,6 +237,44 @@ vdo_rm <- function() {
     file.remove(list.files('www/video/', '*.mp4$', full.names=TRUE))
   } else dir.create('www/video/', recursive=TRUE)
 }
+
+
+## Spatial enrichment
+# Translate overlap up/down genes from different methods in a list to a data frame.
+venn_inter <- function(lis.all) {
+  
+  gen.all <- unique(unlist(lis.all))
+  # Create an empty data frame, where rows are all genes and columns are methods.
+  zero <- rep(0, length(gen.all))
+  df.all <- as.data.frame(matrix(rep(0, length(gen.all)*length(lis.all)), ncol=length(lis.all)))
+  cna <- names(lis.all)
+  suf <- unique(gsub('(.*)\\.(.*)', '\\2', cna))
+  meth <- unique(gsub('(.*)\\.(.*)', '\\1', cna))
+  names(lis.all) <- colnames(df.all) <- meth
+  rownames(df.all) <- gen.all
+  # Retrieve all overlaps.
+  lis <- venn(lis.all, show.plot=FALSE) 
+  inter <- attributes(lis)$intersections
+  # Translate all overlaps into a data frame.
+  for (i in seq_along(inter)) {
+    lis0 <- inter[[i]]; na0 <- strsplit(names(inter[i]), ':')[[1]]
+    w1 <- which(gen.all %in% lis0); w2 <- which(meth %in% na0)  
+    df.all[w1, w2] <- 1
+  }
+
+  df.all <- cbind(type=suf, total=rowSums(df.all), df.all)
+  # Matrix accepts dupliated rows. Some genes might be up in one method while down in other methods, so when combine up and down table in a single table, there could be duplicated row names. In data frame, duplicated row names are appended 1.
+  df.all <- as.matrix(df.all[order(df.all$total, decreasing=TRUE), ])
+  return(df.all)
+}
+
+# Given a DEG list of different methods, plot the overlap matrix.
+deg_olp <- function(deg.lis) {
+  mat <- vapply(names(deg.lis), function(x) vapply(names(deg.lis), function(y) length(intersect(deg.lis[[x]], deg.lis[[y]])), numeric(1)), numeric(length(deg.lis)))
+  mel <- reshape2::melt(mat)
+  g <- ggplot(data=mel, aes(x=Var1, y=Var2, fill=value))+geom_tile(colour="white")+scale_fill_gradient(low="lightcyan3", high="darkorange")+theme_minimal()+theme(axis.text=element_text(angle=45, vjust=1, size=10, hjust=1))+coord_fixed()+geom_text(aes(Var2, Var1, label=value), color="black", size=4)+theme(axis.title.x=element_blank(), axis.title.y=element_blank(), panel.grid.major=element_blank(), panel.border=element_blank(), panel.background=element_blank(), axis.ticks=element_blank()); return(g)
+}
+
 
 
 

@@ -19,9 +19,10 @@
 #' @importFrom plotly gg2list as_widget subplot 
 #' @importFrom htmlwidgets saveWidget
 
-
 html_ly <- function(gg, cs.g, ft.trans, sam.uni, anm.width, anm.height, selfcontained=FALSE, out.dir) {
+  # save(gg, cs.g, ft.trans, sam.uni, anm.width, anm.height, selfcontained, out.dir, file ='all.ly')
 
+  cs.g$theme$aspect.ratio <- NULL
   gg.na <- names(gg); cs.lis <- gg2list(cs.g, tooltip='color_scale')
   cs.lis$layout$title$text <- NULL 
   csly <- as_widget(cs.lis, tooltip='color_scale') 
@@ -42,6 +43,7 @@ html_ly <- function(gg, cs.g, ft.trans, sam.uni, anm.width, anm.height, selfcont
     leg.idx <- !duplicated(tis.path) & (tis.path %in% ft.legend)
     tis.show <- as.vector(dat$tissue)[leg.idx]
     tis.show1 <- tis.path[leg.idx]
+    g$theme$aspect.ratio <- NULL # Aspect ratio is not accepted.
     g2l <- gg2list(g, tooltip="text")
     cat('Preparing legend for', paste0("'", na.hl, "'"), '... \n')
     for (i in seq_along(g2l$data)) {
@@ -62,4 +64,5 @@ html_ly <- function(gg, cs.g, ft.trans, sam.uni, anm.width, anm.height, selfcont
   }
 
 }
+
 

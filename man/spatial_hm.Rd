@@ -58,8 +58,7 @@ spatial_hm(
   relative.scale = NULL,
   verbose = TRUE,
   out.dir = NULL,
-  anm.width = 650,
-  anm.height = 550,
+  animation.scale = 1,
   selfcontained = FALSE,
   video.dim = "640x480",
   res = 500,
@@ -176,7 +175,7 @@ spatial_hm(
 
 \item{out.dir}{The directory to save interactive spatial heatmaps as independent HTML files and videos. Default is NULL, and the HTML files and videos are not saved.}
 
-\item{anm.width, anm.height}{The width and height of spatial heatmaps in HTML files. Default is 650 and 550 respectively.}
+\item{animation.scale}{A numeric to scale the spatial heatmap size in the HTML files. The default is 1, and the height is 550px and the width is calculated according to the original aspect ratio in the aSVG file.}
 
 \item{selfcontained}{Whether to save the HTML as a single self-contained file
 (with external resources base64 encoded) or a file with external resources
