@@ -19,8 +19,8 @@ js <- "function openFullscreen(elem) {
 
 data_ui <- function(id, deg = FALSE) {
   ns <- NS(id)
-  if (deg == FALSE) tabPanel("Primary Visualization", value='primary',
-  box(width = 12, title = "Data (replicates aggregated)", closable = FALSE, solidHeader = TRUE, collapsible = TRUE, enable_sidebar = FALSE, status = "primary", enable_dropdown = FALSE,
+  # if (deg == FALSE) tabPanel("Primary Visualization", value='primary',
+  if (deg==FALSE) box(width = 12, title = "Data (replicates aggregated)", closable = FALSE, solidHeader = TRUE, collapsible = TRUE, enable_sidebar = FALSE, status = "primary", enable_dropdown = FALSE,
       navbarPage('Parameters:',
       tabPanel("Basic",
       fluidRow(splitLayout(cellWidths=c('1%', '20%', '1%', '20%', '1%', '10%', '1%', '10%'), '',
@@ -38,12 +38,8 @@ data_ui <- function(id, deg = FALSE) {
       ),
       tabPanel("Re-order columns", column(12, uiOutput(ns('col.order'))))
       ), # navbarPage 
-      fluidRow(
-      column(6, textInput(inputId=ns('search'), label='Search by gene IDs (e.g. ENSG00000000971,ENSG00000001617):', value='', placeholder='Muliple IDs must only be separated by space or comma.', width='100%')),
-      column(1, actionButton(ns('search.but'), 'Submit'), align = "center", style = "margin-bottom: 2px;", style = "margin-top: 20px;")
-      ),
       fluidRow(splitLayout(cellWidths=c("1%", "98%", "1%"), "", dataTableOutput(ns("dt")), ""))
-      )
+     # )
   ) else if (deg == TRUE) {
     box(width = 12, title = "Data (with replicates)", closable = FALSE, solidHeader = TRUE, 
       collapsible = TRUE, enable_sidebar = FALSE, status = "primary", enable_dropdown = FALSE,
@@ -60,8 +56,8 @@ data_ui <- function(id, deg = FALSE) {
 
 upload_ui <- function(id) {
    ns <- NS(id)
-   tabPanel("Upload", value='upload',
-      box(width = 12, title = 'Upload data & aSVGs', closable = FALSE, solidHeader = TRUE, collapsible = TRUE, enable_sidebar = FALSE, status = "primary", enable_dropdown = FALSE,
+   tabPanel("Data sets", value='dataSets',
+      box(width = 12, title = 'Data & aSVGs', closable = FALSE, solidHeader = TRUE, collapsible = TRUE, enable_sidebar = FALSE, status = "primary", enable_dropdown = FALSE,
       
       h4(strong("Step1: choose custom or default data sets")),
       fluidRow(splitLayout(cellWidths=c('1%', '30%'), '', 
@@ -109,15 +105,16 @@ upload_ui <- function(id) {
   
 }
 
-shm_ui <- function(id) {
+shm_ui <- function(id, data.ui) {
   ns <- NS(id)
   tabPanel("Spatial Heatmap", value = 'shm2', icon = icon('image'),
     br(),
-    column(12,
+    # list(
     # width = ifelse(input$lgdTog %% 2 == 0, 9, 12), 
       # boxPad(color = NULL, title = NULL, solidHeader = FALSE, 
-    
-    tabsetPanel(type = "pills", id=NULL, selected="shm1",
+    # Append matrix heatmap, network with SHMs.    
+    do.call(tabsetPanel, append(list(type = "pills", id='shmMhNet', selected = "shm1",
+    # tabsetPanel(type = "pills", id=NULL, selected="shm1",
   
       tabPanel(title="Image", value='shm1',  
       navbarPage('Parameters:',
@@ -163,7 +160,7 @@ shm_ui <- function(id) {
 
 #     tags$div(title="Download the spatial heatmaps and legend plot.",
       # h1(strong("Download paramters:"), style = "font-size:20px;"),
-      fluidRow(splitLayout(cellWidths=c('0.5%', '25%', '1%', '15%', '1%', '16%', '1%', '15%', '1%', '15%'), '',
+      fluidRow(splitLayout(cellWidths=c('0.7%', '25%', '1%', '15%', '1%', '16%', '1%', '15%', '1%', '15%'), '',
       radioButtons(inputId=ns('ext'), label='File type', choices=c('NA', "png", "jpg", "pdf"), selected='', inline=TRUE), '', 
       numericInput(inputId=ns('res'), label='Resolution (dpi)', value='', min=10, max=Inf, step=10, width=150), '',
       radioButtons(inputId=ns('lgd.incld'), label='Include legend plot', choices=c('Yes', 'No'), selected='', inline=TRUE), '', 
@@ -194,8 +191,7 @@ shm_ui <- function(id) {
       #) # navbarMenu
       ), # navbarPage 
  
-    verbatimTextOutput(ns('msg.shm')), uiOutput(ns('shm.ui'))
-   
+    verbatimTextOutput(ns('msg.shm')), uiOutput(ns('shm.ui')), data.ui
     ), # tabPanel 
 
       tabPanel(title='Animation', value='shm2', 
@@ -230,24 +226,10 @@ shm_ui <- function(id) {
       radioButtons(inputId=ns("vdo.but"), label="Show/update video", choices=c("Yes", "No"), selected='No', inline=TRUE),
       fluidRow(splitLayout(cellWidths=c("1%", "98%", "1%"), "", uiOutput(ns('video')), ""))
       ) # tabPanel
-      
-    )
-      ) # column 
-  
 
+      ), network_ui(ns('net')) )) # append, do.call
 
-
-
-
-
-
-
-
-
-
-
-
-
+    #  ) # list
 
   )
 }
@@ -337,7 +319,9 @@ deg_ui <- function(id) {
   )
 }
 
-shinyUI(dashboardPage(
+
+ui <- function(request) {
+  dashboardPage(
  
   # includeCSS("style.css"),
   dashboardHeader(title = NULL, titleWidth = 0),
@@ -365,16 +349,24 @@ shinyUI(dashboardPage(
        $("header").find("nav").append(\'<span class="myClass">spatialHeatmap</span>\');
      })
    ')),
-    fluidRow( 
-      tabsetPanel(type = "pills", id=NULL, selected="primary",
-        upload_ui('upl'), data_ui('dat'), deg_ui('deg'),
-        tabPanel("About", value='about',
+    fluidRow(
+ 
+      fluidRow(
+      column(6, textInput(inputId='search', label='Search by gene IDs (e.g. ENSG00000000971,ENSG00000001617):', value='', placeholder='Muliple IDs must only be separated by space or comma.', width='100%')),
+      column(1, actionButton('search.but', 'Submit'), align = "center", style = "margin-bottom: 2px;", style = "margin-top: 20px;")
+      ),
+      # tabsetPanel(type = "pills", id=NULL, selected="primary", data_ui('dat') ),
+      # tabsetPanel(type = "pills", id = 'shm.sup', selected = "shm2", shm_ui('shmAll'))
+      do.call(tabsetPanel, append(list(type = "pills", id = 'shm.sup', selected="shm2", upload_ui('upl'), shm_ui('shmAll', data_ui('dat')), deg_ui('deg')),
+        list(tabPanel("About", value='about',
           box(width = 12, title = "", closable = FALSE, solidHeader = TRUE, collapsible = TRUE, enable_sidebar = FALSE, status = "primary", enable_dropdown = FALSE,
         'Coming soon!'
           )
-        )
-      ),
-      do.call(tabsetPanel, append(list(type = "pills", id = 'shm.sup', selected = "shm2", shm_ui('shmAll')), network_ui('net')))
+        ))
+    ))
+
     )
  ) # dashboardBody
-)) # shinyUI(dashboardPage(
+)
+
+}

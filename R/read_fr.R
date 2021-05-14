@@ -37,7 +37,7 @@ read_fr <- function(input, header = TRUE, sep = 'auto', fill = TRUE, check.names
   df0[fct.idx] <- lapply(df0[fct.idx], as.character)
 
   if (cna[1]=='V1') cna <- cna[-1] else cna <- cna[-ncol(df0)] 
-  df1 <- as.data.frame(df0); rownames(df1) <- df1[, 1]
+  df1 <- as.data.frame(df0); rownames(df1) <- make.names(df1[, 1])
   # Subsetting identical column names in a matrix will not trigger numbers to be appened.
   df1 <- df1[, -1, drop = FALSE]; colnames(df1) <- cna; rna <- rownames(df1)
   # Applies to data frame of numeric-character mixture.

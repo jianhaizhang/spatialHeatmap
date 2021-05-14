@@ -41,7 +41,7 @@ label[for='search'] { display: table-cell; text-align: center; vertical-align: m
 
 .box.box-solid.box-primary>.box-header { color: #fff; background: #3c8dbc; background-color: #3c8dbc;}
 
-.btn-primary {background-color: #3498DB;border-color: #367fa9;}
+.btn.btn-primary.action-button.dropdown-toggle.shiny-bound-input {background-color:#f4f4f4;border-color:#ddd;color:#444}
 
 
 /* Tab colors. */
@@ -59,7 +59,6 @@ label[for='search'] { display: table-cell; text-align: center; vertical-align: m
 /* Avoid overflowing in fluidrow and splitLayout. */
 .shiny-split-layout > div {overflow: visible;}
 
-
 .container-fluid {
   padding-right: 5px; padding-left: 5px;
 }
@@ -69,6 +68,65 @@ img, video, iframe {
   display: block; margin: auto;
 }
 
+
+/* Avoid shiny elements overlap. */
+[id='dropdown-menu-shmAll-dropdown'] {
+  position: absolute
+}
+
+
+/* selectizeInput */
+.selectize-dropdown.multi.form-control.shinyjs-resettable.plugin-selectize-plugin-a11y {
+  position: static; z-index: 5
+}
+
+/*All genes in dropdown list.*/
+.selectize-dropdown-content {
+  position:absolute; z-index:5; background:#f6f6f6
+}
+
+/* Search button. Dots are special characters in CSS, and should be escaped. So #sear-ids.but or [id='sear-ids.but'] is right. 
+
+[id='sear-ids.but'] {
+  background-color: #bec5cb;
+  margin-top: -15px; margin-bottom: 5px;
+}
+
+*/
+
+/*Avoid the top of navbarPage covering other elements. */
+.navbar.navbar-default.navbar-static-top {
+  z-index:0
+}
+
+/* Selected items in search box. */
+.selectize-input.items.not-full.has-options has-items {
+  display:table-cell
+}
+
+/*Content of dropdown menu.*/
+#dropdown-menu-shmAll-scaleDrop, #dropdown-menu-shmAll-scroDrop, #dropdown-menu-shmAll-colDrop {
+  width:500px !important
+}
+
+#dropdown-menu-shmAll-togDrop {
+ width:500px !important; margin-left:-300px
+}
+
+#dropdown-menu-shmAll-titDrop {
+ width:500px !important; margin-left:-60px
+}
+
+/*Basic parameters above SHMs. */
+div[data-value='Basic'] .row {
+  margin-top:-15px; margin-bottom:5px
+}
+
+/*Top margin of navbar. 
+div[data-value='shm1'] > navbar.navbar-default.navbar-static-top > container-fluid div.navbar-header ul.nav.navbar-nav {
+  margin-top:-10px
+}
+*/
 
 /* Customized tooltip. */
 .tp {
@@ -161,15 +219,41 @@ span {
 
 
 /* Scrolling bars in SHM box. 
-
 #barSHM div:nth-child(2), #barSHM div:nth-child(4) {
   overflow-y: auto; overflow-x: auto; height: auto;
 }
-
 */
 
 #shmAll-ggly {
   overflow: scroll
 }
+
+/*Image gallery in landing page. */
+
+#field img, #plate img, #sub img, #dwl img, #inter img, #vdo img {
+  transition: transform linear 0.5s; transition-delay: 0.5s;
+}
+
+#field:hover, #plate:hover, #sub:hover, #dwl:hover, #inter:hover, #vdo:hover {
+  z-index: 5
+}
+
+#field img:hover, #dwl img:hover {
+  transform: scale(3); transform-origin: left;
+}
+
+#plate img:hover, #inter img:hover {
+  transform: scale(3); transform-origin: center;
+}
+          
+#sub img:hover {
+  transform: scale(3); transform-origin: right;
+}
+
+#vdo img:hover {
+  transform: scale(2); transform-origin: right;
+}
+
+
 
 

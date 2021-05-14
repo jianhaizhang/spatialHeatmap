@@ -7,7 +7,14 @@ options(stringsAsFactors=FALSE)
 
 
 # enableWGCNAThreads()
-shinyServer(function(input, output, session) {
+# enableBookmarking("url")
+server <- function(input, output, session) {
+  setBookmarkExclude("shmAll-dat-dt_rows_all")
+  observe({
+    # The url on browser is captured only if the url is refreshed or the "Enter" key is pressed, which applies in the cases shiny app is first launched or users modified parameters in the url. Otherwise the query is null.
+    query <- parseQueryString(session$clientData$url_search)
+    print(query[c('shmAll-lgd.row', 'shmAll-tis')])
+   })
   observe({
     withProgress(message="Loading dependencies: ", value=0, {
     incProgress(0.3, detail="in progress ...")
@@ -22,7 +29,7 @@ shinyServer(function(input, output, session) {
   })
   })
 
-upload_server <- function(id) {
+upload_server <- function(id, session) {
   moduleServer(id, function(input, output, session) {
 
   observeEvent(input$cusHelp, {
@@ -70,7 +77,7 @@ upload_server <- function(id) {
     if (!is.null(df.tar)) validate(need(try(sum(tar.num)==2), 'Two separate tar files of data and aSVGs respectively are expected!'))
     if (sum(tar.num)==2) {
 
-      cat('Processing uploaded tar... \n')
+      cat('Processing uploaded tar file ... \n')
       p <- df.tar$datapath[1]; strs <- strsplit(p, '/')[[1]]
       cfg$pa.upl <- pa.svg <- paste0(strs[grep('\\.tar$', strs, invert=TRUE)], collapse='/')
       dat.idx <- grepl('data_shm.tar$', df.tar$name) 
@@ -80,12 +87,12 @@ upload_server <- function(id) {
       df.pair.upl <- read_hdf5(dat.pa, 'df_pair')[[1]]
       pair.na <- df.pair.upl$name; dat.upl <- df.pair.upl$data
       svg.upl <- as.list(df.pair.upl$aSVG); names(dat.upl) <- names(svg.upl) <- pair.na
-
+      # Process multiple aSVGs under the same data.
       for (i in seq_along(svg.upl)) {
         svg0 <- svg.upl[[i]]; if (grepl(';| |,', svg0)) {
           strs <- strsplit(svg0, ';| |,')[[1]]; svg.upl[[i]] <- strs[strs!='']
         }
-      }
+      }; cat('Done! \n')
     }
     # Separate data, svg of default and customization. 
     na.def <- na.ipt[!grepl('^none$|^customData$|^customComputedData$', na.ipt)]
@@ -96,8 +103,6 @@ upload_server <- function(id) {
     # If data/svg are duplicated between the server and upload, the data/svg on server side is removed.
     dat.def <- dat.def[unique(names(dat.def))]; svg.def <- svg.def[unique(names(svg.def))]
     cfg$lis.dat <- lis.dat; cfg$lis.dld <- lis.dld; cfg$lis.par <- lis.par; cfg$na.def <- names(dat.def); cfg$svg.def <- svg.def; cfg$dat.def <- dat.def; cfg$na.cus <- na.cus
-    # output$spatialHeatmap <- renderText({ lis.par$title['title', 'default'] })
-    # output$title.w <- renderText({ lis.par$title['width', 'default'] })
 
     dat.nas <- c('none', 'customData', names(dat.def))
     updateSelectInput(session, 'fileIn', NULL, dat.nas, lis.par$default.dataset)
@@ -106,8 +111,6 @@ upload_server <- function(id) {
     updateNumericInput(session, inputId="P", label="Proportion (P) of samples with values >= A", value=as.numeric(lis.par$data.matrix['P', 'default']))
     updateNumericInput(session, inputId="CV1", label="Min coefficient of variation (CV1)", value=as.numeric(lis.par$data.matrix['CV1', 'default']))
     updateNumericInput(session, inputId="CV2", label="Max coefficient of variation (CV2)", value=as.numeric(lis.par$data.matrix['CV2', 'default']))
-    updateRadioButtons(session, inputId='log', label='Log/exp transform', choices=c("No", "log2", "exp2"), selected=lis.par$log.exp, inline=TRUE)
-    updateRadioButtons(session, inputId='scale', label='Scale by', choices=c('No', 'Row', 'Column'), selected=lis.par$data.matrix.scale, inline=TRUE)
     updateRadioButtons(session, inputId='measure', label="Measure:", choices=c('correlation', 'distance'), selected=lis.par$mhm['measure', 'default'], inline=TRUE)
     updateRadioButtons(session, inputId="cor.abs", label="Cor.absolute:", choices=c('No', 'Yes'), selected=lis.par$mhm['cor.absolute', 'default'], inline=TRUE)
     updateRadioButtons(session, inputId="thr", label="Select by:", choices=c('proportion'='p', 'number'='n', 'value'='v'), selected=lis.par$mhm['select.by', 'default'], inline=TRUE)
@@ -137,7 +140,9 @@ upload_server <- function(id) {
       filename=function(){ "config_par.yaml" },
  content=function(file=paste0(normalizePath(tempdir(check=TRUE), winslash="/", mustWork=FALSE), '/config_par.yaml')){  
         lis.cfg <- yaml.load_file('config/config.yaml')
-        lis.par <- lis.cfg[c("max.upload.size", "default.dataset", "col.row.gene", "separator", "hide.legend", "data.matrix", "shm.img", "shm.anm", "shm.video", "legend", "mhm", "network")]
+        par.na <- c("max.upload.size", "default.dataset", "col.row.gene", "separator", "data.matrix", "shm.img", "shm.anm", "shm.video", "legend", "mhm", "network")
+        par.na <- par.na[par.na %in% names(lis.cfg)]
+        lis.par <- lis.cfg[par.na]
         write_yaml(lis.par, file)
       }
     )
@@ -176,12 +181,13 @@ content=function(file=paste0(normalizePath(tempdir(check=TRUE), winslash="/", mu
     toggleState(id = "svgInpath1", condition = input$fileIn == 'customData')
     toggleState(id = "svgInpath2", condition = input$fileIn == 'customData')
   })
+  onBookmark(function(state) { state })
   return(list(ipt = input, cfg = cfg))
 })}
   ipt.cfg <- upload_server('upl')
   ipt <- ipt.cfg$ipt; cfg <- ipt.cfg$cfg 
 
-data_server <- function(id, ipt, cfg, deg = FALSE) {
+data_server <- function(id, ipt, cfg, sch, deg = FALSE, session) {
   moduleServer(id, function(input, output, session) {
 
   # Filter parameters.
@@ -290,10 +296,10 @@ data_server <- function(id, ipt, cfg, deg = FALSE) {
   })
   sear <- reactiveValues(id=NULL)
   observeEvent(ipt$fileIn, { sear$id <- NULL })
-  observeEvent(input$search.but, {
+  observeEvent(sch$but, {
     if (is.null(geneIn1())) return()
-    if (input$search=='') sel <- as.numeric(cfg$lis.par$data.matrix['row.selected', 'default']) else {
-      gens <- strsplit(gsub(' |,', '_', input$search), '_')[[1]]
+    if (sch$sch=='') sel <- as.numeric(cfg$lis.par$data.matrix['row.selected', 'default']) else {
+      gens <- strsplit(gsub(' |,', '_', sch$sch), '_')[[1]]
       pat <- paste0('^', gens, '$', collapse='|')
       sel <- which(grepl(pat, x=rownames(geneIn1()[['df.aggr.tran']]), ignore.case=TRUE, perl=TRUE))
       if (length(sel)==0) sel <- as.numeric(cfg$lis.par$data.matrix['row.selected', 'default'])
@@ -391,20 +397,25 @@ data_server <- function(id, ipt, cfg, deg = FALSE) {
   log <- reactive({ input$log }); A <- reactive({ input$A })
   CV1 <- reactive({ input$CV1 }); CV2 <- reactive({ input$CV2 })
   P <- reactive({ input$P })
-  search.but <- reactive({ input$search.but })
+  search.but <- reactive({ sch$sch.but })
+  onBookmark(function(state) { state })
   return(list(geneIn0 = geneIn0, geneIn1 = geneIn1, geneIn = geneIn, sear = sear, ipt.dat = ipt.dat, col.reorder = col.reorder, col.cfm = col.cfm, col.na = col.na, log = log, A = A, P = P, CV1 = CV1, CV2 = CV2, search.but = search.but))
   })
 
 }
 
-  dat.mod.lis <- data_server('dat', ipt, cfg)
+  sch <- reactiveValues()
+  observe({ sch$sch <- input$search; sch$but <- input$search.but })
 
-shm_server <- function(id, ipt, cfg, dat.mod.lis) {
+  dat.mod.lis <- data_server('dat', ipt, cfg, sch)
+
+shm_server <- function(id, ipt, cfg, sch, dat.mod.lis, session) {
   
   moduleServer(id, function(input, output, session) {
 
   # The reactive type in and outside module is the same: sear is a reactiveValue in and outside module; geneIn is reactive expression in and outside module. "geneIn()" is accessing the content of a reactive expression, and loses the "reactive" attribute.
   # As long as the content of reactiveValues (col.reorder$col.na.re) is not accessed, the operation does not need to be inside reactive environment (observe).
+  
   ipt.dat <- reactiveValues()
   ipt.dat$dat <- dat.mod.lis$ipt.dat; sear <- dat.mod.lis$sear
   col.reorder <- reactiveValues(); col.reorder <- dat.mod.lis$col.reorder
@@ -1354,6 +1365,8 @@ shm_server <- function(id, ipt, cfg, dat.mod.lis) {
     selectInput(ns('shms.in'), label='Select plots', choices=svg.pa, selected=svg.pa[1])
   })
 
+  network_server('net', ipt, cfg, dat.mod.lis, shm.mod.lis=list(gID=gID))
+
   observe({
     ipt$fileIn; ipt$geneInpath; lis.par <- cfg$lis.par
     updateRadioButtons(session, inputId='cs.v', label='Color key based on', choices=c("Selected rows", "All rows"), selected=cfg$lis.par$shm.img['color.scale', 'default'], inline=TRUE)
@@ -1387,12 +1400,11 @@ shm_server <- function(id, ipt, cfg, dat.mod.lis) {
   updateRadioButtons(session, inputId="vdo.but", label="Show/update video", choices=c("Yes", "No"), selected=cfg$lis.par$shm.video['show', 'default'], inline=TRUE)
 
   })
-  return(list(gID = gID))
+  onBookmark(function(state) { state })
+  return(list(gID = gID, dat.mod.lis=dat.mod.lis))
 })} # shm_server
 
-shm.mod.lis <- shm_server('shmAll', ipt, cfg, dat.mod.lis)
-
-network_server <- function(id, ipt, cfg, dat.mod.lis, shm.mod.lis) {
+network_server <- function(id, ipt, cfg, dat.mod.lis, shm.mod.lis, session) {
   
   moduleServer(id, function(input, output, session) {
 
@@ -1733,8 +1745,7 @@ network_server <- function(id, ipt, cfg, dat.mod.lis, shm.mod.lis) {
     output$edge <- renderUI({ 
       cat('Remaining edges ... \n')
       if (input$adj.in=="None"|is.null(visNet())) return(NULL)
-      if (ipt$fileIn=="none"|(ipt$fileIn=="customData" & is.null(geneIn()))|
-      input$gen.sel=="None") return(NULL)
+      if (ipt$fileIn=="none"|(ipt$fileIn=="customData" & is.null(geneIn()))|input$gen.sel=="None") return(NULL)
       span(style = "color:black;font-weight:NULL;", HTML(paste0("Remaining edges: ", dim((visNet()[["link"]]))[1])))
       cat('Done! \n')
     })
@@ -1764,34 +1775,33 @@ network_server <- function(id, ipt, cfg, dat.mod.lis, shm.mod.lis) {
   })
 
   output$vis <- renderVisNetwork({
-
     if (is.null(ipt.dat$dat$dt_rows_selected)) return()
     if (ipt$fileIn=="none"|is.null(vis.net())) return(NULL)
     # if (input$cpt.nw=="No") return(NULL)
-
     withProgress(message="Network:", value=0.5, {
-
       incProgress(0.3, detail="plotting ...")
       cat('Rendering network...\n'); vis.net()
-
     })
-
   })
+  onBookmark(function(state) { state })
 
 })
 
 }
-network_server('net', ipt, cfg, dat.mod.lis, shm.mod.lis)
+
+shm.mod.lis <- shm_server('shmAll', ipt, cfg, sch, dat.mod.lis)
 
 
-deg_server <- function(id, ipt, cfg, dat.mod.lis, shm.mod.lis) {
+
+deg_server <- function(id, ipt, cfg, sch, dat.mod.lis, shm.mod.lis, session) {
 
   moduleServer(id, function(input, output, session) {
 
   gID <- shm.mod.lis$gID
   cat('Presenting data matrix (DEG) ... \n')
-  dat.deg.mod.lis <- data_server('datDEG', ipt, cfg, deg = TRUE)
+  dat.deg.mod.lis <- data_server('datDEG', ipt, cfg, sch, deg = TRUE)
   cat('Done! \n')
+  dat.mod.lis <- shm.mod.lis$dat.mod.lis
   geneIn1 <- dat.mod.lis$geneIn1 # Take transformed values in DEG table.
   geneIn <- dat.deg.mod.lis$geneIn # Take filted matrix with replicates. 
   ssg.dat <- reactive({
@@ -2143,14 +2153,22 @@ sub_se <- function(se, sams, cons) {
       norm_aggr(se=ssg.dat()$se, method.norm='TMM', log2.trans=TRUE, sample.factor='fct', rep.aggr='mean')
 
     })
+  onBookmark(function(state) { state })
 
 })}
 
-deg.mod.lis <- deg_server('deg', ipt, cfg, dat.mod.lis, shm.mod.lis)
-  
+deg.mod.lis <- deg_server('deg', ipt, cfg, sch, dat.mod.lis, shm.mod.lis)
+   observe({ 
+     lis.ipt <- reactiveValuesToList(input); session$doBookmark()
+    # lapply(seq_along(lis.ipt), function(i) {if (length(lis.ipt[[i]])<1000) { print(lis.ipt[i]) }})
+     #query <- parseQueryString(session$clientData$url_search)
+     # print(query[c('shmAll-lgd.row', 'shmAll-tis')])
+   })
+ onBookmarked(function(url) { updateQueryString(url) })
+# onBookmarked(updateQueryString)
+
   onStop(function() { ggly_rm(); vdo_rm(); cat("Session stopped! \n") })
 
-})
-
+}
 
 

@@ -1,3 +1,26 @@
+# Search portion of URLs on the upload page.
+
+field.url <- '?_inputs_&upl-fileIn=%22FIELD%22&shmAll-val.lgd.key=0.03&shmAll-vdo.key.row=2&shmAll-lgd.row=2&dat-CV1=-10000&shmAll-vdo.key.size=0.04&shmAll-togDrop=0&shmAll-col.n=2&landing-ids.in=%22OS01G0100100%20%3A%20RabGAP%2FTBC%20domain%20containing%20protein%22&shmAll-dropdown=0&dat-fil.but=0&shmAll-disDrop_state=true&sear-ids.in=%5B%22OS01G0100100%20%3A%20RabGAP%2FTBC%20domain%20containing%20protein%22%2C%22OS01G0100400%20%3A%20Similar%20to%20Pectinesterase-like%20protein%22%5D&shmAll-cs.v=%22Selected%20rows%22&shmAll-colDrop=0&shmAll-ext=%22NA%22&shmAll-val.lgd.text=10&shmAll-fs=0&shmAll-vdo.but=0&shmAll-genCon=%22con%22&shmAll-line.size=0.1&shmAll-color=%22yellow%2Corange%2Cred%22&shmAll-t=2&shmAll-lgd.incld=%22Yes%22&shmAll-disDrop=1&sear-ids.but=1&landing-ids.but=3&shmAll-line.color=%22grey70%22&dat-A=0&dat-dtSel_columns_selected=null&shmAll-scale.shm=1.4&dat-dtSel_cell_clicked=%7B%7D&dat-scale=%22Row%22&shmAll-ggly.but=0&shmAll-vdo.itvl=1&sidebarItemExpanded=null&dat-P=0&shmAll-titDrop=0&dat-CV2=10000&shm.sup=%22shm1%22&shmAll-scaleDrop=0&shmAll-val.lgd.feat=%22No%22&shmAll-lgd.key.size=0.04&shmAll-lgd.lab.size=2.5&shmAll-vdo.label=%22No%22&shmAll-scroDrop=0&dat-dtSel_cells_selected=%5B%5D&dat-log=%22No%22&shmAll-togSld=0.67&shmAll-vdo.res=400&dat-dtSel_state=null&shmAll-col.but=0&shmAll-title.size=12&shmAll-lgd.label=%22No%22&shmAll-val.lgd=0&dat-dtSel_rows_selected=null&shmAll-lgd.size=0.5&dat-dtSel_search=%22%22&sidebarCollapsed=true&shmAll-scale.ly=1&shmAll-val.lgd.row=1&shmAll-vdo.val.lgd=%22No%22&shmAll-scrollH=450&shmAll-vdo.lab.size=2&shmAll-res=300&shmAll-vdo.dim=%22640x480%22&right.bar=true'
+
+plate.url <- '?_inputs_&upl-fileIn=%22PLATE%22&shmAll-val.lgd.key=0.03&shmAll-vdo.key.row=2&shmAll-lgd.row=2&dat-CV1=-10000&shmAll-vdo.key.size=0.04&shmAll-togDrop=0&shmAll-col.n=2&landing-ids.in=%22OS01G0100100%20%3A%20RabGAP%2FTBC%20domain%20containing%20protein%22&shmAll-dropdown=0&dat-fil.but=0&shmAll-disDrop_state=true&sear-ids.in=%5B%22OS01G0100100%20%3A%20RabGAP%2FTBC%20domain%20containing%20protein%22%2C%22OS01G0100400%20%3A%20Similar%20to%20Pectinesterase-like%20protein%22%5D&shmAll-cs.v=%22Selected%20rows%22&shmAll-colDrop=0&shmAll-ext=%22NA%22&shmAll-val.lgd.text=10&shmAll-fs=0&shmAll-vdo.but=0&shmAll-genCon=%22con%22&shmAll-line.size=0.1&shmAll-color=%22yellow%2Corange%2Cred%22&shmAll-t=2&shmAll-lgd.incld=%22Yes%22&shmAll-disDrop=1&sear-ids.but=1&landing-ids.but=0&shmAll-line.color=%22grey70%22&dat-A=0&dat-dtSel_columns_selected=null&shmAll-scale.shm=1.4&dat-dtSel_cell_clicked=%7B%7D&dat-scale=%22Row%22&shmAll-ggly.but=0&shmAll-vdo.itvl=1&sidebarItemExpanded=null&dat-P=0&shmAll-titDrop=0&dat-CV2=10000&shm.sup=%22shm1%22&shmAll-scaleDrop=0&shmAll-val.lgd.feat=%22No%22&shmAll-lgd.key.size=0.04&shmAll-lgd.lab.size=2.5&shmAll-vdo.label=%22No%22&shmAll-scroDrop=0&dat-dtSel_cells_selected=%5B%5D&dat-log=%22No%22&shmAll-togSld=0.67&shmAll-vdo.res=400&dat-dtSel_state=null&shmAll-col.but=0&shmAll-title.size=12&shmAll-lgd.label=%22No%22&shmAll-val.lgd=0&dat-dtSel_rows_selected=null&shmAll-lgd.size=0.5&dat-dtSel_search=%22%22&sidebarCollapsed=true&shmAll-scale.ly=1&shmAll-val.lgd.row=1&shmAll-vdo.val.lgd=%22No%22&shmAll-scrollH=450&shmAll-vdo.lab.size=2&shmAll-res=300&shmAll-vdo.dim=%22640x480%22&right.bar=true'
+
+sub.url <- '?_inputs_&upl-fileIn=%22GH.SUB%22&shmAll-val.lgd.key=0.03&shmAll-vdo.key.row=2&shmAll-lgd.row=2&dat-CV1=-10000&shmAll-vdo.key.size=0.04&shmAll-togDrop=2&shmAll-col.n=3&landing-ids.in=%22OS01G0100100%20%3A%20RabGAP%2FTBC%20domain%20containing%20protein%22&shmAll-dropdown=0&dat-fil.but=0&shmAll-disDrop_state=false&sear-ids.in=%22OS01G0100100%20%3A%20RabGAP%2FTBC%20domain%20containing%20protein%22&shmAll-cs.v=%22Selected%20rows%22&shmAll-colDrop=2&shmAll-ext=%22NA%22&shmAll-val.lgd.text=10&shmAll-fs=0&shmAll-vdo.but=0&shmAll-genCon=%22gene%22&shmAll-line.size=0.1&shmAll-color=%22yellow%2Corange%2Cred%22&shmAll-t=2&shmAll-lgd.incld=%22Yes%22&shmAll-disDrop=1&sear-ids.but=1&landing-ids.but=0&shmAll-line.color=%22grey70%22&dat-A=0&dat-dtSel_columns_selected=null&shmAll-scale.shm=1&dat-dtSel_cell_clicked=%7B%7D&dat-scale=%22Row%22&shmAll-ggly.but=0&shmAll-vdo.itvl=1&sidebarItemExpanded=null&dat-P=0&shmAll-titDrop=0&dat-CV2=10000&shm.sup=%22shm1%22&shmAll-scaleDrop=2&shmAll-val.lgd.feat=%22No%22&shmAll-lgd.key.size=0.04&shmAll-lgd.lab.size=2.5&shmAll-vdo.label=%22No%22&shmAll-scroDrop=0&dat-dtSel_cells_selected=%5B%5D&dat-log=%22No%22&shmAll-togSld=0.75&shmAll-vdo.res=400&dat-dtSel_state=null&shmAll-scaleDrop_state=false&shmAll-col.but=0&shmAll-title.size=12&shmAll-lgd.label=%22No%22&shmAll-val.lgd=0&dat-dtSel_rows_selected=null&shmAll-togDrop_state=false&shmAll-lgd.size=0.5&dat-dtSel_search=%22%22&shmAll-colDrop_state=false&sidebarCollapsed=true&shmAll-scale.ly=1&shmAll-val.lgd.row=1&shmAll-vdo.val.lgd=%22No%22&shmAll-scrollH=450&shmAll-vdo.lab.size=2&shmAll-res=300&shmAll-vdo.dim=%22640x480%22&right.bar=true'
+
+dwl.url <- '?_inputs_&upl-fileIn=%22GH.W.D.WL%22&shmAll-val.lgd.key=0.03&shmAll-vdo.key.row=2&shmAll-lgd.row=2&dat-CV1=-10000&shmAll-vdo.key.size=0.04&shmAll-togDrop=2&shmAll-col.n=3&landing-ids.in=%22OS01G0100100%20%3A%20RabGAP%2FTBC%20domain%20containing%20protein%22&shmAll-dropdown=0&dat-fil.but=0&sear-ids.in=%22OS01G0100100%20%3A%20RabGAP%2FTBC%20domain%20containing%20protein%22&shmAll-cs.v=%22Selected%20rows%22&shmAll-colDrop=0&shmAll-ext=%22NA%22&shmAll-val.lgd.text=10&shmAll-fs=0&shmAll-vdo.but=0&shmAll-genCon=%22gene%22&shmAll-line.size=0.1&shmAll-color=%22yellow%2Corange%2Cred%22&shmAll-t=2&shmAll-lgd.incld=%22Yes%22&shmAll-disDrop=0&sear-ids.but=1&landing-ids.but=0&shmAll-line.color=%22grey70%22&dat-A=0&dat-dtSel_columns_selected=null&shmAll-scale.shm=0.8&dat-dtSel_cell_clicked=%7B%7D&dat-scale=%22Row%22&shmAll-ggly.but=0&shmAll-vdo.itvl=1&sidebarItemExpanded=null&dat-P=0&shmAll-titDrop=0&dat-CV2=10000&shm.sup=%22shm1%22&shmAll-scaleDrop=2&shmAll-val.lgd.feat=%22No%22&shmAll-lgd.key.size=0.04&shmAll-lgd.lab.size=2.5&shmAll-vdo.label=%22No%22&shmAll-scroDrop=0&dat-dtSel_cells_selected=%5B%5D&dat-log=%22No%22&shmAll-togSld=0.7&shmAll-vdo.res=400&dat-dtSel_state=null&shmAll-scaleDrop_state=false&shmAll-col.but=0&shmAll-title.size=12&shmAll-lgd.label=%22No%22&shmAll-val.lgd=0&dat-dtSel_rows_selected=null&shmAll-togDrop_state=false&shmAll-lgd.size=0.5&dat-dtSel_search=%22%22&sidebarCollapsed=true&shmAll-scale.ly=1&shmAll-val.lgd.row=1&shmAll-vdo.val.lgd=%22No%22&shmAll-scrollH=450&shmAll-vdo.lab.size=2&shmAll-res=300&shmAll-vdo.dim=%22640x480%22&right.bar=true'
+
+inter.url <- '?_inputs_&upl-fileIn=%22FIELD%22&shmAll-val.lgd.key=0.03&shmAll-vdo.key.row=2&shmAll-lgd.row=2&dat-CV1=-10000&shmAll-vdo.key.size=0.04&shmAll-togDrop=0&shmAll-col.n=2&landing-ids.in=%22OS01G0100100%20%3A%20RabGAP%2FTBC%20domain%20containing%20protein%22&shmAll-dropdown=0&dat-fil.but=0&sear-ids.in=%22OS01G0100100%20%3A%20RabGAP%2FTBC%20domain%20containing%20protein%22&shmAll-cs.v=%22Selected%20rows%22&shmAll-colDrop=0&shmAll-ext=%22NA%22&shmAll-val.lgd.text=10&shmAll-fs=0&shmAll-vdo.but=0&shmAll-genCon=%22gene%22&shmAll-line.size=0.1&shmAll-color=%22yellow%2Corange%2Cred%22&shmAll-fm=1&shmAll-t=2&shmAll-lgd.incld=%22Yes%22&shmAll-disDrop=0&sear-ids.but=0&landing-ids.but=0&shmAll-line.color=%22grey70%22&dat-A=0&dat-dtSel_columns_selected=null&shmAll-scale.shm=1.4&dat-dtSel_cell_clicked=%7B%7D&dat-scale=%22Row%22&shmAll-ggly.but=1&shmAll-vdo.itvl=1&sidebarItemExpanded=null&dat-P=0&shmAll-titDrop=0&dat-CV2=10000&shm.sup=%22shm2%22&shmAll-scaleDrop=0&shmAll-val.lgd.feat=%22No%22&shmAll-lgd.key.size=0.04&shmAll-lgd.lab.size=2.5&shmAll-vdo.label=%22No%22&shmAll-scroDrop=0&dat-dtSel_cells_selected=%5B%5D&dat-log=%22No%22&shmAll-togSld=0.67&shmAll-vdo.res=400&dat-dtSel_state=null&shmAll-col.but=0&shmAll-title.size=12&shmAll-lgd.label=%22No%22&shmAll-val.lgd=0&dat-dtSel_rows_selected=null&shmAll-lgd.size=0.5&dat-dtSel_search=%22%22&sidebarCollapsed=true&shmAll-scale.ly=1&shmAll-val.lgd.row=1&shmAll-vdo.val.lgd=%22No%22&shmAll-scrollH=450&shmAll-vdo.lab.size=2&shmAll-res=300&shmAll-vdo.dim=%22640x480%22&right.bar=true'
+
+
+vdo.url <- '?_inputs_&upl-fileIn=%22FIELD%22&shmAll-val.lgd.key=0.03&shmAll-vdo.key.row=2&shmAll-vdo.itvl=1&sidebarItemExpanded=null&dat-P=0&shmAll-titDrop=0&shmAll-togDrop=0&shmAll-col.n=2&shm.sup=%22shm3%22&shmAll-scaleDrop=0&shmAll-dropdown=0&dat-fil.but=0&shmAll-val.lgd.feat=%22No%22&shmAll-vdo.label=%22No%22&shmAll-scroDrop=0&landing-ids.in=%22OS01G0100100%20%3A%20RabGAP%2FTBC%20domain%20containing%20protein%22&shmAll-cs.v=%22Selected%20rows%22&dat-log=%22No%22&shmAll-colDrop=0&shmAll-ext=%22NA%22&sear-ids.in=%22OS01G0100100%20%3A%20RabGAP%2FTBC%20domain%20containing%20protein%22&shmAll-togSld=0.67&shmAll-fs=0&shmAll-val.lgd.text=10&shmAll-vdo.but=2&shmAll-col.but=0&shmAll-genCon=%22gene%22&shmAll-title.size=12&shmAll-line.size=0.1&dat-CV1=-10000&dat-CV2=10000&shmAll-t=2&shmAll-vdo.key.size=0.04&shmAll-vdo.res=400&shmAll-lgd.incld=%22Yes%22&shmAll-color=%22yellow%2Corange%2Cred%22&shmAll-val.lgd=0&shmAll-disDrop=0&sear-ids.but=0&shmAll-lgd.size=0.5&landing-ids.but=0&sidebarCollapsed=true&shmAll-line.color=%22grey70%22&shmAll-val.lgd.row=1&dat-A=0&shmAll-scale.shm=1.4&shmAll-vdo.val.lgd=%22No%22&shmAll-scrollH=450&shmAll-scale.ly=1&shmAll-vdo.lab.size=2&shmAll-res=300&dat-scale=%22Row%22&shmAll-ggly.but=2&right.bar=true&shmAll-vdo.dim=%22640x480%22'
+
+# Extract parameter values from url.
+url_val <- function(na, lis.url) {
+  # if (!exists('lis.url')) return('null')
+  if (!na %in% names(lis.url$par)) return('null')
+  val <- ifelse(length(lis.url$par)==0, 'null', lis.url$par[[na]])
+  gsub('\\"', '', val)
+}
+
 # Import internal functions.
 deter_core <- get('deter_core', envir=asNamespace('spatialHeatmap'), inherits=FALSE)
 
@@ -75,6 +98,20 @@ modal <- function(title = NULL, msg) {
     footer = tagList(modalButton("Dismiss")), size = c("m")
   )
 }
+
+# Extract a 1-column data frame of URL. If no column of URL is present, the default google-search URLs are composed.
+link_dat <- function(df.met) {
+  cna <- colnames(df.met); rna <- rownames(df.met)
+  link.idx <- grep('link|links', cna, ignore.case=TRUE)[1]
+  if (is.na(link.idx)) {
+    # Iterative operation on data frame: vectorization is faster than for/lapply loop.
+    link <- paste0('<a href=\"https://www.google.com/search?q=', rna, '" target="_blank">link</a>')
+    # link <- lapply(rownames(df.met), function(x) a("link", href=paste0('https://www.google.com/search?q=', x), target="_blank"))
+    # link <- unlist(lapply(link, as.character))
+  } else { link <- df.met[, link.idx] }
+  return(data.frame(link=link, row.names=rownames(df.met)))
+}
+
 # Import input matrix, able to deal with/separate numeric matrix, character matrix, and mixture of both.
 fread_df <- function(input, isRowGene=TRUE, header=TRUE, sep='auto', fill=TRUE, rep.aggr='mean', check.names=FALSE) {
   
@@ -87,7 +124,7 @@ fread_df <- function(input, isRowGene=TRUE, header=TRUE, sep='auto', fill=TRUE, 
   }) 
     cna <- make.names(colnames(df0))
     if (cna[1]=='V1') cna <- cna[-1] else cna <- cna[-ncol(df0)] 
-    df1 <- as.data.frame(df0); rownames(df1) <- df1[, 1]
+    df1 <- as.data.frame(df0); rownames(df1) <- make.names(df1[, 1])
     df1 <- df1[, -1, drop = FALSE]; colnames(df1) <- cna
     if(isRowGene==FALSE) df1 <- t(df1)
     cna <- colnames(df1); rna <- rownames(df1) 
@@ -102,12 +139,19 @@ fread_df <- function(input, isRowGene=TRUE, header=TRUE, sep='auto', fill=TRUE, 
   na <- as.data.frame(na); rownames(na) <- rna
   idx <- colSums(apply(na, 2, is.na))!=0
   df.num <- na[!idx]; colnames(df.num) <- cna <- cna[!idx]
-  df.met <- as.data.frame(df1)[idx]
-  # Only one column is selected for row metadata.
-  if (ncol(df.met) > 0) {
-    met.idx <- grep('metadata', colnames(df.met), ignore.case = TRUE)[1]
-    if (!is.na(met.idx)) df.met <- df.met[, met.idx, drop = FALSE] else { colnames(df.met)[1] <- 'metadata'; df.met <- df.met[, 1, drop = FALSE] }
-  }
+  df.met.all <- as.data.frame(df1)[idx]
+  cat('Preparing URLs .. \n')
+  df.link <- link_dat(df.met.all) # Works if ncol(df.met.all) is 0.
+  if (ncol(df.met.all) > 0) {
+  cat('Preparing metadata .. \n')
+    met.idx <- grep('^metadata$', colnames(df.met.all), ignore.case = TRUE)[1]
+    if (!is.na(met.idx)) { 
+      df.met <- df.met.all[, met.idx, drop = FALSE] 
+      colnames(df.met) <- 'metadata'
+      df.met <- cbind(df.met, df.link)
+    } else df.met <- df.link
+  } else df.met <- df.link
+
   # Only row metadata.
   if (ncol(df.num) == 0) {
     return(list(df.aggr = NULL, df.met=as.data.frame(df.met), df.rep = NULL, con.na = FALSE))
