@@ -1,17 +1,16 @@
 
 
-Changes in version 1.1.5
-
+Changes in version 1.1.6 (2021-05-17)
  + The spatial heatmaps are able to maitain outline (stroke) widths defined in aSVG. The stroke widths can be updated with "update_feature".
- + The Shiny app is able to take HDF5 database backend, which contains data and aSVG files. The HDF5 database can also be uploaded on the user interface.
  + Text in aSVGs can be independent from features, i.e. have separate colors, stroke widths, etc. 
  + Only "g", "path", "rect", "ellipse", "use", and "title" elements are allowed in aSVG files, and other elements will raise errors or warnings. The "use" element should not in "g", and "g" elements should not have the "transform" attribute with a "matrix" value.                                
  + Extraction of shape coordinates includes two alternative methods. If one fails, the other will be used by default. So in most cases though some coordinates are missing due to irregular shapes, spatial heatmaps can still be created.  
- + Added spatiotemporal example of rice coleoptile to Shiny app and vignette. 
- + In "spatial_hm", the "tis.trans" argument was replaced by "ft.trans". The function "shiny_all" was renamed to "shiny_shm".
+ + Added spatiotemporal example of rice coleoptile to Shiny app and vignette.
  + Downloaded gene expression data are cached.
+ + In "spatial_hm", the "tis.trans" argument was replaced by "ft.trans"; width and height arguments were removed, since the spatial heatmap aspect ratio is set the same with original aSVG.
+ + Shiny app: the function "shiny_all" was renamed to "shiny_shm"; the app is able to take HDF5 database backend, which contains data and aSVG files, and the HDF5 database can also be uploaded on the user interface; re-organized user interface: Landing Page (includes links to different app instances), Spatial Heatmap (includes sub-tabs of Image, Interactive, Video, Matrix Heatmap, Interactive Network), Spatial Enrichment (identifies spatial feature-specific genes), About; new functionality introduced: auto-completion search box, URLs of specific app states can be bookmarked, full screen, scrolling height, tooltip, one-to-multiple re-matching of spatial features, fixed aspect ratio (SHMs are not squeezed in the case of multiple aSVGs), metadata column and link column in the data matrix; code was organized in modules, etc.
 
 Changes in version 0.99.0 (2020-09-21)
- + Submitted the first version to Bioconductor
+ + Submitted the first version to Bioconductor.
 
 

@@ -1,5 +1,4 @@
 library(shiny); library(shinydashboard); library(shinydashboardPlus); library(yaml); library(plotly); library(visNetwork); library(DT); library(shinyWidgets); library(shinyBS); library(shinyjs)
-source('R/function.R')
 lis.cfg <- yaml.load_file('config/config.yaml')
 tit <- sub('^(title|width):', '', lis.cfg$title)
 
@@ -17,10 +16,15 @@ js <- "function openFullscreen(elem) {
 }"
 
 
-data_ui <- function(id, deg = FALSE) {
+data_ui <- function(id, deg=FALSE) {
   ns <- NS(id)
   # if (deg == FALSE) tabPanel("Primary Visualization", value='primary',
   if (deg==FALSE) box(width = 12, title = "Data (replicates aggregated)", closable = FALSE, solidHeader = TRUE, collapsible = TRUE, enable_sidebar = FALSE, status = "primary", enable_dropdown = FALSE,
+    tabsetPanel(type="pills", id=NULL, selected="dTabSel",
+      tabPanel('Selected', value='dTabSel',
+        fluidRow(splitLayout(cellWidths=c("1%", "98%", "1%"), "", dataTableOutput(ns("dtSel")), "")), br()
+      ),
+      tabPanel('Complete', value='dTabAll',
       navbarPage('Parameters:',
       tabPanel("Basic",
       fluidRow(splitLayout(cellWidths=c('1%', '20%', '1%', '20%', '1%', '10%', '1%', '10%'), '',
@@ -38,8 +42,10 @@ data_ui <- function(id, deg = FALSE) {
       ),
       tabPanel("Re-order columns", column(12, uiOutput(ns('col.order'))))
       ), # navbarPage 
-      fluidRow(splitLayout(cellWidths=c("1%", "98%", "1%"), "", dataTableOutput(ns("dt")), ""))
-     # )
+      fluidRow(splitLayout(cellWidths=c("1%", "98%", "1%"), "", dataTableOutput(ns("dtAll")), ""))
+     ) # tabPanel('Complete'
+   ) # tabsetPanel(
+
   ) else if (deg == TRUE) {
     box(width = 12, title = "Data (with replicates)", closable = FALSE, solidHeader = TRUE, 
       collapsible = TRUE, enable_sidebar = FALSE, status = "primary", enable_dropdown = FALSE,
@@ -49,16 +55,28 @@ data_ui <- function(id, deg = FALSE) {
       numericInput(inputId=ns("CV1"), label="Min coefficient of variation (CV1)", value=-10^4), '', 
       numericInput(inputId=ns("CV2"), label="Max coefficient of variation (CV2)", value=10^4)
       )), actionButton(inputId=ns('fil.but'), label="Submit"), verbatimTextOutput(ns("fil.par")),
-      fluidRow(splitLayout(cellWidths=c("1%", "98%", "1%"), "", dataTableOutput(ns("dt")),  ""))
+      fluidRow(splitLayout(cellWidths=c("1%", "98%", "1%"), "", dataTableOutput(ns("dtRep")),  ""))
     )
   }
 }
 
 upload_ui <- function(id) {
    ns <- NS(id)
-   tabPanel("Data sets", value='dataSets',
-      box(width = 12, title = 'Data & aSVGs', closable = FALSE, solidHeader = TRUE, collapsible = TRUE, enable_sidebar = FALSE, status = "primary", enable_dropdown = FALSE,
-      
+   tabPanel(title="Landing Page", value='landing',
+   navbarPage('', 
+     tabPanel(title="Gallary", value='gallery',
+      fluidRow(
+        column(4, id='brainHum', style='text-align:center', uiOutput(ns('brain.hum')), tags$img(width='97%', src="image/brain_hum.png")),
+        column(4, id='mouse', style='text-align:center', uiOutput(ns('mouse')), tags$img(width='97%', src="image/mouse.png")),
+        column(4, id='chicken', style='text-align:center', uiOutput(ns('chicken')), tags$img(width='97%', src="image/chicken.png"))
+      ),
+      fluidRow(
+        column(4, id='organArab', style='text-align:center', uiOutput(ns('organ.arab')), tags$img(width='97%', src="image/organ_arab.png")),
+        column(4, id='shootArab', style='text-align:center', uiOutput(ns('shoot.arab')), tags$img(width='97%', src="image/shoot_arab.png")),
+        column(4, id='rootArab', style='text-align:center', uiOutput(ns('root.arab')), tags$img(width='97%', src="image/root_arab.png"))
+      )
+     ), # tabPanel(title="Gallary",
+     tabPanel(title="Data & aSVGs", value='datSVG',
       h4(strong("Step1: choose custom or default data sets")),
       fluidRow(splitLayout(cellWidths=c('1%', '30%'), '', 
       selectInput(ns("fileIn"), NULL, c('none', 'customData'), 'none')
@@ -99,15 +117,15 @@ upload_ui <- function(id) {
       fluidRow(splitLayout(cellWidths=c('1%', '24%', '1%', '35%'), '',
       downloadButton(ns("dld.cfg"), "Example config file"), '', downloadButton(ns("dld.bat"), "Example data/aSVGs in batch")
       )))
-      )
-      
-      )# tabPanel
+   ) # tabPanel(title="Data & aSVGs",
+   ) # tabsetPanel(selected="gallery",
+   ) # tabPanel(title="Landing page", 
   
 }
 
-shm_ui <- function(id, data.ui) {
+shm_ui <- function(id, data.ui, search.ui) {
   ns <- NS(id)
-  tabPanel("Spatial Heatmap", value = 'shm2', icon = icon('image'),
+  tabPanel("Spatial Heatmap", value='shmPanelAll', icon=NULL,
     br(),
     # list(
     # width = ifelse(input$lgdTog %% 2 == 0, 9, 12), 
@@ -116,29 +134,41 @@ shm_ui <- function(id, data.ui) {
     do.call(tabsetPanel, append(list(type = "pills", id='shmMhNet', selected = "shm1",
     # tabsetPanel(type = "pills", id=NULL, selected="shm1",
   
-      tabPanel(title="Image", value='shm1',  
+      tabPanel(title="Image", value='shm1',
+      column(12, search.ui, style='z-index:5'),  
       navbarPage('Parameters:',
       tabPanel("Basic",
-      fluidRow(splitLayout(cellWidths=c('0.5%', '9%', '0.5%', '6%', '0.5%', '10%', '0.5%', '10%', '0.5%', '10%', '0.5%', '10%', '0.5%', '13%', '0.5%', '13%'), '',  
-      div(style = "margin-top: 23px;",
-      actionButton(ns("fs"), "Full screen", onclick = "openFullscreen(document.getElementById('barSHM'))")), '',
-      div(title = 'Number of columns for the subplots.', 
-      numericInput(inputId=ns('col.n'), label='Columns', value=2, min=1, max=Inf, step=1, width=150)), '',
+      fluidRow(splitLayout(cellWidths=c('0.5%', '8%', '0.5%', '8%', '0.5%', '8%', '0.5%', '9%', '0.5%', '11%', '0.5%', '8%', '0.5%', '8%', '0.5%', '8%'), '',  
+      actionButton(ns("fs"), "Full screen", onclick = "openFullscreen(document.getElementById('barSHM'))"), '',
+      div(title = 'Number of columns for the subplots.',
+      dropdownButton(inputId=ns('colDrop'), label='Columns', circle=FALSE, icon=NULL, status='primary', inline=FALSE, width='100%',
+        sliderInput(ns("col.n"), "", min=1, max=50, step=1, value=2, width='100%')
+      )
+      ), '',
       div(title='Data column: by the column order in data matrix.',
-      selectInput(inputId = ns("genCon"), label = "Display by", choices = c("Gene"="gene", "Condition"="con", "Data column"="none"), selected = '', multiple = FALSE, width = NULL)), '',
-      numericInput(inputId=ns('scale.shm'), label='Scale plots', value='', min=0.1, max=Inf, step=0.1, width=150), '',
-      numericInput(inputId=ns('scrollH'), label='Scrolling height', value=450, min=1, max=Inf, step=5, width=140), '',
-      numericInput(inputId=ns('title.size'), label='Title size', value='', min=0.1, max=Inf, step=0.5, width=150), '',
-      div(style = "margin-top: 23px;",
-      dropdownButton(inputId=ns('dropdown'), label='Color key', circle=FALSE, icon= icon("sliders"), status='primary', inline=FALSE, width=250,
+      dropdownButton(inputId=ns('disDrop'), label='Display by', circle=FALSE, icon=NULL, status='primary', inline=FALSE, width=250,
+        radioButtons(inputId=ns('genCon'), label='', choices=c("Gene"="gene", "Condition"="con", "Data column"="none"), selected='', inline=FALSE, width='100%')
+      )), '',
+      dropdownButton(inputId=ns('scaleDrop'), label='Scale plots', circle=FALSE, icon=NULL, status='primary', inline=FALSE, width=250,
+        sliderInput(ns("scale.shm"), "", min=0.1, max=10, step=0.1, value=1, width='100%')
+      ), '',
+      dropdownButton(inputId=ns('scroDrop'), label='Scrolling height', circle=FALSE, icon=NULL, status='primary', inline=FALSE, width=250,
+        sliderInput(ns("scrollH"), "", min=50, max=10000, step=50, value=450, width='100%')
+      ), '',
+      dropdownButton(inputId=ns('titDrop'), label='Title size', circle=FALSE, icon=NULL, status='primary', inline=FALSE, width=250,
+        sliderInput(ns("title.size"), "", min=0, max=100, step=0.5, value=12, width='100%')
+      ), '',
+      dropdownButton(inputId=ns('dropdown'), label='Color key', circle=FALSE, icon=NULL, status='primary', inline=FALSE, width=250,
       fluidRow(splitLayout(cellWidths=c('1%', '60%', '35%'), '', textInput(ns("color"), "Color scheme", '', placeholder=paste0('Eg: ', ''), width=200),
       actionButton(ns("col.but"), "Confirm", icon=NULL, style = "margin-top: 24px;"))), 
       radioButtons(inputId=ns('cs.v'), label='Color key based on', choices=c("Selected rows", "All rows"), selected='', inline=TRUE)
-      )), '', 
-      actionButton(ns("lgdTog"), "Toggle legend plot", icon=icon('toggle-on'), class="btn-xs", title = "Click to toggle legend plot", style='margin-top: 24px')
+      ), '', 
+      dropdownButton(inputId=ns('togDrop'), label='Horizontal layout', circle=FALSE, icon=NULL, status='primary', inline=FALSE, width=250,
+        sliderInput(ns("togSld"), "Adjust horizontal layout", min=0, max=1, step=0.05, value=0.67, width='100%')
+      )
       )), # fluidRow
       # bsPopover(id=ns('genCon'), title="Data column: by the column order in data matrix.", placement = "top", trigger = "hover"),
-      textOutput(ns('h.w.c')), textOutput(ns('msg.col')),
+      textOutput(ns('h.w.c')), textOutput(ns('msg.col')), br(),
       fluidRow(splitLayout(cellWidths=c('0.5%', '99.5%'), '',   checkboxGroupInput(inputId=ns("tis"), label="Select features to be transparent", choices='', selected='', inline=TRUE)))
       ), # tabPanel
       tabPanel("Value legend",
@@ -194,39 +224,50 @@ shm_ui <- function(id, data.ui) {
     verbatimTextOutput(ns('msg.shm')), uiOutput(ns('shm.ui')), data.ui
     ), # tabPanel 
 
-      tabPanel(title='Animation', value='shm2', 
-      fluidRow(splitLayout(cellWidths=c('1.5%', '15%', '1%', '16%', '1%', '12%', '1%', '12%'), '', 
-      radioButtons(inputId=ns("ggly.but"), label="Show animation", choices=c("Yes", "No"), selected='', inline=TRUE), '',
-      uiOutput(ns('tran.t')), '', uiOutput(ns('anm.scale')), '', uiOutput(ns('dld.anm.but'))
-      )), textOutput(ns('tran')), uiOutput(ns('sld.fm')),
-      # The input ids should be unique, so no legend plot parameters are added here.
-      fluidRow(splitLayout(cellWidths=c("1%", "7%", "61%", "30%"), "", plotOutput(ns("bar2")), htmlOutput(ns("ggly")), plotOutput(ns("lgd2"))))
+      tabPanel(title='Interactive', value='anm',
+      navbarPage('',
+      tabPanel('Plot',
+        fluidRow(splitLayout(cellWidths=c("1%", "13%", '5%', "80%"), '',
+        actionButton(ns("ggly.but"), "Click to show/update", icon=icon("refresh")), '',
+        uiOutput(ns('sld.fm'))
+        )),
+        # The input ids should be unique, so no legend plot parameters are added here.
+        fluidRow(splitLayout(cellWidths=c("1%", "7%", "61%", "30%"), "", plotOutput(ns("bar2")), htmlOutput(ns("ggly")), plotOutput(ns("lgd2"))))
+      ),
+      tabPanel('Parameters',
+        fluidRow(splitLayout(cellWidths=c('1.5%', '16%', '1%', '12%', '1%', '12%'), '',
+          numericInput(ns('t'), label='Transition time (s)', value=2, min=0.1, max=Inf, step=NA, width=270), '',
+          numericInput(ns('scale.ly'), label='Scale plot', value=1, min=0.1, max=Inf, step=0.1, width=170), '',
+          downloadButton(ns("dld.anm"), "Download", style = "margin-top: 24px;") 
+         )), textOutput(ns('tran'))
+      )) # navbarPage
       ),
 
+
       tabPanel(title='Video', value='shm3',
-      navbarPage('Parameters:',
-      tabPanel("Basic",
+      navbarPage('',
+      tabPanel('Video',
+      actionButton(ns("vdo.but"), "Click to show/update", icon=icon("refresh")),
+      fluidRow(splitLayout(cellWidths=c("1%", "98%", "1%"), "", uiOutput(ns('video')), ""))
+      ),
+      tabPanel("Parameters",
       fluidRow(splitLayout(cellWidths=c('1%', '8%', '1%', '10%', '1%', '13%', '1%', '10%', '1%', '8%', '2%', '18%'), '',
       numericInput(inputId=ns('vdo.key.row'), label='Key rows', value=2, min=1, max=Inf, step=1, width=270), '',
       numericInput(inputId=ns('vdo.key.size'), label='Key size', value=0.04, min=0.01, max=Inf, step=0.1, width=270), '',
       radioButtons(inputId=ns("vdo.val.lgd"), label="Key value", choices=c("Yes", "No"), selected='No', inline=TRUE), '', 
       radioButtons(inputId=ns("vdo.label"), label="Feature label", choices=c("Yes", "No"), selected='No', inline=TRUE), '',
       numericInput(inputId=ns('vdo.lab.size'), label='Label size', value=2, min=0, max=Inf, step=0.5, width=150), '',
-      uiOutput(ns('video.dim'))
-      )) # fluidRow
-      ),
-      tabPanel("More",
+      selectInput(ns("vdo.dim"), label="Fixed dimension", choices=c('1920x1080', '1280x800', '320x568', '1280x1024', '1280x720', '320x480', '480x360', '600x600', '800x600', '640x480'), selected='640x480', width=110)
+      )), # fluidRow
+
       fluidRow(splitLayout(cellWidths=c('1%', '14%', '1%', '13%'), '', 
       numericInput(inputId=ns('vdo.itvl'), label='Transition time (s)', value=1, min=0.1, max=Inf, step=1, width=270), '',
       numericInput(inputId=ns('vdo.res'), label='Resolution (dpi)', value=400, min=1, max=1000, step=5, width=270)
-      )) # fluidRow
+      )), # fluidRow
+      textOutput(ns('tran.vdo')), htmlOutput(ns('ffm')) 
       )
-      ), # navbarPage
-      textOutput(ns('tran.vdo')), htmlOutput(ns('ffm')), 
-      radioButtons(inputId=ns("vdo.but"), label="Show/update video", choices=c("Yes", "No"), selected='No', inline=TRUE),
-      fluidRow(splitLayout(cellWidths=c("1%", "98%", "1%"), "", uiOutput(ns('video')), ""))
+      ) # navbarPage
       ) # tabPanel
-
       ), network_ui(ns('net')) )) # append, do.call
 
     #  ) # list
@@ -237,7 +278,7 @@ shm_ui <- function(id, data.ui) {
 network_ui <- function(id) {
   ns <- NS(id)
   list(
-  tabPanel("Matrix Heatmap", id = 'mhm', icon = icon('border-all'),
+  tabPanel("Matrix Heatmap", id = 'mhm', icon=,
       fluidRow(splitLayout(cellWidths=c('1%', '15%', '1%', '10%', '1%', '20%', '1%', '7%', '1%', '20%', '1%', '10%'), '', 
       radioButtons(inputId=ns('measure'), label="Measure:", choices=c('correlation', 'distance'), selected='correlation', inline=TRUE), '', 
       radioButtons(inputId=ns("cor.abs"), label="Cor.absolute:", choices=c('No', 'Yes'), selected='No', inline=TRUE), '', 
@@ -249,7 +290,7 @@ network_ui <- function(id) {
       )),
       plotlyOutput(ns("HMly"))
   ),
-  tabPanel("Interactive Network", id = 'net', icon = icon('project-diagram'), 
+  tabPanel("Interactive Network", id = 'net', icon=, 
       fluidRow( # If column widths are not integers, columns are vertically aligned.
       column(2, offset=0, style='padding-left:15px; padding-right:0px; padding-top:0px; padding-bottom:5px',
       textInput(ns("color.net"), "Color scheme:", 'yellow,orange,red', placeholder='Eg: yellow,orange,red', width=150), actionButton(ns("col.but.net"), "Go", icon=icon("refresh"))
@@ -286,7 +327,7 @@ network_ui <- function(id) {
 deg_ui <- function(id) { 
   ns <- NS(id)
   tabPanel('Spatial Enrichment', value='deg',
-    data_ui(ns("datDEG"), deg = TRUE),
+    data_ui(ns("datDEG"), deg=TRUE),
     box(title='Spatial Enrichment', status="primary", solidHeader=TRUE, collapsible=TRUE, width=12,
       navbarPage(NULL, 
         tabPanel(title="Parameters",
@@ -312,13 +353,28 @@ deg_ui <- function(id) {
         ),
         tabPanel(title="Link with spatial heatmap", value='dt.deg', 
           dataTableOutput(ns("dt.vs2")), br(),
-          downloadButton(ns("dld.ssg.tab"), "Download"), dataTableOutput(ns("dt.deg"))
+          column(12, search_ui(ns('deg')), style='z-index:5'),  
+          dataTableOutput(ns("dt.deg")),
+          downloadButton(ns("dld.ssg.tab"), "Download")
         ) 
       ) # navbarPage
     ) # box(title='Spatial Enrich'
   )
 }
 
+label <- 'Search by gene IDs (e.g. ENSMUSG00000000031) or symbols'
+search_ui <- function(id, lab=label) { 
+  ns <- NS(id)
+  if (0) fluidRow(splitLayout(cellWidths=c('1%', '80%', '0.1%', '2%'), '', 
+  selectizeInput(ns('ids.in'), label, choices=NULL, multiple = TRUE, options=list(placeholder = 'Partial matching is enabled.')), '',
+actionButton(ns("ids.but"), "Confirm selection", style='margin-top: 24px;')
+  ))
+  if (0) list(
+  column(11, selectizeInput(ns('ids.in'), label, choices=NULL, multiple = TRUE, options=list(placeholder = 'Partial matching is enabled.'))),
+  column(1, actionButton(ns("ids.but"), "Confirm selection", style='margin-top: 24px;'))
+  )
+  if (1) selectizeInput(ns('ids.in'), p(lab, actionButton(ns("ids.but"), "Confirm selection", style='margin-top:2px;margin-bottom:-10px;margin-left:20px;padding-top:2px;padding-bottom:2px;background-color:#ddd;')), choices=NULL, multiple = TRUE, options=list(placeholder = 'Partial matching is enabled.'))
+}
 
 ui <- function(request) {
   dashboardPage(
@@ -351,17 +407,15 @@ ui <- function(request) {
    ')),
     fluidRow(
  
-      fluidRow(
-      column(6, textInput(inputId='search', label='Search by gene IDs (e.g. ENSG00000000971,ENSG00000001617):', value='', placeholder='Muliple IDs must only be separated by space or comma.', width='100%')),
-      column(1, actionButton('search.but', 'Submit'), align = "center", style = "margin-bottom: 2px;", style = "margin-top: 20px;")
-      ),
       # tabsetPanel(type = "pills", id=NULL, selected="primary", data_ui('dat') ),
       # tabsetPanel(type = "pills", id = 'shm.sup', selected = "shm2", shm_ui('shmAll'))
-      do.call(tabsetPanel, append(list(type = "pills", id = 'shm.sup', selected="shm2", upload_ui('upl'), shm_ui('shmAll', data_ui('dat')), deg_ui('deg')),
+      do.call(tabsetPanel, append(list(type = "pills", id = 'shm.sup', selected="landing", upload_ui('upl'), shm_ui('shmAll', data_ui('dat'), search_ui('sear')), deg_ui('deg')),
         list(tabPanel("About", value='about',
-          box(width = 12, title = "", closable = FALSE, solidHeader = TRUE, collapsible = TRUE, enable_sidebar = FALSE, status = "primary", enable_dropdown = FALSE,
-        'Coming soon!'
-          )
+          if (0) box(width = 12, title = "", closable = FALSE, solidHeader = TRUE, collapsible = TRUE, enable_sidebar = FALSE, status = "primary", enable_dropdown = FALSE,
+
+          ),
+
+        includeHTML("instruction/about.html")
         ))
     ))
 

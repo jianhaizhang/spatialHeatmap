@@ -16,13 +16,12 @@ spatial_hm(
   col.bar = "selected",
   cores = NA,
   bar.width = 0.08,
-  legend.width = 1,
   bar.title.size = 0,
   trans.scale = NULL,
   ft.trans = NULL,
   tis.trans = ft.trans,
   lis.rematch = NULL,
-  legend.r = 1,
+  legend.r = 0.2,
   sub.title.size = 11,
   legend.plot = "all",
   ft.legend = "identical",
@@ -91,8 +90,6 @@ spatial_hm(
 
 \item{bar.width}{The width of color bar that ranges from 0 to 1. The default is 0.08.}
 
-\item{legend.width}{The width of legend plot that ranges from 0 to 1 (default).}
-
 \item{bar.title.size}{A numeric of color bar title size. The default is 0.}
 
 \item{trans.scale}{One of "log2", "exp2", "row", "column", or NULL, which means transform the data by "log2" or "2-base expoent", scale by "row" or "column", or no manipuation respectively. This argument should be used if colors across samples cannot be distinguished due to low variance or outliers.}
@@ -103,11 +100,11 @@ spatial_hm(
 
 \item{lis.rematch}{A list for rematching features. In each slot, the slot name is an existing feature in the data, and the slot contains a vector of features in aSVG that will be rematched to the feature in the slot name. \emph{E.g.} \code{list(featureData1 = c('featureSVG1', 'featureSVG2'), featureData2 = c('featureSVG3'))}, where features \code{c('featureSVG1', 'featureSVG2')}, \code{c('featureSVG3')} in the aSVG are rematched to features \code{'featureData1'}, \code{'featureData2'} in data, respectively.}
 
-\item{legend.r}{A numeric to adjust the dimension of the legend plot. The default is 1. The larger, the higher ratio of width to height.}
+\item{legend.r}{A numeric (between -1 and 1) to adjust the legend plot size. The default is 0.2.}
 
 \item{sub.title.size}{A numeric of the subtitle font size of each individual spatial heatmap. The default is 11.}
 
-\item{legend.plot}{A vector of suffix(es) of aSVG file name(s) such as c('shm1', 'shm2'). Only aSVG(s) whose suffix(es) are assigned to this arugment will have a legend plot on the right. The default is 'all' and each aSVG will have a legend plot. If NULL, no legend plot is shown. Only applicable if multiple aSVG files are provided to \code{svg.path}.}
+\item{legend.plot}{A vector of suffix(es) of aSVG file name(s) such as \code{c('shm1', 'shm2')}. Only aSVG(s) whose suffix(es) are assigned to this arugment will have a legend plot on the right. The default is \code{all} and each aSVG will have a legend plot. If NULL, no legend plot is shown.}
 
 \item{ft.legend}{One of "identical", "all", or a character vector of tissue/spatial feature identifiers from the aSVG file. The default is "identical" and all the identical/matching tissues/spatial features between the data and aSVG file are colored in the legend plot. If "all", all tissues/spatial features in the aSVG are shown. If a vector, only the tissues/spatial features in the vector are shown.}
 
@@ -170,6 +167,8 @@ spatial_hm(
 \item{line.size}{The thickness of each shape outline in the aSVG is maintained in spatial heatmaps, \emph{i.e.} the stroke widths in Inkscape. This argument is the extra thickness added to all outlines. Default is 0.2 in case stroke widths in the aSVG are 0.}
 
 \item{line.color}{A character of the shape outline color. Default is "grey70".}
+
+\item{relative.scale}{A numeric to adjust the relative sizes between multiple aSVGs. Applicable only if multiple aSVG paths is assigned to \code{svg.path}. Default is \code{NULL} and all aSVGs have the same size.}
 
 \item{verbose}{Logical, FALSE or TRUE. If TRUE the samples in data not colored in spatial heatmaps are printed to R console. Default is TRUE.}
 

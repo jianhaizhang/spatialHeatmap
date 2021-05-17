@@ -61,6 +61,7 @@
 #' @param lay.shm One of "gene", "con", or "none". If "gene", spatial heatmaps are organized by genes proteins, or metabolites, \emph{etc.} and conditions are sorted whithin each gene. If "con", spatial heatmaps are organized by the conditions/treatments applied to experiments, and genes are sorted winthin each condition. If "none", spaital heatmaps are organized by the gene order in \code{ID} and conditions follow the order they appear in \code{data}. 
 #' @param ncol An integer of the number of columns to display the spatial heatmaps, which does not include the legend plot.
 
+#' @param relative.scale A numeric to adjust the relative sizes between multiple aSVGs. Applicable only if multiple aSVG paths is assigned to \code{svg.path}. Default is \code{NULL} and all aSVGs have the same size. 
 #' @param verbose Logical, FALSE or TRUE. If TRUE the samples in data not colored in spatial heatmaps are printed to R console. Default is TRUE.
 #' @param out.dir The directory to save interactive spatial heatmaps as independent HTML files and videos. Default is NULL, and the HTML files and videos are not saved.
 #' @param animation.scale A numeric to scale the spatial heatmap size in the HTML files. The default is 1, and the height is 550px and the width is calculated according to the original aspect ratio in the aSVG file.

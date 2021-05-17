@@ -93,40 +93,40 @@ up_dn <- function(sam.all, df.all=df.all, log.fc, fdr, log.na, fdr.na) {
     w.fc1 <- grep(paste0('_VS_', i, '_', log.na, '$'), colnames(df.all))
     if (length(w.fc)>0) {
 
-      df.fc <- df.all[, w.fc, drop=F]
+      df.fc <- df.all[, w.fc, drop=FALSE]
       w.fdr <- grep(paste0('^', i, '_VS_.*_', fdr.na, '$'), colnames(df.all))
-      df.fdr <- df.all[, w.fdr, drop=F]
+      df.fdr <- df.all[, w.fdr, drop=FALSE]
       # Up DEGs.
       df.idx <- cbind(df.fc >= abs(log.fc), df.fdr <= fdr)
       w <- which(rowSums(df.idx)==ncol(df.idx))
       if (length(w)>0) {
-        df.up <- cbind(df.fc[w, , drop=F], df.fdr[w, , drop=F])
+        df.up <- cbind(df.fc[w, , drop=FALSE], df.fdr[w, , drop=FALSE])
       }
       # Down DEGs
       df.idx <- cbind(df.fc <= -abs(log.fc), df.fdr <= fdr)
       w <- which(rowSums(df.idx)==ncol(df.idx))
       if (length(w)>0) {
-        df.down <- cbind(df.fc[w, , drop=F], df.fdr[w, , drop=F])
+        df.down <- cbind(df.fc[w, , drop=FALSE], df.fdr[w, , drop=FALSE])
       }
 
     } # "else if" runs only if the preceeding "if" is not true (exclusive relationship), so should not be used here.
 
     if (length(w.fc1)>0) {
 
-      df.fc <- df.all[, w.fc1, drop=F]
+      df.fc <- df.all[, w.fc1, drop=FALSE]
       w.fdr1 <- grep(paste0('_VS_', i, '_', fdr.na, '$'), colnames(df.all))
-      df.fdr <- df.all[, w.fdr1, drop=F]
+      df.fdr <- df.all[, w.fdr1, drop=FALSE]
       # Up DEGs.
       df.idx <- cbind(df.fc <= -abs(log.fc), df.fdr <= fdr)
       w <- which(rowSums(df.idx)==ncol(df.idx))
       if (length(w)>0) {
-        df.up1 <- cbind(df.fc[w, , drop=F], df.fdr[w, , drop=F])
+        df.up1 <- cbind(df.fc[w, , drop=FALSE], df.fdr[w, , drop=FALSE])
       }
       # Down DEGs
       df.idx <- cbind(df.fc >= abs(log.fc), df.fdr <= fdr)
       w <- which(rowSums(df.idx)==ncol(df.idx))
       if (length(w)>0) {
-        df.down1 <- cbind(df.fc[w, , drop=F], df.fdr[w, , drop=F])
+        df.down1 <- cbind(df.fc[w, , drop=FALSE], df.fdr[w, , drop=FALSE])
       }
 
     }
@@ -141,13 +141,13 @@ up_dn <- function(sam.all, df.all=df.all, log.fc, fdr, log.na, fdr.na) {
 
     if (nrow(up)==0) up <- data.frame() else {
       up <- as.data.frame(up)
-      fdr.up <- up[, grep(paste0('_', fdr.na, '$'), colnames(up)), drop=F]; up <- up[, order(colnames(up))]
+      fdr.up <- up[, grep(paste0('_', fdr.na, '$'), colnames(up)), drop=FALSE]; up <- up[, order(colnames(up))]
       up <- cbind(FDR_mean=10^rowMeans(log10(fdr.up)), up); up <- up[order(up[, 1]), ]
     }
 
     if (nrow(down)==0) down <- data.frame() else {
       down <- as.data.frame(down)
-      fdr.down <- down[, grep(paste0('_', fdr.na, '$'), colnames(down)), drop=F]; down <- down[, order(colnames(down))]
+      fdr.down <- down[, grep(paste0('_', fdr.na, '$'), colnames(down)), drop=FALSE]; down <- down[, order(colnames(down))]
       down <- cbind(FDR_mean=10^rowMeans(log10(fdr.down)), down); down <- down[order(down[, 1]), ]
     }; cat(i, 'up:', nrow(up), ';', 'down:', nrow(down), '\n')
     lis0 <- list(up=up, down=down); names(lis0) <- paste0(i, c('_up', '_down')); lis1 <- list(lis0); names(lis1) <- i

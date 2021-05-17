@@ -61,7 +61,7 @@ title:
 - title:spatialHeatmap
 - width:350
 max.upload.size: 5G 
-default.dataset: brain_Prudencio
+default.dataset: mouse_Merkin
 col.row.gene: None
 separator: None
 data.matrix:
@@ -71,7 +71,7 @@ data.matrix:
 - CV2:10000
 - log.exp:No
 - scale:Row
-- row.selected:1
+- selected.id:ENSMUSG00000000031
 shm.img:
 - columns:2
 - display.by:gene

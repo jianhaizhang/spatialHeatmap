@@ -100,7 +100,7 @@ custom_shiny <- function(..., lis.par=NULL, lis.par.tmp=FALSE, lis.dld.single=NU
   # Default config file.
   cfg.def <- yaml.load_file(system.file('extdata/shinyApp/config/config.yaml', package='spatialHeatmap'))
   # Default parameters.
-  lis.par.def <- cfg.def[!grepl('^dataset\\d+|download_single|download_multiple|download_spatial_temporal', names(cfg.def))]
+  lis.par.def <- cfg.def[!grepl('^dataset\\d+|download_single|download_multiple|download_spatial_temporal|download_batched_data_aSVGs', names(cfg.def))]
   # Return parameter template.
   if (lis.par.tmp==TRUE) {
 

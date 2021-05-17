@@ -49,8 +49,8 @@ label[for='search'] { display: table-cell; text-align: center; vertical-align: m
 /* All tabs. */
 /* .tabbable > .nav > li > a {background-color: grey; color:black} */
 /* .tabbable > .nav > li > a[data-value='shm'] {background-color: #2471A3; color:white} */
-.tabbable > .nav > li > a {background-color: #2471A3; color:white}
-
+.tabbable > .nav > li > a {background-color:#337ab7; color:white}
+.tabbable > ul[id='shmMhNet'] > li > a {background-color:#54a1d2; color:white}
 
 .tabbable > .nav > li[class=active] > a {background-color:#337ab7; color:white}
 
@@ -82,7 +82,7 @@ img, video, iframe {
 
 /*All genes in dropdown list.*/
 .selectize-dropdown-content {
-  position:absolute; z-index:5; background:#f6f6f6
+  position:absolute; z-index:5; background:#f6f6f6; width:100%
 }
 
 /* Search button. Dots are special characters in CSS, and should be escaped. So #sear-ids.but or [id='sear-ids.but'] is right. 
@@ -102,6 +102,11 @@ img, video, iframe {
 /* Selected items in search box. */
 .selectize-input.items.not-full.has-options has-items {
   display:table-cell
+}
+
+/* Top search box in the DEG table. */
+div.form-group.has-feedback {
+  z-index:0 !important
 }
 
 /*Content of dropdown menu.*/
@@ -230,30 +235,28 @@ span {
 
 /*Image gallery in landing page. */
 
-#field img, #plate img, #sub img, #dwl img, #inter img, #vdo img {
+#brainHum img, #mouse img, #chicken img, #organArab img, #shootArab img, #rootArab img, #vdo img {
   transition: transform linear 0.5s; transition-delay: 0.5s;
 }
 
-#field:hover, #plate:hover, #sub:hover, #dwl:hover, #inter:hover, #vdo:hover {
+#brainHum:hover, #mouse:hover, #chicken:hover, #organArab:hover, #shootArab:hover, #rootArab:hover, #inter:hover, #vdo:hover {
   z-index: 5
 }
 
-#field img:hover, #dwl img:hover {
+#brainHum img:hover, #organArab img:hover {
   transform: scale(3); transform-origin: left;
 }
 
-#plate img:hover, #inter img:hover {
+#shootArab img:hover, #mouse img:hover {
   transform: scale(3); transform-origin: center;
 }
           
-#sub img:hover {
+#chicken img:hover, #rootArab img:hover {
   transform: scale(3); transform-origin: right;
 }
 
-#vdo img:hover {
-  transform: scale(2); transform-origin: right;
-}
-
+/*HTML file in About. */
+body { text-align: justify }
 
 
 

@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+<meta charset="utf-8" />
+<meta name="generator" content="pandoc" />
+<meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
+
+
+<meta name="author" content="Authors: Jianhai Zhang, Jordan Hayes, Le Zhang, Bing Yang, Wolf B. Frommer, Julia Bailey-Serres, and Thomas Girke" />
+
+
+<title></title>
+
+<script src="about_files/jquery-1.11.3/jquery.min.js"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<link href="about_files/bootstrap-3.3.5/css/bootstrap.min.css" rel="stylesheet" />
+<script src="about_files/bootstrap-3.3.5/js/bootstrap.min.js"></script>
+<script src="about_files/bootstrap-3.3.5/shim/html5shiv.min.js"></script>
+<script src="about_files/bootstrap-3.3.5/shim/respond.min.js"></script>
+<style>h1 {font-size: 34px;}
+       h1.title {font-size: 38px;}
+       h2 {font-size: 30px;}
+       h3 {font-size: 24px;}
+       h4 {font-size: 18px;}
+       h5 {font-size: 16px;}
+       h6 {font-size: 12px;}
+       code {color: inherit; background-color: rgba(0, 0, 0, 0.04);}
+       pre:not([class]) { background-color: white }</style>
+<script src="about_files/navigation-1.1/tabsets.js"></script>
+<script src="about_files/navigation-1.1/codefolding.js"></script>
+<link href="about_files/highlightjs-9.12.0/default.css" rel="stylesheet" />
+<script src="about_files/highlightjs-9.12.0/highlight.js"></script>
+
+<style type="text/css">
+  code{white-space: pre-wrap;}
+  span.smallcaps{font-variant: small-caps;}
+  span.underline{text-decoration: underline;}
+  div.column{display: inline-block; vertical-align: top; width: 50%;}
+  div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+  ul.task-list{list-style: none;}
+    </style>
+
+<style type="text/css">code{white-space: pre;}</style>
+<script type="text/javascript">
+if (window.hljs) {
+  hljs.configure({languages: []});
+  hljs.initHighlightingOnLoad();
+  if (document.readyState && document.readyState === "complete") {
+    window.setTimeout(function() { hljs.initHighlighting(); }, 0);
+  }
+}
+</script>
+
+
+
+
+
+<link rel="stylesheet" href="/usr/local/lib/R/site-library/BiocStyle/resources/html/bioconductor.css" type="text/css" />
+<link rel="stylesheet" href="file/custom.css" type="text/css" />
+
+
+
+<style type = "text/css">
+.main-container {
+  max-width: 828px;
+  margin-left: auto;
+  margin-right: auto;
+}
+img {
+  max-width:100%;
+}
+.tabbed-pane {
+  padding-top: 12px;
+}
+.html-widget {
+  margin-bottom: 20px;
+}
+button.code-folding-btn:focus {
+  outline: none;
+}
+summary {
+  display: list-item;
+}
+pre code {
+  padding: 0;
+}
+</style>
+
+
+
+<!-- tabsets -->
+
+<style type="text/css">
+.tabset-dropdown > .nav-tabs {
+  display: inline-table;
+  max-height: 500px;
+  min-height: 44px;
+  overflow-y: auto;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+}
+
+.tabset-dropdown > .nav-tabs > li.active:before {
+  content: "";
+  font-family: 'Glyphicons Halflings';
+  display: inline-block;
+  padding: 10px;
+  border-right: 1px solid #ddd;
+}
+
+.tabset-dropdown > .nav-tabs.nav-tabs-open > li.active:before {
+  content: "&#xe258;";
+  border: none;
+}
+
+.tabset-dropdown > .nav-tabs.nav-tabs-open:before {
+  content: "";
+  font-family: 'Glyphicons Halflings';
+  display: inline-block;
+  padding: 10px;
+  border-right: 1px solid #ddd;
+}
+
+.tabset-dropdown > .nav-tabs > li.active {
+  display: block;
+}
+
+.tabset-dropdown > .nav-tabs > li > a,
+.tabset-dropdown > .nav-tabs > li > a:focus,
+.tabset-dropdown > .nav-tabs > li > a:hover {
+  border: none;
+  display: inline-block;
+  border-radius: 4px;
+  background-color: transparent;
+}
+
+.tabset-dropdown > .nav-tabs.nav-tabs-open > li {
+  display: block;
+  float: none;
+}
+
+.tabset-dropdown > .nav-tabs > li {
+  display: none;
+}
+</style>
+
+<!-- code folding -->
+<style type="text/css">
+.code-folding-btn { margin-bottom: 4px; }
+</style>
+
+
+
+
+<script>
+function toggle_visibility(id1) {
+  var e = document.getElementById(id1);
+  e.style.display = ((e.style.display!="none") ? "none" : "block");
+}
+</script>
+
+</head>
+
+<body>
+
+
+<div class="container-fluid main-container">
+
+
+
+
+<div id="header">
+
+<div class="btn-group pull-right float-right">
+<button type="button" class="btn btn-default btn-xs btn-secondary btn-sm dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><span>Code</span> <span class="caret"></span></button>
+<ul class="dropdown-menu dropdown-menu-right" style="min-width: 50px;">
+<li><a id="rmd-show-all-code" href="#">Show All Code</a></li>
+<li><a id="rmd-hide-all-code" href="#">Hide All Code</a></li>
+</ul>
+</div>
+
+
+
+
+</div>
+
+
+<style type="text/css">
+pre code {
+white-space: pre !important;
+overflow-x: scroll !important;
+word-break: keep-all !important;
+word-wrap: initial !important;
+}
+</style>
+<!-- 
+
+<style type="text/css">
+ .main-container { max-width: 1800px; margin-left: 5px; margin-right: auto; }
+</style>
+
+<style>body { text-align: justify }</style>  
+
+
+<script type="text/javascript">
+document.addEventListener("DOMContentLoaded", function() {
+  document.querySelector("h1").className = "title";
+});
+</script>
+<script type="text/javascript">
+document.addEventListener("DOMContentLoaded", function() {
+  var links = document.links;  
+  for (var i = 0, linksLength = links.length; i < linksLength; i++)
+    if (links[i].hostname != window.location.hostname)
+      links[i].target = '_blank';
+});
+</script>
+
+-->
+<p>Authors: Jianhai Zhang, Jordan Hayes, Le Zhang, Bing Yang, Wolf B. Frommer, Julia Bailey-Serres, and Thomas Girke</p>
+<div id="summary" class="section level1">
+<h1><span class="header-section-number">1</span> Summary</h1>
+<p>This Shiny app is an integrated implementation of the R/Bioconductor package <a href="http://www.bioconductor.org/packages/release/bioc/vignettes/spatialHeatmap/inst/doc/spatialHeatmap.html" target="_blank">spatialHeatmap</a>. It is designed for interactively visualizing numeric values in biological assays (e.g. RNA-seq, microarray, qPCR) on an anotomical aSVG image. First, the core feature &quot;Spatial Heatmap&quot; maps numeric values of target assayed items (genes, proteins, metabolites, etc) to matching spatial features (cells, tissues, organs, etc) in the aSVG image. In this process, the values are translated into different colors and these colors are used to paint the spatial features. The resulting images are called spatial heatmaps (SHMs). Second, nearest neighbors of each target assayed item are selected by most similar expression profiles independently. All target items and their nearest neighbors are hierachically clustered and visualized as interactive matrix heatmap. Third, network modules are identified internally and the module containing a target item is displayed as interactive network graph.</p>
+<p>In addition to the primary visualizaion, the Spatial Enrichment (SE) is specialized in identifying spatial feature-specific genes in RNA-seq count data.</p>
+<p>This app is a general visualization tool, not limited to biological data. Operations on this app are expected to follow the order as each panel appears. Otherwise if errors arise, the webpage should be refreshed.</p>
+<p><strong>For a quick test, select one example under &quot;Data &amp; aSVGs&quot; on the Landing Page, or select &quot;customData&quot;, download the example data and aSVG, and upload them to respective fields.</strong></p>
+</div>
+<div id="input" class="section level1">
+<h1><span class="header-section-number">2</span> Input</h1>
+<p><strong>Step1: choose custom or default data sets</strong> There are pre-configured examples (e.g. mouse_Merkin) for demonstration, and the &quot;customData&quot; allows to upload aSVG file(s) and data matrix generated by users.</p>
+<p><strong>Step 2: upload custom data</strong><br />
+<strong>2A: Upload formatted data matrix</strong> Upload the data matrix in tabular file where target samples should have matching spatial features (shapes) in the aSVG(s). Note, the file name should not contain parenthesis. E.g. <code>arab_expr_example.txt</code> is expected while <code>arab_expr_example.txt(1).txt</code> will raise errors. The separator in the tabular file can only be one of tab, space, comma, or semicolon.<br />
+<strong>2B: is column or row gene?</strong> Specify genes in row or column. In the data matrix where row and column names are gene IDs and sample/conditions respectively, the column names MUST follow these naming scheme: 1) A sample name is followed by double underscore then the condition. E.g. in &quot;root_pGL2__hypoxia&quot;, &quot;root_pGL2&quot; is the sample (atrichoblast epidermis) and &quot;hypoxia&quot; is the condition. 2) The &quot;__&quot; is a reserved separator, so it cannot be used in sample or condition identifiers. 3) Each column name must be unique. To achieve such naming format, simple sample/conditions can be edited in a regular text editor/Excel, while if complex it can be generated with the function filter_data in &quot;spatialHeatmap&quot;. One column of metadata (e.g. gene annotation) could be optinally appended to sample/condition at the end, where the column name should not include &quot;__&quot;. Only values of samples having a matching feature counterparts in the aSVG are translated to colors in spatial heatmaps. In the case of spatial-temporal data, there are three factors: samples, conditions, and time points. The naming scheme is slightly different and includes three options: 1) combine samples and conditions to make the composite factor sample-condition, then concatenate the new factor and times with double underscore in between, i.e. &quot;sampleCondition__time&quot;; 2) combine samples and times to make the composite factor sample-time, then concatenate the new factor and conditions with double underscore in between, i.e. &quot;sampleTime__condition&quot;; or 3) combine all three factors to make the composite factor &quot;sampleTimeCondition&quot; without double underscore.</p>
+<p><strong>Step 3: upload custom aSVG(s)</strong><br />
+<strong>3A: upload one aSVG file</strong> Upload an aSVG file generated by users, where the aSVG means spatial features are annotated with unique identifiers. An example aSVG is downloadable below. Note, the aSVG file name should not contain parenthesis. E.g. &quot;arabidopsis.thaliana_root.cross_shm.svg&quot; is expected while &quot;arabidopsis.thaliana_root.cross_shm(1).svg&quot; will cause errors.</p>
+<p><strong>3B (optional): upload multiple aSVG files</strong> Upload more than one aSVGs, such as aSVGs representing organs at different growth stages. The order of aSVGs should be indicated by suffixes of &quot;_shm1&quot;, &quot;_shm2&quot;, ... . e.g. &quot;arabidopsis.thaliana_organ_shm1.svg&quot;, &quot;arabidopsis.thaliana_organ_shm2.svg&quot;. The spatial heatmaps would be a composite image including all aSVGs. This step takes precedence over &quot;Step 3A&quot;. A pre-uploaded example is &quot;growthStage_Mustroph&quot; under &quot;Step 1&quot;.</p>
+<p>More details about how to set up aSVG file and data matrix are provided in the <a href="https://jianhaizhang.github.io/SVG_tutorial_file/spatialHeatmap.html" target="_blank">package vignette</a> and the <a href="https://jianhaizhang.github.io/SVG_tutorial_file/" target="_blank">SVG tutorial</a>. The example aSVG files and formatted data matrices are provided on the landing page and can be uploaded directly for testing after selecting &quot;customData&quot;.</p>
+<p><strong>Additional files</strong><br />
+<strong>Upload a config file (optional)</strong> Optionally upload a custom configuration file in &quot;yaml&quot; format, where customized default parameters are set such as the color scheme, title size, etc. A specialized yaml file editor is recommended for editing this file, e.g. <a href="https://onlineyamltools.com/edit-yaml" target="_blank">onlineyamltools</a>.</p>
+<p><strong>Upload batched data, aSVGs in two separate tar files (optional)</strong> If there are a large amount of data and aSVG files to visualize, they can be compressed in two separate tar files and uploaded in a batch. See the function &quot;write_hdf5&quot; for details.</p>
+</div>
+<div id="matrix-heatmap" class="section level1">
+<h1><span class="header-section-number">3</span> Matrix Heatmap</h1>
+<p>The nearest neighbors of each selected/target gene in the data matrix are selected with correlation or distance measure independently, then all target genes and their nearest neighbors are hierarchically clustered and visualized in an interactive matrix heatmap, where target genes are labeled by black lines. The interactive features include 1) mouse over a cell to see row/column labels and cell value, and 2) draw a rectangle to zoom in and double click to zoom out.</p>
+</div>
+<div id="network" class="section level1">
+<h1><span class="header-section-number">4</span> Network</h1>
+<p>This section applies network analysis on the subsetted matrix in the Matrix Heatmap with WGCNA <span class="citation">(Peter Langfelder and Horvath 2008; P. Langfelder and Horvath 2012; Peter Langfelder, Zhang, and Steve Horvath 2016)</span>. Briefly, a correlation matrix or distance matrix is computed on all genes in Matrix Heatmap, and transformed to an adjacency matrix and topological overlap matrix (TOM) sequentially, which are advanced measures to quantify coexpression similarity. Then network modules are identified by hierarchinally clustering the TOM-transformed dissimilarity matrix 1-TOM, which are clusters of genes with highly similar coexpression profiles. The module containing a target gene is finally displayed as interactive network graph. Since this is a coexpression analysis, variables of sample/condition should be at least 5. Otherwise, resulting modules are not reliable. Refer to <a href="https://jianhaizhang.github.io/SVG_tutorial_file/spatialHeatmap.html" target="_blank">package vignette</a> for details.</p>
+</div>
+<div id="spatial-enrichment" class="section level1">
+<h1><span class="header-section-number">5</span> Spatial Enrichment</h1>
+<p>The Spatial Enrichment is specialized in detecting spatial feature-specific genes (SFSGs) in RNA-seq count data. Basically, the app compares a target feature with each reference feature by using tools of edgeR <span class="citation">(McCarthy et al. 2012)</span>, DESeq2 <span class="citation">(Love, Huber, and Anders 2014)</span>, limma <span class="citation">(Ritchie et al. 2015)</span>, distinct <span class="citation">(Tiberi et al., n.d.)</span>. The target and reference features, and tools are selected by users. If more than one tools are selected, the overlaps of identified SFSGs between all selected tools are presented. These SFSGs can be selected for visualization in the spatial heatmaps.</p>
+</div>
+<div id="other-information" class="section level1">
+<h1><span class="header-section-number">6</span> Other Information</h1>
+<p><strong>Data Source</strong><br />
+brain_Prudencio: RNA-seq, <span class="citation">Prudencio et al. (2015)</span>, accessed through the R package ExpressionAtlas <span class="citation">(Keays 2019)</span>.<br />
+mouse_Merkin: RNA-seq, <span class="citation">Merkin et al. (2012)</span>, accessed through the R package ExpressionAtlas <span class="citation">(Keays 2019)</span>.<br />
+chicken_Cardoso.Moreira: RNA-seq, <span class="citation">Cardoso-Moreira et al. (2019)</span>, accessed through the R package ExpressionAtlas <span class="citation">(Keays 2019)</span>.<br />
+shoot_Mustroph/organ_Mustroph/root_Mustroph/shootRoot_Mustroph/rootRootTip_Mustroph: microarray, <span class="citation">Mustroph et al. (2009)</span>, accessed through the R package GEOquery <span class="citation">(S. Davis and Meltzer 2007)</span>.<br />
+spatiotemporal_Narsai: RNA-seq, <span class="citation">Narsai et al. (2017)</span>, accessed through the R package ExpressionAtlas <span class="citation">(Keays 2019)</span>.<br />
+growthStage_Mustroph: random data.<br />
+map_Census: <span class="citation">Bureau (2018)</span>.</p>
+<p><strong>Image Source</strong><br />
+brain_Prudencio/mouse_Merkin/chicken_Cardoso.Moreira: <a href="https://github.com/ebi-gene-expression-group/anatomogram/tree/master/src/svg" target="_blank">Expression Atlas-EMBL-EBI</a><br />
+shoot_Mustroph/organ_Mustroph/root_Mustroph/shootRoot_Mustroph/rootRootTip_Mustroph/growthStage_Mustroph: <span class="citation">Merkin et al. (2012)</span>.<br />
+spatiotemporal_Narsai: <span class="citation">Narsai et al. (2017)</span>.<br />
+map_Census: <span class="citation">Trip8.Co (2018)</span>.</p>
+<p><strong>Fund source</strong> This project has been funded by NSF awards: PGRP-1546879, PGRP-1810468, PGRP-1936492.</p>
+</div>
+<div id="reference" class="section level1 unnumbered">
+<h1>Reference</h1>
+<div id="refs" class="references">
+<div id="ref-US_Census_Bureau">
+<p>Bureau, U.S. Census. 2018. “Annual Population Estimates, Estimated Components of Resident Population Change, and Rates of the Components of Resident Population Change for the United States, States, and Puerto Rico: April 1, 2010 to July 1, 2018.” <a href="https://www.census.gov/data/datasets/time-series/demo/popest/2010s-state-total.html" class="uri">https://www.census.gov/data/datasets/time-series/demo/popest/2010s-state-total.html</a>.</p>
+</div>
+<div id="ref-Cardoso-Moreira2019-yq">
+<p>Cardoso-Moreira, Margarida, Jean Halbert, Delphine Valloton, Britta Velten, Chunyan Chen, Yi Shao, Angélica Liechti, et al. 2019. “Gene Expression Across Mammalian Organ Development.” <em>Nature</em> 571 (7766): 505–9.</p>
+</div>
+<div id="ref-geo">
+<p>Davis, Sean, and Paul Meltzer. 2007. “GEOquery: A Bridge Between the Gene Expression Omnibus (GEO) and BioConductor.” <em>Bioinformatics</em> 14: 1846–7.</p>
+</div>
+<div id="ref-ebi">
+<p>Keays, Maria. 2019. <em>ExpressionAtlas: Download Datasets from EMBL-EBI Expression Atlas</em>.</p>
+</div>
+<div id="ref-Langfelder2012-nv">
+<p>Langfelder, P., and S. Horvath. 2012. “Fast R Functions for Robust Correlations and Hierarchical Clustering.” <em>J. Stat. Softw.</em> 46 (11). <a href="https://www.ncbi.nlm.nih.gov/pubmed/23050260" class="uri">https://www.ncbi.nlm.nih.gov/pubmed/23050260</a>.</p>
+</div>
+<div id="ref-Langfelder2008-sg">
+<p>Langfelder, Peter, and Steve Horvath. 2008. “WGCNA: An R Package for Weighted Correlation Network Analysis.” <em>BMC Bioinformatics</em> 9 (December): 559.</p>
+</div>
+<div id="ref-dynamicTreeCut">
+<p>Langfelder, Peter, Bin Zhang, and with contributions from Steve Horvath. 2016. <em>DynamicTreeCut: Methods for Detection of Clusters in Hierarchical Clustering Dendrograms</em>. <a href="https://CRAN.R-project.org/package=dynamicTreeCut" class="uri">https://CRAN.R-project.org/package=dynamicTreeCut</a>.</p>
+</div>
+<div id="ref-DESeq2">
+<p>Love, Michael I., Wolfgang Huber, and Simon Anders. 2014. “Moderated Estimation of Fold Change and Dispersion for RNA-Seq Data with DESeq2.” <em>Genome Biology</em> 15 (12): 550. doi:<a href="https://doi.org/10.1186/s13059-014-0550-8">10.1186/s13059-014-0550-8</a>.</p>
+</div>
+<div id="ref-edgeR">
+<p>McCarthy, Davis J., Chen, Yunshun, Smyth, and Gordon K. 2012. “Differential Expression Analysis of Multifactor RNA-Seq Experiments with Respect to Biological Variation.” <em>Nucleic Acids Research</em> 40 (10): 4288–97.</p>
+</div>
+<div id="ref-Merkin2012-ak">
+<p>Merkin, Jason, Caitlin Russell, Ping Chen, and Christopher B Burge. 2012. “Evolutionary Dynamics of Gene and Isoform Regulation in Mammalian Tissues.” <em>Science</em> 338 (6114): 1593–9.</p>
+</div>
+<div id="ref-Mustroph2009-nu">
+<p>Mustroph, Angelika, M Eugenia Zanetti, Charles J H Jang, Hans E Holtan, Peter P Repetti, David W Galbraith, Thomas Girke, and Julia Bailey-Serres. 2009. “Profiling Translatomes of Discrete Cell Populations Resolves Altered Cellular Priorities During Hypoxia in Arabidopsis.” <em>Proc Natl Acad Sci U S A</em> 106 (44): 18843–8.</p>
+</div>
+<div id="ref-Narsai2017-ql">
+<p>Narsai, Reena, David Secco, Matthew D Schultz, Joseph R Ecker, Ryan Lister, and James Whelan. 2017. “Dynamic and Rapid Changes in the Transcriptome and Epigenome During Germination and in Developing Rice ( Oryza Sativa ) Coleoptiles Under Anoxia and Re-Oxygenation.” <em>Plant J.</em> 89 (4): 805–24.</p>
+</div>
+<div id="ref-Prudencio2015-wd">
+<p>Prudencio, Mercedes, Veronique V Belzil, Ranjan Batra, Christian A Ross, Tania F Gendron, Luc J Pregent, Melissa E Murray, et al. 2015. “Distinct Brain Transcriptome Profiles in C9orf72-Associated and Sporadic ALS.” <em>Nat. Neurosci.</em> 18 (8): 1175–82.</p>
+</div>
+<div id="ref-limma">
+<p>Ritchie, Matthew E, Belinda Phipson, Di Wu, Yifang Hu, Charity W Law, Wei Shi, and Gordon K Smyth. 2015. “Limma Powers Differential Expression Analyses for RNA-sequencing and Microarray Studies.” <em>Nucleic Acids Res.</em> 43 (7): e47.</p>
+</div>
+<div id="ref-distinct">
+<p>Tiberi, Simone, Helena L Crowell, Lukas M Weber, Pantelis Samartsidis, and Mark D Robinson. n.d. “Distinct : A Novel Approach to Differential Distribution Analyses.” <em>BioRxiv</em>.</p>
+</div>
+<div id="ref-Trip8.Co">
+<p>Trip8.Co. 2018. “Us Map States.” <a href="http://trip8.co/interactive-map-of-us-states-us-map-states-interactive-us-map/interactive-map-of-us-states-us-map-states-interactive-us-map-new-united-states-map-interactive-detail-color-usa-with-name-inside/" class="uri">http://trip8.co/interactive-map-of-us-states-us-map-states-interactive-us-map/interactive-map-of-us-states-us-map-states-interactive-us-map-new-united-states-map-interactive-detail-color-usa-with-name-inside/</a>.</p>
+</div>
+</div>
+</div>
+
+
+
+
+</div>
+
+<script>
+
+// add bootstrap table styles to pandoc tables
+function bootstrapStylePandocTables() {
+  $('tr.odd').parent('tbody').parent('table').addClass('table table-condensed');
+}
+$(document).ready(function () {
+  bootstrapStylePandocTables();
+});
+
+
+</script>
+
+<!-- tabsets -->
+
+<script>
+$(document).ready(function () {
+  window.buildTabsets("TOC");
+});
+
+$(document).ready(function () {
+  $('.tabset-dropdown > .nav-tabs > li').click(function () {
+    $(this).parent().toggleClass('nav-tabs-open');
+  });
+});
+</script>
+
+<!-- code folding -->
+<script>
+$(document).ready(function () {
+  window.initializeCodeFolding("hide" === "show");
+});
+</script>
+
+
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    "HTML-CSS": {
+      styles: {
+        ".MathJax_Display": {
+           "text-align": "center",
+           padding: "0px 150px 0px 65px",
+           margin: "0px 0px 0.5em"
+        },
+        "@media screen and (max-width: 991px)": {
+            ".MathJax_Display": {
+               "text-align": "center",
+               padding: "0 0 0 0"
+            }
+         }
+      }
+    }
+  });
+</script>
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>
