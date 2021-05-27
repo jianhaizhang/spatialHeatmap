@@ -1,5 +1,4 @@
 
-
 Changes in version 1.1.6 (2021-05-17)
  + The spatial heatmaps are able to maitain outline (stroke) widths defined in aSVG. The stroke widths can be updated with "update_feature".
  + Text in aSVGs can be independent from features, i.e. have separate colors, stroke widths, etc. 

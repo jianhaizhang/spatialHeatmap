@@ -46,9 +46,6 @@ expr.hum <- cbind(expr.hum, row.met[, 'metadata', drop = FALSE])
 write.table(expr.hum, 'expr_human.txt', col.names=TRUE, row.names=TRUE, sep='\t')
 
 
-
-
-
 ## Make target file/Shiny app data-mouse organ example.
 
 # Select "E-MTAB-2801".
@@ -84,7 +81,6 @@ expr.mus <- cbind(expr.mus, row.met[, 'metadata', drop = FALSE])
 
 # colnames(expr.mus) <- gsub("_", ".", colnames(expr.mus))
 write.table(expr.mus, 'expr_mouse.txt', col.names=TRUE, row.names=TRUE, sep='\t')
-
 
 
 ## Make target file/Shiny app data-chicken organ example.
@@ -144,31 +140,32 @@ title.factor <- sub('_rep\\d+$', '', titles)
 sam <- gsub('(root|shoot)(_)(control|hypoxia)(_.*)', '\\1\\4', title.factor) 
 con <- gsub('(root|shoot)(_)(control|hypoxia)(_.*)', '\\3', title.factor) 
 target.geo <- data.frame(col.name=col.name, titles=titles, row.names=2, samples=sam, conditions=con, stringsAsFactors=FALSE) 
-write.table(target.geo, 'target_geo.txt', col.names=TRUE, row.names=TRUE, sep='\t')
+write.table(target.geo, 'target_arab.txt', col.names=TRUE, row.names=TRUE, sep='\t')
 
+# Annotation in ath1121501.db.
 library(ath1121501.db); library(genefilter)
-# Gene annotation.
 ann <- data.frame(SYMBOL=sapply(contents(ath1121501SYMBOL), paste, collapse=";"), DESC=sapply(contents(ath1121501GENENAME), paste, collapse=";"), stringsAsFactors=FALSE)
 ann <- subset(ann, !grepl("AFFX|s_at|a_at|x_at|r_at", rownames(ann)) & !duplicated(SYMBOL) & SYMBOL!="NA")
 
 # Optional: data frame for gene metadata.
 mat <- assay(se); colnames(mat) <- rownames(target.geo)
 int <- intersect(rownames(mat), rownames(ann))
-mat <- mat[int, ]; rownames(mat) <- make.names(ann[int, 'SYMBOL'])
-ffun <- filterfun(pOverA(0.03, 6), cv(0.25, 100))
-filtered <- genefilter(mat, ffun); mat <- mat[filtered, ]
-target.sh <- mat
-write.table(target.sh, 'target_arab.txt', col.names=TRUE, row.names=TRUE, sep='\t')
+mat <- mat[int, ]; rdat <- rowData(se)[int, ]
+rownames(mat) <- rownames(rdat) <- make.names(ann[int, 'SYMBOL'])
+se.sh <- SummarizedExperiment(assays=list(expr=mat), rowData=rdat, colData=target.geo)
+# ffun <- filterfun(pOverA(0.03, 6), cv(0.25, 100))
+# filtered <- genefilter(mat, ffun); mat <- mat[filtered, ]
+# target.sh <- mat
+# write.table(target.sh, 'target_arab.txt', col.names=TRUE, row.names=TRUE, sep='\t')
 
-colData(se.sh) <- DataFrame(target.sh)
 # Average the sample-condition replicates.
 se.aggr.sh <- aggr_rep(data=se.sh, sam.factor='samples', con.factor='conditions', aggr='mean')
-se.fil.sh <- filter_data(data=se.aggr.sh, sam.factor='samples', con.factor='conditions', pOA=c(0.03, 6), CV=c(0.29, 100), dir=NULL)
+se.fil.sh <- filter_data(data=se.aggr.sh, sam.factor='samples', con.factor='conditions', pOA=c(0.03, 6), CV=c(0.25, 100), dir=NULL)
 # Data matrix.
 expr.sh <- assay(se.fil.sh)
 # colnames(expr.sh) <- gsub("_", ".", colnames(expr.sh))
-expr.sh <- cbind.data.frame(expr.sh, ann=rowData(se.fil.sh)[, 'Target.Description'], stringsAsFactors=FALSE)
-expr.sh <- expr.sh <- expr.sh[c(9, 1:8, 10:372), ]
+expr.sh <- cbind.data.frame(expr.sh, metadata=rowData(se.fil.sh)[, 'Target.Description'], stringsAsFactors=FALSE)
+# expr.sh <- expr.sh[c(9, 1:8, 10:230), ]
 write.table(expr.sh, 'expr_arab.txt', col.names=TRUE, row.names=TRUE, sep='\t')
 
 

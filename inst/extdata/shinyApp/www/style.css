@@ -109,6 +109,13 @@ div.form-group.has-feedback {
   z-index:0 !important
 }
 
+
+/*Data table.*/
+
+table#DataTables_Table_0 {
+  position:sticky !important
+}
+
 /*Content of dropdown menu.*/
 #dropdown-menu-shmAll-scaleDrop, #dropdown-menu-shmAll-scroDrop, #dropdown-menu-shmAll-colDrop {
   width:500px !important

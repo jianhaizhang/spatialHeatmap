@@ -66,14 +66,14 @@ upload_ui <- function(id) {
    navbarPage('', 
      tabPanel(title="Gallary", value='gallery',
       fluidRow(
-        column(4, id='brainHum', style='text-align:center', uiOutput(ns('brain.hum')), tags$img(width='97%', src="image/brain_hum.png")),
-        column(4, id='mouse', style='text-align:center', uiOutput(ns('mouse')), tags$img(width='97%', src="image/mouse.png")),
-        column(4, id='chicken', style='text-align:center', uiOutput(ns('chicken')), tags$img(width='97%', src="image/chicken.png"))
+        column(4, id='brainHum', style='text-align:center', uiOutput(ns('brain.hum'))),
+        column(4, id='mouse', style='text-align:center', uiOutput(ns('mouse'))),
+        column(4, id='chicken', style='text-align:center', uiOutput(ns('chicken')))
       ),
       fluidRow(
-        column(4, id='organArab', style='text-align:center', uiOutput(ns('organ.arab')), tags$img(width='97%', src="image/organ_arab.png")),
-        column(4, id='shootArab', style='text-align:center', uiOutput(ns('shoot.arab')), tags$img(width='97%', src="image/shoot_arab.png")),
-        column(4, id='rootArab', style='text-align:center', uiOutput(ns('root.arab')), tags$img(width='97%', src="image/root_arab.png"))
+        column(4, id='organArab', style='text-align:center', uiOutput(ns('organ.arab'))),
+        column(4, id='shootArab', style='text-align:center', uiOutput(ns('shoot.arab'))),
+        column(4, id='rootArab', style='text-align:center', uiOutput(ns('root.arab')))
       )
      ), # tabPanel(title="Gallary",
      tabPanel(title="Data & aSVGs", value='datSVG',
@@ -131,7 +131,7 @@ shm_ui <- function(id, data.ui, search.ui) {
     # width = ifelse(input$lgdTog %% 2 == 0, 9, 12), 
       # boxPad(color = NULL, title = NULL, solidHeader = FALSE, 
     # Append matrix heatmap, network with SHMs.    
-    do.call(tabsetPanel, append(list(type = "pills", id='shmMhNet', selected = "shm1",
+    do.call(tabsetPanel, append(list(type="pills", id=ns('shmMhNet'), selected="shm1",
     # tabsetPanel(type = "pills", id=NULL, selected="shm1",
   
       tabPanel(title="Image", value='shm1',
@@ -221,14 +221,14 @@ shm_ui <- function(id, data.ui, search.ui) {
       #) # navbarMenu
       ), # navbarPage 
  
-    verbatimTextOutput(ns('msg.shm')), uiOutput(ns('shm.ui')), data.ui
+    verbatimTextOutput(ns('msgSHM')), uiOutput(ns('shm.ui')), data.ui
     ), # tabPanel 
 
-      tabPanel(title='Interactive', value='anm',
-      navbarPage('',
-      tabPanel('Plot',
+      tabPanel(title='Interactive', value='interTab',
+      navbarPage('', id=ns('interNav'),
+      tabPanel('Plot', value='interPlot',
         fluidRow(splitLayout(cellWidths=c("1%", "13%", '5%', "80%"), '',
-        actionButton(ns("ggly.but"), "Click to show/update", icon=icon("refresh")), '',
+        actionButton(ns("ggly.but"), "Click to show/update", icon=icon("refresh"), style="color:#fff; background-color:#499fe9;border-color:#2e6da4"), '',
         uiOutput(ns('sld.fm'))
         )),
         # The input ids should be unique, so no legend plot parameters are added here.
@@ -242,12 +242,10 @@ shm_ui <- function(id, data.ui, search.ui) {
          )), textOutput(ns('tran'))
       )) # navbarPage
       ),
-
-
-      tabPanel(title='Video', value='shm3',
-      navbarPage('',
-      tabPanel('Video',
-      actionButton(ns("vdo.but"), "Click to show/update", icon=icon("refresh")),
+      tabPanel(title='Video', value='vdoTab',
+      navbarPage('', id=ns('vdoNav'),
+      tabPanel('Video', value='video',
+      actionButton(ns("vdo.but"), "Click to show/update", icon=icon("refresh"), style="color:#fff; background-color:#499fe9;border-color:#2e6da4"),
       fluidRow(splitLayout(cellWidths=c("1%", "98%", "1%"), "", uiOutput(ns('video')), ""))
       ),
       tabPanel("Parameters",
@@ -278,49 +276,63 @@ shm_ui <- function(id, data.ui, search.ui) {
 network_ui <- function(id) {
   ns <- NS(id)
   list(
-  tabPanel("Matrix Heatmap", id = 'mhm', icon=,
-      fluidRow(splitLayout(cellWidths=c('1%', '15%', '1%', '10%', '1%', '20%', '1%', '7%', '1%', '20%', '1%', '10%'), '', 
-      radioButtons(inputId=ns('measure'), label="Measure:", choices=c('correlation', 'distance'), selected='correlation', inline=TRUE), '', 
-      radioButtons(inputId=ns("cor.abs"), label="Cor.absolute:", choices=c('No', 'Yes'), selected='No', inline=TRUE), '', 
-      radioButtons(inputId=ns("thr"), label="Select by:", choices=c('proportion'='p', 'number'='n', 'value'='v'), selected='p', inline=TRUE), '',
-      numericInput(inputId=ns('mhm.v'), label='Cutoff: ', value=0.2, min=-Inf, max=Inf, step=NA, width=NULL), '',
-      radioButtons(inputId=ns("mat.scale"), label="Scale by:", choices=c("No", "Column", "Row"), selected='No', inline=TRUE), '',
-      # radioButtons(inputId="mhm.but", label="Show plot:", choices=c("Yes", "No"), selected='No', inline=TRUE)
-      actionButton(ns("mhm.but"), "Update", icon=icon("refresh"), style="color: #fff; background-color:purple;border-color: #2e6da4")
-      )),
-      plotlyOutput(ns("HMly"))
-  ),
-  tabPanel("Interactive Network", id = 'net', icon=, 
-      fluidRow( # If column widths are not integers, columns are vertically aligned.
-      column(2, offset=0, style='padding-left:15px; padding-right:0px; padding-top:0px; padding-bottom:5px',
-      textInput(ns("color.net"), "Color scheme:", 'yellow,orange,red', placeholder='Eg: yellow,orange,red', width=150), actionButton(ns("col.but.net"), "Go", icon=icon("refresh"))
-      ),
-      column(1, offset=0, style='padding-left:10px; padding-right:0px; padding-top:0px; padding-bottom:5px',
-      selectInput(inputId=ns("net.type"), label="Network type:", choices=c('signed', 'unsigned', 'signed hybrid', 'distance'), selected='signed', width=100)
-      ),
-      column(1, offset=0, style='padding-left:10px; padding-right:0px; padding-top:0px; padding-bottom:5px',
-      numericInput(ns("min.size"), "Minmum module size:", value=15, min=15, max=5000, width=150)
-      ),
-      column(2, offset=0, style='padding-left:10px; padding-right:0px; padding-top:0px; padding-bottom:5px',
-      tags$span(style="color:brown;font-weight:NULL", selectInput(ns("gen.sel"), "Select a target gene:", c("None"), selected='None', width=150))
-      ),
-      column(2, offset=0, style='padding-left:10px; padding-right:0px; padding-top:0px; padding-bottom:5px',
-      selectInput(ns("ds"),"Module splitting sensitivity level:", 3:2, selected=3, width=170)
-      ),
-      column(1, offset=0, style='padding-left:10px; padding-right:0px; padding-top:0px; padding-bottom:5px',
-      selectInput(ns("adj.in"), "Adjacency threshold (the smaller, the more edges):", sort(seq(0, 1, 0.002), decreasing=TRUE), selected=1, width=200)
-      ),
-      column(2, offset=0, style='padding-left:10px; padding-right:0px; padding-top:0px; padding-bottom:5px',
-      tags$span(style="color:brown", numericInput(ns("max.edg"), "Maximun edges (too many edges may crash the app):", value=50, min=1, max=500, width=200)),
-      htmlOutput(ns("edge"))
-      ),
-      column(1, offset=0, style='padding-left:10px; padding-right:0px; padding-top:0px; padding-bottom:5px',
-      actionButton(ns("cpt.nw"), "Update", icon=icon("refresh"), style="color: #fff; background-color:purple;border-color: #2e6da4")
+  tabPanel(id='cluster', "Cluster", value='clus', icon=NULL,
+      fluidRow(splitLayout(style='margin-top:3px;margin-bottom:3px', cellWidths=c('1%', '15%', '1%', '15%'), '', 
+      dropdownButton(inputId=ns('dpbMea'), label='Similarity/Dissimilarity', circle=FALSE, icon=NULL, status='primary', inline=FALSE, width=250, 
+      radioButtons(inputId=ns('measure'), label="Measure", choices=c('Correlation', 'Distance'), selected='Correlation', inline=TRUE, width='100%'), 
+      div(title='Only applicable when "correlation" is selected.',
+      radioButtons(inputId=ns("cor.abs"), label="Absolute correlation", choices=c('No', 'Yes'), selected='No', inline=TRUE, width='100%')
       )
+      ), '',
+      dropdownButton(inputId=ns('dpbThr'), label='Subset', circle=FALSE, icon=NULL, status='primary', inline=FALSE, width=400,
+        div(title='Subset the most similar neighbors at a cutoff by top proportion, specific number, or similarity/dissimilairty value.',
+        radioButtons(inputId=ns("thr"), label="By", choices=c('Proportion'='p', 'Number'='n', 'Similarity/Dissimilarity'='v'), selected='p', inline=TRUE, width='100%'),
+        numericInput(inputId=ns('mhm.v'), label='Cutoff', value=0.2, min=-Inf, max=Inf, step=0.1, width='100%')
+        )
+      )
+      )),
+      bsTooltip(id=ns('dpbMea'), title='Measure to subset the nearest neighbors for the target gene (s) in spatial heatmaps.', placement = "top", trigger = "hover"),
+      navbarPage('', id=ns('clusNav'),
+      tabPanel(strong('Matrix Heatmap (MHM)'), value='mhmPlot', 
+      actionButton(ns("mhm.but"), "Click to show/update", icon=icon("refresh"), style="color: #fff; background-color:#499fe9;border-color:#2e6da4"), plotlyOutput(ns("HMly"))
       ),
-      fluidRow(splitLayout(cellWidths=c("1%", "6%", "91%", "2%"), "", plotOutput(ns("bar.net")), visNetworkOutput(ns("vis")), ""))
-      ) # tabPanel("Interactive Network"
+      tabPanel('Parameter (MHM)', value='mhmPar',
+      fluidRow(splitLayout(cellWidths=c('1%', '20%'), '', 
+      radioButtons(inputId=ns("mat.scale"), label="Scale by", choices=c("No", "Column", "Row"), selected='No', inline=TRUE)
+      # radioButtons(inputId="mhm.but", label="Show plot:", choices=c("Yes", "No"), selected='No', inline=TRUE)
+      ))
+      ), # tabPanel('Plot', value='mhmPar'
+    tabPanel(strong("Interactive Network (NET)"), value='netPlot', icon=NULL, 
+      actionButton(ns("cpt.nw"), "Click to show/update", icon=icon("refresh"), style="color: #fff; background-color:#499fe9;border-color:#2e6da4"),
+      fluidRow(splitLayout(cellWidths=c("1%", "3%", "94%", "2%"), "", plotOutput(ns("bar.net")), visNetworkOutput(ns("vis")), ""))
+    ),
+    tabPanel("Parameter (NET)", value='netPar', icon=NULL, 
+      #fluidRow( # If column widths are not integers, columns are vertically aligned.
+      fluidRow(splitLayout(style='margin-top:3px;margin-bottom:3px', cellWidths=c('0.5%', '9%', '0.5%', '10%', '0.5%', '14%', '0.5%', '15%', '0.5%', '11%'), '',
+      dropdownButton(inputId=ns('dpwNetTar'), label='Target gene', circle=FALSE, icon=NULL, status='primary', inline=FALSE, width=250,
+        selectInput(ns("gen.sel"), "", c("None"), selected='None', width='100%')
+      ), '',
+      dropdownButton(inputId=ns('dpwNetType'), label='Network type', circle=FALSE, icon=NULL, status='primary', inline=FALSE, width=250, 
+      selectInput(inputId=ns("net.type"), label="", choices=c('signed', 'unsigned', 'signed hybrid', 'distance'), selected='signed', width='100%')
+      ), '',
+      dropdownButton(inputId=ns('dpwModSize'), label='Module size/splitting', circle=FALSE, icon=NULL, status='primary', inline=FALSE, width=250, 
+        numericInput(ns("min.size"), "Min module size", value=15, min=15, max=5000, width='100%'),
+        selectInput(ns("ds"), HTML("Module splitting sensitivity level <br/> (Larger value results in more <br/> modules with smaller sizes)"), 3:2, selected=3, width='100%')
+      ), '',
+      dropdownButton(inputId=ns('dpwNetAdj'), label='Adjacency/edges', circle=FALSE, icon=NULL, status='primary', inline=FALSE, width=300,
+        selectInput(ns("adj.in"), HTML("Adjacency threshold <br/> (the smaller, the more edges)"), sort(seq(0, 1, 0.002), decreasing=TRUE), selected=1, width='100%'),
+        numericInput(ns("max.edg"), HTML("Maximun edges <br/> (too many edges may crash the app)"), value=50, min=1, max=500, width='100%'), htmlOutput(ns("edge"))
+      ), '',
+      dropdownButton(inputId=ns('dpwColNet'), label='Color key', circle=FALSE, icon=NULL, status='primary', inline=FALSE, width=300,
+      fluidRow(splitLayout(cellWidths=c('1%', '60%', '35%'), '',
+      textInput(ns("color.net"), "Color scheme", 'yellow,orange,red', placeholder='Eg: yellow,orange,red', width='100%'),
+      actionButton(ns("col.but.net"), "Confirm", icon=icon("refresh"), style='margin-top:24px'))) # fluidRow(splitLayout
+      )
+      )) # fluidRow(splitLayout
+     )
+    ) # navbarPage('', id=ns('mhmNav')
   )
+  ) # list
 }
 
 

@@ -111,7 +111,7 @@ legend:
 - label.size:2.5
 - aspect.ratio:1
 mhm:
-- measure:correlation
+- measure:Correlation
 - cor.absolute:No
 - select.by:p
 - cutoff:0.2
