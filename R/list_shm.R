@@ -50,8 +50,9 @@ gg_shm <- function(gene, con.na=TRUE, geneV, coord, ID, cols, tis.path, lis.rema
     # Assign default colours to each path.
     g.col <- rep(NA, length(tis.path)); names(g.col) <- tis.df
     if (lgd==FALSE) {
-      # Keep text colors in the main SHM.
-      g.col <- legend.col[grep('_LGD$', names(legend.col), ignore.case=TRUE)][sub('__\\d+$', '', names(g.col))]
+      # Keep global text/legend colors in the main SHM. No change on the local legend colors so they are all NA. The line widths of local legend will be set 0.
+      g.col <- legend.col[grep('_globalLGD$', names(legend.col))][sub('__\\d+$', '', names(g.col))]
+
       names(g.col) <- tis.df # Resolves legend.col['tissue'] is NA by default. 
       # Un-related aSVG mapped to data.
       if (rematch.dif.svg) {
@@ -153,6 +154,10 @@ gg_shm <- function(gene, con.na=TRUE, geneV, coord, ID, cols, tis.path, lis.rema
     lis.v <- lapply(col.na1, function(i) { rep(gene[df0$gene[1], i], tab0[i][[1]]) } )
     df0$value <- unlist(lis.v) 
     coord[idx1, ] <- df0; coord$line.size <- coord$line.size+line.size
+    if (lgd==FALSE) { # Set line size as 0 for local legends. 
+      idx.local <- grepl('_localLGD$|_localLGD__\\d+$', coord$tissue)
+      coord$line.size[idx.local] <- 0
+    }
     # If "data" is not in ggplot(), g$data slot is empty. x, y, and group should be in the same aes().
     g <- ggplot(data=coord, aes(x=x, y=y, value=value, group=tissue, text=paste0('feature: ', feature, '\n', 'value: ', value)), ...)+geom_polygon(aes(fill=tissue), color=line.color, size=coord$line.size, linetype='solid')+scl.fil+theme(axis.text=element_blank(), axis.ticks=element_blank(), panel.grid=element_blank(), panel.background=element_rect(fill="white", colour="grey80"), plot.title=element_text(hjust=0.5, size=sub.title.size), legend.box.margin=margin(-20, 0, 2, 0, unit='pt'), plot.margin=margin(0.005, 0.005, 0.005, 0.005, "npc"), aspect.ratio = 1/aspect.ratio)+labs(x="", y="")+scale_y_continuous(expand=c(0.01, 0.01))+scale_x_continuous(expand=c(0.01, 0.01))+lgd.par
     # The aspect ratio should not be calculated by margins that are inferred from original width/height (mar.lb <- (1-w.h/w.h.max*0.99)/2). It works on single plot, but will squeeze the subplots in arrangeGrob/grid.arrange. Rather the "aspect ratio" in theme should be used, which will not squeeze subplots.

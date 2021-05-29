@@ -22,7 +22,9 @@ vdo.url <- '?_inputs_&upl-fileIn=%22FIELD%22&shmAll-val.lgd.key=0.03&shmAll-vdo.
 url_val <- function(na, lis.url) {
   # if (!exists('lis.url')) return('null')
   if (!na %in% names(lis.url$par)) return('null')
-  val <- ifelse(length(lis.url$par)==0, 'null', lis.url$par[[na]])
+  if (length(lis.url$par)==0) val <- 'null' else val <- lis.url$par[[na]]
+  # In "ifelse", the length of returned value is same with the first argument.
+  # val <- ifelse(length(lis.url$par)==0, 'null', lis.url$par[[na]])
   gsub('\\"', '', val)
 }
 

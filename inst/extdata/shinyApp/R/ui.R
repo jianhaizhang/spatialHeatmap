@@ -15,6 +15,15 @@ js <- "function openFullscreen(elem) {
   }
 }"
 
+label <- 'Search by gene IDs (e.g. ENSMUSG00000000031) or symbols'
+search_ui <- function(id, lab=label) {
+  ns <- NS(id) 
+  fluidRow(splitLayout(cellWidths=c('1%', '13%', '1%', '85%'), '',
+  radioButtons(inputId=ns('sch.mode'), label='Search mode', choices=c('Single', 'Multiple'), selected='Multiple', inline=TRUE), '',
+  uiOutput(ns('sch.box'))
+  ))
+}
+
 
 data_ui <- function(id, deg=FALSE) {
   ns <- NS(id)
@@ -374,19 +383,6 @@ deg_ui <- function(id) {
   )
 }
 
-label <- 'Search by gene IDs (e.g. ENSMUSG00000000031) or symbols'
-search_ui <- function(id, lab=label) { 
-  ns <- NS(id)
-  if (0) fluidRow(splitLayout(cellWidths=c('1%', '80%', '0.1%', '2%'), '', 
-  selectizeInput(ns('ids.in'), label, choices=NULL, multiple = TRUE, options=list(placeholder = 'Partial matching is enabled.')), '',
-actionButton(ns("ids.but"), "Confirm selection", style='margin-top: 24px;')
-  ))
-  if (0) list(
-  column(11, selectizeInput(ns('ids.in'), label, choices=NULL, multiple = TRUE, options=list(placeholder = 'Partial matching is enabled.'))),
-  column(1, actionButton(ns("ids.but"), "Confirm selection", style='margin-top: 24px;'))
-  )
-  if (1) selectizeInput(ns('ids.in'), p(lab, actionButton(ns("ids.but"), "Confirm selection", style='margin-top:2px;margin-bottom:-10px;margin-left:20px;padding-top:2px;padding-bottom:2px;background-color:#ddd;')), choices=NULL, multiple = TRUE, options=list(placeholder = 'Partial matching is enabled.'))
-}
 
 ui <- function(request) {
   dashboardPage(

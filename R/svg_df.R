@@ -21,7 +21,7 @@
 #' @importFrom parallel detectCores mclapply
 
 svg_df <- function(svg.path, feature=NULL, cores) {
-
+  # save(svg.path, feature, cores, file='sfc')
   # Make sure the style is correct. If the stroke width is not the same across polygons such as '0.0002px', '0.216px', some stroke outlines cannot be recognised by 'PostScriptTrace'. Then some polygons are missing. Since the ggplot is based on 'stroke' not 'fill'.
   options(stringsAsFactors=FALSE)
   doc <- read_xml(svg.path); spa <- xml_attr(doc, 'space')
@@ -130,10 +130,13 @@ svg_df <- function(svg.path, feature=NULL, cores) {
   #}
   #if (length(tit)!=length(nodeset)) return('some shape(s) are missing!')
 
-  # Move matching tissues on top of non-matching tissues.
+  # Move non-matching tissues on top of matching tissues in the data frame.
   idx.match <- sub('__\\d+$', '', df$tissue) %in% feature
   # In geom_polygon, the order to plot tissues is the factor level. If a tissue is the 1st according to factor level but is last in the coordinate data frame, it will be plotted first, and the 2nd tissue in the level can cover it if all tissues are colored.
-  df <- rbind(df[idx.match, ], df[!idx.match, ])
+  df <- rbind(df[!idx.match, ], df[idx.match, ])
+  # Place some shapes on the top layer on purpose.
+  idx.top <- grepl('_TOP$|_TOP__\\d+$', df$tissue)
+  df <- rbind(df[!idx.top, ], df[idx.top, ])
   df$tissue <- factor(df$tissue, levels=unique(df$tissue))
   # Each entry in tis.path is represented by many x-y pairs in coordinate, and tissues in coord are tissues in tis.path appended '__\\d+$'.
   # Update tis.path.
@@ -145,7 +148,6 @@ svg_df <- function(svg.path, feature=NULL, cores) {
   lis <- list(df=df, tis.path=tis.path, fil.cols=fil.cols, w.h = w.h, aspect.r = aspect.r, df.attr=df.attr); return(lis)
 
 }
-
 
 #' Extract children, id, element name from outline and tissue layer#' @param doc The document of SVG
 #' @keywords Internal

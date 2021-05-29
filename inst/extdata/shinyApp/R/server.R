@@ -17,14 +17,9 @@ server <- function(input, output, session) {
     lis.url$par <- parseQueryString(hos.port$url_search)
     hos.port1 <- paste0(hos.port$url_hostname, ':', hos.port$url_port, hos.port$url_pathname)
     lis.url$hos.port <- hos.port1
+    lis.url$url_search <- hos.port$url_search
     # cat('Parameters in URL:', (names(lis.url$par)), '\n')
    })
-  observeEvent(lis.url, {
-    url.val <- url_val('sear-ids.in', lis.url)
-    if (url.val[1]!='null') { 
-      lis.url$par[['sear-ids.in']] <- strsplit(gsub('^\\[|\\]$', '', url.val), ',')[[1]]
-    }
-  })
 
     #observeEvent(input$show, {
     observe({
@@ -58,13 +53,29 @@ server <- function(input, output, session) {
   })
   })
 
+  url.id <- reactiveValues()
   mods <- reactiveValues(upload=NULL, search=NULL, data=NULL, shm=NULL)
 
-search_server <- function(id, ids, cfg, lis.url, dat.mod.lis, session) {
+search_server <- function(id, ids, cfg, lis.url, url.id, dat.mod.lis, session) {
   moduleServer(id, function(input, output, session) {
     cat('ID search box ... \n')
-    # In bookmarked url, if there is a comma in gene ID and annotation combination, the combined ID and annotation will be broken at the comma, resulting two strings. 
-    url.val <- eventReactive(lis.url, { lis.url$par[['sear-ids.in']] })
+    observeEvent(session$clientData$url_search, {
+      id.sch.sgl <- url_val('sear-sch.sgl', lis.url)
+      # lis <- reactiveValuesToList(lis.url)
+      # In bookmarked url of single search box, if there is a comma in gene ID and annotation combination, the combined ID and annotation will be broken at the comma, resulting two strings.
+      if (id.sch.sgl[1]!='null') {
+        # Multiple ID-discs are concatenated and separated by comma. E.g [ID1 disc1,ID2 disc2].
+        id.sch.sgl <- unlist(strsplit(gsub('^\\[|\\]$', '', id.sch.sgl), ','))
+      }
+      url.id$sch.sgl <- lis.url$par[['sear-sch.sgl']] <- id.sch.sgl
+      url.id$sch.mul <- lis.url$par[['sear-sch.mul']] <- unlist(strsplit(gsub(' |,', '__', url_val('sear-sch.mul', lis.url)), '__'))
+      cat('Parsing IDs from URL ... done! \n')
+    })
+    if (0) url.val <- eventReactive(lis.url, { 
+    list(sch.sgl.id=lis.url$par[['sear-sch.sgl']], 
+    sch.mul.id=lis.url$par[['sear-sch.mul']])
+
+    })
     geneIn <- reactiveValues(lis=NULL)
     observe({
       if (is.null(dat.mod.lis)) return()
@@ -81,32 +92,86 @@ search_server <- function(id, ids, cfg, lis.url, dat.mod.lis, session) {
       id <- id[id %in% rownames(df.aggr.tran)]
       if (length(id)==0) id <- rna[1]; pre.id$id <- id
     })
-    observe({
+    sch.sgl <- reactiveValues(cho=NULL, sel=NULL)
+    observe({ # Accounts for IDs in URL for single search box.
       if (is.null(geneIn$lis)) return()
       # geneIn <- dat.mod.lis$geneIn; gen.lis <- geneIn()
       df.aggr.tran <- geneIn$lis$df.aggr.tran
       rna <- rownames(df.aggr.tran); df.met <- geneIn$lis$df.met
       cho <- paste0(rna, ' ', ifelse(rep('metadata' %in% colnames(df.met), length(rna)), df.met[, 'metadata'], ''))
       id <- pre.id$id
-      # print(list('id', id, url.val()))
-      if (!is.null(url.val())) if (url.val()[1]!='null') {
+      if (!is.null(url.id$sch.sgl)) if (url.id$sch.sgl[1]!='null') {
         # Only obtain the ID, no annotation.
-        sel <- url.val(); sel <- sub(' .*', '', sel)
+        sel <- sub(' .*', '', url.id$sch.sgl)
         id <- sel[sel %in% rna]
       }
       sel <- paste0(id, ' ', df.met[id, 'metadata'])
-      updateSelectizeInput(session, 'ids.in', choices=cho, selected=sel, server=TRUE)
+      sch.sgl$cho <- cho; sch.sgl$sel <- sel
+      # updateSelectizeInput(session, 'sch.sgl', choices=cho, selected=sel, server=TRUE)
     })
+  output$sch.box <- renderUI({
+    ns <- session$ns; sch.mod <- input$sch.mode
+    style <- 'margin-top:2px;margin-bottom:-10px;margin-left:20px;padding-top:2px;padding-bottom:2px;background-color:#ddd;'
+    lab.sgl <- 'Search by single gene ID (e.g. ENSMUSG00000000031) or symbols'
+    lab.mul <- 'Search by single or multiple gene IDs (e.g. ENSMUSG00000000031 ENSMUSG00000000093)'
+    mul.val <- pre.id$id
+    if (!is.null(url.id$sch.mul)) if (url.id$sch.mul[1]!='null') mul.val <- url.id$sch.mul
+    mul.val <- paste0(mul.val, collapse=',')
+    # At the very beginning, two search buttons and two search boxes are all NULL, since they are not rendered. When toggling between search modes, one of two buttons is reverted to 0 not NULL, while the search content is reverted to NULL then strings.
+    if (sch.mod=='Single') selectizeInput(ns('sch.sgl'), p(lab.sgl, actionButton(ns("sch.sgl.but"), "Confirm selection", style=style)), choices='none', selected='none', multiple = TRUE, options=list(placeholder = 'Supports partial matching.')) else if (sch.mod=='Multiple') textInput(inputId=ns('sch.mul'), p(lab.mul, actionButton(ns("sch.mul.but"), "Confirm selection", style=style)), value=mul.val, placeholder='Muliple IDs must ONLY be separated by space or comma.', width='100%')
+  })
   rna <- reactiveValues(val=NULL)
-  observe({
+  observe({ # rna$val: accounts for filtered data.
     if (is.null(geneIn$lis)) return()
     rna$val <- rownames(geneIn$lis$df.aggr.tran) 
   })
+  upd.sel <- reactiveValues()
   observe({
-    if (is.null(geneIn$lis)) return()
-    rna$val
-    ids$sel <- sub(' .*', '', input$ids.in); ids$but <- input$ids.but;
-  }); cat('Done! \n')
+    if (is.null(input$sch.sgl)) return()
+    pars <- list(sch.sgl$cho, sch.sgl$sel, input$sch.mode, rna$val)
+    upd.sel$pars <- pars
+  })
+  observeEvent(upd.sel$pars, {
+    updateSelectizeInput(session, 'sch.sgl', choices=sch.sgl$cho, selected=sch.sgl$sel, server=TRUE)
+  }) 
+  # The button controls all IDs in the downstream SHMs.
+  observeEvent(list(input$sch.sgl.but, rna$val), { 
+    cat('Single search IDs ... \n')
+    if (is.null(input$sch.sgl)) return()
+    if (is.null(geneIn$lis)|'none' %in% input$sch.sgl) return()
+    sel <- sub(' .*', '', input$sch.sgl)
+    # validate: holds on til condition is met, can address issues in execution orders.
+    validate(need(all(sel %in% rna$val), ''))
+    ids$sel <- sel; ids$but.sgl <- input$sch.sgl.but
+    cat('Done! \n')
+  })
+
+  observe({ # On-start IDs in single search mode.
+    if (length(ids$sel %in% rna$val)>0|is.null(input$sch.sgl)) return()
+    if (input$sch.sgl=='none') return()
+    ids$sel <- sub(' .*', '', input$sch.sgl); ids$but.sgl <- input$sch.sgl.but
+  })
+  # The button controls all IDs in the downstream SHMs.
+  observeEvent(list(input$sch.mul.but, rna$val), {
+    cat('Multiple search IDs ... \n')
+    if (is.null(rna$val)|!is.character(input$sch.mul)) return()
+    if (input$sch.mul=='') sel <- pre.id$id else {
+      gens <- strsplit(gsub(' |,', '__', input$sch.mul), '__')[[1]]
+      sel <- gens[tolower(gens) %in% tolower(rna$val)]
+      if (length(sel)==0) sel <- pre.id$id
+    }; ids$sel <- sel; ids$but.mul <- input$sch.mul.but
+    cat('Done! \n') 
+  })
+ 
+  observe({ # On-start IDs in multiple search mode.
+    sch.mul <- input$sch.mul
+    if (length(ids$sel %in% rna$val)>0|is.null(sch.mul)) return()
+    if (sch.mul=='') return()
+    gens <- strsplit(gsub(' |,', '__', sch.mul), '__')[[1]]
+    ids$sel <- gens[tolower(gens) %in% tolower(rna$val)]
+    ids$but.mul <- input$sch.mul.but
+  })
+
   return(list(ids=ids))
   onBookmark(function(state) { state })
   })
@@ -573,8 +638,8 @@ data_server <- function(id, ipt, cfg, sch, lis.url, ids, deg = FALSE, session) {
   # observe({ ipt0$url.but <- input$url.but })
   mods$data <- dat.mod.lis <- data_server('dat', ipt, cfg, sch, lis.url, ids, deg=FALSE)
 
-mods$search <- sch.mod.lis <- search_server('sear', ids, cfg, lis.url, dat.mod.lis)
-mods$search <- sch.mod.lis <- search_server('landing', ids, cfg, lis.url, dat.mod.lis)
+mods$search <- sch.mod.lis <- search_server('sear', ids, cfg, lis.url, url.id, dat.mod.lis)
+mods$search <- sch.mod.lis <- search_server('landing', ids, cfg, lis.url, url.id, dat.mod.lis)
  
 network_server <- function(id, ipt, cfg, dat.mod.lis, shm.mod.lis, sch.mod.lis, session) {
   
@@ -1014,7 +1079,7 @@ network_server <- function(id, ipt, cfg, dat.mod.lis, shm.mod.lis, sch.mod.lis, 
 }
 # network_server('net', ipt, cfg, dat.mod.lis, shm.mod.lis)
 
-shm_server <- function(id, ipt, cfg, sch, lis.url, dat.mod.lis, sch.mod.lis, session) {  
+shm_server <- function(id, ipt, cfg, sch, lis.url, url.id, dat.mod.lis, sch.mod.lis, session) {  
   moduleServer(id, function(input, output, session) {
   # The reactive type in and outside module is the same: sear is a reactiveValue in and outside module; geneIn is reactive expression in and outside module. "geneIn()" is accessing the content of a reactive expression, and loses the "reactive" attribute.
   # As long as the content of reactiveValues (col.reorder$col.na.re) is not accessed, the operation does not need to be inside reactive environment (observe).
@@ -1046,6 +1111,7 @@ shm_server <- function(id, ipt, cfg, sch, lis.url, dat.mod.lis, sch.mod.lis, ses
     cat('New file:', ipt$fileIn, '\n')
     if (length(ids$sel)==0) return()
     if (ids$sel[1]==''|init$but>0) return()
+    if (!all(ids$sel %in% rna.fil$val)) return()
     # Avoid multiple selected rows from last input$fileIn. Must be behind gID$geneSel. 
     if (length(ids$sel)>1 & is.null(lis.url$par)) return()
     gID$geneSel <- ids$sel; gID$all <- gID$new <- NULL
@@ -1054,14 +1120,15 @@ shm_server <- function(id, ipt, cfg, sch, lis.url, dat.mod.lis, sch.mod.lis, ses
     init$but <- 1
     cat('New ID:', gID$new, 'Selected ID:', gID$geneSel, 'All ID:', gID$all, '\n')
   })
-  observeEvent(list(ids$but), { # Selected IDs after the landing page.
+  observeEvent(list(ids$sel), { # Selected IDs after the landing page.
     cat('Confirm selection ... \n')
     # Ensure executions only after the landing page.
     if (init$but==0|init$new==1) return()
-    if (is.null(ids$but)|length(ids$sel)==0|ids$sel[1]==''|init$but==0) return()
+    if (is.null(ids$but.sgl) & is.null(ids$but.mul)) return()
+    if (length(ids$sel)==0|ids$sel[1]=='') return()
     gID$geneSel <- unique(ids$sel)
     gID$new <- setdiff(gID$geneSel, gID$all); gID$all <- c(gID$all, gID$new) 
-    cat('New ID:', gID$new, 'Selected ID:', gID$geneSel, 'All ID:', gID$all, '\n')
+    cat('New ID:', gID$new, 'Selected ID:', gID$geneSel, 'All ID:', gID$all, '\n'); cat('Done! \n')
     # if (any(is.na(gID$geneSel))) gID$geneSel <- "none"
   })
 
@@ -1328,8 +1395,8 @@ shm_server <- function(id, ipt, cfg, sch, lis.url, dat.mod.lis, sch.mod.lis, ses
   shm <- reactiveValues(grob.all=NULL, grob.all1=NULL, gg.all=NULL, gg.all1=NULL, lgd.all=NULL, grob.gg.all = NULL)
   observeEvent(ipt$fileIn, { shm$grob.all <- shm$grob.all1 <- shm$gg.all1 <- shm$gg.all <- shm$lgd.all <- shm$grob.gg.all <- NULL })
   
-  url.id <- reactiveValues(id=NULL)
-  observe({ url.id$id <- sub(' .*', '', lis.url$par[['sear-ids.in']]) })
+  # url.id <- reactiveValues(id=NULL)
+  # observe({ url.id$id <- sub(' .*', '', lis.url$par[['sear-sch.sgl']]) })
   msg.shm <- reactiveValues(msg=NULL)
   # Avoid repetitive computation under input$cs.v=='All rows'.
   gs.new <- reactive({
@@ -1343,8 +1410,12 @@ shm_server <- function(id, ipt, cfg, sch, lis.url, dat.mod.lis, sch.mod.lis, ses
     if (scale.shm <= 0) return()
     # If color key is build on selected rows, all SHMs should be computed upon selected rows are changed. This action is done through a separate observeEvent triggered by gID$geneSel. So in this "reactive" only one gene is accepted each time.
     # Only works at "Selected rows" and one gene is selected, i.e. when the app is launched.
-    # print(list('new', ids$but, gID$geneSel, url.id$id, gID$new))
-    if (input$cs.v=="Selected rows" & ids$but==0) ID <- gID$geneSel else if (all(sort(url.id$id)==sort(gID$geneSel))) ID <- gID$geneSel else if (input$cs.v=="All rows") ID <- gID$new else return()
+    # print(list('new', ids$but.sgl, gID$geneSel, url.id$id, gID$new))
+    if (length(ids$but.sgl)==0 & length(ids$but.mul)==0) return()
+    if (length(url.id$sch.mul)==0|length(url.id$sch.sgl)==0) return()
+    if (url.id$sch.sgl[1]!='null') urlID <- url.id$sch.sgl else if (url.id$sch.mul[1]!='null') urlID <- url.id$sch.mul else urlID <- 'null'
+    if (length(url.id$id)==0) return()
+    if (input$cs.v=="Selected rows" & ids$but.sgl==0) ID <- gID$geneSel else if (all(sort(url.id$id)==sort(gID$geneSel))) ID <- gID$geneSel else if (input$cs.v=="All rows") ID <- gID$new else return()
     # Works all the time as long as "All rows" selected.
     # if (input$cs.v!="All rows") return() 
     # ID <- gID$new
@@ -1464,7 +1535,7 @@ shm_server <- function(id, ipt, cfg, sch, lis.url, dat.mod.lis, sch.mod.lis, ses
     shm$lgd.all <- gs.all()$lgd.all; shm$grob.gg.all <- gs.all()$gg.grob.lis
   }) # observeEvent
   # Avoid repetitive computation under input$cs.v=='All rows'.
-  observeEvent(list(ids$but), { 
+  observeEvent(list(gID$geneSel), { 
     cat('Updating all SHMs caused by selected IDs ... \n')
     if.con <- is.null(input$cs.v)|gID$geneSel[1]=='none'|input$cs.v=='All rows'
     if (length(if.con==FALSE)==0) if (length(if.con)==0) return(); if (is.na(if.con)|if.con==TRUE) return(NULL)
@@ -2099,7 +2170,7 @@ shm_server <- function(id, ipt, cfg, sch, lis.url, dat.mod.lis, sch.mod.lis, ses
 })} # shm_server
 
 
-mods$shm <- shm.mod.lis <- shm_server('shmAll', ipt, cfg, sch, lis.url, dat.mod.lis, sch.mod.lis)
+mods$shm <- shm.mod.lis <- shm_server('shmAll', ipt, cfg, sch, lis.url, url.id, dat.mod.lis, sch.mod.lis)
 
 
 deg_server <- function(id, ipt, cfg, sch, lis.url, ids, dat.mod.lis, shm.mod.lis, session) {
@@ -2408,7 +2479,7 @@ sub_se <- function(se, sams, cons) {
     dat.mod.lis.deg$geneIn <- reactive({  
     return(list(df.aggr=gen.lis$df.aggr[deg.rna, , drop=FALSE], df.aggr.tran=gen.lis$df.aggr.tran[deg.rna, , drop=FALSE], df.aggr.tran.order=gen.lis$df.aggr.tran.order[deg.rna, , drop=FALSE], df.met=gen.lis$df.met[deg.rna, , drop=FALSE], df.rep=gen.lis$df.rep[deg.rna, , drop=FALSE]))
     })
-   sch.mod.lis <- search_server('deg', ids, cfg, lis.url, dat.mod.lis.deg)
+   sch.mod.lis <- search_server('deg', ids, cfg, lis.url, url.id, dat.mod.lis.deg)
    cat('Done! \n')
   })
 
