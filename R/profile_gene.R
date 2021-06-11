@@ -24,10 +24,9 @@
 #' @importFrom reshape2 melt
 #' @importFrom ggplot2 ggplot aes geom_line theme labs element_text element_rect element_line
 
-profile_gene <- function(data, scale='none', x.title='Sample/conditions', y.title='Value', text.size=15, text.angle=45) {                                       
-  data <- subset(data, !duplicated(gene))                                                                                          
-  rownames(data) <- data$gene                                                                                                      
-  if (is(data, 'data.frame')|is(data, 'matrix')|is(data, 'DFrame')) { # Data frame of spatial enrichment.                          
+profile_gene <- function(data, scale='none', x.title='Sample/conditions', y.title='Value', text.size=15, text.angle=45) {                                                                                   
+  if (all(c('gene', 'type', 'total') %in% colnames(data))) { # Data frame of spatial enrichment.
+    data <- subset(data, !duplicated(gene)); rownames(data) <- data$gene                        
     data <- data[, !colnames(data) %in% c('gene', 'type', 'total', 'metadata', 'edgeR', 'limma', 'DESeq2', 'distinct'), drop=FALSE]            
   }                                                                                                                                
   if (scale=='row') data <- t(scale(t(data))) else if (scale=='all') data <- scale_all(data)                                       
@@ -39,8 +38,8 @@ profile_gene <- function(data, scale='none', x.title='Sample/conditions', y.titl
   # Possible: the colour order (left to right) matches with the row order (top to bottom) in original data frame before melted,    but the coloured lined is plotted in the order of levels (left to right) in melted data frame.                                     
   # if (length(cols)<nrow(data)) cols <- diff_cols(nrow(data))                                                                     
   # Custom colours: scale_color_manual(values=cols)                                                                                
-  g <- ggplot(data=df.long, aes(x=Samples, y=Value, colour=Genes, group=Genes))+geom_line()+labs(title="", x=x.title,  y=y.title)+theme(legend.position="right", axis.text=element_text(size=text.size), axis.title=element_text(size=text.size,          face="bold"), axis.text.x=element_text(angle=text.angle, hjust=1), panel.background = element_rect(fill = "gray95", colour =       "gray95", size = 0.5, linetype = "solid"), panel.grid.major = element_line(size = 0.5, linetype = 'solid', colour = "white"),      panel.grid.minor = element_line(size = 0.5, linetype = 'solid', colour = "white"))                                                 
-  return(g)                                                                                                                        
+  g <- ggplot(data=df.long, aes(x=Samples, y=Value, colour=Genes, group=Genes))+geom_line()+labs(title="", x=x.title,  y=y.title)+theme(legend.position="right", axis.text=element_text(size=text.size), axis.title=element_text(size=text.size, face="bold"), axis.text.x=element_text(angle=text.angle, hjust=1), panel.background = element_rect(fill = "gray95", colour = "gray95", size = 0.5, linetype = "solid"), panel.grid.major = element_line(size = 0.5, linetype = 'solid', colour = "white"), panel.grid.minor = element_line(size = 0.5, linetype = 'solid', colour ="white"))
+  return(g)
 }
 
 
