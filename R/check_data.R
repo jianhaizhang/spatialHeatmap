@@ -25,8 +25,11 @@ check_data <- function(data, sam.factor=NULL, con.factor=NULL, usage='other') {
     if (!(usage %in% c('aggr', 'norm', 'filter'))) if (any(duplicated(cna))) stop('Please use function \'aggr_rep\' to aggregate replicates!') 
     na <- vapply(seq_len(ncol(data)), function(i) { tryCatch({ as.numeric(data[, i]) }, warning=function(w) { return(rep(NA, nrow(data)))
     }, error=function(e) { stop("Please make sure input data are numeric!") }) }, FUN.VALUE=numeric(nrow(data)) )
+    if (nrow(data)==1) na <- matrix(na, byrow=TRUE, ncol=ncol(data))
     na <- as.data.frame(na); rownames(na) <- rna
-    idx <- colSums(apply(na, 2, is.na))!=0
+    app <- apply(na, 2, is.na)
+    if (nrow(data)==1) app <- matrix(app, byrow=TRUE, ncol=ncol(data)); rownames(app) <- rna
+    idx <- colSums(app)!=0
     row.meta <- data[idx] # aggr_rep filter_data, submatrix 
     dat <- na[!idx]; colnames(dat) <- fct.cna <- cna[!idx]
     # spatial_hm

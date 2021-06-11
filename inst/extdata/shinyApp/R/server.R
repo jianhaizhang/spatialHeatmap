@@ -1,14 +1,12 @@
 
 options(stringsAsFactors=FALSE) 
 
-# source('~/tissue_specific_gene/function/fun.R')
 # Every variable in every container should be checked at the beginning. E.g. input$fileIn in reactive({}). These checks will avoid amost all errors/warnings.
-# Right before submit the package the following functions will be deleted, and they will be imported as above. They are listed here now for the convenience of functionality development.
-
 
 # enableWGCNAThreads()
 # enableBookmarking("url")
 server <- function(input, output, session) {
+  tmp.dir <- normalizePath(tempdir(check=TRUE), winslash="/", mustWork=FALSE)
   lis.url <- reactiveValues(par=NULL)
   observe({
     # The url on browser is captured only if the url is refreshed or the "Enter" key is pressed, which applies in the cases shiny app is first launched or users modified parameters in the url. Otherwise the query is null.
@@ -71,11 +69,6 @@ search_server <- function(id, ids, cfg, lis.url, url.id, dat.mod.lis, session) {
       url.id$sch.mul <- lis.url$par[['sear-sch.mul']] <- unlist(strsplit(gsub(' |,', '__', url_val('sear-sch.mul', lis.url)), '__'))
       cat('Parsing IDs from URL ... done! \n')
     })
-    if (0) url.val <- eventReactive(lis.url, { 
-    list(sch.sgl.id=lis.url$par[['sear-sch.sgl']], 
-    sch.mul.id=lis.url$par[['sear-sch.mul']])
-
-    })
     geneIn <- reactiveValues(lis=NULL)
     observe({
       if (is.null(dat.mod.lis)) return()
@@ -111,14 +104,11 @@ search_server <- function(id, ids, cfg, lis.url, url.id, dat.mod.lis, session) {
     })
   output$sch.box <- renderUI({
     ns <- session$ns; sch.mod <- input$sch.mode
-    style <- 'margin-top:2px;margin-bottom:-10px;margin-left:20px;padding-top:2px;padding-bottom:2px;background-color:#ddd;'
-    lab.sgl <- 'Search by single gene ID (e.g. ENSMUSG00000000031) or symbols'
-    lab.mul <- 'Search by single or multiple gene IDs (e.g. ENSMUSG00000000031 ENSMUSG00000000093)'
     mul.val <- pre.id$id
     if (!is.null(url.id$sch.mul)) if (url.id$sch.mul[1]!='null') mul.val <- url.id$sch.mul
     mul.val <- paste0(mul.val, collapse=',')
     # At the very beginning, two search buttons and two search boxes are all NULL, since they are not rendered. When toggling between search modes, one of two buttons is reverted to 0 not NULL, while the search content is reverted to NULL then strings.
-    if (sch.mod=='Single') selectizeInput(ns('sch.sgl'), p(lab.sgl, actionButton(ns("sch.sgl.but"), "Confirm selection", style=style)), choices='none', selected='none', multiple = TRUE, options=list(placeholder = 'Supports partial matching.')) else if (sch.mod=='Multiple') textInput(inputId=ns('sch.mul'), p(lab.mul, actionButton(ns("sch.mul.but"), "Confirm selection", style=style)), value=mul.val, placeholder='Muliple IDs must ONLY be separated by space or comma.', width='100%')
+    if (sch.mod=='Single') selectizeInput(ns('sch.sgl'), p(lab.sgl, actionButton(ns("sch.sgl.but"), "Confirm selection")), choices='none', selected='none', multiple = TRUE, options=list(placeholder = 'Supports partial matching.')) else if (sch.mod=='Multiple') textInput(inputId=ns('sch.mul'), p(lab.mul, actionButton(ns("sch.mul.but"), "Confirm selection")), value=mul.val, placeholder='Muliple IDs must ONLY be separated by space or comma.', width='100%')
   })
   rna <- reactiveValues(val=NULL)
   observe({ # rna$val: accounts for filtered data.
@@ -320,26 +310,38 @@ content=function(file=paste0(normalizePath(tempdir(check=TRUE), winslash="/", mu
   })
   output$chicken <-renderUI({
   tagList(
-    p('Mouse organ', style='font-size:18px'),
+    p('Chicken organ', style='font-size:18px'),
     a(img(width='97%', src="image/chicken.png"), href=paste0('http://', lis.url$hos.port, chicken.url), target="_blank")
     )
   })
   output$organ.arab <-renderUI({
   tagList(
-    p('Arabidopsis organ', style='font-size:18px'),
+    p('Organ', style='font-size:18px'),
     a(img(width='97%', src="image/organ_arab.png"), href=paste0('http://', lis.url$hos.port, organ.arab.url), target="_blank")
     )
   })
   output$shoot.arab <-renderUI({
   tagList(
-    p('Arabidopsis shoot', style='font-size:18px'),
+    p('Shoot tissue', style='font-size:18px'),
     a(img(width='97%', src="image/shoot_arab.png"), href=paste0('http://', lis.url$hos.port, shoot.arab.url), target="_blank")
   )
   })
   output$root.arab <-renderUI({
   tagList(
-    p('Arabidopsis root', style='font-size:18px'),
+    p('Root tissue', style='font-size:18px'),
     a(img(width='97%', src="image/root_arab.png"), href=paste0('http://', lis.url$hos.port, root.arab.url), target="_blank")
+    )
+  })
+  output$stage.arab <-renderUI({
+  tagList(
+    p('Developmental stage', style='font-size:18px'),
+    a(img(width='97%', src="image/stage_arab.png"), href=paste0('http://', lis.url$hos.port, stage.arab.url), target="_blank")
+    )
+  })
+  output$clp.rice <-renderUI({
+  tagList(
+    p('Rice spatiotemporal coleoptile', style='font-size:18px'),
+    a(img(width='97%', src="image/clp_rice.png"), href=paste0('http://', lis.url$hos.port, clp.rice.url), target="_blank")
     )
   })
 
@@ -454,19 +456,33 @@ data_server <- function(id, ipt, cfg, sch, lis.url, ids, deg = FALSE, session) {
     })
 
   })
-
   # Transform data.
   geneIn1 <- reactive({
     cat('Scale/tranform data ... \n')
+    norm.meth <- input$normDat; scale.dat <- input$scaleDat
     if (deg == FALSE) {
-      if (is.null(geneIn0())|is.null(input$scale)|is.null(input$log)) return()
-    df.aggr <- df.aggr.tran <- geneIn0()[['df.aggr']] 
+      if (is.null(geneIn0())|is.null(norm.meth)|is.null(scale.dat)|is.null(input$log)) return()
+    df.aggr <- df.aggr.tran <- geneIn0()[['df.aggr']]
+    # Normalization
+    if (grepl('^CNF-', norm.meth)) {
+      norm.fun <- 'CNF'
+      par.lis <- list(method=sub('.*-', '', norm.meth))
+    } else { norm.fun <- norm.meth; par.lis <- NULL }
+    if (all(df.aggr.tran==round(df.aggr.tran))) df.aggr.tran <- norm_data(data=df.aggr.tran, norm.fun=norm.fun, parameter.list=par.lis, log2.trans=FALSE)
+
     if (input$log=='log2') { 
       g.min <- min(df.aggr.tran)
       if (g.min<0) df.aggr.tran <- df.aggr.tran-g.min+1; if (g.min==0) df.aggr.tran <- df.aggr.tran+1; df.aggr.tran <- log2(df.aggr.tran)
     } else if (input$log=='exp2') df.aggr.tran <- 2^df.aggr.tran
     # Scale by row/column
-    if (input$scale=='Row') { df.aggr.tran <- t(scale(t(df.aggr.tran))) } else if (input$scale=='Column') { df.aggr.tran <- scale(df.aggr.tran) } 
+    if (scale.dat=='Row') { df.aggr.tran <- t(scale(t(df.aggr.tran))) } else if (scale.dat=='Selected') {
+      # validate(need(!is.null(ids$sel), ''))
+      idx.sel <- rownames(df.aggr.tran) %in% ids$sel
+      df.sel <- df.aggr.tran[idx.sel, ]
+      df.aggr.tran[idx.sel, ] <- scale_all(df.sel) 
+    } else if (scale.dat=='All') {
+      df.aggr.tran <- scale_all(df.aggr.tran)
+    }
     } else if (deg == TRUE) {   
       if (is.null(geneIn0())) return()
       df.aggr <- df.aggr.tran <- geneIn0()[['df.aggr']] 
@@ -511,11 +527,12 @@ data_server <- function(id, ipt, cfg, sch, lis.url, ids, deg = FALSE, session) {
     # When ipt$fileIn changes, col.reorder$col.na.re of last session still exists and causes errors.
     if (deg == FALSE) if (!identical(sort(col.reorder$col.na.re), sort(colnames(df2fil)))) return()
     # Input variables in "isolate" will not triger re-excution, but if the whole reactive object is trigered by "input$fil.but" then code inside "isolate" will re-excute.
+    scale.dat <- input$scaleDat
     isolate({ 
       se <- SummarizedExperiment(assays=list(expr=as.matrix(df2fil)), rowData=df.met)
       if (ncol(df.met)>0 & 'metadata' %in% colnames(df.met)) ann.col <- 'metadata' else ann.col <- NULL
       # If scaled by row, sd is 1, mean is 0, cv is Inf.
-      if (deg == FALSE) CVs <- c(ifelse(input$scale=='Row', -Inf, fil$CV1), ifelse(input$scale=='Row', Inf, fil$CV2)) else CVs <- c(fil$CV1, fil$CV2)
+      if (deg == FALSE) CVs <- c(ifelse(scale.dat %in% c('Row', 'Selected'), -Inf, fil$CV1), ifelse(scale.dat %in% c('Row', 'Selected'), Inf, fil$CV2)) else CVs <- c(fil$CV1, fil$CV2)
       se <- filter_data(data=se, ann=ann.col, sam.factor=NULL, con.factor=NULL, pOA=c(fil$P, fil$A), CV = CVs, dir=NULL, verbose=FALSE)
       if (nrow(se)==0) { validate(need(try(nrow(se)>0), 'All rows are filtered out!')); return() }
       # In case all rows are filtered, the app continues to work without refreshing after the filter parameters are reduced.
@@ -560,29 +577,51 @@ data_server <- function(id, ipt, cfg, sch, lis.url, ids, deg = FALSE, session) {
     })
   })
 
+  if (deg==FALSE) output$selProf <- renderPlot(height=800, {
+    cat('Profile of selected genes ... \n')
+    gene.dt <- dt.shm(); df.all <- geneIn()
+    if (is.null(gene.dt)|length(ids$sel)==0) return()
+    validate(need(length(ids$sel)<=100, 'Due to space limitation, profiles of 100+ genes are not plotted!'))
+    dt.sel <- gene.dt[ids$sel, , drop=FALSE]
+    dt.sel <- dt.sel[, !colnames(dt.sel) %in% c('metadata', 'link'), drop=FALSE]
+    scale.dat <- input$scaleDat; if (is.null(scale.dat)) return()
+    if (!is.null(scale.dat)) if (scale.dat=='No') title <- 'No scaling' else if (scale.dat=='Row') title <- 'Scaled by row' else if (scale.dat=='Selected') title <- 'Scaled across selected genes' else if (scale.dat=='All') title <- 'Scaled across all genes' else title <- ''
+    g1 <- profile_gene(dt.sel, y.title=title); 
+    g2 <- profile_gene(df.all$df.aggr[ids$sel, , drop=FALSE], y.title='No scaling')
+    cat('Done! \n'); grid.arrange(g1, g2, nrow=2)
+  })
   if (deg==FALSE) output$dtSel <- renderDataTable({
     cat('Preparing selected data matrix ... \n')
     gene.dt <- dt.shm()
     if (is.null(gene.dt)|length(ids$sel)==0) return()
+    # Decimals.
+    df.num <- gene.dt[, !colnames(gene.dt) %in% c('metadata', 'link'), drop=FALSE]
+    if (all(df.num==round(df.num))) deci <- 0 else deci <- 2
     dt.sel <- gene.dt[ids$sel, , drop=FALSE]
+    # Tooltip on metadata.
     col1 <- list(list(targets = c(1), render = JS("$.fn.dataTable.render.ellipsis(5, false)")))
     # In case no metadata column.
     if (colnames(dt.sel)[1]!='metadata') col1 <- NULL
     dtab <- datatable(dt.sel, selection='none', escape=FALSE, filter="top", extensions=c('Scroller'), plugins = "ellipsis",
    options=list(pageLength=5, lengthMenu=c(5, 15, 20), autoWidth=TRUE, scrollCollapse=TRUE, deferRender=TRUE, scrollX=TRUE, scrollY=200, scroller=TRUE, searchHighlight=FALSE, search=list(regex=TRUE, smart=FALSE, caseInsensitive=TRUE), searching=FALSE, columnDefs=col1), 
    class='cell-border strip hover') %>% formatStyle(0, backgroundColor="orange", cursor='pointer') %>% 
-   formatRound(colnames(geneIn()[["df.aggr.tran"]]), ifelse(deg == FALSE, 2, 0))
+   formatRound(colnames(geneIn()[["df.aggr.tran"]]), deci)
     cat('Done! \n'); dtab
   })
+  dt.sel <- reactiveValues(val='none')
   if (deg==FALSE) output$dtAll <- renderDataTable({
     cat('Preparing complete data matrix ... \n')
     gene.dt <- dt.shm(); if (is.null(gene.dt)) return()
+    # Decimals.
+    df.num <- gene.dt[, !colnames(gene.dt) %in% c('metadata', 'link'), drop=FALSE]
+    if (all(df.num==round(df.num))) deci <- 0 else deci <- 2
+    # Tooltip on metadata.
     col1 <- list(list(targets = c(1), render = JS("$.fn.dataTable.render.ellipsis(5, false)")))
     if (colnames(gene.dt)[1]!='metadata') col1 <- NULL
-    dtab <- datatable(gene.dt, selection='none', escape=FALSE, filter="top", extensions=c('Scroller'), plugins = "ellipsis",
+    dtab <- datatable(gene.dt, selection=list(mode="multiple", target="row", selected=dt.sel$val), escape=FALSE, filter="top", extensions=c('Scroller'), plugins = "ellipsis",
    options=list(pageLength=5, lengthMenu=c(5, 15, 20), autoWidth=TRUE, scrollCollapse=TRUE, deferRender=TRUE, scrollX=TRUE, scrollY=200, scroller=TRUE, searchHighlight=FALSE, search=list(regex=TRUE, smart=FALSE, caseInsensitive=TRUE), searching=FALSE, columnDefs=col1), 
    class='cell-border strip hover') %>% formatStyle(0, backgroundColor="orange", cursor='pointer') %>% 
-   formatRound(colnames(geneIn()[["df.aggr.tran"]]), ifelse(deg == FALSE, 2, 0))
+   formatRound(colnames(geneIn()[["df.aggr.tran"]]), deci)
     cat('Done! \n'); dtab
   })
 
@@ -595,15 +634,20 @@ data_server <- function(id, ipt, cfg, sch, lis.url, ids, deg = FALSE, session) {
     dtab <- datatable(gene.dt, selection='none', escape=FALSE, filter="top", extensions=c('Scroller'), plugins = "ellipsis",
    options=list(pageLength=5, lengthMenu=c(5, 15, 20), autoWidth=TRUE, scrollCollapse=TRUE, deferRender=TRUE, scrollX=TRUE, scrollY=200, scroller=TRUE, searchHighlight=FALSE, search=list(regex=TRUE, smart=FALSE, caseInsensitive=TRUE), searching=FALSE, columnDefs=col1), 
    class='cell-border strip hover') %>% formatStyle(0, backgroundColor="orange", cursor='pointer') %>% 
-   formatRound(colnames(geneIn()[["df.aggr.tran"]]), ifelse(deg == FALSE, 2, 0))
+   formatRound(colnames(geneIn()[["df.aggr.tran"]]), 0)
     cat('Done! \n'); dtab
+  })
+  observeEvent(input$dat.all.but, { # Select genes in table.
+    gene.dt <- dt.shm(); if (is.null(gene.dt)) return()
+    ids$sel <- rownames(gene.dt)[input$dtAll_rows_selected]
+    dt.sel$val <- input$dtAll_rows_selected
   })
   observe({
     ipt$fileIn; ipt$geneInpath; lis.par <- cfg$lis.par; lis.url
     url.val <- url_val('dat-log', lis.url)
-    updateRadioButtons(session, inputId='log', label='Log/exp transform', choices=c("No", "log2", "exp2"), selected=ifelse(url.val!='null', url.val, cfg$lis.par$data.matrix['log.exp', 'default']), inline=TRUE)
+    updateSelectInput(session, inputId='log', label='Log/exp transform', selected=ifelse(url.val!='null', url.val, cfg$lis.par$data.matrix['log.exp', 'default']), )
     url.val <- url_val('dat-scale', lis.url)
-    updateRadioButtons(session, 'scale', label='Scale by row', choices=c('No'='No', 'Yes'='Row'), selected=ifelse(url.val!='null', url.val, cfg$lis.par$data.matrix['scale', 'default']), inline=TRUE)
+    updateSelectInput(session, 'scaleDat', label='Scale by', selected=ifelse(url.val!='null', url.val, cfg$lis.par$data.matrix['scale', 'default']))
   })
 
   observe({
@@ -622,12 +666,13 @@ data_server <- function(id, ipt, cfg, sch, lis.url, ids, deg = FALSE, session) {
   observe({ ipt.dat$dt_rows_selected <- input$dt_rows_selected })
   col.cfm <- reactive({ input$col.cfm })
   col.na <- reactive({ input$na })
+  scaleDat <- reactive({ input$scaleDat })
   log <- reactive({ input$log }); A <- reactive({ input$A })
   CV1 <- reactive({ input$CV1 }); CV2 <- reactive({ input$CV2 })
   P <- reactive({ input$P })
   search.but <- reactive({ sch$but })
   onBookmark(function(state) { state })
-  return(list(geneIn0 = geneIn0, geneIn1 = geneIn1, geneIn = geneIn, sear = sear, ipt.dat = ipt.dat, col.reorder = col.reorder, col.cfm = col.cfm, col.na = col.na, log = log, A = A, P = P, CV1 = CV1, CV2 = CV2, search.but = search.but))
+  return(list(geneIn0 = geneIn0, geneIn1 = geneIn1, geneIn = geneIn, sear = sear, ipt.dat = ipt.dat, col.reorder = col.reorder, col.cfm = col.cfm, col.na = col.na, scaleDat=scaleDat, log = log, A = A, P = P, CV1 = CV1, CV2 = CV2, search.but = search.but))
   })
 
 }
@@ -639,7 +684,6 @@ data_server <- function(id, ipt, cfg, sch, lis.url, ids, deg = FALSE, session) {
   mods$data <- dat.mod.lis <- data_server('dat', ipt, cfg, sch, lis.url, ids, deg=FALSE)
 
 mods$search <- sch.mod.lis <- search_server('sear', ids, cfg, lis.url, url.id, dat.mod.lis)
-mods$search <- sch.mod.lis <- search_server('landing', ids, cfg, lis.url, url.id, dat.mod.lis)
  
 network_server <- function(id, ipt, cfg, dat.mod.lis, shm.mod.lis, sch.mod.lis, session) {
   
@@ -777,7 +821,8 @@ network_server <- function(id, ipt, cfg, dat.mod.lis, shm.mod.lis, sch.mod.lis, 
     withProgress(message="Matrix heatmap:", value=0, {
       incProgress(0.7, detail="Plotting ...")
       if (input$mat.scale=="Column") scale.hm <- 'column' else if (input$mat.scale=="Row") scale.hm <- 'row' else scale.hm <- 'no'
-      hm <- matrix_hm(ID=gen.tar, data=sub.mat, scale=scale.hm, main='Target Genes and Their Nearest Neighbours', title.size=10, static=FALSE)
+
+      hm <- matrix_hm(ID=gen.tar, data=sub.mat, col=c('yellow', 'red'), scale=scale.hm, main='Target Genes and Their Nearest Neighbours', title.size=10, static=FALSE)
       cat('Done! \n'); hm
     })
   })
@@ -1019,7 +1064,7 @@ network_server <- function(id, ipt, cfg, dat.mod.lis, shm.mod.lis, sch.mod.lis, 
       incProgress(0.75, detail="plotting, please wait ...")
       node <- nd.eg[["node"]]; if (is.null(node)) return()
       node.v <- node$value; v.net <- seq(min(node.v), max(node.v), len=len.cs.net)
-      cs.net <- col_bar(geneV=v.net, cols=color.net$col.net, width=1); 
+      cs.net <- col_bar(geneV=v.net, cols=color.net$col.net, width=1)
       cat('Done! \n'); return(cs.net) # '((max(v.net)-min(v.net))/len.cs.net)*0.7' avoids bar overlap.
 
       })
@@ -1089,6 +1134,7 @@ shm_server <- function(id, ipt, cfg, sch, lis.url, url.id, dat.mod.lis, sch.mod.
   geneIn0 <- dat.mod.lis$geneIn0; geneIn1 <- dat.mod.lis$geneIn1
   geneIn <- dat.mod.lis$geneIn
   col.na <- dat.mod.lis$col.na; col.cfm <- dat.mod.lis$col.cfm 
+  scaleDat <- dat.mod.lis$scaleDat
   log <- dat.mod.lis$log; A <- dat.mod.lis$A
   search.but <- dat.mod.lis$search.but
   ids <- sch.mod.lis$ids
@@ -1173,7 +1219,12 @@ shm_server <- function(id, ipt, cfg, sch, lis.url, url.id, dat.mod.lis, sch.mod.
     if (ipt$fileIn!="none") { color$col <- colorRampPalette(col.sch())(length(geneV())) }
     cat('Done! \n')
   })
-
+  x.title <- reactiveValues(val='')
+  observe({
+    scale.dat <- scaleDat(); if (is.null(scale.dat)) return()
+    if (!is.null(scale.dat)) if (scale.dat=='No') title <- 'No scaling' else if (scale.dat=='Row') title <- 'Scaled by row' else if (scale.dat=='Selected') title <- 'Scaled across selected genes' else if (scale.dat=='All') title <- 'Scaled across all genes' else title <- ''
+    x.title$val <- title
+  })
   shm.bar <- reactive({
     cat('Colour key ... \n')
     if (is.null(gID$all)) return(NULL)
@@ -1181,7 +1232,7 @@ shm_server <- function(id, ipt, cfg, sch, lis.url, url.id, dat.mod.lis, sch.mod.
       if (length(color$col=="none")==0|input$color==""|is.null(geneV())) return(NULL)
       withProgress(message="Color scale: ", value = 0, {
         incProgress(0.75, detail="plotting, please wait ...")
-        cs.g <- col_bar(geneV=geneV(), cols=color$col, width=1)
+        cs.g <- col_bar(geneV=geneV(), cols=color$col, width=1, x.title=x.title$val, x.title.size=10)
         cat('Done! \n'); return(cs.g)
       })
     }
@@ -1479,7 +1530,7 @@ shm_server <- function(id, ipt, cfg, sch, lis.url, url.id, dat.mod.lis, sch.mod.
   # Use "observeEvent" to replace "observe" and list events (input$log, input$tis, ...), since if the events are in "observe", every time a new gene is clicked, "input$dt_rows_selected" causes the evaluation of all code in "observe", and the evaluation is duplicated with "gs.new".
   observeEvent(col.na(), { if (col.cfm()>0) col.reorder$col.re <- 'N' })
   # Update SHMs, above theme().
-  observeEvent(list(log(), input$tis, color$col, input$cs.v, col.cfm(), input$scale, input$match, input$line.size, input$line.color), {
+  observeEvent(list(log(), input$tis, color$col, input$cs.v, col.cfm(), scaleDat(), input$match, input$line.size, input$line.color), {
     shm$grob.all <- shm$gg.all <- shm$lgd.all <- shm$grob.gg.all <- NULL; gs.all <- reactive({ 
       cat('Updating all SHMs ... \n')
       if.con <- is.null(svg.df())|is.null(geneIn())|length(ids$sel)==0|color$col[1]=='none'|gID$geneSel[1]=='none'
@@ -1763,7 +1814,7 @@ shm_server <- function(id, ipt, cfg, sch, lis.url, url.id, dat.mod.lis, sch.mod.
       grob.all <- c(grob.all, grob.lis) 
     }; shm$grob.all <- grob.all; shm$gg.all <- gg.all; shm$grob.gg.all <- grob.gg.all
   })
-
+  shmLay <- reactiveValues(val=NULL) 
   # Variables in 'observe' are accessible anywhere in the same 'observe'.
   observe({
     lay <- lay.shm(); scale.shm <- input$scale.shm
@@ -1773,7 +1824,8 @@ shm_server <- function(id, ipt, cfg, sch, lis.url, url.id, dat.mod.lis, sch.mod.
     # Avoid: if one column has all NAs in the layout matrix, the aspect ratio is distroyed. So only take the columns not containing all NAs.
     col.vld <- sum(unlist(lapply(seq_len(ncol(lay)), function(x) !all(is.na(lay[, x])))))
     # width/height relate to scrolling in box.
-    width <- col.vld * 250 * scale.shm; height <- nrow(lay) * 300 * scale.shm
+    shmLay$width <- width <- col.vld * 250 * scale.shm
+    shmLay$height <- height <- nrow(lay) * 300 * scale.shm
     output$shm <- renderPlot(width = width, height = height, { 
     cat('Plotting spatial heatmaps ... \n')
     if (col.reorder$col.re=='N') return()
@@ -1790,38 +1842,48 @@ shm_server <- function(id, ipt, cfg, sch, lis.url, url.id, dat.mod.lis, sch.mod.
     con <- unique(gsub(pat.all, '\\2\\3', names(grob.lis.p))); if (length(con)==0) return()
     lay <- input$genCon; ID <- gID$geneSel; ncol <- input$col.n
     # This step is plotting.
-    shm.lay <- lay_shm(lay.shm=lay, con=con, ncol=ncol, ID.sel=ID, grob.list=grob.lis.p, shiny=TRUE); shm.arr <- shm.lay$shm
-    shm.lay <- shm.lay$lay; cat('Done! \n')
-    if (input$ext!='NA') {
+    shmLay$val <- shm.lay <- lay_shm(lay.shm=lay, con=con, ncol=ncol, ID.sel=ID, grob.list=grob.lis.p, shiny=TRUE)
+    cat('Done! \n')
+    })
+  })
+  observeEvent(list(input$ext, input$res, input$lgd.incld, input$lgd.size), {
+  output$dldBut <- renderUI({ }) 
+  })
+  observeEvent(input$dld.but, ignoreInit=TRUE, {
+    if (is.null(shmLay$val)) return()
+    showNotification(HTML('Please wait till the <strong> "Download" </strong> button shows up!'), closeButton = TRUE)
+    shm.arr <- shmLay$val$shm; shm.lay <- shmLay$val$lay
       cat('Downloading SHMs ... \n')
       validate(need(try(input$res>0), 'Resolution should be a positive numeric!'))
-      # validate(need(try(input$lgd.ratio>0), 'Legend aspect ratio should be a positive numeric!'))
-      cs.grob <- ggplotGrob(shm.bar())
+      png(paste0(tmp.dir, '/tmp.png'));
+      cs.grob <- ggplotGrob(shm.bar()); dev.off()
       cs.arr <- arrangeGrob(grobs=list(grobTree(cs.grob)), layout_matrix=cbind(1), widths=unit(1, "npc"))
       # Legend size in downloaded SHM is reduced.
-      lgd.lis <- shm$lgd.all; lgd.lis <- gg_lgd(gg.all=lgd.lis, sam.dat=sam(), ft.trans=input$tis, label=FALSE)
+      lgd.lis <- shm$lgd.all
       lgd.lis <- gg_lgd(gg.all=lgd.lis, size.key=input$lgd.key.size*0.5, size.text.key=NULL, label.size=input$lgd.lab.size, row=input$lgd.row, sam.dat=sam(), ft.trans=input$tis, position.text.key='right', label=(input$lgd.label=='Yes'))
       if (input$lgd.incld=='Yes') { 
-        grob.lgd.lis <- lapply(lgd.lis, ggplotGrob)
+        png(paste0(tmp.dir, '/tmp.png'));
+        grob.lgd.lis <- lapply(lgd.lis, ggplotGrob); dev.off()
         lgd.tr <- lapply(grob.lgd.lis, grobTree)
     # In 'arrangeGrob', if numbers in 'layout_matrix' are more than items in 'grobs', there is no difference. The width/height of each subplot is decided by 'widths' and 'heights'.
       w.lgd <- (1-0.08)/(ncol(shm.lay)+1); shm.w <- 1-0.08-w.lgd
       # If legend.r = 0, legend plot size is a square.
       lgd.size <- input$lgd.size; validate(need(is.numeric(lgd.size), ''))
       lgd.arr <- arrangeGrob(grobs=lgd.tr, layout_matrix=matrix(seq_along(lgd.lis), ncol=1), widths=unit(0.99, "npc"), heights=unit(rep(w.lgd + (0.99 - w.lgd) * lgd.size, length(lgd.lis)), "npc"))
-
-    png(paste0(normalizePath(tempdir(check=TRUE), winslash="/", mustWork=FALSE), '/tmp.png')); shm1 <- grid.arrange(cs.arr, shm.arr, lgd.arr, ncol=3, widths=unit(c(0.08-0.005, shm.w, w.lgd), 'npc')); dev.off() } else { png(paste0(normalizePath(tempdir(check=TRUE), winslash="/", mustWork=FALSE), '/tmp.png')); shm1 <- grid.arrange(cs.arr, shm.arr, ncol=2, widths=unit(c(0.08-0.005, 1-0.08), 'npc')); dev.off() }
-    ggsave(paste0(normalizePath(tempdir(check=TRUE), winslash="/", mustWork=FALSE), '/shm.', input$ext), plot=shm1, device=input$ext, width=width/72, height=height/72, dpi=input$res, unit='in'); cat('Done! \n') 
-    }
-    
+        png(paste0(tmp.dir, '/tmp.png')); shm1 <- grid.arrange(cs.arr, shm.arr, lgd.arr, ncol=3, widths=unit(c(0.08-0.005, shm.w, w.lgd), 'npc')); dev.off() } else { 
+        png(paste0(tmp.dir, '/tmp.png')); shm1 <- grid.arrange(cs.arr, shm.arr, ncol=2, widths=unit(c(0.08-0.005, 1-0.08), 'npc')); dev.off() 
+      }
+      ggsave(paste0(tmp.dir, '/shm.', input$ext), plot=shm1, device=input$ext, width=shmLay$width/72, height=shmLay$height/72, dpi=input$res, unit='in'); cat('Done! \n') 
+  output$dldBut <- renderUI({
+    ns <- session$ns    
+    downloadButton(ns("dld.shm"), "Download", style = "margin-top: 24px;")
+  })  
     })
-
-  })
 
   output$dld.shm <- downloadHandler(
     filename=function() { paste0('shm.', input$ext) },
-    content=function(file) { file0 <- paste0(normalizePath(tempdir(check=TRUE), winslash="/", mustWork=FALSE), '/shm.', input$ext); 
-    cat("Downloading 'shm' from", normalizePath(tempdir(check=TRUE), winslash="/", mustWork=FALSE), '...\n')
+    content=function(file) { file0 <- paste0(tmp.dir, '/shm.', input$ext); 
+    cat("Downloading 'shm' from", tmp.dir, '...\n')
     file.copy(file0, file, overwrite=TRUE) }
   )
 
@@ -1829,7 +1891,7 @@ shm_server <- function(id, ipt, cfg, sch, lis.url, url.id, dat.mod.lis, sch.mod.
   
     ipt$fileIn; geneIn(); ipt$adj.modInpath; A(); input$p; input$cv1; input$cv2; ids$sel; input$tis; input$genCon  
     url.val <- url_val('shmAll-ext', lis.url)
-    updateRadioButtons(session, inputId='ext', label='File type', choices=c('NA', "png", "jpg", "pdf"), selected=ifelse(url.val!='null', url.val, cfg$lis.par$shm.img['file.type', 'default']), inline=TRUE)
+    updateRadioButtons(session, inputId='ext', selected=ifelse(url.val!='null', url.val, cfg$lis.par$shm.img['file.type', 'default']))
     url.val <- url_val('shmAll-ggly.but', lis.url)
     # updateRadioButtons(session, inputId="ggly.but", label="Show animation", choices=c("Yes", "No"), selected=ifelse(url.val!='null', url.val, cfg$lis.par$shm.anm['show', 'default']), inline=TRUE)
     url.val <- url_val('shmAll-vdo.but', lis.url)
@@ -2058,7 +2120,7 @@ shm_server <- function(id, ipt, cfg, sch, lis.url, url.id, dat.mod.lis, sch.mod.
     url.lgd.lab.size <- url_val('shmAll-lgd.lab.size', lis.url)
     column(12,
  
-    fluidRow(splitLayout(id='barSHM', cellWidths=c("0.5%", "3%", paste0(input$togSld*95, '%'), paste0((1-input$togSld)*95, '%')), "",  
+    fluidRow(splitLayout(id='barSHM', cellWidths=c("0.5%", "6%", paste0(input$togSld*92, '%'), paste0((1-input$togSld)*92, '%')), "",  
     plotOutput(ns("bar1")),
     if (input$togSld!=0) div(id='divSHM', style=paste0('overflow-y:scroll;height:', scroll.h$h, 'px;overflow-x:scroll'), plotOutput(ns("shm"), height='100%', width='100%')),
 
@@ -2136,7 +2198,7 @@ shm_server <- function(id, ipt, cfg, sch, lis.url, url.id, dat.mod.lis, sch.mod.
   url.val <- url_val('shmAll-line.size', lis.url)
   updateNumericInput(session, inputId='line.size', label='Line size', value=ifelse(url.val!='null', url.val, as.numeric(cfg$lis.par$shm.img['line.size', 'default'])), min=0.05, max=Inf, step=0.05) 
   url.val <- url_val('shmAll-ext', lis.url)
-  updateRadioButtons(session, inputId='ext', label='File type', choices=c('NA', "png", "jpg", "pdf"), selected=ifelse(url.val!='null', url.val, cfg$lis.par$shm.img['file.type', 'default']), inline=TRUE)
+  updateRadioButtons(session, inputId='ext', selected=ifelse(url.val!='null', url.val, cfg$lis.par$shm.img['file.type', 'default']))
   url.val <- url_val('shmAll-res', lis.url)
   updateNumericInput(session, inputId='res', label='Resolution (dpi)', value=ifelse(url.val!='null', url.val, as.numeric(cfg$lis.par$shm.img['dpi', 'default'])), min=10, max=Inf, step=10)
   url.val <- url_val('shmAll-lgd.incld', lis.url)
@@ -2144,9 +2206,7 @@ shm_server <- function(id, ipt, cfg, sch, lis.url, url.id, dat.mod.lis, sch.mod.
   url.val <- url_val('shmAll-lgd.size', lis.url) 
   updateNumericInput(session, inputId='lgd.size', label='Legend plot size', value=ifelse(url.val!='null', url.val, as.numeric(cfg$lis.par$shm.img['legend.plot.size', 'default'])), min=-1, max=Inf, step=0.1)
   url.val <- url_val('shmAll-relaSize', lis.url)
-  updateNumericInput(session, inputId='relaSize', label='Relative sizes', value=ifelse(url.val!='null', url.val, as.numeric(cfg$lis.par$shm.img['relative.size', 'default'])), min=0.01, max=Inf, step=0.1)
-  url.val <- url_val('shmAll-ggly.but', lis.url) 
-  # updateRadioButtons(session, inputId="ggly.but", label="Show animation", choices=c("Yes", "No"), selected=ifelse(url.val!='null', url.val, as.numeric(cfg$lis.par$shm.img['show', 'default'])), inline=TRUE)
+  updateNumericInput(session, inputId='relaSize', label='Relative sizes', value=ifelse(url.val!='null', url.val, as.numeric(cfg$lis.par$shm.img['relative.size', 'default'])))
   url.val <- url_val('shmAll-vdo.key.row', lis.url)
   updateNumericInput(session, inputId='vdo.key.row', label='Key rows', value=ifelse(url.val!='null', url.val, as.numeric(cfg$lis.par$shm.video['key.rows', 'default'])), min=1, max=Inf, step=1)
   url.val <- url_val('shmAll-vdo.key.size', lis.url)
@@ -2214,12 +2274,12 @@ deg_server <- function(id, ipt, cfg, sch, lis.url, ids, dat.mod.lis, shm.mod.lis
     selectInput(ns('ssg.con'), label='Select factors', choices=cho, selected=cho[2:3], multiple=TRUE)
   })
 
-# Subset SE.
-sub_se <- function(se, sams, cons) {
-  cna.sel <- NULL
-  for (i in cons) { cna.sel <- c(cna.sel, paste0(sams, '__', i)) }
-  se <- se[, colnames(se) %in% cna.sel]; return(se)
-}
+  # Subset SE.
+  sub_se <- function(se, sams, cons) {
+    cna.sel <- NULL; for (i in cons) { 
+      cna.sel <- c(cna.sel, paste0(sams, '__', i)) }
+    se <- se[, colnames(se) %in% cna.sel]; return(se)
+  }
 
   se <- reactive({
     cat('Subsetting SE with input features/factors ... \n')
@@ -2232,8 +2292,10 @@ sub_se <- function(se, sams, cons) {
     if ('all' %in% con) con <- unique(dat$cons)
     se <- sub_se(se, sam, con)
     if (sam.con=='feature') fct <- 'sample' else if (sam.con=='factor') fct <- 'condition' else if (sam.con=='feature__factor') fct <- 'samCon'
-    cat('Done! \n')
-    return(list(se=se, fct=fct))
+    fct.tab <- table(colData(se)[, fct])
+    fct.na <- names(fct.tab)[fct.tab==1] 
+    validate(need(length(fct.na)==0, paste0('At least 2 replicates are required: ', paste0(fct.na, collapse=', '))))
+    cat('Done! \n'); return(list(se=se, fct=fct))
   })
 
   se.nor.rok.dis <- reactive({
@@ -2269,12 +2331,15 @@ sub_se <- function(se, sams, cons) {
     if ('all' %in% sam) sam <- unique(dat$sams)
     if ('all' %in% con) con <- unique(dat$cons)
     vs <- data.frame()
+    # save(dat, sam, con, sam.con, tar, file='dscstf')
     # Reference, query.
     if (sam.con %in% c('feature', 'factor')) {
       if (sam.con == 'feature') {  
         under <- con; ref <- setdiff(sam, tar)
+        validate(need(length(ref)>0, 'If compare by "feature", at least 2 features should be selected!'))
       } else if (sam.con == 'factor') {
         under <- sam; ref <- setdiff(con, tar)
+        validate(need(length(ref)>0, 'If compare by "factor", at least 2 factors should be selected!'))
       }
       tar.all <- paste0(tar, '__', under)
       ref.all <- paste0(unlist(lapply(ref, function(i) paste0(i, '__', under))))
@@ -2295,8 +2360,7 @@ sub_se <- function(se, sams, cons) {
     if (is.null(geneIn())|is.null(se())) return(NULL)
     withProgress(message="edgeR: ", value=0, {
     incProgress(0.5, detail="in progress ...")
-    edg <- edgeR(se=se()$se, method.norm=sub('.*-', '', input$edg.lim.nor), com.factor=se()$fct, method.adjust='BH', return.all=TRUE); cat('Done! \n')
-    edg
+    edg <- edgeR(se=se()$se, method.norm=sub('.*-', '', input$edg.lim.nor), com.factor=se()$fct, method.adjust='BH', return.all=TRUE); cat('Done! \n'); edg
     })
   })
   edg <- eventReactive(input$ssg.update, {
@@ -2398,8 +2462,6 @@ sub_se <- function(se, sams, cons) {
     lis <- list(edgeR=edg(), limma=lim(), DESeq2=dsq(), ROKU=rok(), distinct=dis())[meth.sel]
     deg.lis1 <- deg_lis(lis, sam=input$ssg.tar, 'up')
     deg.lis2 <- deg_lis(lis, sam=input$ssg.tar, 'down')
-    # validate(need(try(length(deg.lis)>1), 'Over-expressed genes detected in less than two methods, so upset plot is unavailable for the selected target!'))
-    # if (length(deg.lis)<2) return()
     if (length(deg.lis1) == 1) { # Only one method is selected.
       deg.lis1 <- c(deg.lis1[1], deg.lis1[1])
       names(deg.lis1) <- paste0(names(deg.lis1), c('', '.1'))
@@ -2413,27 +2475,33 @@ sub_se <- function(se, sams, cons) {
   output$upset1 <- renderPlot({
     cat('Upset up ... \n'); deg.lis <- deg.lis()
     if (is.null(geneIn())|is.null(input$ssg.tar) | is.null(deg.lis)) return(NULL)
-    up <- upset(fromList(deg.lis$up.lis), order.by="degree", nintersects=40, point.size=3, line.size=1, mb.ratio=c(0.6, 0.4), text.scale=1.5); cat('Done! \n'); up
+    up.lis <- deg.lis$up.lis
+    validate(need(!is.null(up.lis), 'No over-expressed genes are detected!'))
+    # up <- upset(fromList(up.lis), order.by="degree", nintersects=40, point.size=3, line.size=1, mb.ratio=c(0.6, 0.4), text.scale=1.5); cat('Done! \n'); up
+    up <- deg_ovl(deg.lis, type='up', plot='upset'); cat('Done! \n'); up
   })
   output$upset2 <- renderPlot({
     cat('Upset down ... \n'); deg.lis <- deg.lis()
     if (is.null(geneIn())|is.null(input$ssg.tar) | is.null(deg.lis)) return(NULL)
-    up <- upset(fromList(deg.lis$down.lis), order.by="degree", nintersects=40, point.size=3, line.size=1, mb.ratio=c(0.6, 0.4), text.scale=1.5); cat('Done! \n'); up
+    down.lis <- deg.lis$down.lis
+    validate(need(!is.null(down.lis), 'No under-expressed genes are detected!'))
+    dn <- deg_ovl(deg.lis, type='down', plot='upset'); cat('Done! \n'); dn
+    # dn <- upset(fromList(down.lis), order.by="degree", nintersects=40, point.size=3, line.size=1, mb.ratio=c(0.6, 0.4), text.scale=1.5); cat('Done! \n'); up
   })
 
 
   output$ovl1 <- renderPlot({
-    cat('Overlap up DEG ... \n'); deg.lis <- deg.lis()$up.lis
-    if (is.null(geneIn())|is.null(input$ssg.tar) | is.null(deg.lis)) return(NULL)
-    names(deg.lis) <- sub('\\.up(\\.\\d+)*$|\\.down(\\.\\d+)*$', '', names(deg.lis))
-    g <- deg_olp(deg.lis); cat('Done! \n'); g
+    cat('Overlap up DEG ... \n'); degLis <- deg.lis()
+    up.lis <- degLis$up.lis
+    if (is.null(geneIn())|is.null(input$ssg.tar) | is.null(up.lis)) return(NULL)
+    g <- deg_ovl(degLis, type='up', plot='matrix'); cat('Done! \n'); g
   })
 
   output$ovl2 <- renderPlot({
-    cat('Overlap down DEG ... \n'); deg.lis <- deg.lis()$down.lis
-    if (is.null(geneIn())|is.null(input$ssg.tar) | is.null(deg.lis)) return(NULL)
-    names(deg.lis) <- sub('\\.up(\\.\\d+)*$|\\.down(\\.\\d+)*$', '', names(deg.lis)) 
-    g <- deg_olp(deg.lis); cat('Done! \n'); g
+    cat('Overlap down DEG ... \n'); degLis <- deg.lis()
+    down.lis <- degLis$down.lis
+    if (is.null(geneIn())|is.null(input$ssg.tar) | is.null(down.lis)) return(NULL)
+    g <- deg_ovl(degLis, type='down', plot='matrix'); cat('Done! \n'); g
   })
 
   dt.deg <- reactive({
@@ -2447,9 +2515,12 @@ sub_se <- function(se, sams, cons) {
     deg.lis2 <- deg_lis(lis, sam=input$ssg.tar, 'down')
     # venn_inter returns matrix, since matrix accepts duplicate row names while data frame not. Some genes might be up in one method while down in other methods, so there could be duplicated rows in df.deg.
     df.deg <- rbind(venn_inter(deg.lis1), venn_inter(deg.lis2))
+    validate(need(nrow(df.deg)>0, 'No up or down regulated genes are detected!'))
     df.met <- geneIn1[["df.met"]][, , drop=FALSE]
     # The data (geneIn1) before filtering is used, so even though all genes are filtered out, the DEG SHMs can still be displayed.
     na.deg <- rownames(df.deg); df.aggr.tran <- round(geneIn1$df.aggr.tran, 2)
+    # Switch data sets.
+    if (!all(na.deg %in% rownames(df.aggr.tran))) return()
     if (ncol(df.met) > 0) df.deg <- cbind.data.frame(df.met[na.deg, , drop = FALSE], df.deg, stringsAsFactors=FALSE)
     df.deg <- cbind.data.frame(df.deg, df.aggr.tran[na.deg, , drop = FALSE], stringsAsFactors=FALSE)
     cat('Done! \n'); df.deg 

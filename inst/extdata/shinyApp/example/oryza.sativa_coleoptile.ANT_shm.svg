@@ -43,9 +43,9 @@
                            inkscape:window-height="1056"
                            id="namedview4"
                            showgrid="false"
-                           inkscape:zoom="0.79724778"
-                           inkscape:cx="200.81033"
-                           inkscape:cy="145.91583"
+                           inkscape:zoom="1.9158328"
+                           inkscape:cx="206.06111"
+                           inkscape:cy="250.30907"
                            inkscape:window-x="65"
                            inkscape:window-y="24"
                            inkscape:window-maximized="1"
@@ -58,12 +58,12 @@
                            id="container">
                           <path
                                         inkscape:connector-curvature="0"
-                                        id="rect1033_LGD"
+                                        id="rect1033_globalLGD"
                                         d="M 10.944438,56.32036 H 42.216688 V 64.23261 H 10.944438 Z"
                                         style="opacity:1;fill:#3f1d38;fill-opacity:1;fill-rule:evenodd;stroke:#000000;stroke-width:0.2;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" />
                           <g
                                         transform="translate(-487.74713,38.444901)"
-                                        id="text1037_LGD"
+                                        id="text1037_globalLGD"
                                         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:16px;line-height:1.25;font-family:sans-serif;-inkscape-font-specification:'sans-serif, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:start;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:start;fill:#3f1d38;fill-opacity:1;stroke:#000000;stroke-width:0.2;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
                                         aria-label="5mm">
                                        <path
@@ -84,7 +84,7 @@
                           </g>
                           <g
                                         transform="translate(206.09782,-143.08737)"
-                                        id="text1178_LGD"
+                                        id="text1178_globalLGD"
                                         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:20px;line-height:1.25;font-family:sans-serif;-inkscape-font-specification:'sans-serif, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:start;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:start;fill:#3f1d38;fill-opacity:1;stroke:#000000;stroke-width:0.2;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
                                         aria-label="h: hour">
                                        <path
@@ -120,7 +120,7 @@
                           </g>
                           <g
                                         transform="translate(284.49521,-277.56473)"
-                                        id="text1186_LGD"
+                                        id="text1186_globalLGD"
                                         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:20px;line-height:1.25;font-family:sans-serif;-inkscape-font-specification:'sans-serif, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:start;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:start;fill:#3f1d38;fill-opacity:1;stroke:#000000;stroke-width:0.2;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
                                         aria-label="A: aerobic">
                                        <path
@@ -171,7 +171,7 @@
                           </g>
                           <g
                                         transform="translate(451.91715,-325.18537)"
-                                        id="text1190_LGD"
+                                        id="text1190_globalLGD"
                                         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:20px;line-height:1.25;font-family:sans-serif;-inkscape-font-specification:'sans-serif, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:start;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:start;fill:#3f1d38;fill-opacity:1;stroke:#000000;stroke-width:0.2;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
                                         aria-label="N: Anaerobic">
                                        <path
@@ -232,13 +232,13 @@
                           </g>
                           <path
                                         inkscape:connector-curvature="0"
-                                        id="rect1324_LGD"
+                                        id="rect1324_globalLGD"
                                         d="M 121.49656,6.529546 H 150.50816 V 11.804383 H 121.49656 Z"
                                         style="opacity:1;fill:#c25f00;fill-opacity:1;fill-rule:evenodd;stroke:#000000;stroke-width:0.2;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" />
                           <path
                                         inkscape:transform-center-y="-4.1445146"
                                         inkscape:transform-center-x="0.37677406"
-                                        id="rect1324-9_LGD"
+                                        id="rect1324-9_globalLGD"
                                         d="M 316.58302,7.13599 H 345.59462 V 12.410827 H 316.58302 Z"
                                         style="opacity:1;fill:#2e93a2;fill-opacity:1;fill-rule:evenodd;stroke:#000000;stroke-width:0.2;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
                                         inkscape:connector-curvature="0" />
@@ -272,25 +272,25 @@
                           <path
                                         inkscape:transform-center-y="-3.5669133"
                                         inkscape:transform-center-x="3.9196692"
-                                        id="rect1324-9-8-1_LGD"
+                                        id="rect1324-9-8-1_globalLGD"
                                         d="M 40.58964,430.9055 H 342.40408 V 435.44522 H 40.58964 Z"
                                         style="opacity:1;fill:#2e93a2;fill-opacity:1;fill-rule:evenodd;stroke:#000000;stroke-width:0.2;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
                                         inkscape:connector-curvature="0" />
                           <path
                                         inkscape:connector-curvature="0"
-                                        id="rect1324-46-7_LGD"
+                                        id="rect1324-46-7_globalLGD"
                                         d="M 392.19254,430.97837 H 409.82726 V 436.33237 H 392.19254 Z"
                                         style="opacity:1;fill:#c25f00;fill-opacity:1;fill-rule:evenodd;stroke:#000000;stroke-width:0.2;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" />
                           <path
                                         inkscape:transform-center-y="-4.0997725"
                                         inkscape:transform-center-x="0.52452769"
-                                        id="rect1324-9-9-7_LGD"
+                                        id="rect1324-9-9-7_globalLGD"
                                         d="M 351.95154,431.04642 H 392.34025 V 436.26432 H 351.95154 Z"
                                         style="opacity:1;fill:#2e93a2;fill-opacity:1;fill-rule:evenodd;stroke:#000000;stroke-width:0.2;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
                                         inkscape:connector-curvature="0" />
                           <g
                                         transform="translate(-454.90783,-73.666856)"
-                                        id="text2357_LGD"
+                                        id="text2357_globalLGD"
                                         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:16px;line-height:1.25;font-family:sans-serif;-inkscape-font-specification:'sans-serif, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:start;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:start;fill:#000000;fill-opacity:1;stroke:#000000;stroke-width:0.2;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
                                         aria-label="0h">
                                        <path
@@ -306,7 +306,7 @@
                           </g>
                           <g
                                         transform="translate(-448.90783,-75.666856)"
-                                        id="text2361_LGD"
+                                        id="text2361_globalLGD"
                                         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:16px;line-height:1.25;font-family:sans-serif;-inkscape-font-specification:'sans-serif, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:start;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:start;fill:#000000;fill-opacity:1;stroke:#000000;stroke-width:0.2;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
                                         aria-label="1hN">
                                        <path
@@ -327,7 +327,7 @@
                           </g>
                           <g
                                         transform="translate(-455.70338,-76.958166)"
-                                        id="text2365_LGD"
+                                        id="text2365_globalLGD"
                                         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:16px;line-height:1.25;font-family:sans-serif;-inkscape-font-specification:'sans-serif, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:start;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:start;fill:#000000;fill-opacity:1;stroke:#000000;stroke-width:0.2;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
                                         aria-label="3hN">
                                        <path
@@ -348,7 +348,7 @@
                           </g>
                           <g
                                         transform="translate(-463.29448,-76.023846)"
-                                        id="text2369_LGD"
+                                        id="text2369_globalLGD"
                                         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:16px;line-height:1.25;font-family:sans-serif;-inkscape-font-specification:'sans-serif, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:start;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:start;fill:#000000;fill-opacity:1;stroke:#000000;stroke-width:0.2;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
                                         aria-label="12hN">
                                        <path
@@ -374,7 +374,7 @@
                           </g>
                           <g
                                         transform="translate(-481.00952,-77.622366)"
-                                        id="text2373_LGD"
+                                        id="text2373_globalLGD"
                                         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:16px;line-height:1.25;font-family:sans-serif;-inkscape-font-specification:'sans-serif, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:start;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:start;fill:#000000;fill-opacity:1;stroke:#000000;stroke-width:0.2;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
                                         aria-label="24hN">
                                        <path
@@ -400,7 +400,7 @@
                           </g>
                           <g
                                         transform="translate(-489.93643,-79.220876)"
-                                        id="text2377_LGD"
+                                        id="text2377_globalLGD"
                                         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:16px;line-height:1.25;font-family:sans-serif;-inkscape-font-specification:'sans-serif, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:start;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:start;fill:#000000;fill-opacity:1;stroke:#000000;stroke-width:0.2;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
                                         aria-label="48hN">
                                        <path
@@ -426,7 +426,7 @@
                           </g>
                           <g
                                         transform="translate(-505.9216,-79.622366)"
-                                        id="text2381_LGD"
+                                        id="text2381_globalLGD"
                                         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:16px;line-height:1.25;font-family:sans-serif;-inkscape-font-specification:'sans-serif, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:start;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:start;fill:#000000;fill-opacity:1;stroke:#000000;stroke-width:0.2;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
                                         aria-label="72hN">
                                        <path
@@ -452,7 +452,7 @@
                           </g>
                           <g
                                         transform="translate(-517.06815,-79.995896)"
-                                        id="text2385_LGD"
+                                        id="text2385_globalLGD"
                                         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:16px;line-height:1.25;font-family:sans-serif;-inkscape-font-specification:'sans-serif, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:start;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:start;fill:#000000;fill-opacity:1;stroke:#000000;stroke-width:0.2;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
                                         aria-label="96hN">
                                        <path
@@ -478,7 +478,7 @@
                           </g>
                           <g
                                         transform="translate(-514.87409,-81.713966)"
-                                        id="text2389_LGD"
+                                        id="text2389_globalLGD"
                                         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:16px;line-height:1.25;font-family:sans-serif;-inkscape-font-specification:'sans-serif, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:start;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:start;fill:#000000;fill-opacity:1;stroke:#000000;stroke-width:0.2;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
                                         aria-label="72hN24hA">
                                        <path
@@ -638,7 +638,7 @@
                                         style="opacity:1;fill:none;fill-opacity:1;fill-rule:evenodd;stroke:#000000;stroke-width:0.2;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" />
                           <g
                                         transform="translate(143.88562,97.14521)"
-                                        id="text893-9_LGD"
+                                        id="text893-9_globalLGD"
                                         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:16px;line-height:1.25;font-family:sans-serif;-inkscape-font-specification:'sans-serif, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:start;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:start;fill:#3f1d38;fill-opacity:1;stroke:#000000;stroke-width:0.2;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
                                         aria-label="0h">
                                        <path
@@ -654,7 +654,7 @@
                           </g>
                           <g
                                         transform="translate(181.31571,63.04352)"
-                                        id="text905-0_LGD"
+                                        id="text905-0_globalLGD"
                                         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:16px;line-height:1.25;font-family:sans-serif;-inkscape-font-specification:'sans-serif, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:start;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:start;fill:#3f1d38;fill-opacity:1;stroke:#000000;stroke-width:0.2;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
                                         aria-label="1hA">
                                        <path
@@ -675,7 +675,7 @@
                           </g>
                           <g
                                         transform="translate(225.13986,18.81789)"
-                                        id="text917-5_LGD"
+                                        id="text917-5_globalLGD"
                                         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:16px;line-height:1.25;font-family:sans-serif;-inkscape-font-specification:'sans-serif, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:start;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:start;fill:#3f1d38;fill-opacity:1;stroke:#000000;stroke-width:0.2;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
                                         aria-label="3hA">
                                        <path
@@ -696,7 +696,7 @@
                           </g>
                           <g
                                         transform="translate(274.02969,-29.67046)"
-                                        id="text921-4_LGD"
+                                        id="text921-4_globalLGD"
                                         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:16px;line-height:1.25;font-family:sans-serif;-inkscape-font-specification:'sans-serif, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:start;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:start;fill:#3f1d38;fill-opacity:1;stroke:#000000;stroke-width:0.2;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
                                         aria-label="12hA">
                                        <path
@@ -722,7 +722,7 @@
                           </g>
                           <g
                                         transform="translate(317.18736,-82.41882)"
-                                        id="text925-3_LGD"
+                                        id="text925-3_globalLGD"
                                         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:16px;line-height:1.25;font-family:sans-serif;-inkscape-font-specification:'sans-serif, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:start;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:start;fill:#3f1d38;fill-opacity:1;stroke:#000000;stroke-width:0.2;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
                                         aria-label="24hA">
                                        <path
@@ -748,12 +748,12 @@
                           </g>
                           <path
                                         inkscape:connector-curvature="0"
-                                        id="rect1324-4-6_LGD"
+                                        id="rect1324-4-6_globalLGD"
                                         d="M 50.312667,221.02169 H 347.6132 V 225.56879 H 50.312667 Z"
                                         style="opacity:1;fill:#c25f00;fill-opacity:1;fill-rule:evenodd;stroke:#000000;stroke-width:0.2;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" />
                           <g
                                         transform="translate(-380.49172,129.80806)"
-                                        id="text2145_LGD"
+                                        id="text2145_globalLGD"
                                         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:16px;line-height:1.25;font-family:sans-serif;-inkscape-font-specification:'sans-serif, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:start;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:start;fill:#000000;fill-opacity:1;stroke:#000000;stroke-width:0.2;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
                                         aria-label="48hA">
                                        <path
@@ -779,7 +779,7 @@
                           </g>
                           <g
                                         transform="translate(-304.55885,98.41969)"
-                                        id="text2145-0_LGD"
+                                        id="text2145-0_globalLGD"
                                         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:16px;line-height:1.25;font-family:sans-serif;-inkscape-font-specification:'sans-serif, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:start;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:start;fill:#000000;fill-opacity:1;stroke:#000000;stroke-width:0.2;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
                                         aria-label="96hA">
                                        <path
@@ -805,7 +805,7 @@
                           </g>
                           <g
                                         transform="translate(-420.79703,123.90372)"
-                                        id="text2145-0-5_LGD"
+                                        id="text2145-0-5_globalLGD"
                                         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:16px;line-height:1.25;font-family:sans-serif;-inkscape-font-specification:'sans-serif, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:start;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:start;fill:#000000;fill-opacity:1;stroke:#000000;stroke-width:0.2;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
                                         aria-label="72hA">
                                        <path

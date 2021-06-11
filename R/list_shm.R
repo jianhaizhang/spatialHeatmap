@@ -114,10 +114,9 @@ gg_shm <- function(gene, con.na=TRUE, geneV, coord, ID, cols, tis.path, lis.rema
       # Assign legend key colours if identical samples between SVG and matrix have colors of "none".
       legend.col1 <- legend.col[ft.legend] # Only includes matching samples. 
       if (any(is.na(legend.col1))) {
-         n <- sum(is.na(legend.col1)); col.all <- grDevices::colors()[grep('honeydew|aliceblue|white|gr(a|e)y', grDevices::colors(), invert=TRUE)]
-         col.na <- col.all[seq(from=1, to=length(col.all), by=floor(length(col.all)/n))]
-         legend.col1[is.na(legend.col1)] <- col.na[seq_len(n)]
-       }
+        n <- sum(is.na(legend.col1)); col.na <- diff_cols(n) 
+        legend.col1[is.na(legend.col1)] <- col.na[seq_len(n)]
+      }
        # Map legend colours to tissues.
        # Exclude transparent tissues.
        ft.legend <- setdiff(ft.legend, ft.trans) 
@@ -234,6 +233,20 @@ grob_shm <- function(gg.lis, cores=2) {
   names(grob.lis) <- nas; return(grob.lis)
 }
 
+#' Extract contrasting colors.
+#'
+#' @param n Total number of contasting colors required.
+#' @return A a vector of contrasting colors.
+#' @keywords Internal
+#' @noRd
 
+#' @author Jianhai Zhang \email{jzhan067@@ucr.edu; zhang.jianhai@@hotmail.com} \cr Dr. Thomas Girke \email{thomas.girke@@ucr.edu}
+
+#' @importFrom grDevices colors
+
+diff_cols <- function(n) {
+  col.all <- grDevices::colors()[grep('honeydew|aliceblue|white|gr(a|e)y|lightsteelblue|lightsteelblue(1|2)', grDevices::colors(), invert=TRUE)]
+  col.na <- col.all[seq(from=1, to=length(col.all), by=floor(length(col.all)/n))]; return(col.na)
+}
 
 

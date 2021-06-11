@@ -15,7 +15,6 @@ js <- "function openFullscreen(elem) {
   }
 }"
 
-label <- 'Search by gene IDs (e.g. ENSMUSG00000000031) or symbols'
 search_ui <- function(id, lab=label) {
   ns <- NS(id) 
   fluidRow(splitLayout(cellWidths=c('1%', '13%', '1%', '85%'), '',
@@ -33,14 +32,22 @@ data_ui <- function(id, deg=FALSE) {
       tabPanel('Selected', value='dTabSel',
         fluidRow(splitLayout(cellWidths=c("1%", "98%", "1%"), "", dataTableOutput(ns("dtSel")), "")), br()
       ),
+      tabPanel('Selected Profile', value='dTabSelProf',
+        fluidRow(splitLayout(cellWidths=c("1%", "98%", "1%"), "", plotOutput(ns("selProf")), ""))
+      ),
       tabPanel('Complete', value='dTabAll',
       navbarPage('Parameters:',
       tabPanel("Basic",
-      fluidRow(splitLayout(cellWidths=c('1%', '20%', '1%', '20%', '1%', '10%', '1%', '10%'), '',
-      radioButtons(inputId=ns('scale'), label='Scale by', choices=c('No', 'Row', 'Column'), selected='No', inline=TRUE), '', 
-      radioButtons(inputId=ns('log'), label='Log/exp-transform', choices=c("No", "log2", "exp2"), selected='No', inline=TRUE),
-      bsTooltip(id=ns('log'), title="No: original values in uploaded data are used.", placement = "bottom", trigger = "hover")
-      ))), # tabPanel
+      fluidRow(splitLayout(cellWidths=c('1%', '15%', '1%', '15%', '1%', '15%', '1%', '15%'), '',
+      actionButton(ns("dat.all.but"), "Confirm selection"), '',
+      selectInput(ns("normDat"), "Normalize", c('None'='none', "CNF-TMM", "CNF-TMMwsp", "CNF-RLE", "CNF-upperquartile", "ESF", "VST", "rlog"), selected='none'), '',
+      selectInput(inputId=ns('log'), label='Log/exp-transform', choices=c("No", 'Log2'="log2", 'Exp2'="exp2"), selected='No'), '', 
+      selectInput(inputId=ns('scaleDat'), label='Scale by', choices=c('No'='No', 'Row'='Row', 'Selected'='Selected', 'All'='All'), selected='Row')
+      )),
+      bsTooltip(id=ns('normDat'), title="CNF: calcNormFactors in edgeR. <br/> ESF: estimateSizeFactors in DESeq2. <br/> VST: varianceStabilizingTransformation in DESeq2. <br/> rlog: regularized log in DESeq2.", placement = "top", trigger = "hover"),
+      bsTooltip(id=ns('scaleDat'), title="Row: scale each row independently. <br/> Selected: scale across all selected genes as a whole. <br/> All: scale across all genes as a whole.", placement = "top", trigger = "hover"),
+      bsTooltip(id=ns('log'), title="No: original values in uploaded data are used. <br/> Log2: transform data to log2-scale. <br/> Exp2: transform data to the power of 2.", placement = "top", trigger = "hover")
+      ), # tabPanel
       tabPanel("Filter",
       fluidRow(splitLayout(cellWidths=c('1%', '14%', '1%', '30%', '1%', '24%', '1%', '24%'), '',
       numericInput(inputId=ns("A"), label="Threshold (A) to exceed", value=0), '',
@@ -79,11 +86,18 @@ upload_ui <- function(id) {
         column(4, id='mouse', style='text-align:center', uiOutput(ns('mouse'))),
         column(4, id='chicken', style='text-align:center', uiOutput(ns('chicken')))
       ),
+      br(), p(em('Arabidopsis thaliana'), style='font-size:18px'),
       fluidRow(
         column(4, id='organArab', style='text-align:center', uiOutput(ns('organ.arab'))),
         column(4, id='shootArab', style='text-align:center', uiOutput(ns('shoot.arab'))),
         column(4, id='rootArab', style='text-align:center', uiOutput(ns('root.arab')))
-      )
+      ),
+        column(4, id='stageArab', style='text-align:center', uiOutput(ns('stage.arab'))),
+        column(4, style='width:100%'), column(4, style='width:100%'),
+      fluidRow(
+        column(4, id='clpRice', style='text-align:center', uiOutput(ns('clp.rice'))),
+        column(4, ), column(4, )
+      ),
      ), # tabPanel(title="Gallary",
      tabPanel(title="Data & aSVGs", value='datSVG',
       h4(strong("Step1: choose custom or default data sets")),
@@ -181,14 +195,13 @@ shm_ui <- function(id, data.ui, search.ui) {
       fluidRow(splitLayout(cellWidths=c('0.5%', '99.5%'), '',   checkboxGroupInput(inputId=ns("tis"), label="Select features to be transparent", choices='', selected='', inline=TRUE)))
       ), # tabPanel
       tabPanel("Value legend",
-      column(9, offset=0, style='padding-left:50px; padding-right:80px; padding-top:0px; padding-bottom:5px',
-      fluidRow(splitLayout(cellWidths=c('1%', '32%', '1%', '13%', '1%', '17%', '1%', '16%', '1%', '28%'), '', 
-      actionButton(ns("val.lgd"), "Add/Remove", icon=icon("refresh"), style = "margin-top: 24px;"), '',  
+      fluidRow(splitLayout(cellWidths=c('1%', '10%', '1%', '10%', '1%', '10%', '1%', '10%', '1%', '10%'), '', 
       numericInput(inputId=ns('val.lgd.row'), label='Rows', value='', min=1, max=Inf, step=1, width=150), '',
       numericInput(inputId=ns('val.lgd.key'), label='Key size', value='', min=0.0001, max=1, step=0.01, width=150), '',
       numericInput(inputId=ns('val.lgd.text'), label='Text size', value='', min=0.0001, max=Inf, step=1, width=140), '',
-      radioButtons(inputId=ns('val.lgd.feat'), label='Include features', choices=c('No', 'Yes'), selected='', inline=TRUE)
-      ))) # column
+      radioButtons(inputId=ns('val.lgd.feat'), label='Include features', choices=c('No', 'Yes'), selected='', inline=TRUE), '',
+      actionButton(ns("val.lgd"), "Add/Remove", icon=icon("refresh"), style = "margin-top: 24px;") 
+      ))
       ), # tabPanel
       tabPanel("Shape outline",
       splitLayout(cellWidths=c('1%', '15%', '1%', '13%'), '', 
@@ -199,12 +212,14 @@ shm_ui <- function(id, data.ui, search.ui) {
 
 #     tags$div(title="Download the spatial heatmaps and legend plot.",
       # h1(strong("Download paramters:"), style = "font-size:20px;"),
-      fluidRow(splitLayout(cellWidths=c('0.7%', '25%', '1%', '15%', '1%', '16%', '1%', '15%', '1%', '15%'), '',
-      radioButtons(inputId=ns('ext'), label='File type', choices=c('NA', "png", "jpg", "pdf"), selected='', inline=TRUE), '', 
+      fluidRow(splitLayout(cellWidths=c('0.7%', '15%', '1%', '10%', '1%', '12%', '1%', '12%', '1%', '8%', '1%', '8%'), '',
+      radioButtons(inputId=ns('ext'), label='File type', choices=c("jpg", "png", "pdf"), selected='jpg', inline=TRUE), '', 
       numericInput(inputId=ns('res'), label='Resolution (dpi)', value='', min=10, max=Inf, step=10, width=150), '',
       radioButtons(inputId=ns('lgd.incld'), label='Include legend plot', choices=c('Yes', 'No'), selected='', inline=TRUE), '', 
       numericInput(inputId=ns('lgd.size'), label='Legend plot size', value='', min=-1, max=Inf, step=0.1, width=140), '',
-      downloadButton(ns("dld.shm"), "Download", style = "margin-top: 24px;")
+      actionButton(ns("dld.but"), "Confirm", icon=icon("refresh"), style = "margin-top: 24px;"), '',
+      # downloadButton(ns("dld.shm"), "Download", style = "margin-top: 24px;")
+      uiOutput(ns('dldBut'))
       )), # fluidRow
       bsTooltip(id=ns('ext'), title="Select a file type to download.", placement = "bottom", trigger = "hover")
 
@@ -221,9 +236,9 @@ shm_ui <- function(id, data.ui, search.ui) {
       ), # tabPanel
 
       tabPanel(title="Re-match features", value='rematch',
-        column(12, fluidRow(splitLayout(cellWidths=c('0.2%', "40%", '20%', "30%"), '',
+        column(12, fluidRow(splitLayout(cellWidths=c('1%', "40%", '10%', "30%"), '',
           uiOutput(ns('svg'), style = 'margin-left:-5px'), '', 
-          actionButton(ns("match"), "Confirm re-matching", icon=icon("refresh"), style="color: #fff; background-color:#3498DB;border-color: #2e6da4;margin-top: 24px;")
+          actionButton(ns("match"), "Confirm re-matching", icon=icon("refresh"))
         ))), verbatimTextOutput(ns('msg.match')),
         column(12, uiOutput(ns('ft.match')))
       )
@@ -289,7 +304,7 @@ network_ui <- function(id) {
       fluidRow(splitLayout(style='margin-top:3px;margin-bottom:3px', cellWidths=c('1%', '15%', '1%', '15%'), '', 
       dropdownButton(inputId=ns('dpbMea'), label='Similarity/Dissimilarity', circle=FALSE, icon=NULL, status='primary', inline=FALSE, width=250, 
       radioButtons(inputId=ns('measure'), label="Measure", choices=c('Correlation', 'Distance'), selected='Correlation', inline=TRUE, width='100%'), 
-      div(title='Only applicable when "correlation" is selected.',
+      div(title='Only applicable when "Correlation" is selected.',
       radioButtons(inputId=ns("cor.abs"), label="Absolute correlation", choices=c('No', 'Yes'), selected='No', inline=TRUE, width='100%')
       )
       ), '',
@@ -313,7 +328,7 @@ network_ui <- function(id) {
       ), # tabPanel('Plot', value='mhmPar'
     tabPanel(strong("Interactive Network (NET)"), value='netPlot', icon=NULL, 
       actionButton(ns("cpt.nw"), "Click to show/update", icon=icon("refresh"), style="color: #fff; background-color:#499fe9;border-color:#2e6da4"),
-      fluidRow(splitLayout(cellWidths=c("1%", "3%", "94%", "2%"), "", plotOutput(ns("bar.net")), visNetworkOutput(ns("vis")), ""))
+      fluidRow(splitLayout(cellWidths=c("1%", "5%", "92%", "2%"), "", plotOutput(ns("bar.net")), visNetworkOutput(ns("vis")), ""))
     ),
     tabPanel("Parameter (NET)", value='netPar', icon=NULL, 
       #fluidRow( # If column widths are not integers, columns are vertically aligned.
@@ -375,7 +390,7 @@ deg_ui <- function(id) {
         tabPanel(title="Link with spatial heatmap", value='dt.deg', 
           dataTableOutput(ns("dt.vs2")), br(),
           column(12, search_ui(ns('deg')), style='z-index:5'),  
-          dataTableOutput(ns("dt.deg")),
+          column(12, dataTableOutput(ns("dt.deg"))),
           downloadButton(ns("dld.ssg.tab"), "Download")
         ) 
       ) # navbarPage

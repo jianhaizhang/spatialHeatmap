@@ -205,7 +205,7 @@
 #' # for details by running "browseVignette('spatialHeatmap')" in R. 
 
 
-#' @author Jianhai Zhang \email{jzhan067@@ucr.edu; zhang.jianhai@@hotmail.com} \cr Dr. Thomas Girke \email{thomas.girke@@ucr.edu}
+#' @author Jianhai Zhang \email{jianhai.zhang@@email.ucr.edu} \cr Dr. Thomas Girke \email{thomas.girke@@ucr.edu}
 
 #' @references
 #' https://www.gimp.org/tutorials/ \cr https://inkscape.org/en/doc/tutorials/advanced/tutorial-advanced.en.html \cr http://www.microugly.com/inkscape-quickguide/
@@ -233,6 +233,7 @@ spatial_hm <- function(svg.path, data, sam.factor=NULL, con.factor=NULL, ID, lay
   if("tis.trans" %in% calls) { ft.trans <- tis.trans; warning('"tis.trans" is deprecated and replaced by "ft.trans"! \n') }
   x <- y <- color_scale <- tissue <- NULL; options(stringsAsFactors=FALSE)
   # if (!is.null(sub.margin)) if (!is.numeric(sub.margin) | length(sub.margin)!=4 | any(sub.margin >= 1) | any(sub.margin < 0)) stop('"sub.margin" must be a 4-length numeric vector between 0 (inclusive) and 1 (exclusive)!')
+  ID <- unique(ID)
   # Extract and filter data.
   if (is.vector(data)) {
     vec.na <- make.names(names(data)); if (is.null(vec.na)) stop("Please provide names for the input data!")
@@ -243,9 +244,16 @@ spatial_hm <- function(svg.path, data, sam.factor=NULL, con.factor=NULL, ID, lay
     if (is.null(ID)) stop('Please provide a name for the data!')
     gene <- as.data.frame(matrix(data, nrow=1, dimnames=list(ID, vec.na)))
 
-  } else if (is(data, 'data.frame')|is(data, 'matrix')|is(data, 'SummarizedExperiment')) {
+  } else if (is(data, 'data.frame')|is(data, 'matrix')|is(data, 'DFrame')|is(data, 'SummarizedExperiment')) {
+    if (is(data, 'data.frame')|is(data, 'matrix')|is(data, 'DFrame')) { # Data frame of spatial enrichment.
+      cna <- colnames(data)
+      if (all(c('gene', 'type', 'total') %in% cna)) {
+        data <- subset(data, !duplicated(gene)); rownames(data) <- data$gene
+      }
+      data <- data[, !colnames(data) %in% c('gene', 'type', 'total', 'metadata', 'edgeR', 'limma', 'DESeq2', 'distinct'), drop=FALSE]
+    }
     id.no <- ID[!ID %in% rownames(data)]
-    if (length(id.no)>0) stop(id.no, ': not detected in data! \n')
+    if (length(id.no)>0) stop(paste0(id.no, collapse=' '), ': not detected in data! \n')
     # Process data.
     dat.lis <- check_data(data=data, sam.factor=sam.factor, con.factor=con.factor, usage='shm')
     gene <- as.data.frame(dat.lis$dat); con.na <- dat.lis$con.na

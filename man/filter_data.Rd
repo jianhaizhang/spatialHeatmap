@@ -55,7 +55,7 @@ This function is designed to filter the numeric data in class of "data.frame" or
 cnt.chk.simple <- system.file('extdata/shinyApp/example/count_chicken_simple.txt', 
 package='spatialHeatmap')
 df.chk <- read.table(cnt.chk.simple, header=TRUE, row.names=1, sep='\t', check.names=FALSE)
-# Columns follow the namig scheme "sample__condition", where "sample" and "condition" stands
+# Columns follow the naming scheme "sample__condition", where "sample" and "condition" stands
 # for organs and time points respectively.
 df.chk[1:3, ]
 

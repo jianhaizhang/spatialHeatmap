@@ -82,7 +82,7 @@ norm_data <- function(data, norm.fun='CNF', parameter.list=NULL, log2.trans=TRUE
 stop('Accepted data classes are "data.frame", "matrix", "DFrame", or "SummarizedExperiment", except that "spatial_hm" also accepts a "vector".') }
   
   if (is.null(norm.fun)) norm.fun <- 'none'
-  if (!norm.fun %in% c("CNF", "ESF", "VST", "rlog")) stop('"norm.fun" should be one of "CNF", "ESF", "VST", "rlog", or "none"!')
+  if (!norm.fun %in% c("CNF", "ESF", "VST", "rlog", 'none')) stop('"norm.fun" should be one of "CNF", "ESF", "VST", "rlog", or "none"!')
   if (norm.fun=='none') {
     if (log2.trans==TRUE) { 
       v.min <- min(expr); if (v.min<0) expr <- expr-v.min

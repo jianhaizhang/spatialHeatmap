@@ -35,7 +35,7 @@ word-wrap: initial !important;
 ```{r global_options, include=FALSE}
 ## ThG: chunk added to enable global knitr options. The below turns on
 ## caching for faster vignette re-build during text editing.
-#knitr::opts_chunk$set(cache=TRUE)
+knitr::opts_chunk$set(cache=TRUE)
 ```
 <!-- 
 
@@ -56,18 +56,20 @@ BiocStyle::markdown(css.files=c('file/custom.css'))
 library(knitr); opts_chunk$set(message=FALSE, warning=FALSE)
 ```
 
+<font style='color:blue;font-size:30px'>jianhai: all changes are in blue. </font>
+
 # Introduction 
 
 ## Motivation
 
-The _spatialHeatmap_ package provides functionalities for visualizing cell-,
+<font style='color:blue'>The primary functionality of _spatialHeatmap_ package is to visualize cell-, </font>
 tissue- and organ-specific data of biological assays by coloring the
 corresponding spatial features defined in anatomical images according to a
 numeric color key. The color scheme used to represent the assay values can be
 customized by the user. This core functionality of the package is called a
 _spatial heatmap_ (SHM) plot. It is enhanced with visualization tools for groups 
 of measured items (_e.g._ gene modules) sharing related abundance profiles, including 
-matrix heatmaps combined with hierarchical clustering dendrograms and network representations. 
+matrix heatmaps combined with hierarchical clustering dendrograms and network representations. <font style='color:blue'> Except for the primary functionality, it also provides an advanced functionality of spatial enrichment (SE). The SE is specialized in detecting genes that are specifically expressed in a particular feature. The primary and advanced functionalities form an integrated methodology for spatial enrichment and spatial visualization. </font>
 The functionalities of _spatialHeatmap_ can be used either in a command-driven mode
 from within R or a graphical user interface (GUI) provided by a Shiny App that
 is also part of this package. While the R-based mode provides flexibility to
@@ -80,8 +82,9 @@ _spatialHeatmap's_ functionalities with community and/or private data. The
 functionalities of the `spatialHeatmap` package are illustrated in Figure
 \@ref(fig:illus).   
 
-```{r illus, echo=FALSE, fig.wide=TRUE, out.width="100%", fig.cap=("Overview of spatialHeatmap. (A) The _saptialHeatmap_ package plots numeric assay data onto spatially annotated images. A wide range of omics technologies is supported including genomic, transcriptomic, proteomic and metabolomic profiling data. The assay data can be provided as numeric vectors, tabular data, or _SummarizedExperiment_ objects. The latter is a widely used data container for organizing both assay data as well as associated annotation and experimental design data. (B) Anatomical and other spatial images need to be provided as annotated SVG (aSVG) files where the spatial features and the corresponding data components of the assay data have matching labels (_e.g._ tissue labels). (C) The assay data are used to color the matching spatial features in one or more aSVG images according to a color key. The result is called a spatial heatmap (SHM) or spatiotemporal heatmap (STHM) plot. Multiple measurements can be visualized in the same plot, such as several factors (_e.g._ genes, proteins, metabolites), treatment conditions, growth stages and more. (D) Data mining graphics, such as matrix heatmaps and network graphs, are integrated to facilitate the identification of factors with similar assay profiles. The functionalities of _spatialHeatmap_ can be accessed from local computers via the R console or a graphical user interface based on Shiny. In addition, the latter can be deployed as a web service on custom servers or cloud-based systems.")}
-include_graphics('img/spatialHeatmap_Design.jpg')
+
+```{r illus, echo=FALSE, fig.wide=TRUE, out.width="100%", fig.cap=("Overview of spatialHeatmap. (A) The _saptialHeatmap_ package plots numeric assay data onto spatially annotated images. A wide range of omics technologies is supported including genomic, transcriptomic, proteomic and metabolomic profiling data. The assay data can be provided as numeric vectors, tabular data, or _SummarizedExperiment_ objects. The latter is a widely used data container for organizing both assay data as well as associated annotation and experimental design data. (B) Anatomical and other spatial images need to be provided as annotated SVG (aSVG) files where the spatial features and the corresponding data components of the assay data have matching labels (_e.g._ tissue labels). <font style='color:blue'> The assay data are used to color the matching spatial features in aSVG images according to a color key. The result is called a spatial heatmap (SHM). In the regular SHM (C), the feature profiles may or may not be contrasting, while in the enriched SHM (D) there are clear contrasting profiles across features. </font> (E) Data mining graphics, such as matrix heatmaps and network graphs, are integrated to facilitate the identification of factors with similar assay profiles. The functionalities of _spatialHeatmap_ can be accessed from local computers via the R console or a graphical user interface based on Shiny. In addition, the latter can be deployed as a web service on custom servers or cloud-based systems.")}
+include_graphics('img/visual_abstract_shm.png')
 ```
 
 As anatomical images the package supports both tissue maps from public
@@ -102,8 +105,7 @@ maps. This high level of flexibility is one of the unique features of
 _spatialHeatmap_. Related software tools for biological applications in this
 field are largely based on pure web applications [@Lekschas2015-gd; @Papatheodorou2018-jy; @Winter2007-bq; @Waese2017-fx] or local tools [@Maag2018-gi; @Muschelli2014-av] that typically
 lack customization functionalities. These restrictions limit users to utilizing
-pre-existing expression data and/or fixed sets of anatomical image collections.
-To close this gap for biological use cases, we have developed _spatialHeatmap_
+pre-existing expression data and/or fixed sets of anatomical image collections. <font style='color:blue'> Additionally, these existing tools are only able to visualize data, but not analyze data to identify feature-specific information. </font> To close this gap for biological use cases, we have developed _spatialHeatmap_
 as a generic R/Bioconductor package for plotting quantitative values onto any
 type of spatially mapped images in a programmable environment and/or in an
 intuitive to use GUI application.
@@ -129,8 +131,7 @@ example (Figure \@ref(fig:musshm)). Except for spatial data, this package also w
 aSVGs in a single SHM plot as shown in Figure \@ref(fig:arabshm). This is 
 particularly useful for displaying abundance trends across multiple development 
 stages, where each is represented by its own aSVG image. In addition to
-static SHM representations, one can visualize them in form of dynamic animations
-embedded in interactive HTML files or generate videos for them.
+static SHM representations,<font style='color:blue'> one can visualize them in form of interactive HTML files or generate videos for them. In spatial enrichment, the target feature is compared with reference features in a pairwise manner. Genes are specifically-expressed in the target feature across all pairwise comparisons are deemed target-specific. </font>
 
 To maximize reusability and extensibility, the package organizes large-scale
 omics assay data along with the associated experimental design information in a
@@ -216,7 +217,7 @@ analysis tools are introduced, which facilitate the visualization of
 gene modules sharing similar expression patterns. This includes the
 visualization of hierarchical clustering results with traditional matrix
 heatmaps ([Matrix Heatmap](#mhm)) as well co-expression network plots
-([Network](#net)). Third, an overview of the corresponding [Shiny App](#shiny)
+([Network](#net)). <font style='color:blue'> Third, the [spatial enrichemnt](#se) functionality is illustrated on the mouse RNA-seq data. Lastly, </font> an overview of the corresponding [Shiny App](#shiny)
 is presented that provides access to the same functionalities as the R
 functions, but executes them in an interactive GUI environment [@shiny;
 @shinydashboard]. Fourth, more advanced features for plotting customized
@@ -1011,13 +1012,13 @@ target.sh[60:63, ]
 Return all samples present in target file.     
 
 ```{r eval=TRUE, echo=TRUE, warnings=FALSE}
-unique(target.sh[, 'sample'])
+unique(target.sh[, 'samples'])
 ```
 
 Return all conditions present in target file.  
 
 ```{r eval=TRUE, echo=TRUE, warnings=FALSE}
-unique(target.sh[, 'condition'])
+unique(target.sh[, 'conditions'])
 ```
 
 Load custom target data into `colData` slot.  
@@ -1036,8 +1037,8 @@ latter, the following code will retain genes with expression values larger than
 coefficient of variance (CV) between 0.30 and 100 (CV=c(0.30, 100)).   
 
 ```{r eval=TRUE, echo=TRUE, warnings=FALSE }
-se.aggr.sh <- aggr_rep(data=se.sh, sam.factor='sample', con.factor='condition', aggr='mean') # Replicate agggregation using mean
-se.fil.arab <- filter_data(data=se.aggr.sh, sam.factor='sample', con.factor='condition', pOA=c(0.03, 6), CV=c(0.30, 100), dir=NULL) # Filtering of genes with low intensities and variance
+se.aggr.sh <- aggr_rep(data=se.sh, sam.factor='samples', con.factor='conditions', aggr='mean') # Replicate agggregation using mean
+se.fil.arab <- filter_data(data=se.aggr.sh, sam.factor='samples', con.factor='conditions', pOA=c(0.03, 6), CV=c(0.30, 100), dir=NULL) # Filtering of genes with low intensities and variance
 ```
 
 ### SHM: Microarray 
@@ -1345,7 +1346,7 @@ spatial_hm(svg.path=c(svg.sh1, svg.sh2), data=df.random, ID=c('gene1'), width=0.
 
 Note in Figure \@ref(fig:arabshm) shoots have thicker outlines than roots. This is another function of `spatial_hm`, *i.e.* preserves the outline thicknesses defined in aSVG files. This feature is particularly useful in cellular SHMs where different cell types have different cell-wall thicknesses. The outline widths can be updated with `update_feature` programatically or with Inkscape manually. The former is illustrated in the Supplementary Section.   
 
-# Multi-Factor Spatial Heatmaps
+# Multi-Factor Spatial Heatmaps {#multFactor}
 
 In principle, the `spatialHeatmap` is extendable to as many factors (*e.g.* samples, conditions, times) as possible. The most common scenario involves only two factors of samples and conditions ([Section 3](#shm)). If more factors are relevant such as development stages, geographical locations, genotypes, *etc*, all or selected factors should be combined to generate composite factors. The [spatiotemporal section](#sthm) is an illustration of three factors. Similar combining strategies should be appied in cases of four or more factors. A rule of thumb is the composite factors of interest must have a matching counterpart in the aSVG file, otherwise target spatial features are not painted in spatial heatmaps.   
 
@@ -1487,8 +1488,105 @@ in the last column, then it will be shown when moving the cursor over a network
 node.    
 
 ```{r eval=FALSE, echo=TRUE, warnings=FALSE}
-network(ID="HRE2", data=sub.mat,  adj.mod=adj.mod, static=FALSE)
+network(ID="HRE2", data=sub.mat, adj.mod=adj.mod, static=FALSE)
 ```
+
+<font style='color:blue'>
+
+# Spatial Enrichment (SE) {#se} 
+
+This functionality is an extension of the SHMs. It identifies spatial feature-specifically expressed genes and thus enables the SHMs to visualize feature-specific profiles. It compares the target feature with all other selected features in a pairwise manner. The genes significantly up- or down-regulated in the target feature across all pairwise comparisons are denoted final target feature-specifcally expressed genes. The base methods include edgeR [@edgeR], limma [@limma], DESeq2 [@DESeq2], distinct [@distinct]. The feature-specific genes are first detected with each method independently then summarized across methods.  
+
+In addition to feature-specific genes, the SE is also able to identify genes specifically expressed in a certain condition or certain composite factor. The latter is a combination of multiple expermental factors. *E.g.* the spatiotemporal factor is a combination of feature and time points. See [section 5](#multFactor) for details.  
+
+The application of SE is illustrated on the mouse brain in the following example, which could be extended to other examples in a similar way.  
+
+## Mouse Brain
+
+In this example, `brain` is selected as the target feature, `liver` and `kidney` as the reference features, and all the three strains `DBA.2J`, `C57BL.6`, `CD1` as the factors. 
+
+All features.   
+
+```{r eval=TRUE, echo=TRUE, warnings=FALSE }
+unique(colData(rse.mus)$organism_part)
+```
+
+All factors.   
+
+```{r eval=TRUE, echo=TRUE, warnings=FALSE }
+unique(colData(rse.mus)$strain)
+```
+
+Subset the data according to the selected features and factors.   
+
+```{r eval=TRUE, echo=TRUE, warnings=FALSE }
+data.sub.mus <- sub_data(data=rse.mus, feature='organism_part', features=c('brain', 'liver', 'kidney'), factor='strain', factors=c('DBA.2J', 'C57BL.6', 'CD1'), com.by='feature', target='brain')
+```
+
+The SE requires replicates in the count data and has build-in normalizing utilities, thus the pre-processing only involves filtering.   
+
+```{r eval=TRUE, echo=TRUE, warnings=FALSE }
+data.sub.mus.fil <- filter_data(data=data.sub.mus, sam.factor='organism_part', con.factor='strain', pOA=c(0.2, 15), CV=c(0.8, 100))
+```
+
+The base methods in SE include four opitions: `edgeR`, `limma`, `DESeq2`, `distinct`, and the default are the first two. With each of the selected methods, the strains (`factors`) in each feature are treated as replicates and the target feature `brain` is compared with `liver` and `kidney` in a pairwise manner. The brain-specific genes are selected by log2 fold change (`log2.fc`) and FDR (`fdr`).   
+
+```{r eval=TRUE, echo=TRUE, warnings=FALSE }
+deg.lis.mus <- spatial_enrich(data.sub.mus.fil, methods=c('edgeR', 'limma'), log2.fc=1, fdr=0.05, aggr='mean', log2.trans.aggr=TRUE)
+```
+
+The up- and down-regulated genes in brain can be accessed by method. The genes in edgeR can be accessed as following.    
+
+```{r eval=TRUE, echo=TRUE, warnings=FALSE }
+deg.lis.mus$lis.up.down$up.lis$edgeR.up[1:3] # Up-regulated.
+deg.lis.mus$lis.up.down$down.lis$edgeR.down[1:3] # Down-regulated. 
+```
+
+Overlap of up-regulated genes in brain across methods in UpSet plot.   
+
+```{r upset, eval=TRUE, echo=TRUE, warnings=FALSE, fig.wide=TRUE, fig.cap=('UpSet plot of up-regulated genes in mouse brain. The overlap of up-regulated genes detected by edgeR and limma is indicated by bars.'), out.width="100%", fig.show='show'}
+deg_ovl(deg.lis.mus$lis.up.down, type='up', plot='upset')
+```
+
+Overlap of up-regulated genes in brain across methods in matrix plot.   
+
+```{r matrix, eval=TRUE, echo=TRUE, warnings=FALSE, fig.wide=TRUE, fig.cap=('Matrix plot of up-regulated genes in mouse brain. The matrix plot displays any overlap between up-regulated genes detected by edgeR and limma.'), out.width="70%", fig.show='show'}
+deg_ovl(deg.lis.mus$lis.up.down, type='up', plot='matrix')
+```
+
+The brain-specific genes are also summarized in a table. The `type` column indicates up- or down-regulated, the `total` column shows how many methods identify a certain gene as up or down, and the `edgeR` and `limma` columns have entry `1` if the method identifies a certain gene as up or down otherwise the entry will be `0`. The data provided to `spatial_enrich` is normalized and replicates are aggregated internally, and appended to the right of the table.    
+
+```{r eval=TRUE, echo=TRUE, warnings=FALSE }
+deg.table.mus <- deg.lis.mus$deg.table; deg.table.mus[1:2, ] 
+```
+
+The numbers in `total` column are stringency measures of gene specificity, where the larger, the more strigent. For example, the up- and down-regulated genes in brain can be subsetted with the highest stringency `total==2`.  
+
+```{r eval=TRUE, echo=TRUE, warnings=FALSE }
+df.up.mus <- subset(deg.table.mus, type=='up' & total==2)
+df.up.mus[1:2, ]
+```
+
+```{r eval=TRUE, echo=TRUE, warnings=FALSE }
+df.down.mus <- subset(deg.table.mus, type=='down' & total==2)
+df.down.mus[1:2, ]
+```
+
+Create SHMs on one up-regulated (`ENSMUSG00000026764`) and one down-regulated (`ENSMUSG00000025479`) gene.   
+
+```{r enrich, eval=TRUE, echo=TRUE, warnings=FALSE, fig.wide=TRUE, fig.cap=('Spatially-enriched mouse genes. The two genes in the image are enriched in the mouse brain relative to kidney and liver. Top: down-regulated in brain. Bottom: up-regulated in brain.'), out.width="100%", fig.show='show'}
+spatial_hm(svg.path=svg.mus, data=deg.lis.mus$deg.table, ID=c('ENSMUSG00000026764', 'ENSMUSG00000025479'), legend.r=1, legend.nrow=3, sub.title.size=6.1, ncol=3, bar.width=0.11)
+```
+
+Line graph of expression profiles of the two genes in (Figure \@ref(fig:enrich)).    
+
+```{r prof, eval=TRUE, echo=TRUE, warnings=FALSE, fig.wide=TRUE, fig.cap=('Line graph of gene expression profiles. The count data is normalized and replicates are aggregated.'), out.width="100%", fig.show='show'}
+profile_gene(rbind(df.up.mus[1, ], df.down.mus[1, ]))
+```
+
+
+</font>
+
 
 # Shiny App {#shiny}
 
@@ -1510,18 +1608,19 @@ along with embedded user instructions.
 The Shiny App of `spatialHeatmap` can be launched from an R session with the following function call. 
 
 ```{r eval=FALSE, echo=TRUE, warnings=FALSE}
-shiny_shm()
+shiny_all()
 ```   
 
 The dashboard panels of the Shiny App are organized as follows:
 
-1. Upload: menu for uploading custom files, selecting default files, or downloading example files.  
-2. Data Matrix: scrollable assay matrix uploaded by users
-3. Spatial Heatmap: spatially colored images based on aSVG images selected and/or uploaded by user
-4. Matrix Heatmap: hierarchical clustering results of user selected items along with nearest neighbors showing most similar abundance profiles 
-5. Network Graph: interactive network graph for selected module 
-6. Parameter Control Menus: postioned on top of each visualization panel 
+<font style='color:blue'>
 
+1. Landing Page: gallery of pre-upload examples, menu for uploading custom files, selecting default files, or downloading example files.  
+2. Spatial Heatmap: spatially colored images based on aSVG images selected and/or uploaded by user, matrix heatmap, network graph, data table (replicates aggregated). 
+3. Spatial Enrichment: data table (with replicates), menu for enrichment, enrichment results. 
+4. Parameter Control Menu: postioned on top of each panel.  
+
+</font>
 
 A screenshot is shown below depicting an SHM plot generated with the Shiny App of `spatialHeatmap` 
 (Figure \@ref(fig:shiny)).
@@ -1550,9 +1649,12 @@ se.fil.arab <- filter_data(data=se.aggr.sh, ann="Target.Description", sam.factor
 To interactively access gene-, transcript- or protein-level annotations in the plots and
 tables of the Shiny App, such as viewing functional descriptions by moving the
 cursor over network nodes, the corresponding annotation column needs to be
-present in the `rowData` slot and its column name assigned to the `ann`
+present in the `rowData` slot and its column name assigned to the `metadata`
 argument. In the exported tabular file, the extra annotation column is appended
 to the expression matrix.   
+
+<font style='color:blue'>
+Alternatively, once can export the three slots (`assay`, `colData`, `rowData`) of `SummarizedExperiment` in three tabular files and upload them separately.  </font> 
 
 
 ## Server Deployment
@@ -1564,7 +1666,7 @@ need to use R on the user system. For deployment one can use custom web
 servers or cloud services, such as AWS, GCP or
 [shinysapps.io](https://www.shinyapps.io/){target="_blank"}. An example web instance for testing
 `spatialHeatmap` online is available
-[here](https://www.plantsecretome.org/software/spatialheatmap){target="_blank"}.
+[here](https://tgirke.shinyapps.io/spatialHeatmap/){target="_blank"}.
 
 ## Custom Shiny App
 

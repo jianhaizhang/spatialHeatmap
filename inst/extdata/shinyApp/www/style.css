@@ -50,11 +50,12 @@ label[for='search'] { display: table-cell; text-align: center; vertical-align: m
 /* .tabbable > .nav > li > a {background-color: grey; color:black} */
 /* .tabbable > .nav > li > a[data-value='shm'] {background-color: #2471A3; color:white} */
 .tabbable > .nav > li > a {background-color:#337ab7; color:white}
-.tabbable > ul[id='shmMhNet'] > li > a {background-color:#54a1d2; color:white}
 
 .tabbable > .nav > li[class=active] > a {background-color:#337ab7; color:white}
 
 .nav-pills>li.active>a, .nav-pills>li.active>a:focus, .nav-pills>li.active>a:hover {border-top-color:red;}
+
+.tabbable > ul[id='shmMhNet'] > li > a {background-color:#54a1d2; color:white}
 
 /* Avoid overflowing in fluidrow and splitLayout. */
 .shiny-split-layout > div {overflow: visible;}
@@ -242,15 +243,15 @@ span {
 
 /*Image gallery in landing page. */
 
-#brainHum img, #mouse img, #chicken img, #organArab img, #shootArab img, #rootArab img, #vdo img {
+#brainHum img, #mouse img, #chicken img, #organArab img, #shootArab img, #rootArab img, #stageArab img, #clpRice img {
   transition: transform linear 0.5s; transition-delay: 0.5s;
 }
 
-#brainHum:hover, #mouse:hover, #chicken:hover, #organArab:hover, #shootArab:hover, #rootArab:hover, #inter:hover, #vdo:hover {
+#brainHum:hover, #mouse:hover, #chicken:hover, #organArab:hover, #shootArab:hover, #rootArab:hover, #stageArab:hover, #clpRice:hover {
   z-index: 5
 }
 
-#brainHum img:hover, #organArab img:hover {
+#brainHum img:hover, #organArab img:hover, #stageArab img:hover, #clpRice img:hover {
   transform: scale(3); transform-origin: left;
 }
 
@@ -264,6 +265,17 @@ span {
 
 /*HTML file in About. */
 body { text-align: justify }
+
+
+button[id='sear-sch.sgl.but'], button[id='sear-sch.mul.but'], button[id='deg-deg-sch.sgl.but'], button[id='deg-deg-sch.mul.but'], button[id='dat-dat.all.but'], a[id='shmAll-dld.shm'], button[id='shmAll-match'], button[id='shmAll-val.lgd'] {
+ margin-top:2px;margin-bottom:-10px;margin-left:20px;padding-top:2px;padding-bottom:2px;background-color:#ddd
+}
+
+/*tooltip in shinyBS. */
+div[class='tooltip-inner'] {
+  text-align: left
+}
+
 
 
 

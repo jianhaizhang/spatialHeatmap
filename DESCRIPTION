@@ -22,8 +22,8 @@ VignetteBuilder: knitr
 Suggests: knitr, rmarkdown, BiocStyle, RUnit, BiocGenerics,
         ExpressionAtlas, DT, reshape2, Biobase, GEOquery, shinyWidgets, shinyjs, htmltools, shinyBS, sortable
 Depends:
-Imports: av, BiocFileCache, data.table, DESeq2, edgeR, WGCNA, flashClust, htmlwidgets, genefilter,
-        ggplot2, ggdendro, grImport, grid, gridExtra, gplots, igraph, HDF5Array,
+Imports: av, BiocFileCache, data.table, DESeq2, distinct, edgeR, WGCNA, flashClust, htmlwidgets, genefilter,
+        ggplot2, ggdendro, grImport, grid, gridExtra, gplots, igraph, HDF5Array, limma,
         rsvg, shiny, dynamicTreeCut, grDevices, graphics, ggplotify, parallel, 
         plotly, rols, rappdirs, stats, SummarizedExperiment, shinydashboard, S4Vectors,
         utils, visNetwork, methods, xml2, yaml

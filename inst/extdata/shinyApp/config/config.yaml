@@ -80,7 +80,7 @@ shm.img:
 - relative.size:1
 - color:yellow,orange,red
 - color.scale:Selected rows
-- file.type:NA
+- file.type:jpg
 - dpi:300
 - include.legend.plot:Yes
 - legend.plot.size:0.5
