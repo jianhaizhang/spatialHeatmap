@@ -12,7 +12,7 @@ customComputedData/
 spatialHeatmap.html
 vignette_files/
 spatialHeatmap_files/
-vignette_cache/
+spatialHeatmap_cache/
 inst/extdata/shinyApp/test*
 html_shm/
 !inst/extdata/shinyApp/html_shm/README.txt
