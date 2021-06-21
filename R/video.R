@@ -14,6 +14,7 @@
 #' @param position.text.key The position of key text in legend plot, one of "top", "right", "bottom", "left". Default is NULL, equivalent to "right".
 #' @param legend.value.vdo Logical TRUE or FALSE. If TRUE, the numeric values of matching spatial features are added to video legend. The default is NULL.
 #' @param sub.title.size The title size of ggplot.
+#' @param bar.width The color bar width, between 0 and 1.
 #' @param label Logical. If TRUE, spatial features having matching samples are labeled by feature identifiers. The default is FALSE. It is useful when spatial features are labeled by similar colors. 
 #' @param label.size The size of spatial feature labels. The default is 4.
 #' @param label.angle The angle of spatial feature labels in legend plot. Default is 0.
@@ -36,7 +37,7 @@
 #' @importFrom av av_capture_graphics
 #' @importFrom gridExtra grid.arrange
 
-video <- function(gg, cs.g, sam.uni, ft.trans, sub.title.size=NULL, bar.value.size=NULL, lgd.key.size=0.02, lgd.text.size=8, angle.text.key=NULL, position.text.key=NULL, lgd.row=2, lgd.col=NULL, legend.value.vdo=NULL, label=FALSE, label.size=4, label.angle=0, hjust=0, vjust=0, opacity=1, key=TRUE, video.dim='640x480', res=500, interval=1, framerate=1, out.dir) {
+video <- function(gg, cs.g, sam.uni, ft.trans, sub.title.size=NULL, bar.width=0.1, bar.value.size=NULL, lgd.key.size=0.02, lgd.text.size=8, angle.text.key=NULL, position.text.key=NULL, lgd.row=2, lgd.col=NULL, legend.value.vdo=NULL, label=FALSE, label.size=4, label.angle=0, hjust=0, vjust=0, opacity=1, key=TRUE, video.dim='640x480', res=500, interval=1, framerate=1, out.dir) {
 
   try(test_ffm()); ffm <- tryCatch({ test_ffm() }, error=function(e){ return('error') }, warning=function(w) { return('warning') } )
   if (grepl('error|warning', ffm)) return()
@@ -50,7 +51,7 @@ video <- function(gg, cs.g, sam.uni, ft.trans, sub.title.size=NULL, bar.value.si
   res.r=res/144; w.h <- round(as.numeric(strsplit(video.dim, 'x')[[1]])*res.r)
   if (w.h[1] %% 2!=0) w.h[1] <- w.h[1]+1
   if (w.h[2] %% 2!=0) w.h[2] <- w.h[2]+1
-  av_capture_graphics(expr=for (i in na) { print(grid.arrange(cs.g, gg1[[i]], widths=unit(c(0.08, 0.92), 'npc'), 
+  av_capture_graphics(expr=for (i in na) { print(grid.arrange(cs.g, gg1[[i]], widths=unit(c(bar.width, 1-bar.width), 'npc'), 
   heights=unit(c(0.05, 0.99, 0.05), 'npc'), layout_matrix=lay)) }, 
   output=paste0(normalizePath(out.dir, winslash="/", mustWork=FALSE), "/shm.mp4"), width=w.h[1], height=w.h[2], res=res, vfilter=paste0('framerate=fps=', framerate))
 

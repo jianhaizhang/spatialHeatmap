@@ -267,6 +267,14 @@ svg_suffix <- function(svg.path, svg.na) {
   }; return(list(svg.path=svg.path, svg.na=svg.na))
 }
 
+# Convert aSVG features to draggable items.
+# ns() is the namespace in shiny modules.
+ft2tag <- function(ft){
+  lapply(ft, function(i) { tag("span", list(class = class(i), tags$span(class = "glyphicon glyphicon-move"), i)) }
+  )
+}
+
+
 ## Rematch features.
 # Create a panel for each data feature, where aSVG features can be dropped.
 # ns() is the namespace in shiny modules.
@@ -289,12 +297,6 @@ ft_js <- function(x, ns) {
   )
 }
 
-# Convert aSVG features to draggable items.
-# ns() is the namespace in shiny modules.
-ft2tag <- function(ft){
-  lapply(ft, function(i) { tag("span", list(class = class(i), tags$span(class = "glyphicon glyphicon-move"), i)) }
-  )
-}
 
 # Clean trash files in animation and video.
 ggly_rm <- function() {
@@ -303,12 +305,20 @@ ggly_rm <- function() {
     unlink('www/ggly/lib', recursive=TRUE)
     file.remove(list.files('www/ggly/', '*.html$', full.names=TRUE))
   } else dir.create('www/ggly', recursive=TRUE)
+  if (dir.exists('R/www')) {
+    cat("Removing animation files in 'R/www/ggly/' ... \n")
+    unlink('R/www', recursive=TRUE)
+  }
 }
 vdo_rm <- function() {
   if (dir.exists('www/video/')) {
     cat("Removing video file in 'www/video/' ... \n")
     file.remove(list.files('www/video/', '*.mp4$', full.names=TRUE))
   } else dir.create('www/video/', recursive=TRUE)
+ if (dir.exists('R/www')) {
+    cat("Removing video file in 'R/www/video' ... \n")
+    unlink('R/www', recursive=TRUE)
+ }
 }
 
 

@@ -192,6 +192,8 @@ placed in an adjacent directory.}
 
 \item{...}{additional element specifications not part of base ggplot2. In general,
 these should also be defined in the \verb{element tree} argument.}
+
+\item{bar.width.vdo}{The color bar width in video, between 0 and 1.}
 }
 \value{
 An image of spatial heatmap(s), a three-component list of the spatial heatmap(s) in \code{ggplot} format, a data frame of mapping between assayed samples and aSVG features, and a data frame of feature attributes.

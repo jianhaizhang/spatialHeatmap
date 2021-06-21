@@ -23,6 +23,7 @@
 
 #' @param angle.text.key A value of key text angle in legend plot. The default is NULL, equivalent to 0.
 #' @param position.text.key The position of key text in legend plot, one of "top", "right", "bottom", "left". Default is NULL, equivalent to "right".
+#' @param bar.width.vdo The color bar width in video, between 0 and 1.
 #' @param legend.value.vdo Logical TRUE or FALSE. If TRUE, the numeric values of matching spatial features are added to video legend. The default is NULL.
 #' @param label Logical. If TRUE, spatial features having matching samples are labeled by feature identifiers. The default is FALSE. It is useful when spatial features are labeled by similar colors. 
 #' @param label.size The size of spatial feature labels in legend plot. The default is 4.
@@ -429,7 +430,7 @@ spatial_hm <- function(svg.path, data, sam.factor=NULL, con.factor=NULL, ID, lay
         html_ly(gg=gg.all[i], cs.g=cs.g, ft.trans=ft.trans, sam.uni=sam.uni, anm.width=anm.width, anm.height=anm.height, out.dir=out.dir)
       }
 
-      vdo <- video(gg=gg.all, cs.g=cs.g, sam.uni=sam.uni, ft.trans=ft.trans, lgd.key.size=legend.key.size.2nd, lgd.text.size=legend.text.size.2nd, angle.text.key=angle.text.key.2nd, position.text.key=position.text.key.2nd, lgd.row=legend.nrow.2nd, lgd.col=legend.ncol.2nd, legend.value.vdo=legend.value.vdo, label=label, label.size=label.size, label.angle=label.angle, hjust=hjust, vjust=vjust, opacity=opacity, key=key, video.dim=video.dim, res=res, interval=interval, framerate=framerate, out.dir=out.dir)
+      vdo <- video(gg=gg.all, cs.g=cs.g, sam.uni=sam.uni, ft.trans=ft.trans, bar.width=bar.width.vdo, lgd.key.size=legend.key.size.2nd, lgd.text.size=legend.text.size.2nd, angle.text.key=angle.text.key.2nd, position.text.key=position.text.key.2nd, lgd.row=legend.nrow.2nd, lgd.col=legend.ncol.2nd, legend.value.vdo=legend.value.vdo, label=label, label.size=label.size, label.angle=label.angle, hjust=hjust, vjust=vjust, opacity=opacity, key=key, video.dim=video.dim, res=res, interval=interval, framerate=framerate, out.dir=out.dir)
       if (is.null(vdo)) cat("Video is not generated! \n")
 
     }

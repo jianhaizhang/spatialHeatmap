@@ -17,4 +17,5 @@ inst/extdata/shinyApp/test*
 html_shm/
 !inst/extdata/shinyApp/html_shm/README.txt
 inst/extdata/shinyApp/www/ggly/*
+inst/extdata/shinyApp/R/www/
 *.mp4

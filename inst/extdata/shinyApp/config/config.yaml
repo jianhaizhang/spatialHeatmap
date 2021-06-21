@@ -104,6 +104,7 @@ shm.video:
 - feature.label:No
 - label.size:2
 - dimension:640x480
+- bar.width.video:0.1
 legend:
 - key.row:2
 - key.size:0.04

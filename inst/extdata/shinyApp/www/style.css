@@ -267,7 +267,7 @@ span {
 body { text-align: justify }
 
 
-button[id='sear-sch.sgl.but'], button[id='sear-sch.mul.but'], button[id='deg-deg-sch.sgl.but'], button[id='deg-deg-sch.mul.but'], button[id='dat-dat.all.but'], a[id='shmAll-dld.shm'], button[id='shmAll-match'], button[id='shmAll-val.lgd'] {
+button[id='sear-sch.sgl.but'], button[id='sear-sch.mul.but'], button[id='deg-deg-sch.sgl.but'], button[id='deg-deg-sch.mul.but'], button[id='dat-dat.all.but'], a[id='shmAll-dld.shm'], button[id='shmAll-rematch-match'], button[id='shmAll-val.lgd'] {
  margin-top:2px;margin-bottom:-10px;margin-left:20px;padding-top:2px;padding-bottom:2px;background-color:#ddd
 }
 

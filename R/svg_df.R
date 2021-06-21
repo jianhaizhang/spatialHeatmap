@@ -131,16 +131,16 @@ svg_df <- function(svg.path, feature=NULL, cores) {
   #if (length(tit)!=length(nodeset)) return('some shape(s) are missing!')
 
   # Move non-matching tissues on top of matching tissues in the data frame.
-  idx.match <- sub('__\\d+$', '', df$tissue) %in% feature
+  # idx.match <- sub('__\\d+$', '', df$tissue) %in% feature
   # In geom_polygon, the order to plot tissues is the factor level. If a tissue is the 1st according to factor level but is last in the coordinate data frame, it will be plotted first, and the 2nd tissue in the level can cover it if all tissues are colored.
-  df <- rbind(df[!idx.match, ], df[idx.match, ])
+  # df <- rbind(df[!idx.match, ], df[idx.match, ])
   # Place some shapes on the top layer on purpose.
-  idx.top <- grepl('_TOP$|_TOP__\\d+$', df$tissue)
-  df <- rbind(df[!idx.top, ], df[idx.top, ])
+  # idx.top <- grepl('_TOP$|_TOP__\\d+$', df$tissue)
+  # df <- rbind(df[!idx.top, ], df[idx.top, ])
   df$tissue <- factor(df$tissue, levels=unique(df$tissue))
   # Each entry in tis.path is represented by many x-y pairs in coordinate, and tissues in coord are tissues in tis.path appended '__\\d+$'.
   # Update tis.path.
-  tis.path <- sub('__\\d+$', '', unique(df$tissue))
+  # tis.path <- sub('__\\d+$', '', unique(df$tissue))
   fil.cols <- df.attr$color; names(fil.cols) <- df.attr$feature
   w.h <- c(max(df$x) - min(df$x), max(df$y) - min(df$y)); aspect.r <- w.h[1]/w.h[2]; names(aspect.r) <- NULL
   names(w.h) <- c('width', 'height')

@@ -14,7 +14,7 @@
 #' @importFrom SummarizedExperiment assay colData rowData
 
 check_data <- function(data, sam.factor=NULL, con.factor=NULL, usage='other') {
-
+  # save(data, sam.factor, con.factor, usage, file='check.all')
   options(stringsAsFactors=FALSE)
   dat <- fct.cna <- col.meta <- row.meta <- con.na <- NULL
   if (is(data, 'data.frame')|is(data, 'matrix')|is(data, 'DFrame')) {
@@ -27,9 +27,10 @@ check_data <- function(data, sam.factor=NULL, con.factor=NULL, usage='other') {
     }, error=function(e) { stop("Please make sure input data are numeric!") }) }, FUN.VALUE=numeric(nrow(data)) )
     if (nrow(data)==1) na <- matrix(na, byrow=TRUE, ncol=ncol(data))
     na <- as.data.frame(na); rownames(na) <- rna
-    app <- apply(na, 2, is.na)
-    if (nrow(data)==1) app <- matrix(app, byrow=TRUE, ncol=ncol(data)); rownames(app) <- rna
-    idx <- colSums(app)!=0
+    # app <- apply(na, 2, is.na): requires much more memory than vapply.
+    app <- vapply(na, is.na, logical(nrow(na)))
+    if (nrow(data)==1) app <- matrix(app, byrow=TRUE, ncol=ncol(data))
+    rownames(app) <- rna; idx <- colSums(app)!=0
     row.meta <- data[idx] # aggr_rep filter_data, submatrix 
     dat <- na[!idx]; colnames(dat) <- fct.cna <- cna[!idx]
     # spatial_hm
@@ -37,8 +38,10 @@ check_data <- function(data, sam.factor=NULL, con.factor=NULL, usage='other') {
 
   } else if (is(data, 'SummarizedExperiment')) {
 
-    dat <- assay(data); r.na <- rownames(dat); dat <- apply(dat, 2, as.numeric) # This step removes rownames.
-    rownames(dat) <- r.na; cna <- colnames(dat) <- make.names(colnames(dat))
+    dat <- assay(data); r.na <- rownames(dat); cna <- make.names(colnames(dat))
+    dat <- vapply(seq_len(ncol(dat)), function(i) { as.numeric(dat[, i]) }, numeric(nrow(dat))) # This step removes rownames.
+    if (nrow(data)==1) dat <- matrix(dat, byrow=TRUE, ncol=ncol(data))
+    rownames(dat) <- r.na; colnames(dat) <- cna
     if (!identical(cna, colnames(dat))) cat('Syntactically valid column names are made! \n')
     col.meta <- as.data.frame(colData(data))
     # filter_data

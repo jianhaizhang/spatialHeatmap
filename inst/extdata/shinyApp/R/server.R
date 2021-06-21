@@ -42,7 +42,7 @@ server <- function(input, output, session) {
     incProgress(0.3, detail="in progress ...")
     library(spatialHeatmap); library(SummarizedExperiment); library(shiny); library(shinydashboard); library(shinydashboardPlus); library(grImport); library(rsvg); library(ggplot2); library(DT) 
     incProgress(0.6, detail="in progress ...")
-    library(gridExtra); library(ggdendro); library(WGCNA); library(grid); library(xml2); library(plotly); library(data.table); library(genefilter); library(flashClust); library(visNetwork); 
+    library(gridExtra); library(ggdendro); library(grid); library(xml2); library(plotly); library(data.table); library(genefilter); library(flashClust); library(visNetwork); 
     showModal(modal(title = HTML('<center><b>Welcome to spatialHeatmap!</b><center>'), msg = strong('Please wait for the landing page to finish!')))
     incProgress(0.9, detail="in progress...")
    library(reshape2); library(igraph); library(animation); library(av); library(shinyWidgets); library(yaml); library(HDF5Array); library(sortable); library(shinyBS); library(shinyjs); library(htmltools)
@@ -52,7 +52,7 @@ server <- function(input, output, session) {
   })
 
   url.id <- reactiveValues()
-  mods <- reactiveValues(upload=NULL, search=NULL, data=NULL, shm=NULL)
+  mods <- reactiveValues(upload=NULL, search=NULL, data=NULL, shm=NULL, deg=NULL)
 
 search_server <- function(id, ids, cfg, lis.url, url.id, dat.mod.lis, session) {
   moduleServer(id, function(input, output, session) {
@@ -345,17 +345,6 @@ content=function(file=paste0(normalizePath(tempdir(check=TRUE), winslash="/", mu
     )
   })
 
-  # Instruction.
-  output$dld <-renderUI({ includeHTML("instruction/download.html") })
-  output$sum <-renderUI({ includeHTML("instruction/summary.html") })
-  output$input <-renderUI({ includeHTML("instruction/input.html") })
-  output$matrix <-renderUI({ includeHTML("instruction/data_matrix.html") })
-  output$shm.ins <-renderUI({ includeHTML("instruction/spatial_heatmap.html") })
-  output$mhm.ins <-renderUI({ includeHTML("instruction/matrix_heatmap.html") })
-  output$net.ins <-renderUI({ includeHTML("instruction/network.html") })
-  # Acknowledgement.
-  output$ack <-renderUI({ includeHTML("instruction/acknowledgement.html") })
-
   observe({
     toggleState(id = "geneInpath", condition = input$fileIn == 'customData')
     toggleState(id = "dimName", condition = input$fileIn == 'customData')
@@ -364,9 +353,19 @@ content=function(file=paste0(normalizePath(tempdir(check=TRUE), winslash="/", mu
     toggleState(id = "svgInpath1", condition = input$fileIn == 'customData')
     toggleState(id = "svgInpath2", condition = input$fileIn == 'customData')
   })
-  onBookmark(function(state) { state })
+  sce <- reactiveValues()
+  observe({
+  library(SingleCellExperiment)
+  library(scater); library(scran); library(BiocSingular)
+  sgl.cell.ipt <- input$sglCell
+  # save(sgl.cell.ipt, file='sgl.cell.ipt')
+  if (is.null(sgl.cell.ipt)) return()
+  pa <- sgl.cell.ipt$datapath
+  if (grepl('\\.rds$', pa)) sce$val <- readRDS(pa)
+  })
 
-  return(list(ipt = input, cfg = cfg))
+  onBookmark(function(state) { state })
+  return(list(ipt = input, cfg = cfg, sce=sce))
 })}
   # Selected IDs and button in search box.
   ids <- reactiveValues(sel=NULL, but=NULL)
@@ -587,7 +586,7 @@ data_server <- function(id, ipt, cfg, sch, lis.url, ids, deg = FALSE, session) {
     scale.dat <- input$scaleDat; if (is.null(scale.dat)) return()
     if (!is.null(scale.dat)) if (scale.dat=='No') title <- 'No scaling' else if (scale.dat=='Row') title <- 'Scaled by row' else if (scale.dat=='Selected') title <- 'Scaled across selected genes' else if (scale.dat=='All') title <- 'Scaled across all genes' else title <- ''
     g1 <- profile_gene(dt.sel, y.title=title); 
-    g2 <- profile_gene(df.all$df.aggr[ids$sel, , drop=FALSE], y.title='No scaling')
+    g2 <- profile_gene(df.all$df.aggr[ids$sel, , drop=FALSE], y.title='Original values')
     cat('Done! \n'); grid.arrange(g1, g2, nrow=2)
   })
   if (deg==FALSE) output$dtSel <- renderDataTable({
@@ -899,7 +898,7 @@ network_server <- function(id, ipt, cfg, dat.mod.lis, shm.mod.lis, sch.mod.lis, 
       incProgress(0.3, detail="adjacency matrix ...")
       incProgress(0.5, detail="topological overlap matrix ...")
       incProgress(0.1, detail="dynamic tree cutting ...")
-        lis <- adj_mod(data=sub.mat, type=input$net.type, minSize=input$min.size); cat('Done! \n'); lis
+       library(WGCNA); lis <- adj_mod(data=sub.mat, type=input$net.type, minSize=input$min.size); cat('Done! \n'); lis
       })
     })
 
@@ -1122,7 +1121,82 @@ network_server <- function(id, ipt, cfg, dat.mod.lis, shm.mod.lis, sch.mod.lis, 
 })
 
 }
-# network_server('net', ipt, cfg, dat.mod.lis, shm.mod.lis)
+
+# Match spatial features between data and aSVG.
+match_server <- function(id, sam, svg.na.rematch, ft.reorder, upload.mod.lis, session) {
+  moduleServer(id, function(input, output, session) { 
+    ipt <- upload.mod.lis$ipt; cfg <- upload.mod.lis$cfg
+  # renderUI: if the tab/page containing uiOutput('svg') is active clicked, the input$svg on the server side is NULL. To avoid this, the ui side should have "selectInput".
+  output$svgs <- renderUI({
+    ns <- session$ns; nas <- names(cfg$svg.def)
+    selectInput(ns('svg'), label='Choose an aSVG to match', choices=nas, selected=ipt$fileIn)
+  })
+  # Extract features in data and aSVG and create user interface to host these features.
+  observeEvent(list(input$svg), {
+    if (is.null(ipt$fileIn)|is.null(cfg$svg.def)) return()
+    if (ipt$fileIn=='none'|is.null(cfg$svg.def)|is.null(input$svg)) return()
+    if (!(any(ipt$fileIn %in% cfg$na.def) & is.null(ipt$svgInpath1))) return()
+    # Single or multiple svg paths are treated same way.
+    lis <- svg_pa_na(cfg$svg.def[[input$svg]], cfg$pa.svg.upl)
+    output$msg.match <- renderText({ validate(need(try(!is.character(lis)), lis)) })
+    validate(need(try(!is.character(lis)), lis))
+    svg.path <- lis$svg.path; svg.na <- lis$svg.na
+    cat('Access aSVG path for re-matching ... \n')
+    # If multiple svgs, check suffixes.
+    lis <- svg_suffix(svg.path, svg.na)
+    validate(need(try(!is.character(lis)), lis))
+    svg.path <- lis$svg.path; svg.na <- lis$svg.na
+ 
+  withProgress(message="Spatial heatmap re-matching: ", value=0, {  
+    incProgress(0.5, detail="extracting coordinates, please wait ...") 
+    # Whether a single or multiple SVGs, all are returned in a list.
+    sf.all <- NULL; for (i in seq_along(svg.na)) { 
+      cat('Extract all spatial features for re-matching:', svg.na[i], '\n')
+      df_tis <- svg_df(svg.path=svg.path[i], feature=sam(), cores=deter_core(2, svg.path[i]))
+      validate(need(!is.character(df_tis), paste0(svg.na[i], ': ', df_tis)))
+      sf.all <- c(sf.all, df_tis$tis.path)
+    }
+  })
+  # paths and groups are dropped to bottom. 
+  sf.all <- unique(sf.all); pas.idx <- grepl('^path\\d+|^g\\d+', sf.all)
+  sf.all <- c(sf.all[!pas.idx], sf.all[pas.idx])
+  # Matching samples are raised to top.
+  sam.all <- unique(sam())
+  ft.reorder$ft.dat <- sam.all; ft.reorder$ft.svg <- sf.all
+  cat('Preparing interface of data/aSVG features ... \n')
+  output$ft.match <- renderUI({
+    ns <- session$ns
+    fluidRow(
+      span(class = "panel panel-default", style = 'margin-left:0px',
+        div(class = "panel-heading", strong("Features in aSVG")),
+        div(class = "panel-body", id = ns("ftSVG"), ft2tag(sf.all))
+      ),
+      div(class = "panel panel-default",
+        div(class = "panel-heading", strong("Features in data")),
+        lapply(sam.all, ft_dat, ns = ns)
+      ), lapply(c('ftSVG', sam.all), ft_js, ns = ns) # Items are interchangeable across ftSVG and sam.all.
+    )
+  })
+ svg.na.rematch$svg.path <- svg.path; svg.na.rematch$svg.na <- svg.na
+  })
+
+#  ft.rematch <- reactive({
+  observeEvent(list(input$match), {
+    if (is.null(ft.reorder$ft.dat) | is.null(ft.reorder$ft.svg)) return()
+    ft.dat <- ft.reorder$ft.dat
+    lis0 <- lapply(ft.dat, function(x) input[[x]])
+    names(lis0) <- ft.dat; ft.reorder$ft.rematch <- lis0
+  })  
+  observeEvent(ipt$fileIn, {
+    ft.reorder$ft.dat <- ft.reorder$ft.svg <- ft.reorder$ft.rematch <- NULL
+    # cna.match$cna <- NULL
+    svg.na.rematch$svg.path <- svg.na.rematch$svg.na <- NULL
+  })
+  but.match <- reactive({ input$match })
+  onBookmark(function(state) { state })
+  return(list(svg.na.rematch=svg.na.rematch, ft.reorder=ft.reorder, but.match=but.match))
+
+})}
 
 shm_server <- function(id, ipt, cfg, sch, lis.url, url.id, dat.mod.lis, sch.mod.lis, session) {  
   moduleServer(id, function(input, output, session) {
@@ -1153,7 +1227,8 @@ shm_server <- function(id, ipt, cfg, sch, lis.url, url.id, dat.mod.lis, sch.mod.
   })
   # The on-start ID processing is controlled by 0 and 1 states.
   observeEvent(list(session, ipt$fileIn, rna.fil$val), { init$but <- 0 })
-  observeEvent(list(ids$sel, rna.fil$val), { # All on-start and on-start similar IDs. Eg. the default first ID after data is filtered.
+  # init$but: triggers id update if the data is same but aSVG is different such as the rice shiny app. 
+  observeEvent(list(ids$sel, rna.fil$val, init$but), { # All on-start and on-start similar IDs. Eg. the default first ID after data is filtered.
     cat('New file:', ipt$fileIn, '\n')
     if (length(ids$sel)==0) return()
     if (ids$sel[1]==''|init$but>0) return()
@@ -1206,7 +1281,7 @@ shm_server <- function(id, ipt, cfg, sch, lis.url, url.id, dat.mod.lis, sch.mod.
     cat('Initial color code for color key ... \n')
     session # Avoid color$col is "none", sine new session triggers color <- reactiveValues(col="none")
     col0 <- cfg$lis.par$shm.img['color', 'default']
-    col.but <- input$col.but 
+    col.but <- input$col.but
     if (is.null(col.but)|is.null(col0)|gID$geneSel[1]=='none') return()
     if(col.but==0) color$col <- colorRampPalette(col_sep(col0))(length(geneV()))
     cat('Done! \n')
@@ -1267,94 +1342,14 @@ shm_server <- function(id, ipt, cfg, sch, lis.url, url.id, dat.mod.lis, sch.mod.
     cname <- colnames(geneIn()$df.aggr); idx <- grep("__", cname); c.na <- cname[idx]
     if (length(grep("__", c.na))>=1) gsub("(.*)(__)(.*$)", "\\1", c.na) else return(NULL) 
   })
-  # renderUI: if the tab/page containing uiOutput('svg') is active clicked, the input$svg on the server side is NULL. To avoid this, the ui side should have "selectInput".
-  output$svg <- renderUI({
-    ns <- session$ns
-    nas <- names(cfg$svg.def)
-    selectInput(ns('svg'), label='Choose an aSVG to re-match', choices=nas, selected=ipt$fileIn)
-  })
-
-  # The object scope in reactive expression is restricted to the reactive evironment, thus sf.sep and sam.sep are moved outside 'observe'.
-  sf.sep <- 'only_above_features_are_re-matched'
-  sam.sep <- 'only_above_samples_are_re-matched'
+     
   ft.reorder <- reactiveValues(ft.dat = NULL, ft.svg = NULL, ft.rematch = NULL)
-  observeEvent(list(input$svg), {
-    if (ipt$fileIn=='none'|is.null(cfg$svg.def)|is.null(input$svg)) return()
-    if (!(any(ipt$fileIn %in% cfg$na.def) & is.null(ipt$svgInpath1))) return()
-    # Single or multiple svg paths are treated same way.
-    lis <- svg_pa_na(cfg$svg.def[[input$svg]], cfg$pa.svg.upl)
-    output$msg.match <- renderText({ validate(need(try(!is.character(lis)), lis)) })
-    validate(need(try(!is.character(lis)), lis))
-    svg.path <- lis$svg.path; svg.na <- lis$svg.na
-    cat('Access aSVG path for re-matching ... \n')
-    # If multiple svgs, check suffixes.
-    lis <- svg_suffix(svg.path, svg.na)
-    validate(need(try(!is.character(lis)), lis))
-    svg.path <- lis$svg.path; svg.na <- lis$svg.na
- 
-  withProgress(message="Spatial heatmap re-matching: ", value=0, {  
-    incProgress(0.5, detail="extracting coordinates, please wait ...") 
-    # Whether a single or multiple SVGs, all are returned in a list.
-    sf.all <- NULL; for (i in seq_along(svg.na)) { 
-      cat('Extract all spatial features for re-matching:', svg.na[i], '\n')
-      df_tis <- svg_df(svg.path=svg.path[i], feature=sam(), cores=deter_core(2, svg.path[i]))
-      validate(need(!is.character(df_tis), paste0(svg.na[i], ': ', df_tis)))
-      sf.all <- c(sf.all, df_tis$tis.path)
-    }
-  })
-  # paths and gs are dropped to bottom. 
-  sf.all <- unique(sf.all); pas.idx <- grepl('^path\\d+|^g\\d+', sf.all)
-  sf.all <- c(sf.all[!pas.idx], sf.all[pas.idx])
-  # Matching samples are raised to top.
-  sam.all <- unique(sam()); inter <- intersect(sam.all, sf.all)
-  cat('Adding separators to samples and features for re-matching ... \n')
-  if (length(inter)!=0) { 
-    int.idx1 <- sam.all %in% inter; inter1 <- sam.all[int.idx1]
-    sam.all <- c(inter1, sam.sep, sam.all[!int.idx1])
-    int.idx2 <- sf.all %in% inter; sf.all <- c(inter1, sf.sep, sf.all[!int.idx2])
-  } else { sf.all <- c(sf.sep, sf.all); sam.all <- c(sam.sep, sam.all) }
-  ft.reorder$ft.dat <- sam.all1 <- sam.all[sam.all != sam.sep]
-  ft.reorder$ft.svg <- sf.all1 <- sf.all[sf.all != sf.sep]
 
-  cat('Preparing interface of data/aSVG features ... \n')
-  output$ft.match <- renderUI({
-    ns <- session$ns
-      fluidRow(
-      span(class = "panel panel-default", style = 'margin-left:0px',
-        div(class = "panel-heading", strong("Features in aSVG")),
-        div(class = "panel-body", id = ns("ftSVG"), ft2tag(sf.all1))
-      ),
-      div(class = "panel panel-default",
-        div(class = "panel-heading", strong("Features in data")),
-        lapply(sam.all1, ft_dat, ns = ns)
-      ), lapply(c('ftSVG', sam.all1), ft_js, ns = ns) # Items are interchangeable across ftSVG and sam.all1.
-      )
-  }) 
+mat.mod.lis <- match_server('rematch', sam, svg.na.rematch, ft.reorder, ipt.cfg)
+svg.na.rematch <- mat.mod.lis$svg.na.rematch
+ft.reorder <- mat.mod.lis$ft.reorder
+but.match <- mat.mod.lis$but.match
 
-
-  output$sam <- renderUI({
-    rank_list(text="Drag features in data in any desired order to match right", labels=sam.all, input_id="sam")
-  })
-
-  output$sf <- renderUI({
-    rank_list(text="Drag features in aSVG in any desired order to match left", labels=sf.all, input_id="sf"
-    )
-  }); svg.na.rematch$svg.path <- svg.path; svg.na.rematch$svg.na <- svg.na
-
-  })
-
-#  ft.rematch <- reactive({
-  observeEvent(input$match, {
-    if (is.null(ft.reorder$ft.dat) | is.null(ft.reorder$ft.svg)) return()
-    ft.dat <- ft.reorder$ft.dat
-    lis0 <- lapply(ft.dat, function(x) input[[x]])
-    names(lis0) <- ft.dat; ft.reorder$ft.rematch <- lis0
-  })  
-  observeEvent(ipt$fileIn, {
-    ft.reorder$ft.dat <- ft.reorder$ft.svg <- ft.reorder$ft.rematch <- NULL
-    cna.match$cna <- NULL
-    svg.na.rematch$svg.path <- svg.na.rematch$svg.na <- NULL
-  })
   # Reactive object in "observeEvent" is not accessible outside observeEvent. The solution is eventReactive. 
   # svg.path1 stores the final svg path/na after re-matching, and will be used in SHMs.
   svg.path1 <- reactive({
@@ -1362,42 +1357,7 @@ shm_server <- function(id, ipt, cfg, sch, lis.url, url.id, dat.mod.lis, sch.mod.
     return(list(svg.path=svg.path, svg.na=svg.na))
   })
 
-  cna.match <- reactiveValues(cna=NULL)
-  observeEvent(input$match1, {
-  
-    sam <- input$sam; sf <- input$sf
-    cna <- colnames(geneIn()[["df.aggr.tran"]])
-    w.sf <- which(sf %in% sf.sep); w.sam <- which(sam %in% sam.sep)
-    # If no "renderText", the validate message is not assigned to any reactive values and thus not seen on the user interface.
-    output$msg.match <- renderText({
-    validate(need(try(w.sf==w.sam), 'Samples and features should be one-to-one re-matched!')); NULL })
-    sf <- sf[-w.sf]; w.sf <- w.sf-1; sam <- sam[-w.sam]; w.sam <- w.sam-1
-    output$msg.match <- renderText({
-    validate(need(try(w.sf!=0|w.sam!=0), 'No samples or features are re-matched!')); NULL })
-    if (w.sf>0) {
-      cat('Re-match samples and features ... \n')
-      sf.mat <- sf[seq_len(w.sf)]
-      cna <- colnames(geneIn()[["df.aggr.tran"]]);
-      # If sf1 is re-matched to sam1, and sf1 is included in all sams, sf1 in all sams is replaced by sam1. 
-      sam.idx1 <- sam.idx2 <- list(); for (i in seq_len(w.sf)){
-        if (sam[i]==sf[i]) next
-        idx1 <- list(grep(paste0('^', sam[i], '__'), cna))
-        names(idx1) <- sf.mat[i]; sam.idx1 <- c(sam.idx1, idx1)
-        if (sf[i] %in% sam) {
-          idx2 <- list(grep(paste0('^', sf[i], '__'), cna))
-          names(idx2) <- sam[i]; sam.idx2 <- c(sam.idx2, idx2)
-        }
-      }
-      # sf1 is re-matched to sam1.
-      if (length(sam.idx1)>0) for (i in seq_along(sam.idx1)) {
-        cna[sam.idx1[[i]]] <- sub('.*__', paste0(names(sam.idx1)[i], '__'), cna[sam.idx1[[i]]])
-      }
-      # sf1 in sams is replaced by sam1.
-      if (length(sam.idx2)>0) for (i in seq_along(sam.idx2)) {
-        cna[sam.idx2[[i]]] <- sub('.*__', paste0(names(sam.idx2)[i], '__'), cna[sam.idx2[[i]]])
-      }; cna.match$cna <- cna 
-    }
-  })
+  # cna.match <- reactiveValues(cna=NULL)
 
   svg.df <- reactive({
     if (ipt$fileIn %in% cfg$na.cus & is.null(ipt$geneInpath) & ipt$dimName == "None") return()
@@ -1425,7 +1385,7 @@ shm_server <- function(id, ipt, cfg, sch, lis.url, url.id, dat.mod.lis, sch.mod.
     updateCheckboxGroupInput(session, inputId="tis", label='Select features to be transparent', choices=intersect(unique(sam()), unique(ft.path.all)), selected='', inline=TRUE)
   })
   observe({
-    input$svg; svg.df <- svg.df(); ft.svg.reorder <- ft.reorder$ft.svg; input$match
+    input$svg; svg.df <- svg.df(); ft.svg.reorder <- ft.reorder$ft.svg; but.match()
     if (is.null(svg.df) | is.null(ft.svg.reorder)) return()
     ft.path.all <- NULL; for (i in seq_along(svg.df())) { ft.path.all <- c(ft.path.all, svg.df()[[i]][['tis.path']]) }
     updateCheckboxGroupInput(session, inputId="tis", label='Select features to be transparent', choices=intersect(unique(ft.svg.reorder), unique(ft.path.all)), selected='', inline=TRUE)
@@ -1494,9 +1454,9 @@ shm_server <- function(id, ipt, cfg, sch, lis.url, url.id, dat.mod.lis, sch.mod.
         tis.path <- svg.df[["tis.path"]]; fil.cols <- svg.df[['fil.cols']]
         # if (input$preScale=='Yes') mar <- (1-w.h/w.h.max*0.99)/2 else mar <- NULL
         cat(ID, ' \n')
-        if (!is.null(cna.match$cna)) { 
-		  if (ncol(gene)==length(cna.match$cna)) colnames(gene) <- cna.match$cna 
-        }
+        #if (!is.null(cna.match$cna)) { 
+		#  if (ncol(gene)==length(cna.match$cna)) colnames(gene) <- cna.match$cna 
+        #}
         size.key <- as.numeric(cfg$lis.par$legend['key.size', 'default'])
         # Cores: the orders in svg.path(), names(svg.df.lis) are same.
         gg.lis <- gg_shm(gene=gene, con.na=geneIn0()[['con.na']], geneV=geneV(), coord=g.df, ID=ID, legend.col=fil.cols, cols=color$col, tis.path=tis.path, ft.trans=input$tis, sub.title.size=input$title.size * scale.shm, aspect.ratio = svg.df$aspect.r, legend.nrow=as.numeric(cfg$lis.par$legend['key.row', 'default']), legend.key.size=size.key, legend.text.size=8*size.key*33, line.size=input$line.size, line.color=input$line.color, lis.rematch = ft.reorder$ft.rematch) # Only gID$new is used.
@@ -1530,7 +1490,7 @@ shm_server <- function(id, ipt, cfg, sch, lis.url, url.id, dat.mod.lis, sch.mod.
   # Use "observeEvent" to replace "observe" and list events (input$log, input$tis, ...), since if the events are in "observe", every time a new gene is clicked, "input$dt_rows_selected" causes the evaluation of all code in "observe", and the evaluation is duplicated with "gs.new".
   observeEvent(col.na(), { if (col.cfm()>0) col.reorder$col.re <- 'N' })
   # Update SHMs, above theme().
-  observeEvent(list(log(), input$tis, color$col, input$cs.v, col.cfm(), scaleDat(), input$match, input$line.size, input$line.color), {
+  observeEvent(list(log(), input$tis, color$col, input$cs.v, col.cfm(), scaleDat(), but.match(), input$line.size, input$line.color), {
     shm$grob.all <- shm$gg.all <- shm$lgd.all <- shm$grob.gg.all <- NULL; gs.all <- reactive({ 
       cat('Updating all SHMs ... \n')
       if.con <- is.null(svg.df())|is.null(geneIn())|length(ids$sel)==0|color$col[1]=='none'|gID$geneSel[1]=='none'
@@ -1557,10 +1517,10 @@ shm_server <- function(id, ipt, cfg, sch, lis.url, url.id, dat.mod.lis, sch.mod.
         # if (input$preScale=='Yes') mar <- (1-w.h/w.h.max*0.99)/2 else mar <- NULL
         cat('All grob/ggplot:', gID$geneSel, ' \n')
         incProgress(0.75, detail=paste0('preparing ', paste0(gID$geneSel, collapse=';')))
-        if (!is.null(cna.match$cna)) { 
-		  if (ncol(gene)!=length(cna.match$cna)) return()
-          colnames(gene) <- cna.match$cna 
-        }
+        # if (!is.null(cna.match$cna)) { 
+		#  if (ncol(gene)!=length(cna.match$cna)) return()
+        #  colnames(gene) <- cna.match$cna 
+        #}
         size.key <- as.numeric(cfg$lis.par$legend['key.size', 'default'])
         gg.lis <- gg_shm(gene=gene, con.na=geneIn0()[['con.na']], geneV=geneV(), coord=g.df, ID=gID$geneSel, legend.col=fil.cols, cols=color$col, tis.path=tis.path, ft.trans=input$tis, sub.title.size=input$title.size * scale.shm, aspect.ratio = svg.df$aspect.r, legend.nrow=as.numeric(cfg$lis.par$legend['key.row', 'default']), legend.key.size=size.key, legend.text.size=8*size.key*33, line.size=input$line.size, line.color=input$line.color, lis.rematch = ft.reorder$ft.rematch) # All gene IDs are used.
         msg <- paste0(svg.na[i], ': no matching features are detected between data and aSVG!')
@@ -1615,10 +1575,10 @@ shm_server <- function(id, ipt, cfg, sch, lis.url, url.id, dat.mod.lis, sch.mod.
         # if (input$preScale=='Yes') mar <- (1-w.h/w.h.max*0.99)/2 else mar <- NULL
         cat('All grob/ggplot of row selection:', ID, ' \n')
         incProgress(0.75, detail=paste0('preparing ', paste0(ID, collapse=';')))
-        if (!is.null(cna.match$cna)) { 
-		  if (ncol(gene)!=length(cna.match$cna)) return()
-          colnames(gene) <- cna.match$cna 
-        }
+        # if (!is.null(cna.match$cna)) { 
+		#  if (ncol(gene)!=length(cna.match$cna)) return()
+        #  colnames(gene) <- cna.match$cna 
+        #}
         size.key <- as.numeric(cfg$lis.par$legend['key.size', 'default'])
         gg.lis <- gg_shm(gene=gene, con.na=geneIn0()[['con.na']], geneV=geneV(), coord=g.df, ID=ID, legend.col=fil.cols, cols=color$col, tis.path=tis.path, ft.trans=input$tis, sub.title.size=input$title.size * scale.shm, aspect.ratio = svg.df$aspect.r, legend.nrow=as.numeric(cfg$lis.par$legend['key.row', 'default']), legend.key.size=size.key, legend.text.size=8*size.key*33, line.size=input$line.size, line.color=input$line.color, lis.rematch = ft.reorder$ft.rematch) # All gene IDs are used.
         msg <- paste0(svg.na[i], ': no spatial features that have matching sample identifiers in data are detected!')
@@ -1901,6 +1861,7 @@ shm_server <- function(id, ipt, cfg, sch, lis.url, url.id, dat.mod.lis, sch.mod.
 
   observe({
    input$vdo.key.size; input$vdo.key.row; input$vdo.val.lgd; input$tis; input$vdo.lab.size; input$vdo.res; input$vdo.itvl
+   input$vdo.bar.width
    url.val <- url_val('shmAll-vdo.but', lis.url)
    # updateRadioButtons(session, inputId="vdo.but", label="Show/update video", choices=c("Yes", "No"), selected=ifelse(url.val!='null', url.val, cfg$lis.par$shm.video['show', 'default']), inline=TRUE)
   })
@@ -1968,7 +1929,7 @@ shm_server <- function(id, ipt, cfg, sch, lis.url, url.id, dat.mod.lis, sch.mod.
     } else dir.create('html_shm/')
   })
 
-  observeEvent(list(log=log(), tis=input$tis, col.but=input$col.but, cs.v=input$cs.v, preScale=input$preScale, ggly.but=input$ggly.but, gID.new=gID$new), {
+  observeEvent(list(input$ggly.but), {
     cat('Preparing animation frames ... \n')
     scale.ly <- input$scale.ly; ggly.but <- input$ggly.but
     if (is.null(scale.ly)|is.null(ggly.but)) return()
@@ -1992,6 +1953,7 @@ shm_server <- function(id, ipt, cfg, sch, lis.url, url.id, dat.mod.lis, sch.mod.
       # gg0$theme$plot.title$size <- tit.size*scale.ly
       gly <- ggplotly(gg0, tooltip='text') %>% layout(showlegend=FALSE)
       gly$sizingPolicy$padding <- 0
+      incProgress(0.2, detail=paste0('preparing ', na0, ' ...'))
       cat('Animation: saving', na0, '\n')
       saveWidget(gly, na0, selfcontained=FALSE, libdir="lib")
       file.rename(na0, paste0('www/ggly/', na0))
@@ -2085,10 +2047,11 @@ shm_server <- function(id, ipt, cfg, sch, lis.url, url.id, dat.mod.lis, sch.mod.
   observeEvent(list(input$vdo.but), {
     cat('Making video ... \n')
     vdo.itvl <- input$vdo.itvl; vdo.res <- input$vdo.res
-    vdo.but <- input$vdo.but
-    if (is.null(vdo.but)|!is.numeric(vdo.itvl)|!is.numeric(vdo.res)) return(NULL)
+    vdo.but <- input$vdo.but; bar.width <- input$vdo.bar.width
+    if (is.null(vdo.but)|!is.numeric(vdo.itvl)|!is.numeric(vdo.res)|!is.numeric(bar.width)) return(NULL)
     if (vdo.but==0|is.null(pat.all())) return(NULL)
     if (is.null(svg.df())|is.null(geneIn())|length(ids$sel)==0|color$col[1]=='none') return(NULL)
+    print(2)
     validate(need(try(!is.na(vdo.itvl) & vdo.itvl>0), 'Transition time should be a positive numeric!'))
     validate(need(try(!is.na(vdo.res) & vdo.res>=1 & vdo.res<=700), 'Resolution should be between 1 and 700!'))
  
@@ -2101,7 +2064,7 @@ shm_server <- function(id, ipt, cfg, sch, lis.url, url.id, dat.mod.lis, sch.mod.
     if (dim %in% c('1280x800', '1280x1024', '1280x720')&res>450) res <- 450
     if (dim=='1920x1080'&res>300) res <- 300
     # selectInput("vdo.dim", label="Fixed dimension:", choices=c('1920x1080', '1280x800', '320x568', '1280x1024', '1280x720', '320x480', '480x360', '600x600', '800x600', '640x480'), selected='640x480', width=110)
-    vdo <- video(gg=gg.all1, cs.g=shm.bar(), sam.uni=sam(), ft.trans=input$tis, lgd.key.size=input$vdo.key.size, lgd.text.size=NULL, position.text.key='right', legend.value.vdo=(input$'vdo.val.lgd'=='Yes'), label=(input$vdo.label=='Yes'), label.size=input$vdo.lab.size, sub.title.size=8, bar.value.size=6, lgd.row=input$vdo.key.row, video.dim=dim, interval=vdo.itvl, res=res, out.dir='./www/video')
+    vdo <- video(gg=gg.all1, cs.g=shm.bar(), sam.uni=sam(), ft.trans=input$tis, bar.width=bar.width, lgd.key.size=input$vdo.key.size, lgd.text.size=NULL, position.text.key='right', legend.value.vdo=(input$'vdo.val.lgd'=='Yes'), label=(input$vdo.label=='Yes'), label.size=input$vdo.lab.size, sub.title.size=8, bar.value.size=6, lgd.row=input$vdo.key.row, video.dim=dim, interval=vdo.itvl, res=res, out.dir='./www/video')
     if (is.null(vdo)) return()
     cat('Presenting video ... \n')
     incProgress(0.95, detail="Presenting video...")
@@ -2217,6 +2180,8 @@ shm_server <- function(id, ipt, cfg, sch, lis.url, url.id, dat.mod.lis, sch.mod.
   updateRadioButtons(session, inputId="vdo.label", label="Feature label", choices=c("Yes", "No"), selected=ifelse(url.val!='null', url.val, cfg$lis.par$shm.video['feature.label', 'default']), inline=TRUE)
   url.val <- url_val('shmAll-vdo.lab.size', lis.url)
   updateNumericInput(session, inputId='vdo.lab.size', label='Label size', value=ifelse(url.val!='null', url.val, as.numeric(cfg$lis.par$shm.video['label.size', 'default'])), min=0, max=Inf, step=0.5)
+  url.val <- url_val('shmAll-vdo.bar.width', lis.url)
+  updateNumericInput(session, inputId='vdo.bar.width', value=ifelse(url.val!='null', url.val, as.numeric(cfg$lis.par$shm.video['bar.width.video', 'default'])))
   url.val <- url_val('shmAll-vdo.itvl', lis.url)
   updateNumericInput(session, inputId='vdo.itvl', label='Transition time (s)', value=ifelse(url.val!='null', url.val, as.numeric(cfg$lis.par$shm.video['transition', 'default'])), min=0.1, max=Inf, step=1)
   url.val <- url_val('shmAll-vdo.res', lis.url)
@@ -2553,76 +2518,128 @@ deg_server <- function(id, ipt, cfg, sch, lis.url, ids, dat.mod.lis, shm.mod.lis
    sch.mod.lis <- search_server('deg', ids, cfg, lis.url, url.id, dat.mod.lis.deg)
    cat('Done! \n')
   })
-
-  # gID is a reactiveValue. It is shared between modules, so no need to pass the updated gID to shm_server.
-  observeEvent(list(input$dt.deg_rows_selected), {
-    cat('Selected genes in DEG summary table ... \n')
-    if (is.null(input$dt.deg_rows_selected)) return()
-    r.na <- rownames(dt.deg()); gID$geneSel <- unique(r.na[input$dt.deg_rows_selected])
-    if (any(is.na(gID$geneSel))) gID$geneSel <- "none"
-    gID$new <- setdiff(gID$geneSel, gID$all); gID$all <- c(gID$all, gID$new); cat('Done! \n')
-  })
-
-  output$w.table1 <- renderDataTable({
-    
-    if (is.null(geneIn0())|is.null(edg())|is.null(dsq())) return(NULL)
-    if (is.null(geneIn0())) return(NULL)
-    sam.con <- unique(colnames(geneIn()))[1:3]
-    lis.all <- list(edg=edg(), dsq=dsq()); sam.all <- names(lis.all[[1]])
-    sam <- sam.all[1:3]; sam.tar <- sam.all[2]; sam.vs <- sam.all[c(1, 3)]
-    meth <- 'edg'
-    df.up <- lis.all[[meth]][[sam[2]]][[1]]
-    df.dn <- lis.all[[meth]][[sam[2]]][[2]]
-    df.up.dn <- rbind(df.up, df.dn)
-    if (nrow(df.up.dn)==0) return("No SSGs detected.")
-    # print(df.up.dn)
-    pat <- c(paste0('^', sam.tar, '_VS_', sam.vs, '_'), paste0('^', sam.vs, '_VS_', sam.tar, '_'))
-    df.up.dn <- df.up.dn[, c(1, grep(paste0(pat, collapse='|'), colnames(df.up.dn)))]
-    datatable(df.up.dn, selection=list(mode="multiple", target="row", selected=NULL), filter="top", extensions='Scroller', options=list(pageLength=5, lengthMenu=c(5, 15, 20), autoWidth=TRUE, scrollCollapse=TRUE, deferRender=TRUE, scrollX=TRUE, scrollY=200, scroller=TRUE), class='cell-border strip hover') %>% formatStyle(0, backgroundColor="orange", cursor='pointer')
- 
-  }) 
-
-  output$ssg.sum <- renderPlot({ 
-
-    if (is.null(geneIn0())|is.null(edg())|is.null(dsq())) return(NULL)
-    # if (input$fileIn!="customData") return(NULL)
-    if (is.null(geneIn0())) return(NULL)
-    per=0.5; width=0.85
-    lis.all <- list(edg(), dsq()); sam.all <- names(lis.all[[1]])
-    sam <- sam.all[1:3]
-    lis.aggr <- sig_frq(lis.all=lis.all, per=per, sam=sam)
-    ssg_sum(lis.aggr=lis.aggr, width=width)
-
-  })
-
-
-  output$a.table <- renderDataTable({
-    
-    if (is.null(geneIn0())|is.null(edg())|is.null(dsq())) return(NULL)
-    if (is.null(geneIn0())) return(NULL)
-    per=0.5
-    sam.con <- unique(colnames(geneIn()))[1:3]
-    lis.all <- list(edg=edg(), dsq=dsq()); sam.all <- names(lis.all[[1]])
-    lis.aggr.r <- sig_frq(lis.all=lis.all, per=per)
-    df.sum <- as.data.frame(lis.aggr.r[[1]][[1]][[2]])
-    datatable(df.sum, selection=list(mode="multiple", target="row", selected=NULL), filter="top", extensions='Scroller', options=list(pageLength=5, lengthMenu=c(5, 15, 20), autoWidth=TRUE, scrollCollapse=TRUE, deferRender=TRUE, scrollX=TRUE, scrollY=200, scroller=TRUE), class='cell-border strip hover') %>% formatStyle(0, backgroundColor="orange", cursor='pointer')
-
-  })
-
-    expr.nor <- reactive({
-
-    if (is.null(geneIn0())|is.null(edg())|is.null(dsq())) return(NULL)
-      if (is.null(geneIn0())) return(NULL)
-      df.rep <- geneIn0()[['df.rep']]
-      se <- SummarizedExperiment(assays=list(expr=as.matrix(df.rep)), colData=data.frame(fct=colnames(df.rep)))
-      norm_aggr(se=ssg.dat()$se, method.norm='TMM', log2.trans=TRUE, sample.factor='fct', rep.aggr='mean')
-
-    })
   onBookmark(function(state) { state })
-
+  but.sgl <- reactive({ sch.mod.lis$ids$but.sgl })
+  but.mul <- reactive({ sch.mod.lis$ids$but.mul })
+  return(list(but.sgl=but.sgl, but.mul=but.mul))
 })}
 
-  deg.mod.lis <- deg_server('deg', ipt, cfg, sch, lis.url, ids, dat.mod.lis, shm.mod.lis)
+  mods$deg <- deg.mod.lis <- deg_server('deg', ipt, cfg, sch, lis.url, ids, dat.mod.lis, shm.mod.lis)
+  # Switch to SHM tab.
+  observeEvent(mods$deg$but.sgl(), ignoreInit=TRUE, {
+    updateTabsetPanel(session, "shm.sup", selected='shmPanelAll')
+  })
+  observeEvent(mods$deg$but.mul(), ignoreInit=TRUE, {
+    updateTabsetPanel(session, "shm.sup", selected='shmPanelAll')
+  })
+
+
+scell_server <- function(id, upload.mod.lis, session) {
+
+  moduleServer(id, function(input, output, session) {
+  cfg <- reactiveValues()
+  observe({ 
+  sce <- upload.mod.lis$sce$val; if (is.null(sce)) return else {
+  cfg <- upload.mod.lis$cfg 
+  unfiltered <- sce
+
+  output$datCell <- renderDataTable({
+  assay(sce)[1:100, 1:50]
+  })
+  stats <- perCellQCMetrics(sce, subsets=list(Mt=rowData(sce)$featureType=="mito"))
+  qc <- quickPerCellQC(stats, percent_subsets=c("altexps_ERCC_percent", "subsets_Mt_percent"))
+  sce <- sce[,!qc$discard]
+  colData(unfiltered) <- cbind(colData(unfiltered), stats)
+  unfiltered$discard <- qc$discard
+  cat('Single cell: quality control ... \n')
+  output$qc.all <- renderPlot({
+    grid.arrange(
+    plotColData(unfiltered, y="sum", colour_by="discard") +
+        scale_y_log10() + ggtitle("Total count"),
+    plotColData(unfiltered, y="detected", colour_by="discard") +
+        scale_y_log10() + ggtitle("Detected features"),
+    plotColData(unfiltered, y="altexps_ERCC_percent",
+        colour_by="discard") + ggtitle("ERCC percent"),
+    plotColData(unfiltered, y="subsets_Mt_percent",
+        colour_by="discard") + ggtitle("Mito percent"),
+    ncol=2
+  )
+  })
+
+  cat('Single cell: mitochondrial counts vs total, spike-in ... \n')
+  output$qc.mt <- renderPlot({
+    grid.arrange(
+    plotColData(unfiltered, x="sum", y="subsets_Mt_percent",
+        colour_by="discard") + scale_x_log10(),
+    plotColData(unfiltered, x="altexps_ERCC_percent", y="subsets_Mt_percent",
+        colour_by="discard"),
+    ncol=2
+  )
+  })
+colSums(as.matrix(qc))
+
+  cat('Single cell: nomalization ... \n')
+set.seed(1000)
+clusters <- quickCluster(sce)
+sce <- computeSumFactors(sce, cluster=clusters) 
+sce <- logNormCounts(sce)
+
+summary(sizeFactors(sce))
+
+  output$norm <- renderPlot({
+    plot(librarySizeFactors(sce), sizeFactors(sce), pch=16,
+    xlab="Library size factors", ylab="Deconvolution factors", log="xy")
+  })
+
+# dec.zeisel <- modelGeneVarWithSpikes(sce, "ERCC")
+dec.zeisel <- modelGeneVar(sce)
+top.hvgs <- getTopHVGs(dec.zeisel, prop=0.1)
+
+  output$var <- renderPlot({
+    plot(dec.zeisel$mean, dec.zeisel$total, pch=16, cex=0.5,
+    xlab="Mean of log-expression", ylab="Variance of log-expression")
+    curfit <- metadata(dec.zeisel)
+    points(curfit$mean, curfit$var, col="red", pch=16)
+    curve(curfit$trend(x), col='dodgerblue', add=TRUE, lwd=2)
+  })
+
+  cat('Single cell: clustering ... \n')
+set.seed(101011001)
+sce <- denoisePCA(sce, technical=dec.zeisel, subset.row=top.hvgs)
+sce <- runTSNE(sce, dimred="PCA")
+
+
+snn.gr <- buildSNNGraph(sce, use.dimred="PCA")
+colLabels(sce) <- factor(igraph::cluster_walktrap(snn.gr)$membership)
+
+  output$tsne <- renderPlot({
+plotTSNE(sce, colour_by="label")
+  })
+
+  output$pca <- renderPlot({
+plotPCA(sce, colour_by="label")
+  })
+
+  cat('Single cell: aggregating cells ... \n')
+df.rep <- assay(sce); colnames(df.rep) <- colLabels(sce)
+
+df.aggr <- aggr_rep(data=df.rep, sam.factor=NULL, con.factor=NULL, aggr='mean')
+  }
+
+
+  output$svg <- renderUI({
+    ns <- session$ns; nas <- names(cfg$svg.def)
+    selectInput(ns('svg'), label='Choose an aSVG to match', choices=nas, selected=ipt$fileIn)
+  })
+
+  })
+
+  onBookmark(function(state) { state })
+  # return(list(but.sgl=but.sgl, but.mul=but.mul))
+
+})}
+  scell_server('scell', ipt.cfg)
+
   setBookmarkExclude(c("dat-dtSel_rows_all", "dat-dtSel_rows_current", "dat-dtSel_search_columns", "dat-dtAll_rows_all", "dat-dtAll_rows_current", "dat-dtAll_search_columns")) 
   observe({
     lis.ipt <- reactiveValuesToList(input); session$doBookmark()

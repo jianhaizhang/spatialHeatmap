@@ -112,9 +112,10 @@ upload_ui <- function(id) {
       fileInput(ns("target"), "2C (optional): upload targets file for columns", accept=c(".txt", ".csv"), multiple=FALSE)), '',
       tags$div(class='tp', span(class='tpt', 'Ensure "rows" in the data matrix corresponds with "rows" in the row metadata file respectively.'),
       fileInput(ns("met"), "2D (optional): upload metadata file for rows", accept=c(".txt", ".csv"), multiple=FALSE))
-
       )),
-      h4(strong("Step 3: upload custom aSVG(s)")),
+      h4(strong('Single-Cell Data')), 
+      fileInput(ns("sglCell"), "", accept=c(".rds"), multiple=FALSE),
+      h5(strong("Step 3: upload custom aSVG(s)")),
       fluidRow(splitLayout(cellWidths=c('1%', '27%', '1%', '28%'), '',
       tags$div(class='tp', span(class='tpt', 'The data is matched with a single aSVG file.'),
       fileInput(ns("svgInpath1"), "3A: upload one aSVG file", accept=".svg", multiple=FALSE)), '',
@@ -144,6 +145,18 @@ upload_ui <- function(id) {
    ) # tabsetPanel(selected="gallery",
    ) # tabPanel(title="Landing page", 
   
+}
+
+# Match spatial features between data and aSVG.
+match_ui <- function(id, cfm='Confirm matching') { 
+  ns <- NS(id)
+  list(
+  column(12, fluidRow(splitLayout(cellWidths=c('1%', "40%", '10%', "10%"), '',
+    uiOutput(ns('svgs'), style = 'margin-left:-5px'), '', 
+    actionButton(ns("match"), cfm, icon=icon("refresh"), style='margin-top:23px')
+    ))), verbatimTextOutput(ns('msg.match')),
+  column(12, uiOutput(ns('ft.match')))
+  )
 }
 
 shm_ui <- function(id, data.ui, search.ui) {
@@ -236,11 +249,12 @@ shm_ui <- function(id, data.ui, search.ui) {
       ), # tabPanel
 
       tabPanel(title="Re-match features", value='rematch',
-        column(12, fluidRow(splitLayout(cellWidths=c('1%', "40%", '10%', "30%"), '',
-          uiOutput(ns('svg'), style = 'margin-left:-5px'), '', 
-          actionButton(ns("match"), "Confirm re-matching", icon=icon("refresh"))
-        ))), verbatimTextOutput(ns('msg.match')),
-        column(12, uiOutput(ns('ft.match')))
+        # column(12, fluidRow(splitLayout(cellWidths=c('1%', "40%", '10%', "30%"), '',
+        #  uiOutput(ns('svg'), style = 'margin-left:-5px'), '', 
+        #  actionButton(ns("match"), "Confirm re-matching", icon=icon("refresh"))
+        #))), verbatimTextOutput(ns('msg.match')),
+        #column(12, uiOutput(ns('ft.match')))
+        match_ui(ns('rematch'))
       )
       #) # navbarMenu
       ), # navbarPage 
@@ -273,13 +287,14 @@ shm_ui <- function(id, data.ui, search.ui) {
       fluidRow(splitLayout(cellWidths=c("1%", "98%", "1%"), "", uiOutput(ns('video')), ""))
       ),
       tabPanel("Parameters",
-      fluidRow(splitLayout(cellWidths=c('1%', '8%', '1%', '10%', '1%', '13%', '1%', '10%', '1%', '8%', '2%', '18%'), '',
+      fluidRow(splitLayout(cellWidths=c('1%', '8%', '1%', '10%', '1%', '13%', '1%', '10%', '1%', '8%', '2%', '14%', '1%', '8%'), '',
       numericInput(inputId=ns('vdo.key.row'), label='Key rows', value=2, min=1, max=Inf, step=1, width=270), '',
       numericInput(inputId=ns('vdo.key.size'), label='Key size', value=0.04, min=0.01, max=Inf, step=0.1, width=270), '',
       radioButtons(inputId=ns("vdo.val.lgd"), label="Key value", choices=c("Yes", "No"), selected='No', inline=TRUE), '', 
       radioButtons(inputId=ns("vdo.label"), label="Feature label", choices=c("Yes", "No"), selected='No', inline=TRUE), '',
       numericInput(inputId=ns('vdo.lab.size'), label='Label size', value=2, min=0, max=Inf, step=0.5, width=150), '',
-      selectInput(ns("vdo.dim"), label="Fixed dimension", choices=c('1920x1080', '1280x800', '320x568', '1280x1024', '1280x720', '320x480', '480x360', '600x600', '800x600', '640x480'), selected='640x480', width=110)
+      selectInput(ns("vdo.dim"), label="Fixed dimension", choices=c('1920x1080', '1280x800', '320x568', '1280x1024', '1280x720', '320x480', '480x360', '600x600', '800x600', '640x480'), selected='640x480', width=110), '',
+      numericInput(inputId=ns('vdo.bar.width'), label='Color bar width', value=0.1, min=0.01, max=0.9, step=0.03, width=270)
       )), # fluidRow
 
       fluidRow(splitLayout(cellWidths=c('1%', '14%', '1%', '13%'), '', 
@@ -398,29 +413,62 @@ deg_ui <- function(id) {
   )
 }
 
+scell_ui <- function(id) { 
+  ns <- NS(id)
+  tabPanel("Single Cell", value='scell', icon=NULL,
+    br(),
+    tabsetPanel(type = "pills", id=NULL, selected="datCell", 
+      tabPanel(title="Data Table", value='datCell',
+      # column(12, search.ui, style='z-index:5'),  
+      navbarPage('Parameters:' ),
+      dataTableOutput(ns("datCell"))
+      
+      ), # navbarPage tabPanel 
+      tabPanel("Quality Control",
+      plotOutput(ns('qc.all')), plotOutput(ns('qc.mt'))
+      ), # tabPanel
+      tabPanel("Normalization",
+      plotOutput(ns('norm'))
+      ), # tabPanel
+      tabPanel("Variance Modelling",
+      plotOutput(ns('var'))
+      ), # tabPanel
+      tabPanel("Dimensionality Reduction",
+      plotOutput(ns('tsne')), plotOutput(ns('pca'))
+      ), # tabPanel
+      tabPanel("Spatial Heatmap",
+      navbarPage('Parameters:',
+      tabPanel(title="Match spatial features", value='matchCell'
+
+      )
+      #) # navbarMenu
+      )) # navbarPage tabPanel 
+      ) # tabsetPanel(
+  ) # tabPanel("Single Cell",
+}
+
 
 ui <- function(request) {
-  dashboardPage(
- 
-  # includeCSS("style.css"),
-  dashboardHeader(title = NULL, titleWidth = 0),
-  dashboardSidebar(collapsed = TRUE, disable = TRUE, width = 0, sidebarMenu() ),
-  controlbar = dashboardControlbar(id = "right.bar", collapsed = FALSE, overlay = FALSE, width = 51),
-  dashboardBody(
+  dashboardPage( 
+    # includeCSS("style.css"),
+    dashboardHeader(title = NULL, titleWidth = 0),
+    dashboardSidebar(collapsed = TRUE, disable = TRUE, width = 0, sidebarMenu() ),
+    controlbar = dashboardControlbar(id = "right.bar", collapsed = FALSE, overlay = FALSE, width = 51),
+    dashboardBody(
    # tags$head(HTML('<title>spatialHeatmap</title>')),
-   useShinyjs(), 
-   includeCSS("www/style.css"),
-   tags$head(tags$link(rel="stylesheet", type="text/css", href="style.css")),
+     useShinyjs(), 
+     includeCSS("www/style.css"),
+     tags$head(tags$link(rel="stylesheet", type="text/css", href="style.css")),
    
-   tags$head(tags$script(src = "javascript.js"), tags$script(HTML(js))),
-   includeScript(path = "www/javascript.js"),
-   tags$script(src="javascript.js"),
-   tags$head(HTML("<script type='text/javascript' src='javascript.js'></script>")),
-   HTML('<head>
+     tags$head(tags$script(src = "javascript.js"), tags$script(HTML(js))),
+     includeScript(path = "www/javascript.js"),
+     tags$script(src="javascript.js"),
+     tags$head(HTML("<script type='text/javascript' src='javascript.js'></script>")),
+     HTML('<head>
          <link rel="stylesheet" type="text/css" href="style.css">
          <script type="text/javascript" src="www/javascript.js"></script>
          </head>
-   '),
+     '),
 
    # Place title on the right of dashboard header.
    tags$script(HTML('
@@ -428,19 +476,14 @@ ui <- function(request) {
        $("header").find("nav").append(\'<span class="myClass">spatialHeatmap</span>\');
      })
    ')),
-    fluidRow(
- 
-      # tabsetPanel(type = "pills", id=NULL, selected="primary", data_ui('dat') ),
-      # tabsetPanel(type = "pills", id = 'shm.sup', selected = "shm2", shm_ui('shmAll'))
-      do.call(tabsetPanel, append(list(type = "pills", id = 'shm.sup', selected="landing", upload_ui('upl'), shm_ui('shmAll', data_ui('dat'), search_ui('sear')), deg_ui('deg')),
+    fluidRow( 
+      do.call(tabsetPanel, append(list(type = "pills", id = 'shm.sup', selected="landing", upload_ui('upl'), shm_ui('shmAll', data_ui('dat'), search_ui('sear')), deg_ui('deg'), scell_ui('scell')),
         list(tabPanel("About", value='about',
           if (0) box(width = 12, title = "", closable = FALSE, solidHeader = TRUE, collapsible = TRUE, enable_sidebar = FALSE, status = "primary", enable_dropdown = FALSE,
-
           ),
-
         includeHTML("instruction/about.html")
         ))
-    ))
+    )) # do.call append
 
     )
  ) # dashboardBody
