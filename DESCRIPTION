@@ -19,14 +19,15 @@ biocViews: Visualization, Microarray, Sequencing, GeneExpression,
         CellBasedAssays, ATACSeq, DNASeq, TissueMicroarray, SingleCell,
         CellBiology, GeneTarget
 VignetteBuilder: knitr
-Suggests: knitr, rmarkdown, BiocStyle, RUnit, BiocGenerics,
-        ExpressionAtlas, DT, reshape2, Biobase, GEOquery, shinyWidgets, shinyjs, htmltools, shinyBS, sortable
+Suggests: knitr, rmarkdown, BiocStyle, BiocSingular, RUnit, BiocGenerics,
+        ExpressionAtlas, DT, reshape2, Biobase, GEOquery, shinyWidgets, shinyjs, htmltools, shinyBS, sortable,
+        scater, scran
 Depends:
 Imports: av, BiocFileCache, data.table, DESeq2, distinct, edgeR, WGCNA, flashClust, htmlwidgets, genefilter,
-        ggplot2, ggdendro, grImport, grid, gridExtra, gplots, igraph, HDF5Array, limma,
+        ggplot2, ggdendro, grImport, grid, gridExtra, gplots, igraph, HDF5Array, limma, methods,
         rsvg, shiny, dynamicTreeCut, grDevices, graphics, ggplotify, parallel, 
-        plotly, rols, rappdirs, stats, SummarizedExperiment, shinydashboard, S4Vectors,
-        utils, visNetwork, methods, xml2, yaml
+        plotly, rols, rappdirs, stats, SummarizedExperiment, shinydashboard, S4Vectors, 
+        utils, visNetwork, UpSetR, xml2, yaml
 BugReports: https://github.com/jianhaizhang/spatialHeatmap/issues
 URL: https://github.com/jianhaizhang/spatialHeatmap
 RoxygenNote: 7.1.1
