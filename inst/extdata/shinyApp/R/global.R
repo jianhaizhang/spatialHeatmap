@@ -31,6 +31,10 @@ url_val <- function(na, lis.url) {
 
 # Import internal functions.
 
+check <- get('check', envir=asNamespace('spatialHeatmap'), inherits=FALSE)
+
+df_is_as <- get('df_is_as', envir=asNamespace('spatialHeatmap'), inherits=FALSE)
+
 scale_all <- get('scale_all', envir=asNamespace('spatialHeatmap'), inherits=FALSE)
 
 venn_inter <- get('venn_inter', envir=asNamespace('spatialHeatmap'), inherits=FALSE)
@@ -144,7 +148,8 @@ link_dat <- function(df.met) {
 # Import input matrix, able to deal with/separate numeric matrix, character matrix, and mixture of both.
 fread_df <- function(input, isRowGene=TRUE, header=TRUE, sep='auto', fill=TRUE, rep.aggr='mean', check.names=FALSE) {
   
-  if (!is(input, 'data.frame') & !is(input, 'matrix')) { 
+  if (is(input, 'dgCMatrix')|is(input, 'matrix')) input <- as.data.frame(as.matrix(input))
+  if (!is(input, 'data.frame')) {
   df0 <- tryCatch({
     fread(input=input, header=header, sep=sep, fill=fill, check.names=check.names)
   }, error = function(error_condition) {
@@ -165,8 +170,9 @@ fread_df <- function(input, isRowGene=TRUE, header=TRUE, sep='auto', fill=TRUE, 
   df1 <- as.matrix(df1)
   # Isolate data and row metadata.
   na <- vapply(seq_len(ncol(df1)), function(i) { tryCatch({ as.numeric(df1[, i]) }, warning=function(w) { return(rep(NA, nrow(df1))) }, error=function(e) { stop("Please make sure input data are numeric!") }) }, FUN.VALUE=numeric(nrow(df1)) )
-  na <- as.data.frame(na); rownames(na) <- rna
-  idx <- colSums(apply(na, 2, is.na))!=0
+  if (nrow(df1)==1) na <- matrix(na, byrow=TRUE, ncol=ncol(df1))
+  na <- as.data.frame(na); rownames(na) <- rna; colnames(na) <- cna
+  vap <- df_is_as(na, is.na); idx <- colSums(vap)!=0
   df.num <- na[!idx]; colnames(df.num) <- cna <- cna[!idx]
   df.met.all <- as.data.frame(df1)[idx]
   cat('Preparing URLs .. \n')
@@ -185,10 +191,11 @@ fread_df <- function(input, isRowGene=TRUE, header=TRUE, sep='auto', fill=TRUE, 
   if (ncol(df.num) == 0) {
     return(list(df.aggr = NULL, df.met=as.data.frame(df.met), df.rep = NULL, con.na = FALSE))
   }
-  form <- grepl("__", cna); if (sum(form)==0) { colnames(df.num) <- paste0(cna, '__', 'con'); con.na <- FALSE } else con.na <- TRUE
+  form <- grepl("__", cna); if (sum(form)==0) { cna <- colnames(df.num) <- paste0(cna, '__', 'con'); con.na <- FALSE } else con.na <- TRUE
   if(sum(is.na(as.numeric(as.matrix(df.num))))>=1) return('Make sure all values in data matrix are numeric.')
   
-  df.rep <- df.num; rna <- rownames(df.rep); df.rep <- apply(df.rep, 2, as.numeric); rownames(df.rep) <- rna
+  df.rep <- df.num; rna <- rownames(df.rep)
+  df.rep <- df_is_as(df.rep, as.numeric)
   # Aggregate replicates.
   if (any(duplicated(cna)) & !is.null(rep.aggr)) {
 
@@ -199,7 +206,7 @@ fread_df <- function(input, isRowGene=TRUE, header=TRUE, sep='auto', fill=TRUE, 
       rownames(df.num) <- rna
     }
 
-  }; df.aggr <-apply(df.num, 2, as.numeric); rownames(df.aggr) <- rna 
+  }; df.aggr <- df_is_as(df.num, as.numeric)
   return(list(df.aggr=as.data.frame(df.aggr), df.met=as.data.frame(df.met), df.rep=as.data.frame(df.rep), con.na=con.na))
 
 }
@@ -282,6 +289,13 @@ ft_dat <- function(x, ns) {
  span(class = "panel panel-default",
    div(class = "panel-heading", x), 
    div(class = "panel-body", id = ns(x))
+  )
+}
+
+ft_lis_dat <- function(x, ns) {
+ span(class = "panel panel-default",
+   div(class = "panel-heading", names(x)), 
+   div(class = "panel-body", id = ns(names(x)), ft2tag(x[[1]]))
   )
 }
 

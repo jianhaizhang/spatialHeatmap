@@ -76,10 +76,10 @@ norm_data <- function(data, norm.fun='CNF', parameter.list=NULL, log2.trans=TRUE
     if (data.trans=='log2') log2.trans <- TRUE else log2.trans <- FALSE
     warning('"data.trans" is deprecated and replaced by "log2.trans"! \n') 
   }
-  if (is(data, 'data.frame')|is(data, 'matrix')|is(data, 'DFrame')) {
+  if (is(data, 'data.frame')|is(data, 'matrix')|is(data, 'DFrame')|is(data, 'dgCMatrix')) {
     dat.lis <- check_data(data=data, usage='norm'); expr <- dat.lis$dat; ann <- dat.lis$row.meta
   } else if (is(data, 'SummarizedExperiment')) { expr <- SummarizedExperiment::assay(data) } else {
-stop('Accepted data classes are "data.frame", "matrix", "DFrame", or "SummarizedExperiment", except that "spatial_hm" also accepts a "vector".') }
+stop('Accepted data classes are "data.frame", "matrix", "DFrame", "dgCMatrix", or "SummarizedExperiment", except that "spatial_hm" also accepts a "vector".') }
   
   if (is.null(norm.fun)) norm.fun <- 'none'
   if (!norm.fun %in% c("CNF", "ESF", "VST", "rlog", 'none')) stop('"norm.fun" should be one of "CNF", "ESF", "VST", "rlog", or "none"!')

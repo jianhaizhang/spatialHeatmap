@@ -151,7 +151,7 @@
 network <- function(ID, data, adj.mod, ds="3", adj.min=0, con.min=0, node.col=c("turquoise", "violet"), edge.col=c("yellow", "blue"), vertex.label.cex=1, vertex.cex=3, edge.cex=10, layout="circle", main=NULL, static=TRUE, ...) {
 
   options(stringsAsFactors=FALSE)
-  if (is(data, 'data.frame')|is(data, 'matrix')|is(data, 'DFrame')) {
+  if (is(data, 'data.frame')|is(data, 'matrix')|is(data, 'DFrame')|is(data, 'dgCMatrix')) {
 
     dat.lis <- check_data(data=data); gene <- dat.lis$dat; ann <- dat.lis$row.meta
     if (ncol(ann)>0) ann <- ann[1] else ann <- NULL
@@ -160,7 +160,7 @@ network <- function(ID, data, adj.mod, ds="3", adj.min=0, con.min=0, node.col=c(
 
     gene <- assay(data); if (!is.null(rowData(data)) & !is.null(ann)) { ann <- rowData(data)[, ann, drop=FALSE]; rownames(gene) <- rownames(ann) <- make.names(rownames(gene)) } else ann <- NULL
 
-  } else { stop('Accepted data classes are "data.frame", "matrix", "DFrame", or "SummarizedExperiment", except that "spatial_hm" also accepts a "vector".') } 
+  } else { stop('Accepted data classes are "data.frame", "matrix", "DFrame", "dgCMatrix", or "SummarizedExperiment", except that "spatial_hm" also accepts a "vector".') } 
   from <- to <- width <- size <- NULL 
   adj <- adj.mod[["adj"]]; mods <- adj.mod[["mod"]]
   if (length(ID)!=1) return('Only one ID is required!')

@@ -144,13 +144,13 @@ adj_mod <- function(data, type='signed', power=if (type=='distance') 1 else 6, a
 
   options(stringsAsFactors=FALSE)
   # Get data matrix.
-  if (is(data, 'data.frame')|is(data, 'matrix')|is(data, 'DFrame')) {
+  if (is(data, 'data.frame')|is(data, 'matrix')|is(data, 'DFrame')|is(data, 'dgCMatrix')) {
     dat.lis <- check_data(data=data); data <- t(dat.lis$dat)
   } else if (is(data, 'SummarizedExperiment')) { data <- t(assay(data)) 
 
     if (any(duplicated(rownames(data)))) stop('Please use function \'aggr_rep\' to aggregate replicates!')
 
-  } else { stop('Accepted data classes are "data.frame", "matrix", "DFrame", or "SummarizedExperiment", except that "spatial_hm" also accepts a "vector".') }
+  } else { stop('Accepted data classes are "data.frame", "matrix", "DFrame", "dgCMatrix", or "SummarizedExperiment", except that "spatial_hm" also accepts a "vector".') }
   if (nrow(data)<5) cat('Warning: variables of sample/condition are less than 5! \n')
   if (ncol(data)>10000) cat('More than 10,000 rows are detected in data. Computation may take a long time! \n')
   

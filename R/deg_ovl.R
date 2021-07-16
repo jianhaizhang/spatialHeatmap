@@ -37,7 +37,6 @@ deg_ovl <- function(lis.up.down, type='up', plot='upset', order.by="degree", nin
 
 
 
-
 #' Given a DEG list of different methods, plot the overlap matrix.
 #'
 #' @param deg.lis The list of all up- and down-regulated genes organized by methods, which comes from the returned value of \code{spatial_enrich}.

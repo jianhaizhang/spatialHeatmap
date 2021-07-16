@@ -1,10 +1,12 @@
 #' Organise Spatial Heatmaps by Gene or Condition
 #'
+#' @param lay.shm One of \code{gene}, \code{none}, \code{con}, specifying how the SHMs will be organised.
 #' @param con A charater vector of all conditions.
 #' @param ncol An integer specifying number of columns in the layout.
 #' @param ID.sel A vector of target genes for spatial heatmaps.
 #' @param grob.list A list of spatial heatmaps in the form of ggplot2 plot grob, returned by \code{\link{grob_list}}.
 #' @param lay.mat Logical. If true, only the layout matrix is returned.
+#' @param scell Logical TRUE or FALSE. If TRUE, single-scell data is considered, and the number of genes or conditions will be doubled.
 #' @param shiny Logical, TRUE or FALSE, apply this function to shiny app or not respectively.
 #' @inheritParams spatial_hm
 
@@ -24,17 +26,22 @@
 #' @importFrom gridExtra arrangeGrob grid.arrange
 #' @importFrom grid grobTree unit
 
-lay_shm <- function(lay.shm, con, ncol, ID.sel, grob.list = NULL, lay.mat = FALSE, shiny = FALSE) {
+lay_shm <- function(lay.shm, con, ncol, ID.sel, grob.list = NULL, lay.mat = FALSE, scell=FALSE, shiny = FALSE) {
   
   # save(lay.shm, con, ncol, ID.sel, grob.list, shiny, file = 'all.lay')
 
-  ncol <- as.numeric(ncol); con <- unique(con); grob.all.na <- names(grob.list)
+  ncol <- as.numeric(ncol); grob.all.na <- names(grob.list);
+  con <- unique(con); ID.sel <- unique(ID.sel)
   if (lay.shm=="gene"|lay.shm=="none") {
 
-    all.cell <- ceiling(length(con)/ncol)*ncol
-    cell.idx <- c(seq_len(length(con)), rep(NA, all.cell-length(con)))
+    # If single-scell data, the number of cons is doubled.
+    len <- length(con); if (scell==TRUE) len <- len*2
+    all.cell <- ceiling(len/ncol)*ncol
+    cell.idx <- c(seq_len(len), rep(NA, all.cell-len))
+    # Matrix of a single gene.
     m <- matrix(cell.idx, ncol=as.numeric(ncol), byrow=TRUE)
-    lay <- NULL; for (i in seq_len(length(ID.sel))) { lay <- rbind(lay, m+(i-1)*length(con)) }
+    # Copy the matrix for each gene.
+    lay <- NULL; for (i in seq_along(ID.sel)) { lay <- rbind(lay, m+(i-1)*len) }
     if (lay.mat == TRUE) return(lay)
     # Sort conditions under each gene.
     #na.sort <- sort_gen_con(ID.sel=ID.sel, na.all=grob.all.na, con.all=con, by=lay.shm)
@@ -46,11 +53,15 @@ lay_shm <- function(lay.shm, con, ncol, ID.sel, grob.list = NULL, lay.mat = FALS
     g.arr <- arrangeGrob(grobs=g.tr, layout_matrix=lay, widths=unit(rep(0.99/n.col, n.col), "npc"), heights=unit(rep(0.99/n.row, n.row), "npc"))
 
   } else if (lay.shm=="con") {
-
-    all.cell <- ceiling(length(ID.sel)/ncol)*ncol
-    cell.idx <- c(seq_len(length(ID.sel)), rep(NA, all.cell-length(ID.sel)))
+    
+    # If single-scell data, the number of genes is doubled.
+    len <- length(ID.sel); if (scell==TRUE) len <- len*2
+    all.cell <- ceiling(len/ncol)*ncol
+    cell.idx <- c(seq_len(len), rep(NA, all.cell-len))
+    # Matrix of a single condition.
     m <- matrix(cell.idx, ncol=ncol, byrow=TRUE)
-    lay <- NULL; for (i in seq_len(length(con))) { lay <- rbind(lay, m+(i-1)*length(ID.sel)) }
+    # Copy the matrix for each condition.
+    lay <- NULL; for (i in seq_along(con)) { lay <- rbind(lay, m+(i-1)*len) }
     if (lay.mat == TRUE) return(lay)
     # na.sort <- sort_gen_con(ID.sel=ID.sel, na.all=grob.all.na, con.all=con, by='con')
     # grob.list <- grob.list[na.sort]

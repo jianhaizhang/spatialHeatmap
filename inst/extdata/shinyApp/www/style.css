@@ -111,6 +111,12 @@ div.form-group.has-feedback {
 }
 
 
+/* Main SHMs. */
+
+#shmAll-shm img {
+  max-width:none
+}
+
 /*Data table.*/
 
 table#DataTables_Table_0 {

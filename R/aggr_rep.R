@@ -90,7 +90,7 @@ aggr_rep <- function(data, sam.factor, con.factor, aggr='mean') {
 
   }
   
-  if (is(data, 'data.frame')|is(data, 'matrix')) { return(cbind(mat, row.meta)) } else if (is(data, 'SummarizedExperiment')) { 
+  if (is(data, 'data.frame')|is(data, 'matrix')|is(data, 'dgCMatrix')) { return(cbind(mat, row.meta)) } else if (is(data, 'SummarizedExperiment')) { 
   
     col.meta <- col.meta[!duplicated(fct.cna), ]; rownames(col.meta) <- NULL
     data <- SummarizedExperiment(assays=list(expr=mat), rowData=rowData(data), colData=col.meta); return(data)

@@ -150,10 +150,10 @@
 matrix_hm <- function(ID, data, scale='no', col=c('yellow', 'orange', 'red'), main=NULL, title.size=10, cexCol=1, cexRow=1, angleCol=45, angleRow=45, sep.color="black", sep.width=0.02, static=TRUE, margin=c(10, 10), arg.lis1=list(), arg.lis2=list()) {
 
   options(stringsAsFactors=FALSE)
-  if (is(data, 'data.frame')|is(data, 'matrix')|is(data, 'DFrame')) {
+  if (is(data, 'data.frame')|is(data, 'matrix')|is(data, 'DFrame')|is(data, 'dgCMatrix')) {
     dat.lis <- check_data(data=data); gene <- dat.lis$dat
   } else if (is(data, 'SummarizedExperiment')) { gene <- assay(data) } else { 
-  stop('Accepted data classes are "data.frame", "matrix", "DFrame", or "SummarizedExperiment", except that "spatial_hm" also accepts a "vector".') }
+  stop('Accepted data classes are "data.frame", "matrix", "DFrame", "dgCMatrix", or "SummarizedExperiment", except that "spatial_hm" also accepts a "vector".') }
   mod <- as.matrix(gene)
  
   if (static==TRUE) {

@@ -120,14 +120,14 @@ submatrix <- function(data, ann=NULL, ID, p=0.3, n=NULL, v=NULL, fun='cor', cor.
 
   options(stringsAsFactors=FALSE)
   # Process data.
-  if (is(data, 'data.frame')|is(data, 'matrix')|is(data, 'DFrame')) {
+  if (is(data, 'data.frame')|is(data, 'matrix')|is(data, 'DFrame')|is(data, 'dgCMatrix')) {
     dat.lis <- check_data(data=data); data <- dat.lis$dat; ann <- dat.lis$row.meta
   } else if (is(data, 'SummarizedExperiment')) { 
 
     ann <- rowData(data)[ann]; data <- as.data.frame(assay(data)) 
     if (any(duplicated(rownames(data)))) stop('Please use function \'aggr_rep\' to aggregate replicates!')
 
-  } else { stop('Accepted data classes are "data.frame", "matrix", "DFrame", or "SummarizedExperiment", except that "spatial_hm" also accepts a "vector".') }
+  } else { stop('Accepted data classes are "data.frame", "matrix", "DFrame", "dgCMatrix", or "SummarizedExperiment", except that "spatial_hm" also accepts a "vector".') }
 
   if (nrow(data)<5) cat('Warning: variables of sample/condition are less than 5! \n')
   na <- NULL; len <- nrow(data)

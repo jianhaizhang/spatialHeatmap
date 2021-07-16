@@ -52,6 +52,7 @@
 #' @param ID A character vector of assyed items (\emph{e.g.} genes, proteins) whose abudance values are used to color the aSVG.
 #' @param col.com A character vector of the color components used to build the color scale. The default is c('yellow', 'orange', 'red').
 #' @param col.bar One of "selected" or "all", the former uses values of \code{ID} to build the color scale while the latter uses all values from the data. The default is "selected".
+#' @param sig.thr A two-numeric vector of the signal thresholds (the range of the color bar). The first and the second element will be the minmun and maximum threshold in the color bar respectively. Signals/values above the max or below min will be assigned the same color as the max or min respectively. The default is \code{c(NA, NA)} and the min and max signals in the data will be used. If one needs to change either max or min, the other should be \code{NA}.    
 #' @param cores The number of CPU cores for parallelization, relevant for aSVG files with size larger than 5M. The default is NA, and the number of used cores is 1 or 2 depending on the availability. 
 #' @param trans.scale One of "log2", "exp2", "row", "column", or NULL, which means transform the data by "log2" or "2-base expoent", scale by "row" or "column", or no manipuation respectively. This argument should be used if colors across samples cannot be distinguished due to low variance or outliers. 
 #' @param bar.width The width of color bar that ranges from 0 to 1. The default is 0.08.
@@ -228,7 +229,7 @@
 #' @importFrom methods is
 #' @importFrom ggplotify as.ggplot
 
-spatial_hm <- function(svg.path, data, sam.factor=NULL, con.factor=NULL, ID, lay.shm="gene", ncol=2, col.com=c('yellow', 'orange', 'red'), col.bar='selected', cores=NA, bar.width=0.08, bar.title.size=0, trans.scale=NULL, ft.trans=NULL, tis.trans=ft.trans, lis.rematch = NULL, legend.r=0.2, sub.title.size=11, legend.plot='all', ft.legend='identical', bar.value.size=10, legend.plot.title='Legend', legend.plot.title.size=11, legend.ncol=NULL, legend.nrow=NULL, legend.position='bottom', legend.direction=NULL, legend.key.size=0.02, legend.text.size=12, angle.text.key=NULL, position.text.key=NULL, legend.2nd=FALSE, position.2nd='bottom', legend.nrow.2nd=NULL, legend.ncol.2nd=NULL, legend.key.size.2nd=0.03, legend.text.size.2nd=10, angle.text.key.2nd=0, position.text.key.2nd='right', add.feature.2nd=FALSE, label=FALSE, label.size=4, label.angle=0, hjust=0, vjust=0, opacity=1, key=TRUE, line.size=0.2, line.color='grey70', relative.scale = NULL, verbose=TRUE, out.dir=NULL, animation.scale = 1, selfcontained=FALSE, video.dim='640x480', res=500, interval=1, framerate=1, legend.value.vdo=NULL, ...) {
+spatial_hm <- function(svg.path, data, sam.factor=NULL, con.factor=NULL, ID, lay.shm="gene", ncol=2, col.com=c('yellow', 'orange', 'red'), col.bar='selected', sig.thr=c(NA, NA), cores=NA, bar.width=0.08, bar.title.size=0, trans.scale=NULL, ft.trans=NULL, tis.trans=ft.trans, lis.rematch = NULL, legend.r=0.2, sub.title.size=11, legend.plot='all', ft.legend='identical', bar.value.size=10, legend.plot.title='Legend', legend.plot.title.size=11, legend.ncol=NULL, legend.nrow=NULL, legend.position='bottom', legend.direction=NULL, legend.key.size=0.02, legend.text.size=12, angle.text.key=NULL, position.text.key=NULL, legend.2nd=FALSE, position.2nd='bottom', legend.nrow.2nd=NULL, legend.ncol.2nd=NULL, legend.key.size.2nd=0.03, legend.text.size.2nd=10, angle.text.key.2nd=0, position.text.key.2nd='right', add.feature.2nd=FALSE, label=FALSE, label.size=4, label.angle=0, hjust=0, vjust=0, opacity=1, key=TRUE, line.size=0.2, line.color='grey70', relative.scale = NULL, verbose=TRUE, out.dir=NULL, animation.scale = 1, selfcontained=FALSE, video.dim='640x480', res=500, interval=1, framerate=1, legend.value.vdo=NULL, ...) {
 
   calls <- names(vapply(match.call(), deparse, character(1))[-1])
   if("tis.trans" %in% calls) { ft.trans <- tis.trans; warning('"tis.trans" is deprecated and replaced by "ft.trans"! \n') }
@@ -245,8 +246,8 @@ spatial_hm <- function(svg.path, data, sam.factor=NULL, con.factor=NULL, ID, lay
     if (is.null(ID)) stop('Please provide a name for the data!')
     gene <- as.data.frame(matrix(data, nrow=1, dimnames=list(ID, vec.na)))
 
-  } else if (is(data, 'data.frame')|is(data, 'matrix')|is(data, 'DFrame')|is(data, 'SummarizedExperiment')) {
-    if (is(data, 'data.frame')|is(data, 'matrix')|is(data, 'DFrame')) { # Data frame of spatial enrichment.
+  } else if (is(data, 'data.frame')|is(data, 'matrix')|is(data, 'DFrame')|is(data, 'dgCMatrix')|is(data, 'SummarizedExperiment')) {
+    if (is(data, 'data.frame')|is(data, 'matrix')|is(data, 'DFrame')|is(data, 'dgCMatrix')) { # Data frame of spatial enrichment.
       cna <- colnames(data)
       if (all(c('gene', 'type', 'total') %in% cna)) {
         data <- subset(data, !duplicated(gene)); rownames(data) <- data$gene
@@ -259,7 +260,7 @@ spatial_hm <- function(svg.path, data, sam.factor=NULL, con.factor=NULL, ID, lay
     dat.lis <- check_data(data=data, sam.factor=sam.factor, con.factor=con.factor, usage='shm')
     gene <- as.data.frame(dat.lis$dat); con.na <- dat.lis$con.na
 
-  } else { stop('Accepted data classes are "data.frame", "matrix", "DFrame", or "SummarizedExperiment", except that "spatial_hm" also accepts a "vector".') }
+  } else { stop('Accepted data classes are "data.frame", "matrix", "DFrame", "dgCMatrix", or "SummarizedExperiment", except that "spatial_hm" also accepts a "vector".') }
 
   if (!is.null(trans.scale)) if (trans.scale=='log2') { 
           
@@ -270,8 +271,24 @@ spatial_hm <- function(svg.path, data, sam.factor=NULL, con.factor=NULL, ID, lay
     gene <- t(scale(t(gene))) } else if (trans.scale=='column') { gene <- scale(gene) }
  
     # Color bar.
-    bar.len=1000
-    if (col.bar=="all") geneV <- seq(min(gene), max(gene), len=bar.len) else if (col.bar=="selected") geneV <- seq(min(gene[ID, , drop=FALSE]), max(gene[ID, , drop=FALSE]), len=bar.len)
+    sig.thr <- check(sig.thr, as.numeric)
+    if (length(sig.thr)!=2) stop('The "sig.thr" must be a two-element vecor and contain as least one numeric!')
+    if (any(is.na(sig.thr))) { # Default signal threshold
+      if (col.bar=="all") { 
+        min.v <- min(gene); max.v <- max(gene) 
+      } else if (col.bar=="selected") {
+        vals <- gene[ID, , drop=FALSE]
+        min.v <- min(vals); max.v <- max(vals)
+      }
+    }
+    # Customized signal threshold.
+    thr1 <- sig.thr[1]; thr2 <- sig.thr[2]
+    if (is.numeric(thr1) & !is.na(thr1)) min.v <- thr1
+    if (is.numeric(thr2) & !is.na(thr2)) max.v <- thr2
+     
+     if (max.v <= min.v) stop('Make sure the max signal threshold is larger than the min!')
+    bar.len=1000; geneV <- seq(min.v, max.v, len=bar.len)
+
     col <- colorRampPalette(col.com)(length(geneV))
     cs.g <- col_bar(geneV=geneV, cols=col, width=1, bar.title.size=bar.title.size, bar.value.size=bar.value.size)
 
@@ -334,7 +351,7 @@ spatial_hm <- function(svg.path, data, sam.factor=NULL, con.factor=NULL, ID, lay
 
     # A set of SHMs (gene_con*) are made for each SVG, and all sets of SHMs under different SVGs are placed in 2 lists in form of ggplots and grobs respectively. Different SHMs of same 'gene_condition' under different SVGs are indexed with suffixed of '_1', '_2', ... E.g. SHMs under shm1.svg: gene_condition1_1, gene_condition2_1; SHMs under shm2.svg: gene_condition1_2, gene_condition2_2; the 4 SHMs are stored in 2 separate lists in form of ggplots and grobs respectively. 
     # The order of ggplot SHMs, grob SHMs, and legends follow the order of SVGs, so all are same.
-    gg.lis.all <- gg.all <- grob.all <- lgd.all <- NULL; for (i in seq_along(svg.df.lis)) {
+    gg.lis.all <- gg.all <- grob.all <- lgd.all <- gcol.all <- NULL; for (i in seq_along(svg.df.lis)) {
       na0 <- names(svg.df.lis)[i]; cat('ggplots/grobs:', na0, '... \n')
       svg.df <- svg.df.lis[[i]]; g.df <- svg.df[["df"]]; aspect.r <- svg.df[['aspect.r']]
       tis.path <- svg.df[["tis.path"]]; fil.cols <- svg.df[['fil.cols']]
@@ -357,6 +374,10 @@ spatial_hm <- function(svg.path, data, sam.factor=NULL, con.factor=NULL, ID, lay
 
       # Store legend of ggplot in a list.
       lgd.all <- c(lgd.all, list(gg.lis$g.lgd))
+
+      # Store colors of matching features in each SHM in a list.
+      gcols <- gg.lis$gcol.lis.all; names(gcols) <- paste0(names(gcols), '_', i)
+      gcol.all <- c(gcol.all, gcols)
     }; names(lgd.all) <- names(svg.df.lis)
 
     pat.gen <- paste0(ID, collapse='|'); pat.con <- paste0(con.uni, collapse='|')

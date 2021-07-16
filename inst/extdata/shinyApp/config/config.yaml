@@ -3,11 +3,11 @@ dataset1:
   data: none
   svg: none
 dataset2:
-  name: customData
+  name: customBulkData
   data: none
   svg: none
 dataset3:
-  name: customComputedData
+  name: customSingleCellData
   data: none
   svg: none
 dataset4:

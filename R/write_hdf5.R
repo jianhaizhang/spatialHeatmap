@@ -220,7 +220,7 @@ write_hdf5 <- function(dat.lis, dir='./data_shm', replace=FALSE, chunkdim=NULL, 
 
     # Check "sample_condition" format, and stored data in SE.
     data <- dat.lis[[i]]
-    if (is(data, 'data.frame')|is(data, 'matrix')|is(data, 'DFrame')) { 
+    if (is(data, 'data.frame')|is(data, 'matrix')|is(data, 'DFrame')|is(data, 'dgCMatrix')) { 
       form <- grepl('__', colnames(data))
       if (sum(form)==0 & na.all[i]!='df_pair') stop(paste0(na.all[i], ': the colnames of assay slot should follow the naming scheme "sample__condition"!'))
       if (na.all[i]=='df_pair') { data <- SummarizedExperiment(assays=list(expr=data)) } else {
@@ -248,7 +248,7 @@ write_hdf5 <- function(dat.lis, dir='./data_shm', replace=FALSE, chunkdim=NULL, 
        if (any(duplicated(colnames(assay(data))))) stop(paste0(na.all[i], ': duplicated "sample__condition" replicates are detected! Please use "aggr_rep" to aggregate replicates.'))
      }
      saveHDF5SummarizedExperiment(data, dir=dir, prefix=paste0(na.all[i], '_'), replace=replace, chunkdim=chunkdim, level=level, verbose=verbose)
-    } else cat(paste0('Accepted data classes are: data.frame, matrix, DFrame, SummarizedExperiment! This data is not saved: ', na.all[i]), '\n')
+    } else cat(paste0('Accepted data classes are: data.frame, matrix, DFrame, dgCMatrix, SummarizedExperiment! This data is not saved: ', na.all[i]), '\n')
 
   }; wd <- getwd(); setwd(dir)
   file.tar <- paste0(tempdir(check=TRUE), '/data_shm.tar')

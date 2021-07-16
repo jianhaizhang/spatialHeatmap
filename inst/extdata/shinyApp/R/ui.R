@@ -24,25 +24,20 @@ search_ui <- function(id, lab=label) {
 }
 
 
-data_ui <- function(id, deg=FALSE) {
+data_ui <- function(id, dim.ui=NULL, deg=FALSE) {
   ns <- NS(id)
   # if (deg == FALSE) tabPanel("Primary Visualization", value='primary',
   if (deg==FALSE) box(width = 12, title = "Data (replicates aggregated)", closable = FALSE, solidHeader = TRUE, collapsible = TRUE, enable_sidebar = FALSE, status = "primary", enable_dropdown = FALSE,
-    tabsetPanel(type="pills", id=NULL, selected="dTabSel",
-      tabPanel('Selected', value='dTabSel',
-        fluidRow(splitLayout(cellWidths=c("1%", "98%", "1%"), "", dataTableOutput(ns("dtSel")), "")), br()
-      ),
-      tabPanel('Selected Profile', value='dTabSelProf',
-        fluidRow(splitLayout(cellWidths=c("1%", "98%", "1%"), "", plotOutput(ns("selProf")), ""))
-      ),
+    tabsetPanel(type="pills", id=ns('dtab.shm'), selected='dTabAll',
       tabPanel('Complete', value='dTabAll',
       navbarPage('Parameters:',
       tabPanel("Basic",
-      fluidRow(splitLayout(cellWidths=c('1%', '15%', '1%', '15%', '1%', '15%', '1%', '15%'), '',
-      actionButton(ns("dat.all.but"), "Confirm selection"), '',
+      fluidRow(splitLayout(cellWidths=c('1%', '15%', '1%', '15%', '1%', '15%', '1%', '15%', '1%', '15%'), '',
+      actionButton(ns("dat.all.but"), "Confirm selection", style='margin-top:24px'), '',
       selectInput(ns("normDat"), "Normalize", c('None'='none', "CNF-TMM", "CNF-TMMwsp", "CNF-RLE", "CNF-upperquartile", "ESF", "VST", "rlog"), selected='none'), '',
       selectInput(inputId=ns('log'), label='Log/exp-transform', choices=c("No", 'Log2'="log2", 'Exp2'="exp2"), selected='No'), '', 
-      selectInput(inputId=ns('scaleDat'), label='Scale by', choices=c('No'='No', 'Row'='Row', 'Selected'='Selected', 'All'='All'), selected='Row')
+      selectInput(inputId=ns('scaleDat'), label='Scale by', choices=c('No'='No', 'Row'='Row', 'Selected'='Selected', 'All'='All'), selected='Row'), '',
+      numericInput(ns('page'), label='Page height', value=300, min=50, max=Inf, step=50, width=150)
       )),
       bsTooltip(id=ns('normDat'), title="CNF: calcNormFactors in edgeR. <br/> ESF: estimateSizeFactors in DESeq2. <br/> VST: varianceStabilizingTransformation in DESeq2. <br/> rlog: regularized log in DESeq2.", placement = "top", trigger = "hover"),
       bsTooltip(id=ns('scaleDat'), title="Row: scale each row independently. <br/> Selected: scale across all selected genes as a whole. <br/> All: scale across all genes as a whole.", placement = "top", trigger = "hover"),
@@ -56,10 +51,29 @@ data_ui <- function(id, deg=FALSE) {
       numericInput(inputId=ns("CV2"), label="Max coefficient of variation (CV2)", value=10^4)
       )), actionButton(inputId=ns('fil.but'), label="Submit"), verbatimTextOutput(ns("fil.par")) 
       ),
+      tabPanel("Threshold",
+      fluidRow(splitLayout(cellWidths=c('1%', '20%', '1%', '20%', '1%', '10%'), '', 
+      textInput(ns("sig.max"), "Signal threshold (max)", '', placeholder=('Default to max signal.'), width=200), '',
+      textInput(ns("sig.min"), "Signal threshold (min)", '', placeholder=('Default to min signal.'), width=200), '',
+      actionButton(ns("sig.but"), "Confirm", icon=NULL, style = "margin-top: 24px;")
+      )), br(), span(uiOutput(ns('msg.sig.thr')), style='color:red')  
+      ),
       tabPanel("Re-order columns", column(12, uiOutput(ns('col.order'))))
       ), # navbarPage 
       fluidRow(splitLayout(cellWidths=c("1%", "98%", "1%"), "", dataTableOutput(ns("dtAll")), ""))
-     ) # tabPanel('Complete'
+     ), # tabPanel('Complete'
+      tabPanel('Selected', value='dTabSel',
+        actionButton(ns("tran.scale.but.sel"), "Transform/scale data", style='margin-top:10px'),
+        fluidRow(splitLayout(cellWidths=c("1%", "98%", "1%"), "", dataTableOutput(ns("dtSel")), ""))
+      ),
+      tabPanel('Selected Profile', value='dTabSelProf',
+        actionButton(ns("tran.scale.but.prof"), "Transform/scale data", style='margin-top:10px'),
+        fluidRow(splitLayout(cellWidths=c("1%", "98%", "1%"), "", plotOutput(ns("selProf")), ""))
+      ), 
+      tabPanel('Single-cell metadata', value='dTabScell',
+        if (is.null(dim.ui)) 'This tab is only applicable to singel-cell data.' else dim.ui
+      )
+
    ) # tabsetPanel(
 
   ) else if (deg == TRUE) {
@@ -102,26 +116,27 @@ upload_ui <- function(id) {
      tabPanel(title="Data & aSVGs", value='datSVG',
       h4(strong("Step1: choose custom or default data sets")),
       fluidRow(splitLayout(cellWidths=c('1%', '30%'), '', 
-      selectInput(ns("fileIn"), NULL, c('none', 'customData'), 'none')
-      )), br(),
-      fluidRow(splitLayout(cellWidths=c('1%', '20%', '1%', '10%'), '', h4(strong("Step 2: upload custom data")), '', actionButton(ns("cusHelp"), "Help", icon = icon('question-circle')))),
-      fluidRow(splitLayout(cellWidths=c('1%', '24%', '1%', '18%', '1%', '25%', '1%', '25%'), '',
-      fileInput(ns("geneInpath"), "2A: upload formatted data matrix", accept=c(".txt", ".csv"), multiple=FALSE), '',
-      radioButtons(inputId=ns('dimName'), label='2B: is column or row gene?', choices=c("None", "Row", "Column"), selected='None', inline=TRUE), '',
-      tags$div(class='tp', span(class='tpt', 'Ensure "columns in the data matrix corresponds with "rows" in the targets file respectively.'),
-      fileInput(ns("target"), "2C (optional): upload targets file for columns", accept=c(".txt", ".csv"), multiple=FALSE)), '',
-      tags$div(class='tp', span(class='tpt', 'Ensure "rows" in the data matrix corresponds with "rows" in the row metadata file respectively.'),
-      fileInput(ns("met"), "2D (optional): upload metadata file for rows", accept=c(".txt", ".csv"), multiple=FALSE))
+      selectInput(ns("fileIn"), NULL, c('none', 'customBulkData'), 'none')
       )),
-      h4(strong('Single-Cell Data')), 
-      fileInput(ns("sglCell"), "", accept=c(".rds"), multiple=FALSE),
-      h5(strong("Step 3: upload custom aSVG(s)")),
-      fluidRow(splitLayout(cellWidths=c('1%', '27%', '1%', '28%'), '',
-      tags$div(class='tp', span(class='tpt', 'The data is matched with a single aSVG file.'),
-      fileInput(ns("svgInpath1"), "3A: upload one aSVG file", accept=".svg", multiple=FALSE)), '',
-      tags$div(class='tp', span(class='tpt', 'The data is matched with multiple aSVG files (e.g. developmental stages).'),
-      fileInput(ns("svgInpath2"), "3B (optional): upload multiple aSVG files", accept=".svg", multiple=TRUE))
-      )),
+      uiOutput(ns('bulk.sce')), uiOutput(ns('svg.upl')),
+      #fluidRow(splitLayout(cellWidths=c('1%', '20%', '1%', '10%'), '', h4(strong("Step 2: upload custom data")), '', actionButton(ns("cusHelp"), "Help", icon = icon('question-circle')))),
+      #fluidRow(splitLayout(cellWidths=c('1%', '24%', '1%', '18%', '1%', '25%', '1%', '25%'), '',
+      #fileInput(ns("geneInpath"), "2A: upload formatted data matrix", accept=c(".txt", ".csv"), multiple=FALSE), '',
+      #radioButtons(inputId=ns('dimName'), label='2B: is column or row gene?', choices=c("None", "Row", "Column"), selected='None', inline=TRUE), '',
+      #tags$div(class='tp', span(class='tpt', 'Ensure "columns in the data matrix corresponds with "rows" in the targets file respectively.'),
+      #fileInput(ns("target"), "2C (optional): upload targets file for columns", accept=c(".txt", ".csv"), multiple=FALSE)), '',
+      #tags$div(class='tp', span(class='tpt', 'Ensure "rows" in the data matrix corresponds with "rows" in the row metadata file respectively.'),
+      #fileInput(ns("met"), "2D (optional): upload metadata file for rows", accept=c(".txt", ".csv"), multiple=FALSE))
+      #)),
+      #h4(strong('Single-Cell Data')), 
+      #fileInput(ns("sglCell"), "", accept=c(".rds"), multiple=FALSE),
+      #h5(strong("Step 3: upload custom aSVG(s)")),
+      #fluidRow(splitLayout(cellWidths=c('1%', '27%', '1%', '28%'), '',
+      #tags$div(class='tp', span(class='tpt', 'The data is matched with a single aSVG file.'),
+      #fileInput(ns("svgInpath1"), "3A: upload one aSVG file", accept=".svg", multiple=FALSE)), '',
+      #tags$div(class='tp', span(class='tpt', 'The data is matched with multiple aSVG files (e.g. developmental stages).'),
+      #fileInput(ns("svgInpath2"), "3B (optional): upload multiple aSVG files", accept=".svg", multiple=TRUE))
+      #)),
       bsTooltip(id='svgInpath', title = "The data is matched with a single aSVG file.", placement = "bottom", trigger = "hover"),
       div(style = "font-size: 10px; padding: 0px 0px; margin:0%",
       fluidRow(splitLayout(cellWidths=c('1%', '27%', '1%', '28%', '1%', '28%'), '',
@@ -148,12 +163,13 @@ upload_ui <- function(id) {
 }
 
 # Match spatial features between data and aSVG.
-match_ui <- function(id, cfm='Confirm matching') { 
+match_ui <- function(id) { 
   ns <- NS(id)
   list(
-  column(12, fluidRow(splitLayout(cellWidths=c('1%', "40%", '10%', "10%"), '',
-    uiOutput(ns('svgs'), style = 'margin-left:-5px'), '', 
-    actionButton(ns("match"), cfm, icon=icon("refresh"), style='margin-top:23px')
+  column(12, fluidRow(splitLayout(cellWidths=c('1%', '40%', '5%', '10%', '3%', '10%'), '',
+    uiOutput(ns('svgs'), style = 'margin-left:-5px'), '',
+    uiOutput(ns('match.but'), style = 'margin-top:23px'), '',
+    uiOutput(ns('match.reset'), style = 'margin-top:23px') 
     ))), verbatimTextOutput(ns('msg.match')),
   column(12, uiOutput(ns('ft.match')))
   )
@@ -162,7 +178,7 @@ match_ui <- function(id, cfm='Confirm matching') {
 shm_ui <- function(id, data.ui, search.ui) {
   ns <- NS(id)
   tabPanel("Spatial Heatmap", value='shmPanelAll', icon=NULL,
-    br(),
+    div(style='margin-top:10px'),
     # list(
     # width = ifelse(input$lgdTog %% 2 == 0, 9, 12), 
       # boxPad(color = NULL, title = NULL, solidHeader = FALSE, 
@@ -204,9 +220,11 @@ shm_ui <- function(id, data.ui, search.ui) {
       )
       )), # fluidRow
       # bsPopover(id=ns('genCon'), title="Data column: by the column order in data matrix.", placement = "top", trigger = "hover"),
-      textOutput(ns('h.w.c')), textOutput(ns('msg.col')), br(),
-      fluidRow(splitLayout(cellWidths=c('0.5%', '99.5%'), '',   checkboxGroupInput(inputId=ns("tis"), label="Select features to be transparent", choices='', selected='', inline=TRUE)))
+      textOutput(ns('h.w.c')), textOutput(ns('msg.col')), div(style='margin-top:10px'), uiOutput(ns('dim'))
       ), # tabPanel
+      tabPanel("Transparent features",
+        fluidRow(splitLayout(cellWidths=c('0.5%', '99.5%'), '',  checkboxGroupInput(inputId=ns("tis"), label="Select features to be transparent", choices='', selected='', inline=TRUE)))  
+      ),
       tabPanel("Value legend",
       fluidRow(splitLayout(cellWidths=c('1%', '10%', '1%', '10%', '1%', '10%', '1%', '10%', '1%', '10%'), '', 
       numericInput(inputId=ns('val.lgd.row'), label='Rows', value='', min=1, max=Inf, step=1, width=150), '',
@@ -412,6 +430,17 @@ deg_ui <- function(id) {
     ) # box(title='Spatial Enrich'
   )
 }
+# Dimension reduction in single-cell data.
+dim_ui <- function(id) { 
+  ns <- NS(id); uiOutput(ns('dim.ui'))
+  #list(
+  #  column(12,
+  #  fluidRow(splitLayout(cellWidths=c('1%', '48%', '1%', '48%'), '',
+  #    plotOutput(ns('tsne')), '', plotOutput(ns('pca'))
+  #  )), dataTableOutput(ns('scell.cdat'))
+  #)
+  #)
+}
 
 scell_ui <- function(id) { 
   ns <- NS(id)
@@ -425,25 +454,80 @@ scell_ui <- function(id) {
       
       ), # navbarPage tabPanel 
       tabPanel("Quality Control",
-      plotOutput(ns('qc.all')), plotOutput(ns('qc.mt'))
+      # column(3, uiOutput(ns('ft.type'))), br(), 
+      plotOutput(ns('qc.all'))
       ), # tabPanel
       tabPanel("Normalization",
-      plotOutput(ns('norm'))
+      navbarPage('',
+      tabPanel('Plot', plotOutput(ns('norm'))),
+      tabPanel('Parameters',
+        actionButton(ns("norm.but"), "Confirm"), br(),
+        h5(strong('quickCluster')),  
+        fluidRow(splitLayout(cellWidths=c('1%', '20%'), '',
+        numericInput(ns('min.size'), label='Min size', value=100, min=5, max=Inf, step=50, width=150)
+        )),
+        h5(strong('computeSumFactors')),  
+        fluidRow(splitLayout(cellWidths=c('1%', '20%'), '',
+        numericInput(ns('max.size'), label='Max size', value=3000, min=10, max=Inf, step=100, width=150)
+        ))
+      )
+      )
       ), # tabPanel
       tabPanel("Variance Modelling",
-      plotOutput(ns('var'))
+      navbarPage('',
+      tabPanel('Plot', plotOutput(ns('var'))
+      ),
+      tabPanel('Parameters',
+        actionButton(ns("var.but"), "Confirm"), br(),
+        h5(strong('getTopHVGs')),  
+        fluidRow(splitLayout(cellWidths=c('1%', '20%', '1%', '20%'), '',
+        numericInput(ns('hvg.n'), label='Top variable genes by number', value=3000, min=5, max=Inf, step=50, width=150), '',
+        numericInput(ns('hvg.p'), label='Top variable genes by proportion', value=0.1, min=0.0001, max=1, step=0.1, width=150)
+        ))
+      )
+      )
       ), # tabPanel
       tabPanel("Dimensionality Reduction",
-      plotOutput(ns('tsne')), plotOutput(ns('pca'))
-      ), # tabPanel
-      tabPanel("Spatial Heatmap",
-      navbarPage('Parameters:',
-      tabPanel(title="Match spatial features", value='matchCell'
-
-      )
+      navbarPage('',
+      tabPanel('Plot',
+         dim_ui(ns('dim'))
+      ),
+      tabPanel('Parameters',
+        actionButton(ns("dim.but"), "Confirm"), br(),
+        h5(strong('denoisePCA')),  
+        fluidRow(splitLayout(cellWidths=c('1%', '20%', '1%', '20%'), '',
+        numericInput(ns('min.rank'), label='Min PCs', value=5, min=2, max=Inf, step=1, width=150), '',
+        numericInput(ns('max.rank'), label='Max PCs', value=50, min=3, max=Inf, step=5, width=150)
+        )),
+        h5(strong('runTSNE')),  
+        fluidRow(splitLayout(cellWidths=c('1%', '20%', '1%', '20%'), '',
+        numericInput(ns('ncomT'), label='t-SNE dimensions to obtain', value=2, min=2, max=Inf, step=1, width=150), '',
+        numericInput(ns('ntopT'), label='Number of top HVGs', value=500, min=50, max=Inf, step=100, width=150)
+        )),
+        h5(strong('runUMAP')),  
+        fluidRow(splitLayout(cellWidths=c('1%', '20%', '1%', '20%', '1%', '20%'), '',
+        numericInput(ns('ncomU'), label='UMAP dimensions to obtain', value=2, min=2, max=Inf, step=1, width=150), '',
+        numericInput(ns('ntopU'), label='Number of top HVGs', value=500, min=50, max=Inf, step=100, width=150), '',
+        numericInput(ns('pcs'), label='Number of PCs', value=50, min=5, max=Inf, step=5, width=150)
+        )), span(textOutput(ns('msg.umap')), style='color:red'),
+        h5(strong('Build neighbor graph')),  
+        fluidRow(splitLayout(cellWidths=c('1%', '20%'), '',
+        selectInput(ns('nn.graph'), label='Method', choices=c('buildSNNGraph', 'buildKNNGraph'), selected='buildSNNGraph')
+        )), uiOutput(ns('graph.par')),
+        h5(strong('Clustering')),  
+        fluidRow(splitLayout(cellWidths=c('1%', '20%'), '',
+        selectInput(ns('scell.cluster'), label='Method', choices=c('cluster_walktrap', 'cluster_fast_greedy', 'cluster_leading_eigen'), selected='cluster_walktrap')
+        )), uiOutput(ns('clus.par'))
+      ) # tabPanel
+     )), #tabPanel("Dimensionality Reduction", navbarPage
+      tabPanel("Matching",
+      #navbarPage('Parameters:',
+      #tabPanel(title="Match spatial features", value='matchCell',
+        match_ui(ns('rematchCell'))
       #) # navbarMenu
-      )) # navbarPage tabPanel 
-      ) # tabsetPanel(
+      #) # navbarPage 
+      ) #tabPanel 
+     ) # tabsetPanel(
   ) # tabPanel("Single Cell",
 }
 
@@ -477,7 +561,7 @@ ui <- function(request) {
      })
    ')),
     fluidRow( 
-      do.call(tabsetPanel, append(list(type = "pills", id = 'shm.sup', selected="landing", upload_ui('upl'), shm_ui('shmAll', data_ui('dat'), search_ui('sear')), deg_ui('deg'), scell_ui('scell')),
+      do.call(tabsetPanel, append(list(type = "pills", id = 'shm.sup', selected="landing", upload_ui('upl'), shm_ui('shmAll', data_ui('dat', dim_ui('datDim')), search_ui('sear')), deg_ui('deg'), scell_ui('scell')),
         list(tabPanel("About", value='about',
           if (0) box(width = 12, title = "", closable = FALSE, solidHeader = TRUE, collapsible = TRUE, enable_sidebar = FALSE, status = "primary", enable_dropdown = FALSE,
           ),

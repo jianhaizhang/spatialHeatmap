@@ -32,6 +32,7 @@
 
 gg_lgd <- function(gg.all, size.key=NULL, size.text.key=8, angle.text.key=NULL, position.text.key=NULL, legend.value.vdo=NULL, sub.title.size=NULL, row=NULL, col=NULL, label=FALSE, label.size=3, label.angle=0, hjust=0, vjust=0, opacity=1, key=TRUE, sam.dat, ft.trans=NULL, aspect.ratio = NULL) {
 
+  # save(gg.all, size.key, size.text.key, angle.text.key, position.text.key, legend.value.vdo, sub.title.size, row, col, label, label.size, label.angle, hjust, vjust, opacity, key, sam.dat, ft.trans, aspect.ratio, file='gg.lgd.all')
   tissue <- x0 <- y0 <- NULL
   # Function to remove feature labels. 
   rm_label <- function(g) {    
@@ -53,6 +54,8 @@ gg_lgd <- function(gg.all, size.key=NULL, size.text.key=8, angle.text.key=NULL, 
       names(g.col) <- dat$tissue; df.tis <- as.vector(dat$tissue); df.val <- round(dat$value, 2)
       g.col <- g.col[!duplicated(names(g.col))]; tis.path <- dat$feature
       ft.legend <- intersect(unique(sam.dat), unique(tis.path))
+      # Single-cell data: length(ft.legend)==0.
+      if (length(ft.legend)==0) ft.legend <- unique(sub('__\\d+', '', names(g.col[!is.na(g.col)])))  
       ft.legend <- setdiff(ft.legend, ft.trans) 
       leg.idx <- !duplicated(tis.path) & (tis.path %in% ft.legend)
       df.tar <- df.tis[leg.idx]; lab <- path.tar <- tis.path[leg.idx]; val.tar <- df.val[leg.idx]

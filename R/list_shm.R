@@ -39,7 +39,7 @@
 
 gg_shm <- function(gene, con.na=TRUE, geneV, coord, ID, cols, tis.path, lis.rematch = NULL, ft.trans=NULL, sub.title.size, ft.legend='identical', legend.col, legend.ncol=NULL, legend.nrow=NULL, legend.position='bottom', legend.direction=NULL, legend.key.size=0.02, legend.text.size=12, legend.plot.title=NULL, legend.plot.title.size=11, line.size=0.2, line.color='grey70', aspect.ratio = 1, ...) {
 
-   # save(gene, con.na, geneV, coord, ID, cols, tis.path, lis.rematch, ft.trans, sub.title.size, ft.legend, legend.col, legend.ncol, legend.nrow, legend.position, legend.direction, legend.key.size, legend.text.size, legend.plot.title, legend.plot.title.size, line.size, line.color, aspect.ratio, file='all.shm')
+  # save(gene, con.na, geneV, coord, ID, cols, tis.path, lis.rematch, ft.trans, sub.title.size, ft.legend, legend.col, legend.ncol, legend.nrow, legend.position, legend.direction, legend.key.size, legend.text.size, legend.plot.title, legend.plot.title.size, line.size, line.color, aspect.ratio, file='all.shm')
   
   # Main function to create SHMs (by conditions) and legend plot.
   g_list <- function(con, lgd=FALSE, ...) {
@@ -58,41 +58,45 @@ gg_shm <- function(gene, con.na=TRUE, geneV, coord, ID, cols, tis.path, lis.rema
       if (rematch.dif.svg) {
         # The data column index of data features that are assinged new aSVG features under a specific condition.
         tis.tar.idx <- cname %in% paste0(tis.tar, '__', con)
-        # In data columns, feature__conditions and colors have the same index. 
-        tis.tar.col <- color.dat[tis.tar.idx]; names(tis.tar.col) <- tis.tar
-        # Copy colors of target features in data to corresponding aSVG features according to lis.rematch. 
-        col.ft.rematch <- NULL; for (i in names(lis.rematch[tis.tar])) {
-          ft.svg <- lis.rematch[tis.tar][[i]]
-          col0 <- rep(tis.tar.col[i], length(ft.svg)); names(col0) <- ft.svg
-          col.ft.rematch <- c(col.ft.rematch, col0)
+        # Target features may not be profiled in every contidion.
+        tis.tar <- unique(gsub('(.*)__(.*)', '\\1', cname[tis.tar.idx]))
+        if (length(tis.tar)>0) {
+          # In data columns, feature__conditions and colors have the same index. 
+          tis.tar.col <- color.dat[tis.tar.idx]; names(tis.tar.col) <- tis.tar
+          # Copy colors of target features in data to corresponding aSVG features according to lis.rematch. 
+          col.ft.rematch <- NULL; for (i in names(lis.rematch[tis.tar])) {
+            ft.svg <- lis.rematch[tis.tar][[i]]
+            col0 <- rep(tis.tar.col[i], length(ft.svg)); names(col0) <- ft.svg
+            col.ft.rematch <- c(col.ft.rematch, col0)
+          }
+          for (i in names(col.ft.rematch)) g.col[tis.path %in% i] <- col.ft.rematch[i]
         }
-        for (i in names(col.ft.rematch)) g.col[tis.path %in% i] <- col.ft.rematch[i]
        } else {
         con.idx <- grep(paste0("^", con, "$"), cons)
         # Target tissues and colors in data columns.
         tis.col1 <- tis.col[con.idx]; color.dat1 <- color.dat[con.idx]
         for (i in unique(tis.path)) {
-        # Map target colors to target tissues.
-        tis.idx <- which(tis.col1 %in% i); if (length(tis.idx)==1) {
-          # Account for single-shape tissue without '__\\d+$' and multi-shape tissue with '__\\d+$'.
-          pat <- paste0(paste0('^', i, '$'), '|', paste0('^', i, '__\\d+$'))
-          g.col[grep(pat, tis.df)] <- color.dat1[tis.idx] # names(g.col) is tis.df 
+          # Map target colors to target tissues.
+          tis.idx <- which(tis.col1 %in% i); if (length(tis.idx)==1) {
+            # Account for single-shape tissue without '__\\d+$' and multi-shape tissue with '__\\d+$'.
+            pat <- paste0(paste0('^', i, '$'), '|', paste0('^', i, '__\\d+$'))
+            g.col[grep(pat, tis.df)] <- color.dat1[tis.idx] # names(g.col) is tis.df 
+          }
         }
-      }
-      # Rematch features between the same pair of data-aSVG.
-      if (is.list(lis.rematch)) {
-        for (i in seq_along(lis.rematch)) {
-          lis0 <- lis.rematch[i]; if (!is.character(lis0[[1]])) next
-          # Index of features will be rematched.
-          idx.tis.rematch <- tis.path %in% lis0[[1]]
-          # Index of color for rematching.
-          idx.tis.rematch.color <- tis.path %in% names(lis0)
-          # if (sum(idx.tis.rematch.color) == 0) stop(paste0('Feature "', names(lis0), '" is not detected in aSVG!'))
-          if (sum(idx.tis.rematch) == 0 | sum(idx.tis.rematch.color) == 0) next
-          g.col[idx.tis.rematch] <- unique(g.col[idx.tis.rematch.color])
+        # Rematch features between the same pair of data-aSVG.
+        if (is.list(lis.rematch)) {
+          for (i in seq_along(lis.rematch)) {
+            lis0 <- lis.rematch[i]; if (!is.character(lis0[[1]])) next
+            # Index of features will be rematched.
+            idx.tis.rematch <- tis.path %in% lis0[[1]]
+            # Index of color for rematching.
+            idx.tis.rematch.color <- tis.path %in% names(lis0)
+            # if (sum(idx.tis.rematch.color) == 0) stop(paste0('Feature "', names(lis0), '" is not detected in aSVG!'))
+            if (sum(idx.tis.rematch) == 0 | sum(idx.tis.rematch.color) == 0) next
+            g.col[idx.tis.rematch] <- unique(g.col[idx.tis.rematch.color])
+           }
          }
        }
-     }
     } 
     # The colors might be internally re-ordered alphabetically during mapping, so give them names to fix the match with tissues. E.g. c('yellow', 'blue') can be re-ordered to c('blue', 'yellow'), which makes tissue mapping wrong. Correct: colours are not re-ordered. The 'tissue' in 'data=coord' are internally re-ordered according to a factor. Therfore, 'tissue' should be a factor with the right order. Otherwise, disordered mapping can happen. Alternatively, name the colors with corresponding tissue names.
     # aes() is passed to either ggplot() or specific layer. Aesthetics supplied to ggplot() are used as defaults for every layer. 
@@ -165,7 +169,7 @@ gg_shm <- function(gene, con.na=TRUE, geneV, coord, ID, cols, tis.path, lis.rema
     if (con.na==FALSE) g.tit <- ggtitle(k) else g.tit <- ggtitle(paste0(k, "_", con)); g <- g+g.tit
     if (lgd==TRUE) {
       g <- g+theme(plot.margin=margin(0.005, 0.005, 0.2, 0, "npc"), plot.title=element_text(hjust=0.5, size=legend.plot.title.size))+ggtitle(legend.plot.title)
-    }; return(g)
+    }; return(list(g=g, g.col=g.col))
 
   }
 
@@ -175,7 +179,7 @@ gg_shm <- function(gene, con.na=TRUE, geneV, coord, ID, cols, tis.path, lis.rema
   cons <- gsub("(.*)(__)(.*)", "\\3", cname)
   sam.uni <- unique(gsub("(.*)(__)(.*)", "\\1", cname)); ft.trans <- make.names(ft.trans)
 
-  g.lis.all <- NULL; for (k in ID) {
+  g.lis.all <- gcol.lis.all <- NULL; for (k in ID) {
     # Match color key values to selected genes.
     color.dat <- NULL; for (i in gene[k, ]) { 
       ab <- abs(i-geneV); col.ind <- which(ab==min(ab))[1]; color.dat <- c(color.dat, cols[col.ind])
@@ -194,22 +198,29 @@ gg_shm <- function(gene, con.na=TRUE, geneV, coord, ID, cols, tis.path, lis.rema
       # Take the features in data that are assinged new aSVG features.
       tis.tar <- unlist(lapply(names(lis.rematch), function(i) {
         vec0 <- lis.rematch[[i]]
-        if (!is.null(vec0)) if (all(vec0 %in% tis.path.uni)) return(i)
+        if (!is.null(vec0)) if (any(vec0 %in% tis.path.uni)) return(i)
       }))
     }; if (length(tis.tar)==0) return(NULL)
-    cname1 <- cname[grepl(paste0('^(', paste0(tis.tar,collapse='|'), ')__'), cname)]
+    cname1 <- cname[grepl(paste0('^(', paste0(tis.tar, collapse='|'), ')__'), cname)]
+    if (length(cname1)==0) return()
     # Only conditions paired with valid tissues (have matching samples in data) are used. 
     con.vld <- gsub("(.*)(__)(.*)", "\\3", cname1); con.vld.uni <- unique(con.vld)
     na0 <- paste0(k, "_", con.vld.uni); cat('ggplot: ', k, ', ', sep = ''); g.lis <- lapply(con.vld.uni, g_list, ...); cat('\n')
-    names(g.lis) <- na0; g.lis.all <- c(g.lis.all, g.lis)
-  }; g.lgd <- g_list(con=NULL, lgd=TRUE, ...)
-  return(list(g.lgd = g.lgd, g.lis.all = g.lis.all))
+    # ggplots.
+    gg.lis <- lapply(g.lis, function(x) return(x$g))
+    names(gg.lis) <- na0; g.lis.all <- c(g.lis.all, gg.lis)
+    # Spatial feature Colors. 
+    gcol.lis <- lapply(g.lis, function(x) return(x$g.col))
+    names(gcol.lis) <- paste0('col_', na0); gcol.lis.all <- c(gcol.lis.all, gcol.lis)
+  }; g.lgd <- g_list(con=NULL, lgd=TRUE, ...)$g
+  return(list(g.lgd = g.lgd, g.lis.all = g.lis.all, gcol.lis.all=gcol.lis.all))
 }
 
 #' Convert SHMs of Ggplot to Grobs
 #'
 #' @param gg.lis A list of SHMs of ggplot, returned by \code{\link{gg_shm}}.
 #' @param cores The number of CPU cores for parallelization, relevant for aSVG files with size larger than 5M. The default is NA, and the number of used cores is 1 or 2 depending on the availability.
+#' @param lgd.pos Legend position, one of \code{none}, \code{right}, \code{left}, \code{top}, \code{bottom}.
 #' @return A list of grob SHMs.
 #' @keywords Internal
 #' @noRd
@@ -218,7 +229,7 @@ gg_shm <- function(gene, con.na=TRUE, geneV, coord, ID, cols, tis.path, lis.rema
 
 #' @importFrom parallel detectCores mclapply
 
-grob_shm <- function(gg.lis, cores=2) {
+grob_shm <- function(gg.lis, cores=2, lgd.pos='none') {
   tmp <- normalizePath(tempfile(), winslash='/', mustWork=FALSE)
   cat('Converting "ggplot" to "grob" ... \n')
   # mclapply does not give speed gain here.
@@ -228,7 +239,7 @@ grob_shm <- function(gg.lis, cores=2) {
   png(tmp); grob.lis <- mclapply(seq_along(gg.lis), function(x) {
     cat(nas[x], ' '); x <- gg.lis[[x]]
     # Remove legends in SHMs.
-    x <- x+theme(legend.position="none"); ggplotGrob(x) 
+    x <- x+theme(legend.position=lgd.pos); ggplotGrob(x) 
   }, mc.cores=cores); dev.off(); cat('\n')
   names(grob.lis) <- nas; return(grob.lis)
 }

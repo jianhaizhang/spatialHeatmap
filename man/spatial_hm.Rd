@@ -14,6 +14,7 @@ spatial_hm(
   ncol = 2,
   col.com = c("yellow", "orange", "red"),
   col.bar = "selected",
+  sig.thr = c(NA, NA),
   cores = NA,
   bar.width = 0.08,
   bar.title.size = 0,
@@ -85,6 +86,8 @@ spatial_hm(
 \item{col.com}{A character vector of the color components used to build the color scale. The default is c('yellow', 'orange', 'red').}
 
 \item{col.bar}{One of "selected" or "all", the former uses values of \code{ID} to build the color scale while the latter uses all values from the data. The default is "selected".}
+
+\item{sig.thr}{A two-numeric vector of the signal thresholds (the range of the color bar). The first and the second element will be the minmun and maximum threshold in the color bar respectively. Signals/values above the max or below min will be assigned the same color as the max or min respectively. The default is \code{c(NA, NA)} and the min and max signals in the data will be used. If one needs to change either max or min, the other should be \code{NA}.}
 
 \item{cores}{The number of CPU cores for parallelization, relevant for aSVG files with size larger than 5M. The default is NA, and the number of used cores is 1 or 2 depending on the availability.}
 
