@@ -45,6 +45,7 @@ gg_shm <- function(gene, con.na=TRUE, geneV, coord, ID, cols, tis.path, lis.rema
   g_list <- function(con, lgd=FALSE, ...) {
     if (is.null(con)) cat('Legend plot ... \n') else cat(con, ' ')
     value <- feature <- x <- y <- tissue <- NULL; tis.df <- as.vector(unique(coord[, 'tissue']))
+    # Since ggplot2 '3.3.5', 'NA' instead of NA represents transparency.
     legend.col[legend.col == 'none'] <- NA
     # tis.path and tis.df have the same length by default, but not entries, since tis.df is appended '__\\d+' at the end.
     # Assign default colours to each path.
@@ -112,7 +113,9 @@ gg_shm <- function(gene, con.na=TRUE, geneV, coord, ID, cols, tis.path, lis.rema
       if (!is.null(ft.trans)) g.col[sub('__\\d+$', '', tis.df) %in% ft.trans] <- NA # This step should not be merged with 'lgd=T'.
       ft.legend <- setdiff(ft.legend, ft.trans) 
       leg.idx <- !duplicated(tis.path) & (tis.path %in% ft.legend)
-      # Bottom legends are set for each SHM and then removed in 'ggplotGrob', but a copy with legend is saved separately for later used in video.
+      # Bottom legends are set for each SHM and then removed in 'ggplotGrob', but a copy with legend is saved separately for later use in video.
+      # Since ggplot2 '3.3.5', 'NA' instead of NA represents transparency.
+      g.col[is.na(g.col)] <- 'NA'
       scl.fil <- scale_fill_manual(values=g.col, breaks=tis.df[leg.idx], labels=tis.path[leg.idx], guide=guide_legend(title=NULL, ncol=legend.ncol, nrow=legend.nrow))
     } else { 
       # Assign legend key colours if identical samples between SVG and matrix have colors of "none".
@@ -142,6 +145,8 @@ gg_shm <- function(gene, con.na=TRUE, geneV, coord, ID, cols, tis.path, lis.rema
          } 
        ); g.col <- unlist(g.col)
        # No matter the tissues in coordinate data frame are vector or factor, the coloring are decided by the named color vector (order of colors does not matter as long as names are right) in scale_fill_manual.
+       # Since ggplot2 '3.3.5', 'NA' instead of NA represents transparency.
+       g.col[is.na(g.col)] <- 'NA'
        scl.fil <- scale_fill_manual(values=g.col, breaks=tis.df[leg.idx], labels=tis.path[leg.idx], guide=guide_legend(title=NULL, ncol=legend.ncol, nrow=legend.nrow)) 
     }
     lgd.par <- theme(legend.position=legend.position, legend.direction=legend.direction, legend.background = element_rect(fill=alpha(NA, 0)), legend.key.size=unit(legend.key.size, "npc"), legend.text=element_text(size=legend.text.size), legend.margin=margin(l=0.1, r=0.1, unit='npc'))

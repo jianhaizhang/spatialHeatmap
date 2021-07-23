@@ -444,18 +444,30 @@ dim_ui <- function(id) {
 
 scell_ui <- function(id) { 
   ns <- NS(id)
-  tabPanel("Single Cell", value='scell', icon=NULL,
+  tabPanel("Spatial Single Cell", value='scell', icon=NULL,
     br(),
     tabsetPanel(type = "pills", id=NULL, selected="datCell", 
       tabPanel(title="Data Table", value='datCell',
-      # column(12, search.ui, style='z-index:5'),  
       navbarPage('Parameters:' ),
       dataTableOutput(ns("datCell"))
       
       ), # navbarPage tabPanel 
       tabPanel("Quality Control",
-      # column(3, uiOutput(ns('ft.type'))), br(), 
-      plotOutput(ns('qc.all'))
+      navbarPage('',
+        tabPanel('Plot', plotOutput(ns('qc.all'))
+        ),
+        tabPanel('Parameters',
+        actionButton(ns("qc.but"), "Confirm"), br(),
+        h5(strong('perCellQCMetrics')),  
+        fluidRow(splitLayout(cellWidths=c('1%', '20%'), '',
+        numericInput(ns('cnt.thr'), label='Min counts', value=0, min=0, max=Inf, step=50, width=150)
+        )),
+        h5(strong('isOutlier')),  
+        fluidRow(splitLayout(cellWidths=c('1%', '20%'), '',
+        numericInput(ns('nmads'), label='Min median absolute deviations (MADs)', value=3, min=1, max=Inf, step=1, width=150)
+        ))
+        )
+      )
       ), # tabPanel
       tabPanel("Normalization",
       navbarPage('',

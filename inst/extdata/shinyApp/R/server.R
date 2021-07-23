@@ -54,9 +54,10 @@ server <- function(input, output, session) {
   url.id <- reactiveValues()
   mods <- reactiveValues(upload=NULL, search=NULL, data=NULL, shm=NULL, deg=NULL, scell=NULL)
 
-search_server <- function(id, ids, cfg, lis.url, url.id, dat.mod.lis, session) {
+search_server <- function(id, ids, lis.url, url.id, upl.mod.lis, dat.mod.lis, session) {
   moduleServer(id, function(input, output, session) {
     cat('ID search box ... \n')
+    ipt <- upl.mod.lis$ipt; cfg <- upl.mod.lis$cfg
     observeEvent(session$clientData$url_search, {
       id.sch.sgl <- url_val('sear-sch.sgl', lis.url)
       # lis <- reactiveValuesToList(lis.url)
@@ -77,12 +78,12 @@ search_server <- function(id, ids, cfg, lis.url, url.id, dat.mod.lis, session) {
     pre.id <- reactiveValues(id=NULL)
     observe({ # Pre-selected ids in config file.
       if (is.null(geneIn$lis)) return()
-      # geneIn <- dat.mod.lis$geneIn
       df.aggr.tran <- geneIn$lis$df.aggr.tran 
-      id <- cfg$lis.par$data.matrix['selected.id', 'default']
-      id <- make.names(strsplit(id, ',')[[1]])
       rna <- rownames(df.aggr.tran)
-      id <- id[id %in% rownames(df.aggr.tran)]
+      id <- cfg$lis.par$data.matrix['selected.id', 'default']
+      if (length(id)==0) { pre.id$id <- rna[1]; return() }
+      id <- make.names(strsplit(id, ',')[[1]])
+      id <- id[id %in% rna]
       if (length(id)==0) id <- rna[1]; pre.id$id <- id
     })
     sch.sgl <- reactiveValues(cho=NULL, sel=NULL)
@@ -138,17 +139,19 @@ search_server <- function(id, ids, cfg, lis.url, url.id, dat.mod.lis, session) {
 
   observe({ # On-start IDs in single search mode.
     cat('Single search IDs: on-start ... \n')
-    if (sum(ids$sel %in% rna$val)>0|is.null(input$sch.sgl)) return()
-    if (input$sch.sgl=='none') return()
-    ids$sel <- sub(' .*', '', input$sch.sgl); ids$but.sgl <- input$sch.sgl.but
+    sch.sgl <- input$sch.sgl
+    if (sum(ids$sel %in% rna$val)>0|is.null(sch.sgl)) return()
+    if (sch.sgl=='none') return()
+    ids$sel <- sub(' .*', '', sch.sgl); ids$but.sgl <- input$sch.sgl.but
     cat('Done! \n')
   })
   # The button controls all IDs in the downstream SHMs.
   observeEvent(list(input$sch.mul.but, rna$val), {
     cat('Multiple search IDs ... \n')
-    if (is.null(rna$val)|!is.character(input$sch.mul)) return()
-    if (input$sch.mul=='') sel <- pre.id$id else {
-      gens <- strsplit(gsub(' |,', '__', input$sch.mul), '__')[[1]]
+    sch.mul <- input$sch.mul
+    if (is.null(rna$val)|!is.character(sch.mul)) return()
+    if (sch.mul=='') sel <- pre.id$id else {
+      gens <- strsplit(gsub(' |,', '__', sch.mul), '__')[[1]]
       sel <- gens[tolower(gens) %in% tolower(rna$val)]
       # Invalid IDs.
       dif <- setdiff(gens, sel)
@@ -161,12 +164,13 @@ search_server <- function(id, ids, cfg, lis.url, url.id, dat.mod.lis, session) {
     }; ids$sel <- sel; ids$but.mul <- input$sch.mul.but
     cat('Done! \n') 
   })
- 
-  observe({ # On-start IDs in multiple search mode.
+  # observeEvent: input$sch.mul and ids$sel affects each other and lead to infinite circles.  
+  observeEvent(list(input$sch.mul, rna$val, pre.id$id), { # On-start IDs in multiple search mode.
     cat('Multiple search IDs: on-start ... \n')
     sch.mul <- input$sch.mul
     if (sum(ids$sel %in% rna$val)>0|is.null(sch.mul)) return()
     if (sch.mul=='') return()
+    # if (!all(ids$sel %in% sch.mul)) return()
     gens <- strsplit(gsub(' |,', '__', sch.mul), '__')[[1]]
     sel <- gens[tolower(gens) %in% tolower(rna$val)]
     # Invalid IDs.
@@ -180,7 +184,7 @@ search_server <- function(id, ids, cfg, lis.url, url.id, dat.mod.lis, session) {
     ids$sel <- sel; ids$but.mul <- input$sch.mul.but
     cat('Done! \n')
   })
-
+  # observeEvent(ipt$fileIn, { ids$sel <- NULL })
   return(list(ids=ids))
   onBookmark(function(state) { state })
   })
@@ -413,8 +417,7 @@ content=function(file=paste0(normalizePath(tempdir(check=TRUE), winslash="/", mu
     toggleState(id = "svgInpath1", condition = input$fileIn %in% cfg$na.cus)
     toggleState(id = "svgInpath2", condition = input$fileIn %in% cfg$na.cus)
   })
-  sce <- reactiveValues()
-  observe({
+  sce <- reactiveValues(); observe({
   library(SingleCellExperiment)
   library(scater); library(scran); library(BiocSingular)
   sgl.cell.ipt <- input$sglCell
@@ -599,7 +602,7 @@ data_server <- function(id, sch, lis.url, ids, deg = FALSE, upl.mod.lis, scell.m
     } else if (scale.dat=='All') { df.aggr.tran <- scale_all(df.aggr.tran) }
     } else if (deg == TRUE) {   
       if (is.null(geneIn0())) return()
-      df.aggr <- df.aggr.tran <- geneIn0()[['df.aggr']] 
+      df.aggr <- df.aggr.tran <- geneIn0()[['df.aggr']]
     }
     if (ipt$fileIn!='customSingleCellData') { 
       df.met <- geneIn0()[['df.met']]; df.rep <- geneIn0()[['df.rep']]
@@ -647,13 +650,15 @@ data_server <- function(id, sch, lis.url, ids, deg = FALSE, upl.mod.lis, scell.m
     if (is.null(df.aggr)) return()
     df.aggr.tran <- gene.lis[['df.aggr.tran']]
     df.aggr.thr <- gene.lis$df.aggr.thr
-    if (is.null(df.aggr.thr)) return()
     df.met <- gene.lis[['df.met']]; df.rep <- gene.lis[['df.rep']]
     input$fil.but; lis.url
-    # Filter un-scaled values.
-    if (deg == FALSE) df2fil <- df.aggr.thr else df2fil <- df.rep
-    # When ipt$fileIn changes, col.reorder$col.na.re of last session still exists and causes errors.
-    if (deg == FALSE) if (!identical(sort(col.reorder$col.na.re), sort(colnames(df2fil)))) return()
+    if (deg==FALSE) {
+      if (is.null(df.aggr.thr)) return()
+      # Filter un-scaled values.
+      df2fil <- df.aggr.thr
+      # When ipt$fileIn changes, col.reorder$col.na.re of last session still exists and causes errors.
+      if (!identical(sort(col.reorder$col.na.re), sort(colnames(df2fil)))) return()
+    } else df2fil <- df.rep
     # Input variables in "isolate" will not triger re-excution, but if the whole reactive object is trigered by "input$fil.but" then code inside "isolate" will re-excute.
     scale.dat <- input$scaleDat
     isolate({ 
@@ -666,7 +671,7 @@ data_server <- function(id, sch, lis.url, ids, deg = FALSE, upl.mod.lis, scell.m
       if (fil$P!=0 | fil$A!=0 | fil$CV1!=-10000 | fil$CV2!=10000) showNotification("Filtering is applied on un-scaled values.", duration=3)
       # In case all rows are filtered, the app continues to work without refreshing after the filter parameters are reduced.
       if (nrow(se)==0) { validate(need(try(nrow(se)>0), 'All rows are filtered out!')); return() }
-      se <- filter_data(data=se, ann=ann.col, sam.factor=NULL, con.factor=NULL, pOA=c(fil$P, fil$A), CV=CVs, dir=NULL, verbose=FALSE)
+      # se <- filter_data(data=se, ann=ann.col, sam.factor=NULL, con.factor=NULL, pOA=c(fil$P, fil$A), CV=CVs, dir=NULL, verbose=FALSE)
       df2fil <- as.data.frame(assay(se), stringsAsfactors=FALSE)
       colnames(df2fil) <- make.names(colnames(df2fil))
       rna.fil <- rownames(df2fil)
@@ -687,10 +692,11 @@ data_server <- function(id, sch, lis.url, ids, deg = FALSE, upl.mod.lis, scell.m
     } else {
       # Only "df.rep" is used.
       df.aggr.tran.order <- df.aggr.tran
-      df.rep <- df2fil 
+      df.rep <- df2fil  
     }
+    if (!is.null(df.aggr.thr)) df.aggr.thr <- as.data.frame(as.matrix(df.aggr.thr))
     # df.aggr.tran is used for SHMs.
-    cat('Done! \n'); return(list(df.aggr = as.data.frame(as.matrix(df.aggr)), df.aggr.tran = as.data.frame(as.matrix(df.aggr.tran)), df.aggr.tran.order = as.data.frame(as.matrix(df.aggr.tran.order)), df.aggr.thr = as.data.frame(as.matrix(df.aggr.thr)), df.met=df.met, df.rep = as.data.frame(as.matrix(df.rep)), con.na=gene.lis$con.na))
+    cat('Done! \n'); return(list(df.aggr = as.data.frame(as.matrix(df.aggr)), df.aggr.tran = as.data.frame(as.matrix(df.aggr.tran)), df.aggr.tran.order = as.data.frame(as.matrix(df.aggr.tran.order)), df.aggr.thr = df.aggr.thr, df.met=df.met, df.rep = as.data.frame(as.matrix(df.rep)), con.na=gene.lis$con.na))
 
   })
   dt.shm <- reactive({
@@ -830,7 +836,7 @@ data_server <- function(id, sch, lis.url, ids, deg = FALSE, upl.mod.lis, scell.m
   # observe({ ipt0$url.but <- input$url.but })
   mods$data <- dat.mod.lis <- data_server('dat', sch, lis.url, ids, deg=FALSE, upl.mod.lis, scell.mod.lis=mods$scell)
 
-mods$search <- sch.mod.lis <- search_server('sear', ids, cfg, lis.url, url.id, dat.mod.lis)
+mods$search <- sch.mod.lis <- search_server('sear', ids, lis.url, url.id, upl.mod.lis, dat.mod.lis)
  
 network_server <- function(id, upload.mod.lis, dat.mod.lis, shm.mod.lis, sch.mod.lis, session) {
   
@@ -1417,7 +1423,9 @@ shm_server <- function(id, sch, lis.url, url.id, tab, upl.mod.lis, dat.mod.lis, 
   sig.but <- dat.mod.lis$sig.but
   ids <- sch.mod.lis$ids
   gID <- reactiveValues(geneSel="none", new=NULL, all=NULL)
-  observe({ ipt$geneInpath; ipt$fileIn; gID$geneSel <- "none" })
+  observe({ ipt$geneInpath; ipt$fileIn; gID$geneSel <- "none"
+    gID$new <- gID$all <- NULL
+  })
   observe({ if (is.null(geneIn())) gID$geneSel <- "none" })
   # To make the "gID$new" and "gID$all" updated with the new "input$fileIn", since the selected row is fixed (3rd row), the "gID$new" is not updated when "input$fileIn" is changed, and the downstream is not updated either. The shoot/root examples use the same data matrix, so the "gID$all" is the same (pre-selected 3rd row) when change from the default "shoot" to others like "organ". As a result, the "gene$new" is null and downstream is not updated. Also the "gene$new" is the same when change from shoot to organ, and downstream is not updated, thus "gene$new" and "gene$all" are both set NULL above upon new "input$fileIn".  
 
@@ -1436,6 +1444,7 @@ shm_server <- function(id, sch, lis.url, url.id, tab, upl.mod.lis, dat.mod.lis, 
     cat('New file:', ipt$fileIn, '\n')
     if (length(ids$sel)==0) return()
     if (ids$sel[1]==''|init$but>0) return()
+    # Avoid selected genes are from last data while new data is used.
     if (!all(ids$sel %in% rna.fil$val)) return()
     # Avoid multiple selected rows from last input$fileIn. Must be behind gID$geneSel. 
     if (length(ids$sel)>1 & is.null(lis.url$par)) return()
@@ -1445,12 +1454,20 @@ shm_server <- function(id, sch, lis.url, url.id, tab, upl.mod.lis, dat.mod.lis, 
     init$but <- 1
     cat('New ID:', gID$new, 'Selected ID:', gID$geneSel, 'All ID:', gID$all, '\n')
   })
+
   observeEvent(list(ids$sel), { # Selected IDs after the landing page.
     cat('Confirm selection ... \n')
+    # In case init$new is not assigned to 0, since gg_shm processe is not triggered.
+    if (!is.null(gID$all) & !is.null(gID$new) & !is.null(ids$sel) & init$new==1) {
+      if (!all(ids$sel %in% gID$all)) init$new <- 0
+    }
     # Ensure executions only after the landing page.
     if (init$but==0|init$new==1) return()
     if (is.null(ids$but.sgl) & is.null(ids$but.mul)) return()
-    if (length(ids$sel)==0|ids$sel[1]=='') return()
+    if (length(ids$sel)==0) return()
+    if (ids$sel[1]=='') return()
+    # Avoid selected genes are from last data while new data is used.
+    if (!all(ids$sel %in% rna.fil$val)) return()
     gID$geneSel <- unique(ids$sel)
     gID$new <- setdiff(gID$geneSel, gID$all); gID$all <- c(gID$all, gID$new) 
     cat('New ID:', gID$new, 'Selected ID:', gID$geneSel, 'All ID:', gID$all, '\n'); cat('Done! \n')
@@ -1666,7 +1683,7 @@ shm_server <- function(id, sch, lis.url, url.id, tab, upl.mod.lis, dat.mod.lis, 
   # Avoid repetitive computation under input$cs.v=='All rows'.
   gs.new <- reactive({
     cat('New grob/ggplot: ')
-    # print(list(is.null(svg.df()), is.null(geneIn()), gID$new, gID$all, ids$sel, color$col[1]))
+     # print(list(is.null(svg.df()), is.null(geneIn()), gID$new, gID$all, ids$sel, color$col[1]))
     geneIn <- geneIn()
     validate(
       need(!is.null(svg.df()) & !is.null(geneIn) & length(gID$new) > 0 & !is.null(gID$all) & length(ids$sel)>0 & color$col[1]!='none', '')
@@ -2050,7 +2067,7 @@ shm_server <- function(id, sch, lis.url, url.id, tab, upl.mod.lis, dat.mod.lis, 
    # Ensure the matching button is effective only if shm$grob.all1/shm$gg.all1 is not NULL. Otherwise dim plots are absent.
    #dim.shm.par <- reactiveValues(); observe({
    #  if (is.null(shm$grob.all1)|is.null(shm$gg.all1)) return()
-   #  dim.shm.par$val <- scell.mod.lis$match.lis$val$but.match$val
+   #  dim.shm.par$val <- scell.mod.lis$, match.lis$val$but.match$val
    # })
    output$dim <- renderUI({
      ns <- session$ns
@@ -2058,7 +2075,7 @@ shm_server <- function(id, sch, lis.url, url.id, tab, upl.mod.lis, dat.mod.lis, 
      selectInput(ns('dims'), label='Select dimentionality reduction', choices=c('TSNE', 'PCA', 'UMAP'), selected='TSNE')
    })
    # Single-cell reduced dimensionality for each gene__con. 
-   observeEvent(list(shm$grob.all1, input$dims), {
+   observeEvent(list(shm$grob.all, shm$grob.all1, input$dims), {
      cat('Single-cell: compiling PCA/TSNE/UMAP and SHMs ... \n')
      clus <- scell.mod.lis$sce.rct$clus
      ft.rematch <- scell.mod.lis$match.lis$val$ft.reorder$ft.rematch
@@ -2077,7 +2094,7 @@ shm_server <- function(id, sch, lis.url, url.id, tab, upl.mod.lis, dat.mod.lis, 
        gg.dim <- gg.dim.all[i]; na <- sub('^dim_', '', names(gg.dim))
        g.col <- gcol.all[[paste0('col_', na)]]
        dat.ft.na <- names(ft.rematch)
-       dim.col <- rep('white', length(ft.rematch))
+       dim.col <- rep('gray80', length(ft.rematch))
        names(dim.col) <- dat.ft.na
        for (j in dat.ft.na) {
          # Matched svg fts have the same color, so only the 1st is taken. 
@@ -2088,7 +2105,10 @@ shm_server <- function(id, sch, lis.url, url.id, tab, upl.mod.lis, dat.mod.lis, 
          } else if (length(matched)>0) dim.col[j] <- matched
        }
        # Max shapes: 128.
-       gg.dim.all[[i]] <- gg.dim[[1]]+geom_point(size=2, fill='grey20', alpha=0.6, aes(shape=colour_by))+scale_color_manual(values=dim.col)+scale_shape_manual(values=0:127)+labs(colour=sf.by, shape=sf.by)
+       sp <- seq_along(dim.col); names(sp) <- names(dim.col)
+       # Merge colour and shape legend: dim.col and sp have the same names.
+       # save(gg.dim, dim.col, sp, sf.by, file='gdss')
+       gg.dim.all[[i]] <- gg.dim[[1]]+geom_point(size=2, alpha=0.2, aes(shape=colour_by))+scale_color_manual(values=dim.col)+scale_shape_manual(values=sp)+labs(colour=sf.by, shape=sf.by)
      }
      # Convert all reduced dim of ggplots to grobs.
      grob.dim.all <- grob_shm(gg.dim.all, lgd.pos='right')
@@ -2535,7 +2555,7 @@ mods$shm <- shm.mod.lis <- shm_server('shmAll', sch, lis.url, url.id, tab, upl.m
 deg_server <- function(id, sch, lis.url, ids, upl.mod.lis, dat.mod.lis, shm.mod.lis, session) {
 
   moduleServer(id, function(input, output, session) {
-    ipt <- upl.mod.lis$ipt; cfg <- upl.mod.lis$cfg
+  ipt <- upl.mod.lis$ipt; cfg <- upl.mod.lis$cfg
 
   gID <- shm.mod.lis$gID
   cat('Presenting data matrix (DEG) ... \n')
@@ -2882,23 +2902,23 @@ dim_server <- function(id, sce, section='scell', upl.mod.lis, match.mod.lis, dat
     output$umap <- renderPlot({
       sce <- sce(); cna <- input$cna
       if (is.null(sce)|is.null(cna)) return()
+      if (!cna %in% colnames(colData(sce))) return()
       # if (length(unique(colData(sce)[, cna]))>6) shape.by <- NULL else shape.by <- cna 
-      gg <- plotUMAP(sce, colour_by=cna)
-      gg+geom_point(size=2, fill='grey20', alpha=0.6, aes(shape=colour_by))+scale_shape_manual(values=0:127)+labs(colour=cna, shape=cna)
+      plotUMAP(sce, colour_by=cna)+labs(colour=cna)
     })
     output$tsne <- renderPlot({
       sce <- sce(); cna <- input$cna
       if (is.null(sce)|is.null(cna)) return()
+      if (!cna %in% colnames(colData(sce))) return()
       # if (length(unique(colData(sce)[, cna]))>6) shape.by <- NULL else shape.by <- cna 
-      gg <- plotTSNE(sce, colour_by=cna)
-      gg+geom_point(size=2, fill='grey20', alpha=0.6, aes(shape=colour_by))+scale_shape_manual(values=0:127)+labs(colour=cna, shape=cna)
+      plotTSNE(sce, colour_by=cna)+labs(colour=cna)
     })
     output$pca <- renderPlot({
       sce <- sce(); cna <- input$cna
       if (is.null(sce)|is.null(cna)) return()
+      if (!cna %in% colnames(colData(sce))) return()
       # if (length(unique(colData(sce)[, cna]))>6) shape.by <- NULL else shape.by <- cna 
-      gg <- plotPCA(sce, colour_by=cna)
-      gg+geom_point(size=2, fill='grey20', alpha=0.6, aes(shape=colour_by))+scale_shape_manual(values=0:127)+labs(colour=cna, shape=cna)
+      plotPCA(sce, colour_by=cna)+labs(colour=cna)
     })
 
     output$scell.cdat <- renderDataTable({
@@ -2913,21 +2933,24 @@ dim_server <- function(id, sce, section='scell', upl.mod.lis, match.mod.lis, dat
         matched <- unlist(lapply(match.lis, function(x) {
           if (is.null(x)) return('NA') else if (is.character(x)) return(paste0(x, collapse=', ')) 
           }
-        ))
-        cdat.o <- cdat[, !colnames(cdat) %in% c('cluster', 'label'), drop=FALSE]
-        cdat.lab <- cdat[, 'label', drop=FALSE]
-        cdat.clus <- cdat[, 'cluster', drop=FALSE]
-        if (sf.by=='label') {
+        )); cna <- colnames(cdat) 
+        cdat.o <- cdat[, !cna %in% c('cluster', 'label'), drop=FALSE]
+        cdat.lab <- cdat.clus <- data.frame(na=NA)
+        if ('label' %in% cna) cdat.lab <- cdat[, 'label', drop=FALSE]
+        if ('cluster' %in% cna) cdat.clus <- cdat[, 'cluster', drop=FALSE]
+        if (sf.by=='label' & !all(is.na(cdat.lab))) {
           mat.lab <- matched[cdat$label]
           if (!any(is.na(mat.lab))) { 
-            cdat <- cbind(cdat.clus, cdat.lab, matched.label=matched[cdat$label], cdat.o)[order(cdat$label), , drop=FALSE]
+            cdat <- cbind(cdat.clus, cdat.lab, matched.label=mat.lab, cdat.o)[order(cdat$label), , drop=FALSE]
+            if (all(is.na(cdat.clus))) cdat <- cdat[, -1]
             idx <- cdat$matched.label!='NA'
             if (length(idx)>0 & !any(is.na(idx))) cdat <- rbind(cdat[idx, , drop=FALSE], cdat[!idx, , drop=FALSE])
           }
-        } else if (sf.by=='cluster') {
+        } else if (sf.by=='cluster' & !all(is.na(cdat.clus))) {
           mat.clus <- matched[cdat$cluster]
           if (!any(is.na(mat.clus))) {
-            cdat <- cbind(cdat.clus, matched.cluster=matched[cdat$cluster], cdat.lab, cdat.o)[order(cdat$cluster), , drop=FALSE]
+            cdat <- cbind(cdat.clus, matched.cluster=mat.clus, cdat.lab, cdat.o)[order(cdat$cluster), , drop=FALSE]
+            if (all(is.na(cdat.lab))) cdat <- cdat[, -3]
           idx <- cdat$matched.cluster!='NA'
           if (length(idx)>0 & !any(is.na(idx))) cdat <- rbind(cdat[idx, , drop=FALSE], cdat[!idx, , drop=FALSE])
           }
@@ -2985,10 +3008,17 @@ scell_server <- function(id, tab, upl.mod.lis, shm.mod.lis, dim.mod.lis=NULL, se
     # The id 'rematchCell' is fixed, since it is recognised internally. 
     if (upl.mod.lis$ipt$fileIn=='customSingleCellData') match.mod.lis$val <- match_server('rematchCell', shm.mod.lis$sam, tab, upl.mod.lis) else match.mod.lis$val <- NULL
   })
+ 
   sce.rct <- reactiveValues()
+  observeEvent(upl.mod.lis$sce$val, {
+    # If new sce is uploaded but aSVG is the same, then all objects calculated from previous sce are set NULL.
+    sce.rct$val <- sce.rct$var <- sce.rct$top <- sce.rct$dimred <- sce.rct$clus <- sce.rct$graph <- NULL
+    sce.rct$val <- upl.mod.lis$sce$val
+  })
+
   observe({
     library(Matrix)
-    sce <- upl.mod.lis$sce$val; if (is.null(sce)) return()
+    sce <- sce.rct$val; if (is.null(sce)) return()
     assay(sce) <- as(assay(sce), 'dgCMatrix')
     sce.rct$val <- sce
     withProgress(message="Data table: ", value=0, {
@@ -3000,25 +3030,27 @@ scell_server <- function(id, tab, upl.mod.lis, shm.mod.lis, dim.mod.lis=NULL, se
       )
     })
    })
-    rdat <- rowData(sce)
-    if (0) output$ft.type <- renderUI({
-      ns <- session$ns
-      selectInput(ns('mito'), 'Mitochondrial gene symbol', c('none', unique(rdat$featureType)), 'mito')
-    })
   })
 
+  par.qc <- reactiveValues()
+  # Button of 0 cannot trigger observeEvent.
+  observeEvent(input$qc.but+1, { 
+    par.qc$cnt.thr <- input$cnt.thr; par.qc$nmads <- input$nmads
+  })
   observe({
     cat('Single cell: quality control ... \n')
+    cnt.thr <- par.qc$cnt.thr; nmads <- par.qc$nmads
     sce.unfil <- sce <- sce.rct$val; # mito <- input$mito
-    if (is.null(sce)) return()
+    if (is.null(sce)|!is.numeric(cnt.thr)|!is.numeric(nmads)) return()
     # if (is.null(sce)|is.null(mito)) return()
     withProgress(message="Quality control: ", value=0, {
     incProgress(0.3, detail="in progress ...")
-    stats <- perCellQCMetrics(sce, subsets=list(Mt=rowData(sce)$featureType=='mito'))
+    stats <- perCellQCMetrics(sce, subsets=list(Mt=rowData(sce)$featureType=='mito'), threshold=as.integer(cnt.thr))
     sub.fields <- 'subsets_Mt_percent'
     ercc <- 'ERCC' %in% altExpNames(sce)
     if (ercc) sub.fields <- c('altexps_ERCC_percent', sub.fields)
-    qc <- quickPerCellQC(stats, sub.fields=sub.fields)
+    qc <- perCellQCFilters(stats, sub.fields=sub.fields, nmads=as.integer(nmads))
+    # qc <- quickPerCellQC(stats, sub.fields=sub.fields)
     sce.rct$val <- sce[, !qc$discard]
     colData(sce.unfil) <- cbind(colData(sce.unfil), stats)
     sce.unfil$discard <- qc$discard
@@ -3076,6 +3108,9 @@ scell_server <- function(id, tab, upl.mod.lis, shm.mod.lis, dim.mod.lis=NULL, se
     validate(need(round(n)==n, '')); validate(need(p > 0 & p < 1, ''))
     withProgress(message="Variance modelling: ", value=0, {
     incProgress(0.3, detail="in progress ...")
+    if (!'logcounts' %in% assayNames(sce)) {
+      sce.rct$var <- sce.rct$top <- NULL; return()
+    }
     sce.rct$var <- sce.var <- modelGeneVar(sce)
     incProgress(0.3, detail="in progress ...")
     sce.rct$top <- top.hvgs <- getTopHVGs(sce.var, prop=p, n=n)
@@ -3201,13 +3236,6 @@ scell_server <- function(id, tab, upl.mod.lis, shm.mod.lis, dim.mod.lis=NULL, se
     colData(sce) <- cdat; sce.rct$clus <- sce; cat('Done! \n')
     # sce.clus <- sce; save(sce.clus, file='sce.clus')
   })
-  if (0) {
-  cdat <- colData(sce.clus)
-  labs <- unique(cdat[, 'label'])
-  lis0 <- lapply(labs, function(x) {
-    unique(cdat[, 'source_name'][cdat[, 'label'] == x])
-  }); names(lis0) <- labs
-  }
   cat('Single-cell: column data table ... \n')
   dim.lis <- reactive({ dim_server('dim', reactive({ sce.rct$clus }), 'scell', upl.mod.lis, match.mod.lis, NULL) }) # Avoid endless circle.
   cat('Done! \n')
@@ -3223,10 +3251,11 @@ scell_server <- function(id, tab, upl.mod.lis, shm.mod.lis, dim.mod.lis=NULL, se
     df.rep <- assay(sce.clus); labs <- colLabels(sce.clus)
     # Cell labels: avoid numeric.
     er.wa <- check(as.vector(labs), as.numeric)
-    if (is.numeric(er.wa)) labs <- colLabels(sce.clus) <- paste0('sp.ft', labs)
+    if (is.numeric(er.wa) & length(er.wa)>0) labs <- colLabels(sce.clus) <- paste0('sp.ft', labs)
     # Column names: sp.ft, exp.var.
     sp.ft <- sf.by$val; if (is.null(sp.ft)) return()
     cdat <- colData(sce.clus); con.na <- TRUE
+    if (!sp.ft %in% colnames(cdat)) return()
     if ('expVar' %in% colnames(cdat)) colnames(df.rep) <- paste0(cdat[, sp.ft], '__', cdat[, 'expVar']) else { colnames(df.rep) <- cdat[, sp.ft]; con.na <- FALSE }
     withProgress(message="Aggregating cells: ", value=0, {
       incProgress(0.3, detail="in progress ...")
@@ -3273,7 +3302,6 @@ scell_server <- function(id, tab, upl.mod.lis, shm.mod.lis, dim.mod.lis=NULL, se
   onStop(function() { ggly_rm(); vdo_rm(); cat("Session stopped! \n") })
 
 }
-
 
 
 
