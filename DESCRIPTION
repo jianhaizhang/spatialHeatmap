@@ -24,7 +24,7 @@ Suggests: knitr, rmarkdown, BiocStyle, BiocSingular, RUnit, BiocGenerics,
         scater, scran
 Depends:
 Imports: av, BiocFileCache, data.table, DESeq2, distinct, edgeR, WGCNA, flashClust, htmlwidgets, genefilter,
-        ggplot2, ggdendro, grImport, grid, gridExtra, gplots, igraph, HDF5Array, limma, methods,
+        ggplot2, ggdendro, grImport, grid, gridExtra, gplots, igraph, HDF5Array, limma, methods, magick,
         rsvg, shiny, dynamicTreeCut, grDevices, graphics, ggplotify, parallel, 
         plotly, rols, rappdirs, stats, SummarizedExperiment, shinydashboard, S4Vectors, 
         utils, visNetwork, UpSetR, xml2, yaml

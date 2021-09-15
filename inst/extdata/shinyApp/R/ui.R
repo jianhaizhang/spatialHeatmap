@@ -273,7 +273,21 @@ shm_ui <- function(id, data.ui, search.ui) {
         #))), verbatimTextOutput(ns('msg.match')),
         #column(12, uiOutput(ns('ft.match')))
         match_ui(ns('rematch'))
-      )
+      ),
+      tabPanel("Template",
+       tags$div(title="Overlay templates of raster images with spatial heatmap images.",
+         splitLayout(cellWidths=c('1%', '10%', '1%', '10%', '1%', '10%'), '', 
+           selectInput(ns('tmp'), label='Overlay', choices=c('Yes', 'No'), selected='Yes'), '',
+           selectInput(ns('coal'), label='Charcoal', choices=c('Yes', 'No'), selected='No'), '',
+           div(style='margin-top:25px',
+           dropdownButton(inputId=ns('dpwAlpOver'), label='Alpha', circle=FALSE, icon=NULL, status='primary', inline=FALSE, width=300,
+           fluidRow(splitLayout(cellWidths=c('1%', '60%', '35%'), '',
+           sliderInput(ns('alpOver'), "", min=0, max=1, step=0.05, value=1, width='100%'),
+           actionButton(ns("alpOverBut"), "Confirm", icon=icon("refresh"), style='margin-top:31px')))
+           ))
+         )
+       )
+      ) # tabPanel
       #) # navbarMenu
       ), # navbarPage 
  

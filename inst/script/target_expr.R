@@ -37,7 +37,7 @@ library(org.Hs.eg.db)
 columns(org.Hs.eg.db); keytypes(org.Hs.eg.db)
 row.met <- select(org.Hs.eg.db, keys=rownames(expr.hum), columns=c('ENSEMBL', 'SYMBOL', 'GENENAME'), keytype="ENSEMBL")
 row.met <- row.met[!duplicated(row.met$ENSEMBL), ]
-row.met$metadata <- paste0(row.met$SYMBOL, ': ', row.met$GENENAME)
+row.met$metadata <- paste0(row.met$SYMBOL, ' ', row.met$GENENAME)
 # Append row metadata to data matrix.
 expr.hum <- expr.hum[row.met$ENSEMBL, ]
 expr.hum <- cbind(expr.hum, row.met[, 'metadata', drop = FALSE])
@@ -74,7 +74,7 @@ library(org.Mm.eg.db)
 columns(org.Mm.eg.db); keytypes(org.Mm.eg.db)
 row.met <- select(org.Mm.eg.db, keys=rownames(expr.mus), columns=c('ENSEMBL', 'SYMBOL', 'GENENAME'), keytype="ENSEMBL")
 row.met <- row.met[!duplicated(row.met$ENSEMBL), ]
-row.met$metadata <- paste0(row.met$SYMBOL, ': ', row.met$GENENAME)
+row.met$metadata <- paste0(row.met$SYMBOL, ' ', row.met$GENENAME)
 # Append row metadata to data matrix.
 expr.mus <- expr.mus[row.met$ENSEMBL, ]
 expr.mus <- cbind(expr.mus, row.met[, 'metadata', drop = FALSE])
@@ -108,8 +108,7 @@ expr.chk <- assay(se.fil.chk)
 # colnames(expr.chk) <- gsub("_", ".", colnames(expr.chk))
 write.table(expr.chk, 'expr_chicken.txt', col.names=TRUE, row.names=TRUE, sep='\t')
 
-
-
+# Keep replicates.
 colData(rse.chk) <- DataFrame(target.chk)
 se.nor.chk <- norm_data(data=rse.chk, norm.fun='ESF', log2.trans = FALSE)
 se.fil.chk <- filter_data(data=se.nor.chk, sam.factor='organism_part', con.factor='age', pOA=c(0.3, 700), CV=c(0.5, 100), dir=NULL); se.fil.chk
@@ -117,9 +116,6 @@ se.fil.chk <- filter_data(data=se.nor.chk, sam.factor='organism_part', con.facto
 expr.chk <- assay(se.fil.chk)
 # colnames(expr.chk) <- gsub("_", ".", colnames(expr.chk))
 write.table(expr.chk, 'expr_chicken.txt', col.names=TRUE, row.names=TRUE, sep='\t')
-
-
-
 
 
 ## Make targets file/Shiny app data for the Arabidopsis shoot example.

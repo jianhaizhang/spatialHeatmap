@@ -54,6 +54,14 @@ dataset13:
   - example/arabidopsis.thaliana_organ_shm1.svg
   - example/arabidopsis.thaliana_organ_shm2.svg
 dataset14:
+  name: leaf_test
+  data: example/dat_overlay.txt
+  svg:
+  - example/overlay_shm1.png
+  - example/overlay_shm1.svg
+  - example/overlay_shm2.png
+  - example/overlay_shm2.svg
+dataset15:
   name: map_Census
   data: example/us_population2018.txt
   svg: example/us_map_shm.svg
@@ -61,7 +69,7 @@ title:
 - title:spatialHeatmap
 - width:350
 max.upload.size: 5G 
-default.dataset: mouse_Merkin
+default.dataset: brain_Prudencio
 col.row.gene: None
 separator: None
 data.matrix:

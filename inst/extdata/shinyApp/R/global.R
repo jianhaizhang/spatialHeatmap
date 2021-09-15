@@ -1,3 +1,6 @@
+# Bitmap extensions accepted in uploaded images.
+tmp.ext <- c('.jpg', '.png')
+
 # Confirm button labels.
 lab.sgl <- 'Search by single gene ID (e.g. ENSMUSG00000000031) or symbols'
 lab.mul <- 'Search by single or multiple gene IDs (e.g. ENSMUSG00000000031 ENSMUSG00000000093)'
@@ -141,9 +144,10 @@ link_dat <- function(df.met) {
     link <- paste0('<a href=\"https://www.google.com/search?q=', rna, '" target="_blank">link</a>')
     # link <- lapply(rownames(df.met), function(x) a("link", href=paste0('https://www.google.com/search?q=', x), target="_blank"))
     # link <- unlist(lapply(link, as.character))
-  } else { link <- df.met[, link.idx] }
+  } else { link <- df.met[, link.idx]; link <- gsub('\\\\"', '\'', link) }
   return(data.frame(link=link, row.names=rownames(df.met)))
 }
+
 
 # Import input matrix, able to deal with/separate numeric matrix, character matrix, and mixture of both.
 fread_df <- function(input, isRowGene=TRUE, header=TRUE, sep='auto', fill=TRUE, rep.aggr='mean', check.names=FALSE) {
@@ -235,6 +239,23 @@ se_from_db <- function(se) {
   }; return(dat)
 }
 
+# Check if SVGs are paired with templates of raster images.
+# svg.na: SVG names or paths.
+svg_tmp <- function(svg.na, tmp.ext) {                                                                                           
+  ext <- paste0('\\', c('.svg', tmp.ext), '$', collapse='|')
+  paired <- all(table(sub(ext, '', svg.na))==2)
+  if (!paired) showModal(modal(msg='If raster images uploaded as templates, ensure they have the same names with corresponding SVG images. E.g. test.png, test.svg.'))
+  validate(need(try(paired), ''))                                                                                            
+}   
+
+# Extract tmplate path for a selected SVG.
+# svg.paths, svg.nas: All svg/tmp paths and names, which are in the same order.
+# svg.na: selected SVG name.
+tmp_path <- function(svg.paths, svg.nas, svg.na, tmp.ext){
+  tmp.pat <- sub('\\.svg', paste0('(', paste0('\\', tmp.ext, '$', collapse='|'), ')'), svg.na)
+  tmp.pa <- svg.paths[grepl(tmp.pat, svg.nas)]; return(tmp.pa)
+}
+
 # Extract target svgs in tar into tmp folder, and return the paths. 
 extr_svg <- function(file, name) {
   dir <- paste0(tempdir(check=TRUE), '/svg_shm')
@@ -245,12 +266,12 @@ extr_svg <- function(file, name) {
 }
 
 # Extract svg path/na from uploaded or internal tar files.
-svg_pa_na <- function(svg.path, pa.svg.upl) {
+svg_pa_na <- function(svg.path, pa.svg.upl, tmp.ext) {
   svg.na <- NULL; for (i in seq_along(svg.path)) {
     # Extract svg names. 
     str <- strsplit(svg.path[[i]], '/')[[1]]
     na0 <- str[length(str)]
-    if (!grepl('\\.svg$', na0)) return('No aSVG file is detected! Solution: 1) select another aSVG and rematch it to data; 2) add an aSVG file for the selected data in the backend aSVG tar file or uploaded aSVG tar file.')
+    if (!grepl(paste0('\\', c('.svg', tmp.ext), '$', collapse='|'), na0)) return('No aSVG/template file is detected! Solution: 1) select another aSVG and rematch it to data; 2) add an aSVG/template file for the selected data in the backend aSVG tar file or uploaded aSVG tar file.')
     svg.na <- c(svg.na, na0)
     # Complete uploaded svg paths.
     if (!grepl('example/', svg.path[[i]])) {
@@ -260,15 +281,16 @@ svg_pa_na <- function(svg.path, pa.svg.upl) {
         tar.all <- list.files('example', pattern='\\.tar$', full.names=TRUE)
         tar.svg <- tar.all[!grepl('data_shm.tar$', tar.all)][1]
         pa0 <- extr_svg(file=tar.svg, name=na0)
-      }; if (is.null(pa0)) return(paste0("This aSVG file is not detected: ", na0, "!")) else svg.path[[i]] <- pa0
+      }; if (is.null(pa0)) return(paste0("This aSVG/template file is not detected: ", na0, "!")) else svg.path[[i]] <- pa0
     }
   }; return(list(svg.path=svg.path, svg.na=svg.na))
 }
 
 # Check suffixes if multiple svgs.
-svg_suffix <- function(svg.path, svg.na) {
+svg_suffix <- function(svg.path, svg.na, tmp.ext) {
   if (length(svg.na)>1) {
-    if (!all(grepl('_shm\\d+\\.svg$', svg.na, perl=TRUE))) return("Suffixes of aSVGs should be indexed as '_shm1.svg', '_shm2.svg', '_shm3.svg', ...")
+    ext <- paste0('_shm\\d+\\', c('.svg', tmp.ext), '$', collapse='|')
+    if (!all(grepl(ext, svg.na, perl=TRUE))) return("Suffixes of aSVGs and templates should be indexed as '_shm1.svg', '_shm1.png', '_shm2.svg', '_shm2.png', '_shm3.svg', '_shm3.png', ...")
     ord <- order(gsub('.*_(shm.*)$', '\\1', svg.na))
     svg.path <- svg.path[ord]; svg.na <- svg.na[ord]  
   }; return(list(svg.path=svg.path, svg.na=svg.na))

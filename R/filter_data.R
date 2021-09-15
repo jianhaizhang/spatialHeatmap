@@ -129,7 +129,7 @@ filter_data <- function(data, pOA=c(0, 0), CV=c(-Inf, Inf), top.CV=1, ann=NULL, 
     write.table(expr1, paste0(dir, "/customData.txt"), sep="\t", row.names=TRUE, col.names=TRUE)  
   }
 
-  if (is(data, 'data.frame')|is(data, 'matrix')) { return(cbind(expr, row.meta)) } else if (is(data, 'SummarizedExperiment')) {
+  if (is(data, 'data.frame')|is(data, 'matrix')|is(data, 'dgCMatrix')) { return(cbind(expr, row.meta)) } else if (is(data, 'SummarizedExperiment')) {
   
     rownames(col.meta) <- NULL # If row names present in colData(data), if will become column names of assay(data).
     expr <- SummarizedExperiment(assays=list(expr=expr), rowData=row.meta, colData=col.meta)

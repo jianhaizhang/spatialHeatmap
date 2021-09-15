@@ -1,6 +1,6 @@
 #' Construct Database for the Shiny App
 #'
-#' This is a convenience function for constructing the database backend in the Shiny app (\link{shiny_shm}). The data to store in the database should be in the class of "data.frame" or "SummarizedExperiment" and should be formatted according to the conventions in the "data" argument of \link{spatial_hm}. After formatted, all these data should be arranged in a list and each data slot should have a unique name such as "expr_arab", "expr_chicken", \emph{etc.}. \cr In addition, a pairing data frame describing the matching relationship between the data and aSVG files must also be included in the list with the exclusive slot name "df_pair". This data frame should contain at least three columns: name, data, aSVG. The name column includes concise description of each data-aSVG pair, and entries in this column will be listed under "Step 1: data sets" on the Shiny app. The data column contains slot names of all data in the list ("expr_arab", "expr_chicken", \emph{etc.}), and the aSVG column includes the aSVG file names corresponding to each data respectively such as "gallus_gallus.svg", \emph{etc.} If one data is related to multiple aSVG files (\emph{e.g.} multiple development  stages), these aSVGs should be concatenated by comma, space, or semicolon, \emph{e.g.} "arabidopsis.thaliana_organ_shm1.svg;arabidopsis.thaliana_organ_shm2.svg". Inclusion of other columns providing metadata of the data and aSVGs are optional, which is up to the users. \cr After calling this function, all the data including "df_pair" in the list are saved into independent DHF5 databases, and all the DHF5 databases are finally compressed in the file "data_shm.tar". Accordingly, all the corresponding aSVG files listed in the "df_pair" should be compressed in another "tar" file such as "aSVG.tar". If the directory path containing the aSVG files are assigned to \code{svg.dir}, all the SVG files in the diretory are compressed in "aSVGs.tar" automatically. The two tar files compose the database in the Shiny app and should be placed in the "example" folder in the app or uploaded on the user interface. 
+#' This is a convenience function for constructing the database backend in the Shiny app (\link{shiny_shm}). The data to store in the database should be in the class of "data.frame" or "SummarizedExperiment" and should be formatted according to the conventions in the "data" argument of \link{spatial_hm}. After formatted, all these data should be arranged in a list and each data slot should have a unique name such as "expr_arab", "expr_chicken", \emph{etc.}. \cr In addition, a pairing data frame describing the matching relationship between the data and aSVG files must also be included in the list with the exclusive slot name "df_pair". This data frame should contain at least three columns: name, data, aSVG. The name column includes concise description of each data-aSVG pair, and entries in this column will be listed under "Step 1: data sets" on the Shiny app. The data column contains slot names of all data in the list ("expr_arab", "expr_chicken", \emph{etc.}), and the aSVG column includes the aSVG file names corresponding to each data respectively such as "gallus_gallus.svg", \emph{etc.} If one data is related to multiple aSVG files (\emph{e.g.} multiple development stages), these aSVGs should be concatenated by comma, space, or semicolon, \emph{e.g.} "arabidopsis.thaliana_organ_shm1.svg;arabidopsis.thaliana_organ_shm2.svg". Inclusion of other columns providing metadata of the data and aSVGs are optional, which is up to the users. \cr After calling this function, all the data including "df_pair" in the list are saved into independent DHF5 databases, and all the DHF5 databases are finally compressed in the file "data_shm.tar". Accordingly, all the corresponding aSVG files listed in the "df_pair" should be compressed in another "tar" file such as "aSVG.tar". If the directory path containing the aSVG files are assigned to \code{svg.dir}, all the SVG files in the diretory are compressed in "aSVGs.tar" automatically. The two tar files compose the database in the Shiny app and should be placed in the "example" folder in the app or uploaded on the user interface. 
 
 #' @param dat.lis A list of data of class "data.frame" or "SummarizedExperiment", where every data should have a unique slot name such as "expr_arab", "expr_chicken", \emph{etc.}. In addition to the data, a pairing data frame describing pairing between the data and aSVG files must be included under the exclusive slot name "df_pair". This data frame has three required columns: the "name" column includes concise names of the data-aSVG pair, the "data" column contains all slot names of the data ("expr_arab", "expr_chicken", \emph{etc.}) and the "aSVG" column contains the aSVG file names corresponding to each data. If one data is related to multiple aSVG files (\emph{e.g.} multiple development  stages), these aSVGs should be concatenated by comma, space, or semicolon, \emph{e.g.} \cr "arabidopsis.thaliana_organ_shm1.svg;arabidopsis.thaliana_organ_shm2.svg". The metadata of data and aSVGs could be optionally included in extra columns.
 
@@ -107,8 +107,8 @@
 #' # pre-processing steps are restricted to aggregation of replicates and filtering of reliably
 #' # expressed genes. 
 #' # Replicate agggregation using mean
-#' se.aggr.sh <- aggr_rep(data=se.sh, sam.factor='sample', con.factor='condition', aggr='mean') 
-#' se.fil.arab <- filter_data(data=se.aggr.sh, sam.factor='sample', con.factor='condition', 
+#' se.aggr.sh <- aggr_rep(data=se.sh, sam.factor='samples', con.factor='conditions', aggr='mean') 
+#' se.fil.arab <- filter_data(data=se.aggr.sh, sam.factor='samples', con.factor='conditions', 
 #' pOA=c(0.03, 6), CV=c(0.30, 100), dir=NULL) # Filtering of genes with low intensities and variance
 #'
 #' # Similarly, the aSVG file corresponding to this data is pre-packaged and copied to the same
@@ -131,16 +131,35 @@
 #' # Copy the two aSVG files to the same temporary directory.
 #' file.copy(c(svg.arab1, svg.arab2), dir.svg, overwrite=TRUE)
 #'
-#' # Make the pairing table, which describes matchings between the data and aSVG files.
-#' df.pair <- data.frame(name=c('chicken', 'arab', 'growth'), data=c('expr_chicken', 'expr_arab', 
-#' 'random_data_multiple_aSVGs'), aSVG=c('gallus_gallus.svg', 'arabidopsis.thaliana_organ_shm.svg',
-#' 'arabidopsis.thaliana_organ_shm1.svg;arabidopsis.thaliana_organ_shm2.svg'))
+#' # 4. Include aSVG templates of raster images.
+#'
+#' pa.leaf <- system.file("extdata/shinyApp/example", 'dat_overlay.txt',
+#' package="spatialHeatmap")
+#' dat.leaf <- read_fr(pa.leaf); dat.leaf[1:2, ]
+#' # Paths of the two aSVG files.
+#' svg.leaf1 <- system.file("extdata/shinyApp/example", 'overlay_shm1.svg',
+#' package="spatialHeatmap")
+#' svg.leaf2 <- system.file("extdata/shinyApp/example", 'overlay_shm2.svg',
+#' package="spatialHeatmap") 
+#' # Paths of the two corresponsing raster images of templates.
+#' tmp.leaf1 <- system.file("extdata/shinyApp/example", 'overlay_shm1.png',
+#' package="spatialHeatmap")
+#' tmp.leaf2 <- system.file("extdata/shinyApp/example", 'overlay_shm2.png',
+#' package="spatialHeatmap") 
+#' # Copy the two aSVG and two template files to the same temporary directory.
+#' file.copy(c(svg.leaf1, svg.leaf2, tmp.leaf1, tmp.leaf2), dir.svg, overwrite=TRUE)
+#'
+#' # Make the pairing table, which describes matchings between the data and image files.
+#' df.pair <- data.frame(name=c('chicken', 'arab', 'growth', 'leaf'), data=c('expr_chicken', 'expr_arab', 
+#' 'random_data_multiple_aSVGs', 'leaf'), aSVG=c('gallus_gallus.svg', 'arabidopsis.thaliana_organ_shm.svg',
+#' 'arabidopsis.thaliana_organ_shm1.svg;arabidopsis.thaliana_organ_shm2.svg', 
+#' 'overlay_shm1.svg;overlay_shm1.png;overlay_shm2.svg;overlay_shm2.png'))
 #' # Note that multiple aSVGs should be concatenated by comma, semicolon, or single space.
 #' df.pair
 #'
 #' # Organize the data and pairing table in a list, and create the database.
 #' dat.lis <- list(df_pair=df.pair, expr_chicken=se.fil.chk, expr_arab=se.fil.arab, 
-#' random_data_multiple_aSVGs=dat.growth)
+#' random_data_multiple_aSVGs=dat.growth, leaf=dat.leaf)
 #' # Create the database in a temporary directory "db_shm".
 #' dir.db <- paste0(tempdir(check=TRUE), '/db_shm') # Temporary directory. 
 #' \donttest{ 
@@ -257,7 +276,8 @@ write_hdf5 <- function(dat.lis, dir='./data_shm', replace=FALSE, chunkdim=NULL, 
   file.rename(file.tar, paste0(dir, '/data_shm.tar'))
   if (!is.null(svg.dir)) if (dir.exists(svg.dir)) {
     setwd(svg.dir); cat('aSVGs in progress... \n')
-    tar(paste0(dir, '/aSVGs.tar'), files=list.files(svg.dir, '\\.svg$', full.names=FALSE), tar="tar")
+    # Only compress aSVG files listed in the df_pair. 
+    tar(paste0(dir, '/aSVGs.tar'), files=unlist(strsplit(df.pair$aSVG, ' |,|;')), tar="tar")
   }; setwd(wd); cat('Done! \n')
 
 }

@@ -214,7 +214,6 @@ upload_server <- function(id, lis.url=NULL, session) {
       )
    }
   })
-
   output$svg.upl <- renderUI({
     ns <- session$ns; fileIn <- input$fileIn
     if (fileIn %in% na.cus) {
@@ -222,9 +221,9 @@ upload_server <- function(id, lis.url=NULL, session) {
       h5(strong("Step 3: upload custom aSVG(s)")),
       fluidRow(splitLayout(cellWidths=c('1%', '27%', '1%', '28%'), '',
       tags$div(class='tp', span(class='tpt', 'The data is matched with a single aSVG file.'),
-      fileInput(ns("svgInpath1"), "3A: upload one aSVG file", accept=".svg", multiple=FALSE)), '',
+      fileInput(ns("svgInpath1"), "3A: upload one aSVG file", accept=c('.svg', tmp.ext), multiple=TRUE)), '',
       tags$div(class='tp', span(class='tpt', 'The data is matched with multiple aSVG files (e.g. developmental stages).'),
-      fileInput(ns("svgInpath2"), "3B (optional): upload multiple aSVG files", accept=".svg", multiple=TRUE))
+      fileInput(ns("svgInpath2"), "3B (optional): upload multiple aSVG files", accept=c('.svg', tmp.ext), multiple=TRUE))
       ))
     )}
   })
@@ -251,7 +250,6 @@ upload_server <- function(id, lis.url=NULL, session) {
     if (grepl('\\d+G$', upl.size)) max.size <- num*1024^3
     if (grepl('\\d+M$', upl.size)) max.size <- num*1024^2 
     options(shiny.maxRequestSize=max.size) 
-    # if (!any(lis.par$hide.legend %in% c('Yes', 'No'))) lis.par$hide.legend <- ifelse(lis.par$hide.legend==TRUE, 'Yes', 'No')
     # Organise configuration parameters in a data frame.
     for (i in seq_along(lis.par)) {
       lis0 <- lis.par[[i]]; if (length(lis0)>1) {
@@ -268,12 +266,11 @@ upload_server <- function(id, lis.url=NULL, session) {
       na.ipt <- c(na.ipt, i$name); dat.ipt <- c(dat.ipt, i$data)
       svg.ipt <- c(svg.ipt, list(i$svg))
     }; names(dat.ipt) <- names(svg.ipt) <- na.ipt
-
+    # Uploaded tar files.
     df.tar <- input$tar; dat.upl <- svg.upl <- NULL
     tar.num <- grepl('\\.tar$', df.tar$datapath)
     if (!is.null(df.tar)) validate(need(try(sum(tar.num)==2), 'Two separate tar files of data and aSVGs respectively are expected!'))
     if (sum(tar.num)==2) {
-
       cat('Processing uploaded tar files ... \n')
       p <- df.tar$datapath[1]; strs <- strsplit(p, '/')[[1]]
       cfg$pa.upl <- pa.svg <- paste0(strs[grep('\\.tar$', strs, invert=TRUE)], collapse='/')
@@ -292,9 +289,8 @@ upload_server <- function(id, lis.url=NULL, session) {
       }; cat('Done! \n')
     }
     # Separate data, svg of default and customization. 
-    na.def <- na.ipt[!grepl('^none$|^customBulkData$|^customSingleCellData$', na.ipt)]
     na.def <- na.ipt[!na.ipt %in% c('none', 'customBulkData', 'customSingleCellData')]
-
+    # Data in uploaded tar files are also included in default.
     dat.def <- c(dat.upl, dat.ipt[na.def]); svg.def <- c(svg.upl, svg.ipt[na.def])
     # If data/svg are duplicated between the server and upload, the data/svg on server side is removed.
     dat.def <- dat.def[unique(names(dat.def))]; svg.def <- svg.def[unique(names(svg.def))]
@@ -306,12 +302,14 @@ upload_server <- function(id, lis.url=NULL, session) {
     updateRadioButtons(session, inputId='dimName', label='2B: is column or row gene?', choices=c("None", "Row", "Column"), selected=lis.par$col.row.gene, inline=TRUE)
 
   })
-  
   observe({ # aSVG uploaded in regular files (not tar), used in re-matching.
     if (is.null(input$svgInpath2)) svgIn.df <- input$svgInpath1 else svgIn.df <- input$svgInpath2
     if (is.null(svgIn.df)) return()
-    if (input$fileIn %in% na.cus) { 
+    if (input$fileIn %in% na.cus) {
       svg.path <- svgIn.df$datapath; svg.na <- svgIn.df$name
+      # Raster images uploaded.
+      if (any(!grepl('\\.svg$', svg.na))) svg_tmp(svg.na, tmp.ext)
+      # SVG and template paths are processed in the same way, and both are placed in the same list.
       pa.svg.reg <- list(unlist(lapply(seq_along(svg.na), function(x) {
           strs <- strsplit(svg.path[x], '/')[[1]]
           strs <- strs[-length(strs)]
@@ -743,11 +741,11 @@ data_server <- function(id, sch, lis.url, ids, deg = FALSE, upl.mod.lis, scell.m
     if (all(df.num==round(df.num))) deci <- 0 else deci <- 2
     dt.sel <- gene.dt[ids$sel, , drop=FALSE]
     # Tooltip on metadata.
-    col1 <- list(list(targets = c(1), render = JS("$.fn.dataTable.render.ellipsis(5, false)")))
+    col1 <- list(list(targets = c(1), render = JS("$.fn.dataTable.render.ellipsis(40, false)")))
     # In case no metadata column.
     if (colnames(dt.sel)[1]!='metadata') col1 <- NULL
     dtab <- datatable(dt.sel, selection='none', escape=FALSE, filter="top", extensions=c('Scroller', 'FixedColumns'), plugins = "ellipsis",
-   options=list(pageLength=5, lengthMenu=c(5, 15, 20), autoWidth=TRUE, scrollCollapse=TRUE, deferRender=TRUE, scrollX=TRUE, scrollY=300, scroller=TRUE, searchHighlight=FALSE, search=list(regex=TRUE, smart=FALSE, caseInsensitive=TRUE), searching=FALSE, columnDefs=col1, dom='t', fixedColumns = list(leftColumns=2)), 
+   options=list(pageLength=5, lengthMenu=c(5, 15, 20), autoWidth=TRUE, scrollCollapse=TRUE, deferRender=TRUE, scrollX=TRUE, scrollY=300, scroller=TRUE, searchHighlight=TRUE, search=list(regex=TRUE, smart=FALSE, caseInsensitive=TRUE), searching=FALSE, columnDefs=col1, dom='t', fixedColumns = list(leftColumns=2)), 
    class='cell-border strip hover') %>% formatStyle(0, backgroundColor="orange", cursor='pointer') %>% 
    formatRound(cna, deci)
     cat('Done! \n'); dtab
@@ -763,10 +761,10 @@ data_server <- function(id, sch, lis.url, ids, deg = FALSE, upl.mod.lis, scell.m
     if (geneIn$con.na==FALSE) cna <- sub('__con$', '', cna)
     if (all(df.num==round(df.num))) deci <- 0 else deci <- 2
     # Tooltip on metadata.
-    col1 <- list(list(targets = c(1), render = JS("$.fn.dataTable.render.ellipsis(5, false)")))
+    col1 <- list(list(targets = c(1), render = JS("$.fn.dataTable.render.ellipsis(40, false)")))
     if (colnames(gene.dt)[1]!='metadata') col1 <- NULL
     dtab <- datatable(gene.dt, selection=list(mode="multiple", target="row", selected=dt.sel$val), escape=FALSE, filter="top", extensions=c('Scroller', 'FixedColumns'), plugins = "ellipsis",
-   options=list(pageLength=5, lengthMenu=c(5, 15, 20), autoWidth=TRUE, scrollCollapse=TRUE, deferRender=TRUE, scrollX=TRUE, scrollY=page.h, scroller=TRUE, searchHighlight=FALSE, search=list(regex=TRUE, smart=FALSE, caseInsensitive=TRUE), searching=FALSE, columnDefs=col1), 
+   options=list(pageLength=5, lengthMenu=c(5, 15, 20), autoWidth=TRUE, scrollCollapse=TRUE, deferRender=TRUE, scrollX=TRUE, scrollY=page.h, scroller=TRUE, searchHighlight=TRUE, search=list(regex=TRUE, smart=FALSE, caseInsensitive=TRUE), searching=FALSE, columnDefs=col1), 
    class='cell-border strip hover') %>% formatStyle(0, backgroundColor="orange", cursor='pointer') %>% 
    formatRound(cna, deci)
     cat('Done! \n'); dtab
@@ -775,11 +773,11 @@ data_server <- function(id, sch, lis.url, ids, deg = FALSE, upl.mod.lis, scell.m
   if (deg==TRUE) output$dtRep <- renderDataTable({
     cat('Preparing complete data matrix ... \n')
     gene.dt <- dt.shm(); if (is.null(gene.dt)) return()
-    col1 <- list(list(targets = c(1), render = JS("$.fn.dataTable.render.ellipsis(5, false)")))
+    col1 <- list(list(targets = c(1), render = JS("$.fn.dataTable.render.ellipsis(40, false)")))
     # In case no metadata column.
     if (colnames(gene.dt)[1]!='metadata') col1 <- NULL
     dtab <- datatable(gene.dt, selection='none', escape=FALSE, filter="top", extensions=c('Scroller', 'FixedColumns'), plugins = "ellipsis",
-   options=list(pageLength=5, lengthMenu=c(5, 15, 20), autoWidth=TRUE, scrollCollapse=TRUE, deferRender=TRUE, scrollX=TRUE, scrollY=300, scroller=TRUE, searchHighlight=FALSE, search=list(regex=TRUE, smart=FALSE, caseInsensitive=TRUE), searching=FALSE, columnDefs=col1, dom = 't', fixedColumns = list(leftColumns=2)), 
+   options=list(pageLength=5, lengthMenu=c(5, 15, 20), autoWidth=TRUE, scrollCollapse=TRUE, deferRender=TRUE, scrollX=TRUE, scrollY=300, scroller=TRUE, searchHighlight=TRUE, search=list(regex=TRUE, smart=FALSE, caseInsensitive=TRUE), searching=FALSE, columnDefs=col1, dom = 't', fixedColumns = list(leftColumns=2)), 
    class='cell-border strip hover') %>% formatStyle(0, backgroundColor="orange", cursor='pointer') %>% 
    formatRound(colnames(geneIn()[["df.aggr.tran"]]), 0)
     cat('Done! \n'); dtab
@@ -1314,7 +1312,7 @@ match_server <- function(id, sam, tab, upl.mod.lis, session) {
     if (ipt$fileIn=='none') return()
     if (input$svg!='uploaded') {
       # Single or multiple svg paths are treated same way.
-      lis <- svg_pa_na(cfg$svg.def[[input$svg]], cfg$pa.svg.upl)
+      lis <- svg_pa_na(cfg$svg.def[[input$svg]], cfg$pa.svg.upl, tmp.ext)
       output$msg.match <- renderText({ validate(need(try(!is.character(lis)), lis)) })
       validate(need(try(!is.character(lis)), lis))
       svg.path <- lis$svg.path; svg.na <- lis$svg.na
@@ -1324,7 +1322,7 @@ match_server <- function(id, sam, tab, upl.mod.lis, session) {
     }
     cat('Access aSVG path for re-matching ... \n')
     # If multiple svgs, check suffixes.
-    lis <- svg_suffix(svg.path, svg.na)
+    lis <- svg_suffix(svg.path, svg.na, tmp.ext)
     validate(need(try(!is.character(lis)), lis))
     svg.path <- lis$svg.path; svg.na <- lis$svg.na
     svg.na.rematch$svg.path <- svg.path; svg.na.rematch$svg.na <- svg.na
@@ -1333,8 +1331,10 @@ match_server <- function(id, sam, tab, upl.mod.lis, session) {
     # Whether a single or multiple SVGs, all are returned in a list.
     sf.all <- NULL; for (i in seq_along(svg.na)) { 
       cat('Extract all spatial features for re-matching:', svg.na[i], '\n')
+      na0 <- svg.na[i]; if (!grepl('\\.svg$', na0)) next
       df_tis <- svg_df(svg.path=svg.path[i], feature=sam(), cores=deter_core(2, svg.path[i]))
       validate(need(!is.character(df_tis), paste0(svg.na[i], ': ', df_tis)))
+      df_tis$tmp.pa <- tmp_path(svg.path, svg.na, na0, tmp.ext)
       sf.all <- c(sf.all, df_tis$tis.path)
     }
   })
@@ -1408,6 +1408,7 @@ match_server <- function(id, sam, tab, upl.mod.lis, session) {
 
 shm_server <- function(id, sch, lis.url, url.id, tab, upl.mod.lis, dat.mod.lis, sch.mod.lis, scell.mod.lis, session) {  
   moduleServer(id, function(input, output, session) {
+    library(magick)
     ipt <- upl.mod.lis$ipt; cfg <- upl.mod.lis$cfg
   # The reactive type in and outside module is the same: sear is a reactiveValue in and outside module; geneIn is reactive expression in and outside module. "geneIn()" is accessing the content of a reactive expression, and loses the "reactive" attribute.
   # As long as the content of reactiveValues (col.reorder$col.na.re) is not accessed, the operation does not need to be inside reactive environment (observe).
@@ -1541,6 +1542,7 @@ shm_server <- function(id, sch, lis.url, url.id, tab, upl.mod.lis, dat.mod.lis, 
       withProgress(message="Color scale: ", value = 0, {
         incProgress(0.75, detail="plotting, please wait ...")
         cs.g <- col_bar(geneV=bar.v, cols=color$col, width=1, x.title=x.title$val, x.title.size=10)
+        # save(cs.g, file='cs.g')
         cat('Done! \n'); return(cs.g)
       })
     }
@@ -1553,7 +1555,7 @@ shm_server <- function(id, sch, lis.url, url.id, tab, upl.mod.lis, dat.mod.lis, 
     if (is.null(ggly.but)) output$bar2 <- NULL else if (ggly.but==0) output$bar2 <- NULL else output$bar2 <- bar2
   }) 
 
-  svg.path <- reactive({
+  svg.path <- reactive({ # Organise svg name and path in a nested list.
     if (ipt$fileIn=='none') return()
     if (ipt$fileIn %in% cfg$na.cus) {
       if (is.null(ipt$svgInpath2)) svgIn.df <- ipt$svgInpath1 else svgIn.df <- ipt$svgInpath2
@@ -1561,12 +1563,14 @@ shm_server <- function(id, sch, lis.url, url.id, tab, upl.mod.lis, dat.mod.lis, 
     } else {
       # Extract svg path and name: single or multiple svg paths are treated same way.
       svg.def <- cfg$svg.def; pa.svg.upl <- cfg$pa.svg.upl
-      lis <- svg_pa_na(cfg$svg.def[[ipt$fileIn]], cfg$pa.svg.upl)
+      # Check if SVGs are paired with templates of raster images.
+      svg.tmp <- lapply(svg.def, function(x) { if (any(!grepl('\\.svg$', x))) svg_tmp(x, tmp.ext) } )
+      lis <- svg_pa_na(cfg$svg.def[[ipt$fileIn]], cfg$pa.svg.upl, tmp.ext)
       validate(need(try(!is.character(lis)), lis))
       svg.path <- lis$svg.path; svg.na <- lis$svg.na
     }; cat('Access aSVG path... \n')
-    # If multiple svgs, check suffixes.
-    lis <- svg_suffix(svg.path, svg.na)
+    # If multiple svgs/templates (treated same way), check suffixes.
+    lis <- svg_suffix(svg.path, svg.na, tmp.ext)
     validate(need(try(!is.character(lis)), lis)); return(lis)
   })
 
@@ -1634,12 +1638,17 @@ shm_server <- function(id, sch, lis.url, url.id, tab, upl.mod.lis, dat.mod.lis, 
         incProgress(0.5, detail="extracting coordinates, please wait ...")
           svg.path <- svg.path1()$svg.path; svg.na <- svg.path1()$svg.na
           # Whether a single or multiple SVGs, all are returned in a list.
-         svg.df.lis <- NULL; for (i in seq_along(svg.na)) {
+         svg.df.lis <- nas <- NULL; for (i in seq_along(svg.na)) {
             cat(svg.na[i], '\n')
+            # Excluding raster images.
+            na0 <- svg.na[i]; if (!grepl('\\.svg$', na0)) next
             df_tis <- svg_df(svg.path=svg.path[i], feature=sam(), cores=deter_core(2, svg.path[i]))
-            validate(need(!is.character(df_tis), paste0(svg.na[i], ': ', df_tis)))
+            validate(need(!is.character(df_tis), paste0(na0, ': ', df_tis)))
+            # Extract template image path for each aSVG.
+            df_tis$tmp.pa <- tmp_path(svg.path, svg.na, na0, tmp.ext)
             svg.df.lis <- c(svg.df.lis, list(df_tis))
-          }; names(svg.df.lis) <- svg.na; 
+            nas <- c(nas, na0)
+          }; names(svg.df.lis) <- nas; 
           cat('Done! \n'); return(svg.df.lis)
       })
     }
@@ -1678,7 +1687,19 @@ shm_server <- function(id, sch, lis.url, url.id, tab, upl.mod.lis, dat.mod.lis, 
   # SHM ggplots, grobs legends are stored in gg.all, grob.all, lgd.all respectively for various purposes. grob.gg.all is used in relative scale of multiple SVGs, and the rescaled SVGs are stored in gg.all/grob.all finally. 
   shm <- reactiveValues(grob.all=NULL, grob.all1=NULL, gg.all=NULL, gg.all1=NULL, lgd.all=NULL, grob.gg.all = NULL)
   observeEvent(ipt$fileIn, { shm$grob.all <- shm$grob.all1 <- shm$gg.all1 <- shm$gg.all <- shm$lgd.all <- shm$gcol.all <- shm$grob.gg.all <- NULL })
-  
+  tmp.par <- reactiveValues(over='Yes', coal='No', alp=NULL)
+  # Use observeEvent: use NULL to replace 'No' to avoid unnecessary trigering of gg_shm, since NULL does not triger observeEvent below.
+  observeEvent(list(input$tmp, input$coal, input$alpOverBut, svg.path1()$svg.na), {
+    svg.na <- svg.path1()$svg.na
+    if (is.null(svg.na)|is.null(input$tmp)|is.null(input$coal)|is.null(input$alpOver)) return()
+    # tmp.par$over is NULL or Yes, not No.
+    if (input$tmp=='Yes' & any(!grepl('\\.svg$', svg.na))) tmp.par$over <- 'Yes' else tmp.par$over <- NULL
+    if (is.null(tmp.par$over)) tmp.par$coal <- NULL else if (tmp.par$over=='Yes') {
+      if (input$coal=='Yes') tmp.par$coal <- 'Yes' else tmp.par$coal <- NULL
+      tmp.par$alp <- input$alpOver
+    }
+  })
+
   msg.shm <- reactiveValues(msg=NULL)
   # Avoid repetitive computation under input$cs.v=='All rows'.
   gs.new <- reactive({
@@ -1714,7 +1735,10 @@ shm_server <- function(id, sch, lis.url, url.id, tab, upl.mod.lis, dat.mod.lis, 
       gene <- geneIn[["df.aggr.tran"]]
       # When input$fileIn updates, ID is from last session while gene is from new session.
       if (!all(ID %in% rownames(gene))) return()
-      svg.df.lis <- svg.df(); 
+      if (is.null(tmp.par$coal)) charcoal <- FALSE else if (tmp.par$coal=='Yes') charcoal <- TRUE else if (tmp.par$coal=='No') charcoal <- FALSE
+      alp.over <- 1
+      if (!is.null(tmp.par$over)) if (tmp.par$over=='Yes') alp.over <- tmp.par$alp
+      svg.df.lis <- svg.df() 
       #w.h.all <- NULL
       # Get max width/height of multiple SVGs, and dimensions of other SVGs can be set relative to this max width/height.
       # for (i in seq_along(svg.df.lis)) { w.h.all <- c(w.h.all, svg.df.lis[[i]][['w.h']]); w.h.max <- max(w.h.all) }
@@ -1724,6 +1748,7 @@ shm_server <- function(id, sch, lis.url, url.id, tab, upl.mod.lis, dat.mod.lis, 
 
         svg.df <- svg.df.lis[[i]]; g.df <- svg.df[["df"]]; w.h <- svg.df[['w.h']]
         tis.path <- svg.df[["tis.path"]]; fil.cols <- svg.df[['fil.cols']]
+        tmp.pa <- svg.df$tmp.pa; if (length(tmp.pa)==0|is.null(tmp.par$over)) tmp.pa <- NULL
         # if (input$preScale=='Yes') mar <- (1-w.h/w.h.max*0.99)/2 else mar <- NULL
         cat(ID, ' \n')
         #if (!is.null(cna.match$cna)) { 
@@ -1731,7 +1756,7 @@ shm_server <- function(id, sch, lis.url, url.id, tab, upl.mod.lis, dat.mod.lis, 
         #}
         size.key <- as.numeric(cfg$lis.par$legend['key.size', 'default'])
         # Cores: the orders in svg.path(), names(svg.df.lis) are same.
-        gg.lis <- gg_shm(gene=gene, con.na=geneIn[['con.na']], geneV=geneV()$bar.v, coord=g.df, ID=ID, legend.col=fil.cols, cols=color$col, tis.path=tis.path, ft.trans=input$tis, sub.title.size=input$title.size * scale.shm, aspect.ratio = svg.df$aspect.r, legend.nrow=as.numeric(cfg$lis.par$legend['key.row', 'default']), legend.key.size=size.key, legend.text.size=8*size.key*33, line.size=input$line.size, line.color=input$line.color, lis.rematch = ft.reorder$ft.rematch) # Only gID$new is used.
+        gg.lis <- gg_shm(gene=gene, con.na=geneIn[['con.na']], geneV=geneV()$bar.v, coord=g.df, tmp.path=tmp.pa, charcoal=charcoal, alpha.overlay=alp.over, ID=ID, legend.col=fil.cols, cols=color$col, tis.path=tis.path, ft.trans=input$tis, sub.title.size=input$title.size * scale.shm, aspect.ratio = svg.df$aspect.r, legend.nrow=as.numeric(cfg$lis.par$legend['key.row', 'default']), legend.key.size=size.key, legend.text.size=8*size.key*33, line.size=input$line.size, line.color=input$line.color, lis.rematch = ft.reorder$ft.rematch) # Only gID$new is used.
         msg <- paste0(svg.na[i], ': no spatial features that have matching sample identifiers in data are detected!')
         if (is.null(gg.lis)) {
           cat(msg, '\n'); msg.shm$msg <- msg
@@ -1766,7 +1791,7 @@ shm_server <- function(id, sch, lis.url, url.id, tab, upl.mod.lis, dat.mod.lis, 
   # Use "observeEvent" to replace "observe" and list events (input$log, input$tis, ...), since if the events are in "observe", every time a new gene is clicked, "input$dt_rows_selected" causes the evaluation of all code in "observe", and the evaluation is duplicated with "gs.new".
   observeEvent(col.na(), { if (col.cfm()>0) col.reorder$col.re <- 'N' })
   # Update SHMs, above theme().
-  observeEvent(list(log(), input$tis, color$col, sig.but(), input$cs.v, col.cfm(), scaleDat(), but.match$val, input$line.size, input$line.color), {
+  observeEvent(list(log(), input$tis, color$col, sig.but(), input$cs.v, col.cfm(), scaleDat(), but.match$val, input$line.size, input$line.color, tmp.par$over, tmp.par$coal, tmp.par$alp), {
     shm$grob.all <- shm$gg.all <- shm$lgd.all <- shm$gcol.all <- shm$grob.gg.all <- NULL; gs.all <- reactive({ 
       cat('Updating all SHMs ... \n')
       geneIn <- geneIn()
@@ -1781,6 +1806,8 @@ shm_server <- function(id, sch, lis.url, url.id, tab, upl.mod.lis, dat.mod.lis, 
       #if (input$cs.v=="All rows") gene <- geneIn()[["df.aggr.tran"]]
       df.aggr.tran <- geneIn$df.aggr.tran
       gene <- df.aggr.tran[gID$geneSel, ]; svg.df.lis <- svg.df()
+      alp.over <- 1
+      if (!is.null(tmp.par$over)) if (tmp.par$over=='Yes') alp.over <- tmp.par$alp
       # w.h.all <- NULL
       # Get max width/height of multiple SVGs, and dimensions of other SVGs can be set relative to this max width/height.
       # for (i in seq_along(svg.df.lis)) { w.h.all <- c(w.h.all, svg.df.lis[[i]][['w.h']]); w.h.max <- max(w.h.all) }
@@ -1790,6 +1817,8 @@ shm_server <- function(id, sch, lis.url, url.id, tab, upl.mod.lis, dat.mod.lis, 
         
         svg.df <- svg.df.lis[[i]]; g.df <- svg.df[["df"]]
         tis.path <- svg.df[["tis.path"]]; fil.cols <- svg.df[['fil.cols']]
+        tmp.pa <- svg.df$tmp.pa; if (length(tmp.pa)==0|is.null(tmp.par$over)) tmp.pa <- NULL
+        if (is.null(tmp.par$coal)) charcoal <- FALSE else if (tmp.par$coal=='Yes') charcoal <- TRUE else if (tmp.par$coal=='No') charcoal <- FALSE
         # w.h <- svg.df[['w.h']]
         # if (input$preScale=='Yes') mar <- (1-w.h/w.h.max*0.99)/2 else mar <- NULL
         cat('All grob/ggplot:', gID$geneSel, ' \n')
@@ -1799,8 +1828,7 @@ shm_server <- function(id, sch, lis.url, url.id, tab, upl.mod.lis, dat.mod.lis, 
         #  colnames(gene) <- cna.match$cna 
         #}
         size.key <- as.numeric(cfg$lis.par$legend['key.size', 'default'])
-        lis.rematch = ft.reorder$ft.rematch
-        gg.lis <- gg_shm(gene=gene, con.na=geneIn[['con.na']], geneV=geneV()$bar.v, coord=g.df, ID=gID$geneSel, legend.col=fil.cols, cols=color$col, tis.path=tis.path, ft.trans=input$tis, sub.title.size=input$title.size * scale.shm, aspect.ratio = svg.df$aspect.r, legend.nrow=as.numeric(cfg$lis.par$legend['key.row', 'default']), legend.key.size=size.key, legend.text.size=8*size.key*33, line.size=input$line.size, line.color=input$line.color, lis.rematch = ft.reorder$ft.rematch) # All gene IDs are used.
+        gg.lis <- gg_shm(gene=gene, con.na=geneIn[['con.na']], geneV=geneV()$bar.v, coord=g.df, tmp.path=tmp.pa, charcoal=charcoal, alpha.overlay=alp.over, ID=gID$geneSel, legend.col=fil.cols, cols=color$col, tis.path=tis.path, ft.trans=input$tis, sub.title.size=input$title.size * scale.shm, aspect.ratio = svg.df$aspect.r, legend.nrow=as.numeric(cfg$lis.par$legend['key.row', 'default']), legend.key.size=size.key, legend.text.size=8*size.key*33, line.size=input$line.size, line.color=input$line.color, lis.rematch = ft.reorder$ft.rematch) # All gene IDs are used.
         msg <- paste0(svg.na[i], ': no matching features are detected between data and aSVG!')
         if (is.null(gg.lis)) { cat(msg, '\n'); msg.shm$msg <- msg } else msg.shm$msg <- NULL
        validate(need(!is.null(gg.lis), msg))
@@ -1844,6 +1872,8 @@ shm_server <- function(id, sch, lis.url, url.id, tab, upl.mod.lis, dat.mod.lis, 
       incProgress(0.25, detail="preparing data ...")
       df.aggr.tran <- geneIn$df.aggr.tran
       gene <- df.aggr.tran[gID$geneSel, ]; svg.df.lis <- svg.df()
+      alp.over <- 1
+      if (!is.null(tmp.par$over)) if (tmp.par$over=='Yes') alp.over <- tmp.par$alp
       # w.h.all <- NULL
       # Get max width/height of multiple SVGs, and dimensions of other SVGs can be set relative to this max width/height.
       # for (i in seq_along(svg.df.lis)) { w.h.all <- c(w.h.all, svg.df.lis[[i]][['w.h']]); w.h.max <- max(w.h.all) }
@@ -1853,6 +1883,8 @@ shm_server <- function(id, sch, lis.url, url.id, tab, upl.mod.lis, dat.mod.lis, 
 
         svg.df <- svg.df.lis[[i]]; g.df <- svg.df[["df"]]
         tis.path <- svg.df[["tis.path"]]; fil.cols <- svg.df[['fil.cols']];
+        tmp.pa <- svg.df$tmp.pa; if (length(tmp.pa)==0) tmp.pa <- NULL
+        if (is.null(tmp.par$coal)) charcoal <- FALSE else if (tmp.par$coal=='Yes') charcoal <- TRUE else if (tmp.par$coal=='No') charcoal <- FALSE
         # w.h <- svg.df[['w.h']]
         # if (input$preScale=='Yes') mar <- (1-w.h/w.h.max*0.99)/2 else mar <- NULL
         cat('All grob/ggplot of row selection:', ID, ' \n')
@@ -1862,7 +1894,7 @@ shm_server <- function(id, sch, lis.url, url.id, tab, upl.mod.lis, dat.mod.lis, 
         #  colnames(gene) <- cna.match$cna 
         #}
         size.key <- as.numeric(cfg$lis.par$legend['key.size', 'default'])
-        gg.lis <- gg_shm(gene=gene, con.na=geneIn[['con.na']], geneV=geneV()$bar.v, coord=g.df, ID=ID, legend.col=fil.cols, cols=color$col, tis.path=tis.path, ft.trans=input$tis, sub.title.size=input$title.size * scale.shm, aspect.ratio = svg.df$aspect.r, legend.nrow=as.numeric(cfg$lis.par$legend['key.row', 'default']), legend.key.size=size.key, legend.text.size=8*size.key*33, line.size=input$line.size, line.color=input$line.color, lis.rematch = ft.reorder$ft.rematch) # All gene IDs are used.
+        gg.lis <- gg_shm(gene=gene, con.na=geneIn[['con.na']], geneV=geneV()$bar.v, coord=g.df, tmp.path=tmp.pa, charcoal=charcoal, alpha.overlay=alp.over, ID=ID, legend.col=fil.cols, cols=color$col, tis.path=tis.path, ft.trans=input$tis, sub.title.size=input$title.size * scale.shm, aspect.ratio = svg.df$aspect.r, legend.nrow=as.numeric(cfg$lis.par$legend['key.row', 'default']), legend.key.size=size.key, legend.text.size=8*size.key*33, line.size=input$line.size, line.color=input$line.color, lis.rematch = ft.reorder$ft.rematch) # All gene IDs are used.
         msg <- paste0(svg.na[i], ': no spatial features that have matching sample identifiers in data are detected!')
         if (is.null(gg.lis)) { cat(msg, '\n'); msg.shm$msg <- msg } else msg.shm$msg <- NULL
        validate(need(!is.null(gg.lis), msg))
@@ -1974,8 +2006,10 @@ shm_server <- function(id, sch, lis.url, url.id, tab, upl.mod.lis, dat.mod.lis, 
     lgd.label <- lis.par$lgd.label; label.size <- lis.par$lgd.lab.size
     if (is.null(shm$lgd.all)|!is.numeric(lgd.key.size)|!is.numeric(lgd.row)|is.null(lgd.label)) return()
     # Potential endless circles: shm$lgd.all updates itself.
+gg.all=shm$lgd.all; size.key=lgd.key.size; size.text.key=NULL; row=lgd.row; sam.dat=sam(); ft.trans=input$tis; position.text.key='right'; label=(lgd.label=='Yes'); label.size=label.size
     shm$lgd.all <- gg_lgd(gg.all=shm$lgd.all, size.key=lgd.key.size, size.text.key=NULL, row=lgd.row, sam.dat=sam(), ft.trans=input$tis, position.text.key='right', label=(lgd.label=='Yes'), label.size=label.size); cat('Done! \n') 
   })
+
   observeEvent(list(shm$grob.all, input$genCon), {
     cat('Reordering grobs/ggplots ... \n') 
     if (is.null(gID$all)|is.null(shm$grob.all)|is.null(shm$gg.all)) return()
@@ -2123,11 +2157,11 @@ shm_server <- function(id, sch, lis.url, url.id, tab, upl.mod.lis, dat.mod.lis, 
      names(dim.shm.grob.lis)[seq(2, 2*n, 2)] <- names(grob.all1)
      dim.shm.grob.all$val <- dim.shm.grob.lis
      cat('Done! \n')
-     # save(dim.shm.grob.lis, gg.all1, gg.dim.all, gcol.all, ft.rematch, file='dggg')
+     # lgd.lis <- shm$lgd.all; save(dim.shm.grob.lis, gg.all1, gg.dim.all, gcol.all, ft.rematch, lgd.lis, file='dgggl')
 
    })
    observeEvent(ipt$fileIn, { dim.shm.grob.all$val <- NULL })
-  
+
    shmLay <- reactiveValues(val=NULL) 
   # Variables in 'observe' are accessible anywhere in the same 'observe'.
   observe({
@@ -2463,8 +2497,9 @@ shm_server <- function(id, sch, lis.url, url.id, tab, upl.mod.lis, dat.mod.lis, 
     ns <- session$ns 
     if (is.null(svg.path1())) return(NULL)
     if (length(svg.path1()$svg.na)==1) return(NULL)
-    svg.pa <- svg.path1()[['svg.na']]
-    selectInput(ns('shms.in'), label='Select plots', choices=svg.pa, selected=svg.pa[1])
+    svg.na <- svg.path1()[['svg.na']]
+    svg.na <- svg.na[grepl('\\.svg$', svg.na)]
+    selectInput(ns('shms.in'), label='Select plots', choices=svg.na, selected=svg.na[1])
   })
   # If tab.act.lis is defined inside observe, then it is not accessible outside observe.
   tab.act.lis <- reactiveValues()
@@ -2853,11 +2888,11 @@ deg_server <- function(id, sch, lis.url, ids, upl.mod.lis, dat.mod.lis, shm.mod.
   output$dt.deg <- renderDataTable({
     cat('DEG summary table ... \n'); gene.dt <- dt.deg()
     if (is.null(gene.dt)) return()
-    col1 <- list(list(targets=c(1), render=JS("$.fn.dataTable.render.ellipsis(5, false)")))
+    col1 <- list(list(targets=c(1), render=JS("$.fn.dataTable.render.ellipsis(40, false)")))
     # In case no metadata column.
     if (colnames(gene.dt)[1]!='metadata') col1 <- NULL
     d.tab <- datatable(gene.dt, selection='none', escape=FALSE, filter="top", extensions='Scroller', plugins = "ellipsis",
-      options=list(pageLength=5, lengthMenu=c(5, 15, 20), autoWidth=TRUE, scrollCollapse=TRUE, deferRender=TRUE, scrollX=TRUE, scrollY=300, scroller=TRUE, searchHighlight = TRUE, search=list(regex=TRUE, smart=FALSE, caseInsensitive=TRUE), searching=FALSE, columnDefs=col1), 
+      options=list(pageLength=5, lengthMenu=c(5, 15, 20), autoWidth=TRUE, scrollCollapse=TRUE, deferRender=TRUE, scrollX=TRUE, scrollY=300, scroller=TRUE, searchHighlight=TRUE, search=list(regex=TRUE, smart=FALSE, caseInsensitive=TRUE), searching=FALSE, columnDefs=col1), 
       class='cell-border strip hover') %>% formatStyle(0, backgroundColor="orange", cursor='pointer'); cat('Done! \n')
       d.tab
   }) 
@@ -2956,11 +2991,11 @@ dim_server <- function(id, sce, section='scell', upl.mod.lis, match.mod.lis, dat
           }
         }
       }
-    cols <- list(list(targets=seq_len(ncol(cdat)), render = JS("$.fn.dataTable.render.ellipsis(20, false)")))
+    cols <- list(list(targets=seq_len(ncol(cdat)), render = JS("$.fn.dataTable.render.ellipsis(40, false)")))
       # The 1st column is "lable" or "cluster".
       # dom='t' overwrites search box.
       tab <- datatable(cdat, selection='none', escape=FALSE, filter="top", extensions=c('Scroller', 'FixedColumns'), plugins = "ellipsis",
-      options=list(pageLength=20, lengthMenu=c(10, 20, 50, 100), autoWidth=TRUE, scrollCollapse=TRUE, deferRender=TRUE, scrollX=TRUE, scrollY=300, scroller=TRUE, searchHighlight=FALSE, search=list(regex=TRUE, smart=FALSE, caseInsensitive=TRUE), searching=TRUE, columnDefs=cols, fixedColumns = list(leftColumns=2)), 
+      options=list(pageLength=20, lengthMenu=c(10, 20, 50, 100), autoWidth=TRUE, scrollCollapse=TRUE, deferRender=TRUE, scrollX=TRUE, scrollY=300, scroller=TRUE, searchHighlight=TRUE, search=list(regex=TRUE, smart=FALSE, caseInsensitive=TRUE), searching=TRUE, columnDefs=cols, fixedColumns = list(leftColumns=2)), 
       class='cell-border strip hover') %>% formatStyle(0, backgroundColor="white", cursor='pointer')
       cat('Done! \n'); tab
     })
@@ -2983,17 +3018,18 @@ dim_server <- function(id, sce, section='scell', upl.mod.lis, match.mod.lis, dat
 })}
 
 
-library(igraph)
-nn_graph <- function(sce, nn.graph='SNN', snn.arg=list(k=10, type=c("rank", "number", "jaccard"), use.dimred = NULL), knn.arg=list(k=10)) {
+library(scran)
+nn_graph <- function(sce, nn.graph='SNN', use.dimred=NULL, snn.arg=list(k=10, type=c("rank", "number", "jaccard")), snn.arg1=list(), knn.arg=list(k=10), knn.arg1=list()) {
   assay(sce) <- as.matrix(assay(sce))
   cat('Scell: nearest neighbor graph ... \n')
   if (nn.graph=='SNN') {
-    g <- do.call('buildSNNGraph', c(list(x=sce), snn.arg))
+    g <- do.call('buildSNNGraph', c(list(x=sce, use.dimred=use.dimred), snn.arg, snn.arg1))
   } else if (nn.graph=='KNN') {
-    g <- do.call('buildKNNGraph', c(list(x=assay(sce)), knn.arg)) 
+    g <- do.call('buildKNNGraph', c(list(x=sce, use.dimred=use.dimred), knn.arg, knn.arg1)) 
   }; return(g)
 }
 
+library(igraph)
 cluster_cells <- function(graph, clustering='wt', wt.arg=list(steps = 4), fg.arg=list(), sl.arg=list(spins = 25), le.arg=list(), eb.arg=list()) {
   cat('Scell: clustering ... \n')
   if (clustering=='wt') clus <- do.call('cluster_walktrap', c(list(graph=graph), wt.arg)) else if (clustering=='fg') clus <- do.call('cluster_fast_greedy', c(list(graph=graph),fg.arg)) else if (clustering=='le') clus <- do.call('cluster_leading_eigen', c(list(graph=graph), le.arg)) else if (clustering=='sl') clus <- do.call('cluster_spinglass', c(list(graph=graph), sl.arg)) else if (clustering=='eb') clus <- do.call('cluster_edge_betweenness', c(list(graph=graph), eb.arg))
@@ -3026,7 +3062,7 @@ scell_server <- function(id, tab, upl.mod.lis, shm.mod.lis, dim.mod.lis=NULL, se
     output$datCell <- renderDataTable({
       dat <- as.matrix(assay(sce))
       datatable(dat[1:100, 1:50], selection='none', escape=FALSE, filter="top", extensions=c('Scroller', 'FixedColumns'), plugins = "ellipsis",
-      options=list(pageLength=20, lengthMenu=c(10, 20, 50, 100), autoWidth=TRUE, scrollCollapse=TRUE, deferRender=TRUE, scrollX=TRUE, scrollY=300, scroller=TRUE, searchHighlight=FALSE, search=list(regex=TRUE, smart=FALSE, caseInsensitive=TRUE), searching=TRUE, fixedColumns=list(leftColumns=1))
+      options=list(pageLength=20, lengthMenu=c(10, 20, 50, 100), autoWidth=TRUE, scrollCollapse=TRUE, deferRender=TRUE, scrollX=TRUE, scrollY=300, scroller=TRUE, searchHighlight=TRUE, search=list(regex=TRUE, smart=FALSE, caseInsensitive=TRUE), searching=TRUE, fixedColumns=list(leftColumns=1))
       )
     })
    })
@@ -3164,9 +3200,10 @@ scell_server <- function(id, tab, upl.mod.lis, shm.mod.lis, dim.mod.lis=NULL, se
      ns <- session$ns
      if (meth=='buildSNNGraph') fluidRow(splitLayout(cellWidths = c('1%', '20%', '1%', '20%', '1%', '20%'), '', numericInput(ns('k.snn'), label='Nearest neighbors to consider', value=10, min=1, max=Inf, step=1, width=150), '',
     selectInput(ns('type'), label='Weighting scheme for neighbors', choices=c("rank", "number", "jaccard"), selected='rank'), '', 
-    selectInput(ns('dimred'), label='Reduced dimensionality to use', choices=c("PCA", "TSNE", "UMAP"), selected='PCA')
+    selectInput(ns('dimred.s'), label='Reduced dimensionality to use', choices=c("PCA", "TSNE", "UMAP"), selected='PCA')
     )) else if (meth=='buildKNNGraph') fluidRow(splitLayout(
-     cellWidths = c('1%', '20%'), '', numericInput(ns('k.knn'), label='Nearest neighbors to consider', value=10, min=1, max=Inf, step=1, width=150)
+     cellWidths = c('1%', '20%', '1%', '20%'), '', numericInput(ns('k.knn'), label='Nearest neighbors to consider', value=10, min=1, max=Inf, step=1, width=150), '',
+     selectInput(ns('dimred.k'), label='Reduced dimensionality to use', choices=c("PCA", "TSNE", "UMAP"), selected='PCA')
     ))
    })
   })
@@ -3186,21 +3223,23 @@ scell_server <- function(id, tab, upl.mod.lis, shm.mod.lis, dim.mod.lis=NULL, se
     if (nn.graph=='buildSNNGraph') nn.graph <- 'SNN' else if (nn.graph=='buildKNNGraph') nn.graph <- 'KNN'
     k.snn <- input$k.snn; if (is.null(k.snn)) k.snn <- 10
     type <- input$type; if (is.null(type)) type <- 'rank'
-    dimred <- input$dimred; if (is.null(dimred)) dimred <- 'PCA'
+    dimred.s <- input$dimred.s; if (is.null(dimred.s)) dimred.s<- 'PCA'
+    dimred.k <- input$dimred.k; if (is.null(dimred.k)) dimred.k <- 'PCA'
     k.knn <- input$k.knn; if (is.null(k.knn)) k.knn <- 10
     par.graph$nn.graph <- nn.graph; par.graph$k.snn <- k.snn
-    par.graph$type <- type; par.graph$dimred <- dimred
-    par.graph$k.knn <- k.knn 
+    par.graph$type <- type; par.graph$dimred.s <- dimred.s
+    par.graph$dimred.k <- dimred.k; par.graph$k.knn <- k.knn 
   })
   observe({
     cat('Single cell: building NN graph ... \n')
     sce <- sce.rct$dimred; if (is.null(sce)) return()
     nn.graph <- par.graph$nn.graph; k.snn <- par.graph$k.snn
-    type <- par.graph$type; dimred <- par.graph$dimred
-    k.knn <- par.graph$k.knn
+    type <- par.graph$type; dimred.s <- par.graph$dimred.s
+    dimred.k <- par.graph$dimred.k; k.knn <- par.graph$k.knn
+    if (nn.graph=='SNN') dimred <- dimred.s else if (nn.graph=='KNN') dimred <- dimred.k
     withProgress(message="Building NN graph: ", value=0, {
       incProgress(0.3, detail="in progress ...")
-    graph <- nn_graph(sce, nn.graph=nn.graph, snn.arg=list(k=k.snn, type=type, use.dimred=dimred), knn.arg=list(k=k.knn))
+    graph <- nn_graph(sce, nn.graph=nn.graph, snn.arg=list(k=k.snn, type=type), knn.arg=list(k=k.knn), use.dimred=dimred)
     })
     sce.rct$graph <- graph; 
     cat('Done! \n')

@@ -49,9 +49,10 @@ gg_lgd <- function(gg.all, size.key=NULL, size.text.key=8, angle.text.key=NULL, 
     if (!is.null(sub.title.size)) g <- g+theme(plot.title=element_text(hjust=0.5, size=sub.title.size))
     if (!is.null(row)|!is.null(col)|label==TRUE|opacity!=1|!is.null(angle.text.key)|!is.null(position.text.key)|!is.null(legend.value.vdo)) {
 
-      lay.dat <- layer_data(g)
-      dat <- g$data; g.col <- lay.dat$fill
-      names(g.col) <- dat$tissue; df.tis <- as.vector(dat$tissue); df.val <- round(dat$value, 2)
+      bld.dat <- ggplot_build(g)$data; bld.dat <- bld.dat[[length(bld.dat)]]
+      dat <- g$data; g.col <- bld.dat$fill
+      names(g.col) <- dat$tissue; df.tis <- as.vector(dat$tissue)
+      df.val <- round(dat$value, 2) # Expression values.
       g.col <- g.col[!duplicated(names(g.col))]; tis.path <- dat$feature
       ft.legend <- intersect(unique(sam.dat), unique(tis.path))
       # Single-cell data: length(ft.legend)==0.
@@ -89,8 +90,6 @@ gg_lgd <- function(gg.all, size.key=NULL, size.text.key=8, angle.text.key=NULL, 
   return(gg.all)
 
 }
-
-
 
 
 

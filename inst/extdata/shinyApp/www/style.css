@@ -117,11 +117,13 @@ div.form-group.has-feedback {
   max-width:none
 }
 
-/*Data table.*/
+/*Data table.
 
 table#DataTables_Table_0 {
   position:sticky !important
 }
+
+*/
 
 /*Content of dropdown menu.*/
 #dropdown-menu-shmAll-scaleDrop, #dropdown-menu-shmAll-scroDrop, #dropdown-menu-shmAll-colDrop {

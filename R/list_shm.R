@@ -34,12 +34,13 @@
 #' @references
 #' H. Wickham. ggplot2: Elegant Graphics for Data Analysis. Springer-Verlag New York, 2016. \cr R Core Team (2018). R: A language and environment for statistical computing. R Foundation for Statistical Computing, Vienna, Austria. RL https://www.R-project.org/ \cr Mustroph, Angelika, M Eugenia Zanetti, Charles J H Jang, Hans E Holtan, Peter P Repetti, David W Galbraith, Thomas Girke, and Julia Bailey-Serres. 2009. “Profiling Translatomes of Discrete Cell Populations Resolves Altered Cellular Priorities During Hypoxia in Arabidopsis.” Proc Natl Acad Sci U S A 106 (44): 18843–8
 
-#' @importFrom ggplot2 ggplot aes theme element_blank margin element_rect scale_y_continuous scale_x_continuous ggplotGrob geom_polygon scale_fill_manual ggtitle element_text labs guide_legend alpha coord_fixed
+#' @importFrom ggplot2 ggplot aes theme element_blank margin element_rect scale_y_continuous scale_x_continuous ggplotGrob geom_polygon scale_fill_manual ggtitle element_text labs guide_legend alpha coord_fixed annotation_raster
+#' @importFrom magick image_read image_charcoal
 #' @importFrom parallel detectCores mclapply
 
-gg_shm <- function(gene, con.na=TRUE, geneV, coord, ID, cols, tis.path, lis.rematch = NULL, ft.trans=NULL, sub.title.size, ft.legend='identical', legend.col, legend.ncol=NULL, legend.nrow=NULL, legend.position='bottom', legend.direction=NULL, legend.key.size=0.02, legend.text.size=12, legend.plot.title=NULL, legend.plot.title.size=11, line.size=0.2, line.color='grey70', aspect.ratio = 1, ...) {
+gg_shm <- function(gene, con.na=TRUE, geneV, coord, tmp.path=NULL, charcoal=FALSE, alpha.overlay=1, ID, cols, tis.path, lis.rematch = NULL, ft.trans=NULL, sub.title.size, ft.legend='identical', legend.col, legend.ncol=NULL, legend.nrow=NULL, legend.position='bottom', legend.direction=NULL, legend.key.size=0.02, legend.text.size=12, legend.plot.title=NULL, legend.plot.title.size=11, line.size=0.2, line.color='grey70', aspect.ratio = 1, ...) {
 
-  # save(gene, con.na, geneV, coord, ID, cols, tis.path, lis.rematch, ft.trans, sub.title.size, ft.legend, legend.col, legend.ncol, legend.nrow, legend.position, legend.direction, legend.key.size, legend.text.size, legend.plot.title, legend.plot.title.size, line.size, line.color, aspect.ratio, file='all.shm')
+  # save(gene, con.na, geneV, coord, tmp.path, charcoal, alpha.overlay, ID, cols, tis.path, lis.rematch, ft.trans, sub.title.size, ft.legend, legend.col, legend.ncol, legend.nrow, legend.position, legend.direction, legend.key.size, legend.text.size, legend.plot.title, legend.plot.title.size, line.size, line.color, aspect.ratio, file='all.gg.shm')
   
   # Main function to create SHMs (by conditions) and legend plot.
   g_list <- function(con, lgd=FALSE, ...) {
@@ -53,7 +54,6 @@ gg_shm <- function(gene, con.na=TRUE, geneV, coord, ID, cols, tis.path, lis.rema
     if (lgd==FALSE) {
       # Keep global text/legend colors in the main SHM. No change on the local legend colors so they are all NA. The line widths of local legend will be set 0.
       g.col <- legend.col[grep('_globalLGD$', names(legend.col))][sub('__\\d+$', '', names(g.col))]
-
       names(g.col) <- tis.df # Resolves legend.col['tissue'] is NA by default. 
       # Un-related aSVG mapped to data.
       if (rematch.dif.svg) {
@@ -88,13 +88,17 @@ gg_shm <- function(gene, con.na=TRUE, geneV, coord, ID, cols, tis.path, lis.rema
         if (is.list(lis.rematch)) {
           for (i in seq_along(lis.rematch)) {
             lis0 <- lis.rematch[i]; if (!is.character(lis0[[1]])) next
+            # Color for remathing: picked up from original color pool.
+            col0 <- color.dat[paste0(names(lis0), '__', con)]
+            # Rematching. 
+            g.col[tis.path %in% lis0[[1]]] <- col0
             # Index of features will be rematched.
-            idx.tis.rematch <- tis.path %in% lis0[[1]]
+            #idx.tis.rematch <- tis.path %in% lis0[[1]]
             # Index of color for rematching.
-            idx.tis.rematch.color <- tis.path %in% names(lis0)
+            #idx.tis.rematch.color <- tis.path %in% names(lis0)
             # if (sum(idx.tis.rematch.color) == 0) stop(paste0('Feature "', names(lis0), '" is not detected in aSVG!'))
-            if (sum(idx.tis.rematch) == 0 | sum(idx.tis.rematch.color) == 0) next
-            g.col[idx.tis.rematch] <- unique(g.col[idx.tis.rematch.color])
+            #if (sum(idx.tis.rematch) == 0 | sum(idx.tis.rematch.color) == 0) next
+            #g.col[idx.tis.rematch] <- unique(g.col[idx.tis.rematch.color])
            }
          }
        }
@@ -167,7 +171,8 @@ gg_shm <- function(gene, con.na=TRUE, geneV, coord, ID, cols, tis.path, lis.rema
       coord$line.size[idx.local] <- 0
     }
     # If "data" is not in ggplot(), g$data slot is empty. x, y, and group should be in the same aes().
-    g <- ggplot(data=coord, aes(x=x, y=y, value=value, group=tissue, text=paste0('feature: ', feature, '\n', 'value: ', value)), ...)+geom_polygon(aes(fill=tissue), color=line.color, size=coord$line.size, linetype='solid')+scl.fil+theme(axis.text=element_blank(), axis.ticks=element_blank(), panel.grid=element_blank(), panel.background=element_rect(fill="white", colour="grey80"), plot.title=element_text(hjust=0.5, size=sub.title.size), legend.box.margin=margin(-20, 0, 2, 0, unit='pt'), plot.margin=margin(0.005, 0.005, 0.005, 0.005, "npc"), aspect.ratio = 1/aspect.ratio)+labs(x="", y="")+scale_y_continuous(expand=c(0.01, 0.01))+scale_x_continuous(expand=c(0.01, 0.01))+lgd.par
+    g <- ggplot(data=coord, aes(x=x, y=y, value=value, group=tissue, text=paste0('feature: ', feature, '\n', 'value: ', value)), ...)+tmp.g+geom_polygon(aes(fill=tissue), color=line.color, size=coord$line.size, linetype='solid', alpha=alpha.overlay)+scl.fil+theme_void()+theme(plot.title=element_text(hjust=0.5, size=sub.title.size), plot.margin=margin(0.005, 0.005, 0.005, 0.005, "npc"), legend.box.margin=margin(-3, 0, 2, 0, unit='pt'), legend.background=element_rect(color=NA), aspect.ratio = 1/aspect.ratio)+labs(x="", y="")+scale_y_continuous(expand=expansion(mult=c(0, 0)))+scale_x_continuous(expand=expansion(mult=c(0, 0)))+lgd.par
+
     # The aspect ratio should not be calculated by margins that are inferred from original width/height (mar.lb <- (1-w.h/w.h.max*0.99)/2). It works on single plot, but will squeeze the subplots in arrangeGrob/grid.arrange. Rather the "aspect ratio" in theme should be used, which will not squeeze subplots.
     # After theme(aspect.ratio) is set, change in only top or left margin will not distort the image. Rather width/height will scale propotionally, since the aspect ratio is fixed.
     # if (is.null(mar.lb)) g <- g+theme(plot.margin=margin(0.005, 0.005, 0.005, 0.005, "npc")) else g <- g+theme(plot.margin=margin(mar.lb[2], mar.lb[1], mar.lb[2], mar.lb[1], "npc"))
@@ -183,12 +188,18 @@ gg_shm <- function(gene, con.na=TRUE, geneV, coord, ID, cols, tis.path, lis.rema
   cname <- colnames(gene)
   cons <- gsub("(.*)(__)(.*)", "\\3", cname)
   sam.uni <- unique(gsub("(.*)(__)(.*)", "\\1", cname)); ft.trans <- make.names(ft.trans)
+  # Template image.
+  tmp.g <- NULL; if (is.character(tmp.path)) if (file.exists(tmp.path)) {
+    tmp <- image_read(tmp.path)
+    if (charcoal==TRUE) tmp <- image_charcoal(tmp)
+    tmp.g <- annotation_raster(tmp, -Inf, Inf, -Inf, Inf)
+  }
 
   g.lis.all <- gcol.lis.all <- NULL; for (k in ID) {
     # Match color key values to selected genes.
     color.dat <- NULL; for (i in gene[k, ]) { 
       ab <- abs(i-geneV); col.ind <- which(ab==min(ab))[1]; color.dat <- c(color.dat, cols[col.ind])
-    }
+    }; names(color.dat) <- colnames(gene)
 
     # idx <- grep("__", cname); c.na <- cname[idx]
     # Column names without '__' are also included so as to keep one-to-one match with color.dat.
