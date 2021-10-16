@@ -113,6 +113,11 @@ filter_data <- function(data, pOA=c(0, 0), CV=c(-Inf, Inf), top.CV=1, ann=NULL, 
     cat('All coefficient of variances (CVs) after filtering:\n'); print(summary(cv.all))
   }
   row.meta <- row.meta[filtered, , drop=FALSE]
+  rownames(row.meta) <- NULL # Some rownames could have been automatically mangled
+                             # earlier to keep them unique so they don't necessarily
+                             # match 'rownames(expr)' anymore. This will cause the
+                             # call to 'SummarizedExperiment()' below to fail with
+                             # SummarizedExperiment 1.23.2.
   if (!is.null(dir)) {
     dir <- normalizePath(dir, winslash="/", mustWork=FALSE)
     if (!dir.exists(dir)) stop(paste0(dir, ' does not exist!'))
