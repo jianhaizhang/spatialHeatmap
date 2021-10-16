@@ -1,5 +1,5 @@
 # Bitmap extensions accepted in uploaded images.
-tmp.ext <- c('.jpg', '.png')
+tmp.ext <- c('.jpg', '.JPG', '.png', '.PNG')
 
 # Confirm button labels.
 lab.sgl <- 'Search by single gene ID (e.g. ENSMUSG00000000031) or symbols'
@@ -33,6 +33,10 @@ url_val <- function(na, lis.url) {
 }
 
 # Import internal functions.
+
+svg_tmp <- get('svg_tmp', envir=asNamespace('spatialHeatmap'), inherits=FALSE)
+
+tmp_path <- get('tmp_path', envir=asNamespace('spatialHeatmap'), inherits=FALSE)
 
 check <- get('check', envir=asNamespace('spatialHeatmap'), inherits=FALSE)
 
@@ -128,12 +132,9 @@ html_ly <- get('html_ly', envir=asNamespace('spatialHeatmap'), inherits=FALSE)
 
 # Make videos.
 video <- get('video', envir=asNamespace('spatialHeatmap'), inherits=FALSE)
+
 # Shown popup window. 
-modal <- function(title = NULL, msg, easyClose=FALSE) {
-  modalDialog(title = title, span(msg),
-    footer = tagList(modalButton("Dismiss")), size = c("m"), easyClose=easyClose
-  )
-}
+modal <- get('modal', envir=asNamespace('spatialHeatmap'), inherits=FALSE)
 
 # Extract a 1-column data frame of URL. If no column of URL is present, the default google-search URLs are composed.
 link_dat <- function(df.met) {
@@ -239,22 +240,6 @@ se_from_db <- function(se) {
   }; return(dat)
 }
 
-# Check if SVGs are paired with templates of raster images.
-# svg.na: SVG names or paths.
-svg_tmp <- function(svg.na, tmp.ext) {                                                                                           
-  ext <- paste0('\\', c('.svg', tmp.ext), '$', collapse='|')
-  paired <- all(table(sub(ext, '', svg.na))==2)
-  if (!paired) showModal(modal(msg='If raster images uploaded as templates, ensure they have the same names with corresponding SVG images. E.g. test.png, test.svg.'))
-  validate(need(try(paired), ''))                                                                                            
-}   
-
-# Extract tmplate path for a selected SVG.
-# svg.paths, svg.nas: All svg/tmp paths and names, which are in the same order.
-# svg.na: selected SVG name.
-tmp_path <- function(svg.paths, svg.nas, svg.na, tmp.ext){
-  tmp.pat <- sub('\\.svg', paste0('(', paste0('\\', tmp.ext, '$', collapse='|'), ')'), svg.na)
-  tmp.pa <- svg.paths[grepl(tmp.pat, svg.nas)]; return(tmp.pa)
-}
 
 # Extract target svgs in tar into tmp folder, and return the paths. 
 extr_svg <- function(file, name) {

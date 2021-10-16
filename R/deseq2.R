@@ -76,7 +76,8 @@
 #' \cr Love, M.I., Huber, W., Anders, S. Moderated estimation of fold change and dispersion for RNA-seq data with DESeq2 Genome Biology 15(12):550 (2014)
 
 #' @importFrom SummarizedExperiment assay colData
-#' @importFrom DESeq2 DESeqDataSetFromMatrix DESeq results  
+#' @importFrom DESeq2 DESeqDataSetFromMatrix DESeq results 
+#' @importFrom utils combn 
 
 
 deseq2 <- function(se, com.factor, method.adjust='BH', return.all=FALSE, log2.fc=1, fdr=0.05) {

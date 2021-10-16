@@ -17,6 +17,8 @@ spatial_enrich(
 )
 }
 \arguments{
+\item{data}{A \code{SummarizedExperiment} object, which is returned by \code{sub_data}. The \code{colData} slot is required to contain at least two columns of "features" and "factors" respectively. The \code{rowData} slot can optionally contain a column of discriptions of each gene and the column name should be \code{metadata}.}
+
 \item{methods}{One or more of \code{edgeR}, \code{limma}, \code{DESeq2}, \code{distinct}. The default is \code{c('edgeR', 'limma')}.}
 
 \item{norm}{The normalization method (\code{TMM}, \code{RLE}, \code{upperquartile}, \code{none}) in edgeR. The default is \code{TMM}. Details: https://www.rdocumentation.org/packages/edgeR/versions/3.14.0/topics/calcNormFactors}
@@ -32,8 +34,6 @@ spatial_enrich(
 \item{aggr}{One of \code{mean} (default), \code{median}. The method to aggregated replicates in the data frame of feature-specific genes.}
 
 \item{log2.trans.aggr}{Logical. If \code{TRUE} (default), the aggregated data (see \code{aggr}) is transformed to log2-scale, included in the returned data frame of feature-specific genes, and would be further used in the spatial heatmaps.}
-
-\item{se}{A \code{SummarizedExperiment} object, which is returned by \code{sub_data}. The \code{colData} slot is required to contain at least two columns of "features" and "factors" respectively. The \code{rowData} slot can optionally contain a column of discriptions of each gene and the column name should be \code{metadata}.}
 }
 \value{
 A nested list containing the feature-specific genes summarized across methods within methods.
@@ -47,7 +47,7 @@ This functionality is an extension of the spatial heatmap. It identifies spatial
 ## included in this package. The complete raw count data are downloaded using the R package
 ## ExpressionAtlas (Keays 2019) with the accession number "E-MTAB-6769".   
 
-library(SummarizedExperiment); library(spatialHeatmap)
+library(SummarizedExperiment)
 
 ## Set up toy data.
 

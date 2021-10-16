@@ -31,7 +31,11 @@ An image of ggplot.
 Plot Gene Expression Profiles in a Data Frame
 }
 \examples{
-# See examples in the function "spatial_enrich".
+
+data(deg.table)
+# Line graph of selected gene expression profile.
+profile_gene(deg.table[1, ])
+# See detailed examples in the function "spatial_enrich".
 }
 \references{
 H. Wickham. ggplot2: Elegant Graphics for Data Analysis. Springer-Verlag New York, 2016.

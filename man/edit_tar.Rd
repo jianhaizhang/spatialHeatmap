@@ -26,7 +26,7 @@ Replace existing entries in a chosen column of a targets file with desired ones.
 \examples{
 sh.tar <- system.file('extdata/shinyApp/example/target_arab.txt', package='spatialHeatmap')
 target.sh <- read_fr(sh.tar)
-target.sh.new <- edit_tar(df.tar=target.sh, column='condition', old=c('control', 'hypoxia'),
+target.sh.new <- edit_tar(df.tar=target.sh, column='conditions', old=c('control', 'hypoxia'),
 new=c('C', 'H'), sub.row=c(1:12))
 }
 \references{

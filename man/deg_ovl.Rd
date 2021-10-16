@@ -43,9 +43,18 @@ An upset plot or matrix plot, which displays overlap of spatially-enriched genes
 In \code{spatial_enrich}, the spatially-enriched genes are detected within each method (edgeR, limma, DESeq2, distinct). This function plot the overlap of these detected genes across methods in form of upset plot (Nils, 2019) and overlap matrix.
 }
 \examples{
-# See examples in the function spatial_enrich.
+
+data(lis.deg.up.down)
+# Overlap of up-regulated brain-specific genes across methods.
+deg_ovl(lis.deg.up.down, type='up', plot='upset')
+deg_ovl(lis.deg.up.down, type='up', plot='matrix')
+# Overlap of down-regulated brain-specific genes across methods.
+deg_ovl(lis.deg.up.down, type='down', plot='upset')
+deg_ovl(lis.deg.up.down, type='down', plot='matrix')
+# See detailed examples in the function spatial_enrich.
 }
 \references{
+Cardoso-Moreira, Margarida, Jean Halbert, Delphine Valloton, Britta Velten, Chunyan Chen, Yi Shao, Angélica Liechti, et al. 2019. “Gene Expression Across Mammalian Organ Development.” Nature 571 (7766): 505–9
 Nils Gehlenborg (2019). UpSetR: A More Scalable Alternative to Venn and Euler Diagrams for Visualizing Intersecting Sets. R package version 1.4.0. https://CRAN.R-project.org/package=UpSetR
 }
 \seealso{

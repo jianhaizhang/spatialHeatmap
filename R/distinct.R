@@ -83,19 +83,21 @@
 
 #' @importFrom SummarizedExperiment assay colData
 #' @importFrom distinct distinct_test log2_FC
+#' @importFrom utils combn
+#' @importFrom stats model.matrix
 
 distt <- function(se, norm.fun='CNF', parameter.list=NULL, log2.trans=TRUE, com.factor, return.all=FALSE, log2.fc=1, fdr=0.05) {
-
+  filtered <- NULL
   if (!is.null(norm.fun)) { cat('Normalizing counts ... \n')
   se <- norm_data(data=se, norm.fun=norm.fun, parameter.list=parameter.list, log2.trans=log2.trans) }
    
   # Replicate names are the rownames of design matrix, and should not be duplicated, so avoid duplicated replicate names. 
   # cdat <- as.data.frame(colData(se)) # Duplicated row names are numbered.
-  cdat <- colData(se); cdat$OneSample <- 'sample'; sam.factor <- 'OneSample'
+  cdat <- SummarizedExperiment::colData(se); cdat$OneSample <- 'sample'; sam.factor <- 'OneSample'
   con.factor <- com.factor
 
   if (any(duplicated(rownames(cdat)))) rownames(cdat) <- paste0(rownames(cdat), '.', seq_along(rownames(cdat)))
-  cdat$rep.distt <- rownames(cdat); colData(se) <- DataFrame(cdat)
+  cdat$rep.distt <- rownames(cdat); SummarizedExperiment::colData(se) <- DataFrame(cdat)
   sam.all <- unique(cdat[, sam.factor])
   # Compare each pair of conditions for each sample.
   lis.all <- list(); for (i in sam.all) {
@@ -111,15 +113,15 @@ distt <- function(se, norm.fun='CNF', parameter.list=NULL, log2.trans=TRUE, com.
       con.all1 <- com[, j]
       idx1 <- (cdat[, con.factor] %in% con.all1) & idx
       se0 <- se[, idx1]
-      fct <- factor(colData(se0)[, con.factor]); dsg <- model.matrix(~fct)
+      fct <- factor(SummarizedExperiment::colData(se0)[, con.factor]); dsg <- model.matrix(~fct)
       vs <- paste0(levels(fct), collapse='_VS_')
       cat(i, ':', vs, '... \n')
-      rownames(dsg) <- colData(se0)[, 'rep.distt']
-      set.seed(61217)
+      rownames(dsg) <- SummarizedExperiment::colData(se0)[, 'rep.distt']
+      # set.seed(61217)
       # Genes with values <=0 in less than min_non_zero_cells are disgarded.
       res0 <- distinct_test(x=se0, name_assays_expression=assayNames(se0)[1], name_cluster=sam.factor, name_sample='rep.distt', design=dsg, column_to_test=2, min_non_zero_cells=ceiling((min(table(fct))+1)/2), n_cores=2)
       # Log2 FC requires count matrix.
-      assay(se0) <- 2^assay(se0)
+      SummarizedExperiment::assay(se0) <- 2^SummarizedExperiment::assay(se0)
       res1 <- log2_FC(res=res0, x=se0, name_assays_expression=assayNames(se0)[1], name_cluster=sam.factor, name_group=con.factor)
       cna.res <- colnames(res1)
       colnames(res1)[cna.res=='p_adj.loc'] <- paste0(vs, '_FDR') 

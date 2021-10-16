@@ -75,13 +75,13 @@
 #' @importFrom SummarizedExperiment colData assayNames 
 
 sub_data <- function(data, feature, features=NULL, factor, factors=NULL, com.by='feature', target=NULL) {
-  cdat <- colData(data); fts <- cdat[, feature]
+  cdat <- SummarizedExperiment::colData(data); fts <- cdat[, feature]
   fcts <- cdat[, factor]
-  if (is.null(features)) features <- unique(fts)[1:2] else if (features[1]=='all') features <- unique(fts)
-  if (is.null(factors)) factors <- unique(fcts)[1:2] else if (factors[1]=='all') factors <- unique(fcts)
+  if (is.null(features)) features <- unique(fts)[seq_len(2)] else if (features[1]=='all') features <- unique(fts)
+  if (is.null(factors)) factors <- unique(fcts)[seq_len(2)] else if (factors[1]=='all') factors <- unique(fcts)
 
   idx <- cdat[, feature] %in% features & cdat[, factor] %in% factors
-  data <- data[, idx]; cdat <- colData(data)
+  data <- data[, idx]; cdat <- SummarizedExperiment::colData(data)
   rna <- rownames(cdat); tar <- rep('yes', nrow(cdat))
   
   if (com.by=='feature') {
@@ -95,13 +95,13 @@ sub_data <- function(data, feature, features=NULL, factor, factors=NULL, com.by=
     cdat <- cbind(feature.factor=ft.fct, cdat[, c(feature, factor)], cdat1)
   }
   cdat <- cbind(target=tar, cdat); cna <- colnames(cdat)
-  cdat <- cdat[, c(cna[c(2, 1)], setdiff(cna, cna[1:2]))]
+  cdat <- cdat[, c(cna[c(2, 1)], setdiff(cna, cna[seq_len(2)]))]
   if (is.null(target)) target <- features[1]
   cdat$target[!cdat[, 1] %in% target] <- 'no'
-  rownames(cdat) <- rna; colData(data) <- cdat
+  rownames(cdat) <- rna; SummarizedExperiment::colData(data) <- cdat
   colnames(data) <- paste0(cdat[, feature], '__', cdat[, factor])
   # Name the assay: required in distinct.
-  if (is.null(assayNames(data))) assayNames(data) <- 'count'
+  if (is.null(SummarizedExperiment::assayNames(data))) SummarizedExperiment::assayNames(data) <- 'count'
   return(data)
 }
 

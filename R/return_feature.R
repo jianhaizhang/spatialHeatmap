@@ -25,9 +25,20 @@
 #' \donttest{
 #' # Make an empty directory "~/test" if not exist.
 #' if (!dir.exists('~/test')) dir.create('~/test')
-#' # Query the remote EBI aSVG repo.
+#' # Remote aSVG repos.
+#' data(aSVG.remote.repo)
+#' tmp.dir <- normalizePath(tempdir(check=TRUE), winslash="/", mustWork=FALSE)
+#' tmp.dir.ebi <- paste0(tmp.dir, '/ebi.zip')
+#' tmp.dir.shm <- paste0(tmp.dir, '/shm.zip')
+#' # Download the remote aSVG repos as zip files. According to Bioconductor's 
+#' # requirements, downloadings are not allowed inside functions, so the repos are 
+#' # downloaded before calling "return_feature".  
+#' download.file(aSVG.remote.repo$ebi, tmp.dir.ebi)
+#' download.file(aSVG.remote.repo$shm, tmp.dir.shm)
+#' remote <- list(tmp.dir.ebi, tmp.dir.shm)
+#' # Query the remote aSVG repos.
 #' feature.df <- return_feature(feature=c('heart', 'brain'), species=c('gallus'), dir='~/test',
-#' match.only=FALSE, remote=TRUE)
+#' match.only=FALSE, remote=remote)
 #' feature.df
 #' # The path of downloaded aSVG.
 #' svg.chk <- '~/test/gallus_gallus.svg'
@@ -40,7 +51,7 @@
 #' # Query the local aSVG repo. The "species" argument is set NULL on purpose so as to illustrate
 #' # how to select the target aSVG among all matching aSVGs.
 #' feature.df <- return_feature(feature=c('heart', 'brain'), species=NULL, dir=svg.dir, 
-#' match.only=FALSE, remote=FALSE)
+#' match.only=FALSE, remote=NULL)
 #' # All matching aSVGs.
 #' unique(feature.df$SVG)
 #' # Select the target aSVG of chicken.
@@ -58,9 +69,9 @@
 #' @export return_feature
 #' @importFrom xml2 read_xml
 #' @importFrom rols term termDesc
-#' @importFrom utils download.file unzip
+#' @importFrom utils unzip
 
-return_feature <- function(feature, species, keywords.any=TRUE, remote=TRUE, dir=NULL, svg.path=NULL, desc=FALSE, match.only=TRUE, return.all=FALSE) {
+return_feature <- function(feature, species, keywords.any=TRUE, remote=NULL, dir=NULL, svg.path=NULL, desc=FALSE, match.only=TRUE, return.all=FALSE) {
 
   options(stringsAsFactors=FALSE)
   # Parse and return features.
@@ -72,7 +83,7 @@ return_feature <- function(feature, species, keywords.any=TRUE, remote=TRUE, dir
       # Move ontology with NA or "NULL" to bottom.
       w.na <- which(is.na(df0$id)|df0$id=='NULL'|df0$id=='NA')
       if (length(w.na)>0) df0 <- rbind(df0[-w.na, ], df0[w.na, ])
-      na <- strsplit(i, '/')[[1]]; na <- na[grep('.svg$', na)]
+      na <- strsplit(i, '/')[[1]]; na <- na[grep('\\.svg$', na)]
       cat(na); cat(', '); df0$SVG <- na; df <- rbind(df, df0)
 
     }; cat('\n')
@@ -107,20 +118,12 @@ return_feature <- function(feature, species, keywords.any=TRUE, remote=TRUE, dir
   # Pattern for selecting relevant species.
   if (length(species)>0 & return.all==FALSE) { species1 <- gsub(' |_|\\.|-|;|,|/', '|', make.names(species))
   species1 <- paste0(species1, collapse="|") }
-  if (remote==TRUE) {
-  
-    cat('Downloading SVG images... \n')
-    tmp <- normalizePath(tempdir(check=TRUE), winslash="/", mustWork=FALSE); tmp1 <- paste0(normalizePath(tempdir(check=TRUE), winslash="/", mustWork=FALSE), '/git.zip')
-    tmp2 <- paste0(tmp, '/git'); if (!dir.exists(tmp2)) dir.create(tmp2)
-    # Dowloaded file overwrites existing file by default.
-    download.file('https://github.com/ebi-gene-expression-group/anatomogram/archive/master.zip', tmp1); unzip(tmp1, exdir=tmp2)
-    tmp3 <- paste0(tmp2, '/anatomogram-master/src/svg')
-    download.file('https://github.com/jianhaizhang/spatialHeatmap_aSVG_Repository/archive/master.zip', tmp1); unzip(tmp1, exdir=tmp2)
-    tmp4 <- paste0(tmp2, '/spatialHeatmap_aSVG_Repository-master')
-    svgs <- list.files(path=tmp3, pattern='.svg$', full.names=TRUE, recursive=TRUE)
-    svgs.shm <- list.files(path=tmp4, pattern='.svg$', full.names=TRUE, recursive=TRUE)
+  if (is(remote, 'list')) { 
+    tmp <- normalizePath(tempdir(check=TRUE), winslash="/", mustWork=FALSE) 
+    # Extract paths of aSVG files in remote zip files.
+    svgs <- svg_zpath(remote);
     # Only select relevant svgs to species.
-    svgs <- c(svgs, svgs.shm); if (length(species)>0 & return.all==FALSE) {
+    if (length(species)>0 & return.all==FALSE) {
       svgs.sp <- grep(species1, svgs, value=TRUE, ignore.case=TRUE)
       if (length(svgs.sp)>0) svgs <- svgs.sp
     }
@@ -207,16 +210,42 @@ return_feature <- function(feature, species, keywords.any=TRUE, remote=TRUE, dir
 
   }; rownames(df.final) <- NULL
   
-  if (remote==TRUE) {
+  if (is(remote, 'list')) {
 
     svgs.cp <- svgs[svgs.na %in% unique(df.final$SVG)]
     svgs.rm <- svgs1[svgs.na1 %in% unique(df.final$SVG)]
     cat(paste0('Overwriting: ', svgs.rm, '\n'))
     vapply(svgs.cp, function (i) file.copy(i, dir, overwrite=TRUE), logical(1))
-    if (dir.exists(tmp)) unlink(tmp, recursive=TRUE)
+    if (dir.exists(tmp) & !is(remote, 'list')) unlink(tmp, recursive=TRUE)
 
   }; return(df.final)
 
 }
+
+#' Extract aSVG paths in remote zip files.
+#'
+#' @param zip.paths A list of paths of zipped aSVG files.
+#' @return A vector of full paths of aSVG files.
+#' @keywords Internal
+#' @noRd
+
+svg_zpath <- function(zip.path) { 
+  if (!all(grepl('\\.zip$', zip.path))) stop('Please ensure the aSVG files are in a zip file with the extension ".zip".')
+  tmp <- normalizePath(tempdir(check=TRUE), winslash="/", mustWork=FALSE)
+  tmp.uz <- paste0(tmp, '/asvg'); tmp.zcopy <- paste0(tmp, '/zcopy')
+  unlink(tmp.uz, recursive=TRUE); dir.create(tmp.uz)
+  unlink(tmp.zcopy, recursive=TRUE); dir.create(tmp.zcopy)
+ for (i in seq_along(zip.path)) {
+   zip.pa <- zip.path[[i]]
+   if (!file.exists(zip.pa)) stop(paste0(zip.pa, ': file does not exist!'))
+   # Make a copy of provided SVG zip file.
+   svg.zpa <- paste0(tmp.zcopy, '/svg.zip') 
+   file.copy(zip.pa, svg.zpa); unzip(svg.zpa, exdir=tmp.uz)
+ }
+ svgs <- list.files(path=tmp.uz, pattern='.svg$', full.names=TRUE, recursive=TRUE)
+ if (length(svgs)==0) stop('No aSVG files are found!')
+ return(svgs)
+}
+
 
 

@@ -3,6 +3,9 @@
 #' The input are a pair of annotated SVG (aSVG) file and formatted data (\code{vector}, \code{data.frame}, \code{SummarizedExperiment}). In the former, spatial features are represented by shapes and assigned unique identifiers, while the latter are numeric values measured from these spatial features and organized in specific formats. In biological cases, aSVGs are anatomical or cell structures, and data are measurements of genes, proteins, metabolites, \emph{etc}. in different samples (\emph{e.g.} cells, tissues). Data are mapped to the aSVG according to identifiers of assay samples and aSVG features. Only the data from samples having matching counterparts in aSVG features are mapped. The mapped features are filled with colors translated from the data, and the resulting images are termed spatial heatmaps. Note, "sample" and "feature" are two equivalent terms referring to cells, tissues, organs \emph{etc.} where numeric values are measured. Matching means a target sample in data and a target spatial feature in aSVG have the same identifier. \cr This function is designed as much flexible as to achieve optimal visualization. For example, subplots of spatial heatmaps can be organized by gene or condition for easy comparison, in multi-layer anotomical structures selected tissues can be set transparent to expose burried features, color scale is customizable to highlight difference among features. This function also works with many other types of spatial data, such as population data plotted to geographic maps.
 
 #' @param svg.path The path of aSVG file(s). \emph{E.g.}: system.file("extdata/shinyApp/example", "gallus_gallus.svg", package="spatialHeatmap"). Multiple aSVGs are also accepted, such as aSVGs depicting organs development across mutiple times. In this case, the aSVGs should be indexed with suffixes "_shm1", "_shm2", ..., such as "arabidopsis.thaliana_organ_shm1.svg", "arabidopsis.thaliana_organ_shm2.svg", and the paths of these aSVGs be provided in a character vector.  \cr See \code{\link{return_feature}} for details on how to directly download aSVGs from the EBI aSVG repository \url{https://github.com/ebi-gene-expression-group/anatomogram/tree/master/src/svg} and spatialHeatmap aSVG Repository \url{https://github.com/jianhaizhang/spatialHeatmap_aSVG_Repository} developed in this project.
+#' @param tmp.path The path of the template image in the form of raster/bitmap. The template is used to create aSVGs and can be overlaid with spatial heatmaps.
+#' @param charcoal Logical, if \code{TRUE} the template image will be turned black and white.
+#' @param alpha.overlay The opacity of top-layer spatial heatmaps if a template image is added at the bottom layer. The default is 1.
 
 #' @param bar.title.size A numeric of color bar title size. The default is 0. 
 #' @param bar.value.size A numeric of value size in the color bar y-axis. The default is 10.
@@ -52,7 +55,7 @@
 #' @param ID A character vector of assyed items (\emph{e.g.} genes, proteins) whose abudance values are used to color the aSVG.
 #' @param col.com A character vector of the color components used to build the color scale. The default is c('yellow', 'orange', 'red').
 #' @param col.bar One of "selected" or "all", the former uses values of \code{ID} to build the color scale while the latter uses all values from the data. The default is "selected".
-#' @param sig.thr A two-numeric vector of the signal thresholds (the range of the color bar). The first and the second element will be the minmun and maximum threshold in the color bar respectively. Signals/values above the max or below min will be assigned the same color as the max or min respectively. The default is \code{c(NA, NA)} and the min and max signals in the data will be used. If one needs to change either max or min, the other should be \code{NA}.    
+#' @param sig.thr A two-numeric vector of the signal thresholds (the range of the color bar). The first and the second element will be the minmun and maximum threshold in the color bar respectively. Signals/values above the max or below min will be assigned the same color as the max or min respectively. The default is \code{c(NA, NA)} and the min and max signals in the data will be used. If one needs to change only max or min, the other should be \code{NA}.    
 #' @param cores The number of CPU cores for parallelization, relevant for aSVG files with size larger than 5M. The default is NA, and the number of used cores is 1 or 2 depending on the availability. 
 #' @param trans.scale One of "log2", "exp2", "row", "column", or NULL, which means transform the data by "log2" or "2-base expoent", scale by "row" or "column", or no manipuation respectively. This argument should be used if colors across samples cannot be distinguished due to low variance or outliers. 
 #' @param bar.width The width of color bar that ranges from 0 to 1. The default is 0.08.
@@ -206,6 +209,29 @@
 #' # samples, stages, and conditions should be formatted in different ways. See the vignette
 #' # for details by running "browseVignette('spatialHeatmap')" in R. 
 
+#' # Overlay real images with spatial heatmaps.
+#' 
+#' # The first real image used as a template to create an aSVG. 
+#' tmp.pa1 <- system.file('extdata/shinyApp/example/overlay_shm1.png',
+#' package='spatialHeatmap')
+#' # The first aSVG created with the first real image. 
+#' svg.pa1 <- system.file('extdata/shinyApp/example/overlay_shm1.svg',
+#' package='spatialHeatmap')
+#' # The second real image used as a template to create an aSVG. 
+#' tmp.pa2 <- system.file('extdata/shinyApp/example/overlay_shm2.png',
+#' package='spatialHeatmap')
+#' # The second aSVG created with the second real image. 
+#' svg.pa2 <- system.file('extdata/shinyApp/example/overlay_shm2.svg',
+#' package='spatialHeatmap')
+#'
+#' # The data table.
+#' dat.overlay <- read_fr(system.file('extdata/shinyApp/example/dat_overlay.txt',
+#' package='spatialHeatmap'))
+#' 
+#' # Plot spatial heatmaps on top of real images.
+#' spatial_hm(svg.path=c(svg.pa1, svg.pa2), data=dat.overlay, tmp.path=c(tmp.pa1, tmp.pa2),
+#' charcoal=FALSE, ID=c('gene1'), alpha.overlay=0.5)
+
 
 #' @author Jianhai Zhang \email{jianhai.zhang@@email.ucr.edu} \cr Dr. Thomas Girke \email{thomas.girke@@ucr.edu}
 
@@ -229,7 +255,9 @@
 #' @importFrom methods is
 #' @importFrom ggplotify as.ggplot
 
-spatial_hm <- function(svg.path, data, sam.factor=NULL, con.factor=NULL, ID, lay.shm="gene", ncol=2, col.com=c('yellow', 'orange', 'red'), col.bar='selected', sig.thr=c(NA, NA), cores=NA, bar.width=0.08, bar.title.size=0, trans.scale=NULL, ft.trans=NULL, tis.trans=ft.trans, lis.rematch = NULL, legend.r=0.2, sub.title.size=11, legend.plot='all', ft.legend='identical', bar.value.size=10, legend.plot.title='Legend', legend.plot.title.size=11, legend.ncol=NULL, legend.nrow=NULL, legend.position='bottom', legend.direction=NULL, legend.key.size=0.02, legend.text.size=12, angle.text.key=NULL, position.text.key=NULL, legend.2nd=FALSE, position.2nd='bottom', legend.nrow.2nd=NULL, legend.ncol.2nd=NULL, legend.key.size.2nd=0.03, legend.text.size.2nd=10, angle.text.key.2nd=0, position.text.key.2nd='right', add.feature.2nd=FALSE, label=FALSE, label.size=4, label.angle=0, hjust=0, vjust=0, opacity=1, key=TRUE, line.size=0.2, line.color='grey70', relative.scale = NULL, verbose=TRUE, out.dir=NULL, animation.scale = 1, selfcontained=FALSE, video.dim='640x480', res=500, interval=1, framerate=1, legend.value.vdo=NULL, ...) {
+spatial_hm <- function(svg.path, data, sam.factor=NULL, con.factor=NULL, ID, tmp.path=NULL, charcoal=FALSE, alpha.overlay=1, lay.shm="gene", ncol=2, col.com=c('yellow', 'orange', 'red'), col.bar='selected', sig.thr=c(NA, NA), cores=NA, bar.width=0.08, bar.title.size=0, trans.scale=NULL, ft.trans=NULL, tis.trans=ft.trans, lis.rematch = NULL, legend.r=0.2, sub.title.size=11, legend.plot='all', ft.legend='identical', bar.value.size=10, legend.plot.title='Legend', legend.plot.title.size=11, legend.ncol=NULL, legend.nrow=NULL, legend.position='bottom', legend.direction=NULL, legend.key.size=0.02, legend.text.size=12, angle.text.key=NULL, position.text.key=NULL, legend.2nd=FALSE, position.2nd='bottom', legend.nrow.2nd=NULL, legend.ncol.2nd=NULL, legend.key.size.2nd=0.03, legend.text.size.2nd=10, angle.text.key.2nd=0, position.text.key.2nd='right', add.feature.2nd=FALSE, label=FALSE, label.size=4, label.angle=0, hjust=0, vjust=0, opacity=1, key=TRUE, line.size=0.2, line.color='grey70', relative.scale = NULL, verbose=TRUE, out.dir=NULL, animation.scale = 1, selfcontained=FALSE, video.dim='640x480', res=500, interval=1, framerate=1, bar.width.vdo=0.1, legend.value.vdo=NULL, ...) {
+
+ # save(svg.path, data, sam.factor, con.factor, ID, tmp.path, charcoal, alpha.overlay, lay.shm, ncol, col.com, col.bar, sig.thr, cores, bar.width, bar.title.size, trans.scale, ft.trans, tis.trans, lis.rematch, legend.r, sub.title.size, legend.plot, ft.legend, bar.value.size, legend.plot.title, legend.plot.title.size, legend.ncol, legend.nrow, legend.position, legend.direction, legend.key.size, legend.text.size, angle.text.key, position.text.key, legend.2nd, position.2nd, legend.nrow.2nd, legend.ncol.2nd, legend.key.size.2nd, legend.text.size.2nd, angle.text.key.2nd, position.text.key.2nd, add.feature.2nd, label, label.size, label.angle, hjust, vjust, opacity, key, line.size, line.color, relative.scale, verbose, out.dir, animation.scale, selfcontained, video.dim, res, interval, framerate, bar.width.vdo, legend.value.vdo, file='shm.all')
 
   calls <- names(vapply(match.call(), deparse, character(1))[-1])
   if("tis.trans" %in% calls) { ft.trans <- tis.trans; warning('"tis.trans" is deprecated and replaced by "ft.trans"! \n') }
@@ -297,24 +325,23 @@ spatial_hm <- function(svg.path, data, sam.factor=NULL, con.factor=NULL, ID, lay
     con <- gsub("(.*)(__)(.*)", "\\3", cname[form]); con.uni <- unique(con)
     sam.uni <- unique(gsub("(.*)(__)(.*)", "\\1", cname))
 
-    # Get SVG names.
-    str.lis <- strsplit(svg.path, '/')
-    svg.na <- vapply(str.lis, function(x) x[[length(x)]], FUN.VALUE=character(1))
-    if (length(svg.na)>1) { 
-
-      shm <- gsub('.*_(shm\\d+).svg$', '\\1', svg.na)
-      if (any(duplicated(shm))) stop(paste0('Suffixes of aSVG files are duplicated: ', paste0(shm, collapse='; ')))
-      if (!all(grepl('_shm\\d+', svg.na, perl=TRUE))) stop("Suffixes of aSVG files should be indexed as '_shm1', '_shm2', '_shm3', ...") 
-
+    # Get SVG/template names and order their path/name if there are multiple images.
+    svg.pa.na <- img_pa_na(svg.path); svg.path <- svg.pa.na$path; svg.na <- svg.pa.na$na
+    tmp.pa <- tmp.na <- NULL
+    if (is.character(tmp.path)) { 
+      tmp.pa.na <- img_pa_na(tmp.path); tmp.pa <- tmp.pa.na$path; tmp.na <- tmp.pa.na$na
+      # Ensure aSVGs and templates are paired. After this step, the aSVG and template are paired, and if multiple aSVGs exist, aSVGs and templates are ordered by shm1, shm2, etc.
+      msg <- svg_tmp(c(svg.na, tmp.na), tmp.ext=c('.jpg', '.JPG', '.png', '.PNG'), shiny=FALSE)
+      if (!is.null(msg)) stop(msg)
     }
-    ord <- order(gsub('.*_(shm.*).svg$', '\\1', svg.na))
-    svg.path <- svg.path[ord]; svg.na <- svg.na[ord]
+
     # Coordinates of each SVG are extracted and placed in a list.
     df.attr <- svg.df.lis <- NULL; for (i in seq_along(svg.na)) {
       cat('Coordinates:', svg.na[i], '...', '\n') # '... \n' renders two new lines.
       cores <- deter_core(cores, svg.path[i]); cat('CPU cores:', cores, '\n')
       df_tis <- svg_df(svg.path=svg.path[i], feature=sam.uni, cores=cores)
       if (is.character(df_tis)) stop(paste0(svg.na[i], ': ', df_tis))
+      df_tis$tmp.pa <- tmp.pa[i] 
       svg.df.lis <- c(svg.df.lis, list(df_tis))
       df.attr0 <- df_tis$df.attr[, c('feature', 'stroke', 'color', 'id', 'element', 'parent', 'index1')]
       df.attr0$SVG <- svg.na[i]; df.attr <- rbind(df.attr, df.attr0)
@@ -357,7 +384,7 @@ spatial_hm <- function(svg.path, data, sam.factor=NULL, con.factor=NULL, ID, lay
       tis.path <- svg.df[["tis.path"]]; fil.cols <- svg.df[['fil.cols']]
       # if (preserve.scale==TRUE & is.null(sub.margin)) sub.margin <- (1-w.h/w.h.max*0.99)/2
       # SHMs/legend of ggplots under one SVG.
-      gg.lis <- gg_shm(gene=gene, con.na=con.na, geneV=geneV, coord=g.df, ID=ID, legend.col=fil.cols, cols=col, tis.path=tis.path, lis.rematch = lis.rematch, ft.trans=ft.trans, sub.title.size=sub.title.size, ft.legend=ft.legend, legend.ncol=legend.ncol, legend.nrow=legend.nrow, legend.position=legend.position, legend.direction=legend.direction, legend.key.size=legend.key.size, legend.text.size=legend.text.size, legend.plot.title=legend.plot.title, legend.plot.title.size=legend.plot.title.size, line.size=line.size, line.color=line.color, aspect.ratio = aspect.r, ...)
+      gg.lis <- gg_shm(gene=gene, con.na=con.na, geneV=geneV, coord=g.df, tmp.path=svg.df$tmp.pa, charcoal=charcoal, alpha.overlay=alpha.overlay, ID=ID, legend.col=fil.cols, cols=col, tis.path=tis.path, lis.rematch = lis.rematch, ft.trans=ft.trans, sub.title.size=sub.title.size, ft.legend=ft.legend, legend.ncol=legend.ncol, legend.nrow=legend.nrow, legend.position=legend.position, legend.direction=legend.direction, legend.key.size=legend.key.size, legend.text.size=legend.text.size, legend.plot.title=legend.plot.title, legend.plot.title.size=legend.plot.title.size, line.size=line.size, line.color=line.color, aspect.ratio = aspect.r, ...)
       msg <- paste0(na0, ': no spatial features that have matching sample identifiers in data are detected!'); if (is.null(gg.lis)) stop(msg)
 
       # Append suffix '_i' for the SHMs of ggplot under SVG[i], and store them in a list.
@@ -459,6 +486,26 @@ spatial_hm <- function(svg.path, data, sam.factor=NULL, con.factor=NULL, ID, lay
 
 }
 
+#' Get SVG names and order SVG path/name if there are multiple SVGs.
+#' @param path.na A vector of image paths or names (SVG or raster).
+#' @param tmp.ext A vector of template image extensions.
+#' @keywords Internal
+#' @noRd
+
+img_pa_na <- function(path.na, tmp.ext=c('.jpg', '.JPG', '.png', '.PNG')) {
+  str.lis <- strsplit(path.na, '/')
+  na <- vapply(str.lis, function(x) x[[length(x)]], FUN.VALUE=character(1))
+  ext <- c('.svg', '.SVG', tmp.ext); ext <- paste0('(', paste0('\\', ext, collapse='|'), ')')
+  pat <- paste0('.*_(shm\\d+)', ext, '$') 
+    if (length(na)>1) { 
+      shm <- gsub(pat, '\\1', na)
+      if (any(duplicated(shm))) stop(paste0('Suffixes of aSVG files are duplicated: ', paste0(shm, collapse='; ')))
+      if (!all(grepl('_shm\\d+', na, perl=TRUE))) stop("Suffixes of aSVG files should be indexed as '_shm1', '_shm2', '_shm3', ...") 
+    }
+    ord <- order(gsub(pat, '\\1', na))
+    path <- path.na[ord]; na <- na[ord]; return(list(path=path, na=na))
+}
+
 #' Determine the number of CPU cores.
 #' @param cores The input number of cores.
 #' @param svg.path The path of SVG file.
@@ -490,7 +537,6 @@ rela_size <- function(h, h.max, scale, lay.row, gg.lis) {
   gg.lis <- lapply(gg.lis, function(x) { x + theme(plot.margin = margin(mar.tb, 0.005, mar.tb, 0.005, "npc")) })
   return(gg.lis)
 }
-
 
 
 

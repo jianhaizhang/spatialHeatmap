@@ -80,8 +80,9 @@
 
 #' @importFrom SummarizedExperiment assay colData
 #' @importFrom edgeR DGEList calcNormFactors
-#' @importFrom limma voom lmFit makeContrasts contrasts.fit eBayes topTable 
-
+#' @importFrom limma voom lmFit makeContrasts contrasts.fit eBayes topTable
+#' @importFrom stats model.matrix 
+#' @importFrom utils combn
 
 limma <- function(se, m.array=FALSE, method.norm='TMM', com.factor, method.adjust='BH', return.all=FALSE, log2.fc=1, fdr=0.05) {
 

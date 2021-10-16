@@ -81,7 +81,9 @@
 
 #' @importFrom SummarizedExperiment assay colData
 #' @importFrom edgeR DGEList calcNormFactors estimateDisp glmFit glmLRT topTags
-#' @importFrom limma makeContrasts 
+#' @importFrom limma makeContrasts
+#' @importFrom stats model.matrix 
+#' @importFrom utils combn
 
 edgeR <- function(se, method.norm='TMM', com.factor, method.adjust='BH', return.all=FALSE, log2.fc=1, fdr=0.05) {
 

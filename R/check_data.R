@@ -28,8 +28,10 @@ check_data <- function(data, sam.factor=NULL, con.factor=NULL, usage='other') {
     if (nrow(data)==1) na <- matrix(na, byrow=TRUE, ncol=ncol(data))
     na <- as.data.frame(na); rownames(na) <- rna
     # app <- apply(na, 2, is.na): requires much more memory than vapply.
-    vap <- df_is_as(na, is.na)
-    rownames(vap) <- rna; idx <- colSums(vap)!=0
+    vap <- df_is_as(na, is.na); rownames(vap) <- rna
+    # Exclude rows of all NAs.
+    vap <- vap[!rowSums(vap)==ncol(vap), , drop=FALSE]
+    idx <- colSums(vap)!=0
     row.meta <- data[idx] # aggr_rep filter_data, submatrix 
     dat <- na[!idx]; colnames(dat) <- fct.cna <- cna[!idx]
     # spatial_hm
@@ -66,7 +68,3 @@ check_data <- function(data, sam.factor=NULL, con.factor=NULL, usage='other') {
   }; return(list(dat=dat, fct.cna=fct.cna, col.meta=col.meta, row.meta=row.meta, con.na=con.na)) 
 
 }
-
-
-
-

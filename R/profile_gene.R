@@ -11,8 +11,12 @@
 #' @author Jianhai Zhang \email{jzhan067@@ucr.edu; zhang.jianhai@@hotmail.com} \cr Dr. Thomas Girke \email{thomas.girke@@ucr.edu}
 
 #' @examples
+#'
+#' data(deg.table)
+#' # Line graph of selected gene expression profile.
+#' profile_gene(deg.table[1, ])
 
-#' # See examples in the function "spatial_enrich".
+#' # See detailed examples in the function "spatial_enrich".
 
 #' @seealso \code{spatial_enrich}
 
@@ -24,15 +28,15 @@
 #' @importFrom reshape2 melt
 #' @importFrom ggplot2 ggplot aes geom_line theme labs element_text element_rect element_line
 
-profile_gene <- function(data, scale='none', x.title='Sample/conditions', y.title='Value', text.size=15, text.angle=45) {                                                                                   
+profile_gene <- function(data, scale='none', x.title='Sample/conditions', y.title='Value', text.size=15, text.angle=45) {
+  gene <- Samples <- Value <- Genes <- NULL 
   if (all(c('gene', 'type', 'total') %in% colnames(data))) { # Data frame of spatial enrichment.
     data <- subset(data, !duplicated(gene)); rownames(data) <- data$gene                        
-    data <- data[, !colnames(data) %in% c('gene', 'type', 'total', 'metadata', 'edgeR', 'limma', 'DESeq2', 'distinct'), drop=FALSE]            
-  }                                                                                                                                
+    data <- data[, !colnames(data) %in% c('gene', 'type', 'total', 'metadata', 'edgeR', 'limma', 'DESeq2', 'distinct'), drop=FALSE] }
   if (scale=='row') data <- t(scale(t(data))) else if (scale=='all') data <- scale_all(data)                                       
-  # convert to long format                                                                                                         
-  df.long <- reshape2::melt(as.matrix(data))                                                                                       
-  colnames(df.long) <- c('Genes', 'Samples', 'Value')                                                                              
+  # convert to long format                                 
+  df.long <- reshape2::melt(as.matrix(data))
+  colnames(df.long) <- c('Genes', 'Samples', 'Value')
   # The levels in melted data frame has the same order (left to right) with row order (top to bottom) in original data frame       before melted.                                                                                                                     
   # Colours map to variables in original data frame before melted.                                                                 
   # Possible: the colour order (left to right) matches with the row order (top to bottom) in original data frame before melted,    but the coloured lined is plotted in the order of levels (left to right) in melted data frame.                                     

@@ -1,7 +1,7 @@
 Package: spatialHeatmap
 Type: Package
 Title: spatialHeatmap
-Version: 1.1.6
+Version: 1.99.0
 Authors@R: c(
   person(given="Jianhai", family="Zhang", role=c("aut", "trl", "cre"), email="jianhai.zhang@email.ucr.edu", comment=""),
   person(given="Jordan", family="Hayes", role="aut", email="jhayes@ucr.edu", comment=""),
@@ -20,13 +20,13 @@ biocViews: Visualization, Microarray, Sequencing, GeneExpression,
         CellBiology, GeneTarget
 VignetteBuilder: knitr
 Suggests: knitr, rmarkdown, BiocStyle, BiocSingular, RUnit, BiocGenerics,
-        ExpressionAtlas, DT, reshape2, Biobase, GEOquery, shinyWidgets, shinyjs, htmltools, shinyBS, sortable,
+        ExpressionAtlas, DT, Biobase, GEOquery, shinyWidgets, shinyjs, htmltools, shinyBS, sortable,
         scater, scran
-Depends:
+Depends: R (>= 3.5.0)
 Imports: av, BiocFileCache, data.table, DESeq2, distinct, edgeR, WGCNA, flashClust, htmlwidgets, genefilter,
         ggplot2, ggdendro, grImport, grid, gridExtra, gplots, igraph, HDF5Array, limma, methods, magick,
         rsvg, shiny, dynamicTreeCut, grDevices, graphics, ggplotify, parallel, 
-        plotly, rols, rappdirs, stats, SummarizedExperiment, shinydashboard, S4Vectors, 
+        plotly, rols, rappdirs, reshape2, stats, SummarizedExperiment, shinydashboard, S4Vectors, 
         utils, visNetwork, UpSetR, xml2, yaml
 BugReports: https://github.com/jianhaizhang/spatialHeatmap/issues
 URL: https://github.com/jianhaizhang/spatialHeatmap

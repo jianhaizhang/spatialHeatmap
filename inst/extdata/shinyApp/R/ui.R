@@ -278,7 +278,7 @@ shm_ui <- function(id, data.ui, search.ui) {
        tags$div(title="Overlay templates of raster images with spatial heatmap images.",
          splitLayout(cellWidths=c('1%', '10%', '1%', '10%', '1%', '10%'), '', 
            selectInput(ns('tmp'), label='Overlay', choices=c('Yes', 'No'), selected='Yes'), '',
-           selectInput(ns('coal'), label='Charcoal', choices=c('Yes', 'No'), selected='No'), '',
+           selectInput(ns('coal'), label='Black-white', choices=c('Yes', 'No'), selected='No'), '',
            div(style='margin-top:25px',
            dropdownButton(inputId=ns('dpwAlpOver'), label='Alpha', circle=FALSE, icon=NULL, status='primary', inline=FALSE, width=300,
            fluidRow(splitLayout(cellWidths=c('1%', '60%', '35%'), '',

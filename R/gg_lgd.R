@@ -28,7 +28,7 @@
 #' @references 
 #' H. Wickham. ggplot2: Elegant Graphics for Data Analysis. Springer-Verlag New York, 2016.
 
-#' @importFrom ggplot2 theme layer_data scale_fill_manual unit element_text guide_legend
+#' @importFrom ggplot2 theme layer_data scale_fill_manual unit element_text guide_legend ggplot_build
 
 gg_lgd <- function(gg.all, size.key=NULL, size.text.key=8, angle.text.key=NULL, position.text.key=NULL, legend.value.vdo=NULL, sub.title.size=NULL, row=NULL, col=NULL, label=FALSE, label.size=3, label.angle=0, hjust=0, vjust=0, opacity=1, key=TRUE, sam.dat, ft.trans=NULL, aspect.ratio = NULL) {
 

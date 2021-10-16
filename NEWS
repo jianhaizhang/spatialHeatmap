@@ -1,3 +1,8 @@
+Changes in version 1.99.0 (2021-10-14)
+ + Implemented overlaying feature: overlay template images in raster format with SHMs, where charcoal and transparency options are provided.
+ + Implemented Spatial Single Cell functionality: co-visualize single cells and bulk tissues by placing single-cell embedding plots (PCA, tSNE, UMAP) and SHMs side by side, cell cluster assignments are defined in the app or provided by users, in dimensionality plots shapes are not restricted to 6, etc.
+ + Spatial enrichment was synced to R command line.
+ + Implemented Sigle and Multiple search mode for gene IDs.
 
 Changes in version 1.1.6 (2021-05-17)
  + The spatial heatmaps are able to maitain outline (stroke) widths defined in aSVG. The stroke widths can be updated with "update_feature".

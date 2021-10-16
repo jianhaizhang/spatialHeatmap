@@ -26,7 +26,10 @@ path_br_all <- function(node.parent) {
 
         nod0.chl <- xml_children(nod0); nas <- xml_name(nod0.chl)
         if ('g' %in% nas) return(paste0('Nested group detected in ', xml_attr(nod0, 'id'), '!'))
-        if ('use' %in% nas) return(paste0('The "use" element is detected in group', xml_attr(nod0, 'id'), '!'))
+        if ('use' %in% nas) {
+          cat('\n');print(paste0("Warning: The 'use' element is detected in group ", xml_attr(nod0, 'id'), ", and is removed!")); cat('\n')
+          xml_remove(nod0.chl[nas=='use'])
+        }
         for (j in seq_along(nod0.chl)) {
 
           nod1 <- nod0.chl[[j]]; if (xml_name(nod1)=='a') next

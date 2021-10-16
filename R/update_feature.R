@@ -18,9 +18,20 @@
 #' \donttest{
 #' # Make an empty directory "~/test" if not exist.
 #' if (!dir.exists('~/test')) dir.create('~/test')
-#' # Query the remote EBI aSVG repo.
+#' # Remote aSVG repos.
+#' data(aSVG.remote.repo)
+#' tmp.dir <- normalizePath(tempdir(check=TRUE), winslash="/", mustWork=FALSE)
+#' tmp.dir.ebi <- paste0(tmp, '/ebi.zip')
+#' tmp.dir.shm <- paste0(tmp, '/shm.zip')
+#' # Download the remote aSVG repos as zip files. According to Bioconductor's 
+#' # requirements, downloadings are not allowed inside functions, so the repos are 
+#' # downloaded before calling "return_feature".  
+#' download.file(aSVG.remote.repo$ebi, tmp.dir.ebi)
+#' download.file(aSVG.remote.repo$shm, tmp.dir.shm)
+#' remote <- list(tmp.dir.ebi, tmp.dir.shm)
+#' # Query the remote aSVG repos.
 #' feature.df <- return_feature(feature=c('heart', 'brain'), species=c('gallus'), dir='~/test',
-#' match.only=TRUE, remote=TRUE)
+#' match.only=TRUE, remote=remote)
 #' feature.df
 #'
 #' # New features, stroke widths, colors.

@@ -233,9 +233,21 @@ pOA=c(0.01, 5), CV=c(0.2, 100), dir=NULL)
 \donttest{
 # Make an empty directory "tmp.dir" if not exist.
 tmp.dir <- paste0(normalizePath(tempdir(check=TRUE), winslash="/", mustWork=FALSE), '/shm')
-# Query aSVGs from remote.
+# Remote aSVG repos.
+data(aSVG.remote.repo)
+tmp.dir <- normalizePath(tempdir(check=TRUE), winslash="/", mustWork=FALSE)
+tmp.dir.ebi <- paste0(tmp, '/ebi.zip')
+tmp.dir.shm <- paste0(tmp, '/shm.zip')
+# Download the remote aSVG repos as zip files. According to Bioconductor's 
+# requirements, downloadings are not allowed inside functions, so the repos are 
+# downloaded before calling "return_feature".  
+download.file(aSVG.remote.repo$ebi, tmp.dir.ebi)
+download.file(aSVG.remote.repo$shm, tmp.dir.shm)
+remote <- list(tmp.dir.ebi, tmp.dir.shm)
+
+# Query aSVGs from remote repos.
 feature.df <- return_feature(feature=c('heart', 'brain'), species=c('gallus'), dir=tmp.dir, 
-match.only=FALSE, remote=TRUE)
+match.only=FALSE, remote=remote)
 feature.df
 # The path of matching aSVG.
 svg.chk <- paste0(tmp.dir, '/gallus_gallus.svg')
@@ -300,9 +312,21 @@ preserve.scale=TRUE)
 tmp.dir <- paste0(normalizePath(tempdir(check=TRUE), winslash="/", mustWork=FALSE), '/shm')
 # Make a copy of "gallus_gallus.svg".
 file.copy(from=svg.chk, to=tmp.dir, overwrite=FALSE)
-# Query "gallus_gallus.svg".
+# Remote aSVG repos.
+data(aSVG.remote.repo)
+tmp.dir <- normalizePath(tempdir(check=TRUE), winslash="/", mustWork=FALSE)
+tmp.dir.ebi <- paste0(tmp, '/ebi.zip')
+tmp.dir.shm <- paste0(tmp, '/shm.zip')
+# Download the remote aSVG repos as zip files. According to Bioconductor's 
+# requirements, downloadings are not allowed inside functions, so the repos are 
+# downloaded before calling "return_feature".  
+download.file(aSVG.remote.repo$ebi, tmp.dir.ebi)
+download.file(aSVG.remote.repo$shm, tmp.dir.shm)
+remote <- list(tmp.dir.ebi, tmp.dir.shm)
+
+# Query "gallus_gallus.svg" in remote repos.
 feature.df <- return_feature(feature=c('heart', 'brain'), species=c('gallus'), dir=tmp.dir, 
-match.only=TRUE, remote=TRUE)
+match.only=TRUE, remote=remote)
 feature.df
 
 # New features.

@@ -8,7 +8,7 @@ return_feature(
   feature,
   species,
   keywords.any = TRUE,
-  remote = TRUE,
+  remote = NULL,
   dir = NULL,
   svg.path = NULL,
   desc = FALSE,
@@ -51,9 +51,20 @@ This function parses a collection of aSVG files and returns those containing tar
 \donttest{
 # Make an empty directory "~/test" if not exist.
 if (!dir.exists('~/test')) dir.create('~/test')
-# Query the remote EBI aSVG repo.
+# Remote aSVG repos.
+data(aSVG.remote.repo)
+tmp.dir <- normalizePath(tempdir(check=TRUE), winslash="/", mustWork=FALSE)
+tmp.dir.ebi <- paste0(tmp.dir, '/ebi.zip')
+tmp.dir.shm <- paste0(tmp.dir, '/shm.zip')
+# Download the remote aSVG repos as zip files. According to Bioconductor's 
+# requirements, downloadings are not allowed inside functions, so the repos are 
+# downloaded before calling "return_feature".  
+download.file(aSVG.remote.repo$ebi, tmp.dir.ebi)
+download.file(aSVG.remote.repo$shm, tmp.dir.shm)
+remote <- list(tmp.dir.ebi, tmp.dir.shm)
+# Query the remote aSVG repos.
 feature.df <- return_feature(feature=c('heart', 'brain'), species=c('gallus'), dir='~/test',
-match.only=FALSE, remote=TRUE)
+match.only=FALSE, remote=remote)
 feature.df
 # The path of downloaded aSVG.
 svg.chk <- '~/test/gallus_gallus.svg'
@@ -66,7 +77,7 @@ svg.dir <- system.file("extdata/shinyApp/example", package="spatialHeatmap")
 # Query the local aSVG repo. The "species" argument is set NULL on purpose so as to illustrate
 # how to select the target aSVG among all matching aSVGs.
 feature.df <- return_feature(feature=c('heart', 'brain'), species=NULL, dir=svg.dir, 
-match.only=FALSE, remote=FALSE)
+match.only=FALSE, remote=NULL)
 # All matching aSVGs.
 unique(feature.df$SVG)
 # Select the target aSVG of chicken.

@@ -179,7 +179,9 @@ adj_mod <- function(data, type='signed', power=if (type=='distance') 1 else 6, a
   if (!is.null(dir)) { 
   
     dir <- normalizePath(dir, winslash="/", mustWork=FALSE)
-    if (!dir.exists(dir)) stop(paste0(dir, ' does not exist!'))
+    if (!dir.exists(dir)) {
+      msg <- paste0(dir, ' does not exist!'); stop(msg)
+    }
     path <- paste0(dir, "/customComputedData/"); if (!dir.exists(path)) dir.create(path)
     write.table(adj, paste0(path, "adj.txt"), sep="\t", row.names=TRUE, col.names=TRUE)
     write.table(mcol, paste0(path, "mod.txt"), sep="\t", row.names=TRUE, col.names=TRUE)

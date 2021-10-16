@@ -10,13 +10,22 @@
 #' @return An upset plot or matrix plot, which displays overlap of spatially-enriched genes across methods. 
 
 #' @examples
+#'
+#' data(lis.deg.up.down)
+#' # Overlap of up-regulated brain-specific genes across methods.
+#' deg_ovl(lis.deg.up.down, type='up', plot='upset')
+#' deg_ovl(lis.deg.up.down, type='up', plot='matrix')
+#' # Overlap of down-regulated brain-specific genes across methods.
+#' deg_ovl(lis.deg.up.down, type='down', plot='upset')
+#' deg_ovl(lis.deg.up.down, type='down', plot='matrix')
 
-#' # See examples in the function spatial_enrich.
+#' # See detailed examples in the function spatial_enrich.
 
 
 #' @author Jianhai Zhang \email{jzhan067@@ucr.edu; zhang.jianhai@@hotmail.com} \cr Dr. Thomas Girke \email{thomas.girke@@ucr.edu}
 
 #' @references
+#' Cardoso-Moreira, Margarida, Jean Halbert, Delphine Valloton, Britta Velten, Chunyan Chen, Yi Shao, Angélica Liechti, et al. 2019. “Gene Expression Across Mammalian Organ Development.” Nature 571 (7766): 505–9
 #' Nils Gehlenborg (2019). UpSetR: A More Scalable Alternative to Venn and Euler Diagrams for Visualizing Intersecting Sets. R package version 1.4.0. https://CRAN.R-project.org/package=UpSetR
  
 #' @seealso \code{spatial_enrich}
@@ -56,6 +65,7 @@ deg_ovl <- function(lis.up.down, type='up', plot='upset', order.by="degree", nin
 #' @importFrom ggplot2 ggplot aes geom_tile scale_fill_gradient theme_minimal theme element_text coord_fixed geom_text element_blank
  
 deg_ovl_mat <- function(deg.lis) {
+  Var1 <- Var2 <- value <- NULL
   mat <- vapply(names(deg.lis), function(x) vapply(names(deg.lis), function(y) length(intersect(deg.lis[[x]], deg.lis[[y]])), numeric(1)), numeric(length(deg.lis)))
   mel <- reshape2::melt(mat)
   g <- ggplot(data=mel, aes(x=Var1, y=Var2, fill=value))+geom_tile(colour="white")+scale_fill_gradient(low="lightcyan3", high="darkorange")+theme_minimal()+theme(axis.text=element_text(angle=45, vjust=1, size=10, hjust=1))+coord_fixed()+geom_text(aes(Var2, Var1, label=value), color="black", size=4)+theme(axis.title.x=element_blank(), axis.title.y=element_blank(), panel.grid.major=element_blank(), panel.border=element_blank(), panel.background=element_blank(), axis.ticks=element_blank()); return(g)

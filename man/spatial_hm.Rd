@@ -10,6 +10,9 @@ spatial_hm(
   sam.factor = NULL,
   con.factor = NULL,
   ID,
+  tmp.path = NULL,
+  charcoal = FALSE,
+  alpha.overlay = 1,
   lay.shm = "gene",
   ncol = 2,
   col.com = c("yellow", "orange", "red"),
@@ -64,6 +67,7 @@ spatial_hm(
   res = 500,
   interval = 1,
   framerate = 1,
+  bar.width.vdo = 0.1,
   legend.value.vdo = NULL,
   ...
 )
@@ -79,6 +83,12 @@ spatial_hm(
 
 \item{ID}{A character vector of assyed items (\emph{e.g.} genes, proteins) whose abudance values are used to color the aSVG.}
 
+\item{tmp.path}{The path of the template image in the form of raster/bitmap. The template is used to create aSVGs and can be overlaid with spatial heatmaps.}
+
+\item{charcoal}{Logical, if \code{TRUE} the template image will be turned black and white.}
+
+\item{alpha.overlay}{The opacity of top-layer spatial heatmaps if a template image is added at the bottom layer. The default is 1.}
+
 \item{lay.shm}{One of "gene", "con", or "none". If "gene", spatial heatmaps are organized by genes proteins, or metabolites, \emph{etc.} and conditions are sorted whithin each gene. If "con", spatial heatmaps are organized by the conditions/treatments applied to experiments, and genes are sorted winthin each condition. If "none", spaital heatmaps are organized by the gene order in \code{ID} and conditions follow the order they appear in \code{data}.}
 
 \item{ncol}{An integer of the number of columns to display the spatial heatmaps, which does not include the legend plot.}
@@ -87,7 +97,7 @@ spatial_hm(
 
 \item{col.bar}{One of "selected" or "all", the former uses values of \code{ID} to build the color scale while the latter uses all values from the data. The default is "selected".}
 
-\item{sig.thr}{A two-numeric vector of the signal thresholds (the range of the color bar). The first and the second element will be the minmun and maximum threshold in the color bar respectively. Signals/values above the max or below min will be assigned the same color as the max or min respectively. The default is \code{c(NA, NA)} and the min and max signals in the data will be used. If one needs to change either max or min, the other should be \code{NA}.}
+\item{sig.thr}{A two-numeric vector of the signal thresholds (the range of the color bar). The first and the second element will be the minmun and maximum threshold in the color bar respectively. Signals/values above the max or below min will be assigned the same color as the max or min respectively. The default is \code{c(NA, NA)} and the min and max signals in the data will be used. If one needs to change only max or min, the other should be \code{NA}.}
 
 \item{cores}{The number of CPU cores for parallelization, relevant for aSVG files with size larger than 5M. The default is NA, and the number of used cores is 1 or 2 depending on the availability.}
 
@@ -191,12 +201,12 @@ placed in an adjacent directory.}
 
 \item{framerate}{An integer of video framerate in frames per seconds. Default is 1. Larger values make the video smoother.}
 
+\item{bar.width.vdo}{The color bar width in video, between 0 and 1.}
+
 \item{legend.value.vdo}{Logical TRUE or FALSE. If TRUE, the numeric values of matching spatial features are added to video legend. The default is NULL.}
 
 \item{...}{additional element specifications not part of base ggplot2. In general,
 these should also be defined in the \verb{element tree} argument.}
-
-\item{bar.width.vdo}{The color bar width in video, between 0 and 1.}
 }
 \value{
 An image of spatial heatmap(s), a three-component list of the spatial heatmap(s) in \code{ggplot} format, a data frame of mapping between assayed samples and aSVG features, and a data frame of feature attributes.
@@ -331,6 +341,28 @@ preserve.scale=TRUE)
 # Multiple development stages can also be arranged in a single aSVG image, but the 
 # samples, stages, and conditions should be formatted in different ways. See the vignette
 # for details by running "browseVignette('spatialHeatmap')" in R. 
+# Overlay real images with spatial heatmaps.
+
+# The first real image used as a template to create an aSVG. 
+tmp.pa1 <- system.file('extdata/shinyApp/example/overlay_shm1.png',
+package='spatialHeatmap')
+# The first aSVG created with the first real image. 
+svg.pa1 <- system.file('extdata/shinyApp/example/overlay_shm1.svg',
+package='spatialHeatmap')
+# The second real image used as a template to create an aSVG. 
+tmp.pa2 <- system.file('extdata/shinyApp/example/overlay_shm2.png',
+package='spatialHeatmap')
+# The second aSVG created with the second real image. 
+svg.pa2 <- system.file('extdata/shinyApp/example/overlay_shm2.svg',
+package='spatialHeatmap')
+
+# The data table.
+dat.overlay <- read_fr(system.file('extdata/shinyApp/example/dat_overlay.txt',
+package='spatialHeatmap'))
+
+# Plot spatial heatmaps on top of real images.
+spatial_hm(svg.path=c(svg.pa1, svg.pa2), data=dat.overlay, tmp.path=c(tmp.pa1, tmp.pa2),
+charcoal=FALSE, ID=c('gene1'), alpha.overlay=0.5)
 }
 \references{
 https://www.gimp.org/tutorials/ \cr https://inkscape.org/en/doc/tutorials/advanced/tutorial-advanced.en.html \cr http://www.microugly.com/inkscape-quickguide/

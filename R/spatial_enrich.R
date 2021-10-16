@@ -2,7 +2,7 @@
 #'
 #' This functionality is an extension of the spatial heatmap. It identifies spatial feature-specifically expressed genes and thus enables the spatial heatmap to visualize feature-specific profiles. The spatial features include cellular compartments, tissues, organs, \emph{etc}. The function compares the target feature with all other selected features in a pairwise manner. The genes significantly up- or down-regulated in the target feature across all pairwise comparisons are denoted final target feature-specifcally expressed genes. The underlying methods include edgeR (Robinson et al, 2010), limma (Ritchie et al, 2015), DESeq2 (Love et al, 2014), distinct (Tiberi et al, 2020). The feature-specific genes are first detected with each method and can be summarized across methods. \cr In addition to feature-specific genes, this function is also able to identify genes specifically expressed in certain condition or in composite factor. The latter is a combination of multiple expermental factors. \code{E.g.} the spatiotemporal factor is a combination of feature and time points.
 
-#' @param se A \code{SummarizedExperiment} object, which is returned by \code{sub_data}. The \code{colData} slot is required to contain at least two columns of "features" and "factors" respectively. The \code{rowData} slot can optionally contain a column of discriptions of each gene and the column name should be \code{metadata}. 
+#' @param data A \code{SummarizedExperiment} object, which is returned by \code{sub_data}. The \code{colData} slot is required to contain at least two columns of "features" and "factors" respectively. The \code{rowData} slot can optionally contain a column of discriptions of each gene and the column name should be \code{metadata}. 
 #' @param methods One or more of \code{edgeR}, \code{limma}, \code{DESeq2}, \code{distinct}. The default is \code{c('edgeR', 'limma')}.
 #' @param norm The normalization method (\code{TMM}, \code{RLE}, \code{upperquartile}, \code{none}) in edgeR. The default is \code{TMM}. Details: https://www.rdocumentation.org/packages/edgeR/versions/3.14.0/topics/calcNormFactors
 
@@ -25,7 +25,7 @@
 #' ## included in this package. The complete raw count data are downloaded using the R package
 #' ## ExpressionAtlas (Keays 2019) with the accession number "E-MTAB-6769".   
 #'
-#' library(SummarizedExperiment); library(spatialHeatmap)
+#' library(SummarizedExperiment)
 #' 
 #' ## Set up toy data.
 #' 

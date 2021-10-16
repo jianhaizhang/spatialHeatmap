@@ -3,8 +3,11 @@
 #' @param gene The gene expession matrix, where rows are genes and columns are tissue/conditions.
 #' @param geneV The gene expression values used to construct the colour bar.
 #' @param con.na Logical, TRUE or FALSE. Default is TRUE, meaning conditions are available.
-#' @param coord The coordidates extracted from the SVG file.
-#' @param ID All gene ids selected after the App is launched.
+#' @param coord The coordidates extracted from the SVG file..
+#' @param tmp.path The path of the template image in the form of raster/bitmap. The template is used to create aSVGs and can be overlaid with spatial heatmaps.
+#' @param charcoal Logical, if \code{TRUE} the template image will be turned black and white.
+#' @param alpha.overlay The opacity of top-layer spatial heatmaps if a template image is added at the bottom layer. The default is 1. 
+#' @param ID All gene ids selected after the App is launched. 
 #' @param cols All the color codes used to construct the color bar.
 #' @param tis.path All the tissues/paths extracted from the SVG.
 #' @param lis.rematch A list for rematching features. In each slot, the slot name is an existing feature in the data, and the slot contains a vector of features in aSVG that will be rematched to the feature in the slot name. \emph{E.g.} \code{list(featureData1 = c('featureSVG1', 'featureSVG2'), featureData2 = c('featureSVG3'))}, where features \code{c('featureSVG1', 'featureSVG2')}, \code{c('featureSVG3')} in the aSVG are rematched to features \code{'featureData1'}, \code{'featureData2'} in data, respectively. 
@@ -34,7 +37,7 @@
 #' @references
 #' H. Wickham. ggplot2: Elegant Graphics for Data Analysis. Springer-Verlag New York, 2016. \cr R Core Team (2018). R: A language and environment for statistical computing. R Foundation for Statistical Computing, Vienna, Austria. RL https://www.R-project.org/ \cr Mustroph, Angelika, M Eugenia Zanetti, Charles J H Jang, Hans E Holtan, Peter P Repetti, David W Galbraith, Thomas Girke, and Julia Bailey-Serres. 2009. “Profiling Translatomes of Discrete Cell Populations Resolves Altered Cellular Priorities During Hypoxia in Arabidopsis.” Proc Natl Acad Sci U S A 106 (44): 18843–8
 
-#' @importFrom ggplot2 ggplot aes theme element_blank margin element_rect scale_y_continuous scale_x_continuous ggplotGrob geom_polygon scale_fill_manual ggtitle element_text labs guide_legend alpha coord_fixed annotation_raster
+#' @importFrom ggplot2 ggplot aes theme element_blank margin element_rect scale_y_continuous scale_x_continuous expansion ggplotGrob geom_polygon scale_fill_manual ggtitle element_text labs guide_legend alpha coord_fixed annotation_raster theme_void
 #' @importFrom magick image_read image_charcoal
 #' @importFrom parallel detectCores mclapply
 
@@ -189,7 +192,7 @@ gg_shm <- function(gene, con.na=TRUE, geneV, coord, tmp.path=NULL, charcoal=FALS
   cons <- gsub("(.*)(__)(.*)", "\\3", cname)
   sam.uni <- unique(gsub("(.*)(__)(.*)", "\\1", cname)); ft.trans <- make.names(ft.trans)
   # Template image.
-  tmp.g <- NULL; if (is.character(tmp.path)) if (file.exists(tmp.path)) {
+  tmp.g <- NULL; if (is.character(tmp.path)) if (all(file.exists(tmp.path))) {
     tmp <- image_read(tmp.path)
     if (charcoal==TRUE) tmp <- image_charcoal(tmp)
     tmp.g <- annotation_raster(tmp, -Inf, Inf, -Inf, Inf)
