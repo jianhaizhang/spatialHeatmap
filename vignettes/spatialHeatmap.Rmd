@@ -1623,7 +1623,7 @@ along with embedded user instructions.
 The Shiny App of `spatialHeatmap` can be launched from an R session with the following function call. 
 
 ```{r eval=FALSE, echo=TRUE, warnings=FALSE}
-shiny_all()
+shiny_shm()
 ```   
 
 The dashboard panels of the Shiny App are organized as follows:
