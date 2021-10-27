@@ -1,3 +1,4 @@
+# The Shiny modules (e.g. search_server) are temporarily placed in this file only for debugging purpose, and will be moved to independent files in the R folder after the App development is completed.
 
 options(stringsAsFactors=FALSE) 
 
