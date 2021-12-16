@@ -6,6 +6,7 @@
 \usage{
 adj_mod(
   data,
+  assay.na = NULL,
   type = "signed",
   power = if (type == "distance") 1 else 6,
   arg.adj = list(),
@@ -19,6 +20,8 @@ adj_mod(
 }
 \arguments{
 \item{data}{The subsetted data matrix returned by the function \code{\link{submatrix}}, where rows are assayed items and columns are samples/conditions.}
+
+\item{assay.na}{Applicable when \code{data} is "SummarizedExperiment" or "SingleCellExperiment", where multiple assays could be stored. The name of target assay to use. The default is \code{NULL}.}
 
 \item{type}{The network type, one of "unsigned", "signed", "signed hybrid", "distance". Correlation and distance are transformed as follows: for \code{type="unsigned"}, \code{adjacency=|cor|^power}; for \code{type="signed"}, \code{adjacency=(0.5 * (1+cor) )^power}; for \code{type="signed hybrid"}, if cor>0 \code{adjacency=cor^power}, otherwise adjacency=0; and for \code{type="distance"}, \code{adjacency=(1-(dist/max(dist))^2)^power}. Refer to \pkg{WGCNA} (Langfelder and Horvath 2008) for more details.}
 

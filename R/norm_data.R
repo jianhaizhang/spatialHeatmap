@@ -65,21 +65,25 @@
 #' \cr Cardoso-Moreira, Margarida, Jean Halbert, Delphine Valloton, Britta Velten, Chunyan Chen, Yi Shao, Angélica Liechti, et al. 2019. “Gene Expression Across Mammalian Organ Development.” Nature 571 (7766): 505–9
 
 #' @export norm_data
-#' @importFrom SummarizedExperiment assay
+#' @importFrom SummarizedExperiment assays
 #' @importFrom edgeR DGEList calcNormFactors cpm
 #' @importFrom DESeq2 DESeqDataSetFromMatrix estimateSizeFactors counts varianceStabilizingTransformation rlog
 
 
-norm_data <- function(data, norm.fun='CNF', parameter.list=NULL, log2.trans=TRUE, data.trans) {
+norm_data <- function(data, assay.na=NULL, norm.fun='CNF', parameter.list=NULL, log2.trans=TRUE, data.trans) {
   calls <- names(vapply(match.call(), deparse, character(1))[-1]) 
   if("data.trans" %in% calls) { 
     if (data.trans=='log2') log2.trans <- TRUE else log2.trans <- FALSE
     warning('"data.trans" is deprecated and replaced by "log2.trans"! \n') 
   }
   if (is(data, 'data.frame')|is(data, 'matrix')|is(data, 'DFrame')|is(data, 'dgCMatrix')) {
-    dat.lis <- check_data(data=data, usage='norm'); expr <- dat.lis$dat; ann <- dat.lis$row.meta
-  } else if (is(data, 'SummarizedExperiment')) { expr <- SummarizedExperiment::assay(data) } else {
-stop('Accepted data classes are "data.frame", "matrix", "DFrame", "dgCMatrix", or "SummarizedExperiment", except that "spatial_hm" also accepts a "vector".') }
+    dat.lis <- check_data(data=data, assay.na=assay.na, usage='norm'); expr <- dat.lis$dat; ann <- dat.lis$row.meta
+  } else if (is(data, 'SummarizedExperiment') | is(data, 'SingleCellExperiment')) {
+    if (is.null(assay.na)) {
+      if (length(assays(data)) > 1) stop("Please specify which assay to use by assigning the assay name to 'assay.na'!") else if (length(assays(data)) == 1) assay.na <- 1
+    }
+    expr <- SummarizedExperiment::assays(data)[[assay.na]] 
+  } else { stop('Accepted data classes are "data.frame", "matrix", "DFrame", "dgCMatrix", "SummarizedExperiment", or "SingleCellExperiment", except that "spatial_hm" also accepts a "vector".') }
   
   if (is.null(norm.fun)) norm.fun <- 'none'
   if (!norm.fun %in% c("CNF", "ESF", "VST", "rlog", 'none')) stop('"norm.fun" should be one of "CNF", "ESF", "VST", "rlog", or "none"!')
@@ -140,7 +144,7 @@ stop('Accepted data classes are "data.frame", "matrix", "DFrame", "dgCMatrix", o
 
   } else if (min(expr)<0 | !all(round(expr)==expr)) stop('Nornalization only applies to data matrix of all non-negative integers! \n')
   if (log2.trans == FALSE) expr <- round(expr)
-  if (is(data, 'data.frame')|is(data, 'matrix')) { return(cbind(expr, ann)) } else if (is(data, 'SummarizedExperiment')) { SummarizedExperiment::assay(data) <- expr; return(data) }
+  if (is(data, 'data.frame')|is(data, 'matrix')|is(data, 'DFrame')|is(data, 'dgCMatrix')) { return(cbind(expr, ann)) } else if (is(data, 'SummarizedExperiment') | is(data, 'SingleCellExperiment')) { SummarizedExperiment::assays(data)[[assay.na]] <- expr; return(data) }
 
 } 
 

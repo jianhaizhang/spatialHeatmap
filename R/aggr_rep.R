@@ -62,7 +62,7 @@
 #' se.aggr.chk <- aggr_rep(data=se.chk, sam.factor='organism_part', con.factor='age', aggr='mean')
 #' assay(se.aggr.chk)[1:3, 1:3]
 
-#' @author Jianhai Zhang \email{jzhan067@@ucr.edu; zhang.jianhai@@hotmail.com} \cr Dr. Thomas Girke \email{thomas.girke@@ucr.edu}
+#' @author Jianhai Zhang \email{jzhan067@@ucr.edu} \cr Dr. Thomas Girke \email{thomas.girke@@ucr.edu}
 
 #' @references
 #' SummarizedExperiment: SummarizedExperiment container. R package version 1.10.1 \cr R Core Team (2018). R: A language and environment for statistical computing. R Foundation for Statistical Computing, Vienna, Austria. URL https://www.R-project.org/
@@ -70,15 +70,18 @@
 #' \cr Love, Michael I., Wolfgang Huber, and Simon Anders. 2014. "Moderated Estimation of Fold Change and Dispersion for RNA-Seq Data with DESeq2." Genome Biology 15 (12): 550. doi:10.1186/s13059-014-0550-8
 #' \cr McCarthy, Davis J., Chen, Yunshun, Smyth, and Gordon K. 2012. "Differential Expression Analysis of Multifactor RNA-Seq Experiments with Respect to Biological Variation." Nucleic Acids Research 40 (10): 4288–97
 #' \cr Cardoso-Moreira, Margarida, Jean Halbert, Delphine Valloton, Britta Velten, Chunyan Chen, Yi Shao, Angélica Liechti, et al. 2019. “Gene Expression Across Mammalian Organ Development.” Nature 571 (7766): 505–9
+#' \cr Amezquita R, Lun A, Becht E, Carey V, Carpp L, Geistlinger L, Marini F, Rue-Albrecht K, Risso D, Soneson C, Waldron L, Pages H, Smith M, Huber W, Morgan M, Gottardo R, Hicks S (2020). “Orchestrating single-cell analysis with Bioconductor.” Nature Methods, 17, 137–145. https://www.nature.com/articles/s41592-019-0654-x
 
 #' @export aggr_rep
-#' @importFrom SummarizedExperiment assay rowData colData SummarizedExperiment
+#' @importFrom SummarizedExperiment assays rowData colData SummarizedExperiment
+#' @importFrom SingleCellExperiment SingleCellExperiment
 
-aggr_rep <- function(data, sam.factor, con.factor, aggr='mean') {
+
+aggr_rep <- function(data, assay.na=NULL, sam.factor, con.factor, aggr='mean') {
 
   options(stringsAsFactors=FALSE)
-  # Process data.
-  dat.lis <- check_data(data=data, sam.factor=sam.factor, con.factor=con.factor, usage='aggr')
+  # Process data. "dgCMatrix" is converted to "matrix".
+  dat.lis <- check_data(data=data, assay.na=assay.na, sam.factor=sam.factor, con.factor=con.factor, usage='aggr')
   mat <- dat.lis$dat; fct.cna <- dat.lis$fct.cna; row.meta <- dat.lis$row.meta; col.meta <- dat.lis$col.meta
 
   # To keep colnames, "X" should be a character, not a factor.
@@ -89,14 +92,20 @@ aggr_rep <- function(data, sam.factor, con.factor, aggr='mean') {
     rownames(mat) <- rownames(data)
 
   }
-  
-  if (is(data, 'data.frame')|is(data, 'matrix')|is(data, 'dgCMatrix')) { return(cbind(mat, row.meta)) } else if (is(data, 'SummarizedExperiment')) { 
+  # sce is 'SummarizedExperiment', but not vice versa.
+  if (is(data, 'data.frame') | is(data, 'matrix') | is(data, 'dgCMatrix')) { return(cbind(mat, row.meta)) } else if (is(data, 'SummarizedExperiment') | is(data, 'SingleCellExperiment')) { 
   
     col.meta <- col.meta[!duplicated(fct.cna), ]; rownames(col.meta) <- NULL
-    data <- SummarizedExperiment(assays=list(expr=mat), rowData=rowData(data), colData=col.meta); return(data)
-
-  }
-
+    
+    # if (is(data, 'SingleCellExperiment')) {
+      data <- sce_sub(sce=data, assay.na=assay.na, mat=mat, cna=colnames(mat), col.idx=!duplicated(fct.cna), cdat=col.meta)
+      if (is.null(assayNames(data))) SummarizedExperiment::assayNames(expr)[1] <- 'expr'; return(data)
+      #data <- data[, !duplicated(fct.cna)]; colnames(data) <- colnames(mat)
+      #assays(data)[[assay.na]] <- mat
+      # Erase colnames in assay.
+      #colData(data) <- as(col.meta, 'DataFrame'); colnames(data) <- colnames(mat); return(data)
+    # } else { data <- SummarizedExperiment(assays=list(expr=mat), rowData=rowData(data), colData=col.meta); return(data) }
+      
+    }
 }
-
 

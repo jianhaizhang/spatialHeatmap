@@ -12,6 +12,7 @@
 #' @param tis.path All the tissues/paths extracted from the SVG.
 #' @param lis.rematch A list for rematching features. In each slot, the slot name is an existing feature in the data, and the slot contains a vector of features in aSVG that will be rematched to the feature in the slot name. \emph{E.g.} \code{list(featureData1 = c('featureSVG1', 'featureSVG2'), featureData2 = c('featureSVG3'))}, where features \code{c('featureSVG1', 'featureSVG2')}, \code{c('featureSVG3')} in the aSVG are rematched to features \code{'featureData1'}, \code{'featureData2'} in data, respectively. 
 #' @param ft.trans A character vector of tissue/spatial feature identifiers that will be set transparent. \emph{E.g} c("brain", "heart"). This argument is used when target features are covered by  overlapping features and the latter should be transparent.
+#' @param ft.trans.shm A character vector of aSVG feature identifiers that will be set transparent only in SHMs not legend.
 #' @param sub.title.size A numeric of the subtitle font size of each individual spatial heatmap. The default is 11.
 #' @param ft.legend One of "identical", "all", or a character vector of tissue/spatial feature identifiers from the aSVG file. The default is "identical" and all the identical/matching tissues/spatial features between the data and aSVG file are indicated in the legend plot. If "all", all tissues/spatial features in the aSVG are shown. If a vector, only the tissues/spatial features in the vector are shown.
 #' @param legend.col A character vector of colors for the keys in the legend plot. The lenght must be equal to the number of target samples shown in the legend. 
@@ -41,9 +42,9 @@
 #' @importFrom magick image_read image_charcoal
 #' @importFrom parallel detectCores mclapply
 
-gg_shm <- function(gene, con.na=TRUE, geneV, coord, tmp.path=NULL, charcoal=FALSE, alpha.overlay=1, ID, cols, tis.path, lis.rematch = NULL, ft.trans=NULL, sub.title.size, ft.legend='identical', legend.col, legend.ncol=NULL, legend.nrow=NULL, legend.position='bottom', legend.direction=NULL, legend.key.size=0.02, legend.text.size=12, legend.plot.title=NULL, legend.plot.title.size=11, line.size=0.2, line.color='grey70', aspect.ratio = 1, ...) {
+gg_shm <- function(gene, con.na=TRUE, geneV, coord, tmp.path=NULL, charcoal=FALSE, alpha.overlay=1, ID, cols, tis.path, lis.rematch = NULL, ft.trans=NULL, ft.trans.shm=NULL, sub.title.size, ft.legend='identical', legend.col, legend.ncol=NULL, legend.nrow=NULL, legend.position='bottom', legend.direction=NULL, legend.key.size=0.02, legend.text.size=12, legend.plot.title=NULL, legend.plot.title.size=11, line.size=0.2, line.color='grey70', aspect.ratio = 1, ...) {
 
-  # save(gene, con.na, geneV, coord, tmp.path, charcoal, alpha.overlay, ID, cols, tis.path, lis.rematch, ft.trans, sub.title.size, ft.legend, legend.col, legend.ncol, legend.nrow, legend.position, legend.direction, legend.key.size, legend.text.size, legend.plot.title, legend.plot.title.size, line.size, line.color, aspect.ratio, file='all.gg.shm')
+  # save(gene, con.na, geneV, coord, tmp.path, charcoal, alpha.overlay, ID, cols, tis.path, lis.rematch, ft.trans, sub.title.size, ft.legend, legend.col, legend.ncol, legend.nrow, legend.position, legend.direction, legend.key.size, legend.text.size, legend.plot.title, legend.plot.title.size, line.size, line.color, aspect.ratio, file='gg.shm.arg')
   
   # Main function to create SHMs (by conditions) and legend plot.
   g_list <- function(con, lgd=FALSE, ...) {
@@ -117,6 +118,8 @@ gg_shm <- function(gene, con.na=TRUE, geneV, coord, tmp.path=NULL, charcoal=FALS
     
     if (lgd==FALSE) { # Legend plot.
       # Make selected tissues transparent by setting their colours NA.
+      ft.trans <- unique(c(ft.trans, ft.trans.shm))
+
       if (!is.null(ft.trans)) g.col[sub('__\\d+$', '', tis.df) %in% ft.trans] <- NA # This step should not be merged with 'lgd=T'.
       ft.legend <- setdiff(ft.legend, ft.trans) 
       leg.idx <- !duplicated(tis.path) & (tis.path %in% ft.legend)
@@ -134,6 +137,7 @@ gg_shm <- function(gene, con.na=TRUE, geneV, coord, tmp.path=NULL, charcoal=FALS
        # Map legend colours to tissues.
        # Exclude transparent tissues.
        ft.legend <- setdiff(ft.legend, ft.trans) 
+
        leg.idx <- !duplicated(tis.path) & (tis.path %in% ft.legend)
        legend.col1 <- legend.col1[ft.legend]
        # Keep all colors in the original SVG.
@@ -231,8 +235,9 @@ gg_shm <- function(gene, con.na=TRUE, geneV, coord, tmp.path=NULL, charcoal=FALS
     # Spatial feature Colors. 
     gcol.lis <- lapply(g.lis, function(x) return(x$g.col))
     names(gcol.lis) <- paste0('col_', na0); gcol.lis.all <- c(gcol.lis.all, gcol.lis)
-  }; g.lgd <- g_list(con=NULL, lgd=TRUE, ...)$g
-  return(list(g.lgd = g.lgd, g.lis.all = g.lis.all, gcol.lis.all=gcol.lis.all))
+  }; g.lgd.lis <- g_list(con=NULL, lgd=TRUE, ...) 
+  g.lgd <- g.lgd.lis$g; gcol.lgd <- g.lgd.lis$g.col
+  return(list(g.lgd = g.lgd, gcol.lgd=gcol.lgd, g.lis.all = g.lis.all, gcol.lis.all=gcol.lis.all))
 }
 
 #' Convert SHMs of Ggplot to Grobs

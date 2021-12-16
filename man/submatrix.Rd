@@ -6,6 +6,7 @@
 \usage{
 submatrix(
   data,
+  assay.na = NULL,
   ann = NULL,
   ID,
   p = 0.3,
@@ -19,9 +20,11 @@ submatrix(
 )
 }
 \arguments{
-\item{data}{A \code{data.frame} or \code{SummarizedExperiment} object returned by the function \code{\link{filter_data}}, where the columns and rows of the data matrix are samples/conditions and assayed items (\emph{e.g.} genes, proteins) respectively. Since this function builds on coexpression analysis, variables of sample/condition should be at least 5. Otherwise, the results are not reliable.}
+\item{data}{A "data.frame", "SummarizedExperiment", or "SingleCellExperiment" object returned by the function \code{\link{filter_data}}, where the columns and rows of the data matrix are samples/conditions and assayed items (\emph{e.g.} genes, proteins) respectively. Since this function builds on coexpression analysis, variables of sample/condition should be at least 5. Otherwise, the results are not reliable.}
 
-\item{ann}{Applies to \code{data} argument of \code{SummarizedExperiment}. The column name corresponding to row item annotation in the \code{rowData} slot. Default is NULL.}
+\item{assay.na}{Applicable when \code{data} is "SummarizedExperiment" or "SingleCellExperiment", where multiple assays could be stored. The name of target assay to use. The default is \code{NULL}.}
+
+\item{ann}{Applicable when \code{data} is "SummarizedExperiment" or "SingleCellExperiment". The column name corresponding to row item annotation in the \code{rowData} slot. Default is NULL.}
 
 \item{ID}{A vector of target item identifiers.}
 

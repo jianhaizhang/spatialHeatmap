@@ -3,7 +3,7 @@
 #' This function is designed to filter the numeric data in class of "data.frame" or "SummarizedExperiment". The filtering builds on two functions \code{\link[genefilter]{pOverA}} and \code{\link[genefilter]{cv}} from the package \pkg{genefilter} (Gentleman et al. 2018). 
 
 #' @param data An object of \code{data.frame} or \code{SummarizedExperiment}. In either case, the columns and rows should be sample/conditions and assayed items (\emph{e.g.} genes, proteins, metabolites) respectively. If \code{data.frame}, the column names should follow the naming scheme "sample__condition". The "sample" is a general term and stands for cells, tissues, organs, \emph{etc}., where the values are measured. The "condition" is also a general term and refers to experiment treatments applied to "sample" such as drug dosage, temperature, time points, \emph{etc}. If certain samples are not expected to be colored in "spatial heatmaps" (see \code{\link{spatial_hm}}), they are not required to follow this naming scheme. In the downstream interactive network (see \code{\link{network}}), if users want to see node annotation by mousing over a node, a column of row item annotation could be optionally appended to the last column. \cr In the case of \code{SummarizedExperiment}, the \code{assays} slot stores the data matrix. Similarly, the \code{rowData} slot could optionally store a data frame of row item anntation, which is only relevant to the interactive network. The \code{colData} slot usually contains a data frame with one column of sample replicates and one column of condition replicates. It is crucial that replicate names of the same sample or condition must be identical. \emph{E.g.} If sampleA has 3 replicates, "sampleA", "sampleA", "sampleA" is expected while "sampleA1", "sampleA2", "sampleA3" is regarded as 3 different samples. If original column names in the \code{assay} slot already follow the "sample__condition" scheme, then the \code{colData} slot is not required at all. \cr In the function \code{\link{spatial_hm}}, this argument can also be a numeric vector. In this vector, every value should be named, and values expected to color the "spatial heatmaps" should follow the naming scheme "sample__condition". \cr In certain cases, there is no condition associated with data. Then in the naming scheme of \code{data frame} or \code{vector}, the "__condition" part could be discarded. In \code{SummarizedExperiment}, the "condition" column could be discarded in \code{colData} slot. \cr Note, regardless of data class the double underscore is a special string that is reserved for specific purposes in "spatialHeatmap", and thus should be avoided for naming feature/samples and conditions. \cr In the case of spatial-temporal data, there are three factors: samples, conditions, and time points. The naming scheme is slightly different and includes three options: 1) combine samples and conditions to make the composite factor "sampleCondition", then concatenate the new factor and times with double underscore in between, \emph{i.e.} "sampleCondition__time"; 2) combine samples and times to make the composite factor "sampleTime", then concatenate the new factor and conditions with double underscore in between, \emph{i.e.} "sampleTime__condition"; or 3) combine all three factors to make the composite factor "sampleTimeCondition" without double underscore. See the vignette for more details by running \code{browseVignettes('spatialHeatmap')} in R.
-
+#' @param assay.na Applicable when \code{data} is "SummarizedExperiment" or "SingleCellExperiment", where multiple assays could be stored. The name of target assay to use. The default is \code{NULL}. 
 #' @param pOA It specifies parameters of the filter function \code{\link[genefilter]{pOverA}} from the package \pkg{genefilter} (Gentleman et al. 2018), where genes with expression values larger than "A" in at least the proportion of "P" samples are retained. The input is a vector of two numbers with the first being "P" and the second being "A". The default is c(0, 0), which means no filter is applied. \cr \emph{E.g.} c(0.1, 2) means genes with expression values over 2 in at least 10\% of all samples are kept. 
 
 #' @param CV It specifies parameters of the filter function \code{\link[genefilter]{cv}} from the package \pkg{genefilter} (Gentleman et al. 2018), which filters genes according to the coefficient of variation (CV). The input is a vector of two numbers that specify the CV range. The default is c(-Inf, Inf), which means no filtering is applied. \cr \emph{E.g.} c(0.1, 5) means genes with CV between 0.1 and 5 are kept.
@@ -82,20 +82,22 @@
 #' \cr Keays, Maria. 2019. ExpressionAtlas: Download Datasets from EMBL-EBI Expression Atlas
 #' \cr Love, Michael I., Wolfgang Huber, and Simon Anders. 2014. "Moderated Estimation of Fold Change and Dispersion for RNA-Seq Data with DESeq2." Genome Biology 15 (12): 550. doi:10.1186/s13059-014-0550-8
 #' \cr Cardoso-Moreira, Margarida, Jean Halbert, Delphine Valloton, Britta Velten, Chunyan Chen, Yi Shao, Angélica Liechti, et al. 2019. “Gene Expression Across Mammalian Organ Development.” Nature 571 (7766): 505–9
+#' \cr Amezquita R, Lun A, Becht E, Carey V, Carpp L, Geistlinger L, Marini F, Rue-Albrecht K, Risso D, Soneson C, Waldron L, Pages H, Smith M, Huber W, Morgan M, Gottardo R, Hicks S (2020). “Orchestrating single-cell analysis with Bioconductor.” Nature Methods, 17, 137–145. https://www.nature.com/articles/s41592-019-0654-x
 
 
 #' @export filter_data
-#' @importFrom SummarizedExperiment assay rowData colData SummarizedExperiment assayNames
+#' @importFrom SummarizedExperiment assays rowData colData SummarizedExperiment assayNames
+#' @importFrom SingleCellExperiment SingleCellExperiment
 #' @importFrom genefilter filterfun pOverA cv genefilter
 #' @importFrom utils write.table
 #' @importFrom stats sd
 
-filter_data <- function(data, pOA=c(0, 0), CV=c(-Inf, Inf), top.CV=1, ann=NULL, sam.factor, con.factor, dir=NULL, verbose=TRUE) {
+filter_data <- function(data, assay.na=NULL, pOA=c(0, 0), CV=c(-Inf, Inf), top.CV=1, ann=NULL, sam.factor, con.factor, dir=NULL, verbose=TRUE) {
 
   options(stringsAsFactors=FALSE)
   if (top.CV>1|top.CV<0) stop('"top.CV" should be between 0 and 1!')
   # Process data.
-  dat.lis <- check_data(data=data, sam.factor=sam.factor, con.factor=con.factor, usage='filter')
+  dat.lis <- check_data(data=data, assay.na=assay.na, sam.factor=sam.factor, con.factor=con.factor, usage='filter')
   expr <- dat.lis$dat; row.meta <- dat.lis$row.meta; col.meta <- dat.lis$col.meta
   if (verbose==TRUE) { cat('All values before filtering:\n'); print(summary(unlist(as.data.frame(expr)))) }
   expr.t <- as.data.frame(t(expr)); cv.all <- sort(vapply(expr.t, sd, numeric(1))/vapply(expr.t, mean, numeric(1)), decreasing=TRUE)
@@ -123,7 +125,7 @@ filter_data <- function(data, pOA=c(0, 0), CV=c(-Inf, Inf), top.CV=1, ann=NULL, 
     if (!dir.exists(dir)) stop(paste0(dir, ' does not exist!'))
     if (is(data, 'data.frame')|is(data, 'matrix')) {
       expr1 <- cbind.data.frame(expr, row.meta, stringsAsFactors=FALSE)
-    }  else if (is(data, 'SummarizedExperiment')) {
+    }  else if (is(data, 'SummarizedExperiment') | is(data, 'SingleCellExperiment')) {
       
       if (ncol(row.meta)>0 & !is.null(ann)) {
         expr1 <- cbind.data.frame(expr, row.meta[, ann], stringsAsFactors=FALSE)
@@ -134,18 +136,22 @@ filter_data <- function(data, pOA=c(0, 0), CV=c(-Inf, Inf), top.CV=1, ann=NULL, 
     write.table(expr1, paste0(dir, "/customData.txt"), sep="\t", row.names=TRUE, col.names=TRUE)  
   }
 
-  if (is(data, 'data.frame')|is(data, 'matrix')|is(data, 'dgCMatrix')) { return(cbind(expr, row.meta)) } else if (is(data, 'SummarizedExperiment')) {
-  
+  if (is(data, 'data.frame')|is(data, 'matrix')|is(data, 'dgCMatrix')) { return(cbind(expr, row.meta)) } else if (is(data, 'SummarizedExperiment') | is(data, 'SingleCellExperiment')) {
+    if (is.null(assay.na)) {
+      if (length(assays(data)) > 1) stop("Please specify which assay to use by assigning the assay name to 'assay.na'!") else if (length(assays(data)) == 1) assay.na <- 1
+    }
     rownames(col.meta) <- NULL # If row names present in colData(data), if will become column names of assay(data).
-    expr <- SummarizedExperiment(assays=list(expr=expr), rowData=row.meta, colData=col.meta)
-    if (!is.null(assayNames(data))) SummarizedExperiment::assayNames(expr) <- assayNames(data)[1]; return(expr)
+    # if (is(data, 'SingleCellExperiment')) { 
+      # expr <- SingleCellExperiment(assays=list(expr=expr), rowData=row.meta, colData=col.meta)
+
+     expr <- sce_sub(sce=data, mat=expr, cna=colnames(expr), assay.na=assay.na, row.idx=filtered, rdat=row.meta, cdat=col.meta)
+     if (is.null(assayNames(data))) SummarizedExperiment::assayNames(expr)[1] <- 'expr'; return(expr)
+
+
+#else {
+#expr <- SummarizedExperiment(assays=list(expr=expr), rowData=row.meta, colData=col.meta) } 
+#    }
 
   }
 
 }
-
-
-
-
-
-

@@ -1,3 +1,7 @@
+# Temporary directory.
+tmp.dir <- normalizePath(tempdir(check=TRUE), winslash="/", mustWork=FALSE)
+tmp.file <- normalizePath(tempfile(), winslash='/', mustWork=FALSE)
+
 # Bitmap extensions accepted in uploaded images.
 tmp.ext <- c('.jpg', '.JPG', '.png', '.PNG')
 
@@ -33,6 +37,13 @@ url_val <- function(na, lis.url) {
 }
 
 # Import internal functions.
+sub_asg <- get('sub_asg', envir=asNamespace('spatialHeatmap'), inherits=FALSE)
+
+detect_cluster <- get('detect_cluster', envir=asNamespace('spatialHeatmap'), inherits=FALSE)
+
+dim_color <- get('dim_color', envir=asNamespace('spatialHeatmap'), inherits=FALSE)
+
+nn_graph <- get('nn_graph', envir=asNamespace('spatialHeatmap'), inherits=FALSE)
 
 svg_tmp <- get('svg_tmp', envir=asNamespace('spatialHeatmap'), inherits=FALSE)
 
@@ -136,7 +147,7 @@ video <- get('video', envir=asNamespace('spatialHeatmap'), inherits=FALSE)
 # Shown popup window. 
 modal <- get('modal', envir=asNamespace('spatialHeatmap'), inherits=FALSE)
 
-# Extract a 1-column data frame of URL. If no column of URL is present, the default google-search URLs are composed.
+# Extract a 1-column data frame of URLs. If no column of URL is present, the default google-search URLs are composed.
 link_dat <- function(df.met) {
   cna <- colnames(df.met); rna <- rownames(df.met)
   link.idx <- grep('link|links', cna, ignore.case=TRUE)[1]

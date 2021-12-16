@@ -233,6 +233,8 @@
 #' charcoal=FALSE, ID=c('gene1'), alpha.overlay=0.5)
 
 
+
+
 #' @author Jianhai Zhang \email{jianhai.zhang@@email.ucr.edu} \cr Dr. Thomas Girke \email{thomas.girke@@ucr.edu}
 
 #' @references
@@ -255,15 +257,19 @@
 #' @importFrom methods is
 #' @importFrom ggplotify as.ggplot
 
-spatial_hm <- function(svg.path, data, sam.factor=NULL, con.factor=NULL, ID, tmp.path=NULL, charcoal=FALSE, alpha.overlay=1, lay.shm="gene", ncol=2, col.com=c('yellow', 'orange', 'red'), col.bar='selected', sig.thr=c(NA, NA), cores=NA, bar.width=0.08, bar.title.size=0, trans.scale=NULL, ft.trans=NULL, tis.trans=ft.trans, lis.rematch = NULL, legend.r=0.2, sub.title.size=11, legend.plot='all', ft.legend='identical', bar.value.size=10, legend.plot.title='Legend', legend.plot.title.size=11, legend.ncol=NULL, legend.nrow=NULL, legend.position='bottom', legend.direction=NULL, legend.key.size=0.02, legend.text.size=12, angle.text.key=NULL, position.text.key=NULL, legend.2nd=FALSE, position.2nd='bottom', legend.nrow.2nd=NULL, legend.ncol.2nd=NULL, legend.key.size.2nd=0.03, legend.text.size.2nd=10, angle.text.key.2nd=0, position.text.key.2nd='right', add.feature.2nd=FALSE, label=FALSE, label.size=4, label.angle=0, hjust=0, vjust=0, opacity=1, key=TRUE, line.size=0.2, line.color='grey70', relative.scale = NULL, verbose=TRUE, out.dir=NULL, animation.scale = 1, selfcontained=FALSE, video.dim='640x480', res=500, interval=1, framerate=1, bar.width.vdo=0.1, legend.value.vdo=NULL, ...) {
+spatial_hm <- function(svg.path, data, assay.na=NULL, sam.factor=NULL, con.factor=NULL, ID, sce.dimred=NULL, dimred='TSNE', tar.cell='all', profile=FALSE, color.by=NULL, tmp.path=NULL, charcoal=FALSE, alpha.overlay=1, lay.shm="gene", ncol=2, col.com=c('yellow', 'orange', 'red'), col.bar='selected', sig.thr=c(NA, NA), cores=NA, bar.width=0.08, bar.title.size=0, trans.scale=NULL, ft.trans=NULL, tis.trans=ft.trans, lis.rematch = NULL, legend.r=0.2, sub.title.size=11, legend.plot='all', ft.legend='identical', bar.value.size=10, legend.plot.title='Legend', legend.plot.title.size=11, legend.ncol=NULL, legend.nrow=NULL, legend.position='bottom', legend.direction=NULL, legend.key.size=0.02, legend.text.size=12, angle.text.key=NULL, position.text.key=NULL, legend.2nd=FALSE, position.2nd='bottom', legend.nrow.2nd=NULL, legend.ncol.2nd=NULL, legend.key.size.2nd=0.03, legend.text.size.2nd=10, angle.text.key.2nd=0, position.text.key.2nd='right', add.feature.2nd=FALSE, label=FALSE, label.size=4, label.angle=0, hjust=0, vjust=0, opacity=1, key=TRUE, line.size=0.2, line.color='grey70', relative.scale = NULL, verbose=TRUE, out.dir=NULL, animation.scale = 1, selfcontained=FALSE, video.dim='640x480', res=500, interval=1, framerate=1, bar.width.vdo=0.1, legend.value.vdo=NULL, ...) {
 
- # save(svg.path, data, sam.factor, con.factor, ID, tmp.path, charcoal, alpha.overlay, lay.shm, ncol, col.com, col.bar, sig.thr, cores, bar.width, bar.title.size, trans.scale, ft.trans, tis.trans, lis.rematch, legend.r, sub.title.size, legend.plot, ft.legend, bar.value.size, legend.plot.title, legend.plot.title.size, legend.ncol, legend.nrow, legend.position, legend.direction, legend.key.size, legend.text.size, angle.text.key, position.text.key, legend.2nd, position.2nd, legend.nrow.2nd, legend.ncol.2nd, legend.key.size.2nd, legend.text.size.2nd, angle.text.key.2nd, position.text.key.2nd, add.feature.2nd, label, label.size, label.angle, hjust, vjust, opacity, key, line.size, line.color, relative.scale, verbose, out.dir, animation.scale, selfcontained, video.dim, res, interval, framerate, bar.width.vdo, legend.value.vdo, file='shm.all')
+  #save(svg.path, data, assay.na, sam.factor, con.factor, ID, sce.dimred, dimred, tar.cell, profile, color.by, tmp.path, charcoal, alpha.overlay, lay.shm, ncol, col.com, col.bar, sig.thr, cores, bar.width, bar.title.size, trans.scale, ft.trans, tis.trans, lis.rematch, legend.r, sub.title.size, legend.plot, ft.legend, bar.value.size, legend.plot.title, legend.plot.title.size, legend.ncol, legend.nrow, legend.position, legend.direction, legend.key.size, legend.text.size, angle.text.key, position.text.key, legend.2nd, position.2nd, legend.nrow.2nd, legend.ncol.2nd, legend.key.size.2nd, legend.text.size.2nd, angle.text.key.2nd, position.text.key.2nd, add.feature.2nd, label, label.size, label.angle, hjust, vjust, opacity, key, line.size, line.color, relative.scale, verbose, out.dir, animation.scale, selfcontained, video.dim, res, interval, framerate, bar.width.vdo, legend.value.vdo, file='shm.arg')
 
   calls <- names(vapply(match.call(), deparse, character(1))[-1])
   if("tis.trans" %in% calls) { ft.trans <- tis.trans; warning('"tis.trans" is deprecated and replaced by "ft.trans"! \n') }
   x <- y <- color_scale <- tissue <- NULL; options(stringsAsFactors=FALSE)
   # if (!is.null(sub.margin)) if (!is.numeric(sub.margin) | length(sub.margin)!=4 | any(sub.margin >= 1) | any(sub.margin < 0)) stop('"sub.margin" must be a 4-length numeric vector between 0 (inclusive) and 1 (exclusive)!')
   ID <- unique(ID)
+  if (is(sce.dimred, 'SingleCellExperiment')) {
+    if (!dimred %in% reducedDimNames(sce.dimred)) stop(paste0(dimred, " is not detected in 'reducedDimNames'!"))
+    if (!color.by %in% colnames(colData(sce.dimred))) stop(paste0(color.by, " is not detected in 'colData' slot!"))
+  }
   # Extract and filter data.
   if (is.vector(data)) {
     vec.na <- make.names(names(data)); if (is.null(vec.na)) stop("Please provide names for the input data!")
@@ -274,7 +280,7 @@ spatial_hm <- function(svg.path, data, sam.factor=NULL, con.factor=NULL, ID, tmp
     if (is.null(ID)) stop('Please provide a name for the data!')
     gene <- as.data.frame(matrix(data, nrow=1, dimnames=list(ID, vec.na)))
 
-  } else if (is(data, 'data.frame')|is(data, 'matrix')|is(data, 'DFrame')|is(data, 'dgCMatrix')|is(data, 'SummarizedExperiment')) {
+  } else if (is(data, 'data.frame')|is(data, 'matrix')|is(data, 'DFrame')|is(data, 'dgCMatrix')|is(data, 'SummarizedExperiment') | is(data, 'SingleCellExperiment')) {
     if (is(data, 'data.frame')|is(data, 'matrix')|is(data, 'DFrame')|is(data, 'dgCMatrix')) { # Data frame of spatial enrichment.
       cna <- colnames(data)
       if (all(c('gene', 'type', 'total') %in% cna)) {
@@ -285,10 +291,10 @@ spatial_hm <- function(svg.path, data, sam.factor=NULL, con.factor=NULL, ID, tmp
     id.no <- ID[!ID %in% rownames(data)]
     if (length(id.no)>0) stop(paste0(id.no, collapse=' '), ': not detected in data! \n')
     # Process data.
-    dat.lis <- check_data(data=data, sam.factor=sam.factor, con.factor=con.factor, usage='shm')
+    dat.lis <- check_data(data=data, assay.na=assay.na, sam.factor=sam.factor, con.factor=con.factor, usage='shm')
     gene <- as.data.frame(dat.lis$dat); con.na <- dat.lis$con.na
 
-  } else { stop('Accepted data classes are "data.frame", "matrix", "DFrame", "dgCMatrix", or "SummarizedExperiment", except that "spatial_hm" also accepts a "vector".') }
+  } else { stop('Accepted data classes are "data.frame", "matrix", "DFrame", "dgCMatrix", "SummarizedExperiment", or "SingleCellExperiment" except that "spatial_hm" also accepts a "vector".') }
 
   if (!is.null(trans.scale)) if (trans.scale=='log2') { 
           
@@ -378,42 +384,72 @@ spatial_hm <- function(svg.path, data, sam.factor=NULL, con.factor=NULL, ID, tmp
 
     # A set of SHMs (gene_con*) are made for each SVG, and all sets of SHMs under different SVGs are placed in 2 lists in form of ggplots and grobs respectively. Different SHMs of same 'gene_condition' under different SVGs are indexed with suffixed of '_1', '_2', ... E.g. SHMs under shm1.svg: gene_condition1_1, gene_condition2_1; SHMs under shm2.svg: gene_condition1_2, gene_condition2_2; the 4 SHMs are stored in 2 separate lists in form of ggplots and grobs respectively. 
     # The order of ggplot SHMs, grob SHMs, and legends follow the order of SVGs, so all are same.
-    gg.lis.all <- gg.all <- grob.all <- lgd.all <- gcol.all <- NULL; for (i in seq_along(svg.df.lis)) {
+    ft.trans.shm <- NULL
+    if (is(sce.dimred, 'SingleCellExperiment') & profile==TRUE) {
+      blk.uni <- unique(colData(sce.dimred)$SVGBulk)
+      if (tar.cell[1]=='all') tar.cell <- blk.uni
+      # SVG features corresponding to non-target cells are set transparent.
+      ft.trans.shm <- unique(setdiff(blk.uni, tar.cell))
+    }
+    gg.lis.all <- gg.all <- grob.all <- lgd.all <- grob.lgd.all <- gcol.lgd.all <- gcol.all <- NULL; for (i in seq_along(svg.df.lis)) {
       na0 <- names(svg.df.lis)[i]; cat('ggplots/grobs:', na0, '... \n')
       svg.df <- svg.df.lis[[i]]; g.df <- svg.df[["df"]]; aspect.r <- svg.df[['aspect.r']]
       tis.path <- svg.df[["tis.path"]]; fil.cols <- svg.df[['fil.cols']]
       # if (preserve.scale==TRUE & is.null(sub.margin)) sub.margin <- (1-w.h/w.h.max*0.99)/2
       # SHMs/legend of ggplots under one SVG.
-      gg.lis <- gg_shm(gene=gene, con.na=con.na, geneV=geneV, coord=g.df, tmp.path=svg.df$tmp.pa, charcoal=charcoal, alpha.overlay=alpha.overlay, ID=ID, legend.col=fil.cols, cols=col, tis.path=tis.path, lis.rematch = lis.rematch, ft.trans=ft.trans, sub.title.size=sub.title.size, ft.legend=ft.legend, legend.ncol=legend.ncol, legend.nrow=legend.nrow, legend.position=legend.position, legend.direction=legend.direction, legend.key.size=legend.key.size, legend.text.size=legend.text.size, legend.plot.title=legend.plot.title, legend.plot.title.size=legend.plot.title.size, line.size=line.size, line.color=line.color, aspect.ratio = aspect.r, ...)
+      gg.lis <- gg_shm(gene=gene, con.na=con.na, geneV=geneV, coord=g.df, tmp.path=svg.df$tmp.pa, charcoal=charcoal, alpha.overlay=alpha.overlay, ID=ID, legend.col=fil.cols, cols=col, tis.path=tis.path, lis.rematch = lis.rematch, ft.trans=ft.trans, ft.trans.shm=ft.trans.shm, sub.title.size=sub.title.size, ft.legend=ft.legend, legend.ncol=legend.ncol, legend.nrow=legend.nrow, legend.position=legend.position, legend.direction=legend.direction, legend.key.size=legend.key.size, legend.text.size=legend.text.size, legend.plot.title=legend.plot.title, legend.plot.title.size=legend.plot.title.size, line.size=line.size, line.color=line.color, aspect.ratio = aspect.r, ...)
       msg <- paste0(na0, ': no spatial features that have matching sample identifiers in data are detected!'); if (is.null(gg.lis)) stop(msg)
 
       # Append suffix '_i' for the SHMs of ggplot under SVG[i], and store them in a list.
       ggs <- gg.lis$g.lis.all; names(ggs) <- paste0(names(ggs), '_', i)
       gg.all <- c(gg.all, ggs)
-
       cores <- deter_core(cores, svg.path[i]); cat('CPU cores:', cores, '\n')
-      # Same names with ggplot: append suffix '_i' for the SHMs of grob under each SVG, and store them in a list.
+      # Same names with ggplot: append suffix '_i' for the SHMs of grob under each SVG, and store them in a list. 'i' is equal to SVG.
       grobs <- grob_shm(ggs, cores=cores); grob.all <- c(grob.all, grobs)
 
       # Store SHM ggplots and w.h under each SVG in separate list for use in relative scale.
       lis0 <- list(list(ggs = ggs, w.h = svg.df$w.h)); names(lis0) <- na0
       gg.lis.all <- c(gg.lis.all, lis0)
+    
 
-      # Store legend of ggplot in a list.
-      lgd.all <- c(lgd.all, list(gg.lis$g.lgd))
+if (0) if (is(sce.dimred, 'SingleCellExperiment')) {
+
+      # Only show SVG features corresponding to target cells that have true bulk assignments.
+tar_cell_true <- function(gg.lgd, gcol.lgd, blk.uni, profile) {
+      na.idxed <- unique(names(gcol.lgd))
+      na <- sub('__\\d+$', '', na.idxed)
+      # Only show SVG features corresponding to target cells that have true bulk assignments.
+      # lgd.idx <- na %in% blk.uni & !duplicated(na) & !(gcol.lgd=='NA'|is.na(gcol.lgd))
+      lgd.idx <- !duplicated(na) & !(gcol.lgd=='NA'|is.na(gcol.lgd))
+      gg.lgd <- gg.lgd + scale_fill_manual(values=gcol.lgd, breaks=na.idxed[lgd.idx], labels=na[lgd.idx], guide=guide_legend(title=NULL, ncol=legend.ncol, nrow=legend.nrow))
+      if (profile==FALSE) gg.lgd <- gg.lgd + labs(title=NULL)
+      return(gg.lgd)
+}
+
+# gg.lgd <- tar_cell_true(gg.lgd=gg.lis$g.lgd, gcol.lgd=gg.lis$gcol.lgd, blk.uni=blk.uni, profile=profile)
+
+    }
+      # Store legend/colour of ggplot in a list.
+      gg.lgd <- gg.lis$g.lgd
+      if (profile==FALSE) gg.lgd <- gg.lgd + labs(title=NULL)
+      lgd.all <- c(lgd.all, list(gg.lgd))
+      grob.lgd.lis <- grob_shm(lgd.all, cores=cores, lgd.pos='bottom')
+      grob.lgd.all <- c(grob.lgd.all, grob.lgd.lis)
+      gcol.lgd.all <- c(gcol.lgd.all, list(gg.lis$gcol.lgd))
 
       # Store colors of matching features in each SHM in a list.
       gcols <- gg.lis$gcol.lis.all; names(gcols) <- paste0(names(gcols), '_', i)
       gcol.all <- c(gcol.all, gcols)
-    }; names(lgd.all) <- names(svg.df.lis)
-
+    }; names(lgd.all) <- names(grob.lgd.all) <- names(svg.df.lis)
+    names(gcol.lgd.all) <- paste0('col_', names(svg.df.lis))
     pat.gen <- paste0(ID, collapse='|'); pat.con <- paste0(con.uni, collapse='|')
     # Use definite patterns and avoid using '.*' as much as possible. Try to as specific as possible.
     pat.all <- paste0('^(', pat.gen, ')_(', pat.con, ')(_\\d+$)')
     # Indexed cons with '_1', '_2', ... at the end.
     con.idxed <- unique(gsub(pat.all, '\\2\\3', names(gg.all)))
+    if (is(sce.dimred, 'SingleCellExperiment')) coclus <- TRUE
     # Layout matrix of SHMs for use in relative scale.
-    lay.mat <- lay_shm(lay.shm=lay.shm, con=con.idxed, ncol=ncol, ID.sel=ID, lay.mat = TRUE) 
+    lay.mat <- lay_shm(lay.shm=lay.shm, con=con.idxed, ncol=ncol, ID.sel=ID, lay.mat = TRUE, profile=profile, coclus=coclus) 
 
     # If relative size in multiple SVGs is required, update all SHM ggplots/grobs under each SVG.
     if (is.numeric(relative.scale) & length(svg.path) > 1) if (relative.scale > 0) {
@@ -434,22 +470,30 @@ spatial_hm <- function(svg.path, data, sam.factor=NULL, con.factor=NULL, ID, tmp
     png(tmp); cs.grob <- ggplotGrob(cs.g); dev.off()
     if (file.exists(tmp)) do.call(file.remove, list(tmp))
     cs.arr <- arrangeGrob(grobs=list(grobTree(cs.grob)), layout_matrix=cbind(1), widths=unit(1, "npc")) # "mm" is fixed, "npc" is scalable.
+    if (legend.2nd==TRUE) {
+      gg.all <- gg_2lgd(gg.all=gg.all, sam.dat=sam.uni, ft.trans=ft.trans, position.2nd=position.2nd, legend.nrow.2nd=legend.nrow.2nd, legend.ncol.2nd=legend.ncol.2nd, legend.key.size.2nd=legend.key.size.2nd, add.feature.2nd=add.feature.2nd, legend.text.size.2nd=legend.text.size.2nd, angle.text.key.2nd=angle.text.key.2nd, position.text.key.2nd=position.text.key.2nd)
+      grob.all <- lapply(gg.all, ggplotGrob)
+    }
 
     # Arrange SHM grobs.
     na.all <- sort_gen_con(ID.sel=ID, na.all=na.all, con.all=con.idxed, by=lay.shm)
     grob.all <- grob.all[na.all]; gg.all <- gg.all[na.all]
-    g.arr <- lay_shm(lay.shm=lay.shm, con=con.idxed, ncol=ncol, ID.sel=ID, grob.list=grob.all, shiny=FALSE)
-
+    gcol.all <- gcol.all[paste0('col_', na.all)]
+    if (is(sce.dimred, 'SingleCellExperiment')) {
+      if (dimred=='TSNE') gg.dim <- plotTSNE(sce.dimred, colour_by = color.by)
+      if (dimred=='PCA') gg.dim <- plotPCA(sce.dimred, colour_by = color.by)
+      if (dimred=='UMAP') gg.dim <- plotUMAP(sce.dimred, colour_by = color.by)
+      dim.shm.lis <- dim_color_coclus(sce=sce.dimred, tar.cell=tar.cell, profile=profile, gg.dim = gg.dim, gg.shm.all=gg.all, grob.shm.all = grob.all, gg.lgd.all=lgd.all, col.shm.all = gcol.all, col.lgd.all=gcol.lgd.all, grob.lgd.all=grob.lgd.all, con.na=con.na, lis.match=NULL, sub.title.size=sub.title.size)
+      grob.all <- dim.shm.lis$dim.shm.grob.lis
+      gg.all <- dim.shm.lis$dim.shm.gg.lis
+    }
+    g.arr <- lay_shm(lay.shm=lay.shm, con=con.idxed, ncol=ncol, ID.sel=ID, grob.list=grob.all, scell=is(sce.dimred, 'SingleCellExperiment'), profile=profile, coclus=coclsu, shiny=FALSE)
+    if (profile==FALSE) legend.plot <- NULL
     if (!is.null(legend.plot)) {
       # Select legend plot to show. 
       if (length(svg.na)>1 & legend.plot!='all') na.lgd <- svg.na[grep(paste0('_(', paste0(legend.plot, collapse='|'), ').svg$'), svg.na)] else na.lgd <- svg.na
       lgd.lis <- lgd.all[na.lgd]
-     
-      if (legend.2nd==TRUE) {
-        gg.all <- gg_2lgd(gg.all=gg.all, sam.dat=sam.uni, ft.trans=ft.trans, position.2nd=position.2nd, legend.nrow.2nd=legend.nrow.2nd, legend.ncol.2nd=legend.ncol.2nd, legend.key.size.2nd=legend.key.size.2nd, add.feature.2nd=add.feature.2nd, legend.text.size.2nd=legend.text.size.2nd, angle.text.key.2nd=angle.text.key.2nd, position.text.key.2nd=position.text.key.2nd)
-        grob.all <- lapply(gg.all, ggplotGrob)
-      }
-      
+ 
       # Add labels to target shapes/adjust keys in legend plots.
       lgd.lis <- gg_lgd(gg.all=lgd.lis, angle.text.key=angle.text.key, position.text.key=position.text.key, label=label, label.size=label.size, label.angle=label.angle, hjust=hjust, vjust=vjust, opacity=opacity, key=key, sam.dat=sam.uni, ft.trans=ft.trans)
       grob.lgd.lis <- lapply(lgd.lis, ggplotGrob)
@@ -468,7 +512,10 @@ spatial_hm <- function(svg.path, data, sam.factor=NULL, con.factor=NULL, ID, tmp
 
       # A plot pops up when 'grid.arrange' runs.
       shm <- grid.arrange(cs.arr, g.arr, lgd.arr, ncol=3, widths=unit(c(bar.width-0.005, shm.w, w.lgd), 'npc'))
-    } else { shm.w <- 1-bar.width; shm <- grid.arrange(cs.arr, g.arr, ncol=2, widths=unit(c(bar.width-0.005, shm.w), 'npc')) }
+    } else { 
+      shm.w <- 1-bar.width
+      if (profile==TRUE) shm <- grid.arrange(cs.arr, g.arr, ncol=2, widths=unit(c(bar.width-0.005, shm.w), 'npc')) else shm <- grid.arrange(g.arr, ncol=1, widths=unit(c(1-0.005), 'npc'))
+    }
 
     if (!is.null(out.dir)) { 
 

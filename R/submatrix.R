@@ -2,8 +2,9 @@
 #'
 #' Given a vector of target assayed items (gene, protein, metabolite, \emph{etc}), this function selects nearest neighbors for every target item independently, which share most similar abundance profiles with the targets. The selection is based on correlation or distance matrix computed by \code{\link[stats]{cor}} or \code{\link[stats]{dist}} from the "stats" package respectively. One of three alternative arguments \code{p}, \code{n}, \code{v} sets a cutoff for the selection.
 
-#' @param data A \code{data.frame} or \code{SummarizedExperiment} object returned by the function \code{\link{filter_data}}, where the columns and rows of the data matrix are samples/conditions and assayed items (\emph{e.g.} genes, proteins) respectively. Since this function builds on coexpression analysis, variables of sample/condition should be at least 5. Otherwise, the results are not reliable. 
-#' @param ann Applies to \code{data} argument of \code{SummarizedExperiment}. The column name corresponding to row item annotation in the \code{rowData} slot. Default is NULL.
+#' @param data A "data.frame", "SummarizedExperiment", or "SingleCellExperiment" object returned by the function \code{\link{filter_data}}, where the columns and rows of the data matrix are samples/conditions and assayed items (\emph{e.g.} genes, proteins) respectively. Since this function builds on coexpression analysis, variables of sample/condition should be at least 5. Otherwise, the results are not reliable.
+#' @param assay.na Applicable when \code{data} is "SummarizedExperiment" or "SingleCellExperiment", where multiple assays could be stored. The name of target assay to use. The default is \code{NULL}. 
+#' @param ann Applicable when \code{data} is "SummarizedExperiment" or "SingleCellExperiment". The column name corresponding to row item annotation in the \code{rowData} slot. Default is NULL.
 #' @param ID A vector of target item identifiers.
 #' @param p The proportion of top items with most similar expression profiles with the target items. Only items within this proportion are returned. Default is 0.3. It applies to each target item independently, and selected items of each target are returned together.
 #' @param n An integer of top items with most similar expression profiles with the target items. Only items within this number are returned. Default is NULL. It applies to each target independently, and selected items of each target are returned together.
@@ -116,18 +117,21 @@
 #' @importFrom SummarizedExperiment assay rowData
 #' @importFrom stats cor dist
 
-submatrix <- function(data, ann=NULL, ID, p=0.3, n=NULL, v=NULL, fun='cor', cor.absolute=FALSE, arg.cor=list(method="pearson"), arg.dist=list(method="euclidean"), dir=NULL) {
+submatrix <- function(data, assay.na=NULL, ann=NULL, ID, p=0.3, n=NULL, v=NULL, fun='cor', cor.absolute=FALSE, arg.cor=list(method="pearson"), arg.dist=list(method="euclidean"), dir=NULL) {
 
   options(stringsAsFactors=FALSE)
   # Process data.
   if (is(data, 'data.frame')|is(data, 'matrix')|is(data, 'DFrame')|is(data, 'dgCMatrix')) {
     dat.lis <- check_data(data=data); data <- dat.lis$dat; ann <- dat.lis$row.meta
-  } else if (is(data, 'SummarizedExperiment')) { 
-
-    ann <- rowData(data)[ann]; data <- as.data.frame(assay(data)) 
+  } else if (is(data, 'SummarizedExperiment') | is(data, 'SingleCellExperiment')) {
+    if (is.null(assay.na)) {
+      if (length(assays(data)) > 1) stop("Please specify which assay to use by assigning the assay name to 'assay.na'!") else if (length(assays(data)) == 1) assay.na <- 1
+    }
+ 
+    ann <- rowData(data)[ann]; data <- as.data.frame(assays(data)[[assay.na]]) 
     if (any(duplicated(rownames(data)))) stop('Please use function \'aggr_rep\' to aggregate replicates!')
 
-  } else { stop('Accepted data classes are "data.frame", "matrix", "DFrame", "dgCMatrix", or "SummarizedExperiment", except that "spatial_hm" also accepts a "vector".') }
+  } else { stop('Accepted data classes are "data.frame", "matrix", "DFrame", "dgCMatrix", "SummarizedExperiment", or "SingleCellExperiment" except that "spatial_hm" also accepts a "vector".') }
 
   if (nrow(data)<5) cat('Warning: variables of sample/condition are less than 5! \n')
   na <- NULL; len <- nrow(data)

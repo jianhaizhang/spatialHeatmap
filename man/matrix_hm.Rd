@@ -7,6 +7,7 @@
 matrix_hm(
   ID,
   data,
+  assay.na = NULL,
   scale = "no",
   col = c("yellow", "orange", "red"),
   main = NULL,
@@ -27,6 +28,8 @@ matrix_hm(
 \item{ID}{A vector of target item identifiers in the data.}
 
 \item{data}{The subsetted data matrix returned by the function \code{\link{submatrix}}, where rows are assayed items and columns are samples/conditions.}
+
+\item{assay.na}{Applicable when \code{data} is "SummarizedExperiment" or "SingleCellExperiment", where multiple assays could be stored. The name of target assay to use. The default is \code{NULL}.}
 
 \item{scale}{One of "row", "column", or "no", corresponding to scale the heatmap by row, column, or no scale respectively. Default is "no".}
 

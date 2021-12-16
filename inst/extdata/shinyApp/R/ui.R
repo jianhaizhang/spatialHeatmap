@@ -17,6 +17,7 @@ js <- "function openFullscreen(elem) {
   }
 }"
 
+# A module can only have a "ui" element without ther "server".
 search_ui <- function(id, lab=label) {
   ns <- NS(id) 
   fluidRow(splitLayout(cellWidths=c('1%', '13%', '1%', '85%'), '',
@@ -186,11 +187,10 @@ shm_ui <- function(id, data.ui, search.ui) {
       # boxPad(color = NULL, title = NULL, solidHeader = FALSE, 
     # Append matrix heatmap, network with SHMs.    
     do.call(tabsetPanel, append(list(type="pills", id=ns('shmMhNet'), selected="shm1",
-    # tabsetPanel(type = "pills", id=NULL, selected="shm1",
-  
+    # tabsetPanel(type = "pills", id=NULL, selected="shm1", 
       tabPanel(title="Image", value='shm1',
       column(12, search.ui, style='z-index:5'),  
-      navbarPage('Parameters:',
+      navbarPage('Parameters:', id=ns('shmPar'),
       tabPanel("Basic",
       fluidRow(splitLayout(cellWidths=c('0.5%', '8%', '0.5%', '8%', '0.5%', '8%', '0.5%', '9%', '0.5%', '11%', '0.5%', '8%', '0.5%', '8%', '0.5%', '8%'), '',  
       actionButton(ns("fs"), "Full screen", onclick = "openFullscreen(document.getElementById('barSHM'))"), '',
@@ -222,9 +222,9 @@ shm_ui <- function(id, data.ui, search.ui) {
       )
       )), # fluidRow
       # bsPopover(id=ns('genCon'), title="Data column: by the column order in data matrix.", placement = "top", trigger = "hover"),
-      textOutput(ns('h.w.c')), textOutput(ns('msg.col')), div(style='margin-top:10px'), uiOutput(ns('dim'))
+      textOutput(ns('h.w.c')), textOutput(ns('msg.col')), div(style='margin-top:10px') 
       ), # tabPanel
-      tabPanel("Transparent features",
+      tabPanel("Transparency",
         fluidRow(splitLayout(cellWidths=c('0.5%', '99.5%'), '',  checkboxGroupInput(inputId=ns("tis"), label="Select features to be transparent", choices='', selected='', inline=TRUE)))  
       ),
       tabPanel("Value legend",
@@ -288,6 +288,15 @@ shm_ui <- function(id, data.ui, search.ui) {
            actionButton(ns("alpOverBut"), "Confirm", icon=icon("refresh"), style='margin-top:31px')))
            ))
          )
+       )
+      ), # tabPanel
+      tabPanel("Single cell", value='scellTab', 
+        tags$div(title="Single cell",
+        fluidRow(splitLayout(cellWidths=c('1%', '7%', '1%', '15%', '1%', '10%'), '',  
+        selectInput(ns('profile'), label='Profile', choices=c('No', 'Yes'), selected='No'), '', 
+        selectInput(ns('dims'), label='Dimentionality reduction', choices=c('TSNE', 'PCA', 'UMAP'), selected='UMAP'), '', 
+        uiOutput(ns('tarCell'))
+        ))
        )
       ) # tabPanel
       #) # navbarMenu
@@ -460,19 +469,19 @@ dim_ui <- function(id) {
 
 scell_ui <- function(id) { 
   ns <- NS(id)
-  tabPanel("Spatial Single Cell", value='scell', icon=NULL,
+  tabPanel("Spatial Single Cell", value=ns('scell'), icon=NULL,
     br(),
-    tabsetPanel(type = "pills", id=NULL, selected="datCell", 
+    tabsetPanel(type = "pills", id=ns('tabSetCell'), selected="datCell", 
       tabPanel(title="Data Table", value='datCell',
       navbarPage('Parameters:' ),
       dataTableOutput(ns("datCell"))
       
       ), # navbarPage tabPanel 
-      tabPanel("Quality Control",
-      navbarPage('',
+      tabPanel(title="Quality Control", value='qcTab', 
+      navbarPage('', id=ns('qcNav'),
         tabPanel('Plot', plotOutput(ns('qc.all'))
         ),
-        tabPanel('Parameters',
+        tabPanel(title='Parameters', value=ns('qcPar'),
         actionButton(ns("qc.but"), "Confirm"), br(),
         h5(strong('perCellQCMetrics')),  
         fluidRow(splitLayout(cellWidths=c('1%', '20%'), '',
@@ -515,7 +524,7 @@ scell_ui <- function(id) {
       )
       )
       ), # tabPanel
-      tabPanel("Dimensionality Reduction",
+      tabPanel("Dimensionality Reduction", value='dimred',
       navbarPage('',
       tabPanel('Plot',
          dim_ui(ns('dim'))
@@ -548,13 +557,55 @@ scell_ui <- function(id) {
         )), uiOutput(ns('clus.par'))
       ) # tabPanel
      )), #tabPanel("Dimensionality Reduction", navbarPage
-      tabPanel("Matching",
+      tabPanel("Manual-matching",
       #navbarPage('Parameters:',
       #tabPanel(title="Match spatial features", value='matchCell',
         match_ui(ns('rematchCell'))
       #) # navbarMenu
       #) # navbarPage 
+      ), #tabPanel 
+
+      tabPanel("Auto-matching",
+        
+      navbarPage('',
+      tabPanel('Result',
+        # h5(strong('Subset assignments')),  
+        fluidRow(splitLayout(cellWidths=c('1%', '10%', '1%', '10%'), '',
+        numericInput(ns('asgThr'), label='Assignment threshold', value=0, min=0, max=1, step=0.1, width=150), '',
+        actionButton(ns("coclusAsg"), "Confirm", style='margin-top:24px')
+        )),
+        dataTableOutput(ns("resAsg")) 
+      ),
+      tabPanel('Parameters',
+        h3(strong('Filter input bulk and cells')),  
+        fluidRow(splitLayout(cellWidths=c('1%', '10%', '1%', '10%', '1%', '18%', '1%', '18%', '1%', '10%', '1%', '10%'), '',
+        numericInput(ns('filBlkP'), label='P', value=0.3, min=0, max=1, step=0.1, width=150), '',
+        numericInput(ns('filBlkA'), label='A', value=1, min=0, max=1000, step=5, width=150), '',
+        numericInput(ns('filBlkCV1'), label='Min coefficient of variation (CV1)', value=0.3, min=-1000, max=1000, step=0.1, width=150), '',
+        numericInput(ns('filBlkCV2'), label='Max coefficient of variation (CV2)', value=200, min=-1000, max=1000, step=0.1, width=150), '',
+        numericInput(ns('filPGen'), label='P by gene', value=0.15, min=0, max=1, step=0.1, width=150), '',
+        numericInput(ns('filPCell'), label='P by cell', value=0.35, min=0, max=1, step=0.1, width=150)
+        )), 
+        h3(strong('Clustering')),  
+        fluidRow(splitLayout(cellWidths=c('1%', '10%', '1%', '13%', '1%', '10%'), '',
+        selectInput(ns('clusDim'), label='Dimensionality', choices=c('PCA', 'UMAP'), selected='UMAP'), '',
+        selectInput(ns('clusMeth'), label='Method', choices=c('buildSNNGraph'='snn', 'buildKNNGraph'='knn'), selected='buildSNNGraph'), '',
+        selectInput(ns('clusSim'), label='Similarity', choices=c('Spearman', 'Pearson'), selected='Spearman')
+        )),
+        h5(strong('Refine cell clusters')),
+        fluidRow(splitLayout(cellWidths=c('1%', '10%', '1%', '10%'), '',
+        numericInput(ns('clusSimT'), label='Similarity threshold', value=0.3, min=0, max=1, step=0.1, width=150), '',
+        numericInput(ns('clusSimP'), label='Similarity proportion', value=0.5, min=0, max=1, step=0.1, width=150)
+        )),
+        h5(strong('Co-cluster bulk and cells')),
+        fluidRow(splitLayout(cellWidths=c('1%', '10%'), '',
+        numericInput(ns('clusDimN'), label='Top dims', value=5, min=5, max=50, step=1, width=150)
+        )), 
+        actionButton(ns("coclusPar"), "Confirm parameters", style='margin-top:1px')
       ) #tabPanel 
+     ) # navbarPage
+     ) #tabPanel
+
      ) # tabsetPanel(
   ) # tabPanel("Single Cell",
 }

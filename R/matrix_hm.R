@@ -4,6 +4,7 @@
 
 #' @param ID A vector of target item identifiers in the data. 
 #' @param data The subsetted data matrix returned by the function \code{\link{submatrix}}, where rows are assayed items and columns are samples/conditions.
+#' @param assay.na Applicable when \code{data} is "SummarizedExperiment" or "SingleCellExperiment", where multiple assays could be stored. The name of target assay to use. The default is \code{NULL}.
 #' @param scale One of "row", "column", or "no", corresponding to scale the heatmap by row, column, or no scale respectively. Default is "no".
 #' @param col A character vector of color ingredients for constructing the color scale. The default is c('yellow', 'orange', 'red').
 #' @param main The title of the matrix heatmap.
@@ -138,7 +139,7 @@
 #' \cr Cardoso-Moreira, Margarida, Jean Halbert, Delphine Valloton, Britta Velten, Chunyan Chen, Yi Shao, Angélica Liechti, et al. 2019. “Gene Expression Across Mammalian Organ Development.” Nature 571 (7766): 505–9
 
 #' @export matrix_hm
-#' @importFrom SummarizedExperiment assay
+#' @importFrom SummarizedExperiment assays
 #' @importFrom ggdendro dendro_data
 #' @importFrom ggplot2 ggplot geom_segment geom_text position_dodge geom_rect theme theme_minimal geom_tile scale_fill_gradient geom_hline
 #' @importFrom plotly layout subplot %>%
@@ -147,13 +148,18 @@
 #' @importFrom graphics image mtext par plot title
 #' @importFrom grDevices dev.off png
 
-matrix_hm <- function(ID, data, scale='no', col=c('yellow', 'orange', 'red'), main=NULL, title.size=10, cexCol=1, cexRow=1, angleCol=45, angleRow=45, sep.color="black", sep.width=0.02, static=TRUE, margin=c(10, 10), arg.lis1=list(), arg.lis2=list()) {
+matrix_hm <- function(ID, data, assay.na=NULL, scale='no', col=c('yellow', 'orange', 'red'), main=NULL, title.size=10, cexCol=1, cexRow=1, angleCol=45, angleRow=45, sep.color="black", sep.width=0.02, static=TRUE, margin=c(10, 10), arg.lis1=list(), arg.lis2=list()) {
 
   options(stringsAsFactors=FALSE)
   if (is(data, 'data.frame')|is(data, 'matrix')|is(data, 'DFrame')|is(data, 'dgCMatrix')) {
     dat.lis <- check_data(data=data); gene <- dat.lis$dat
-  } else if (is(data, 'SummarizedExperiment')) { gene <- assay(data) } else { 
-  stop('Accepted data classes are "data.frame", "matrix", "DFrame", "dgCMatrix", or "SummarizedExperiment", except that "spatial_hm" also accepts a "vector".') }
+  } else if (is(data, 'SummarizedExperiment') | is(data, 'SingleCellExperiment')) {
+    if (is.na(assay.na)) {
+      if (length(assays(data)) > 1) stop("Please specify which assay to use by assigning the assay name to 'assay.na'!") else if (length(assays(data)) == 1) assay.na <- 1
+    }
+    gene <- assays(data)[[assay.na]] 
+  } else { 
+    stop('Accepted data classes are "data.frame", "matrix", "DFrame", "dgCMatrix", "SummarizedExperiment", or "SingleCellExperiment", except that "spatial_hm" also accepts a "vector".') }
   mod <- as.matrix(gene)
  
   if (static==TRUE) {

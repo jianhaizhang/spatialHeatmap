@@ -1,5 +1,5 @@
-source('./R/fun.R')
-source('./R/df_match.R') 
+source('~/single_cell/function/fun.R')
+source('~/single_cell/function/df_match.R') 
 df.match <- df_match()
 # The Shiny modules (e.g. search_server) are temporarily placed in this file only for debugging purpose, and will be moved to independent files in the R folder after the App development is completed.
 
@@ -2231,7 +2231,7 @@ gg.all=shm$lgd.all; size.key=lgd.key.size; size.text.key=NULL; row=lgd.row; sam.
      scale.shm <- input$scale.shm
      if (!is.numeric(scale.shm)) return()
      if (scale.shm <= 0) return()
-     source('./R/dim_color_coclus.R')
+     source('~/spatialHeatmap/R/dim_color_coclus.R')
      dim.shm.lis <- dim_color_coclus(sce=dimred, tar.cell=tar.cell, profile=profile, gg.dim = gg.dim, gg.shm.all=gg.all1, grob.shm.all = grob.all1, gg.lgd.all=lgd.all, col.shm.all = gcol.all, col.lgd.all=gcol.lgd.all, grob.lgd.all=lgd.grob.all, con.na=con.na, lis.match=NULL, sub.title.size=input$title.size * scale.shm)
      # save(dim.shm.lis, file='dim.shm.lis')
      dim.shm.grob.all$val <- dim.shm.lis$dim.shm.grob.lis
@@ -3095,14 +3095,23 @@ dim_server <- function(id, sce, section='scell', upl.mod.lis, match.mod.lis, dat
    if (upl.mod.lis$ipt$fileIn!='customSingleCellData') return()
    ns <- session$ns
    lis <- list(
-     fluidRow(splitLayout(cellWidths=c('35%', '40%', '1%', '20%', '1%'), '',
-     span('Embedding plots of all cells before co-clusterings', style='margin-bottom=0px'), '', actionButton(ns("coclusPlotBut"), label='Visualize co-clustering result', style='margin-bottom:2px'), ''
+     column(6,
+     fluidRow(splitLayout(cellWidths=c('1%', '20%', '1%', '20%', '1%'), '',
+     selectInput(ns('dimCell'), label='Cells before co-clusterings', choices=c("UMAP", "PCA", "TSNE"), selected='UMAP'), '', 
+     actionButton(ns("coclusPlotBut"), label='Visualize co-clustering result', style='margin-bottom:2px'), ''
      )), 
      fluidRow(splitLayout(cellWidths=c('1%', '32%', '1%', '32%', '1%', '32%'), '',
       # This section is equivalent to ui, so tsne/umap/pca/scell.cdat can be used.
       plotOutput(ns('tsne')), '', plotOutput(ns('umap')), '',  plotOutput(ns('pca'))
     )),
-    column(6, uiOutput(ns('cna'))), column(6, uiOutput(ns('sf.cell'))),
+    column(3, uiOutput(ns('cna'))), column(3, uiOutput(ns('sf.cell')))
+    ),
+    column(6,
+    fluidRow(splitLayout(cellWidths=c('1%', '80%', '1%', '10%', '1%'), '',
+    span('Selected cells', style='margin-bottom=0px'), '', 
+    selectInput(ns('manBulk'), label='Select Bulk', choices=cna$val)
+    )
+    )),
     dataTableOutput(ns('scell.cdat'))
     )
    if (section!='scell') dataTableOutput(ns('scell.cdat')) else lis 

@@ -7,6 +7,7 @@
 network(
   ID,
   data,
+  assay.na = NULL,
   adj.mod,
   ds = "3",
   adj.min = 0,
@@ -26,6 +27,8 @@ network(
 \item{ID}{A vector of target item identifiers in the data.}
 
 \item{data}{The subsetted data matrix returned by the function \code{\link{submatrix}}, where rows are assayed items and columns are samples/conditions.}
+
+\item{assay.na}{Applicable when \code{data} is "SummarizedExperiment" or "SingleCellExperiment", where multiple assays could be stored. The name of target assay to use. The default is \code{NULL}.}
 
 \item{adj.mod}{The two-component list returned by \code{\link{adj_mod}} with the adjacency matrix and module assignment respectively.}
 

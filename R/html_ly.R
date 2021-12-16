@@ -36,8 +36,9 @@ html_ly <- function(gg, cs.g, ft.trans, sam.uni, anm.width, anm.height, selfcont
     na.hl <- paste0(i, '.html')
     cat('Preparing', paste0("'", na.hl, "'"), '... \n')
     g <- gg[[i]]; lay.dat <- layer_data(g)
-    dat <- g$data; g.col <- lay.dat$fill; names(g.col) <- dat$tissue
-    g.col <- g.col[!duplicated(names(g.col))]; tis.path <- dat$feature
+    dat <- g$data; tis.path <- dat$feature
+    # g.col <- lay.dat$fill; names(g.col) <- dat$tissue
+    # g.col <- g.col[!duplicated(names(g.col))] 
     ft.legend <- intersect(sam.uni, unique(tis.path))
     ft.legend <- setdiff(ft.legend, ft.trans) 
     leg.idx <- !duplicated(tis.path) & (tis.path %in% ft.legend)
@@ -56,13 +57,11 @@ html_ly <- function(gg, cs.g, ft.trans, sam.uni, anm.width, anm.height, selfcont
     subly$width <- anm.width; subly$height <- anm.height
     saveWidget(subly, na.hl, selfcontained=selfcontained, libdir="lib")
     file.rename(na.hl, paste0(dir, '/', na.hl)) 
+  }; unlink(paste0(dir, '/lib'), recursive=TRUE)
 
-  }; unlink(paste0(dir, '/lib'), recursive=TRUE) 
   if (dir.exists('lib')) { lib1 <- paste0(dir, '/lib')
    if (dir.exists(lib1)) unlink(lib1, recursive=TRUE)
    file.rename('lib', lib1) 
   }
 
 }
-
-

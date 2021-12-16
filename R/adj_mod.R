@@ -140,17 +140,20 @@
 #' @importFrom dynamicTreeCut cutreeHybrid
 
 
-adj_mod <- function(data, type='signed', power=if (type=='distance') 1 else 6, arg.adj=list(), TOMType='unsigned', arg.tom=list(), method='complete', minSize=15, arg.cut=list(), dir=NULL) {
+adj_mod <- function(data, assay.na=NULL, type='signed', power=if (type=='distance') 1 else 6, arg.adj=list(), TOMType='unsigned', arg.tom=list(), method='complete', minSize=15, arg.cut=list(), dir=NULL) {
 
   options(stringsAsFactors=FALSE)
   # Get data matrix.
   if (is(data, 'data.frame')|is(data, 'matrix')|is(data, 'DFrame')|is(data, 'dgCMatrix')) {
     dat.lis <- check_data(data=data); data <- t(dat.lis$dat)
-  } else if (is(data, 'SummarizedExperiment')) { data <- t(assay(data)) 
-
+  } else if (is(data, 'SummarizedExperiment') | is(data, 'SingleCellExperiment')) {
+    if (is.null(assay.na)) {
+      if (length(assays(data)) > 1) stop("Please specify which assay to use by assigning the assay name to 'assay.na'!") else if (length(assays(data)) == 1) assay.na <- 1
+    }
+    data <- t(assays(data)[[assay.na]])
     if (any(duplicated(rownames(data)))) stop('Please use function \'aggr_rep\' to aggregate replicates!')
 
-  } else { stop('Accepted data classes are "data.frame", "matrix", "DFrame", "dgCMatrix", or "SummarizedExperiment", except that "spatial_hm" also accepts a "vector".') }
+  } else { stop('Accepted data classes are "data.frame", "matrix", "DFrame", "dgCMatrix", "SummarizedExperiment", or "SingleCellExperiment", except that "spatial_hm" also accepts a "vector".') }
   if (nrow(data)<5) cat('Warning: variables of sample/condition are less than 5! \n')
   if (ncol(data)>10000) cat('More than 10,000 rows are detected in data. Computation may take a long time! \n')
   
