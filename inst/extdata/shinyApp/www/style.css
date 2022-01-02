@@ -259,6 +259,7 @@ span {
   z-index: 5
 }
 
+/*
 #brainHum img:hover, #organArab img:hover, #stageArab img:hover, #clpRice img:hover {
   transform: scale(3); transform-origin: left;
 }
@@ -270,6 +271,7 @@ span {
 #chicken img:hover, #rootArab img:hover {
   transform: scale(3); transform-origin: right;
 }
+*/
 
 /*HTML file in About. */
 body { text-align: justify }

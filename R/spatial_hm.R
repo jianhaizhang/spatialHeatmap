@@ -232,6 +232,143 @@
 #' spatial_hm(svg.path=c(svg.pa1, svg.pa2), data=dat.overlay, tmp.path=c(tmp.pa1, tmp.pa2),
 #' charcoal=FALSE, ID=c('gene1'), alpha.overlay=0.5)
 
+# Co-visualizing bulk and single cell data
+library(SingleCellExperiment)
+sce.unfil <- sce <- readRDS('~/single_cell/sce.mar.rds')
+library(scuttle)
+stats <- perCellQCMetrics(sce, subsets=list(Mt=rowData(sce)$featureType=='mito'), threshold=1)
+sub.fields <- 'subsets_Mt_percent'
+ercc <- 'ERCC' %in% altExpNames(sce)
+if (ercc) sub.fields <- c('altexps_ERCC_percent', sub.fields)
+qc <- perCellQCFilters(stats, sub.fields=sub.fields, nmads=3)
+
+
+colData(sce.unfil) <- cbind(colData(sce.unfil), stats)
+
+sce.unfil$discard <- qc$discard
+library(scater)
+scell_qc <- function(sce.unfil, ercc = FALSE) {
+library(gridExtra)
+  g.sum <- plotColData(sce.unfil, y="sum", colour_by="discard") + scale_y_log10() + ggtitle("Total count")
+  g.det <- plotColData(sce.unfil, y="detected", colour_by="discard") + scale_y_log10() + ggtitle("Detected features")
+  g.mt.per <- plotColData(sce.unfil, y="subsets_Mt_percent", colour_by="discard") + ggtitle("Mito percent")
+  if (ercc) g.ercc.per <- plotColData(sce.unfil, y="altexps_ERCC_percent", colour_by="discard") + ggtitle("ERCC percent") else g.ercc.dis <- ggplot() + theme_void()
+  g.mt.log <- plotColData(sce.unfil, x="sum", y="subsets_Mt_percent", colour_by="discard") + scale_x_log10()      
+  if (ercc) g.mt.ercc <- plotColData(sce.unfil, x="altexps_ERCC_percent", y="subsets_Mt_percent", colour_by="discard") else g.mt.ercc <- ggplot() + theme_void()
+  if (ercc) grid.arrange(
+    g.sum, g.det, g.mt.per, g.ercc.per, g.mt.log, g.mt.ercc,
+    ncol = 2
+  ) else grid.arrange(g.sum, g.det, g.mt.per, g.mt.log, ncol = 2)
+}
+
+scell_qc(sce.unfil)
+
+ 
+library(scran)    
+clusters <- quickCluster(sce, min.size=100)
+sce <- computeSumFactors(sce, cluster=clusters, max.cluster.size=3000)    
+sce <- logNormCounts(sce) # log2-scale.
+plot(librarySizeFactors(sce), sizeFactors(sce), pch = 16,
+xlab = "Library size factors", ylab = "Deconvolution factors", log = "xy")
+  
+ 
+    df.var <- modelGeneVar(sce)
+    # sce.rct$var <- sce.var <- modelGeneVar(sce)    
+    #sce.rct$top <- top.hvgs <- getTopHVGs(df.var, prop=p, n=n)
+    top.hvgs <- getTopHVGs(df.var, prop = 0.1, n = 3000)
+    
+        
+    
+    plot(df.var$mean, df.var$total, pch = 16, cex = 0.5,
+    xlab = "Mean of log-expression", ylab = "Variance of log-expression")
+    curfit <- metadata(df.var)
+    points(curfit$mean, curfit$var, col = "red", pch = 16)
+    curve(curfit$trend(x), col = 'dodgerblue', add = TRUE, lwd = 2)
+  
+            
+sce <- denoisePCA(sce, assay.type = "logcounts", technical = df.var, subset.row = top.hvgs, min.rank = 5, max.rank = 50)
+# Other argument: n_dimred, ntop. By default only 2 dimensions are returned by runTSNE/runUMAP.
+sce <- runTSNE(sce, dimred = "PCA", ncomponents = 3)
+sce <- runUMAP(sce, dimred = "PCA", ncomponents = 3)
+ 
+    graph <- nn_graph(sce, method='SNN', use.dimred = 'PCA')
+    
+      
+cluster <- detect_cluster(graph, clustering='wt') 
+labs <- paste0('cluster', cluster$membership)
+cdat <- colData(sce); rna <- make.names(rownames(cdat))
+lab.lgc <- 'label' %in% make.names(colnames(cdat))
+if (lab.lgc) { cdat <- cbind(cluster=labs, colData(sce))
+  idx <- colnames(cdat) %in% c('cluster', 'label')
+  cdat <- cdat[, c(which(idx), which(!idx))]
+} else cdat <- cbind(cluster=labs, colData(sce))
+rownames(cdat) <- rna
+colnames(cdat) <- make.names(colnames(cdat))
+colData(sce) <- cdat
+gg.dim <- plotTSNE(sce, colour_by = 'label')
+gg.dim + geom_point(size = 2, alpha = 0.2, aes(shape=colour_by)) + scale_shape_manual(values = seq_along(unique(sce$label))) + labs(shape = 'label')
+ 
+# Aggregate cells in each cluster/label.
+sce.aggr <- aggr_rep(data=sce, assay.na='logcounts', sam.factor='label', con.factor='expVar', aggr='mean')
+
+ft.rematch <- get(load('~/spatialHeatmap/inst/extdata/shinyApp/ft.rematch'))
+svg.mus <- '~/single_cell/mus_musculus.brain.svg' 
+
+
+# Inital filtering before normalization.
+blk <- filter_data(data=blk.all, sam.factor=NULL, con.factor=NULL, pOA=c(0.05, 5), CV=c(0.05, 100), dir=NULL); dim(blk)           
+
+dat.lis10.11.31 <- filter_sc(lis=list(sc10=sc.all10, sc11=sc.all11, sc31=sc.all31), blk=blk, gen.rm='^ATCG|^ATCG', min.cnt=1, p.in.cell=0.01, p.in.gen=0.05)
+
+dat.lis.nor <- norm_sc(dat.lis=dat.lis10.11.31, cpm=FALSE)
+lis <- list(sc10=logcounts(dat.lis.nor$sc10), sc11=logcounts(dat.lis.nor$sc11), sc31=logcounts(dat.lis.nor$sc31))                 
+
+# Secondary filtering.
+blk <- filter_data(data=logcounts(dat.lis.nor$blk), sam.factor=NULL, con.factor=NULL, pOA=c(0.3, 1), CV=c(0.3, 100), dir=NULL); dim(blk)
+
+dat.lis10.11.31_4 <- filter_sc(lis=lis, blk=blk, gen.rm='^ATCG|^ATCG', min.cnt=1, p.in.cell=0.3, p.in.gen=0.1)                  
+
+save(dat.lis10.11.31_3, file='result/dat.lis10.11.31_3.rds')
+
+
+dat.lis <- get(load('~/single_cell/result/dat.lis10.11.31_3.rds'))
+dat.all <- cbind(dat.lis$bulk, dat.lis$sc10, dat.lis$sc11, dat.lis$sc31)
+cdat <- data.frame(bulkCell=c(rep('bulk', ncol(dat.lis$bulk)), rep('sc10', ncol(dat.lis$sc10)), rep('sc11', ncol(dat.lis$sc11)), rep('target', ncol(dat.lis$sc31))))
+library(SummarizedExperiment)
+sce.nor <- SummarizedExperiment(assays=list(dat.all=as.matrix(dat.all)), colData=cdat)
+saveRDS(sce.nor, file='~/single_cell/blk.sce.nor.rds')
+
+library(spatialHeatmap); attach(loadNamespace("spatialHeatmap"), name = "spatialHeatmap_all")
+blk.fil <- filter_data(data=dat.lis$bulk, sam.factor=NULL, con.factor=NULL, pOA=c(0.3, 0), CV=c(0.1, 100), dir=NULL); dim(blk.fil)
+
+source('~/single_cell/function/fun.R')
+source('~/single_cell/function/df_match.R')
+df.match <- df_match()
+
+dat.lis.fil <- filter_sc(lis=dat.lis[c('sc10', 'sc11', 'sc31')], blk=blk.fil, gen.rm='^ATCG|^ATCG', min.cnt=0, p.in.cell=0.35, p.in.gen=0.15)
+
+res.lis <- tests(bulk=dat.lis.fil$bulk, scell=dat.lis.fil$sc31, df.match=df.match, sc.dim.min=10, max.dim=50, sim=0.31, sim.p=0.52, dim=16, method='snn', dimred='UMAP', return.all=TRUE, file='df.par.10.11.12.del')
+
+sce.lis <- sub_asg(res.lis=res.lis, thr=0, true.only=TRUE)
+
+sce.aggr <- aggr_rep(data=sce.lis$sce.sub, assay.na='logcounts', sam.factor='SVGBulk', con.factor=NULL, aggr='mean')
+
+svg.rt <- '~/single_cell/arabidopsis.thaliana_root.cross_shm.svg'
+
+shm.lis <- spatial_hm(svg.path=svg.rt, data=sce.aggr, ID=c('AT1G01010', 'AT1G01100'), height=0.7, legend.r=1.5, legend.key.size=0.02, legend.text.size=12, legend.nrow=2, ft.trans=NULL, sce.dimred=sce.lis$sce, dimred='UMAP', color.by='label', assay.na='logcounts', tar.cell=c('all'), profile=F)
+
+
+load('../inst/extdata/shinyApp/dim.color.all')
+tar.cell <- c('CORT', 'ENDO')
+lis <- dim_color_coclus(sce=sce, tar.cell=tar.cell, profile=FALSE, gg.dim=gg.dim, gg.shm.all=gg.shm.all, grob.shm.all=grob.shm.all, gg.lgd.all=gg.lgd.all, col.shm.all=col.shm.all, col.lgd.all=col.lgd.all, grob.lgd.all=grob.lgd.all, con.na=con.na, lis.match=lis.match, sub.title.size=sub.title.size)
+
+library(ggplot2)
+
+gg.dim <- plotTSNE(sce, colour_by = 'label')
+dim.shm.lis <- dim_color(gg.dim = gg.dim, gg.shm.all=gg.all1, grob.shm.all = grob.all1, col.shm.all = gcol.all, color.by='label')
+
+
+gg.dim <- plotUMAP(sce, colour_by = 'label')
 
 
 

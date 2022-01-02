@@ -19,6 +19,7 @@ js <- "function openFullscreen(elem) {
 
 # A module can only have a "ui" element without ther "server".
 search_ui <- function(id, lab=label) {
+  # Applying "ns" on an id: this id is prefixed with the module id in HTML output.
   ns <- NS(id) 
   fluidRow(splitLayout(cellWidths=c('1%', '13%', '1%', '85%'), '',
   radioButtons(inputId=ns('sch.mode'), label='Search mode', choices=c('Single', 'Multiple'), selected='Multiple', inline=TRUE), '',
@@ -73,10 +74,7 @@ data_ui <- function(id, dim.ui=NULL, deg=FALSE) {
         actionButton(ns("tran.scale.but.prof"), "Transform/scale data", style='margin-top:10px'),
         fluidRow(splitLayout(cellWidths=c("1%", "98%", "1%"), "", plotOutput(ns("selProf")), ""))
       ), 
-      tabPanel('Single-cell metadata', value='dTabScell',
-        if (is.null(dim.ui)) 'This tab is only applicable to singel-cell data.' else dim.ui
-      )
-
+      tabPanel('Single-cell metadata', value='dTabScell', dim.ui)
    ) # tabsetPanel(
 
   ) else if (deg == TRUE) {
@@ -119,7 +117,7 @@ upload_ui <- function(id) {
      tabPanel(title="Data & aSVGs", value='datSVG',
       h4(strong("Step1: choose custom or default data sets")),
       fluidRow(splitLayout(cellWidths=c('1%', '30%'), '', 
-      selectInput(ns("fileIn"), NULL, c('none', 'customBulkData'), 'none')
+      selectInput(ns("fileIn"), label=NULL, choices=c('customBulkData'), selected='')
       )),
       uiOutput(ns('bulk.sce')), uiOutput(ns('svg.upl')),
       #fluidRow(splitLayout(cellWidths=c('1%', '20%', '1%', '10%'), '', h4(strong("Step 2: upload custom data")), '', actionButton(ns("cusHelp"), "Help", icon = icon('question-circle')))),
@@ -455,6 +453,7 @@ deg_ui <- function(id) {
     ) # box(title='Spatial Enrich'
   )
 }
+
 # Dimension reduction in single-cell data.
 dim_ui <- function(id) { 
   ns <- NS(id); uiOutput(ns('dim.ui'))
@@ -465,6 +464,28 @@ dim_ui <- function(id) {
   #  )), dataTableOutput(ns('scell.cdat'))
   #)
   #)
+}
+
+# Dimension reduction in single-cell data.
+tailor_match_ui <- function(id, hide=FALSE) { 
+  ns <- NS(id)
+  col1 <- column(6, id='dimCellBut', 
+  fluidRow(splitLayout(cellWidths=c('1%', '50%', '1%', '20%', '1%'), '',
+    selectInput(ns('dimCell'), label='Cells before co-clusterings', choices=c("UMAP", "PCA", "TSNE")), '', 
+    actionButton(ns("coclusPlotBut"), label='Visualize co-clustering result', style='margin-bottom:-60px'), ''
+  ))
+  );
+  col2 <- column(6, id='selBlkButCan',
+  fluidRow(splitLayout(cellWidths=c('1%', '40%', '1%', '25%', '1%', '15%'), '', uiOutput(ns('selBlk')), '',
+  actionButton(ns("selBlkBut"), label='Final confirmation', style='margin-bottom:-60px'), '',
+  actionButton(ns("selBlkCancel"), label='Reset', style='margin-bottom:-60px')
+  ))
+  ) 
+  list( # Inside the list: "," is the separator. Outside the list ";" is the separator.
+  if (hide==FALSE) col1, if (hide==FALSE) col2,
+  # if (hide==TRUE) hidden(col1), if (hide==TRUE) hidden(col2), 
+  uiOutput(ns('dim.ui'))
+  )
 }
 
 scell_ui <- function(id) { 
@@ -526,9 +547,7 @@ scell_ui <- function(id) {
       ), # tabPanel
       tabPanel("Dimensionality Reduction", value='dimred',
       navbarPage('',
-      tabPanel('Plot',
-         dim_ui(ns('dim'))
-      ),
+      tabPanel('Plot', dim_ui(ns('dim'))),
       tabPanel('Parameters',
         actionButton(ns("dim.but"), "Confirm"), br(),
         h5(strong('denoisePCA')),  
@@ -565,8 +584,7 @@ scell_ui <- function(id) {
       #) # navbarPage 
       ), #tabPanel 
 
-      tabPanel("Auto-matching",
-        
+      tabPanel("Auto-matching", 
       navbarPage('',
       tabPanel('Result',
         # h5(strong('Subset assignments')),  
@@ -602,9 +620,11 @@ scell_ui <- function(id) {
         numericInput(ns('clusDimN'), label='Top dims', value=5, min=5, max=50, step=1, width=150)
         )), 
         actionButton(ns("coclusPar"), "Confirm parameters", style='margin-top:1px')
-      ) #tabPanel 
-     ) # navbarPage
-     ) #tabPanel
+      ), #tabPanel 
+     tabPanel("Tailoring matching", value='tailor',
+         tailor_match_ui(ns('tailor'))
+     ) #tabPanel("Tailoring matching", navbarPage     
+     )) # tabPanel("Auto-matching", navbarPage(
 
      ) # tabsetPanel(
   ) # tabPanel("Single Cell",
@@ -640,7 +660,7 @@ ui <- function(request) {
      })
    ')),
     fluidRow( 
-      do.call(tabsetPanel, append(list(type = "pills", id = 'shm.sup', selected="landing", upload_ui('upl'), shm_ui('shmAll', data_ui('dat', dim_ui('datDim')), search_ui('sear')), deg_ui('deg'), scell_ui('scell')),
+      do.call(tabsetPanel, append(list(type = "pills", id = 'shm.sup', selected="landing", upload_ui('upl'), shm_ui('shmAll', data_ui('dat', uiOutput('datDim')), search_ui('sear')), deg_ui('deg'), scell_ui('scell')),
         list(tabPanel("About", value='about',
           if (0) box(width = 12, title = "", closable = FALSE, solidHeader = TRUE, collapsible = TRUE, enable_sidebar = FALSE, status = "primary", enable_dropdown = FALSE,
           ),

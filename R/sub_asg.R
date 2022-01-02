@@ -30,6 +30,11 @@ sub_asg <- function(res.lis, thr, true.only=TRUE) {
   cdat$assignedBulk[df.roc$idx] <- df.roc$assignedBulk
   cdat$response[df.roc$idx] <- df.roc$response
   cdat$idx[df.roc$idx] <- df.roc$idx
+  # In consideration of rematching in coclustering.
+  cdat$cell[df.roc$idx] <- df.roc$cell
+  cdat$SVGBulk[df.roc$idx] <- df.roc$SVGBulk
+  cdat$trueBulk[df.roc$idx] <- df.roc$trueBulk
+  
   cdat <- cdat[, c('label', 'cell', 'assignedBulk', 'response', 'SVGBulk', 'trueBulk', 'idx')]
   colData(sce) <- cdat
   sce.sub <- sce[, df.roc$idx]

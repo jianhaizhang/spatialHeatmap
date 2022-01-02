@@ -261,7 +261,7 @@ extr_svg <- function(file, name) {
   if (file.exists(pa)) return(pa) else return()
 }
 
-# Extract svg path/na from uploaded or internal tar files.
+# Extract svg path/na from uploaded or internal tar files if not found in 'example' folder.
 svg_pa_na <- function(svg.path, pa.svg.upl, tmp.ext) {
   svg.na <- NULL; for (i in seq_along(svg.path)) {
     # Extract svg names. 

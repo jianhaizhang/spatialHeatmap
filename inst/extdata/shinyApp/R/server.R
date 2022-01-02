@@ -1,9 +1,12 @@
-source('./R/fun.R')
-source('./R/df_match.R') 
+#source('~/single_cell/function/fun.R')
+#source('~/single_cell/function/df_match.R') 
+source('R/fun.R')
+source('R/df_match.R') 
+
 df.match <- df_match()
 # The Shiny modules (e.g. search_server) are temporarily placed in this file only for debugging purpose, and will be moved to independent files in the R folder after the App development is completed.
-
-options(stringsAsFactors=FALSE) 
+options(list(stringsAsFactors=FALSE, shiny.fullstacktrace=TRUE))
+# options(stringsAsFactors=FALSE) 
 
 # Every variable in every container should be checked at the beginning. E.g. input$fileIn in reactive({}). These checks will avoid amost all errors/warnings.
 
@@ -292,16 +295,16 @@ upload_server <- function(id, lis.url=NULL, session) {
       }; cat('Done! \n')
     }
     # Separate data, svg of default and customization. 
-    na.def <- na.ipt[!na.ipt %in% c('none', 'customBulkData', 'customSingleCellData')]
+    na.def <- na.ipt[!na.ipt %in% c('customBulkData', 'customSingleCellData')]
     # Data in uploaded tar files are also included in default.
     dat.def <- c(dat.upl, dat.ipt[na.def]); svg.def <- c(svg.upl, svg.ipt[na.def])
     # If data/svg are duplicated between the server and upload, the data/svg on server side is removed.
     dat.def <- dat.def[unique(names(dat.def))]; svg.def <- svg.def[unique(names(svg.def))]
     cfg$lis.dat <- lis.dat; cfg$lis.dld <- lis.dld; cfg$lis.par <- lis.par; cfg$na.def <- names(dat.def); cfg$svg.def <- svg.def; cfg$dat.def <- dat.def; cfg$na.cus <- na.cus
 
-    dat.nas <- c('none', na.cus, names(dat.def))
+    dat.nas <- c(na.cus, names(dat.def))
     url.val <- url_val('upl-fileIn', lis.url)
-    updateSelectInput(session, 'fileIn', NULL, dat.nas, ifelse(url.val=='null', lis.par$default.dataset, url.val))
+    updateSelectInput(session, 'fileIn', choices=dat.nas, selected=ifelse(url.val=='null', lis.par$default.dataset, url.val))
     updateRadioButtons(session, inputId='dimName', label='2B: is column or row gene?', choices=c("None", "Row", "Column"), selected=lis.par$col.row.gene, inline=TRUE)
 
   })
@@ -591,7 +594,7 @@ data_server <- function(id, sch, lis.url, ids, deg = FALSE, upl.mod.lis, scell.m
       df.aggr.tran[df.aggr.tran <= min.v] <- min.v
       }
     })
-    # All values before scaling.
+    # The only difference between "df.aggr.thr" and "df.aggr.tran" is scaling. The former is used to indicate un-scaled range in the colour bar title.
     df.aggr.thr <- df.aggr.tran
     # Scale by row/column
     if (scale.dat=='Row') { df.aggr.tran <- t(scale(t(df.aggr.tran))) } else if (scale.dat=='Selected') {
@@ -1017,6 +1020,7 @@ network_server <- function(id, upload.mod.lis, dat.mod.lis, shm.mod.lis, sch.mod
   })
     #gene <- geneIn()[["df.aggr.tran"]]; if (!(input$gen.sel %in% rownames(gene))) return() # Avoid unnecessary computing of 'adj', since 'input$gen.sel' is a cerain true gene id of an irrelevant expression matrix, not 'None', when switching from one defaul example's matrix heatmap to another example.
     if (0) observe({
+    # ggsave(paste0(tmp.dir, '/shm_all.', ext), plot=shm.all, device=ext, width=width/72, height=height/72, dpi=res, unit='in', limitsize = FALSE) 
       cat('Initial adjacency matrix and modules ...\n')
       if (ipt$fileIn=="none"|tab.net$val!='yes') return()
       if (is.null(input$cpt.nw)) return() # Network section is removed.
@@ -1408,7 +1412,7 @@ match_server <- function(id, sam, tab, upl.mod.lis, session) {
  # Active tab.
  tab <- reactiveValues(); observe({ tab$val <- input$shm.sup })
 
-shm_server <- function(id, sch, lis.url, url.id, tab, upl.mod.lis, dat.mod.lis, sch.mod.lis, scell.mod.lis, session) {  
+shm_server <- function(id, sch, lis.url, url.id, tab, upl.mod.lis, dat.mod.lis, sch.mod.lis, scell.mod.lis, dim.mod.lis, tailor.mod.lis, session) {  
   moduleServer(id, function(input, output, session) {
     library(magick)
     ipt <- upl.mod.lis$ipt; cfg <- upl.mod.lis$cfg
@@ -1532,7 +1536,7 @@ shm_server <- function(id, sch, lis.url, url.id, tab, upl.mod.lis, dat.mod.lis, 
   observe({
     thr <- geneV()$thr; if (is.null(thr)) return()
     scale.dat <- scaleDat(); if (is.null(scale.dat)) return()
-    if (!is.null(scale.dat)) if (scale.dat=='No') title <- 'No scaling' else if (scale.dat=='Row') title <- 'Scaled by row' else if (scale.dat=='Selected') title <- 'Scaled across selected genes' else if (scale.dat=='All') title <- 'Scaled across all genes' else title <- ''
+    if (!is.null(scale.dat)) if (scale.dat=='No') title <- 'No scaling' else if (scale.dat=='Row') title <- 'Scaled by row' else if (scale.dat=='Selected') title <- 'Scaled on selected genes' else if (scale.dat=='All') title <- 'Scaled on all genes' else title <- ''
     x.title$val <- paste0(title, ' (', round(thr[1], 2), '-', round(thr[2], 2), ')')
   })
   shm.bar <- reactive({
@@ -2208,12 +2212,12 @@ gg.all=shm$lgd.all; size.key=lgd.key.size; size.text.key=NULL; row=lgd.row; sam.
      # lgd.lis <- shm$lgd.all; save(dim.shm.grob.lis, gg.all1, gg.dim.all, gcol.all, ft.rematch, lgd.lis, file='dgggl')
 
    })
-
    # Coclustering: single-cell reduced dimensionality for each gene__con. 
-   observeEvent(list(input$tarCell, input$profile, shm$grob.all, shm$grob.all1, input$dims), {
+   observeEvent(list(scell.mod.lis$sce.rct$dimred, tailor.mod.lis$row.sel$val, scell.mod.lis$tailor.lis()$df.sel.cell$val1, input$tarCell, input$profile, shm$grob.all, shm$grob.all1, input$dims), ignoreNULL=FALSE, {
      cat('Coclustering: compiling PCA/TSNE/UMAP and SHMs ... \n')
      tar.cell <- input$tarCell
      profile <- ifelse(input$profile=='Yes', TRUE, FALSE)
+     row.sel <- tailor.mod.lis$row.sel$val
      blk <- scell.mod.lis$sce.rct$bulk
      dimred <- scell.mod.lis$sce.rct$dimred
      sf.by <- scell.mod.lis$df.lis()$sf.by
@@ -2231,8 +2235,9 @@ gg.all=shm$lgd.all; size.key=lgd.key.size; size.text.key=NULL; row=lgd.row; sam.
      scale.shm <- input$scale.shm
      if (!is.numeric(scale.shm)) return()
      if (scale.shm <= 0) return()
-     source('./R/dim_color_coclus.R')
-     dim.shm.lis <- dim_color_coclus(sce=dimred, tar.cell=tar.cell, profile=profile, gg.dim = gg.dim, gg.shm.all=gg.all1, grob.shm.all = grob.all1, gg.lgd.all=lgd.all, col.shm.all = gcol.all, col.lgd.all=gcol.lgd.all, grob.lgd.all=lgd.grob.all, con.na=con.na, lis.match=NULL, sub.title.size=input$title.size * scale.shm)
+     # source('~/spatialHeatmap/R/dim_color_coclus.R')
+     source('R/dim_color_coclus.R')
+     dim.shm.lis <- dim_color_coclus(sce=dimred, row.sel=row.sel, tar.cell=tar.cell, profile=profile, gg.dim = gg.dim, gg.shm.all=gg.all1, grob.shm.all = grob.all1, gg.lgd.all=lgd.all, col.shm.all = gcol.all, col.lgd.all=gcol.lgd.all, grob.lgd.all=lgd.grob.all, con.na=con.na, lis.match=NULL, sub.title.size=input$title.size * scale.shm)
      # save(dim.shm.lis, file='dim.shm.lis')
      dim.shm.grob.all$val <- dim.shm.lis$dim.shm.grob.lis
      cat('Done! \n')
@@ -2254,7 +2259,7 @@ gg.all=shm$lgd.all; size.key=lgd.key.size; size.text.key=NULL; row=lgd.row; sam.
     # Avoid: if one column has all NAs in the layout matrix, the aspect ratio is distroyed. So only take the columns not containing all NAs.
     col.vld <- sum(unlist(lapply(seq_len(ncol(lay)), function(x) !all(is.na(lay[, x])))))
     # width/height relate to scrolling in box.
-    shmLay$width <- width <- col.vld * 250 * scale.shm
+    shmLay$width <- width <- col.vld * 300 * scale.shm
     shmLay$height <- height <- nrow(lay) * 300 * scale.shm
     output$shm <- renderPlot(width = width, height = height, { 
       cat('Plotting spatial heatmaps ... \n')
@@ -2312,7 +2317,7 @@ gg.all=shm$lgd.all; size.key=lgd.key.size; size.text.key=NULL; row=lgd.row; sam.
         png(paste0(tmp.dir, '/tmp.png')); shm1 <- grid.arrange(cs.arr, shm.arr, lgd.arr, ncol=3, widths=unit(c(0.08-0.005, shm.w, w.lgd), 'npc')); dev.off() } else { 
         png(paste0(tmp.dir, '/tmp.png')); shm1 <- grid.arrange(cs.arr, shm.arr, ncol=2, widths=unit(c(0.08-0.005, 1-0.08), 'npc')); dev.off() 
       }
-      ggsave(paste0(tmp.dir, '/shm.', input$ext), plot=shm1, device=input$ext, width=shmLay$width/72, height=shmLay$height/72, dpi=input$res, unit='in'); cat('Done! \n') 
+      ggsave(paste0(tmp.dir, '/shm.', input$ext), plot=shm1, device=input$ext, width=shmLay$width/72, height=shmLay$height/72, dpi=input$res, unit='in', limitsize = FALSE); cat('Done! \n') 
   output$dldBut <- renderUI({
     ns <- session$ns    
     downloadButton(ns("dld.shm"), "Download", style = "margin-top: 24px;")
@@ -2669,7 +2674,9 @@ gg.all=shm$lgd.all; size.key=lgd.key.size; size.text.key=NULL; row=lgd.row; sam.
 })} # shm_server
 
 
-mods$shm <- shm.mod.lis <- shm_server('shmAll', sch, lis.url, url.id, tab, upl.mod.lis, dat.mod.lis, sch.mod.lis, mods$scell, session=session)
+# Variables of "reactiveValues()" are accessible anywhere once created. E.g. created in one module and used instantly in another module without being passed as an argument. So "url.id" can be accessed if not passed as an argument, even in the inner nested modules.
+
+mods$shm <- shm.mod.lis <- shm_server('shmAll', sch, lis.url, url.id, tab, upl.mod.lis, dat.mod.lis, sch.mod.lis, mods$scell, mods$dim, mods$tailor, session=session)
 
 
 deg_server <- function(id, sch, lis.url, ids, upl.mod.lis, dat.mod.lis, shm.mod.lis, session) {
@@ -3000,9 +3007,48 @@ deg_server <- function(id, sch, lis.url, ids, upl.mod.lis, dat.mod.lis, shm.mod.
 })}
 
   mods$deg <- deg.mod.lis <- deg_server('deg', sch, lis.url, ids, upl.mod.lis, dat.mod.lis, shm.mod.lis)
+plot_dim <- function(sce, dim, color.by, row.sel=NULL) {
+  dim.all <- reducedDim(sce, dim)
+  # First two dims.
+  df.all <- dim.all[, c(1, 2)]; # rna <- rownames(df.all)
+  df.all <- as.data.frame(df.all)
+  colnames(df.all) <- c('x', 'y') 
+  df.all$colour_by <- colData(sce)[, color.by]
+  # Used in event_data/ggplotly.
+  df.all$key <- seq_len(nrow(df.all))
+  labs <- paste0(dim, c(1, 2))
+  # Percentage of variance explained.
+  per.var <- attr(dim.all, 'percentVar')
+  if (!is.null(per.var)) { # Axis labels.
+    per <- paste(round(per.var[1:2], 0), "%", sep="") 
+    labs <- paste0(labs, ' (', per, ')')
+  }
+
+  if (!is.null(row.sel)) {
+    df.sel <- df.all[row.sel, ]
+    df.sel$colour_by <- paste0(df.sel$colour_by, '.selected')
+    sel <- unique(df.sel$colour_by)
+    col.sel <- rep('blue', length(sel))
+    names(col.sel) <- sel
+    df.other <- df.all[setdiff(df.all$key, row.sel), ] 
+    other <- unique(df.other$colour_by)
+    col.other <- rep('gray80', length(other))
+    names(col.other) <- other
+    col.all <- c(col.other, col.sel)
+    df.all <- rbind(df.other, df.sel)
+    scl.col <- scale_color_manual(name='Selected', values=col.all, breaks=sel, labels=sub('\\.selected$', '', sel))
+  } else scl.col <- NULL
+  
+  ggplot(df.all, aes(x=x, y=y)) + geom_point(size=1.5, alpha=0.6, shape=19, stroke=0.5, aes(colour=colour_by, key=key)) + theme_classic() + theme(plot.title=element_text(hjust=0.5, size=14)) + labs(x=labs[1], y=labs[2], colour=color.by) + scl.col
+}
 
 dim_server <- function(id, sce, section='scell', upl.mod.lis, match.mod.lis, dat.lis, session) {
   moduleServer(id, function(input, output, session) {
+    if (section!='scell') {
+      hideElement('dimCell'); hideElement('coclusPlotBut')
+      hideElement('selBlk'); hideElement('selBlkBut')
+      hideElement('selBlkCancel')
+    }  
     cna <- reactiveValues(); observe({
       sce <- sce(); if (is.null(sce)) return()
       cdat <- colData(sce); cna$val <- colnames(cdat)
@@ -3016,46 +3062,184 @@ dim_server <- function(id, sce, section='scell', upl.mod.lis, match.mod.lis, dat
     output$sf.cell <- renderUI({
       if (is.null(cna$val)) return(); ns <- session$ns
       sel <- cho <- NULL
-      if ('SVGBulk' %in% cna$val) {
-        sel <- cho <- 'SVGBulk'
-      } else {
-        cho <- 'cluster'
+      if ('SVGBulk' %in% cna$val) { sel <- cho <- 'SVGBulk'
+      } else {cho <- 'cluster'
         if (cna$sel=='label') cho <- c('label', 'cluster')
       }
-      selectInput(ns('sf.by'), 'Pseudo spatial feature by', cho, cna$sel)
+      selectInput(ns('sf.by'), 'Collapse cells by', cho, cna$sel)
     })
     output$umap <- renderPlot({
       sce <- sce(); cna <- input$cna
       if (is.null(sce)|is.null(cna)) return()
       if (!cna %in% colnames(colData(sce))) return()
-      # if (length(unique(colData(sce)[, cna]))>6) shape.by <- NULL else shape.by <- cna 
-      plotUMAP(sce, colour_by=cna)+labs(colour=cna)
+      plot_dim(sce, dim='UMAP', color.by=cna, row.sel=row.sel$val)
     })
     output$tsne <- renderPlot({
       sce <- sce(); cna <- input$cna
       if (is.null(sce)|is.null(cna)) return()
       if (!cna %in% colnames(colData(sce))) return()
-      # if (length(unique(colData(sce)[, cna]))>6) shape.by <- NULL else shape.by <- cna 
-      plotTSNE(sce, colour_by=cna)+labs(colour=cna)
+      plot_dim(sce, dim='TSNE', color.by=cna, row.sel=row.sel$val)
     })
     output$pca <- renderPlot({
       sce <- sce(); cna <- input$cna
       if (is.null(sce)|is.null(cna)) return()
       if (!cna %in% colnames(colData(sce))) return()
-      # if (length(unique(colData(sce)[, cna]))>6) shape.by <- NULL else shape.by <- cna 
-      plotPCA(sce, colour_by=cna)+labs(colour=cna)
+      plot_dim(sce, dim='PCA', color.by=cna, row.sel=row.sel$val)
     })
 
-    output$scell.cdat <- renderDataTable({
+    output$scellCdat <- renderDataTable({
       cat('Single-cell: colData table ... \n')
       sce <- sce(); if (is.null(sce)) return()
+      input$scellRowCancelBut # Deselect rows.
       cdat <- as.data.frame(colData(sce))
       cdat <- cdat[order(cdat[, 1]), , drop=FALSE]
       match.lis <- match.mod.lis$val$ft.reorder$ft.rematch
       # sf.by from dim_server in scell_server. 
       if (section=='scell') sf.by <- input$sf.by else sf.by <- dat.lis()$sf.by
-      # Move matched features to top, move label/cluster columns to left.
       if (!is.null(match.lis) & !is.null(sf.by)) { 
+        matched <- unlist(lapply(match.lis, function(x) {
+          if (is.null(x)) return('NA') else if (is.character(x)) return(paste0(x, collapse=', ')) 
+          }
+        )); cna <- colnames(cdat) 
+        cdat.o <- cdat[, !cna %in% c('cluster', 'label'), drop=FALSE]
+        cdat.lab <- cdat.clus <- data.frame(na=NA)
+        if ('label' %in% cna) cdat.lab <- cdat[, 'label', drop=FALSE]
+        if ('cluster' %in% cna) cdat.clus <- cdat[, 'cluster', drop=FALSE]
+        if (sf.by=='label' & !all(is.na(cdat.lab))) {
+          mat.lab <- matched[cdat$label]
+          if (!any(is.na(mat.lab))) { 
+            cdat <- cbind(cdat.clus, cdat.lab, matched.label=mat.lab, cdat.o)[order(cdat$label), , drop=FALSE]
+            if (all(is.na(cdat.clus))) cdat <- cdat[, -1]
+            idx <- cdat$matched.label!='NA'
+            if (length(idx)>0 & !any(is.na(idx))) cdat <- rbind(cdat[idx, , drop=FALSE], cdat[!idx, , drop=FALSE])
+          }
+        } else if (sf.by=='cluster' & !all(is.na(cdat.clus))) {
+          mat.clus <- matched[cdat$cluster]
+          if (!any(is.na(mat.clus))) {
+            cdat <- cbind(cdat.clus, matched.cluster=mat.clus, cdat.lab, cdat.o)[order(cdat$cluster), , drop=FALSE]
+            if (all(is.na(cdat.lab))) cdat <- cdat[, -3]
+          idx <- cdat$matched.cluster!='NA'
+          if (length(idx)>0 & !any(is.na(idx))) cdat <- rbind(cdat[idx, , drop=FALSE], cdat[!idx, , drop=FALSE])
+          }
+        }
+      }
+    cols <- list(list(targets=seq_len(ncol(cdat)), render = JS("$.fn.dataTable.render.ellipsis(40, false)")))
+    sel <- list(mode="multiple", target="row", selected='none')
+    if (section!='scell') sel <- 'none'
+      # The 1st column is "lable" or "cluster".
+      # dom='t' overwrites search box.
+      tab <- datatable(cdat, selection=sel, escape=FALSE, filter="top", extensions=c('Scroller', 'FixedColumns'), plugins = "ellipsis",
+      options=list(pageLength=20, lengthMenu=c(10, 20, 50, 100), autoWidth=TRUE, scrollCollapse=TRUE, deferRender=TRUE, scrollX=TRUE, scrollY=300, scroller=TRUE, searchHighlight=TRUE, search=list(regex=TRUE, smart=FALSE, caseInsensitive=TRUE), searching=TRUE, columnDefs=cols, fixedColumns = list(leftColumns=2)), 
+      class='cell-border strip hover') %>% formatStyle(0, backgroundColor="white", cursor='pointer')
+      cat('Done! \n'); tab
+    })
+
+  output$dim.ui <- renderUI({
+   if (upl.mod.lis$ipt$fileIn!='customSingleCellData') return()
+   ns <- session$ns
+   row.but <- actionButton(ns('scellRowBut'), 'Confirm row selection', style='margin-top:24px')
+   row.cancel.but <- actionButton(ns('scellRowCancelBut'), 'Deselect all', style='margin-top:24px')
+   lis <- list(fluidRow(splitLayout(cellWidths=c('1%', '32%', '1%', '32%', '1%', '32%'), '',
+      plotOutput(ns('tsne')), '',plotOutput(ns('umap')), '',  plotOutput(ns('pca'))
+    )), br(),
+    fluidRow(splitLayout(cellWidths=c('1%', '10%', '1%', '17%', '1%', '15%', '1%', '15%'), '', uiOutput(ns('cna')), '', uiOutput(ns('sf.cell')), '', row.but, '', row.cancel.but
+    )), br(),
+    dataTableOutput(ns('scellCdat'))
+    )
+   if (section!='scell') dataTableOutput(ns('scellCdat')) else lis 
+  })
+  row.sel <- reactiveValues(val=NULL)
+  observeEvent(input$scellRowBut, {
+    row.sel$val <- input$scellCdat_rows_selected 
+  })
+  observeEvent(input$scellRowCancelBut, { row.sel$val <- NULL })
+  sfBy <- reactiveValues()
+  observe({ sfBy$val <- input$sf.by })
+  onBookmark(function(state) { state })
+  return(list(sf.by=sfBy))
+})}
+
+tailor_match_server <- function(id, sce, section='scell', upl.mod.lis, match.mod.lis, dat.lis, session) {
+  moduleServer(id, function(input, output, session) {
+    # If these elements are rendered after calling "hideElement", no elements are hidden.
+    if (section!='scell') {
+      hideElement('dimCell'); hideElement('coclusPlotBut')
+      hideElement('selBlk'); hideElement('selBlkBut')
+      hideElement('selBlkCancel') 
+    }
+    cna <- reactiveValues(); observe({
+      sce <- sce(); if (is.null(sce)) return()
+      cdat <- colData(sce); cna$val <- colnames(cdat)
+      if ('cell' %in% cna$val) sel <- 'cell' else if ('label' %in% cna$val) sel <- 'label' else sel <- 'cluster'
+      cna$sel <- sel
+    })
+    output$cna <- renderUI({
+      if (is.null(cna$val)) return(); ns <- session$ns
+      selectInput(ns('cna'), 'Color by', cna$val, cna$sel)
+    })
+    output$sf.cell <- renderUI({
+      if (is.null(cna$val)) return(); ns <- session$ns
+      sel <- cho <- NULL
+      if ('SVGBulk' %in% cna$val) { sel <- cho <- 'SVGBulk'
+      } else { cho <- 'cluster'
+        if (cna$sel=='label') cho <- c('label', 'cluster')
+      }
+      selectInput(ns('sf.by'), 'Collapse cells by', cho, cna$sel)
+    })
+    output$umap <- renderPlotly({
+      sce <- sce(); cna <- input$cna
+      if (is.null(sce)|is.null(cna)) return()
+      if (!cna %in% colnames(colData(sce))) return()
+      ggplotly(plot_dim(sce, dim='UMAP', color.by=cna, row.sel=row.sel$val), source='dim', tooltip=c('colour', 'x', 'y')) %>% event_register("plotly_selected")
+    })
+    output$tsne <- renderPlotly({
+      sce <- sce(); cna <- input$cna
+      if (is.null(sce)|is.null(cna)) return()
+      if (!cna %in% colnames(colData(sce))) return()
+      ggplotly(plot_dim(sce, dim='TSNE', color.by=cna, row.sel=row.sel$val), source='dim', tooltip=c('colour', 'x', 'y')) %>% event_register("plotly_selected")
+    })
+    output$pca <- renderPlotly({
+      sce <- sce(); cna <- input$cna
+      if (is.null(sce)|is.null(cna)) return()
+      if (!cna %in% colnames(colData(sce))) return()
+      ggplotly(plot_dim(sce, dim='PCA', color.by=cna, row.sel=row.sel$val), source='dim', tooltip=c('colour', 'x', 'y')) %>% event_register("plotly_selected")
+    })
+
+  df.sel.cell <- reactiveValues(val=NULL, val1=NULL)
+  observeEvent(input$selBlkCancel, { 
+    df.sel.cell$val1 <- df.sel.cell$val <- NULL 
+    })
+  observeEvent(input$selBulk, {
+    cat('Desired bulk for selected cells ... \n')
+    sel.blk <- input$selBulk; if (is.null(sel.blk)) return()
+    cat(sel.blk, '\n')
+    event.df <- event_data(event="plotly_selected", source='dim')
+    if (!is(event.df, 'data.frame')) return()
+    event.df <- event.df[, c('x', 'y', 'key')]
+    df.val <- df.sel.cell$val
+    if (!is.null(df.val)) df.val <- subset(df.val, !key %in% event.df$key)
+    event.df$desiredSVGBulk <- sel.blk
+    df.sel.cell$val <- rbind(event.df, df.val)
+    showNotification(paste0('Registered for selected cells: ', sel.blk, '!'))
+    df.sel.cell$val$key <- as.numeric(df.sel.cell$val$key)
+    df.val <- df.sel.cell$val; save(df.val, file='df.val')
+    cat('Done! \n')
+  })
+  # df.sel.cell$val1 is only used to trigger downstream changes in response to the two buttons. df.sel.cell$val changes every time input$selBulk changes while df.sel.cell$val1 changes only when the two button change.
+  observeEvent(list(input$selBlkBut), {
+    df.sel.cell$val1 <- df.sel.cell$val
+  })
+    output$scellCdat <- renderDataTable({
+      cat('Tailor: colData table ... \n')
+      sce <- sce(); if (is.null(sce)) return()
+      input$scellRowCancelBut # Deselect rows.
+      cdat <- as.data.frame(colData(sce))
+      if (0) cdat <- cdat[order(cdat[, 1]), , drop=FALSE]
+      if (0) match.lis <- match.mod.lis$val$ft.reorder$ft.rematch
+      # sf.by from dim_server in scell_server. 
+      if (section=='scell') sf.by <- input$sf.by else sf.by <- dat.lis()$sf.by
+      # Move matched features to top, move label/cluster columns to left.
+      if (0) if (!is.null(match.lis) & !is.null(sf.by)) { 
         matched <- unlist(lapply(match.lis, function(x) {
           if (is.null(x)) return('NA') else if (is.character(x)) return(paste0(x, collapse=', ')) 
           }
@@ -3085,37 +3269,78 @@ dim_server <- function(id, sce, section='scell', upl.mod.lis, match.mod.lis, dat
     cols <- list(list(targets=seq_len(ncol(cdat)), render = JS("$.fn.dataTable.render.ellipsis(40, false)")))
       # The 1st column is "lable" or "cluster".
       # dom='t' overwrites search box.
-      tab <- datatable(cdat, selection='none', escape=FALSE, filter="top", extensions=c('Scroller', 'FixedColumns'), plugins = "ellipsis",
-      options=list(pageLength=20, lengthMenu=c(10, 20, 50, 100), autoWidth=TRUE, scrollCollapse=TRUE, deferRender=TRUE, scrollX=TRUE, scrollY=300, scroller=TRUE, searchHighlight=TRUE, search=list(regex=TRUE, smart=FALSE, caseInsensitive=TRUE), searching=TRUE, columnDefs=cols, fixedColumns = list(leftColumns=2)), 
+      # If "fixedColumns" is used, rows cannot be selected on the fixed part.
+      tab <- datatable(cdat, selection=list(mode="multiple", target="row", selected='none'), escape=FALSE, filter="top", extensions=c('Scroller'), plugins = "ellipsis",
+      options=list(pageLength=20, lengthMenu=c(10, 20, 50, 100), autoWidth=TRUE, scrollCollapse=TRUE, deferRender=TRUE, scrollX=TRUE, scrollY=300, scroller=TRUE, searchHighlight=TRUE, search=list(regex=TRUE, smart=FALSE, caseInsensitive=TRUE), searching=TRUE, columnDefs=cols), 
       class='cell-border strip hover') %>% formatStyle(0, backgroundColor="white", cursor='pointer')
       cat('Done! \n'); tab
     })
 
-  output$dim.ui <- renderUI({
-   if (upl.mod.lis$ipt$fileIn!='customSingleCellData') return()
-   ns <- session$ns
-   lis <- list(
-     fluidRow(splitLayout(cellWidths=c('35%', '40%', '1%', '20%', '1%'), '',
-     span('Embedding plots of all cells before co-clusterings', style='margin-bottom=0px'), '', actionButton(ns("coclusPlotBut"), label='Visualize co-clustering result', style='margin-bottom:2px'), ''
-     )), 
-     fluidRow(splitLayout(cellWidths=c('1%', '32%', '1%', '32%', '1%', '32%'), '',
-      # This section is equivalent to ui, so tsne/umap/pca/scell.cdat can be used.
-      plotOutput(ns('tsne')), '', plotOutput(ns('umap')), '',  plotOutput(ns('pca'))
-    )),
-    column(6, uiOutput(ns('cna'))), column(6, uiOutput(ns('sf.cell'))),
-    dataTableOutput(ns('scell.cdat'))
-    )
-   if (section!='scell') dataTableOutput(ns('scell.cdat')) else lis 
+  output$selBlk <- renderUI({
+    ns <- session$ns; input$selBlkCancel
+    if (upl.mod.lis$ipt$fileIn!='customSingleCellData') return()
+    # New selection causes 'none'.
+    event.df <- event_data(event="plotly_selected", source='dim')
+    sce <- sce(); if (is.null(sce)) return()
+    svg.blk <- unique(colData(sce)$SVGBulk)
+    if (is.null(svg.blk)) return()  
+    selectInput(ns('selBulk'), label='Desired bulk for selected cells', choices=c('none', svg.blk), selected='none')
   })
+
+ output$selCellTab <- renderDataTable({
+    if (upl.mod.lis$ipt$fileIn!='customSingleCellData') return()
+    sce <- sce(); sel.blk <- input$selBulk; ns <- session$ns 
+    if (is.null(sel.blk)|is.null(sce)) return()
+    event.df <- event_data(event="plotly_selected", source='dim')
+    if (!is(event.df, 'data.frame')) return()
+    event.df <- event.df[, c('x', 'y', 'key')]
+    event.df$desiredSVGBulk <- sel.blk
+    event.df$cell <- colData(sce)$cell[as.numeric(event.df$key)]
+    event.df <- event.df[, c('desiredSVGBulk', 'cell', 'x', 'y')]
+    if (is.null(event.df)) return() else event.df
+  })
+
+  output$dim.ui <- renderUI({
+   ns <- session$ns; dimCell <- input$dimCell
+   if (upl.mod.lis$ipt$fileIn!='customSingleCellData'|is.null(dimCell)) return()
+   row.but <- actionButton(ns('scellRowBut'), 'Confirm row selection', style='margin-top:24px')
+   row.cancel.but <- actionButton(ns('scellRowCancelBut'), 'Deselect all', style='margin-top:24px')
+   lis <- list(
+     column(6, 
+     fluidRow(splitLayout(cellWidths=c('1%', '97%', '1%'), '',
+      # renderUI's output is used in another renderUI on the server side. This section is equivalent to ui, so tsne/umap/pca/scellCdat can be used.
+      if (dimCell=='TSNE') plotlyOutput(ns('tsne')) else if (dimCell=='UMAP') plotlyOutput(ns('umap')) else if (dimCell=='PCA') plotlyOutput(ns('pca')), ''
+    ))
+    ),
+    column(6, dataTableOutput(ns('selCellTab'))),
+    column(12, fluidRow(splitLayout(cellWidths=c('1%', '10%', '1%', '17%', '1%', '15%', '1%', '15%'), '', uiOutput(ns('cna')), '', uiOutput(ns('sf.cell')), '', row.but, '', row.cancel.but
+    ))
+    ),
+    dataTableOutput(ns('scellCdat'))
+    )
+   # The same "row.but" can be used in scell and SHM sections, since these two sections use different ids to distinguish the same module.
+   if (section!='scell') {
+     list(column(12, fluidRow(splitLayout(cellWidths=c('1%', '15%', '1%', '15%'), '', row.but, '', row.cancel.but))),
+     dataTableOutput(ns('scellCdat'))
+     )
+   } else lis 
+  })
+  row.sel <- reactiveValues(val=NULL)
+  observeEvent(input$scellRowBut, {
+    row.sel$val <- input$scellCdat_rows_selected 
+  })
+  observeEvent(input$scellRowCancelBut, { row.sel$val <- NULL })
   sfBy <- reactiveValues()
   observe({ sfBy$val <- input$sf.by })
   coclusPlotBut <- reactive({ input$coclusPlotBut })
+  selBlkBut <- reactive({ input$selBlkBut })
+  selBlkCancel <- reactive({ input$selBlkCancel })
   onBookmark(function(state) { state })
-  return(list(sf.by=sfBy, coclusPlotBut=coclusPlotBut))
+  return(list(sf.by=sfBy, coclusPlotBut=coclusPlotBut, selBlkBut=selBlkBut, selBlkCancel=selBlkCancel, df.sel.cell=df.sel.cell, row.sel=row.sel))
 })}
 
 
-scell_server <- function(id, tab, upl.mod.lis, shm.mod.lis, dim.mod.lis=NULL, session) {
+scell_server <- function(id, tab, upl.mod.lis, shm.mod.lis, session) {
 
   moduleServer(id, function(input, output, session) {
   match.mod.lis <- reactiveValues() 
@@ -3349,21 +3574,46 @@ scell_server <- function(id, tab, upl.mod.lis, shm.mod.lis, dim.mod.lis=NULL, se
   observeEvent(input$coclusAsg+1, {
     par.asg$asgThr <- input$asgThr
   })
-  observe({
+  observeEvent(list(res.lis(), tailor.lis()$df.sel.cell$val1), {
     cat('Auto-matching: subset assignments ... \n')
     res <- res.lis(); if (is.null(res)) return()
     asgThr <- par.asg$asgThr
     validate(need(asgThr >=0 & asgThr <=1, ''))
-    sce.lis <- sub_asg(res.lis=res, thr=asgThr) 
+    # Re-match co-clustering results.
+    df.sel.cell <- tailor.lis()$df.sel.cell$val
+    # save(res, df.sel.cell, file='rd')
+    if (!is.null(df.sel.cell)) {
+      key <- as.numeric(df.sel.cell$key)
+      # "none" indicates no change.
+      desire.blk <- setdiff(unique(df.sel.cell$desiredSVGBulk), 'none')
+      if (length(desire.blk)>0) {
+        df.roc <- res$df.roc; for (i in desire.blk) {  
+        df.sel.cell0 <- subset(df.sel.cell, desiredSVGBulk==i)
+        df.match0 <- subset(df.match, SVGBulk==i)[1, ]
+        # Use "df.match" and "desire.blk" as gold standard to construct true coclustering results "df.roc0" for each "desire.blk", then append "df.roc0" to "df.roc".
+        df.roc0 <- data.frame(matrix(ncol=ncol(df.roc), nrow=nrow(df.sel.cell0), dimnames=list(NULL, colnames(df.roc))))
+        df.roc0[, colnames(df.match0)] <- df.match0
+        df.roc0$assignedBulk <- df.roc0$trueBulk
+        df.roc0$response <- TRUE; df.roc0$predictor <- 1
+        df.roc0$idx <- df.sel.cell0$key
+        df.roc <- rbind(subset(df.roc, !idx %in% df.roc0$idx), df.roc0)
+        }; res$df.roc <- df.roc
+      }
+    }
+    sce.lis <- sub_asg(res.lis=res, thr=asgThr, true.only=TRUE)
+    # save(sce.lis, file='sce.lis')
     sce.rct$sce.sub <- sce.lis$sce.sub
-    sce.rct$dimred <- sce.lis$sce 
+    sce.rct$dimred <- sce.lis$sce
+    cat('Done! \n')
   })
+
    observeEvent(sce.rct$val, ignoreInit=FALSE, {
     updateTabsetPanel(session, inputId="tabSetCell", selected='dimred')
   })
   output$resAsg <- renderDataTable({
     res <- res.lis(); if (is.null(res)) return()
     asgThr <- par.asg$asgThr
+    save(res, file='res')
     validate(need(asgThr >=0 & asgThr <=1, ''))
     df.roc <- res$df.roc; df.roc <- subset(df.roc, predictor >= asgThr)
     datatable(df.roc, selection='none', escape=FALSE, filter="top", extensions=c('Scroller', 'FixedColumns'), plugins = "ellipsis",
@@ -3400,7 +3650,7 @@ scell_server <- function(id, tab, upl.mod.lis, shm.mod.lis, dim.mod.lis=NULL, se
     sce <- denoisePCA(sce, technical=sce.var, subset.row=top, min.rank=min.rank, max.rank=max.rank)
     sce <- runTSNE(sce, dimred="PCA", ncomponents=ncomT, ntop=ntopT)
     incProgress(0.3, detail="in progress ...")
-    sce <- runUMAP(sce, ncomponents=ncomU, ntop=ntopU, pca=pcs)
+    sce <- runUMAP(sce, dimred="PCA", ncomponents=ncomU, ntop=ntopU, pca=pcs)
     })
     sce.rct$dimred <- sce; cat('Done! \n')
   })
@@ -3491,14 +3741,17 @@ scell_server <- function(id, tab, upl.mod.lis, shm.mod.lis, dim.mod.lis=NULL, se
     if (is.null(sce.rct$clus)) res.lis()$sce else if (!is.null(sce.rct$clus)) sce.rct$clus else return()
   })
   # Generates both embedding plots and the colData table in the scell page.
-  dim.lis <- reactive({ dim_server('dim', sce=sceClus, section='scell', upl.mod.lis=upl.mod.lis, match.mod.lis=match.mod.lis, dat.lis=NULL) }) # Avoid endless circle.
+  dim.lis <- reactive({
+    dim_server('dim', sce=sceClus, section='scell', upl.mod.lis=upl.mod.lis, match.mod.lis=match.mod.lis, dat.lis=NULL) 
+  }) # Avoid endless circle.
+  tailor.lis <- reactive({ 
+    if (!is.null(sce.rct$sce.sub)) tailor_match_server('tailor', sce=sceClus, section='scell', upl.mod.lis=upl.mod.lis, match.mod.lis=match.mod.lis, dat.lis=NULL) }) # Avoid endless circle.
   cat('Done! \n')
   sf.by <- reactiveValues()
-  # From scell section.
-  observe({ sf.by$val <- dim.lis()$sf.by$val })
-  # From SHM section.
-  # observe({ sf.by$val <- dim.mod.lis$sf.by$val })
-
+  # "sf.by" from scell section, passed to SHM page.
+  observe({
+    if (is.null(sce.rct$sce.sub)) sf.by$val <- dim.lis()$sf.by$val else sf.by$val <- tailor.lis()$sf.by$val
+  })
   df.lis <- reactive({
     cat('Single cell: aggregating cells ... \n')
     sce.clus <- sce.rct$clus; sce.sub <- sce.rct$sce.sub
@@ -3523,22 +3776,39 @@ scell_server <- function(id, tab, upl.mod.lis, shm.mod.lis, dim.mod.lis=NULL, se
     idx.met <- grep('^metadata$', colnames(rdat), ignore.case=TRUE)
     if (length(idx.met)>0) df.met <- cbind(rdat[, idx.met[1], drop=FALSE], df.link) else df.met <- df.link
     lis <- list(df.aggr=df.aggr, df.aggr.tran=df.aggr, df.met=df.met, df.rep=df.rep, con.na=df.lis$con.na, sf.by=sp.ft)
+    # save(lis, file='lis')
     cat('Done! \n'); return(lis)
   })
   onBookmark(function(state) { state })
-  return(list(sce.rct=sce.rct, df.lis=df.lis, match.lis=match.mod.lis, dim.lis=dim.lis))
+  return(list(sce.rct=sce.rct, df.lis=df.lis, match.lis=match.mod.lis, tailor.lis=tailor.lis))
 
 })}
-  mods$scell <- scell.mod.lis <- scell_server('scell', tab, upl.mod.lis, shm.mod.lis, mods$dim, session)
-
-  sce.clus.dat <- reactive({ 
-    sce.clus <- mods$scell$sce.rct$clus
+  
+  mods$scell <- scell.mod.lis <- scell_server('scell', tab, upl.mod.lis, shm.mod.lis, session)
+  
+  dimred <- reactive({ 
     sce.sub <- mods$scell$sce.rct$sce.sub
-    if (is.null(sce.clus)) sce.sub else if (!is.null(sce.clus)) sce.clus else return()
+    sce.clus <- mods$scell$sce.rct$clus 
+    if (is.null(sce.sub)) sce.clus else NULL
   })
-  # mods$scell$sce.rct$clus: used in reactive environment inside dim_server.
   # Only generates the colData table in the SHM page.
-  mods$dim <- dim.mod.lis <- dim_server('datDim', sce.clus.dat, 'data', mods$upload, mods$scell$match.lis, mods$scell$df.lis)
+  mods$dim <- dim.mod.lis <- dim_server('datDim', dimred, 'data', mods$upload, mods$scell$match.lis, mods$scell$df.lis)
+
+  dimred.tailor <- reactive({ 
+    sce.sub <- mods$scell$sce.rct$sce.sub
+    dimred <- mods$scell$sce.rct$dimred
+    if (is.null(sce.sub)) NULL else dimred
+  })
+  # Only generates the colData table in the SHM page.
+  # dimred.tailor is reactive, so is tailor_match_server.
+  mods$tailor <- tailor.mod.lis <- tailor_match_server('datDimTailor', dimred.tailor, 'data', mods$upload, mods$scell$match.lis, mods$scell$df.lis)
+  # Only after the "Single-cell metadata" is clicked, this "renderUI" is called, so this "ui" is often rendered after "hideElement" in the server (tailor_match_server). As a result, elements are not hidden. Since "hideElement" should be called after the elements are rendered. The solution is to hide the elements through an argument (hide=TRUE) passed to ui. But if "hide=TRUE", "dimCellBut", "coclusPlotBut", "selBlkBut", "selBlkButCan" on ui are NULL, and the server is not executed. As a result, no table is shown on "Single-cell metadata". Thus the ui (tailor_match_ui) should be generated on the general ui part.
+  # The downside of "renderUI" is some inputs are NULL before it is called, and the server might not be executed.
+  output$datDim <- renderUI({ 
+    sce.sub <- mods$scell$sce.rct$sce.sub
+    if (!is.null(sce.sub)) tailor_match_ui('datDimTailor', hide=FALSE) else if (is.null(sce.sub)) dim_ui('datDim') else 'This tab is only applicable to singel-cell data.'
+  })
+ 
   # If 'eventExpr' is a list, one slot of NULL will trigger 'observeEvent', though ignoreNULL = TRUE, so these 'observeEvents' are not merged. 
   # Switch to SHM tab.
   observeEvent(list(mods$deg$but.sgl()), ignoreInit=TRUE, {
@@ -3550,10 +3820,16 @@ scell_server <- function(id, tab, upl.mod.lis, shm.mod.lis, dim.mod.lis=NULL, se
   observeEvent(mods$scell$match.lis$val$but.match$val, ignoreInit=TRUE, {
     updateTabsetPanel(session, "shm.sup", selected='shmPanelAll')
   })
-  observeEvent(mods$scell$dim.lis()$coclusPlotBut(), ignoreInit=FALSE, { updateTabsetPanel(session, inputId="shm.sup", selected='shmPanelAll')
+  tailor.lis.com <- reactive({
+    lis <- mods$scell$tailor.lis(); df.lis <- mods$scell$df.lis()
+    if (is.null(lis$coclusPlotBut)) return()
+    if (is.null(lis)|is.null(df.lis)|lis$coclusPlotBut()==0) return()
+    list(lis$coclusPlotBut(), lis$selBlkBut(), lis$selBlkCancel())
+  })
+  observeEvent(tailor.lis.com(), ignoreInit=TRUE, { updateTabsetPanel(session, inputId="shm.sup", selected='shmPanelAll')
   })
 
-    # hideTab(inputId='tabSetCell', target="qcTab")
+  # hideTab(inputId='tabSetCell', target="qcTab")
 
   setBookmarkExclude(c("dat-dtSel_rows_all", "dat-dtSel_rows_current", "dat-dtSel_search_columns", "dat-dtAll_rows_all", "dat-dtAll_rows_current", "dat-dtAll_search_columns")) 
   observe({
@@ -3567,6 +3843,7 @@ scell_server <- function(id, tab, upl.mod.lis, shm.mod.lis, dim.mod.lis=NULL, se
   onStop(function() { ggly_rm(); vdo_rm(); cat("Session stopped! \n") })
 
 }
+
 
 
 

@@ -1,59 +1,55 @@
 dataset1:
-  name: none
-  data: none
-  svg: none
-dataset2:
   name: customBulkData
   data: none
   svg: none
-dataset3:
+dataset2:
   name: customSingleCellData
   data: none
   svg: none
-dataset4:
+dataset3:
   name: brain_Prudencio
   data: example/expr_human.txt
   svg: example/homo.sapiens_brain.shiny_shm.svg
-dataset5:
+dataset4:
   name: mouse_Merkin
   data: example/expr_mouse.txt
   svg: example/mus_musculus.male.svg
-dataset6:
+dataset5:
   name: chicken_Cardoso.Moreira
   data: example/expr_chicken.txt
   svg: example/gallus_gallus.svg
-dataset7:
+dataset6:
   name: shoot_Mustroph
   data: example/expr_arab.txt
   svg: example/arabidopsis.thaliana_shoot_shm.svg
-dataset8:
+dataset7:
   name: organ_Mustroph
   data: example/expr_arab.txt
   svg: example/arabidopsis.thaliana_organ_shm.svg
-dataset9:
+dataset8:
   name: root_Mustroph
   data: example/expr_arab.txt
   svg: example/arabidopsis.thaliana_root.cross_shm.svg
-dataset10:
+dataset9:
   name: shootRoot_Mustroph
   data: example/expr_arab.txt
   svg: example/arabidopsis.thaliana_shoot.root_shm.svg
-dataset11:
+dataset10:
   name: rootRootTip_Mustroph
   data: example/expr_arab.txt
   svg: example/arabidopsis.thaliana_root.roottip_shm.svg
-dataset12:
+dataset11:
   name: spatiotemporal_Narsai
   data: example/expr_coleoptile_samTimeCon.txt
   svg:
   - example/oryza.sativa_coleoptile.ANT_shm.svg
-dataset13:
+dataset12:
   name: growthStage_Mustroph
   data: example/random_data_multiple_aSVGs.txt
   svg:
   - example/arabidopsis.thaliana_organ_shm1.svg
   - example/arabidopsis.thaliana_organ_shm2.svg
-dataset14:
+dataset13:
   name: leaf_test
   data: example/dat_overlay.txt
   svg:
@@ -61,7 +57,7 @@ dataset14:
   - example/overlay_shm1.svg
   - example/overlay_shm2.png
   - example/overlay_shm2.svg
-dataset15:
+dataset14:
   name: map_Census
   data: example/us_population2018.txt
   svg: example/us_map_shm.svg
@@ -83,7 +79,7 @@ data.matrix:
 shm.img:
 - columns:2
 - display.by:gene
-- scale.plots:1.4
+- scale.plots:1.1
 - title.size:12
 - relative.size:1
 - color:yellow,orange,red
@@ -91,7 +87,7 @@ shm.img:
 - file.type:jpg
 - dpi:300
 - include.legend.plot:Yes
-- legend.plot.size:0.5
+- legend.plot.size:0.8
 - value.legend.rows:1
 - value.legend.key:0.03
 - value.legend.text:10
@@ -114,7 +110,7 @@ shm.video:
 - dimension:640x480
 - bar.width.video:0.1
 legend:
-- key.row:2
+- key.row:3
 - key.size:0.04
 - label:No
 - label.size:2.5
