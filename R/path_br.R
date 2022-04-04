@@ -13,7 +13,7 @@
 #' Hadley Wickham, Jim Hester and Jeroen Ooms (2019). xml2: Parse XML. R package version 1.2.2. https://CRAN.R-project.org/package=xml2
 
 
-#' @importFrom xml2 xml_attr xml_add_sibling xml_name xml_children xml_remove xml_add_child xml_set_attr
+#' @importFrom xml2 xml_attr xml_add_sibling xml_name xml_children xml_remove xml_add_child xml_set_attr 
 
 path_br <- function(node, g=TRUE) {
 

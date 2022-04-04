@@ -20,7 +20,7 @@
 #' Narsai, Reena, David Secco, Matthew D Schultz, Joseph R Ecker, Ryan Lister, and James Whelan. 2017. "Dynamic and Rapid Changes in the Transcriptome and Epigenome During Germination and in Developing Rice (Oryza Sativa) Coleoptiles Under Anoxia and Re-Oxygenation." Plant J. 89 (4): 805–24
 
 #' @export com_factor
-#' @importFrom SummarizedExperiment colData
+#' @importFrom SummarizedExperiment colData colData<-
 #' @importFrom S4Vectors DataFrame
 
 com_factor <- function(se, target, factors2com, sep='.', factor.new) {
@@ -31,6 +31,6 @@ com_factor <- function(se, target, factors2com, sep='.', factor.new) {
   if (missing(se)) return(target)
   # Keep columns present in colData but not in target.
   cdat <- colData(se); cdat <- cdat[, !colnames(cdat) %in% colnames(target), drop=FALSE]
-  SummarizedExperiment::colData(se) <- cbind(DataFrame(target), cdat)
+  colData(se) <- cbind(DataFrame(target), cdat)
   return(se)
 }

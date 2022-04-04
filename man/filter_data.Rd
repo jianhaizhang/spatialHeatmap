@@ -11,8 +11,8 @@ filter_data(
   CV = c(-Inf, Inf),
   top.CV = 1,
   ann = NULL,
-  sam.factor,
-  con.factor,
+  sam.factor = NULL,
+  con.factor = NULL,
   dir = NULL,
   verbose = TRUE
 )

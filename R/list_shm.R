@@ -14,6 +14,7 @@
 #' @param ft.trans A character vector of tissue/spatial feature identifiers that will be set transparent. \emph{E.g} c("brain", "heart"). This argument is used when target features are covered by  overlapping features and the latter should be transparent.
 #' @param ft.trans.shm A character vector of aSVG feature identifiers that will be set transparent only in SHMs not legend.
 #' @param sub.title.size A numeric of the subtitle font size of each individual spatial heatmap. The default is 11.
+#' @param sub.title.vjust A numeric of vertical adjustment for sub title. The default is \code{2}.
 #' @param ft.legend One of "identical", "all", or a character vector of tissue/spatial feature identifiers from the aSVG file. The default is "identical" and all the identical/matching tissues/spatial features between the data and aSVG file are indicated in the legend plot. If "all", all tissues/spatial features in the aSVG are shown. If a vector, only the tissues/spatial features in the vector are shown.
 #' @param legend.col A character vector of colors for the keys in the legend plot. The lenght must be equal to the number of target samples shown in the legend. 
 #' @param legend.ncol An integer of the total columns of keys in the legend plot. The default is NULL. If both \code{legend.ncol} and \code{legend.nrow} are used, the product of the two arguments should be equal or larger than the total number of shown spatial features.
@@ -42,9 +43,9 @@
 #' @importFrom magick image_read image_charcoal
 #' @importFrom parallel detectCores mclapply
 
-gg_shm <- function(gene, con.na=TRUE, geneV, coord, tmp.path=NULL, charcoal=FALSE, alpha.overlay=1, ID, cols, tis.path, lis.rematch = NULL, ft.trans=NULL, ft.trans.shm=NULL, sub.title.size, ft.legend='identical', legend.col, legend.ncol=NULL, legend.nrow=NULL, legend.position='bottom', legend.direction=NULL, legend.key.size=0.02, legend.text.size=12, legend.plot.title=NULL, legend.plot.title.size=11, line.size=0.2, line.color='grey70', aspect.ratio = 1, ...) {
+gg_shm <- function(gene, con.na=TRUE, geneV, coord, tmp.path=NULL, charcoal=FALSE, alpha.overlay=1, ID, cols, tis.path, lis.rematch = NULL, ft.trans=NULL, ft.trans.shm=NULL, sub.title.size, sub.title.vjust=2, ft.legend='identical', legend.col, legend.ncol=NULL, legend.nrow=NULL, legend.position='bottom', legend.direction=NULL, legend.key.size=0.02, legend.text.size=12, legend.plot.title=NULL, legend.plot.title.size=11, line.size=0.2, line.color='grey70', aspect.ratio = 1, ...) {
 
-  # save(gene, con.na, geneV, coord, tmp.path, charcoal, alpha.overlay, ID, cols, tis.path, lis.rematch, ft.trans, sub.title.size, ft.legend, legend.col, legend.ncol, legend.nrow, legend.position, legend.direction, legend.key.size, legend.text.size, legend.plot.title, legend.plot.title.size, line.size, line.color, aspect.ratio, file='gg.shm.arg')
+  # save(gene, con.na, geneV, coord, tmp.path, charcoal, alpha.overlay, ID, cols, tis.path, lis.rematch, ft.trans, ft.trans.shm, sub.title.size, sub.title.vjust, ft.legend, legend.col, legend.ncol, legend.nrow, legend.position, legend.direction, legend.key.size, legend.text.size, legend.plot.title, legend.plot.title.size, line.size, line.color, aspect.ratio, file='gg.shm.arg')
   
   # Main function to create SHMs (by conditions) and legend plot.
   g_list <- function(con, lgd=FALSE, ...) {
@@ -106,12 +107,18 @@ gg_shm <- function(gene, con.na=TRUE, geneV, coord, tmp.path=NULL, charcoal=FALS
            }
          }
        }
+      # lis.rematch: data feature (names(lis.rematch)) in tis.path but not in the matched SVG feature is set NA.
+      if (is(lis.rematch, 'list')) {
+        match.na <- names(lis.rematch); match.ft.uni <- unique(unlist(lis.rematch)) 
+        dat.ft.no <- match.na[match.na %in% unique(tis.path) & (!match.na %in% match.ft.uni)]
+        g.col[sub('__\\d+$', '', names(g.col)) %in% dat.ft.no] <- NA
+      }
     } 
     # The colors might be internally re-ordered alphabetically during mapping, so give them names to fix the match with tissues. E.g. c('yellow', 'blue') can be re-ordered to c('blue', 'yellow'), which makes tissue mapping wrong. Correct: colours are not re-ordered. The 'tissue' in 'data=coord' are internally re-ordered according to a factor. Therfore, 'tissue' should be a factor with the right order. Otherwise, disordered mapping can happen. Alternatively, name the colors with corresponding tissue names.
     # aes() is passed to either ggplot() or specific layer. Aesthetics supplied to ggplot() are used as defaults for every layer. 
     # Show selected or all samples in legend.
     if (length(ft.legend)==1) if (ft.legend=='identical') {
-      if (rematch.dif.svg) {
+      if (rematch.dif.svg | is(lis.rematch, 'list')) {
         ft.legend <- intersect(unlist(lis.rematch), unique(tis.path)) 
       } else ft.legend <- intersect(sam.uni, unique(tis.path)) 
     } else if (ft.legend=='all') ft.legend <- unique(tis.path)
@@ -178,14 +185,14 @@ gg_shm <- function(gene, con.na=TRUE, geneV, coord, tmp.path=NULL, charcoal=FALS
       coord$line.size[idx.local] <- 0
     }
     # If "data" is not in ggplot(), g$data slot is empty. x, y, and group should be in the same aes().
-    g <- ggplot(data=coord, aes(x=x, y=y, value=value, group=tissue, text=paste0('feature: ', feature, '\n', 'value: ', value)), ...)+tmp.g+geom_polygon(aes(fill=tissue), color=line.color, size=coord$line.size, linetype='solid', alpha=alpha.overlay)+scl.fil+theme_void()+theme(plot.title=element_text(hjust=0.5, size=sub.title.size), plot.margin=margin(0.005, 0.005, 0.005, 0.005, "npc"), legend.box.margin=margin(-3, 0, 2, 0, unit='pt'), legend.background=element_rect(color=NA), aspect.ratio = 1/aspect.ratio)+labs(x="", y="")+scale_y_continuous(expand=expansion(mult=c(0, 0)))+scale_x_continuous(expand=expansion(mult=c(0, 0)))+lgd.par
+    g <- ggplot(data=coord, aes(x=x, y=y, value=value, group=tissue, text=paste0('feature: ', feature, '\n', 'value: ', value)), ...)+tmp.g+geom_polygon(aes(fill=tissue), color=line.color, size=coord$line.size, linetype='solid', alpha=alpha.overlay)+scl.fil+theme_void()+theme(plot.title=element_text(hjust=0.5, vjust=sub.title.vjust, size=sub.title.size), plot.margin=margin(0.005, 0.005, 0.005, 0.005, "npc"), legend.box.margin=margin(-3, 0, 2, 0, unit='pt'), legend.background=element_rect(color=NA), aspect.ratio = 1/aspect.ratio)+labs(x="", y="")+scale_y_continuous(expand=expansion(mult=c(0, 0)))+scale_x_continuous(expand=expansion(mult=c(0, 0)))+lgd.par
 
     # The aspect ratio should not be calculated by margins that are inferred from original width/height (mar.lb <- (1-w.h/w.h.max*0.99)/2). It works on single plot, but will squeeze the subplots in arrangeGrob/grid.arrange. Rather the "aspect ratio" in theme should be used, which will not squeeze subplots.
     # After theme(aspect.ratio) is set, change in only top or left margin will not distort the image. Rather width/height will scale propotionally, since the aspect ratio is fixed.
     # if (is.null(mar.lb)) g <- g+theme(plot.margin=margin(0.005, 0.005, 0.005, 0.005, "npc")) else g <- g+theme(plot.margin=margin(mar.lb[2], mar.lb[1], mar.lb[2], mar.lb[1], "npc"))
     if (con.na==FALSE) g.tit <- ggtitle(k) else g.tit <- ggtitle(paste0(k, "_", con)); g <- g+g.tit
     if (lgd==TRUE) {
-      g <- g+theme(plot.margin=margin(0.005, 0.005, 0.2, 0, "npc"), plot.title=element_text(hjust=0.5, size=legend.plot.title.size))+ggtitle(legend.plot.title)
+      g <- g+theme(plot.margin=margin(0.005, 0.005, 0.2, 0, "npc"), plot.title=element_text(hjust=0.5, vjust=sub.title.vjust, size=legend.plot.title.size))+ggtitle(legend.plot.title)
     }; return(list(g=g, g.col=g.col))
 
   }
@@ -263,7 +270,7 @@ grob_shm <- function(gg.lis, cores=2, lgd.pos='none') {
   png(tmp); grob.lis <- mclapply(seq_along(gg.lis), function(x) {
     cat(nas[x], ' '); x <- gg.lis[[x]]
     # Remove legends in SHMs.
-    x <- x+theme(legend.position=lgd.pos); ggplotGrob(x) 
+    if (!is.null(lgd.pos)) x <- x + theme(legend.position=lgd.pos); ggplotGrob(x) 
   }, mc.cores=cores); dev.off(); cat('\n')
   names(grob.lis) <- nas; return(grob.lis)
 }

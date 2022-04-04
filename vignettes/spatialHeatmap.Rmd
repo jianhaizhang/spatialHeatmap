@@ -56,6 +56,7 @@ BiocStyle::markdown(css.files=c('file/custom.css'))
 library(knitr); opts_chunk$set(message=FALSE, warning=FALSE)
 ```
 
+<p style='color:red'>jianhai: text in red. </p>
 
 # Introduction 
 
@@ -66,9 +67,8 @@ tissue- and organ-specific data of biological assays by coloring the
 corresponding spatial features defined in anatomical images according to a
 numeric color key. The color scheme used to represent the assay values can be
 customized by the user. This core functionality of the package is called a
-_spatial heatmap_ (SHM) plot. It is enhanced with visualization tools for groups 
-of measured items (_e.g._ gene modules) sharing related abundance profiles, including 
-matrix heatmaps combined with hierarchical clustering dendrograms and network representations. Except for the primary functionality, it also provides an advanced functionality of spatial enrichment (SE). The SE is specialized in detecting genes that are specifically expressed in a particular feature. The primary and advanced functionalities form an integrated methodology for spatial enrichment and spatial visualization.   
+_spatial heatmap_ (SHM) plot. <font style='color:red'> It also has extended functionalities of spatial enrichment (SE) and clustering. SE is specialized in detecting genes that are specifically expressed in a particular spatial feature, while clustering is designed to detect biological molecule groups sharing related abundance profiles (_e.g._ gene modules) and visualize them in matrix heatmaps combined with hierarchical clustering dendrograms and network representations. Moreover, an advanced functionality of integrated co-visualization of bulk and single-cell data (co-visualization) is also developed. Sinlge cells in embedding plots (PCA, UMAP, TSNE) are matched with corresponding bulk tissues in SHMs manually or automatically. These functionalities form an integrated methodology for spatial biological assay data visualization and analysis. </font>     
+
 The functionalities of _spatialHeatmap_ can be used either in a command-driven mode
 from within R or a graphical user interface (GUI) provided by a Shiny App that
 is also part of this package. While the R-based mode provides flexibility to
@@ -240,7 +240,9 @@ BiocManager::install("spatialHeatmap")
 Next, the packages required for running the sample code in this vignette need to be loaded.  
 
 ```{r, eval=TRUE, echo=TRUE, warnings=FALSE, results='hide'}
-library(spatialHeatmap); library(SummarizedExperiment); library(ExpressionAtlas); library(GEOquery)
+library(spatialHeatmap); library(SummarizedExperiment); library(ExpressionAtlas); library(GEOquery); library(scran)
+library(scater); library(igraph); library(SingleCellExperiment)
+library(BiocParallel)
 ```
 
 The following lists the vignette(s) of this package in an HTML browser. Clicking the corresponding name will open this vignette. 
@@ -1360,7 +1362,7 @@ This image is hidden to meet the 5MB requirement on vignette.
 -->
 
 ```{r arabshm, eval=TRUE, echo=TRUE, warnings=FALSE, fig.wide=TRUE, fig.cap=('Spatial heatmap of Arabidopsis at two growth stages. The expression profile of gene1 under condition1 and condition2 is plotted for two growth stages (top and bottom row).'), out.width="100%", fig.show='show'}
-spatial_hm(svg.path=c(svg.sh1, svg.sh2), data=df.random, ID=c('gene1'), width=0.7, legend.r=0.2, legend.width=1, preserve.scale=TRUE) 
+spatial_hm(svg.path=c(svg.sh1, svg.sh2), data=df.random, ID=c('gene1'), width=0.7, legend.r=0.2, legend.width=1, preserve.scale=TRUE, bar.width=0.09) 
 ```
 
 Note in Figure \@ref(fig:arabshm) shoots have thicker outlines than roots. This is another function of `spatial_hm`, *i.e.* preserves the outline thicknesses defined in aSVG files. This feature is particularly useful in cellular SHMs where different cell types have different cell-wall thicknesses. The outline widths can be updated with `update_feature` programatically or with Inkscape manually. The former is illustrated in the Supplementary Section.   
@@ -1369,13 +1371,54 @@ Note in Figure \@ref(fig:arabshm) shoots have thicker outlines than roots. This 
 
 In principle, the `spatialHeatmap` is extendable to as many factors (*e.g.* samples, conditions, times) as possible. The most common scenario involves only two factors of samples and conditions ([Section 3](#shm)). If more factors are relevant such as development stages, geographical locations, genotypes, *etc*, all or selected factors should be combined to generate composite factors. The [spatiotemporal section](#sthm) is an illustration of three factors. Similar combining strategies should be appied in cases of four or more factors. A rule of thumb is the composite factors of interest must have a matching counterpart in the aSVG file, otherwise target spatial features are not painted in spatial heatmaps.   
 
+<font style='color:red'>
+
+
+# Overlaying 
+
+`spatialHeatmap` supports overlaying real images with SHMs, which provides more intuitive background. There are certain requirements to utilize this feature: 1) The real images are templates for creating aSVGs and the formats include `.jpg`, `.JPG`, `.png`, `.PNG`; 2) Except for file extensions, the file names of templates and aSVGs should be same such as `real_shm.png`, `real_shm.svg`. In other words, templates and aSVGs should be paired; and 3) If multiple templates/aSVGs are used such as developmental stages, names of separate template/aSVG files need to include the following suffixes: `*_shm1.png`, `*_shm1.svg`, `*_shm2.png`, `*_shm2.svg`, etc. Otherwise, the order of these images is not recognized.  
+
+In the following example, template images are modified from a study on abaxial bundle sheath (ABS) cells in maize leaves [@Bezrutczyk2021-fq]. They are labeled 1 and 2 to mimic two developmental stages. The data are randomly generated.   
+
+The first template and paired aSVG.  
+```{r eval=TRUE, echo=TRUE, warnings=FALSE}
+tmp.pa1 <- system.file('extdata/shinyApp/example/maize_leaf_shm1.png', package='spatialHeatmap')
+svg.pa1 <- system.file('extdata/shinyApp/example/maize_leaf_shm1.svg', package='spatialHeatmap')
+```
+
+The second template and paired aSVG.  
+```{r eval=TRUE, echo=TRUE, warnings=FALSE}
+tmp.pa2 <- system.file('extdata/shinyApp/example/maize_leaf_shm2.png', package='spatialHeatmap')
+svg.pa2 <- system.file('extdata/shinyApp/example/maize_leaf_shm2.svg', package='spatialHeatmap')
+```
+
+Random data.  
+```{r eval=TRUE, echo=TRUE, warnings=FALSE}
+dat.overlay <- read_fr(system.file('extdata/shinyApp/example/dat_overlay.txt', package='spatialHeatmap'))
+dat.overlay[1:2, ]
+```
+
+The real images may contain colors that interfere with SHMs. To address such issues, the argument `alpha.overlay` is developed to adjust transparency of real images. In Figure \@ref(fig:overCol), expression profiles of gene1 are plotted on SHMs and SHMs are placed on top of template images.    
+
+```{r overCol, eval=TRUE, echo=TRUE, warnings=FALSE, fig.wide=TRUE, fig.cap=('Overlaying real images with SHMs (colorful backaground). The expression profiles of gene1 are plotted on ABS cells.'), out.width="100%", fig.show='show'}
+spatial_hm(svg.path=c(svg.pa1, svg.pa2), data=dat.overlay, tmp.path=c(tmp.pa1, tmp.pa2), charcoal=FALSE, ID=c('gene1'), alpha.overlay=0.5, bar.width=0.09, sub.title.vjust=4)
+```
+
+To reduce template colors to minimum, templates can be set black-white by `charcoal=TRUE` (Figure \@ref(fig:overChar)).  
+
+```{r overChar, eval=TRUE, echo=TRUE, warnings=FALSE, fig.wide=TRUE, fig.cap=('Overlaying real images with SHMs (black-white background). The expression profiles of gene1 are plotted on ABS cells.'), out.width="100%", fig.show='show'}
+spatial_hm(svg.path=c(svg.pa1, svg.pa2), data=dat.overlay, tmp.path=c(tmp.pa1, tmp.pa2), charcoal=TRUE, ID=c('gene1'), alpha.overlay=0.5, bar.width=0.09, sub.title.vjust=4)
+```
+
+</font>
+
 # Matrix Heatmaps {#mhm}
 
 SHMs are suitable for comparing assay profiles among small number of items
 (_e.g._ few genes or proteins) across cell types and conditions. To also
 support analysis routines of larger number of items, `spatialHeatmap` integrates
 functionalities for identifying groups of items with similar and/or dissimilar 
-assay profiles, and subsequently analyzing the results with data mining methods 
+assay profiles, and subsequently analyzing the results with data mining 
 methods that scale to larger numbers of items than SHMs, such as hierarchical
 clustering and network analysis methods. The following introduces both
 approaches using as sample data the gene expression data from Arabidopsis
@@ -1447,7 +1490,7 @@ performed with the `flashClust` package [@Langfelder2012-nv]. Fifth, network mod
 are identified with the `dynamicTreeCut` package [@dynamicTreeCut]. Its `ds`
 (`deepSplit`) argument can be assigned integer values from `0` to `3`, where
 higher values increase the stringency of the module identification process.  To
-simplify the network module idenification process with WGCNA, the individual
+simplify the network module identification process with WGCNA, the individual
 steps can be executed with a single function called `adj_mod`. The result is a
 list containing the adjacency matrix and the final module assignments stored in
 a `data.frame`. Since the [interactive network](#inter_net) feature used in the
@@ -1498,7 +1541,7 @@ network(ID="HRE2", data=sub.mat, adj.mod=adj.mod, adj.min=0.90, vertex.label.cex
 <a name="inter_net"></a>
 Setting `static=FALSE` launches the interactive network. In this mode there
 is an interactive color bar that denotes the gene connectivity. To modify it,
-the color lables need to be provided in a comma separated format, _e.g._: 
+the color labels need to be provided in a comma separated format, _e.g._: 
 `yellow, orange, red`. The latter would indicate that the gene connectivity 
 increases from yellow to red. 
 
@@ -1510,10 +1553,11 @@ node.
 network(ID="HRE2", data=sub.mat, adj.mod=adj.mod, static=FALSE)
 ```
 
+<font style='color:red'>
 
 # Spatial Enrichment (SE) {#se} 
 
-This functionality is an extension of the SHMs. It identifies spatial feature-specifically expressed genes and thus enables the SHMs to visualize feature-specific profiles. It compares the target feature with all other selected features in a pairwise manner. The genes significantly up- or down-regulated in the target feature across all pairwise comparisons are denoted final target feature-specifcally expressed genes. The base methods include edgeR [@edgeR], limma [@limma], DESeq2 [@DESeq2], distinct [@distinct]. The feature-specific genes are first detected with each method independently then summarized across methods.  
+This functionality is an extension of the SHMs. It identifies spatial feature-specifically expressed genes and thus enables the SHMs to visualize feature-specific profiles. It compares the target feature with all other selected features in a pairwise manner. The genes significantly up- or down-regulated in the target feature across all pairwise comparisons are denoted final target feature-specifically expressed genes. The base methods include edgeR [@edgeR], limma [@limma], DESeq2 [@DESeq2], distinct [@distinct]. The feature-specific genes are first detected with each method independently then summarized across methods.  
 
 In addition to feature-specific genes, the SE is also able to identify genes specifically expressed in a certain condition or certain composite factor. The latter is a combination of multiple expermental factors. *E.g.* the spatiotemporal factor is a combination of feature and time points. See [section 5](#multFactor) for details.  
 
@@ -1602,11 +1646,842 @@ Line graph of expression profiles of the two genes in (Figure \@ref(fig:enrich))
 profile_gene(rbind(df.up.mus[1, ], df.down.mus[1, ]))
 ```
 
+# Integrated Co-visualization
+
+The co-visuaization is a novel functionality to co-visualize single cell and bulk data in forms of embedding plots (PCA, UMAP, TSNE) and SHMs respectively. The key feature is single cells in a cluster are matched to source bulk tissue. Two matching methods are provided: manual and automatic.  
+
+## Manual matching
+
+In manual matching, single cell clusters can be automatically detected or pre-defined by users. When matching with source bulk tissues, the matching relationship needs to be manualy defined. In R-command line, the matching is defined in a name `list` while in Shiny App it is simply dragging and dropping.  
+
+The example single cell data of mouse brain are from a oligodendrocyte heterogeneity study in mouse central nervous system [@Marques2016-ff]. Before co-visualizing, single cell data are pre-processed and clustered, which is learned from [Bioconductor OCSA](http://bioconductor.org/books/3.14/OSCA.workflows/zeisel-mouse-brain-strt-seq.html){target='blank'}. Since these steps are not the focus, details are not explained.   
+
+### Clustering single cells
+
+Read the example single cell data.  
+
+```{r scRead, eval=TRUE, echo=TRUE, warnings=FALSE}
+  sce.manual.pa <- system.file("extdata/shinyApp/example", "sce_manual_mouse.rds", package="spatialHeatmap")
+  sce.manual <- readRDS(sce.manual.pa)
+```
+
+Quality control through mitochondria and spike-in genes.  
+
+```{r scQC, eval=TRUE, echo=TRUE, warnings=FALSE}
+  stats <- perCellQCMetrics(sce.manual, subsets=list(Mt=rowData(sce.manual)$featureType=='mito'), threshold=1)
+  sub.fields <- 'subsets_Mt_percent'
+  ercc <- 'ERCC' %in% altExpNames(sce.manual)
+  if (ercc) sub.fields <- c('altexps_ERCC_percent', sub.fields)
+  qc <- perCellQCFilters(stats, sub.fields=sub.fields, nmads=3)
+  # Discard unreliable cells.
+  colSums(as.matrix(qc))
+  sce.manual <- sce.manual[, !qc$discard]
+```
+     
+Normalization.
+
+```{r scNorm, eval=TRUE, echo=TRUE, warnings=FALSE}
+  set.seed(1000); clusters <- quickCluster(sce.manual)
+  sce.manual <- computeSumFactors(sce.manual, cluster=clusters) 
+  sce.manual <- logNormCounts(sce.manual)
+```
+
+Dimensionality reduction through PCA, UMAP, and TSNE.   
+
+```{r scDimred, eval=TRUE, echo=TRUE, warnings=FALSE}
+  # Variance modelling.
+  df.var <- modelGeneVar(sce.manual)
+  top.hvgs <- getTopHVGs(df.var, prop = 0.1, n = 3000)
+  # Dimensionality reduction.
+   set.seed(1000)
+  sce.manual <- denoisePCA(sce.manual, technical=df.var, subset.row=top.hvgs)
+  sce.manual <- runTSNE(sce.manual, dimred="PCA")
+  sce.manual <- runUMAP(sce.manual, dimred = "PCA")
+```  
+
+Clustering. Cell clusters are detected by first building a graph object then partitioning the graph, where cells are nodes in the graph.  
+
+```{r scClus, eval=TRUE, echo=TRUE, warnings=FALSE}
+  # Build graph.
+  snn.gr <- buildSNNGraph(sce.manual, use.dimred="PCA") 
+  # Partition graph to detect cell clusters.
+  cluster <- paste0('clus', cluster_walktrap(snn.gr)$membership)
+  table(cluster)
+```
+
+Cell cluster assignments need to store in the `colData` slot of `SingleCellExperiment`. Cell clusters/groups pre-defined by users need to be stored in the `label` column while cell clusters automatically detected by clustering algorithm are stored in the `cluster` column. If there are experimental variables such as treatments or time points, they should be stored in the `expVar` column.  
+
+```{r scCdat, eval=TRUE, echo=TRUE, warnings=FALSE}
+  cdat <- colData(sce.manual) 
+  lab.lgc <- 'label' %in% make.names(colnames(cdat))
+  if (lab.lgc) {
+    cdat <- cbind(cluster=cluster, colData(sce.manual))
+    idx <- colnames(cdat) %in% c('cluster', 'label')
+    cdat <- cdat[, c(which(idx), which(!idx))]
+  } else cdat <- cbind(cluster=cluster, colData(sce.manual))
+  colnames(cdat) <- make.names(colnames(cdat))
+  colData(sce.manual) <- cdat; cdat[1:3, ]
+```
+
+Embedding plot of single cells with clusters labeled by the `label` column in `colData`. 
+
+```{r scDim, eval=TRUE, echo=TRUE, warnings=FALSE, fig.wide=TRUE, fig.cap=('Embedding plot single cells. The cell clusters are defined by the `label` column in `colData`.'), out.width="100%", fig.show='show'}
+ plotUMAP(sce.manual, colour_by="label")
+```
+
+### aSVG of Mouse Brain
+
+The spatial features in mouse brain aSVG are extracted. They are the bulk tissues to be matched with cell clusters.  
+
+```{r scSVG, eval=TRUE, echo=TRUE, warnings=FALSE}
+  svg.mus <- system.file("extdata/shinyApp/example", "mus_musculus.brain.svg", package="spatialHeatmap")
+  # Spatial features to match with single cell clusters.
+  feature.df <- return_feature(svg.path=svg.mus)
+  feature.df$feature
+```
+
+The single cell clusters can be matched to bulk tissues according to cluster assignments in the `label` or `cluster` column in `colData`.
+
+### Matching by Custom Clusters
+ 
+The custom cell clusters are defined in the `label` column of `colData`, which are cell sources provided in the original study.  
+
+```{r scLab, eval=TRUE, echo=TRUE, warnings=FALSE}
+  unique(colData(sce.manual)$label) 
+```
+
+Aggregate cells by clusters defined in the `label` column.  
+
+```{r scLabAggr, eval=TRUE, echo=TRUE, warnings=FALSE}
+ sce.manual.aggr <- aggr_rep(sce.manual, assay.na='logcounts', sam.factor='label', con.factor='expVar', aggr='mean')
+```
+
+Manually create the matching `list`.  
+
+```{r scLabList, eval=TRUE, echo=TRUE, warnings=FALSE}
+lis.match <- list(hypothalamus=c('hypothalamus'), cortex.S1=c('cerebral.cortex'))
+```
+
+Co-visualization on gene `St18`.  
+
+```{r scLabVis, eval=TRUE, echo=TRUE, warnings=FALSE, fig.wide=TRUE, fig.cap=('Co-visualizing single cells and bulk tissues by custom cell clusters. The expression profiles of gene `St18` are used.'), out.width="100%", fig.show='show'}
+  shm.lis <- spatial_hm(svg.path=svg.mus, data=sce.manual.aggr, ID=c('St18'), height=0.7, legend.r=1.5, legend.key.size=0.02, legend.text.size=12, legend.nrow=2, sce.dimred=sce.manual, dimred='PCA', cell.group='label', assay.na='logcounts', tar.cell=c('matched'), lis.rematch=lis.match, bar.width=0.1, dim.lgd.nrow=1)
+```
+
+### Matching by Auto-Clusters
+
+Automatically detected cell clusters are stored in the `cluster` column in `colData`.  
+
+```{r scAuto, eval=TRUE, echo=TRUE, warnings=FALSE}
+ unique(colData(sce.manual)$cluster) 
+```
+Aggregate cells by clusters defined in the `label` column.  
+
+```{r scAutoAggr, eval=TRUE, echo=TRUE, warnings=FALSE}
+  sce.manual.aggr <- aggr_rep(sce.manual, assay.na='logcounts', sam.factor='cluster', con.factor=NULL, aggr='mean')
+```
+
+Manually create the matching `list`.  
+
+```{r scAutoList, eval=TRUE, echo=TRUE, warnings=FALSE}
+  lis.match <- list(clus1=c('hypothalamus'), clus3=c('cerebral.cortex', 'midbrain'))
+```
+
+Co-visualization on gene `St18`.  
+
+```{r scAutoVis, eval=TRUE, echo=TRUE, warnings=FALSE, fig.wide=TRUE, fig.cap=('Co-visualizing single cells and bulk tissues by automatically-detected cell clusters. The expression profiles of gene `St18` are used.'), out.width="100%", fig.show='show'}
+shm.lis <- spatial_hm(svg.path=svg.mus, data=sce.manual.aggr, ID=c('St18'), height=0.7, legend.r=1.5, legend.key.size=0.02, legend.text.size=12, legend.nrow=3, sce.dimred=sce.manual, dimred='PCA', cell.group='cluster', assay.na='logcounts', tar.cell=c('matched'), lis.rematch=lis.match, bar.width=0.11, dim.lgd.nrow=1)
+```
+
+## Auto-Matching
+
+Except for being manually defined, the matching between cells and bulk tissues in co-visualization can also be automatic. The automatic process is carried out by combining and co-clustering bulk and single cell data. The bulk and single cell data need to be derived from the same organ or same large tissue. If same organ, the single cell data are assayed on the whole organ. By contrast, if single cell data are from a whole tissue, the bulk tissues should be sub-tissues.   
+
+The potential applications of auto-matching include: 1) Reduce single cell RNA-seq (scRNA-seq) complexities. In conventional scRNA-seq, there is ususally a complex and laborious stage of isolating single cells. Auto-matching has the potential to avoid such processes since it only requires scRNA-seq on a whole organ; 2) Discover novel cell types. The cells with bulk tissue assignments are assumed to be major populations in the bulk, while cells without bulk assignemnts are likely to be novel cell types or cells at the bulk tissue boundaries; and 3) Estimate cellular compositions. If bulk tissues are representative of a whole organ, cellular compositions of the organ could be estimated according to their bulk tissue assignments. This application is useful in disease diagnose and treatment, since it helps to analyze each cell type's contribution to the disease.    
+
+The auto-matching includes two main functionalities. One is the auto-matching optimization and another is the co-visualization. The former is developed to optimize the workflow on trainning data sets, while the latter uses the optimized parameter settings for co-visualization.  
+
+### Workflow Overview
+
+Figure \@ref(fig:coclusOver) is the co-clustering workflow overview. The inputs are RNA-seq raw count data of bulk tissues and single cells of the same organ (Figure \@ref(fig:coclusOver).1). The single cells should come from the whole organ or at least covers the bulk tissues. The identities of each bulk tissue and each cell need to be labeled so as to evaluate the co-clustering performance. Bulk and single cell data are initially filtered at low strigency. The main difference between bulk and single cells is the sparsity in the latter. To reduce such difference, the bulk and single-cell data are combined, normalized, and then separated (Figure \@ref(fig:coclusOver).2). After separation, the normalized bulk data are filtered to remove genes of low and constant expressions (Figure \@ref(fig:coclusOver).3). The normalized single-cell data are also filtered to remove genes and cells having high zero-count rates. After filtered, the gene dimensionalities of single-cell data are reduced using PCA or UMAP method, and the top dimensionalities are clustered (Figure \@ref(fig:coclusOver).4). In each cell cluster, cells having low similarities with other cells in the same cluster are filtered (Figure \@ref(fig:coclusOver).5), and therefore the remaining clusters are more homogeneous (Figure \@ref(fig:coclusOver).6). The filtered bulk and filtered single cells are combined and co-clustered (Figure \@ref(fig:coclusOver).7).  
+
+The results include three types of co-clusters: 1) Two bulk tissues are clustered with cells. The source bulk is assigned to each cell according to Spearman's correlation coefficient. For example, in Figure \@ref(fig:coclusOver).8a bulk A is assigned to cell a1 because a1 has higher similarity with A than B. Since the true source bulk of a1 is A, this assignment is TRUE. By contrast, cell b1 also has higher similarity with A than B, and A is assigned to b1, but this assignment is labeled FALSE since the true source bulk of b1 is B; 2). Only one bulk tissue is clustered with cells. This bulk is assigned to all the cells in the same co-cluster (\@ref(fig:coclusOver).8b); and 3) No bulk is included. All these cells are discarded (Figure \@ref(fig:coclusOver).8c). Lastly, the Spearman's correlation coefficient and TRUE or FALSE assignments are used to create ROC plots and evaluate the performance (Figure \@ref(fig:coclusOver).9).
+
+
+```{r coclusOver, echo=FALSE, fig.wide=TRUE, out.width="80%", fig.cap=("Overview of coclustering. The coclustering are illustrated in 9 steps. Basically, bulk and single data are initially filtered, then combined, normalized, and separated. The normalized bulk and single cell data are filtered again. Single cells are clustered and resulting clusters are refined. Subsequently bulk and single cells are combined and co-clustered. In each co-cluster, bulk tissues are assigned to cells. The assignments are evaluated by ROC curves.")}
+include_graphics('img/coclustering_overview.png')
+```
+
+### Optimization Demonstration {#opt_demo}
+
+Since real optimizations have high demand on computing power and take a long time, it is demonstrated on toy data. Thus the result parameter settings may not be really optimal. The example bulk and single cell RNA-seq data are from Arabidopsis thaliana (Arabidopsis) root. Bulk tissue data comprise all the major root tissues such as epidermis, cortex, endodermis, xylem, columella, which are generated in a research on alternative splicing and lincRNA regulation [@Li2016-yz]. The two single cell data sets are derived from the whole root, which are produced in a study of single cell Arabidopsis root atlas [@Shahan2020-zj]. The identities of bulk and single cells are all labeled.   
+
+The optimization focuses on parameters of normalization methods, filtering, dimensionality reduction methods, refining homogeneous cell clusters, number of top dimensionalities in co-clustering, graph-building methods in co-clustering. The optimization is performed by running the co-clustering workflow (Figure \@ref(fig:coclusOver)) on each of the single cell data sets. The parameter settings being optimized is fixed and all settings of other parameters are varied across all possible combinations.  
+
+Each running of the workflow yields an AUC value, thus after running the workflow on all possible settings combinations one parameter settings has a set of AUC values. The AUCs are filtered according to some criteria and the remaining AUCs are averaged. A settings with a higher mean AUC than its counterparts are taken as optimal in a parameter. For example, when optimizing dimensionality reduction methods, the settings are PCA and UMAP. If the mean of remaining AUCs of PCA is 0.6 while UMAP is 0.55, PCA is regarded as the optimal.   
+
+Since optimzation on example data also takes a relatively long time, most of the following steps are not evaluated. A common computer with 4G memory and 4 CPUs is enough to run the following optimization process.   
+
+Read bulk and two single cell data.  
+
+```{r optRead, eval=TRUE, echo=TRUE, warnings=FALSE}
+  blk <- readRDS(system.file("extdata/cocluster/data", "bulk_cocluster.rds", package="spatialHeatmap")) # Bulk.
+  sc10 <- readRDS(system.file("extdata/cocluster/data", "sc10_cocluster.rds", package="spatialHeatmap")) # Single cell.
+  sc11 <- readRDS(system.file("extdata/cocluster/data", "sc11_cocluster.rds", package="spatialHeatmap")) # Single cell.
+  blk; sc10; sc11
+```
+
+These example data are already pre-processed. To demonstrate the optimization process the pre-processing steps are perfomed again with few genes or cells removed.   
+
+Inital filtering with low strigency before normalization.   
+
+```{r optInitFil, eval=FALSE, echo=TRUE, warnings=FALSE}
+  blk <- filter_data(data=blk, pOA=c(0.2, 15), CV=c(1.5, 100))
+  fil.init <- filter_cell(lis=list(sc10=sc10, sc11=sc11), bulk=blk, gen.rm='^ATCG|^ATCG', min.cnt=1, p.in.cell=0.3, p.in.gen=0.1); fil.init
+```
+
+Combine and normalize bulk and single cell data, then separate them. By default `computeSumFactors (fct)` in `scran` package is used [@scran]. If `cpm=TRUE`, additional normalization of counts per million is applied.    
+
+```{r optNorm, eval=FALSE, echo=TRUE, warnings=FALSE}
+ norm.fct <- norm_multi(dat.lis=fil.init, cpm=FALSE) # fct.
+ norm.cpm <- norm_multi(dat.lis=fil.init, cpm=TRUE) # fct + cpm
+```
+
+Secondary filtering with higher strigency after normalization. Four sets of filtering parameter settings are created. In bulk data, genes with expression values over `A` across samples of over proportion `p` and with coefficinet of variance (CV) between cv1 and cv2 are retained. In cell data, genes with expression values over `min.cnt` of at least proportion `p.in.gen` are retained, and cells with with expression values over `min.cnt` of at least proportion `p.in.cell` are retained.   
+
+```{r optFilPar, eval=TRUE, echo=TRUE, warnings=FALSE}
+ df.par.fil <- data.frame(p=c(0.1, 0.2, 0.3, 0.4), A=rep(1, 4), cv1=c(0.1, 0.2, 0.3, 0.4), cv2=rep(100, 4), min.cnt=rep(1, 4), p.in.cell=c(0.1, 0.25, 0.3, 0.35), p.in.gen=c(0.01, 0.05, 0.1, 0.15))
+ df.par.fil
+``` 
+
+Filter bulk and cell data using the four filtering settings. The results are automatically saved in the working directory `wk.dir` and are recognized in the downstream. Thus the working directory should be the same across the entire workflow.  
+
+```{r optFil, eval=FALSE, echo=TRUE, warnings=FALSE}
+  if (!dir.exists('opt_res')) dir.create('opt_res')
+  fct.fil.all <- filter_iter(bulk=norm.fct$bulk, cell.lis=list(sc10=norm.fct$sc10, sc11=norm.fct$sc11), df.par.fil=df.par.fil, gen.rm='^ATCG|^ATCG', wk.dir='opt_res', norm.meth='fct')
+  
+  cpm.fil.all <- filter_iter(bulk=norm.cpm$bulk, cell.lis=list(sc10=norm.cpm$sc10, sc11=norm.cpm$sc11), df.par.fil=df.par.fil, gen.rm='^ATCG|^ATCG', wk.dir='opt_res', norm.meth='cpm')
+```
+
+To evaluate the downstream auto-matching performance, a ground-truth matching relationship is required in form of `data.frame`. The `cell` and `trueBulk` refer to bulk tissue identifiers in aSVG files, single cell identifiers and bulk tissue identifiers in the data for co-clustering, respectively. If a cell matches multiple bulk tissues, bulk identifiers are separated by comma, semicolon, or single space such as `NONHAIR,LRC_NONHAIR`. The `SVGBulk` is the bulk identifiers in aSVG files, which are recognized in co-visualization.   
+
+```{r optMatch, eval=TRUE, echo=TRUE, warnings=FALSE}
+  match.pa <- system.file("extdata/cocluster/data", "match_arab_root_cocluster.txt", package="spatialHeatmap")
+  df.match.arab <- read.table(match.pa, header=TRUE, row.names=1, sep='\t')
+  df.match.arab[1:3, ]
+```
+
+In real application, the whole optimization takes a long time and requires a lot of computation power. For example, combined bulk and cell data with 6945 genes and 7747 samples requires about 20G memory for coclustering. To speed up computation, the optimization function `coclus_opt` provides two levels of parallel computing through `BiocParallel` [@biocpara]. The first one is `BatchtoolsParam` and relies on the [slurm](https://slurm.schedmd.com/documentation.html){target='blank'} scheduler and the second one utilizes `MulticoreParam`.   
+
+Before optimzation, users could check the parallelization guide by setting `parallel.info=TRUE`, then it returns the max possible parallelizations for each level respectively.   
+
+```{r optGuide, eval=FALSE, echo=TRUE, warnings=FALSE}
+  coclus_opt(wk.dir='opt_res', parallel.info=TRUE)
+```
+
+A slurm template is provided for the first level parallelization. Users are advised to make a new copy and set slurm parameters in the new copy.  
+
+```{r optTmpl, eval=FALSE, echo=TRUE, warnings=FALSE}
+  file.copy(system.file("extdata/cocluster", "slurm.tmpl", package="spatialHeatmap"), './slurm.tmpl')
+```
+
+If slurm is installed, users could take advantage of two levels of parallelizations. For instance, the first- and second-level parallelizations are set 3 and 2 cpu cores respectively. The `wk.dir` is the same in secondary filtering.  
+
+`sim` and `sim.p` are parameters in refining cell clusters (Figure \@ref(fig:coclusOver).5). Specifically, in a cell cluster, cells having similarities over `sim` with other cells in the same cluster of at least proportion `sim.p` would remain. `sim` is Spearman' or Pearson's correlation coefficient. `dim` is the number of top dimensionalities (equivalent to genes) in co-clustering. Since the three parameters are related to each other, they are treated as a set `spd.set`.     
+
+```{r optPara2, eval=FALSE, echo=TRUE, warnings=FALSE}
+  opt <- coclus_opt(wk.dir='opt_res', dimred=c('PCA', 'UMAP'), graph.meth=c('knn', 'snn'), sim=seq(0.2, 0.4, by=0.1), sim.p=seq(0.2, 0.4, by=0.1), dim=seq(5, 7, by=1), df.match=df.match.arab, batch.par=BatchtoolsParam(workers=3, cluster="slurm", template='slurm.tmpl'), multi.core.par=MulticoreParam(workers=2), verbose=FALSE)
+```
+
+If slurm is not available, optimization can be parallelized only at the second-level by setting `batch.par=NULL`.      
+
+```{r optPara1, eval=FALSE, echo=TRUE, warnings=FALSE}
+opt <- coclus_opt(wk.dir='opt_res', dimred=c('PCA', 'UMAP'), graph.meth=c('knn', 'snn'), sim=seq(0.2, 0.4, by=0.1), sim.p=seq(0.2, 0.4, by=0.1), dim=seq(5, 7, by=1), df.match=df.match.arab, batch.par=NULL, multi.core.par=MulticoreParam(workers=2))
+```
+
+The performace of each combination of parameter settings on each single cell data set is measured by an AUC value in ROC curve. These AUCs are filtered according to a cutoff (`aucs` over 0.5) and corresponding total bulk assignments (`total.min`) and total true assignments (`true.min`). The following demonstrates how to visualize the AUCs and select optimal parameter settings.  
+
+Extract AUCs for each filtering settings across `aucs` at 0.5, 0.6, 0.7, 0.8, 0.9 respectively.   
+
+```{r optParFil, eval=FALSE, echo=TRUE, warnings=FALSE}
+df.lis.fil <- auc_stat(wk.dir='opt_res', tar.par='filter', total.min=500, true.min=300, aucs=round(seq(0.5, 0.9, 0.1), 1))
+```
+
+Mean AUCs by each filtering settings and AUC cutoff.  
+
+```{r optParFilMean, eval=FALSE, echo=TRUE, warnings=FALSE}
+df.lis.fil$df.auc.mean[1:3, ]
+mean_auc_bar(df.lis.fil[[1]], bar.width=0.07, title='Mean AUCs by filtering settings')
+```
+
+```{r optParFilMeanPlot, echo=FALSE, fig.wide=TRUE, out.width="80%", fig.cap=("Mean AUCs of filtering settings. One bar refers to mean AUCs of a filtering settings at a certain AUC cutoff.")}
+include_graphics('img/filter_auc_mean.png')
+```
+
+All AUCs by each filtering settings and AUC cutoff. 
+
+```{r optParFilAll, eval=FALSE, echo=TRUE, warnings=FALSE}
+ auc_violin(df.lis=df.lis.fil, xlab='Filtering settings')
+```
+
+```{r optParFilAllPlot, echo=FALSE, fig.wide=TRUE, out.width="80%", fig.cap=("All AUCs of filtering settings. A violin plot refers to all AUCs of a filtering settings at a certain AUC cutoff.")}
+include_graphics('img/filter_auc_all.png')
+```
+
+According to the mean AUCs, optimal filtering settings are fil1, fil2, fil3.  
+
+```{r optParFilSel, eval=TRUE, echo=TRUE, warnings=FALSE}
+df.par.fil[c(1, 2, 3), ]
+```
+
+Extract AUCs for normalization methods across `aucs` at 0.5, 0.6, 0.7, 0.8, 0.9 respectively.   
+
+```{r optParNor, eval=FALSE, echo=TRUE, warnings=FALSE}
+  df.lis.norm <- auc_stat(wk.dir='opt_res', tar.par='norm', total.min=500, true.min=300, aucs=round(seq(0.5, 0.9, 0.1), 1))
+```
+
+Mean AUCs by each normalization method and AUC cutoff.  
+
+```{r optParNorMean, eval=FALSE, echo=TRUE, warnings=FALSE}
+df.lis.norm$df.auc.mean[1:3, ]
+mean_auc_bar(df.lis.norm[[1]], bar.width=0.07, title='Mean AUCs by normalization methods')
+```
+
+All AUCs by each normalization method and AUC cutoff. 
+
+```{r optParNorAll, eval=FALSE, echo=TRUE, warnings=FALSE}
+auc_violin(df.lis=df.lis.norm, xlab='Normalization methods')
+```
+
+Optimal normalization method: `fct` (`computeSumFactors`).  
+
+Extract AUCs for graph-building methods across `aucs` at 0.5, 0.6, 0.7, 0.8, 0.9 respectively.   
+
+```{r optParGra, eval=FALSE, echo=TRUE, warnings=FALSE}
+df.lis.graph <- auc_stat(wk.dir='opt_res', tar.par='graph', total.min=500, true.min=300, aucs=round(seq(0.5, 0.9, 0.1), 1))
+```
+
+Mean AUCs by each graph-building method and AUC cutoff.  
+
+```{r optParGraMean, eval=FALSE, echo=TRUE, warnings=FALSE}
+df.lis.graph$df.auc.mean[1:3, ]
+mean_auc_bar(df.lis.graph[[1]], bar.width=0.07, title='Mean AUCs by graph-building methods')
+```
+
+All AUCs by each graph-building method and AUC cutoff.   
+
+```{r optParGraAll, eval=FALSE, echo=TRUE, warnings=FALSE}
+auc_violin(df.lis=df.lis.graph, xlab='Graph-building methods')
+```
+
+Optimal graph-building methods: `knn` (`buildKNNGraph`).  
+
+
+Extract AUCs for dimensionality reduction methods across `aucs` at 0.5, 0.6, 0.7, 0.8, 0.9 respectively.   
+
+```{r optParDim, eval=FALSE, echo=TRUE, warnings=FALSE}
+df.lis.dimred <- auc_stat(wk.dir='opt_res', tar.par='dimred', total.min=500, true.min=300, aucs=round(seq(0.5, 0.9, 0.1), 1))
+```
+
+Mean AUCs by each dimensionality reduction method and AUC cutoff.  
+
+```{r optParDimMean, eval=FALSE, echo=TRUE, warnings=FALSE}
+df.lis.dimred$df.auc.mean[1:3, ]
+# Mean AUCs by each dimensionality reduction method and AUC cutoff.
+mean_auc_bar(df.lis.dimred[[1]], bar.width=0.07, title='Mean AUCs by dimensionality reduction methods')
+```
+
+All AUCs by each dimensionality reduction method and AUC cutoff. 
+
+```{r optParDimAll, eval=FALSE, echo=TRUE, warnings=FALSE}
+auc_violin(df.lis=df.lis.dimred, xlab='Dimensionality reduction')
+```
+
+Optimal dimensionality reduction method: `pca` (`denoisePCA`).   
+
+Extract AUCs for spd.set across `aucs` at 0.5, 0.6, 0.7, 0.8, 0.9 respectively.   
+
+```{r optParSpd, eval=FALSE, echo=TRUE, warnings=FALSE}
+df.lis.spd <- auc_stat(wk.dir='opt_res', tar.par='spd.set', total.min=500, true.min=300, aucs=round(seq(0.5, 0.9, 0.1), 1))
+df.lis.spd$auc0.5$df.frq[1:3, ]
+```
+
+All AUCs of top five spd.sets ranked by frequency across `aucs` at 0.5, 0.6, 0.7, 0.8, 0.9 respectively.    
+
+```{r optParSpdTop, eval=FALSE, echo=TRUE, warnings=FALSE}
+spd_auc_violin(df.lis=df.lis.spd, n=5, xlab='spd.sets', x.vjust=0.6)
+```
+
+Top five spd.sets across `aucs` at 0.5, 0.6, 0.7, 0.8, 0.9 respectively are taken as optimal spd.sets.   
+
+```{r optParSpdTopFin, eval=FALSE, echo=TRUE, warnings=FALSE}
+n <- 5; df.spd.opt <- NULL
+for (i in df.lis.spd) {
+  df.spd.opt <- rbind(df.spd.opt, i$df.frq[seq_len(n), c('sim', 'sim.p', 'dim')])
+}
+df.spd.opt$spd.set <- paste0('s', df.spd.opt$sim, 'p', df.spd.opt$sim.p, 'd', df.spd.opt$dim)
+df.spd.opt <- subset(df.spd.opt, !duplicated(spd.set))
+df.spd.opt[1:3, ]
+```
+
+In real application, the optimized settings need to be validated on data sets from other organs of different species, which is presented below.  
+
+
+### Optimization in Real Case {#opt_real}
+
+Ideally, the co-clustering should be optimized on different organs from different organisms as many possible. The single cell data need to be generated on whole organs and each cell's identity need to be labeled. Such data are less common and not easy to obtain in public databases, since most single cell RNA-seq (scRNA-seq) assays only focus on specific cell populations rather than whole organs, which are isolated by microdissection or fluorescent assisted cell sorting (FACS). As a result, the co-clustering optimization is performed only on five single cell data sets of Arabidopsis thaliana (Arabidopsis) root. The optimized parameter settings are validated on mouse brain and kidney.  
+
+The optimization in real case has high demand on computing power and takes a long time, so most of the following steps are not evaluated. The following steps are not explained in details since they are the same as [last section](#opt_demo).  
+
+The bulk [@Li2016-yz] and five single cell [@Shahan2020-zj] data sets of Arabidopsis root are accessed from the same studies as [last section](#opt_demo). Details about how to access and format them are described [here](https://github.com/jianhaizhang/cocluster_data){target='blank'}. In the following, `blk.arb.rt` refers to bulk data and `sc.arab.rt10`, `sc.arab.rt11`, `sc.arab.rt12`, `sc.arab.rt30`, `sc.arab.rt31` refers to the five single cell data sets respectively.  
+
+
+Inital filtering with low strigency before normalization. 
+
+```{r , eval=FALSE, echo=TRUE, warnings=FALSE}
+blk.arab.rt <- filter_data(data=blk.arab.rt, pOA=c(0.05, 5), CV=c(0.05, 100))
+fil.init <- filter_cell(lis=list(sc10=sc.arab.rt10, sc11=sc.arab.rt11, sc12=sc.arab.rt12, sc30=sc.arab.rt30, sc31=sc.arab.rt31), bulk=blk, gen.rm='^ATCG|^ATCG', min.cnt=1, p.in.cell=0.01, p.in.gen=0.05); fil.init
+```
+
+Combine and normalize bulk and single cell data, then separate them.       
+
+```{r , eval=FALSE, echo=TRUE, warnings=FALSE}
+norm.fct <- norm_multi(dat.lis=fil.init, cpm=FALSE) # fct.
+norm.cpm <- norm_multi(dat.lis=fil.init, cpm=TRUE) # fct + cpm
+```
+
+Secondary filtering with higher strigency after normalization. Four sets of filtering parameter settings are created.      
+
+```{r , eval=TRUE, echo=TRUE, warnings=FALSE}
+df.par.fil <- data.frame(p=c(0.1, 0.2, 0.3, 0.4), A=rep(1, 4), cv1=c(0.1, 0.2, 0.3, 0.4), cv2=rep(100, 4), min.cnt=rep(1, 4), p.in.cell=c(0.1, 0.25, 0.3, 0.35), p.in.gen=c(0.01, 0.05, 0.1, 0.15))
+df.par.fil
+``` 
+
+Filter bulk and cell data using the four filtering settings. The results are automatically saved in the working directory `wk.dir` and are recognized in the downstream. Thus the working directory should be the same across the entire workflow.  
+
+```{r , eval=FALSE, echo=TRUE, warnings=FALSE}
+if (!dir.exists('opt_real_res')) dir.create('opt_real_res')
+
+fct.fil.all <- filter_iter(bulk=norm.fct$bulk, cell.lis=list(sc10=norm.fct$sc10, sc11=norm.fct$sc11, sc12=norm.fct$sc12, sc30=norm.fct$sc30, sc31=norm.fct$sc31), df.par.fil=df.par.fil, gen.rm='^ATCG|^ATCG', wk.dir='opt_real_res', norm.meth='fct')
+  
+cpm.fil.all <- filter_iter(bulk=norm.cpm$bulk, cell.lis=list(sc10=norm.cpm$sc10, sc11=norm.cpm$sc11, sc12=norm.cpm$sc12, sc30=norm.cpm$sc30, sc31=norm.cpm$sc31), df.par.fil=df.par.fil, gen.rm='^ATCG|^ATCG', wk.dir='opt_real_res', norm.meth='cpm')
+```
+
+Ground-truth matching relationship across `cell`, `trueBulk`, and `SVGBulk`.     
+
+```{r , eval=TRUE, echo=TRUE, warnings=FALSE}
+match.pa <- system.file("extdata/cocluster/data", "match_arab_root_cocluster.txt", package="spatialHeatmap")
+df.match.arab <- read.table(match.pa, header=TRUE, row.names=1, sep='\t')
+df.match.arab[1:3, ]
+```
+
+The max possible parallelizations for each level respectively.  
+
+```{r , eval=FALSE, echo=TRUE, warnings=FALSE}
+coclus_opt(wk.dir='opt_real_res', parallel.info=TRUE)
+```
+
+Make a new copy of the default slurm template and set parameters in the new copy.  
+
+```{r , eval=FALSE, echo=TRUE, warnings=FALSE}
+file.copy(system.file("extdata/cocluster", "slurm.tmpl", package="spatialHeatmap"), './slurm.tmpl')
+```
+
+If slurm is installed, users could take advantage of two levels of parallelizations. For instance, the first- and second-level parallelizations are set 3 and 2 cpu cores respectively. The `wk.dir` is the same in secondary filtering. Note the settings of `spd.set` (`sim/sim.p/dim`) has wider ranges than in last section. The parallel computation is performed at High-Performance Computing Center (HPCC) at University of California, Riverside.  
+
+```{r , eval=FALSE, echo=TRUE, warnings=FALSE}
+opt <- coclus_opt(wk.dir='opt_real_res', dimred=c('PCA', 'UMAP'), graph.meth=c('knn', 'snn'), sim=seq(0.2, 0.8, by=0.1), sim.p=seq(0.2, 0.8, by=0.1), dim=seq(5, 40, by=1), df.match=df.match.arab, batch.par=BatchtoolsParam(workers=3, cluster="slurm", template='slurm.tmpl'), multi.core.par=MulticoreParam(workers=2), verbose=FALSE)
+```
+
+If slurm is not available, optimization can be parallelized only at the second-level by setting `batch.par=NULL`.      
+
+```{r , eval=FALSE, echo=TRUE, warnings=FALSE}
+opt <- coclus_opt(wk.dir='opt_real_res', dimred=c('PCA', 'UMAP'), graph.meth=c('knn', 'snn'), sim=seq(0.2, 0.8, by=0.1), sim.p=seq(0.2, 0.8, by=0.1), dim=seq(5, 40, by=1), df.match=df.match.arab, batch.par=NULL, multi.core.par=MulticoreParam(workers=2))
+```
+
+The performace of each combination of parameter settings on each single cell data set is measured by an AUC value in ROC curve. These AUCs are filtered according to a cutoff (`aucs` over 0.5) and corresponding total bulk assignments (`total.min`) and total true assignments (`true.min`). The following demonstrates how to visualize the AUCs and select optimal parameter settings.  
+
+Extract AUCs for each filtering settings across `aucs` at 0.5, 0.6, 0.7, 0.8, 0.9 respectively.   
+
+```{r , eval=FALSE, echo=TRUE, warnings=FALSE}
+df.lis.fil <- auc_stat(wk.dir='opt_real_res', tar.par='filter', total.min=500, true.min=300, aucs=round(seq(0.5, 0.9, 0.1), 1))
+```
+
+Mean AUCs by each filtering settings and AUC cutoff.  
+
+```{r , eval=FALSE, echo=TRUE, warnings=FALSE}
+df.lis.fil$df.auc.mean[1:3, ]
+mean_auc_bar(df.lis.fil[[1]], bar.width=0.07, title='Mean AUCs by filtering settings')
+```
+
+```{r , echo=FALSE, fig.wide=TRUE, out.width="70%", fig.cap=("Mean AUCs of filtering settings in real optimization. One bar refers to mean AUCs of a filtering settings at a certain AUC cutoff.")}
+include_graphics('img/real_filter_auc_mean.png')
+```
+
+All AUCs by each filtering settings and AUC cutoff. 
+
+```{r , eval=FALSE, echo=TRUE, warnings=FALSE}
+ auc_violin(df.lis=df.lis.fil, xlab='Filtering settings')
+```
+
+```{r , echo=FALSE, fig.wide=TRUE, out.width="80%", fig.cap=("All AUCs of filtering settings in real optimization. A violin plot refers to all AUCs of a filtering settings at a certain AUC cutoff.")}
+include_graphics('img/real_filter_auc_all.png')
+```
+
+According to the mean AUCs, fil1 and fil2 are selected as optimal filtering settings.    
+
+```{r , eval=TRUE, echo=TRUE, warnings=FALSE}
+df.par.fil[c(1, 2), ]
+```
+
+Extract AUCs for normalization methods across `aucs` at 0.5, 0.6, 0.7, 0.8, 0.9 respectively.   
+
+```{r , eval=FALSE, echo=TRUE, warnings=FALSE}
+df.lis.norm <- auc_stat(wk.dir='opt_real_res', tar.par='norm', total.min=500, true.min=300, aucs=round(seq(0.5, 0.9, 0.1), 1))
+```
+
+Mean AUCs by each normalization method and AUC cutoff.  
+
+```{r , eval=FALSE, echo=TRUE, warnings=FALSE}
+df.lis.norm$df.auc.mean[1:3, ]
+mean_auc_bar(df.lis.norm[[1]], bar.width=0.07, title='Mean AUCs by normalization methods')
+```
+
+All AUCs by each normalization method and AUC cutoff. 
+
+```{r , eval=FALSE, echo=TRUE, warnings=FALSE}
+auc_violin(df.lis=df.lis.norm, xlab='Normalization methods')
+```
+
+Optimal normalization method: `fct` (`computeSumFactors`).  
+
+Extract AUCs for graph-building methods across `aucs` at 0.5, 0.6, 0.7, 0.8, 0.9 respectively.   
+
+```{r , eval=FALSE, echo=TRUE, warnings=FALSE}
+df.lis.graph <- auc_stat(wk.dir='opt_real_res', tar.par='graph', total.min=500, true.min=300, aucs=round(seq(0.5, 0.9, 0.1), 1))
+```
+
+Mean AUCs by each graph-building method and AUC cutoff.  
+
+```{r , eval=FALSE, echo=TRUE, warnings=FALSE}
+df.lis.graph$df.auc.mean[1:3, ]
+mean_auc_bar(df.lis.graph[[1]], bar.width=0.07, title='Mean AUCs by graph-building methods')
+```
+
+All AUCs by each graph-building method and AUC cutoff.   
+
+```{r , eval=FALSE, echo=TRUE, warnings=FALSE}
+auc_violin(df.lis=df.lis.graph, xlab='Graph-building methods')
+```
+
+Since `knn` (`buildKNNGraph`) and `snn` (`buildSNNGraph`) have similar mean AUCs, both are selected as optimal graph-building methods.   
+
+
+Extract AUCs for dimensionality reduction methods across `aucs` at 0.5, 0.6, 0.7, 0.8, 0.9 respectively.   
+
+```{r , eval=FALSE, echo=TRUE, warnings=FALSE}
+df.lis.dimred <- auc_stat(wk.dir='opt_real_res', tar.par='dimred', total.min=500, true.min=300, aucs=round(seq(0.5, 0.9, 0.1), 1))
+```
+
+Mean AUCs by each dimensionality reduction method and AUC cutoff.  
+
+```{r , eval=FALSE, echo=TRUE, warnings=FALSE}
+df.lis.dimred$df.auc.mean[1:3, ]
+# Mean AUCs by each dimensionality reduction method and AUC cutoff.
+mean_auc_bar(df.lis.dimred[[1]], bar.width=0.07, title='Mean AUCs by dimensionality reduction methods')
+```
+
+All AUCs by each dimensionality reduction method and AUC cutoff. 
+
+```{r , eval=FALSE, echo=TRUE, warnings=FALSE}
+auc_violin(df.lis=df.lis.dimred, xlab='Dimensionality reduction')
+```
+
+Optimal dimensionality reduction method: `pca` (`denoisePCA`).   
+
+
+Extract AUCs for spd.set across `aucs` at 0.5, 0.6, 0.7, 0.8, 0.9 respectively.   
+
+```{r , eval=FALSE, echo=TRUE, warnings=FALSE}
+df.lis.spd <- auc_stat(wk.dir='opt_real_res', tar.par='spd.set', total.min=500, true.min=300, aucs=round(seq(0.5, 0.9, 0.1), 1))
+df.lis.spd$auc0.5$df.frq[1:3, ]
+```
+
+All AUCs of top five spd.sets ranked by frequency across `aucs` at 0.5, 0.6, 0.7, 0.8, 0.9 respectively.    
+
+```{r , eval=FALSE, echo=TRUE, warnings=FALSE}
+spd_auc_violin(df.lis=df.lis.spd, n=5, xlab='spd.sets', x.vjust=0.6)
+```
+
+Top five spd.sets across `aucs` at 0.5, 0.6, 0.7, 0.8, 0.9 respectively are taken as optimal spd.sets. `s`, `p`, `d` stands for `sim`, `sim.p`, `dim` respectively. *E.g.* `s0.2p0.5d12` means `sim` = 0.2, `sim.p` = 0.5, `dim` = 12.     
+
+```{r , eval=FALSE, echo=TRUE, warnings=FALSE}
+n <- 5; df.spd.opt <- NULL
+for (i in df.lis.spd) {
+  df.spd.opt <- rbind(df.spd.opt, i$df.frq[seq_len(n), c('sim', 'sim.p', 'dim')])
+}
+
+df.spd.opt$spd.set <- paste0('s', df.spd.opt$sim, 'p', df.spd.opt$sim.p, 'd', df.spd.opt$dim)
+
+df.spd.opt <- subset(df.spd.opt, !duplicated(spd.set))
+df.spd.opt[1:3, ]
+```
+
+```{r , eval=TRUE, echo=FALSE, warnings=FALSE}
+df.spd.opt <- read.table(system.file("extdata/cocluster", "df_spd_opt.txt", package="spatialHeatmap"), header=TRUE, row.names=1, sep='\t')
+df.spd.opt[1:3, ]
+```
+
+The optimal parameter settings at this stage are listed in the table below.   
+```{r optPar, eval=TRUE, echo=FALSE, warnings=FALSE}
+df.opt <- data.frame(normalization='fct', filtering.set='fil1, fil2', dimensionality.reduction='pca', graph.building='knn, snn', spd.set=df.spd.opt$spd.set)
+kable(df.opt, caption='Optimized parameter settings on Arabidopsis thaliana root data sets', col.names=colnames(df.opt), row.names=FALSE, escape=TRUE)
+```
+
+Next, these optimal settings are validated on mouse brain, mouse kindney, and Arabidopsis root data sets. In mouse brain, the bulk RNA-seq data are generated in a research on the impact of placental endocrine on mouse cerebellar development [@Vacher2021-xg] and the scRNA-seq data are from a study of mouse brain molecular atlas [@Ortiz2020-yt]. The bulk count data are produced using systemPipeR (2.1.12) [@systempiper]. Details about how to access and format bulk and single data are described [here](https://github.com/jianhaizhang/cocluster_data){target='blank'}. In the following, `blk.mus.brain` and `sc.mus.brain` refers to bulk and single cell data respectively. The validation is performed by applying these optimal settings on the same coclustering workflow, so the following procedures are not detailed.  
+
+
+Initial filtering.   
+```{r , eval=FALSE, echo=TRUE, warnings=FALSE}
+blk.mus.brain <- filter_data(data=blk.mus.brain, pOA=c(0.05, 5), CV=c(0.05, 100)) 
+mus.brain.lis <- filter_cell(lis=list(sc.mus=sc.mus.brain), bulk=blk.mus.brain, gen.rm=NULL, min.cnt=1, p.in.cell=0.01, p.in.gen=0.05, verbose=FALSE) 
+```
+
+Bulk and single cell are combined and normalized, then separated.   
+```{r , eval=FALSE, echo=TRUE, warnings=FALSE}
+mus.brain.lis.nor <- norm_multi(dat.lis=mus.brain.lis, cpm=FALSE)
+```
+
+Secondary filtering. Since `fil1` and `fil2` exhibit similar performaces, only `fil1` is used.    
+```{r , eval=FALSE, echo=TRUE, warnings=FALSE}
+blk.mus.brain.fil <- filter_data(data=mus.brain.lis.nor$bulk, pOA=c(0.1, 1), CV=c(0.1, 100), verbose=FALSE) 
+mus.brain.lis.fil <- filter_cell(lis=list(sc.mus=mus.brain.lis.nor$sc.mus), bulk=blk.mus.brain.fil, gen.rm=NULL, min.cnt=1, p.in.cell=0.1, p.in.gen=0.01, verbose=FALSE)
+```
+
+Matching table indicating true bulk tissues of each cell type and corresponding SVG bulk (spatial feature).  
+```{r , eval=TRUE, echo=TRUE, warnings=FALSE}
+match.mus.brain.pa <- system.file("extdata/shinyApp/example", "match_mouse_brain_cocluster.txt", package="spatialHeatmap")
+df.match.mus.brain <- read.table(match.mus.brain.pa, header=TRUE, row.names=1, sep='\t')
+df.match.mus.brain
+``` 
+
+Since `knn` and `snn` display similar performances, only `knn` is used. All optimal `spd.set` settings in Table \@ref(tab:optPar) are tested, and results are shown in Figure \@ref(fig:validateOpt)a.   
+
+```{r , eval=FALSE, echo=TRUE, warnings=FALSE}  
+mus.brain.df.para <- cocluster(bulk=mus.brain.lis.fil$bulk, cell=mus.brain.lis.fil$sc.mus, df.match=df.match.mus.brain, df.para=df.spd.opt[, c('sim', 'sim.p', 'dim')], graph.meth='knn', dimred='PCA', return.all=FALSE, multi.core.par=MulticoreParam(workers=2))
+```
+
+In mouse kidney, four bulk tissues are selected: proximal straight tubule in cortical medullary rays (PTS2), cortical collecting duct (CCD), and cortical thick ascending limb of the loop of Henle (cTAL), glomerulus. PTS2 data are from a research on cell-type selective markers in mouse kidney [@Clark2019-is], CCD and cTAL are from transcriptome analysis of major renal collecting duct cell types in mouse kidney [@Chen2017-ar], and glomerulus is from a transcriptome atlas study of mouse glomerulus [@Karaiskos2018-kr]. The FASTQ files of the four tissues are downloaded from original studies and raw count data are generated with systemPipeR (2.1.12) [@systempiper]. The single cell data are accessed from an investigation in cellular targets of mouse kidney metabolic acidosis [@Park2018-zr]. Details about how to access and format bulk and single data are described [here](https://github.com/jianhaizhang/cocluster_data){target='blank'}.   
+
+The validating procedures on mouse kindey are same with mouse brain except that after initial filtering replicates in each bulk are reduced to 3 by using function `reduce_rep` due to two many replicates. The results are shown in Figure \@ref(fig:validateOpt)b.   
+
+In Arabidopsis root, the same bulk tissues [@Li2016-yz] and two additional single cell data sets (`sc9`, `sc51`, [@Shahan2020-zj]) from the same studies as [real optimization](#opt_real) are used. Details about how to access and format them are described [here](https://github.com/jianhaizhang/cocluster_data){target='blank'}. The procedures of validating optimized settings are the same with mouse brain except that in normalization two single cell data sets are used instead of one. The results are shown in Figure \@ref(fig:validateOpt)c and d.  
+
+As comparisons, random combinations of non-optimal settings are generated and tested. The graph-building methods have two settings `knn` and `snn`, and both are taken as optimal, thus they are all used for generating random combinations.    
+
+```{r , eval=FALSE, echo=TRUE, warnings=FALSE}  
+df.par.rdn <- random_para(fil.set=c('fil3', 'fil4'), norm='cpm', dimred='umap', graph.meth=c('knn', 'snn'), sim=round(seq(0.2, 0.8, by=0.1), 1), sim.p=round(seq(0.2, 0.8,by=0.1), 1), dim=seq(5, 40, by=1), df.spd.opt=df.spd.opt)
+df.par.rnd[1:3,  ]
+```
+
+These random settings are tested on each of the four validating data sets, where other settings such as initial filtering are not changed. The results are shown in Figure \@ref(fig:validateRdm)c and d.
+
+The AUCs of optimal and random settings are presented in Figure \@ref(fig:validateOpt) and Figure \@ref(fig:validateRdm) respectively. In both figures, if total bulk assignments < 500 or total true assignments < 300, AUCs are set 0. It is clear that the optimal settings exhibit better performance than random settings, so the optimization workflow is reliable at least to some extent. In Figure \@ref(fig:validateOpt), asterisks indicate optimal settings have AUCs >= 0.5, total bulk assignments >= 500, total true assignments >= 300 across all four data sets. These settings are regarded as final optimal settings (Table \@ref(tab:optParFin)).   
+
+```{r validateOpt, echo=FALSE, fig.wide=TRUE, fig.cap=("Validating optimal settings. AUCs of optimal settings on each validating data sets. One bar refers to one AUC of one optimal settings. Asterisks indicate optimal settings have AUC >= 0.5, total bulk assignments >= 500, total true assignments >= 300 across all four data sets. If total bulk assignments < 500 or total true assignments < 300, AUCs are set 0. (a) Mouse brain. (b) Mouse kidndy. (c) Arabidopsis root of single cell 9. (d) Arabidopsis root of single cell 51. "), out.width="100%"}
+include_graphics('img/validate_para_opt.png')
+```  
+
+```{r validateRdm, echo=FALSE, fig.wide=TRUE, fig.cap=("Random settings. AUCs of random settings on each validating data sets. One bar refers to one AUC of one optimal settings. If total bulk assignments < 500 or total true assignments < 300, AUCs are set 0. (a) Mouse brain. (b) Mouse kidndy. (c) Arabidopsis root of single cell 9. (d) Arabidopsis root of single cell 51. "), out.width="100%"}
+include_graphics('img/validate_para_rdm.png')
+```  
+
+```{r optParFin, eval=TRUE, echo=FALSE, warnings=FALSE}
+df.opt.final <- subset(df.opt, spd.set %in% c('s0.3p0.5d13', 's0.2p0.8d12', 's0.3p0.5d11', 's0.2p0.2d12', 's0.2p0.5d12'))
+kable(df.opt.final, caption='Final optimal parameter settings after validation.', col.names=colnames(df.opt.final), row.names=FALSE, escape=TRUE)
+```
+
+### Application on Mouse Brain 
+
+This section demonstrates co-visulization of bulk and single cells using the auto-matching functionality on mouse brain data. The bulk [@Vacher2021-xg] and single cell [@Ortiz2020-yt] RNA-seq data are from the same studies as in validating optimal settings. Both data sets are reduced for demonstration purpose. The optimal settings of `fct`, `fil1`, `pca`, `knn`, `s0.2p0.8d12` in Table \@ref(tab:optParFin) are used.      
+
+Read bulk and single cell data.  
+
+```{r , eval=TRUE, echo=TRUE, warnings=FALSE}
+# Example bulk data.
+blk.mus.pa <- system.file("extdata/shinyApp/example", "bulk_mouse_cocluster.txt", package="spatialHeatmap") 
+blk.mus <- as.matrix(read.table(blk.mus.pa, header=TRUE, row.names=1, sep='\t', check.names=FALSE))
+blk.mus[1:3, 1:5]
+
+# Example single cell data.
+sc.mus.pa <- system.file("extdata/shinyApp/example", "cell_mouse_cocluster.txt", package="spatialHeatmap") 
+sc.mus <- as.matrix(read.table(sc.mus.pa, header=TRUE, row.names=1, sep='\t', check.names=FALSE))
+sc.mus[1:3, 1:5]
+```
+ 
+Initial filtering.  
+
+```{r , eval=TRUE, echo=TRUE, warnings=FALSE}
+blk.mus <- filter_data(data=blk.mus, sam.factor=NULL, con.factor=NULL, pOA=c(0.1, 5), CV=c(0.2, 100), verbose=FALSE) 
+mus.lis <- filter_cell(lis=list(sc.mus=sc.mus), bulk=blk.mus, gen.rm=NULL, min.cnt=1, p.in.cell=0.5, p.in.gen=0.1, verbose=FALSE) 
+```
+
+Normalization. Bulk and single cell are combined and normalized, then separated.   
+
+```{r , eval=TRUE, echo=TRUE, warnings=FALSE}
+mus.lis.nor <- read_cache(cache.pa, 'mus.lis.nor') # Retrieve data from cache.
+if (is.null(mus.lis.nor)) { # Save normalized data to cache if not cached.
+  mus.lis.nor <- norm_multi(dat.lis=mus.lis, cpm=FALSE)
+  save_cache(dir=cache.pa, overwrite=TRUE, mus.lis.nor)
+}
+```
+
+Secondary filtering.  
+```{r , eval=TRUE, echo=TRUE, warnings=FALSE}
+blk.mus.fil <- filter_data(data=logcounts(mus.lis.nor$bulk), sam.factor=NULL, con.factor=NULL, pOA=c(0.1, 0.5), CV=c(0.2, 100), verbose=FALSE) 
+mus.lis.fil <- filter_cell(lis=list(sc.mus=logcounts(mus.lis.nor$sc.mus)), bulk=blk.mus.fil, gen.rm=NULL, min.cnt=1, p.in.cell=0.05, p.in.gen=0.02, verbose=FALSE)
+```
+
+The aSVG file of mouse brain.  
+```{r , eval=TRUE, echo=TRUE, warnings=FALSE}
+svg.mus <- system.file("extdata/shinyApp/example", "mus_musculus.brain.svg", package="spatialHeatmap")
+# Spatial features.  
+feature.df <- return_feature(svg.path=svg.mus)
+```
+ 
+Matching table indicating true bulk tissues of each cell type and corresponding SVG bulk (spatial feature).  
+```{r , eval=TRUE, echo=TRUE, warnings=FALSE}
+match.mus.brain.pa <- system.file("extdata/shinyApp/example", "match_mouse_brain_cocluster.txt", package="spatialHeatmap")
+df.match.mus.brain <- read.table(match.mus.brain.pa, header=TRUE, row.names=1, sep='\t')
+df.match.mus.brain
+``` 
+
+The SVG bulk tissues are in the aSVG file.   
+```{r , eval=TRUE, echo=TRUE, warnings=FALSE}
+df.match.mus.brain$SVGBulk %in% feature.df$feature
+```
+
+Cluster single cells. Cluster labels are stored in `label` column in `colData`.   
+```{r , eval=TRUE, echo=TRUE, warnings=FALSE}
+clus.sc <- read_cache(cache.pa, 'clus.sc') # Retrieve data from cache.
+if (is.null(clus.sc)) {
+  clus.sc <- cluster_cell(data=mus.lis.fil$sc.mus, min.dim=10, max.dim=50, graph.meth='knn', dimred='PCA')
+  save_cache(dir=cache.pa, overwrite=TRUE, clus.sc)
+}
+colData(clus.sc)[1:3, ]
+``` 
+
+Refine cell clusters.  
+```{r , eval=TRUE, echo=TRUE, warnings=FALSE}
+cell.refined <- refine_cluster(clus.sc, sim=0.2, sim.p=0.8, sim.meth='spearman', verbose=FALSE)
+```
+
+Include matching information in `colData`.  
+```{r , eval=TRUE, echo=TRUE, warnings=FALSE}
+cell.refined <- true_bulk(cell.refined, df.match.mus.brain)
+colData(cell.refined)[1:3, ]
+```
+
+Cocluster bulk and single cells.    
+```{r , eval=TRUE, echo=TRUE, warnings=FALSE}
+roc.lis <- read_cache(cache.pa, 'roc.lis') # Retrieve data from cache.
+if (is.null(roc.lis)) {
+  roc.lis <- coclus_roc(bulk=mus.lis.fil$bulk, cell.refined=cell.refined, df.match=df.match.mus.brain, min.dim=12, graph.meth='knn', dimred='PCA') 
+  save_cache(dir=cache.pa, overwrite=TRUE, roc.lis)
+}
+```
+The auto-matching results are listed in `roc.lis$df.roc`. `predictor` is the similarity (Spearman's or Pearson's correlation coefficient) between bulk and cells within a co-cluster, which is used to assign bulk tissues to cells (Figure \@ref(fig:coclusOver).8). `response` indicates whether the bulk assignment is correct according to the matching table. `index` is the cell index in the `SingleCellExperiment` after cell clusters are refined.   
+```{r , eval=TRUE, echo=TRUE, warnings=FALSE}
+roc.lis$df.roc[1:3, ]
+table(roc.lis$df.roc$response)
+```
+
+ROC curve is created according to `roc.lis$df.roc` and the AUC value indicates the auto-matching performance.   
+```{r , eval=TRUE, echo=TRUE, warnings=FALSE, fig.wide=TRUE, fig.cap=('ROC curve of auto-matching on mouse brain data. The AUC value is a measure of accuracy on bulk assignments.'), out.width="70%", fig.show='show'}
+plot(roc.lis$roc.obj, print.auc=TRUE)
+```
+
+Incorporate `cell.refined` in `roc.lis` for downstream co-visualization.  
+```{r , eval=TRUE, echo=TRUE, warnings=FALSE}
+res.lis <- c(list(cell.refined=cell.refined), roc.lis)
+```  
+
+The processes of clustering single cells, refining cell clusters, and coclustering bulk and single cells can be performed in a single function call. Setting `return.all=TRUE` returns a `list` of refined cell clusters, ROC object, and a `data.frame` of auto-matching results. If `return.all=FALSE`, a `data.frame` of parameter settings and resulting AUC is returned.   
+```{r , eval=FALSE, echo=TRUE, warnings=FALSE}  
+res.lis <- cocluster(bulk=mus.lis.fil$bulk, cell=mus.lis.fil$sc.mus, df.match=df.match.mus.brain, df.para=NULL, sim=0.2, sim.p=0.8, dim=12, graph.meth='knn', dimred='PCA', sim.meth='spearman', return.all=TRUE)
+res.lis <- res.lis[[1]]
+```
+
+The function `cocluster` accepts multiple combinations of parameter settings provided in a `data.frame`, and coclustering on these combinations can be performed in parallel on multiple cpu cores through `multi.core.par`.    
+
+Multiple combinations of parameter settings. If some parameters are not specified in this table such as `graph.meth`, their default settings will be used.   
+```{r , eval=TRUE, echo=TRUE, warnings=FALSE}  
+df.par <- data.frame(sim=c(0.2, 0.3), sim.p=c(0.8, 0.7), dim=c(12, 13))
+df.par
+```
+
+The coclustering is run on 2 cpu cores (`workers=2`).  
+```{r , eval=FALSE, echo=TRUE, warnings=FALSE}  
+res.multi <- cocluster(bulk=mus.lis.fil$bulk, cell=mus.lis.fil$sc.mus, df.match=df.match.mus.brain, df.para=df.par, sc.dim.min=10, max.dim=50, sim=0.2, sim.p=0.8, dim=12, graph.meth='knn', dimred='PCA', sim.meth='spearman', return.all=TRUE, multi.core.par=MulticoreParam(workers=2))
+```
+
+The auto-matching results can be tailored through "Lasso Select" on the convenience Shiny app (`desired_bulk_shiny`) or manually defining desired bulk.  
+
+Example of desired bulk downloaded from the convenience Shiny app.   
+```{r , eval=TRUE, echo=TRUE, warnings=FALSE}  
+desired.blk.pa <- system.file("extdata/shinyApp/example", "selected_cells_with_desired_bulk.txt", package="spatialHeatmap")
+df.desired.bulk <- read.table(desired.blk.pa, header=TRUE, row.names=1, sep='\t')
+df.desired.bulk[1:3, ]
+``` 
+
+Before manually defining desired bulk, check cells in the embedding plot.   
+```{r , eval=TRUE, echo=TRUE, warnings=FALSE, fig.wide=TRUE, fig.cap=('PCA embedding plot of mouse brain single cell data. Single cell data after cluster refining are plotted.'), out.width="70%", fig.show='show'}
+plot_dim(res.lis$cell.refined, dim='PCA', color.by='cell', x.break=seq(-10, 10, 2), y.break=seq(-10, 10, 2))
+```
+
+Manually define desired bulk for certain cells by x-y coordinates ranges in the embedding plot. The `dimred` reveals where the coordinates come from and are required.  
+```{r , eval=TRUE, echo=TRUE, warnings=FALSE}  
+df.desired.bulk <- data.frame(x.min=c(2, 6), x.max=c(4, 10), y.min=c(6, 8), y.max=c(8, 10), desiredSVGBulk=c('cerebral.cortex', 'cerebral.cortex'), dimred='PCA')
+df.desired.bulk
+```
+
+Extract cells with bulk assignments. If `df.desired.bulk` is provided a value, the corrresponding assignments are incorporated in `res.lis$df.roc`, and `response` and `predictor` is set `TRUE` and 1 respectively. `thr` is a cutoff for the `predictor` in `res.lis$df.roc`, so `thr=0` denotes `predictor` is not filtered. `true.only=TRUE` indicates only true assignments are extracted.    
+```{r , eval=TRUE, echo=TRUE, warnings=FALSE}  
+sce.lis <- sub_asg(res.lis=res.lis, thr=0, df.desired.bulk=df.desired.bulk, df.match=df.match.mus.brain, true.only=TRUE)
+```
+
+Aggregate extracted cells by `SVGBulk`. The aggregated cells are equivalent to bulk tissues (spatial features) in the aSVG. The aggregated abundance profiles are used to color matching bulk tissues in the aSVG image.    
+```{r , eval=TRUE, echo=TRUE, warnings=FALSE}  
+sce.aggr <- aggr_rep(data=sce.lis$cell.sub, assay.na='logcounts', sam.factor='SVGBulk', con.factor=NULL, aggr='mean')
+```
+
+Co-visualize bulk and single cells with aggregated abundance profiles of gene `Agt`. `tar.bulk` refers to the target bulk in  aSVG and all corresponding cells are highlighted. Cells with true assignments of `tar.bulk` are colored according to the color key, while other corresponding cells with false or without assignments are colored black. All other cells not corresponding to `tar.bulk` are in gray.    
+```{r , eval=TRUE, echo=TRUE, warnings=FALSE, fig.wide=TRUE, fig.cap=('Co-visualizing bulk and single cells of mouse brain with abundance profiles. The aggregated expression profiles of gene `Agt` are plotted.'), out.width="100%", fig.show='show'}
+shm.lis1 <- spatial_hm(svg.path=svg.mus, data=sce.aggr, ID=c('Agt'), legend.nrow=4, sce.dimred=sce.lis$cell.refined, dimred='PCA', assay.na='logcounts', tar.bulk=c('hippocampus'), profile=TRUE, dim.lgd.text.size=10, dim.lgd.nrow=1, bar.width=0.1)
+```
+
+Co-visualize bulk and single cells without abundance profiles.  
+
+```{r , eval=TRUE, echo=TRUE, warnings=FALSE, fig.wide=TRUE, fig.cap=('Co-visualizing bulk and single cells of mouse brain without abundance profiles. The matching between cells and SVG bulk is denoted by color in-between.'), out.width="100%", fig.show='show'}
+shm.lis2 <- spatial_hm(svg.path=svg.mus, data=sce.aggr, ID=c('Agt'), legend.nrow=4, sce.dimred=sce.lis$cell.refined, dimred='PCA', tar.bulk=c('hippocampus'), profile=FALSE, dim.lgd.text.size=10, dim.lgd.nrow=1)
+```
+
+### Using Shiny App
+
+The auto-matching utility is included in the [Shiny app](#shiny). To use it, the bulk, single cell data, and matching table need to be stored in a `SingleCellExperiment` object. Bulk and single cell raw count data are combined and stored in the `assay` slot and are labeled by `bulk` and `cell` respectively by the column `bulkCell` in `colData` slot. The matching table is stored in the `metadata` list with the name `df.match`. The example below illustrates these rules.     
+
+```{r , eval=TRUE, echo=TRUE, warnings=FALSE}  
+sce.auto <- readRDS(system.file("extdata/shinyApp/example", 'sce_auto_bulk_cell_mouse_brain.rds', package="spatialHeatmap"))
+colData(sce.auto)
+metadata(sce.auto)$df.match
+```
+
+</font>
 
 # Shiny App {#shiny}
 
 In additon to running `spatialHeatmap` from R, the package includes a [Shiny
-App](https://shiny.rstudio.com/) that provides access to the same
+App](https://shiny.rstudio.com/){target="_blank"} that provides access to the same
 functionalities from an intuitive-to-use web browser interface. Apart from
 being very user-friendly, this App conveniently organizes the results of the
 entire visualization workflow in a single browser window with options to adjust
@@ -1687,7 +2562,7 @@ instances using the `custom_shiny` function. This function provides options to i
 custom example data and aSVGs, and define default values within most visualization
 panels (*e.g.* color schemes, image dimensions). For details users want
 to consult the help file of the `custom_shiny` function. To maximize
-flexibilty, the default parameters are stored in a yaml file on the Shiny App.
+flexibility, the default parameters are stored in a yaml file on the Shiny App.
 This makes it easy to refine and optimize default parameters simply by changing
 this yaml file.
 

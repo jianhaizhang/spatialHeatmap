@@ -50,13 +50,13 @@ dataset12:
   - example/arabidopsis.thaliana_organ_shm1.svg
   - example/arabidopsis.thaliana_organ_shm2.svg
 dataset13:
-  name: leaf_test
+  name: overlay
   data: example/dat_overlay.txt
   svg:
-  - example/overlay_shm1.png
-  - example/overlay_shm1.svg
-  - example/overlay_shm2.png
-  - example/overlay_shm2.svg
+  - example/maize_leaf_shm1.png
+  - example/maize_leaf_shm1.svg
+  - example/maize_leaf_shm1.png
+  - example/maize_leaf_shm1.svg
 dataset14:
   name: map_Census
   data: example/us_population2018.txt
@@ -65,7 +65,7 @@ title:
 - title:spatialHeatmap
 - width:350
 max.upload.size: 5G 
-default.dataset: customSingleCellData
+default.dataset: brain_Prudencio
 col.row.gene: None
 separator: None
 data.matrix:
@@ -138,6 +138,11 @@ download_multiple:
 download_spatial_temporal:
   data: example/expr_coleoptile_samTimeCon.txt
   svg: example/oryza.sativa_coleoptile.ANT_shm.svg
+download_covisualization:
+  data:
+  - example/sce_manual_mouse.rds
+  - example/sce_auto_bulk_cell_mouse_brain.rds
+  svg: example/mus_musculus.brain.svg
 download_batched_data_aSVGs:
   data: example/aSVGs_shm.tar
   svg: example/data_shm.tar

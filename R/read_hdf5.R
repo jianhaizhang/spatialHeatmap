@@ -17,7 +17,7 @@
 #' Hervé Pagès (2020). HDF5Array: HDF5 backend for DelayedArray objects. R package version 1.16.1.
 
 #' @export read_hdf5
-#' @importFrom SummarizedExperiment rowData assay
+#' @importFrom SummarizedExperiment rowData assay assay<-
 #' @importFrom HDF5Array loadHDF5SummarizedExperiment
 #' @importFrom utils untar
 
@@ -42,7 +42,7 @@ read_hdf5 <- function(file, prefix) {
       dat <- list('none'); names(dat) <- 'none'; lis <- c(lis, dat); next
     }
     dat <- loadHDF5SummarizedExperiment(dir=dir, prefix=paste0(i, '_'))
-    SummarizedExperiment::assay(dat) <- as.data.frame(assay(dat))
+    assay(dat) <- as.data.frame(assay(dat))
     assay.na <- names(assay(dat))
     if (!is.null(assay.na)) if (assay.na[1]=='merge') dat <- cbind(assay(dat), rowData(dat))
     if (i=='df_pair') dat <- assay(dat)

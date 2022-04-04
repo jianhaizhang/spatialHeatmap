@@ -7,7 +7,7 @@
 #' @param old A vector of existing entries to replace, where the length must be the same with \code{new}.
 #' @param new A vector of desired entries to replace that in \code{old}, where each entry corresponds to a counterpart in \code{old} respectively.
 #' @param sub.row A vector of integers corresponding to target rows for editing, or a vector of TRUE and FALSE corresponding to each row. Default is all rows in the targets file.
-#' @return A data frame.
+#' @return A \code{data.frame}.
 
 #' @examples
 

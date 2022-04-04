@@ -2,8 +2,6 @@
 #'
 #' @param gg A list of spatial heatmaps of ggplot.
 #' @param cs.g The color key of ggplot.
-#' @param sam.uni A vector of unique samples extracted from data matrix.
-#' @param ft.trans A vector of tissues to be transparent.
 #' @param lgd.key.size The size of legend key (including text). Default is 0.02.
 #' @param lgd.text.size The size of legend text. Default is 8.
 #' @param lgd.row An integer of legend rows.
@@ -37,7 +35,7 @@
 #' @importFrom av av_capture_graphics
 #' @importFrom gridExtra grid.arrange
 
-video <- function(gg, cs.g, sam.uni, ft.trans, sub.title.size=NULL, bar.width=0.1, bar.value.size=NULL, lgd.key.size=0.02, lgd.text.size=8, angle.text.key=NULL, position.text.key=NULL, lgd.row=2, lgd.col=NULL, legend.value.vdo=NULL, label=FALSE, label.size=4, label.angle=0, hjust=0, vjust=0, opacity=1, key=TRUE, video.dim='640x480', res=500, interval=1, framerate=1, out.dir) {
+video <- function(gg, cs.g, sub.title.size=NULL, bar.width=0.1, bar.value.size=NULL, lgd.key.size=0.02, lgd.text.size=8, angle.text.key=NULL, position.text.key=NULL, lgd.row=2, lgd.col=NULL, legend.value.vdo=NULL, label=FALSE, label.size=4, label.angle=0, hjust=0, vjust=0, opacity=1, key=TRUE, video.dim='640x480', res=500, interval=1, framerate=1, out.dir) {
 
   try(test_ffm()); ffm <- tryCatch({ test_ffm() }, error=function(e){ return('error') }, warning=function(w) { return('warning') } )
   if (grepl('error|warning', ffm)) return()
@@ -45,7 +43,7 @@ video <- function(gg, cs.g, sam.uni, ft.trans, sub.title.size=NULL, bar.width=0.
   if (!is.null(bar.value.size)) cs.g <- cs.g+theme(axis.text.y=element_text(size=bar.value.size))
   na <- names(gg)
   cat('Video: adjust legend size/rows... \n')
-  gg1 <- gg_lgd(gg.all=gg, size.key=lgd.key.size, size.text.key=lgd.text.size, angle.text.key=angle.text.key, position.text.key=position.text.key, legend.value.vdo=legend.value.vdo, label=label, label.size=label.size, label.angle=label.angle, hjust=hjust, vjust=vjust, opacity=opacity, key=key, sub.title.size=sub.title.size, row=lgd.row, col=lgd.col, sam.dat=sam.uni, ft.trans=ft.trans)
+  gg1 <- gg_lgd(gg.all=gg, size.key=lgd.key.size, size.text.key=lgd.text.size, angle.text.key=angle.text.key, position.text.key=position.text.key, legend.value.vdo=legend.value.vdo, label=label, label.size=label.size, label.angle=label.angle, hjust=hjust, vjust=vjust, opacity=opacity, key=key, sub.title.size=sub.title.size, row=lgd.row, col=lgd.col)
   lay <- rbind(c(NA, NA), c(1, 2), c(NA, NA))
   cat('Saving video... \n')
   res.r=res/144; w.h <- round(as.numeric(strsplit(video.dim, 'x')[[1]])*res.r)

@@ -75,10 +75,8 @@ return_feature <- function(feature, species, keywords.any=TRUE, remote=NULL, dir
 
   options(stringsAsFactors=FALSE)
   # Parse and return features.
-  ftr_return <- function(svgs, desc=desc) { 
-
+  ftr_return <- function(svgs, desc=desc) {
     cat('Accessing features... \n'); df <- NULL; for (i in svgs) {
-
       doc <- read_xml(i); df0 <- svg_attr(doc, feature=NULL, TRUE)[['df.attr']]
       # Move ontology with NA or "NULL" to bottom.
       w.na <- which(is.na(df0$id)|df0$id=='NULL'|df0$id=='NA')
@@ -202,22 +200,18 @@ return_feature <- function(feature, species, keywords.any=TRUE, remote=NULL, dir
       }
 
     } else {
-
       w <- grepl(sp, df$SVG, ignore.case=TRUE) & grepl(ft, df$feature, ignore.case=TRUE)
       df.final <- df[w, ]
-
     }
 
   }; rownames(df.final) <- NULL
   
   if (is(remote, 'list')) {
-
     svgs.cp <- svgs[svgs.na %in% unique(df.final$SVG)]
     svgs.rm <- svgs1[svgs.na1 %in% unique(df.final$SVG)]
     cat(paste0('Overwriting: ', svgs.rm, '\n'))
     vapply(svgs.cp, function (i) file.copy(i, dir, overwrite=TRUE), logical(1))
     if (dir.exists(tmp) & !is(remote, 'list')) unlink(tmp, recursive=TRUE)
-
   }; return(df.final)
 
 }

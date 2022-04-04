@@ -18,7 +18,7 @@ edit_tar(df.tar, column, old, new, sub.row)
 \item{sub.row}{A vector of integers corresponding to target rows for editing, or a vector of TRUE and FALSE corresponding to each row. Default is all rows in the targets file.}
 }
 \value{
-A data frame.
+A \code{data.frame}.
 }
 \description{
 Replace existing entries in a chosen column of a targets file with desired ones.

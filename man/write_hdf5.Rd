@@ -169,14 +169,14 @@ pa.leaf <- system.file("extdata/shinyApp/example", 'dat_overlay.txt',
 package="spatialHeatmap")
 dat.leaf <- read_fr(pa.leaf); dat.leaf[1:2, ]
 # Paths of the two aSVG files.
-svg.leaf1 <- system.file("extdata/shinyApp/example", 'overlay_shm1.svg',
+svg.leaf1 <- system.file("extdata/shinyApp/example", 'maize_leaf_shm1.svg',
 package="spatialHeatmap")
-svg.leaf2 <- system.file("extdata/shinyApp/example", 'overlay_shm2.svg',
+svg.leaf2 <- system.file("extdata/shinyApp/example", 'maize_leaf_shm2.svg',
 package="spatialHeatmap") 
 # Paths of the two corresponsing raster images of templates.
-tmp.leaf1 <- system.file("extdata/shinyApp/example", 'overlay_shm1.png',
+tmp.leaf1 <- system.file("extdata/shinyApp/example", 'maize_leaf_shm1.png',
 package="spatialHeatmap")
-tmp.leaf2 <- system.file("extdata/shinyApp/example", 'overlay_shm2.png',
+tmp.leaf2 <- system.file("extdata/shinyApp/example", 'maize_leaf_shm2.png',
 package="spatialHeatmap") 
 # Copy the two aSVG and two template files to the same temporary directory.
 file.copy(c(svg.leaf1, svg.leaf2, tmp.leaf1, tmp.leaf2), dir.svg, overwrite=TRUE)
@@ -185,7 +185,7 @@ file.copy(c(svg.leaf1, svg.leaf2, tmp.leaf1, tmp.leaf2), dir.svg, overwrite=TRUE
 df.pair <- data.frame(name=c('chicken', 'arab', 'growth', 'leaf'), data=c('expr_chicken', 'expr_arab', 
 'random_data_multiple_aSVGs', 'leaf'), aSVG=c('gallus_gallus.svg', 'arabidopsis.thaliana_organ_shm.svg',
 'arabidopsis.thaliana_organ_shm1.svg;arabidopsis.thaliana_organ_shm2.svg', 
-'overlay_shm1.svg;overlay_shm1.png;overlay_shm2.svg;overlay_shm2.png'))
+'maize_leaf_shm1.svg;maize_leaf_shm1.png;maize_leaf_shm2.svg;maize_leaf_shm2.png'))
 # Note that multiple aSVGs should be concatenated by comma, semicolon, or single space.
 df.pair
 

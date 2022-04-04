@@ -72,16 +72,16 @@
 #' \cr Martin Morgan, Valerie Obenchain, Jim Hester and Hervé Pagès (2018). SummarizedExperiment: SummarizedExperiment container. R package version 1.10.1 
 
 #' @export sub_data
-#' @importFrom SummarizedExperiment colData assayNames 
+#' @importFrom SummarizedExperiment colData assayNames colData<- assayNames<- 
 
 sub_data <- function(data, feature, features=NULL, factor, factors=NULL, com.by='feature', target=NULL) {
-  cdat <- SummarizedExperiment::colData(data); fts <- cdat[, feature]
+  cdat <- colData(data); fts <- cdat[, feature]
   fcts <- cdat[, factor]
   if (is.null(features)) features <- unique(fts)[seq_len(2)] else if (features[1]=='all') features <- unique(fts)
   if (is.null(factors)) factors <- unique(fcts)[seq_len(2)] else if (factors[1]=='all') factors <- unique(fcts)
 
   idx <- cdat[, feature] %in% features & cdat[, factor] %in% factors
-  data <- data[, idx]; cdat <- SummarizedExperiment::colData(data)
+  data <- data[, idx]; cdat <- colData(data)
   rna <- rownames(cdat); tar <- rep('yes', nrow(cdat))
   
   if (com.by=='feature') {
@@ -98,10 +98,10 @@ sub_data <- function(data, feature, features=NULL, factor, factors=NULL, com.by=
   cdat <- cdat[, c(cna[c(2, 1)], setdiff(cna, cna[seq_len(2)]))]
   if (is.null(target)) target <- features[1]
   cdat$target[!cdat[, 1] %in% target] <- 'no'
-  rownames(cdat) <- rna; SummarizedExperiment::colData(data) <- cdat
+  rownames(cdat) <- rna; colData(data) <- cdat
   colnames(data) <- paste0(cdat[, feature], '__', cdat[, factor])
   # Name the assay: required in distinct.
-  if (is.null(SummarizedExperiment::assayNames(data))) SummarizedExperiment::assayNames(data) <- 'count'
+  if (is.null(assayNames(data))) assayNames(data) <- 'count'
   return(data)
 }
 

@@ -65,7 +65,7 @@
 #' \cr Cardoso-Moreira, Margarida, Jean Halbert, Delphine Valloton, Britta Velten, Chunyan Chen, Yi Shao, Angélica Liechti, et al. 2019. “Gene Expression Across Mammalian Organ Development.” Nature 571 (7766): 505–9
 
 #' @export norm_data
-#' @importFrom SummarizedExperiment assays
+#' @importFrom SummarizedExperiment assays assay assays<-
 #' @importFrom edgeR DGEList calcNormFactors cpm
 #' @importFrom DESeq2 DESeqDataSetFromMatrix estimateSizeFactors counts varianceStabilizingTransformation rlog
 
@@ -82,7 +82,7 @@ norm_data <- function(data, assay.na=NULL, norm.fun='CNF', parameter.list=NULL, 
     if (is.null(assay.na)) {
       if (length(assays(data)) > 1) stop("Please specify which assay to use by assigning the assay name to 'assay.na'!") else if (length(assays(data)) == 1) assay.na <- 1
     }
-    expr <- SummarizedExperiment::assays(data)[[assay.na]] 
+    expr <- assays(data)[[assay.na]] 
   } else { stop('Accepted data classes are "data.frame", "matrix", "DFrame", "dgCMatrix", "SummarizedExperiment", or "SingleCellExperiment", except that "spatial_hm" also accepts a "vector".') }
   
   if (is.null(norm.fun)) norm.fun <- 'none'
@@ -126,7 +126,7 @@ norm_data <- function(data, assay.na=NULL, norm.fun='CNF', parameter.list=NULL, 
       cat('Normalising:', norm.fun, '\n'); print(unlist(parameter.list))
       # Returns log2-scale data. 
       vsd <- do.call(varianceStabilizingTransformation, c(list(object=dds), parameter.list))
-      expr <- SummarizedExperiment::assay(vsd)
+      expr <- assay(vsd)
       if (log2.trans==FALSE) expr <- 2^expr
 
     } else if (norm.fun=='rlog') { 
@@ -137,14 +137,14 @@ norm_data <- function(data, assay.na=NULL, norm.fun='CNF', parameter.list=NULL, 
       cat('Normalising:', norm.fun, '\n'); print(unlist(parameter.list))
       # Apply A 'Regularized Log' Transformation. 
       rld <- do.call(rlog, c(list(object=dds), parameter.list))
-      expr <- SummarizedExperiment::assay(rld) 
+      expr <- assay(rld) 
       if (log2.trans==FALSE) expr <- 2^expr  
 
     }
 
   } else if (min(expr)<0 | !all(round(expr)==expr)) stop('Nornalization only applies to data matrix of all non-negative integers! \n')
   if (log2.trans == FALSE) expr <- round(expr)
-  if (is(data, 'data.frame')|is(data, 'matrix')|is(data, 'DFrame')|is(data, 'dgCMatrix')) { return(cbind(expr, ann)) } else if (is(data, 'SummarizedExperiment') | is(data, 'SingleCellExperiment')) { SummarizedExperiment::assays(data)[[assay.na]] <- expr; return(data) }
+  if (is(data, 'data.frame')|is(data, 'matrix')|is(data, 'DFrame')|is(data, 'dgCMatrix')) { return(cbind(expr, ann)) } else if (is(data, 'SummarizedExperiment') | is(data, 'SingleCellExperiment')) { assays(data)[[assay.na]] <- expr; return(data) }
 
 } 
 

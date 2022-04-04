@@ -16,7 +16,6 @@
 
 #' @importFrom igraph cluster_walktrap cluster_fast_greedy cluster_leading_eigen cluster_spinglass cluster_edge_betweenness 
 
-library(igraph)
 detect_cluster <- function(graph, clustering='wt', wt.arg=list(steps = 4), fg.arg=list(), sl.arg=list(spins = 25), le.arg=list(), eb.arg=list()) {
   cat('Scell: clustering ... \n')
   if (clustering=='wt') clus <- do.call('cluster_walktrap', c(list(graph=graph), wt.arg)) else if (clustering=='fg') clus <- do.call('cluster_fast_greedy', c(list(graph=graph),fg.arg)) else if (clustering=='le') clus <- do.call('cluster_leading_eigen', c(list(graph=graph), le.arg)) else if (clustering=='sl') clus <- do.call('cluster_spinglass', c(list(graph=graph), sl.arg)) else if (clustering=='eb') clus <- do.call('cluster_edge_betweenness', c(list(graph=graph), eb.arg))

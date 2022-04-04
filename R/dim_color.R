@@ -1,15 +1,17 @@
-#' Map colours in SHMs to embedding plots 
+#' Map colours in SHMs to embedding plots through manually-created matching list 
 #'
-#' @param sce.aggr A \code{SingleCellExperiment} containing the (un-)aggregated cells that have source tissue assignments. The \code{lis.match} will be built from \code{colLabels} internally.
 #' @param gg.dim The ggplot of embedding plot.
-#' @param gg.shm.all The list of SHM ggplot.
-#' @param grob.shm.all The list of SHM grob.
+#' @param gg.shm.all The list of SHM ggplots.
+#' @param grob.shm.all The list of SHM grobs.
 #' @param col.shm.all The list of SHM colours.
-#' @param color.by A column name in the \code{colData} slot such as \code{label}.  
-#' @param lgd.all.dim Logical. The default is \code{FALSE}, and only cells with source tissue assignment have legends.
-#' @param con.na Logical, TRUE or FALSE. Default is TRUE, meaning conditions are available.
-#' @param lis.match The remaching list of spatial features in data and aSVGs.
+#' @param cell.group A column name in \code{colData} such as \code{cluster} (auto-generated), \code{label}. Cells are divided into clusters by this column name and these clusters are matched to bulk tissues. It is also the legend title in the embedding plots.
+#' @param tar.cell The names of target cell clusters to show in embedding plot. The default is \code{matched} and only matching cell clusters have legends in the embedding plot.
+#' @param con.na Logical, \code{TRUE} or \code{FALSE}. Default is \code{TRUE}, meaning conditions are available.
+#' @param lis.match The maching list of spatial features between data and aSVGs.
 #' @param sub.title.size The title size of embedding plots. The default is 11.
+#' @param dim.lgd.pos The legend position. The default is \code{bottom}.
+#' @param dim.lgd.nrow The number of legend rows. The default is \code{2}.
+#' @param dim.lgd.text.size The size of legend text. The default is \code{8}.
 
 #' @return A nested list of embedding and SHM plots.
 #' @keywords Internal
@@ -20,21 +22,25 @@
 #' @references
 #' H. Wickham. ggplot2: Elegant Graphics for Data Analysis. Springer-Verlag New York, 2016
 
-#' @importFrom ggplot2 layer_data ggplot geom_point theme_classic theme element_text element_blank labs 
+#' @importFrom ggplot2 layer_data ggplot geom_point theme_classic theme element_text element_blank labs scale_color_manual scale_shape_manual margin guide_legend 
 
-dim_color <- function(sce.aggr=NULL, gg.dim, gg.shm.all, grob.shm.all, col.shm.all, color.by, lgd.all.dim=FALSE, con.na=TRUE, lis.match=NULL, sub.title.size=11) {
-  # save(sce.aggr, gg.dim, gg.shm.all, grob.shm.all, col.shm.all, color.by, lgd.all.dim, con.na, lis.match, sub.title.size, file='dim.color.all')
-  if (!is.null(sce.aggr) & !is.null(lis.match)) stop("Only one of 'sce.aggr' and 'lis.match' is required!")
-  if (!is.null(sce.aggr)) {
-    # The matching list between aggregated cells and aSVG spatial features. The former are cells with a source tissue assignment in co-clustering.   
-    blk.uni <- unique(colLabels(sce.aggr))
-    lis.match <- as(blk.uni, 'list'); names(lis.match) <- blk.uni
-  }
+dim_color <- function(gg.dim, gg.shm.all, grob.shm.all, col.shm.all, cell.group, tar.cell='matched', con.na=TRUE, lis.match=NULL, sub.title.size=11, dim.lgd.pos='bottom', dim.lgd.nrow=2, dim.lgd.text.size=8) {
+  # save(gg.dim, gg.shm.all, grob.shm.all, col.shm.all, cell.group, tar.cell, con.na, lis.match, sub.title.size, dim.lgd.pos, dim.lgd.nrow, dim.lgd.text.size, file='dim.color.arg')
   lis.match <- lis.match[!unlist(lapply(lis.match, is.null))]
+  if (tar.cell[1]=='matched') tar.cell <- unique(names(lis.match))
+  dat.ft.all <- unique(gg.dim$data$colour_by)
+  # dat.ft.o <- setdiff(dat.ft.all, names(lis.match))
+  #if (length(dat.ft.o) > 0) { # Add missing features in data.
+  #  lis0 <- rep(list(NULL), length(dat.ft.o))
+  #  names(lis0) <- dat.ft.o
+  #  lis.match <- c(lis.match, lis0)
+  # }
+
+  if (any(!tar.cell %in% dat.ft.all)) stop("Make sure all entries in 'tar.cell' are in 'names(lis.match))'!")
   # Ggplots of all reduced dim.
   n <- length(grob.shm.all); gg.dim.all <- rep(list(gg.dim), n)
   names(gg.dim.all) <- paste0('dim_', names(grob.shm.all))
-  # Match colors in SHMs to dim plots.
+  # Match colors in SHMs to dim plots. Colour order: data -> svg feature -> embedding plot.
   for (i in seq_along(gg.dim.all)) {
     gg.dim <- gg.dim.all[i]; na <- sub('^dim_', '', names(gg.dim))
     g.col <- col.shm.all[[paste0('col_', na)]]
@@ -54,7 +60,7 @@ dim_color <- function(sce.aggr=NULL, gg.dim, gg.shm.all, grob.shm.all, col.shm.a
     # Max shapes: 128.
     # sp <- seq_along(dim.col); names(sp) <- names(dim.col)
     # Merge colour and shape legend: dim.col and sp have the same names.
-    # save(gg.dim, dim.col, sp, color.by, file='gdsc')
+    # save(gg.dim, dim.col, sp, cell.group, file='gdsc')
 
     gg.dim0 <- gg.dim[[1]]
     dat <- gg.dim0$data; lay.dat <- layer_data(gg.dim0) 
@@ -71,16 +77,22 @@ dim_color <- function(sce.aggr=NULL, gg.dim, gg.shm.all, grob.shm.all, col.shm.a
     # sp <- seq_along(dim.col.all); names(sp) <- names(dim.col.all)
     dat.all <- rbind(subset(dat.all, fill == 'gray80'), subset(dat.all, fill != 'gray80'))
 
-    # gg.dim.all[[i]] <- ggplot(dat.all, aes(x=x, y=y, shape=feature, text=dat.all$feature)) + geom_point(size=2, alpha=1, aes(colour=feature)) + scale_color_manual(values=dim.col) + scale_shape_manual(values=sp) + theme_classic() + theme(plot.title=element_text(hjust=0.5, size=sub.title.size), axis.text = element_blank(), axis.ticks = element_blank()) + labs(title=gsub('^dim_(.*)_\\d+$', '\\1', names(gg.dim)), x=gg.dim0$labels$x, y=gg.dim0$labels$y, colour=color.by, shape=color.by)
+    # gg.dim.all[[i]] <- ggplot(dat.all, aes(x=x, y=y, shape=feature, text=dat.all$feature)) + geom_point(size=2, alpha=1, aes(colour=feature)) + scale_color_manual(values=dim.col) + scale_shape_manual(values=sp) + theme_classic() + theme(plot.title=element_text(hjust=0.5, size=sub.title.size), axis.text = element_blank(), axis.ticks = element_blank()) + labs(title=gsub('^dim_(.*)_\\d+$', '\\1', names(gg.dim)), x=gg.dim0$labels$x, y=gg.dim0$labels$y, colour=cell.group, shape=cell.group)
   if (con.na==TRUE) tit <- gsub('^dim_(.*)_\\d+$', '\\1', names(gg.dim)) else tit <- gsub('^dim_(.*)_con_\\d+$', '\\1', names(gg.dim))
+  # Non-target cell clusters have colour of 'gray80'.
+  non.tar <- setdiff(dat.ft.all, tar.cell)
+  dim.col.all[non.tar] <- 'gray80'
+  # Cell cluster shapes.
+  sp <- c(0:25, 32:127)[seq_along(dat.ft.all)]
+  names(sp) <- dat.ft.all
+  if (length(non.tar) > 0) br <- tar.cell else br <- dat.ft.all
   # Re-plot dimensionlaity plot.
-  gg <- ggplot(dat.all, aes(x=x, y=y, text=dat.all$feature)) + geom_point(size=2, alpha=1, aes(colour=feature)) + theme_classic() + theme(plot.title=element_text(hjust=0.5, size=sub.title.size), axis.text = element_blank(), axis.ticks = element_blank()) + labs(title=tit, x=gg.dim0$labels$x, y=gg.dim0$labels$y, colour=color.by, shape=color.by)
-  if (lgd.all.dim==FALSE) gg <- gg + scale_color_manual(values=dim.col.all, breaks=names(dim.col)) else gg <- gg + scale_color_manual(values=dim.col.all, breaks=names(dim.col.all))
+  gg <- ggplot(dat.all, aes(x=x, y=y, text=dat.all$feature)) + geom_point(size=2, alpha=1, aes(colour=feature, shape=feature)) + theme_classic() + theme(plot.title=element_text(hjust=0.5, size=sub.title.size), axis.text = element_blank(), axis.ticks = element_blank(), legend.position=dim.lgd.pos, legend.text=element_text(size=dim.lgd.text.size), legend.margin = margin(t=-0.03, l=0.05, r=0.1, unit='npc')) + scale_color_manual(values=dim.col.all, breaks=br, guide=guide_legend(title=NULL, nrow=dim.lgd.nrow)) + scale_shape_manual(values=sp, breaks=br, guide=guide_legend(title=NULL, nrow=dim.lgd.nrow)) + labs(title=tit, x=gg.dim0$labels$x, y=gg.dim0$labels$y, colour=cell.group, shape=cell.group) 
   gg.dim.all[[i]] <- gg
 
   }
   # Convert all reduced dim of ggplots to grobs.
-  grob.dim.all <- grob_shm(gg.dim.all, lgd.pos='right')
+  grob.dim.all <- grob_shm(gg.dim.all, lgd.pos=NULL)
   # Empty list of all reduced dim and SHMs. 
   dim.shm.gg.lis <- dim.shm.grob.lis <- rep(list(NULL), 2*n)
 

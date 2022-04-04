@@ -1,4 +1,4 @@
-#' Create Spatial Heatmaps
+#' Plot Spatial Heatmaps
 #'
 #' The input are a pair of annotated SVG (aSVG) file and formatted data (\code{vector}, \code{data.frame}, \code{SummarizedExperiment}). In the former, spatial features are represented by shapes and assigned unique identifiers, while the latter are numeric values measured from these spatial features and organized in specific formats. In biological cases, aSVGs are anatomical or cell structures, and data are measurements of genes, proteins, metabolites, \emph{etc}. in different samples (\emph{e.g.} cells, tissues). Data are mapped to the aSVG according to identifiers of assay samples and aSVG features. Only the data from samples having matching counterparts in aSVG features are mapped. The mapped features are filled with colors translated from the data, and the resulting images are termed spatial heatmaps. Note, "sample" and "feature" are two equivalent terms referring to cells, tissues, organs \emph{etc.} where numeric values are measured. Matching means a target sample in data and a target spatial feature in aSVG have the same identifier. \cr This function is designed as much flexible as to achieve optimal visualization. For example, subplots of spatial heatmaps can be organized by gene or condition for easy comparison, in multi-layer anotomical structures selected tissues can be set transparent to expose burried features, color scale is customizable to highlight difference among features. This function also works with many other types of spatial data, such as population data plotted to geographic maps.
 
@@ -6,7 +6,12 @@
 #' @param tmp.path The path of the template image in the form of raster/bitmap. The template is used to create aSVGs and can be overlaid with spatial heatmaps.
 #' @param charcoal Logical, if \code{TRUE} the template image will be turned black and white.
 #' @param alpha.overlay The opacity of top-layer spatial heatmaps if a template image is added at the bottom layer. The default is 1.
-
+#' @param sce.dimred A \code{SingleCellExperiment} with reduced dimentionalities such as \code{PCA}, \code{UMAP}, \code{TSNE}.
+#' @param dimred One of \code{PCA}, \code{UMAP}, \code{TSNE}, specifying which reduced dimensionality to use in co-visualization of bulk and single data.
+#' @param cell.group Applicable in co-visualizing bulk and single cell data through manual matching. A column name in \code{colData} such as \code{cluster} (auto-generated), \code{label} (user-defined). Cells are divided into clusters by cell groups in this column and these clusters are matched to bulk tissues.
+#' @param tar.cell Applicable in co-visualizing bulk and single cell data through manual matching. Identifiers of target cell groups to show in embedding plot, which are defined in \code{cell.group}. The default is \code{matched} and only cell groups in the matching list will have legends in the embedding plot.
+#' @param tar.bulk Applicable in co-visualizing bulk and single cell data through auto-matching (coclustering). One of the \code{SVGBulk} entries in the matching \code{data.frame}. Cells correctly assigned to this bulk tissue is highlighted, while other cells corresponding to this bulk but have false or no bulk assignments are colored black.
+#' @param profile Logical, applicable in co-visualizing bulk and single cell data through auto-matching (coclustering). If \code{TRUE}, one or multiple biological molecule (e.g. gene) identifiers need to be assigned to \code{ID}, and their abundance proifles are included in the co-visualization plot. If \code{FALSE} (default), only the bulk tissue in \code{tar.bulk} and matching cells are highlighted in the the co-visualization plot without abundance proifles.
 #' @param bar.title.size A numeric of color bar title size. The default is 0. 
 #' @param bar.value.size A numeric of value size in the color bar y-axis. The default is 10.
 
@@ -18,12 +23,16 @@
 #' @param legend.nrow.2nd An integer of rows of the secondary legend keys. Applies to the static image and video.
 #' @param legend.ncol.2nd An integer of columns of the secondary legend keys. Applies to the static image and video.
 #' @param legend.key.size.2nd A numeric of legend key size. The default is 0.03. Applies to the static image and video.
+#' @param dim.lgd.pos The legend position in dimensionality reduction plot. The default is \code{bottom}.
+#' @param dim.lgd.nrow The number of legend rows in dimensionality reduction plot. The default is \code{2}.
+#' @param dim.lgd.text.size The size of legend text in dimensionality reduction plot. The default is \code{8}.
 #' @param add.feature.2nd Logical TRUE or FALSE. Add feature identifiers to the secondary legend or not. The default is FALSE. Applies to the static image.
 #' @param legend.text.size.2nd A numeric of the secondary legend text size. The default is 10. Applies to the static image and video.
 #' @param angle.text.key.2nd A value of angle of key text in the secondary legend. Default is 0. Applies to the static image and video.
 #' @param position.text.key.2nd The position of key text in the secondary legend, one of "top", "right", "bottom", "left". Default is "right". Applies to the static image and video.
-
-
+#' @param dim.lgd.pos The legend position in the dimensionality reduction plot. The default is \code{bottom}.
+#' @param dim.lgd.nrow The number of legend rows in the dimensionality reduction plot. The default is \code{2}.
+#' @param dim.lgd.text.size The size of legend text in the dimensionality reduction plot. The default is \code{8}.
 #' @param angle.text.key A value of key text angle in legend plot. The default is NULL, equivalent to 0.
 #' @param position.text.key The position of key text in legend plot, one of "top", "right", "bottom", "left". Default is NULL, equivalent to "right".
 #' @param bar.width.vdo The color bar width in video, between 0 and 1.
@@ -41,6 +50,7 @@
 #' @param lis.rematch A list for rematching features. In each slot, the slot name is an existing feature in the data, and the slot contains a vector of features in aSVG that will be rematched to the feature in the slot name. \emph{E.g.} \code{list(featureData1 = c('featureSVG1', 'featureSVG2'), featureData2 = c('featureSVG3'))}, where features \code{c('featureSVG1', 'featureSVG2')}, \code{c('featureSVG3')} in the aSVG are rematched to features \code{'featureData1'}, \code{'featureData2'} in data, respectively.
 #' @param tis.trans This argument is deprecated and replaced by \code{ft.trans}. 
 #' @param sub.title.size A numeric of the subtitle font size of each individual spatial heatmap. The default is 11.
+#' @param sub.title.vjust A numeric of vertical adjustment for subtitle. The default is \code{2}.
 #' @param ft.legend One of "identical", "all", or a character vector of tissue/spatial feature identifiers from the aSVG file. The default is "identical" and all the identical/matching tissues/spatial features between the data and aSVG file are colored in the legend plot. If "all", all tissues/spatial features in the aSVG are shown. If a vector, only the tissues/spatial features in the vector are shown.
 #' @param legend.ncol An integer of the total columns of keys in the legend plot. The default is NULL. If both \code{legend.ncol} and \code{legend.nrow} are used, the product of the two arguments should be equal or larger than the total number of shown spatial features.
 #' @param legend.nrow An integer of the total rows of keys in the legend plot. The default is NULL. It is only applicable to the legend plot. If both \code{legend.ncol} and \code{legend.nrow} are used, the product of the two arguments should be equal or larger than the total number of matching spatial features.
@@ -212,16 +222,16 @@
 #' # Overlay real images with spatial heatmaps.
 #' 
 #' # The first real image used as a template to create an aSVG. 
-#' tmp.pa1 <- system.file('extdata/shinyApp/example/overlay_shm1.png',
+#' tmp.pa1 <- system.file('extdata/shinyApp/example/maize_leaf_shm1.png',
 #' package='spatialHeatmap')
 #' # The first aSVG created with the first real image. 
-#' svg.pa1 <- system.file('extdata/shinyApp/example/overlay_shm1.svg',
+#' svg.pa1 <- system.file('extdata/shinyApp/example/maize_leaf_shm1.svg',
 #' package='spatialHeatmap')
 #' # The second real image used as a template to create an aSVG. 
-#' tmp.pa2 <- system.file('extdata/shinyApp/example/overlay_shm2.png',
+#' tmp.pa2 <- system.file('extdata/shinyApp/example/maize_leaf_shm2.png',
 #' package='spatialHeatmap')
 #' # The second aSVG created with the second real image. 
-#' svg.pa2 <- system.file('extdata/shinyApp/example/overlay_shm2.svg',
+#' svg.pa2 <- system.file('extdata/shinyApp/example/maize_leaf_shm2.svg',
 #' package='spatialHeatmap')
 #'
 #' # The data table.
@@ -232,145 +242,93 @@
 #' spatial_hm(svg.path=c(svg.pa1, svg.pa2), data=dat.overlay, tmp.path=c(tmp.pa1, tmp.pa2),
 #' charcoal=FALSE, ID=c('gene1'), alpha.overlay=0.5)
 
-# Co-visualizing bulk and single cell data
-library(SingleCellExperiment)
-sce.unfil <- sce <- readRDS('~/single_cell/sce.mar.rds')
-library(scuttle)
-stats <- perCellQCMetrics(sce, subsets=list(Mt=rowData(sce)$featureType=='mito'), threshold=1)
-sub.fields <- 'subsets_Mt_percent'
-ercc <- 'ERCC' %in% altExpNames(sce)
-if (ercc) sub.fields <- c('altexps_ERCC_percent', sub.fields)
-qc <- perCellQCFilters(stats, sub.fields=sub.fields, nmads=3)
+#'
+#'
+#' # Co-visualizing single cell and bulk tissues through manual matching.
 
+#' # Example single cell data from mouse brain (Marques et al. (2016)).
+#' sce.manual.pa <- system.file("extdata/shinyApp/example", "sce_manual_mouse.rds", package="spatialHeatmap")
+#' sce.manual <- readRDS(sce.manual.pa)
 
-colData(sce.unfil) <- cbind(colData(sce.unfil), stats)
+#' # The following are simplified steps on single cell data analysis. Details are available at http://bioconductor.org/books/3.14/OSCA.workflows/zeisel-mouse-brain-strt-seq.html
+#'
+#' # Quality control
+#' stats <- perCellQCMetrics(sce.manual, subsets=list(Mt=rowData(sce.manual)$featureType=='mito'), threshold=1)
+#' sub.fields <- 'subsets_Mt_percent'
+#' ercc <- 'ERCC' %in% altExpNames(sce.manual)
+#' if (ercc) sub.fields <- c('altexps_ERCC_percent', sub.fields)
+#' qc <- perCellQCFilters(stats, sub.fields=sub.fields, nmads=3)
+#'
+#' # Discard unreliable cells.
+#' colSums(as.matrix(qc))
+#' sce.manual <- sce.manual[, !qc$discard]
+#'
+#' # Normalization
+#' library(scran); set.seed(1000)
+#' clusters <- quickCluster(sce.manual)
+#' sce.manual <- computeSumFactors(sce.manual, cluster=clusters) 
+#' sce.manual <- logNormCounts(sce.manual)
+#'
+#' # Variance modelling.
+#' df.var <- modelGeneVar(sce.manual)
+#' top.hvgs <- getTopHVGs(df.var, prop = 0.1, n = 3000)
+#'
+#' # Dimensionality reduction.
+#' library(scater); set.seed(101011001)
+#' sce.manual <- denoisePCA(sce.manual, technical=df.var, subset.row=top.hvgs)
+#' sce.manual <- runTSNE(sce.manual, dimred="PCA")
+#' sce.manual <- runUMAP(sce.manual, dimred = "PCA")
+#'
+#' # Clustering.
+#' library(igraph)
+#' snn.gr <- buildSNNGraph(sce.manual, use.dimred="PCA")
+#' # Cell clusters.
+#' cluster <- paste0('clus', cluster_walktrap(snn.gr)$membership)
+#' table(cluster)
+#' # Cell cluster/group assignments need to store in "colData" slot of "SingleCellExperiment". Cell clusters/groups pre-defined by users are expected to store in the "label" column while cell clusters automatically detected by clustering algorithm are stored in the "cluster" column. If there are experimental variables such as treatments or time points, they should be stored in the "expVar" column.
+#' cdat <- colData(sce.manual) 
+#' lab.lgc <- 'label' %in% make.names(colnames(cdat))
+#' if (lab.lgc) {
+#'   cdat <- cbind(cluster=cluster, colData(sce.manual))
+#'   idx <- colnames(cdat) %in% c('cluster', 'label')
+#'  cdat <- cdat[, c(which(idx), which(!idx))]
+#' } else cdat <- cbind(cluster=cluster, colData(sce.manual))
+#' colnames(cdat) <- make.names(colnames(cdat))
+#' colData(sce.manual) <- cdat; cdat[1:3, ]
+#'
+#' \donttest{
+#' plotUMAP(sce.manual, colour_by="label")
+#' plotUMAP(sce.manual, colour_by="cluster")
+#' }
+#'
+#' # The aSVG file of mouse brain.
+#' svg.mus <- system.file("extdata/shinyApp/example", "mus_musculus.brain.svg", package="spatialHeatmap")
+#' # Spatial features to match with single cell clusters.
+#' feature.df <- return_feature(svg.path=svg.mus)
+#' feature.df$feature
+#'
+#' # The single cells can be matched to bulk tissues according to cluster assignments in the "label" or "cluster" column in "colData".
+#' # Matching according to cell clusters in the "label" column in "colData", which are the cell sources provided in the original study. 
+#' unique(colData(sce.manual)$label) 
+#' # Aggregate cells by cell clusters defined in the "label" column.
+#' sce.manual.aggr <- aggr_rep(sce.manual, assay.na='logcounts', sam.factor='label', con.factor='expVar', aggr='mean')
 
-sce.unfil$discard <- qc$discard
-library(scater)
-scell_qc <- function(sce.unfil, ercc = FALSE) {
-library(gridExtra)
-  g.sum <- plotColData(sce.unfil, y="sum", colour_by="discard") + scale_y_log10() + ggtitle("Total count")
-  g.det <- plotColData(sce.unfil, y="detected", colour_by="discard") + scale_y_log10() + ggtitle("Detected features")
-  g.mt.per <- plotColData(sce.unfil, y="subsets_Mt_percent", colour_by="discard") + ggtitle("Mito percent")
-  if (ercc) g.ercc.per <- plotColData(sce.unfil, y="altexps_ERCC_percent", colour_by="discard") + ggtitle("ERCC percent") else g.ercc.dis <- ggplot() + theme_void()
-  g.mt.log <- plotColData(sce.unfil, x="sum", y="subsets_Mt_percent", colour_by="discard") + scale_x_log10()      
-  if (ercc) g.mt.ercc <- plotColData(sce.unfil, x="altexps_ERCC_percent", y="subsets_Mt_percent", colour_by="discard") else g.mt.ercc <- ggplot() + theme_void()
-  if (ercc) grid.arrange(
-    g.sum, g.det, g.mt.per, g.ercc.per, g.mt.log, g.mt.ercc,
-    ncol = 2
-  ) else grid.arrange(g.sum, g.det, g.mt.per, g.mt.log, ncol = 2)
-}
+#' # Manually create the matching list.
+#' lis.match <- list(hypothalamus=c('hypothalamus'), cortex.S1=c('cerebral.cortex'))
 
-scell_qc(sce.unfil)
+#' # Co-visualization through manual mathcing: label.
+#' shm.lis <- spatial_hm(svg.path=svg.mus, data=sce.manual.aggr, ID=c('St18'), height=0.7, legend.r=1.5, legend.key.size=0.02, legend.text.size=12, legend.nrow=2, sce.dimred=sce.manual, dimred='PCA', cell.group='label', assay.na='logcounts', tar.cell=c('matched'), lis.rematch=lis.match, bar.width=0.1, dim.lgd.nrow=1)
+#'
+#' # Matching according to cell clusters in the "cluster" column in "colData".
+#' unique(colData(sce.manual)$cluster) 
+#' # Aggregate cells by cell clusters defined in the "label" column.
+#' sce.manual.aggr <- aggr_rep(sce.manual, assay.na='logcounts', sam.factor='cluster', con.factor=NULL, aggr='mean')
 
- 
-library(scran)    
-clusters <- quickCluster(sce, min.size=100)
-sce <- computeSumFactors(sce, cluster=clusters, max.cluster.size=3000)    
-sce <- logNormCounts(sce) # log2-scale.
-plot(librarySizeFactors(sce), sizeFactors(sce), pch = 16,
-xlab = "Library size factors", ylab = "Deconvolution factors", log = "xy")
-  
- 
-    df.var <- modelGeneVar(sce)
-    # sce.rct$var <- sce.var <- modelGeneVar(sce)    
-    #sce.rct$top <- top.hvgs <- getTopHVGs(df.var, prop=p, n=n)
-    top.hvgs <- getTopHVGs(df.var, prop = 0.1, n = 3000)
-    
-        
-    
-    plot(df.var$mean, df.var$total, pch = 16, cex = 0.5,
-    xlab = "Mean of log-expression", ylab = "Variance of log-expression")
-    curfit <- metadata(df.var)
-    points(curfit$mean, curfit$var, col = "red", pch = 16)
-    curve(curfit$trend(x), col = 'dodgerblue', add = TRUE, lwd = 2)
-  
-            
-sce <- denoisePCA(sce, assay.type = "logcounts", technical = df.var, subset.row = top.hvgs, min.rank = 5, max.rank = 50)
-# Other argument: n_dimred, ntop. By default only 2 dimensions are returned by runTSNE/runUMAP.
-sce <- runTSNE(sce, dimred = "PCA", ncomponents = 3)
-sce <- runUMAP(sce, dimred = "PCA", ncomponents = 3)
- 
-    graph <- nn_graph(sce, method='SNN', use.dimred = 'PCA')
-    
-      
-cluster <- detect_cluster(graph, clustering='wt') 
-labs <- paste0('cluster', cluster$membership)
-cdat <- colData(sce); rna <- make.names(rownames(cdat))
-lab.lgc <- 'label' %in% make.names(colnames(cdat))
-if (lab.lgc) { cdat <- cbind(cluster=labs, colData(sce))
-  idx <- colnames(cdat) %in% c('cluster', 'label')
-  cdat <- cdat[, c(which(idx), which(!idx))]
-} else cdat <- cbind(cluster=labs, colData(sce))
-rownames(cdat) <- rna
-colnames(cdat) <- make.names(colnames(cdat))
-colData(sce) <- cdat
-gg.dim <- plotTSNE(sce, colour_by = 'label')
-gg.dim + geom_point(size = 2, alpha = 0.2, aes(shape=colour_by)) + scale_shape_manual(values = seq_along(unique(sce$label))) + labs(shape = 'label')
- 
-# Aggregate cells in each cluster/label.
-sce.aggr <- aggr_rep(data=sce, assay.na='logcounts', sam.factor='label', con.factor='expVar', aggr='mean')
+#' # Manually create the matching list.
+#' lis.match <- list(clus1=c('hypothalamus'), clus3=c('cerebral.cortex', 'midbrain'))
 
-ft.rematch <- get(load('~/spatialHeatmap/inst/extdata/shinyApp/ft.rematch'))
-svg.mus <- '~/single_cell/mus_musculus.brain.svg' 
-
-
-# Inital filtering before normalization.
-blk <- filter_data(data=blk.all, sam.factor=NULL, con.factor=NULL, pOA=c(0.05, 5), CV=c(0.05, 100), dir=NULL); dim(blk)           
-
-dat.lis10.11.31 <- filter_sc(lis=list(sc10=sc.all10, sc11=sc.all11, sc31=sc.all31), blk=blk, gen.rm='^ATCG|^ATCG', min.cnt=1, p.in.cell=0.01, p.in.gen=0.05)
-
-dat.lis.nor <- norm_sc(dat.lis=dat.lis10.11.31, cpm=FALSE)
-lis <- list(sc10=logcounts(dat.lis.nor$sc10), sc11=logcounts(dat.lis.nor$sc11), sc31=logcounts(dat.lis.nor$sc31))                 
-
-# Secondary filtering.
-blk <- filter_data(data=logcounts(dat.lis.nor$blk), sam.factor=NULL, con.factor=NULL, pOA=c(0.3, 1), CV=c(0.3, 100), dir=NULL); dim(blk)
-
-dat.lis10.11.31_4 <- filter_sc(lis=lis, blk=blk, gen.rm='^ATCG|^ATCG', min.cnt=1, p.in.cell=0.3, p.in.gen=0.1)                  
-
-save(dat.lis10.11.31_3, file='result/dat.lis10.11.31_3.rds')
-
-
-dat.lis <- get(load('~/single_cell/result/dat.lis10.11.31_3.rds'))
-dat.all <- cbind(dat.lis$bulk, dat.lis$sc10, dat.lis$sc11, dat.lis$sc31)
-cdat <- data.frame(bulkCell=c(rep('bulk', ncol(dat.lis$bulk)), rep('sc10', ncol(dat.lis$sc10)), rep('sc11', ncol(dat.lis$sc11)), rep('target', ncol(dat.lis$sc31))))
-library(SummarizedExperiment)
-sce.nor <- SummarizedExperiment(assays=list(dat.all=as.matrix(dat.all)), colData=cdat)
-saveRDS(sce.nor, file='~/single_cell/blk.sce.nor.rds')
-
-library(spatialHeatmap); attach(loadNamespace("spatialHeatmap"), name = "spatialHeatmap_all")
-blk.fil <- filter_data(data=dat.lis$bulk, sam.factor=NULL, con.factor=NULL, pOA=c(0.3, 0), CV=c(0.1, 100), dir=NULL); dim(blk.fil)
-
-source('~/single_cell/function/fun.R')
-source('~/single_cell/function/df_match.R')
-df.match <- df_match()
-
-dat.lis.fil <- filter_sc(lis=dat.lis[c('sc10', 'sc11', 'sc31')], blk=blk.fil, gen.rm='^ATCG|^ATCG', min.cnt=0, p.in.cell=0.35, p.in.gen=0.15)
-
-res.lis <- tests(bulk=dat.lis.fil$bulk, scell=dat.lis.fil$sc31, df.match=df.match, sc.dim.min=10, max.dim=50, sim=0.31, sim.p=0.52, dim=16, method='snn', dimred='UMAP', return.all=TRUE, file='df.par.10.11.12.del')
-
-sce.lis <- sub_asg(res.lis=res.lis, thr=0, true.only=TRUE)
-
-sce.aggr <- aggr_rep(data=sce.lis$sce.sub, assay.na='logcounts', sam.factor='SVGBulk', con.factor=NULL, aggr='mean')
-
-svg.rt <- '~/single_cell/arabidopsis.thaliana_root.cross_shm.svg'
-
-shm.lis <- spatial_hm(svg.path=svg.rt, data=sce.aggr, ID=c('AT1G01010', 'AT1G01100'), height=0.7, legend.r=1.5, legend.key.size=0.02, legend.text.size=12, legend.nrow=2, ft.trans=NULL, sce.dimred=sce.lis$sce, dimred='UMAP', color.by='label', assay.na='logcounts', tar.cell=c('all'), profile=F)
-
-
-load('../inst/extdata/shinyApp/dim.color.all')
-tar.cell <- c('CORT', 'ENDO')
-lis <- dim_color_coclus(sce=sce, tar.cell=tar.cell, profile=FALSE, gg.dim=gg.dim, gg.shm.all=gg.shm.all, grob.shm.all=grob.shm.all, gg.lgd.all=gg.lgd.all, col.shm.all=col.shm.all, col.lgd.all=col.lgd.all, grob.lgd.all=grob.lgd.all, con.na=con.na, lis.match=lis.match, sub.title.size=sub.title.size)
-
-library(ggplot2)
-
-gg.dim <- plotTSNE(sce, colour_by = 'label')
-dim.shm.lis <- dim_color(gg.dim = gg.dim, gg.shm.all=gg.all1, grob.shm.all = grob.all1, col.shm.all = gcol.all, color.by='label')
-
-
-gg.dim <- plotUMAP(sce, colour_by = 'label')
-
-
+#' # Co-visualization through manual mathcing: cluster.
+#' shm.lis <- spatial_hm(svg.path=svg.mus, data=sce.manual.aggr, ID=c('St18'), height=0.7, legend.r=1.5, legend.key.size=0.02, legend.text.size=12, legend.nrow=3, sce.dimred=sce.manual, dimred='PCA', cell.group='cluster', assay.na='logcounts', tar.cell=c('matched'), lis.rematch=lis.match, bar.width=0.11, dim.lgd.nrow=1)
 
 #' @author Jianhai Zhang \email{jianhai.zhang@@email.ucr.edu} \cr Dr. Thomas Girke \email{thomas.girke@@ucr.edu}
 
@@ -382,9 +340,10 @@ gg.dim <- plotUMAP(sce, colour_by = 'label')
 #' \cr Love, Michael I., Wolfgang Huber, and Simon Anders. 2014. "Moderated Estimation of Fold Change and Dispersion for RNA-Seq Data with DESeq2." Genome Biology 15 (12): 550. doi:10.1186/s13059-014-0550-8
 #' \cr Guangchuang Yu (2020). ggplotify: Convert Plot to 'grob' or 'ggplot' Object. R package version 0.0.5. https://CRAN.R-project.org/package=ggplotify
 #' \cr Cardoso-Moreira, Margarida, Jean Halbert, Delphine Valloton, Britta Velten, Chunyan Chen, Yi Shao, Angélica Liechti, et al. 2019. “Gene Expression Across Mammalian Organ Development.” Nature 571 (7766): 505–9
+#' Marques A et al. (2016). Oligodendrocyte heterogeneity in the mouse juvenile and adult central nervous system. Science 352(6291), 1326-1329.
 
 #' @export
-#' @importFrom SummarizedExperiment assay
+#' @importFrom SummarizedExperiment assay colData
 #' @importFrom ggplot2 ggplot geom_bar aes theme element_blank margin element_rect coord_flip scale_y_continuous scale_x_continuous ggplotGrob geom_polygon scale_fill_manual ggtitle element_text labs
 #' @importFrom rsvg rsvg_ps 
 #' @importFrom grImport PostScriptTrace 
@@ -394,18 +353,20 @@ gg.dim <- plotUMAP(sce, colour_by = 'label')
 #' @importFrom methods is
 #' @importFrom ggplotify as.ggplot
 
-spatial_hm <- function(svg.path, data, assay.na=NULL, sam.factor=NULL, con.factor=NULL, ID, sce.dimred=NULL, dimred='TSNE', tar.cell='all', profile=FALSE, color.by=NULL, tmp.path=NULL, charcoal=FALSE, alpha.overlay=1, lay.shm="gene", ncol=2, col.com=c('yellow', 'orange', 'red'), col.bar='selected', sig.thr=c(NA, NA), cores=NA, bar.width=0.08, bar.title.size=0, trans.scale=NULL, ft.trans=NULL, tis.trans=ft.trans, lis.rematch = NULL, legend.r=0.2, sub.title.size=11, legend.plot='all', ft.legend='identical', bar.value.size=10, legend.plot.title='Legend', legend.plot.title.size=11, legend.ncol=NULL, legend.nrow=NULL, legend.position='bottom', legend.direction=NULL, legend.key.size=0.02, legend.text.size=12, angle.text.key=NULL, position.text.key=NULL, legend.2nd=FALSE, position.2nd='bottom', legend.nrow.2nd=NULL, legend.ncol.2nd=NULL, legend.key.size.2nd=0.03, legend.text.size.2nd=10, angle.text.key.2nd=0, position.text.key.2nd='right', add.feature.2nd=FALSE, label=FALSE, label.size=4, label.angle=0, hjust=0, vjust=0, opacity=1, key=TRUE, line.size=0.2, line.color='grey70', relative.scale = NULL, verbose=TRUE, out.dir=NULL, animation.scale = 1, selfcontained=FALSE, video.dim='640x480', res=500, interval=1, framerate=1, bar.width.vdo=0.1, legend.value.vdo=NULL, ...) {
+spatial_hm <- function(svg.path, data, assay.na=NULL, sam.factor=NULL, con.factor=NULL, ID, sce.dimred=NULL, dimred='PCA', tar.cell='matched', tar.bulk, profile=FALSE, cell.group=NULL, tmp.path=NULL, charcoal=FALSE, alpha.overlay=1, lay.shm="gene", ncol=2, col.com=c('yellow', 'orange', 'red'), col.bar='selected', sig.thr=c(NA, NA), cores=NA, bar.width=0.08, bar.title.size=0, trans.scale=NULL, ft.trans=NULL, tis.trans=ft.trans, lis.rematch = NULL, legend.r=0.2, sub.title.size=11, sub.title.vjust=2, legend.plot='all', ft.legend='identical', bar.value.size=10, legend.plot.title='Legend', legend.plot.title.size=11, legend.ncol=NULL, legend.nrow=NULL, legend.position='bottom', legend.direction=NULL, legend.key.size=0.02, legend.text.size=12, angle.text.key=NULL, position.text.key=NULL, legend.2nd=FALSE, position.2nd='bottom', legend.nrow.2nd=NULL, legend.ncol.2nd=NULL, legend.key.size.2nd=0.03, legend.text.size.2nd=10, angle.text.key.2nd=0, position.text.key.2nd='right', dim.lgd.pos='bottom', dim.lgd.nrow=2, dim.lgd.text.size=8, add.feature.2nd=FALSE, label=FALSE, label.size=4, label.angle=0, hjust=0, vjust=0, opacity=1, key=TRUE, line.size=0.2, line.color='grey70', relative.scale = NULL, verbose=TRUE, out.dir=NULL, animation.scale = 1, selfcontained=FALSE, video.dim='640x480', res=500, interval=1, framerate=1, bar.width.vdo=0.1, legend.value.vdo=NULL, ...) {
 
-  #save(svg.path, data, assay.na, sam.factor, con.factor, ID, sce.dimred, dimred, tar.cell, profile, color.by, tmp.path, charcoal, alpha.overlay, lay.shm, ncol, col.com, col.bar, sig.thr, cores, bar.width, bar.title.size, trans.scale, ft.trans, tis.trans, lis.rematch, legend.r, sub.title.size, legend.plot, ft.legend, bar.value.size, legend.plot.title, legend.plot.title.size, legend.ncol, legend.nrow, legend.position, legend.direction, legend.key.size, legend.text.size, angle.text.key, position.text.key, legend.2nd, position.2nd, legend.nrow.2nd, legend.ncol.2nd, legend.key.size.2nd, legend.text.size.2nd, angle.text.key.2nd, position.text.key.2nd, add.feature.2nd, label, label.size, label.angle, hjust, vjust, opacity, key, line.size, line.color, relative.scale, verbose, out.dir, animation.scale, selfcontained, video.dim, res, interval, framerate, bar.width.vdo, legend.value.vdo, file='shm.arg')
+  #save(svg.path, data, assay.na, sam.factor, con.factor, ID, sce.dimred, dimred, tar.cell, tar.bulk, profile, cell.group, tmp.path, charcoal, alpha.overlay, lay.shm, ncol, col.com, col.bar, sig.thr, cores, bar.width, bar.title.size, trans.scale, ft.trans, tis.trans, lis.rematch, legend.r, sub.title.size, sub.title.vjust, legend.plot, ft.legend, bar.value.size, legend.plot.title, legend.plot.title.size, legend.ncol, legend.nrow, legend.position, legend.direction, legend.key.size, legend.text.size, angle.text.key, position.text.key, legend.2nd, position.2nd, legend.nrow.2nd, legend.ncol.2nd, legend.key.size.2nd, legend.text.size.2nd, angle.text.key.2nd, position.text.key.2nd, add.feature.2nd, label, label.size, label.angle, hjust, vjust, opacity, key, line.size, line.color, relative.scale, verbose, out.dir, animation.scale, selfcontained, video.dim, res, interval, framerate, bar.width.vdo, legend.value.vdo, file='shm.arg')
 
   calls <- names(vapply(match.call(), deparse, character(1))[-1])
   if("tis.trans" %in% calls) { ft.trans <- tis.trans; warning('"tis.trans" is deprecated and replaced by "ft.trans"! \n') }
   x <- y <- color_scale <- tissue <- NULL; options(stringsAsFactors=FALSE)
   # if (!is.null(sub.margin)) if (!is.numeric(sub.margin) | length(sub.margin)!=4 | any(sub.margin >= 1) | any(sub.margin < 0)) stop('"sub.margin" must be a 4-length numeric vector between 0 (inclusive) and 1 (exclusive)!')
   ID <- unique(ID)
-  if (is(sce.dimred, 'SingleCellExperiment')) {
+  is.sce <- is(sce.dimred, 'SingleCellExperiment')
+  profile.no <- profile==FALSE & is.sce & !is(lis.rematch, 'list')
+  if (is.sce) {
     if (!dimred %in% reducedDimNames(sce.dimred)) stop(paste0(dimred, " is not detected in 'reducedDimNames'!"))
-    if (!color.by %in% colnames(colData(sce.dimred))) stop(paste0(color.by, " is not detected in 'colData' slot!"))
+    if (!is.null(cell.group)) if (!cell.group %in% colnames(colData(sce.dimred))) stop(paste0(cell.group, " is not detected in 'colData' slot!"))
   }
   # Extract and filter data.
   if (is.vector(data)) {
@@ -433,11 +394,9 @@ spatial_hm <- function(svg.path, data, assay.na=NULL, sam.factor=NULL, con.facto
 
   } else { stop('Accepted data classes are "data.frame", "matrix", "DFrame", "dgCMatrix", "SummarizedExperiment", or "SingleCellExperiment" except that "spatial_hm" also accepts a "vector".') }
 
-  if (!is.null(trans.scale)) if (trans.scale=='log2') { 
-          
+  if (!is.null(trans.scale)) if (trans.scale=='log2') {      
       g.min <- min(gene) 
-      if (g.min<0) gene <- gene-g.min+1; if (g.min==0) gene <- gene+1; gene <- log2(gene)  
-
+      if (g.min<0) gene <- gene-g.min+1; if (g.min==0) gene <- gene+1; gene <- log2(gene)
     } else if (trans.scale=='exp2') gene <- 2^gene else if (trans.scale=='row') { 
     gene <- t(scale(t(gene))) } else if (trans.scale=='column') { gene <- scale(gene) }
  
@@ -522,11 +481,16 @@ spatial_hm <- function(svg.path, data, assay.na=NULL, sam.factor=NULL, con.facto
     # A set of SHMs (gene_con*) are made for each SVG, and all sets of SHMs under different SVGs are placed in 2 lists in form of ggplots and grobs respectively. Different SHMs of same 'gene_condition' under different SVGs are indexed with suffixed of '_1', '_2', ... E.g. SHMs under shm1.svg: gene_condition1_1, gene_condition2_1; SHMs under shm2.svg: gene_condition1_2, gene_condition2_2; the 4 SHMs are stored in 2 separate lists in form of ggplots and grobs respectively. 
     # The order of ggplot SHMs, grob SHMs, and legends follow the order of SVGs, so all are same.
     ft.trans.shm <- NULL
-    if (is(sce.dimred, 'SingleCellExperiment') & profile==TRUE) {
+    if (is.sce & profile==TRUE & !is(lis.rematch, 'list')) {
       blk.uni <- unique(colData(sce.dimred)$SVGBulk)
-      if (tar.cell[1]=='all') tar.cell <- blk.uni
+      # if (tar.bulk[1]=='all') tar.bulk <- blk.uni
       # SVG features corresponding to non-target cells are set transparent.
-      ft.trans.shm <- unique(setdiff(blk.uni, tar.cell))
+      ft.trans.shm <- unique(setdiff(blk.uni, tar.bulk))
+    } else if (is.sce & is(lis.rematch, 'list')) {
+      blk.uni <- unique(names(lis.rematch))
+      if (tar.cell[1]=='matched') tar.cell <- blk.uni
+      # SVG features corresponding to non-target cells are set transparent.
+      ft.trans.shm <- unique(unlist(lis.rematch[setdiff(blk.uni, tar.cell)]))
     }
     gg.lis.all <- gg.all <- grob.all <- lgd.all <- grob.lgd.all <- gcol.lgd.all <- gcol.all <- NULL; for (i in seq_along(svg.df.lis)) {
       na0 <- names(svg.df.lis)[i]; cat('ggplots/grobs:', na0, '... \n')
@@ -534,7 +498,7 @@ spatial_hm <- function(svg.path, data, assay.na=NULL, sam.factor=NULL, con.facto
       tis.path <- svg.df[["tis.path"]]; fil.cols <- svg.df[['fil.cols']]
       # if (preserve.scale==TRUE & is.null(sub.margin)) sub.margin <- (1-w.h/w.h.max*0.99)/2
       # SHMs/legend of ggplots under one SVG.
-      gg.lis <- gg_shm(gene=gene, con.na=con.na, geneV=geneV, coord=g.df, tmp.path=svg.df$tmp.pa, charcoal=charcoal, alpha.overlay=alpha.overlay, ID=ID, legend.col=fil.cols, cols=col, tis.path=tis.path, lis.rematch = lis.rematch, ft.trans=ft.trans, ft.trans.shm=ft.trans.shm, sub.title.size=sub.title.size, ft.legend=ft.legend, legend.ncol=legend.ncol, legend.nrow=legend.nrow, legend.position=legend.position, legend.direction=legend.direction, legend.key.size=legend.key.size, legend.text.size=legend.text.size, legend.plot.title=legend.plot.title, legend.plot.title.size=legend.plot.title.size, line.size=line.size, line.color=line.color, aspect.ratio = aspect.r, ...)
+      gg.lis <- gg_shm(gene=gene, con.na=con.na, geneV=geneV, coord=g.df, tmp.path=svg.df$tmp.pa, charcoal=charcoal, alpha.overlay=alpha.overlay, ID=ID, legend.col=fil.cols, cols=col, tis.path=tis.path, lis.rematch = lis.rematch, ft.trans=ft.trans, ft.trans.shm=ft.trans.shm, sub.title.size=sub.title.size, sub.title.vjust=sub.title.vjust, ft.legend=ft.legend, legend.ncol=legend.ncol, legend.nrow=legend.nrow, legend.position=legend.position, legend.direction=legend.direction, legend.key.size=legend.key.size, legend.text.size=legend.text.size, legend.plot.title=legend.plot.title, legend.plot.title.size=legend.plot.title.size, line.size=line.size, line.color=line.color, aspect.ratio = aspect.r, ...)
       msg <- paste0(na0, ': no spatial features that have matching sample identifiers in data are detected!'); if (is.null(gg.lis)) stop(msg)
 
       # Append suffix '_i' for the SHMs of ggplot under SVG[i], and store them in a list.
@@ -568,7 +532,7 @@ tar_cell_true <- function(gg.lgd, gcol.lgd, blk.uni, profile) {
     }
       # Store legend/colour of ggplot in a list.
       gg.lgd <- gg.lis$g.lgd
-      if (profile==FALSE) gg.lgd <- gg.lgd + labs(title=NULL)
+      if (profile.no) gg.lgd <- gg.lgd + labs(title=NULL)
       lgd.all <- c(lgd.all, list(gg.lgd))
       grob.lgd.lis <- grob_shm(lgd.all, cores=cores, lgd.pos='bottom')
       grob.lgd.all <- c(grob.lgd.all, grob.lgd.lis)
@@ -580,11 +544,11 @@ tar_cell_true <- function(gg.lgd, gcol.lgd, blk.uni, profile) {
     }; names(lgd.all) <- names(grob.lgd.all) <- names(svg.df.lis)
     names(gcol.lgd.all) <- paste0('col_', names(svg.df.lis))
     pat.gen <- paste0(ID, collapse='|'); pat.con <- paste0(con.uni, collapse='|')
-    # Use definite patterns and avoid using '.*' as much as possible. Try to as specific as possible.
+    # Use definite patterns and avoid using '.*' as much as possible. Try to be as specific as possible.
     pat.all <- paste0('^(', pat.gen, ')_(', pat.con, ')(_\\d+$)')
     # Indexed cons with '_1', '_2', ... at the end.
     con.idxed <- unique(gsub(pat.all, '\\2\\3', names(gg.all)))
-    if (is(sce.dimred, 'SingleCellExperiment')) coclus <- TRUE
+    if (is.sce) coclus <- TRUE else coclus <- FALSE
     # Layout matrix of SHMs for use in relative scale.
     lay.mat <- lay_shm(lay.shm=lay.shm, con=con.idxed, ncol=ncol, ID.sel=ID, lay.mat = TRUE, profile=profile, coclus=coclus) 
 
@@ -616,23 +580,34 @@ tar_cell_true <- function(gg.lgd, gcol.lgd, blk.uni, profile) {
     na.all <- sort_gen_con(ID.sel=ID, na.all=na.all, con.all=con.idxed, by=lay.shm)
     grob.all <- grob.all[na.all]; gg.all <- gg.all[na.all]
     gcol.all <- gcol.all[paste0('col_', na.all)]
-    if (is(sce.dimred, 'SingleCellExperiment')) {
-      if (dimred=='TSNE') gg.dim <- plotTSNE(sce.dimred, colour_by = color.by)
-      if (dimred=='PCA') gg.dim <- plotPCA(sce.dimred, colour_by = color.by)
-      if (dimred=='UMAP') gg.dim <- plotUMAP(sce.dimred, colour_by = color.by)
-      dim.shm.lis <- dim_color_coclus(sce=sce.dimred, tar.cell=tar.cell, profile=profile, gg.dim = gg.dim, gg.shm.all=gg.all, grob.shm.all = grob.all, gg.lgd.all=lgd.all, col.shm.all = gcol.all, col.lgd.all=gcol.lgd.all, grob.lgd.all=grob.lgd.all, con.na=con.na, lis.match=NULL, sub.title.size=sub.title.size)
+
+    if (is.sce) {
+      # Use the same dim plot through which desired bulk is assigned.
+      dimred.pre <- unique(colData(data)$dimred)
+      if (!is.null(dimred.pre)) {
+        dimred <- dimred.pre
+        cat('The reduced dimensionality in "data" is used:', dimred, '.\n')
+      }
+
+      if (is(lis.rematch, 'list')) {
+      gg.dim <- plot_dim(sce.dimred, dim=dimred, color.by=cell.group)
+      dim.shm.lis <- dim_color(gg.dim=gg.dim, gg.shm.all=gg.all, grob.shm.all=grob.all, col.shm.all=gcol.all, cell.group=cell.group, tar.cell=tar.cell, con.na=con.na, lis.match=lis.rematch, sub.title.size=sub.title.size, dim.lgd.pos=dim.lgd.pos, dim.lgd.nrow=dim.lgd.nrow, dim.lgd.text.size=dim.lgd.text.size)
+      } else {
+      gg.dim <- plot_dim(sce.dimred, dim=dimred, color.by='SVGBulk')
+      dim.shm.lis <- dim_color_coclus(sce=sce.dimred, tar.bulk=tar.bulk, profile=profile, gg.dim = gg.dim, gg.shm.all=gg.all, grob.shm.all = grob.all, gg.lgd.all=lgd.all, col.shm.all = gcol.all, col.lgd.all=gcol.lgd.all, grob.lgd.all=grob.lgd.all, con.na=con.na, lis.match=NULL, sub.title.size=sub.title.size, dim.lgd.pos=dim.lgd.pos, dim.lgd.nrow=dim.lgd.nrow, dim.lgd.text.size=dim.lgd.text.size)
+      }
       grob.all <- dim.shm.lis$dim.shm.grob.lis
       gg.all <- dim.shm.lis$dim.shm.gg.lis
     }
-    g.arr <- lay_shm(lay.shm=lay.shm, con=con.idxed, ncol=ncol, ID.sel=ID, grob.list=grob.all, scell=is(sce.dimred, 'SingleCellExperiment'), profile=profile, coclus=coclsu, shiny=FALSE)
-    if (profile==FALSE) legend.plot <- NULL
+    g.arr <- lay_shm(lay.shm=lay.shm, con=con.idxed, ncol=ncol, ID.sel=ID, grob.list=grob.all, scell=is.sce, profile=profile, coclus=coclus, shiny=FALSE)
+    if (profile.no) legend.plot <- NULL
     if (!is.null(legend.plot)) {
       # Select legend plot to show. 
       if (length(svg.na)>1 & legend.plot!='all') na.lgd <- svg.na[grep(paste0('_(', paste0(legend.plot, collapse='|'), ').svg$'), svg.na)] else na.lgd <- svg.na
       lgd.lis <- lgd.all[na.lgd]
  
       # Add labels to target shapes/adjust keys in legend plots.
-      lgd.lis <- gg_lgd(gg.all=lgd.lis, angle.text.key=angle.text.key, position.text.key=position.text.key, label=label, label.size=label.size, label.angle=label.angle, hjust=hjust, vjust=vjust, opacity=opacity, key=key, sam.dat=sam.uni, ft.trans=ft.trans)
+      lgd.lis <- gg_lgd(gg.all=lgd.lis, angle.text.key=angle.text.key, position.text.key=position.text.key, label=label, label.size=label.size, label.angle=label.angle, hjust=hjust, vjust=vjust, opacity=opacity, key=key)
       grob.lgd.lis <- lapply(lgd.lis, ggplotGrob)
       lgd.tr <- lapply(grob.lgd.lis, grobTree)
 
@@ -651,7 +626,7 @@ tar_cell_true <- function(gg.lgd, gcol.lgd, blk.uni, profile) {
       shm <- grid.arrange(cs.arr, g.arr, lgd.arr, ncol=3, widths=unit(c(bar.width-0.005, shm.w, w.lgd), 'npc'))
     } else { 
       shm.w <- 1-bar.width
-      if (profile==TRUE) shm <- grid.arrange(cs.arr, g.arr, ncol=2, widths=unit(c(bar.width-0.005, shm.w), 'npc')) else shm <- grid.arrange(g.arr, ncol=1, widths=unit(c(1-0.005), 'npc'))
+      if (!profile.no) shm <- grid.arrange(cs.arr, g.arr, ncol=2, widths=unit(c(bar.width-0.005, shm.w), 'npc')) else shm <- grid.arrange(g.arr, ncol=1, widths=unit(c(1-0.005), 'npc'))
     }
 
     if (!is.null(out.dir)) { 
@@ -662,7 +637,7 @@ tar_cell_true <- function(gg.lgd, gcol.lgd, blk.uni, profile) {
         html_ly(gg=gg.all[i], cs.g=cs.g, ft.trans=ft.trans, sam.uni=sam.uni, anm.width=anm.width, anm.height=anm.height, out.dir=out.dir)
       }
 
-      vdo <- video(gg=gg.all, cs.g=cs.g, sam.uni=sam.uni, ft.trans=ft.trans, bar.width=bar.width.vdo, lgd.key.size=legend.key.size.2nd, lgd.text.size=legend.text.size.2nd, angle.text.key=angle.text.key.2nd, position.text.key=position.text.key.2nd, lgd.row=legend.nrow.2nd, lgd.col=legend.ncol.2nd, legend.value.vdo=legend.value.vdo, label=label, label.size=label.size, label.angle=label.angle, hjust=hjust, vjust=vjust, opacity=opacity, key=key, video.dim=video.dim, res=res, interval=interval, framerate=framerate, out.dir=out.dir)
+      vdo <- video(gg=gg.all, cs.g=cs.g, bar.width=bar.width.vdo, lgd.key.size=legend.key.size.2nd, lgd.text.size=legend.text.size.2nd, angle.text.key=angle.text.key.2nd, position.text.key=position.text.key.2nd, lgd.row=legend.nrow.2nd, lgd.col=legend.ncol.2nd, legend.value.vdo=legend.value.vdo, label=label, label.size=label.size, label.angle=label.angle, hjust=hjust, vjust=vjust, opacity=opacity, key=key, video.dim=video.dim, res=res, interval=interval, framerate=framerate, out.dir=out.dir)
       if (is.null(vdo)) cat("Video is not generated! \n")
 
     }

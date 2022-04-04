@@ -86,13 +86,13 @@
 
 
 #' @export filter_data
-#' @importFrom SummarizedExperiment assays rowData colData SummarizedExperiment assayNames
+#' @importFrom SummarizedExperiment assays rowData colData SummarizedExperiment assayNames assayNames<-
 #' @importFrom SingleCellExperiment SingleCellExperiment
 #' @importFrom genefilter filterfun pOverA cv genefilter
 #' @importFrom utils write.table
 #' @importFrom stats sd
 
-filter_data <- function(data, assay.na=NULL, pOA=c(0, 0), CV=c(-Inf, Inf), top.CV=1, ann=NULL, sam.factor, con.factor, dir=NULL, verbose=TRUE) {
+filter_data <- function(data, assay.na=NULL, pOA=c(0, 0), CV=c(-Inf, Inf), top.CV=1, ann=NULL, sam.factor=NULL, con.factor=NULL, dir=NULL, verbose=TRUE) {
 
   options(stringsAsFactors=FALSE)
   if (top.CV>1|top.CV<0) stop('"top.CV" should be between 0 and 1!')
@@ -142,10 +142,10 @@ filter_data <- function(data, assay.na=NULL, pOA=c(0, 0), CV=c(-Inf, Inf), top.C
     }
     rownames(col.meta) <- NULL # If row names present in colData(data), if will become column names of assay(data).
     # if (is(data, 'SingleCellExperiment')) { 
-      # expr <- SingleCellExperiment(assays=list(expr=expr), rowData=row.meta, colData=col.meta)
+    # expr <- SingleCellExperiment(assays=list(expr=expr), rowData=row.meta, colData=col.meta)
 
      expr <- sce_sub(sce=data, mat=expr, cna=colnames(expr), assay.na=assay.na, row.idx=filtered, rdat=row.meta, cdat=col.meta)
-     if (is.null(assayNames(data))) SummarizedExperiment::assayNames(expr)[1] <- 'expr'; return(expr)
+     if (is.null(assayNames(data))) assayNames(expr)[1] <- 'expr'; return(expr)
 
 
 #else {

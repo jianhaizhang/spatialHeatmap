@@ -16,8 +16,6 @@
 #' @param vjust The value to vertically adjust positions of spatial feature labels in legend plot. Default is 0.
 #' @param opacity The transparency of colored spatial features in legend plot. Default is 1. If 0, features are totally transparent.
 #' @param key Logical. The default is TRUE and keys are added in legend plot. If \code{label} is TRUE, the keys could be removed. 
-#' @param sam.dat A vector of samples in the data matrix.
-#' @param ft.trans A vector of tissues to be transparent.
 #' @param aspect.ratio The ratio of width to height. The default is 1.
 #' @return A list of ggplots.
 #' @keywords Internal
@@ -30,9 +28,9 @@
 
 #' @importFrom ggplot2 theme layer_data scale_fill_manual unit element_text guide_legend ggplot_build
 
-gg_lgd <- function(gg.all, size.key=NULL, size.text.key=8, angle.text.key=NULL, position.text.key=NULL, legend.value.vdo=NULL, sub.title.size=NULL, row=NULL, col=NULL, label=FALSE, label.size=3, label.angle=0, hjust=0, vjust=0, opacity=1, key=TRUE, sam.dat, ft.trans=NULL, aspect.ratio = NULL) {
+gg_lgd <- function(gg.all, size.key=NULL, size.text.key=8, angle.text.key=NULL, position.text.key=NULL, legend.value.vdo=NULL, sub.title.size=NULL, row=NULL, col=NULL, label=FALSE, label.size=3, label.angle=0, hjust=0, vjust=0, opacity=1, key=TRUE, aspect.ratio = NULL) {
 
-  # save(gg.all, size.key, size.text.key, angle.text.key, position.text.key, legend.value.vdo, sub.title.size, row, col, label, label.size, label.angle, hjust, vjust, opacity, key, sam.dat, ft.trans, aspect.ratio, file='gg.lgd.all')
+  # save(gg.all, size.key, size.text.key, angle.text.key, position.text.key, legend.value.vdo, sub.title.size, row, col, label, label.size, label.angle, hjust, vjust, opacity, key, aspect.ratio, file='gg.lgd.all')
   tissue <- x0 <- y0 <- NULL
   # Function to remove feature labels. 
   rm_label <- function(g) {    
@@ -56,10 +54,12 @@ gg_lgd <- function(gg.all, size.key=NULL, size.text.key=8, angle.text.key=NULL, 
       df.tis <- as.vector(dat$tissue)
       if (is.null(dat$value)) df.val <- NULL else df.val <- round(dat$value, 2) # Expression values.
       g.col <- g.col[!duplicated(names(g.col))]; tis.path <- dat$feature
-      ft.legend <- intersect(unique(sam.dat), unique(tis.path))
+      # ft.legend <- intersect(unique(sam.dat), unique(tis.path))
       # Single-cell data: length(ft.legend)==0.
-      if (length(ft.legend)==0) ft.legend <- unique(sub('__\\d+', '', names(g.col[!is.na(g.col) & !g.col=='NA'])))  
-      ft.legend <- setdiff(ft.legend, ft.trans) 
+      # if (length(ft.legend)==0) ft.legend <- unique(sub('__\\d+', '', names(g.col[!is.na(g.col) & !g.col=='NA'])))  
+      # ft.legend <- setdiff(ft.legend, ft.trans) 
+      # Identify tissues with colours: applies to regular bulk SHM and single cell.
+      ft.legend <- unique(sub('__\\d+', '', names(g.col[!is.na(g.col) & !g.col=='NA'])))  
       leg.idx <- !duplicated(tis.path) & (tis.path %in% ft.legend)
       df.tar <- df.tis[leg.idx]; lab <- path.tar <- tis.path[leg.idx]; val.tar <- df.val[leg.idx]
       if (sum(legend.value.vdo)==1) { 

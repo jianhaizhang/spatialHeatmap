@@ -1,3 +1,6 @@
-"cell1__con"	"cell2__con"	"cell3__con"	"cell4__con"	"cell5__con"
-"gene1"	9	76	72	39	88
-"gene2"	74	55	54	83	15
+"cell1"	"cell2"
+"gene1"	7	65
+"gene2"	70	27
+"gene3"	89	50
+"gene4"	15	48
+"gene5"	39	32

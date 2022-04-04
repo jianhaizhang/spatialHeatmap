@@ -1,12 +1,20 @@
 
 /* Text on the top header */
-span.myClass {display:table; margin:0 auto; 
+span.mainTitle {
+ display:table; margin:0 auto; 
  font-size: 20px; line-height: 50px; text-align: center;
  font-family: "Helvetica Neue",Helvetica,Arial,sans-serif;
- padding: 0 0px; overflow: hidden; color: white; width:100px; height: 100%;
+ padding: 0 0px; overflow: hidden; color: white; width:500px;
+ height: 100%; white-space: nowrap
 }
 
 .shiny-output-error-validation { color: red }
+
+/* Tab colour of disabled tabs. */
+.nav li a.disabled {
+background-color: #338fc3 !important; color: #333 !important;
+cursor: not-allowed !important; border-color: #aaa !important;
+}
 
 #DataTables_Table_0_filter { float: left }
 .dataTables_filter input { margin-left: 0.5em; width: 450px}

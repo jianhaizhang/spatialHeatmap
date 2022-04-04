@@ -37,9 +37,12 @@ url_val <- function(na, lis.url) {
 }
 
 # Import internal functions.
-sub_asg <- get('sub_asg', envir=asNamespace('spatialHeatmap'), inherits=FALSE)
+
+sc_qc_plot <- get('sc_qc_plot', envir=asNamespace('spatialHeatmap'), inherits=FALSE)
 
 detect_cluster <- get('detect_cluster', envir=asNamespace('spatialHeatmap'), inherits=FALSE)
+
+dim_color_coclus <- get('dim_color_coclus', envir=asNamespace('spatialHeatmap'), inherits=FALSE)
 
 dim_color <- get('dim_color', envir=asNamespace('spatialHeatmap'), inherits=FALSE)
 

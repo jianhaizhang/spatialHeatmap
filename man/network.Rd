@@ -24,7 +24,7 @@ network(
 )
 }
 \arguments{
-\item{ID}{A vector of target item identifiers in the data.}
+\item{ID}{A target item identifier.}
 
 \item{data}{The subsetted data matrix returned by the function \code{\link{submatrix}}, where rows are assayed items and columns are samples/conditions.}
 

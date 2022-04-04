@@ -2,7 +2,7 @@
 % Please edit documentation in R/spatial_hm.R
 \name{spatial_hm}
 \alias{spatial_hm}
-\title{Create Spatial Heatmaps}
+\title{Plot Spatial Heatmaps}
 \usage{
 spatial_hm(
   svg.path,
@@ -12,10 +12,11 @@ spatial_hm(
   con.factor = NULL,
   ID,
   sce.dimred = NULL,
-  dimred = "TSNE",
-  tar.cell = "all",
+  dimred = "PCA",
+  tar.cell = "matched",
+  tar.bulk,
   profile = FALSE,
-  color.by = NULL,
+  cell.group = NULL,
   tmp.path = NULL,
   charcoal = FALSE,
   alpha.overlay = 1,
@@ -33,6 +34,7 @@ spatial_hm(
   lis.rematch = NULL,
   legend.r = 0.2,
   sub.title.size = 11,
+  sub.title.vjust = 2,
   legend.plot = "all",
   ft.legend = "identical",
   bar.value.size = 10,
@@ -54,6 +56,9 @@ spatial_hm(
   legend.text.size.2nd = 10,
   angle.text.key.2nd = 0,
   position.text.key.2nd = "right",
+  dim.lgd.pos = "bottom",
+  dim.lgd.nrow = 2,
+  dim.lgd.text.size = 8,
   add.feature.2nd = FALSE,
   label = FALSE,
   label.size = 4,
@@ -91,6 +96,18 @@ spatial_hm(
 
 \item{ID}{A character vector of assyed items (\emph{e.g.} genes, proteins) whose abudance values are used to color the aSVG.}
 
+\item{sce.dimred}{A \code{SingleCellExperiment} with reduced dimentionalities such as \code{PCA}, \code{UMAP}, \code{TSNE}.}
+
+\item{dimred}{One of \code{PCA}, \code{UMAP}, \code{TSNE}, specifying which reduced dimensionality to use in co-visualization of bulk and single data.}
+
+\item{tar.cell}{Applicable in co-visualizing bulk and single cell data through manual matching. Identifiers of target cell groups to show in embedding plot, which are defined in \code{cell.group}. The default is \code{matched} and only cell groups in the matching list will have legends in the embedding plot.}
+
+\item{tar.bulk}{Applicable in co-visualizing bulk and single cell data through auto-matching (coclustering). One of the \code{SVGBulk} entries in the matching \code{data.frame}. Cells correctly assigned to this bulk tissue is highlighted, while other cells corresponding to this bulk but have false or no bulk assignments are colored black.}
+
+\item{profile}{Logical, applicable in co-visualizing bulk and single cell data through auto-matching (coclustering). If \code{TRUE}, one or multiple biological molecule (e.g. gene) identifiers need to be assigned to \code{ID}, and their abundance proifles are included in the co-visualization plot. If \code{FALSE} (default), only the bulk tissue in \code{tar.bulk} and matching cells are highlighted in the the co-visualization plot without abundance proifles.}
+
+\item{cell.group}{Applicable in co-visualizing bulk and single cell data through manual matching. A column name in \code{colData} such as \code{cluster} (auto-generated), \code{label} (user-defined). Cells are divided into clusters by cell groups in this column and these clusters are matched to bulk tissues.}
+
 \item{tmp.path}{The path of the template image in the form of raster/bitmap. The template is used to create aSVGs and can be overlaid with spatial heatmaps.}
 
 \item{charcoal}{Logical, if \code{TRUE} the template image will be turned black and white.}
@@ -124,6 +141,8 @@ spatial_hm(
 \item{legend.r}{A numeric (between -1 and 1) to adjust the legend plot size. The default is 0.2.}
 
 \item{sub.title.size}{A numeric of the subtitle font size of each individual spatial heatmap. The default is 11.}
+
+\item{sub.title.vjust}{A numeric of vertical adjustment for subtitle. The default is \code{2}.}
 
 \item{legend.plot}{A vector of suffix(es) of aSVG file name(s) such as \code{c('shm1', 'shm2')}. Only aSVG(s) whose suffix(es) are assigned to this arugment will have a legend plot on the right. The default is \code{all} and each aSVG will have a legend plot. If NULL, no legend plot is shown.}
 
@@ -168,6 +187,12 @@ spatial_hm(
 \item{angle.text.key.2nd}{A value of angle of key text in the secondary legend. Default is 0. Applies to the static image and video.}
 
 \item{position.text.key.2nd}{The position of key text in the secondary legend, one of "top", "right", "bottom", "left". Default is "right". Applies to the static image and video.}
+
+\item{dim.lgd.pos}{The legend position in the dimensionality reduction plot. The default is \code{bottom}.}
+
+\item{dim.lgd.nrow}{The number of legend rows in the dimensionality reduction plot. The default is \code{2}.}
+
+\item{dim.lgd.text.size}{The size of legend text in the dimensionality reduction plot. The default is \code{8}.}
 
 \item{add.feature.2nd}{Logical TRUE or FALSE. Add feature identifiers to the secondary legend or not. The default is FALSE. Applies to the static image.}
 
@@ -352,16 +377,16 @@ preserve.scale=TRUE)
 # Overlay real images with spatial heatmaps.
 
 # The first real image used as a template to create an aSVG. 
-tmp.pa1 <- system.file('extdata/shinyApp/example/overlay_shm1.png',
+tmp.pa1 <- system.file('extdata/shinyApp/example/maize_leaf_shm1.png',
 package='spatialHeatmap')
 # The first aSVG created with the first real image. 
-svg.pa1 <- system.file('extdata/shinyApp/example/overlay_shm1.svg',
+svg.pa1 <- system.file('extdata/shinyApp/example/maize_leaf_shm1.svg',
 package='spatialHeatmap')
 # The second real image used as a template to create an aSVG. 
-tmp.pa2 <- system.file('extdata/shinyApp/example/overlay_shm2.png',
+tmp.pa2 <- system.file('extdata/shinyApp/example/maize_leaf_shm2.png',
 package='spatialHeatmap')
 # The second aSVG created with the second real image. 
-svg.pa2 <- system.file('extdata/shinyApp/example/overlay_shm2.svg',
+svg.pa2 <- system.file('extdata/shinyApp/example/maize_leaf_shm2.svg',
 package='spatialHeatmap')
 
 # The data table.
@@ -371,6 +396,87 @@ package='spatialHeatmap'))
 # Plot spatial heatmaps on top of real images.
 spatial_hm(svg.path=c(svg.pa1, svg.pa2), data=dat.overlay, tmp.path=c(tmp.pa1, tmp.pa2),
 charcoal=FALSE, ID=c('gene1'), alpha.overlay=0.5)
+
+
+# Co-visualizing single cell and bulk tissues through manual matching.
+# Example single cell data from mouse brain (Marques et al. (2016)).
+sce.manual.pa <- system.file("extdata/shinyApp/example", "sce_manual_mouse.rds", package="spatialHeatmap")
+sce.manual <- readRDS(sce.manual.pa)
+# The following are simplified steps on single cell data analysis. Details are available at http://bioconductor.org/books/3.14/OSCA.workflows/zeisel-mouse-brain-strt-seq.html
+
+# Quality control
+stats <- perCellQCMetrics(sce.manual, subsets=list(Mt=rowData(sce.manual)$featureType=='mito'), threshold=1)
+sub.fields <- 'subsets_Mt_percent'
+ercc <- 'ERCC' \%in\% altExpNames(sce.manual)
+if (ercc) sub.fields <- c('altexps_ERCC_percent', sub.fields)
+qc <- perCellQCFilters(stats, sub.fields=sub.fields, nmads=3)
+
+# Discard unreliable cells.
+colSums(as.matrix(qc))
+sce.manual <- sce.manual[, !qc$discard]
+
+# Normalization
+library(scran); set.seed(1000)
+clusters <- quickCluster(sce.manual)
+sce.manual <- computeSumFactors(sce.manual, cluster=clusters) 
+sce.manual <- logNormCounts(sce.manual)
+
+# Variance modelling.
+df.var <- modelGeneVar(sce.manual)
+top.hvgs <- getTopHVGs(df.var, prop = 0.1, n = 3000)
+
+# Dimensionality reduction.
+library(scater); set.seed(101011001)
+sce.manual <- denoisePCA(sce.manual, technical=df.var, subset.row=top.hvgs)
+sce.manual <- runTSNE(sce.manual, dimred="PCA")
+sce.manual <- runUMAP(sce.manual, dimred = "PCA")
+
+# Clustering.
+library(igraph)
+snn.gr <- buildSNNGraph(sce.manual, use.dimred="PCA")
+# Cell clusters.
+cluster <- paste0('clus', cluster_walktrap(snn.gr)$membership)
+table(cluster)
+# Cell cluster/group assignments need to store in "colData" slot of "SingleCellExperiment". Cell clusters/groups pre-defined by users are expected to store in the "label" column while cell clusters automatically detected by clustering algorithm are stored in the "cluster" column. If there are experimental variables such as treatments or time points, they should be stored in the "expVar" column.
+cdat <- colData(sce.manual) 
+lab.lgc <- 'label' \%in\% make.names(colnames(cdat))
+if (lab.lgc) {
+  cdat <- cbind(cluster=cluster, colData(sce.manual))
+  idx <- colnames(cdat) \%in\% c('cluster', 'label')
+ cdat <- cdat[, c(which(idx), which(!idx))]
+} else cdat <- cbind(cluster=cluster, colData(sce.manual))
+colnames(cdat) <- make.names(colnames(cdat))
+colData(sce.manual) <- cdat; cdat[1:3, ]
+
+\donttest{
+plotUMAP(sce.manual, colour_by="label")
+plotUMAP(sce.manual, colour_by="cluster")
+}
+
+# The aSVG file of mouse brain.
+svg.mus <- system.file("extdata/shinyApp/example", "mus_musculus.brain.svg", package="spatialHeatmap")
+# Spatial features to match with single cell clusters.
+feature.df <- return_feature(svg.path=svg.mus)
+feature.df$feature
+
+# The single cells can be matched to bulk tissues according to cluster assignments in the "label" or "cluster" column in "colData".
+# Matching according to cell clusters in the "label" column in "colData", which are the cell sources provided in the original study. 
+unique(colData(sce.manual)$label) 
+# Aggregate cells by cell clusters defined in the "label" column.
+sce.manual.aggr <- aggr_rep(sce.manual, assay.na='logcounts', sam.factor='label', con.factor='expVar', aggr='mean')
+# Manually create the matching list.
+lis.match <- list(hypothalamus=c('hypothalamus'), cortex.S1=c('cerebral.cortex'))
+# Co-visualization through manual mathcing: label.
+shm.lis <- spatial_hm(svg.path=svg.mus, data=sce.manual.aggr, ID=c('St18'), height=0.7, legend.r=1.5, legend.key.size=0.02, legend.text.size=12, legend.nrow=2, sce.dimred=sce.manual, dimred='PCA', cell.group='label', assay.na='logcounts', tar.cell=c('matched'), lis.rematch=lis.match, bar.width=0.1, dim.lgd.nrow=1)
+
+# Matching according to cell clusters in the "cluster" column in "colData".
+unique(colData(sce.manual)$cluster) 
+# Aggregate cells by cell clusters defined in the "label" column.
+sce.manual.aggr <- aggr_rep(sce.manual, assay.na='logcounts', sam.factor='cluster', con.factor=NULL, aggr='mean')
+# Manually create the matching list.
+lis.match <- list(clus1=c('hypothalamus'), clus3=c('cerebral.cortex', 'midbrain'))
+# Co-visualization through manual mathcing: cluster.
+shm.lis <- spatial_hm(svg.path=svg.mus, data=sce.manual.aggr, ID=c('St18'), height=0.7, legend.r=1.5, legend.key.size=0.02, legend.text.size=12, legend.nrow=3, sce.dimred=sce.manual, dimred='PCA', cell.group='cluster', assay.na='logcounts', tar.cell=c('matched'), lis.rematch=lis.match, bar.width=0.11, dim.lgd.nrow=1)
 }
 \references{
 https://www.gimp.org/tutorials/ \cr https://inkscape.org/en/doc/tutorials/advanced/tutorial-advanced.en.html \cr http://www.microugly.com/inkscape-quickguide/
@@ -380,6 +486,7 @@ Martin Morgan, Valerie Obenchain, Jim Hester and Hervé Pagès (2018). Summarize
 \cr Love, Michael I., Wolfgang Huber, and Simon Anders. 2014. "Moderated Estimation of Fold Change and Dispersion for RNA-Seq Data with DESeq2." Genome Biology 15 (12): 550. doi:10.1186/s13059-014-0550-8
 \cr Guangchuang Yu (2020). ggplotify: Convert Plot to 'grob' or 'ggplot' Object. R package version 0.0.5. https://CRAN.R-project.org/package=ggplotify
 \cr Cardoso-Moreira, Margarida, Jean Halbert, Delphine Valloton, Britta Velten, Chunyan Chen, Yi Shao, Angélica Liechti, et al. 2019. “Gene Expression Across Mammalian Organ Development.” Nature 571 (7766): 505–9
+Marques A et al. (2016). Oligodendrocyte heterogeneity in the mouse juvenile and adult central nervous system. Science 352(6291), 1326-1329.
 }
 \author{
 Jianhai Zhang \email{jianhai.zhang@email.ucr.edu} \cr Dr. Thomas Girke \email{thomas.girke@ucr.edu}

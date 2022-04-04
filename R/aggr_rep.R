@@ -73,7 +73,7 @@
 #' \cr Amezquita R, Lun A, Becht E, Carey V, Carpp L, Geistlinger L, Marini F, Rue-Albrecht K, Risso D, Soneson C, Waldron L, Pages H, Smith M, Huber W, Morgan M, Gottardo R, Hicks S (2020). “Orchestrating single-cell analysis with Bioconductor.” Nature Methods, 17, 137–145. https://www.nature.com/articles/s41592-019-0654-x
 
 #' @export aggr_rep
-#' @importFrom SummarizedExperiment assays rowData colData SummarizedExperiment
+#' @importFrom SummarizedExperiment assays rowData colData SummarizedExperiment assayNames<-
 #' @importFrom SingleCellExperiment SingleCellExperiment
 
 
@@ -99,7 +99,7 @@ aggr_rep <- function(data, assay.na=NULL, sam.factor, con.factor, aggr='mean') {
     
     # if (is(data, 'SingleCellExperiment')) {
       data <- sce_sub(sce=data, assay.na=assay.na, mat=mat, cna=colnames(mat), col.idx=!duplicated(fct.cna), cdat=col.meta)
-      if (is.null(assayNames(data))) SummarizedExperiment::assayNames(expr)[1] <- 'expr'; return(data)
+      if (is.null(assayNames(data))) assayNames(data)[1] <- 'expr'; return(data)
       #data <- data[, !duplicated(fct.cna)]; colnames(data) <- colnames(mat)
       #assays(data)[[assay.na]] <- mat
       # Erase colnames in assay.

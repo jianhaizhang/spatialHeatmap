@@ -18,10 +18,8 @@
 
 #' @references 
 #' Morgan M, Obenchain V, Hester J, Pagès H (2021). SummarizedExperiment: SummarizedExperiment container. R package version 1.24.0, https://bioconductor.org/packages/SummarizedExperiment
-#' \cr Amezquita R, Lun A, Becht E, Carey V, Carpp L, Geistlinger L, Marini F, Rue-Albrecht K, Risso D, Soneson C, Waldron L, Pages H, Smith M, Huber W, Morgan M, Gottardo R, Hicks S (2020). “Orchestrating single-cell analysis with Bioconductor.” Nature Methods, 17, 137–145. https://www.nature.com/articles/s41592-019-0654-x
 
-#' @importFrom SummarizedExperiment assays
-#' @importFrom SingleCellExperiment colData rowData
+#' @importFrom SummarizedExperiment assays colData rowData
 
 sce_sub <- function(sce, assay.na=NULL, mat=NULL, cna=NULL, col.idx=NULL, row.idx=NULL, cdat=NULL, rdat=NULL) {
   if (!is.null(mat) | !is.null(cdat)) if (is.null(cna)) stop("The 'cna' is required if 'cdat' is assigned a value!")
