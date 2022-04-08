@@ -18,6 +18,9 @@
 
 #' @examples
 
+#' # To obtain reproducible results, always start a new R session and set a fixed seed for Random Number Generator at the begaining, which is required only once in each R session.  
+#' set.seed(10)
+#' 
 #' # Example bulk data of Arabidopsis thaliana (Arabidopsis) root for coclustering optimization (Li et al 2016).
 #' blk <- readRDS(system.file("extdata/cocluster/data", "bulk_cocluster.rds", package="spatialHeatmap"))
 #'
@@ -58,13 +61,14 @@
 #'
 #' # Optimization. 
 #' # Check parallelization guide.
-#' coclus_opt(wk.dir='opt_res', parallel.info=TRUE)
+#' coclus_opt(wk.dir='opt_res', parallel.info=TRUE, dimred=c('PCA', 'UMAP'), graph.meth=c('knn', 'snn'), sim=seq(0.2, 0.4, by=0.1), sim.p=seq(0.2, 0.4, by=0.1), dim=seq(5, 7, by=1))
 #'
 #' # The first-level parallel computing relies on the slurm scheduler (https://slurm.schedmd.com/documentation.html), so if it is available the whole optimization process could be parallelized at two levels. 
 # Copy slurm template to current directory. Edit the template according to the parallelization guide and available computing resources.
 #' file.copy(system.file("extdata/cocluster", "slurm.tmpl", package="spatialHeatmap"), './slurm.tmpl')
 #' 
 #' # The first- and second-level parallelizations are set 3 and 2 respectively.
+#' library(BiocParallel)
 #' opt <- coclus_opt(wk.dir='opt_res', dimred=c('PCA', 'UMAP'), graph.meth=c('knn', 'snn'), sim=seq(0.2, 0.4, by=0.1), sim.p=seq(0.2, 0.4, by=0.1), dim=seq(5, 7, by=1), df.match=df.match.arab, batch.par=BatchtoolsParam(workers=3, cluster="slurm", template='slurm.tmpl'), multi.core.par=MulticoreParam(workers=2))
 #'
 #' # If slurm is not available, parallelize the optimization only at the second-level through 2 workers. 
@@ -147,10 +151,9 @@
 #' Morgan M, Wang J, Obenchain V, Lang M, Thompson R, Turaga N (2021). BiocParallel: Bioconductor facilities for parallel evaluation. R package version 1.28.3, https://github.com/Bioconductor/BiocParallel.
 
 #' @export coclus_opt
-#' @importFrom BiocParallel BatchtoolsParam MulticoreParam
+#' @importFrom BiocParallel BatchtoolsParam MulticoreParam register bpRNGseed bpRNGseed<-
 
-coclus_opt <- function(wk.dir, parallel.info=FALSE, sc.dim.min=10, max.dim=50, dimred=c('PCA', 'UMAP'), graph.meth=c('knn', 'snn'), sim=seq(0.2, 0.8, by=0.1), sim.p=seq(0.2, 0.8, by=0.1), dim=seq(5, 40, by=1), df.match, sim.meth='spearman', batch.par=BatchtoolsParam(workers=1, cluster="slurm", template='slurm.tmpl', stop.on.error = FALSE, log = TRUE, logdir=file.path(wk.dir, 'batch_log')), multi.core.par=MulticoreParam(workers=workers, stop.on.error=FALSE, log=TRUE, logdir=file.path(wk.dir, 'multi_core_log')), seed=1000, verbose=TRUE) {
-
+coclus_opt <- function(wk.dir, parallel.info=FALSE, sc.dim.min=10, max.dim=50, dimred=c('PCA', 'UMAP'), graph.meth=c('knn', 'snn'), sim=seq(0.2, 0.8, by=0.1), sim.p=seq(0.2, 0.8, by=0.1), dim=seq(5, 40, by=1), df.match, sim.meth='spearman', batch.par=BatchtoolsParam(workers=1, cluster="slurm", template='slurm.tmpl', RNGseed=100, stop.on.error = FALSE, log = TRUE, logdir=file.path(wk.dir, 'batch_log')), multi.core.par=MulticoreParam(workers=1, RNGseed=NULL, stop.on.error=FALSE, log=TRUE, logdir=file.path(wk.dir, 'multi_core_log')), verbose=TRUE) {
   fil.dir <- file.path(wk.dir, 'filter_res')
   bat.log.dir <- file.path(wk.dir, 'batch_log')
   mcore.log.dir <- file.path(wk.dir, 'multi_core_log')
@@ -159,6 +162,16 @@ coclus_opt <- function(wk.dir, parallel.info=FALSE, sc.dim.min=10, max.dim=50, d
   if (!dir.exists(bat.log.dir)) dir.create(bat.log.dir) 
   if (!dir.exists(mcore.log.dir)) dir.create(mcore.log.dir) 
   if (!dir.exists(auc.dir)) dir.create(auc.dir) 
+  # Check random seed. 
+  if (is(batch.par, 'BatchtoolsParam')) seed.bat <- bpRNGseed(batch.par) else seed.bat <- NULL
+  if (is(multi.core.par, 'MulticoreParam')) seed.mul <- bpRNGseed(multi.core.par) else seed.mul <- NULL
+  if (is.numeric(seed.bat) & !is.numeric(seed.mul)) { 
+    bpRNGseed(multi.core.par) <- NULL
+    message('"RNGseed" in MulticoreParam is set NULL, since it is already set in BatchtoolsParam.')
+  }
+  if (!is.numeric(seed.bat) & !is.numeric(seed.mul)) {
+    message('"RNGseed" in BatchtoolsParam or MulticoreParam is NULL')
+  }
   # All single cell data names.
   fil.nas <- list.files(fil.dir, '\\.fil\\d+\\.rds$')
   sc.na.all <- NULL; for (i in fil.nas) {
@@ -175,7 +188,7 @@ coclus_opt <- function(wk.dir, parallel.info=FALSE, sc.dim.min=10, max.dim=50, d
     cat('\n Max second-level parallelizations across MulticoreParam workers (--cpus-per-task in slurm template) on each BatchtoolsParam worker: ', nrow(df.spd), '\n', sep='')
     return()
   }
-  fun <- function(i, df.par.com, df.spd, df.match, sc.dim.min, max.dim, sim.meth, multi.core.par, seed, auc.dir) {
+  fun <- function(i, df.par.com, df.spd, df.match, sc.dim.min, max.dim, sim.meth, multi.core.par, auc.dir) {
     df0 <- df.par.com[i, ]
     df.para <- cbind(df.spd, df0, row.names=NULL)
     dat.fil <- readRDS(df0$file)
@@ -184,15 +197,15 @@ coclus_opt <- function(wk.dir, parallel.info=FALSE, sc.dim.min=10, max.dim=50, d
     fil.na <- rev(strsplit(df.para[1, ]$file, '/')[[1]])[1]
     fil.na <- sub('\\.rds$', '', fil.na)
     out <- file.path(auc.dir, tolower(paste0('auc.', fil.na, '.', df0$cell, '.', df0$dimred, '.', df0$graph.meth)))
-    library(spatialHeatmap)
-    df.para <- cocluster(bulk=blk, cell=sc, df.match=df.match, df.para=df.para, sc.dim.min=sc.dim.min, max.dim=max.dim, sim.meth=sim.meth, return.all=FALSE, multi.core.par=multi.core.par, seed=seed, verbose=verbose, file=out); return('Done')
+    # library(spatialHeatmap)
+    df.para <- spatialHeatmap::cocluster(bulk=blk, cell=sc, df.match=df.match, df.para=df.para, sc.dim.min=sc.dim.min, max.dim=max.dim, sim.meth=sim.meth, return.all=FALSE, multi.core.par=multi.core.par, verbose=verbose, file=out); return('Done')
   }
   # Every row in df.par.com is combined with every row in df.spd for coclustering.
   if (is(batch.par, 'BatchtoolsParam')) {
     register(batch.par)
-    res <- bplapply(seq_len(nrow(df.par.com)), fun, df.par.com=df.par.com, df.spd=df.spd, df.match=df.match, sc.dim.min=sc.dim.min, max.dim=max.dim, sim.meth=sim.meth, multi.core.par=multi.core.par, seed=seed, auc.dir=auc.dir) 
+    res <- bplapply(seq_len(nrow(df.par.com)), fun, df.par.com=df.par.com, df.spd=df.spd, df.match=df.match, sc.dim.min=sc.dim.min, max.dim=max.dim, sim.meth=sim.meth, multi.core.par=multi.core.par,  auc.dir=auc.dir) 
   } else {
-    res <- lapply(seq_len(nrow(df.par.com)), fun, df.par.com=df.par.com, df.spd=df.spd, df.match=df.match, sc.dim.min=sc.dim.min, max.dim=max.dim, sim.meth=sim.meth, multi.core.par=multi.core.par, seed=seed, auc.dir=auc.dir)
+    res <- lapply(seq_len(nrow(df.par.com)), fun, df.par.com=df.par.com, df.spd=df.spd, df.match=df.match, sc.dim.min=sc.dim.min, max.dim=max.dim, sim.meth=sim.meth, multi.core.par=multi.core.par,  auc.dir=auc.dir)
   }
   return(res)
 }

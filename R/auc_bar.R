@@ -15,7 +15,17 @@
 
 #' @examples
 
-#' See package vignette by calling "browseVignettes('spatialHeatmap')".
+#' # Create parameter settings and corresponding aucs.
+#' df.auc <- data.frame(auc=runif(n=5, min=1e-12, max=.99))
+#' ran <- seq(0.2, 0.8, 0.1)
+#' df.spd <- data.frame(sim=sample(ran, 5, replace=FALSE), sim.p=sample(ran, 5, replace=FALSE), dim=sample(seq(5, 40, 1), 5, replace=FALSE))
+#' df.spd$spd.set <- paste0('s', df.spd$sim, 'p', df.spd$sim.p, 'd', df.spd$dim)
+#' 
+#' df.auc <- cbind(df.spd, df.auc)
+#' # Plot the aucs.
+#' auc_bar(df.auc, auc='auc', thr=0.5) 
+
+#' # See package vignette by calling "browseVignettes('spatialHeatmap')".
 
 #' @author Jianhai Zhang \email{jzhan067@@ucr.edu} \cr Dr. Thomas Girke \email{thomas.girke@@ucr.edu}
 
@@ -27,6 +37,7 @@
 #' @export auc_bar
 
 auc_bar <- function(df.auc, auc='auc', thr=0.5, bar.width=0.8, spd.sel=NULL, title=NULL, key.title=NULL, x.agl=80, x.vjust=0.6) { 
+  spd.set <- NULL
   cna <- colnames(df.auc); cna[cna==auc] <- 'auc'
   colnames(df.auc) <- cna
   # df0 <- subset(df.auc, sc==tar.datset)
@@ -36,7 +47,7 @@ auc_bar <- function(df.auc, auc='auc', thr=0.5, bar.width=0.8, spd.sel=NULL, tit
   gg <- ggplot(df.auc, aes(x=spd.set, y=auc)) +
   geom_bar(color='black', width=bar.width, fill='#FF6666', position=position_dodge2(width=bar.width, preserve="single"), stat="identity") +
   geom_text(aes(label=ifelse(spd.sel, "*", "")), 
-position = position_dodge2(width=bar.width, preserve="single"), vjust=-0.1, size=20/.pt) +
+position = position_dodge2(width=bar.width, preserve="single"), vjust=-0.1, size=10) +
   labs(title=title, x="Optimized parameter sets", y='AUC', fill=key.title)+theme(plot.title = element_text(hjust = 0.5)) +
   theme(axis.text.x=element_text(angle=x.agl, vjust=x.vjust)) +
   geom_hline(yintercept=thr, linetype="dashed", color = "black", size=1)

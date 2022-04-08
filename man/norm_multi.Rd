@@ -4,7 +4,7 @@
 \alias{norm_multi}
 \title{Normalize one or multiple count data sets.}
 \usage{
-norm_multi(dat.lis, cpm = FALSE, count.kp = FALSE, seed = 1000)
+norm_multi(dat.lis, cpm = FALSE, count.kp = FALSE)
 }
 \arguments{
 \item{dat.lis}{A named \code{list} containing count data of single cell and bulk, which are in form of \code{matrix}, \code{data.frame}, \code{dgCMatrix}, or \code{SingleCellExperiment}.}
@@ -12,8 +12,6 @@ norm_multi(dat.lis, cpm = FALSE, count.kp = FALSE, seed = 1000)
 \item{cpm}{Logical. The count data are first normalized by \code{\link[scran]{computeSumFactors}}. If \code{TRUE}, the data is further normalized by counts per million (cpm). The default is \code{FALSE}.}
 
 \item{count.kp}{Logical. If \code{FALSE} (default), the count data is discarded and only log2-scale data are kept.}
-
-\item{seed}{An integer for setting the seed of R's random number generator, which is useful to reproduce results.}
 }
 \value{
 A list of normalized single cell and bulk data.

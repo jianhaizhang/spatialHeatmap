@@ -253,6 +253,7 @@
 #' # The following are simplified steps on single cell data analysis. Details are available at http://bioconductor.org/books/3.14/OSCA.workflows/zeisel-mouse-brain-strt-seq.html
 #'
 #' # Quality control
+#' library(scuttle)
 #' stats <- perCellQCMetrics(sce.manual, subsets=list(Mt=rowData(sce.manual)$featureType=='mito'), threshold=1)
 #' sub.fields <- 'subsets_Mt_percent'
 #' ercc <- 'ERCC' %in% altExpNames(sce.manual)
@@ -274,7 +275,7 @@
 #' top.hvgs <- getTopHVGs(df.var, prop = 0.1, n = 3000)
 #'
 #' # Dimensionality reduction.
-#' library(scater); set.seed(101011001)
+#' library(scater) 
 #' sce.manual <- denoisePCA(sce.manual, technical=df.var, subset.row=top.hvgs)
 #' sce.manual <- runTSNE(sce.manual, dimred="PCA")
 #' sce.manual <- runUMAP(sce.manual, dimred = "PCA")
@@ -341,6 +342,7 @@
 #' \cr Guangchuang Yu (2020). ggplotify: Convert Plot to 'grob' or 'ggplot' Object. R package version 0.0.5. https://CRAN.R-project.org/package=ggplotify
 #' \cr Cardoso-Moreira, Margarida, Jean Halbert, Delphine Valloton, Britta Velten, Chunyan Chen, Yi Shao, Angélica Liechti, et al. 2019. “Gene Expression Across Mammalian Organ Development.” Nature 571 (7766): 505–9
 #' Marques A et al. (2016). Oligodendrocyte heterogeneity in the mouse juvenile and adult central nervous system. Science 352(6291), 1326-1329.
+#' Amezquita R, Lun A, Becht E, Carey V, Carpp L, Geistlinger L, Marini F, Rue-Albrecht K, Risso D, Soneson C, Waldron L, Pages H, Smith M, Huber W, Morgan M, Gottardo R, Hicks S (2020). “Orchestrating single-cell analysis with Bioconductor.” Nature Methods, 17, 137–145. https://www.nature.com/articles/s41592-019-0654-x.
 
 #' @export
 #' @importFrom SummarizedExperiment assay colData
@@ -352,6 +354,7 @@
 #' @importFrom grDevices colorRampPalette
 #' @importFrom methods is
 #' @importFrom ggplotify as.ggplot
+#' @importFrom SingleCellExperiment reducedDimNames
 
 spatial_hm <- function(svg.path, data, assay.na=NULL, sam.factor=NULL, con.factor=NULL, ID, sce.dimred=NULL, dimred='PCA', tar.cell='matched', tar.bulk, profile=FALSE, cell.group=NULL, tmp.path=NULL, charcoal=FALSE, alpha.overlay=1, lay.shm="gene", ncol=2, col.com=c('yellow', 'orange', 'red'), col.bar='selected', sig.thr=c(NA, NA), cores=NA, bar.width=0.08, bar.title.size=0, trans.scale=NULL, ft.trans=NULL, tis.trans=ft.trans, lis.rematch = NULL, legend.r=0.2, sub.title.size=11, sub.title.vjust=2, legend.plot='all', ft.legend='identical', bar.value.size=10, legend.plot.title='Legend', legend.plot.title.size=11, legend.ncol=NULL, legend.nrow=NULL, legend.position='bottom', legend.direction=NULL, legend.key.size=0.02, legend.text.size=12, angle.text.key=NULL, position.text.key=NULL, legend.2nd=FALSE, position.2nd='bottom', legend.nrow.2nd=NULL, legend.ncol.2nd=NULL, legend.key.size.2nd=0.03, legend.text.size.2nd=10, angle.text.key.2nd=0, position.text.key.2nd='right', dim.lgd.pos='bottom', dim.lgd.nrow=2, dim.lgd.text.size=8, add.feature.2nd=FALSE, label=FALSE, label.size=4, label.angle=0, hjust=0, vjust=0, opacity=1, key=TRUE, line.size=0.2, line.color='grey70', relative.scale = NULL, verbose=TRUE, out.dir=NULL, animation.scale = 1, selfcontained=FALSE, video.dim='640x480', res=500, interval=1, framerate=1, bar.width.vdo=0.1, legend.value.vdo=NULL, ...) {
 

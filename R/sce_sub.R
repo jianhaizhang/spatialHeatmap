@@ -19,7 +19,7 @@
 #' @references 
 #' Morgan M, Obenchain V, Hester J, Pagès H (2021). SummarizedExperiment: SummarizedExperiment container. R package version 1.24.0, https://bioconductor.org/packages/SummarizedExperiment
 
-#' @importFrom SummarizedExperiment assays colData rowData
+#' @importFrom SummarizedExperiment assays colData rowData rowData<-
 
 sce_sub <- function(sce, assay.na=NULL, mat=NULL, cna=NULL, col.idx=NULL, row.idx=NULL, cdat=NULL, rdat=NULL) {
   if (!is.null(mat) | !is.null(cdat)) if (is.null(cna)) stop("The 'cna' is required if 'cdat' is assigned a value!")

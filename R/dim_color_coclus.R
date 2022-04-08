@@ -24,12 +24,15 @@
 #' @references
 #' Morgan M, Obenchain V, Hester J, Pagès H (2021). SummarizedExperiment: SummarizedExperiment container. R package version 1.24.0, https://bioconductor.org/packages/SummarizedExperiment.
 #' H. Wickham. ggplot2: Elegant Graphics for Data Analysis. Springer-Verlag New York, 2016
+#' R Core Team (2021). R: A language and environment for statistical computing. R Foundation for Statistical Computing, Vienna, Austria. URL https://www.R-project.org/.
 
 #' @importFrom SummarizedExperiment colData
+#' @importFrom methods as
 #' @importFrom ggplot2 layer_data ggplot geom_point theme_classic theme element_text element_blank labs scale_shape_manual scale_color_manual margin guide_legend
 
 dim_color_coclus <- function(sce=NULL, row.sel=NULL, tar.bulk=NULL, profile=FALSE, gg.dim, gg.shm.all, grob.shm.all, gg.lgd.all, col.shm.all, col.lgd.all, grob.lgd.all, con.na=TRUE, lis.match=NULL, sub.title.size=11, dim.lgd.pos='bottom', dim.lgd.nrow=1, dim.lgd.text.size=10) {
  # save(sce, row.sel, tar.bulk, profile, gg.dim, gg.shm.all, grob.shm.all, gg.lgd.all, col.shm.all, col.lgd.all, grob.lgd.all, con.na, lis.match, sub.title.size, dim.lgd.pos, dim.lgd.nrow, dim.lgd.text.size, file='dim.color.coclus.arg')
+  response <- feature <- idx <- x <- y <- NULL
   if (!is.null(sce) & !is.null(lis.match)) stop("Only one of 'sce' and 'lis.match' is required!")
   cdat <- colData(sce)
   if (!is.null(sce)) {

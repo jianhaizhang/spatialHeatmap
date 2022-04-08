@@ -7,7 +7,7 @@
 #' @param gen.rm A regular expression of gene identifiers in single cell data to remove before filtering. E.g. mitochondrial, chloroplast and protoplasting-induced genes (\code{^ATCG|^ATCG}). The default is \code{NULL}.
 #' @param min.cnt The min count of gene expression. The default is \code{1}.
 #' @param p.in.cell The min proportion of counts above \code{min.cnt} in a cell. The default is \code{0.4}.
-#' @param p.in.gene The min proportion of counts above \code{min.cnt} in a gene. The default is \code{0.2}.
+#' @param p.in.gen The min proportion of counts above \code{min.cnt} in a gene. The default is \code{0.2}.
 #' @param verbose Logical. If \code{TRUE} (default), intermediate messages are printed.
 
 #' @return A list of filtered single cell data and bulk data, which have common genes.
@@ -72,10 +72,11 @@ filter_cell <- function(lis, bulk=NULL, gen.rm=NULL, min.cnt=1, p.in.cell=0.4, p
 #' Martin Morgan, Valerie Obenchain, Jim Hester and Hervé Pagès (2021). SummarizedExperiment: SummarizedExperiment container. R package version 1.24.0. https://bioconductor.org/packages/SummarizedExperiment
 #' Amezquita R, Lun A, Becht E, Carey V, Carpp L, Geistlinger L, Marini F, Rue-Albrecht K, Risso D, Soneson C, Waldron L, Pages H, Smith M, Huber W, Morgan M, Gottardo R, Hicks S (2020). "Orchestrating single-cell analysis with Bioconductor." _Nature Methods_, *17*, 137-145. <URL: https://www.nature.com/articles/s41592-019-0654-x>
 #' Douglas Bates and Martin Maechler (2021). Matrix: Sparse and Dense Matrix Classes and Methods. R package version 1.4-0. https://CRAN.R-project.org/package=Matrix
-
+#' R Core Team (2021). R: A language and environment for statistical computing. R Foundation for Statistical Computing, Vienna, Austria. URL https://www.R-project.org/.
 
 #' @importFrom SummarizedExperiment assay 
 #' @importFrom Matrix rowSums colSums
+#' @importFrom utils head 
  
 preprocess_sc <- function(data, gen.rm=NULL, min.cnt=1, p.in.cell=0.4, p.in.gen=0.2, verbose=TRUE) { 
   if (is(data, 'SummarizedExperiment') | is(data, 'SingeCellExperiment')) {

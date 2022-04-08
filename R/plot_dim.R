@@ -2,7 +2,7 @@
 #'
 #' @param sce A \code{SingleCellExperiment} object with reduced dimensions seen by \code{reducedDimNames(sce)}. 
 #' @param dim One of \code{PCA}, \code{UMAP}, \code{TSNE}, the method for reducing dimensionality.
-#' @param coloy.by One of the column names in the \code{colData} slot of \code{sce}.
+#' @param color.by One of the column names in the \code{colData} slot of \code{sce}.
 #' @param row.sel A numeric vector of row numbers in the \code{colData} slot of \code{sce}. The cells corresponding to these rows are highlighted and plotted on top of other cells.
 #' @param x.break,y.break Two numeric vectors for x, y axis breaks respectively. E.g. \code{seq(-10, 10, 2)}. The default is \code{NULL}.
 
@@ -10,7 +10,14 @@
 
 #' @examples
 
-#' See function "cocluster" by running "?cocluster".
+#' library(scran); library(scuttle) 
+#' sce <- mockSCE(); sce <- logNormCounts(sce) 
+#' # Modelling the variance.
+#' var.stats <- modelGeneVar(sce) 
+#' sce <- denoisePCA(sce, technical=var.stats, subset.row=rownames(var.stats)) 
+#' plot_dim(sce, dim='PCA', color.by='Cell_Cycle')
+
+#' # See function "cocluster" by running "?cocluster".
 
 #' @author Jianhai Zhang \email{jzhan067@@ucr.edu} \cr Dr. Thomas Girke \email{thomas.girke@@ucr.edu}
 
@@ -18,6 +25,8 @@
 #' Amezquita R, Lun A, Becht E, Carey V, Carpp L, Geistlinger L, Marini F, Rue-Albrecht K, Risso D, Soneson C, Waldron L, Pages H, Smith M, Huber W, Morgan M, Gottardo R, Hicks S (2020). “Orchestrating single-cell analysis with Bioconductor.” Nature Methods, 17, 137–145. https://www.nature.com/articles/s41592-019-0654-x
 #' H. Wickham. ggplot2: Elegant Graphics for Data Analysis. Springer-Verlag New York, 2016.
 #' Morgan M, Obenchain V, Hester J, Pagès H (2021). SummarizedExperiment: SummarizedExperiment container. R package version 1.24.0, https://bioconductor.org/packages/SummarizedExperiment.
+#' Lun ATL, McCarthy DJ, Marioni JC (2016). “A step-by-step workflow for low-level analysis of single-cell RNA-seq data with Bioconductor.” F1000Res., 5, 2122. doi: 10.12688/f1000research.9501.2.
+#' McCarthy DJ, Campbell KR, Lun ATL, Willis QF (2017). “Scater: pre-processing, quality control, normalisation and visualisation of single-cell RNA-seq data in R.” Bioinformatics, 33, 1179-1186. doi: 10.1093/bioinformatics/btw777.
 
 #' @importFrom SummarizedExperiment colData
 #' @importFrom SingleCellExperiment reducedDim
@@ -26,6 +35,7 @@
 #' @export plot_dim
 
 plot_dim <- function(sce, dim, color.by, row.sel=NULL, x.break=NULL, y.break=NULL) {
+  x <- y <- key <- colour_by <- NULL
   dim.all <- reducedDim(sce, dim)
   # First two dims.
   df.all <- dim.all[, c(1, 2)]; # rna <- rownames(df.all)
@@ -38,7 +48,7 @@ plot_dim <- function(sce, dim, color.by, row.sel=NULL, x.break=NULL, y.break=NUL
   # Percentage of variance explained.
   per.var <- attr(dim.all, 'percentVar')
   if (!is.null(per.var)) { # Axis labels.
-    per <- paste(round(per.var[1:2], 0), "%", sep="") 
+    per <- paste(round(per.var[seq_len(2)], 0), "%", sep="") 
     labs <- paste0(labs, ' (', per, ')')
   }
 

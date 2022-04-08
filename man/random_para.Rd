@@ -12,8 +12,7 @@ random_para(
   sim = round(seq(0.2, 0.8, by = 0.1), 1),
   sim.p = round(seq(0.2, 0.8, by = 0.1), 1),
   dim = seq(5, 40, by = 1),
-  df.spd.opt,
-  seed = 10
+  df.spd.opt
 )
 }
 \arguments{
@@ -32,8 +31,6 @@ random_para(
 \item{dim}{Integer scalar specifying the minimum number of (principle components) PCs to retain in \code{\link[scran]{denoisePCA}} when coclustering single cells and bulk data. The default is \code{12}.}
 
 \item{df.spd.opt}{A \code{data.frame} of optimized \code{spd.set} settings. These settings are avoided in the output random settings.}
-
-\item{seed}{}
 }
 \value{
 A \code{data.frame}.
@@ -44,7 +41,7 @@ In coclustering, generate random combinations of parameter settings for validati
 \examples{
 
 df.spd.opt <- data.frame(sim=c(0.2, 0.4, 0.3), sim.p=c(0.8, 0.6, 0.7), dim=c(12, 14, 13))
-df.para.rdn <- random_para(fil.set=c('fil3', 'fil4'), norm='cpm', dimred='umap', graph.meth=c('knn', 'snn'), sim=round(seq(0.2, 0.8, by=0.1), 1), sim.p=round(seq(0.2, 0.8,by=0.1), 1), dim=seq(5, 40, by=1), df.spd.opt=df.spd.opt, seed=10)
+df.para.rdn <- random_para(fil.set=c('fil3', 'fil4'), norm='cpm', dimred='umap', graph.meth=c('knn', 'snn'), sim=round(seq(0.2, 0.8, by=0.1), 1), sim.p=round(seq(0.2, 0.8,by=0.1), 1), dim=seq(5, 40, by=1), df.spd.opt=df.spd.opt)
 }
 \author{
 Jianhai Zhang \email{jzhan067@ucr.edu} \cr Dr. Thomas Girke \email{thomas.girke@ucr.edu}

@@ -9,7 +9,22 @@
 
 #' @examples
 
-#' See the example in the "cocluster" function by running "?cocluster".
+#' # Matching table.
+#' match.mus.brain.pa <- system.file("extdata/shinyApp/example", "match_mouse_brain_cocluster.txt", package="spatialHeatmap")
+#' df.match.mus.brain <- read.table(match.mus.brain.pa, header=TRUE, row.names=1, sep='\t')
+#' df.match.mus.brain
+#' 
+#' # Create random data matrix.
+#' df.random <- matrix(rexp(30), nrow=5)
+#' dimnames(df.random) <- list(paste0('gene', seq_len(nrow(df.random))), c('cere', 'cere', 'hipp', 'hipp', 'corti.sub', 'corti.sub'))
+#' 
+#' library(SingleCellExperiment); library(S4Vectors)
+#' cell.refined <- SingleCellExperiment(assays=list(logcounts=df.random), colData=DataFrame(cell=colnames(df.random)))
+#' 
+#' cell.refined <- true_bulk(cell.refined, df.match.mus.brain)
+#' colData(cell.refined)
+#' 
+#' # See detailed example in the "cocluster" function by running "?cocluster".
 
 #' @author Jianhai Zhang \email{jzhan067@@ucr.edu} \cr Dr. Thomas Girke \email{thomas.girke@@ucr.edu}
 
@@ -23,8 +38,8 @@ true_bulk <- function(sce, df.match) {
   true.bulk <- df.match$trueBulk; names(true.bulk) <- df.match$cell
   cdat <- colData(sce) 
   svg.bulk <- df.match$SVGBulk; names(svg.bulk) <- df.match$cell
-  colData(sce)$trueBulk <- true.bulk[cdat$cell]
-  colData(sce)$SVGBulk <- svg.bulk[cdat$cell]
+  colData(sce)$trueBulk <- as.character(true.bulk[cdat$cell])
+  colData(sce)$SVGBulk <- as.character(svg.bulk[cdat$cell])
   cdat <- colData(sce) 
   idx <- is.na(cdat$trueBulk) & is.na(cdat$SVGBulk)
   colData(sce)[idx, c('trueBulk', 'SVGBulk')] <- 'none'

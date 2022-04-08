@@ -73,7 +73,7 @@
 #' # Perform all pairwise comparisons in "organism_part" in "colData" slot.
 #' dis <- distinct(se=data.sub, com.factor='organism_part')
 
-#' @author Jianhai Zhang \email{jzhan067@@ucr.edu; zhang.jianhai@@hotmail.com} \cr Dr. Thomas Girke \email{thomas.girke@@ucr.edu}
+#' @author Jianhai Zhang \email{jzhan067@@ucr.edu} \cr Dr. Thomas Girke \email{thomas.girke@@ucr.edu}
 
 #' @references
 #' Cardoso-Moreira, Margarida, Jean Halbert, Delphine Valloton, Britta Velten, Chunyan Chen, Yi Shao, Angélica Liechti, et al. 2019. “Gene Expression Across Mammalian Organ Development.” Nature 571 (7766): 505–9
@@ -117,7 +117,7 @@ distt <- function(se, norm.fun='CNF', parameter.list=NULL, log2.trans=TRUE, com.
       vs <- paste0(levels(fct), collapse='_VS_')
       cat(i, ':', vs, '... \n')
       rownames(dsg) <- colData(se0)[, 'rep.distt']
-      # set.seed(61217)
+      # set.seed(100)
       # Genes with values <=0 in less than min_non_zero_cells are disgarded.
       res0 <- distinct_test(x=se0, name_assays_expression=assayNames(se0)[1], name_cluster=sam.factor, name_sample='rep.distt', design=dsg, column_to_test=2, min_non_zero_cells=ceiling((min(table(fct))+1)/2), n_cores=2)
       # Log2 FC requires count matrix.

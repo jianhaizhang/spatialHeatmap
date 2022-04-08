@@ -1,3 +1,8 @@
+Changes in version 2.1.1 (2022-04-06)
+ + Developed the new functionality co-visualization of bulk and single cell data through auto-matching/coclustering, i.e. source bulk tissues are matched/assigned to single cells automatically through coclustering. This feature is implemented in both command line and Shiny app with testing data provided. 
+ + Developed optimization functions for coclustering workflow with testing data provided.
+ + Co-visualization through manual matching was implemented in command line.
+ 
 Changes in version 1.99.0 (2021-10-14)
  + Implemented overlaying feature: overlay template images in raster format with SHMs, where charcoal and transparency options are provided.
  + Implemented Spatial Single Cell functionality: co-visualize single cells and bulk tissues by placing single-cell embedding plots (PCA, tSNE, UMAP) and SHMs side by side, cell cluster assignments are defined in the app or provided by users, in dimensionality plots shapes are not restricted to 6, etc.

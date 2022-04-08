@@ -5,7 +5,6 @@
 #' @param bulk The normalized and filtered bulk data in form of \code{SingleCellExperiment}, \code{matrix} (log2-scale), or \code{data.frame} (log2-scale).
 #' @param cell.refined The refined cell data in form of \code{SingleCellExperiment}, which is returned by \code{refine_cluster}. 
 #' @param df.match The \code{data.frame} specifying matching between cells and true bulk.
-#' @inheritParams cluster_cell
 #' @param sim.meth Method to calculate similarities between bulk and cells in each cocluster when assigning bulk to cells. \code{spearman} (default) or \code{pearson}.
 #' @inheritParams cluster_cell
 
@@ -13,7 +12,62 @@
 
 #' @examples
 
-#' See function "cocluster" by running "?cocluster".
+#' # Example bulk data of mouse brain for coclustering (Vacher et al 2021).
+#' blk.mus.pa <- system.file("extdata/shinyApp/example", "bulk_mouse_cocluster.txt", package="spatialHeatmap") 
+#'blk.mus <- as.matrix(read.table(blk.mus.pa, header=TRUE, row.names=1, sep='\t', check.names=FALSE))
+#' blk.mus[1:3, 1:5]
+#'
+#' # Example single cell data for coclustering (Ortiz et al 2020).
+#' sc.mus.pa <- system.file("extdata/shinyApp/example", "cell_mouse_cocluster.txt", package="spatialHeatmap") 
+#'sc.mus <- as.matrix(read.table(sc.mus.pa, header=TRUE, row.names=1, sep='\t', check.names=FALSE))
+#' sc.mus[1:3, 1:5]
+#'
+#' # Initial filtering. 
+#' blk.mus <- filter_data(data=blk.mus, sam.factor=NULL, con.factor=NULL, pOA=c(0.1, 5), CV=c(0.2, 100), dir=NULL) 
+#' dim(blk.mus)
+#' mus.lis <- filter_cell(lis=list(sc.mus=sc.mus), bulk=blk.mus, gen.rm=NULL, min.cnt=1, p.in.cell=0.5, p.in.gen=0.1) 
+
+#' \donttest{
+
+#' # Normalization: bulk and single cell are combined and normalized, then separated.
+#' mus.lis.nor <- norm_multi(dat.lis=mus.lis, cpm=FALSE)
+#'
+#' # Secondary filtering.
+#' library(SingleCellExperiment)
+#' blk.mus.fil <- filter_data(data=logcounts(mus.lis.nor$bulk), sam.factor=NULL, con.factor=NULL, pOA=c(0.1, 0.5), CV=c(0.2, 100)) 
+#' dim(blk.mus.fil)
+#' 
+#' mus.lis.fil <- filter_cell(lis=list(sc.mus=logcounts(mus.lis.nor$sc.mus)), bulk=blk.mus.fil, gen.rm=NULL, min.cnt=1, p.in.cell=0.05, p.in.gen=0.02)
+#'
+#' # The aSVG file of mouse brain.
+#' svg.mus <- system.file("extdata/shinyApp/example", "mus_musculus.brain.svg", package="spatialHeatmap")
+#' # Spatial features.  
+#' feature.df <- return_feature(svg.path=svg.mus) 
+#'
+#' # Matching table indicating true bulk tissues of each cell type and corresponding SVG bulk (spatial feature).
+#' df.match.mus.pa <- system.file("extdata/shinyApp/example", "match_mouse_brain_cocluster.txt", package="spatialHeatmap")
+#' df.match <- read.table(df.match.mus.pa, header=TRUE, row.names=1, sep='\t')
+#' df.match
+#'
+#' # The SVG bulk tissues are in the aSVG file.  
+#' df.match$SVGBulk %in% feature.df$feature
+#'
+#' # Cluster single cells.
+#' clus.sc <- cluster_cell(data=mus.lis.fil$sc.mus, min.dim=10, max.dim=50, graph.meth='knn', dimred='PCA')
+#' # Cluster labels are stored in "label" column in "colData".
+#'colData(clus.sc)[1:3, ]
+#'
+#' # Refine cell clusters.
+#' cell.refined <- refine_cluster(clus.sc, sim=0.2, sim.p=0.8, sim.meth='spearman')
+#'
+#' # Include matching information in "colData".
+#' cell.refined <- true_bulk(cell.refined, df.match)
+#' colData(cell.refined)[1:3, ]
+#'
+#' # Cocluster bulk and single cells.
+#' roc.lis <- coclus_roc(bulk=mus.lis.fil$bulk, cell.refined=cell.refined, df.match=df.match, min.dim=12, max.dim=50, graph.meth='knn', dimred='PCA', sim.meth='spearman') 
+#' }
+
 
 #' @author Jianhai Zhang \email{jzhan067@@ucr.edu} \cr Dr. Thomas Girke \email{thomas.girke@@ucr.edu}
 
@@ -23,7 +77,7 @@
 #' @export coclus_roc 
 #' @importFrom SingleCellExperiment logcounts
 
-coclus_roc <- function(bulk, cell.refined, df.match, min.dim=10, max.dim=50, graph.meth='snn', dimred='PCA', sim.meth='spearman', seed=1000) {
+coclus_roc <- function(bulk, cell.refined, df.match, min.dim=10, max.dim=50, graph.meth='snn', dimred='PCA', sim.meth='spearman') {
   # Combine bulk and single cell data.
   dat.kp.sc <- logcounts(cell.refined)
   cat('Single cell data: \n'); print(dim(dat.kp.sc))
@@ -40,7 +94,7 @@ coclus_roc <- function(bulk, cell.refined, df.match, min.dim=10, max.dim=50, gra
   table(colnames(blk.kp)); table(colnames(sc.kp))
 
   # Cluster cells+bulk.
-  sce.tsne.com <- cluster_cell(data=com.kp, min.dim=min.dim, max.dim=max.dim, graph.meth=graph.meth, dimred=dimred, seed=seed)
+  sce.tsne.com <- cluster_cell(data=com.kp, min.dim=min.dim, max.dim=max.dim, graph.meth=graph.meth, dimred=dimred)
   if (is.null(sce.tsne.com)) return()
   # sce.tsne.com <- clus.com$sce.tsne; sce.com.nor <- clus.com$sce.nor
   # data.com: logcounts(sce.com.nor), reducedDim(sce.tsne.com, 'PCA')
@@ -76,6 +130,7 @@ coclus_roc <- function(bulk, cell.refined, df.match, min.dim=10, max.dim=50, gra
 
 com_roc <- function(sce.coclus, dimred, dat.blk, df.match, sim.meth='spearman') { 
   # save(sce.coclus, dimred, dat.blk, df.match, sim.meth, file='com.roc.arg')
+  response <- NULL
   dat.com <- t(reducedDim(sce.coclus, dimred))
   cdat.com <- colData(sce.coclus) 
   if (nrow(dat.com)<5) stop('Dimensions should be >= 5!')

@@ -7,6 +7,7 @@ options(list(stringsAsFactors=FALSE, shiny.fullstacktrace=TRUE))
 # enableWGCNAThreads()
 # enableBookmarking("url")
 server <- function(input, output, session) {
+  set.seed(10)
   lis.url <- reactiveValues(par=NULL)
   observe({
     # The url on browser is captured only if the url is refreshed or the "Enter" key is pressed, which applies in the cases shiny app is first launched or users modified parameters in the url. Otherwise the query is null.
@@ -3530,7 +3531,7 @@ scell_server <- function(id, tab, upl.mod.lis, shm.mod.lis, session) {
     min.size <- par.norm$min.size; max.size <- par.norm$max.size
     validate(need(round(min.size)==min.size, ''))
     validate(need(round(max.size)==max.size, ''))
-    cat('Single cell: nomalization ... \n'); set.seed(100)
+    cat('Single cell: nomalization ... \n')
     withProgress(message="Normalizing: ", value=0, {
     incProgress(0.3, detail="in progress ...")
     clusters <- quickCluster(sce, min.size=min.size)
@@ -3790,7 +3791,7 @@ scell_server <- function(id, tab, upl.mod.lis, shm.mod.lis, session) {
     par.dim$pcs <- input$pcs
   })
   observe({
-    cat('Single cell: reducing dimensionality ... \n'); set.seed(100)
+    cat('Single cell: reducing dimensionality ... \n'); 
     sce <- sce.rct$val; sce.var <- sce.rct$var; top <- sce.rct$top
     min.rank <- par.dim$min.rank; max.rank <- par.dim$max.rank
     ncomT <- par.dim$ncomT; ntopT <- par.dim$ntopT; steps <- par.dim$steps

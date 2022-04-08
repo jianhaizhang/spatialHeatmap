@@ -4,7 +4,6 @@
 #' @param dat.lis A named \code{list} containing count data of single cell and bulk, which are in form of \code{matrix}, \code{data.frame}, \code{dgCMatrix}, or \code{SingleCellExperiment}.
 #' @param cpm Logical. The count data are first normalized by \code{\link[scran]{computeSumFactors}}. If \code{TRUE}, the data is further normalized by counts per million (cpm). The default is \code{FALSE}.
 #' @param count.kp Logical. If \code{FALSE} (default), the count data is discarded and only log2-scale data are kept.
-#' @param seed An integer for setting the seed of R's random number generator, which is useful to reproduce results.
 
 #' @return A list of normalized single cell and bulk data. 
 
@@ -47,7 +46,8 @@
 #' @importFrom scran quickCluster computeSumFactors 
 #' @importFrom scuttle logNormCounts
 
-norm_multi <- function(dat.lis, cpm=FALSE, count.kp=FALSE, seed=1000) {
+norm_multi <- function(dat.lis, cpm=FALSE, count.kp=FALSE) {
+  set <- NULL
   nas <- names(dat.lis)
   if (any(nas=='')) stop('The list should be named!')
   # Anchor sce.
@@ -64,7 +64,7 @@ norm_multi <- function(dat.lis, cpm=FALSE, count.kp=FALSE, seed=1000) {
     min.size <- 100
     if (min.size > ncol(sce.sc)) { print('Fewer cells than min size in quickCluster!'); return()
     }
-    set.seed(seed); clusters <- quickCluster(sce.sc, min.size=min.size)
+    clusters <- quickCluster(sce.sc, min.size=min.size)
     sce.sc <- computeSumFactors(sce.sc, cluster=clusters, min.mean=1)
     sce.sc.nor <- logNormCounts(sce.sc)
     # CPM.

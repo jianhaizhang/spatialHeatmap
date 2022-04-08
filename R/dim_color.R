@@ -26,6 +26,7 @@
 
 dim_color <- function(gg.dim, gg.shm.all, grob.shm.all, col.shm.all, cell.group, tar.cell='matched', con.na=TRUE, lis.match=NULL, sub.title.size=11, dim.lgd.pos='bottom', dim.lgd.nrow=2, dim.lgd.text.size=8) {
   # save(gg.dim, gg.shm.all, grob.shm.all, col.shm.all, cell.group, tar.cell, con.na, lis.match, sub.title.size, dim.lgd.pos, dim.lgd.nrow, dim.lgd.text.size, file='dim.color.arg')
+  x <- y <- fill <- feature <- NULL
   lis.match <- lis.match[!unlist(lapply(lis.match, is.null))]
   if (tar.cell[1]=='matched') tar.cell <- unique(names(lis.match))
   dat.ft.all <- unique(gg.dim$data$colour_by)

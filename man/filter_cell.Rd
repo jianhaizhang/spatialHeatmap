@@ -25,9 +25,9 @@ filter_cell(
 
 \item{p.in.cell}{The min proportion of counts above \code{min.cnt} in a cell. The default is \code{0.4}.}
 
-\item{verbose}{Logical. If \code{TRUE} (default), intermediate messages are printed.}
+\item{p.in.gen}{The min proportion of counts above \code{min.cnt} in a gene. The default is \code{0.2}.}
 
-\item{p.in.gene}{The min proportion of counts above \code{min.cnt} in a gene. The default is \code{0.2}.}
+\item{verbose}{Logical. If \code{TRUE} (default), intermediate messages are printed.}
 }
 \value{
 A list of filtered single cell data and bulk data, which have common genes.

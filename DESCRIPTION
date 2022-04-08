@@ -1,9 +1,9 @@
 Package: spatialHeatmap
 Type: Package
 Title: spatialHeatmap
-Version: 1.99.1
+Version: 2.1.1
 Authors@R: c(
-  person(given="Jianhai", family="Zhang", role=c("aut", "trl", "cre"), email="jianhai.zhang@email.ucr.edu", comment=""),
+  person(given="Jianhai", family="Zhang", role=c("aut", "trl", "cre"), email="jzhan067@ucr.edu", comment=""),
   person(given="Jordan", family="Hayes", role="aut", email="jhayes@ucr.edu", comment=""),
   person(given="Le", family="Zhang", role="aut", email="lzhan140@ucr.edu", comment=""),
   person(given="Bing", family="Yang", role="aut", email="yangbi@missouri.edu", comment=""),
@@ -14,20 +14,19 @@ Authors@R: c(
 Description: The spatialHeatmap package provides functionalities for visualizing cell-, tissue- and organ-specific data of biological assays by coloring the corresponding spatial features defined in anatomical images according to a numeric color key.
 License: Artistic-2.0
 Encoding: UTF-8
-biocViews: Visualization, Microarray, Sequencing, GeneExpression,
+biocViews: Spatial, Visualization, Microarray, Sequencing, GeneExpression,
         DataRepresentation, Network, Clustering, GraphAndNetwork,
         CellBasedAssays, ATACSeq, DNASeq, TissueMicroarray, SingleCell,
         CellBiology, GeneTarget
 VignetteBuilder: knitr
 Suggests: knitr, rmarkdown, BiocStyle, BiocSingular, RUnit, BiocGenerics,
-        ExpressionAtlas, DT, Biobase, GEOquery, shinyWidgets, shinyjs, htmltools, shinyBS, sortable,
-        scater, scran
+          ExpressionAtlas, DT, Biobase, GEOquery, shinyWidgets, shinyjs, htmltools, shinyBS, sortable
 Depends: R (>= 3.5.0)
-Imports: av, BiocFileCache, data.table, DESeq2, distinct, edgeR, WGCNA, flashClust, htmlwidgets, genefilter,
-        ggplot2, ggdendro, grImport, grid, gridExtra, gplots, igraph, HDF5Array, limma, methods, magick,
-        Matrix, rsvg, shiny, dynamicTreeCut, grDevices, graphics, ggplotify, parallel, 
-        plotly, rols, rappdirs, reshape2, scater, scuttle, scran, stats, SummarizedExperiment, shinydashboard, 
-        S4Vectors, utils, visNetwork, UpSetR, xml2, yaml
+Imports: av, BiocParallel, BiocFileCache, data.table, DESeq2, distinct, edgeR, WGCNA, flashClust, htmlwidgets, genefilter,
+        ggplot2, ggdendro, grImport, grid, gridExtra, gplots, igraph, HDF5Array, limma, methods, magick, Matrix, rsvg,
+        shiny, dynamicTreeCut, grDevices, graphics, ggplotify, parallel, plotly, pROC, rols, rappdirs, reshape2, scater, 
+        scuttle, scran, stats, SummarizedExperiment, SingleCellExperiment, shinydashboard, S4Vectors, utils, visNetwork, 
+        UpSetR, xml2, yaml
 BugReports: https://github.com/jianhaizhang/spatialHeatmap/issues
 URL: https://github.com/jianhaizhang/spatialHeatmap
 RoxygenNote: 7.1.2

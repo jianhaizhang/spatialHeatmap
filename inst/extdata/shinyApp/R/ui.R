@@ -495,7 +495,7 @@ tailor_match_ui <- function(id) {
 
 scell_ui <- function(id) { 
   ns <- NS(id)
-  tabPanel("Spatial Single Cell", value='scell', icon=NULL,
+  tabPanel("Co-visualization", value='scell', icon=NULL,
     br(),
     tabsetPanel(type = "pills", id=ns('tabSetCell'), selected="datCell", 
       tabPanel(title="Data Table", value='datCell',

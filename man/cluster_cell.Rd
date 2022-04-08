@@ -10,9 +10,8 @@ cluster_cell(
   min.dim = 5,
   max.dim = 50,
   pca = FALSE,
-  graph.meth = "snn",
-  dimred = "PCA",
-  seed = 1000
+  graph.meth = "knn",
+  dimred = "PCA"
 )
 }
 \arguments{
@@ -22,13 +21,11 @@ cluster_cell(
 
 \item{min.dim, max.dim}{Integer scalars specifying the minimum (\code{min.dim}) and maximum (\code{max.dim}) number of (principle components) PCs to retain respectively in \code{\link[scran]{denoisePCA}}. The default is \code{min.dim=5}, \code{max.dim=50}.}
 
+\item{pca}{Logical, if \code{TRUE} only the data with reduced dimentionality by PCA is returned and no clustering is performed. The default is \code{FALSE} and clustering is performed after dimensionality reduction.}
+
 \item{graph.meth}{Method to build a nearest-neighbor graph, \code{snn} (see \code{\link[scran]{buildSNNGraph}}) or \code{knn} (default, see \code{\link[scran]{buildKNNGraph}}). The clusters are detected by first creating a nearest neighbor graph using \code{snn} or \code{kn} then partitioning the graph.}
 
 \item{dimred}{A string of \code{PCA} (default) or \code{UMAP} specifying which reduced dimensionality to use in creating a nearest neighbor graph. Internally, before building a nearest neighbor graph the data dimensionalities are reduced by PCA and UMAP respectively.}
-
-\item{seed}{An integer for setting the seed of R's random number generator, which is useful to reproduce results.}
-
-\item{Logical, }{if \code{TRUE} only the data with reduced dimentionality by PCA is returned and no clustering is performed. The default is \code{FALSE} and clustering is performed after dimensionality reduction.}
 }
 \value{
 A list of normalized single cell and bulk data.
@@ -37,7 +34,18 @@ A list of normalized single cell and bulk data.
 In co-clustering, cluster only single cell data or combination of single cell and bulk data. The cluster assignments are stored in the \code{label} column of \code{colData} slot of \code{SingleCellExperiment}.
 }
 \examples{
-See function "cocluster" by running "?cocluster".
+library(scran); library(scuttle) 
+sce <- mockSCE(); sce <- logNormCounts(sce)
+# Modelling the variance.
+var.stats <- modelGeneVar(sce)
+sce <- denoisePCA(sce, technical=var.stats, subset.row=rownames(var.stats)) 
+\donttest{
+sce.clus <- cluster_cell(data=sce, prop=0.1, min.dim=5, max.dim=50, graph.meth='snn', dimred='PCA')
+# Clusters.
+table(colData(sce.clus)$label)
+
+}
+# See details in function "cocluster" by running "?cocluster".
 }
 \references{
 Morgan M, Obenchain V, Hester J, Pagès H (2021). SummarizedExperiment: SummarizedExperiment container. R package version 1.24.0, https://bioconductor.org/packages/SummarizedExperiment.

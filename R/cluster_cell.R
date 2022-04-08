@@ -4,16 +4,26 @@
 #' @param data The normalized single cell data or nomalized combination of single cell and bulk data at log2 scale in form of \code{SingleCellExperiment}, \code{dgCMatrix}, \code{matrix}, or \code{data.frame}.
 #' @param prop Numeric scalar specifying the proportion of genes to report as highly variable genes (HVGs). The default is \code{0.1}.
 #' @param min.dim,max.dim Integer scalars specifying the minimum (\code{min.dim}) and maximum (\code{max.dim}) number of (principle components) PCs to retain respectively in \code{\link[scran]{denoisePCA}}. The default is \code{min.dim=5}, \code{max.dim=50}.
-#' @param Logical, if \code{TRUE} only the data with reduced dimentionality by PCA is returned and no clustering is performed. The default is \code{FALSE} and clustering is performed after dimensionality reduction.
+#' @param pca Logical, if \code{TRUE} only the data with reduced dimentionality by PCA is returned and no clustering is performed. The default is \code{FALSE} and clustering is performed after dimensionality reduction.
 #' @param graph.meth Method to build a nearest-neighbor graph, \code{snn} (see \code{\link[scran]{buildSNNGraph}}) or \code{knn} (default, see \code{\link[scran]{buildKNNGraph}}). The clusters are detected by first creating a nearest neighbor graph using \code{snn} or \code{kn} then partitioning the graph. 
 #' @param dimred A string of \code{PCA} (default) or \code{UMAP} specifying which reduced dimensionality to use in creating a nearest neighbor graph. Internally, before building a nearest neighbor graph the data dimensionalities are reduced by PCA and UMAP respectively.
-#' @inheritParams norm_multi
 
 #' @return A list of normalized single cell and bulk data. 
 
 #' @examples
 
-#' See function "cocluster" by running "?cocluster".
+#' library(scran); library(scuttle) 
+#' sce <- mockSCE(); sce <- logNormCounts(sce)
+#' # Modelling the variance.
+#' var.stats <- modelGeneVar(sce)
+#' sce <- denoisePCA(sce, technical=var.stats, subset.row=rownames(var.stats)) 
+#' \donttest{
+#' sce.clus <- cluster_cell(data=sce, prop=0.1, min.dim=5, max.dim=50, graph.meth='snn', dimred='PCA')
+#' # Clusters.
+#' table(colData(sce.clus)$label)
+#'
+#' }
+#' # See details in function "cocluster" by running "?cocluster".
 
 #' @author Jianhai Zhang \email{jzhan067@@ucr.edu} \cr Dr. Thomas Girke \email{thomas.girke@@ucr.edu}
 
@@ -27,12 +37,12 @@
 
 #' @export cluster_cell 
 #' @importFrom SummarizedExperiment colData
-#' @importFrom SingleCellExperiment SingleCellExperiment
+#' @importFrom SingleCellExperiment SingleCellExperiment colLabels colLabels<-
 #' @importFrom scran modelGeneVar getTopHVGs denoisePCA buildSNNGraph buildSNNGraph 
 #' @importFrom scater runUMAP runTSNE
 #' @importFrom igraph cluster_walktrap
 
-cluster_cell <- function(data, prop=0.1, min.dim=5, max.dim=50, pca=FALSE, graph.meth='snn', dimred='PCA', seed=1000) {
+cluster_cell <- function(data, prop=0.1, min.dim=5, max.dim=50, pca=FALSE, graph.meth='knn', dimred='PCA') {
   if (is(data, 'SingleCellExperiment')) sce <- data
   if (is(data, 'dgCMatrix')|is(data, 'matrix')|is(data, 'data.frame')) {
     if (all(round(data)==data)) stop('The data to cluster should be in log2 scale!')
@@ -50,14 +60,15 @@ cluster_cell <- function(data, prop=0.1, min.dim=5, max.dim=50, pca=FALSE, graph
       warning('The input single cell data has too less genes!'); return()
     }
   }
-  set.seed(seed)
   sce.dimred <- denoisePCA(sce, assay.type = "logcounts", technical=df.var.sc, subset.row=top.hvgs.sc, min.rank=min.dim, max.rank=max.dim)
   if (pca==TRUE) return(sce.dimred)
   # Other argument: n_dimred, ntop. By default only 2 dimensions are returned by runTSNE/runUMAP.
   # runUMAP returns different results before/after runTSNE.
-  set.seed(seed)
+  # Avoid warnings due to duplicated column names.
+  cna <- colnames(sce.dimred); colnames(sce.dimred) <- seq_len(ncol(sce.dimred)) 
   sce.dimred <- runUMAP(sce.dimred, dimred="PCA", ncomponents=min.dim)
-  set.seed(seed)
+  # Row names in colData, reducedDim change accordingly.
+  colnames(sce.dimred) <- cna
   sce.dimred <- runTSNE(sce.dimred, dimred="PCA", ncomponents=2)
   
   # dims <- list(pca='PCA', tsne='TSNE', umap='UMAP') 

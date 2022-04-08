@@ -6,7 +6,7 @@
 
 #' @param lis.par A list of default parameters of the Shiny app. See \code{ lis.par.tmp }. Default is NULL, which means default parameters are adopted.
 
-#' @param lis.par.tmp Logical, TRUE or FALSE. Default is FALSE. If TRUE the template of default paramter list is returned, and users can set customized default values then assign this list to \code{ lis.par }. Note, only the existing values in the list can be changed while the hierarchy of the list should be preserved. Otherwise, it cannot be recognized by the internal program. 
+#' @param lis.par.tmp Logical, TRUE (default) or FALSE. If TRUE the template of default paramter list is returned, and users can set customized default values then assign this list to \code{ lis.par }. Note, only the existing values in the list can be changed while the hierarchy of the list should be preserved. Otherwise, it cannot be recognized by the internal program. 
 #' @param lis.dld.single A list of paired data matrix and single aSVG file, which would be downloadable on the app for testing. The list should have two elements with name slots of "data" and "svg" respectively, which are the paths of the data matrix and aSVG file repectively. After the function call, the specified data and aSVG are copied to the "example" folder in the app. Note the two name slots should not be changed. \emph{E.g.} \code{list(data='./data_download.txt', svg='./root_download_shm.svg')}.
 #' @param lis.dld.mul A list of paired data matrix and multiple aSVG files, which would be downloadable on the app for testing. The multiple aSVG files could be multiple growth stages of a plant. The list should have two elements with name slots of "data" and "svg" respectively, which are the paths of the data matrix and aSVG files repectively. The data and aSVG should only include the spatial dimension, no temporal dimension. After the function call, the specified data and aSVGs are copied to the "example" folder in the app. Note the two name slots should not be changed. \emph{E.g.} list(data='./data_download.txt', svg=c('./root_young_download_shm.svg', './root_old_download_shm.svg')).
 #' @param lis.dld.st A list of paired data matrix and single aSVG file, which would be downloadable on the app for testing. The list should have two elements with name slots of "data" and "svg" respectively, which are the paths of the data matrix and aSVG file repectively. Compared with \code{lis.dld.single}, the only difference is the data and aSVG include spatial and temporal dimension. See the example section for details. After the function call, the specified data and aSVG are copied to the "example" folder in the app. Note the two name slots should not be changed. \emph{E.g.} \code{list(data='./data_download.txt', svg='./root_download_shm.svg')}.
@@ -100,26 +100,18 @@ custom_shiny <- function(..., lis.par=NULL, lis.par.tmp=FALSE, lis.dld.single=NU
   # Default config file.
   cfg.def <- yaml.load_file(system.file('extdata/shinyApp/config/config.yaml', package='spatialHeatmap'))
   # Default parameters.
-  lis.par.def <- cfg.def[!grepl('^dataset\\d+|download_single|download_multiple|download_spatial_temporal|download_batched_data_aSVGs', names(cfg.def))]
+  lis.par.def <- cfg.def[!grepl('^dataset\\d+|download_single|download_multiple|download_spatial_temporal|download_covisualization|download_batched_data_aSVGs', names(cfg.def))]
   # Return parameter template.
   if (lis.par.tmp==TRUE) {
-
     for (i in seq_along(lis.par.def)) {
-
       lis0 <- lis.par.def[[i]]; if (length(lis0)>1) { 
- 
         name <- default <- NULL; for (j in seq_along(lis0)) {
-
           pair <- strsplit(lis0[j], ':')[[1]]
           name <- c(name, pair[1]); default <- c(default, pair[2])
-
         }; df0 <- data.frame(default=default)
         rownames(df0) <- name; lis.par.def[[i]] <- df0
-
       } 
-
     }; return(lis.par.def)
-
   }
   app.dir0 <- normalizePath(app.dir, winslash="/", mustWork=FALSE)
   app.dir <- paste0(app.dir0, '/shinyApp')

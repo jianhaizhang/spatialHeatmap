@@ -405,6 +405,7 @@ sce.manual <- readRDS(sce.manual.pa)
 # The following are simplified steps on single cell data analysis. Details are available at http://bioconductor.org/books/3.14/OSCA.workflows/zeisel-mouse-brain-strt-seq.html
 
 # Quality control
+library(scuttle)
 stats <- perCellQCMetrics(sce.manual, subsets=list(Mt=rowData(sce.manual)$featureType=='mito'), threshold=1)
 sub.fields <- 'subsets_Mt_percent'
 ercc <- 'ERCC' \%in\% altExpNames(sce.manual)
@@ -426,7 +427,7 @@ df.var <- modelGeneVar(sce.manual)
 top.hvgs <- getTopHVGs(df.var, prop = 0.1, n = 3000)
 
 # Dimensionality reduction.
-library(scater); set.seed(101011001)
+library(scater) 
 sce.manual <- denoisePCA(sce.manual, technical=df.var, subset.row=top.hvgs)
 sce.manual <- runTSNE(sce.manual, dimred="PCA")
 sce.manual <- runUMAP(sce.manual, dimred = "PCA")
@@ -487,6 +488,7 @@ Martin Morgan, Valerie Obenchain, Jim Hester and Hervé Pagès (2018). Summarize
 \cr Guangchuang Yu (2020). ggplotify: Convert Plot to 'grob' or 'ggplot' Object. R package version 0.0.5. https://CRAN.R-project.org/package=ggplotify
 \cr Cardoso-Moreira, Margarida, Jean Halbert, Delphine Valloton, Britta Velten, Chunyan Chen, Yi Shao, Angélica Liechti, et al. 2019. “Gene Expression Across Mammalian Organ Development.” Nature 571 (7766): 505–9
 Marques A et al. (2016). Oligodendrocyte heterogeneity in the mouse juvenile and adult central nervous system. Science 352(6291), 1326-1329.
+Amezquita R, Lun A, Becht E, Carey V, Carpp L, Geistlinger L, Marini F, Rue-Albrecht K, Risso D, Soneson C, Waldron L, Pages H, Smith M, Huber W, Morgan M, Gottardo R, Hicks S (2020). “Orchestrating single-cell analysis with Bioconductor.” Nature Methods, 17, 137–145. https://www.nature.com/articles/s41592-019-0654-x.
 }
 \author{
 Jianhai Zhang \email{jianhai.zhang@email.ucr.edu} \cr Dr. Thomas Girke \email{thomas.girke@ucr.edu}

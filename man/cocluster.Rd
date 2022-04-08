@@ -19,7 +19,6 @@ cocluster(
   sim.meth = "spearman",
   return.all = FALSE,
   multi.core.par = MulticoreParam(workers = 1, stop.on.error = FALSE, log = FALSE),
-  seed = 1000,
   verbose = TRUE,
   file = NULL
 )
@@ -53,8 +52,6 @@ cocluster(
 
 \item{multi.core.par}{The parallelization settings. Default is \code{MulticoreParam(workers=1, stop.on.error=FALSE, log=FALSE, logdir=NULL)}. See \code{\link[BiocParallel]{MulticoreParam}}.}
 
-\item{seed}{An integer for setting the seed of R's random number generator, which is useful to reproduce results.}
-
 \item{verbose}{Logical. If \code{TRUE} (default), intermediate messages are printed.}
 
 \item{file}{A file name without extension to save the table of parameter settings and coclustering statisctics if \code{return.all = FALSE}. The table is saved by \code{saveRDS} with extension \code{.rds}. Default is \code{NULL} and no file is saved.}
@@ -66,6 +63,9 @@ A nested list or a table of coclustering results.
 Cluster single cells, refine single cell clusters, and cocluster bulk and single cell data. Accept multiple parameter settings combinations in form of \code{data.frame}, and allows for parallelization.
 }
 \examples{
+# To obtain reproducible results, always start a new R session and set a fixed seed for Random Number Generator at the begaining, which is required only once in each R session.  
+set.seed(10)
+
 # Example bulk data of mouse brain for coclustering (Vacher et al 2021).
 blk.mus.pa <- system.file("extdata/shinyApp/example", "bulk_mouse_cocluster.txt", package="spatialHeatmap") 
 blk.mus <- as.matrix(read.table(blk.mus.pa, header=TRUE, row.names=1, sep='\t', check.names=FALSE))
@@ -138,6 +138,7 @@ names(res.lis)
 df.par <- data.frame(sim=c(0.2, 0.3), sim.p=c(0.8, 0.7), dim=c(12, 13))
 
 # The computation is parallelized on 2 cpu cores by "multi.core.par".
+library(BiocParallel)
 res.multi <- cocluster(bulk=mus.lis.fil$bulk, cell=mus.lis.fil$sc.mus, df.match=df.match, df.para=df.par, sc.dim.min=10, max.dim=50, sim=0.2, sim.p=0.8, dim=12, graph.meth='knn', dimred='PCA', sim.meth='spearman', return.all=TRUE, multi.core.par=MulticoreParam(workers=2))
 
 # The results of auto-matching through coclustering can be tailored through "Lasso Select" on the convenience Shiny app (desired_bulk_shiny) or manually defining desired bulk.
@@ -174,6 +175,7 @@ Amezquita R, Lun A, Becht E, Carey V, Carpp L, Geistlinger L, Marini F, Rue-Albr
 Xavier Robin, Natacha Turck, Alexandre Hainard, Natalia Tiberti, Frédérique Lisacek, Jean-Charles Sanchez and Markus Müller (2011). pROC: an open-source package for R and S+ to analyze and compare ROC curves. BMC Bioinformatics, 12, p. 77.  DOI: 10.1186/1471-2105-12-77 <http://www.biomedcentral.com/1471-2105/12/77/>
 Vacher CM, Lacaille H, O'Reilly JJ, Salzbank J et al. Placental endocrine function shapes cerebellar development and social behavior. Nat Neurosci 2021 Oct;24(10):1392-1401. PMID: 34400844.
 Ortiz C, Navarro JF, Jurek A, Märtin A et al. Molecular atlas of the adult mouse brain. Sci Adv 2020 Jun;6(26):eabb3446. PMID: 32637622
+R Core Team (2021). R: A language and environment for statistical computing. R Foundation for Statistical Computing, Vienna, Austria. URL https://www.R-project.org/.
 }
 \author{
 Jianhai Zhang \email{jzhan067@ucr.edu} \cr Dr. Thomas Girke \email{thomas.girke@ucr.edu}

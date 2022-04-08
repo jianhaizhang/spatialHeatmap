@@ -20,6 +20,9 @@
 
 #' @examples
 
+#' # To obtain reproducible results, always start a new R session and set a fixed seed for Random Number Generator at the begaining, which is required only once in each R session.  
+#' set.seed(10)
+#' 
 #' # Example bulk data of mouse brain for coclustering (Vacher et al 2021).
 #' blk.mus.pa <- system.file("extdata/shinyApp/example", "bulk_mouse_cocluster.txt", package="spatialHeatmap") 
 #'blk.mus <- as.matrix(read.table(blk.mus.pa, header=TRUE, row.names=1, sep='\t', check.names=FALSE))
@@ -95,6 +98,7 @@
 #' df.par <- data.frame(sim=c(0.2, 0.3), sim.p=c(0.8, 0.7), dim=c(12, 13))
 #'
 #' # The computation is parallelized on 2 cpu cores by "multi.core.par".
+#' library(BiocParallel)
 #' res.multi <- cocluster(bulk=mus.lis.fil$bulk, cell=mus.lis.fil$sc.mus, df.match=df.match, df.para=df.par, sc.dim.min=10, max.dim=50, sim=0.2, sim.p=0.8, dim=12, graph.meth='knn', dimred='PCA', sim.meth='spearman', return.all=TRUE, multi.core.par=MulticoreParam(workers=2))
 #'
 #' # The results of auto-matching through coclustering can be tailored through "Lasso Select" on the convenience Shiny app (desired_bulk_shiny) or manually defining desired bulk.
@@ -134,15 +138,18 @@
 #' Xavier Robin, Natacha Turck, Alexandre Hainard, Natalia Tiberti, Frédérique Lisacek, Jean-Charles Sanchez and Markus Müller (2011). pROC: an open-source package for R and S+ to analyze and compare ROC curves. BMC Bioinformatics, 12, p. 77.  DOI: 10.1186/1471-2105-12-77 <http://www.biomedcentral.com/1471-2105/12/77/>
 #' Vacher CM, Lacaille H, O'Reilly JJ, Salzbank J et al. Placental endocrine function shapes cerebellar development and social behavior. Nat Neurosci 2021 Oct;24(10):1392-1401. PMID: 34400844.
 #' Ortiz C, Navarro JF, Jurek A, Märtin A et al. Molecular atlas of the adult mouse brain. Sci Adv 2020 Jun;6(26):eabb3446. PMID: 32637622
+#' R Core Team (2021). R: A language and environment for statistical computing. R Foundation for Statistical Computing, Vienna, Austria. URL https://www.R-project.org/.
 
 #' @export cocluster
-#' @importFrom BiocParallel bpnworkers bpworkers bplapply
+#' @importFrom BiocParallel bpnworkers bpworkers bpworkers<- bplapply
 #' @importFrom parallel detectCores
 #' @importFrom SummarizedExperiment assay 
 #' @importFrom SingleCellExperiment logcounts 
 #' @importFrom pROC auc coords 
+#' @importFrom methods as 
 
-cocluster <- function(bulk, cell, df.match, df.para=NULL, sc.dim.min=10, max.dim=50, sim=0.2, sim.p=0.8, dim=12, graph.meth='knn', dimred='PCA', sim.meth='spearman', return.all=FALSE, multi.core.par=MulticoreParam(workers=1, stop.on.error=FALSE, log=FALSE), seed=1000, verbose=TRUE, file=NULL) {
+cocluster <- function(bulk, cell, df.match, df.para=NULL, sc.dim.min=10, max.dim=50, sim=0.2, sim.p=0.8, dim=12, graph.meth='knn', dimred='PCA', sim.meth='spearman', return.all=FALSE, multi.core.par=MulticoreParam(workers=1, stop.on.error=FALSE, log=FALSE), verbose=TRUE, file=NULL) {
+  sc.par.com <- NULL
   # if (!dir.exists('./multi_core_log')) dir.create('./multi_core_log')
   cpus <- detectCores(); workers <- bpnworkers(multi.core.par)
   if (workers <= 0) stop('The minimum worker(s) is 1 !')
@@ -185,7 +192,7 @@ cocluster <- function(bulk, cell, df.match, df.para=NULL, sc.dim.min=10, max.dim
     df.para0 <- subset(df.para, sc.par.com == i)
     df.para0 <- df.para0[, cna.val, drop=FALSE]
     workers <- nrow(df.para0)
-    clus.sc <- cluster_cell(data=cell, min.dim=df.para0$sc.dim.min[1], max.dim=df.para0$max.dim[1], pca=FALSE, graph.meth=df.para0$graph.meth[1], dimred=df.para0$dimred[1], seed=seed)
+    clus.sc <- cluster_cell(data=cell, min.dim=df.para0$sc.dim.min[1], max.dim=df.para0$max.dim[1], pca=FALSE, graph.meth=df.para0$graph.meth[1], dimred=df.para0$dimred[1])
     if (workers < bpworkers(multi.core.par)) bpworkers(multi.core.par) <- workers
     # Split para combinations by # of workers so that the intermediate auc results could be saved more frequently. E.g. nrow(df.para0) is 100, workers are 2. If no splitting, the auc results are saved when every 50 cocusterings are done. If split, auc results are saved when every 2 cocusterings are done.  
     rows <- seq_len(nrow(df.para0)); row.gr <- split(rows, ceiling(seq_along(rows)/workers))
@@ -205,7 +212,7 @@ cocluster <- function(bulk, cell, df.match, df.para=NULL, sc.dim.min=10, max.dim
       cell.refined <- refine_cluster(clus.sc, sim=df0$sim, sim.p=df0$sim.p, sim.meth=df0$sim.meth, verbose=verbose)
       cell.refined <- true_bulk(cell.refined, df.match)
       # Cocluster.
-      roc.lis <- coclus_roc(bulk=bulk, cell.refined=cell.refined, df.match=df.match, min.dim=df0$dim, max.dim=df0$max.dim, graph.meth=df0$graph.meth, dimred=df0$dimred, sim.meth=df0$sim.meth, seed=seed) 
+      roc.lis <- coclus_roc(bulk=bulk, cell.refined=cell.refined, df.match=df.match, min.dim=df0$dim, max.dim=df0$max.dim, graph.meth=df0$graph.meth, dimred=df0$dimred, sim.meth=df0$sim.meth) 
       if (return.all==TRUE) { 
         lis0 <- c(list(index=df0$index, cell.refined=cell.refined), roc.lis)
         return(lis0)

@@ -18,7 +18,22 @@ A \code{SingleCellExperiment} object.
 In co-clustering, assign true bulk to cells in \code{colData} slot.
 }
 \examples{
-See the example in the "cocluster" function by running "?cocluster".
+# Matching table.
+match.mus.brain.pa <- system.file("extdata/shinyApp/example", "match_mouse_brain_cocluster.txt", package="spatialHeatmap")
+df.match.mus.brain <- read.table(match.mus.brain.pa, header=TRUE, row.names=1, sep='\t')
+df.match.mus.brain
+
+# Create random data matrix.
+df.random <- matrix(rexp(30), nrow=5)
+dimnames(df.random) <- list(paste0('gene', seq_len(nrow(df.random))), c('cere', 'cere', 'hipp', 'hipp', 'corti.sub', 'corti.sub'))
+
+library(SingleCellExperiment); library(S4Vectors)
+cell.refined <- SingleCellExperiment(assays=list(logcounts=df.random), colData=DataFrame(cell=colnames(df.random)))
+
+cell.refined <- true_bulk(cell.refined, df.match.mus.brain)
+colData(cell.refined)
+
+# See detailed example in the "cocluster" function by running "?cocluster".
 }
 \references{
 Morgan M, Obenchain V, Hester J, Pagès H (2021). SummarizedExperiment: SummarizedExperiment container. R package version 1.24.  0, https://bioconductor.org/packages/SummarizedExperiment.

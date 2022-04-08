@@ -14,7 +14,7 @@
 #' McCarthy DJ, Campbell KR, Lun ATL, Willis QF (2017). "Scater: pre-processing, quality control, normalisation and visualisation of single-cell RNA-seq data in R." _Bioinformatics_, *33*, 1179-1186. doi: 10.1093/bioinformatics/btw777 (URL: https://doi.org/10.1093/bioinformatics/btw777).
 #' Baptiste Auguie (2017). gridExtra: Miscellaneous Functions for "Grid" Graphics. R package version 2.3. https://CRAN.R-project.org/package=gridExtra.
 
-#' @importFrom ggplot2 ggplot theme_void
+#' @importFrom ggplot2 ggplot theme_void scale_y_log10 scale_x_log10
 #' @importFrom scater plotColData
 #' @importFrom gridExtra grid.arrange
 

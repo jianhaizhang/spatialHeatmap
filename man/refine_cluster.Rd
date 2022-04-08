@@ -6,8 +6,8 @@
 \usage{
 refine_cluster(
   sce.clus,
-  sim = 0.5,
-  sim.p = 0.5,
+  sim = 0.2,
+  sim.p = 0.8,
   sim.meth = "spearman",
   verbose = TRUE
 )
@@ -28,11 +28,26 @@ A \code{SummarizedExperiment} object with some cells discarded.
 In each cell cluster, the pairwise Spearman or Pearson correlation coefficients (similarities) are calculated between cells. Cells having similarities over \code{sim} with other cells in the same cluster at proportion over \code{sim.p} remain, and other cells are filtered out. The resulting clusters are more homogeneous.
 }
 \examples{
-See function "cocluster" by running "?cocluster".
+library(scran); library(scuttle) 
+sce <- mockSCE(); sce <- logNormCounts(sce) 
+# Modelling the variance.
+var.stats <- modelGeneVar(sce)
+sce <- denoisePCA(sce, technical=var.stats, subset.row=rownames(var.stats))
+\donttest{
+sce.clus <- cluster_cell(data=sce, prop=0.1, min.dim=5, max.dim=50, graph.meth='snn', dimred='PCA')
+# Clusters. 
+table(colData(sce.clus)$label)
+
+cell.refined <- refine_cluster(sce.clus, sim=0.5, sim.p=0.8, sim.meth='spearman', verbose=TRUE)
+}
+
+# See details in function "cocluster" by running "?cocluster".
 }
 \references{
 Morgan M, Obenchain V, Hester J, Pagès H (2021). SummarizedExperiment: SummarizedExperiment container. R package version 1.24.0, https://bioconductor.org/packages/SummarizedExperiment.
 mezquita R, Lun A, Becht E, Carey V, Carpp L, Geistlinger L, Marini F, Rue-Albrecht K, Risso D, Soneson C, Waldron L, Pages H, Smith M, Huber W, Morgan M, Gottardo R, Hicks S (2020). “Orchestrating single-cell analysis with Bioconductor.” Nature Methods, 17, 137–145. https://www.nature.com/articles/s41592-019-0654-x.
+Lun ATL, McCarthy DJ, Marioni JC (2016). “A step-by-step workflow for low-level analysis of single-cell RNA-seq data with       Bioconductor.” F1000Res., 5, 2122. doi: 10.12688/f1000research.9501.2.
+McCarthy DJ, Campbell KR, Lun ATL, Willis QF (2017). “Scater: pre-processing, quality control, normalisation and visualisation  of single-cell RNA-seq data in R.” Bioinformatics, 33, 1179-1186. doi: 10.1093/bioinformatics/btw777.
 }
 \author{
 Jianhai Zhang \email{jzhan067@ucr.edu} \cr Dr. Thomas Girke \email{thomas.girke@ucr.edu}
