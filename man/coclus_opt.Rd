@@ -58,7 +58,7 @@ A list of normalized single cell and bulk data.
 Optimizing coclustering process with two levels of parallelizations available.
 }
 \examples{
-# To obtain reproducible results, always start a new R session and set a fixed seed for Random Number Generator at the begaining, which is required only once in each R session.  
+# To obtain reproducible results, always start a new R session and set a fixed seed for Random Number Generator at the beginning, which is required only once in each R session.  
 set.seed(10)
 
 # Example bulk data of Arabidopsis thaliana (Arabidopsis) root for coclustering optimization (Li et al 2016).

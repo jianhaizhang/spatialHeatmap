@@ -30,7 +30,7 @@ A \code{SingleCellExperiment} of remaining bulk-cell assignments.
 Subset the bulk-cell assignments according to a threshold, which is a similarity value between bulk and cells.
 }
 \examples{
-# To obtain reproducible results, always start a new R session and set a fixed seed for Random Number Generator at the begaining, which is required only once in each R session.  
+# To obtain reproducible results, always start a new R session and set a fixed seed for Random Number Generator at the beginning, which is required only once in each R session.  
 set.seed(10)
 
 # Example bulk data of mouse brain for coclustering (Vacher et al 2021).

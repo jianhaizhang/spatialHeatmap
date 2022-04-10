@@ -260,7 +260,7 @@ gg_shm <- function(gene, con.na=TRUE, geneV, coord, tmp.path=NULL, charcoal=FALS
 
 #' @importFrom parallel detectCores mclapply
 
-grob_shm <- function(gg.lis, cores=2, lgd.pos='none') {
+grob_shm <- function(gg.lis, cores=1, lgd.pos='none') {
   tmp <- normalizePath(tempfile(), winslash='/', mustWork=FALSE)
   cat('Converting "ggplot" to "grob" ... \n')
   # mclapply does not give speed gain here.

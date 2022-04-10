@@ -56,6 +56,7 @@ BiocStyle::markdown(css.files=c('file/custom.css'))
 library(knitr); opts_chunk$set(message=FALSE, warning=FALSE)
 ```
 
+<p style='color:red'>jianhai: text in red. </p>
 
 # Introduction 
 
@@ -66,7 +67,7 @@ tissue- and organ-specific data of biological assays by coloring the
 corresponding spatial features defined in anatomical images according to a
 numeric color key. The color scheme used to represent the assay values can be
 customized by the user. This core functionality of the package is called a
-_spatial heatmap_ (SHM) plot. It also has extended functionalities of spatial enrichment (SE) and clustering. SE is specialized in detecting genes that are specifically expressed in a particular spatial feature, while clustering is designed to detect biological molecule groups sharing related abundance profiles (_e.g._ gene modules) and visualize them in matrix heatmaps combined with hierarchical clustering dendrograms and network representations. Moreover, an advanced functionality of integrated co-visualization of bulk and single-cell data (co-visualization) is also developed. Sinlge cells in embedding plots (PCA, UMAP, TSNE) are matched with corresponding bulk tissues in SHMs manually or automatically. These functionalities form an integrated methodology for spatial biological assay data visualization and analysis.      
+_spatial heatmap_ (SHM) plot. <font style='color:red'> It also has extended functionalities of spatial enrichment (SE) and clustering. SE is specialized in detecting genes that are specifically expressed in a particular spatial feature, while clustering is designed to detect biological molecule groups sharing related abundance profiles (_e.g._ gene modules) and visualize them in matrix heatmaps combined with hierarchical clustering dendrograms and network representations. Moreover, an advanced functionality of integrated co-visualization of bulk and single-cell data (co-visualization) is also developed. Sinlge cells in embedding plots (PCA, UMAP, TSNE) are matched with corresponding bulk tissues in SHMs manually or automatically. These functionalities form an integrated methodology for spatial biological assay data visualization and analysis. </font>     
 
 The functionalities of _spatialHeatmap_ can be used either in a command-driven mode
 from within R or a graphical user interface (GUI) provided by a Shiny App that
@@ -1370,6 +1371,7 @@ Note in Figure \@ref(fig:arabshm) shoots have thicker outlines than roots. This 
 
 In principle, the `spatialHeatmap` is extendable to as many factors (*e.g.* samples, conditions, times) as possible. The most common scenario involves only two factors of samples and conditions ([Section 3](#shm)). If more factors are relevant such as development stages, geographical locations, genotypes, *etc*, all or selected factors should be combined to generate composite factors. The [spatiotemporal section](#sthm) is an illustration of three factors. Similar combining strategies should be appied in cases of four or more factors. A rule of thumb is the composite factors of interest must have a matching counterpart in the aSVG file, otherwise target spatial features are not painted in spatial heatmaps.   
 
+<font style='color:red'>
 
 
 # Overlaying 
@@ -1408,6 +1410,7 @@ To reduce template colors to minimum, templates can be set black-white by `charc
 spatial_hm(svg.path=c(svg.pa1, svg.pa2), data=dat.overlay, tmp.path=c(tmp.pa1, tmp.pa2), charcoal=TRUE, ID=c('gene1'), alpha.overlay=0.5, bar.width=0.09, sub.title.vjust=4)
 ```
 
+</font>
 
 # Matrix Heatmaps {#mhm}
 
@@ -1550,6 +1553,7 @@ node.
 network(ID="HRE2", data=sub.mat, adj.mod=adj.mod, static=FALSE)
 ```
 
+<font style='color:red'>
 
 # Spatial Enrichment (SE) {#se} 
 
@@ -1654,7 +1658,7 @@ The example single cell data of mouse brain are from a oligodendrocyte heterogen
 
 ### Clustering single cells
 
-To obtain reproducible results, always start a new R session and set a fixed seed for Random Number Generator at the begaining, which is required only once in each R session.     
+To obtain reproducible results, always start a new R session and set a fixed seed for Random Number Generator at the beginning, which is required only once in each R session.     
 ```{r , eval=TRUE, echo=TRUE, warnings=FALSE}
 set.seed(10)
 ```
@@ -1822,7 +1826,7 @@ Each running of the workflow yields an AUC value, thus after running the workflo
 
 Since optimzation on example data also takes a relatively long time, most of the following steps are not evaluated. A common computer with 4G memory and 4 CPUs is enough to run the following optimization process.   
 
-To obtain reproducible results, always start a new R session and set a fixed seed for Random Number Generator at the begaining, which is required only once in each R session.   
+To obtain reproducible results, always start a new R session and set a fixed seed for Random Number Generator at the beginning, which is required only once in each R session.   
 ```{r , eval=TRUE, echo=TRUE, warnings=FALSE}
 set.seed(10)
 ```
@@ -1895,7 +1899,7 @@ If slurm is installed, users could take advantage of two levels of parallelizati
 `sim` and `sim.p` are parameters in refining cell clusters (Figure \@ref(fig:coclusOver).5). Specifically, in a cell cluster, cells having similarities over `sim` with other cells in the same cluster of at least proportion `sim.p` would remain. `sim` is Spearman' or Pearson's correlation coefficient. `dim` is the number of top dimensionalities (equivalent to genes) in co-clustering. Since the three parameters are related to each other, they are treated as a set `spd.set`.     
 
 ```{r optPara2, eval=FALSE, echo=TRUE, warnings=FALSE}
-  opt <- coclus_opt(wk.dir='opt_res', dimred=c('PCA', 'UMAP'), graph.meth=c('knn', 'snn'), sim=seq(0.2, 0.4, by=0.1), sim.p=seq(0.2, 0.4, by=0.1), dim=seq(5, 7, by=1), df.match=df.match.arab, batch.par=BatchtoolsParam(workers=3, cluster="slurm", template='slurm.tmpl'), multi.core.par=MulticoreParam(workers=2), verbose=FALSE)
+  opt <- coclus_opt(wk.dir='opt_res', dimred=c('PCA', 'UMAP'), graph.meth=c('knn', 'snn'), sim=seq(0.2, 0.4, by=0.1), sim.p=seq(0.2, 0.4, by=0.1), dim=seq(5, 7, by=1), df.match=df.match.arab, batch.par=BatchtoolsParam(workers=3, cluster="slurm", template='slurm.tmpl', RNGseed=100), multi.core.par=MulticoreParam(workers=2), verbose=FALSE)
 ```
 
 If slurm is not available, optimization can be parallelized only at the second-level by setting `batch.par=NULL`.      
@@ -2040,7 +2044,7 @@ The optimization in real case has high demand on computing power and takes a lon
 
 The bulk [@Li2016-yz] and five single cell [@Shahan2020-zj] data sets of Arabidopsis root are accessed from the same studies as [last section](#opt_demo). Details about how to access and format them are described [here](https://github.com/jianhaizhang/cocluster_data){target='blank'}. In the following, `blk.arb.rt` refers to bulk data and `sc.arab.rt10`, `sc.arab.rt11`, `sc.arab.rt12`, `sc.arab.rt30`, `sc.arab.rt31` refers to the five single cell data sets respectively.  
 
-To obtain reproducible results, always start a new R session and set a fixed seed for Random Number Generator at the begaining, which is required only once in each R session.   
+To obtain reproducible results, always start a new R session and set a fixed seed for Random Number Generator at the beginning, which is required only once in each R session.   
 ```{r , eval=TRUE, echo=TRUE, warnings=FALSE}
 set.seed(10)
 ```
@@ -2099,7 +2103,7 @@ file.copy(system.file("extdata/cocluster", "slurm.tmpl", package="spatialHeatmap
 If slurm is installed, users could take advantage of two levels of parallelizations. For instance, the first- and second-level parallelizations are set 3 and 2 cpu cores respectively. The `wk.dir` is the same in secondary filtering. Note the settings of `spd.set` (`sim/sim.p/dim`) has wider ranges than in last section. The parallel computation is performed at High-Performance Computing Center (HPCC) at University of California, Riverside.  
 
 ```{r , eval=FALSE, echo=TRUE, warnings=FALSE}
-opt <- coclus_opt(wk.dir='opt_real_res', dimred=c('PCA', 'UMAP'), graph.meth=c('knn', 'snn'), sim=seq(0.2, 0.8, by=0.1), sim.p=seq(0.2, 0.8, by=0.1), dim=seq(5, 40, by=1), df.match=df.match.arab, batch.par=BatchtoolsParam(workers=3, cluster="slurm", template='slurm.tmpl'), multi.core.par=MulticoreParam(workers=2), verbose=FALSE)
+opt <- coclus_opt(wk.dir='opt_real_res', dimred=c('PCA', 'UMAP'), graph.meth=c('knn', 'snn'), sim=seq(0.2, 0.8, by=0.1), sim.p=seq(0.2, 0.8, by=0.1), dim=seq(5, 40, by=1), df.match=df.match.arab, batch.par=BatchtoolsParam(workers=3, cluster="slurm", template='slurm.tmpl', RNGseed=100), multi.core.par=MulticoreParam(workers=2), verbose=FALSE)
 ```
 
 If slurm is not available, optimization can be parallelized only at the second-level by setting `batch.par=NULL`.      
@@ -2314,7 +2318,7 @@ kable(df.opt.final, caption='Final optimal parameter settings after validation.'
 
 This section demonstrates co-visulization of bulk and single cells using the auto-matching functionality on mouse brain data. The bulk [@Vacher2021-xg] and single cell [@Ortiz2020-yt] RNA-seq data are from the same studies as in validating optimal settings. Both data sets are reduced for demonstration purpose. The optimal settings of `fct`, `fil1`, `pca`, `knn`, `s0.2p0.8d12` in Table \@ref(tab:optParFin) are used.      
 
-To obtain reproducible results, always start a new R session and set a fixed seed for Random Number Generator at the begaining, which is required only once in each R session.   
+To obtain reproducible results, always start a new R session and set a fixed seed for Random Number Generator at the beginning, which is required only once in each R session.   
 ```{r , eval=TRUE, echo=TRUE, warnings=FALSE}
 set.seed(10)
 ```
@@ -2469,15 +2473,15 @@ Aggregate extracted cells by `SVGBulk`. The aggregated cells are equivalent to b
 sce.aggr <- aggr_rep(data=sce.lis$cell.sub, assay.na='logcounts', sam.factor='SVGBulk', con.factor=NULL, aggr='mean')
 ```
 
-Co-visualize bulk and single cells with aggregated abundance profiles of gene `Agt`. `tar.bulk` refers to the target bulk in  aSVG and all corresponding cells are highlighted. Cells with true assignments of `tar.bulk` are colored according to the color key, while other corresponding cells with false or without assignments are colored black. All other cells not corresponding to `tar.bulk` are in gray.    
-```{r , eval=TRUE, echo=TRUE, warnings=FALSE, fig.wide=TRUE, fig.cap=('Co-visualizing bulk and single cells of mouse brain with abundance profiles. The aggregated expression profiles of gene `Agt` are plotted.'), out.width="100%", fig.show='show'}
-shm.lis1 <- spatial_hm(svg.path=svg.mus, data=sce.aggr, ID=c('Agt'), legend.nrow=4, sce.dimred=sce.lis$cell.refined, dimred='PCA', assay.na='logcounts', tar.bulk=c('hippocampus'), profile=TRUE, dim.lgd.text.size=10, dim.lgd.nrow=1, bar.width=0.1)
+Co-visualize bulk and single cells with aggregated abundance profiles of gene `Adcy1`. `tar.bulk` refers to the target bulk in  aSVG and all corresponding cells are highlighted. Cells with true assignments of `tar.bulk` are colored according to the color key, while other corresponding cells with false or without assignments are colored black. All other cells not corresponding to `tar.bulk` are in gray.    
+```{r , eval=TRUE, echo=TRUE, warnings=FALSE, fig.wide=TRUE, fig.cap=('Co-visualizing bulk and single cells of mouse brain with abundance profiles. The aggregated expression profiles of gene `Adcy1` are plotted.'), out.width="100%", fig.show='show'}
+shm.lis1 <- spatial_hm(svg.path=svg.mus, data=sce.aggr, ID=c('Adcy1'), legend.nrow=4, sce.dimred=sce.lis$cell.refined, dimred='PCA', assay.na='logcounts', tar.bulk=c('hippocampus'), profile=TRUE, dim.lgd.text.size=10, dim.lgd.nrow=1, bar.width=0.1)
 ```
 
 Co-visualize bulk and single cells without abundance profiles.  
 
 ```{r , eval=TRUE, echo=TRUE, warnings=FALSE, fig.wide=TRUE, fig.cap=('Co-visualizing bulk and single cells of mouse brain without abundance profiles. The matching between cells and SVG bulk is denoted by color in-between.'), out.width="100%", fig.show='show'}
-shm.lis2 <- spatial_hm(svg.path=svg.mus, data=sce.aggr, ID=c('Agt'), legend.nrow=4, sce.dimred=sce.lis$cell.refined, dimred='PCA', tar.bulk=c('hippocampus'), profile=FALSE, dim.lgd.text.size=10, dim.lgd.nrow=1)
+shm.lis2 <- spatial_hm(svg.path=svg.mus, data=sce.aggr, ID=c('Adcy1'), legend.nrow=4, sce.dimred=sce.lis$cell.refined, dimred='PCA', tar.bulk=c('hippocampus'), profile=FALSE, dim.lgd.text.size=10, dim.lgd.nrow=1)
 ```
 
 ### Using Shiny App
@@ -2490,6 +2494,7 @@ colData(sce.auto)
 metadata(sce.auto)$df.match
 ```
 
+</font>
 
 # Shiny App {#shiny}
 

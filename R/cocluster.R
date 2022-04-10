@@ -20,7 +20,7 @@
 
 #' @examples
 
-#' # To obtain reproducible results, always start a new R session and set a fixed seed for Random Number Generator at the begaining, which is required only once in each R session.  
+#' # To obtain reproducible results, always start a new R session and set a fixed seed for Random Number Generator at the beginning, which is required only once in each R session.  
 #' set.seed(10)
 #' 
 #' # Example bulk data of mouse brain for coclustering (Vacher et al 2021).
@@ -121,10 +121,10 @@
 #' sce.aggr <- aggr_rep(data=sce.lis$cell.sub, assay.na='logcounts', sam.factor='SVGBulk', con.factor=NULL, aggr='mean')
 #'
 #' # Co-visualize bulk and single cells without abundance profiles.
-#' shm.lis1 <- spatial_hm(svg.path=svg.mus, data=sce.aggr, ID=c('Agt'), legend.nrow=4, sce.dimred=sce.lis$cell.refined, dimred='PCA', tar.bulk=c('hippocampus'), profile=FALSE, dim.lgd.text.size=10, dim.lgd.nrow=1)
+#' shm.lis1 <- spatial_hm(svg.path=svg.mus, data=sce.aggr, ID=c('Adcy1'), legend.nrow=4, sce.dimred=sce.lis$cell.refined, dimred='PCA', tar.bulk=c('hippocampus'), profile=FALSE, dim.lgd.text.size=10, dim.lgd.nrow=1)
 #'
-#' # Co-visualize bulk and single cells with abundance profiles of gene "Agt".
-#' shm.lis2 <- spatial_hm(svg.path=svg.mus, data=sce.aggr, ID=c('Agt'), legend.nrow=4, sce.dimred=sce.lis$cell.refined, dimred='PCA', assay.na='logcounts', tar.bulk=c('hippocampus'), profile=TRUE, dim.lgd.text.size=10, dim.lgd.nrow=1, bar.width=0.1)
+#' # Co-visualize bulk and single cells with abundance profiles of gene "Adcy1".
+#' shm.lis2 <- spatial_hm(svg.path=svg.mus, data=sce.aggr, ID=c('Adcy1'), legend.nrow=4, sce.dimred=sce.lis$cell.refined, dimred='PCA', assay.na='logcounts', tar.bulk=c('hippocampus'), profile=TRUE, dim.lgd.text.size=10, dim.lgd.nrow=1, bar.width=0.1)
 
 #'}
 

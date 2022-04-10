@@ -119,7 +119,7 @@ distt <- function(se, norm.fun='CNF', parameter.list=NULL, log2.trans=TRUE, com.
       rownames(dsg) <- colData(se0)[, 'rep.distt']
       # set.seed(100)
       # Genes with values <=0 in less than min_non_zero_cells are disgarded.
-      res0 <- distinct_test(x=se0, name_assays_expression=assayNames(se0)[1], name_cluster=sam.factor, name_sample='rep.distt', design=dsg, column_to_test=2, min_non_zero_cells=ceiling((min(table(fct))+1)/2), n_cores=2)
+      res0 <- distinct_test(x=se0, name_assays_expression=assayNames(se0)[1], name_cluster=sam.factor, name_sample='rep.distt', design=dsg, column_to_test=2, min_non_zero_cells=ceiling((min(table(fct))+1)/2), n_cores=1)
       # Log2 FC requires count matrix.
       SummarizedExperiment::assay(se0) <- 2^SummarizedExperiment::assay(se0)
       res1 <- log2_FC(res=res0, x=se0, name_assays_expression=assayNames(se0)[1], name_cluster=sam.factor, name_group=con.factor)

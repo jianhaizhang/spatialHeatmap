@@ -1367,7 +1367,7 @@ match_server <- function(id, sam, tab, upl.mod.lis, sce.rct=NULL, session) {
     sf.all <- NULL; for (i in seq_along(svg.na)) { 
       cat('Extract all spatial features for re-matching:', svg.na[i], '\n')
       na0 <- svg.na[i]; if (!grepl('\\.svg$', na0)) next
-      df_tis <- svg_df(svg.path=svg.path[i], feature=sam(), cores=deter_core(2, svg.path[i]))
+      df_tis <- svg_df(svg.path=svg.path[i], feature=sam(), cores=deter_core(1, svg.path[i]))
       validate(need(!is.character(df_tis), paste0(svg.na[i], ': ', df_tis)))
       df_tis$tmp.pa <- tmp_path(svg.path, svg.na, na0, tmp.ext)
       sf.all <- c(sf.all, df_tis$tis.path)
@@ -1675,7 +1675,7 @@ shm_server <- function(id, sch, lis.url, url.id, tab, upl.mod.lis, dat.mod.lis, 
             cat(svg.na[i], '\n')
             # Excluding raster images.
             na0 <- svg.na[i]; if (!grepl('\\.svg$', na0)) next
-            df_tis <- svg_df(svg.path=svg.path[i], feature=sam(), cores=deter_core(2, svg.path[i]))
+            df_tis <- svg_df(svg.path=svg.path[i], feature=sam(), cores=deter_core(1, svg.path[i]))
             validate(need(!is.character(df_tis), paste0(na0, ': ', df_tis)))
             # Extract template image path for each aSVG.
             df_tis$tmp.pa <- tmp_path(svg.path, svg.na, na0, tmp.ext)
@@ -1822,9 +1822,9 @@ shm_server <- function(id, sch, lis.url, url.id, tab, upl.mod.lis, dat.mod.lis, 
        lgd.all <- c(lgd.all, list(gg.lis$g.lgd))
        gcol.lgd.all <- c(gcol.lgd.all, list(gg.lis$gcol.lgd))
        # Same names with ggs: append suffix '_i' for the SHMs of grob under SVG[i], and store them in a list.
-       grob.lis <- grob_shm(ggs, cores=deter_core(2, svg.path()$svg.path[i])) 
+       grob.lis <- grob_shm(ggs, cores=deter_core(1, svg.path()$svg.path[i])) 
        grob.all <- c(grob.all, grob.lis)
-       lgd.grob.lis <- grob_shm(lgd.all, cores=deter_core(2, svg.path()$svg.path[i]), lgd.pos='bottom')
+       lgd.grob.lis <- grob_shm(lgd.all, cores=deter_core(1, svg.path()$svg.path[i]), lgd.pos='bottom')
        lgd.grob.all <- c(lgd.grob.all, lgd.grob.lis)
        # All ggplots/grobs are stored in nested lists under each SVG for use in relatice scale. In above, all ggplots/grobs are stored in the same list with suffix '_i' to indicate SVGs.
         lis0 <- list(grob.lis = grob.lis, gg.lis = ggs, lgd.lis = gg.lis$g.lgd, lgd.grob=lgd.grob.lis[[1]], gcol.lis=gcols, gcol.lgd=gg.lis$gcol.lgd)
@@ -1916,9 +1916,9 @@ shm_server <- function(id, sch, lis.url, url.id, tab, upl.mod.lis, dat.mod.lis, 
        lgd.all <- c(lgd.all, list(gg.lis$g.lgd))
        gcol.lgd.all <- c(gcol.lgd.all, list(gg.lis$gcol.lgd))
        # Same with ggs: append suffix '_i' for the SHMs of grob under SVG[i], and store them in a list.
-       grob.lis <- grob_shm(ggs, cores=deter_core(2, svg.path()$svg.path[i]))
+       grob.lis <- grob_shm(ggs, cores=deter_core(1, svg.path()$svg.path[i]))
        grob.all <- c(grob.all, grob.lis)
-       lgd.grob.lis <- grob_shm(lgd.all, cores=deter_core(2, svg.path()$svg.path[i]), lgd.pos='bottom')
+       lgd.grob.lis <- grob_shm(lgd.all, cores=deter_core(1, svg.path()$svg.path[i]), lgd.pos='bottom')
        lgd.grob.all <- c(lgd.grob.all, lgd.grob.lis)
        # All ggplots/grobs are stored in nested lists under each SVG for use in relatice scale.
        lis0 <- list(grob.lis = grob.lis, gg.lis = ggs, lgd.lis = gg.lis$g.lgd, lgd.grob=lgd.grob.lis[[1]], gcol.lis=gcols, gcol.lgd=gg.lis$gcol.lgd)
@@ -2007,9 +2007,9 @@ shm_server <- function(id, sch, lis.url, url.id, tab, upl.mod.lis, dat.mod.lis, 
        lgd.all <- c(lgd.all, list(gg.lis$g.lgd))
        gcol.lgd.all <- c(gcol.lgd.all, list(gg.lis$gcol.lgd))
        # Same with ggs: append suffix '_i' for the SHMs of grob under SVG[i], and store them in a list.
-       grob.lis <- grob_shm(ggs, cores=deter_core(2, svg.path()$svg.path[i]))
+       grob.lis <- grob_shm(ggs, cores=deter_core(1, svg.path()$svg.path[i]))
        grob.all <- c(grob.all, grob.lis)
-       lgd.grob.lis <- grob_shm(lgd.all, cores=deter_core(2, svg.path()$svg.path[i]), lgd.pos='bottom')
+       lgd.grob.lis <- grob_shm(lgd.all, cores=deter_core(1, svg.path()$svg.path[i]), lgd.pos='bottom')
        lgd.grob.all <- c(lgd.grob.all, lgd.grob.lis)
        # All ggplots/grobs are stored in nested lists under each SVG for use in relatice scale.
        lis0 <- list(grob.lis = grob.lis, gg.lis = ggs, lgd.lis = gg.lis$g.lgd, lgd.grob=lgd.grob.lis[[1]], gcol.lis=gcols, gcol.lgd=gg.lis$gcol.lgd)
