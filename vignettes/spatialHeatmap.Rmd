@@ -56,7 +56,6 @@ BiocStyle::markdown(css.files=c('file/custom.css'))
 library(knitr); opts_chunk$set(message=FALSE, warning=FALSE)
 ```
 
-<p style='color:red'>jianhai: text in red. </p>
 
 # Introduction 
 
@@ -67,7 +66,7 @@ tissue- and organ-specific data of biological assays by coloring the
 corresponding spatial features defined in anatomical images according to a
 numeric color key. The color scheme used to represent the assay values can be
 customized by the user. This core functionality of the package is called a
-_spatial heatmap_ (SHM) plot. <font style='color:red'> It also has extended functionalities of spatial enrichment (SE) and clustering. SE is specialized in detecting genes that are specifically expressed in a particular spatial feature, while clustering is designed to detect biological molecule groups sharing related abundance profiles (_e.g._ gene modules) and visualize them in matrix heatmaps combined with hierarchical clustering dendrograms and network representations. Moreover, an advanced functionality of integrated co-visualization of bulk and single-cell data (co-visualization) is also developed. Sinlge cells in embedding plots (PCA, UMAP, TSNE) are matched with corresponding bulk tissues in SHMs manually or automatically. These functionalities form an integrated methodology for spatial biological assay data visualization and analysis. </font>     
+_spatial heatmap_ (SHM) plot. It also has extended functionalities of spatial enrichment (SE) and clustering. SE is specialized in detecting genes that are specifically expressed in a particular spatial feature, while clustering is designed to detect biological molecule groups sharing related abundance profiles (_e.g._ gene modules) and visualize them in matrix heatmaps combined with hierarchical clustering dendrograms and network representations. Moreover, an advanced functionality of integrated co-visualization of bulk and single-cell data (co-visualization) is also developed. Sinlge cells in embedding plots (PCA, UMAP, TSNE) are matched with corresponding bulk tissues in SHMs manually or automatically. These functionalities form an integrated methodology for spatial biological assay data visualization and analysis.      
 
 The functionalities of _spatialHeatmap_ can be used either in a command-driven mode
 from within R or a graphical user interface (GUI) provided by a Shiny App that
@@ -1371,7 +1370,6 @@ Note in Figure \@ref(fig:arabshm) shoots have thicker outlines than roots. This 
 
 In principle, the `spatialHeatmap` is extendable to as many factors (*e.g.* samples, conditions, times) as possible. The most common scenario involves only two factors of samples and conditions ([Section 3](#shm)). If more factors are relevant such as development stages, geographical locations, genotypes, *etc*, all or selected factors should be combined to generate composite factors. The [spatiotemporal section](#sthm) is an illustration of three factors. Similar combining strategies should be appied in cases of four or more factors. A rule of thumb is the composite factors of interest must have a matching counterpart in the aSVG file, otherwise target spatial features are not painted in spatial heatmaps.   
 
-<font style='color:red'>
 
 
 # Overlaying 
@@ -1410,7 +1408,6 @@ To reduce template colors to minimum, templates can be set black-white by `charc
 spatial_hm(svg.path=c(svg.pa1, svg.pa2), data=dat.overlay, tmp.path=c(tmp.pa1, tmp.pa2), charcoal=TRUE, ID=c('gene1'), alpha.overlay=0.5, bar.width=0.09, sub.title.vjust=4)
 ```
 
-</font>
 
 # Matrix Heatmaps {#mhm}
 
@@ -1553,7 +1550,6 @@ node.
 network(ID="HRE2", data=sub.mat, adj.mod=adj.mod, static=FALSE)
 ```
 
-<font style='color:red'>
 
 # Spatial Enrichment (SE) {#se} 
 
@@ -2494,7 +2490,6 @@ colData(sce.auto)
 metadata(sce.auto)$df.match
 ```
 
-</font>
 
 # Shiny App {#shiny}
 
