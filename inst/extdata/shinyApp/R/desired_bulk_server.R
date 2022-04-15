@@ -18,7 +18,21 @@ desired_bulk_server <- function(input, output, session) {
    library(shinyWidgets); library(shinyBS); library(shinyjs); library(htmltools)
   })
   })
-
+  observeEvent(input$tailorHelp, {
+    showModal(
+    div(id='tailorHel', modalDialog(title= HTML('<strong><center>Instructions for Assigning Bulk Tissues</center></strong>'),
+      div(style = 'overflow-y:scroll;overflow-x:scroll',
+      HTML('
+      <ol>
+        <li>Mouse over the top of left embedding plot and select "Lasso Select".</li>
+        <li>Select target cells on the embedding plot.</li>
+        <li>Selected cells are listed on the right table. Select a desired bulk tissue from the dropdown menu.</li>
+        <li>If more bulk tissues need to assign, repeat step 2 and 3.</li>
+        <li>After all target cells are selected and assigned desired bulk tissues, click "Final confirmation".</li>
+      </ol>
+      ')
+      ))))
+    })
 
   sce <- reactive({
     sgl.cell.ipt <- input$sglCell
@@ -53,6 +67,7 @@ desired_bulk_server <- function(input, output, session) {
   observeEvent(input$scellRowBut, {
     row.sel$val <- input$scellCdat_rows_selected
   })
+  dimred <- reactiveValues()
   output$dim <- renderPlotly({
     cat('Plotting embedding plot ... \n')
     sce <- sce(); cna <- input$cna; dimCell <- input$dimCell
@@ -60,7 +75,8 @@ desired_bulk_server <- function(input, output, session) {
     if (!cna %in% colnames(colData(sce))) return()
     withProgress(message="Plotting: ", value=0, {
     incProgress(0.3, detail="in progress ...")
-    gg <- plot_dim(sce, dim=dimCell, color.by=cna, row.sel=row.sel$val); cat('Done! \n') 
+    gg <- plot_dim(sce, dim=dimCell, color.by=cna, row.sel=row.sel$val); cat('Done! \n')
+    dimred$val <- gg
     ggplotly(gg, source='dim', tooltip=c('colour', 'x', 'y')) %>% event_register("plotly_selected")
     })
   })
@@ -73,6 +89,7 @@ desired_bulk_server <- function(input, output, session) {
     cat('Desired bulk for selected cells ... \n')
     sel.blk <- input$selBulk; if (is.null(sel.blk)) return()
     if (sel.blk=='none') return(); cat(sel.blk, '\n')
+    if (!is(dimred$val, 'ggplot')) return()
     event.df <- event_data(event="plotly_selected", source='dim')
     if (!is(event.df, 'data.frame')) return()
     event.df <- event.df[, c('x', 'y', 'key')]
@@ -81,7 +98,7 @@ desired_bulk_server <- function(input, output, session) {
     event.df$desiredSVGBulk <- sel.blk
     event.df$dimred <- input$dimCell
     df.sel.cell$val <- rbind(event.df, df.val)
-    showNotification(paste0('Registered for selected cells: ', sel.blk, '!'))
+    showNotification(paste0('Registered for selected cells: ', sel.blk, '!'), duration=2)
     df.sel.cell$val$key <- as.numeric(df.sel.cell$val$key)
     df.sel.cell$val$dimred <- input$dimCell 
     # df.val <- df.sel.cell$val; save(df.val, file='df.val')
@@ -111,6 +128,7 @@ desired_bulk_server <- function(input, output, session) {
     })
 
   output$selBlk <- renderUI({
+    if (!is(dimred$val, 'ggplot')) return()
     input$selBlkCancel
     # New selection causes 'none'.
     event.df <- event_data(event="plotly_selected", source='dim')
@@ -123,6 +141,7 @@ desired_bulk_server <- function(input, output, session) {
  output$selCellTab <- renderDataTable({
     sce <- sce(); sel.blk <- input$selBulk  
     if (is.null(sel.blk)|is.null(sce)) return()
+    if (!is(dimred$val, 'ggplot')) return()
     event.df <- event_data(event="plotly_selected", source='dim')
     if (!is(event.df, 'data.frame')) return()
     event.df <- event.df[, c('x', 'y', 'key')]

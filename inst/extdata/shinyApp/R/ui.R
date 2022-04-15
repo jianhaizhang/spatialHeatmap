@@ -476,7 +476,7 @@ tailor_match_ui <- function(id) {
   col1 <- column(6, id='dimCellBut', 
   fluidRow(splitLayout(cellWidths=c('1%', '50%', '1%', '20%', '1%', '5%'), '',
     selectInput(ns('dimCell'), label='Cells before co-clusterings', choices=c("UMAP", "PCA", "TSNE")), '', 
-    actionButton(ns("coclusPlotBut"), label='Visualizing co-clustering results', style='margin-bottom:-60px'), ''
+    actionButton(ns("coclusPlotBut"), label='Covisualizing results', style='margin-bottom:-60px'), ''
   ))
   );
   col2 <- column(6, id='selBlkButCan',

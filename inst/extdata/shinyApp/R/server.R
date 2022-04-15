@@ -157,7 +157,7 @@ search_server <- function(id, ids, lis.url, url.id, upl.mod.lis, dat.mod.lis, se
       # Invalid IDs.
       dif <- setdiff(gens, sel)
       msg <- paste0('ID(s) not detected: ', paste0(dif, collapse=', ')); cat(msg, '\n')
-      if (length(dif)>0) showNotification(msg, duration=3)
+      if (length(dif)>0) showNotification(msg, duration=2)
       validate(need(length(dif)==0, ''))
       if (length(sel)==0) sel <- pre.id$id
       # Eleminate case difference.
@@ -177,7 +177,7 @@ search_server <- function(id, ids, lis.url, url.id, upl.mod.lis, dat.mod.lis, se
     # Invalid IDs.
     dif <- setdiff(gens, sel)
     msg <- paste0('ID(s) not detected: ', paste0(dif, collapse=', ')); cat(msg, '\n')
-    if (length(dif)>0) showNotification(msg, duration=3)
+    if (length(dif)>0) showNotification(msg, duration=2)
     validate(need(length(dif)==0, ''))
     if (length(sel)==0) sel <- pre.id$id
     # Eleminate case difference.
@@ -680,7 +680,7 @@ data_server <- function(id, sch, lis.url, ids, deg = FALSE, upl.mod.lis, scell.m
       # If scaled by row, sd is 1, mean is 0, cv is Inf.
       if (deg == FALSE) CVs <- c(ifelse(scale.dat %in% c('Row', 'Selected'), -Inf, fil$CV1), ifelse(scale.dat %in% c('Row', 'Selected'), Inf, fil$CV2)) else CVs <- c(fil$CV1, fil$CV2)
       se <- filter_data(data=se, ann=ann.col, sam.factor=NULL, con.factor=NULL, pOA=c(fil$P, fil$A), CV = CVs, dir=NULL, verbose=FALSE)
-      if (fil$P!=0 | fil$A!=0 | fil$CV1!=-10000 | fil$CV2!=10000) showNotification("Filtering is applied on un-scaled values.", duration=3)
+      if (fil$P!=0 | fil$A!=0 | fil$CV1!=-10000 | fil$CV2!=10000) showNotification("Filtering is applied on un-scaled values.", duration=2)
       # In case all rows are filtered, the app continues to work without refreshing after the filter parameters are reduced.
       if (nrow(se)==0) { validate(need(try(nrow(se)>0), 'All rows are filtered out!')); return() }
       # se <- filter_data(data=se, ann=ann.col, sam.factor=NULL, con.factor=NULL, pOA=c(fil$P, fil$A), CV=CVs, dir=NULL, verbose=FALSE)
@@ -3196,7 +3196,7 @@ tailor_match_server <- function(id, sce, section='scell', upl.mod.lis, match.mod
     showModal(
     div(id='tailorHel', modalDialog(title= HTML('<strong><center>Instructions for Tailoring Matching Results</center></strong>'),
       div(style = 'overflow-y:scroll;overflow-x:scroll',
-      p('The tailoring is designed to assign desired bulk tissues to selected cells and is optional. If no desired bulk tissues to assign, simply click "Visualize co-clustering results".'),
+      p('The tailoring is designed to assign desired bulk tissues to selected cells and is optional. If no desired bulk tissues to assign, simply click "Covisualizing results".'),
       HTML('
       <ol>
         <li>Mouse over the top of left embedding plot and select "Lasso Select".</li>
@@ -3236,23 +3236,30 @@ tailor_match_server <- function(id, sce, section='scell', upl.mod.lis, match.mod
       }
       selectInput(ns('sf.by'), 'Collapse cells by', cho, cna$sel)
     })
+    dimred <- reactiveValues()
     output$umap <- renderPlotly({
       sce <- sce(); cna <- input$cna
       if (is.null(sce)|is.null(cna)) return()
       if (!cna %in% colnames(colData(sce))) return()
-      ggplotly(plot_dim(sce, dim='UMAP', color.by=cna, row.sel=row.sel$val), source='dim', tooltip=c('colour', 'x', 'y')) %>% event_register("plotly_selected")
+      gg <- plot_dim(sce, dim='UMAP', color.by=cna, row.sel=row.sel$val) 
+      dimred$val <- gg
+      ggplotly(gg, source='dim', tooltip=c('colour', 'x', 'y')) %>% event_register("plotly_selected")
     })
     output$tsne <- renderPlotly({
       sce <- sce(); cna <- input$cna
       if (is.null(sce)|is.null(cna)) return()
       if (!cna %in% colnames(colData(sce))) return()
-      ggplotly(plot_dim(sce, dim='TSNE', color.by=cna, row.sel=row.sel$val), source='dim', tooltip=c('colour', 'x', 'y')) %>% event_register("plotly_selected")
+      gg <- plot_dim(sce, dim='TSNE', color.by=cna, row.sel=row.sel$val)
+      dimred$val <- gg
+      ggplotly(gg, source='dim', tooltip=c('colour', 'x', 'y')) %>% event_register("plotly_selected")
     })
     output$pca <- renderPlotly({
       sce <- sce(); cna <- input$cna
       if (is.null(sce)|is.null(cna)) return()
       if (!cna %in% colnames(colData(sce))) return()
-      ggplotly(plot_dim(sce, dim='PCA', color.by=cna, row.sel=row.sel$val), source='dim', tooltip=c('colour', 'x', 'y')) %>% event_register("plotly_selected")
+      gg <- plot_dim(sce, dim='PCA', color.by=cna, row.sel=row.sel$val)
+      dimred$val <- gg
+      ggplotly(gg, source='dim', tooltip=c('colour', 'x', 'y')) %>% event_register("plotly_selected")
     })
 
   df.sel.cell <- reactiveValues(val=NULL, val1=NULL)
@@ -3263,6 +3270,7 @@ tailor_match_server <- function(id, sce, section='scell', upl.mod.lis, match.mod
     cat('Desired bulk for selected cells ... \n')
     sel.blk <- input$selBulk; if (is.null(sel.blk)) return()
     if (sel.blk=='none') return(); cat(sel.blk, '\n')
+    if (!is(dimred$val, 'ggplot')) return()
     event.df <- event_data(event="plotly_selected", source='dim')
     if (!is(event.df, 'data.frame')) return()
     event.df <- event.df[, c('x', 'y', 'key')]
@@ -3331,6 +3339,7 @@ tailor_match_server <- function(id, sce, section='scell', upl.mod.lis, match.mod
     ns <- session$ns; input$selBlkCancel
     if (upl.mod.lis$ipt$fileIn!='customSingleCellData') return()
     # New selection causes 'none'.
+    if (!is(dimred$val, 'ggplot')) return()
     event.df <- event_data(event="plotly_selected", source='dim')
     sce <- sce(); if (is.null(sce)) return()
     svg.blk <- unique(colData(sce)$SVGBulk)
@@ -3342,6 +3351,7 @@ tailor_match_server <- function(id, sce, section='scell', upl.mod.lis, match.mod
     if (upl.mod.lis$ipt$fileIn!='customSingleCellData') return()
     sce <- sce(); sel.blk <- input$selBulk; ns <- session$ns 
     if (is.null(sel.blk)|is.null(sce)) return()
+    if (!is(dimred$val, 'ggplot')) return()
     event.df <- event_data(event="plotly_selected", source='dim')
     if (!is(event.df, 'data.frame')) return()
     event.df <- event.df[, c('x', 'y', 'key')]

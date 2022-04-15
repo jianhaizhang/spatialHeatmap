@@ -165,7 +165,7 @@ coclus_opt <- function(wk.dir, parallel.info=FALSE, sc.dim.min=10, max.dim=50, d
   # Check random seed. 
   if (is(batch.par, 'BatchtoolsParam')) seed.bat <- bpRNGseed(batch.par) else seed.bat <- NULL
   if (is(multi.core.par, 'MulticoreParam')) seed.mul <- bpRNGseed(multi.core.par) else seed.mul <- NULL
-  if (is.numeric(seed.bat) & !is.numeric(seed.mul)) { 
+  if (is.numeric(seed.bat) & is.numeric(seed.mul)) { 
     bpRNGseed(multi.core.par) <- NULL
     message('"RNGseed" in MulticoreParam is set NULL, since it is already set in BatchtoolsParam.')
   }

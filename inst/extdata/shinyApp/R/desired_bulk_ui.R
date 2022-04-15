@@ -31,7 +31,6 @@ desired_bulk_ui <- function(request) {
      })
    ')),
 
-
   tabsetPanel(
     tabPanel("Upload data", br(),
     fileInput("sglCell", "Upload single cell data (.rds)", accept=c(".rds"), multiple=FALSE)
@@ -39,12 +38,14 @@ desired_bulk_ui <- function(request) {
     tabPanel("Assign bulk",
       column(6, id='dimCellBut', 
       fluidRow(splitLayout(cellWidths=c('1%', '50%', '1%', '20%', '1%'), '',
-      selectInput('dimCell', label='Embedding plot', choices=c("UMAP", "PCA", "TSNE")), ''  
+      selectInput('dimCell', label='Embedding plot', choices=c("UMAP", "PCA", "TSNE")), '', 
+      actionButton("tailorHelp", "Help", style='margin-bottom:-60px', icon = icon('question-circle'))
       ))
       ),
 
       column(6, id='selBlkButCan',
-      fluidRow(splitLayout(cellWidths=c('1%', '40%', '1%', '24%', '1%', '10%', '1%', '15%'), '', uiOutput('selBlk'), '',
+      fluidRow(splitLayout(cellWidths=c('1%', '40%', '1%', '24%', '1%', '10%', '1%', '15%'), '', 
+      uiOutput('selBlk'), '',
       actionButton("selBlkBut", label='Final confirmation', style='margin-bottom:-60px'), '',
       actionButton("selBlkCancel", label='Reset', style='margin-bottom:-60px'), '',
       downloadButton("dld", "Download", style = "margin-top: 24px;")
