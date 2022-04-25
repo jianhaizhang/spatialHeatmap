@@ -10,8 +10,9 @@ auc_violin(
   ylab = "AUC",
   nrow = 3,
   title = NULL,
-  key.title = NULL,
-  lgd.key.size = 0.05
+  title.size = 20,
+  x.text.size = 11,
+  y.text.size = 11
 )
 }
 \arguments{
@@ -23,9 +24,9 @@ auc_violin(
 
 \item{title}{The title of composite violin plots.}
 
-\item{key.title}{The title of legend.}
+\item{title.size}{The title size. Default is 20.}
 
-\item{lgd.key.size}{The size of legend keys.}
+\item{x.text.size, y.text.size}{The size of x and y axis text.}
 }
 \value{
 An object of ggplot.

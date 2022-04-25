@@ -11,8 +11,14 @@ mean_auc_bar(
   mean = "mean",
   bar.width = 0.8,
   title = NULL,
+  title.size = 20,
+  xlab = "AUC threshold",
+  ylab = "Mean AUC",
+  x.text.size = 11,
+  y.text.size = 11,
   key.title = NULL,
-  lgd.key.size = 0.05
+  lgd.key.size = 0.05,
+  lgd.text.size = 10
 )
 }
 \arguments{
@@ -28,9 +34,17 @@ mean_auc_bar(
 
 \item{title}{The title of composite violin plots.}
 
+\item{title.size}{The title size. Default is 20.}
+
+\item{x.text.size, y.text.size}{The size of x and y axis text.}
+
 \item{key.title}{The title of legend.}
 
 \item{lgd.key.size}{The size of legend keys.}
+
+\item{lgd.text.size}{The size of legend text.}
+
+\item{x.lab, ylab}{The x and y axis label respectively.}
 }
 \value{
 An object of ggplot.

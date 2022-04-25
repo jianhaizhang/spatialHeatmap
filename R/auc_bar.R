@@ -8,8 +8,11 @@
 #' @param bar.width Width of a single bar.
 #' @param spd.sel A character vector of selected \code{spd.set}, usually the common \code{spd.set} displaying desired AUCs across multiple validating data sets.
 #' @param title The title of composite violin plots.
-#' @param key.title The title of legend.
+#' @param title.size The title size. Default is 20.
+#' @param x.lab,ylab The x and y axis label respectively.
+#' @param x.text.size,y.text.size The size of x and y axis text.
 #' @param x.agl,x.vjust The angle and vertical position of x-axis text.
+
 
 #' @return An object of ggplot.
 
@@ -36,7 +39,7 @@
 
 #' @export auc_bar
 
-auc_bar <- function(df.auc, auc='auc', thr=0.5, bar.width=0.8, spd.sel=NULL, title=NULL, key.title=NULL, x.agl=80, x.vjust=0.6) { 
+auc_bar <- function(df.auc, auc='auc', thr=0.5, bar.width=0.8, spd.sel=NULL, title=NULL, title.size=15, xlab="Optimized parameter sets", ylab='AUC', x.text.size=15, y.text.size=15, x.agl=80, x.vjust=0.6) { 
   spd.set <- NULL
   cna <- colnames(df.auc); cna[cna==auc] <- 'auc'
   colnames(df.auc) <- cna
@@ -47,9 +50,9 @@ auc_bar <- function(df.auc, auc='auc', thr=0.5, bar.width=0.8, spd.sel=NULL, tit
   gg <- ggplot(df.auc, aes(x=spd.set, y=auc)) +
   geom_bar(color='black', width=bar.width, fill='#FF6666', position=position_dodge2(width=bar.width, preserve="single"), stat="identity") +
   geom_text(aes(label=ifelse(spd.sel, "*", "")), 
-position = position_dodge2(width=bar.width, preserve="single"), vjust=-0.1, size=10) +
-  labs(title=title, x="Optimized parameter sets", y='AUC', fill=key.title)+theme(plot.title = element_text(hjust = 0.5)) +
-  theme(axis.text.x=element_text(angle=x.agl, vjust=x.vjust)) +
+position = position_dodge2(width=bar.width, preserve="single"), vjust=0.3, size=10) +
+  labs(title=title, x=xlab, y=ylab)+theme(plot.title = element_text(size=title.size, hjust = 0.5, vjust=1.5)) +
+  theme(axis.text.x=element_text(angle=x.agl, vjust=x.vjust, size = x.text.size), axis.text.y = element_text(size = y.text.size)) +
   geom_hline(yintercept=thr, linetype="dashed", color = "black", size=1)
   gg
 }

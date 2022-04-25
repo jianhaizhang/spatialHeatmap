@@ -60,7 +60,16 @@ cluster_cell <- function(data, prop=0.1, min.dim=5, max.dim=50, pca=FALSE, graph
       warning('The input single cell data has too less genes!'); return()
     }
   }
-  sce.dimred <- denoisePCA(sce, assay.type = "logcounts", technical=df.var.sc, subset.row=top.hvgs.sc, min.rank=min.dim, max.rank=max.dim)
+  # prop=1 cannot avoid all warnings if the real max.dim does not increase even though prop=1.
+  sce.dimred <- tryCatch(
+    expr = {
+      denoisePCA(sce, assay.type = "logcounts", technical=df.var.sc, subset.row=top.hvgs.sc, min.rank=min.dim, max.rank=max.dim)
+    },
+    warning = function(w){ 'w' }, error = function(e){ 'e' } 
+  ) 
+  if (!is(sce.dimred, 'SingleCellExperiment')) {
+    message('min.dim = ', min.dim, ' and ', 'max.dim = ', max.dim, ' cannot be satisfied!'); return()
+  }
   if (pca==TRUE) return(sce.dimred)
   # Other argument: n_dimred, ntop. By default only 2 dimensions are returned by runTSNE/runUMAP.
   # runUMAP returns different results before/after runTSNE.

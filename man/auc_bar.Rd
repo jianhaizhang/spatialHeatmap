@@ -11,7 +11,11 @@ auc_bar(
   bar.width = 0.8,
   spd.sel = NULL,
   title = NULL,
-  key.title = NULL,
+  title.size = 15,
+  xlab = "Optimized parameter sets",
+  ylab = "AUC",
+  x.text.size = 15,
+  y.text.size = 15,
   x.agl = 80,
   x.vjust = 0.6
 )
@@ -29,9 +33,13 @@ auc_bar(
 
 \item{title}{The title of composite violin plots.}
 
-\item{key.title}{The title of legend.}
+\item{title.size}{The title size. Default is 20.}
+
+\item{x.text.size, y.text.size}{The size of x and y axis text.}
 
 \item{x.agl, x.vjust}{The angle and vertical position of x-axis text.}
+
+\item{x.lab, ylab}{The x and y axis label respectively.}
 }
 \value{
 An object of ggplot.

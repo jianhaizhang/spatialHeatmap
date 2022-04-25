@@ -9,12 +9,13 @@ spd_auc_violin(
   n = 5,
   ylab = "AUC",
   xlab,
+  x.text.size = 11,
+  y.text.size = 11,
   x.agl = 45,
   x.vjust = 0.6,
   nrow = 3,
   title = NULL,
-  key.title = NULL,
-  lgd.key.size = 0.03
+  title.size = 20
 )
 }
 \arguments{
@@ -24,15 +25,15 @@ spd_auc_violin(
 
 \item{xlab, ylab}{The x and y axis labels in the violin plots.}
 
+\item{x.text.size, y.text.size}{The size of x and y axis text.}
+
 \item{x.agl, x.vjust}{Angle and vertical position to adjust x-axis text.}
 
 \item{nrow}{The numbers of rows of all the violin plots.}
 
 \item{title}{The title of composite violin plots.}
 
-\item{key.title}{The title of legend.}
-
-\item{lgd.key.size}{The size of legend keys.}
+\item{title.size}{The title size. Default is 20.}
 }
 \value{
 An object of ggplot.

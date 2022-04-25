@@ -5,11 +5,11 @@
 #' @param df.lis The nested list of extracted aucs returned by \code{auc_stat}.
 #' @param n Number of top \code{spd.set} ranked by frequencies to plot.
 #' @param xlab,ylab The x and y axis labels in the violin plots.
+#' @param x.text.size,y.text.size The size of x and y axis text.
 #' @param x.agl,x.vjust Angle and vertical position to adjust x-axis text.
 #' @param nrow The numbers of rows of all the violin plots.
 #' @param title The title of composite violin plots.
-#' @param key.title The title of legend.
-#' @param lgd.key.size The size of legend keys.
+#' @param title.size The title size. Default is 20.
 
 #' @return An object of ggplot.
 
@@ -144,7 +144,7 @@
 
 #' @export spd_auc_violin
 
-spd_auc_violin <- function(df.lis, n=5, ylab='AUC', xlab, x.agl=45, x.vjust=0.6, nrow=3, title=NULL, key.title=NULL, lgd.key.size=0.03) {
+spd_auc_violin <- function(df.lis, n=5, ylab='AUC', xlab, x.text.size=11, y.text.size=11, x.agl=45, x.vjust=0.6, nrow=3, title=NULL, title.size=20) {
   spd.set <- NULL
   df.nas <- names(df.lis); df.frq.na='df.frq'; df.all.na='df.all'
   gg.lis <- NULL; for (i in df.nas) {
@@ -155,8 +155,8 @@ spd_auc_violin <- function(df.lis, n=5, ylab='AUC', xlab, x.agl=45, x.vjust=0.6,
     df0 <- subset(df.all0, spd.set %in% df.frq0[seq_len(n), 'spd.set'])
     gg <- ggplot(df0, aes(x=spd.set, y=auc, fill=spd.set)) +
     geom_violin() + geom_boxplot(width=0.1, show.legend=FALSE) +
-    labs(title=title, x=xlab, y=ylab, fill=key.title)+theme(plot.title = element_text(hjust = 0.5)) +
-    theme(legend.key.size = unit(lgd.key.size, 'npc'), axis.text.x=element_text(angle=x.agl, vjust=x.vjust))
+    labs(title=title, x=xlab, y=ylab)+theme(plot.title = element_text(size=title.size, hjust = 0.5, vjust=1.5)) +
+    theme(legend.position="none", axis.text.x=element_text(angle=x.agl, vjust=x.vjust, size = x.text.size), axis.text.y = element_text(size = y.text.size))
     gg.lis <- c(gg.lis, list(gg))
   }
   gg.grob <- lapply(gg.lis, ggplotGrob)
