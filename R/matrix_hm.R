@@ -6,7 +6,9 @@
 #' @param data The subsetted data matrix returned by the function \code{\link{submatrix}}, where rows are assayed items and columns are samples/conditions.
 #' @param assay.na Applicable when \code{data} is "SummarizedExperiment" or "SingleCellExperiment", where multiple assays could be stored. The name of target assay to use. The default is \code{NULL}.
 #' @param scale One of "row", "column", or "no", corresponding to scale the heatmap by row, column, or no scale respectively. Default is "no".
-#' @param col A character vector of color ingredients for constructing the color scale. The default is c('yellow', 'orange', 'red').
+#' @param col A character vector of color ingredients for constructing the color scale. The default is \code{c('yellow', 'orange', 'red')}.
+#' @param col.n The number of colors in palette.
+#' @param keysize A numeric value indicating the size of the color key.
 #' @param main The title of the matrix heatmap.
 #' @param title.size A numeric value of the title size.
 #' @param cexCol A numeric value of column name size. Default is 1.
@@ -148,8 +150,8 @@
 #' @importFrom graphics image mtext par plot title
 #' @importFrom grDevices dev.off png
 
-matrix_hm <- function(ID, data, assay.na=NULL, scale='no', col=c('yellow', 'orange', 'red'), main=NULL, title.size=10, cexCol=1, cexRow=1, angleCol=45, angleRow=45, sep.color="black", sep.width=0.02, static=TRUE, margin=c(10, 10), arg.lis1=list(), arg.lis2=list()) {
-
+matrix_hm <- function(ID, data, assay.na=NULL, scale='no', col=c('yellow', 'orange', 'red'), col.n=200, keysize=1.8, main=NULL, title.size=10, cexCol=1, cexRow=1, angleCol=45, angleRow=45, sep.color="black", sep.width=0.02, static=TRUE, margin=c(10, 10), arg.lis1=list(), arg.lis2=list()) {
+ # save(ID, data, assay.na, scale, col, col.n, keysize, main, title.size, cexCol, cexRow, angleCol, angleRow, sep.color, sep.width, static, margin, arg.lis1, arg.lis2, file='matrix.hm.arg')
   options(stringsAsFactors=FALSE)
   if (is(data, 'data.frame')|is(data, 'matrix')|is(data, 'DFrame')|is(data, 'dgCMatrix')) {
     dat.lis <- check_data(data=data); gene <- dat.lis$dat
@@ -170,7 +172,7 @@ matrix_hm <- function(ID, data, assay.na=NULL, scale='no', col=c('yellow', 'oran
     # Select the row of target gene.  
     idx <- which(rev(colnames(hm$carpet) %in% ID))
     # If colour codes are more than 500, the colour key is blank.
-    lis1 <- c(arg.lis1, list(x=mod, scale=scale, main=main, margin=margin, col=colorRampPalette(col)(500), rowsep=c(idx-1, idx), cexCol=cexCol, cexRow=cexRow, srtRow=angleRow, srtCol=angleCol, dendrogram='both', sepcolor=sep.color, sepwidth=c(sep.width, sep.width), key=TRUE, trace="none", density.info="none", Rowv=TRUE, Colv=TRUE))
+    lis1 <- c(arg.lis1, list(x=mod, scale=scale, main=main, margin=margin, col=colorRampPalette(col)(col.n), keysize=keysize, rowsep=c(idx-1, idx), cexCol=cexCol, cexRow=cexRow, srtRow=angleRow, srtCol=angleCol, dendrogram='both', sepcolor=sep.color, sepwidth=c(sep.width, sep.width), key=TRUE, trace="none", density.info="none", Rowv=TRUE, Colv=TRUE))
     do.call(heatmap.2, lis1)
 
   } else if (static==FALSE) {

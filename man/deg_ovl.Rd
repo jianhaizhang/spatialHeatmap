@@ -13,7 +13,10 @@ deg_ovl(
   point.size = 3,
   line.size = 1,
   mb.ratio = c(0.6, 0.4),
-  text.scale = 1.5
+  text.scale = 1.5,
+  axis.agl = 45,
+  font.size = 5,
+  cols = c("lightcyan3", "darkorange")
 )
 }
 \arguments{
@@ -35,6 +38,12 @@ deg_ovl(
 
 \item{text.scale}{Numeric, value to scale the text sizes, applies to all axis labels, tick labels, and numbers above bar plot. Can be a universal scale, or a vector containing individual scales
 in the following format: c(intersection size title, intersection size tick labels, set size title, set size tick labels, set names, numbers above bars)}
+
+\item{axis.agl}{The angle of axis text.}
+
+\item{font.size}{The font size of all text in overlap matrix.}
+
+\item{cols}{A vector of two colors indicating low and high values in the overlap matrix respectively. The default is \code{c("lightcyan3", "darkorange")}.}
 }
 \value{
 An upset plot or matrix plot, which displays overlap of spatially-enriched genes across methods.

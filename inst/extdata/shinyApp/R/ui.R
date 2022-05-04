@@ -636,7 +636,7 @@ scell_ui <- function(id) {
         )),
         h5(strong('Co-clustering bulk and cells')),
         fluidRow(splitLayout(cellWidths=c('1%', '10%'), '',
-        numericInput(ns('clusDimN'), label='Top dims', value=12, min=5, max=50, step=1, width=150)
+        numericInput(ns('clusDimN'), label='Top dims', value=13, min=5, max=50, step=1, width=150)
         )), 
         actionButton(ns("coclusPar"), "Confirm parameters", style='margin-top:1px')
       ), #tabPanel 

@@ -6,6 +6,9 @@
 #' @param type One of \code{up} (default) or \code{down}, which refers to up- or down-regulated genes.
 #' @param plot One of \code{upset} (default) or \code{matrix}, which corresponds to upset plot or overlap matrix in the output plot. 
 #' @inheritParams UpSetR::upset
+#' @param axis.agl The angle of axis text.
+#' @param font.size The font size of all text in overlap matrix.
+#' @param cols A vector of two colors indicating low and high values in the overlap matrix respectively. The default is \code{c("lightcyan3", "darkorange")}.
 
 #' @return An upset plot or matrix plot, which displays overlap of spatially-enriched genes across methods. 
 
@@ -33,14 +36,14 @@
 #' @export deg_ovl
 #' @importFrom UpSetR upset fromList
 
-deg_ovl <- function(lis.up.down, type='up', plot='upset', order.by="degree", nintersects=40, point.size=3, line.size=1, mb.ratio=c(0.6, 0.4), text.scale=1.5) {
+deg_ovl <- function(lis.up.down, type='up', plot='upset', order.by="degree", nintersects=40, point.size=3, line.size=1, mb.ratio=c(0.6, 0.4), text.scale=1.5, axis.agl=45, font.size=5, cols=c("lightcyan3", "darkorange")) {
   if (type=='up') lis <- lis.up.down$up.lis else if (type=='down') lis <- lis.up.down$down.lis
   if (plot=='upset') {
     upset <- upset(fromList(lis), order.by=order.by, nintersects=nintersects, point.size=point.size, line.size=line.size, mb.ratio=mb.ratio, text.scale=text.scale)
     return(upset)
   } else if (plot=='matrix') {
     names(lis) <- sub('\\.up(\\.\\d+)*$|\\.down(\\.\\d+)*$', '', names(lis))
-    g <- deg_ovl_mat(lis); return(g)
+    g <- deg_ovl_mat(lis, axis.agl=axis.agl, font.size=font.size, cols=cols); return(g)
   }
 }
 
@@ -49,6 +52,9 @@ deg_ovl <- function(lis.up.down, type='up', plot='upset', order.by="degree", nin
 #' Given a DEG list of different methods, plot the overlap matrix.
 #'
 #' @param deg.lis The list of all up- and down-regulated genes organized by methods, which comes from the returned value of \code{spatial_enrich}.
+#' @param axis.agl The angle of axis text.
+#' @param font.size The font size of all text in overlap matrix.
+#' @param cols A vector of two colors indicating low and high values in the overlap matrix respectively. The default is \code{c("lightcyan3", "darkorange")}.
 
 #' @return An image of ggplot.
 #' @keywords Internal
@@ -63,10 +69,11 @@ deg_ovl <- function(lis.up.down, type='up', plot='upset', order.by="degree", nin
 
 #' @importFrom reshape2 melt
 #' @importFrom ggplot2 ggplot aes geom_tile scale_fill_gradient theme_minimal theme element_text coord_fixed geom_text element_blank
- 
-deg_ovl_mat <- function(deg.lis) {
+
+deg_ovl_mat <- function(deg.lis, axis.agl, font.size, cols) {
   Var1 <- Var2 <- value <- NULL
   mat <- vapply(names(deg.lis), function(x) vapply(names(deg.lis), function(y) length(intersect(deg.lis[[x]], deg.lis[[y]])), numeric(1)), numeric(length(deg.lis)))
-  mel <- reshape2::melt(mat)
-  g <- ggplot(data=mel, aes(x=Var1, y=Var2, fill=value))+geom_tile(colour="white")+scale_fill_gradient(low="lightcyan3", high="darkorange")+theme_minimal()+theme(axis.text=element_text(angle=45, vjust=1, size=10, hjust=1))+coord_fixed()+geom_text(aes(Var2, Var1, label=value), color="black", size=4)+theme(axis.title.x=element_blank(), axis.title.y=element_blank(), panel.grid.major=element_blank(), panel.border=element_blank(), panel.background=element_blank(), axis.ticks=element_blank()); return(g)
+  mel <- reshape2::melt(mat) 
+  g <- ggplot(data=mel, aes(x=Var1, y=Var2, fill=value))+geom_tile(colour="white")+scale_fill_gradient(low=cols[1], high=cols[2])+ theme_minimal()+theme(axis.text=element_text(angle=axis.agl, vjust=1, size=font.size+12, hjust=1))+coord_fixed()+geom_text(aes(Var2, Var1, label=value), color="black", size=font.size)+theme(axis.title.x=element_blank(), axis.title.y=element_blank(), panel.grid.major=element_blank(), panel.border=element_blank(), panel.background=element_blank(), axis.ticks=element_blank(), text = element_text(size=font.size+17)); return(g)
 }
+

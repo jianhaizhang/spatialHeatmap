@@ -30,8 +30,8 @@
 #' @importFrom methods as
 #' @importFrom ggplot2 layer_data ggplot geom_point theme_classic theme element_text element_blank labs scale_shape_manual scale_color_manual margin guide_legend
 
-dim_color_coclus <- function(sce=NULL, row.sel=NULL, tar.bulk=NULL, profile=FALSE, gg.dim, gg.shm.all, grob.shm.all, gg.lgd.all, col.shm.all, col.lgd.all, grob.lgd.all, con.na=TRUE, lis.match=NULL, sub.title.size=11, dim.lgd.pos='bottom', dim.lgd.nrow=1, dim.lgd.text.size=10) {
- # save(sce, row.sel, tar.bulk, profile, gg.dim, gg.shm.all, grob.shm.all, gg.lgd.all, col.shm.all, col.lgd.all, grob.lgd.all, con.na, lis.match, sub.title.size, dim.lgd.pos, dim.lgd.nrow, dim.lgd.text.size, file='dim.color.coclus.arg')
+dim_color_coclus <- function(sce=NULL, row.sel=NULL, tar.bulk=NULL, profile=FALSE, gg.dim, gg.shm.all, grob.shm.all, gg.lgd.all, col.shm.all, col.lgd.all, grob.lgd.all, con.na=TRUE, lis.match=NULL, sub.title.size=11, dim.lgd.pos='bottom', dim.lgd.nrow=1, dim.lgd.key.size=4, dim.lgd.text.size=13, dim.capt.size=13) {
+ # save(sce, row.sel, tar.bulk, profile, gg.dim, gg.shm.all, grob.shm.all, gg.lgd.all, col.shm.all, col.lgd.all, grob.lgd.all, con.na, lis.match, sub.title.size, dim.lgd.pos, dim.lgd.nrow, dim.lgd.text.size, dim.lgd.key.size, dim.capt.size, file='dim.color.coclus.arg')
   response <- feature <- idx <- x <- y <- NULL
   if (!is.null(sce) & !is.null(lis.match)) stop("Only one of 'sce' and 'lis.match' is required!")
   cdat <- colData(sce)
@@ -184,15 +184,8 @@ tar_cell <- function(tar.bulk, df.all, row.sel=NULL) {
       names(dim.col.final)[1] <- 'none'
       sp <- c(1, sp); names(sp)[1] <- 'none'
     }
-    # gg.dim.all[[i]] <- ggplot(dat.all, aes(x=x, y=y, shape=feature, text=dat.all$feature)) + geom_point(size=2, alpha=1, aes(colour=feature)) + scale_color_manual(values=dim.col) + scale_shape_manual(values=sp) + theme_classic() + theme(plot.title=element_text(hjust=0.5, size=sub.title.size), axis.text = element_blank(), axis.ticks = element_blank()) + labs(title=gsub('^dim_(.*)_\\d+$', '\\1', names(gg.dim)), x=gg.dim0$labels$x, y=gg.dim0$labels$y, colour=color.by, shape=color.by)
   if (con.na==TRUE) tit <- gsub('^dim_(.*)_\\d+$', '\\1', names(gg.dim)) else tit <- gsub('^dim_(.*)_con_\\d+$', '\\1', names(gg.dim))
   if (profile==FALSE) tit <- NULL
-  # Re-plot dimensionlaity plot.
-  # gg <- ggplot(dat.all, aes(x=x, y=y, text=dat.all$feature)) + geom_point(size=2, alpha=1, aes(colour=feature)) + theme_classic() + theme(plot.title=element_text(hjust=0.5, size=sub.title.size), axis.text = element_blank(), axis.ticks = element_blank()) + labs(title=tit, x=gg.dim0$labels$x, y=gg.dim0$labels$y, colour=color.by, shape=color.by)
-  # if (lgd.all.dim==FALSE) gg <- gg + scale_color_manual(values=dim.col.all, breaks=names(dim.col)) else gg <- gg + scale_color_manual(values=dim.col.all, breaks=names(dim.col.all))
-
-
-  # gg <- ggplot(dat.all, aes(x=x, y=y, shape=feature, text=dat.all$feature)) + geom_point(size=2, alpha=1, aes(colour=feature)) + theme_classic() + theme(plot.title=element_text(hjust=0.5, size=sub.title.size), axis.text = element_blank(), axis.ticks = element_blank()) + labs(title=tit, x=gg.dim0$labels$x, y=gg.dim0$labels$y, colour=color.by, shape=color.by) + scale_color_manual(values=dim.col.all.uni, breaks=names(dim.col)) + scale_shape_manual(values=sp.all.uni, breaks=names(dim.col)) 
   if (is.null(row.sel)) {
     lgd.tit <- 'True assignment'; lgd.show <- tar.bulk
     br <- tar.bulk 
@@ -200,7 +193,7 @@ tar_cell <- function(tar.bulk, df.all, row.sel=NULL) {
     lgd.tit <- 'Selected'; lgd.show <- sub('\\.selected$', '', na.sel) 
     br <- na.sel
   }
-  gg <- ggplot(df.all, aes(x=x, y=y, text=df.all$feature)) + geom_point(size=2, alpha=1, aes(shape=feature, colour=feature)) + theme_classic() + theme(plot.title=element_text(hjust=0.5, size=sub.title.size), axis.text = element_blank(), axis.ticks = element_blank(), legend.position=dim.lgd.pos, legend.text=element_text(size=dim.lgd.text.size), legend.margin = margin(t=-0.02, l=0.05, r=0.1, unit='npc'), plot.caption = element_text(hjust = 0)) + labs(title=tit, x=gg.dim0$labels$x, y=gg.dim0$labels$y, caption =capt) + scale_color_manual(name=lgd.tit, values=dim.col.final, breaks=br, labels=lgd.show, guide=guide_legend(title=lgd.tit, nrow=dim.lgd.nrow)) + scale_shape_manual(name=lgd.tit, values=sp, breaks=br, labels=lgd.show, guide=guide_legend(title=lgd.tit, nrow=dim.lgd.nrow))
+  gg <- ggplot(df.all, aes(x=x, y=y, text=df.all$feature)) + geom_point(size=2, alpha=1, aes(shape=feature, colour=feature)) + theme_classic() + theme(plot.title=element_text(hjust=0.5, size=sub.title.size), axis.text = element_blank(), axis.ticks = element_blank(), legend.position=dim.lgd.pos, legend.text=element_text(size=dim.lgd.text.size), legend.margin = margin(t=-0.02, l=0.05, r=0.1, unit='npc'), plot.caption = element_text(hjust = 0, size=dim.capt.size), legend.title=element_text(size=dim.lgd.text.size+1)) + labs(title=tit, x=gg.dim0$labels$x, y=gg.dim0$labels$y, caption =capt) + scale_color_manual(name=lgd.tit, values=dim.col.final, breaks=br, labels=lgd.show, guide=guide_legend(title=lgd.tit, nrow=dim.lgd.nrow)) + scale_shape_manual(name=lgd.tit, values=sp, breaks=br, labels=lgd.show, guide=guide_legend(title=lgd.tit, nrow=dim.lgd.nrow, override.aes = list(size=dim.lgd.key.size)))
   gg.dim.all[[i]] <- gg
 
   }

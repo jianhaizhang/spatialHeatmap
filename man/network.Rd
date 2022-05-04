@@ -18,6 +18,8 @@ network(
   vertex.cex = 3,
   edge.cex = 10,
   layout = "circle",
+  color.key.lab.size = 1.5,
+  color.key.text.size = 1,
   main = NULL,
   static = TRUE,
   ...
@@ -49,6 +51,8 @@ network(
 \item{edge.cex}{The size of edge in the static image. The default is 10.}
 
 \item{layout}{The layout of the network in static image, either "circle" or "fr". The "fr" stands for force-directed layout algorithm by Fruchterman and Reingold. The default is "circle".}
+
+\item{color.key.lab.size, color.key.text.size}{The size of color key label and text respectively.}
 
 \item{main}{The title in the static image. Default is NULL.}
 

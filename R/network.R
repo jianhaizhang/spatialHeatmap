@@ -15,6 +15,7 @@
 #' @param vertex.cex The size of node in the static image. The default is 3.
 #' @param edge.cex The size of edge in the static image. The default is 10.
 #' @param layout The layout of the network in static image, either "circle" or "fr". The "fr" stands for force-directed layout algorithm by Fruchterman and Reingold. The default is "circle".
+#' @param color.key.lab.size,color.key.text.size The size of color key label and text respectively.
 #' @param main The title in the static image. Default is NULL.
 #' @param static Logical, TRUE returns a static network while FALSE returns an interactive network. 
 #' @param ... Other arguments passed to the generic function \code{\link[graphics]{plot.default}}, \emph{e.g.}: \code{asp=1}. 
@@ -150,8 +151,8 @@
 #' @importFrom shinydashboard dashboardSidebar dashboardPage dashboardHeader sidebarMenu menuItem menuSubItem dashboardBody tabItems tabItem box
 #' @importFrom visNetwork visNetworkOutput visNetwork visOptions renderVisNetwork visIgraphLayout
 
-network <- function(ID, data, assay.na=NULL, adj.mod, ds="3", adj.min=0, con.min=0, node.col=c("turquoise", "violet"), edge.col=c("yellow", "blue"), vertex.label.cex=1, vertex.cex=3, edge.cex=10, layout="circle", main=NULL, static=TRUE, ...) {
-
+network <- function(ID, data, assay.na=NULL, adj.mod, ds="3", adj.min=0, con.min=0, node.col=c("turquoise", "violet"), edge.col=c("yellow", "blue"), vertex.label.cex=1, vertex.cex=3, edge.cex=10, layout="circle", color.key.lab.size=1.5, color.key.text.size=1, main=NULL, static=TRUE, ...) {
+ # save(ID, data, assay.na, adj.mod, ds, adj.min, con.min, node.col, edge.col, vertex.label.cex, vertex.cex, edge.cex, layout, color.key.lab.size, color.key.text.size, main, static, file='network.arg')
   options(stringsAsFactors=FALSE)
   if (is(data, 'data.frame')|is(data, 'matrix')|is(data, 'DFrame')|is(data, 'dgCMatrix')) {
 
@@ -212,12 +213,12 @@ network <- function(ID, data, assay.na=NULL, adj.mod, ds="3", adj.min=0, con.min
   # Node colour bar.
   mat1 <- matrix(v.nod, ncol=1, nrow=length(v.nod)) 
   par(mar=c(2.2, 3, 1, 2.5), new=FALSE); image(x=seq_len(length(v.nod)), y=1, mat1, col=col.nod, xlab="", ylab="", axes=FALSE)
-  title(xlab="Node colour scale", line=1, cex.lab=1)
-  mtext(text=round(seq(min(node.v), max(node.v), len=5), 1), side=1, line=0.3, at=seq(1, col.len, len=5), las=0, cex=0.8)
+  title(xlab="Node colour scale", line=1, cex.lab=color.key.lab.size)
+  mtext(text=round(seq(min(node.v), max(node.v), len=5), 1), side=3, line=0.3, at=seq(1, col.len, len=5), las=0, cex=color.key.text.size)
   mat2 <- matrix(v.link, ncol=1, nrow=length(v.link)) 
   par(mar=c(2.2, 2.5, 1, 3), new=FALSE); image(x=seq_len(length(v.link)), y=1, mat2, col=col.lin, xlab="", ylab="", axes=FALSE)
-  title(xlab="Edge colour scale", line=1, cex.lab=1)
-  mtext(text=round(seq(min(link.v), max(link.v), len=5), 1), side=1, line=0.3, at=seq(1, col.len, len=5), las=0, cex=0.8)
+  title(xlab="Edge colour scale", line=1, cex.lab=color.key.lab.size)
+  mtext(text=round(seq(min(link.v), max(link.v), len=5), 1), side=3, line=0.3, at=seq(1, col.len, len=5), las=0, cex=color.key.text.size)
 
   } else if (static==FALSE) {
 
@@ -235,7 +236,7 @@ network <- function(ID, data, assay.na=NULL, adj.mod, ds="3", adj.min=0, con.min
         div(style="display:inline-block;width:25%;text-align:left;", actionButton("col.but.net", "Go", icon=icon("refresh"), style="padding:7px; font-size:90%; margin-left: 0px")),
         selectInput("ds","Module splitting sensitivity level:", 3:2, selected="3", width=190),
         selectInput("adj.in", "Adjacency threshold (the smaller, the more edges):", sort(seq(0, 1, 0.002), decreasing=TRUE), 1, width=190),
-        tags$span(style="color:yellow", numericInput(inputId="max.edg", label="Maximun edges (too many edges may crash the app):", value=10, min=1, max=500, width=200)),
+        tags$span(style="color:yellow", numericInput(inputId="max.edg", label="Maximum edges (too many edges may crash the app):", value=10, min=1, max=500, width=200)),
         htmlOutput("edge"),
         menuSubItem("View graph", tabName="net")
         ),
@@ -357,7 +358,7 @@ network <- function(ID, data, assay.na=NULL, adj.mod, ds="3", adj.min=0, con.min
 
     output$edge <- renderUI({ 
 
-      span(style="color:yellow;font-weight:bold;", HTML(paste0("Edges left to display: ", nrow((visNet()[["link"]])))))
+      span(style="color:yellow;font-weight:bold;", HTML(paste0("Remaining edges for display: ", nrow((visNet()[["link"]])))))
 
     })
 

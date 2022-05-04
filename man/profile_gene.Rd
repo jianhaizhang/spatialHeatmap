@@ -10,7 +10,7 @@ profile_gene(
   x.title = "Sample/conditions",
   y.title = "Value",
   text.size = 15,
-  text.angle = 45
+  text.angle = 60
 )
 }
 \arguments{
@@ -20,7 +20,7 @@ profile_gene(
 
 \item{x.title, y.title}{X-axis title and Y-axis title respectively.}
 
-\item{text.size}{The size of axis title and text.}
+\item{text.size}{The font size of all text.}
 
 \item{text.angle}{The angle of axis text.}
 }

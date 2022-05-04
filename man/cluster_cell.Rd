@@ -7,7 +7,7 @@
 cluster_cell(
   data,
   prop = 0.1,
-  min.dim = 5,
+  min.dim = 13,
   max.dim = 50,
   pca = FALSE,
   graph.meth = "knn",
@@ -19,7 +19,7 @@ cluster_cell(
 
 \item{prop}{Numeric scalar specifying the proportion of genes to report as highly variable genes (HVGs). The default is \code{0.1}.}
 
-\item{min.dim, max.dim}{Integer scalars specifying the minimum (\code{min.dim}) and maximum (\code{max.dim}) number of (principle components) PCs to retain respectively in \code{\link[scran]{denoisePCA}}. The default is \code{min.dim=5}, \code{max.dim=50}.}
+\item{min.dim, max.dim}{Integer scalars specifying the minimum (\code{min.dim}) and maximum (\code{max.dim}) number of (principle components) PCs to retain respectively in \code{\link[scran]{denoisePCA}}. The default is \code{min.dim=13}, \code{max.dim=50}.}
 
 \item{pca}{Logical, if \code{TRUE} only the data with reduced dimentionality by PCA is returned and no clustering is performed. The default is \code{FALSE} and clustering is performed after dimensionality reduction.}
 
@@ -40,7 +40,7 @@ sce <- mockSCE(); sce <- logNormCounts(sce)
 var.stats <- modelGeneVar(sce)
 sce <- denoisePCA(sce, technical=var.stats, subset.row=rownames(var.stats)) 
 \donttest{
-sce.clus <- cluster_cell(data=sce, prop=0.1, min.dim=5, max.dim=50, graph.meth='snn', dimred='PCA')
+sce.clus <- cluster_cell(data=sce, prop=0.1, min.dim=13, max.dim=50, graph.meth='snn', dimred='PCA')
 # Clusters.
 table(colData(sce.clus)$label)
 

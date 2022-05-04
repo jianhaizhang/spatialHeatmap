@@ -24,8 +24,8 @@
 
 #' @importFrom ggplot2 layer_data ggplot geom_point theme_classic theme element_text element_blank labs scale_color_manual scale_shape_manual margin guide_legend 
 
-dim_color <- function(gg.dim, gg.shm.all, grob.shm.all, col.shm.all, cell.group, tar.cell='matched', con.na=TRUE, lis.match=NULL, sub.title.size=11, dim.lgd.pos='bottom', dim.lgd.nrow=2, dim.lgd.text.size=8) {
-  # save(gg.dim, gg.shm.all, grob.shm.all, col.shm.all, cell.group, tar.cell, con.na, lis.match, sub.title.size, dim.lgd.pos, dim.lgd.nrow, dim.lgd.text.size, file='dim.color.arg')
+dim_color <- function(gg.dim, gg.shm.all, grob.shm.all, col.shm.all, cell.group, tar.cell='matched', con.na=TRUE, lis.match=NULL, sub.title.size=11, dim.lgd.pos='bottom', dim.lgd.nrow=2, dim.lgd.key.size=4, dim.lgd.text.size=13) {
+  # save(gg.dim, gg.shm.all, grob.shm.all, col.shm.all, cell.group, tar.cell, con.na, lis.match, sub.title.size, dim.lgd.pos, dim.lgd.nrow, dim.lgd.key.size, dim.lgd.text.size, file='dim.color.arg')
   x <- y <- fill <- feature <- NULL
   lis.match <- lis.match[!unlist(lapply(lis.match, is.null))]
   if (tar.cell[1]=='matched') tar.cell <- unique(names(lis.match))
@@ -88,7 +88,7 @@ dim_color <- function(gg.dim, gg.shm.all, grob.shm.all, col.shm.all, cell.group,
   names(sp) <- dat.ft.all
   if (length(non.tar) > 0) br <- tar.cell else br <- dat.ft.all
   # Re-plot dimensionlaity plot.
-  gg <- ggplot(dat.all, aes(x=x, y=y, text=dat.all$feature)) + geom_point(size=2, alpha=1, aes(colour=feature, shape=feature)) + theme_classic() + theme(plot.title=element_text(hjust=0.5, size=sub.title.size), axis.text = element_blank(), axis.ticks = element_blank(), legend.position=dim.lgd.pos, legend.text=element_text(size=dim.lgd.text.size), legend.margin = margin(t=-0.03, l=0.05, r=0.1, unit='npc')) + scale_color_manual(values=dim.col.all, breaks=br, guide=guide_legend(title=NULL, nrow=dim.lgd.nrow)) + scale_shape_manual(values=sp, breaks=br, guide=guide_legend(title=NULL, nrow=dim.lgd.nrow)) + labs(title=tit, x=gg.dim0$labels$x, y=gg.dim0$labels$y, colour=cell.group, shape=cell.group) 
+  gg <- ggplot(dat.all, aes(x=x, y=y, text=dat.all$feature)) + geom_point(size=2, alpha=1, aes(colour=feature, shape=feature)) + theme_classic() + theme(plot.title=element_text(hjust=0.5, size=sub.title.size), axis.text = element_blank(), axis.ticks = element_blank(), legend.position=dim.lgd.pos, legend.text=element_text(size=dim.lgd.text.size), legend.margin = margin(t=-0.02, l=0.05, r=0.1, unit='npc')) + scale_color_manual(values=dim.col.all, breaks=br, guide=guide_legend(title=NULL, nrow=dim.lgd.nrow)) + scale_shape_manual(values=sp, breaks=br, guide=guide_legend(title=NULL, nrow=dim.lgd.nrow, override.aes = list(size=dim.lgd.key.size))) + labs(title=tit, x=gg.dim0$labels$x, y=gg.dim0$labels$y, colour=cell.group, shape=cell.group) 
   gg.dim.all[[i]] <- gg
 
   }

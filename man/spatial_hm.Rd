@@ -58,7 +58,9 @@ spatial_hm(
   position.text.key.2nd = "right",
   dim.lgd.pos = "bottom",
   dim.lgd.nrow = 2,
-  dim.lgd.text.size = 8,
+  dim.lgd.key.size = 4,
+  dim.lgd.text.size = 13,
+  dim.capt.size = 13,
   add.feature.2nd = FALSE,
   label = FALSE,
   label.size = 4,
@@ -192,7 +194,11 @@ spatial_hm(
 
 \item{dim.lgd.nrow}{The number of legend rows in the dimensionality reduction plot. The default is \code{2}.}
 
-\item{dim.lgd.text.size}{The size of legend text in the dimensionality reduction plot. The default is \code{8}.}
+\item{dim.lgd.key.size}{The size of legend key in the dimensionality reduction plot. The default is \code{4}.}
+
+\item{dim.lgd.text.size}{The size of legend text in the dimensionality reduction plot. The default is \code{13}.}
+
+\item{dim.capt.size}{The size of caption text in the dimensionality reduction plot in coclustering. The default is \code{13}.}
 
 \item{add.feature.2nd}{Logical TRUE or FALSE. Add feature identifiers to the secondary legend or not. The default is FALSE. Applies to the static image.}
 

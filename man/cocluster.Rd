@@ -13,7 +13,7 @@ cocluster(
   max.dim = 50,
   sim = 0.2,
   sim.p = 0.8,
-  dim = 12,
+  dim = 13,
   graph.meth = "knn",
   dimred = "PCA",
   sim.meth = "spearman",
@@ -117,7 +117,7 @@ cell.refined <- true_bulk(cell.refined, df.match)
 colData(cell.refined)[1:3, ]
 
 # Cocluster bulk and single cells.
-roc.lis <- coclus_roc(bulk=mus.lis.fil$bulk, cell.refined=cell.refined, df.match=df.match, min.dim=12, max.dim=50, graph.meth='knn', dimred='PCA', sim.meth='spearman') 
+roc.lis <- coclus_roc(bulk=mus.lis.fil$bulk, cell.refined=cell.refined, df.match=df.match, min.dim=13, max.dim=50, graph.meth='knn', dimred='PCA', sim.meth='spearman') 
 
 # The colustering results. "predictor" is the similarity between bulk and cells within a co-cluster. "index" is the cell index in the "SingleCellExperiment" after cell clusters are refined. 
 roc.lis$df.roc[1:3, ]
@@ -128,7 +128,7 @@ res.lis <- c(list(cell.refined=cell.refined), roc.lis)
 
 # The processes of clustering single cells, refining cell clusters, and coclustering bulk and single cells can be performed by a single function.
 library(BiocParallel)
-res.lis <- cocluster(bulk=mus.lis.fil$bulk, cell=mus.lis.fil$sc.mus, df.match=df.match, df.para=NULL, sim=0.2, sim.p=0.8, dim=12, graph.meth='knn', dimred='PCA', sim.meth='spearman', return.all=TRUE)
+res.lis <- cocluster(bulk=mus.lis.fil$bulk, cell=mus.lis.fil$sc.mus, df.match=df.match, df.para=NULL, sim=0.2, sim.p=0.8, dim=13, graph.meth='knn', dimred='PCA', sim.meth='spearman', return.all=TRUE)
 res.lis <- res.lis[[1]]
 
 names(res.lis)
@@ -139,7 +139,7 @@ df.par <- data.frame(sim=c(0.2, 0.3), sim.p=c(0.8, 0.7), dim=c(12, 13))
 
 # The computation is parallelized on 2 cpu cores by "multi.core.par".
 library(BiocParallel)
-res.multi <- cocluster(bulk=mus.lis.fil$bulk, cell=mus.lis.fil$sc.mus, df.match=df.match, df.para=df.par, sc.dim.min=10, max.dim=50, sim=0.2, sim.p=0.8, dim=12, graph.meth='knn', dimred='PCA', sim.meth='spearman', return.all=TRUE, multi.core.par=MulticoreParam(workers=2))
+res.multi <- cocluster(bulk=mus.lis.fil$bulk, cell=mus.lis.fil$sc.mus, df.match=df.match, df.para=df.par, sc.dim.min=10, max.dim=50, sim=0.2, sim.p=0.8, dim=13, graph.meth='knn', dimred='PCA', sim.meth='spearman', return.all=TRUE, multi.core.par=MulticoreParam(workers=2))
 
 # The results of auto-matching through coclustering can be tailored through "Lasso Select" on the convenience Shiny app (desired_bulk_shiny) or manually defining desired bulk. If the former, save "cell.refined" in an ".rds" file by "saveRDS(cell.refined, file='cell.refined.rds')" and upload "cell.refined.rds" to the Shiny app. 
 df.desired.bulk <- NULL 

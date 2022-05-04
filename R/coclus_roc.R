@@ -53,7 +53,7 @@
 #' df.match$SVGBulk %in% feature.df$feature
 #'
 #' # Cluster single cells.
-#' clus.sc <- cluster_cell(data=mus.lis.fil$sc.mus, min.dim=10, max.dim=50, graph.meth='knn', dimred='PCA')
+#' clus.sc <- cluster_cell(data=mus.lis.fil$sc.mus, min.dim=13, max.dim=50, graph.meth='knn', dimred='PCA')
 #' # Cluster labels are stored in "label" column in "colData".
 #'colData(clus.sc)[1:3, ]
 #'
@@ -65,7 +65,7 @@
 #' colData(cell.refined)[1:3, ]
 #'
 #' # Cocluster bulk and single cells.
-#' roc.lis <- coclus_roc(bulk=mus.lis.fil$bulk, cell.refined=cell.refined, df.match=df.match, min.dim=12, max.dim=50, graph.meth='knn', dimred='PCA', sim.meth='spearman') 
+#' roc.lis <- coclus_roc(bulk=mus.lis.fil$bulk, cell.refined=cell.refined, df.match=df.match, min.dim=13, max.dim=50, graph.meth='knn', dimred='PCA', sim.meth='spearman') 
 #' }
 
 
@@ -77,7 +77,7 @@
 #' @export coclus_roc 
 #' @importFrom SingleCellExperiment logcounts
 
-coclus_roc <- function(bulk, cell.refined, df.match, min.dim=10, max.dim=50, graph.meth='snn', dimred='PCA', sim.meth='spearman') {
+coclus_roc <- function(bulk, cell.refined, df.match, min.dim=13, max.dim=50, graph.meth='snn', dimred='PCA', sim.meth='spearman') {
   # Combine bulk and single cell data.
   dat.kp.sc <- logcounts(cell.refined)
   cat('Single cell data: \n'); print(dim(dat.kp.sc))

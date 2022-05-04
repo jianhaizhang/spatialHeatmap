@@ -3,7 +3,7 @@
 #' In co-clustering, cluster only single cell data or combination of single cell and bulk data. The cluster assignments are stored in the \code{label} column of \code{colData} slot of \code{SingleCellExperiment}.
 #' @param data The normalized single cell data or nomalized combination of single cell and bulk data at log2 scale in form of \code{SingleCellExperiment}, \code{dgCMatrix}, \code{matrix}, or \code{data.frame}.
 #' @param prop Numeric scalar specifying the proportion of genes to report as highly variable genes (HVGs). The default is \code{0.1}.
-#' @param min.dim,max.dim Integer scalars specifying the minimum (\code{min.dim}) and maximum (\code{max.dim}) number of (principle components) PCs to retain respectively in \code{\link[scran]{denoisePCA}}. The default is \code{min.dim=5}, \code{max.dim=50}.
+#' @param min.dim,max.dim Integer scalars specifying the minimum (\code{min.dim}) and maximum (\code{max.dim}) number of (principle components) PCs to retain respectively in \code{\link[scran]{denoisePCA}}. The default is \code{min.dim=13}, \code{max.dim=50}.
 #' @param pca Logical, if \code{TRUE} only the data with reduced dimentionality by PCA is returned and no clustering is performed. The default is \code{FALSE} and clustering is performed after dimensionality reduction.
 #' @param graph.meth Method to build a nearest-neighbor graph, \code{snn} (see \code{\link[scran]{buildSNNGraph}}) or \code{knn} (default, see \code{\link[scran]{buildKNNGraph}}). The clusters are detected by first creating a nearest neighbor graph using \code{snn} or \code{kn} then partitioning the graph. 
 #' @param dimred A string of \code{PCA} (default) or \code{UMAP} specifying which reduced dimensionality to use in creating a nearest neighbor graph. Internally, before building a nearest neighbor graph the data dimensionalities are reduced by PCA and UMAP respectively.
@@ -18,7 +18,7 @@
 #' var.stats <- modelGeneVar(sce)
 #' sce <- denoisePCA(sce, technical=var.stats, subset.row=rownames(var.stats)) 
 #' \donttest{
-#' sce.clus <- cluster_cell(data=sce, prop=0.1, min.dim=5, max.dim=50, graph.meth='snn', dimred='PCA')
+#' sce.clus <- cluster_cell(data=sce, prop=0.1, min.dim=13, max.dim=50, graph.meth='snn', dimred='PCA')
 #' # Clusters.
 #' table(colData(sce.clus)$label)
 #'
@@ -42,7 +42,7 @@
 #' @importFrom scater runUMAP runTSNE
 #' @importFrom igraph cluster_walktrap
 
-cluster_cell <- function(data, prop=0.1, min.dim=5, max.dim=50, pca=FALSE, graph.meth='knn', dimred='PCA') {
+cluster_cell <- function(data, prop=0.1, min.dim=13, max.dim=50, pca=FALSE, graph.meth='knn', dimred='PCA') {
   if (is(data, 'SingleCellExperiment')) sce <- data
   if (is(data, 'dgCMatrix')|is(data, 'matrix')|is(data, 'data.frame')) {
     if (all(round(data)==data)) stop('The data to cluster should be in log2 scale!')

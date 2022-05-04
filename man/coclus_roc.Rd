@@ -8,7 +8,7 @@ coclus_roc(
   bulk,
   cell.refined,
   df.match,
-  min.dim = 10,
+  min.dim = 13,
   max.dim = 50,
   graph.meth = "snn",
   dimred = "PCA",
@@ -22,9 +22,9 @@ coclus_roc(
 
 \item{df.match}{The \code{data.frame} specifying matching between cells and true bulk.}
 
-\item{min.dim}{Integer scalars specifying the minimum (\code{min.dim}) and maximum (\code{max.dim}) number of (principle components) PCs to retain respectively in \code{\link[scran]{denoisePCA}}. The default is \code{min.dim=5}, \code{max.dim=50}.}
+\item{min.dim}{Integer scalars specifying the minimum (\code{min.dim}) and maximum (\code{max.dim}) number of (principle components) PCs to retain respectively in \code{\link[scran]{denoisePCA}}. The default is \code{min.dim=13}, \code{max.dim=50}.}
 
-\item{max.dim}{Integer scalars specifying the minimum (\code{min.dim}) and maximum (\code{max.dim}) number of (principle components) PCs to retain respectively in \code{\link[scran]{denoisePCA}}. The default is \code{min.dim=5}, \code{max.dim=50}.}
+\item{max.dim}{Integer scalars specifying the minimum (\code{min.dim}) and maximum (\code{max.dim}) number of (principle components) PCs to retain respectively in \code{\link[scran]{denoisePCA}}. The default is \code{min.dim=13}, \code{max.dim=50}.}
 
 \item{graph.meth}{Method to build a nearest-neighbor graph, \code{snn} (see \code{\link[scran]{buildSNNGraph}}) or \code{knn} (default, see \code{\link[scran]{buildKNNGraph}}). The clusters are detected by first creating a nearest neighbor graph using \code{snn} or \code{kn} then partitioning the graph.}
 
@@ -78,7 +78,7 @@ df.match
 df.match$SVGBulk \%in\% feature.df$feature
 
 # Cluster single cells.
-clus.sc <- cluster_cell(data=mus.lis.fil$sc.mus, min.dim=10, max.dim=50, graph.meth='knn', dimred='PCA')
+clus.sc <- cluster_cell(data=mus.lis.fil$sc.mus, min.dim=13, max.dim=50, graph.meth='knn', dimred='PCA')
 # Cluster labels are stored in "label" column in "colData".
 colData(clus.sc)[1:3, ]
 
@@ -90,7 +90,7 @@ cell.refined <- true_bulk(cell.refined, df.match)
 colData(cell.refined)[1:3, ]
 
 # Cocluster bulk and single cells.
-roc.lis <- coclus_roc(bulk=mus.lis.fil$bulk, cell.refined=cell.refined, df.match=df.match, min.dim=12, max.dim=50, graph.meth='knn', dimred='PCA', sim.meth='spearman') 
+roc.lis <- coclus_roc(bulk=mus.lis.fil$bulk, cell.refined=cell.refined, df.match=df.match, min.dim=13, max.dim=50, graph.meth='knn', dimred='PCA', sim.meth='spearman') 
 }
 }
 \references{

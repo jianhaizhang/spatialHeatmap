@@ -1738,10 +1738,10 @@ Embedding plot of single cells with clusters labeled by the `label` column in `c
 The spatial features in mouse brain aSVG are extracted. They are the bulk tissues to be matched with cell clusters.  
 
 ```{r scSVG, eval=TRUE, echo=TRUE, warnings=FALSE}
-  svg.mus <- system.file("extdata/shinyApp/example", "mus_musculus.brain.svg", package="spatialHeatmap")
-  # Spatial features to match with single cell clusters.
-  feature.df <- return_feature(svg.path=svg.mus)
-  feature.df$feature
+svg.mus.brain <- system.file("extdata/shinyApp/example", "mus_musculus.brain.svg", package="spatialHeatmap")
+# Spatial features to match with single cell clusters.
+feature.df <- return_feature(svg.path=svg.mus.brain)
+feature.df$feature
 ```
 
 The single cell clusters can be matched to bulk tissues according to cluster assignments in the `label` or `cluster` column in `colData`.
@@ -1751,13 +1751,13 @@ The single cell clusters can be matched to bulk tissues according to cluster ass
 The custom cell clusters are defined in the `label` column of `colData`, which are cell sources provided in the original study.  
 
 ```{r scLab, eval=TRUE, echo=TRUE, warnings=FALSE}
-  unique(colData(sce.manual)$label) 
+unique(colData(sce.manual)$label) 
 ```
 
 Aggregate cells by clusters defined in the `label` column.  
 
 ```{r scLabAggr, eval=TRUE, echo=TRUE, warnings=FALSE}
- sce.manual.aggr <- aggr_rep(sce.manual, assay.na='logcounts', sam.factor='label', con.factor='expVar', aggr='mean')
+sce.manual.aggr <- aggr_rep(sce.manual, assay.na='logcounts', sam.factor='label', con.factor='expVar', aggr='mean')
 ```
 
 Manually create the matching `list`.  
@@ -1769,7 +1769,7 @@ lis.match <- list(hypothalamus=c('hypothalamus'), cortex.S1=c('cerebral.cortex')
 Co-visualization on gene `St18`.  
 
 ```{r scLabVis, eval=TRUE, echo=TRUE, warnings=FALSE, fig.wide=TRUE, fig.cap=('Co-visualizing single cells and bulk tissues by custom cell clusters. The expression profiles of gene `St18` are used.'), out.width="100%", fig.show='show'}
-  shm.lis <- spatial_hm(svg.path=svg.mus, data=sce.manual.aggr, ID=c('St18'), height=0.7, legend.r=1.5, legend.key.size=0.02, legend.text.size=12, legend.nrow=2, sce.dimred=sce.manual, dimred='PCA', cell.group='label', assay.na='logcounts', tar.cell=c('matched'), lis.rematch=lis.match, bar.width=0.1, dim.lgd.nrow=1)
+shm.lis <- spatial_hm(svg.path=svg.mus.brain, data=sce.manual.aggr, ID=c('St18'), height=0.7, legend.r=1.5, legend.key.size=0.02, legend.text.size=12, legend.nrow=2, sce.dimred=sce.manual, dimred='PCA', cell.group='label', assay.na='logcounts', tar.cell=c('matched'), lis.rematch=lis.match, bar.width=0.1, dim.lgd.nrow=1)
 ```
 
 ### Matching by Auto-Clusters
@@ -1794,7 +1794,7 @@ Manually create the matching `list`.
 Co-visualization on gene `St18`.  
 
 ```{r scAutoVis, eval=TRUE, echo=TRUE, warnings=FALSE, fig.wide=TRUE, fig.cap=('Co-visualizing single cells and bulk tissues by automatically-detected cell clusters. The expression profiles of gene `St18` are used.'), out.width="100%", fig.show='show'}
-shm.lis <- spatial_hm(svg.path=svg.mus, data=sce.manual.aggr, ID=c('St18'), height=0.7, legend.r=1.5, legend.key.size=0.02, legend.text.size=12, legend.nrow=3, sce.dimred=sce.manual, dimred='PCA', cell.group='cluster', assay.na='logcounts', tar.cell=c('matched'), lis.rematch=lis.match, bar.width=0.11, dim.lgd.nrow=1)
+shm.lis <- spatial_hm(svg.path=svg.mus.brain, data=sce.manual.aggr, ID=c('St18'), height=0.7, legend.r=1.5, legend.key.size=0.02, legend.text.size=12, legend.nrow=3, sce.dimred=sce.manual, dimred='PCA', cell.group='cluster', assay.na='logcounts', tar.cell=c('matched'), lis.rematch=lis.match, bar.width=0.11, dim.lgd.nrow=1)
 ```
 
 ## Auto-Matching
@@ -2362,9 +2362,9 @@ mus.lis.fil <- filter_cell(lis=list(sc.mus=logcounts(mus.lis.nor$sc.mus)), bulk=
 
 The aSVG file of mouse brain.  
 ```{r , eval=TRUE, echo=TRUE, warnings=FALSE}
-svg.mus <- system.file("extdata/shinyApp/example", "mus_musculus.brain.svg", package="spatialHeatmap")
+svg.mus.brain <- system.file("extdata/shinyApp/example", "mus_musculus.brain.svg", package="spatialHeatmap")
 # Spatial features.  
-feature.df <- return_feature(svg.path=svg.mus)
+feature.df <- return_feature(svg.path=svg.mus.brain)
 ```
  
 Matching table indicating true bulk tissues of each cell type and corresponding SVG bulk (spatial feature).  
@@ -2404,7 +2404,7 @@ Cocluster bulk and single cells.
 ```{r , eval=TRUE, echo=TRUE, warnings=FALSE}
 roc.lis <- read_cache(cache.pa, 'roc.lis') # Retrieve data from cache.
 if (is.null(roc.lis)) {
-  roc.lis <- coclus_roc(bulk=mus.lis.fil$bulk, cell.refined=cell.refined, df.match=df.match.mus.brain, min.dim=12, graph.meth='knn', dimred='PCA') 
+  roc.lis <- coclus_roc(bulk=mus.lis.fil$bulk, cell.refined=cell.refined, df.match=df.match.mus.brain, min.dim=13, graph.meth='knn', dimred='PCA') 
   save_cache(dir=cache.pa, overwrite=TRUE, roc.lis)
 }
 ```
@@ -2426,7 +2426,7 @@ res.lis <- c(list(cell.refined=cell.refined), roc.lis)
 
 The processes of clustering single cells, refining cell clusters, and coclustering bulk and single cells can be performed in a single function call. Setting `return.all=TRUE` returns a `list` of refined cell clusters, ROC object, and a `data.frame` of auto-matching results. If `return.all=FALSE`, a `data.frame` of parameter settings and resulting AUC is returned.   
 ```{r , eval=FALSE, echo=TRUE, warnings=FALSE}  
-res.lis <- cocluster(bulk=mus.lis.fil$bulk, cell=mus.lis.fil$sc.mus, df.match=df.match.mus.brain, df.para=NULL, sim=0.2, sim.p=0.8, dim=12, graph.meth='knn', dimred='PCA', sim.meth='spearman', return.all=TRUE)
+res.lis <- cocluster(bulk=mus.lis.fil$bulk, cell=mus.lis.fil$sc.mus, df.match=df.match.mus.brain, df.para=NULL, sim=0.2, sim.p=0.8, dim=13, graph.meth='knn', dimred='PCA', sim.meth='spearman', return.all=TRUE)
 res.lis <- res.lis[[1]]
 ```
 
@@ -2440,7 +2440,7 @@ df.par
 
 The coclustering is run on 2 cpu cores (`workers=2`).  
 ```{r , eval=FALSE, echo=TRUE, warnings=FALSE}  
-res.multi <- cocluster(bulk=mus.lis.fil$bulk, cell=mus.lis.fil$sc.mus, df.match=df.match.mus.brain, df.para=df.par, sc.dim.min=10, max.dim=50, sim=0.2, sim.p=0.8, dim=12, graph.meth='knn', dimred='PCA', sim.meth='spearman', return.all=TRUE, multi.core.par=MulticoreParam(workers=2))
+res.multi <- cocluster(bulk=mus.lis.fil$bulk, cell=mus.lis.fil$sc.mus, df.match=df.match.mus.brain, df.para=df.par, sc.dim.min=10, max.dim=50, sim=0.2, sim.p=0.8, dim=13, graph.meth='knn', dimred='PCA', sim.meth='spearman', return.all=TRUE, multi.core.par=MulticoreParam(workers=2))
 ```
 
 The auto-matching results through coclustering can be tailored through "Lasso Select" on the convenience Shiny app (`desired_bulk_shiny`) or manually defining desired bulk. If the former, save `cell.refined` in an `.rds` file by `saveRDS(cell.refined, file='cell.refined.rds')` and upload `cell.refined.rds` to the Shiny app.   
@@ -2475,13 +2475,13 @@ sce.aggr <- aggr_rep(data=sce.lis$cell.sub, assay.na='logcounts', sam.factor='SV
 
 Co-visualize bulk and single cells with aggregated abundance profiles of gene `Adcy1`. `tar.bulk` refers to the target bulk in  aSVG and all corresponding cells are highlighted. Cells with true assignments of `tar.bulk` are colored according to the color key, while other corresponding cells with false or without assignments are colored black. All other cells not corresponding to `tar.bulk` are in gray.    
 ```{r , eval=TRUE, echo=TRUE, warnings=FALSE, fig.wide=TRUE, fig.cap=('Co-visualizing bulk and single cells of mouse brain with abundance profiles. The aggregated expression profiles of gene `Adcy1` are plotted.'), out.width="100%", fig.show='show'}
-shm.lis1 <- spatial_hm(svg.path=svg.mus, data=sce.aggr, ID=c('Adcy1'), legend.nrow=4, sce.dimred=sce.lis$cell.refined, dimred='PCA', assay.na='logcounts', tar.bulk=c('hippocampus'), profile=TRUE, dim.lgd.text.size=10, dim.lgd.nrow=1, bar.width=0.1)
+shm.lis1 <- spatial_hm(svg.path=svg.mus.brain, data=sce.aggr, ID=c('Adcy1'), legend.nrow=4, sce.dimred=sce.lis$cell.refined, dimred='PCA', assay.na='logcounts', tar.bulk=c('cerebral.cortex'), profile=TRUE, dim.lgd.text.size=10, dim.lgd.nrow=1, bar.width=0.1)
 ```
 
 Co-visualize bulk and single cells without abundance profiles.  
 
 ```{r , eval=TRUE, echo=TRUE, warnings=FALSE, fig.wide=TRUE, fig.cap=('Co-visualizing bulk and single cells of mouse brain without abundance profiles. The matching between cells and SVG bulk is denoted by color in-between.'), out.width="100%", fig.show='show'}
-shm.lis2 <- spatial_hm(svg.path=svg.mus, data=sce.aggr, ID=c('Adcy1'), legend.nrow=4, sce.dimred=sce.lis$cell.refined, dimred='PCA', tar.bulk=c('hippocampus'), profile=FALSE, dim.lgd.text.size=10, dim.lgd.nrow=1)
+shm.lis2 <- spatial_hm(svg.path=svg.mus.brain, data=sce.aggr, ID=c('Adcy1'), legend.nrow=4, sce.dimred=sce.lis$cell.refined, dimred='PCA', tar.bulk=c('cerebral.cortex'), profile=FALSE, dim.lgd.text.size=10, dim.lgd.nrow=1)
 ```
 
 ### Using Shiny App
