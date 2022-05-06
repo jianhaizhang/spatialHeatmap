@@ -98,7 +98,7 @@ upload_ui <- function(id) {
    ns <- NS(id)
    tabPanel(title="Datasets", value='landing',
    navbarPage('', 
-     tabPanel(title="Gallary", value='gallery',
+     tabPanel(title="Gallery", value='gallery',
       fluidRow(
         column(4, id='brainHum', style='text-align:center', uiOutput(ns('brain.hum'))),
         column(4, id='mouse', style='text-align:center', uiOutput(ns('mouse'))),
@@ -116,7 +116,7 @@ upload_ui <- function(id) {
         column(4, id='clpRice', style='text-align:center', uiOutput(ns('clp.rice'))),
         column(4, ), column(4, )
       ),
-     ), # tabPanel(title="Gallary",
+     ), # tabPanel(title="Gallery",
      tabPanel(title="Data & aSVGs", value='datSVG',
       h4(strong("Step 1: choose custom or default data sets")),
       fluidRow(splitLayout(cellWidths=c('1%', '30%'), '', 

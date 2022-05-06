@@ -251,11 +251,11 @@ The following lists the vignette(s) of this package in an HTML browser. Clicking
 browseVignettes('spatialHeatmap')
 ```
 
-# Spatial Heatmaps (SHMs) {#shm}
+# Spatial Heatmaps {#shm}
 
 ## Toy Example {#toy}
 
-SHMs are plotted with the `spatial_hm` function. To provide a quick
+Spatial Heatmaps (SHMs) are plotted with the `spatial_hm` function. To provide a quick
 and intuitive overview how these plots are generated, the following uses a
 generalized toy example where a small vector of random numeric values is
 generated that are used to color features in an aSVG image. The image chosen
@@ -1071,7 +1071,47 @@ across six cell types (Figure \@ref(fig:shshm)).
 spatial_hm(svg.path=svg.sh, data=se.fil.arab, ID=c("HRE2"), height=0.7, legend.nrow=3, legend.text.size=11)
 ```
 
-# Spatiotemporal Heatmaps (STHMs) {#sthm} 
+<font style='color:red'>
+
+## Overlaying 
+
+`spatialHeatmap` supports overlaying real images with SHMs, which provides more intuitive background. There are certain requirements to utilize this feature: 1) The real images are templates for creating aSVGs and the formats include `.jpg`, `.JPG`, `.png`, `.PNG`; 2) Except for file extensions, the file names of templates and aSVGs should be same such as `real_shm.png`, `real_shm.svg`. In other words, templates and aSVGs should be paired; and 3) If multiple templates/aSVGs are used such as developmental stages, names of separate template/aSVG files need to include the following suffixes: `*_shm1.png`, `*_shm1.svg`, `*_shm2.png`, `*_shm2.svg`, etc. Otherwise, the order of these images is not recognized.  
+
+In the following example, template images are modified from a study on abaxial bundle sheath (ABS) cells in maize leaves [@Bezrutczyk2021-fq]. They are labeled 1 and 2 to mimic two developmental stages. The data are randomly generated.   
+
+The first template and paired aSVG.  
+```{r eval=TRUE, echo=TRUE, warnings=FALSE}
+tmp.pa1 <- system.file('extdata/shinyApp/example/maize_leaf_shm1.png', package='spatialHeatmap')
+svg.pa1 <- system.file('extdata/shinyApp/example/maize_leaf_shm1.svg', package='spatialHeatmap')
+```
+
+The second template and paired aSVG.  
+```{r eval=TRUE, echo=TRUE, warnings=FALSE}
+tmp.pa2 <- system.file('extdata/shinyApp/example/maize_leaf_shm2.png', package='spatialHeatmap')
+svg.pa2 <- system.file('extdata/shinyApp/example/maize_leaf_shm2.svg', package='spatialHeatmap')
+```
+
+Random data.  
+```{r eval=TRUE, echo=TRUE, warnings=FALSE}
+dat.overlay <- read_fr(system.file('extdata/shinyApp/example/dat_overlay.txt', package='spatialHeatmap'))
+dat.overlay[1:2, ]
+```
+
+The real images may contain colors that interfere with SHMs. To address such issues, the argument `alpha.overlay` is developed to adjust transparency of real images. In Figure \@ref(fig:overCol), expression profiles of gene1 are plotted on SHMs and SHMs are placed on top of template images.    
+
+```{r overCol, eval=TRUE, echo=TRUE, warnings=FALSE, fig.wide=TRUE, fig.cap=('Overlaying real images with SHMs (colorful backaground). The expression profiles of gene1 are plotted on ABS cells.'), out.width="100%", fig.show='show'}
+spatial_hm(svg.path=c(svg.pa1, svg.pa2), data=dat.overlay, tmp.path=c(tmp.pa1, tmp.pa2), charcoal=FALSE, ID=c('gene1'), alpha.overlay=0.5, bar.width=0.09, sub.title.vjust=4)
+```
+
+To reduce template colors to minimum, templates can be set black-white by `charcoal=TRUE` (Figure \@ref(fig:overChar)).  
+
+```{r overChar, eval=TRUE, echo=TRUE, warnings=FALSE, fig.wide=TRUE, fig.cap=('Overlaying real images with SHMs (black-white background). The expression profiles of gene1 are plotted on ABS cells.'), out.width="100%", fig.show='show'}
+spatial_hm(svg.path=c(svg.pa1, svg.pa2), data=dat.overlay, tmp.path=c(tmp.pa1, tmp.pa2), charcoal=TRUE, ID=c('gene1'), alpha.overlay=0.5, bar.width=0.09, sub.title.vjust=4)
+```
+
+</font>
+
+## Spatiotemporal Heatmaps (STHMs) {#sthm} 
 
 The above examples are SHMs plotted at the single spatial dimension. This section showcases the application of SHMs at spatial and temporal dimesions, *i.e.* data assayed in spatial feature(s) across different development stages.  
 
@@ -1079,9 +1119,9 @@ The data at single spatial dimension contains only two factors: samples and cond
 
 Which option to choose depends on the specific data and aSVGs, and the chosen one should achieve optimal visualization. In this example, the third is the best choice and will be showcased in the first part. Meanwhile, for demonstration purpose the second choice will also be illustrated in the second part. In the spatiotemporal application, different development stages can be represented in different aSVG images, and this feature will be presented in the third part.   
 
-## Sample-Time-Condition Factor
+### Sample-Time-Condition Factor
 
-### Gene Expression Data
+#### Gene Expression Data
 
 The data is from the transcriptome analysis on rice coleoptile during germinating and developing stages under anoxia and re-oxygenation [@Narsai2017-ql], which is also downloaded with `ExpressionAtlas`.   
 
@@ -1093,7 +1133,7 @@ if (is.null(rse.clp)) { # Save downloaded data to cache if it is not cached.
 }
 ```
 
-### Experimental Design
+#### Experimental Design
 
 The targets file was prepared according to the experiment design stored in `colData` slot of `res.clp` by using the convenient function `edit_tar`, and pre-packaged in `spatialHeatmap`.  
 
@@ -1134,7 +1174,7 @@ target.clp <- colData(rse.clp)
 unique(target.clp$samTimeCon)
 ```
 
-### aSVG Image
+#### aSVG Image
 
 Similar with the Arabidopsis Shoot example, the aSVG image has been generated in Inkscape from 
 the corresponding figure in @Narsai2017-ql according to the [SVG tutorial](https://jianhaizhang.github.io/SVG_tutorial_file/){target="_blank"}, and the resulting custom figure
@@ -1166,8 +1206,7 @@ Obtain full path of the retrieved aSVG on user system.
 svg.clp1 <- system.file("extdata/shinyApp/example", "oryza.sativa_coleoptile.ANT_shm.svg", package="spatialHeatmap")
 ```
 
-### Preprocess Assay Data
-
+#### Preprocess Assay Data
 
 The raw RNA-Seq count are preprocessed with the following steps: (1)
 normalization, (2) aggregation of replicates, and (3) filtering of reliable
@@ -1193,7 +1232,7 @@ Since all three factors (conditions, times, tissues) are combined, the resulting
 assay(se.fil.clp1)[1:3, 1:3] # A slice of the resulting data table.
 ```
 
-### STHM: combine sample, time, and condition
+#### STHM: combine sample, time, and condition
 
 The expression profile of gene `Os12g0630200` and `Os01g0106300` in coleoptile is plotted across eight time
 points under anoxia and re-oxygenation in form of a composite STHM.   
@@ -1208,11 +1247,11 @@ This STHM example is also deployed as an interacive Shiny app, where STHMs are p
 <iframe width='700px' height='700px' src='https://tgirke.shinyapps.io/spatiotemporalHeatmap/'></iframe>
 -->
 
-## Sample-Time Factor
+### Sample-Time Factor
 
 This part showcases the usage of sample-time factor. The sample-condition factor could be applied similarly. To obtain optimal result, the data under aerobic is excluded. Since most steps are similar with the sample-time-condition factor, the following process is reduced to minimum.  
 
-### Gene Expression Data
+#### Gene Expression Data
 
 The same RNA-seq count data from @Narsai2017-ql is downloaded.  
 
@@ -1224,7 +1263,7 @@ if (is.null(rse.clp)) { # Save downloaded data to cache if it is not cached.
 }
 ```
 
-### Experimental Design
+#### Experimental Design
 
 The same targets file with sample-time factor is imported.   
 
@@ -1250,7 +1289,7 @@ target.clp <- colData(rse.clp)
 target.clp[1:3, ]
 ```
 
-### aSVG Image
+#### aSVG Image
 
 Similarly the custom aSVG image was generated in Inkscape from 
 the corresponding figure in @Narsai2017-ql according to the [SVG tutorial](https://jianhaizhang.github.io/SVG_tutorial_file/){target="_blank"} and included in `spatialHeatmap`.   
@@ -1280,8 +1319,7 @@ Obtain full path of the retrieved aSVG on user system.
 svg.clp2 <- system.file("extdata/shinyApp/example", "oryza.sativa_coleoptile.NT_shm.svg", package="spatialHeatmap")
 ```
 
-### Preprocess Assay Data
-
+#### Preprocess Assay Data
 
 The raw RNA-Seq count are preprocessed with the following steps: (1)
 normalization, (2) aggregation of replicates, and (3) filtering of reliable
@@ -1313,7 +1351,7 @@ df.fil.clp1 <- df.fil.clp[, !grepl('__aerobic', colnames(df.fil.clp))] # Exclude
 df.fil.clp1[1:3, 1:3] # A slice of the data table without aerobic data.
 ```
 
-### STHM: combine sample and time
+#### STHM: combine sample and time
 
 The expression profile of gene `Os12g0630200` in coleoptile is plotted across eight time
 points under anoxia and re-oxygenation respectively.   
@@ -1326,7 +1364,7 @@ This image is hidden to meet the 5MB requirement on vignette.
 shm.lis <- spatial_hm(svg.path=svg.clp2, data=df.fil.clp1, ID=c('Os12g0630200'), legend.r=0.9, legend.key.size=0.02, legend.text.size=9, legend.nrow=8, ncol=1, line.size=0)
 ```
 
-## Multiple aSVGs {#mul_svg}
+### Multiple aSVGs {#mul_svg}
 
 In the spatiotemporal application, different development stages may need to be represented in separate aSVG images. In that case, the `spatial_hm` function is able to arrange multiple aSVGs in a single SHM plot. To organize the subplots, the names
 of the separate aSVG files are expected to include the following suffixes: `*_shm1.svg`,
@@ -1367,203 +1405,24 @@ spatial_hm(svg.path=c(svg.sh1, svg.sh2), data=df.random, ID=c('gene1'), width=0.
 
 Note in Figure \@ref(fig:arabshm) shoots have thicker outlines than roots. This is another function of `spatial_hm`, *i.e.* preserves the outline thicknesses defined in aSVG files. This feature is particularly useful in cellular SHMs where different cell types have different cell-wall thicknesses. The outline widths can be updated with `update_feature` programatically or with Inkscape manually. The former is illustrated in the Supplementary Section.   
 
-# Multi-Factor Spatial Heatmaps {#multFactor}
+## Multi-Factor Spatial Heatmaps {#multFactor}
 
 In principle, the `spatialHeatmap` is extendable to as many factors (*e.g.* samples, conditions, times) as possible. The most common scenario involves only two factors of samples and conditions ([Section 3](#shm)). If more factors are relevant such as development stages, geographical locations, genotypes, *etc*, all or selected factors should be combined to generate composite factors. The [spatiotemporal section](#sthm) is an illustration of three factors. Similar combining strategies should be appied in cases of four or more factors. A rule of thumb is the composite factors of interest must have a matching counterpart in the aSVG file, otherwise target spatial features are not painted in spatial heatmaps.   
 
-<font style='color:red'>
 
-
-# Overlaying 
-
-`spatialHeatmap` supports overlaying real images with SHMs, which provides more intuitive background. There are certain requirements to utilize this feature: 1) The real images are templates for creating aSVGs and the formats include `.jpg`, `.JPG`, `.png`, `.PNG`; 2) Except for file extensions, the file names of templates and aSVGs should be same such as `real_shm.png`, `real_shm.svg`. In other words, templates and aSVGs should be paired; and 3) If multiple templates/aSVGs are used such as developmental stages, names of separate template/aSVG files need to include the following suffixes: `*_shm1.png`, `*_shm1.svg`, `*_shm2.png`, `*_shm2.svg`, etc. Otherwise, the order of these images is not recognized.  
-
-In the following example, template images are modified from a study on abaxial bundle sheath (ABS) cells in maize leaves [@Bezrutczyk2021-fq]. They are labeled 1 and 2 to mimic two developmental stages. The data are randomly generated.   
-
-The first template and paired aSVG.  
-```{r eval=TRUE, echo=TRUE, warnings=FALSE}
-tmp.pa1 <- system.file('extdata/shinyApp/example/maize_leaf_shm1.png', package='spatialHeatmap')
-svg.pa1 <- system.file('extdata/shinyApp/example/maize_leaf_shm1.svg', package='spatialHeatmap')
-```
-
-The second template and paired aSVG.  
-```{r eval=TRUE, echo=TRUE, warnings=FALSE}
-tmp.pa2 <- system.file('extdata/shinyApp/example/maize_leaf_shm2.png', package='spatialHeatmap')
-svg.pa2 <- system.file('extdata/shinyApp/example/maize_leaf_shm2.svg', package='spatialHeatmap')
-```
-
-Random data.  
-```{r eval=TRUE, echo=TRUE, warnings=FALSE}
-dat.overlay <- read_fr(system.file('extdata/shinyApp/example/dat_overlay.txt', package='spatialHeatmap'))
-dat.overlay[1:2, ]
-```
-
-The real images may contain colors that interfere with SHMs. To address such issues, the argument `alpha.overlay` is developed to adjust transparency of real images. In Figure \@ref(fig:overCol), expression profiles of gene1 are plotted on SHMs and SHMs are placed on top of template images.    
-
-```{r overCol, eval=TRUE, echo=TRUE, warnings=FALSE, fig.wide=TRUE, fig.cap=('Overlaying real images with SHMs (colorful backaground). The expression profiles of gene1 are plotted on ABS cells.'), out.width="100%", fig.show='show'}
-spatial_hm(svg.path=c(svg.pa1, svg.pa2), data=dat.overlay, tmp.path=c(tmp.pa1, tmp.pa2), charcoal=FALSE, ID=c('gene1'), alpha.overlay=0.5, bar.width=0.09, sub.title.vjust=4)
-```
-
-To reduce template colors to minimum, templates can be set black-white by `charcoal=TRUE` (Figure \@ref(fig:overChar)).  
-
-```{r overChar, eval=TRUE, echo=TRUE, warnings=FALSE, fig.wide=TRUE, fig.cap=('Overlaying real images with SHMs (black-white background). The expression profiles of gene1 are plotted on ABS cells.'), out.width="100%", fig.show='show'}
-spatial_hm(svg.path=c(svg.pa1, svg.pa2), data=dat.overlay, tmp.path=c(tmp.pa1, tmp.pa2), charcoal=TRUE, ID=c('gene1'), alpha.overlay=0.5, bar.width=0.09, sub.title.vjust=4)
-```
-
-</font>
-
-# Matrix Heatmaps {#mhm}
-
-SHMs are suitable for comparing assay profiles among small number of items
-(_e.g._ few genes or proteins) across cell types and conditions. To also
-support analysis routines of larger number of items, `spatialHeatmap` integrates
-functionalities for identifying groups of items with similar and/or dissimilar 
-assay profiles, and subsequently analyzing the results with data mining 
-methods that scale to larger numbers of items than SHMs, such as hierarchical
-clustering and network analysis methods. The following introduces both
-approaches using as sample data the gene expression data from Arabidopsis
-shoots from the previous section.
-
-To identify similar items, the `submatrix` function can be used. The latter
-identifies items sharing similar profiles with one or more query items of
-interest. The given example uses correlation coefficients as similarity metric.
-Three filtering parameters are provided to control the similarity and number of
-items in the result. First, the `p` argument allows to restrict the number of
-similar items to return based on a percentage cutoff relative to the number of
-items in the assay data set (_e.g._ 1% of the top most similar items). Second,
-a fixed number `n` of the most similar items can be returned.  Third, all items
-above a user definable correlation coefficient cutoff value can be returned,
-such as a Pearson correlation coefficient (PCC) of at least 0.6. If several
-query items are provided then the function returns the similar genes for each
-query, while assuring uniqueness among items in the result. 
-
-The following example uses as query the two genes: 'RCA' and 'HRE2'. The `ann`
-argument corresponds to the column name in the `rowData` slot containing gene
-annotation information. The latter is only relevant if users want to see these
-annotations when mousing over a node in the [interactive network](#inter_net)
-plot generated in the next section. 
-
-```{r eval=TRUE, echo=TRUE, warnings=FALSE}
-sub.mat <- submatrix(data=se.fil.arab, ann='Target.Description', ID=c('RCA', 'HRE2'), p=0.1)
-```
-
-The result from the previous step is the assay matrix subsetted to the genes sharing similar assay profiles
-with the query genes 'RCA' and 'HRE2'.  
-
-```{r eval=TRUE, echo=TRUE, warnings=FALSE}
-sub.mat[c('RCA', 'HRE2'), c(1:3, 37)] # Subsetted assay matrix
-```
-
-<a name="mhm1"></a>
-Subsequently, hierarchical clustering is applied to the subsetted assay matrix
-containing only the genes that share profile similarities with the query genes
-'RCA' and 'HRE2'.  The clustering result is displayed as a matrix heatmap where
-the rows and columns are sorted by the corresponding hierarchical clustering
-dendrograms (Figure \@ref(fig:static)). The position of the query genes ('RCA'
-and 'HRE2') is indicated in the heatmap by black lines. Setting `static=FALSE`
-will launch the interactive mode, where users can zoom into the heatmap by
-selecting subsections in the image or zoom out by double clicking.  
-
-```{r static, eval=TRUE, echo=TRUE, warnings=FALSE, fig.cap=("Matrix Heatmap. Rows are genes and columns are samples. The input genes are tagged by black lines."), out.width='100%'}
-matrix_hm(ID=c('RCA', 'HRE2'), data=sub.mat, angleCol=80, angleRow=35, cexRow=0.8, cexCol=0.8, margin=c(10, 6), static=TRUE, arg.lis1=list(offsetRow=0.01, offsetCol=0.01))
-```   
-
-# Network Graphs {#net}
-## Module Identification
-
-<a name="ds"></a>
-Network analysis is performed with the WGCNA algorithm [@Langfelder2008-sg;
-@Ravasz2002-db] using as input the subsetted assay matrix generated in the 
-previous section. The objective is to identify network modules that can be 
-visualized in the following step in form of network graphs. Applied to the gene
-expression sample data used here, these network modules represent groups of
-genes sharing highly similar expression profiles. Internally, the network
-module identification includes five major steps. First, a correlation matrix is
-computed using distance or correlation-based similarity metrics. Second, the
-obtained matrix is transformed into an adjacency matrix defining the
-connections among items. Third, the adjacency matrix is used to calculate a
-topological overlap matrix (TOM) where shared neighborhood information among
-items is used to preserve robust connections, while removing spurious
-connections. Fourth, the distance transformed TOM is used for hierarchical
-clustering. To maximize time performance, the hierarchical clustering is
-performed with the `flashClust` package [@Langfelder2012-nv]. Fifth, network modules
-are identified with the `dynamicTreeCut` package [@dynamicTreeCut]. Its `ds`
-(`deepSplit`) argument can be assigned integer values from `0` to `3`, where
-higher values increase the stringency of the module identification process.  To
-simplify the network module identification process with WGCNA, the individual
-steps can be executed with a single function called `adj_mod`. The result is a
-list containing the adjacency matrix and the final module assignments stored in
-a `data.frame`. Since the [interactive network](#inter_net) feature used in the
-visualization step below performs best on smaller modules, only modules are
-returned that were obtained with stringent `ds` settings (here `ds=2` and `ds=3`). 
-
-```{r eval=TRUE, echo=TRUE, warnings=FALSE, results=FALSE}
-adj.mod <- adj_mod(data=sub.mat)
-```
-
-A slice of the adjacency matrix is shown below.    
-
-```{r eval=TRUE, echo=TRUE, warnings=FALSE}
-adj.mod[['adj']][1:3, 1:3]
-```
-
-The module assignments are stored in a `data frame`. Its columns contain the results
-for the `ds=2` and `ds=3` settings. Integer values $>0$ are the module labels, while $0$ 
-indicates unassigned items. The following returns the first three rows of the module 
-assignment result.  
-
-```{r eval=TRUE, echo=TRUE, warnings=FALSE}
-adj.mod[['mod']][1:3, ] 
-```
-
-
-## Module Visualization
-
-Network modules can be visualized with the `network` function. To plot a module
-containing an item (gene) of interest, its ID (_e.g._ 'HRE2') needs to be
-provided under the corresponding argument.  Typically, this could be one of the
-items chosen for the above SHM plots. There are two modes to visualize the
-selected module: static or interactive. Figure \@ref(fig:inter) was generated
-with `static=TRUE`. Setting `static=FALSE` will generate the interactive
-version. In the network plot shown below the nodes and edges represent genes
-and their interactions, respectively. The thickness of the edges denotes the
-adjacency levels, while the size of the nodes indicates the degree of
-connectivity of each item in the network. The adjacency and connectivity levels
-are also indicated by colors. For example, in Figure \@ref(fig:inter)
-connectivity increases from "turquoise" to "violet", while the adjacency
-increases from "yellow" to "blue".  If a gene of interest has been assigned
-under `ID`, then its ID is labeled in the plot with the suffix tag: `*_target`.  
-
-```{r inter, eval=TRUE, echo=TRUE, warnings=FALSE, fig.cap=("Static network. Node size denotes gene connectivity while edge thickness stands for co-expression similarity.") }
-network(ID="HRE2", data=sub.mat, adj.mod=adj.mod, adj.min=0.90, vertex.label.cex=1.2, vertex.cex=2, static=TRUE)
-```   
-
-<a name="inter_net"></a>
-Setting `static=FALSE` launches the interactive network. In this mode there
-is an interactive color bar that denotes the gene connectivity. To modify it,
-the color labels need to be provided in a comma separated format, _e.g._: 
-`yellow, orange, red`. The latter would indicate that the gene connectivity 
-increases from yellow to red. 
-
-If the subsetted expression matrix contains gene/protein annotation information
-in the last column, then it will be shown when moving the cursor over a network
-node.    
-
-```{r eval=FALSE, echo=TRUE, warnings=FALSE}
-network(ID="HRE2", data=sub.mat, adj.mod=adj.mod, static=FALSE)
-```
+# Extended functionalities
 
 <font style='color:red'>
 
-# Spatial Enrichment (SE) {#se} 
+## Spatial Enrichment {#se} 
 
-This functionality is an extension of the SHMs. It identifies spatial feature-specifically expressed genes and thus enables the SHMs to visualize feature-specific profiles. It compares the target feature with all other selected features in a pairwise manner. The genes significantly up- or down-regulated in the target feature across all pairwise comparisons are denoted final target feature-specifically expressed genes. The base methods include edgeR [@edgeR], limma [@limma], DESeq2 [@DESeq2], distinct [@distinct]. The feature-specific genes are first detected with each method independently then summarized across methods.  
+The Spatial Enrichment (SE) is an extension of the SHMs. It identifies spatial feature-specifically expressed genes and thus enables the SHMs to visualize feature-specific profiles. It compares the target feature with all other selected features in a pairwise manner. The genes significantly up- or down-regulated in the target feature across all pairwise comparisons are denoted final target feature-specifically expressed genes. The base methods include edgeR [@edgeR], limma [@limma], DESeq2 [@DESeq2], distinct [@distinct]. The feature-specific genes are first detected with each method independently then summarized across methods.  
 
 In addition to feature-specific genes, the SE is also able to identify genes specifically expressed in a certain condition or certain composite factor. The latter is a combination of multiple expermental factors. *E.g.* the spatiotemporal factor is a combination of feature and time points. See [section 5](#multFactor) for details.  
 
 The application of SE is illustrated on the mouse brain in the following example, which could be extended to other examples in a similar way.  
 
-## Mouse Brain
+### Mouse Brain
 
 In this example, `brain` is selected as the target feature, `liver` and `kidney` as the reference features, and all the three strains `DBA.2J`, `C57BL.6`, `CD1` as the factors. 
 
@@ -1645,8 +1504,151 @@ Line graph of expression profiles of the two genes in (Figure \@ref(fig:enrich))
 ```{r prof, eval=TRUE, echo=TRUE, warnings=FALSE, fig.wide=TRUE, fig.cap=('Line graph of gene expression profiles. The count data is normalized and replicates are aggregated.'), out.width="100%", fig.show='show'}
 profile_gene(rbind(df.up.mus[1, ], df.down.mus[1, ]))
 ```
+</font>
+
+## Matrix Heatmaps {#mhm}
+
+SHMs are suitable for comparing assay profiles among small number of items
+(_e.g._ few genes or proteins) across cell types and conditions. To also
+support analysis routines of larger number of items, `spatialHeatmap` integrates
+functionalities for identifying groups of items with similar and/or dissimilar 
+assay profiles, and subsequently analyzing the results with data mining 
+methods that scale to larger numbers of items than SHMs, such as hierarchical
+clustering and network analysis methods. The following introduces both
+approaches using as sample data the gene expression data from Arabidopsis
+shoots from the previous section.
+
+To identify similar items, the `submatrix` function can be used. The latter
+identifies items sharing similar profiles with one or more query items of
+interest. The given example uses correlation coefficients as similarity metric.
+Three filtering parameters are provided to control the similarity and number of
+items in the result. First, the `p` argument allows to restrict the number of
+similar items to return based on a percentage cutoff relative to the number of
+items in the assay data set (_e.g._ 1% of the top most similar items). Second,
+a fixed number `n` of the most similar items can be returned.  Third, all items
+above a user definable correlation coefficient cutoff value can be returned,
+such as a Pearson correlation coefficient (PCC) of at least 0.6. If several
+query items are provided then the function returns the similar genes for each
+query, while assuring uniqueness among items in the result. 
+
+The following example uses as query the two genes: 'RCA' and 'HRE2'. The `ann`
+argument corresponds to the column name in the `rowData` slot containing gene
+annotation information. The latter is only relevant if users want to see these
+annotations when mousing over a node in the [interactive network](#inter_net)
+plot generated in the next section. 
+
+```{r eval=TRUE, echo=TRUE, warnings=FALSE}
+sub.mat <- submatrix(data=se.fil.arab, ann='Target.Description', ID=c('RCA', 'HRE2'), p=0.1)
+```
+
+The result from the previous step is the assay matrix subsetted to the genes sharing similar assay profiles
+with the query genes 'RCA' and 'HRE2'.  
+
+```{r eval=TRUE, echo=TRUE, warnings=FALSE}
+sub.mat[c('RCA', 'HRE2'), c(1:3, 37)] # Subsetted assay matrix
+```
+
+<a name="mhm1"></a>
+Subsequently, hierarchical clustering is applied to the subsetted assay matrix
+containing only the genes that share profile similarities with the query genes
+'RCA' and 'HRE2'.  The clustering result is displayed as a matrix heatmap where
+the rows and columns are sorted by the corresponding hierarchical clustering
+dendrograms (Figure \@ref(fig:static)). The position of the query genes ('RCA'
+and 'HRE2') is indicated in the heatmap by black lines. Setting `static=FALSE`
+will launch the interactive mode, where users can zoom into the heatmap by
+selecting subsections in the image or zoom out by double clicking.  
+
+```{r static, eval=TRUE, echo=TRUE, warnings=FALSE, fig.cap=("Matrix Heatmap. Rows are genes and columns are samples. The input genes are tagged by black lines."), out.width='100%'}
+matrix_hm(ID=c('RCA', 'HRE2'), data=sub.mat, angleCol=80, angleRow=35, cexRow=0.8, cexCol=0.8, margin=c(10, 6), static=TRUE, arg.lis1=list(offsetRow=0.01, offsetCol=0.01))
+```   
+
+## Network Graphs {#net}
+### Module Identification
+
+<a name="ds"></a>
+Network analysis is performed with the WGCNA algorithm [@Langfelder2008-sg;
+@Ravasz2002-db] using as input the subsetted assay matrix generated in the 
+previous section. The objective is to identify network modules that can be 
+visualized in the following step in form of network graphs. Applied to the gene
+expression sample data used here, these network modules represent groups of
+genes sharing highly similar expression profiles. Internally, the network
+module identification includes five major steps. First, a correlation matrix is
+computed using distance or correlation-based similarity metrics. Second, the
+obtained matrix is transformed into an adjacency matrix defining the
+connections among items. Third, the adjacency matrix is used to calculate a
+topological overlap matrix (TOM) where shared neighborhood information among
+items is used to preserve robust connections, while removing spurious
+connections. Fourth, the distance transformed TOM is used for hierarchical
+clustering. To maximize time performance, the hierarchical clustering is
+performed with the `flashClust` package [@Langfelder2012-nv]. Fifth, network modules
+are identified with the `dynamicTreeCut` package [@dynamicTreeCut]. Its `ds`
+(`deepSplit`) argument can be assigned integer values from `0` to `3`, where
+higher values increase the stringency of the module identification process.  To
+simplify the network module identification process with WGCNA, the individual
+steps can be executed with a single function called `adj_mod`. The result is a
+list containing the adjacency matrix and the final module assignments stored in
+a `data.frame`. Since the [interactive network](#inter_net) feature used in the
+visualization step below performs best on smaller modules, only modules are
+returned that were obtained with stringent `ds` settings (here `ds=2` and `ds=3`). 
+
+```{r eval=TRUE, echo=TRUE, warnings=FALSE, results=FALSE}
+adj.mod <- adj_mod(data=sub.mat)
+```
+
+A slice of the adjacency matrix is shown below.    
+
+```{r eval=TRUE, echo=TRUE, warnings=FALSE}
+adj.mod[['adj']][1:3, 1:3]
+```
+
+The module assignments are stored in a `data frame`. Its columns contain the results
+for the `ds=2` and `ds=3` settings. Integer values $>0$ are the module labels, while $0$ 
+indicates unassigned items. The following returns the first three rows of the module 
+assignment result.  
+
+```{r eval=TRUE, echo=TRUE, warnings=FALSE}
+adj.mod[['mod']][1:3, ] 
+```
+
+### Module Visualization
+
+Network modules can be visualized with the `network` function. To plot a module
+containing an item (gene) of interest, its ID (_e.g._ 'HRE2') needs to be
+provided under the corresponding argument.  Typically, this could be one of the
+items chosen for the above SHM plots. There are two modes to visualize the
+selected module: static or interactive. Figure \@ref(fig:inter) was generated
+with `static=TRUE`. Setting `static=FALSE` will generate the interactive
+version. In the network plot shown below the nodes and edges represent genes
+and their interactions, respectively. The thickness of the edges denotes the
+adjacency levels, while the size of the nodes indicates the degree of
+connectivity of each item in the network. The adjacency and connectivity levels
+are also indicated by colors. For example, in Figure \@ref(fig:inter)
+connectivity increases from "turquoise" to "violet", while the adjacency
+increases from "yellow" to "blue".  If a gene of interest has been assigned
+under `ID`, then its ID is labeled in the plot with the suffix tag: `*_target`.  
+
+```{r inter, eval=TRUE, echo=TRUE, warnings=FALSE, fig.cap=("Static network. Node size denotes gene connectivity while edge thickness stands for co-expression similarity.") }
+network(ID="HRE2", data=sub.mat, adj.mod=adj.mod, adj.min=0.90, vertex.label.cex=1.2, vertex.cex=2, static=TRUE)
+```   
+
+<a name="inter_net"></a>
+Setting `static=FALSE` launches the interactive network. In this mode there
+is an interactive color bar that denotes the gene connectivity. To modify it,
+the color labels need to be provided in a comma separated format, _e.g._: 
+`yellow, orange, red`. The latter would indicate that the gene connectivity 
+increases from yellow to red. 
+
+If the subsetted expression matrix contains gene/protein annotation information
+in the last column, then it will be shown when moving the cursor over a network
+node.    
+
+```{r eval=FALSE, echo=TRUE, warnings=FALSE}
+network(ID="HRE2", data=sub.mat, adj.mod=adj.mod, static=FALSE)
+```
 
 # Integrated Co-visualization
+
+<font style='color:red'>
 
 The co-visuaization is a novel functionality to co-visualize single cell and bulk data in forms of embedding plots (PCA, UMAP, TSNE) and SHMs respectively. The key feature is single cells in a cluster are matched to source bulk tissue. Two matching approaches are provided: manual and automatic.  
 
@@ -1713,18 +1715,18 @@ Clustering. Cell clusters are detected by first building a graph object then par
   table(cluster)
 ```
 
-Cell cluster assignments need to be store in the `colData` slot of `SingleCellExperiment`. Cell clusters/groups pre-defined by users need to be stored in the `label` column while cell clusters automatically detected by clustering algorithm are stored in the `cluster` column. If there are experimental variables such as treatments or time points, they should be stored in the `expVar` column.  
+Cell cluster assignments are stored in the `colData` slot of `SingleCellExperiment`. Cell clusters/groups pre-defined by users need to be stored in the `label` column while cell clusters automatically detected by clustering algorithm are stored in the `cluster` column. If there are experimental variables such as treatments or time points, they should be stored in the `expVar` column.  
 
 ```{r scCdat, eval=TRUE, echo=TRUE, warnings=FALSE}
-  cdat <- colData(sce.manual) 
-  lab.lgc <- 'label' %in% make.names(colnames(cdat))
-  if (lab.lgc) {
-    cdat <- cbind(cluster=cluster, colData(sce.manual))
-    idx <- colnames(cdat) %in% c('cluster', 'label')
-    cdat <- cdat[, c(which(idx), which(!idx))]
-  } else cdat <- cbind(cluster=cluster, colData(sce.manual))
-  colnames(cdat) <- make.names(colnames(cdat))
-  colData(sce.manual) <- cdat; cdat[1:3, ]
+cdat <- colData(sce.manual) 
+lab.lgc <- 'label' %in% make.names(colnames(cdat))
+if (lab.lgc) {
+  cdat <- cbind(cluster=cluster, colData(sce.manual))
+  idx <- colnames(cdat) %in% c('cluster', 'label')
+  cdat <- cdat[, c(which(idx), which(!idx))]
+} else cdat <- cbind(cluster=cluster, colData(sce.manual))
+colnames(cdat) <- make.names(colnames(cdat))
+colData(sce.manual) <- cdat; cdat[1:3, ]
 ```
 
 Embedding plot of single cells with clusters labeled by the `label` column in `colData`. 
@@ -1920,7 +1922,7 @@ Mean AUCs by each filtering settings and AUC cutoff.
 
 ```{r optParFilMean, eval=FALSE, echo=TRUE, warnings=FALSE}
 df.lis.fil$df.auc.mean[1:3, ]
-mean_auc_bar(df.lis.fil[[1]], bar.width=0.07, title='Mean AUCs by filtering settings')
+mean_auc_bar(df.lis.fil[[1]], bar.width=0.07, title='Mean AUCs by filtering settings', x.text.size=15, y.text.size=15, lgd.text.size=15)
 ```
 
 ```{r optParFilMeanPlot, echo=FALSE, fig.wide=TRUE, out.width="80%", fig.cap=("Mean AUCs of filtering settings. One bar refers to mean AUCs of a filtering settings at a certain AUC cutoff.")}
@@ -1930,7 +1932,7 @@ include_graphics('img/demo_filter_bar.jpg')
 All AUCs by each filtering settings and AUC cutoff. 
 
 ```{r optParFilAll, eval=FALSE, echo=TRUE, warnings=FALSE}
-auc_violin(df.lis=df.lis.fil, xlab='Filtering settings')
+auc_violin(df.lis=df.lis.fil, xlab='Filtering settings', x.text.size=13, y.text.size=13)
 ```
 
 ```{r optParFilAllPlot, echo=FALSE, fig.wide=TRUE, out.width="80%", fig.cap=("All AUCs of filtering settings. A violin plot refers to all AUCs of a filtering settings at a certain AUC cutoff.")}
@@ -1953,13 +1955,13 @@ Mean AUCs by each normalization method and AUC cutoff.
 
 ```{r optParNorMean, eval=FALSE, echo=TRUE, warnings=FALSE}
 df.lis.norm$df.auc.mean[1:3, ]
-mean_auc_bar(df.lis.norm[[1]], bar.width=0.07, title='Mean AUCs by normalization methods')
+mean_auc_bar(df.lis.norm[[1]], bar.width=0.07, title='Mean AUCs by normalization methods', x.text.size=15, y.text.size=15, lgd.text.size=15)
 ```
 
 All AUCs by each normalization method and AUC cutoff. 
 
 ```{r optParNorAll, eval=FALSE, echo=TRUE, warnings=FALSE}
-auc_violin(df.lis=df.lis.norm, xlab='Normalization methods')
+auc_violin(df.lis=df.lis.norm, xlab='Normalization methods', x.text.size=13, y.text.size=13)
 ```
 
 Optimal normalization method: `fct` (`computeSumFactors`).  
