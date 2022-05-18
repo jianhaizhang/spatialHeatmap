@@ -30,7 +30,7 @@ sub_data(
 \item{target}{A single-component vector of the target for spatial enrichment. If \code{com.by='feature'}, the target will be one of the entries in \code{features}. If \code{com.by='factor'}, the target will be one of the entries in \code{factors}. If \code{com.by='feature.factor'}, the target will be one of the concatenated \code{features} and \code{factors}. \emph{E.g.} \code{features=c('brain', 'kidney')}, \code{factors=c('control', 'drug')}, the target could be one of \code{c('brain__control', 'brain__drug', 'kidney__control', 'kidney__drug')}. The default is \code{NULL}, and the first entity in \code{features} is selected, since the default \code{com.by} is \code{feature}. A \code{target} column will be included in the \code{colData} slot and will be recognized in spatial enrichment.}
 }
 \value{
-A subsetted \code{SummarizedExperiment} object.
+A subsetted \code{SummarizedExperiment} object, where the \code{com.by} is placed in the first column in \code{colData} slot.
 }
 \description{
 This function subsets the target spatial features (\emph{e.g.} cells, tissues, organs) and factors (\emph{e.g.} experimental treatments, time points) for the subsequent spatial enrichment.

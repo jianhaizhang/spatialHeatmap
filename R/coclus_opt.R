@@ -10,7 +10,7 @@
 #' @param sim,sim.p Used when refining cell clusters. Both are numeric scalars, ranging from 0 to 1. \code{sim} is a similarity (Spearman or Pearson correlation coefficient) cutoff between cells and \code{sim.p} is a proportion cutoff. In a certain cell cluster, cells having similarity >= \code{sim} with other cells in the same cluster at proportion >= \code{sim.p} would remain. Otherwise, they are discarded. The default of both is \code{seq(0.2, 0.8, by=0.1)} and can be customized.
 #' @param dim Number of principle components (PCs, equivalent to genes) in combined bulk and single cell data. Used as the minimum number of PCs to retain in \code{\link[scran]{denoisePCA}} when coclustering bulk and single cells. The default is \code{seq(5, 40, by=1)}, and can be customized.
 #' @inheritParams coclus_roc
-#' @param batch.par The parameters for first-level parallelization. See \code{\link[BioParallel]{BatchtoolsParam}}. It works with the "slurm" scheduler, so "slurm" needs to be installed. If \code{NULL}, the first-level parallelization is skipped.
+#' @param batch.par The parameters for first-level parallelization through a cluster scheduler such as SLURM. See \code{\link[BioParallel]{BatchtoolsParam}}. If \code{NULL} (default), the first-level parallelization is skipped.
 #' @param multi.core.par The parameters for second-level parallelization. See \code{\link[BioParallel]{MulticoreParam}}.
 #' @param verbose Logical. If \code{TRUE} (default), intermediate messages are printed.
 
@@ -69,7 +69,7 @@
 #' 
 #' # The first- and second-level parallelizations are set 3 and 2 respectively.
 #' library(BiocParallel)
-#' opt <- coclus_opt(wk.dir='opt_res', dimred=c('PCA', 'UMAP'), graph.meth=c('knn', 'snn'), sim=seq(0.2, 0.4, by=0.1), sim.p=seq(0.2, 0.4, by=0.1), dim=seq(5, 7, by=1), df.match=df.match.arab, batch.par=BatchtoolsParam(workers=3, cluster="slurm", template='slurm.tmpl'), multi.core.par=MulticoreParam(workers=2))
+#' opt <- coclus_opt(wk.dir='opt_res', dimred=c('PCA', 'UMAP'), graph.meth=c('knn', 'snn'), sim=seq(0.2, 0.4, by=0.1), sim.p=seq(0.2, 0.4, by=0.1), dim=seq(5, 7, by=1), df.match=df.match.arab, batch.par=BatchtoolsParam(workers=3, cluster="slurm", template='slurm.tmpl', RNGseed=100, stop.on.error = FALSE, log = TRUE, logdir=file.path('opt_res', 'batch_log')), multi.core.par=MulticoreParam(workers=2))
 #'
 #' # If slurm is not available, parallelize the optimization only at the second-level through 2 workers. 
 #' opt <- coclus_opt(wk.dir='opt_res', dimred=c('PCA', 'UMAP'), graph.meth=c('knn', 'snn'), sim=seq(0.2, 0.4, by=0.1), sim.p=seq(0.2, 0.4, by=0.1), dim=seq(5, 7, by=1), df.match=df.match.arab, batch.par=NULL, multi.core.par=MulticoreParam(workers=2))
@@ -149,11 +149,12 @@
 #' Li, S., Yamada, M., Han, X., Ohler, U., and Benfey, P. N. (November, 2016) High-Resolution Expression Map of the Arabidopsis Root Reveals Alternative Splicing and lincRNA Regulation. Dev. Cell, 39(4), 508–522.
 #' Shahan, R., Hsu, C.-W., Nolan, T. M., Cole, B. J., Taylor, I. W., Vlot, A. H. C., Benfey, P. N., and Ohler, U. (June, 2020) A single cell Arabidopsis root atlas reveals developmental trajectories in wild type and cell identity mutants.
 #' Morgan M, Wang J, Obenchain V, Lang M, Thompson R, Turaga N (2021). BiocParallel: Bioconductor facilities for parallel evaluation. R package version 1.28.3, https://github.com/Bioconductor/BiocParallel.
+#' Yoo, A. B., Jette, M. A., and Grondona, M. (2003) SLURM: Simple Linux Utility for Resource Management. In Job Scheduling Strategies for Parallel Processing Springer Berlin Heidelberg pp. 44–60.
 
 #' @export coclus_opt
 #' @importFrom BiocParallel BatchtoolsParam MulticoreParam register bpRNGseed bpRNGseed<-
 
-coclus_opt <- function(wk.dir, parallel.info=FALSE, sc.dim.min=10, max.dim=50, dimred=c('PCA', 'UMAP'), graph.meth=c('knn', 'snn'), sim=seq(0.2, 0.8, by=0.1), sim.p=seq(0.2, 0.8, by=0.1), dim=seq(5, 40, by=1), df.match, sim.meth='spearman', batch.par=BatchtoolsParam(workers=1, cluster="slurm", template='slurm.tmpl', RNGseed=100, stop.on.error = FALSE, log = TRUE, logdir=file.path(wk.dir, 'batch_log')), multi.core.par=MulticoreParam(workers=1, RNGseed=NULL, stop.on.error=FALSE, log=TRUE, logdir=file.path(wk.dir, 'multi_core_log')), verbose=TRUE) {
+coclus_opt <- function(wk.dir, parallel.info=FALSE, sc.dim.min=10, max.dim=50, dimred=c('PCA', 'UMAP'), graph.meth=c('knn', 'snn'), sim=seq(0.2, 0.8, by=0.1), sim.p=seq(0.2, 0.8, by=0.1), dim=seq(5, 40, by=1), df.match, sim.meth='spearman', batch.par=NULL, multi.core.par=MulticoreParam(workers=1, RNGseed=NULL, stop.on.error=FALSE, log=TRUE, logdir=file.path(wk.dir, 'multi_core_log')), verbose=TRUE) {
   fil.dir <- file.path(wk.dir, 'filter_res')
   bat.log.dir <- file.path(wk.dir, 'batch_log')
   mcore.log.dir <- file.path(wk.dir, 'multi_core_log')
@@ -162,15 +163,20 @@ coclus_opt <- function(wk.dir, parallel.info=FALSE, sc.dim.min=10, max.dim=50, d
   if (!dir.exists(bat.log.dir)) dir.create(bat.log.dir) 
   if (!dir.exists(mcore.log.dir)) dir.create(mcore.log.dir) 
   if (!dir.exists(auc.dir)) dir.create(auc.dir) 
-  # Check random seed. 
-  if (is(batch.par, 'BatchtoolsParam')) seed.bat <- bpRNGseed(batch.par) else seed.bat <- NULL
-  if (is(multi.core.par, 'MulticoreParam')) seed.mul <- bpRNGseed(multi.core.par) else seed.mul <- NULL
+  e.w <- tryCatch( # Check if the cluster scheduler is installed.
+    expr = { is(batch.par, 'BatchtoolsParam') }, 
+    error = function(e){ return('e') }, warning = function(w){ return('w') } 
+  ) 
+  # Check random seed.
+  seed.bat <- seed.mul <- NULL
+  if (!e.w %in% c('e', 'w')) if (is(batch.par, 'BatchtoolsParam')) seed.bat <- bpRNGseed(batch.par)
+  if (is(multi.core.par, 'MulticoreParam')) seed.mul <- bpRNGseed(multi.core.par)
   if (is.numeric(seed.bat) & is.numeric(seed.mul)) { 
     bpRNGseed(multi.core.par) <- NULL
     message('"RNGseed" in MulticoreParam is set NULL, since it is already set in BatchtoolsParam.')
   }
   if (!is.numeric(seed.bat) & !is.numeric(seed.mul)) {
-    message('"RNGseed" in BatchtoolsParam or MulticoreParam is NULL')
+    message('"RNGseed" in BatchtoolsParam and MulticoreParam is NULL')
   }
   # All single cell data names.
   fil.nas <- list.files(fil.dir, '\\.fil\\d+\\.rds$')
@@ -198,14 +204,15 @@ coclus_opt <- function(wk.dir, parallel.info=FALSE, sc.dim.min=10, max.dim=50, d
     fil.na <- sub('\\.rds$', '', fil.na)
     out <- file.path(auc.dir, tolower(paste0('auc.', fil.na, '.', df0$cell, '.', df0$dimred, '.', df0$graph.meth)))
     # library(spatialHeatmap)
-    df.para <- spatialHeatmap::cocluster(bulk=blk, cell=sc, df.match=df.match, df.para=df.para, sc.dim.min=sc.dim.min, max.dim=max.dim, sim.meth=sim.meth, return.all=FALSE, multi.core.par=multi.core.par, verbose=verbose, file=out); return('Done')
+    # In bplapply(), the environment of FUN (other than the global environment) is serialized to the workers. A consequence is that, when FUN is inside a package name space, other functions available in the name space are available to FUN on the workers.
+    df.para <- cocluster(bulk=blk, cell=sc, df.match=df.match, df.para=df.para, sc.dim.min=sc.dim.min, max.dim=max.dim, sim.meth=sim.meth, return.all=FALSE, multi.core.par=multi.core.par, verbose=verbose, file=out); return('Done')
   }
   # Every row in df.par.com is combined with every row in df.spd for coclustering.
   if (is(batch.par, 'BatchtoolsParam')) {
     register(batch.par)
     res <- bplapply(seq_len(nrow(df.par.com)), fun, df.par.com=df.par.com, df.spd=df.spd, df.match=df.match, sc.dim.min=sc.dim.min, max.dim=max.dim, sim.meth=sim.meth, multi.core.par=multi.core.par,  auc.dir=auc.dir) 
   } else {
-    res <- lapply(seq_len(nrow(df.par.com)), fun, df.par.com=df.par.com, df.spd=df.spd, df.match=df.match, sc.dim.min=sc.dim.min, max.dim=max.dim, sim.meth=sim.meth, multi.core.par=multi.core.par,  auc.dir=auc.dir)
+    res <- lapply(seq_len(nrow(df.par.com)), fun, df.par.com=df.par.com, df.spd=df.spd, df.match=df.match, sc.dim.min=sc.dim.min, max.dim=max.dim, sim.meth=sim.meth, multi.core.par=multi.core.par, auc.dir=auc.dir)
   }
   return(res)
 }

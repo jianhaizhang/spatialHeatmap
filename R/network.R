@@ -8,16 +8,18 @@
 #' @param adj.mod The two-component list returned by \code{\link{adj_mod}} with the adjacency matrix and module assignment respectively.
 #' @param ds One of "2" or "3", the module splitting sensitivity level. The former indicates larger but less modules while the latter denotes smaller but more modules. Default is "3". See function \code{\link{adj_mod}} for details.
 #' @param adj.min Minimum adjacency between nodes, edges with adjacency below which will be removed. Default is 0. Applicable to static network.
-#' @param con.min Minimun connectivity of a node, nodes with connectivity below which will be removed. Default is 0. Applicable to static network.
+#' @param con.min Minimun connectivity of a node, nodes with connectivity below which will be removed. Default is 0. Applicable to static network. 
 #' @param node.col A vector of color ingredients for constructing node color scale in the static image. The default is c("turquoise", "violet"), where node connectivity increases from "turquoise" to "violet".
 #' @param edge.col A vector of color ingredients for constructing edge color scale in the static image. The default is c("yellow", "blue"), where edge adjacency increases from "yellow" to "blue".
 #' @param vertex.label.cex The size of node label in the static and interactive networks. The default is 1.
+#' @inheritParams base::plot
 #' @param vertex.cex The size of node in the static image. The default is 3.
 #' @param edge.cex The size of edge in the static image. The default is 10.
 #' @param layout The layout of the network in static image, either "circle" or "fr". The "fr" stands for force-directed layout algorithm by Fruchterman and Reingold. The default is "circle".
 #' @param color.key.lab.size,color.key.text.size The size of color key label and text respectively.
 #' @param main The title in the static image. Default is NULL.
 #' @param static Logical, TRUE returns a static network while FALSE returns an interactive network. 
+#' @param return.node Logical, \code{TRUE} or \code{FALSE} (default). If \code{static=TRUE}, \code{TRUE} returns nodes ranked by connectivities in a \code{data.frame}.
 #' @param ... Other arguments passed to the generic function \code{\link[graphics]{plot.default}}, \emph{e.g.}: \code{asp=1}. 
 #' @return A static or interactive network graph.
 
@@ -28,7 +30,7 @@
 #' ## included in this package. The complete raw count data are downloaded using the R package
 #' ## ExpressionAtlas (Keays 2019) with the accession number "E-MTAB-6769". Toy data1 is used as
 #' ## a "data frame" input to exemplify data of simple samples/conditions, while toy data2 as
-#' ## "SummarizedExperiment" to illustrate data involving complex samples/conditions.   
+#' ## "SummarizedExperiment" to illustrate data involving complex samples/conditions. 
 #' 
 #' ## Set up toy data.
 #' 
@@ -151,7 +153,7 @@
 #' @importFrom shinydashboard dashboardSidebar dashboardPage dashboardHeader sidebarMenu menuItem menuSubItem dashboardBody tabItems tabItem box
 #' @importFrom visNetwork visNetworkOutput visNetwork visOptions renderVisNetwork visIgraphLayout
 
-network <- function(ID, data, assay.na=NULL, adj.mod, ds="3", adj.min=0, con.min=0, node.col=c("turquoise", "violet"), edge.col=c("yellow", "blue"), vertex.label.cex=1, vertex.cex=3, edge.cex=10, layout="circle", color.key.lab.size=1.5, color.key.text.size=1, main=NULL, static=TRUE, ...) {
+network <- function(ID, data, assay.na=NULL, adj.mod, ds="3", adj.min=0, con.min=0, node.col=c("turquoise", "violet"), edge.col=c("yellow", "blue"), vertex.label.cex=1, vertex.label.degree=-pi/4, vertex.cex=3, edge.cex=10, layout="circle", color.key.lab.size=1.5, color.key.text.size=1, main=NULL, static=TRUE, return.node=FALSE, ...) {
  # save(ID, data, assay.na, adj.mod, ds, adj.min, con.min, node.col, edge.col, vertex.label.cex, vertex.cex, edge.cex, layout, color.key.lab.size, color.key.text.size, main, static, file='network.arg')
   options(stringsAsFactors=FALSE)
   if (is(data, 'data.frame')|is(data, 'matrix')|is(data, 'DFrame')|is(data, 'dgCMatrix')) {
@@ -209,7 +211,7 @@ network <- function(ID, data, assay.na=NULL, adj.mod, ds="3", adj.min=0, con.min
   
   # Network.
   graphics::layout(mat=matrix(c(1, 2, 1, 3), nrow=2, ncol=2), height=c(6, 1))
-  par(mar=c(2, 2.5, 2, 2.5), new=FALSE); plot(net, edge.width=igraph::E(net)$width*edge.cex, vertex.size=igraph::V(net)$size*vertex.cex, vertex.label.cex=vertex.label.cex, layout=lay, ...)
+  par(mar=c(2, 2.5, 2, 2.5), new=FALSE); plot(net, edge.width=igraph::E(net)$width*edge.cex, vertex.size=igraph::V(net)$size*vertex.cex, vertex.label.cex=vertex.label.cex, vertex.label.degree=vertex.label.degree, layout=lay, ...)
   # Node colour bar.
   mat1 <- matrix(v.nod, ncol=1, nrow=length(v.nod)) 
   par(mar=c(2.2, 3, 1, 2.5), new=FALSE); image(x=seq_len(length(v.nod)), y=1, mat1, col=col.nod, xlab="", ylab="", axes=FALSE)
@@ -220,6 +222,12 @@ network <- function(ID, data, assay.na=NULL, adj.mod, ds="3", adj.min=0, con.min
   title(xlab="Edge colour scale", line=1, cex.lab=color.key.lab.size)
   mtext(text=round(seq(min(link.v), max(link.v), len=5), 1), side=3, line=0.3, at=seq(1, col.len, len=5), las=0, cex=color.key.text.size)
 
+  if (return.node==TRUE) {
+    node.df <- node
+    colnames(node.df) <- c('id', 'connectivity')
+    rownames(node.df) <- sub('_target$', '', rownames(node.df))
+    node.df <- node.df[, 'connectivity', drop=FALSE]; return(node.df)
+  }
   } else if (static==FALSE) {
 
 

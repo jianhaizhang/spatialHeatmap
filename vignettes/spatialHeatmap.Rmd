@@ -242,7 +242,7 @@ Next, the packages required for running the sample code in this vignette need to
 ```{r, eval=TRUE, echo=TRUE, warnings=FALSE, results='hide'}
 library(spatialHeatmap); library(SummarizedExperiment); library(ExpressionAtlas); library(GEOquery); library(scran)
 library(scater); library(igraph); library(SingleCellExperiment)
-library(BiocParallel)
+library(BiocParallel); library(biomaRt)
 ```
 
 The following lists the vignette(s) of this package in an HTML browser. Clicking the corresponding name will open this vignette. 
@@ -783,7 +783,7 @@ The pre-processed expression data for gene 'ENSMUSG00000000263' is plotted in fo
 of an SHM. In this case the plot includes expression data for 8 tissues across 3 
 mouse strains. 
 
-```{r musshm, eval=TRUE, echo=TRUE, warnings=FALSE, fig.wide=TRUE, fig.cap=("SHM of mouse organs. This is a multiple-layer image where the shapes of the 'skeletal muscle' is set transparent to expose 'lung' and 'heart'."), out.width="100%" }
+```{r, musshm, eval=TRUE, echo=TRUE, warnings=FALSE, fig.wide=TRUE, fig.cap=("SHM of mouse organs. This is a multiple-layer image where the shapes of the 'skeletal muscle' is set transparent to expose 'lung' and 'heart'."), out.width="100%" }
 shm.lis <- spatial_hm(svg.path=svg.mus, data=se.fil.mus, ID=c('ENSMUSG00000000263'), height=0.7, legend.width=0.7, legend.text.size=10, sub.title.size=9, ncol=3, ft.trans=c('skeletal muscle', 'path4204'), legend.nrow=4, line.size=0.2, line.color='grey70')
 ```
 
@@ -1424,7 +1424,7 @@ The application of SE is illustrated on the mouse brain in the following example
 
 ### Mouse Brain
 
-In this example, `brain` is selected as the target feature, `liver` and `kidney` as the reference features, and all the three strains `DBA.2J`, `C57BL.6`, `CD1` as the factors. 
+For domenstration purpose, `brain` is selected as the target feature, `liver` and `kidney` as the reference features, and all the three strains `DBA.2J`, `C57BL.6`, `CD1` as the factors. 
 
 All features.   
 
@@ -1444,19 +1444,19 @@ Subset the data according to the selected features and factors.
 data.sub.mus <- sub_data(data=rse.mus, feature='organism_part', features=c('brain', 'liver', 'kidney'), factor='strain', factors=c('DBA.2J', 'C57BL.6', 'CD1'), com.by='feature', target='brain')
 ```
 
-The SE requires replicates in the count data and has build-in normalizing utilities, thus the pre-processing only involves filtering.   
+The SE requires replicates in the count data and has build-in normalizing utilities, thus the pre-processing only involves filtering at this step.   
 
 ```{r eval=TRUE, echo=TRUE, warnings=FALSE }
 data.sub.mus.fil <- filter_data(data=data.sub.mus, sam.factor='organism_part', con.factor='strain', pOA=c(0.2, 15), CV=c(0.8, 100))
 ```
 
-The base methods in SE include four opitions: `edgeR`, `limma`, `DESeq2`, `distinct`, and the default are the first two. With each of the selected methods, the strains (`factors`) in each feature are treated as replicates and the target feature `brain` is compared with `liver` and `kidney` in a pairwise manner. The brain-specific genes are selected by log2 fold change (`log2.fc`) and FDR (`fdr`).   
+The base methods in SE include four opitions: `edgeR`, `limma`, `DESeq2`, `distinct`, and the default are the first two. The count data are normalized by `TMM` method in `edgeR`. With each of the selected methods, the strains (`factors`) in each feature are treated as replicates and the target feature `brain` is compared with `liver` and `kidney` in a pairwise manner. The brain-specific genes are selected by log2 fold change (`log2.fc`) and FDR (`fdr`).   
 
 ```{r eval=TRUE, echo=TRUE, warnings=FALSE }
-deg.lis.mus <- spatial_enrich(data.sub.mus.fil, methods=c('edgeR', 'limma'), log2.fc=1, fdr=0.05, aggr='mean', log2.trans.aggr=TRUE)
+deg.lis.mus <- spatial_enrich(data.sub.mus.fil, methods=c('edgeR', 'limma'), norm='TMM', log2.fc=1, fdr=0.05, aggr='mean', log2.trans.aggr=TRUE)
 ```
 
-The up- and down-regulated genes in brain can be accessed by method. The genes in edgeR can be accessed as following.    
+The up- and down-regulated genes detected by `edgeR` in brain are accessed as following.    
 
 ```{r eval=TRUE, echo=TRUE, warnings=FALSE }
 deg.lis.mus$lis.up.down$up.lis$edgeR.up[1:3] # Up-regulated.
@@ -1901,7 +1901,7 @@ If slurm is installed, users could take advantage of two levels of parallelizati
 `sim` and `sim.p` are parameters in refining cell clusters (Figure \@ref(fig:coclusOver).5). Specifically, in a cell cluster, cells having similarities over `sim` with other cells in the same cluster of at least proportion `sim.p` would remain. `sim` is Spearman' or Pearson's correlation coefficient. `dim` is the number of top dimensionalities (equivalent to genes) in co-clustering. Since the three parameters are related to each other, they are treated as a set `spd.set`.     
 
 ```{r optPara2, eval=FALSE, echo=TRUE, warnings=FALSE}
-opt <- coclus_opt(wk.dir='opt_res', dimred=c('PCA', 'UMAP'), graph.meth=c('knn', 'snn'), sim=seq(0.2, 0.4, by=0.1), sim.p=seq(0.2, 0.4, by=0.1), dim=seq(5, 7, by=1), df.match=df.match.arab, batch.par=BatchtoolsParam(workers=3, cluster="slurm", template='slurm.tmpl', RNGseed=100), multi.core.par=MulticoreParam(workers=2), verbose=FALSE)
+opt <- coclus_opt(wk.dir='opt_res', dimred=c('PCA', 'UMAP'), graph.meth=c('knn', 'snn'), sim=seq(0.2, 0.4, by=0.1), sim.p=seq(0.2, 0.4, by=0.1), dim=seq(5, 7, by=1), df.match=df.match.arab, batch.par=BatchtoolsParam(workers=3, cluster="slurm", template='slurm.tmpl', RNGseed=100,  stop.on.error = FALSE, log =TRUE, logdir=file.path('opt_res', 'batch_log')), multi.core.par=MulticoreParam(workers=2), verbose=FALSE)
 ```
 
 If slurm is not available, optimization can be parallelized only at the second-level by setting `batch.par=NULL`.      
@@ -2105,7 +2105,7 @@ file.copy(system.file("extdata/cocluster", "slurm.tmpl", package="spatialHeatmap
 If slurm is installed, users could take advantage of two levels of parallelizations. For instance, the first- and second-level parallelizations are set 3 and 2 cpu cores respectively. The `wk.dir` is the same in secondary filtering. Note the settings of `spd.set` (`sim/sim.p/dim`) has wider ranges than in last section. The parallel computation is performed at High-Performance Computing Center (HPCC) at University of California, Riverside.  
 
 ```{r , eval=FALSE, echo=TRUE, warnings=FALSE}
-opt <- coclus_opt(wk.dir='opt_real_res', dimred=c('PCA', 'UMAP'), graph.meth=c('knn', 'snn'), sim=seq(0.2, 0.8, by=0.1), sim.p=seq(0.2, 0.8, by=0.1), dim=seq(5, 40, by=1), df.match=df.match.arab, batch.par=BatchtoolsParam(workers=3, cluster="slurm", template='slurm.tmpl', RNGseed=100), multi.core.par=MulticoreParam(workers=2), verbose=FALSE)
+opt <- coclus_opt(wk.dir='opt_real_res', dimred=c('PCA', 'UMAP'), graph.meth=c('knn', 'snn'), sim=seq(0.2, 0.8, by=0.1), sim.p=seq(0.2, 0.8, by=0.1), dim=seq(5, 40, by=1), df.match=df.match.arab, batch.par=BatchtoolsParam(workers=3, cluster="slurm", template='slurm.tmpl', RNGseed=100, stop.on.error=FALSE, log=TRUE, logdir=file.path('opt_res', 'batch_log')), multi.core.par=MulticoreParam(workers=2), verbose=FALSE)
 ```
 
 If slurm is not available, optimization can be parallelized only at the second-level by setting `batch.par=NULL`.      
@@ -2593,8 +2593,148 @@ To maintain scalability, the customized Shiny app is designed to work with HDF5-
 Except for user-provided data, the database is able to store data sets downloaded from GEO and Expression Atlas. The detailed examples of the database utility are documented in the help file of `write_hdf5`. 
 
 
-# Supplementary Section {#sup} 
+# Use Case
 
+<font style='color:red'> 
+
+This section showcases integrated discovery and visualization of potential novel genes in a particular biological process. Since network analysis/co-expression is involved, at least five spatial features (*e.g.* tissues) are required. Basically, gene abundance in target spatial feature is compared with other spatial features in a pairwise manner to obtain target-specific genes. Among these target-enriched genes, select a well characterized one as reference gene. Then network analysis is performed to detect gene modules. Genes comprising the same module are considered co-expressed and thus likely have similar functions. Therefore, in the module containing the reference gene, the unknown genes are candidates of novel genes having similar functions with the reference gene. As the procedures are explained in previous sections, this section will not explain them in details.   
+
+## Spatial Enrichment
+
+The same data in [Mouse Organ](#mus) section are used. Five tissues are selected: brain, heart, colon, kidney, and liver, where brain is the target.    
+
+```{r eval=TRUE, echo=TRUE, warnings=FALSE }
+data.enrich.mus <- sub_data(data=rse.mus, feature='organism_part', features=c('brain', 'heart', 'colon', 'kidney', 'liver'), factor='strain', factors=c('DBA.2J', 'C57BL.6', 'CD1'), com.by='feature', target='brain')
+```
+
+The SE requires replicates in the count data and has build-in normalizing utilities, thus the pre-processing only involves filtering at this step.   
+
+```{r eval=TRUE, echo=TRUE, warnings=FALSE }
+data.enrich.mus.fil <- filter_data(data=data.enrich.mus, sam.factor='organism_part', con.factor='strain', pOA=c(0.2, 15), CV=c(0.8, 100))
+```
+
+The count data are normalized by `TMM` method in `edgeR`. Pairwise comparisons are conducted among the five tissues by `edgeR` and `limma`.   
+
+```{r eval=TRUE, echo=TRUE, warnings=FALSE }
+deg.all.mus <- spatial_enrich(data.enrich.mus.fil, methods=c('edgeR', 'limma'), norm='TMM', log2.fc=1, fdr=0.05, aggr='mean', log2.trans.aggr=TRUE)
+```
+
+The up- and down-regulated genes detected by `edgeR` in brain are accessed.  
+
+```{r eval=TRUE, echo=TRUE, warnings=FALSE }
+deg.all.mus$lis.up.down$up.lis$edgeR.up[1:3] # Up-regulated.
+deg.all.mus$lis.up.down$down.lis$edgeR.down[1:3] # Down-regulated. 
+```
+
+Overlap of up-regulated genes in brain across methods in UpSet plot.   
+
+```{r eval=TRUE, echo=TRUE, warnings=FALSE, fig.wide=TRUE, fig.cap=('UpSet plot of up-regulated genes in mouse brain. The overlap of up-regulated genes detected by edgeR and limma is indicated by bars.'), out.width="100%", fig.show='show'}
+deg_ovl(deg.all.mus$lis.up.down, type='up', plot='upset')
+```
+
+Overlap of up-regulated genes in brain across methods in matrix plot.   
+
+```{r eval=TRUE, echo=TRUE, warnings=FALSE, fig.wide=TRUE, fig.cap=('Matrix plot of up-regulated genes in mouse brain. The matrix plot displays any overlap between up-regulated genes detected by edgeR and limma.'), out.width="70%", fig.show='show'}
+deg_ovl(deg.all.mus$lis.up.down, type='up', plot='matrix')
+```
+
+The brain-specific genes are also summarized in a table.     
+
+```{r eval=TRUE, echo=TRUE, warnings=FALSE }
+deg.tab.mus <- deg.all.mus$deg.table; deg.tab.mus[1:2, ] 
+```
+
+The numbers in `total` column are stringency measures of gene specificity, where the larger, the more strigent. For example, the up- and down-regulated genes in brain can be subsetted with the highest stringency `total==2`.  
+
+```{r eval=TRUE, echo=TRUE, warnings=FALSE }
+up.mus <- subset(deg.tab.mus, type=='up' & total==2)
+up.mus[1:2, ]
+```
+
+## Matrix Heatmap  
+
+Normalize the filtered count data with the same method (`TMM` in `edgeR`) as in `spatial_enrich`.  
+
+```{r eval=TRUE, echo=TRUE, warnings=FALSE}
+se.nor.enrich.mus <- norm_data(data=data.enrich.mus.fil, norm.fun='CNF', parameter.list=list(method='TMM'), log2.trans=TRUE)
+```
+
+`ENSMUSG00000026764` (`Kif5c`) is a mouse brain-specific gene and its function in synaptic transmission is well studied, so it is selected as reference gene.  
+
+Subset normalized data with reference gene.   
+
+```{r eval=TRUE, echo=TRUE, warnings=FALSE}
+sub.mat.mus <- submatrix(data=se.nor.enrich.mus, ID=c('ENSMUSG00000026764'), p=0.1)
+sub.mat.mus[1:2, ] # Subsetted assay matrix
+```
+
+Matrix heatmap of the subsetted data, where the reference gene `ENSMUSG00000026764` is indicated by black lines.   
+
+```{r eval=TRUE, echo=TRUE, warnings=FALSE, fig.cap=("Matrix Heatmap. Rows are genes and columns are samples. The reference gene is tagged by black lines."), out.width='100%'}
+matrix_hm(ID=c('ENSMUSG00000026764'), data=sub.mat.mus, angleCol=80, angleRow=35, cexRow=0.8, cexCol=0.8, margin=c(10, 8), static=TRUE, arg.lis1=list(offsetRow=0.01, offsetCol=0.01))
+```   
+
+## Module Identification
+
+Identify gene modules.  
+
+```{r eval=TRUE, echo=TRUE, warnings=FALSE, results=FALSE}
+adj.mod.mus <- adj_mod(data=sub.mat.mus)
+```
+
+A slice of the adjacency matrix is shown below.    
+
+```{r eval=TRUE, echo=TRUE, warnings=FALSE}
+adj.mod.mus[['adj']][1:3, 1:3]
+```
+
+The module assignments are stored in a `data frame`. Its columns contain the results
+for the `ds=2` and `ds=3` settings. Integer values $>0$ are the module labels, while $0$ 
+indicates unassigned items. The following returns the first three rows of the module 
+assignment result.  
+
+```{r eval=TRUE, echo=TRUE, warnings=FALSE}
+adj.mod.mus[['mod']][1:3, ] 
+```
+
+Visualize the module containing the reference gene `ENSMUSG00000026764` tagged by `_target`. The genes in this module are returned in a table and ranked by connectivities.   
+
+```{r modMus, eval=TRUE, echo=TRUE, warnings=FALSE, fig.cap=("Static network. Node size denotes gene connectivity while edge thickness stands for co-expression similarity.") }
+node.mus <- network(ID='ENSMUSG00000026764', data=sub.mat.mus, adj.mod=adj.mod.mus, adj.min=0.90, vertex.label.cex=0.7, vertex.cex=2, static=TRUE, return.node=TRUE)
+node.mus[1:3, , drop=FALSE]
+```
+
+Append annotation from `biomaRt`.  
+
+```{r eval=TRUE, echo=TRUE, warnings=FALSE}
+ann.mus <- read_cache(cache.pa, 'ann.mus')
+if (is.null(ann.mus)) {
+  ensem <- useEnsembl("ensembl", dataset = "mmusculus_gene_ensembl")
+  ann.mus <- getBM(filters='ensembl_gene_id', values=rownames(node.mus), attributes=c("ensembl_gene_id", "go_id", "description"), mart=ensem)
+  ann.mus <- subset(ann.mus, !duplicated(description))
+  rownames(ann.mus) <- ann.mus$ensembl_gene_id
+  save_cache(dir=cache.pa, overwrite=TRUE, ann.mus)
+}
+ann.mus <- ann.mus[rownames(node.mus), ]
+node.mus <- cbind(node.mus, ann.mus[, c('go_id', 'description')])
+node.mus[1:2, ]
+```   
+
+According to annotations on [Ensembl](https://www.ensembl.org/index.html){target='_blank'}, in the gene module shown in Figure \@ref(fig:modMus), ENSMUSG00000026764 (Kif5c), ENSMUSG00000021536 (Adcy2 ENSMUSG00000021536), ENSMUSG00000007207 (Stx1a), and ENSMUSG00000041263 (Rusc1) are responsible for synaptic signal transmission. Particularly, Kif5c is a well-characterized kinesin and its transportation activity in axons is experimentally studied. ENSMUSG00000028246 (Faxc) plays potential roles in axonal development. ENSMUSG00000021730 (Hcn1) is responsible for hyperpolarization-activated potassium/sodium channel, which contributes to currents in neurons. ENSMUSG00000024176 (Sox8) and ENSMUSG00000045903 (Npas4) are both transcription factors. Sox8 may play a role in central nervous system while Npas4 regulates excitatory-inhibitory balance within neural circuits, which is experimentally studied. ENSMUSG00000047842 (Diras2) encodes a GTP-binding protein and involves in signal transduction, while ENSMUSG00000032131 (Abcg4) encodes a ATP binding protein and functions in transmembrane transport. According to these functions, this gene module has a high probability of regulating signal transmission in neurons. 
+
+ENSMUSG00000111977 (Gm47163) and ENSMUSG00000097960 have unclear functions. Since they are co-expressed with other genes in this module (Figure \@ref(fig:modMus)), they are potential novel genes responsible for synaptic signal transmission in mouse brain. Their expression profiles are visualized in Figure \@ref(fig:shmNovel) in form of SHMs and in Figure \@ref(fig:lineNovel) in form of line graph.   
+
+```{r shmNovel, eval=TRUE, echo=TRUE, warnings=FALSE, fig.wide=TRUE, fig.cap=('SHMs of novel gene candidates in mouse brain synaptic transmission. Genes ENSMUSG00000111977 and ENSMUSG00000097960 are potential novel genes involved in mouse brain synaptic transmission, which are identified by `spatialHeatmap`. Their expression profiles are visualized in form of SHMs.'), out.width="100%", fig.show='show'}
+spatial_hm(svg.path=svg.mus, data=deg.all.mus$deg.table, ID=c('ENSMUSG00000111977', 'ENSMUSG00000097960'), legend.r=1, legend.nrow=3, sub.title.size=9, ncol=3, bar.width=0.11)
+```
+
+```{r lineNovel, eval=TRUE, echo=TRUE, warnings=FALSE, fig.wide=TRUE, fig.cap=('Line graph of novel gene candidates in mouse brain synaptic transmission. The count data are normalized and replicates are aggregated.'), out.width="100%", fig.show='show'}
+profile_gene(subset(up.mus, gene %in% c('ENSMUSG00000111977', 'ENSMUSG00000097960')))
+```
+
+</font>
+
+# Supplementary Section {#sup} 
 
 ## Numeric Data {#data_form}
 

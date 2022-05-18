@@ -16,9 +16,7 @@ coclus_opt(
   dim = seq(5, 40, by = 1),
   df.match,
   sim.meth = "spearman",
-  batch.par = BatchtoolsParam(workers = 1, cluster = "slurm", template = "slurm.tmpl",
-    RNGseed = 100, stop.on.error = FALSE, log = TRUE, logdir = file.path(wk.dir,
-    "batch_log")),
+  batch.par = NULL,
   multi.core.par = MulticoreParam(workers = 1, RNGseed = NULL, stop.on.error = FALSE,
     log = TRUE, logdir = file.path(wk.dir, "multi_core_log")),
   verbose = TRUE
@@ -45,7 +43,7 @@ coclus_opt(
 
 \item{sim.meth}{Method to calculate similarities between bulk and cells in each cocluster when assigning bulk to cells. \code{spearman} (default) or \code{pearson}.}
 
-\item{batch.par}{The parameters for first-level parallelization. See \code{\link[BioParallel]{BatchtoolsParam}}. It works with the "slurm" scheduler, so "slurm" needs to be installed. If \code{NULL}, the first-level parallelization is skipped.}
+\item{batch.par}{The parameters for first-level parallelization through a cluster scheduler such as SLURM. See \code{\link[BioParallel]{BatchtoolsParam}}. If \code{NULL} (default), the first-level parallelization is skipped.}
 
 \item{multi.core.par}{The parameters for second-level parallelization. See \code{\link[BioParallel]{MulticoreParam}}.}
 
@@ -107,7 +105,7 @@ file.copy(system.file("extdata/cocluster", "slurm.tmpl", package="spatialHeatmap
 
 # The first- and second-level parallelizations are set 3 and 2 respectively.
 library(BiocParallel)
-opt <- coclus_opt(wk.dir='opt_res', dimred=c('PCA', 'UMAP'), graph.meth=c('knn', 'snn'), sim=seq(0.2, 0.4, by=0.1), sim.p=seq(0.2, 0.4, by=0.1), dim=seq(5, 7, by=1), df.match=df.match.arab, batch.par=BatchtoolsParam(workers=3, cluster="slurm", template='slurm.tmpl'), multi.core.par=MulticoreParam(workers=2))
+opt <- coclus_opt(wk.dir='opt_res', dimred=c('PCA', 'UMAP'), graph.meth=c('knn', 'snn'), sim=seq(0.2, 0.4, by=0.1), sim.p=seq(0.2, 0.4, by=0.1), dim=seq(5, 7, by=1), df.match=df.match.arab, batch.par=BatchtoolsParam(workers=3, cluster="slurm", template='slurm.tmpl', RNGseed=100, stop.on.error = FALSE, log = TRUE, logdir=file.path('opt_res', 'batch_log')), multi.core.par=MulticoreParam(workers=2))
 
 # If slurm is not available, parallelize the optimization only at the second-level through 2 workers. 
 opt <- coclus_opt(wk.dir='opt_res', dimred=c('PCA', 'UMAP'), graph.meth=c('knn', 'snn'), sim=seq(0.2, 0.4, by=0.1), sim.p=seq(0.2, 0.4, by=0.1), dim=seq(5, 7, by=1), df.match=df.match.arab, batch.par=NULL, multi.core.par=MulticoreParam(workers=2))
@@ -182,6 +180,7 @@ df.spd.top[1:3, c('sim', 'sim.p', 'dim', 'spd.set')]
 Li, S., Yamada, M., Han, X., Ohler, U., and Benfey, P. N. (November, 2016) High-Resolution Expression Map of the Arabidopsis Root Reveals Alternative Splicing and lincRNA Regulation. Dev. Cell, 39(4), 508–522.
 Shahan, R., Hsu, C.-W., Nolan, T. M., Cole, B. J., Taylor, I. W., Vlot, A. H. C., Benfey, P. N., and Ohler, U. (June, 2020) A single cell Arabidopsis root atlas reveals developmental trajectories in wild type and cell identity mutants.
 Morgan M, Wang J, Obenchain V, Lang M, Thompson R, Turaga N (2021). BiocParallel: Bioconductor facilities for parallel evaluation. R package version 1.28.3, https://github.com/Bioconductor/BiocParallel.
+Yoo, A. B., Jette, M. A., and Grondona, M. (2003) SLURM: Simple Linux Utility for Resource Management. In Job Scheduling Strategies for Parallel Processing Springer Berlin Heidelberg pp. 44–60.
 }
 \author{
 Jianhai Zhang \email{jzhan067@ucr.edu} \cr Dr. Thomas Girke \email{thomas.girke@ucr.edu}

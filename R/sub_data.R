@@ -10,9 +10,9 @@
 #' @param com.by One of \code{feature}, \code{factor}, \code{feature.factor}. If \code{feature}, pairwise comparisons will be perfomed between the selected \code{features} and the \code{factors} will be treated as replicates. If \code{factor}, pairwise comparisons will be perfomed between the selected \code{factors} and the \code{features} will be treated as replicates. If \code{feature.factor}, the selected \code{features} and \code{factors} will be concatenated by \code{__} and pairwise comparisons will be perfomed between the "feature__factor" entities. The default is \code{feature}. The corresponding column will be moved to the first in the \code{colData} slot and be recognized in the spatial enrichment process.  
 #' @param target A single-component vector of the target for spatial enrichment. If \code{com.by='feature'}, the target will be one of the entries in \code{features}. If \code{com.by='factor'}, the target will be one of the entries in \code{factors}. If \code{com.by='feature.factor'}, the target will be one of the concatenated \code{features} and \code{factors}. \emph{E.g.} \code{features=c('brain', 'kidney')}, \code{factors=c('control', 'drug')}, the target could be one of \code{c('brain__control', 'brain__drug', 'kidney__control', 'kidney__drug')}. The default is \code{NULL}, and the first entity in \code{features} is selected, since the default \code{com.by} is \code{feature}. A \code{target} column will be included in the \code{colData} slot and will be recognized in spatial enrichment.   
 
-#' @return A subsetted \code{SummarizedExperiment} object. 
+#' @return A subsetted \code{SummarizedExperiment} object, where the \code{com.by} is placed in the first column in \code{colData} slot.
 
-#' @examples
+#' @examples 
 
 #' ## In the following examples, the toy data come from an RNA-seq analysis on development of 7
 #' ## chicken organs under 9 time points (Cardoso-Moreira et al. 2019). For conveninece, it is
@@ -75,8 +75,10 @@
 #' @importFrom SummarizedExperiment colData assayNames colData<- assayNames<- 
 
 sub_data <- function(data, feature, features=NULL, factor, factors=NULL, com.by='feature', target=NULL) {
-  cdat <- colData(data); fts <- cdat[, feature]
-  fcts <- cdat[, factor]
+  cdat <- colData(data)
+  cdat[, feature] <- make.names(cdat[, feature])
+  cdat[, factor] <- make.names(cdat[, factor])
+  fts <- cdat[, feature]; fcts <- cdat[, factor]
   if (is.null(features)) features <- unique(fts)[seq_len(2)] else if (features[1]=='all') features <- unique(fts)
   if (is.null(factors)) factors <- unique(fcts)[seq_len(2)] else if (factors[1]=='all') factors <- unique(fcts)
 

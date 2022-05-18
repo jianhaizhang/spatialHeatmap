@@ -15,6 +15,7 @@ network(
   node.col = c("turquoise", "violet"),
   edge.col = c("yellow", "blue"),
   vertex.label.cex = 1,
+  vertex.label.degree = -pi/4,
   vertex.cex = 3,
   edge.cex = 10,
   layout = "circle",
@@ -22,6 +23,7 @@ network(
   color.key.text.size = 1,
   main = NULL,
   static = TRUE,
+  return.node = FALSE,
   ...
 )
 }
@@ -58,6 +60,8 @@ network(
 
 \item{static}{Logical, TRUE returns a static network while FALSE returns an interactive network.}
 
+\item{return.node}{Logical, \code{TRUE} or \code{FALSE} (default). If \code{static=TRUE}, \code{TRUE} returns nodes ranked by connectivities in a \code{data.frame}.}
+
 \item{...}{Other arguments passed to the generic function \code{\link[graphics]{plot.default}}, \emph{e.g.}: \code{asp=1}.}
 }
 \value{
@@ -72,7 +76,7 @@ This function exhibits a target assayed item (gene, protein, metabolite, \emph{e
 ## included in this package. The complete raw count data are downloaded using the R package
 ## ExpressionAtlas (Keays 2019) with the accession number "E-MTAB-6769". Toy data1 is used as
 ## a "data frame" input to exemplify data of simple samples/conditions, while toy data2 as
-## "SummarizedExperiment" to illustrate data involving complex samples/conditions.   
+## "SummarizedExperiment" to illustrate data involving complex samples/conditions. 
 
 ## Set up toy data.
 

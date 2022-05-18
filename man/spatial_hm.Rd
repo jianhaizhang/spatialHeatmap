@@ -32,7 +32,7 @@ spatial_hm(
   ft.trans = NULL,
   tis.trans = ft.trans,
   lis.rematch = NULL,
-  legend.r = 0.2,
+  legend.r = 0.9,
   sub.title.size = 11,
   sub.title.vjust = 2,
   legend.plot = "all",
@@ -140,7 +140,7 @@ spatial_hm(
 
 \item{lis.rematch}{A list for rematching features. In each slot, the slot name is an existing feature in the data, and the slot contains a vector of features in aSVG that will be rematched to the feature in the slot name. \emph{E.g.} \code{list(featureData1 = c('featureSVG1', 'featureSVG2'), featureData2 = c('featureSVG3'))}, where features \code{c('featureSVG1', 'featureSVG2')}, \code{c('featureSVG3')} in the aSVG are rematched to features \code{'featureData1'}, \code{'featureData2'} in data, respectively.}
 
-\item{legend.r}{A numeric (between -1 and 1) to adjust the legend plot size. The default is 0.2.}
+\item{legend.r}{A numeric (between -1 and 1) to adjust the legend plot size. The default is 0.9.}
 
 \item{sub.title.size}{A numeric of the subtitle font size of each individual spatial heatmap. The default is 11.}
 
