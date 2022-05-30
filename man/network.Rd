@@ -15,7 +15,6 @@ network(
   node.col = c("turquoise", "violet"),
   edge.col = c("yellow", "blue"),
   vertex.label.cex = 1,
-  vertex.label.degree = -pi/4,
   vertex.cex = 3,
   edge.cex = 10,
   layout = "circle",

@@ -12,7 +12,6 @@
 #' @param node.col A vector of color ingredients for constructing node color scale in the static image. The default is c("turquoise", "violet"), where node connectivity increases from "turquoise" to "violet".
 #' @param edge.col A vector of color ingredients for constructing edge color scale in the static image. The default is c("yellow", "blue"), where edge adjacency increases from "yellow" to "blue".
 #' @param vertex.label.cex The size of node label in the static and interactive networks. The default is 1.
-#' @inheritParams base::plot
 #' @param vertex.cex The size of node in the static image. The default is 3.
 #' @param edge.cex The size of edge in the static image. The default is 10.
 #' @param layout The layout of the network in static image, either "circle" or "fr". The "fr" stands for force-directed layout algorithm by Fruchterman and Reingold. The default is "circle".
@@ -153,7 +152,7 @@
 #' @importFrom shinydashboard dashboardSidebar dashboardPage dashboardHeader sidebarMenu menuItem menuSubItem dashboardBody tabItems tabItem box
 #' @importFrom visNetwork visNetworkOutput visNetwork visOptions renderVisNetwork visIgraphLayout
 
-network <- function(ID, data, assay.na=NULL, adj.mod, ds="3", adj.min=0, con.min=0, node.col=c("turquoise", "violet"), edge.col=c("yellow", "blue"), vertex.label.cex=1, vertex.label.degree=-pi/4, vertex.cex=3, edge.cex=10, layout="circle", color.key.lab.size=1.5, color.key.text.size=1, main=NULL, static=TRUE, return.node=FALSE, ...) {
+network <- function(ID, data, assay.na=NULL, adj.mod, ds="3", adj.min=0, con.min=0, node.col=c("turquoise", "violet"), edge.col=c("yellow", "blue"), vertex.label.cex=1, vertex.cex=3, edge.cex=10, layout="circle", color.key.lab.size=1.5, color.key.text.size=1, main=NULL, static=TRUE, return.node=FALSE, ...) {
  # save(ID, data, assay.na, adj.mod, ds, adj.min, con.min, node.col, edge.col, vertex.label.cex, vertex.cex, edge.cex, layout, color.key.lab.size, color.key.text.size, main, static, file='network.arg')
   options(stringsAsFactors=FALSE)
   if (is(data, 'data.frame')|is(data, 'matrix')|is(data, 'DFrame')|is(data, 'dgCMatrix')) {
@@ -211,7 +210,7 @@ network <- function(ID, data, assay.na=NULL, adj.mod, ds="3", adj.min=0, con.min
   
   # Network.
   graphics::layout(mat=matrix(c(1, 2, 1, 3), nrow=2, ncol=2), height=c(6, 1))
-  par(mar=c(2, 2.5, 2, 2.5), new=FALSE); plot(net, edge.width=igraph::E(net)$width*edge.cex, vertex.size=igraph::V(net)$size*vertex.cex, vertex.label.cex=vertex.label.cex, vertex.label.degree=vertex.label.degree, layout=lay, ...)
+  par(mar=c(2, 2.5, 2, 2.5), new=FALSE); plot(net, edge.width=igraph::E(net)$width*edge.cex, vertex.size=igraph::V(net)$size*vertex.cex, vertex.label.cex=vertex.label.cex, layout=lay, ...)
   # Node colour bar.
   mat1 <- matrix(v.nod, ncol=1, nrow=length(v.nod)) 
   par(mar=c(2.2, 3, 1, 2.5), new=FALSE); image(x=seq_len(length(v.nod)), y=1, mat1, col=col.nod, xlab="", ylab="", axes=FALSE)
