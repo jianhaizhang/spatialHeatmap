@@ -779,12 +779,12 @@ se.fil.mus <- filter_data(data=se.aggr.mus, sam.factor='organism_part', con.fact
 
 ### SHM: Transparency
 
-The pre-processed expression data for gene 'ENSMUSG00000000263' is plotted in form
+The pre-processed expression data for gene 'ENSMUSG00000000037' is plotted in form
 of an SHM. In this case the plot includes expression data for 8 tissues across 3 
 mouse strains. 
 
 ```{r, musshm, eval=TRUE, echo=TRUE, warnings=FALSE, fig.wide=TRUE, fig.cap=("SHM of mouse organs. This is a multiple-layer image where the shapes of the 'skeletal muscle' is set transparent to expose 'lung' and 'heart'."), out.width="100%" }
-shm.lis <- spatial_hm(svg.path=svg.mus, data=se.fil.mus, ID=c('ENSMUSG00000000263'), height=0.7, legend.width=0.7, legend.text.size=10, sub.title.size=9, ncol=3, ft.trans=c('skeletal muscle', 'path4204'), legend.nrow=4, line.size=0.2, line.color='grey70')
+shm.lis <- spatial_hm(svg.path=svg.mus, data=se.fil.mus, ID=c('ENSMUSG00000000037'), height=0.7, legend.width=0.7, legend.text.size=10, sub.title.size=9, ncol=3, ft.trans=c('skeletal muscle', 'path4204'), legend.nrow=4, line.size=0.2, line.color='grey70')
 ```
 
 The SHM plots in Figures \@ref(fig:musshm) and below demonstrate
@@ -801,11 +801,8 @@ To fine control the visual effects in feature rich aSVGs, the `line.size` and
 color of complex structures.
 
 
-<!--
-This image is hidden to meet the 5MB requirement on vignette.
--->
 ```{r, musshm1, eval=TRUE, echo=TRUE, warnings=FALSE, fig.wide=TRUE, fig.cap=("SHM of mouse organs. This is a multiple-layer image where the view onto 'lung' and 'heart' is obstructed by displaying the 'skeletal muscle' tissue."), out.width="100%", fig.show='show' }
-spatial_hm(svg.path=svg.mus, data=se.fil.mus, ID=c('ENSMUSG00000000263'), height=0.6, legend.text.size=10, sub.title.size=9, ncol=3, legend.ncol=2, line.size=0.1, line.color='grey70', ft.trans='path4204')
+spatial_hm(svg.path=svg.mus, data=se.fil.mus, ID=c('ENSMUSG00000000037'), height=0.6, legend.text.size=10, sub.title.size=9, ncol=3, legend.ncol=2, line.size=0.1, line.color='grey70', ft.trans='path4204')
 ```
 
 ## Chicken Organs {#chk}
@@ -1400,7 +1397,7 @@ This image is hidden to meet the 5MB requirement on vignette.
 -->
 
 ```{r arabshm, eval=TRUE, echo=TRUE, warnings=FALSE, fig.wide=TRUE, fig.cap=('Spatial heatmap of Arabidopsis at two growth stages. The expression profile of gene1 under condition1 and condition2 is plotted for two growth stages (top and bottom row).'), out.width="100%", fig.show='show'}
-spatial_hm(svg.path=c(svg.sh1, svg.sh2), data=df.random, ID=c('gene1'), width=0.7, legend.r=0.2, legend.width=1, preserve.scale=TRUE, bar.width=0.09) 
+spatial_hm(svg.path=c(svg.sh1, svg.sh2), data=df.random, ID=c('gene1'), width=0.7, legend.r=0.2, legend.width=1, preserve.scale=TRUE, bar.width=0.09, line.color='grey50') 
 ```
 
 Note in Figure \@ref(fig:arabshm) shoots have thicker outlines than roots. This is another function of `spatial_hm`, *i.e.* preserves the outline thicknesses defined in aSVG files. This feature is particularly useful in cellular SHMs where different cell types have different cell-wall thicknesses. The outline widths can be updated with `update_feature` programatically or with Inkscape manually. The former is illustrated in the Supplementary Section.   
@@ -1809,13 +1806,13 @@ The auto-matching includes two main functionalities. One is the auto-matching op
 
 ### Workflow Overview
 
-Figure \@ref(fig:coclusOver) is the co-clustering workflow overview. The inputs are RNA-seq raw count data of bulk tissues and single cells of the same organ (Figure \@ref(fig:coclusOver).1). The single cells should come from the whole organ or at least covers the bulk tissues. The identities of each bulk tissue and each cell need to be labeled so as to evaluate the co-clustering performance. Bulk and single cell data are initially filtered at low strigency. The main difference between bulk and single cells is the sparsity in the latter. To reduce such difference, the bulk and single-cell data are combined, normalized, and then separated (Figure \@ref(fig:coclusOver).2). After separation, the normalized bulk data are filtered to remove genes of low and constant expressions (Figure \@ref(fig:coclusOver).3). The normalized single-cell data are also filtered to remove genes and cells having high zero-count rates. After filtered, the gene dimensionalities of single-cell data are reduced using PCA or UMAP method, and the top dimensionalities are clustered (Figure \@ref(fig:coclusOver).4). In each cell cluster, cells having low similarities with other cells in the same cluster are filtered (Figure \@ref(fig:coclusOver).5), and therefore the remaining clusters are more homogeneous (Figure \@ref(fig:coclusOver).6). The filtered bulk and filtered single cells are combined and co-clustered (Figure \@ref(fig:coclusOver).7).  
+Figure \@ref(fig:coclusOver) is the co-clustering workflow overview. The inputs are raw count data (*e.g.* RNA-seq) of bulk tissues and single cells of the same organ (Figure \@ref(fig:coclusOver).1). The single cells should come from the whole organ or at least covers the bulk tissues. The identities of each bulk tissue and each cell need to be labeled so as to evaluate the co-clustering performance. Bulk and single cell data are initially filtered at low strigency. The main difference between bulk and single cells is the sparsity in the latter. To reduce such difference, the bulk and single-cell data are combined, normalized, and then separated (Figure \@ref(fig:coclusOver).2). After separation, the normalized bulk data are filtered to remove genes of low and constant expressions (Figure \@ref(fig:coclusOver).3). The normalized single-cell data are also filtered to remove genes and cells having high zero-count rates. After filtered, the gene dimensionalities of single-cell data are reduced using PCA or UMAP method, and the top dimensionalities are clustered (Figure \@ref(fig:coclusOver).4). In each cell cluster, cells having low similarities with other cells in the same cluster are filtered (Figure \@ref(fig:coclusOver).5), and therefore the remaining clusters are more homogeneous (Figure \@ref(fig:coclusOver).6). The filtered bulk and filtered single cells are combined and co-clustered (Figure \@ref(fig:coclusOver).7).  
 
 The results include three types of co-clusters: 1) Two bulk tissues are clustered with cells. The source bulk is assigned to each cell according to Spearman's correlation coefficient. For example, in Figure \@ref(fig:coclusOver).8a bulk A is assigned to cell a1 because a1 has higher similarity with A than B. Since the true source bulk of a1 is A, this assignment is TRUE. By contrast, cell b1 also has higher similarity with A than B, and A is assigned to b1, but this assignment is labeled FALSE since the true source bulk of b1 is B; 2). Only one bulk tissue is clustered with cells. This bulk is assigned to all the cells in the same co-cluster (\@ref(fig:coclusOver).8b); and 3) No bulk is included. All these cells are discarded (Figure \@ref(fig:coclusOver).8c). Lastly, the Spearman's correlation coefficient and TRUE or FALSE assignments are used to create ROC plots and evaluate the performance (Figure \@ref(fig:coclusOver).9).
 
 
 ```{r coclusOver, echo=FALSE, fig.wide=TRUE, out.width="80%", fig.cap=("Overview of coclustering. The coclustering are illustrated in 9 steps. Basically, bulk and single data are initially filtered, then combined, normalized, and separated. The normalized bulk and single cell data are filtered again. Single cells are clustered and resulting clusters are refined. Subsequently bulk and single cells are combined and co-clustered. In each co-cluster, bulk tissues are assigned to cells. The assignments are evaluated by ROC curves.")}
-include_graphics('img/coclustering_overview.png')
+include_graphics('img/coclustering_overview.jpg')
 ```
 
 ### Optimization Demonstration {#opt_demo}
@@ -1882,7 +1879,7 @@ df.match.arab <- read.table(match.pa, header=TRUE, row.names=1, sep='\t')
 df.match.arab[1:3, ]
 ```
 
-In real application, the whole optimization takes a long time and requires a lot of computation power. For example, combined bulk and cell data with 6945 genes and 7747 samples requires about 20G memory for coclustering. To speed up computation, the optimization function `coclus_opt` provides two levels of parallel computing through `BiocParallel` [@biocpara]. The first one is `BatchtoolsParam` and relies on the [slurm](https://slurm.schedmd.com/documentation.html){target='blank'} scheduler and the second one utilizes `MulticoreParam`.   
+In real application, the whole optimization takes a long time and requires a lot of computation power. For example, combined bulk and cell data with 6945 genes and 7747 samples requires about 20G memory for coclustering. To speed up computation, the optimization function `coclus_opt` provides two levels of parallel computing through `BiocParallel` [@biocpara]. The first one is `BatchtoolsParam` and relies on a cluster scheduler such as the [SLURM](https://slurm.schedmd.com/documentation.html){target='blank'} scheduler and the second one utilizes `MulticoreParam`.   
 
 Before optimzation, users could check the parallelization guide by setting `parallel.info=TRUE`, then it returns the max possible parallelizations for each level respectively.   
 
@@ -1890,13 +1887,13 @@ Before optimzation, users could check the parallelization guide by setting `para
 coclus_opt(wk.dir='opt_res', parallel.info=TRUE, dimred=c('PCA', 'UMAP'), graph.meth=c('knn', 'snn'), sim=seq(0.2, 0.4, by=0.1), sim.p=seq(0.2, 0.4, by=0.1), dim=seq(5, 7, by=1))
 ```
 
-A slurm template is provided for the first level parallelization. Users are advised to make a new copy and set slurm parameters in the new copy.  
+A SLURM template is provided as an example for the first level parallelization. Users are advised to make a new copy and set SLURM parameters in the new copy. If users have access to other cluster schedulers, the template should be provided accordingly.  
 
 ```{r optTmpl, eval=FALSE, echo=TRUE, warnings=FALSE}
 file.copy(system.file("extdata/cocluster", "slurm.tmpl", package="spatialHeatmap"), './slurm.tmpl')
 ```
 
-If slurm is installed, users could take advantage of two levels of parallelizations. For instance, the first- and second-level parallelizations are set 3 and 2 cpu cores respectively. The `wk.dir` is the same in secondary filtering.  
+Below is the demonstration of two-level parallelization on SLURM. For instance, the first- and second-level parallelizations are set 3 and 2 cpu cores respectively. The `wk.dir` is the same in secondary filtering.  
 
 `sim` and `sim.p` are parameters in refining cell clusters (Figure \@ref(fig:coclusOver).5). Specifically, in a cell cluster, cells having similarities over `sim` with other cells in the same cluster of at least proportion `sim.p` would remain. `sim` is Spearman' or Pearson's correlation coefficient. `dim` is the number of top dimensionalities (equivalent to genes) in co-clustering. Since the three parameters are related to each other, they are treated as a set `spd.set`.     
 
@@ -1904,7 +1901,7 @@ If slurm is installed, users could take advantage of two levels of parallelizati
 opt <- coclus_opt(wk.dir='opt_res', dimred=c('PCA', 'UMAP'), graph.meth=c('knn', 'snn'), sim=seq(0.2, 0.4, by=0.1), sim.p=seq(0.2, 0.4, by=0.1), dim=seq(5, 7, by=1), df.match=df.match.arab, batch.par=BatchtoolsParam(workers=3, cluster="slurm", template='slurm.tmpl', RNGseed=100,  stop.on.error = FALSE, log =TRUE, logdir=file.path('opt_res', 'batch_log')), multi.core.par=MulticoreParam(workers=2), verbose=FALSE)
 ```
 
-If slurm is not available, optimization can be parallelized only at the second-level by setting `batch.par=NULL`.      
+If no cluster scheduler is available, optimization can be parallelized only at the second-level by setting `batch.par=NULL`.      
 
 ```{r optPara1, eval=FALSE, echo=TRUE, warnings=FALSE}
 opt <- coclus_opt(wk.dir='opt_res', dimred=c('PCA', 'UMAP'), graph.meth=c('knn', 'snn'), sim=seq(0.2, 0.4, by=0.1), sim.p=seq(0.2, 0.4, by=0.1), dim=seq(5, 7, by=1), df.match=df.match.arab, batch.par=NULL, multi.core.par=MulticoreParam(workers=2))
@@ -2096,19 +2093,19 @@ The max possible parallelizations for each level respectively.
 coclus_opt(wk.dir='opt_real_res', parallel.info=TRUE, dimred=c('PCA', 'UMAP'), graph.meth=c('knn', 'snn'), sim=seq(0.2, 0.8, by=0.1), sim.p=seq(0.2, 0.8, by=0.1), dim=seq(5, 40, by=1))
 ```
 
-Make a new copy of the default slurm template and set parameters in the new copy.  
+Take the SLURM scheduler as an example for two-level parallelizatio. Make a new copy of the default SLURM template and set parameters in the new copy.  
 
 ```{r , eval=FALSE, echo=TRUE, warnings=FALSE}
 file.copy(system.file("extdata/cocluster", "slurm.tmpl", package="spatialHeatmap"), './slurm.tmpl')
 ```
 
-If slurm is installed, users could take advantage of two levels of parallelizations. For instance, the first- and second-level parallelizations are set 3 and 2 cpu cores respectively. The `wk.dir` is the same in secondary filtering. Note the settings of `spd.set` (`sim/sim.p/dim`) has wider ranges than in last section. The parallel computation is performed at High-Performance Computing Center (HPCC) at University of California, Riverside.  
+The first- and second-level parallelizations are set 3 and 2 cpu cores respectively. The `wk.dir` is the same in secondary filtering. Note the settings of `spd.set` (`sim/sim.p/dim`) has wider ranges than in last section. The parallel computation is performed at High-Performance Computing Center (HPCC) at University of California, Riverside.  
 
 ```{r , eval=FALSE, echo=TRUE, warnings=FALSE}
 opt <- coclus_opt(wk.dir='opt_real_res', dimred=c('PCA', 'UMAP'), graph.meth=c('knn', 'snn'), sim=seq(0.2, 0.8, by=0.1), sim.p=seq(0.2, 0.8, by=0.1), dim=seq(5, 40, by=1), df.match=df.match.arab, batch.par=BatchtoolsParam(workers=3, cluster="slurm", template='slurm.tmpl', RNGseed=100, stop.on.error=FALSE, log=TRUE, logdir=file.path('opt_res', 'batch_log')), multi.core.par=MulticoreParam(workers=2), verbose=FALSE)
 ```
 
-If slurm is not available, optimization can be parallelized only at the second-level by setting `batch.par=NULL`.      
+If no cluster scheduler is not available, optimization can be parallelized only at the second-level by setting `batch.par=NULL`.      
 
 ```{r , eval=FALSE, echo=TRUE, warnings=FALSE}
 opt <- coclus_opt(wk.dir='opt_real_res', dimred=c('PCA', 'UMAP'), graph.meth=c('knn', 'snn'), sim=seq(0.2, 0.8, by=0.1), sim.p=seq(0.2, 0.8, by=0.1), dim=seq(5, 40, by=1), df.match=df.match.arab, batch.par=NULL, multi.core.par=MulticoreParam(workers=2))
