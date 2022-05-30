@@ -64,6 +64,8 @@ write.table(target.mus, 'target_mouse.txt', col.names=TRUE, row.names=TRUE, sep=
 
 colData(rse.mus) <- DataFrame(target.mus)
 
+rse.mus <- subset(rse.mus, select=colData(rse.mus)$organism_part %in% c('brain', 'heart', 'colon', 'kidney', 'liver'))
+
 se.nor.mus <- norm_data(data=rse.mus, norm.fun='ESF', log2.trans = FALSE)
 se.fil.mus <- filter_data(data=se.nor.mus, sam.factor='organism_part', con.factor='strain', pOA=c(0.3, 30), CV=c(1.5, 100), dir=NULL); se.fil.mus
 # Data matrix.
