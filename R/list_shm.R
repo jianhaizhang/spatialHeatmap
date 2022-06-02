@@ -45,7 +45,7 @@
 
 gg_shm <- function(gene, con.na=TRUE, geneV, coord, tmp.path=NULL, charcoal=FALSE, alpha.overlay=1, ID, cols, tis.path, lis.rematch = NULL, ft.trans=NULL, ft.trans.shm=NULL, sub.title.size, sub.title.vjust=2, ft.legend='identical', legend.col, legend.ncol=NULL, legend.nrow=NULL, legend.position='bottom', legend.direction=NULL, legend.key.size=0.02, legend.text.size=12, legend.plot.title=NULL, legend.plot.title.size=11, line.size=0.2, line.color='grey70', aspect.ratio = 1, ...) {
 
-  # save(gene, con.na, geneV, coord, tmp.path, charcoal, alpha.overlay, ID, cols, tis.path, lis.rematch, ft.trans, ft.trans.shm, sub.title.size, sub.title.vjust, ft.legend, legend.col, legend.ncol, legend.nrow, legend.position, legend.direction, legend.key.size, legend.text.size, legend.plot.title, legend.plot.title.size, line.size, line.color, aspect.ratio, file='gg.shm.arg')
+ # save(gene, con.na, geneV, coord, tmp.path, charcoal, alpha.overlay, ID, cols, tis.path, lis.rematch, ft.trans, ft.trans.shm, sub.title.size, sub.title.vjust, ft.legend, legend.col, legend.ncol, legend.nrow, legend.position, legend.direction, legend.key.size, legend.text.size, legend.plot.title, legend.plot.title.size, line.size, line.color, aspect.ratio, file='gg.shm.arg')
   
   # Main function to create SHMs (by conditions) and legend plot.
   g_list <- function(con, lgd=FALSE, ...) {
@@ -118,9 +118,11 @@ gg_shm <- function(gene, con.na=TRUE, geneV, coord, tmp.path=NULL, charcoal=FALS
     # aes() is passed to either ggplot() or specific layer. Aesthetics supplied to ggplot() are used as defaults for every layer. 
     # Show selected or all samples in legend.
     if (length(ft.legend)==1) if (ft.legend=='identical') {
+      ft.legend <- intersect(sam.uni, unique(tis.path))
       if (rematch.dif.svg | is(lis.rematch, 'list')) {
-        ft.legend <- intersect(unlist(lis.rematch), unique(tis.path)) 
-      } else ft.legend <- intersect(sam.uni, unique(tis.path)) 
+        ft.legend.remat <- intersect(unlist(lis.rematch), unique(tis.path)) 
+      } else ft.legend.remat <- NULL
+      ft.legend <- unique(c(ft.legend, ft.legend.remat))
     } else if (ft.legend=='all') ft.legend <- unique(tis.path)
     
     if (lgd==FALSE) { # Legend plot.

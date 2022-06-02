@@ -628,6 +628,22 @@ to the gene and condition ordering under `ID` and `data`, respectively.
 spatial_hm(svg.path=svg.hum, data=se.fil.hum, ID=c('ENSG00000268433', 'ENSG00000006047'), lay.shm='con', width=0.8, height=1, legend.r=1.5, legend.nrow=2, ft.trans=c('g4320'))
 ```
 
+### SHM: Re-matching
+
+SHMs supports re-matching between data and aSVG features, *i.e.* re-match one spatial feature in the data to a different counterpart or multiple counterparts in the aSVG. The re-matching is defined in a named list, where a name slot refers to a spatial feature in data and the corresponding element in the list are one or multiple aSVG features to re-match.   
+
+Take Figure \@ref(fig:humshm) as an example. The data feature `frontal.cortex' is re-matched to aSVG features `frontal.cortex` and `prefrontal.cortex`. The re-matching is defined in a list.  
+
+```{r eval=FALSE, echo=TRUE, warnings=FALSE }
+remat.hum <- list(frontal.cortex=c('frontal.cortex', 'prefrontal.cortex'))
+```
+
+SHM plots of re-matching. Examples of re-matching application include mapping gene expression profiles of one species to a closely related species in the same anatomical region, or mapping gene assay profiles of a sub-tissue to the whole tissue, where the gene abundance profiles of the whole tissue are hard to assay and only a sub-tissue is assayed.     
+
+```{r remat, eval=TRUE, echo=TRUE, warnings=FALSE, fig.wide=TRUE, fig.cap=("SHMs of re-matching. The data feature `frontal.cortex` is re-matched to aSVG features `frontal.cortex` and `prefrontal.cortex`."), out.width="100%" }
+spatial_hm(svg.path=svg.hum, data=se.fil.hum, ID=c('ENSG00000268433'), lay.shm='gene', ncol=2, width=1, height=1, legend.r=0.8, legend.nrow=2, ft.trans=c('g4320'), lis.rematch=remat.hum)
+```
+
 ### SHM: HTML and Video
 
 SHMs can be saved to interactive HTML files as well as video files. To trigger
