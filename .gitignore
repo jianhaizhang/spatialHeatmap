@@ -13,6 +13,8 @@ spatialHeatmap.html
 vignette_files/
 spatialHeatmap_files/
 spatialHeatmap_cache/
+covisualize_files/
+covisualize_cache/
 inst/extdata/shinyApp/test*
 html_shm/
 !inst/extdata/shinyApp/html_shm/README.txt
