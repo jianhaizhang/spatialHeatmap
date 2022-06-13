@@ -12,8 +12,9 @@ auc_bar(
   spd.sel = NULL,
   title = NULL,
   title.size = 15,
-  xlab = "Optimized parameter sets",
+  xlab = "Optimized settings",
   ylab = "AUC",
+  axis.title.size = 11,
   x.text.size = 15,
   y.text.size = 15,
   x.agl = 80,
@@ -34,6 +35,8 @@ auc_bar(
 \item{title}{The title of composite violin plots.}
 
 \item{title.size}{The title size. Default is 20.}
+
+\item{axis.title.size}{The size of x and y axis labels.}
 
 \item{x.text.size, y.text.size}{The size of x and y axis text.}
 

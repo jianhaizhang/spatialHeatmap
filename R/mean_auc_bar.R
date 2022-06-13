@@ -10,6 +10,7 @@
 #' @param title The title of composite violin plots.
 #' @param title.size The title size. Default is 20.
 #' @param x.lab,ylab The x and y axis label respectively.
+#' @param axis.title.size The size of x and y axis labels.
 #' @param x.text.size,y.text.size The size of x and y axis text.
 #' @param key.title The title of legend.
 #' @param lgd.key.size The size of legend keys.
@@ -97,7 +98,7 @@
 
 #' @export mean_auc_bar
 
-mean_auc_bar <- function(df.auc, parameter='parameter', auc.thr='auc.thr', mean='mean', bar.width=0.8, title=NULL, title.size=20, xlab="AUC threshold", ylab='Mean AUC', x.text.size=11, y.text.size=11, key.title=NULL, lgd.key.size=0.05, lgd.text.size=10) { 
+mean_auc_bar <- function(df.auc, parameter='parameter', auc.thr='auc.thr', mean='mean', bar.width=0.8, title=NULL, title.size=20, xlab="AUC threshold", ylab='Mean AUC', axis.title.size=11, x.text.size=11, y.text.size=11, key.title=NULL, lgd.key.size=0.05, lgd.text.size=10) { 
   cna <- colnames(df.auc)
   cna[cna==parameter] <- 'parameter'
   cna[cna==auc.thr] <- 'auc.thr'; cna[cna==mean] <- 'mean'
@@ -105,6 +106,6 @@ mean_auc_bar <- function(df.auc, parameter='parameter', auc.thr='auc.thr', mean=
   gg <- ggplot(df.auc, aes(x=auc.thr, y=mean, fill=parameter)) +
   geom_bar(color='black', width=bar.width, position=position_dodge2(width=bar.width, preserve="single"), stat="identity") +
   labs(title=title, x=xlab, y=ylab, fill=key.title)+theme(plot.title = element_text(size=title.size, hjust = 0.5, vjust=1.5)) +
-  theme(legend.key.size = unit(lgd.key.size, 'npc'), legend.text=element_text(size=lgd.text.size), axis.text.x = element_text(size = x.text.size), axis.text.y = element_text(size = y.text.size))
+  theme(legend.key.size = unit(lgd.key.size, 'npc'), legend.text=element_text(size=lgd.text.size), axis.title = element_text(size=axis.title.size), axis.text.x = element_text(size = x.text.size), axis.text.y = element_text(size = y.text.size))
   gg
 }

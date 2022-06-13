@@ -761,7 +761,7 @@ The AUCs of optimal and random settings are presented in Figure \@ref(fig:valida
 include_graphics('img/validate_opt.jpg')
 ```  
 
-```{r validateRdm, echo=FALSE, fig.wide=TRUE, fig.cap=("Random settings. AUCs of random settings on each validating data sets. A bar refers to one AUC of one optimal settings. If total bulk assignments < 500 or total true assignments < 300 or AUC < 0.5, AUCs are set 0. (a) Mouse brain. (b) Mouse kidndy. (c) Arabidopsis root of single cell 9. (d) Arabidopsis root of single cell 51. "), out.width="100%"}
+```{r validateRdm, echo=FALSE, fig.wide=TRUE, fig.cap=("Random settings. AUCs of random settings on each validating data sets. A bar refers to one AUC of one random settings. If total bulk assignments < 500 or total true assignments < 300 or AUC < 0.5, AUCs are set 0. (a) Mouse brain. (b) Mouse kidndy. (c) Arabidopsis root of single cell 9. (d) Arabidopsis root of single cell 51. "), out.width="100%"}
 include_graphics('img/validate_rdn.jpg')
 ```  
 

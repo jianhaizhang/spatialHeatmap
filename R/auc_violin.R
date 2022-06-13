@@ -7,6 +7,7 @@
 #' @param nrow The numbers of rows of all the violin plots.
 #' @param title The title of composite violin plots.
 #' @param title.size The title size. Default is 20.
+#' @param axis.title.size The size of x and y axis labels.
 #' @param x.text.size,y.text.size The size of x and y axis text.
 
 #' @return An object of ggplot.
@@ -94,7 +95,7 @@
 
 #' @export auc_violin
 
-auc_violin <- function(df.lis, xlab, ylab='AUC', nrow=3, title=NULL, title.size=20, x.text.size=11, y.text.size=11) {
+auc_violin <- function(df.lis, xlab, ylab='AUC', nrow=3, title=NULL, title.size=20, axis.title.size=11, x.text.size=11, y.text.size=11) {
   parameter <- NULL
   gg.lis <- NULL; df.na.all <- names(df.lis)
   df.nas <- grep('^auc', df.na.all, value=TRUE)
@@ -110,7 +111,7 @@ auc_violin <- function(df.lis, xlab, ylab='AUC', nrow=3, title=NULL, title.size=
     gg <- ggplot(df.all, aes(x=parameter, y=auc, fill=parameter)) +
     geom_violin() + geom_boxplot(width=0.1, show.legend=FALSE) +
     labs(title=title, x=xlab, y=ylab)+theme(plot.title = element_text(size=title.size, hjust = 0.5, vjust=1.5)) +
-    theme(legend.position="none", axis.text.y = element_text(size = y.text.size), axis.text.x = element_text(size = x.text.size))
+    theme(legend.position="none", axis.title = element_text(size=axis.title.size), axis.text.y = element_text(size = y.text.size), axis.text.x = element_text(size = x.text.size))
     gg.lis <- c(gg.lis, list(gg))
   }
   gg.grob <- lapply(gg.lis, ggplotGrob)

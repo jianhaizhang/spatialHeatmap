@@ -14,6 +14,7 @@ mean_auc_bar(
   title.size = 20,
   xlab = "AUC threshold",
   ylab = "Mean AUC",
+  axis.title.size = 11,
   x.text.size = 11,
   y.text.size = 11,
   key.title = NULL,
@@ -35,6 +36,8 @@ mean_auc_bar(
 \item{title}{The title of composite violin plots.}
 
 \item{title.size}{The title size. Default is 20.}
+
+\item{axis.title.size}{The size of x and y axis labels.}
 
 \item{x.text.size, y.text.size}{The size of x and y axis text.}
 

@@ -11,6 +11,7 @@ auc_violin(
   nrow = 3,
   title = NULL,
   title.size = 20,
+  axis.title.size = 11,
   x.text.size = 11,
   y.text.size = 11
 )
@@ -25,6 +26,8 @@ auc_violin(
 \item{title}{The title of composite violin plots.}
 
 \item{title.size}{The title size. Default is 20.}
+
+\item{axis.title.size}{The size of x and y axis labels.}
 
 \item{x.text.size, y.text.size}{The size of x and y axis text.}
 }
