@@ -1,5 +1,5 @@
 ---
-title: "_spatialHeatmap_: Co-visualization"
+title: "Co-visualizing spatial heatmaps with single cell embedding plots"
 author: "Authors: Jianhai Zhang, Jordan Hayes, Le Zhang, Bing Yang, Wolf B. Frommer, Julia Bailey-Serres, and Thomas Girke"
 date: "Last update: `r format(Sys.time(), '%d %B, %Y')`"
 output:
@@ -52,28 +52,47 @@ BiocStyle::markdown(css.files=c('file/custom.css'))
 library(knitr); opts_chunk$set(message=FALSE, warning=FALSE)
 ```
 
-
 # Introduction 
 
-## Summary of *spatialHeatmap*
+## Overview
 
-The primary functionality of _spatialHeatmap_ package is to visualize cell-,
-tissue- and organ-specific data of biological assays by coloring the
-corresponding spatial features (cellular compartments, tissues, organs, *etc*) defined in anatomical images according to a
-numeric color key. This core functionality of the package is called a
-_spatial heatmap_ (SHM) plot. SHM has extended functionalities of spatial enrichment (SE) and clustering. SE is specialized in detecting genes that are specifically expressed in a particular spatial feature, while clustering is designed to detect biological molecule groups sharing related abundance profiles (_e.g._ gene modules) and visualize them in matrix heatmaps combined with hierarchical clustering dendrograms and network representations. Details of these functionalities are presented in the other vignette.   
+The primary utility of the _spatialHeatmap_ package is the generation of
+_spatial heatmaps_ (SHM) for visualizing cell-, tissue- and organ-specific
+abundance patterns of biological molecules in anatomical images. This includes
+the identification of genes with spatially enriched (SE) expression patterns as
+well as clusters and/or network modules composed of genes sharing similar
+expression patterns. These functionalities are described in the [main
+vignette](https://bioconductor.org/packages/release/bioc/html/spatialHeatmap.html)
+of the _spatialHeatmap_ package. 
 
-Except for SHM, SE, and clustering, *spatialHeatmap* has a novel functionality of integrated co-visualization of bulk tissues and single cells, and this feature is the focus in this vignette. 
+This vignette describes extended functionalities for integrating bulk tissue
+with single cell data by co-visualizing them in a composite plot combining
+spatial heatmaps with embedding plots of high-dimensional data, respectively.
+Several dimensionality reduction algorithms (_e.g._ PCA, UMAP or tSNE) are
+supported to generate the embedding plots. To associate the single cells with 
+the corresponding features (_e.g._ tissues and organs) in the spatial heatmaps, 
+the user can choose among manual, annotation and automatic methods. They can
+be used from R as well as the corresponding Shiny app [@shiny, @shinydashboard].   
 
-## Integrated Co-visualization
+## Supported Objects and Image Formats
 
-The co-visualization is a novel functionality in that it bridges single cells and source bulk tissues in a composite plot. Single cells are visualized in embedding plots through dimensionality reduction algorithms of PCA, UMAP, or TSNE while source bulk tissues in SHM plots. The key point in co-visualization is the matching between cell groups (clusters) and bulk tissues. To maximize flexibility, two methods are provided for the matching, *i.e.* manual and automatic, which are implemented in both R command line and Shiny app [@shiny, @shinydashboard].   
+The data objects supported by the co-visualization  include: `data.frame`,
+`SummarizedExperiment` (SE), and `SingleCellExperiment` (SCE). The usage of the
+first two is described in the main vignette of this package. Compared to SE,
+SCE objects contain three additional slots that are used by the 
+co-visualization functionality of this package. First, SCE has a `label` column 
+in the `colData` slot for storing [cell type annotation labels](#cusLab). <span style="color: red;">[ThG: please revise 
+the following sentences. They make no sense since you start here with 
+specific features of SCE but the following doesn't relate to it. This could also 
+be removed since it is too detailed for an intro.]</span> Second,
+when using the Shiny app, single cell data in manual matching or combined
+single cell and bulk data in auto-matching are saved in an `.rds` file of
+`SingleCellExperiment` object by `saveRDS`. Third, when using the auto-matching
+in Shiny app, the [true matching table](#autoSCE) across single cells, bulk
+tissues, and aSVG features is stored in the `metadata` slot of SCE.     
 
-## Data and Images
-
-Data containers in co-visualization include `data frame`, `SummarizedExperiment` (SE), and `SingleCellExperiment` (SCE). The first two are detailed in the other vignette. Compared with SE, SCE functions similarly with SE except three main differences that are relevant to co-visualization. First, SCE has a `label` column in the `colData` slot for storing [custom labels](#cusLab) of cell groups in manual mathcing. Second, when using the Shiny app, single cell data in manual matching or combined single cell and bulk data in auto-matching are saved in an `.rds` file of `SingleCellExperiment` object by `saveRDS`. Third, when using the auto-matching in Shiny app, the [true matching table](#autoSCE) across single cells, bulk tissues, and aSVG features is stored in the `metadata` slot of SCE.     
-
-The images in co-visualization are in the same form of annotated SVGs (aSVGs) with SHM plots, which is detained in the other vignette.   
+The images in co-visualization are in the same form of annotated SVGs (aSVGs)
+with SHM plots, which is detained in the other vignette.   
 
 
 # Getting Started  
@@ -105,13 +124,29 @@ browseVignettes('spatialHeatmap')
 
 # Manual matching
 
-In manual matching, single cell clusters can be automatically detected or pre-defined by users. When matching with source bulk tissues, the matching relationship needs to be manualy defined. In R-command line, the matching is defined in a name `list` while in Shiny App it is simply dragging and dropping.  
+<span style="color: red;">[ThG: does the annotation based option also fall under
+manual. If so why not distintuishing annotation and manual. For the user this makes
+a big difference.]</span>
+In manual matching mode the single cell clusters can be automatically detected or
+pre-defined by the user. When matching with source bulk tissues, the matching
+relationship needs to be manually defined. <span style="color:red">[ThG: Confusing why the
+first option falls into the manual section but then can be auto-detected. The latter
+is the only relevant one for the matching. So I don't understand...]</span> 
+In R the matching is defined by a named `list`, while in Shiny App simply mouse actions 
+including dragging and dropping are supported.  
 
-The example single cell data of mouse brain are from a oligodendrocyte heterogeneity study in mouse central nervous system [@Marques2016-ff]. Before co-visualizing, single cell data are pre-processed and clustered, which is learned from [Bioconductor OCSA](http://bioconductor.org/books/3.14/OSCA.workflows/zeisel-mouse-brain-strt-seq.html){target='blank'}. Since these steps are not the focus, details are not explained.   
+The example single cell data of mouse brain are from a oligodendrocyte
+heterogeneity study in mouse central nervous system [@Marques2016-ff]. Before
+co-visualizing, single cell data are pre-processed and clustered, which is
+learned from [Bioconductor
+OCSA](http://bioconductor.org/books/3.14/OSCA.workflows/zeisel-mouse-brain-strt-seq.html){target='blank'}.
+Since these steps are not the focus, details are not explained.   
 
 ## Clustering single cells
 
-To obtain reproducible results, always start a new R session and set a fixed seed for Random Number Generator at the beginning, which is required only once in each R session.     
+To obtain reproducible results, always start a new R session and set a fixed
+seed for Random Number Generator at the beginning, which is required only once
+in each R session.     
 
 ```{r , eval=TRUE, echo=TRUE, warnings=FALSE}
 set.seed(10)
@@ -145,7 +180,7 @@ sce.manual <- computeSumFactors(sce.manual, cluster=clusters)
 sce.manual <- logNormCounts(sce.manual)
 ```
 
-Dimensionality reduction through PCA, UMAP, and TSNE.   
+Dimensionality reduction with PCA, UMAP and tSNE.   
 
 ```{r scDimred, eval=TRUE, echo=TRUE, warnings=FALSE}
 # Variance modelling.
@@ -157,11 +192,13 @@ sce.manual <- runTSNE(sce.manual, dimred="PCA")
 sce.manual <- runUMAP(sce.manual, dimred = "PCA")
 ```  
 
-Clustering. Cell clusters are detected by first building a graph object then partitioning the graph, where cells are nodes in the graph.  
+Clustering. Cell clusters are detected by first building a graph object then
+partitioning the graph, where cells are nodes in the graph.  
 
 ```{r scClus, eval=TRUE, echo=TRUE, warnings=FALSE}
 # Build graph.
 snn.gr <- buildSNNGraph(sce.manual, use.dimred="PCA") 
+plot(snn.gr)
 # Partition graph to detect cell clusters.
 cluster <- paste0('clus', cluster_walktrap(snn.gr)$membership)
 table(cluster)
@@ -184,7 +221,7 @@ colData(sce.manual) <- cdat; cdat[1:3, ]
 Embedding plot of single cells with clusters labeled by the `label` column in `colData`. 
 
 ```{r scDim, eval=TRUE, echo=TRUE, warnings=FALSE, fig.wide=TRUE, fig.cap=('Embedding plot single cells. The cell clusters are defined by the `label` column in `colData`.'), out.width="100%", fig.show='show'}
- plotUMAP(sce.manual, colour_by="label")
+plotUMAP(sce.manual, colour_by="label")
 ```
 
 ## aSVG of Mouse Brain
@@ -204,7 +241,10 @@ The single cell clusters can be matched to bulk tissues according to cluster ass
 
 <a name='cusLab'></a>
 
-The custom cell clusters are defined in the `label` column of `colData`, which are cell sources provided in the original study.  
+<span style="color:red">[ThG: confusing why this falls under manual?]</span>
+
+The custom cell clusters are defined in the `label` column of `colData`, which
+are cell sources provided in the original study.  
 
 ```{r scLab, eval=TRUE, echo=TRUE, warnings=FALSE}
 unique(colData(sce.manual)$label) 
