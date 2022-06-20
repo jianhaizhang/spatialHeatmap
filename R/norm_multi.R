@@ -60,20 +60,19 @@ norm_multi <- function(dat.lis, cpm=FALSE, count.kp=FALSE) {
     if (is(dat0, 'SingleCellExperiment') | is(dat0, 'SummarizedExperiment')) sce0 <- dat0
     if (is(dat0, 'dgCMatrix')|is(dat0, 'matrix')|is(dat0, 'data.frame')) sce0 <- SingleCellExperiment(assays=list(counts=as.matrix(dat0)))
     colData(sce0)$set <- nas[i]; sce.sc <- cbind(sce.sc, sce0)
-    }; sce.sc <- sce.sc[, -1]
-    min.size <- 100
-    if (min.size > ncol(sce.sc)) { print('Fewer cells than min size in quickCluster!'); return()
-    }
-    clusters <- quickCluster(sce.sc, min.size=min.size)
-    sce.sc <- computeSumFactors(sce.sc, cluster=clusters, min.mean=1)
-    sce.sc.nor <- logNormCounts(sce.sc)
-    # CPM.
-    if (cpm==TRUE) sce.sc.nor <- cal_cpm(sce.sc.nor)
-    if (count.kp==FALSE) assays(sce.sc.nor)$counts <- NULL
-    for (i in nas) {
-      dat.lis[[i]] <- subset(sce.sc.nor, , set==i)
-    }
-    return(dat.lis)
+  }; sce.sc <- sce.sc[, -1]
+  min.size <- 100
+  if (min.size > ncol(sce.sc)) { print('Fewer cells than min size in quickCluster!'); return() }
+  clusters <- quickCluster(sce.sc, min.size=min.size)
+  sce.sc <- computeSumFactors(sce.sc, cluster=clusters, min.mean=1)
+  sce.sc.nor <- logNormCounts(sce.sc)
+  # CPM.
+  if (cpm==TRUE) sce.sc.nor <- cal_cpm(sce.sc.nor)
+  if (count.kp==FALSE) assays(sce.sc.nor)$counts <- NULL
+  for (i in nas) {
+    sce0 <- subset(sce.sc.nor, , set==i)
+    colData(sce0)$set <- NULL; dat.lis[[i]] <- sce0
+  }; return(dat.lis)
 }
 
 #' Normalize by CPM. 

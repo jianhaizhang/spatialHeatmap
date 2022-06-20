@@ -40,7 +40,7 @@
 
 refine_cluster <- function(sce.clus, sim=0.2, sim.p=0.8, sim.meth='spearman', verbose=TRUE) {
   colData(sce.clus)$index.all <- seq_len(ncol(sce.clus))
-  lab <- as.character(colData(sce.clus)$label); lab.uni <- sort(unique(lab))
+  lab <- as.character(colData(sce.clus)$cluster); lab.uni <- sort(unique(lab))
   dat <- dat.dim <- cdat <- NULL
   # Use expression values to calculate similarity. 
   dat.aggr <- data.frame(matrix(NA, nrow=nrow(sce.clus), ncol=1))

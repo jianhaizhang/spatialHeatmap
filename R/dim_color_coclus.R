@@ -1,6 +1,6 @@
 #' Map colours in SHMs to embedding plots 
 #'
-#' @param sce A \code{SingleCellExperiment} containing the (un-)aggregated cells that have source tissue assignments. The \code{lis.match} will be built from \code{colLabels} internally.
+#' @param sce A \code{SingleCellExperiment} containing the (un-)aggregated cells that have source tissue assignments. The \code{lis.match} will be built internally.
 #' @param gg.dim The ggplot of embedding plot.
 #' @param gg.shm.all The list of SHM ggplot.
 #' @param grob.shm.all The list of SHM grob.

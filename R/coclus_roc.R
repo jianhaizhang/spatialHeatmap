@@ -54,7 +54,7 @@
 #'
 #' # Cluster single cells.
 #' clus.sc <- cluster_cell(data=mus.lis.fil$sc.mus, min.dim=13, max.dim=50, graph.meth='knn', dimred='PCA')
-#' # Cluster labels are stored in "label" column in "colData".
+#' # Cluster labels are stored in the "cluster" column in "colData".
 #'colData(clus.sc)[1:3, ]
 #'
 #' # Refine cell clusters.
@@ -72,7 +72,7 @@
 #' @author Jianhai Zhang \email{jzhan067@@ucr.edu} \cr Dr. Thomas Girke \email{thomas.girke@@ucr.edu}
 
 #' @references
-#' Amezquita R, Lun A, Becht E, Carey V, Carpp L, Geistlinger L, Marini F, Rue-Albrecht K, Risso D, Soneson C, Waldron L, Pages H, Smith M, Huber W, Morgan M, Gottardo R, Hicks S (2020). “Orchestrating single-cell analysis with Bioconductor.” Nature Methods,    17, 137–145. https://www.nature.com/articles/s41592-019-0654-x.
+#' Amezquita R, Lun A, Becht E, Carey V, Carpp L, Geistlinger L, Marini F, Rue-Albrecht K, Risso D, Soneson C, Waldron L, Pages H, Smith M, Huber W, Morgan M, Gottardo R, Hicks S (2020). “Orchestrating single-cell analysis with Bioconductor.” Nature Methods, 17, 137–145. https://www.nature.com/articles/s41592-019-0654-x.
 
 #' @export coclus_roc 
 #' @importFrom SingleCellExperiment logcounts
@@ -107,7 +107,7 @@ coclus_roc <- function(bulk, cell.refined, df.match, min.dim=13, max.dim=50, gra
 
 #' Calculate ROC/AUC for the combined bulk and single cell data
 #'
-#' @param sce.coclus The coclustered bulk and single cell data in a \code{SingleCellExperiment}, where cocluster assignments are stored in the \code{label} column in \code{colData}.
+#' @param sce.coclus The coclustered bulk and single cell data in a \code{SingleCellExperiment}, where cocluster assignments are stored in the \code{cluster} column in \code{colData}.
 #' @param dimred The reduced dimensionality to use for calculating similarities between bulk and cells in each cocluster. \code{PCA} or \code{UMAP}.
 #' @param dat.blk The bulk data at log2 scale. 
 #' @param df.match The matching data frame between cells and true bulk.
@@ -136,7 +136,7 @@ com_roc <- function(sce.coclus, dimred, dat.blk, df.match, sim.meth='spearman') 
   if (nrow(dat.com)<5) stop('Dimensions should be >= 5!')
   dat.com <- as(dat.com, 'matrix')
   # Co-cluster labels.
-  lab.com <- cdat.com$label
+  lab.com <- cdat.com$cluster
   labs.com <- as.character(sort(lab.com))
   lab.com.uni <- unique(labs.com)
   # Co-clusters in a list.

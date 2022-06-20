@@ -11,13 +11,21 @@ cluster_cell(
   max.dim = 50,
   pca = FALSE,
   graph.meth = "knn",
-  dimred = "PCA"
+  dimred = "PCA",
+  model.var = list(),
+  top.hvg = list(n = 3000),
+  de.pca = list(assay.type = "logcounts"),
+  tsne = list(dimred = "PCA", ncomponents = 2),
+  umap = list(dimred = "PCA"),
+  knn.gr = list(),
+  snn.gr = list(),
+  cluster.wk = list(steps = 4)
 )
 }
 \arguments{
 \item{data}{The normalized single cell data or nomalized combination of single cell and bulk data at log2 scale in form of \code{SingleCellExperiment}, \code{dgCMatrix}, \code{matrix}, or \code{data.frame}.}
 
-\item{prop}{Numeric scalar specifying the proportion of genes to report as highly variable genes (HVGs). The default is \code{0.1}.}
+\item{prop}{Numeric scalar specifying the proportion of genes to report as highly variable genes (HVGs) in \code{\link[scran]{getTopHVGs}}. The default is \code{0.1}.}
 
 \item{min.dim, max.dim}{Integer scalars specifying the minimum (\code{min.dim}) and maximum (\code{max.dim}) number of (principle components) PCs to retain respectively in \code{\link[scran]{denoisePCA}}. The default is \code{min.dim=13}, \code{max.dim=50}.}
 
@@ -26,12 +34,28 @@ cluster_cell(
 \item{graph.meth}{Method to build a nearest-neighbor graph, \code{snn} (see \code{\link[scran]{buildSNNGraph}}) or \code{knn} (default, see \code{\link[scran]{buildKNNGraph}}). The clusters are detected by first creating a nearest neighbor graph using \code{snn} or \code{kn} then partitioning the graph.}
 
 \item{dimred}{A string of \code{PCA} (default) or \code{UMAP} specifying which reduced dimensionality to use in creating a nearest neighbor graph. Internally, before building a nearest neighbor graph the data dimensionalities are reduced by PCA and UMAP respectively.}
+
+\item{model.var}{Additional arguments in a named list passed to \code{\link[scran]{modelGeneVar}}.}
+
+\item{top.hvg}{Additional arguments in a named list passed to \code{\link[scran]{getTopHVGs}}, such as \code{top.hvg=list(n = 3000)}.}
+
+\item{de.pca}{Additional arguments in a named list passed to \code{\link[scran]{denoisePCA}}, such as \code{de.pca=list(assay.type = "logcounts")}.}
+
+\item{tsne}{Additional arguments in a named list passed to \code{\link[scater]{runTSNE}}, such as \code{tsne=list(dimred="PCA", ncomponents=2)}.}
+
+\item{umap}{Additional arguments in a named list passed to \code{\link[scater]{runUMAP}}, such as \code{umap=list(dimred="PCA")}.}
+
+\item{knn.gr}{Additional arguments in a named list passed to \code{\link[scran]{buildKNNGraph}}.}
+
+\item{snn.gr}{Additional arguments in a named list passed to \code{\link[scran]{buildSNNGraph}}.}
+
+\item{cluster.wk}{Additional arguments in a named list passed to \code{\link[igraph]{cluster_walktrap}}, such as \code{cluster.wk=list(steps = 4)}.}
 }
 \value{
 A list of normalized single cell and bulk data.
 }
 \description{
-In co-clustering, cluster only single cell data or combination of single cell and bulk data. The cluster assignments are stored in the \code{label} column of \code{colData} slot of \code{SingleCellExperiment}.
+Cluster only single cell data or combination of single cell and bulk data. The cluster assignments are stored in the \code{cluster} column of \code{colData} slot of \code{SingleCellExperiment}.
 }
 \examples{
 library(scran); library(scuttle) 
@@ -51,7 +75,6 @@ table(colData(sce.clus)$label)
 Morgan M, Obenchain V, Hester J, Pagès H (2021). SummarizedExperiment: SummarizedExperiment container. R package version 1.24.0, https://bioconductor.org/packages/SummarizedExperiment.
 Amezquita R, Lun A, Becht E, Carey V, Carpp L, Geistlinger L, Marini F, Rue-Albrecht K, Risso D, Soneson C, Waldron L, Pages H, Smith M, Huber W, Morgan M, Gottardo R, Hicks S (2020). “Orchestrating single-cell analysis with Bioconductor.” Nature Methods, 17, 137–145. https://www.nature.com/articles/s41592-019-0654-x.
 Lun ATL, McCarthy DJ, Marioni JC (2016). “A step-by-step workflow for low-level analysis of single-cell RNA-seq data with Bioconductor.” F1000Res., 5, 2122. doi: 10.12688/f1000research.9501.2.
-McCarthy DJ, Campbell KR, Lun ATL, Willis QF (2017). “Scater: pre-processing, quality control, normalisation and visualisation of single-cell RNA-seq data in R.” Bioinformatics, 33, 1179-1186. doi: 10.1093/bioinformatics/btw777.
 Csardi G, Nepusz T: The igraph software package for complex network research, InterJournal, Complex Systems 1695. 2006. https://igraph.org
 }
 \author{

@@ -1,0 +1,37 @@
+#' Normalizing single cell data
+#'
+#' A meta function for normalizing single-cell RNA-seq data.
+#' @param sce Single cell count data in form of \code{SingleCellExperiment} after quality control, which is returned by \code{qc_cell}.
+#' @param quick.clus Arguments in a named list passed to \code{\link[scran]{quickCluster}}, such as \code{quick.clus=list(min.size = 100)}. 
+#' @param com.sum.fct Arguments in a named list passed to \code{\link[scran]{computeSumFactors}}, such as \code{com.sum.fct=list(max.cluster.size = 3000))}. 
+#' @param log.norm Arguments in a named list passed to \code{\link[scuttle]{logNormCounts}}. 
+
+#' @return A \code{SingleCellExperiment} object. 
+
+#' @examples
+
+#' library(scran); library(scuttle) 
+#' sce <- mockSCE()
+#' sce.qc <- qc_cell(sce, qc.metric=list(subsets=list(Mt=rowData(sce)$featureType=='mito'), threshold=1))
+#' sce.norm <- norm_cell(sce.qc)
+
+#' @author Jianhai Zhang \email{jzhan067@@ucr.edu} \cr Dr. Thomas Girke \email{thomas.girke@@ucr.edu}
+
+#' @references
+#' Amezquita R, Lun A, Becht E, Carey V, Carpp L, Geistlinger L, Marini F, Rue-Albrecht K, Risso D, Soneson C, Waldron L, Pages H, Smith M, Huber W, Morgan M, Gottardo R, Hicks S (2020). “Orchestrating single-cell analysis with Bioconductor.” Nature Methods, 17, 137–145. https://www.nature.com/articles/s41592-019-0654-x.
+#' Lun ATL, McCarthy DJ, Marioni JC (2016). “A step-by-step workflow for low-level analysis of single-cell RNA-seq data with Bioconductor.” F1000Res., 5, 2122. doi: 10.12688/f1000research.9501.2.
+#' McCarthy DJ, Campbell KR, Lun ATL, Willis QF (2017). “Scater: pre-processing, quality control, normalisation and visualisation of single-cell RNA-seq data in R.” Bioinformatics, 33, 1179-1186. doi: 10.1093/bioinformatics/btw777.
+
+
+#' @export norm_cell
+#' @importFrom SingleCellExperiment altExpNames 
+#' @importFrom scuttle logNormCounts
+#' @importFrom scran quickCluster computeSumFactors 
+
+norm_cell <- function(sce, quick.clus=list(min.size = 100), com.sum.fct=list(max.cluster.size = 3000), log.norm=list()) {
+  # Normalization.
+  clusters <- do.call(quickCluster, c(list(x=sce), quick.clus))
+  sce <- do.call(computeSumFactors, c(list(x=sce, cluster=clusters), com.sum.fct))
+  sce <- do.call(logNormCounts, c(list(x=sce), log.norm))
+  return(sce)
+}

@@ -602,7 +602,7 @@ scell_ui <- function(id) {
 
       tabPanel('Parameters',
         h3(strong('Initial filtering bulk and cells')),  
-        fluidRow(splitLayout(cellWidths=c('1%', '10%', '1%', '10%', '1%', '10%', '1%', '18%', '1%', '10%', '1%', '10%'), '',
+        fluidRow(splitLayout(cellWidths=c('1%', '10%', '1%', '10%', '1%', '18%', '1%', '18%', '1%', '10%', '1%', '10%'), '',
         numericInput(ns('initFilBlkP'), label='P', value=0.05, min=0, max=1, step=0.1, width=150), '',
         numericInput(ns('initFilBlkA'), label='A', value=5, min=0, max=1000, step=5, width=150), '',
         numericInput(ns('initFilBlkCV1'), label='Min coefficient of variation (CV1)', value=0.05, min=-1000, max=1000, step=0.1, width=200), '',

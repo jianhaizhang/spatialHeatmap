@@ -3094,7 +3094,7 @@ dim_server <- function(id, sce, section='scell', upl.mod.lis, match.mod.lis, dat
       if (is.null(cna$val)) return(); ns <- session$ns
       sel <- cho <- NULL
       if ('SVGBulk' %in% cna$val) { sel <- cho <- 'SVGBulk'
-      } else {cho <- 'cluster'
+      } else { cho <- 'cluster'
         if (cna$sel=='label') cho <- c('label', 'cluster')
       }
       selectInput(ns('sf.by'), 'Aggregate cells by', cho, cna$sel)
@@ -3931,10 +3931,20 @@ scell_server <- function(id, tab, upl.mod.lis, shm.mod.lis, session) {
     sce.clus <- sce.rct$clus; sce.sub <- sce.rct$sce.sub
     if (is.null(sce.clus) & is.null(sce.sub)) return()
     if (!is.null(sce.sub)) sce.clus <- sce.sub
-    df.rep <- assay(sce.clus); labs <- colLabels(sce.clus)
-    # Cell labels: avoid numeric.
-    er.wa <- check(as.vector(labs), as.numeric)
-    if (is.numeric(er.wa) & length(er.wa)>0) labs <- colLabels(sce.clus) <- as.character(labs)
+    df.rep <- assay(sce.clus); cna.cdat <- colnames(colData(sce.clus))
+    if ('label' %in% cna.cdat) {
+      labs <- colLabels(sce.clus)
+      # Cell labels: avoid numeric.
+      er.wa <- check(as.vector(labs), as.numeric)
+      if (is.numeric(er.wa) & length(er.wa)>0) colLabels(sce.clus) <- as.character(labs)
+    }
+    if ('cluster' %in% cna.cdat) {
+      labs <- colData(sce.clus)$cluster
+      # Cell labels: avoid numeric.
+      er.wa <- check(as.vector(labs), as.numeric)
+      if (is.numeric(er.wa) & length(er.wa)>0) colData(sce.clus)$cluster <- as.character(labs)
+    }
+
     # Column names: sp.ft, exp.var.
     sp.ft <- sf.by$val; if (is.null(sp.ft)) return()
     cdat <- colData(sce.clus); con.na <- TRUE

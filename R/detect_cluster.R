@@ -2,7 +2,7 @@
 #'
 #' @param graph A \code{igraph} object returned by \code{nn_graph}.
 #' @param clustering The clustering method. One of \code{wt} (cluster_walktrap, default), \code{fg} (cluster_fast_greedy), \code{le} (cluster_leading_eigen), \code{sl} (cluster_spinglass), \code{ed} (cluster_edge_betweenness). 
-#' @param wt.arg,fg.arg,sl.arg,le.arg,eb.arg A list of arguments passed to \code{wt}, \code{fg}, \code{le}, \code{sl}, \code{ed} respectively.
+#' @param wt.arg,fg.arg,sl.arg,le.arg,eb.arg A named list of arguments passed to \code{wt}, \code{fg}, \code{le}, \code{sl}, \code{ed} respectively.
 
 #' @return A class of \code{communities}.
  

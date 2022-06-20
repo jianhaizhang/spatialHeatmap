@@ -57,7 +57,7 @@
 #'
 #' # Cluster single cells.
 #' clus.sc <- cluster_cell(data=mus.lis.fil$sc.mus, min.dim=10, max.dim=50, graph.meth='knn', dimred='PCA')
-#' # Cluster labels are stored in "label" column in "colData".
+#' # Cluster labels are stored in the  "cluster" column in "colData".
 #'colData(clus.sc)[1:3, ]
 #'
 #' # Refine cell clusters.
@@ -118,16 +118,16 @@
 #' Morgan M, Obenchain V, Hester J, Pagès H (2021). SummarizedExperiment: SummarizedExperiment container. R package version 1.24.0, https://bioconductor.org/packages/SummarizedExperiment.
 
 #' @export sub_asg
-#' @importFrom SingleCellExperiment colLabels colLabels<- reducedDimNames 
+#' @importFrom SingleCellExperiment reducedDimNames 
 #' @importFrom SummarizedExperiment colData 
 
 sub_asg <- function(res.lis, thr=0, df.desired.bulk=NULL, df.match=NULL, true.only=TRUE) {
   # save(res.lis, thr, df.desired.bulk, df.match, true.only, file='sub.asg.arg')
   x <- y <- desiredSVGBulk <- SVGBulk <- index <- predictor <- total <- true <- NULL
   # Validate labels.
-  sce <- res.lis$cell.refined; labs <- colLabels(sce)
+  sce <- res.lis$cell.refined; labs <- colData(sce)$cluster
   er.wa <- check(as.vector(labs), as.numeric)
-  if (is.numeric(er.wa) & length(er.wa) > 0) colLabels(sce) <- as.character(labs)
+  if (is.numeric(er.wa) & length(er.wa) > 0) colData(sce)$cluster <- as.character(labs)
   # If desired bulk is provided with x-y coordinate range, convert "df.desired.bulk" to the form downloaded from Shiny app.
   xy.ran.cna <- c('x.min', 'x.max', 'y.min', 'y.max') 
   if (any(xy.ran.cna %in% colnames(df.desired.bulk))) {
@@ -197,7 +197,7 @@ sub_asg <- function(res.lis, thr=0, df.desired.bulk=NULL, df.match=NULL, true.on
   cdat$SVGBulk[df.roc$index] <- df.roc$SVGBulk
   cdat$trueBulk[df.roc$index] <- df.roc$trueBulk
 
-  cdat <- cdat[, c('label', 'cell', 'assignedBulk', 'response', 'SVGBulk', 'trueBulk', 'index')]
+  cdat <- cdat[, c('cluster', 'cell', 'assignedBulk', 'response', 'SVGBulk', 'trueBulk', 'index')]
   colData(sce) <- cdat
   sce.sub <- sce[, df.roc$index]
   if (true.only==TRUE) sce.sub <- sce.sub[, colData(sce.sub)$response==TRUE]

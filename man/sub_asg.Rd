@@ -73,7 +73,7 @@ df.match$SVGBulk \%in\% feature.df$feature
 
 # Cluster single cells.
 clus.sc <- cluster_cell(data=mus.lis.fil$sc.mus, min.dim=10, max.dim=50, graph.meth='knn', dimred='PCA')
-# Cluster labels are stored in "label" column in "colData".
+# Cluster labels are stored in the  "cluster" column in "colData".
 colData(clus.sc)[1:3, ]
 
 # Refine cell clusters.
