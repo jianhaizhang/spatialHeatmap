@@ -209,17 +209,17 @@ feature.df$feature
 Create a named `list` to match cells and aSVG features.    
 
 ```{r scLabList, eval=TRUE, echo=TRUE, warnings=FALSE}
-lis.match <- list(hypothalamus=c('hypothalamus'), cortex.S1=c('cerebral.cortex'))
+lis.match <- list(hypothalamus=c('hypothalamus'))
 ```
 
-Co-visualization on gene `St18`. Note `cortex.S1` is not colored under the `6h.post.stress` plots, since it is absent under this condition in the original study.   
+Co-visualization on gene `Cops5`.      
 
 ```{r eval=TRUE, echo=TRUE, warnings=FALSE}
 colData(sce.aggr)[, c('label', 'expVar')]
 ```
 
-```{r scLabVis, eval=TRUE, echo=TRUE, warnings=FALSE, fig.wide=TRUE, fig.cap=('Co-visualizing single cells and bulk tissues by custom cell labels. The expression profiles of gene `St18` are used.'), out.width="100%", fig.show='show'}
-shm.lis <- spatial_hm(svg.path=svg.mus.brain, data=sce.aggr, ID=c('St18'), height=0.7, legend.r=1.5, legend.key.size=0.02, legend.text.size=12, legend.nrow=2, sce.dimred=sce.dimred, dimred='PCA', cell.group='label', assay.na='logcounts', tar.cell=c('matched'), lis.rematch=lis.match, bar.width=0.1, dim.lgd.nrow=1)
+```{r scLabVis, eval=TRUE, echo=TRUE, warnings=FALSE, fig.wide=TRUE, fig.cap=('Co-visualizing single cells and bulk tissues by custom cell labels. The expression profiles of gene `Cops5` are used.'), out.width="100%", fig.show='show'}
+shm.lis <- spatial_hm(svg.path=svg.mus.brain, data=sce.aggr, ID=c('Cops5'), height=0.7, legend.r=1.5, legend.key.size=0.02, legend.text.size=12, legend.nrow=2, sce.dimred=sce.dimred, dimred='PCA', cell.group='label', assay.na='logcounts', tar.cell=c('matched'), lis.rematch=lis.match, bar.width=0.1, dim.lgd.nrow=1)
 ```
 
 # Manual Method
@@ -270,10 +270,10 @@ Aggregate cells by clusters defined in the `cluster` column.
 sce.clus.aggr <- aggr_rep(sce.clus, assay.na='logcounts', sam.factor='cluster', con.factor=NULL, aggr='mean')
 ```
 
-Co-visualization on gene `St18`.  
+Co-visualization on gene `Cops5`.  
 
-```{r scAutoVis, eval=TRUE, echo=TRUE, warnings=FALSE, fig.wide=TRUE, fig.cap=('Co-visualizing single cells and bulk tissues by manually-detected cell clusters. The expression profiles of gene `St18` are used.'), out.width="100%", fig.show='show'}
-shm.lis <- spatial_hm(svg.path=svg.mus.brain, data=sce.clus.aggr, ID=c('St18'), height=0.7, legend.r=1.5, legend.key.size=0.02, legend.text.size=12, legend.nrow=3, sce.dimred=sce.clus, dimred='PCA', cell.group='cluster', assay.na='logcounts', tar.cell=c('matched'), lis.rematch=lis.match.clus, bar.width=0.11, dim.lgd.nrow=1)
+```{r scAutoVis, eval=TRUE, echo=TRUE, warnings=FALSE, fig.wide=TRUE, fig.cap=('Co-visualizing single cells and bulk tissues by manually-detected cell clusters. The expression profiles of gene `Cops5` are used.'), out.width="100%", fig.show='show'}
+shm.lis <- spatial_hm(svg.path=svg.mus.brain, data=sce.clus.aggr, ID=c('Cops5'), height=0.7, legend.r=1.5, legend.key.size=0.02, legend.text.size=12, legend.nrow=3, sce.dimred=sce.clus, dimred='PCA', cell.group='cluster', assay.na='logcounts', tar.cell=c('matched'), lis.rematch=lis.match.clus, bar.width=0.11, dim.lgd.nrow=1)
 ```
 
 # Automatic Method
@@ -369,7 +369,7 @@ The processes of clustering single cells, refining cell clusters, and co-cluster
 ```{r , eval=TRUE, echo=TRUE, warnings=FALSE}  
 res.lis <- read_cache(cache.pa, 'res.lis')
 if (is.null(res.lis)) {
-  res.lis <- cocluster(bulk=mus.lis.fil$bulk, cell=mus.lis.fil$sc.mus, df.match=df.match.mus.brain, df.para=NULL, sim=0.2, sim.p=0.8, dim=13, graph.meth='knn', dimred='PCA', sim.meth='spearman', return.all=TRUE, verbose=FALSE)
+  res.lis <- cocluster(bulk=mus.lis.fil$bulk, cell=mus.lis.fil$sc.mus, df.match=df.match.mus.brain, df.para=NULL, sim=0.2, sim.p=0.8, dim=13, graph.meth='knn', dimred='PCA', sim.meth='spearman', return.all=TRUE, multi.core.par=MulticoreParam(workers=1, RNGseed=50), verbose=FALSE)
   res.lis <- res.lis[[1]]
   save_cache(dir=cache.pa, overwrite=TRUE, res.lis)
 }
@@ -397,7 +397,7 @@ df.par
 The coclustering is run on 2 cpu cores (`workers=2`).  
 
 ```{r , eval=FALSE, echo=TRUE, warnings=FALSE}  
-res.multi <- cocluster(bulk=mus.lis.fil$bulk, cell=mus.lis.fil$sc.mus, df.match=df.match.mus.brain, df.para=df.par, sc.dim.min=10, max.dim=50, sim=0.2, sim.p=0.8, dim=13, graph.meth='knn', dimred='PCA', sim.meth='spearman', return.all=TRUE, multi.core.par=MulticoreParam(workers=2))
+res.multi <- cocluster(bulk=mus.lis.fil$bulk, cell=mus.lis.fil$sc.mus, df.match=df.match.mus.brain, df.para=df.par, sc.dim.min=10, max.dim=50, sim=0.2, sim.p=0.8, dim=13, graph.meth='knn', dimred='PCA', sim.meth='spearman', return.all=TRUE, multi.core.par=MulticoreParam(workers=2, RNGseed=50), verbose=FALSE)
 ```
 
 ### Tailoring Co-clustering Results
