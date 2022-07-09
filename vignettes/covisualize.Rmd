@@ -65,27 +65,26 @@ expression patterns. These functionalities are described in the [main
 vignette](https://bioconductor.org/packages/release/bioc/html/spatialHeatmap.html)
 of the _spatialHeatmap_ package. 
 
-This vignette describes extended functionalities for integrating bulk tissue
-with single cell data by co-visualizing them in composite plots combining
-spatial heatmaps with embedding plots of high-dimensional data, respectively.
-The main input data required for this co-visualization are quantitative assay
-data and anatomic images. The assay data can be provided as `data.frame`,
+The following describes extended functionalities for integrating bulk tissue
+with single cell data by co-visualizing them in composite plots that combine
+spatial heatmaps with embedding plots of high-dimensional data. The main input
+data required for this co-visualization are quantitative assay data and
+anatomic images. The assay data can be provided as `data.frame`,
 `SummarizedExperiment` (SE) or `SingleCellExperiment` (SCE) objects, while the
-anatomic images need to be supplied in annotated SVG (aSVG) format. The
-creation of aSVGs is described in the main vignette of this package. For the
-embedding plots of single cell data, several dimensionality reduction
-algorithms (_e.g._ PCA, UMAP or tSNE) are supported. To associate single cells
-with their source tissues, the user can choose among three major methods
-including annotation, manual and automatic. Like most functionalities in
-_spatialHeatmap_, these association methods can be used from R as well as the
-corresponding [Shiny app](#autoSCE) [@shiny, @shinydashboard].   
+anatomic images need to be supplied as annotated SVGs (aSVGs). The creation of
+aSVGs is described in the main vignette of this package. For the embedding
+plots of single cell data, several dimensionality reduction algorithms (_e.g._
+PCA, UMAP or tSNE) are supported. To associate single cells with their source
+tissues, the user can choose among three major methods including annotation,
+manual and automatic. Like most functionalities in _spatialHeatmap_, these
+functionalities are available from within R as well as the corresponding [Shiny
+app](#autoSCE) [@shiny, @shinydashboard].   
 
 # Getting Started  
 
 ## Installation  
 
-The `spatialHeatmap` package should be installed from an R (version $\ge$ 3.6)
-session with the `BiocManager::install` command.  
+The `spatialHeatmap` package can be installed with the `BiocManager::install` command.  
 
 ```{ eval=FALSE, echo=TRUE, warnings=FALSE} 
 if (!requireNamespace("BiocManager", quietly = TRUE))
@@ -103,7 +102,7 @@ library(spatialHeatmap); library(SummarizedExperiment); library(scran); library(
 ```
 
 The following lists the vignette(s) of this package in an HTML browser.
-Clicking the corresponding name will open this vignette. 
+Clicking the name of the corresponding vignette will open it. 
 
 ```{r, eval=FALSE, echo=TRUE, warnings=FALSE}
 browseVignettes('spatialHeatmap')
@@ -112,12 +111,12 @@ browseVignettes('spatialHeatmap')
 To reduce runtime, intermediate results can be cached under `~/.cache/shm`.  
 
 ```{r eval=TRUE, echo=TRUE, message=FALSE, warnings=FALSE }
-cache.pa <- '~/.cache/shm' # The path of the cache directory.
+cache.pa <- '~/.cache/shm' # Set path of the cache directory
 ```
 
 # Mapping Cells to Tissues
 
-To map cell types with the corresponding tissues, the following describes three main 
+To connect cell types with the corresponding tissues, the following describes three main 
 methods that are available to the user, including annotation-based, manual and automatic. 
 
 
@@ -125,10 +124,10 @@ methods that are available to the user, including annotation-based, manual and a
 
 The annotation method allows to provide known cell-to-tissue annotations. These 
 cell labels are stored in the `label` column of the `colData` slot in an SCE object. 
-To populate this column in R, the cell labels can be provided in form of a list, while
-in the Shiny App simply mouse actions can be used.  <span style="color:red">[ThG: 
-the Shiny part makes no sense since mouse actions would fall under manual. There must be 
-an upload option.]</span>
+To populate this column from R, the cell labels can be provided in form of a list, while
+mouse actions can be used in the Shiny App.  <span style="color:red">[ThG: 
+the Shiny part makes no sense in this annotation section since mouse actions would fall 
+under manual mode. There must be an upload option in the app.]</span>
 
 The following example uses single cell data from oligodendrocytes of mouse
 brain [@Marques2016-ff]. Prior to co-visualizing, the single cell data are
@@ -143,59 +142,69 @@ To obtain reproducible results, a fixed seed is set for generating random number
 set.seed(10)
 ```
 
-The single cell sample data set is imported as follows.  
+The single cell sample data set can be imported as follows.  
 
 ```{r scRead, eval=TRUE, echo=TRUE, warnings=FALSE}
 sce.pa <- system.file("extdata/shinyApp/example", "sce_manual_mouse.rds", package="spatialHeatmap")
 sce <- readRDS(sce.pa)
 ```
 
-QC, normalization, and dimensionality reduction. Individual steps
-are seen in the [Supplementary Section](#stepAnn).   
-<span style="color:red">[ThG: you need to at least briefly state what method is used in each
-step. Otherwise why including it at all and user will wonder what normalization or embedding
-method was used.]</span>
+The QC, normalization, and dimensionality reduction steps can each be performed with 
+a single command. Additional details for each of these steps are provided in the
+[Supplement section](#stepAnn).   <span style="color:red">[ThG: you need to at least 
+briefly state what algorithms/method are used in each step.]</span>
 
 ```{r eval=TRUE, echo=TRUE, warnings=FALSE}
-# Quality check.
 sce.qc <- qc_cell(sce, qc.metric=list(subsets=list(Mt=rowData(sce)$featureType=='mito'), threshold=1), qc.filter=list(nmads=3))
-# Normalization.
 sce.norm <- norm_cell(sce=sce.qc, quick.clus=list(min.size = 100), com.sum.fct=list(max.cluster.size = 3000), log.norm=list())
-# Dimensionality reduction.
-sce.dimred <- reduce_dim(sce=sce.norm, prop=0.1, min.dim=13, max.dim=50, model.var=list(), top.hvg=list(n = 3000), de.pca=list(assay.type = "logcounts"), pca=FALSE, tsne=list(dimred="PCA", ncomponents=2), umap=list(dimred="PCA"))
 ```
 
 <a name='cusLab'></a>
 
-
-The custom cell labels (annotations) are defined in the `label` column of `colData`, which are cell sources provided in the original study.  
+The following command returns the cell annotation information from the `label` 
+column of the `colData` component of the `SingleCellExperiment` object, here 
+`sce.dimred`. 
 
 ```{r scLab, eval=TRUE, echo=TRUE, warnings=FALSE}
 unique(colData(sce.dimred)$label) 
 ```
 
-Embedding plot of single cells colored by clusters in the `cluster` column in `colData`.   
+The following embeds the high-dimensional gene expression data into a 2-3
+dimensional space using PCA, tSNE and UMAP. All three embedding result sets
+are stored in the `SingleCellExperiment` object. Subsequently, the UMAP result is 
+visualized as an example in form of a scatter plot where the dots are colored by 
+the corresponding cell labels.
 
 ```{r eval=TRUE, echo=TRUE, warnings=FALSE, fig.wide=TRUE, fig.cap=('Embedding plot single cells. The cells are colored by labels in the `label` column in `colData`.'), out.width="100%", fig.show='show'}
+sce.dimred <- reduce_dim(sce=sce.norm, prop=0.1, min.dim=13, max.dim=50, model.var=list(), top.hvg=list(n = 3000), de.pca=list(assay.type = "logcounts"), pca=FALSE, tsne=list(dimred="PCA", ncomponents=2), umap=list(dimred="PCA"))
 plotUMAP(sce.dimred, colour_by="label")
 ```
 
-Aggregate cells by annnotations defined in the `label` column.   
+Aggregate cells by annnotations defined in the `label` column. <span style="color:red">
+[ThG: First, the previous is an incomplete sentence that should only be used in a title.
+Second, This section is confusing. What do you mean by 'aggregate'? Aren't you using 
+the existing annotations to compute a summary statistics for each predefined group of 
+cells belonging to a tissue specified by the annotations? Subsequently, the summary 
+values are used to define the colors in the spatial heatmap, correct? If so try to 
+outline this more clearly. The same applies ot the help file of aggr_rep.</span>
 
 ```{r scLabAggr, eval=TRUE, echo=TRUE, warnings=FALSE}
 sce.aggr <- aggr_rep(sce.dimred, assay.na='logcounts', sam.factor='label', con.factor='expVar', aggr='mean')
 ```
 
-The spatial features in mouse brain aSVG are extracted. They are the bulk tissues to be matched with cell labels.   
+Next, the spatial features are extracted with the `return_feature` function 
+from an aSVG image of mouse brain. This sample aSVG image file is provided by 
+the package. 
 
 ```{r eval=TRUE, echo=TRUE, warnings=FALSE}
 svg.mus.brain <- system.file("extdata/shinyApp/example", "mus_musculus.brain.svg", package="spatialHeatmap")
-# Spatial features to match with single cell clusters.
 feature.df <- return_feature(svg.path=svg.mus.brain)
 feature.df$feature
 ```
 
-Create a named `list` to match cells and aSVG features.    
+Create a named `list` to match cells and aSVG features. <span style="color:red">[ThG:
+Why is do you select here only one feature/tissue instead of all annotated features.
+Also the need/utility of this list is unclear. 
 
 ```{r scLabList, eval=TRUE, echo=TRUE, warnings=FALSE}
 lis.match <- list(hypothalamus=c('hypothalamus'))
@@ -206,6 +215,14 @@ Co-visualization on gene `Cops5`.
 ```{r eval=TRUE, echo=TRUE, warnings=FALSE}
 colData(sce.aggr)[, c('label', 'expVar')]
 ```
+
+<span style="color:red">[ThG: there needs to be a detailed explanation or legend 
+explaining what is shown on the plot. Again coloring only one tissue creates the 
+impression that tissues need to be depicted one by one instead of a single plot.
+I would change this example to highlight most tissues. Most genes are not so 
+selectively expressed to show up in only one tissue, so choosing here an example
+where this is the case shouldn't be hard.
+</span>
 
 ```{r scLabVis, eval=TRUE, echo=TRUE, warnings=FALSE, fig.wide=TRUE, fig.cap=('Co-visualizing single cells and bulk tissues by custom cell labels. The expression profiles of gene `Cops5` are used.'), out.width="100%", fig.show='show'}
 shm.lis <- spatial_hm(svg.path=svg.mus.brain, data=sce.aggr, ID=c('Cops5'), height=0.7, legend.r=1.5, legend.key.size=0.02, legend.text.size=12, legend.nrow=2, sce.dimred=sce.dimred, dimred='PCA', cell.group='label', assay.na='logcounts', tar.cell=c('matched'), lis.rematch=lis.match, bar.width=0.1, dim.lgd.nrow=1)
@@ -253,7 +270,7 @@ Create a named `list` to match cell cluster `clus1` with aSVG feature `hypothala
 lis.match.clus <- list('clus1'=c('hypothalamus'), 'clus3'=c('cerebral.cortex', 'midbrain'))
 ```
 
-Aggregate cells by clusters defined in the `cluster` column.  
+Aggregate cells by clusters defined in the `cluster` column. 
 
 ```{r scAutoAggr, eval=TRUE, echo=TRUE, warnings=FALSE}
 sce.clus.aggr <- aggr_rep(sce.clus, assay.na='logcounts', sam.factor='cluster', con.factor=NULL, aggr='mean')
