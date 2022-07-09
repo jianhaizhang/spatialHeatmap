@@ -54,12 +54,28 @@ library(knitr); opts_chunk$set(message=FALSE, warning=FALSE)
 
 # Introduction 
 
+<span style="color:red">[ThG: I have edited/commented sections 1-4. Overall
+I think you should (1) provide a simple illustration in the introduction that
+summarizes all 3 methods (annot, manual, co-clustring). Figure 5 can then be
+removed since it is hard to follow and contains too much information relating to 
+the supplement which we wanted to remove from this vignette. (2) Further please reduce 
+the number of code chunks to make things easier for the user. For clarity you could 
+use meta functions and summarize in the text what they are doing. Often you include the
+individual steps but then there is no explanation given what they are doning. (3) The
+optimization part needs to be entirely removed from the main part of this
+vignette as there is no context given what its relevance is. (4) Please also
+simplify the Supplement section 5 or remove it from the vignette and perhaps
+include it in a script file that is then just referenced for expert users in
+the text. Once this part 5 has been improved I will fine edit it. (5) 
+In addition, please address my comments given in red font throughout the 
+text.]</span>
+
 ## Overview
 
 The primary utility of the _spatialHeatmap_ package is the generation of
 _spatial heatmaps_ (SHM) for visualizing cell-, tissue- and organ-specific
-abundance patterns of biological molecules in anatomical images. This includes
-the identification of genes with spatially enriched (SE) expression patterns as
+abundance patterns of biological molecules in anatomical images. This is useful
+for identifying genes with spatially enriched (SE) expression patterns as
 well as clusters and/or network modules composed of genes sharing similar
 expression patterns. These functionalities are described in the [main
 vignette](https://bioconductor.org/packages/release/bioc/html/spatialHeatmap.html)
@@ -69,9 +85,9 @@ The following describes extended functionalities for integrating bulk tissue
 with single cell data by co-visualizing them in composite plots that combine
 spatial heatmaps with embedding plots of high-dimensional data. The main input
 data required for this co-visualization are quantitative assay data and
-anatomic images. The assay data can be provided as `data.frame`,
-`SummarizedExperiment` (SE) or `SingleCellExperiment` (SCE) objects, while the
-anatomic images need to be supplied as annotated SVGs (aSVGs). The creation of
+anatomic images. The assay data can be provided in a variety of widely used tabular 
+data structures (_e.g._ `data.frame`, `SummarizedExperiment` or `SingleCellExperiment`), 
+while the anatomic images need to be supplied as annotated SVGs (aSVGs). The creation of
 aSVGs is described in the main vignette of this package. For the embedding
 plots of single cell data, several dimensionality reduction algorithms (_e.g._
 PCA, UMAP or tSNE) are supported. To associate single cells with their source
@@ -116,8 +132,9 @@ cache.pa <- '~/.cache/shm' # Set path of the cache directory
 
 # Mapping Cells to Tissues
 
-To connect cell types with the corresponding tissues, the following describes three main 
-methods that are available to the user, including annotation-based, manual and automatic. 
+To assign the cell types from single cell experiments with their source tissues, the 
+following describes three main methods available to the user, including 
+annotation-based, manual and automatic. 
 
 
 ## Annotation-based  
@@ -182,11 +199,13 @@ plotUMAP(sce.dimred, colour_by="label")
 
 Aggregate cells by annnotations defined in the `label` column. <span style="color:red">
 [ThG: First, the previous is an incomplete sentence that should only be used in a title.
-Second, This section is confusing. What do you mean by 'aggregate'? Aren't you using 
-the existing annotations to compute a summary statistics for each predefined group of 
-cells belonging to a tissue specified by the annotations? Subsequently, the summary 
-values are used to define the colors in the spatial heatmap, correct? If so try to 
-outline this more clearly. The same applies ot the help file of aggr_rep.</span>
+Second, this section is confusing. What do you mean by 'aggregate'? Isn't this done
+already by having the annotations available? Aren't you using the existing annotations 
+to compute a summary statistics for each predefined group of cells belonging to a tissue 
+specified by the annotations? Subsequently, the summary values are used to define the 
+colors in the spatial heatmap, correct? If so try to outline this more clearly. The same 
+applies ot the help file of the aggr_rep function. The text in this help file is hard
+to follow.</span>
 
 ```{r scLabAggr, eval=TRUE, echo=TRUE, warnings=FALSE}
 sce.aggr <- aggr_rep(sce.dimred, assay.na='logcounts', sam.factor='label', con.factor='expVar', aggr='mean')
