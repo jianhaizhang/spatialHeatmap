@@ -64,17 +64,19 @@ library(knitr); opts_chunk$set(message=FALSE, warning=FALSE)
 
 The _spatialHeatmap_ package provides functionalities for visualizing cell-,
 tissue- and organ-specific data of biological assays by coloring the
-corresponding spatial features defined in anatomical images according to a
-numeric color key. The color scheme used to represent the assay values can be
-customized by the user. This core functionality of the package is called a
-_spatial heatmap_ (SHM) plot. Additional important functionalities include
-_Spatial Enrichment_ (SE), _Spatial Co-Expression_ (SCE), and _Single Cell to 
-SHM Co-Visualization_ (SC2SHM-CoViz). These extra utilities are useful for 
-identifying items with spatially selective abundance patterns (SE), groups of 
-items with related abundance profiles using matrix heatmaps combined with hierarchical clustering 
-and network representations (SCE), and to co-visualize single cell embedding
-results with SHMs (SCSHM-CoViz). The latter functionality is described in a
-a separate vignette called.     
+corresponding spatial features defined in anatomical images according to
+quantitative abundance levels of measured items, such as transcripts, proteins
+or metabolites. The color key used to represent the quantitative assay values
+can be customized by the user. This core functionality of the package is called
+a _spatial heatmap_ (SHM) plot. Additional important functionalities include
+_Spatial Enrichment_ (SE), _Spatial Co-Expression_ (SCE), and _Single Cell to
+SHM Co-Visualization_ (SC2SHM-CoViz). These extra utilities are useful for
+identifying items with spatially selective abundance patterns (SE), groups of
+items with related abundance profiles using matrix heatmaps combined with
+hierarchical clustering and network representations (SCE), and to co-visualize
+single cell embedding results with SHMs (SCSHM-CoViz). The latter co-visualization
+functionality is described in a separate vignette called
+[SCSHM-CoViz](https://bioconductor.org/packages/release/bioc/vignettes/spatialHeatmap/inst/doc/scSHM-CoViz.html).     
 
 The functionalities of _spatialHeatmap_ can be used either in a command-driven mode
 from within R or a graphical user interface (GUI) provided by a Shiny App that
