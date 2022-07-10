@@ -18,7 +18,7 @@ fontsize: 14pt
 bibliography: bibtex.bib
 package: spatialHeatmap
 vignette: >
-  %\VignetteIndexEntry{spatialHeatmap: Co-visualization}
+  %\VignetteIndexEntry{Co-visualizing spatial heatmaps with single cell embedding plots}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
