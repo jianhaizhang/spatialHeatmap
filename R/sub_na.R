@@ -7,7 +7,7 @@
 #' @keywords Internal
 #' @noRd
 
-#' @author Jianhai Zhang \email{zhang.jianhai@@hotmail.com; jzhan067@@ucr.edu} \cr Dr. Thomas Girke \email{thomas.girke@@ucr.edu}
+#' @author Jianhai Zhang \email{jzhan067@@ucr.edu} \cr Dr. Thomas Girke \email{thomas.girke@@ucr.edu}
 
 sub_na <- function(mat, ID, p=0.3, n=NULL, v=NULL) {
 

@@ -159,5 +159,5 @@ Langfelder P and Horvath S, WGCNA: an R package for weighted correlation network
 \cr Ravasz, E, A L Somera, D A Mongru, Z N Oltvai, and A L Barabási. 2002. “Hierarchical Organization of Modularity in Metabolic Networks.” Science 297 (5586): 1551–5.
 }
 \author{
-Jianhai Zhang \email{zhang.jianhai@hotmail.com; jzhan067@ucr.edu} \cr Dr. Thomas Girke \email{thomas.girke@ucr.edu}
+Jianhai Zhang \email{jzhan067@ucr.edu} \cr Dr. Thomas Girke \email{thomas.girke@ucr.edu}
 }

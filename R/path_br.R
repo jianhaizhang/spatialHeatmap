@@ -6,7 +6,7 @@
 #' @return Nothing is returned. The broken paths are updated in the root.
 #' @keywords Internal
 
-#' @author Jianhai Zhang \email{jzhan067@@ucr.edu; zhang.jianhai@@hotmail.com} \cr Dr. Thomas Girke \email{thomas.girke@@ucr.edu}
+#' @author Jianhai Zhang \email{jzhan067@@ucr.edu} \cr Dr. Thomas Girke \email{thomas.girke@@ucr.edu}
 #' @noRd
 
 #' @references

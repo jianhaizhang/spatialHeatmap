@@ -26,7 +26,7 @@
 #' @keywords Internal
 #' @noRd
 
-#' @author Jianhai Zhang \email{jzhan067@@ucr.edu; zhang.jianhai@@hotmail.com} \cr Dr. Thomas Girke \email{thomas.girke@@ucr.edu}
+#' @author Jianhai Zhang \email{jzhan067@@ucr.edu} \cr Dr. Thomas Girke \email{thomas.girke@@ucr.edu}
 
 #' @references 
 #' Jeroen Ooms (2020). av: Working with Audio and Video in R. R package version 0.5.0. https://CRAN.R-project.org/package=av

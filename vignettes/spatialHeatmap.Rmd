@@ -62,12 +62,19 @@ library(knitr); opts_chunk$set(message=FALSE, warning=FALSE)
 
 ## Motivation
 
-The primary functionality of _spatialHeatmap_ package is to visualize cell-,
+The _spatialHeatmap_ package provides functionalities for visualizing cell-,
 tissue- and organ-specific data of biological assays by coloring the
-corresponding spatial features (celllular compartments, tissues, organs, *etc*) defined in anatomical images according to a
+corresponding spatial features defined in anatomical images according to a
 numeric color key. The color scheme used to represent the assay values can be
 customized by the user. This core functionality of the package is called a
-_spatial heatmap_ (SHM) plot. <font style='color:red'> The SHM has extended functionalities of spatial enrichment (SE) and clustering. SE is specialized in detecting genes that are specifically expressed in a particular spatial feature, while clustering is designed to detect biological molecule groups sharing related abundance profiles (_e.g._ gene modules) and visualize them in matrix heatmaps combined with hierarchical clustering dendrograms and network representations. Moreover, a novel functionality of integrated co-visualization of bulk tissues and single cells is also developed. Sinlge cells and bulk tissues are co-visualized in embedding plots using PCA, UMAP, or TSNE and SHM plots respectively, which form a composite plot. The co-visualization is detailed in the other vignette.  </font>     
+_spatial heatmap_ (SHM) plot. Additional important functionalities include
+_Spatial Enrichment_ (SE), _Spatial Co-Expression_ (SCE), and _Single Cell to 
+SHM Co-Visualization_ (SC2SHM-CoViz). These extra utilities are useful for 
+identifying items with spatially selective abundance patterns (SE), groups of 
+items with related abundance profiles using matrix heatmaps combined with hierarchical clustering 
+and network representations (SCE), and to co-visualize single cell embedding
+results with SHMs (SCSHM-CoViz). The latter functionality is described in a
+a separate vignette called.     
 
 The functionalities of _spatialHeatmap_ can be used either in a command-driven mode
 from within R or a graphical user interface (GUI) provided by a Shiny App that
@@ -104,7 +111,8 @@ maps. This high level of flexibility is one of the unique features of
 _spatialHeatmap_. Related software tools for biological applications in this
 field are largely based on pure web applications [@Maag2018-gi; @Lekschas2015-gd; @Papatheodorou2018-jy; @Winter2007-bq; @Waese2017-fx] or local tools [@Muschelli2014-av] that typically
 lack customization functionalities. These restrictions limit users to utilizing
-pre-existing expression data and/or fixed sets of anatomical image collections. Additionally, these existing tools are only able to visualize data, but not analyze data to identify feature-specific information. To close this gap for biological use cases, we have developed _spatialHeatmap_
+pre-existing expression data and/or fixed sets of anatomical image collections.
+To close this gap for biological use cases, we have developed _spatialHeatmap_
 as a generic R/Bioconductor package for plotting quantitative values onto any
 type of spatially mapped images in a programmable environment and/or in an
 intuitive to use GUI application.
@@ -126,16 +134,19 @@ tissue layer of interest in the plots. To address this, several default and
 customizable layer viewing options are provided. They allow to hide features in
 the top layers by making them transparent in order to expose features below
 them. This transparency viewing feature is highlighted below in the mouse
-example (Figure \@ref(fig:musshm)). Except for spatial data, this package also works on spatiotemporal data and generates spatiotemporal heatmaps (STHMs, Figure \@ref(fig:clpshm)). Moreover, one can plot multiple distinct 
+example (Figure \@ref(fig:musshm)). Moreover, one can plot multiple distinct 
 aSVGs in a single SHM plot as shown in Figure \@ref(fig:arabshm). This is 
 particularly useful for displaying abundance trends across multiple development 
 stages, where each is represented by its own aSVG image. In addition to
-static SHM representations, one can visualize them in form of interactive HTML files or generate videos for them. In spatial enrichment, the target feature is compared with reference features in a pairwise manner. Genes are specifically-expressed in the target feature across all pairwise comparisons are deemed target-specific.   
+static SHM representations, one can visualize them in form of dynamic animations
+embedded in interactive HTML files or generate videos for them.
+
 To maximize reusability and extensibility, the package organizes large-scale
 omics assay data along with the associated experimental design information in a
 `SummarizedExperiment` object (Figure \@ref(fig:illus)A, @se) . The latter is one of the core S4 classes within
 the Bioconductor ecosystem that has been widely adapted by many other software
-packages dealing with gene-, protein- and metabolite-level profiling data. In case of gene expression data, the `assays` slot of
+packages dealing with gene-, protein- and metabolite-level profiling data. 
+In case of gene expression data, the `assays` slot of
 the `SummarizedExperiment` container is populated with a gene expression
 matrix, where the rows and columns represent the genes and tissue/conditions,
 respectively, while the `colData` slot contains sample data including replicate
@@ -200,11 +211,11 @@ our guidlines.
 
 ## Tutorial Overview {#sample_data}
 
-<font style='color:red'>
 The following sections of this vignette showcase the most important
-functionalities of SHM, SE, and clustering in the `spatialHeatmap` package using as initial example a simple
+functionalities of the `spatialHeatmap` package using as initial example a simple
 to understand toy data set, and then more complex mRNA profiling data from the
-Expression Atlas and GEO databases. The co-visualization is explained in a separate vignette. </font> First, SHM plots are generated for both the toy
+Expression Atlas and GEO databases. The co-visualization is explained in a separate vignette. 
+First, SHM plots are generated for both the toy
 and mRNA expression data. The latter include gene expression data sets from
 RNA-Seq and microarray experiments of [Human Brain](#hum), [Mouse
 Organs](#mus), [Chicken Organs](#chk), and [Arabidopsis Shoots](#shoot). The
@@ -215,11 +226,12 @@ analysis tools are introduced, which facilitate the visualization of
 gene modules sharing similar expression patterns. This includes the
 visualization of hierarchical clustering results with traditional matrix
 heatmaps ([Matrix Heatmap](#mhm)) as well co-expression network plots
-([Network](#net)). Third, the [spatial enrichemnt](#se) functionality is illustrated on the mouse RNA-seq data. Lastly, an overview of the corresponding [Shiny App](#shiny)
+([Network](#net)). Third, the [Spatial Enrichemnt](#se) functionality is illustrated 
+with mouse RNA-seq data. Lastly, an overview of the corresponding [Shiny App](#shiny)
 is presented that provides access to the same functionalities as the R
 functions, but executes them in an interactive GUI environment [@shiny;
 @shinydashboard]. Fourth, more advanced features for plotting customized
-SHMs are covered using the Human Brain data set as an example.  
+SHMs are covered using the chosen Human brain data set as an example.  
 
 
 # Getting Started  
@@ -240,8 +252,7 @@ BiocManager::install("spatialHeatmap")
 Next, the packages required for running the sample code in this vignette need to be loaded.  
 
 ```{r, eval=TRUE, echo=TRUE, warnings=FALSE, results='hide'}
-library(spatialHeatmap); library(SummarizedExperiment); library(ExpressionAtlas); library(GEOquery)
-library(igraph); library(BiocParallel); library(biomaRt)
+library(spatialHeatmap); library(SummarizedExperiment); library(ExpressionAtlas); library(GEOquery); library(igraph); library(BiocParallel); library(biomaRt)
 ```
 
 The following lists the vignette(s) of this package in an HTML browser. Clicking the corresponding name will open this vignette. 
@@ -315,7 +326,9 @@ painted onto the corresponding features in the aSVG, where the path to the image
 file is defined by `svg.path=svg.hum`. The remaining arguments used here include:
 `ID` for defining the title of the plot; `ncol` for setting the column-wise layout 
 of the plot excluding the feature legend plot on the right; and `height` for defining 
-the height of the SHM relative to its width. In addition, the outline feature `g4320` covers all tissue features due to its default color, so it is set transparent through `ft.trans`. More details of the transparency function is explained in the mouse example (Figure \@ref(fig:musshm)). In the given example
+the height of the SHM relative to its width. To view overlapping features, transparancy
+can be controlled via the `ft.trans` argument. The mouse example in Figure 
+\@ref(fig:musshm) provides additional details on this topic. In the given example
 (Figure \@ref(fig:toyshm)) only three features in `my_vec` ('occipital lobe', 
 'parietal lobe', and 'temporal lobe') have matching entries in the corresponding 
 aSVG.   
@@ -325,7 +338,8 @@ shm.lis <- spatial_hm(svg.path=svg.hum, data=my_vec, ID='toy', ncol=1, height=0.
 ```
 
 The named numeric values in `my_vec`, that have name matches with the features in the 
-chosen aSVG, are stored in the `mapped_feature` slot. The attributes of features are stored in `feature_attribute` slot.  
+chosen aSVG, are stored in the `mapped_feature` slot. The attributes of each the 
+feature are stored in the `feature_attribute` slot.  
 
 ```{r eval=TRUE, echo=TRUE, warnings=FALSE} 
 # The SHM, mapped features, and feature attributes are stored in a list
@@ -350,9 +364,8 @@ the `ExpressionAtlas` package are used [@ebi].
 
 The following example searches the Expression Atlas for expression data derived from
 specific tissues and species of interest, here _'cerebellum'_ and _'Homo sapiens'_,
-respectively.  
-
-To reduce runtime, some data are cached in `~/.cache/shm`.  
+respectively. To reduce the runtime of the subsequent steps, some of the intermediate
+results cached in `~/.cache/shm`.  
 
 ```{r eval=TRUE, echo=TRUE, message=FALSE, warnings=FALSE }
 cache.pa <- '~/.cache/shm' # The path of cache.
@@ -415,8 +428,7 @@ setting `remote=NULL` needs to be used, while specifying the path of the
 corresponding directory under `dir`. All or only matching features are returned
 if `match.only` is set to `FALSE` or `TRUE`, respectively.  
 
-According to Bioconductor's requirements, downloadings are not allowed inside functions, 
-so the remote repos are downloaded before calling `return_feature`.    
+The remote data are downloaded before calling `return_feature`.    
 
 <!--
 Code chunk not evaluated to save time building this vignette.
@@ -433,7 +445,7 @@ download.file(aSVG.remote.repo$shm, tmp.dir.shm)
 remote <- list(tmp.dir.ebi, tmp.dir.shm)
 ```
 
-Query the downloaded remote aSVG repos.   
+The downloaded aSVG repos are queried.   
 
 <!--
 Code chunk not evaluated to save time building this vignette.
@@ -445,7 +457,7 @@ feature.df[1:8, ] # Return first 8 rows for checking
 unique(feature.df$SVG) # Return all matching aSVGs
 ```
 
-To build this vignettes according to the R/Bioconductor package requirements, the
+To build this vignettes according to Bioconductor's package requirements, the
 following code section uses the aSVG file instance included in the
 `spatialHeatmap` package rather than the downloaded instance from the previous
 example. 
@@ -597,7 +609,7 @@ shm.lis <- spatial_hm(svg.path=svg.hum, data=se.fil.hum, ID=c('ENSG00000268433')
 ```
 
 The plotting instructions of the SHM along with the corresponding 
-mapped features and feature attributes are stored as a `list`, here named `shm.lis`. Its components
+mapped features with their attributes are stored as a `list`, here named `shm.lis`. Its components
 can be accessed as follows.  
 
 ```{r eval=TRUE, echo=TRUE, warnings=FALSE }
@@ -624,7 +636,7 @@ SHMs of the genes `ENSG00000268433` and `ENSG00000006047` are organized
 by condition in a horizontal view. This functionality is particularly useful when
 comparing gene families. Users can also customize the order of the SHM subplots, by
 assigning `lay.shm='none'`. With this setting the SHM subplots are organized according 
-to the gene and condition ordering under `ID` and `data`, respectively.    
+to the gene and condition order under `ID` and `data`, respectively.    
 
 ```{r mul, eval=TRUE, echo=TRUE, warnings=FALSE, fig.wide=TRUE, fig.cap=("SHMs of two genes. The subplots are organized by \"condition\" with the `lay.shm='con'` setting."), out.width="100%" }
 spatial_hm(svg.path=svg.hum, data=se.fil.hum, ID=c('ENSG00000268433', 'ENSG00000006047'), lay.shm='con', width=0.8, height=1, legend.r=1.5, legend.nrow=2, ft.trans=c('g4320'))
@@ -721,8 +733,8 @@ colData(rse.mus)[1:3, ]
 The following example shows how to retrieve from the above described [remote SVG
 repositories](#data_repo) an aSVG image that matches the tissues and species
 assayed in the gene expression data set downloaded in the previous subsection.
-The remote repos are downloaded in the [Human Brain](#humSVG) example (`remote`) and 
-are used below. As before the image is saved to a directory named `tmp.dir.shm`.  
+The following downloads and uses the sample data from [Human Brain](#humSVG).
+As before the image is saved to a directory named `tmp.dir.shm`.  
 
 <!--
 Code chunk not evaluated to save time building this vignette.
@@ -806,13 +818,13 @@ shm.lis <- spatial_hm(svg.path=svg.mus, data=se.fil.mus, ID=c('ENSMUSG0000000003
 ```
 
 The SHM plots in Figures \@ref(fig:musshm) and below demonstrate
-the usage of the transparency feature via the `ft.trans` parameter. Except for the outline layer `path4204` interfering with other tissues, the
+the usage of the transparency feature via the `ft.trans` parameter. The
 corresponding mouse organ aSVG image includes overlapping tissue layers. In
 this case the skelectal muscle layer partially overlaps with lung and heart
 tissues. To view lung and heart in Figure \@ref(fig:musshm), the skelectal
-muscle tissue and outline are set transparent with `ft.trans=c('skeletal muscle', 'path4204')`. To view
+muscle tissue is set transparent with `ft.trans=c('skeletal muscle', 'path4204')`. To view
 in the same aSVG the skeletal muscle tissue instead, `ft.trans` is assigned
-only `path4204` as shown below.  
+`path4204` as shown below.  
 
 To fine control the visual effects in feature rich aSVGs, the `line.size` and
 `line.color` parameters are useful. This way one can adjust the thickness and 
@@ -869,8 +881,7 @@ colData(rse.chk)[1:3, ]
 The following example shows how to download from the above introduced [SVG
 repositories](#data_repo) an aSVG image that matches the tissues and species
 assayed in the gene expression data set downloaded in the previous subsection.
-The remote repos are downloaded in the [Human Brain](#humSVG) example (`remote`) and 
-are used below. As before the image is saved to a directory named `tmp.dir.shm`.  
+As before the image is saved to a directory named `tmp.dir.shm`.  
 
 <!--
 Code chunk not evaluated to save time building this vignette.
@@ -944,7 +955,7 @@ se.fil.chk <- filter_data(data=se.aggr.chk, sam.factor='organism_part', con.fact
 
 The expression profile for gene `ENSGALG00000006346` is plotted across nine time
 points in four organs in form of a composite SHM with 9 panels. Their layout in
-three columns is controlled with the argument setting `ncol=3`. The target organs are labeled by text in legend plot via `label=TRUE`.   
+three columns is controlled with the argument setting `ncol=3`. 
 
 ```{r chkshm, eval=TRUE, echo=TRUE, warnings=FALSE, fig.wide=TRUE, fig.cap=("Time course of chicken organs. The SHM shows the expression profile of a single gene across nine time points and four organs."), out.width="100%" }
 spatial_hm(svg.path=svg.chk, data=se.fil.chk, ID='ENSGALG00000006346', width=0.9, legend.width=0.9, legend.r=1.5, sub.title.size=9, ncol=3, legend.nrow=2, label=TRUE)
@@ -982,7 +993,7 @@ se.sh <- as(gset, "SummarizedExperiment")
 
 The gene symbol identifiers are extracted from the `rowData` component to be used 
 as row names. Similarly, one can work with AGI identifiers by providing below `AGI` 
-under `Gene.Symbol`.  
+under `Gene.Symbol`.
 
 ```{r eval=TRUE, echo=TRUE, warnings=FALSE}
 rownames(se.sh) <- make.names(rowData(se.sh)[, 'Gene.Symbol'])

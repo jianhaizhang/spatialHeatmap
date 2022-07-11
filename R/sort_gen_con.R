@@ -9,7 +9,7 @@
 #' @keywords Internal
 #' @noRd
 
-#' @author Jianhai Zhang \email{jzhan067@@ucr.edu; zhang.jianhai@@hotmail.com} \cr Dr. Thomas Girke \email{thomas.girke@@ucr.edu}
+#' @author Jianhai Zhang \email{jzhan067@@ucr.edu} \cr Dr. Thomas Girke \email{thomas.girke@@ucr.edu}
 
 sort_gen_con <- function(ID.sel, na.all, con.all, by='gene') {
 

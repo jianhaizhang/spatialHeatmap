@@ -25,7 +25,7 @@ As anatomical images the package supports both tissue maps from public repositor
 Author: \packageAuthor{spatialHeatmap}
   Jianhai Zhang (PhD candidate at Genetics, Genomics and Bioinformatics, University of California, Riverside), Dr. Thomas Girke (Professor at Department of Botany and Plant Sciences, University of California, Riverside)
 Maintainer: \packageMaintainer{spatialHeatmap}
-  Jianhai Zhang <jzhan067@ucr.edu; zhang.jianhai@hotmail.com>.
+  Jianhai Zhang <jzhan067@@ucr.edu>.
 }
 \references{
   https://www.w3schools.com/graphics/svg_intro.asp 

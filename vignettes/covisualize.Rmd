@@ -54,50 +54,53 @@ library(knitr); opts_chunk$set(message=FALSE, warning=FALSE)
 
 # Introduction 
 
+<span style="color:red">[ThG: I have edited/commented sections 1-4. Overall
+I think you should (1) provide a simple illustration in the introduction that
+summarizes all 3 methods (annot, manual, co-clustring). Figure 5 can then be
+removed since it is hard to follow and contains too much information relating to 
+the supplement which we wanted to remove from this vignette. (2) Further please reduce 
+the number of code chunks to make things easier for the user. For clarity you could 
+use meta functions and summarize in the text what they are doing. Often you include the
+individual steps but then there is no explanation given what they are doning. (3) The
+optimization part needs to be entirely removed from the main part of this
+vignette as there is no context given what its relevance is. (4) Please also
+simplify the Supplement section 5 or remove it from the vignette and perhaps
+include it in a script file that is then just referenced for expert users in
+the text. Once this part 5 has been improved I will fine edit it. (5) 
+In addition, please address my comments given in red font throughout the 
+text.]</span>
+
 ## Overview
 
 The primary utility of the _spatialHeatmap_ package is the generation of
 _spatial heatmaps_ (SHM) for visualizing cell-, tissue- and organ-specific
-abundance patterns of biological molecules in anatomical images. This includes
-the identification of genes with spatially enriched (SE) expression patterns as
+abundance patterns of biological molecules in anatomical images. This is useful
+for identifying genes with spatially enriched (SE) expression patterns as
 well as clusters and/or network modules composed of genes sharing similar
 expression patterns. These functionalities are described in the [main
 vignette](https://bioconductor.org/packages/release/bioc/html/spatialHeatmap.html)
 of the _spatialHeatmap_ package. 
 
-This vignette describes extended functionalities for integrating bulk tissue
-with single cell data by co-visualizing them in a composite plot combining
-spatial heatmaps with embedding plots of high-dimensional data, respectively.
-Several dimensionality reduction algorithms (_e.g._ PCA, UMAP or tSNE) are
-supported to generate the embedding plots. To associate the single cells with 
-the corresponding features (_e.g._ tissues and organs) in the spatial heatmaps, 
-the user can choose among annotation, manual, and automatic methods. They can
-be used from R as well as the corresponding [Shiny app](#autoSCE) [@shiny, @shinydashboard].   
-
-## Supported Objects and Image Formats
-
-The data objects supported by the co-visualization include: `data.frame`,
-`SummarizedExperiment` (SE), and `SingleCellExperiment` (SCE). The usage of the
-first two is described in the main vignette of this package. Compared to SE,
-SCE objects contain two additional slots that are used by the 
-co-visualization functionality of this package. First, SCE has a `label` column 
-in the `colData` slot for storing [cell type annotation labels](#cusLab) <span style="color: blue"> that are provided by users </span>. <span style="color: red;">[ThG: please revise 
-the following sentences. They make no sense since you start here with 
-specific features of SCE but the following doesn't relate to it. This could also 
-be removed since it is too detailed for an intro.]</span> <span style="color: blue;">[jianhai: removed to the Shiny app section.]</span> Second, when using the automatic method
-in [Shiny app](#autoSCE), the true matching table across single cells, bulk
-tissues, and aSVG features is stored in the `metadata` slot of SCE. More details about using the co-visualization in Shiny app is provided in the [Using Shiny App](#autoSCE) section.    
-
-The images in co-visualization are in the same form of annotated SVGs (aSVGs)
-with SHM plots, which is detained in the main vignette.   
-
+The following describes extended functionalities for integrating bulk tissue
+with single cell data by co-visualizing them in composite plots that combine
+spatial heatmaps with embedding plots of high-dimensional data. The main input
+data required for this co-visualization are quantitative assay data and
+anatomic images. The assay data can be provided in a variety of widely used tabular 
+data structures (_e.g._ `data.frame`, `SummarizedExperiment` or `SingleCellExperiment`), 
+while the anatomic images need to be supplied as annotated SVGs (aSVGs). The creation of
+aSVGs is described in the main vignette of this package. For the embedding
+plots of single cell data, several dimensionality reduction algorithms (_e.g._
+PCA, UMAP or tSNE) are supported. To associate single cells with their source
+tissues, the user can choose among three major methods including annotation,
+manual and automatic. Like most functionalities in _spatialHeatmap_, these
+functionalities are available from within R as well as the corresponding [Shiny
+app](#autoSCE) [@shiny, @shinydashboard].   
 
 # Getting Started  
 
 ## Installation  
 
-The `spatialHeatmap` package should be installed from an R (version $\ge$ 3.6)
-session with the `BiocManager::install` command.  
+The `spatialHeatmap` package can be installed with the `BiocManager::install` command.  
 
 ```{ eval=FALSE, echo=TRUE, warnings=FALSE} 
 if (!requireNamespace("BiocManager", quietly = TRUE))
@@ -107,106 +110,120 @@ BiocManager::install("spatialHeatmap")
 
 ## Packages and Documentation
 
-Next, the packages required for running the sample code in this vignette need to be loaded.  
+Next, the packages required for running the sample code in this vignette need
+to be loaded.  
 
 ```{r, eval=TRUE, echo=TRUE, warnings=FALSE, results='hide'}
 library(spatialHeatmap); library(SummarizedExperiment); library(scran); library(scater); library(igraph); library(SingleCellExperiment); library(BiocParallel)
 ```
 
-The following lists the vignette(s) of this package in an HTML browser. Clicking the corresponding name will open this vignette. 
+The following lists the vignette(s) of this package in an HTML browser.
+Clicking the name of the corresponding vignette will open it. 
 
 ```{r, eval=FALSE, echo=TRUE, warnings=FALSE}
 browseVignettes('spatialHeatmap')
 ```
 
-To reduce runtime, some data are cached in `~/.cache/shm`.  
+To reduce runtime, intermediate results can be cached under `~/.cache/shm`.  
 
 ```{r eval=TRUE, echo=TRUE, message=FALSE, warnings=FALSE }
-cache.pa <- '~/.cache/shm' # The path of cache.
+cache.pa <- '~/.cache/shm' # Set path of the cache directory
 ```
 
-# Annotation Method 
+# Mapping Cells to Tissues
 
-<span style="color: red;">[ThG: does the annotation based option also fall under
-manual. If so why not distintuishing annotation and manual. For the user this makes
-a big difference.]</span>
+To assign the cell types from single cell experiments with their source tissues, the 
+following describes three main methods available to the user, including 
+annotation-based, manual and automatic. 
 
-<span style="color: blue"> jianhai: old </span>
-In manual matching mode the single cell clusters can be automatically detected or
-pre-defined by the user. When matching with source bulk tissues, the matching
-relationship needs to be manually defined. <span style="color:red">[ThG: Confusing why the
-first option falls into the manual section but then can be auto-detected. The latter
-is the only relevant one for the matching. So I don't understand...]</span> 
-In R the matching is defined by a named `list`, while in Shiny App simply mouse actions 
-including dragging and dropping are supported.  
 
-<span style="color: blue"> jianhai: new </span>
-In the annotation method, cell labels are provided by users such as cell types and are stored in the `label` column in the `colData` slot of SCE. In R the matching between source bulk tissues and single cells is defined by a named `list`, while in Shiny App simply mouse actions including dragging and dropping are supported.   
+## Annotation-based  
 
-The example single cell data of mouse brain are from a oligodendrocyte
-heterogeneity study in mouse central nervous system [@Marques2016-ff]. Before
-co-visualizing, single cell data are processed through quality check, normalization, and dimensionality reduction, which is
-learned from [Bioconductor
-OCSA](http://bioconductor.org/books/3.14/OSCA.workflows/zeisel-mouse-brain-strt-seq.html){target='blank'}.
-Since these steps are not the focus, details are not explained.   
+The annotation method allows to provide known cell-to-tissue annotations. These 
+cell labels are stored in the `label` column of the `colData` slot in an SCE object. 
+To populate this column from R, the cell labels can be provided in form of a list, while
+mouse actions can be used in the Shiny App.  <span style="color:red">[ThG: 
+the Shiny part makes no sense in this annotation section since mouse actions would fall 
+under manual mode. There must be an upload option in the app.]</span>
 
-To obtain reproducible results, always start a new R session and set a fixed
-seed for Random Number Generator at the beginning, which is required only once in each R session.     
+The following example uses single cell data from oligodendrocytes of mouse
+brain [@Marques2016-ff]. Prior to co-visualizing, the single cell data are
+pre-processed with standard QC and normalization methods. The details of these
+steps are described in the
+[OSCA](http://bioconductor.org/books/3.14/OSCA.workflows/zeisel-mouse-brain-strt-seq.html){target='blank'}
+tutorial.
+
+To obtain reproducible results, a fixed seed is set for generating random numbers.
 
 ```{r , eval=TRUE, echo=TRUE, warnings=FALSE}
 set.seed(10)
 ```
 
-Read the example single cell data.  
+The single cell sample data set can be imported as follows.  
 
 ```{r scRead, eval=TRUE, echo=TRUE, warnings=FALSE}
 sce.pa <- system.file("extdata/shinyApp/example", "sce_manual_mouse.rds", package="spatialHeatmap")
 sce <- readRDS(sce.pa)
 ```
 
-Quality check, normalization, and dimensionality reduction. Individual steps are seen in the [Supplementary Section](#stepAnn).   
+The QC, normalization, and dimensionality reduction steps can each be performed with 
+a single command. Additional details for each of these steps are provided in the
+[Supplement section](#stepAnn).   <span style="color:red">[ThG: you need to at least 
+briefly state what algorithms/method are used in each step.]</span>
 
 ```{r eval=TRUE, echo=TRUE, warnings=FALSE}
-# Quality check.
 sce.qc <- qc_cell(sce, qc.metric=list(subsets=list(Mt=rowData(sce)$featureType=='mito'), threshold=1), qc.filter=list(nmads=3))
-# Normalization.
 sce.norm <- norm_cell(sce=sce.qc, quick.clus=list(min.size = 100), com.sum.fct=list(max.cluster.size = 3000), log.norm=list())
-# Dimensionality reduction.
-sce.dimred <- reduce_dim(sce=sce.norm, prop=0.1, min.dim=13, max.dim=50, model.var=list(), top.hvg=list(n = 3000), de.pca=list(assay.type = "logcounts"), pca=FALSE, tsne=list(dimred="PCA", ncomponents=2), umap=list(dimred="PCA"))
 ```
 
 <a name='cusLab'></a>
 
-<span style="color:red">[ThG: confusing why this falls under manual?]</span>
-
-The custom cell labels (annotations) are defined in the `label` column of `colData`, which are cell sources provided in the original study.  
+The following command returns the cell annotation information from the `label` 
+column of the `colData` component of the `SingleCellExperiment` object, here 
+`sce.dimred`. 
 
 ```{r scLab, eval=TRUE, echo=TRUE, warnings=FALSE}
 unique(colData(sce.dimred)$label) 
 ```
 
-Embedding plot of single cells colored by clusters in the `cluster` column in `colData`.   
+The following embeds the high-dimensional gene expression data into a 2-3
+dimensional space using PCA, tSNE and UMAP. All three embedding result sets
+are stored in the `SingleCellExperiment` object. Subsequently, the UMAP result is 
+visualized as an example in form of a scatter plot where the dots are colored by 
+the corresponding cell labels.
 
 ```{r eval=TRUE, echo=TRUE, warnings=FALSE, fig.wide=TRUE, fig.cap=('Embedding plot single cells. The cells are colored by labels in the `label` column in `colData`.'), out.width="100%", fig.show='show'}
+sce.dimred <- reduce_dim(sce=sce.norm, prop=0.1, min.dim=13, max.dim=50, model.var=list(), top.hvg=list(n = 3000), de.pca=list(assay.type = "logcounts"), pca=FALSE, tsne=list(dimred="PCA", ncomponents=2), umap=list(dimred="PCA"))
 plotUMAP(sce.dimred, colour_by="label")
 ```
 
-Aggregate cells by annnotations defined in the `label` column.   
+Aggregate cells by annnotations defined in the `label` column. <span style="color:red">
+[ThG: First, the previous is an incomplete sentence that should only be used in a title.
+Second, this section is confusing. What do you mean by 'aggregate'? Isn't this done
+already by having the annotations available? Aren't you using the existing annotations 
+to compute a summary statistics for each predefined group of cells belonging to a tissue 
+specified by the annotations? Subsequently, the summary values are used to define the 
+colors in the spatial heatmap, correct? If so try to outline this more clearly. The same 
+applies ot the help file of the aggr_rep function. The text in this help file is hard
+to follow.</span>
 
 ```{r scLabAggr, eval=TRUE, echo=TRUE, warnings=FALSE}
 sce.aggr <- aggr_rep(sce.dimred, assay.na='logcounts', sam.factor='label', con.factor='expVar', aggr='mean')
 ```
 
-The spatial features in mouse brain aSVG are extracted. They are the bulk tissues to be matched with cell labels.   
+Next, the spatial features are extracted with the `return_feature` function 
+from an aSVG image of mouse brain. This sample aSVG image file is provided by 
+the package. 
 
 ```{r eval=TRUE, echo=TRUE, warnings=FALSE}
 svg.mus.brain <- system.file("extdata/shinyApp/example", "mus_musculus.brain.svg", package="spatialHeatmap")
-# Spatial features to match with single cell clusters.
 feature.df <- return_feature(svg.path=svg.mus.brain)
 feature.df$feature
 ```
 
-Create a named `list` to match cells and aSVG features.    
+Create a named `list` to match cells and aSVG features. <span style="color:red">[ThG:
+Why is do you select here only one feature/tissue instead of all annotated features.
+Also the need/utility of this list is unclear. 
 
 ```{r scLabList, eval=TRUE, echo=TRUE, warnings=FALSE}
 lis.match <- list(hypothalamus=c('hypothalamus'))
@@ -218,16 +235,37 @@ Co-visualization on gene `Cops5`.
 colData(sce.aggr)[, c('label', 'expVar')]
 ```
 
+<span style="color:red">[ThG: there needs to be a detailed explanation or legend 
+explaining what is shown on the plot. Again coloring only one tissue creates the 
+impression that tissues need to be depicted one by one instead of a single plot.
+I would change this example to highlight most tissues. Most genes are not so 
+selectively expressed to show up in only one tissue, so choosing here an example
+where this is the case shouldn't be hard.
+</span>
+
 ```{r scLabVis, eval=TRUE, echo=TRUE, warnings=FALSE, fig.wide=TRUE, fig.cap=('Co-visualizing single cells and bulk tissues by custom cell labels. The expression profiles of gene `Cops5` are used.'), out.width="100%", fig.show='show'}
 shm.lis <- spatial_hm(svg.path=svg.mus.brain, data=sce.aggr, ID=c('Cops5'), height=0.7, legend.r=1.5, legend.key.size=0.02, legend.text.size=12, legend.nrow=2, sce.dimred=sce.dimred, dimred='PCA', cell.group='label', assay.na='logcounts', tar.cell=c('matched'), lis.rematch=lis.match, bar.width=0.1, dim.lgd.nrow=1)
 ```
 
-# Manual Method
+## Manual 
 
-In the manual method, cell cluster labels are manually created through clustering algorithms. The same single cell data and aSVG file as in the annotation method are used to domenstrate the manual method.
-The steps of quality control, normalization, and dimensionality reduction are the same with the annotation method, while a subsequent clustering step is involved to created cell labels.  
+In the manual method, cell cluster labels are manually created through
+clustering algorithms. The same single cell data and aSVG file as in the
+annotation method are used to demonstrate the manual method. The steps of
+quality control, normalization, and dimensionality reduction are the same with
+the annotation method, while a subsequent clustering step is involved to
+created cell labels.  
 
-The dimensionality reduction and clustering steps are wrapped in the same function `cluster_cell`. Individual steps are seen in the [Supplementary Section](#stepManu).   
+<span style="color:red">[ThG: I don't understand why the manual method uses clustering???
+If clustering needs to be used here then it is unclear what clustering algorithim is 
+applied.] </span>
+
+The dimensionality reduction and clustering steps are wrapped in the same
+function `cluster_cell`. Individual steps are seen in the [Supplementary
+Section](#stepManu).   
+
+<span style="color:red">[ThG: why does the embedding need to be rerun when
+it was generated before???] </span>
 
 ```{r eval=TRUE, echo=TRUE, warnings=FALSE}
 sce.clus <- read_cache(cache.pa, 'sce.clus')
@@ -237,19 +275,22 @@ if (is.null(sce.clus)) {
 }
 ```
 
-The cluster labels are exclusively saved in the `cluster` column in the `colData` slot.   
+The cluster labels are exclusively saved in the `cluster` column in the
+`colData` slot.   
 
 ```{r eval=TRUE, echo=TRUE, warnings=FALSE}
 table(colData(sce.clus)$cluster)
 ```
 
-Embedding plot of single cells colored by clusters in the `cluster` column in `colData`.   
+Embedding plot of single cells colored by clusters in the `cluster` column in
+`colData`.   
 
 ```{r eval=TRUE, echo=TRUE, warnings=FALSE, fig.wide=TRUE, fig.cap=('Embedding plot single cells. The cells are labeled by clusters in the `cluster` column in `colData`.'), out.width="100%", fig.show='show'}
 plotUMAP(sce.clus, colour_by="cluster")
 ```
 
-The spatial features in mouse brain aSVG are extracted. They are the bulk tissues to be matched with cell clusters.  
+The spatial features in mouse brain aSVG are extracted. They are the bulk
+tissues to be matched with cell clusters.  
 
 ```{r eval=TRUE, echo=TRUE, warnings=FALSE}
 svg.mus.brain <- system.file("extdata/shinyApp/example", "mus_musculus.brain.svg", package="spatialHeatmap")
@@ -258,35 +299,95 @@ feature.df <- return_feature(svg.path=svg.mus.brain)
 feature.df$feature
 ```
 
-Create a named `list` to match cell cluster `clus1` with aSVG feature `hypothalamus`, and cluster `clus3` with `cerebral.cortex` and `midbrain`.    
+Create a named `list` to match cell cluster `clus1` with aSVG feature
+`hypothalamus`, and cluster `clus3` with `cerebral.cortex` and `midbrain`.    
 
 ```{r scAutoList, eval=TRUE, echo=TRUE, warnings=FALSE}
 lis.match.clus <- list('clus1'=c('hypothalamus'), 'clus3'=c('cerebral.cortex', 'midbrain'))
 ```
 
-Aggregate cells by clusters defined in the `cluster` column.  
+Aggregate cells by clusters defined in the `cluster` column. 
+
+<span style="color:red">[ThG: same problem as before the aggregate part is unclear.] </span>
 
 ```{r scAutoAggr, eval=TRUE, echo=TRUE, warnings=FALSE}
 sce.clus.aggr <- aggr_rep(sce.clus, assay.na='logcounts', sam.factor='cluster', con.factor=NULL, aggr='mean')
 ```
 
-Co-visualization on gene `Cops5`.  
+Co-visualization of gene `Cops5`.  
 
 ```{r scAutoVis, eval=TRUE, echo=TRUE, warnings=FALSE, fig.wide=TRUE, fig.cap=('Co-visualizing single cells and bulk tissues by manually-detected cell clusters. The expression profiles of gene `Cops5` are used.'), out.width="100%", fig.show='show'}
 shm.lis <- spatial_hm(svg.path=svg.mus.brain, data=sce.clus.aggr, ID=c('Cops5'), height=0.7, legend.r=1.5, legend.key.size=0.02, legend.text.size=12, legend.nrow=3, sce.dimred=sce.clus, dimred='PCA', cell.group='cluster', assay.na='logcounts', tar.cell=c('matched'), lis.rematch=lis.match.clus, bar.width=0.11, dim.lgd.nrow=1)
 ```
 
-# Automatic Method
+<span style="color:red">[ThG: I don't understand why this section is called 'Manual'?]</span>
 
-Except for annatation and manual clustering methods, an automatic method is developed to match cells and bulk tissues in co-visualization. The automatic process is carried out by combining and co-clustering bulk and single cell data. The bulk and single cell data need to be derived from the same organ or same large tissue. If same organ, the single cell data are assayed on the whole organ. By contrast, if single cell data are from a whole tissue, the bulk tissues should be sub-tissues. To obtain optimal default settings for the automatic method, utilities for optimizing the automatic method are developed in *spatialHeatmap*. This section showcases application of the automatic method on mouse brain data with default settings obtained through optimization. The optimization on toy data and real data are explained in the [Supplementary Section](#opt).    
+## Automatic
 
-The potential applications of auto-matching include: 1) Reduce single cell RNA-seq (scRNA-seq) complexities. In conventional scRNA-seq, there is ususally a complex and laborious stage of isolating single cells. Auto-matching has the potential to avoid such processes since it only requires scRNA-seq on a whole organ; 2) Discover novel cell types. The cells with bulk tissue assignments are assumed to be major populations in the bulk, while cells without bulk assignemnts are likely to be novel cell types or cells at the bulk tissue boundaries; and 3) Estimate cellular compositions. If bulk tissues are representative of a whole organ, cellular compositions of the organ could be estimated according to their bulk tissue assignments. This application is useful in disease diagnose and treatment, since it helps to analyze each cell type's contribution to the disease.    
+In addition to the annatation and manual methods, an automatic method is
+provided that matches cells and bulk tissues for co-visualization. The automatic
+process is carried out by combining and co-clustering bulk and single cell
+data. The bulk and single cell data need to be derived from the same organ or
+tissue. If same organ, the single cell data are assayed on the whole
+organ. <span style="color:red">[ThG: why is that a requirement? You need
+to better explain what the requirements are here.]</span>
+By contrast, if single cell data are from a whole tissue, the bulk
+tissues should be sub-tissues. To obtain optimal default settings for the
+automatic method, utilities for optimizing the automatic method are developed
+in *spatialHeatmap*. This section showcases application of the automatic method
+on mouse brain data with default settings obtained through optimization. The
+optimization on toy data and real data are explained in the [Supplementary
+Section](#opt).    
+
 
 ## Workflow Overview
 
-Figure \@ref(fig:coclusOver) is the automatic method (co-clustering) workflow overview. The inputs are raw count data (*e.g.* RNA-seq) of bulk tissues and single cells of the same organ (Figure \@ref(fig:coclusOver).1). The single cells should come from the whole organ or at least covers the bulk tissues. The identities of each bulk tissue and each cell need to be labeled so as to evaluate the co-clustering performance. Bulk and single cell data are initially filtered at low strigency. The main difference between bulk and single cells is the sparsity in the latter. To reduce such difference, the bulk and single-cell data are combined, normalized, and then separated (Figure \@ref(fig:coclusOver).2). After separation, the normalized bulk data are filtered to remove genes of low and constant expressions (Figure \@ref(fig:coclusOver).3). The normalized single-cell data are also filtered to remove genes and cells having high zero-count rates. After filtered, the gene dimensionalities of single-cell data are reduced using PCA or UMAP method, and the top dimensionalities are clustered (Figure \@ref(fig:coclusOver).4). In each cell cluster, cells having low similarities with other cells in the same cluster are filtered (Figure \@ref(fig:coclusOver).5), and therefore the remaining clusters are more homogeneous (Figure \@ref(fig:coclusOver).6). The filtered bulk and filtered single cells are combined and co-clustered (Figure \@ref(fig:coclusOver).7).  
+<span style="color:red">[ThG: would simplify and generalize this section to all three
+methods and move it to the introduction at the beginning. Most of what you are
+discribing here applies to all methods. By adjusting the illustration you can 
+use the illustration for all 3 methods.]</span>
 
-The results include three types of co-clusters: 1) Two bulk tissues are clustered with cells. The source bulk is assigned to each cell according to Spearman's correlation coefficient. For example, in Figure \@ref(fig:coclusOver).8a bulk A is assigned to cell a1 because a1 has higher similarity with A than B. Since the true source bulk of a1 is A, this assignment is TRUE. By contrast, cell b1 also has higher similarity with A than B, and A is assigned to b1, but this assignment is labeled FALSE since the true source bulk of b1 is B; 2). Only one bulk tissue is clustered with cells. This bulk is assigned to all the cells in the same co-cluster (\@ref(fig:coclusOver).8b); and 3) No bulk is included. All these cells are discarded (Figure \@ref(fig:coclusOver).8c). Lastly, the Spearman's correlation coefficient and TRUE or FALSE assignments are used to create ROC plots and evaluate the performance (Figure \@ref(fig:coclusOver).9).
+Figure \@ref(fig:coclusOver) is the automatic method (co-clustering) workflow
+overview. The inputs are raw count data (*e.g.* RNA-seq) of bulk tissues and
+single cells of the same organ (Figure \@ref(fig:coclusOver).1). The single
+cells should come from the whole organ or at least covers the bulk tissues. The
+identities of each bulk tissue and each cell need to be labeled so as to
+evaluate the co-clustering performance. Bulk and single cell data are initially
+filtered at low strigency. The main difference between bulk and single cells is
+the sparsity in the latter. To reduce such difference, the bulk and single-cell
+data are combined, normalized, and then separated (Figure
+\@ref(fig:coclusOver).2). After separation, the normalized bulk data are
+filtered to remove genes of low and constant expressions (Figure
+\@ref(fig:coclusOver).3). The normalized single-cell data are also filtered to
+remove genes and cells having high zero-count rates. After filtered, the gene
+dimensionalities of single-cell data are reduced using PCA or UMAP method, and
+the top dimensionalities are clustered (Figure \@ref(fig:coclusOver).4). In
+each cell cluster, cells having low similarities with other cells in the same
+cluster are filtered (Figure \@ref(fig:coclusOver).5), and therefore the
+remaining clusters are more homogeneous (Figure \@ref(fig:coclusOver).6). The
+filtered bulk and filtered single cells are combined and co-clustered (Figure
+\@ref(fig:coclusOver).7).  
+
+The results include three types of co-clusters: 1) Two bulk tissues are
+clustered with cells. The source bulk is assigned to each cell according to
+Spearman's correlation coefficient. For example, in Figure
+\@ref(fig:coclusOver).8a bulk A is assigned to cell a1 because a1 has higher
+similarity with A than B. Since the true source bulk of a1 is A, this
+assignment is TRUE. By contrast, cell b1 also has higher similarity with A than
+B, and A is assigned to b1, but this assignment is labeled FALSE since the true
+source bulk of b1 is B; 2). Only one bulk tissue is clustered with cells. This
+bulk is assigned to all the cells in the same co-cluster
+(\@ref(fig:coclusOver).8b); and 3) No bulk is included. All these cells are
+discarded (Figure \@ref(fig:coclusOver).8c). Lastly, the Spearman's correlation
+coefficient and TRUE or FALSE assignments are used to create ROC plots and
+evaluate the performance (Figure \@ref(fig:coclusOver).9).
+<span style="color:red">[ThG: ROCs can only be generated if the correct assingments
+are known. Readers will not understand why this is mentioned here and how they
+would use the tool since they don't have the true tissue assignments.]</span>
+
+<span style="color:red">[ThG: also note the text in the above two paragraph needs
+major revisions with respect to grammar and clarity.]</span>
+
 
 
 ```{r coclusOver, echo=FALSE, fig.wide=TRUE, out.width="80%", fig.cap=("Overview of coclustering. The coclustering are illustrated in 9 steps. Basically, bulk and single data are initially filtered, then combined, normalized, and separated. The normalized bulk and single cell data are filtered again. Single cells are clustered and resulting clusters are refined. Subsequently bulk and single cells are combined and co-clustered. In each co-cluster, bulk tissues are assigned to cells. The assignments are evaluated by ROC curves.")}
@@ -337,6 +438,8 @@ if (is.null(mus.lis.nor)) {
 ```
 
 Secondary filtering at higher strigency.  
+<span style="color:red">[ThG: unnecessary complication, why not doing the filtering 
+right from the start?]</span>
 
 ```{r , eval=TRUE, echo=TRUE, warnings=FALSE}
 blk.mus.fil <- filter_data(data=logcounts(mus.lis.nor$bulk), sam.factor=NULL, con.factor=NULL, pOA=c(0.1, 0.5), CV=c(0.2, 100), verbose=FALSE) 
@@ -344,13 +447,21 @@ mus.lis.fil <- filter_cell(lis=list(sc.mus=logcounts(mus.lis.nor$sc.mus)), bulk=
 ```
 
 The aSVG file of mouse brain.  
+<span style="color:red">[ThG: again use full sentences in paragraphs.]</span>
 ```{r , eval=TRUE, echo=TRUE, warnings=FALSE}
 svg.mus.brain <- system.file("extdata/shinyApp/example", "mus_musculus.brain.svg", package="spatialHeatmap")
 # Spatial features.  
 feature.df <- return_feature(svg.path=svg.mus.brain)
 ```
 
-The true matching between bulk tissues and single cells are defined in a table and provided to the co-clustering workflow so that the performance can be assessed. In addition, the matching between tissues and aSVG features (`SVGBulk`) are defined in the same table, which is used to create the co-visualization plot.    
+The true matching between bulk tissues and single cells are defined in a table
+and provided to the co-clustering workflow so that the performance can be
+assessed. 
+<span style="color:red">[ThG: again users won't have this. The optimization belongs
+into the supplement.]</span>
+In addition, the matching between tissues and aSVG features
+(`SVGBulk`) are defined in the same table, which is used to create the
+co-visualization plot.    
 
 ```{r , eval=TRUE, echo=TRUE, warnings=FALSE}
 match.mus.brain.pa <- system.file("extdata/shinyApp/example", "match_mouse_brain_cocluster.txt", package="spatialHeatmap")
@@ -358,13 +469,22 @@ df.match.mus.brain <- read.table(match.mus.brain.pa, header=TRUE, row.names=1, s
 df.match.mus.brain
 ``` 
 
-Ensure the `SVGBulk` tissues are in the aSVG file.   
+Ensure the `SVGBulk` tissues are present in the aSVG file.   
 
 ```{r , eval=TRUE, echo=TRUE, warnings=FALSE}
 df.match.mus.brain$SVGBulk %in% feature.df$feature
 ```
 
-The processes of clustering single cells, refining cell clusters, and co-clustering bulk and single cells (Figure \@ref(fig:coclusOver)) are performed in a single function call. Setting `return.all=TRUE` returns a `list` of refined cell clusters, ROC object, and a `data.frame` of auto-matching results. If `return.all=FALSE`, a `data.frame` of parameter settings and resulting AUC is returned. Details of individual steps are provided in the [Supplementary Section](#stepAuto).   
+The processes of clustering single cells, refining cell clusters, and
+co-clustering bulk and single cells (Figure \@ref(fig:coclusOver)) are
+performed in a single function call. Setting `return.all=TRUE` returns a `list`
+of refined cell clusters, ROC object, and a `data.frame` of auto-matching
+results. If `return.all=FALSE`, a `data.frame` of parameter settings and
+resulting AUC is returned. Details of individual steps are provided in the
+[Supplementary Section](#stepAuto).   
+
+<span style="color:red">[ThG: now you are implying the ROC is a requirement? 
+Users will stop here since they will not have it. ]</span>
 
 ```{r , eval=TRUE, echo=TRUE, warnings=FALSE}  
 res.lis <- read_cache(cache.pa, 'res.lis')
@@ -382,6 +502,8 @@ table(res.lis$df.roc$response)
 ```
 
 ROC curve is created according to `roc.lis$df.roc` and the AUC value indicates the auto-matching performance, where higher AUC indicates better performance.   
+<span style="color:red">[ThG: I am lost. Why is the ROC part here? ]</span>
+
 ```{r , eval=TRUE, echo=TRUE, warnings=FALSE, fig.wide=TRUE, fig.cap=('ROC curve of auto-matching on mouse brain data. The AUC value is a measure of accuracy on bulk assignments.'), out.width="70%", fig.show='show'}
 plot(res.lis$roc.obj, print.auc=TRUE)
 ```
@@ -400,9 +522,19 @@ The coclustering is run on 2 cpu cores (`workers=2`).
 res.multi <- cocluster(bulk=mus.lis.fil$bulk, cell=mus.lis.fil$sc.mus, df.match=df.match.mus.brain, df.para=df.par, sc.dim.min=10, max.dim=50, sim=0.2, sim.p=0.8, dim=13, graph.meth='knn', dimred='PCA', sim.meth='spearman', return.all=TRUE, multi.core.par=MulticoreParam(workers=2, RNGseed=50), verbose=FALSE)
 ```
 
+<span style="color:red">[ThG: users would expect to see a plot next, yet a new subsection
+starts now that lacks context. Is this an oversight?]</span>
+
 ### Tailoring Co-clustering Results
 
-The co-clustering results can be tailored through "Lasso Select" on the convenience Shiny app (`desired_bulk_shiny`) or manually defining desired bulk. If the former, save `cell.refined` in an `.rds` file by `saveRDS(cell.refined, file='cell.refined.rds')` and upload `cell.refined.rds` to the Shiny app, where tailoring instructions are provided.    
+The co-clustering results can be tailored through "Lasso Select" on the
+convenience Shiny app (`desired_bulk_shiny`) or manually defining desired bulk.
+If the former, save `cell.refined` in an `.rds` file by `saveRDS(cell.refined,
+file='cell.refined.rds')` and upload `cell.refined.rds` to the Shiny app, where
+tailoring instructions are provided.    
+
+<span style="color:red">[ThG: I don't understand the above paragraph. 
+The shiny part is totally out of context.]</span>
 
 Example of desired bulk downloaded from the convenience Shiny app. The x-y coordinates refer to single cells in embbeding plots (`dimred`).    
 ```{r , eval=TRUE, echo=TRUE, warnings=FALSE}  
@@ -424,7 +556,15 @@ df.desired.bulk <- data.frame(x.min=c(-6, 6), x.max=c(-4, 10), y.min=c(6, -4), y
 df.desired.bulk
 ```
 
-Extract cells with bulk assignments. If the `df.desired.bulk` argument is assigned a value, the corrresponding assignments are incorporated in `res.lis$df.roc`, and their `response` and `predictor` is set `TRUE` and 1 respectively. `thr` is a cutoff for the `predictor` in `res.lis$df.roc`, so `thr=0` denotes `predictor` is not filtered. `true.only=TRUE` indicates only true assignments are extracted.   
+Extract cells with bulk assignments. If the `df.desired.bulk` argument is
+assigned a value, the corrresponding assignments are incorporated in
+`res.lis$df.roc`, and their `response` and `predictor` is set `TRUE` and 1
+respectively. `thr` is a cutoff for the `predictor` in `res.lis$df.roc`, so
+`thr=0` denotes `predictor` is not filtered. `true.only=TRUE` indicates only
+true assignments are extracted.   
+
+<span style="color:red">[ThG: lack of context; hard to follow; does this need
+to be here?]</span>
 
 ```{r , eval=TRUE, echo=TRUE, warnings=FALSE}  
 sce.lis <- sub_asg(res.lis=res.lis, thr=0, df.desired.bulk=df.desired.bulk, df.match=df.match.mus.brain, true.only=TRUE)
@@ -432,13 +572,26 @@ sce.lis <- sub_asg(res.lis=res.lis, thr=0, df.desired.bulk=df.desired.bulk, df.m
 
 ### Co-visualization
 
-Aggregate extracted cells by `SVGBulk`. The aggregated cells are equivalent to bulk tissues (spatial features) in the aSVG. The aggregated abundance profiles are used to color matching bulk tissues in the aSVG image.    
+Aggregate extracted cells by `SVGBulk`. The aggregated cells are equivalent to
+bulk tissues (spatial features) in the aSVG. The aggregated abundance profiles
+are used to color matching bulk tissues in the aSVG image.    
+
+<span style="color:red">[ThG: I am unable follow. Please provide clearer explantions
+to help readers what is done here or remove this part. The fact that you are not
+showing any output or visualization in this and other code sections makes it very
+hard to understand what is happening throughout.]</span>
 
 ```{r , eval=TRUE, echo=TRUE, warnings=FALSE}  
 sce.aggr <- aggr_rep(data=sce.lis$cell.sub, assay.na='logcounts', sam.factor='SVGBulk', con.factor=NULL, aggr='mean')
 ```
 
-Co-visualize bulk and single cells with aggregated abundance profiles of gene `Adcy1`. `tar.bulk` refers to the target bulk in aSVG and all corresponding cells are highlighted in the embedding plot. Cells with true assignments of `tar.bulk` are colored according to the color key, while other corresponding cells with false or without assignments are colored black. All other cells not corresponding to `tar.bulk` are in gray. In the embedding plot, the top and right clusters of red cells are the cells defined in `df.desired.bulk`.   
+Co-visualize bulk and single cells with aggregated abundance profiles of gene
+`Adcy1`. `tar.bulk` refers to the target bulk in aSVG and all corresponding
+cells are highlighted in the embedding plot. Cells with true assignments of
+`tar.bulk` are colored according to the color key, while other corresponding
+cells with false or without assignments are colored black. All other cells not
+corresponding to `tar.bulk` are in gray. In the embedding plot, the top and
+right clusters of red cells are the cells defined in `df.desired.bulk`.   
 
 ```{r , eval=TRUE, echo=TRUE, warnings=FALSE, fig.wide=TRUE, fig.cap=('Co-visualizing bulk and single cells of mouse brain with abundance profiles. The aggregated expression profiles of gene `Adcy1` are plotted.'), out.width="100%", fig.show='show'}
 shm.lis1 <- spatial_hm(svg.path=svg.mus.brain, data=sce.aggr, ID=c('Adcy1'), legend.nrow=4, sce.dimred=sce.lis$cell.refined, dimred='PCA', assay.na='logcounts', tar.bulk=c('cerebral.cortex'), profile=TRUE, dim.lgd.text.size=10, dim.lgd.nrow=1, bar.width=0.1)
@@ -454,7 +607,15 @@ shm.lis2 <- spatial_hm(svg.path=svg.mus.brain, data=sce.aggr, ID=c('Adcy1'), leg
 
 When using the Shiny app, single cell data in annotation method or combined
 single cell and bulk data in automatic method are saved in an `.rds` file of
-`SingleCellExperiment` object by `saveRDS`. In addition, in the automatic method bulk tissues and single cells are labeled by `bulk` and `cell` respectively by the `bulkCell` column in `colData` slot. The true matching table is stored in the `metadata` list with the name `df.match`. The example below illustrates these rules.     
+`SingleCellExperiment` object by `saveRDS`. In addition, in the automatic
+method bulk tissues and single cells are labeled by `bulk` and `cell`
+respectively by the `bulkCell` column in `colData` slot. The true matching
+table is stored in the `metadata` list with the name `df.match`. The example
+below illustrates these rules.     
+
+
+<span style="color:red">[ThG: this section would need to show a screenshot
+showing where this is used in the shiny app.]</span>
 
 ```{r , eval=TRUE, echo=TRUE, warnings=FALSE}  
 sce.auto <- readRDS(system.file("extdata/shinyApp/example", 'sce_auto_bulk_cell_mouse_brain.rds', package="spatialHeatmap"))

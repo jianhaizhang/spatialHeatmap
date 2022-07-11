@@ -18,7 +18,8 @@ cocluster(
   dimred = "PCA",
   sim.meth = "spearman",
   return.all = FALSE,
-  multi.core.par = MulticoreParam(workers = 1, stop.on.error = FALSE, log = FALSE),
+  multi.core.par = MulticoreParam(workers = 1, RNGseed = NULL, stop.on.error = FALSE,
+    log = FALSE),
   verbose = TRUE,
   file = NULL
 )
@@ -50,7 +51,7 @@ cocluster(
 
 \item{return.all}{Logical. If \code{TRUE}, single cell data after refining cluster, \code{roc} object and the \code{data.frame} to create the \code{roc} during coclustering are returned in a nested list. If \code{FALSE} (default), the \code{df.para}  table including coclustering statisctics are returned. \code{auc} denotes area under the curve. \code{true} and \code{total} indicate the total true assignments of bulk tissues and total assignments (true and false) respectively. \code{thr}, \code{spec}, and \code{sens} refer to the optimal similarity threshold between bulk and cells in coclusters, specificity, and sensitivity corresponding to \code{thr} respectively.}
 
-\item{multi.core.par}{The parallelization settings. Default is \code{MulticoreParam(workers=1, stop.on.error=FALSE, log=FALSE, logdir=NULL)}. See \code{\link[BiocParallel]{MulticoreParam}}.}
+\item{multi.core.par}{The parallelization settings. Default is \code{MulticoreParam(workers=1, RNGseed=NULL, stop.on.error=FALSE, log=FALSE, logdir=NULL)}. See \code{\link[BiocParallel]{MulticoreParam}}.}
 
 \item{verbose}{Logical. If \code{TRUE} (default), intermediate messages are printed.}
 

@@ -4,7 +4,7 @@
 #' @param node.parent An object of class "xml_node" with children, i.e. one of the last two nodes in SVG file, outline and tissue layer respectively.
 #' @return Nothing is returned. The broken paths are updated in the root.
 
-#' @author Jianhai Zhang \email{jzhan067@@ucr.edu; zhang.jianhai@@hotmail.com} \cr Dr. Thomas Girke \email{thomas.girke@@ucr.edu}
+#' @author Jianhai Zhang \email{jzhan067@@ucr.edu} \cr Dr. Thomas Girke \email{thomas.girke@@ucr.edu}
 #' @noRd
 
 #' @references

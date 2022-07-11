@@ -15,7 +15,7 @@
 #' target.clp <- read_fr(clp.tar)
 #' target.clp <- com_factor(target=target.clp, factors2com=c('organism_part', 'age'), factor.new='samTime')
 
-#' @author Jianhai Zhang \email{jzhan067@@ucr.edu; zhang.jianhai@@hotmail.com} \cr Dr. Thomas Girke \email{thomas.girke@@ucr.edu}
+#' @author Jianhai Zhang \email{jzhan067@@ucr.edu} \cr Dr. Thomas Girke \email{thomas.girke@@ucr.edu}
 #' @references
 #' Narsai, Reena, David Secco, Matthew D Schultz, Joseph R Ecker, Ryan Lister, and James Whelan. 2017. "Dynamic and Rapid Changes in the Transcriptome and Epigenome During Germination and in Developing Rice (Oryza Sativa) Coleoptiles Under Anoxia and Re-Oxygenation." Plant J. 89 (4): 805–24
 

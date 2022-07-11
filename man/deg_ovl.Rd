@@ -70,5 +70,5 @@ Nils Gehlenborg (2019). UpSetR: A More Scalable Alternative to Venn and Euler Di
 \code{spatial_enrich}
 }
 \author{
-Jianhai Zhang \email{jzhan067@ucr.edu; zhang.jianhai@hotmail.com} \cr Dr. Thomas Girke \email{thomas.girke@ucr.edu}
+Jianhai Zhang \email{jzhan067@ucr.edu} \cr Dr. Thomas Girke \email{thomas.girke@ucr.edu}
 }
