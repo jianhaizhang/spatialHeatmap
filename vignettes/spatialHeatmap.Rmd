@@ -1098,59 +1098,92 @@ across six cell types (Figure \@ref(fig:shshm)).
 spatial_hm(svg.path=svg.sh, data=se.fil.arab, ID=c("HRE2"), height=0.7, legend.nrow=3, legend.text.size=11)
 ```
 
-<font style='color:red'>
+## Superimposing raster and vector graphics 
 
-## Overlaying 
+`spatialHeatmap` allows to superimpose raster images with vector-based SHMs. This 
+way one can generate SHMs that resemble photographic representations
+of tissues, organs or entire organisms. For this to work the shapes represented in the
+vector-graphics need to be an aligned carbon copy of the raster image.
+Supported file formats for the raster image are JPG/JPEG and PNG, and for the
+vector image it is SVG. Matching raster and vector graphics are indicated by
+identical base names in their file names (_e.g._ imageA.png and imageA.svg).
+The layout order in SHMs composed of multiple independent images can be
+controlled by numbering the corresponding file pairs accordingly such as
+imageA-1.png and imageA-1.svg, imageA-2.png and imageA-2.svg, etc. 
 
-`spatialHeatmap` supports overlaying real images with SHMs, which provides more intuitive background. There are certain requirements to utilize this feature: 1) The real images are templates for creating aSVGs and the formats include `.jpg`, `.JPG`, `.png`, `.PNG`; 2) Except for file extensions, the file names of templates and aSVGs should be same such as `real_shm.png`, `real_shm.svg`. In other words, templates and aSVGs should be paired; and 3) If multiple templates/aSVGs are used such as developmental stages, names of separate template/aSVG files need to include the following suffixes: `*_shm1.png`, `*_shm1.svg`, `*_shm2.png`, `*_shm2.svg`, etc. Otherwise, the order of these images is not recognized.  
+In the following example, the required image pairs have been pre-generated from
+a study on abaxial bundle sheath (ABS) cells in maize leaves
+[@Bezrutczyk2021-fq]. Their file names are labeled 1 and 2 to indicate two
+developmental stages.  
 
-In the following example, template images are modified from a study on abaxial bundle sheath (ABS) cells in maize leaves [@Bezrutczyk2021-fq]. They are labeled 1 and 2 to mimic two developmental stages. The data are randomly generated.   
-
-The first template and paired aSVG.  
+Import of first png/svg image pair:  
 ```{r eval=TRUE, echo=TRUE, warnings=FALSE}
 tmp.pa1 <- system.file('extdata/shinyApp/example/maize_leaf_shm1.png', package='spatialHeatmap')
 svg.pa1 <- system.file('extdata/shinyApp/example/maize_leaf_shm1.svg', package='spatialHeatmap')
 ```
 
-The second template and paired aSVG.  
+Import of second png/svg image pair:  
 ```{r eval=TRUE, echo=TRUE, warnings=FALSE}
 tmp.pa2 <- system.file('extdata/shinyApp/example/maize_leaf_shm2.png', package='spatialHeatmap')
 svg.pa2 <- system.file('extdata/shinyApp/example/maize_leaf_shm2.svg', package='spatialHeatmap')
 ```
 
-Random data.  
+Import of quantitative assay data: 
 ```{r eval=TRUE, echo=TRUE, warnings=FALSE}
 dat.overlay <- read_fr(system.file('extdata/shinyApp/example/dat_overlay.txt', package='spatialHeatmap'))
 dat.overlay[1:2, ]
 ```
 
-The real images may contain colors that interfere with SHMs. To address such issues, the argument `alpha.overlay` is developed to adjust transparency of real images. In Figure \@ref(fig:overCol), expression profiles of gene1 are plotted on SHMs and SHMs are placed on top of template images.    
+To minimize masking of the features in the SHMs by dense regions in the raster images, 
+the `alpha.overlay` argument allows to adjust the transparency level. In Figure \@ref(fig:overCol), 
+the spatial features of interest are superimposed onto the raster image.   
 
 ```{r overCol, eval=TRUE, echo=TRUE, warnings=FALSE, fig.wide=TRUE, fig.cap=('Overlaying real images with SHMs (colorful backaground). The expression profiles of gene1 are plotted on ABS cells.'), out.width="100%", fig.show='show'}
 spatial_hm(svg.path=c(svg.pa1, svg.pa2), data=dat.overlay, tmp.path=c(tmp.pa1, tmp.pa2), charcoal=FALSE, ID=c('gene1'), alpha.overlay=0.5, bar.width=0.09, sub.title.vjust=4)
 ```
 
-To reduce template colors to minimum, templates can be set black-white by `charcoal=TRUE` (Figure \@ref(fig:overChar)).  
+Another option for reducing masking effects is to display the raster image in black and white by setting `charcoal=TRUE` (Figure \@ref(fig:overChar)).  
 
 ```{r overChar, eval=TRUE, echo=TRUE, warnings=FALSE, fig.wide=TRUE, fig.cap=('Overlaying real images with SHMs (black-white background). The expression profiles of gene1 are plotted on ABS cells.'), out.width="100%", fig.show='show'}
 spatial_hm(svg.path=c(svg.pa1, svg.pa2), data=dat.overlay, tmp.path=c(tmp.pa1, tmp.pa2), charcoal=TRUE, ID=c('gene1'), alpha.overlay=0.5, bar.width=0.09, sub.title.vjust=4)
 ```
 
-</font>
 
 ## Spatiotemporal Heatmaps (STHMs) {#sthm} 
 
-The above examples are SHMs plotted at the single spatial dimension. This section showcases the application of SHMs at spatial and temporal dimesions, *i.e.* data assayed in spatial feature(s) across different development stages.  
+The SHM plots shown so far are restricted to the spatial dimension. This section
+extends this to experiments with spatiotemporal resolution. A common use case for this are 
+applications involving several development stages.  
 
-The data at single spatial dimension contains only two factors: samples and conditions. By contrast, the spatiotemporal data contains three factors: samples, conditions, and times (development stages). There are three alternatives to organize the three factors: 1) combine samples and conditions; 2) combine samples and times; or 3) combine samples, conditions, and times. More details are provided in the [Supplementary Section](#spa.tem).  
+<font style='color:red'>This section 3.7 is far too long! In addition, it is very 
+difficult and confusing how you introduce the different experimental designs. Just
+say how certain more complex designs are supported and show a single SHM result for it.
+Also why is necessary to repeat all the preprocssing steps. This way the you are scaring
+users by createing the impression that they need to become R programmers in order to use the
+package.</font>
 
-Which option to choose depends on the specific data and aSVGs, and the chosen one should achieve optimal visualization. In this example, the third is the best choice and will be showcased in the first part. Meanwhile, for demonstration purpose the second choice will also be illustrated in the second part. In the spatiotemporal application, different development stages can be represented in different aSVG images, and this feature will be presented in the third part.   
+The data at single spatial dimension contains only two factors: samples and
+conditions. By contrast, the spatiotemporal data contains three factors:
+samples, conditions, and times (development stages). There are three
+alternatives to organize the three factors: 1) combine samples and conditions;
+2) combine samples and times; or 3) combine samples, conditions, and times.
+More details are provided in the [Supplementary Section](#spa.tem).  
+
+Which option to choose depends on the specific data and aSVGs, and the chosen
+one should achieve optimal visualization. In this example, the third is the
+best choice and will be showcased in the first part. Meanwhile, for
+demonstration purpose the second choice will also be illustrated in the second
+part. In the spatiotemporal application, different development stages can be
+represented in different aSVG images, and this feature will be presented in the
+third part.   
 
 ### Sample-Time-Condition Factor
 
 #### Gene Expression Data
 
-The data is from the transcriptome analysis on rice coleoptile during germinating and developing stages under anoxia and re-oxygenation [@Narsai2017-ql], which is also downloaded with `ExpressionAtlas`.   
+The data is from the transcriptome analysis on rice coleoptile during
+germinating and developing stages under anoxia and re-oxygenation
+[@Narsai2017-ql], which is also downloaded with `ExpressionAtlas`.   
 
 ```{r eval=TRUE, echo=TRUE, warnings=FALSE}
 rse.clp <- read_cache(cache.pa, 'rse.clp') # Retrieve data from cache.
