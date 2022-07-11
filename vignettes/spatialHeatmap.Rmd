@@ -1155,12 +1155,16 @@ The SHM plots shown so far are restricted to the spatial dimension. This section
 extends this to experiments with spatiotemporal resolution. A common use case for this are 
 applications involving several development stages.  
 
-<font style='color:red'>This section 3.7 is far too long! In addition, it is very 
+<font style='color:blue'>[ThG-Comment: This section 3.7 is far too long! In addition, it is very 
 difficult and confusing how you introduce the different experimental designs. Just
-say how certain more complex designs are supported and show a single SHM result for it.
-Also why is necessary to repeat all the preprocssing steps. This way the you are scaring
+stating how certain more complex designs are supported and showing a single SHM result for it
+would be sufficient. Also why is necessary to repeat all the preprocssing steps. This way you are scaring
 users by createing the impression that they need to become R programmers in order to use the
-package.</font>
+package. I also don't understand the difference between section 4 and 5, both deal with 
+one or more experimental variables. So why is it necessary to have both? Combined those
+sections are as long or longer as an average vignette. Again you are overloading the reader
+and the structure of your these sections is not well thought through since it duplicates so many
+things that have been covered already.</font>
 
 The data at single spatial dimension contains only two factors: samples and
 conditions. By contrast, the spatiotemporal data contains three factors:
