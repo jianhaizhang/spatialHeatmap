@@ -74,7 +74,7 @@ text.]</span>
 
 The primary utility of the _spatialHeatmap_ package is the generation of
 _spatial heatmaps_ (SHM) for visualizing cell-, tissue- and organ-specific
-abundance patterns of biological molecules in anatomical images. This is useful
+abundance patterns of biological molecules in anatomical images [@shm]. This is useful
 for identifying genes with spatially enriched (SE) expression patterns as
 well as clusters and/or network modules composed of genes sharing similar
 expression patterns. These functionalities are described in the [main
@@ -231,7 +231,7 @@ lis.match.toy <- list(G1=c('hypothalamus'), G0=c('brainstem', 'medulla.oblongata
 ```
 
 <font style='color:blue'>
-The co-visualization is created on gene `Gene_0010`. The embedding plot includes all single cells before aggregation. The `G1` and `G0` cells are colored by their respecitive aggregated expression profiles and indicated in the legend at the bottom. In the nearby spatial heatmap plot, aSVG features are filled by the same color as the matching cells defined in the named `list` (`lis.match.toy`).   
+The co-visualization is created on gene `Gene_0010`. The embedding plot includes all single cells before aggregation. The `G1` and `G0` cells are colored by their respecitive aggregated expression profiles (`data=sce.aggr.toy`) and indicated in the legend at the bottom. In the nearby spatial heatmap plot, aSVG features are filled by the same color as the matching cells defined in the named `list` (`lis.match.toy`). The `cell.group` argument indicates which column is considered as cell labels in the `colData` slot of `sce.aggr.toy`.         
 </font>
 
 ```{r , eval=TRUE, echo=TRUE, warnings=FALSE, results='hide', fig.cap=('Example co-visualization plot. The co-visualization is created on gene `Gene_0010`. Single cells in the embedding plot and their matching aSVG features in the spatial heatmap are filled by the same color according to aggregated assay profiles within each cell label.')}
@@ -240,20 +240,22 @@ shm.lis.toy <- spatial_hm(svg.path=svg.mus.brain, data=sce.aggr.toy, ID=c('Gene_
 
 ## Annotation-based  
 
-The annotation method allows to provide known cell-to-tissue annotations. These 
-cell labels are stored in the `label` column of the `colData` slot in an SCE object, <span style="color:blue"> which is usually an existing object created by the community. </span> 
+<font style="color:blue">
+The annotation method mainly takes advantage of annotation labels in existing SCE objects created by the community, such as the SCE objects from the R package `scRNAseq` [@scrnaseq].    
+</font>
 
 <span style="color:red">[ThG: 
 the Shiny part makes no sense in this annotation section since mouse actions would fall 
 under manual mode. There must be an upload option in the app.]</span>
 
+<font style="color:blue">
 The following example uses single cell data from oligodendrocytes of mouse
-brain [@Marques2016-ff]. Prior to co-visualizing, the single cell data are
+brain [@Marques2016-ff], which is downloaded in `scRNAseq` [@scrnaseq] with minor changes. Prior to co-visualizing, the single cell data are
 pre-processed with standard QC and normalization methods. The details of these
 steps are described in the
 [OSCA](http://bioconductor.org/books/3.14/OSCA.workflows/zeisel-mouse-brain-strt-seq.html){target='blank'}
 tutorial.
-
+</font>
 
 ```{r , eval=TRUE, echo=TRUE, warnings=FALSE}
 set.seed(10)
@@ -302,12 +304,11 @@ plotUMAP(sce.dimred, colour_by="label")
 ```
 
 <font style="color:blue">
-The following command returns a slice of the cell annotation and experiment variable information from the `label` and `expVar` 
-column respectively of the `colData` component of the `SingleCellExperiment` object, here `sce.dimred`.   
+The following command returns a slice of cell metadata in the `colData` slot of SCE. In principle, every column can be utilized as annotation labels for the purpose of co-visualization. In this example, the `label` and `expVar` columns are taken as annotation labels and experiment treatment variables respectively.    
 </font>
 
 ```{r scLab, eval=TRUE, echo=TRUE, warnings=FALSE}
-colData(sce.dimred)[25:27, c('label', 'expVar')]
+colData(sce.dimred)[25:27, ]
 ```
 
  <span style="color:red">
@@ -321,7 +322,7 @@ applies ot the help file of the aggr_rep function. The text in this help file is
 to follow.</span>
 
 <font style="color:blue">
-Each annotation label in the `label` column of `colData` defines a cell group or cluster. The expression profiles of each gene are aggregated by mean (`aggr='mean'`) within each cell group. If experiment variables are provided, here `con.factor='expVar'`, the aggregation will be performed on the new variable as a combination of `label` and `expVar`. The aggregation is carried out on normalized data indicated by `assay.na='logcounts'`.   
+Each annotation label in the `label` column of `colData` defines a cell group or cluster (`sam.factor='label'`). The expression profiles of each gene are aggregated by mean (`aggr='mean'`) within each cell group. If experiment variables are provided, here `con.factor='expVar'`, the aggregation will be performed on the new variable as a combination of `label` and `expVar`. The aggregation is carried out on normalized data indicated by `assay.na='logcounts'`.   
 </font>
 
 ```{r scLabAggr, eval=TRUE, echo=TRUE, warnings=FALSE}
@@ -329,7 +330,7 @@ sce.aggr <- aggr_rep(sce.dimred, assay.na='logcounts', sam.factor='label', con.f
 ```
 
 <font style="color:blue">
-A slice of aggregated data is shown. `hypothalamus` and `control` is a annotation label and experiment variable respectively. The abundance mean of gene `Tcea1` under the combined variable `hypothalamus__control` is 1.440910.       
+A slice of aggregated data is shown. `hypothalamus` and `control` is an annotation label and experiment treatment respectively. The abundance mean of gene `Tcea1` under the combined variable `hypothalamus__control` is 1.440910.       
 </font>
 
 
@@ -406,12 +407,12 @@ manual.clus.mus.sc[1:3, ]
 <a name='manual_clus'></a>
 
 <font style="color:blue">
-Manual cluster labels are exclusively included in the `cluster` column in the `colData` slot by the function `manual_cluster`, which does not interfere with the `label` column that stores annotation labels.  
+Manual cluster labels are exclusively included in the `cluster` column in the `colData` slot by the function `manual_cluster`, which does not interfere with existing columns.    
 </font>
 
 ```{r eval=TRUE, echo=TRUE, warnings=FALSE}
 sce.clus <- manual_cluster(sce=sce.dimred, df.clus=manual.clus.mus.sc)
-colData(sce.clus)[1:3, c('cluster', 'label')]
+colData(sce.clus)[1:3, ]
 ```
 
 Embedding plot of single cells colored by manual clusters in the `cluster` column in `colData`.   
@@ -698,512 +699,6 @@ df.desired.bulk <- read.table(desired.blk.pa, header=TRUE, row.names=1, sep='\t'
 df.desired.bulk[1:3, ]
 ``` 
 
-
-<a name='opt'></a> 
-
-## Optimizing Automatic Method
-
-<font style='color:blue'>
-[JZ: The optimization section will go to an external html file. Its update is in progess.]
-</font>
-
-### Optimization on Example Data {#opt_demo}
-
-Since real optimizations have high demand on computing power and take a long time, it is demonstrated on toy data. Thus the result parameter settings may not be really optimal. The example bulk and single cell RNA-seq data are from Arabidopsis thaliana (Arabidopsis) root. Bulk tissue data comprise all the major root tissues such as epidermis, cortex, endodermis, xylem, columella, which are generated in a research on alternative splicing and lincRNA regulation [@Li2016-yz]. The two single cell data sets are derived from the whole root, which are produced in a study of single cell Arabidopsis root atlas [@Shahan2020-zj]. The identities of bulk and single cells are all labeled.   
-
-The optimization focuses on parameters of normalization methods, filtering, dimensionality reduction methods, refining homogeneous cell clusters, number of top dimensionalities in co-clustering, graph-building methods in co-clustering. The optimization is performed by running the co-clustering workflow (Figure \@ref(fig:coclusOver)) on each of the single cell data sets. The parameter settings being optimized is fixed and all settings of other parameters are varied across all possible combinations.  
-
-Each running of the workflow yields an AUC value, thus after running the workflow on all possible settings combinations one parameter settings has a set of AUC values. The AUCs are filtered according to some criteria and the remaining AUCs are averaged. A settings with a higher mean AUC than its counterparts are taken as optimal in a parameter. For example, when optimizing dimensionality reduction methods, the settings are PCA and UMAP. If the mean of remaining AUCs of PCA is 0.6 while UMAP is 0.55, PCA is regarded as the optimal.   
-
-Since optimzation on example data also takes a relatively long time, most of the following steps are not evaluated. A common computer with 4G memory and 4 CPUs is enough to run the following optimization process.   
-
-To obtain reproducible results, always start a new R session and set a fixed seed for Random Number Generator at the beginning, which is required only once in each R session.   
-```{r , eval=TRUE, echo=TRUE, warnings=FALSE}
-set.seed(10)
-```
-
-Read bulk and two single cell data.  
-
-```{r optRead, eval=TRUE, echo=TRUE, warnings=FALSE}
-blk <- readRDS(system.file("extdata/cocluster/data", "bulk_cocluster.rds", package="spatialHeatmap")) # Bulk.
-sc10 <- readRDS(system.file("extdata/cocluster/data", "sc10_cocluster.rds", package="spatialHeatmap")) # Single cell.
-sc11 <- readRDS(system.file("extdata/cocluster/data", "sc11_cocluster.rds", package="spatialHeatmap")) # Single cell.
-blk; sc10; sc11
-```
-
-These example data are already pre-processed. To demonstrate the optimization process the pre-processing steps are perfomed again with few genes or cells removed.   
-
-Inital filtering with low strigency before normalization.   
-
-```{r optInitFil, eval=FALSE, echo=TRUE, warnings=FALSE}
-blk <- filter_data(data=blk, pOA=c(0.2, 15), CV=c(1.5, 100))
-fil.init <- filter_cell(lis=list(sc10=sc10, sc11=sc11), bulk=blk, gen.rm='^ATCG|^ATCG', min.cnt=1, p.in.cell=0.3, p.in.gen=0.1); fil.init
-```
-
-Combine and normalize bulk and single cell data, then separate them. By default `computeSumFactors (fct)` in `scran` package is used [@scran]. If `cpm=TRUE`, additional normalization of counts per million is applied.    
-
-```{r optNorm, eval=FALSE, echo=TRUE, warnings=FALSE}
-norm.fct <- norm_multi(dat.lis=fil.init, cpm=FALSE) # fct.
-norm.cpm <- norm_multi(dat.lis=fil.init, cpm=TRUE) # fct + cpm
-```
-
-Secondary filtering with higher strigency after normalization. Four sets of filtering parameter settings are created. In bulk data, genes with expression values over `A` across samples of over proportion `p` and with coefficinet of variance (CV) between cv1 and cv2 are retained. In cell data, genes with expression values over `min.cnt` of at least proportion `p.in.gen` are retained, and cells with with expression values over `min.cnt` of at least proportion `p.in.cell` are retained.   
-
-```{r optFilPar, eval=TRUE, echo=TRUE, warnings=FALSE}
-df.par.fil <- data.frame(p=c(0.1, 0.2, 0.3, 0.4), A=rep(1, 4), cv1=c(0.1, 0.2, 0.3, 0.4), cv2=rep(100, 4), min.cnt=rep(1, 4), p.in.cell=c(0.1, 0.25, 0.3, 0.35), p.in.gen=c(0.01, 0.05, 0.1, 0.15))
-df.par.fil
-``` 
-
-Filter bulk and cell data using the four filtering settings. The results are automatically saved in the working directory `wk.dir` and are recognized in the downstream. Thus the working directory should be the same across the entire workflow.  
-
-```{r optFil, eval=FALSE, echo=TRUE, warnings=FALSE}
-if (!dir.exists('opt_res')) dir.create('opt_res')
-fct.fil.all <- filter_iter(bulk=norm.fct$bulk, cell.lis=list(sc10=norm.fct$sc10, sc11=norm.fct$sc11), df.par.fil=df.par.fil, gen.rm='^ATCG|^ATCG', wk.dir='opt_res', norm.meth='fct')
-  
-cpm.fil.all <- filter_iter(bulk=norm.cpm$bulk, cell.lis=list(sc10=norm.cpm$sc10, sc11=norm.cpm$sc11), df.par.fil=df.par.fil, gen.rm='^ATCG|^ATCG', wk.dir='opt_res', norm.meth='cpm')
-```
-
-To evaluate the downstream auto-matching performance, a ground-truth matching relationship is required in form of `data.frame`. The `cell` and `dataBulk` refer to bulk tissue identifiers in aSVG files, single cell identifiers and bulk tissue identifiers in the data for co-clustering, respectively. If a cell matches multiple bulk tissues, bulk identifiers are separated by comma, semicolon, or single space such as `NONHAIR,LRC_NONHAIR`. The `SVGBulk` is the bulk identifiers in aSVG files, which are recognized in co-visualization.   
-
-```{r optMatch, eval=TRUE, echo=TRUE, warnings=FALSE}
-match.pa <- system.file("extdata/cocluster/data", "match_arab_root_cocluster.txt", package="spatialHeatmap")
-df.match.arab <- read.table(match.pa, header=TRUE, row.names=1, sep='\t')
-df.match.arab[1:3, ]
-```
-
-In real application, the whole optimization takes a long time and requires a lot of computation power. For example, combined bulk and cell data with 6945 genes and 7747 samples requires about 20G memory for coclustering. To speed up computation, the optimization function `coclus_opt` provides two levels of parallel computing through `BiocParallel` [@biocpara]. The first one is `BatchtoolsParam` and relies on a cluster scheduler such as the [SLURM](https://slurm.schedmd.com/documentation.html){target='blank'} scheduler and the second one utilizes `MulticoreParam`.   
-
-Before optimzation, users could check the parallelization guide by setting `parallel.info=TRUE`, then it returns the max possible parallelizations for each level respectively.   
-
-```{r optGuide, eval=FALSE, echo=TRUE, warnings=FALSE}
-coclus_opt(wk.dir='opt_res', parallel.info=TRUE, dimred=c('PCA', 'UMAP'), graph.meth=c('knn', 'snn'), sim=seq(0.2, 0.4, by=0.1), sim.p=seq(0.2, 0.4, by=0.1), dim=seq(5, 7, by=1))
-```
-
-A SLURM template is provided as an example for the first level parallelization. Users are advised to make a new copy and set SLURM parameters in the new copy. If users have access to other cluster schedulers, the template should be provided accordingly.  
-
-```{r optTmpl, eval=FALSE, echo=TRUE, warnings=FALSE}
-file.copy(system.file("extdata/cocluster", "slurm.tmpl", package="spatialHeatmap"), './slurm.tmpl')
-```
-
-Below is the demonstration of two-level parallelization on SLURM. For instance, the first- and second-level parallelizations are set 3 and 2 cpu cores respectively. The `wk.dir` is the same in secondary filtering.  
-
-`sim` and `sim.p` are parameters in refining cell clusters (Figure \@ref(fig:coclusOver).5). Specifically, in a cell cluster, cells having similarities over `sim` with other cells in the same cluster of at least proportion `sim.p` would remain. `sim` is Spearman' or Pearson's correlation coefficient. `dim` is the number of top dimensionalities (equivalent to genes) in co-clustering. Since the three parameters are related to each other, they are treated as a set `spd.set`.     
-
-```{r optPara2, eval=FALSE, echo=TRUE, warnings=FALSE}
-opt <- coclus_opt(wk.dir='opt_res', dimred=c('PCA', 'UMAP'), graph.meth=c('knn', 'snn'), sim=seq(0.2, 0.4, by=0.1), sim.p=seq(0.2, 0.4, by=0.1), dim=seq(5, 7, by=1), df.match=df.match.arab, batch.par=BatchtoolsParam(workers=3, cluster="slurm", template='slurm.tmpl', RNGseed=100,  stop.on.error = FALSE, log =TRUE, logdir=file.path('opt_res', 'batch_log')), multi.core.par=MulticoreParam(workers=2), verbose=FALSE)
-```
-
-If no cluster scheduler is available, optimization can be parallelized only at the second-level by setting `batch.par=NULL`.      
-
-```{r optPara1, eval=FALSE, echo=TRUE, warnings=FALSE}
-opt <- coclus_opt(wk.dir='opt_res', dimred=c('PCA', 'UMAP'), graph.meth=c('knn', 'snn'), sim=seq(0.2, 0.4, by=0.1), sim.p=seq(0.2, 0.4, by=0.1), dim=seq(5, 7, by=1), df.match=df.match.arab, batch.par=NULL, multi.core.par=MulticoreParam(workers=2))
-```
-
-The performace of each combination of parameter settings on each single cell data set is measured by an AUC value in ROC curve. These AUCs are filtered according to a cutoff (`aucs` over 0.5) and corresponding total bulk assignments (`total.min`) and total true assignments (`true.min`). The following demonstrates how to visualize the AUCs and select optimal parameter settings.  
-
-Extract AUCs for each filtering settings across `aucs` at 0.5, 0.6, 0.7, 0.8, 0.9 respectively.   
-
-```{r optParFil, eval=FALSE, echo=TRUE, warnings=FALSE}
-df.lis.fil <- auc_stat(wk.dir='opt_res', tar.par='filter', total.min=500, true.min=300, aucs=round(seq(0.5, 0.9, 0.1), 1))
-```
-
-Mean AUCs by each filtering settings and AUC cutoff.  
-
-```{r optParFilMean, eval=FALSE, echo=TRUE, warnings=FALSE}
-df.lis.fil$df.auc.mean[1:3, ]
-mean_auc_bar(df.lis.fil[[1]], bar.width=0.07, title='Mean AUCs by filtering settings', x.text.size=15, y.text.size=15, lgd.text.size=15)
-```
-
-```{r optParFilMeanPlot, echo=FALSE, fig.wide=TRUE, out.width="80%", fig.cap=("Mean AUCs of filtering settings. One bar refers to mean AUCs of a filtering settings at a certain AUC cutoff.")}
-include_graphics('img/demo_filter_bar.jpg')
-```
-
-All AUCs by each filtering settings and AUC cutoff. 
-
-```{r optParFilAll, eval=FALSE, echo=TRUE, warnings=FALSE}
-auc_violin(df.lis=df.lis.fil, xlab='Filtering settings', x.text.size=13, y.text.size=13)
-```
-
-```{r optParFilAllPlot, echo=FALSE, fig.wide=TRUE, out.width="80%", fig.cap=("All AUCs of filtering settings. A violin plot refers to all AUCs of a filtering settings at a certain AUC cutoff.")}
-include_graphics('img/demo_fil_violin.jpg')
-```
-
-According to the mean AUCs, optimal filtering settings are fil1, fil2, fil3.  
-
-```{r optParFilSel, eval=TRUE, echo=TRUE, warnings=FALSE}
-df.par.fil[c(1, 2, 3), ]
-```
-
-Extract AUCs for normalization methods across `aucs` at 0.5, 0.6, 0.7, 0.8, 0.9 respectively.   
-
-```{r optParNor, eval=FALSE, echo=TRUE, warnings=FALSE}
-df.lis.norm <- auc_stat(wk.dir='opt_res', tar.par='norm', total.min=500, true.min=300, aucs=round(seq(0.5, 0.9, 0.1), 1))
-```
-
-Mean AUCs by each normalization method and AUC cutoff.  
-
-```{r optParNorMean, eval=FALSE, echo=TRUE, warnings=FALSE}
-df.lis.norm$df.auc.mean[1:3, ]
-mean_auc_bar(df.lis.norm[[1]], bar.width=0.07, title='Mean AUCs by normalization methods', x.text.size=15, y.text.size=15, lgd.text.size=15)
-```
-
-All AUCs by each normalization method and AUC cutoff. 
-
-```{r optParNorAll, eval=FALSE, echo=TRUE, warnings=FALSE}
-auc_violin(df.lis=df.lis.norm, xlab='Normalization methods', x.text.size=13, y.text.size=13)
-```
-
-Optimal normalization method: `fct` (`computeSumFactors`).  
-
-Extract AUCs for graph-building methods across `aucs` at 0.5, 0.6, 0.7, 0.8, 0.9 respectively.   
-
-```{r optParGra, eval=FALSE, echo=TRUE, warnings=FALSE}
-df.lis.graph <- auc_stat(wk.dir='opt_res', tar.par='graph', total.min=500, true.min=300, aucs=round(seq(0.5, 0.9, 0.1), 1))
-```
-
-Mean AUCs by each graph-building method and AUC cutoff.  
-
-```{r optParGraMean, eval=FALSE, echo=TRUE, warnings=FALSE}
-df.lis.graph$df.auc.mean[1:3, ]
-mean_auc_bar(df.lis.graph[[1]], bar.width=0.07, title='Mean AUCs by graph-building methods')
-```
-
-All AUCs by each graph-building method and AUC cutoff.   
-
-```{r optParGraAll, eval=FALSE, echo=TRUE, warnings=FALSE}
-auc_violin(df.lis=df.lis.graph, xlab='Graph-building methods')
-```
-
-Optimal graph-building methods: `knn` (`buildKNNGraph`).  
-
-
-Extract AUCs for dimensionality reduction methods across `aucs` at 0.5, 0.6, 0.7, 0.8, 0.9 respectively.   
-
-```{r optParDim, eval=FALSE, echo=TRUE, warnings=FALSE}
-df.lis.dimred <- auc_stat(wk.dir='opt_res', tar.par='dimred', total.min=500, true.min=300, aucs=round(seq(0.5, 0.9, 0.1), 1))
-```
-
-Mean AUCs by each dimensionality reduction method and AUC cutoff.  
-
-```{r optParDimMean, eval=FALSE, echo=TRUE, warnings=FALSE}
-df.lis.dimred$df.auc.mean[1:3, ]
-# Mean AUCs by each dimensionality reduction method and AUC cutoff.
-mean_auc_bar(df.lis.dimred[[1]], bar.width=0.07, title='Mean AUCs by dimensionality reduction methods')
-```
-
-All AUCs by each dimensionality reduction method and AUC cutoff. 
-
-```{r optParDimAll, eval=FALSE, echo=TRUE, warnings=FALSE}
-auc_violin(df.lis=df.lis.dimred, xlab='Dimensionality reduction')
-```
-
-Optimal dimensionality reduction method: `pca` (`denoisePCA`).   
-
-Extract AUCs for spd.set across `aucs` at 0.5, 0.6, 0.7, 0.8, 0.9 respectively.   
-
-```{r optParSpd, eval=FALSE, echo=TRUE, warnings=FALSE}
-df.lis.spd <- auc_stat(wk.dir='opt_res', tar.par='spd.set', total.min=500, true.min=300, aucs=round(seq(0.5, 0.9, 0.1), 1))
-df.lis.spd$auc0.5$df.frq[1:3, ]
-```
-
-All AUCs of top five spd.sets ranked by frequency across `aucs` at 0.5, 0.6, 0.7, 0.8, 0.9 respectively.    
-
-```{r optParSpdTop, eval=FALSE, echo=TRUE, warnings=FALSE}
-spd_auc_violin(df.lis=df.lis.spd, n=5, xlab='spd.sets', x.vjust=0.6)
-```
-
-Top five spd.sets across `aucs` at 0.5, 0.6, 0.7, 0.8, 0.9 respectively are taken as optimal spd.sets.   
-
-```{r optParSpdTopFin, eval=FALSE, echo=TRUE, warnings=FALSE}
-n <- 5; df.spd.opt <- NULL
-for (i in df.lis.spd) {
-  df.spd.opt <- rbind(df.spd.opt, i$df.frq[seq_len(n), c('sim', 'sim.p', 'dim')])
-}
-df.spd.opt$spd.set <- paste0('s', df.spd.opt$sim, 'p', df.spd.opt$sim.p, 'd', df.spd.opt$dim)
-df.spd.opt <- subset(df.spd.opt, !duplicated(spd.set))
-df.spd.opt[1:3, ]
-```
-
-In real application, the optimized settings need to be validated on data sets from other organs of different species, which is presented below.  
-
-
-### Optimization in Real Case {#opt_real}
-
-Ideally, the co-clustering should be optimized on different organs from different organisms as many possible. The single cell data need to be generated on whole organs and each cell's identity need to be labeled. Such data are less common and not easy to obtain in public databases, since most single cell RNA-seq (scRNA-seq) assays only focus on specific cell populations rather than whole organs, which are isolated by microdissection or fluorescent assisted cell sorting (FACS). As a result, the co-clustering optimization is performed only on five single cell data sets of Arabidopsis thaliana (Arabidopsis) root. The optimized parameter settings are validated on mouse brain and kidney.  
-
-The optimization in real case has high demand on computing power and takes a long time, so most of the following steps are not evaluated. The following steps are not explained in details since they are the same as [last section](#opt_demo).  
-
-The bulk [@Li2016-yz] and five single cell [@Shahan2020-zj] data sets of Arabidopsis root are accessed from the same studies as [last section](#opt_demo). Details about how to access and format them are described [here](https://github.com/jianhaizhang/cocluster_data){target='blank'}. In the following, `blk.arb.rt` refers to bulk data and `sc.arab.rt10`, `sc.arab.rt11`, `sc.arab.rt12`, `sc.arab.rt30`, `sc.arab.rt31` refers to the five single cell data sets respectively.  
-
-To obtain reproducible results, always start a new R session and set a fixed seed for Random Number Generator at the beginning, which is required only once in each R session.   
-```{r , eval=TRUE, echo=TRUE, warnings=FALSE}
-set.seed(10)
-```
-
-Inital filtering with low strigency before normalization. 
-
-```{r , eval=FALSE, echo=TRUE, warnings=FALSE}
-blk.arab.rt <- filter_data(data=blk.arab.rt, pOA=c(0.05, 5), CV=c(0.05, 100))
-fil.init <- filter_cell(lis=list(sc10=sc.arab.rt10, sc11=sc.arab.rt11, sc12=sc.arab.rt12, sc30=sc.arab.rt30, sc31=sc.arab.rt31), bulk=blk, gen.rm='^ATCG|^ATCG', min.cnt=1, p.in.cell=0.01, p.in.gen=0.05); fil.init
-```
-
-Combine and normalize bulk and single cell data, then separate them.       
-
-```{r , eval=FALSE, echo=TRUE, warnings=FALSE}
-norm.fct <- norm_multi(dat.lis=fil.init, cpm=FALSE) # fct.
-norm.cpm <- norm_multi(dat.lis=fil.init, cpm=TRUE) # fct + cpm
-```
-
-Secondary filtering with higher strigency after normalization. Four sets of filtering parameter settings are created.      
-
-```{r , eval=TRUE, echo=TRUE, warnings=FALSE}
-df.par.fil <- data.frame(p=c(0.1, 0.2, 0.3, 0.4), A=rep(1, 4), cv1=c(0.1, 0.2, 0.3, 0.4), cv2=rep(100, 4), min.cnt=rep(1, 4), p.in.cell=c(0.1, 0.25, 0.3, 0.35), p.in.gen=c(0.01, 0.05, 0.1, 0.15))
-df.par.fil
-``` 
-
-Filter bulk and cell data using the four filtering settings. The results are automatically saved in the working directory `wk.dir` and are recognized in the downstream. Thus the working directory should be the same across the entire workflow.  
-
-```{r , eval=FALSE, echo=TRUE, warnings=FALSE}
-if (!dir.exists('opt_real_res')) dir.create('opt_real_res')
-
-fct.fil.all <- filter_iter(bulk=norm.fct$bulk, cell.lis=list(sc10=norm.fct$sc10, sc11=norm.fct$sc11, sc12=norm.fct$sc12, sc30=norm.fct$sc30, sc31=norm.fct$sc31), df.par.fil=df.par.fil, gen.rm='^ATCG|^ATCG', wk.dir='opt_real_res', norm.meth='fct')
-  
-cpm.fil.all <- filter_iter(bulk=norm.cpm$bulk, cell.lis=list(sc10=norm.cpm$sc10, sc11=norm.cpm$sc11, sc12=norm.cpm$sc12, sc30=norm.cpm$sc30, sc31=norm.cpm$sc31), df.par.fil=df.par.fil, gen.rm='^ATCG|^ATCG', wk.dir='opt_real_res', norm.meth='cpm')
-```
-
-Ground-truth matching relationship across `cell`, `dataBulk`, and `SVGBulk`.     
-
-```{r , eval=TRUE, echo=TRUE, warnings=FALSE}
-match.pa <- system.file("extdata/cocluster/data", "match_arab_root_cocluster.txt", package="spatialHeatmap")
-df.match.arab <- read.table(match.pa, header=TRUE, row.names=1, sep='\t')
-df.match.arab[1:3, ]
-```
-
-The max possible parallelizations for each level respectively.  
-
-```{r , eval=FALSE, echo=TRUE, warnings=FALSE}
-coclus_opt(wk.dir='opt_real_res', parallel.info=TRUE, dimred=c('PCA', 'UMAP'), graph.meth=c('knn', 'snn'), sim=seq(0.2, 0.8, by=0.1), sim.p=seq(0.2, 0.8, by=0.1), dim=seq(5, 40, by=1))
-```
-
-Take the SLURM scheduler as an example for two-level parallelizatio. Make a new copy of the default SLURM template and set parameters in the new copy.  
-
-```{r , eval=FALSE, echo=TRUE, warnings=FALSE}
-file.copy(system.file("extdata/cocluster", "slurm.tmpl", package="spatialHeatmap"), './slurm.tmpl')
-```
-
-The first- and second-level parallelizations are set 3 and 2 cpu cores respectively. The `wk.dir` is the same in secondary filtering. Note the settings of `spd.set` (`sim/sim.p/dim`) has wider ranges than in last section. The parallel computation is performed at High-Performance Computing Center (HPCC) at University of California, Riverside.  
-
-```{r , eval=FALSE, echo=TRUE, warnings=FALSE}
-opt <- coclus_opt(wk.dir='opt_real_res', dimred=c('PCA', 'UMAP'), graph.meth=c('knn', 'snn'), sim=seq(0.2, 0.8, by=0.1), sim.p=seq(0.2, 0.8, by=0.1), dim=seq(5, 40, by=1), df.match=df.match.arab, batch.par=BatchtoolsParam(workers=3, cluster="slurm", template='slurm.tmpl', RNGseed=100, stop.on.error=FALSE, log=TRUE, logdir=file.path('opt_res', 'batch_log')), multi.core.par=MulticoreParam(workers=2), verbose=FALSE)
-```
-
-If no cluster scheduler is not available, optimization can be parallelized only at the second-level by setting `batch.par=NULL`.      
-
-```{r , eval=FALSE, echo=TRUE, warnings=FALSE}
-opt <- coclus_opt(wk.dir='opt_real_res', dimred=c('PCA', 'UMAP'), graph.meth=c('knn', 'snn'), sim=seq(0.2, 0.8, by=0.1), sim.p=seq(0.2, 0.8, by=0.1), dim=seq(5, 40, by=1), df.match=df.match.arab, batch.par=NULL, multi.core.par=MulticoreParam(workers=2))
-```
-
-The performace of each combination of parameter settings on each single cell data set is measured by an AUC value in ROC curve. These AUCs are filtered according to a cutoff (`aucs` over 0.5) and corresponding total bulk assignments (`total.min`) and total true assignments (`true.min`). The following demonstrates how to visualize the AUCs and select optimal parameter settings.  
-
-Extract AUCs for each filtering settings across `aucs` at 0.5, 0.6, 0.7, 0.8, 0.9 respectively.   
-
-```{r , eval=FALSE, echo=TRUE, warnings=FALSE}
-df.lis.fil <- auc_stat(wk.dir='opt_real_res', tar.par='filter', total.min=500, true.min=300, aucs=round(seq(0.5, 0.9, 0.1), 1))
-```
-
-Mean AUCs by each filtering settings and AUC cutoff.  
-
-```{r , eval=FALSE, echo=TRUE, warnings=FALSE}
-df.lis.fil$df.auc.mean[1:3, ]
-mean_auc_bar(df.lis.fil[[1]], bar.width=0.07, title='Mean AUCs by filtering settings')
-```
-
-```{r , echo=FALSE, fig.wide=TRUE, out.width="70%", fig.cap=("Mean AUCs of filtering settings in real optimization. A bar refers to mean AUCs of a filtering settings at a certain AUC cutoff.")}
-include_graphics('img/real_filter_bar.jpg')
-```
-
-All AUCs by each filtering settings and AUC cutoff. 
-
-```{r , eval=FALSE, echo=TRUE, warnings=FALSE}
- auc_violin(df.lis=df.lis.fil, xlab='Filtering settings')
-```
-
-```{r , echo=FALSE, fig.wide=TRUE, out.width="80%", fig.cap=("All AUCs of filtering settings in real optimization. A violin plot refers to all AUCs of a filtering settings at a AUC cutoff.")}
-include_graphics('img/real_fil_violin.jpg')
-```
-
-According to the mean AUCs, fil1, fil2, and fil3 are selected as optimal filtering settings.    
-
-```{r , eval=TRUE, echo=TRUE, warnings=FALSE}
-df.par.fil[c(1, 2, 3), ]
-```
-
-Extract AUCs for normalization methods across `aucs` at 0.5, 0.6, 0.7, 0.8, 0.9 respectively.   
-
-```{r , eval=FALSE, echo=TRUE, warnings=FALSE}
-df.lis.norm <- auc_stat(wk.dir='opt_real_res', tar.par='norm', total.min=500, true.min=300, aucs=round(seq(0.5, 0.9, 0.1), 1))
-```
-
-Mean AUCs by each normalization method and AUC cutoff.  
-
-```{r , eval=FALSE, echo=TRUE, warnings=FALSE}
-df.lis.norm$df.auc.mean[1:3, ]
-mean_auc_bar(df.lis.norm[[1]], bar.width=0.07, title='Mean AUCs by normalization methods')
-```
-
-All AUCs by each normalization method and AUC cutoff. 
-
-```{r , eval=FALSE, echo=TRUE, warnings=FALSE}
-auc_violin(df.lis=df.lis.norm, xlab='Normalization methods')
-```
-
-Optimal normalization method: `fct` (`computeSumFactors`).  
-
-Extract AUCs for graph-building methods across `aucs` at 0.5, 0.6, 0.7, 0.8, 0.9 respectively.   
-
-```{r , eval=FALSE, echo=TRUE, warnings=FALSE}
-df.lis.graph <- auc_stat(wk.dir='opt_real_res', tar.par='graph', total.min=500, true.min=300, aucs=round(seq(0.5, 0.9, 0.1), 1))
-```
-
-Mean AUCs by each graph-building method and AUC cutoff.  
-
-```{r , eval=FALSE, echo=TRUE, warnings=FALSE}
-df.lis.graph$df.auc.mean[1:3, ]
-mean_auc_bar(df.lis.graph[[1]], bar.width=0.07, title='Mean AUCs by graph-building methods')
-```
-
-All AUCs by each graph-building method and AUC cutoff.   
-
-```{r , eval=FALSE, echo=TRUE, warnings=FALSE}
-auc_violin(df.lis=df.lis.graph, xlab='Graph-building methods')
-```
-
-Since `knn` (`buildKNNGraph`) and `snn` (`buildSNNGraph`) have similar mean AUCs, both are selected as optimal graph-building methods.   
-
-
-Extract AUCs for dimensionality reduction methods across `aucs` at 0.5, 0.6, 0.7, 0.8, 0.9 respectively.   
-
-```{r , eval=FALSE, echo=TRUE, warnings=FALSE}
-df.lis.dimred <- auc_stat(wk.dir='opt_real_res', tar.par='dimred', total.min=500, true.min=300, aucs=round(seq(0.5, 0.9, 0.1), 1))
-```
-
-Mean AUCs by each dimensionality reduction method and AUC cutoff.  
-
-```{r , eval=FALSE, echo=TRUE, warnings=FALSE}
-df.lis.dimred$df.auc.mean[1:3, ]
-# Mean AUCs by each dimensionality reduction method and AUC cutoff.
-mean_auc_bar(df.lis.dimred[[1]], bar.width=0.07, title='Mean AUCs by dimensionality reduction methods')
-```
-
-All AUCs by each dimensionality reduction method and AUC cutoff. 
-
-```{r , eval=FALSE, echo=TRUE, warnings=FALSE}
-auc_violin(df.lis=df.lis.dimred, xlab='Dimensionality reduction')
-```
-
-Optimal dimensionality reduction method: `pca` (`denoisePCA`).   
-
-
-Extract AUCs for spd.set across `aucs` at 0.5, 0.6, 0.7, 0.8, 0.9 respectively.   
-
-```{r , eval=FALSE, echo=TRUE, warnings=FALSE}
-df.lis.spd <- auc_stat(wk.dir='opt_real_res', tar.par='spd.set', total.min=500, true.min=300, aucs=round(seq(0.5, 0.9, 0.1), 1))
-df.lis.spd$auc0.5$df.frq[1:3, ]
-```
-
-All AUCs of top five spd.sets ranked by frequency across `aucs` at 0.5, 0.6, 0.7, 0.8, 0.9 respectively.    
-
-```{r , eval=FALSE, echo=TRUE, warnings=FALSE}
-spd_auc_violin(df.lis=df.lis.spd, n=5, xlab='spd.sets', x.vjust=0.6)
-```
-
-Top five spd.sets across `aucs` at 0.5, 0.6, 0.7, 0.8, 0.9 respectively are taken as optimal spd.sets. `s`, `p`, `d` stands for `sim`, `sim.p`, `dim` respectively. *E.g.* `s0.2p0.5d12` means `sim` = 0.2, `sim.p` = 0.5, `dim` = 12.     
-
-```{r , eval=FALSE, echo=TRUE, warnings=FALSE}
-n <- 5; df.spd.opt <- NULL
-for (i in df.lis.spd) {
-  df.spd.opt <- rbind(df.spd.opt, i$df.frq[seq_len(n), c('sim', 'sim.p', 'dim')])
-}
-
-df.spd.opt$spd.set <- paste0('s', df.spd.opt$sim, 'p', df.spd.opt$sim.p, 'd', df.spd.opt$dim)
-
-df.spd.opt <- subset(df.spd.opt, !duplicated(spd.set))
-df.spd.opt[1:3, ]
-```
-
-```{r , eval=TRUE, echo=FALSE, warnings=FALSE}
-df.spd.opt <- read.table(system.file("extdata/cocluster", "df_spd_opt.txt", package="spatialHeatmap"), header=TRUE, row.names=1, sep='\t')
-df.spd.opt[1:3, ]
-```
-
-The optimal parameter settings at this stage are listed in the table below.   
-```{r optPar, eval=TRUE, echo=FALSE, warnings=FALSE}
-df.opt <- data.frame(normalization='fct', filtering.set='fil1, fil2, fil3', dimensionality.reduction='pca', graph.building='knn, snn', spd.set=df.spd.opt$spd.set)
-kable(df.opt, caption='Optimized parameter settings on Arabidopsis thaliana root data sets', col.names=colnames(df.opt), row.names=FALSE, escape=TRUE)
-```
-
-Next, these optimal settings are validated on mouse brain, mouse kindney, and Arabidopsis root data sets. In mouse brain, the bulk RNA-seq data are generated in a research on the impact of placental endocrine on mouse cerebellar development [@Vacher2021-xg] and the scRNA-seq data are from a study of mouse brain molecular atlas [@Ortiz2020-yt]. The bulk count data are produced using systemPipeR (2.1.12) [@systempiper]. Details about how to access and format bulk and single data are described [here](https://github.com/jianhaizhang/cocluster_data){target='blank'}. In the following, `blk.mus.brain` and `sc.mus.brain` refers to bulk and single cell data respectively. The validation is performed by applying these optimal settings on the same coclustering workflow, so the following procedures are not detailed.  
-
-
-Initial filtering.   
-```{r , eval=FALSE, echo=TRUE, warnings=FALSE}
-blk.mus.brain <- filter_data(data=blk.mus.brain, pOA=c(0.05, 5), CV=c(0.05, 100)) 
-mus.brain.lis <- filter_cell(lis=list(sc.mus=sc.mus.brain), bulk=blk.mus.brain, gen.rm=NULL, min.cnt=1, p.in.cell=0.01, p.in.gen=0.05, verbose=FALSE) 
-```
-
-Bulk and single cell are combined and normalized, then separated.   
-```{r , eval=FALSE, echo=TRUE, warnings=FALSE}
-mus.brain.lis.nor <- norm_multi(dat.lis=mus.brain.lis, cpm=FALSE)
-```
-
-Secondary filtering. Since `fil1` and `fil2` exhibit similar performaces, only `fil1` is used.    
-```{r , eval=FALSE, echo=TRUE, warnings=FALSE}
-blk.mus.brain.fil <- filter_data(data=mus.brain.lis.nor$bulk, pOA=c(0.1, 1), CV=c(0.1, 100), verbose=FALSE) 
-mus.brain.lis.fil <- filter_cell(lis=list(sc.mus=mus.brain.lis.nor$sc.mus), bulk=blk.mus.brain.fil, gen.rm=NULL, min.cnt=1, p.in.cell=0.1, p.in.gen=0.01, verbose=FALSE)
-```
-
-Matching table indicating true bulk tissues of each cell type and corresponding SVG bulk (spatial feature).  
-```{r , eval=TRUE, echo=TRUE, warnings=FALSE}
-match.mus.brain.pa <- system.file("extdata/shinyApp/example", "match_mouse_brain_cocluster.txt", package="spatialHeatmap")
-df.match.mus.brain <- read.table(match.mus.brain.pa, header=TRUE, row.names=1, sep='\t')
-df.match.mus.brain
-``` 
-
-Since `knn` and `snn` display similar performances, only `knn` is used. All optimal `spd.set` settings in Table \@ref(tab:optPar) are tested, and results are shown in Figure \@ref(fig:validateOpt)a.   
-
-```{r , eval=FALSE, echo=TRUE, warnings=FALSE}  
-mus.brain.df.para <- coclus_meta(bulk=mus.brain.lis.fil$bulk, cell=mus.brain.lis.fil$sc.mus, df.match=df.match.mus.brain, df.para=df.spd.opt[, c('sim', 'sim.p', 'dim')], graph.meth='knn', dimred='PCA', return.all=FALSE, multi.core.par=MulticoreParam(workers=2))
-```
-
-In mouse kidney, four bulk tissues are selected: proximal straight tubule in cortical medullary rays (PTS2), cortical collecting duct (CCD), and cortical thick ascending limb of the loop of Henle (cTAL), glomerulus. PTS2 data are from a research on cell-type selective markers in mouse kidney [@Clark2019-is], CCD and cTAL are from transcriptome analysis of major renal collecting duct cell types in mouse kidney [@Chen2017-ar], and glomerulus is from a transcriptome atlas study of mouse glomerulus [@Karaiskos2018-kr]. The FASTQ files of the four tissues are downloaded from original studies and raw count data are generated with systemPipeR (2.1.12) [@systempiper]. The single cell data are accessed from an investigation in cellular targets of mouse kidney metabolic acidosis [@Park2018-zr]. Details about how to access and format bulk and single data are described [here](https://github.com/jianhaizhang/cocluster_data){target='blank'}.   
-
-The validating procedures on mouse kindey are same with mouse brain except that after initial filtering replicates in each bulk are reduced to 3 by using function `reduce_rep` due to two many replicates. The results are shown in Figure \@ref(fig:validateOpt)b.   
-
-In Arabidopsis root, the same bulk tissues [@Li2016-yz] and two additional single cell data sets (`sc9`, `sc51`, [@Shahan2020-zj]) from the same studies as [real optimization](#opt_real) are used. Details about how to access and format them are described [here](https://github.com/jianhaizhang/cocluster_data){target='blank'}. The procedures of validating optimized settings are the same with mouse brain except that in normalization two single cell data sets are used instead of one. The results are shown in Figure \@ref(fig:validateOpt)c and d.  
-
-As comparisons, random combinations of non-optimal settings are generated and tested. In filtering, fil4 is regarded non-optimal, but it filters out too many genes so that the coclustering procedures cannot run. Thus fil3 is used in the random settings. The graph-building methods have two settings `knn` and `snn`, and both are taken as optimal, thus they are all used for generating random combinations. See details [here](https://github.com/jianhaizhang/cocluster_data/tree/master/validate){target='blank'}.   
-
-```{r , eval=FALSE, echo=TRUE, warnings=FALSE}  
-df.par.rdn <- random_para(fil.set=c('fil3'), norm='cpm', dimred='UMAP', graph.meth=c('knn', 'snn'), sim=round(seq(0.2, 0.8, by=0.1), 1), sim.p=round(seq(0.2, 0.8,by=0.1), 1), dim=seq(5, 40, by=1), df.spd.opt=df.spd.opt)
-df.par.rdn[1:3,  ]
-```
-
-These random settings are tested on each of the four validating data sets, where other settings such as initial filtering are not changed. The results are shown in Figure \@ref(fig:validateRdm)c and d.  
-
-The AUCs of optimal and random settings are presented in Figure \@ref(fig:validateOpt) and Figure \@ref(fig:validateRdm) respectively. In both figures, if total bulk assignments < 500 or total true assignments < 300 or AUC < 0.5, AUCs are set 0. It is clear that the optimal settings exhibit better performance than random settings, so the optimization workflow and results are reliable to some extent. In Figure \@ref(fig:validateOpt), asterisks indicate optimal settings have AUCs >= 0.5, total bulk assignments >= 500, and total true assignments >= 300 across all four data sets. These settings are regarded as final optimal settings (Table \@ref(tab:optParFin)).   
-
-```{r validateOpt, echo=FALSE, fig.wide=TRUE, fig.cap=("Validating optimal settings. AUCs of optimal settings on each validating data sets. A bar refers to one AUC of one optimal settings. Asterisks indicate optimal settings have AUC >= 0.5, total bulk assignments >= 500, and total true assignments >= 300 across all four data sets. If total bulk assignments < 500 or total true assignments < 300 or AUC < 0.5, AUCs are set 0. (a) Mouse brain. (b) Mouse kidndy. (c) Arabidopsis root of single cell 9. (d) Arabidopsis root of single cell 51. "), out.width="100%"}
-include_graphics('img/validate_opt.jpg')
-```  
-
-```{r validateRdm, echo=FALSE, fig.wide=TRUE, fig.cap=("Random settings. AUCs of random settings on each validating data sets. A bar refers to one AUC of one random settings. If total bulk assignments < 500 or total true assignments < 300 or AUC < 0.5, AUCs are set 0. (a) Mouse brain. (b) Mouse kidndy. (c) Arabidopsis root of single cell 9. (d) Arabidopsis root of single cell 51. "), out.width="100%"}
-include_graphics('img/validate_rdn.jpg')
-```  
-
-```{r optParFin, eval=TRUE, echo=FALSE, warnings=FALSE}
-df.opt.final <- subset(df.opt, spd.set %in% c("s0.2p0.2d23", "s0.2p0.2d6", "s0.2p0.3d7", "s0.2p0.5d5", "s0.2p0.5d7", "s0.2p0.6d6", "s0.2p0.8d13", "s0.3p0.2d17", "s0.3p0.4d12", "s0.3p0.4d13", "s0.3p0.4d14", "s0.3p0.5d16", "s0.3p0.7d17"))
-kable(df.opt.final, caption='Final optimal parameter settings after validation.', col.names=colnames(df.opt.final), row.names=FALSE, escape=TRUE)
-```
 
 <br/>
 
