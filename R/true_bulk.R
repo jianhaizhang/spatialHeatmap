@@ -21,10 +21,10 @@
 #' library(SingleCellExperiment); library(S4Vectors)
 #' cell.refined <- SingleCellExperiment(assays=list(logcounts=df.random), colData=DataFrame(cell=colnames(df.random)))
 #' 
-#' cell.refined <- true_bulk(cell.refined, df.match.mus.brain)
-#' colData(cell.refined)
+#' #cell.refined <- true_bulk(cell.refined, df.match.mus.brain)
+#' #colData(cell.refined)
 #' 
-#' # See detailed example in the "cocluster" function by running "?cocluster".
+#' # See detailed example in the "coclus_meta" function by running "?coclus_meta".
 
 #' @author Jianhai Zhang \email{jzhan067@@ucr.edu} \cr Dr. Thomas Girke \email{thomas.girke@@ucr.edu}
 
@@ -35,14 +35,15 @@
 #' @importFrom SummarizedExperiment colData
 
 true_bulk <- function(sce, df.match) {
-  true.bulk <- df.match$trueBulk; names(true.bulk) <- df.match$cell
+  if (!'cell' %in% colnames(df.match)) stop('The "cell" column is missing in the matching table!')
+  true.bulk <- df.match$dataBulk; names(true.bulk) <- df.match$cell
   cdat <- colData(sce) 
   svg.bulk <- df.match$SVGBulk; names(svg.bulk) <- df.match$cell
-  colData(sce)$trueBulk <- as.character(true.bulk[cdat$cell])
+  colData(sce)$dataBulk <- as.character(true.bulk[cdat$cell])
   colData(sce)$SVGBulk <- as.character(svg.bulk[cdat$cell])
   cdat <- colData(sce) 
-  idx <- is.na(cdat$trueBulk) & is.na(cdat$SVGBulk)
-  colData(sce)[idx, c('trueBulk', 'SVGBulk')] <- 'none'
+  idx <- is.na(cdat$dataBulk) & is.na(cdat$SVGBulk)
+  colData(sce)[idx, c('dataBulk', 'SVGBulk')] <- 'none'
   return(sce)
 }
 

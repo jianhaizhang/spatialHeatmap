@@ -47,8 +47,7 @@
 #' @importFrom scuttle logNormCounts
 
 norm_multi <- function(dat.lis, cpm=FALSE, count.kp=FALSE) {
-  set <- NULL
-  nas <- names(dat.lis)
+  set <- NULL; nas <- names(dat.lis)
   if (any(nas=='')) stop('The list should be named!')
   # Anchor sce.
   dat0 <- dat.lis[[1]]

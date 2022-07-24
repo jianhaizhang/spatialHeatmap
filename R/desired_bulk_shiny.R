@@ -1,15 +1,66 @@
-#' Integrated Shiny App
+#' Shiny App for assigning desired bulk tissues to single cells
 #' 
-
-#'  
- 
+#' Shiny App for assigning desired bulk tissues to single cells when tailoring the co-clustering result in co-visualization of bulk and single cell data. The uploaded file is an ".rds" file of a \code{SingleCellExperiment} object saved by \code{saveRDS}. See the example below.  
+#'
 #' @return A web browser based Shiny app.
 
 #' @section Details:
 #' No argument is required, this function launches the Shiny app directly. 
 
 #' @examples
-#' \donttest{ desired_bulk_shiny() }
+
+#' # Example bulk data of mouse brain for coclustering (Vacher et al 2021).
+#' blk.mus.pa <- system.file("extdata/shinyApp/example", "bulk_mouse_cocluster.txt", package="spatialHeatmap") 
+#' blk.mus <- as.matrix(read.table(blk.mus.pa, header=TRUE, row.names=1, sep='\t', check.names=FALSE))
+#' blk.mus[1:3, 1:5]
+#'
+#' # Example single cell data for coclustering (Ortiz et al 2020).
+#' sc.mus.pa <- system.file("extdata/shinyApp/example", "cell_mouse_cocluster.txt", package="spatialHeatmap") 
+#' sc.mus <- as.matrix(read.table(sc.mus.pa, header=TRUE, row.names=1, sep='\t', check.names=FALSE))
+#' sc.mus[1:3, 1:5]
+#'
+#' # Filtering. 
+#' blk.mus <- filter_data(data=blk.mus, sam.factor=NULL, con.factor=NULL, pOA=c(0.1, 5), CV=c(0.2, 100), dir=NULL) 
+#' dim(blk.mus)
+#' mus.lis <- filter_cell(lis=list(sc.mus=sc.mus), bulk=blk.mus, gen.rm=NULL, min.cnt=1, p.in.cell=0.5, p.in.gen=0.1) 
+
+#' \donttest{
+
+#' # Normalization: bulk and single cell are combined and normalized, then separated.
+#' mus.lis.nor <- norm_multi(dat.lis=mus.lis, cpm=FALSE)
+#'
+#' # The aSVG file of mouse brain.
+#' svg.mus <- system.file("extdata/shinyApp/example", "mus_musculus.brain.svg", package="spatialHeatmap")
+#' # Spatial features.  
+#' feature.df <- return_feature(svg.path=svg.mus) 
+#'
+#' # Matching table indicating true bulk tissues of each cell type and corresponding SVG bulk (spatial feature).
+#' df.match.mus.pa <- system.file("extdata/shinyApp/example", "match_mouse_brain_cocluster.txt", package="spatialHeatmap")
+#' df.match <- read.table(df.match.mus.pa, header=TRUE, row.names=1, sep='\t')
+#' df.match
+#'
+#' # The SVG bulk tissues are in the aSVG file.  
+#' df.match$SVGBulk %in% feature.df$feature
+#'
+#' # Dimensionality reduction.
+#' sce.dimred.sc <- reduce_dim(sce=mus.lis.nor$sc.mus, prop=0.1, min.dim=13, max.dim=50, de.pca=list(assay.type ="logcounts"))
+#' # Cluster single cells.
+#' clus.sc <- cluster_cell(sce=sce.dimred.sc, graph.meth='knn', dimred='PCA')
+#' # Cluster labels are stored in the "cluster" column in "colData".
+#' colData(clus.sc)[1:3, ]
+#'
+#' # Refine cell clusters.
+#' cell.refined <- refine_cluster(clus.sc, sim=0.2, sim.p=0.8, sim.meth='spearman')
+#' # Cocluster bulk and single cells.
+#' res.lis <- cocluster(bulk=mus.lis.nor$bulk, cell.refined=cell.refined, df.match=df.match, min.dim=13, max.dim=50, graph.meth='knn', dimred='PCA', sim.meth='spearman') 
+
+#' # Save "res.lis$cell.refined" using "saveRDS" and upload the saved ".rds" file to the Shiny app.
+#' saveRDS(res.lis$cell.refined, file='cell.refined.rds')
+#' 
+#' # Start the Shiny app.
+#' desired_bulk_shiny() 
+
+#' }
 
 #' @author Jianhai Zhang \email{jzhan067@@ucr.edu} \cr Dr. Thomas Girke \email{thomas.girke@@ucr.edu}
 
@@ -67,6 +118,8 @@
 #' Peter Langfelder, Steve Horvath (2012). Fast R Functions for Robust Correlations and Hierarchical Clustering. Journal of Statistical Software, 46(11), 1-17. URL http://www.jstatsoft.org/v46/i11/
 #'
 #' Almende B.V., Benoit Thieurmel and Titouan Robert (2017). visNetwork: Network Visualization using 'vis.js' Library. R package version 2.0.1. https://CRAN.R-project.org/package=visNetwork
+#' Vacher, Claire-Marie, Helene Lacaille, Jiaqi J. O’Reilly, Jacquelyn Salzbank, Dana Bakalar, Sonia Sebaoui, Philippe Liere, et   al. 2021. “Placental Endocrine Function Shapes Cerebellar Development and Social Behavior.” Nature Neuroscience 24 (10): 1392–1401.
+#' Ortiz, Cantin, Jose Fernandez Navarro, Aleksandra Jurek, Antje Märtin, Joakim Lundeberg, and Konstantinos Meletis. 2020.        “Molecular Atlas of the Adult Mouse Brain.” Science Advances 6 (26): eabb3446.
 
 #' @export desired_bulk_shiny
 #' @importFrom shiny runApp

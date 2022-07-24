@@ -15,16 +15,16 @@
 #' sce <- mockSCE(); sce <- logNormCounts(sce) 
 #' # Modelling the variance.
 #' var.stats <- modelGeneVar(sce)
-#' sce <- denoisePCA(sce, technical=var.stats, subset.row=rownames(var.stats))
+#' sce.dimred <- denoisePCA(sce, technical=var.stats, subset.row=rownames(var.stats))
 #' \donttest{
-#' sce.clus <- cluster_cell(data=sce, prop=0.1, min.dim=5, max.dim=50, graph.meth='snn', dimred='PCA')
+#' sce.clus <- cluster_cell(data=sce.dimred, graph.meth='snn', dimred='PCA')
 #' # Clusters. 
 #' table(colData(sce.clus)$label)
 #' 
 #' cell.refined <- refine_cluster(sce.clus, sim=0.5, sim.p=0.8, sim.meth='spearman', verbose=TRUE)
 #' }
 #'
-#' # See details in function "cocluster" by running "?cocluster".
+#' # See details in function "coclus_meta" by running "?coclus_meta".
 
 #' @author Jianhai Zhang \email{jzhan067@@ucr.edu} \cr Dr. Thomas Girke \email{thomas.girke@@ucr.edu}
 

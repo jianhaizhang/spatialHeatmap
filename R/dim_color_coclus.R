@@ -1,6 +1,9 @@
 #' Map colours in SHMs to embedding plots 
 #'
+#' True matching between cells and bulk tissues is not included in \code{sce}.
+#'
 #' @param sce A \code{SingleCellExperiment} containing the (un-)aggregated cells that have source tissue assignments. The \code{lis.match} will be built internally.
+#' @param row.sel The selected row indexes in the table of \code{colData} slot in Shiny app.
 #' @param gg.dim The ggplot of embedding plot.
 #' @param gg.shm.all The list of SHM ggplot.
 #' @param grob.shm.all The list of SHM grob.
@@ -13,7 +16,6 @@
 #' @param dim.lgd.pos The legend position. The default is \code{bottom}.
 #' @param dim.lgd.nrow The number of legend rows. The default is \code{1}.
 #' @param dim.lgd.text.size The size of legend text. The default is \code{10}.
-
 
 #' @return A nested list of embedding and SHM plots.
 #' @keywords Internal
@@ -76,8 +78,8 @@ dim_color_coclus <- function(sce=NULL, row.sel=NULL, tar.bulk=NULL, profile=FALS
   gg.dim <- gg.dim.all[i]
   if (profile==TRUE) dim.col <- col_dim_shm(gg.dim=gg.dim, gcol.all=col.shm.all, lis.match=lis.match)
   if (profile==FALSE) dim.col <- col_dim_shm(gg.dim=gg.dim, gcol.all=col.lgd.all, lis.match=lis.match)
-    # Target cells without true assignments are assigned 'gray50'.
-    true.tar <- unique(subset(cdat, response==TRUE)$SVGBulk)
+    # Target cells without assignments ('none') are assigned 'gray50'.
+    true.tar <- unique(subset(cdat, SVGBulk!='none')$SVGBulk)
     dim.col[setdiff(tar.bulk, true.tar)] <- 'gray50'
     
     gg.dim0 <- gg.dim[[1]]
@@ -88,58 +90,13 @@ dim_color_coclus <- function(sce=NULL, row.sel=NULL, tar.bulk=NULL, profile=FALS
 
     # The row order is the same between cdat and df.all.
     df.all$tissue <- df.all$feature <- cdat$SVGBulk
-    df.all <- cbind(df.all, cdat[, c('cell', 'assignedBulk', 'response', 'trueBulk')])
+    df.all <- cbind(df.all, cdat[, c('cell', 'assignedBulk', 'dataBulk')])
     df.all$idx <- seq_len(nrow(df.all))
     na.sel <- paste0(unique(df.all$feature[row.sel]), '.selected')
 
-# Separate true/false/other bulk assignments for each target cell type in the data frame for embedding plot.
-tar_cell <- function(tar.bulk, df.all, row.sel=NULL) {  
-  lis <- NULL; for (i in tar.bulk) {
-    # True bulk items.
-    tar.all <- subset(df.all, feature == i)
-    true.bulk <- strsplit(tar.all$trueBulk[1], ',|;| ')[[1]]
-    true.bulk <- true.bulk[true.bulk!='']
-    # True/false/other index.
-    idx.true <- which(df.all$assignedBulk %in% true.bulk & df.all$response == TRUE)
-    idx.false <- which(df.all$assignedBulk %in% true.bulk & df.all$response == FALSE)
-    idx.other.tar <- which(df.all$trueBulk == tar.all$trueBulk[1] & df.all$response %in% c(FALSE, 'none'))
-    idx.all <- seq_len(nrow(df.all))
-
-    # all.other <- df.all[setdiff(idx.all, c(idx.true, idx.false, idx.other.tar)), , drop=FALSE]
-    # all.other$border.col <- 'NA'
-    tar.other <- df.all[idx.other.tar, , drop=FALSE]
-    if (nrow(tar.other) > 0) tar.other$feature <- tar.other$tissue <- paste0(tar.other$feature, '.other')
-    # tar.other$border.col <- 'NA'
-    tar.other.col <- 'gray50'; na.other <- paste0(i, '.other')
-    names(tar.other.col) <- na.other
-    
-    tar.false <- df.all[idx.false, , drop=FALSE] 
-    # tar.false$border.col <- 'NA'
-    
-    tar.true <- df.all[idx.true, , drop=FALSE]
-    # tar.true$border.col <- 'black'
-    rate.true1 <- round(nrow(tar.true)/(nrow(tar.true) + nrow(tar.other)), 2)
-    rate.true2 <- round(nrow(tar.true)/(nrow(tar.true) + nrow(tar.false)), 2)
-    if (is.null(row.sel)) capt <- paste0('Black: target cells with false or no bulk assignments. Gray: non-target cells', '\n', 'true/(true + black): ', rate.true1, ', ', 'true/(true + false): ', rate.true2) else capt <- NULL 
-    lis0 <- list(list(tar.true=tar.true, tar.false=tar.false, tar.other=tar.other, idx.true=idx.true, idx.false=idx.false, idx.other.tar=idx.other.tar, capt=capt))
-    names(lis0) <- i; lis <- c(lis0, lis) 
-  }; return(lis)
-}
-
-    tar.lis <- tar_cell(tar.bulk, df.all, row.sel=row.sel)
-    # All true/other target cells are combined and treated as top layer in the embedding plot.
-    idx.top <- df.top <- NULL; for (k in tar.bulk) {
-      lis0 <- tar.lis[[k]]
-      idx.top <- c(idx.top, lis0$idx.other.tar, lis0$idx.true)
-      df.top <- rbind(df.top, lis0$tar.other, lis0$tar.true)
-    }
-    # Legend key text of each target cell.
-    capt <- NULL; for (k in tar.bulk) {
-      capt <- c(capt, tar.lis[[k]]$capt)
-    }
-
     # Target cells are place on top of non-target cells.
-    df.all <- rbind(df.all[setdiff(seq_len(nrow(df.all)), idx.top), ], df.top)
+    idx.top <- which(df.all$tissue != 'none')
+    df.all <- rbind(df.all[setdiff(seq_len(nrow(df.all)), idx.top), ], df.all[idx.top, , drop=FALSE])
     # Selected cells are placed on top.
     if (!is.null(row.sel)) {
       # The cells are divided into "selected" and non-selected. The "other" cells in the coclustering results are treated as ordinary cells.
@@ -155,11 +112,6 @@ tar_cell <- function(tar.bulk, df.all, row.sel=NULL) {
     if (is.null(row.sel)) {
       # Non-target cells are assigned colour gray80.
       dim.col.final[!names(dim.col.final) %in% tar.bulk] <- 'gray80'
-      # Other target cells are assigned colour gray50.
-      tar.other.col <- rep('gray50', length(tar.bulk))
-      na.other <- paste0(tar.bulk, '.other')
-      names(tar.other.col) <- na.other
-      dim.col.final <- c(tar.other.col, dim.col.final) 
     } else { # Colours of selected cells.
       col.sel <- rep('gray50', length(na.sel))
       names(col.sel) <- na.sel
@@ -174,12 +126,11 @@ tar_cell <- function(tar.bulk, df.all, row.sel=NULL) {
     if (is.null(row.sel)) {
       # Legal shapes: c(0:25, 32:127)
       sp[tar.bulk] <- c(0, 2:25, 32:127)[seq_along(tar.bulk)]
-      sp[na.other] <- sp[tar.bulk]
     } else {
       sp[na.sel] <- c(0, 2:25, 32:127)[seq_along(na.sel)]
     }
     # Cells without true bulk in the matching data frame.
-    if ('none' %in% df.all$trueBulk) {
+    if ('none' %in% df.all$dataBulk) {
       dim.col.final <- c('gray80', dim.col.final)
       names(dim.col.final)[1] <- 'none'
       sp <- c(1, sp); names(sp)[1] <- 'none'
@@ -187,13 +138,13 @@ tar_cell <- function(tar.bulk, df.all, row.sel=NULL) {
   if (con.na==TRUE) tit <- gsub('^dim_(.*)_\\d+$', '\\1', names(gg.dim)) else tit <- gsub('^dim_(.*)_con_\\d+$', '\\1', names(gg.dim))
   if (profile==FALSE) tit <- NULL
   if (is.null(row.sel)) {
-    lgd.tit <- 'True assignment'; lgd.show <- tar.bulk
+    lgd.tit <- ''; lgd.show <- tar.bulk
     br <- tar.bulk 
   } else {
     lgd.tit <- 'Selected'; lgd.show <- sub('\\.selected$', '', na.sel) 
     br <- na.sel
   }
-  gg <- ggplot(df.all, aes(x=x, y=y, text=df.all$feature)) + geom_point(size=2, alpha=1, aes(shape=feature, colour=feature)) + theme_classic() + theme(plot.title=element_text(hjust=0.5, size=sub.title.size), axis.text = element_blank(), axis.ticks = element_blank(), legend.position=dim.lgd.pos, legend.text=element_text(size=dim.lgd.text.size), legend.margin = margin(t=-0.02, l=0.05, r=0.1, unit='npc'), plot.caption = element_text(hjust = 0, size=dim.capt.size), legend.title=element_text(size=dim.lgd.text.size+1)) + labs(title=tit, x=gg.dim0$labels$x, y=gg.dim0$labels$y, caption =capt) + scale_color_manual(name=lgd.tit, values=dim.col.final, breaks=br, labels=lgd.show, guide=guide_legend(title=lgd.tit, nrow=dim.lgd.nrow)) + scale_shape_manual(name=lgd.tit, values=sp, breaks=br, labels=lgd.show, guide=guide_legend(title=lgd.tit, nrow=dim.lgd.nrow, override.aes = list(size=dim.lgd.key.size)))
+  gg <- ggplot(df.all, aes(x=x, y=y, text=df.all$feature)) + geom_point(size=2, alpha=1, aes(shape=feature, colour=feature)) + theme_classic() + theme(plot.title=element_text(hjust=0.5, size=sub.title.size), axis.text = element_blank(), axis.ticks = element_blank(), legend.position=dim.lgd.pos, legend.text=element_text(size=dim.lgd.text.size), legend.margin = margin(t=-0.02, l=0.05, r=0.1, unit='npc'), plot.caption = element_text(hjust = 0, size=dim.capt.size), legend.title=element_text(size=dim.lgd.text.size+1)) + labs(title=tit, x=gg.dim0$labels$x, y=gg.dim0$labels$y, caption = NULL) + scale_color_manual(name=lgd.tit, values=dim.col.final, breaks=br, labels=lgd.show, guide=guide_legend(title=lgd.tit, nrow=dim.lgd.nrow)) + scale_shape_manual(name=lgd.tit, values=sp, breaks=br, labels=lgd.show, guide=guide_legend(title=lgd.tit, nrow=dim.lgd.nrow, override.aes = list(size=dim.lgd.key.size)))
   gg.dim.all[[i]] <- gg
 
   }

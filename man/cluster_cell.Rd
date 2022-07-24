@@ -5,45 +5,20 @@
 \title{Cluster single cells or combination of single cells and bulk}
 \usage{
 cluster_cell(
-  data,
-  prop = 0.1,
-  min.dim = 13,
-  max.dim = 50,
-  pca = FALSE,
+  sce,
   graph.meth = "knn",
   dimred = "PCA",
-  model.var = list(),
-  top.hvg = list(n = 3000),
-  de.pca = list(assay.type = "logcounts"),
-  tsne = list(dimred = "PCA", ncomponents = 2),
-  umap = list(dimred = "PCA"),
   knn.gr = list(),
   snn.gr = list(),
   cluster.wk = list(steps = 4)
 )
 }
 \arguments{
-\item{data}{The normalized single cell data or nomalized combination of single cell and bulk data at log2 scale in form of \code{SingleCellExperiment}, \code{dgCMatrix}, \code{matrix}, or \code{data.frame}.}
-
-\item{prop}{Numeric scalar specifying the proportion of genes to report as highly variable genes (HVGs) in \code{\link[scran]{getTopHVGs}}. The default is \code{0.1}.}
-
-\item{min.dim, max.dim}{Integer scalars specifying the minimum (\code{min.dim}) and maximum (\code{max.dim}) number of (principle components) PCs to retain respectively in \code{\link[scran]{denoisePCA}}. The default is \code{min.dim=13}, \code{max.dim=50}.}
-
-\item{pca}{Logical, if \code{TRUE} only the data with reduced dimentionality by PCA is returned and no clustering is performed. The default is \code{FALSE} and clustering is performed after dimensionality reduction.}
+\item{sce}{The single cell data or combination of single cell and bulk data at log2 scale after dimensionality reduction in form of \code{SingleCellExperiment}.}
 
 \item{graph.meth}{Method to build a nearest-neighbor graph, \code{snn} (see \code{\link[scran]{buildSNNGraph}}) or \code{knn} (default, see \code{\link[scran]{buildKNNGraph}}). The clusters are detected by first creating a nearest neighbor graph using \code{snn} or \code{kn} then partitioning the graph.}
 
 \item{dimred}{A string of \code{PCA} (default) or \code{UMAP} specifying which reduced dimensionality to use in creating a nearest neighbor graph. Internally, before building a nearest neighbor graph the data dimensionalities are reduced by PCA and UMAP respectively.}
-
-\item{model.var}{Additional arguments in a named list passed to \code{\link[scran]{modelGeneVar}}.}
-
-\item{top.hvg}{Additional arguments in a named list passed to \code{\link[scran]{getTopHVGs}}, such as \code{top.hvg=list(n = 3000)}.}
-
-\item{de.pca}{Additional arguments in a named list passed to \code{\link[scran]{denoisePCA}}, such as \code{de.pca=list(assay.type = "logcounts")}.}
-
-\item{tsne}{Additional arguments in a named list passed to \code{\link[scater]{runTSNE}}, such as \code{tsne=list(dimred="PCA", ncomponents=2)}.}
-
-\item{umap}{Additional arguments in a named list passed to \code{\link[scater]{runUMAP}}, such as \code{umap=list(dimred="PCA")}.}
 
 \item{knn.gr}{Additional arguments in a named list passed to \code{\link[scran]{buildKNNGraph}}.}
 
@@ -55,21 +30,21 @@ cluster_cell(
 A list of normalized single cell and bulk data.
 }
 \description{
-Cluster only single cell data or combination of single cell and bulk data. The cluster assignments are stored in the \code{cluster} column of \code{colData} slot of \code{SingleCellExperiment}.
+Cluster only single cell data or combination of single cell and bulk data. Clusters are created by first building a graph, where nodes are cells and edges represent connections between nearest neighbors, then partitioning the graph. The cluster assignments are stored in the \code{cluster} column of \code{colData} slot of \code{SingleCellExperiment}.
 }
 \examples{
 library(scran); library(scuttle) 
 sce <- mockSCE(); sce <- logNormCounts(sce)
 # Modelling the variance.
 var.stats <- modelGeneVar(sce)
-sce <- denoisePCA(sce, technical=var.stats, subset.row=rownames(var.stats)) 
+sce.dimred <- denoisePCA(sce, technical=var.stats, subset.row=rownames(var.stats)) 
 \donttest{
-sce.clus <- cluster_cell(data=sce, prop=0.1, min.dim=13, max.dim=50, graph.meth='snn', dimred='PCA')
+sce.clus <- cluster_cell(sce=sce.dimred, graph.meth='snn', dimred='PCA')
 # Clusters.
 table(colData(sce.clus)$label)
 
 }
-# See details in function "cocluster" by running "?cocluster".
+# See details in function "coclus_meta" by running "?coclus_meta".
 }
 \references{
 Morgan M, Obenchain V, Hester J, Pagès H (2021). SummarizedExperiment: SummarizedExperiment container. R package version 1.24.0, https://bioconductor.org/packages/SummarizedExperiment.

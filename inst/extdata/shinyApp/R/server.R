@@ -2225,7 +2225,7 @@ shm_server <- function(id, sch, lis.url, url.id, tab, upl.mod.lis, dat.mod.lis, 
      sce.sub <- scell.mod.lis$sce.rct$sce.sub
      if (is.null(sce.sub)) return()
      cdat <- colData(sce.sub) 
-     svg.bulk <- unique(subset(cdat, response==TRUE)$SVGBulk)
+     svg.bulk <- unique(cdat$SVGBulk)
      if (is.null(blk)) return()
      # unique(colLabels(sce.sub)) is the same with unique(colLabels(sce.aggr))
      ns <- session$ns
@@ -3590,21 +3590,21 @@ scell_server <- function(id, tab, upl.mod.lis, shm.mod.lis, session) {
   })
 
   # Initial filtering.
-  init.fil.coclus <- reactiveValues()
+  fil.coclus <- reactiveValues()
   observeEvent(list(input$coclusPar+1, sce.rct$bulk), {
     if (is.null(sce.rct$bulk)) return()
-    init.fil.coclus$val <- list(input$initFilBlkP, input$initFilBlkA, input$initFilBlkCV1, input$initFilBlkCV2, input$initFilPGen, input$initFilPCell)
+    fil.coclus$val <- list(input$filBlkP, input$filBlkA, input$filBlkCV1, input$filBlkCV2, input$filPGen, input$filPCell)
   })
 
   # eventReactive avoids endless circles.
-  blk.cell.init.fil <- eventReactive(init.fil.coclus$val, {
-    cat('Auto-matching: initial filtering ... \n')
+  blk.cell.fil <- eventReactive(fil.coclus$val, {
+    cat('Auto-matching: filtering ... \n')
     blk <- sce.rct$bulk; cell.lis <- sce.rct$val
     if (is.null(blk)|is.null(cell.lis)) return()
-    filBlkP <- input$initFilBlkP; filBlkA <- input$initFilBlkA
-    filBlkCV1 <- input$initFilBlkCV1
-    filBlkCV2 <- input$initFilBlkCV2
-    filPGen <- input$initFilPGen; filPCell <- input$initFilPCell
+    filBlkP <- input$filBlkP; filBlkA <- input$filBlkA
+    filBlkCV1 <- input$filBlkCV1
+    filBlkCV2 <- input$filBlkCV2
+    filPGen <- input$filPGen; filPCell <- input$filPCell
     validate(need((filBlkP >=0 & filBlkP <=1) & (filBlkA >= 0) & (filPGen >=0 & filPGen <=1) & (filPCell >=0 & filPCell <=1) & (filBlkCV1 >= -1000 & filBlkCV1 <= 1000 & filBlkCV2 >= -1000 & filBlkCV2 <= 1000 & filBlkCV1 < filBlkCV2), ''))
     withProgress(message="Initial filtering: ", value=0, {
     incProgress(0.3, detail="in progress ...")
@@ -3622,47 +3622,48 @@ scell_server <- function(id, tab, upl.mod.lis, shm.mod.lis, session) {
   })
 
   # eventReactive avoids endless circles.
-  blk.cell.nor <- eventReactive(list(norm.coclus$val, blk.cell.init.fil()), {
+  blk.cell.nor <- eventReactive(list(norm.coclus$val, blk.cell.fil()), {
     cat('Auto-matching: normalizing ... \n')
     norm.meth <- input$normCoclus
-    dat.lis.fil <- blk.cell.init.fil()
+    dat.lis.fil <- blk.cell.fil()
     if (is.null(norm.meth)|is.null(dat.lis.fil)) return()
     withProgress(message="Normalizing: ", value=0, {
     incProgress(0.3, detail="in progress ...")
-    lis.nor <- norm_multi(dat.lis=dat.lis.fil, cpm=ifelse(norm.meth=='cpm', TRUE, FALSE)); return(lis.nor)
+    lis.nor <- norm_multi(dat.lis=dat.lis.fil, cpm=ifelse(norm.meth=='cpm', TRUE, FALSE))
+    return(list(blk.nor=lis.nor$bulk, cell.lis.nor=lis.nor[setdiff(names(dat.lis.fil), 'bulk')]))
     })
   }) 
   
   # Secondary filtering.
-  par.fil.coclus <- reactiveValues()
-  observeEvent(input$coclusPar+1, {
-    if (is.null(sce.rct$bulk)) return()
-    par.fil.coclus$val <- list(input$filBlkP, input$filBlkA, input$filBlkCV1, input$filBlkCV2, input$filPGen, input$filPCell)
-  })
+  # par.fil.coclus <- reactiveValues()
+  # observeEvent(input$coclusPar+1, {
+  #   if (is.null(sce.rct$bulk)) return()
+  #   par.fil.coclus$val <- list(input$filBlkP, input$filBlkA, input$filBlkCV1, input$filBlkCV2, input$filPGen, input$filPCell)
+  # })
   # eventReactive avoids endless circles.
-  blk.cell.fil <- eventReactive(list(par.fil.coclus$val, blk.cell.nor()), {
-    cat('Auto-matching: secondary filtering ... \n')
-    library(SingleCellExperiment)
-    dat.lis.nor <- blk.cell.nor()
-    if (is.null(dat.lis.nor)) return() 
-    blk <- dat.lis.nor$bulk
-    cell.lis <- dat.lis.nor[setdiff(names(dat.lis.nor), 'bulk')] 
-    filBlkP <- input$filBlkP; filBlkA <- input$filBlkA
-    filBlkCV1 <- input$filBlkCV1
-    filBlkCV2 <- input$filBlkCV2
-    filPGen <- input$filPGen; filPCell <- input$filPCell
-    validate(need((filBlkP >=0 & filBlkP <=1) & (filBlkA >= 0) & (filPGen >=0 & filPGen <=1) & (filPCell >=0 & filPCell <=1) & (filBlkCV1 >= -1000 & filBlkCV1 <= 1000 & filBlkCV2 >= -1000 & filBlkCV2 <= 1000 & filBlkCV1 < filBlkCV2), ''))
-    withProgress(message="Secondary filtering: ", value=0, {
-    incProgress(0.3, detail="in progress ...")
-    blk.fil <- filter_data(data=blk, pOA=c(filBlkP, filBlkA), CV=c(filBlkCV1, filBlkCV2))
-    incProgress(0.3, detail="in progress ...")
-    dat.lis.fil <- filter_cell(lis=cell.lis, bulk=blk.fil, gen.rm=NULL, min.cnt=1, p.in.cell=filPCell, p.in.gen=filPGen)
-    return(list(blk.fil=dat.lis.fil$bulk, cell.lis.fil=dat.lis.fil[names(cell.lis)]))
-    })
-  })
-  observeEvent(blk.cell.fil(), {
-    sce.rct$bulk <- blk.cell.fil()$blk.fil
-    sce.rct$val <- blk.cell.fil()$cell.lis.fil
+  # blk.cell.fil <- eventReactive(list(par.fil.coclus$val, blk.cell.nor()), {
+  #   cat('Auto-matching: secondary filtering ... \n')
+  # library(SingleCellExperiment)
+  #  dat.lis.nor <- blk.cell.nor()
+  #  if (is.null(dat.lis.nor)) return() 
+  #  blk <- dat.lis.nor$bulk
+  #  cell.lis <- dat.lis.nor[setdiff(names(dat.lis.nor), 'bulk')] 
+  #  filBlkP <- input$filBlkP; filBlkA <- input$filBlkA
+  #  filBlkCV1 <- input$filBlkCV1
+  #  filBlkCV2 <- input$filBlkCV2
+  #  filPGen <- input$filPGen; filPCell <- input$filPCell
+  #  validate(need((filBlkP >=0 & filBlkP <=1) & (filBlkA >= 0) & (filPGen >=0 & filPGen <=1) & (filPCell >=0 & filPCell <=1) & (filBlkCV1 >= -1000 & filBlkCV1 <= 1000 & filBlkCV2 >= -1000 & filBlkCV2 <= 1000 & filBlkCV1 < filBlkCV2), ''))
+  #  withProgress(message="Secondary filtering: ", value=0, {
+  #  incProgress(0.3, detail="in progress ...")
+  #  blk.fil <- filter_data(data=blk, pOA=c(filBlkP, filBlkA), CV=c(filBlkCV1, filBlkCV2))
+  #  incProgress(0.3, detail="in progress ...")
+  #  dat.lis.fil <- filter_cell(lis=cell.lis, bulk=blk.fil, gen.rm=NULL, min.cnt=1, p.in.cell=filPCell, p.in.gen=filPGen)
+  #  return(list(blk.fil=dat.lis.fil$bulk, cell.lis.fil=dat.lis.fil[names(cell.lis)]))
+  #  })
+  #})
+  observeEvent(blk.cell.nor(), {
+    sce.rct$bulk <- blk.cell.nor()$blk.nor
+    sce.rct$val <- blk.cell.nor()$cell.lis.nor
   })
   # Cluster cells.
   clus.cell.coclus <- reactiveValues()
@@ -3671,14 +3672,15 @@ scell_server <- function(id, tab, upl.mod.lis, shm.mod.lis, session) {
     clus.cell.coclus$val <- list(input$clusDim, input$clusMeth)
   })
   # eventReactive avoids endless circles.
-  clus.sc <- eventReactive(list(clus.cell.coclus$val, blk.cell.fil()), {
+  clus.sc <- eventReactive(list(clus.cell.coclus$val, blk.cell.nor()), {
     cat('Auto-matching: clustering cells ... \n')
     clusDim <- input$clusDim; clusMeth <- input$clusMeth
-    dat.lis.fil <- blk.cell.fil()
-    if (is.null(clusDim)|is.null(clusMeth)|is.null(dat.lis.fil)) return()
+    dat.lis.nor <- blk.cell.nor()
+    if (is.null(clusDim)|is.null(clusMeth)|is.null(dat.lis.nor)) return()
     withProgress(message="Clustering cells: ", value=0, {
     incProgress(0.3, detail="in progress ...")
-    clus.sc <- cluster_cell(data=dat.lis.fil$cell.lis.fil[[1]], min.dim=10, max.dim=50, graph.meth=clusMeth, dimred=clusDim)
+    sce.dimred <- reduce_dim(sce=dat.lis.nor$cell.lis.nor[[1]], min.dim=10, max.dim=50)
+    clus.sc <- cluster_cell(sce=sce.dimred, graph.meth=clusMeth, dimred=clusDim)
     return(clus.sc)
     })
   }) 
@@ -3698,7 +3700,7 @@ scell_server <- function(id, tab, upl.mod.lis, shm.mod.lis, session) {
     withProgress(message="Refining cell clusters: ", value=0, {
     incProgress(0.3, detail="in progress ...")
     cell.refined <- refine_cluster(clus.sc, sim=clusSimT, sim.p=clusSimP, sim.meth='spearman', verbose=FALSE)
-    cell.refined <- true_bulk(cell.refined, df.match)
+    if ('cell' %in% colnames(df.match)) cell.refined <- true_bulk(cell.refined, df.match)
     return(cell.refined)
     })
   }) 
@@ -3710,17 +3712,17 @@ scell_server <- function(id, tab, upl.mod.lis, shm.mod.lis, session) {
     coclus.coclus$val <- list(input$clusDim, input$clusMeth, input$clusDimN)
   })
   # eventReactive avoids endless circles.
-  res.coclus <- eventReactive(list(coclus.coclus$val, blk.cell.fil(), cell.refined()), {
+  res.coclus <- eventReactive(list(coclus.coclus$val, blk.cell.nor(), cell.refined()), {
     cat('Auto-matching: coclustering ... \n')
     clusDim <- input$clusDim; clusMeth <- input$clusMeth
     clusDimN <- input$clusDimN; cell.refined <- cell.refined() 
-    blk.fil <- blk.cell.fil()$blk.fil
+    blk.nor <- blk.cell.nor()$blk.nor
     df.match <- sce.rct$df.match
-    if (is.null(clusDim)|is.null(clusMeth)|is.null(clusDimN)|is.null(cell.refined)|is.null(blk.fil)|is.null(df.match)) return()
+    if (is.null(clusDim)|is.null(clusMeth)|is.null(clusDimN)|is.null(cell.refined)|is.null(blk.nor)|is.null(df.match)) return()
     withProgress(message="Coclustering : ", value=0, {
     incProgress(0.3, detail="in progress ...")
-    roc.lis <- coclus_roc(bulk=blk.fil, cell.refined=cell.refined, df.match=df.match, min.dim=clusDimN, graph.meth=clusMeth, dimred=clusDim, sim.meth='spearman') 
-    res.lis <- c(list(cell.refined=cell.refined), roc.lis)
+    res.lis <- cocluster(bulk=blk.nor, cell.refined=cell.refined, df.match=df.match, min.dim=clusDimN, graph.meth=clusMeth, dimred=clusDim, sim.meth='spearman') 
+    # res.lis <- c(list(cell.refined=cell.refined), roc.lis)
     return(res.lis)
     })
   }) 
@@ -3738,10 +3740,10 @@ scell_server <- function(id, tab, upl.mod.lis, shm.mod.lis, session) {
     df.sel.cell <- tailor.lis()$df.sel.cell$val
     # save(res, df.sel.cell, file='rd')
     # The desired bulk is included in final assignments.
-    sce.lis <- sub_asg(res.lis=res, thr=asgThr, df.desired.bulk=df.sel.cell, df.match=sce.rct$df.match, true.only=TRUE)
+    sce.lis <- refine_asg(res.lis=res, thr=asgThr, df.desired.bulk=df.sel.cell, df.match=sce.rct$df.match)
     res.lis$val <- sce.lis
     # save(sce.lis, file='sce.lis')
-    sce.rct$sce.sub <- sce.lis$cell.sub
+    sce.rct$sce.sub <- sce.lis$sce.asg
     sce.rct$dimred <- sce.lis$cell.refined
     cat('Done! \n')
   })
@@ -3784,8 +3786,8 @@ scell_server <- function(id, tab, upl.mod.lis, shm.mod.lis, session) {
     res <- res.lis$val; if (is.null(res)) return()
     asgThr <- par.asg$asgThr # save(res, file='res')
     validate(need(asgThr >=0 & asgThr <=1, ''))
-    df.roc <- res$df.roc; df.roc <- subset(df.roc, predictor >= asgThr)
-    datatable(df.roc, selection='none', escape=FALSE, filter="top", extensions=c('Scroller', 'FixedColumns'), plugins = "ellipsis",
+    df.asg <- res$df.asg; df.asg <- subset(df.asg, predictor >= asgThr)
+    datatable(df.asg, selection='none', escape=FALSE, filter="top", extensions=c('Scroller', 'FixedColumns'), plugins = "ellipsis",
       options=list(pageLength=20, lengthMenu=c(10, 20, 50, 100), autoWidth=TRUE, scrollCollapse=TRUE, deferRender=TRUE, scrollX=TRUE, scrollY=300, scroller=TRUE, searchHighlight=TRUE, search=list(regex=TRUE, smart=FALSE, caseInsensitive=TRUE), searching=TRUE, fixedColumns=list(leftColumns=1))
       )
     })

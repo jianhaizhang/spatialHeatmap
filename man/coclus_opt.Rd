@@ -27,10 +27,6 @@ coclus_opt(
 
 \item{parallel.info}{Logical. If \code{FALSE} (default), coclustering optimization is performed. If \code{TRUE}, parallelization guide is returned and no optimization. Users are advised to check the guide when editing the slurm template.}
 
-\item{sc.dim.min}{Integer scalar specifying the minimum number of (principle components) PCs to retain in \code{\link[scran]{denoisePCA}} when clustering single cells without bulk data. The default is \code{10}.}
-
-\item{max.dim}{Integer scalar specifying the maximum number of (principle components) PCs to retain in \code{\link[scran]{denoisePCA}} when clustering single cells without bulk data and coclustering single cells and bulk data. The default is \code{50}.}
-
 \item{dimred}{Dimensionality redeuction methods to optimize: \code{c('PCA', 'UMAP')}.}
 
 \item{graph.meth}{Graph-building methods in coclustering: \code{c('knn', 'snn')} (see \code{\link[scran]{buildKNNGraph}}), \code{\link[scran]{buildSNNGraph}}) respectively). The clusters are detected by first creating a nearest neighbor graph using \code{snn} or \code{knn} then partitioning the graph.}

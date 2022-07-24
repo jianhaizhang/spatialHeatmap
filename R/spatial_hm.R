@@ -366,6 +366,7 @@ spatial_hm <- function(svg.path, data, assay.na=NULL, sam.factor=NULL, con.facto
   if("tis.trans" %in% calls) { ft.trans <- tis.trans; warning('"tis.trans" is deprecated and replaced by "ft.trans"! \n') }
   x <- y <- color_scale <- tissue <- NULL; options(stringsAsFactors=FALSE)
   # if (!is.null(sub.margin)) if (!is.numeric(sub.margin) | length(sub.margin)!=4 | any(sub.margin >= 1) | any(sub.margin < 0)) stop('"sub.margin" must be a 4-length numeric vector between 0 (inclusive) and 1 (exclusive)!')
+  if (missing(ID)) ID <- rownames(data)[1]
   ID <- unique(ID)
   is.sce <- is(sce.dimred, 'SingleCellExperiment')
   profile.no <- profile==FALSE & is.sce & !is(lis.rematch, 'list')

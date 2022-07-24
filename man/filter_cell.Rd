@@ -21,11 +21,11 @@ filter_cell(
 
 \item{gen.rm}{A regular expression of gene identifiers in single cell data to remove before filtering. E.g. mitochondrial, chloroplast and protoplasting-induced genes (\code{^ATCG|^ATCG}). The default is \code{NULL}.}
 
-\item{min.cnt}{The min count of gene expression. The default is \code{1}.}
+\item{min.cnt}{The minmun count of gene expression. The default is \code{1}.}
 
-\item{p.in.cell}{The min proportion of counts above \code{min.cnt} in a cell. The default is \code{0.4}.}
+\item{p.in.cell}{The proportion cutoff of counts above \code{min.cnt} in a cell. The default is \code{0.4}.}
 
-\item{p.in.gen}{The min proportion of counts above \code{min.cnt} in a gene. The default is \code{0.2}.}
+\item{p.in.gen}{The proportion cutoff of counts above \code{min.cnt} in a gene. The default is \code{0.2}.}
 
 \item{verbose}{Logical. If \code{TRUE} (default), intermediate messages are printed.}
 }

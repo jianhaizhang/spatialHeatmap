@@ -5,9 +5,9 @@
 #' @param lis A named list of single cell data in form of \code{data.frame}, \code{SingleCellExperiment}, or \code{SummarizedExperiment}. 
 #' @param bulk The bulk data in form of \code{data.frame} or \code{SummarizedExperiment}. They are only used to obtain common genes with all single cell data and not filtered. The default is \code{NULL}.
 #' @param gen.rm A regular expression of gene identifiers in single cell data to remove before filtering. E.g. mitochondrial, chloroplast and protoplasting-induced genes (\code{^ATCG|^ATCG}). The default is \code{NULL}.
-#' @param min.cnt The min count of gene expression. The default is \code{1}.
-#' @param p.in.cell The min proportion of counts above \code{min.cnt} in a cell. The default is \code{0.4}.
-#' @param p.in.gen The min proportion of counts above \code{min.cnt} in a gene. The default is \code{0.2}.
+#' @param min.cnt The minmun count of gene expression. The default is \code{1}.
+#' @param p.in.cell The proportion cutoff of counts above \code{min.cnt} in a cell. The default is \code{0.4}.
+#' @param p.in.gen The proportion cutoff of counts above \code{min.cnt} in a gene. The default is \code{0.2}.
 #' @param verbose Logical. If \code{TRUE} (default), intermediate messages are printed.
 
 #' @return A list of filtered single cell data and bulk data, which have common genes.

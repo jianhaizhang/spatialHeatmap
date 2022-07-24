@@ -5,7 +5,7 @@
 #' @param norm A character vector of normalization methods. E.g. \code{c('cpm')}.
 #' @param dimred A character vector of dimesionality reduction methods. E.g. \code{c('umap')}.
 #' @param graph.meth A character vector of graph-building methods. E.g. \code{c('knn', 'snn')}.
-#' @inheritParams cocluster
+#' @inheritParams coclus_meta
 #' @param df.spd.opt A \code{data.frame} of optimized \code{spd.set} settings. These settings are avoided in the output random settings. 
 
 

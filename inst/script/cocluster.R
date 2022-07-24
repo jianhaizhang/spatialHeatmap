@@ -19,42 +19,46 @@ colData(sce.manual) <- cdat
 # Save the example data.
 saveRDS(sce.manual, file='./sce_manual_mouse.rds')
 
+# Quality control, normalization, dimensionality reduction.                                                                        
+sce.dimred <- process_cell_meta(sce.manual, qc.metric=list(subsets=list(Mt=rowData(sce.manual)$featureType=='mito'), threshold=1)) 
+# Clustering.                                                                                                                      
+sce.clus <- cluster_cell(sce=sce.dimred, graph.meth='knn', dimred='PCA')                                                           
+# Manual cluster labels.                                                                                                           
+df.clus.mus.sc <- data.frame(cell=rownames(colData(sce.clus)), cluster=colData(sce.clus)$cluster)                                  
+write.table(df.clus.mus.sc, 'manual_cluster_mouse_brain.txt', col.names=TRUE, sep='\t')
+
 
 ## Example data for auto-matching/coclustering.
 
 library(spatialHeatmap); source('fun_cocluster.R')
-# Download mouse brain bulk data (blk.mus.brain) at https://github.com/jianhaizhang/cocluster_data.                                
-                                                                                                                                   
-# Obtain example data by hash filtering.                                                                                           
-blk.mus.brain <- filter_data(data=, pOA=c(0.3, 6), CV=c(0.6, 100)); dim(blk.mus.brain)                                             
-                                                                                                                                   
-# Import single cell data of mouse brain according to instructions at https://github.com/jianhaizhang/cocluster_data.              
-sc.mus.brain <- sc_dat_mus_brain(sc.pa=file.path(sc.mus.brain.pa, 'GSE147747_expr_raw_counts_table.tsv'), meta.pa=file.path(sc.mus.
-brain.meta.pa, 'GSE147747_meta_table.tsv'))                                                                                        
-                                                                                                                                   
-# Obtain example data by hash filtering.                                                                                           
-sc.mus.brain <- filter_cell(lis=list(sc.mus.brain=sc.mus.brain), bulk=NULL, gen.rm=NULL, min.cnt=1, p.in.cell=0.85, p.in.gen=0.5)  
-                                                                                                                                   
-# Take overlap genes between bulk and single cells.                                                                                
-mus.brain <- filter_cell(lis=list(sc.mus.brain=sc.mus.brain$sc.mus.brain), bulk=blk.mus.brain, gen.rm=NULL, min.cnt=0, p.in.cell=0.
-5, p.in.gen=0.1)                                                                                                                   
-                                                                                                                                   
-# Example bulk and single cell data.                                                                                               
-blk.mus <- mus.brain$bulk; sc.mus <- mus.brain$sc.mus.brain                                                                        
-write.table(blk.mus, 'bulk_mouse_cocluster.txt', col.names=TRUE, row.names=TRUE, sep='\t')                                         
-write.table(sc.mus, 'cell_mouse_cocluster.txt', col.names=TRUE, row.names=TRUE, sep='\t')                                          
-                                                                                                                                   
-# Example data for auto-matching in Shiny app.                                                                                     
-library(SingleCellExperiment)                                                                                                      
-blk.sc <- as.matrix(cbind(blk.mus, sc.mus))                                                                                        
-cdat <- DataFrame(bulkCell=c(rep('bulk', ncol(blk.mus)), rep('cell', ncol(sc.mus))))                                               
-sce.all <- SingleCellExperiment(assays=list(counts=blk.sc), colData=cdat)                                                          
-                                                                                                                                   
-df.match.mus.pa <- system.file("extdata/shinyApp/example", "match_mouse_brain_cocluster.txt", package="spatialHeatmap")            
-df.match <- read.table(df.match.mus.pa, header=TRUE, row.names=1, sep='\t')                                                        
-metadata(sce.all)$df.match <- df.match                                                                                             
-saveRDS(sce.all, file='sce_auto_bulk_cell_mouse_brain.rds')
+# Download mouse brain bulk data (bulk_mouse_brain.xls) at https://github.com/jianhaizhang/cocluster_data/tree/master/validate/mouse_brain.
 
+# Obtain example data by harsh filtering.
+blk.mus.brain <- read.table('bulk_mouse_brain.xls', header=TRUE, sep='\t', row.names=1) 
+blk.mus.brain <- filter_data(data=blk.mus.brain, pOA=c(0.3, 6), CV=c(0.55, 100)); dim(blk.mus.brain)
+ 
+# Import single cell data of mouse brain according to instructions at https://github.com/jianhaizhang/cocluster_data. 
+sc.mus.brain <- sc_dat_mus_brain(sc.pa='GSE147747_expr_raw_counts_table.tsv', meta.pa='GSE147747_meta_table.tsv')
+
+# Obtain example data by harsh filtering, and Take overlap genes between bulk and single cells. 
+sc.mus.brain <- filter_cell(lis=list(sc.mus.brain=sc.mus.brain), bulk=blk.mus.brain, gen.rm=NULL, min.cnt=1, p.in.cell=0.93, p.in. 
+gen=0.5) 
+
+# Example bulk and single cell data. 
+blk.mus <- mus.brain$bulk; sc.mus <- mus.brain$sc.mus.brain 
+write.table(blk.mus, 'bulk_mouse_cocluster.txt', col.names=TRUE, row.names=TRUE, sep='\t') 
+write.table(sc.mus, 'cell_mouse_cocluster.txt', col.names=TRUE, row.names=TRUE, sep='\t') 
+
+# Example data for auto-matching in Shiny app.  
+library(SingleCellExperiment) 
+blk.sc <- as.matrix(cbind(blk.mus, sc.mus)) 
+cdat <- DataFrame(bulkCell=c(rep('bulk', ncol(blk.mus)), rep('cell', ncol(sc.mus)))) 
+sce.all <- SingleCellExperiment(assays=list(counts=blk.sc), colData=cdat)
+ 
+df.match.mus.pa <- system.file("extdata/shinyApp/example", "match_mouse_brain_cocluster.txt", package="spatialHeatmap") 
+df.match <- read.table(df.match.mus.pa, header=TRUE, row.names=1, sep='\t')  
+metadata(sce.all)$df.match <- df.match
+saveRDS(sce.all, file='sce_auto_bulk_cell_mouse_brain.rds') 
 
 ## Example data of Arabidopsis thaliana root for coclustering optimization, downloaded at https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE152766. 
 

@@ -77,7 +77,7 @@
 #' @importFrom shiny runApp
 
 shiny_shm <- function() {
-  if (as.character(match.call()[[1]])=="shiny_all") warning("'shiny_all()' is deprecated and replaced by 'shiny_shm()'!", call. = FALSE)
+  if (any(as.character(match.call()[[1]])=="shiny_all")) warning("'shiny_all()' is deprecated and replaced by 'shiny_shm()'!", call. = FALSE)
   path <- system.file("extdata/shinyApp", package="spatialHeatmap"); runApp(path)
 }
 

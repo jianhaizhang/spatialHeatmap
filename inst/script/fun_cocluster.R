@@ -95,9 +95,9 @@ df_match <- function() {
   
   cell <- c('atricho', 'colu.dist.colu', 'colu.dist.lrc', 'colu.proxi.colu', 'colu.proxi.lrc', 'colu', 'cortex', 'cortex.dist.lrc', 'endo', 'lat.rt.cap.dist.colu', 'lat.rt.cap.dist.lrc', 'lat.rt.cap.proxi.lrc', 'lat.rt.cap', 'metaphlo.comp.cell', 'metaxylem', 'phlo.po.per', 'procam', 'protophlo', 'protoxylem', 'protoxylem.dist.lrc', 'quies.cent', 'put.quies.cent', 'stem.niche', 'tricho', 'xylem.po.per', 'xylem', 'per', 'phlo')
 
-  trueBulk <-c('NONHAIR,LRC_NONHAIR', 'COLU', 'COLU', 'COLU', 'COLU', 'COLU', 'CORT', 'CORT', 'ENDO,ENDO_QC', 'LRC_NONHAIR', 'LRC_NONHAIR', 'LRC_NONHAIR', 'LRC_NONHAIR', 'XYLEM,PERI,PHLM_COMP,PHLOEM,STELE', 'XYLEM,PERI,PHLM_COMP,PHLOEM,STELE', 'XYLEM,PERI,PHLM_COMP,PHLOEM,STELE', 'XYLEM,PERI,PHLM_COMP,PHLOEM,STELE', 'XYLEM,PERI,PHLM_COMP,PHLOEM,STELE', 'XYLEM,PERI,PHLM_COMP,PHLOEM,STELE', 'XYLEM,PERI,PHLM_COMP,PHLOEM,STELE', 'ENDO_QC,QC', 'ENDO_QC,QC', 'ENDO_QC,QC', 'HAIR', 'XYLEM,PERI,PHLM_COMP,PHLOEM,STELE', 'XYLEM,PERI,PHLM_COMP,PHLOEM,STELE', 'XYLEM,PERI,PHLM_COMP,PHLOEM,STELE', 'XYLEM,PERI,PHLM_COMP,PHLOEM,STELE')
+  dataBulk <-c('NONHAIR,LRC_NONHAIR', 'COLU', 'COLU', 'COLU', 'COLU', 'COLU', 'CORT', 'CORT', 'ENDO,ENDO_QC', 'LRC_NONHAIR', 'LRC_NONHAIR', 'LRC_NONHAIR', 'LRC_NONHAIR', 'XYLEM,PERI,PHLM_COMP,PHLOEM,STELE', 'XYLEM,PERI,PHLM_COMP,PHLOEM,STELE', 'XYLEM,PERI,PHLM_COMP,PHLOEM,STELE', 'XYLEM,PERI,PHLM_COMP,PHLOEM,STELE', 'XYLEM,PERI,PHLM_COMP,PHLOEM,STELE', 'XYLEM,PERI,PHLM_COMP,PHLOEM,STELE', 'XYLEM,PERI,PHLM_COMP,PHLOEM,STELE', 'ENDO_QC,QC', 'ENDO_QC,QC', 'ENDO_QC,QC', 'HAIR', 'XYLEM,PERI,PHLM_COMP,PHLOEM,STELE', 'XYLEM,PERI,PHLM_COMP,PHLOEM,STELE', 'XYLEM,PERI,PHLM_COMP,PHLOEM,STELE', 'XYLEM,PERI,PHLM_COMP,PHLOEM,STELE')
 
-  df.match <- data.frame(SVGBulk=SVGBulk, cell=cell, trueBulk=trueBulk)
+  df.match <- data.frame(SVGBulk=SVGBulk, cell=cell, dataBulk=dataBulk)
   return(df.match)
 }
 

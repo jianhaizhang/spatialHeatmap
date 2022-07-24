@@ -1,4 +1,4 @@
-"SVGBulk"	"cell"	"trueBulk"
+"SVGBulk"	"cell"	"dataBulk"
 "1"	"NONHAIR"	"atricho"	"NONHAIR,LRC_NONHAIR"
 "2"	"COLU"	"colu.dist.colu"	"COLU"
 "3"	"COLU"	"colu.dist.lrc"	"COLU"

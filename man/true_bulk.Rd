@@ -30,10 +30,10 @@ dimnames(df.random) <- list(paste0('gene', seq_len(nrow(df.random))), c('cere', 
 library(SingleCellExperiment); library(S4Vectors)
 cell.refined <- SingleCellExperiment(assays=list(logcounts=df.random), colData=DataFrame(cell=colnames(df.random)))
 
-cell.refined <- true_bulk(cell.refined, df.match.mus.brain)
-colData(cell.refined)
+#cell.refined <- true_bulk(cell.refined, df.match.mus.brain)
+#colData(cell.refined)
 
-# See detailed example in the "cocluster" function by running "?cocluster".
+# See detailed example in the "coclus_meta" function by running "?coclus_meta".
 }
 \references{
 Morgan M, Obenchain V, Hester J, Pagès H (2021). SummarizedExperiment: SummarizedExperiment container. R package version 1.24.  0, https://bioconductor.org/packages/SummarizedExperiment.

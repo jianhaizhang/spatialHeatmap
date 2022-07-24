@@ -18,23 +18,23 @@ reduce_dim(
 )
 }
 \arguments{
+\item{sce}{Normalized single cell data in \code{SingleCellExperiment} returned by \code{norm_cell}. Alternative forms include \code{dgCMatrix}, \code{matrix}, \code{data.frame}.}
+
 \item{prop}{Numeric scalar specifying the proportion of genes to report as highly variable genes (HVGs) in \code{\link[scran]{getTopHVGs}}. The default is \code{0.1}.}
 
-\item{min.dim}{Integer scalars specifying the minimum (\code{min.dim}) and maximum (\code{max.dim}) number of (principle components) PCs to retain respectively in \code{\link[scran]{denoisePCA}}. The default is \code{min.dim=13}, \code{max.dim=50}.}
-
-\item{max.dim}{Integer scalars specifying the minimum (\code{min.dim}) and maximum (\code{max.dim}) number of (principle components) PCs to retain respectively in \code{\link[scran]{denoisePCA}}. The default is \code{min.dim=13}, \code{max.dim=50}.}
+\item{min.dim, max.dim}{Integer scalars specifying the minimum (\code{min.dim}) and maximum (\code{max.dim}) number of (principle components) PCs to retain respectively in \code{\link[scran]{denoisePCA}}. The default is \code{min.dim=13}, \code{max. dim=50}.}
 
 \item{model.var}{Additional arguments in a named list passed to \code{\link[scran]{modelGeneVar}}.}
 
-\item{top.hvg}{Additional arguments in a named list passed to \code{\link[scran]{getTopHVGs}}, such as \code{top.hvg=list(n = 3000)}.}
+\item{top.hvg}{Additional arguments in a named list passed to \code{\link[scran]{getTopHVGs}}, such as \code{top.hvg=list(n =   3000)}.}
 
-\item{de.pca}{Additional arguments in a named list passed to \code{\link[scran]{denoisePCA}}, such as \code{de.pca=list(assay.type = "logcounts")}.}
+\item{de.pca}{Additional arguments in a named list passed to \code{\link[scran]{denoisePCA}}, such as \code{de.pca=list(assay.  type = "logcounts")}.}
 
 \item{pca}{Logical, if \code{TRUE} only the data with reduced dimentionality by PCA is returned and no clustering is performed. The default is \code{FALSE} and clustering is performed after dimensionality reduction.}
 
 \item{tsne}{Additional arguments in a named list passed to \code{\link[scater]{runTSNE}}, such as \code{tsne=list(dimred="PCA", ncomponents=2)}.}
 
-\item{umap}{Additional arguments in a named list passed to \code{\link[scater]{runUMAP}}, such as \code{umap=list(dimred="PCA")}.}
+\item{umap}{Additional arguments in a named list passed to \code{\link[scater]{runUMAP}}, such as                               \code{umap=list(dimred="PCA")}.}
 }
 \value{
 A \code{SingleCellExperiment} object.
@@ -51,7 +51,7 @@ sce.dimred <- reduce_dim(sce.norm)
 }
 \references{
 Amezquita R, Lun A, Becht E, Carey V, Carpp L, Geistlinger L, Marini F, Rue-Albrecht K, Risso D, Soneson C, Waldron L, Pages H, Smith M, Huber W, Morgan M, Gottardo R, Hicks S (2020). “Orchestrating single-cell analysis with Bioconductor.” Nature Methods,    17, 137–145. https://www.nature.com/articles/s41592-019-0654-x.
-Lun ATL, McCarthy DJ, Marioni JC (2016). “A step-by-step workflow for low-level analysis of single-cell RNA-seq data with       Bioconductor.” F1000Res., 5, 2122. doi: 10.12688/f1000research.9501.2.
+Lun ATL, McCarthy DJ, Marioni JC (2016). “A step-by-step workflow for low-level analysis of single-cell RNA-seq data with Bioconductor.” F1000Res., 5, 2122. doi: 10.12688/f1000research.9501.2.
 McCarthy DJ, Campbell KR, Lun ATL, Willis QF (2017). “Scater: pre-processing, quality control, normalisation and visualisation  of single-cell RNA-seq data in R.” Bioinformatics, 33, 1179-1186. doi: 10.1093/bioinformatics/btw777.
 }
 \author{

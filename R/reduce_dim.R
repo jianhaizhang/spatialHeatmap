@@ -1,7 +1,16 @@
 #' Reducing dimensionality in count data
 #'
 #' A meta function for reducing dimensionality in count data.
-#' @inheritParams cluster_cell
+
+#' @param sce Normalized single cell data in \code{SingleCellExperiment} returned by \code{norm_cell}. Alternative forms include \code{dgCMatrix}, \code{matrix}, \code{data.frame}.
+#' @param prop Numeric scalar specifying the proportion of genes to report as highly variable genes (HVGs) in \code{\link[scran]{getTopHVGs}}. The default is \code{0.1}.                                                                        
+#' @param min.dim,max.dim Integer scalars specifying the minimum (\code{min.dim}) and maximum (\code{max.dim}) number of (principle components) PCs to retain respectively in \code{\link[scran]{denoisePCA}}. The default is \code{min.dim=13}, \code{max. dim=50}.                                                                                                                           
+#' @param model.var Additional arguments in a named list passed to \code{\link[scran]{modelGeneVar}}.                              
+#' @param top.hvg Additional arguments in a named list passed to \code{\link[scran]{getTopHVGs}}, such as \code{top.hvg=list(n =   3000)}.                                                                                                                            
+#' @param de.pca Additional arguments in a named list passed to \code{\link[scran]{denoisePCA}}, such as \code{de.pca=list(assay.  type = "logcounts")}.                                                                                                              
+#' @param pca Logical, if \code{TRUE} only the data with reduced dimentionality by PCA is returned and no clustering is performed. The default is \code{FALSE} and clustering is performed after dimensionality reduction.                                            
+#' @param tsne Additional arguments in a named list passed to \code{\link[scater]{runTSNE}}, such as \code{tsne=list(dimred="PCA", ncomponents=2)}.                                                                                                                   
+#' @param umap Additional arguments in a named list passed to \code{\link[scater]{runUMAP}}, such as                               \code{umap=list(dimred="PCA")}.                                                                                                    
 
 #' @return A \code{SingleCellExperiment} object. 
 
@@ -17,7 +26,7 @@
 
 #' @references
 #' Amezquita R, Lun A, Becht E, Carey V, Carpp L, Geistlinger L, Marini F, Rue-Albrecht K, Risso D, Soneson C, Waldron L, Pages H, Smith M, Huber W, Morgan M, Gottardo R, Hicks S (2020). “Orchestrating single-cell analysis with Bioconductor.” Nature Methods,    17, 137–145. https://www.nature.com/articles/s41592-019-0654-x.
-#' Lun ATL, McCarthy DJ, Marioni JC (2016). “A step-by-step workflow for low-level analysis of single-cell RNA-seq data with       Bioconductor.” F1000Res., 5, 2122. doi: 10.12688/f1000research.9501.2.
+#' Lun ATL, McCarthy DJ, Marioni JC (2016). “A step-by-step workflow for low-level analysis of single-cell RNA-seq data with Bioconductor.” F1000Res., 5, 2122. doi: 10.12688/f1000research.9501.2.
 #' McCarthy DJ, Campbell KR, Lun ATL, Willis QF (2017). “Scater: pre-processing, quality control, normalisation and visualisation  of single-cell RNA-seq data in R.” Bioinformatics, 33, 1179-1186. doi: 10.1093/bioinformatics/btw777.
 
 
@@ -27,6 +36,10 @@
 #' @importFrom scater runUMAP runTSNE
 
 reduce_dim <- function(sce, prop=0.1, min.dim=13, max.dim=50, model.var=list(), top.hvg=list(n = 3000), de.pca=list(assay.type = "logcounts"), pca=FALSE, tsne=list(dimred="PCA", ncomponents=2), umap=list(dimred="PCA")) {
+  if (is(sce, 'dgCMatrix')|is(sce, 'matrix')|is(sce, 'data.frame')) {
+    if (all(round(sce)==sce)) stop('The "sce" should be in log2 scale!')
+    sce <- SingleCellExperiment(list(logcounts=as.matrix(sce)))
+  }
   # Use logcounts by default.
   df.var.sc <- do.call(modelGeneVar, c(list(x=sce), model.var))
   top.hvgs.sc <- do.call(getTopHVGs, c(list(stats=df.var.sc, prop=prop), top.hvg))

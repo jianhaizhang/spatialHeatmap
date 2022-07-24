@@ -4,7 +4,15 @@
 \alias{plot_dim}
 \title{Plotting single cells in reduced dimensionalities}
 \usage{
-plot_dim(sce, dim, color.by, row.sel = NULL, x.break = NULL, y.break = NULL)
+plot_dim(
+  sce,
+  dim = NULL,
+  color.by,
+  group.sel = NULL,
+  row.sel = NULL,
+  x.break = NULL,
+  y.break = NULL
+)
 }
 \arguments{
 \item{sce}{A \code{SingleCellExperiment} object with reduced dimensions seen by \code{reducedDimNames(sce)}.}
@@ -12,6 +20,8 @@ plot_dim(sce, dim, color.by, row.sel = NULL, x.break = NULL, y.break = NULL)
 \item{dim}{One of \code{PCA}, \code{UMAP}, \code{TSNE}, the method for reducing dimensionality.}
 
 \item{color.by}{One of the column names in the \code{colData} slot of \code{sce}.}
+
+\item{group.sel}{An entry in the \code{color.by} column. All cells under this entry are selected as a group to show.}
 
 \item{row.sel}{A numeric vector of row numbers in the \code{colData} slot of \code{sce}. The cells corresponding to these rows are highlighted and plotted on top of other cells.}
 
@@ -30,7 +40,7 @@ sce <- mockSCE(); sce <- logNormCounts(sce)
 var.stats <- modelGeneVar(sce) 
 sce <- denoisePCA(sce, technical=var.stats, subset.row=rownames(var.stats)) 
 plot_dim(sce, dim='PCA', color.by='Cell_Cycle')
-# See function "cocluster" by running "?cocluster".
+# See function "coclus_meta" by running "?coclus_meta".
 }
 \references{
 Amezquita R, Lun A, Becht E, Carey V, Carpp L, Geistlinger L, Marini F, Rue-Albrecht K, Risso D, Soneson C, Waldron L, Pages H, Smith M, Huber W, Morgan M, Gottardo R, Hicks S (2020). “Orchestrating single-cell analysis with Bioconductor.” Nature Methods, 17, 137–145. https://www.nature.com/articles/s41592-019-0654-x

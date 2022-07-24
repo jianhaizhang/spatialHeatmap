@@ -9,7 +9,7 @@
 #' @param graph.meth Graph-building methods in coclustering: \code{c('knn', 'snn')} (see \code{\link[scran]{buildKNNGraph}}), \code{\link[scran]{buildSNNGraph}}) respectively). The clusters are detected by first creating a nearest neighbor graph using \code{snn} or \code{knn} then partitioning the graph. 
 #' @param sim,sim.p Used when refining cell clusters. Both are numeric scalars, ranging from 0 to 1. \code{sim} is a similarity (Spearman or Pearson correlation coefficient) cutoff between cells and \code{sim.p} is a proportion cutoff. In a certain cell cluster, cells having similarity >= \code{sim} with other cells in the same cluster at proportion >= \code{sim.p} would remain. Otherwise, they are discarded. The default of both is \code{seq(0.2, 0.8, by=0.1)} and can be customized.
 #' @param dim Number of principle components (PCs, equivalent to genes) in combined bulk and single cell data. Used as the minimum number of PCs to retain in \code{\link[scran]{denoisePCA}} when coclustering bulk and single cells. The default is \code{seq(5, 40, by=1)}, and can be customized.
-#' @inheritParams coclus_roc
+#' @inheritParams cocluster
 #' @param batch.par The parameters for first-level parallelization through a cluster scheduler such as SLURM. See \code{\link[BioParallel]{BatchtoolsParam}}. If \code{NULL} (default), the first-level parallelization is skipped.
 #' @param multi.core.par The parameters for second-level parallelization. See \code{\link[BioParallel]{MulticoreParam}}.
 #' @param verbose Logical. If \code{TRUE} (default), intermediate messages are printed.
@@ -205,7 +205,7 @@ coclus_opt <- function(wk.dir, parallel.info=FALSE, sc.dim.min=10, max.dim=50, d
     out <- file.path(auc.dir, tolower(paste0('auc.', fil.na, '.', df0$cell, '.', df0$dimred, '.', df0$graph.meth)))
     # library(spatialHeatmap)
     # In bplapply(), the environment of FUN (other than the global environment) is serialized to the workers. A consequence is that, when FUN is inside a package name space, other functions available in the name space are available to FUN on the workers.
-    df.para <- cocluster(bulk=blk, cell=sc, df.match=df.match, df.para=df.para, sc.dim.min=sc.dim.min, max.dim=max.dim, sim.meth=sim.meth, return.all=FALSE, multi.core.par=multi.core.par, verbose=verbose, file=out); return('Done')
+    df.para <- coclus_meta(bulk=blk, cell=sc, df.match=df.match, df.para=df.para, sc.dim.min=sc.dim.min, max.dim=max.dim, sim.meth=sim.meth, return.all=FALSE, multi.core.par=multi.core.par, verbose=verbose, file=out); return('Done')
   }
   # Every row in df.par.com is combined with every row in df.spd for coclustering.
   if (is(batch.par, 'BatchtoolsParam')) {
