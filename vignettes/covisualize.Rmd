@@ -382,7 +382,7 @@ shm.lis <- spatial_hm(svg.path=svg.mus.brain, data=sce.aggr, ID=c('Cops5'), heig
 ## Manual 
 
 <font style="color:blue">
-In the manual method, cell group or cluster labels are manually created according to criteria or methods chosen by users such as clustering methods, which is very flexible than the annotation method. The resultant manual clusters need to be stored in a tabular file, then added to the `SingleCellExperiment` by the `manual_cluster` function. The same single cell data and aSVG file as in the
+In the manual method, cell group or cluster labels are manually created according to criteria or methods chosen by users such as clustering methods, which is very flexible than the annotation method. The resultant manual clusters need to be stored in a tabular file, then added to the `SingleCellExperiment` by the `manual_group` function. The same single cell data and aSVG file as in the
 annotation method are used to demonstrate the manual method. The steps of
 quality control, normalization, and dimensionality reduction are the same with
 the annotation method, while a subsequent step of adding manual clusters to the `SingleCellExperiment` is required.   
@@ -394,7 +394,7 @@ applied.] </span>
 
 
 <font style="color:blue">
-An example manual cluster file is included in `spatialHeatmap`, where cluster labels are created by the clustering function `cluster_cell`. Refer to the help file for how to use this function. Two columns are required in this file. The `cell` column contains single cell identifiers present in the rownames of `colData` slot in the `SingleCellExperiment`, while the `cluster` column contains the manual cluster labels.   
+An example manual group file is included in `spatialHeatmap`, where group labels are created by the clustering function `cluster_cell`. Refer to the help file for how to use this function. At least two columns are required in this file. The `cell` column contains single cell identifiers present in the rownames of `colData` slot in the `SingleCellExperiment`, while the `cluster` column contains the manual cell group labels.   
 </font>
 
 
@@ -407,15 +407,15 @@ manual.clus.mus.sc[1:3, ]
 <a name='manual_clus'></a>
 
 <font style="color:blue">
-Manual cluster labels are exclusively included in the `cluster` column in the `colData` slot by the function `manual_cluster`, which does not interfere with existing columns.    
+Manual group labels are included in a column in the `colData` slot by the function `manual_group`, which does not interfere with existing columns. The `cell` and `cell.group` arguments indicate two columns corresonding to cells and cell group labels respectively in `manual.clus.mus.sc`.    
 </font>
 
 ```{r eval=TRUE, echo=TRUE, warnings=FALSE}
-sce.clus <- manual_cluster(sce=sce.dimred, df.clus=manual.clus.mus.sc)
+sce.clus <- manual_group(sce=sce.dimred, df.group=manual.clus.mus.sc, cell='cell', cell.group='cluster')
 colData(sce.clus)[1:3, ]
 ```
 
-Embedding plot of single cells colored by manual clusters in the `cluster` column in `colData`.   
+Embedding plot of single cells colored by manual groups in the `cluster` column in `colData`.   
 
 ```{r eval=TRUE, echo=TRUE, warnings=FALSE, fig.wide=TRUE, fig.cap=('Embedding plot single cells. The cells are labeled by clusters in the `cluster` column in `colData`.'), out.width="100%", fig.show='show'}
 plotUMAP(sce.clus, colour_by="cluster")
@@ -662,7 +662,7 @@ include_graphics('img/shiny_coviz.png')
 
 <font style="color:blue">
 When using the Shiny app, single cell data in annotation-based and manual methods or combined
-single cell and bulk data in automatic method are stored in a `SingleCellExperiment` object and saved in an `.rds` file by `saveRDS`, then the `.rds` file should be uploaded to the app. In the manual method, the manual clusters should be included in the `cluster` column in the `colData` slot by calling `manual_cluster` before creating an `.rds` file, as shown [here](#manual_clus). In the automatic method, bulk tissues and single cells are labeled by `bulk` and `cell`
+single cell and bulk data in automatic method are stored in a `SingleCellExperiment` object and saved in an `.rds` file by `saveRDS`, then the `.rds` file should be uploaded to the app. In the manual method, the manual clusters should be included in the `cluster` column in the `colData` slot by calling `manual_group` before creating an `.rds` file, as shown [here](#manual_clus). In the automatic method, bulk tissues and single cells are labeled by `bulk` and `cell`
 respectively in the `bulkCell` column in `colData` slot. The matching table between bulk tissues and aSVG features is stored in the `metadata` list with the name `df.match`. The example `.rds` file below illustrates these rules.     
 </font>
 
