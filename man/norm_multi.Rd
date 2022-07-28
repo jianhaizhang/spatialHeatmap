@@ -11,13 +11,13 @@ norm_multi(
   quick.clus = list(min.size = 100),
   com.sum.fct = list(max.cluster.size = 3000),
   log.norm = list(),
-  wk.dir
+  wk.dir = NULL
 )
 }
 \arguments{
 \item{dat.lis}{A named \code{list} containing count data of single cell and bulk, returned by \code{filter_iter}.}
 
-\item{cpm}{Logical. The count data are first normalized by \code{\link[scran]{computeSumFactors}}. If \code{TRUE}, the data is further normalized by counts per million (cpm). The default is \code{FALSE}.}
+\item{cpm}{Logical. The count data are first normalized by \code{\link[scran]{computeSumFactors}}. If \code{TRUE}, the data is  further normalized by counts per million (cpm). The default is \code{FALSE}.}
 
 \item{count.kp}{Logical. If \code{FALSE} (default), the count data is discarded and only log2-scale data are kept.}
 

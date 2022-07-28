@@ -2,8 +2,6 @@
 #'
 #' Normalize count data of single cell and bulk provided in a \code{list} for co-clustering. The single cell and bulk data are combined, normalized and subsequently separated. The input single cell and bulk data are replaced by normalized data respectively.
 #' @param dat.lis A named \code{list} containing count data of single cell and bulk, returned by \code{filter_iter}.
-#' @param cpm Logical. The count data are first normalized by \code{\link[scran]{computeSumFactors}}. If \code{TRUE}, the data is further normalized by counts per million (cpm). The default is \code{FALSE}.
-#' @param count.kp Logical. If \code{FALSE} (default), the count data is discarded and only log2-scale data are kept.
 #' @inheritParams norm_cell
 
 #' @return A list of normalized single cell and bulk data. 
@@ -47,9 +45,9 @@
 #' @importFrom scran quickCluster computeSumFactors 
 #' @importFrom scuttle logNormCounts
 
-norm_multi <- function(dat.lis, cpm=FALSE, count.kp=FALSE, quick.clus=list(min.size = 100), com.sum.fct=list(max.cluster.size = 3000), log.norm=list(), wk.dir) {
-  fil.dir <- file.path(wk.dir, 'norm_res') 
-  if (!dir.exists(fil.dir)) dir.create(fil.dir)
+norm_multi <- function(dat.lis, cpm=FALSE, count.kp=FALSE, quick.clus=list(min.size = 100), com.sum.fct=list(max.cluster.size = 3000), log.norm=list(), wk.dir=NULL) {
+  if (!is.null(wk.dir)) fil.dir <- file.path(wk.dir, 'norm_res') else fil.dir <- NULL 
+  if (!is.null(fil.dir)) if (!dir.exists(fil.dir)) dir.create(fil.dir)
   na.lis <- names(dat.lis) 
   for (j in na.lis) {
     dat.lis0 <- dat.lis[[j]]
@@ -67,45 +65,16 @@ norm_multi <- function(dat.lis, cpm=FALSE, count.kp=FALSE, quick.clus=list(min.s
       colData(sce0)$set <- nas[i]; sce.sc <- cbind(sce.sc, sce0)
     }; sce.sc <- sce.sc[, -1]
     if (quick.clus$min.size > ncol(sce.sc)) { print('Fewer cells than min size in quickCluster!'); return() }
-    sce.sc.nor <- norm_cell(sce.sc, quick.clus=quick.clus, com.sum.fct=com.sum.fct, log.norm=log.norm)
-    # CPM.
-    if (cpm==TRUE) sce.sc.nor <- cal_cpm(sce.sc.nor)
-    if (count.kp==FALSE) assays(sce.sc.nor)$counts <- NULL
+    sce.sc.nor <- norm_cell(sce.sc, quick.clus=quick.clus, com.sum.fct=com.sum.fct, log.norm=log.norm, cpm=cpm, count.kp=count.kp)
     for (i in nas) {
       sce0 <- subset(sce.sc.nor, , set==i)
       colData(sce0)$set <- NULL; dat.lis0[[i]] <- sce0
-      saveRDS(dat.lis0, file=paste0(fil.dir, '/', j, ifelse(cpm==TRUE, '.cpm', '.fct'), '.rds'))
+      if (!is.null(fil.dir)) saveRDS(dat.lis0, file=paste0(fil.dir, '/', j, ifelse(cpm==TRUE, '.cpm', '.fct'), '.rds'))
     }; dat.lis[[j]] <- dat.lis0
   }
   names(dat.lis) <- paste0(na.lis, ifelse(cpm==TRUE, '.cpm', '.fct')); return(dat.lis)
 }
 
-#' Normalize by CPM. 
-#'
-#' The log2 values are transformed to power of 2 (counts) and then to CPM. To maintain log2-scale values, the CPM values are transformed back to log2. The returned \code{SingleCellExperiment} contains values at both CPM and log2.
-#' @param sce.nor The output of \code{\link[scuttle]{logNormCounts}} in form of \code{SingleCellExperiment}, where library size factors are applied already.
-
-#' @return A \code{SingleCellExperiment} object.
-#' @keywords Internal
-#' @noRd
-
-#' @author Jianhai Zhang \email{jzhan067@@ucr.edu} \cr Dr. Thomas Girke \email{thomas.girke@@ucr.edu}
-
-#' @references 
-#' Amezquita R, Lun A, Becht E, Carey V, Carpp L, Geistlinger L, Marini F, Rue-Albrecht K, Risso D, Soneson C, Waldron L, Pages H, Smith M, Huber W, Morgan M, Gottardo R, Hicks S (2020). “Orchestrating single-cell analysis with Bioconductor.” Nature Methods, 17, 137–145. https://www.nature.com/articles/s41592-019-0654-x.
-#' McCarthy DJ, Campbell KR, Lun ATL, Willis QF (2017). “Scater: pre-processing, quality control, normalisation and visualisation of single-cell RNA-seq data in R.” Bioinformatics, 33, 1179-1186. doi: 10.1093/bioinformatics/btw777.
-#' Douglas Bates and Martin Maechler (2021). Matrix: Sparse and Dense Matrix Classes and Methods. R package version 1.4-0. https://CRAN.R-project.org/package=Matrix
-
-#' @importFrom SingleCellExperiment logcounts logcounts<-
-#' @importFrom scuttle calculateCPM
-#' @importFrom Matrix Matrix 
-
-cal_cpm <- function(sce.nor) {
-  log.cnt <- logcounts(sce.nor)
-  cnt.cpm <- calculateCPM(2^log.cnt-1)
-  logcounts(sce.nor) <- Matrix(log2(cnt.cpm+1), sparse=TRUE)
-  return(sce.nor)
-}
 
 
 

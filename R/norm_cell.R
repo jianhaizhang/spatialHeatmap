@@ -2,6 +2,8 @@
 #'
 #' A meta function for normalizing single-cell RNA-seq data.
 #' @param sce Single cell count data in form of \code{SingleCellExperiment} after quality control, which is returned by \code{qc_cell}.
+#' @param cpm Logical. The count data are first normalized by \code{\link[scran]{computeSumFactors}}. If \code{TRUE}, the data is  further normalized by counts per million (cpm). The default is \code{FALSE}.
+#' @param count.kp Logical. If \code{FALSE} (default), the count data is discarded and only log2-scale data are kept.
 #' @param quick.clus Arguments in a named list passed to \code{\link[scran]{quickCluster}}, such as \code{quick.clus=list(min.size = 100)}. 
 #' @param com.sum.fct Arguments in a named list passed to \code{\link[scran]{computeSumFactors}}, such as \code{com.sum.fct=list(max.cluster.size = 3000))}. 
 #' @param log.norm Arguments in a named list passed to \code{\link[scuttle]{logNormCounts}}. 
@@ -28,10 +30,41 @@
 #' @importFrom scuttle logNormCounts
 #' @importFrom scran quickCluster computeSumFactors 
 
-norm_cell <- function(sce, quick.clus=list(min.size = 100), com.sum.fct=list(max.cluster.size = 3000), log.norm=list()) {
+norm_cell <- function(sce, cpm=FALSE, count.kp=FALSE, quick.clus=list(min.size = 100), com.sum.fct=list(max.cluster.size = 3000), log.norm=list()) {
   # Normalization.
   clusters <- do.call(quickCluster, c(list(x=sce), quick.clus))
   sce <- do.call(computeSumFactors, c(list(x=sce, cluster=clusters), com.sum.fct))
   sce <- do.call(logNormCounts, c(list(x=sce), log.norm))
+  # CPM.
+  if (cpm==TRUE) sce <- cal_cpm(sce)
+  if (count.kp==FALSE) assays(sce)$counts <- NULL
   return(sce)
+}
+
+
+#' Normalize by CPM. 
+#'
+#' The log2 values are transformed to power of 2 (counts) and then to CPM. To maintain log2-scale values, the CPM values are transformed back to log2. The returned \code{SingleCellExperiment} contains values at both CPM and log2.
+#' @param sce.nor The output of \code{\link[scuttle]{logNormCounts}} in form of \code{SingleCellExperiment}, where library size factors are applied already.
+
+#' @return A \code{SingleCellExperiment} object.
+#' @keywords Internal
+#' @noRd
+
+#' @author Jianhai Zhang \email{jzhan067@@ucr.edu} \cr Dr. Thomas Girke \email{thomas.girke@@ucr.edu}
+
+#' @references 
+#' Amezquita R, Lun A, Becht E, Carey V, Carpp L, Geistlinger L, Marini F, Rue-Albrecht K, Risso D, Soneson C, Waldron L, Pages H, Smith M, Huber W, Morgan M, Gottardo R, Hicks S (2020). “Orchestrating single-cell analysis with Bioconductor.” Nature Methods, 17, 137–145. https://www.nature.com/articles/s41592-019-0654-x.
+#' McCarthy DJ, Campbell KR, Lun ATL, Willis QF (2017). “Scater: pre-processing, quality control, normalisation and visualisation of single-cell RNA-seq data in R.” Bioinformatics, 33, 1179-1186. doi: 10.1093/bioinformatics/btw777.
+#' Douglas Bates and Martin Maechler (2021). Matrix: Sparse and Dense Matrix Classes and Methods. R package version 1.4-0. https://CRAN.R-project.org/package=Matrix
+
+#' @importFrom SingleCellExperiment logcounts logcounts<-
+#' @importFrom scuttle calculateCPM
+#' @importFrom Matrix Matrix 
+
+cal_cpm <- function(sce.nor) {
+  log.cnt <- logcounts(sce.nor)
+  cnt.cpm <- calculateCPM(2^log.cnt-1)
+  logcounts(sce.nor) <- Matrix(log2(cnt.cpm+1), sparse=TRUE)
+  return(sce.nor)
 }

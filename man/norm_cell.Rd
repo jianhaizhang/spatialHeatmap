@@ -6,6 +6,8 @@
 \usage{
 norm_cell(
   sce,
+  cpm = FALSE,
+  count.kp = FALSE,
   quick.clus = list(min.size = 100),
   com.sum.fct = list(max.cluster.size = 3000),
   log.norm = list()
@@ -13,6 +15,10 @@ norm_cell(
 }
 \arguments{
 \item{sce}{Single cell count data in form of \code{SingleCellExperiment} after quality control, which is returned by \code{qc_cell}.}
+
+\item{cpm}{Logical. The count data are first normalized by \code{\link[scran]{computeSumFactors}}. If \code{TRUE}, the data is  further normalized by counts per million (cpm). The default is \code{FALSE}.}
+
+\item{count.kp}{Logical. If \code{FALSE} (default), the count data is discarded and only log2-scale data are kept.}
 
 \item{quick.clus}{Arguments in a named list passed to \code{\link[scran]{quickCluster}}, such as \code{quick.clus=list(min.size = 100)}.}
 
