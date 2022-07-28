@@ -4,15 +4,7 @@
 \alias{filter_iter}
 \title{Iteratively filter bulk and single data according to parameters in a data frame.}
 \usage{
-filter_iter(
-  bulk,
-  cell.lis,
-  df.par.fil,
-  gen.rm = NULL,
-  norm.meth,
-  wk.dir,
-  verbose = TRUE
-)
+filter_iter(bulk, cell.lis, df.par.fil, gen.rm = NULL, wk.dir, verbose = TRUE)
 }
 \arguments{
 \item{bulk}{Normalized bulk data at log2-scale returned by \code{norm_multi}.}
@@ -22,8 +14,6 @@ filter_iter(
 \item{df.par.fil}{A \code{data.frame} of filtering parameter settings that are passed to \code{filter_data} and \code{filter_cell} respectively. E.g. \code{df.par.fil <- data.frame(p=c(0.2, 0.3), A=rep(1, 4), cv1=c(0.2, 0.3), cv2=rep(100, 4), min.cnt=rep(1, 4), p.in.cell=c(0.25, 0.3), p.in.gen=c(0.05, 0.1))}.}
 
 \item{gen.rm}{A regular expression of gene identifiers in single cell data to remove before filtering. E.g. mitochondrial, chloroplast and protoplasting-induced genes (\code{^ATCG|^ATCG}). The default is \code{NULL}.}
-
-\item{norm.meth}{Methods used to normalize bulk and single cell data. One of \code{fct} and \code{cpm}, standing for \code{\link[scran]{computeSumFactors}} only and further normalized by counts per million (cpm) respectively. No actual normalization is performed, only used in file names when saving filtered results.}
 
 \item{wk.dir}{The work directory where filtered data are saved in ".rds" files by \code{saveRDS}.}
 
@@ -64,9 +54,9 @@ df.par.fil
 
 # Filtered results are saved in "opt_res".
 if (!dir.exists('opt_res')) dir.create('opt_res')
-fct.fil.all <- filter_iter(bulk=norm.fct$bulk, cell.lis=list(sc10=norm.fct$sc10, sc11=norm.fct$sc11), df.par.fil=df.par.fil, gen.rm='^ATCG|^ATCG', wk.dir='opt_res', norm.meth='fct')
+fct.fil.all <- filter_iter(bulk=norm.fct$bulk, cell.lis=list(sc10=norm.fct$sc10, sc11=norm.fct$sc11), df.par.fil=df.par.fil, gen.rm='^ATCG|^ATCG', wk.dir='opt_res')
 
-cpm.fil.all <- filter_iter(bulk=norm.cpm$bulk, cell.lis=list(sc10=norm.cpm$sc10, sc11=norm.cpm$sc11), df.par.fil=df.par.fil, gen.rm='^ATCG|^ATCG', wk.dir='opt_res', norm.meth='cpm')
+cpm.fil.all <- filter_iter(bulk=norm.cpm$bulk, cell.lis=list(sc10=norm.cpm$sc10, sc11=norm.cpm$sc11), df.par.fil=df.par.fil, gen.rm='^ATCG|^ATCG', wk.dir='opt_res')
 }  
 }
 \author{

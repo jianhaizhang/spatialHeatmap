@@ -155,11 +155,11 @@
 #' @importFrom BiocParallel BatchtoolsParam MulticoreParam register bpRNGseed bpRNGseed<-
 
 coclus_opt <- function(wk.dir, parallel.info=FALSE, sc.dim.min=10, max.dim=50, dimred=c('PCA', 'UMAP'), graph.meth=c('knn', 'snn'), sim=seq(0.2, 0.8, by=0.1), sim.p=seq(0.2, 0.8, by=0.1), dim=seq(5, 40, by=1), df.match, sim.meth='spearman', batch.par=NULL, multi.core.par=MulticoreParam(workers=1, RNGseed=NULL, stop.on.error=FALSE, log=TRUE, logdir=file.path(wk.dir, 'multi_core_log')), verbose=TRUE) {
-  fil.dir <- file.path(wk.dir, 'filter_res')
+  file.dir <- file.path(wk.dir, 'norm_res')
   bat.log.dir <- file.path(wk.dir, 'batch_log')
   mcore.log.dir <- file.path(wk.dir, 'multi_core_log')
   auc.dir <- file.path(wk.dir, 'auc_res')
-  if (!dir.exists(fil.dir)) dir.create(fil.dir) 
+  if (!dir.exists(file.dir)) dir.create(file.dir) 
   if (!dir.exists(bat.log.dir)) dir.create(bat.log.dir) 
   if (!dir.exists(mcore.log.dir)) dir.create(mcore.log.dir) 
   if (!dir.exists(auc.dir)) dir.create(auc.dir) 
@@ -179,14 +179,14 @@ coclus_opt <- function(wk.dir, parallel.info=FALSE, sc.dim.min=10, max.dim=50, d
     message('"RNGseed" in BatchtoolsParam and MulticoreParam is NULL')
   }
   # All single cell data names.
-  fil.nas <- list.files(fil.dir, '\\.fil\\d+\\.rds$')
+  fil.nas <- list.files(file.dir, '\\.fil\\d+\\.')
   sc.na.all <- NULL; for (i in fil.nas) {
-    pa <- file.path(fil.dir, i); dat.fil0 <- readRDS(pa)
+    pa <- file.path(file.dir, i); dat.fil0 <- readRDS(pa)
     nas <- names(dat.fil0); sc.nas <- setdiff(nas, 'bulk')
     sc.na.all <- unique(c(sc.na.all, sc.nas))
   }
 
-  df.par.com <- expand.grid(file=file.path(fil.dir, fil.nas), bulk='bulk', cell=sc.na.all, dimred=dimred, graph.meth=graph.meth, stringsAsFactors = FALSE)
+  df.par.com <- expand.grid(file=file.path(file.dir, fil.nas), bulk='bulk', cell=sc.na.all, dimred=dimred, graph.meth=graph.meth, stringsAsFactors = FALSE)
   df.spd <- expand.grid(sim = sim, sim.p = sim.p, dim = dim, stringsAsFactors = FALSE)
 
   if (parallel.info==TRUE) {
@@ -210,12 +210,9 @@ coclus_opt <- function(wk.dir, parallel.info=FALSE, sc.dim.min=10, max.dim=50, d
   # Every row in df.par.com is combined with every row in df.spd for coclustering.
   if (is(batch.par, 'BatchtoolsParam')) {
     register(batch.par)
-    res <- bplapply(seq_len(nrow(df.par.com)), fun, df.par.com=df.par.com, df.spd=df.spd, df.match=df.match, sc.dim.min=sc.dim.min, max.dim=max.dim, sim.meth=sim.meth, multi.core.par=multi.core.par,  auc.dir=auc.dir) 
+    res <- bplapply(seq_len(nrow(df.par.com)), fun, df.par.com=df.par.com, df.spd=df.spd, df.match=df.match, sc.dim.min=sc.dim.min, max.dim=max.dim, sim.meth=sim.meth, multi.core.par=multi.core.par, auc.dir=auc.dir) 
   } else {
     res <- lapply(seq_len(nrow(df.par.com)), fun, df.par.com=df.par.com, df.spd=df.spd, df.match=df.match, sc.dim.min=sc.dim.min, max.dim=max.dim, sim.meth=sim.meth, multi.core.par=multi.core.par, auc.dir=auc.dir)
   }
   return(res)
 }
-
-
-

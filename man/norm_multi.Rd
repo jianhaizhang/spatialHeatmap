@@ -4,20 +4,34 @@
 \alias{norm_multi}
 \title{Normalize one or multiple count data sets.}
 \usage{
-norm_multi(dat.lis, cpm = FALSE, count.kp = FALSE)
+norm_multi(
+  dat.lis,
+  cpm = FALSE,
+  count.kp = FALSE,
+  quick.clus = list(min.size = 100),
+  com.sum.fct = list(max.cluster.size = 3000),
+  log.norm = list(),
+  wk.dir
+)
 }
 \arguments{
-\item{dat.lis}{A named \code{list} containing count data of single cell and bulk, which are in form of \code{matrix}, \code{data.frame}, \code{dgCMatrix}, or \code{SingleCellExperiment}.}
+\item{dat.lis}{A named \code{list} containing count data of single cell and bulk, returned by \code{filter_iter}.}
 
 \item{cpm}{Logical. The count data are first normalized by \code{\link[scran]{computeSumFactors}}. If \code{TRUE}, the data is further normalized by counts per million (cpm). The default is \code{FALSE}.}
 
 \item{count.kp}{Logical. If \code{FALSE} (default), the count data is discarded and only log2-scale data are kept.}
+
+\item{quick.clus}{Arguments in a named list passed to \code{\link[scran]{quickCluster}}, such as \code{quick.clus=list(min.size = 100)}.}
+
+\item{com.sum.fct}{Arguments in a named list passed to \code{\link[scran]{computeSumFactors}}, such as \code{com.sum.fct=list(max.cluster.size = 3000))}.}
+
+\item{log.norm}{Arguments in a named list passed to \code{\link[scuttle]{logNormCounts}}.}
 }
 \value{
 A list of normalized single cell and bulk data.
 }
 \description{
-Normalize count data of single cell and bulk provided in a \code{list} in co-clustering. The single cell and bulk data are combined, normalized and subsequently separated. The input single cell and bulk data are replaced by normalized data respectively.
+Normalize count data of single cell and bulk provided in a \code{list} for co-clustering. The single cell and bulk data are combined, normalized and subsequently separated. The input single cell and bulk data are replaced by normalized data respectively.
 }
 \examples{
 # Example bulk data of mouse brain for coclustering (Vacher et al 2021).   

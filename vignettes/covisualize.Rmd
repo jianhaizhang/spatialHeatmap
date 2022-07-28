@@ -171,10 +171,10 @@ cache.pa <- '~/.cache/shm' # Set path of the cache directory
 # Mapping Cells to Tissues
 
 <font style='color:blue'>
-Three main methods are developed for assigning cell types from single cell experiments with their source tissues, *i.e.* annotation-based, manual and automatic. Before detailed demonstration on these methods, a general toy example that summarizes the common features of the three methods is shown, which allows users to have a quick test.   
+Three main methods are developed for assigning cell types from single cell experiments with their source tissues, *i.e.* annotation-based, manual and automatic. Before detailed demonstration on these methods, a general quick-start example that summarizes the common features of the three methods is shown, which allows users to have a quick test.   
 </font>
 
-## Toy Example {#toy}
+## Quick Start {#toy}
 
 To obtain reproducible results, a fixed seed is set for generating random numbers.
 

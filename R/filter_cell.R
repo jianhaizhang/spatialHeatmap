@@ -36,8 +36,10 @@
 #' Douglas Bates and Martin Maechler (2021). Matrix: Sparse and Dense Matrix Classes and Methods. R package version 1.4-0. https://CRAN.R-project.org/package=Matrix
 #' Vacher CM, Lacaille H, O'Reilly JJ, Salzbank J et al. Placental endocrine function shapes cerebellar development and social     behavior. Nat Neurosci 2021 Oct;24(10):1392-1401. PMID: 34400844.                                                                  
 #' Ortiz C, Navarro JF, Jurek A, Märtin A et al. Molecular atlas of the adult mouse brain. Sci Adv 2020 Jun;6(26):eabb3446. PMID:  32637622
+# Amezquita R, Lun A, Becht E, Carey V, Carpp L, Geistlinger L, Marini F, Rue-Albrecht K, Risso D, Soneson C, Waldron L, Pages H, Smith M, Huber W, Morgan M, Gottardo R, Hicks S (2020). “Orchestrating single-cell analysis with Bioconductor.” Nature Methods, 17, 137–145. https://www.nature.com/articles/s41592-019-0654-x
 
 #' @export filter_cell
+#' @importFrom SingleCellExperiment SingleCellExperiment
 
 filter_cell <- function(lis, bulk=NULL, gen.rm=NULL, min.cnt=1, p.in.cell=0.4, p.in.gen=0.2, verbose=TRUE) {
   gen.na <- NULL                                
@@ -47,7 +49,10 @@ filter_cell <- function(lis, bulk=NULL, gen.rm=NULL, min.cnt=1, p.in.cell=0.4, p
     gen.na <- c(gen.na, list(rownames(lis[[i]]))) 
   } 
   gen.ovl <- Reduce(intersect, gen.na)
-  if (!is.null(bulk)) lis <- c(list(bulk=bulk[gen.ovl, , drop=FALSE]), lis)
+  if (!is.null(bulk)) {
+    bulk <- SingleCellExperiment(assays=list(counts=as.matrix(bulk[gen.ovl, , drop=FALSE])))
+    lis <- c(list(bulk=bulk), lis)
+  }
   for (i in seq_along(lis)) { 
     lis[[i]] <- lis[[i]][gen.ovl, , drop=FALSE]; if (verbose==TRUE) print(dim(lis[[i]])) 
   }; return(lis) 
@@ -73,10 +78,12 @@ filter_cell <- function(lis, bulk=NULL, gen.rm=NULL, min.cnt=1, p.in.cell=0.4, p
 #' Amezquita R, Lun A, Becht E, Carey V, Carpp L, Geistlinger L, Marini F, Rue-Albrecht K, Risso D, Soneson C, Waldron L, Pages H, Smith M, Huber W, Morgan M, Gottardo R, Hicks S (2020). "Orchestrating single-cell analysis with Bioconductor." _Nature Methods_, *17*, 137-145. <URL: https://www.nature.com/articles/s41592-019-0654-x>
 #' Douglas Bates and Martin Maechler (2021). Matrix: Sparse and Dense Matrix Classes and Methods. R package version 1.4-0. https://CRAN.R-project.org/package=Matrix
 #' R Core Team (2021). R: A language and environment for statistical computing. R Foundation for Statistical Computing, Vienna, Austria. URL https://www.R-project.org/.
+# Amezquita R, Lun A, Becht E, Carey V, Carpp L, Geistlinger L, Marini F, Rue-Albrecht K, Risso D, Soneson C, Waldron L, Pages H, Smith M, Huber W, Morgan M, Gottardo R, Hicks S (2020). “Orchestrating single-cell analysis with Bioconductor.” Nature Methods, 17, 137–145. https://www.nature.com/articles/s41592-019-0654-x
 
 #' @importFrom SummarizedExperiment assay 
 #' @importFrom Matrix rowSums colSums
 #' @importFrom utils head 
+#' @importFrom SingleCellExperiment SingleCellExperiment
  
 preprocess_sc <- function(data, gen.rm=NULL, min.cnt=1, p.in.cell=0.4, p.in.gen=0.2, verbose=TRUE) { 
   if (is(data, 'SummarizedExperiment') | is(data, 'SingeCellExperiment')) {
@@ -106,6 +113,7 @@ preprocess_sc <- function(data, gen.rm=NULL, min.cnt=1, p.in.cell=0.4, p.in.gen=
     print(head(sort(rowSums(dat)), 5))  
     print(head(sort(colSums(dat)), 5))
   }
+  data <- SingleCellExperiment(assays=list(counts=as.matrix(data)))
   return(data)
 } 
 

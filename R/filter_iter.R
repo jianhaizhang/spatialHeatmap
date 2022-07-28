@@ -6,7 +6,6 @@
 #' @param cell.lis Normalized single cell data at log2-scale in a named list returned by \code{norm_multi}.
 #' @param df.par.fil A \code{data.frame} of filtering parameter settings that are passed to \code{filter_data} and \code{filter_cell} respectively. E.g. \code{df.par.fil <- data.frame(p=c(0.2, 0.3), A=rep(1, 4), cv1=c(0.2, 0.3), cv2=rep(100, 4), min.cnt=rep(1, 4), p.in.cell=c(0.25, 0.3), p.in.gen=c(0.05, 0.1))}.
 #' @inheritParams filter_cell
-#' @param norm.meth Methods used to normalize bulk and single cell data. One of \code{fct} and \code{cpm}, standing for \code{\link[scran]{computeSumFactors}} only and further normalized by counts per million (cpm) respectively. No actual normalization is performed, only used in file names when saving filtered results. 
 #' @param wk.dir The work directory where filtered data are saved in ".rds" files by \code{saveRDS}.
 #' @param verbose Logical. If \code{TRUE} (default), intermediate messages are printed.
 
@@ -43,9 +42,9 @@
 #'
 #' # Filtered results are saved in "opt_res".
 #' if (!dir.exists('opt_res')) dir.create('opt_res')
-#' fct.fil.all <- filter_iter(bulk=norm.fct$bulk, cell.lis=list(sc10=norm.fct$sc10, sc11=norm.fct$sc11), df.par.fil=df.par.fil, gen.rm='^ATCG|^ATCG', wk.dir='opt_res', norm.meth='fct')
+#' fct.fil.all <- filter_iter(bulk=norm.fct$bulk, cell.lis=list(sc10=norm.fct$sc10, sc11=norm.fct$sc11), df.par.fil=df.par.fil, gen.rm='^ATCG|^ATCG', wk.dir='opt_res')
 #'
-#' cpm.fil.all <- filter_iter(bulk=norm.cpm$bulk, cell.lis=list(sc10=norm.cpm$sc10, sc11=norm.cpm$sc11), df.par.fil=df.par.fil, gen.rm='^ATCG|^ATCG', wk.dir='opt_res', norm.meth='cpm')
+#' cpm.fil.all <- filter_iter(bulk=norm.cpm$bulk, cell.lis=list(sc10=norm.cpm$sc10, sc11=norm.cpm$sc11), df.par.fil=df.par.fil, gen.rm='^ATCG|^ATCG', wk.dir='opt_res')
 #' }  
 
 #' @author Jianhai Zhang \email{jzhan067@@ucr.edu} \cr Dr. Thomas Girke \email{thomas.girke@@ucr.edu}
@@ -53,16 +52,19 @@
 
 #' @export filter_iter
 
-filter_iter <- function(bulk, cell.lis, df.par.fil, gen.rm=NULL, norm.meth, wk.dir, verbose=TRUE) {
+filter_iter <- function(bulk, cell.lis, df.par.fil, gen.rm=NULL, wk.dir, verbose=TRUE) {
   fil.dir <- file.path(wk.dir, 'filter_res')
-  if (!norm.meth %in% c('fct', 'cpm')) stop('"norm.meth" should be one of "fct" and "cpm"!')
+  # if (!norm.meth %in% c('fct', 'cpm')) stop('"norm.meth" should be one of "fct" and "cpm"!')
   if (!dir.exists(fil.dir)) dir.create(fil.dir)
   lis <- NULL; for (i in seq_len(nrow(df.par.fil))) {
     df0 <- df.par.fil[i, ]
     blk <- filter_data(data=bulk, pOA=c(df0$p, df0$A), CV=c(df0$cv1, df0$cv2), verbose=verbose)
     dat.fil <- filter_cell(lis=cell.lis, bulk=blk, gen.rm=gen.rm, min.cnt=df0$min.cnt, p.in.cell=df0$p.in.cell, p.in.gen=df0$p.in.gen, verbose=verbose)
     lis <- c(lis, list(dat.fil))
-    saveRDS(dat.fil, file=paste0(fil.dir, '/dat.', norm.meth, '.fil', i, '.rds'))
-  }; names(lis) <- paste0('dat.', norm.meth, '.fil', seq_len(nrow(df.par.fil)))
+    saveRDS(dat.fil, file=paste0(fil.dir, '/dat', '.fil', i, '.rds'))
+  }; names(lis) <- paste0('dat', '.fil', seq_len(nrow(df.par.fil)))
     return(lis)
 }
+
+
+
