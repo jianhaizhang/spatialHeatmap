@@ -654,12 +654,6 @@ Bulk tissues and single cells are co-visualized without abundance profiles (`pro
 
 ```{r , eval=TRUE, echo=TRUE, warnings=FALSE, fig.wide=TRUE, fig.cap=('Co-visualizing bulk and single cells of mouse brain without abundance profiles. The matching between cells and source bulk tissues (aSVG features) is denoted by the same color between the embedding plot and anatomical image.'), out.width="100%", fig.show='show', results='hide'}
 shm.lis2 <- spatial_hm(svg.path=svg.mus.brain, data=sce.aggr, legend.nrow=4, sce.dimred=res.lis$cell.refined, dimred='PCA', tar.bulk=c('cerebellum', 'cerebral.cortex'), profile=FALSE, dim.lgd.text.size=10, dim.lgd.nrow=1)
-
-df.desired.bulk <- NULL
-gg <- spatial_hm(svg.path=svg.mus.brain, data=sce.aggr, ID=c('Adcy1'), legend.nrow=4, sce.dimred=res.lis$cell.refined, dimred='PCA', tar.bulk=c('cerebellum', 'cerebral.cortex'), profile=FALSE, dim.lgd.nrow=1, bar.width=0.11, bar.value.size=17, sub.title.size=17,  legend.plot.title.size=17, legend.text.size=17, dim.lgd.text.size=14, dim.lgd.key.size=4, dim.capt.size=12)
-ggsave(file="covisualize_auto.svg", plot=gg$spatial_heatmap, width=10, height=8)
-
-
 ```
 
 # Using Shiny App {#autoSCE}
