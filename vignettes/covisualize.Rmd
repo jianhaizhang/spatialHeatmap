@@ -174,7 +174,7 @@ cache.pa <- '~/.cache/shm' # Set path of the cache directory
 Three main methods are developed for assigning cell types from single cell experiments with their source tissues, *i.e.* annotation-based, manual and automatic. Before detailed demonstration on these methods, a general quick-start example that summarizes the common features of the three methods is shown, which allows users to have a quick test.   
 </font>
 
-## Quick Start {#toy}
+## Quick Start {#test}
 
 To obtain reproducible results, a fixed seed is set for generating random numbers.
 
@@ -183,21 +183,21 @@ set.seed(10)
 ```
 
 <font style='color:blue'>
-Create a toy single cell data by using `mockSCE` from the `scuttle` package [@scater]. The toy data are normalized and log2-transformed (`logNormCounts`), and subsequently processed by dimensionality reduction methods of PCA, TSNE, and UMAP (`reduce_dim`).    
+Create a testing single cell data by using `mockSCE` from the `scuttle` package [@scater]. The testing data are normalized and log2-transformed (`logNormCounts`), and subsequently processed by dimensionality reduction methods of PCA, TSNE, and UMAP (`reduce_dim`).    
 </font>
 
 ```{r , eval=TRUE, echo=TRUE, warnings=FALSE}
-sce.toy <- mockSCE() # Create toy data.
-sce.norm.toy <- logNormCounts(sce.toy) # Normalization and log2-transformation.
-sce.dimred.toy <- reduce_dim(sce.norm.toy) # Dimensionality reduction.  
+sce.test <- mockSCE() # Create test data.
+sce.norm.test <- logNormCounts(sce.test) # Normalization and log2-transformation.
+sce.dimred.test <- reduce_dim(sce.norm.test) # Dimensionality reduction.  
 ```
 
 <font style='color:blue'>
 The downstream co-visualization is demenstrated on the label of cell cycles (`Cell_Cycle`), which includes `G1`, `G2M`, `G0`, `S`.   
 
 ```{r , eval=TRUE, echo=TRUE, warnings=FALSE}
-colData(sce.dimred.toy)[1:2, ]
-unique(colData(sce.dimred.toy)$Cell_Cycle)
+colData(sce.dimred.test)[1:2, ]
+unique(colData(sce.dimred.test)$Cell_Cycle)
 ```
 
 <font style='color:blue'>
@@ -205,8 +205,8 @@ As shown in (Figure \@ref(fig:coclusOver)), to map single cell data onto aSVG fe
 </font>
 
 ```{r , eval=TRUE, echo=TRUE, warnings=FALSE}
-sce.aggr.toy <- aggr_rep(sce.dimred.toy, assay.na='logcounts', sam.factor='Cell_Cycle', con.factor=NULL, aggr='mean')
-colData(sce.aggr.toy)
+sce.aggr.test <- aggr_rep(sce.dimred.test, assay.na='logcounts', sam.factor='Cell_Cycle', con.factor=NULL, aggr='mean')
+colData(sce.aggr.test)
 ```
 
 <font style='color:blue'>
@@ -227,15 +227,15 @@ One collapsed cell cycle is equivalent to one aSVG feature. Before co-visualizat
 </font>
 
 ```{r , eval=TRUE, echo=TRUE, warnings=FALSE}
-lis.match.toy <- list(G1=c('hypothalamus'), G0=c('brainstem', 'medulla.oblongata'))
+lis.match.test <- list(G1=c('hypothalamus'), G0=c('brainstem', 'medulla.oblongata'))
 ```
 
 <font style='color:blue'>
-The co-visualization is created on gene `Gene_0010`. The embedding plot includes all single cells before aggregation. The `G1` and `G0` cells are colored by their respecitive aggregated expression profiles (`data=sce.aggr.toy`) and indicated in the legend at the bottom. In the nearby spatial heatmap plot, aSVG features are filled by the same color as the matching cells defined in the named `list` (`lis.match.toy`). The `cell.group` argument indicates which column is considered as cell labels in the `colData` slot of `sce.aggr.toy`.         
+The co-visualization is created on gene `Gene_0010`. The embedding plot includes all single cells before aggregation. The `G1` and `G0` cells are colored by their respecitive aggregated expression profiles (`data=sce.aggr.test`) and indicated in the legend at the bottom. In the nearby spatial heatmap plot, aSVG features are filled by the same color as the matching cells defined in the named `list` (`lis.match.test`). The `cell.group` argument indicates which column is considered as cell labels in the `colData` slot of `sce.aggr.test`.         
 </font>
 
 ```{r , eval=TRUE, echo=TRUE, warnings=FALSE, results='hide', fig.cap=('Example co-visualization plot. The co-visualization is created on gene `Gene_0010`. Single cells in the embedding plot and their matching aSVG features in the spatial heatmap are filled by the same color according to aggregated assay profiles within each cell label.')}
-shm.lis.toy <- spatial_hm(svg.path=svg.mus.brain, data=sce.aggr.toy, ID=c('Gene_0010'), height=0.7, legend.r=1.5, legend.key.size=0.02, legend.text.size=12, legend.nrow=3, sce.dimred=sce.dimred.toy, dimred='PCA', cell.group='Cell_Cycle', assay.na='logcounts', tar.cell=c('matched'), lis.rematch=lis.match.toy, bar.width=0.11, dim.lgd.nrow=1)
+shm.lis.test <- spatial_hm(svg.path=svg.mus.brain, data=sce.aggr.test, ID=c('Gene_0010'), height=0.7, legend.r=1.5, legend.key.size=0.02, legend.text.size=12, legend.nrow=3, sce.dimred=sce.dimred.test, dimred='PCA', cell.group='Cell_Cycle', assay.na='logcounts', tar.cell=c('matched'), lis.rematch=lis.match.test, bar.width=0.11, dim.lgd.nrow=1)
 ```
 
 ## Annotation-based  
@@ -471,7 +471,7 @@ tissue. </span> <span style="color:red">[ThG: why is that a requirement? You nee
 To obtain optimal default settings for the
 automatic method, this method is optimized and tested on real bulk and single cell datasets. The optimization utilities are included in *spatialHeatmap*, so users have the choice to optimize this method on their own real data. This section showcases application of the automatic method
 on mouse brain data with default settings obtained through optimization. The
-optimization on toy data and real data are explained in an external [file](#opt) <font style="color:blue">[JZ: update in the optimzation section is in progress.] </font>. The bulk RNA-seq data are generated in a research on the impact of placental endocrine on mouse cerebellar development [@Vacher2021-xg] and the scRNA-seq data are from a study of mouse brain molecular atlas [@Ortiz2020-yt]. Both bulk and single cell data sets are reduced for demonstration purpose.     
+optimization on test data and real data are explained in an external [file](#opt) <font style="color:blue">[JZ: update in the optimzation section is in progress.] </font>. The bulk RNA-seq data are generated in a research on the impact of placental endocrine on mouse cerebellar development [@Vacher2021-xg] and the scRNA-seq data are from a study of mouse brain molecular atlas [@Ortiz2020-yt]. Both bulk and single cell data sets are reduced for demonstration purpose.     
 </font>
 
 ### Pre-processing
@@ -526,7 +526,7 @@ if (is.null(mus.lis.nor)) {
 }
 ```
 
-The same aSVG file of mouse brain as the [toy example](#toy) is used. The process of extracting aSVG features is not shown.  
+The same aSVG file of mouse brain as the [test example](#test) is used. The process of extracting aSVG features is not shown.  
 
 ```{r , eval=TRUE, echo=TRUE, warnings=FALSE}
 tail(feature.df$feature) # Partial features are shown.
@@ -671,7 +671,7 @@ include_graphics('img/shiny_coviz.png')
 
 <font style="color:blue">
 When using the Shiny app, single cell data in annotation-based and manual methods or combined
-single cell and bulk data in automatic method are stored in a `SingleCellExperiment` object and saved in an `.rds` file by `saveRDS`, then the `.rds` file should be uploaded to the app. In the manual method, the manual clusters should be included in the `cluster` column in the `colData` slot by calling `manual_group` before creating an `.rds` file, as shown [here](#manual_clus). In the automatic method, bulk tissues and single cells are labeled by `bulk` and `cell`
+single cell and bulk data in automatic method are stored in a `SingleCellExperiment` object and saved in an `.rds` file by `saveRDS`, then the `.rds` file should be uploaded to the app. In the manual method, the manual clusters in a tabular file should be included in the `colData` slot by calling `manual_group` before creating an `.rds` file, as shown [here](#manual_clus). In the automatic method, bulk tissues and single cells are labeled by `bulk` and `cell`
 respectively in the `bulkCell` column in `colData` slot. The matching table between bulk tissues and aSVG features is stored in the `metadata` list with the name `df.match`. The example `.rds` file below illustrates these rules.     
 </font>
 

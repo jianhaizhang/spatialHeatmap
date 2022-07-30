@@ -264,7 +264,7 @@ browseVignettes('spatialHeatmap')
 
 # Spatial Heatmaps {#shm}
 
-## Testing Example {#toy}
+## Quick Start {#test}
 
 Spatial Heatmaps (SHMs) are plotted with the `spatial_hm` function. To provide a quick
 and intuitive overview how these plots are generated, the following uses a
@@ -324,7 +324,7 @@ my_vec
 ### Plot SHM
 
 Next, the SHM is plotted with the `spatial_hm` function (Figure
-\@ref(fig:toyshm)). Internally, the numbers in `my_vec` are translated into
+\@ref(fig:testshm)). Internally, the numbers in `my_vec` are translated into
 colors based on the color key assigned to the `col.com` argument, and then
 painted onto the corresponding features in the aSVG, where the path to the image
 file is defined by `svg.path=svg.hum`. The remaining arguments used here include:
@@ -333,11 +333,11 @@ of the plot excluding the feature legend plot on the right; and `height` for def
 the height of the SHM relative to its width. To view overlapping features, transparancy
 can be controlled via the `ft.trans` argument. The mouse example in Figure 
 \@ref(fig:musshm) provides additional details on this topic. In the given example
-(Figure \@ref(fig:toyshm)) only three features in `my_vec` ('occipital lobe', 
+(Figure \@ref(fig:testshm)) only three features in `my_vec` ('occipital lobe', 
 'parietal lobe', and 'temporal lobe') have matching entries in the corresponding 
 aSVG.   
 
-```{r toyshm, eval=TRUE, echo=TRUE, warnings=FALSE, fig.wide=TRUE, fig.cap=("SHM of human brain with testing data. The plots from left to right represent: color key, SHM and legend. The colors in the first two plots depict the user provided numeric values, whereas in the legend plot they are used to map the feature labels to the corresponding spatial regions in the image. "), out.width="100%" }
+```{r testshm, eval=TRUE, echo=TRUE, warnings=FALSE, fig.wide=TRUE, fig.cap=("SHM of human brain with testing data. The plots from left to right represent: color key, SHM and legend. The colors in the first two plots depict the user provided numeric values, whereas in the legend plot they are used to map the feature labels to the corresponding spatial regions in the image. "), out.width="100%" }
 shm.lis <- spatial_hm(svg.path=svg.hum, data=my_vec, ID='testing', ncol=1, height=0.9, width=0.8, sub.title.size=20, legend.nrow=2, ft.trans=c('g4320'))
 ```
 
@@ -1823,7 +1823,7 @@ to be populated with strings matching the feature names in the corresponding aSV
 To also specify conditions, their labels need to be appended to the feature names
 with double underscores as separator, _i.e._ 'feature__condition'. 
 
-The following example replots the [testing example](#toy) for two spatial features 
+The following example replots the [testing example](#test) for two spatial features 
 ('occipital lobe' and 'parietal lobe') and two conditions ('1' and '2'). 
 
 ```{r eval=TRUE, echo=TRUE, warnings=FALSE }
