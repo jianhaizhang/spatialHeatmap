@@ -74,63 +74,90 @@ text.]</span>
 
 The primary utility of the _spatialHeatmap_ package is the generation of
 _spatial heatmaps_ (SHM) for visualizing cell-, tissue- and organ-specific
-abundance patterns of biological molecules in anatomical images [@shm]. This is useful
-for identifying genes with spatially enriched (SE) expression patterns as
-well as clusters and/or network modules composed of genes sharing similar
-expression patterns. These functionalities are described in the [main
+abundance patterns of biological molecules in anatomical images [@shm]. This is
+useful for identifying genes with spatially enriched (SE) expression patterns
+as well as clusters and/or network modules composed of genes sharing similar
+expression patterns. These functionalities are introduced in the [main
 vignette](https://bioconductor.org/packages/release/bioc/html/spatialHeatmap.html)
-of the _spatialHeatmap_ package. 
+of the _spatialHeatmap_ package. The following describes extended
+functionalities for integrating bulk tissue with single cell data by
+co-visualizing them in composite plots that combine spatial heatmaps with
+embedding plots of high-dimensional data. The resulting spatial context
+information is important for gaining insights into the tissue-level organiztion
+of single cell data. 
 
-The following describes extended functionalities for integrating bulk tissue
-with single cell data by co-visualizing them in composite plots that combine
-spatial heatmaps with embedding plots of high-dimensional data. The main input
-data required for this co-visualization are quantitative assay data and
-anatomic images. The assay data can be provided in a variety of widely used tabular 
-data structures (_e.g._ `data.frame`, `SummarizedExperiment` or `SingleCellExperiment`), 
-while the anatomic images need to be supplied as annotated SVGs (aSVGs). The creation of
-aSVGs is described in the main vignette of this package. For the embedding
-plots of single cell data, several dimensionality reduction algorithms (_e.g._
-PCA, UMAP or tSNE) are supported. To associate single cells with their source
-tissues, the user can choose among three major methods including annotation,
-manual and automatic (Figure \@ref(fig:coclusOver)). Like most functionalities in _spatialHeatmap_, these
-functionalities are available from within R as well as the corresponding [Shiny
-app](#autoSCE) [@shiny, @shinydashboard].   
-
-
+The required quantitative assay data, such as gene expression values, can be
+provided in a variety of widely used tabular data structures (_e.g._
+`data.frame`, `SummarizedExperiment` or `SingleCellExperiment`). The corresponding
+anatomic images need to be supplied as annotated SVG (aSVG) images. The
+creation of aSVGs is described in the main vignette of this package. For the
+embedding plots of single cell data, several dimensionality reduction
+algorithms (_e.g._ PCA, UMAP or tSNE) are supported. To associate single cells
+with their source tissues, the user can choose among three major methods including 
+annotation-based, manual and automated methods (Figure \@ref(fig:coclusOver)). Similar 
+to other functionalities in _spatialHeatmap_, these functionalities are available within
+R as well as the corresponding [Shiny app](#autoSCE) [@shiny, @shinydashboard].   
 
 ## Methods for Associating Cells and Bulk Tissues
 
-<span style="color:red">[ThG: would simplify and generalize this section to all three
-methods and move it to the introduction at the beginning. Most of what you are
-discribing here applies to all methods. By adjusting the illustration you can 
-use the illustration for all 3 methods.]</span>
-
+The three methods for associating single cells with bulk tissues are
+illustrated in Figure \@ref(fig:coclusOver). The annotation-based and manual
+methods are related. The main difference is how the cell labels are generated.
+In the annotation-based method, existing cell annotation labels are usually
+available and can be stored in a suitable format such as in a
+`SingleCellExperiment` object. For example, prepopulated instances of these
+containers are provided by the `scRNAseq` package [@scrnaseq]. The manual
+method allows users to create the cell to tissue associations one-by-one or 
+importing them from a tabular file. In contrast to this, the automated method
+aims to assign single cells to the corresponding source tissue computationally
+by a co-clustering algorithm. 
 
 <font style='color:blue'>
-The three methods for associating single cells with bulk tissues are illustrated in Figure \@ref(fig:coclusOver). The annotation-based and manual methods are similar. The main difference is how the cell labels are generated. In the annotation-based method, cell annotation labels are usually present in an existing `SingleCellExperiment` that is created by a research group or the community such as the objects from the `scRNAseq` package [@scrnaseq]. While in the manual method, cell labels are created by custom criteria or methods such as clustering methods and stored in a tabular file. In both methods, expression profiles of every molecule (*e.g.* gene) under the same cell label are aggregated by taking mean or median. Then the aggregated labels are matched to aSVG spatial features (tissues, organs, *etc.*) according to a matching `list`.   
+<s>
+The most common inputs are raw count data (e.g. RNA-seq) of chosen bulk tissues
+and single cells of the same organ (Figure 1.1), and the single cells come from
+the whole organ or at least cover the chosen bulk tissues. Bulk and single cell
+data are filtered to remove the most noisy data. ^[No need to describe the processing
+and challenges of single cell data here.] The main difference between
+bulk and single cells is the sparsity in the latter. To reduce such difference,
+the bulk and single-cell data are combined and normalized together, and
+subsequently separated \@ref(fig:coclusOver).2). ^[I don't understand the combined and 
+separated part?] Next, dimensionality reduction
+is performed on single-cell data using PCA or UMAP method, where one resultant
+dimensionality is equivalent to one molecule (*e.g.* gene). The top
+dimensionalities are clustered (Figure \@ref(fig:coclusOver).4) to generate
+single cell clusters. Each cell cluster is refined by removing cells having low
+similarities with other cells in the same cluster (Figure
+\@ref(fig:coclusOver).5). As a result, each cell cluster is more homogeneous
+(Figure \@ref(fig:coclusOver).6). Next, bulk and single cell data are combined
+and co-clustered (Figure \@ref(fig:coclusOver).7) to produce co-clusters. ^[The
+text implies that the clustering is performed on the embedding data of the single
+cell data. However, what data is used for the bulk is unclear.]
 
-By contrast, the automatic method assigns bulk tissues to single cells as labels automatically through co-clustering. The most common inputs are raw count data (*e.g.* RNA-seq) of chosen bulk tissues and
-single cells of the same organ (Figure \@ref(fig:coclusOver).1), and the single cells come from the whole organ or at least cover the chosen bulk tissues. Bulk and single cell data are
-filtered to remove the most noisy data. The main difference between bulk and single cells is
-the sparsity in the latter. To reduce such difference, the bulk and single-cell
-data are combined and normalized together, and subsequently separated (Figure
-\@ref(fig:coclusOver).2). Next, dimensionality reduction is performed on single-cell data using PCA or UMAP method, where one resultant dimensionality is equivalent to one molecule (*e.g.* gene). The top dimensionalities are clustered (Figure \@ref(fig:coclusOver).4) to generate single cell clusters. Each cell cluster is refined by removing cells having low similarities with other cells in the same cluster (Figure \@ref(fig:coclusOver).5). As a result, each cell cluster is more homogeneous (Figure \@ref(fig:coclusOver).6). Next, bulk and single cell data are combined and co-clustered (Figure \@ref(fig:coclusOver).7) to produce co-clusters. 
-
-There are three types of co-clusters: 1) Multiple bulk tissues are co-clustered with many cells. Spearman's correlation coefficient (similarity) is calculated for any bulk-cell pair in the same co-cluster. If a bulk has the largest similarity with a specific cell than any other bulk, this bulk is assigned to this cell as source bulk. For example, in Figure \@ref(fig:coclusOver).8a bulk A is assigned to cell a1 because a1 has higher similarity with A than B; 2). Only one bulk tissue is co-clustered with many cells. This
-bulk is assigned to all the cells in the same co-cluster
-(\@ref(fig:coclusOver).8b); and 3) No bulk is present in a cluster. All these cells are not considered for downstream co-visualization (Figure \@ref(fig:coclusOver).8c), which are potential novel cell populations. After the automatic bulk assignments to cells, cells with the same bulk label are aggregated in the same way as annotation-based or manual method and subsequently the aggregated assay profiles are mapped to aSVG features.     
+There are three types of co-clusters: 1) Multiple bulk tissues are co-clustered with 
+many cells. ^[I don't understand the part with the three types of clusters. To me it
+seems you are describing something that is too trivial to be mentioned, the name choice 
+clusters is confusing or I am missing your point in general.] Spearman's correlation 
+coefficient (similarity) is calculated for any bulk-cell pair in the same co-cluster. If a bulk has the largest similarity with 
+a specific cell than any other bulk, this bulk is assigned to this cell as source bulk. 
+For example, in Figure \@ref(fig:coclusOver).8a bulk A is assigned to cell a1 because 
+a1 has higher similarity with A than B; 2). Only one bulk tissue is co-clustered 
+with many cells. This bulk is assigned to all the cells in the same co-cluster
+(\@ref(fig:coclusOver).8b); and 3) No bulk is present in a cluster. All these cells 
+are not considered for downstream co-visualization (Figure \@ref(fig:coclusOver).8c), 
+which are potential novel cell populations. After the automatic bulk assignments to 
+cells, cells with the same bulk label are aggregated in the same way as annotation-based 
+or manual method and subsequently the aggregated assay profiles are mapped to aSVG 
+features.     
 </font>
+</s>
 
-<span style="color:red">[ThG: ROCs can only be generated if the correct assingments
-are known. Readers will not understand why this is mentioned here and how they
-would use the tool since they don't have the true tissue assignments.]</span>
-<span style="color:blue">JZ: ROC is related to optimzation. The text is updated.</span>
-
-<span style="color:red">[ThG: also note the text in the above two paragraph needs
-major revisions with respect to grammar and clarity.]</span>
+<span style="color:red">[ThG: the above text, the illustration and the image legend
+need to be updated. I tried to follow but there are too many things I don't understand.
+Please substantiallyi simplify both the figure and the text.]</span>
 
 
-```{r coclusOver, echo=FALSE, fig.wide=TRUE, out.width="100%", fig.cap=("Overview of co-visualization methods. In the annotation-based method, annotation labels are provided in existing `SingleCellExperiment`, while in the manual method cell labels are created by users, which is very flexible. In the automatic method, bulk tissues are automatically assigned to single cells as labels in a co-clustering process. In any of these methods, cells under the same label are aggregated by mean or median on assay profiles. Cells are colored by their aggregated expression profiles in embedding plots and aSVG spatial features matching with these cells are painted by the same colors.")}
+```{r coclusOver, echo=FALSE, fig.wide=TRUE, out.width="100%", fig.cap=("Overview of co-visualization methods. In the annotation-based method, annotation labels are provided in existing `SingleCellExperiment`, while in the manual method cell labels are created by users, which is very flexible. In the automatic method, bulk tissues are automatically assigned to single cells as labels in a co-clustering process. In any of these methods, cells under the same label are aggregated by mean or median on assay profiles. Cells are colored by their aggregated expression profiles in embedding plots and aSVG spatial features matching with these cells are painted by the same colors.^[ThG: a description of the itemized steps 1-8 is missing. Each or at least ranges of steps need to be mentioned in the legend. In addtion, the illustration includes itemization with letters only for the right part. This needs to be done consitently. Moreover, the Annotation and Manual parts are essentially identical and their data structure is the same as under step 8 of the Automated method. This means you can much better summarize things by including this table once. This would be much more economic and less confusing since you would avoid a lot of duplication you have in the illustration. Moreover, the preprocessing part can be simplified, no one will understand the 'separating' part (see comment above).]")}
 include_graphics('img/coclustering_overview.jpg')
 ```
 
