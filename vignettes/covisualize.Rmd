@@ -195,13 +195,7 @@ To reduce runtime, intermediate results can be cached under `~/.cache/shm`.
 cache.pa <- '~/.cache/shm' # Set path of the cache directory
 ```
 
-# Mapping Cells to Tissues
-
-<font style='color:blue'>
-Three main methods are developed for assigning cell types from single cell experiments with their source tissues, *i.e.* annotation-based, manual and automatic. Before detailed demonstration on these methods, a general quick-start example that summarizes the common features of the three methods is shown, which allows users to have a quick test.   
-</font>
-
-## Quick Start {#test}
+# Quick Start {#test}
 
 To obtain reproducible results, a fixed seed is set for generating random numbers.
 
@@ -209,36 +203,37 @@ To obtain reproducible results, a fixed seed is set for generating random number
 set.seed(10)
 ```
 
-<font style='color:blue'>
-Create a testing single cell data by using `mockSCE` from the `scuttle` package [@scater]. The testing data are normalized and log2-transformed (`logNormCounts`), and subsequently processed by dimensionality reduction methods of PCA, TSNE, and UMAP (`reduce_dim`).    
-</font>
+A single cell test data set is loaded using `mockSCE` from the `scuttle`
+package [@scater]. The data are normalized and log2-transformed
+(`logNormCounts`), and subsequently processed by dimensionality reduction
+methods including PCA, TSNE, and UMAP (`reduce_dim`).    
 
 ```{r , eval=TRUE, echo=TRUE, warnings=FALSE}
-sce.test <- mockSCE() # Create test data.
-sce.norm.test <- logNormCounts(sce.test) # Normalization and log2-transformation.
-sce.dimred.test <- reduce_dim(sce.norm.test) # Dimensionality reduction.  
+sce.test <- mockSCE() 
+sce.norm.test <- logNormCounts(sce.test)
+sce.dimred.test <- reduce_dim(sce.norm.test) 
 ```
 
-<font style='color:blue'>
-The downstream co-visualization is demenstrated on the label of cell cycles (`Cell_Cycle`), which includes `G1`, `G2M`, `G0`, `S`.   
+The downstream co-visualization is demonstrated on the cell cycle labels
+(`Cell_Cycle`) including _G1_, _S_, _G0_ and _G2M_.   
 
 ```{r , eval=TRUE, echo=TRUE, warnings=FALSE}
 colData(sce.dimred.test)[1:2, ]
 unique(colData(sce.dimred.test)$Cell_Cycle)
 ```
 
-<font style='color:blue'>
-As shown in (Figure \@ref(fig:coclusOver)), to map single cell data onto aSVG features, assay profiles under the same cell label should be aggregated by mean or median (`aggr='mean'`). The aggregation is performed on log2-transformed normlized data as specified by `assay.na='logcounts'`. After aggregation, all cells are collapsed into 4 cell cycle labels.    
-</font>
+To visualize single cell data in spatial heatmaps, the single cell expression values
+are aggregated by their source tissues using common summary statistics such as mean 
+or median. 
 
 ```{r , eval=TRUE, echo=TRUE, warnings=FALSE}
 sce.aggr.test <- aggr_rep(sce.dimred.test, assay.na='logcounts', sam.factor='Cell_Cycle', con.factor=NULL, aggr='mean')
 colData(sce.aggr.test)
 ```
 
-<font style='color:blue'>
-An example aSVG file of mouse brain is included in `spatialHeatmap`, and spatial features are extracted.   
-</font>
+The aggregated values are then used to color the tissues represented in the
+spatial heatmap. An example aSVG file of mouse brain is included in
+`spatialHeatmap`, and spatial features are extracted.   
 
 ```{r , eval=TRUE, echo=TRUE, warnings=FALSE, results='hide'}
 svg.mus.brain <- system.file("extdata/shinyApp/example", "mus_musculus.brain.svg", package="spatialHeatmap")
@@ -249,17 +244,21 @@ feature.df <- return_feature(svg.path=svg.mus.brain)
 tail(feature.df$feature) # Partial features are shown.
 ```
 
-<font style='color:blue'>
-One collapsed cell cycle is equivalent to one aSVG feature. Before co-visualization, their matching relationship needs to be defined. In annotation-based and manual methods, the matching relationship is defined by users in a named `list`, while in the automatic method it is automatically defined, which is the essential difference across the three methods. Note, one collapsed cell label can be matched to multiple aSVG features but not vice versa. The following is an example named `list`.   
-</font>
+One collapsed cell cycle is equivalent to one aSVG feature. ^[I don't
+understand this example. If cell cycles are shown whey would they be mapped to
+different tissues. Every biologist will be confused by this. Or perhaps I am
+misunderstanding.] Before co-visualization, their matching relationship needs
+to be defined. In annotation-based and manual methods, the matching
+relationship is defined by users in a named `list`, while in the automatic
+method it is automatically defined, which is the essential difference across
+the three methods. Note, one collapsed cell label can be matched to multiple
+aSVG features but not vice versa. The following is an example named `list`.   
 
 ```{r , eval=TRUE, echo=TRUE, warnings=FALSE}
 lis.match.test <- list(G1=c('hypothalamus'), G0=c('brainstem', 'medulla.oblongata'))
 ```
 
-<font style='color:blue'>
 The co-visualization is created on gene `Gene_0010`. The embedding plot includes all single cells before aggregation. The `G1` and `G0` cells are colored by their respecitive aggregated expression profiles (`data=sce.aggr.test`) and indicated in the legend at the bottom. In the nearby spatial heatmap plot, aSVG features are filled by the same color as the matching cells defined in the named `list` (`lis.match.test`). The `cell.group` argument indicates which column is considered as cell labels in the `colData` slot of `sce.aggr.test`.         
-</font>
 
 ```{r , eval=TRUE, echo=TRUE, warnings=FALSE, results='hide', fig.cap=('Example co-visualization plot. The co-visualization is created on gene `Gene_0010`. Single cells in the embedding plot and their matching aSVG features in the spatial heatmap are filled by the same color according to aggregated assay profiles within each cell label.')}
 shm.lis.test <- spatial_hm(svg.path=svg.mus.brain, data=sce.aggr.test, ID=c('Gene_0010'), height=0.7, legend.r=1.5, legend.key.size=0.02, legend.text.size=12, legend.nrow=3, sce.dimred=sce.dimred.test, dimred='PCA', cell.group='Cell_Cycle', assay.na='logcounts', tar.cell=c('matched'), lis.rematch=lis.match.test, bar.width=0.11, dim.lgd.nrow=1)
