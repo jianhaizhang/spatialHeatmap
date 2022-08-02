@@ -194,7 +194,7 @@ coclus_opt <- function(wk.dir, parallel.info=FALSE, sc.dim.min=10, max.dim=50, d
     cat('\n Max second-level parallelizations across MulticoreParam workers (--cpus-per-task in slurm template) on each BatchtoolsParam worker: ', nrow(df.spd), '\n', sep='')
     return()
   }
-  fun <- function(i, df.par.com, df.spd, df.match, sc.dim.min, max.dim, sim.meth, multi.core.par, auc.dir) {
+  fun <- function(i, df.par.com, df.spd, df.match, sc.dim.min, max.dim, sim.meth, multi.core.par, auc.dir, verbose) {
     df0 <- df.par.com[i, ]
     df.para <- cbind(df.spd, df0, row.names=NULL)
     dat.fil <- readRDS(df0$file)
@@ -210,9 +210,9 @@ coclus_opt <- function(wk.dir, parallel.info=FALSE, sc.dim.min=10, max.dim=50, d
   # Every row in df.par.com is combined with every row in df.spd for coclustering.
   if (is(batch.par, 'BatchtoolsParam')) {
     register(batch.par)
-    res <- bplapply(seq_len(nrow(df.par.com)), fun, df.par.com=df.par.com, df.spd=df.spd, df.match=df.match, sc.dim.min=sc.dim.min, max.dim=max.dim, sim.meth=sim.meth, multi.core.par=multi.core.par, auc.dir=auc.dir) 
+    res <- bplapply(seq_len(nrow(df.par.com)), fun, df.par.com=df.par.com, df.spd=df.spd, df.match=df.match, sc.dim.min=sc.dim.min, max.dim=max.dim, sim.meth=sim.meth, multi.core.par=multi.core.par, auc.dir=auc.dir, verbose=verbose) 
   } else {
-    res <- lapply(seq_len(nrow(df.par.com)), fun, df.par.com=df.par.com, df.spd=df.spd, df.match=df.match, sc.dim.min=sc.dim.min, max.dim=max.dim, sim.meth=sim.meth, multi.core.par=multi.core.par, auc.dir=auc.dir)
+    res <- lapply(seq_len(nrow(df.par.com)), fun, df.par.com=df.par.com, df.spd=df.spd, df.match=df.match, sc.dim.min=sc.dim.min, max.dim=max.dim, sim.meth=sim.meth, multi.core.par=multi.core.par, auc.dir=auc.dir, verbose=verbose)
   }
   return(res)
 }

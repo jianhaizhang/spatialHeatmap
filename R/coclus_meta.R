@@ -195,63 +195,65 @@ coclus_meta <- function(bulk, cell, df.match, df.para=NULL, sc.dim.min=10, max.d
     df.para0 <- df.para0[, cna.val, drop=FALSE]
     workers <- nrow(df.para0)
     sce.dimred.sc <- reduce_dim(sce=cell, min.dim=df.para0$sc.dim.min[1], max.dim=df.para0$max.dim[1], pca=FALSE)
-    clus.sc <- cluster_cell(sce=sce.dimred.sc, graph.meth=df.para0$graph.meth[1], dimred=df.para0$dimred[1])
+    if (is.null(sce.dimred.sc)) clus.sc <- NULL else {
+      clus.sc <- cluster_cell(sce=sce.dimred.sc, graph.meth=df.para0$graph.meth[1], dimred=df.para0$dimred[1])
+    }
     if (workers < bpworkers(multi.core.par)) bpworkers(multi.core.par) <- workers
     # Split para combinations by # of workers so that the intermediate auc results could be saved more frequently. E.g. nrow(df.para0) is 100, workers are 2. If no splitting, the auc results are saved when every 50 cocusterings are done. If split, auc results are saved when every 2 cocusterings are done.  
     rows <- seq_len(nrow(df.para0)); row.gr <- split(rows, ceiling(seq_along(rows)/workers))
     for (k in seq_along(row.gr)) {
-    df.para.gr <- df.para0[row.gr[[k]], , drop=FALSE]
-    lis <- bplapply(seq_len(nrow(df.para.gr)), BPPARAM=multi.core.par, FUN=function(j)
-    {
-      df0 <- df.para.gr[j, , drop=FALSE]; if (verbose==TRUE) print(df0)
-      # Cluster single cell only. min.dim/max.dim is independent from coclustering sc+bulk, which is time-efficient.
-      #if (!is.null(sc.dim.min)) {
-      if (is.null(clus.sc)) return(df0)
-      #}
-      # Cluster single cell only. min.dim/max.dim is the same with coclustering sc+bulk, which is time-inefficient.
-      # if (is.null(sc.dim.min)) clus.sc <- cluster_cell(data=cell, min.dim=df0$dim, max.dim=max.dim, graph.meth=graph.meth, dimred=dimred)
-      # if (is.null(clus.sc)) return(df0)
-      # Filter cells by sim and proportion p.
-      cell.refined <- refine_cluster(clus.sc, sim=df0$sim, sim.p=df0$sim.p, sim.meth=df0$sim.meth, verbose=verbose)
-      if ('cell' %in% colnames(df.match)) cell.refined <- true_bulk(cell.refined, df.match)
-      # Cocluster.
-      roc.lis <- cocluster(bulk=bulk, cell.refined=cell.refined, df.match=df.match, min.dim=df0$dim, max.dim=df0$max.dim, graph.meth=df0$graph.meth, dimred=df0$dimred, sim.meth=df0$sim.meth) 
-      if (return.all==TRUE) { 
-        lis0 <- c(list(index=df0$index), roc.lis)
-        return(lis0)
+      df.para.gr <- df.para0[row.gr[[k]], , drop=FALSE]
+      lis <- bplapply(seq_len(nrow(df.para.gr)), BPPARAM=multi.core.par, FUN=function(j)
+      {
+        df0 <- df.para.gr[j, , drop=FALSE]; if (verbose==TRUE) print(df0)
+        # Cluster single cell only. min.dim/max.dim is independent from coclustering sc+bulk, which is time-efficient.
+        #if (!is.null(sc.dim.min)) {
+        if (is.null(clus.sc)) return(df0)
+        #}
+        # Cluster single cell only. min.dim/max.dim is the same with coclustering sc+bulk, which is time-inefficient.
+        # if (is.null(sc.dim.min)) clus.sc <- cluster_cell(data=cell, min.dim=df0$dim, max.dim=max.dim, graph.meth=graph.meth, dimred=dimred)
+        # if (is.null(clus.sc)) return(df0)
+        # Filter cells by sim and proportion p.
+        cell.refined <- refine_cluster(clus.sc, sim=df0$sim, sim.p=df0$sim.p, sim.meth=df0$sim.meth, verbose=verbose)
+        if ('cell' %in% colnames(df.match)) cell.refined <- true_bulk(cell.refined, df.match)
+        # Cocluster.
+        roc.lis <- cocluster(bulk=bulk, cell.refined=cell.refined, df.match=df.match, min.dim=df0$dim, max.dim=df0$max.dim, graph.meth=df0$graph.meth, dimred=df0$dimred, sim.meth=df0$sim.meth) 
+        if (return.all==TRUE) { 
+          lis0 <- c(list(index=df0$index), roc.lis)
+          return(lis0)
+        }
+        roc.obj <- roc.lis$roc.obj; if (is.null(roc.obj)) return(df0)
+        df.asg <- roc.lis$df.asg
+        df0$auc <- round(auc(roc.obj), 3); df0$total <- nrow(df.asg)
+        df0$true <- sum(df.asg$response)
+        best <- round(coords(roc.obj, x='best'), 3)
+        if (nrow(best)==1) { 
+          df0$thr <- round(best$threshold, 3)
+          df0$sens <- round(best$sensitivity, 3)
+          df0$spec <- round(best$specificity, 3)
+        } else if (unique(max(abs(best$threshold)))==Inf) { 
+        df0$thr <- df0$sens <- df0$spec <- Inf }
+        if (verbose==TRUE) print(df0); 
+        # pa <- paste0(tmp.dir, '/df.para_', j, '.rds')
+        # if (!is.null(file)) saveRDS(df0, file=pa)
+        return(df0)	
+      }) # bplapply
+      # Save intermediate results.
+      if (return.all==TRUE) {
+        # Indexes in input df.para are preserved. 
+        for (i in seq_along(lis)) {
+          names(lis)[i] <- lis[[i]]$index; lis[[i]]$index <- NULL
+        }
+        lis.all <- c(lis.all, lis)
+        lis.all <- lis.all[order(as.numeric(names(lis.all)))]
+        if (!is.null(file)) saveRDS(lis.all, file=paste0(file, '.rds'))
+      } else {
+        # Indexes in input df.para are preserved. 
+        df.para.all <- rbind(df.para.all, do.call('rbind', lis))
+        df.para.all <- df.para.all[order(df.para.all$index), , drop=FALSE]
+        if (!is.null(file)) saveRDS(df.para.all, file=paste0(file, '.rds'));
       }
-      roc.obj <- roc.lis$roc.obj; if (is.null(roc.obj)) return(df0)
-      df.asg <- roc.lis$df.asg
-      df0$auc <- round(auc(roc.obj), 3); df0$total <- nrow(df.asg)
-      df0$true <- sum(df.asg$response)
-      best <- round(coords(roc.obj, x='best'), 3)
-      if (nrow(best)==1) { 
-        df0$thr <- round(best$threshold, 3)
-        df0$sens <- round(best$sensitivity, 3)
-        df0$spec <- round(best$specificity, 3)
-      } else if (unique(max(abs(best$threshold)))==Inf) { 
-      df0$thr <- df0$sens <- df0$spec <- Inf }
-     if (verbose==TRUE) print(df0); 
-      # pa <- paste0(tmp.dir, '/df.para_', j, '.rds')
-      # if (!is.null(file)) saveRDS(df0, file=pa)
-      return(df0)	
-    })
-    if (return.all==TRUE) {
-      # Indexes in input df.para are preserved. 
-      for (i in seq_along(lis)) {
-        names(lis)[i] <- lis[[i]]$index; lis[[i]]$index <- NULL
-      }
-      lis.all <- c(lis.all, lis)
-      lis.all <- lis.all[order(as.numeric(names(lis.all)))]
-      if (!is.null(file)) saveRDS(lis.all, file=paste0(file, '.rds'))
-    } else {
-      # Indexes in input df.para are preserved. 
-      df.para.all <- rbind(df.para.all, do.call('rbind', lis))
-      df.para.all <- df.para.all[order(df.para.all$index), , drop=FALSE]
-      if (!is.null(file)) saveRDS(df.para.all, file=paste0(file, '.rds'));
-    }
-  }
-
+    } 
   }
   if (return.all==TRUE) {
     # The order is the same 
@@ -262,8 +264,3 @@ coclus_meta <- function(bulk, cell, df.match, df.para=NULL, sc.dim.min=10, max.d
     if (!is.null(file)) saveRDS(df.para.all, file=paste0(file, '.rds')); return(df.para.all) 
   }
 }
-
-
-
-
-

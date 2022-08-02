@@ -99,6 +99,7 @@ cocluster <- function(bulk, cell.refined, df.match, min.dim=13, max.dim=50, grap
   com.kp <- as.matrix(cbind(blk.kp, sc.kp))
   # Cluster cells+bulk.
   sce.dimred <- reduce_dim(sce=com.kp, min.dim=min.dim, max.dim=max.dim)
+  if (is.null(sce.dimred)) return()
   sce.tsne.com <- cluster_cell(sce=sce.dimred, graph.meth=graph.meth, dimred=dimred)
   if (is.null(sce.tsne.com)) return()
   # sce.tsne.com <- clus.com$sce.tsne; sce.com.nor <- clus.com$sce.nor
@@ -114,7 +115,6 @@ cocluster <- function(bulk, cell.refined, df.match, min.dim=13, max.dim=50, grap
   sce.lis <- refine_asg(res.lis=c(list(cell.refined=cell.refined, sce.bulk.cell=sce.tsne.com), roc.lis), thr=-Inf, df.desired.bulk=NULL, df.match=df.match)
   return(sce.lis)
 }
-
 
 
 #' Calculate ROC/AUC for the combined bulk and single cell data
@@ -214,7 +214,8 @@ com_roc <- function(sce.coclus, dimred, dat.blk, df.match, sim.meth='spearman') 
        }; df.asg <- rbind(df.asg, df0)
    }
   }
-  if (is.null(df.asg)) return(); roc.obj <- NULL
+  roc.obj <- NULL
+  if (is.null(df.asg)) return(list(df.asg=df.asg, roc.obj=roc.obj))
   if ('cell' %in% colnames(df.match)) {
     df.tr <- subset(df.asg, response==TRUE)
     cat('TRUE and FALSE:\n'); print(dim(df.asg))
