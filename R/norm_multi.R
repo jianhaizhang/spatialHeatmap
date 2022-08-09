@@ -45,36 +45,29 @@
 #' @importFrom scran quickCluster computeSumFactors 
 #' @importFrom scuttle logNormCounts
 
+
 norm_multi <- function(dat.lis, cpm=FALSE, count.kp=FALSE, quick.clus=list(min.size = 100), com.sum.fct=list(max.cluster.size = 3000), log.norm=list(), wk.dir=NULL) {
-  if (!is.null(wk.dir)) fil.dir <- file.path(wk.dir, 'norm_res') else fil.dir <- NULL 
-  if (!is.null(fil.dir)) if (!dir.exists(fil.dir)) dir.create(fil.dir)
-  na.lis <- names(dat.lis) 
-  for (j in na.lis) {
-    dat.lis0 <- dat.lis[[j]]
-    set <- NULL; nas <- names(dat.lis0)
-    if (any(nas=='')) stop('The list should be named!')
-    # Anchor sce.
-    dat0 <- dat.lis0[[1]]
-    if (is(dat0, 'SingleCellExperiment') | is(dat0, 'SummarizedExperiment')) dat0 <- assays(dat0)[[1]]
-    sce.sc <- SingleCellExperiment(assays=list(counts=as.matrix(dat0[, 1, drop=FALSE])), colData=DataFrame(set=0))
-    for (i in seq_along(dat.lis0)) {
-      dat0 <- dat.lis0[[i]]
-      if (is(dat0, 'SummarizedExperiment')) dat0 <- as(dat0, 'SingleCellExperiment')
-      if (is(dat0, 'SingleCellExperiment') | is(dat0, 'SummarizedExperiment')) sce0 <- dat0
-      if (is(dat0, 'dgCMatrix')|is(dat0, 'matrix')|is(dat0, 'data.frame')) sce0 <- SingleCellExperiment(assays=list(counts=as.matrix(dat0)))
-      colData(sce0)$set <- nas[i]; sce.sc <- cbind(sce.sc, sce0)
-    }; sce.sc <- sce.sc[, -1]
-    if (quick.clus$min.size > ncol(sce.sc)) { print('Fewer cells than min size in quickCluster!'); return() }
-    sce.sc.nor <- norm_cell(sce.sc, quick.clus=quick.clus, com.sum.fct=com.sum.fct, log.norm=log.norm, cpm=cpm, count.kp=count.kp)
-    for (i in nas) {
-      sce0 <- subset(sce.sc.nor, , set==i)
-      colData(sce0)$set <- NULL; dat.lis0[[i]] <- sce0
-      if (!is.null(fil.dir)) saveRDS(dat.lis0, file=paste0(fil.dir, '/', j, ifelse(cpm==TRUE, '.cpm', '.fct'), '.rds'))
-    }; dat.lis[[j]] <- dat.lis0
+  if (!is.null(wk.dir)) norm.dir <- file.path(wk.dir, 'norm_res') else norm.dir <- NULL 
+  if (!is.null(norm.dir)) if (!dir.exists(norm.dir)) dir.create(norm.dir)
+  set <- NULL; nas <- names(dat.lis)
+  if (any(nas=='')) stop('The list should be named!')
+  # Anchor sce.
+  dat0 <- dat.lis[[1]]
+  if (is(dat0, 'SingleCellExperiment') | is(dat0, 'SummarizedExperiment')) dat0 <- assays(dat0)[[1]]
+  sce.sc <- SingleCellExperiment(assays=list(counts=as.matrix(dat0[, 1, drop=FALSE])), colData=DataFrame(set=0))
+  for (i in seq_along(dat.lis)) {
+    dat0 <- dat.lis[[i]]
+    if (is(dat0, 'SummarizedExperiment')) dat0 <- as(dat0, 'SingleCellExperiment')
+    if (is(dat0, 'SingleCellExperiment') | is(dat0, 'SummarizedExperiment')) sce0 <- dat0
+    if (is(dat0, 'dgCMatrix')|is(dat0, 'matrix')|is(dat0, 'data.frame')) sce0 <- SingleCellExperiment(assays=list(counts=as.matrix(dat0)))
+    colData(sce0)$set <- nas[i]; sce.sc <- cbind(sce.sc, sce0)
+  }; sce.sc <- sce.sc[, -1]
+  if (quick.clus$min.size > ncol(sce.sc)) { print('Fewer cells than min size in quickCluster!'); return() }
+  sce.sc.nor <- norm_cell(sce.sc, quick.clus=quick.clus, com.sum.fct=com.sum.fct, log.norm=log.norm, cpm=cpm, count.kp=count.kp)
+  for (i in nas) {
+    sce0 <- subset(sce.sc.nor, , set==i)
+    colData(sce0)$set <- NULL; dat.lis[[i]] <- sce0
   }
-  names(dat.lis) <- paste0(na.lis, ifelse(cpm==TRUE, '.cpm', '.fct')); return(dat.lis)
+  if (!is.null(norm.dir)) saveRDS(dat.lis, file=paste0(norm.dir, '/', ifelse(cpm==TRUE, 'cpm', 'fct'), '.rds'))
+  return(dat.lis)
 }
-
-
-
-

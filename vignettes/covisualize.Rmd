@@ -505,15 +505,14 @@ The automatic method (Figure \@ref(fig:covizOver).2c) assigns source bulk tissue
 <font style='color:blue'>
 
 <span style="color:blue"> The most desirable input bulk and single cell data would be raw count data (e.g. RNA-seq) derived from the same organ or
-tissue (Figure \@ref(fig:coclusOver).1). </span> <span style="color:red">[ThG: why is that a requirement? You need to better explain what the requirements are here.]</span> <span style="color:blue"> If same organ, the chosen bulk tissues are major or complete tissues comprising this organ, while the single cell data are assayed on the region covering at least the chosen bulk tissues or on the whole organ. Similarly, if chosen bulk tissues are sub-tissues composing partial or the complete tissue, the single cells need to cover at least the chosen sub-tissues or the whole tissue. The key point is bulk tissues and single cells have anatomical overlap. </span> In the pre-processing step (Figure \@ref(fig:coclusOver).2), bulk and single cell
-data are first filtered respectively to remove the most noisy data, which is explained in the downstream [Pre-processing](#proCoclus) step. The main difference between
+tissue (Figure \@ref(fig:coclusOver).1). </span> <span style="color:red">[ThG: why is that a requirement? You need to better explain what the requirements are here.]</span> <span style="color:blue"> If same organ, the chosen bulk tissues are major or complete tissues comprising this organ, while the single cell data are assayed on the region covering at least the chosen bulk tissues or on the whole organ. Similarly, if chosen bulk tissues are sub-tissues composing partial or the complete tissue, the single cells need to cover at least the chosen sub-tissues or the whole tissue. The key point is bulk tissues and single cells have anatomical overlap. </span> In the pre-processing step (Figure \@ref(fig:coclusOver).2), the count data of bulk tissues and single cells are initially filtered respectively to remove the noisy data for the subsequent normalization, which is explained in the downstream [Pre-processing](#proCoclus) step. The main difference between
 bulk and single cell data is the sparsity in the latter, where rows are molecules (genes, *etc*) and columns are bulk tissues or cells respectively. To reduce such difference, they are combined in a column-wise manner and normalized as a whole, then subsequently separated (Figure \@ref(fig:coclusOver).2b-c). ^[I don't understand the combined and 
 separated part?]    
 
-To increase accuracy of bulk tissue assignments in the downstream co-clustering, the separated single-cell data are clustered (Figure \@ref(fig:coclusOver).4, @scran, @igraph) and each resultant cluster is refined to obtain more homogeneous clusters (Figure \@ref(fig:coclusOver).5). The clustering is performed on top dimensions that are produced by PCA or UMAP techniques [@scran, @scater], where one dimension is equivalent to one molecule (*e.g.* gene). When refining cell clusters, cells having low
+The log2-scale normalized bulk (Figure \@ref(fig:coclusOver).3) and single-cell (Figure \@ref(fig:coclusOver).4a) data are filtered at a second time respectively. To increase accuracy of bulk tissue assignments in the downstream co-clustering, the filtered single-cell data are clustered (Figure \@ref(fig:coclusOver).4, @scran, @igraph) and each resultant cluster is refined to obtain more homogeneous clusters (Figure \@ref(fig:coclusOver).5). The clustering is performed on top dimensions that are produced by PCA or UMAP techniques [@scran, @scater], where one dimension is equivalent to one molecule (*e.g.* gene). When refining cell clusters, cells having low
 similarities (Spearman's or Pearson's correlation 
 coefficients) with other cells in the same cluster are filtered, which are marked by "X" in Figure \@ref(fig:coclusOver).5a. Specifically, in a cluster only cells having a minimum similarity with a minimum proportion of other cells in the same cluster are retained. As a result, each cell cluster is more homogeneous
-(Figure \@ref(fig:coclusOver).5b). Next, seprated bulk (Figure \@ref(fig:coclusOver).3) and refined single cell (Figure \@ref(fig:coclusOver).5b) data are re-combined in column-wise manner and co-clustering is performed on top dimensions of the combined data (Figure \@ref(fig:coclusOver).6) to produce co-clusters (Figure \@ref(fig:coclusOver).7). ^[The
+(Figure \@ref(fig:coclusOver).5b). Next, filtered bulk (Figure \@ref(fig:coclusOver).3) and refined single cell (Figure \@ref(fig:coclusOver).5b) data are re-combined in column-wise manner and co-clustering is performed on top dimensions of the combined data (Figure \@ref(fig:coclusOver).6) to produce co-clusters (Figure \@ref(fig:coclusOver).7). ^[The
 text implies that the clustering is performed on the embedding data of the single
 cell data. However, what data is used for the bulk is unclear.]   
 
@@ -530,7 +529,7 @@ with many cells. This bulk is assigned to all the cells in the same co-cluster
 </font>
 
 
-```{r coclusOver, echo=FALSE, fig.wide=TRUE, out.width="100%", fig.cap=("Overview of co-clustering. (1) The input are raw count data of bulk tissues and single cells, such as RNA-seq count data. (2) Bulk and single cell data are filtered respectively, where rows are molecules (genes, *etc*) and columns are bulk tissues and cells respectively. Then the filtered bulk and cell data are combined in a column-wise manner and nornalized as a whole. After that, bulk and single cells data are seprated. (3) The separated bulk data after normalization. (4) Separated cell data are clustered on their top dimensions such as PCA of UMAP. (5) a. In each single cell cluster, cells having low similarities (Spearman's or Pearson's correlation coefficients) with other cells in the same cluster are filtered, which are indicated by \"X\". b. The resultant clusters are more homogeneous. (6) Re-combine separated bulk and refined single cell data and cluster top dimensions of the combined data. (7) a. Multiple bulk tissues are co-clustered with many cells. If a bulk tissue has the largest similarity with a certain cell, this bulk would be assigned to this cell. For example, bulk A is assigned to cell a1 because A has higher similarity with a1 than B. b. Only one bulk is co-clustered with many cells. This bulk is assigned to every cell in the same co-cluster. c. No bulk is co-clustered with cells. These cells are regarded as un-labelled. (8) The automatic bulk tissue assignments are stored in a table. ^[ThG: a description of the itemized steps 1-8 is missing. Each or at least ranges of steps need to be mentioned in the legend. In addtion, the illustration includes itemization with letters only for the right part. This needs to be done consitently. Moreover, the Annotation and Manual parts are essentially identical and their data structure is the same as under step 8 of the Automated method. This means you can much better summarize things by including this table once. This would be much more economic and less confusing since you would avoid a lot of duplication you have in the illustration. Moreover, the preprocessing part can be simplified, no one will understand the 'separating' part (see comment above).]")}
+```{r coclusOver, echo=FALSE, fig.wide=TRUE, out.width="100%", fig.cap=("Overview of co-clustering. (1) The input are raw count data of bulk tissues and single cells, such as RNA-seq count data. (2) Bulk and single cell data are initially filtered respectively, where rows are molecules (genes, *etc*) and columns are bulk tissues and cells respectively. Then the filtered bulk and cell data are combined in a column-wise manner and nornalized as a whole. After that, bulk and single cells data are seprated. (3) The normalized bulk data are filtered at a second time. (4) The normalized single cell data are filtered at a second time and then clustered on their top dimensions such as PCA of UMAP. (5) a. In each single cell cluster, cells having low similarities (Spearman's or Pearson's correlation coefficients) with other cells in the same cluster are filtered, which are indicated by \"X\". b. The resultant clusters are more homogeneous. (6) Re-combine separated bulk and refined single cell data and cluster top dimensions of the combined data. (7) a. Multiple bulk tissues are co-clustered with many cells. If a bulk tissue has the largest similarity with a certain cell, this bulk would be assigned to this cell. For example, bulk A is assigned to cell a1 because A has higher similarity with a1 than B. b. Only one bulk is co-clustered with many cells. This bulk is assigned to every cell in the same co-cluster. c. No bulk is co-clustered with cells. These cells are regarded as un-labelled. (8) The automatic bulk tissue assignments are stored in a table. ^[ThG: a description of the itemized steps 1-8 is missing. Each or at least ranges of steps need to be mentioned in the legend. In addtion, the illustration includes itemization with letters only for the right part. This needs to be done consitently. Moreover, the Annotation and Manual parts are essentially identical and their data structure is the same as under step 8 of the Automated method. This means you can much better summarize things by including this table once. This would be much more economic and less confusing since you would avoid a lot of duplication you have in the illustration. Moreover, the preprocessing part can be simplified, no one will understand the 'separating' part (see comment above).]")}
 include_graphics('img/coclustering.jpg')
 ```
 
@@ -573,23 +572,31 @@ intersect(colnames(blk.mus), colnames(sc.mus))
 ```
 
 <font style="color:blue">
-Both bulk and single cell data are filtered to remove low quality values. In bulk data, genes are filtered with two filters. The first one is the proportion of counts over a threshold (`A`) in a gene is at least `p` (`pOA`), and the second is the coefficient of variance (`CV`) is within a specified range. Only genes passing these criteria are retained. Refer to `filterfun` in the `geneflter` package for more details [@Gentleman2018-xj]. In single cell data, genes and cells are filtered according to proportion of counts over a minimum (`min.cnt`) is larger than a threshold (`p.in.gen` for genes and `p.in.cell` for cells). For instance, `min.cnt=1` and `p.in.gen=0.1` suggests if the proportion of counts over 1 is at least 0.1 in a gene, this gene is retained.      
+The raw count data of bulk tissues and single cells are initially filtered to remove noisy values for subsequent normalization. In bulk data, genes with counts over 5 across bulk tissues at a minimum proportion of 0.05 (`pOA`) and coefficient of variances (`CV`) between 0.05 and 100 are retained. Refer to `filterfun` in the `geneflter` package for more details [@Gentleman2018-xj]. In single cell data, cells with a minimum count of 1 (`min.cnt=1`) in at least 1% (`p.in.cell=0.01`) of genes are retained. Genes with a minimum count of 1 (`min.cnt=1`) in at least 5% (`p.in.gen=0.05`) of cells are retained.   
 </font>
 
 ```{r , eval=TRUE, echo=TRUE, warnings=FALSE}
-blk.mus <- filter_data(data=blk.mus, sam.factor=NULL, con.factor=NULL, pOA=c(0.1, 5), CV=c(0.2, 100), verbose=FALSE) 
-mus.lis <- filter_cell(lis=list(sc.mus=sc.mus), bulk=blk.mus, gen.rm=NULL, min.cnt=1, p.in.cell=0.5, p.in.gen=0.1, verbose=FALSE) 
+blk.mus.fil1 <- filter_data(data=blk.mus, pOA=c(0.05, 5), CV=c(0.05, 100), verbose=FALSE) 
+mus.lis.fil1 <- filter_cell(lis=list(sc.mus=sc.mus), bulk=blk.mus.fil1, min.cnt=1, p.in.cell=0.01, p.in.gen=0.05, verbose=FALSE) 
 ```
 
-The main different between bulk and single cell data is the sparsity in the latter. To reduce such difference, they are combined in a column-wise manner and normalized together, then separated.   
+The main different between bulk and single cell data is the sparsity in the latter. To reduce such difference, they are combined in a column-wise manner and normalized together, then separated. The whole process is a single function call on `norm_multi`.    
 
 ```{r , eval=TRUE, echo=TRUE, warnings=FALSE}
 mus.lis.nor <- read_cache(cache.pa, 'mus.lis.nor') 
 if (is.null(mus.lis.nor)) { 
-  mus.lis.nor <- norm_multi(dat.lis=list(dat.fil=mus.lis), cpm=FALSE)
-  mus.lis.nor <- mus.lis.nor[[1]] 
+  mus.lis.nor <- norm_multi(dat.lis=mus.lis.fil1, cpm=FALSE)
   save_cache(dir=cache.pa, overwrite=TRUE, mus.lis.nor)
 }
+```
+
+<font style="color:blue">
+The log2-scale normalized data of bulk tissues and single cells are filtered at a second time respectively in a similar way as the initial filtering.   
+</font>
+
+```{r , eval=TRUE, echo=TRUE, warnings=FALSE}
+blk.mus.fil2 <- filter_data(data=mus.lis.nor$bulk, pOA=c(0.1, 1), CV=c(0.1, 50), verbose=FALSE) 
+mus.lis.fil2 <- filter_cell(lis=list(sc.mus=mus.lis.nor$sc.mus), bulk=blk.mus.fil2, min.cnt=1, p.in.cell=0.1, p.in.gen=0.01, verbose=FALSE) 
 ```
 
 The same aSVG file of mouse brain as the [Quick Start](#test) is used. The process of extracting aSVG features is not shown.  
@@ -621,10 +628,10 @@ co-clustering bulk and single cells (Figure \@ref(fig:coclusOver).6-8) are
 performed in a single function call. Setting `return.all=TRUE` returns results in a `list` (`res.lis`).     
 </font>
 
-```{r , eval=TRUE, echo=TRUE, warnings=FALSE}  
+```{r , eval=TRUE, echo=TRUE, warnings=FALSE, results='hide'}  
 res.lis <- read_cache(cache.pa, 'res.lis')
 if (is.null(res.lis)) {
-  res.lis <- coclus_meta(bulk=mus.lis.nor$bulk, cell=mus.lis.nor$sc.mus, df.match=df.match.mus.brain, return.all=TRUE, multi.core.par=MulticoreParam(workers=1, RNGseed=50), verbose=FALSE)
+  res.lis <- coclus_meta(bulk=mus.lis.fil2$bulk, cell=mus.lis.fil2$sc.mus, df.match=df.match.mus.brain, return.all=TRUE, multi.core.par=MulticoreParam(workers=1), verbose=FALSE)
   res.lis <- res.lis[[1]]
   save_cache(dir=cache.pa, overwrite=TRUE, res.lis)
 }
@@ -664,20 +671,20 @@ starts now that lacks context. Is this an oversight?]</span>
 <font style="color:blue">
 The automatic (co-clustering) method is optimized and tested on a small number of real bulk and single cell datasets, due to the limited availability of single cell datasets where single cells are assayed on a whole organ or whole large tissue and each single cell is well annotated. Thus, the accuracy of automatic source bulk tissue assignments might be also limited. As a remedy, utilities are developed for tailoring the automatic bulk tissue assignments at user preferences. Note, the tailoring step is optional, if users are satisfied with the bulk assignments, just proceed to the [co-visualization](#covisAuto) step.   
 
-The tailoring can be performed in command line or on a [Shiny app](#asgBulkShiny). This section illustrates the command-line based tailoring. First visualize single cells after single-cell cluster refining (Figure \@ref(fig:coclusOver).5) in an embedding plot as shown below. The x-y axis breaks (`x.break`, `y.break`) can be tuned so as to define accurate coordinates in the next step.    
+The tailoring can be performed in command line or on a [Shiny app](#asgBulkShiny). This section illustrates the command-line based tailoring. First visualize single cells after single-cell cluster refining (Figure \@ref(fig:coclusOver).5) in an embedding plot as shown below. In order to define more accurate coordinates in the next step, tune the x-y axis breaks (`x.break`, `y.break`) and set `panel.grid=TRUE`.   
 </font>
 
 
-```{r , eval=TRUE, echo=TRUE, warnings=FALSE, fig.wide=TRUE, fig.cap=('PCA embedding plot of mouse brain single cell data. Single cells right after cluster refining are plotted.'), out.width="70%", fig.show='show'}
-plot_dim(res.lis$cell.refined, dim='PCA', color.by='cell', x.break=seq(-10, 10, 2), y.break=seq(-10, 10, 2))
+```{r , eval=TRUE, echo=TRUE, warnings=FALSE, fig.wide=TRUE, fig.cap=('PCA embedding plot of mouse brain single cell data. Single cells right after cluster refining are plotted.'), out.width="100%", fig.show='show'}
+plot_dim(res.lis$cell.refined, dim='UMAP', color.by='cell', x.break=seq(-10, 10, 1), y.break=seq(-10, 10, 1), panel.grid=TRUE)
 ```
 
 <font style="color:blue">
-Define desired bulk tissues (`desiredSVGBulk`) for cells selected by x-y coordinate ranges (`x.min`, `x.max`, `y.min`, `y.max`) in the embedding plot in form of a `data.frame` (`df.desired.bulk`). The `dimred` reveals where the coordinates come from and are required. In this example, `cerebral.cortex` is the desired bulk tissue for cells in the two selected regions.   
+Define desired bulk tissues (`desiredSVGBulk`) for cells selected by x-y coordinate ranges (`x.min`, `x.max`, `y.min`, `y.max`) in the embedding plot in form of a `data.frame` (`df.desired.bulk`). The `dimred` reveals where the coordinates come from and are required. In this example, `cerebellum` is the desired bulk tissue for cells in the selected region.   
 </font>
 
 ```{r , eval=TRUE, echo=TRUE, warnings=FALSE}  
-df.desired.bulk <- data.frame(x.min=c(-6, -2), x.max=c(-4, 0), y.min=c(6, 4), y.max=c(8, 6), desiredSVGBulk=c('cerebral.cortex', 'cerebral.cortex'), dimred='PCA')
+df.desired.bulk <- data.frame(x.min=c(1), x.max=c(3), y.min=c(3), y.max=c(4), desiredSVGBulk=c('hypothalamus'), dimred='UMAP')
 df.desired.bulk
 ```
 
@@ -707,19 +714,19 @@ sce.aggr <- aggr_rep(data=res.lis$sce.asg, assay.na='logcounts', sam.factor='SVG
 ```
 
 <font style="color:blue">
-The co-visualization of bulk and single cells is built on aggregated gene abundance profiles (`profile=TRUE`) of gene `Adcy1`. Two target aSVG features (bulk tissues) are selected, *i.e.* `cerebellum` and `cerebral.cortex`. In the embedding plot, cells matching the same target aSVG feature in the anatomical image are colored according to their aggregated assay profiles, and the same color is used to fill their matching aSVG features. In the embedding plot, the two small colored clusters on the top are the cells defined in `df.desired.bulk` and are also counted when aggregating expression profiles.   
+The co-visualization of bulk and single cells is built on aggregated gene abundance profiles (`profile=TRUE`) of gene `Adcy1`. All available bulk tissues (aSVG features) are selected as targets, *i.e.* `hippocampus`, `hypothalamus`, `cerebellum` and `cerebral.cortex`. In the embedding plot, cells matching the same target aSVG feature in the anatomical image are colored according to their aggregated assay profiles, and the same color is used to fill their matching aSVG features. The cells defined in `df.desired.bulk` in the [tailoring](#tailor) section are also colored in the embedding plot and counted when aggregating expression profiles.   
 </font>
 
 ```{r , eval=TRUE, echo=TRUE, warnings=FALSE, fig.wide=TRUE, fig.cap=('Co-visualizing bulk and single cells of mouse brain with abundance profiles. The aggregated expression profile of gene `Adcy1` in cells matching the same bulk is used to fill these cells and bulk tissues.'), out.width="100%", fig.show='show', results='hide'}
-shm.lis1 <- spatial_hm(svg.path=svg.mus.brain, data=sce.aggr, ID=c('Adcy1'), legend.nrow=4, sce.dimred=res.lis$cell.refined, dimred='PCA', assay.na='logcounts', tar.bulk=c('cerebellum', 'cerebral.cortex'), profile=TRUE, dim.lgd.text.size=10, dim.lgd.nrow=1, bar.width=0.1)
+shm.lis1 <- spatial_hm(svg.path=svg.mus.brain, data=sce.aggr, ID=c('Adcy1'), legend.nrow=4, sce.dimred=res.lis$cell.refined, assay.na='logcounts', dimred='UMAP', tar.bulk=c('hippocampus', 'hypothalamus', 'cerebellum', 'cerebral.cortex'), profile=TRUE, dim.lgd.text.size=10, dim.lgd.nrow=2, bar.width=0.1)
 ```
 
 <font style="color:blue">
-Bulk tissues and single cells are co-visualized without abundance profiles (`profile=FALSE`). The aSVG features (bulk tissues) of interest are filled by different colors in the anatomical image, while the matching cells are indicated in the embedding plot with the same color as their source bulk tissues. At the top of embedding plot, the two small light green clusters are the selected cells in the [tailoring](#tailor) section.   
+Bulk tissues and single cells are co-visualized without abundance profiles (`profile=FALSE`). All available bulk tissues (aSVG features) are selected to show, *i.e.* `hippocampus`, `hypothalamus`, `cerebellum` and `cerebral.cortex`. They are filled by different colors in the anatomical image, while the matching cells are indicated in the embedding plot with the same color as their source bulk tissues. Cells selected in the [tailoring](#tailor) section are also colored in the embedding plot.    
 </font>
 
 ```{r , eval=TRUE, echo=TRUE, warnings=FALSE, fig.wide=TRUE, fig.cap=('Co-visualizing bulk and single cells of mouse brain without abundance profiles. The matching between cells and source bulk tissues (aSVG features) is denoted by the same color between the embedding plot and anatomical image.'), out.width="100%", fig.show='show', results='hide'}
-shm.lis2 <- spatial_hm(svg.path=svg.mus.brain, data=sce.aggr, legend.nrow=4, sce.dimred=res.lis$cell.refined, dimred='PCA', tar.bulk=c('cerebellum', 'cerebral.cortex'), profile=FALSE, dim.lgd.text.size=10, dim.lgd.nrow=1)
+shm.lis2 <- spatial_hm(svg.path=svg.mus.brain, data=sce.aggr, legend.nrow=4, sce.dimred=res.lis$cell.refined, dimred='UMAP', tar.bulk=c('hippocampus', 'hypothalamus', 'cerebellum', 'cerebral.cortex'), profile=FALSE, dim.lgd.text.size=10, dim.lgd.nrow=2)
 ```
 
 # Using Shiny App {#autoSCE}

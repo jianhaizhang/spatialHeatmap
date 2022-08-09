@@ -11,7 +11,8 @@ plot_dim(
   group.sel = NULL,
   row.sel = NULL,
   x.break = NULL,
-  y.break = NULL
+  y.break = NULL,
+  panel.grid = FALSE
 )
 }
 \arguments{
@@ -26,6 +27,8 @@ plot_dim(
 \item{row.sel}{A numeric vector of row numbers in the \code{colData} slot of \code{sce}. The cells corresponding to these rows are highlighted and plotted on top of other cells.}
 
 \item{x.break, y.break}{Two numeric vectors for x, y axis breaks respectively. E.g. \code{seq(-10, 10, 2)}. The default is \code{NULL}.}
+
+\item{panel.grid}{Logical. If \code{TRUE}, the panel grid will be shown.}
 }
 \value{
 An object of ggplot.

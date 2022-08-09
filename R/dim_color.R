@@ -83,8 +83,12 @@ dim_color <- function(gg.dim, gg.shm.all, grob.shm.all, col.shm.all, cell.group,
   # Non-target cell clusters have colour of 'gray80'.
   non.tar <- setdiff(dat.ft.all, tar.cell)
   dim.col.all[non.tar] <- 'gray80'
+  # Legal shapes: c(0:25, 32:127)
+  sp.sel <- c(15:18, 7:14)
+  sp.all <- c(0, 2:25, 32:127)
+  sp.all <- c(sp.sel, setdiff(sp.all, sp.sel))
   # Cell cluster shapes.
-  sp <- c(0:25, 32:127)[seq_along(dat.ft.all)]
+  sp <- sp.all[seq_along(dat.ft.all)]
   names(sp) <- dat.ft.all
   if (length(non.tar) > 0) br <- tar.cell else br <- dat.ft.all
   # Re-plot dimensionlaity plot.

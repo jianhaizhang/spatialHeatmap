@@ -7,6 +7,7 @@
 #' @param df.par.fil A \code{data.frame} of filtering parameter settings that are passed to \code{filter_data} and \code{filter_cell} respectively. E.g. \code{df.par.fil <- data.frame(p=c(0.2, 0.3), A=rep(1, 4), cv1=c(0.2, 0.3), cv2=rep(100, 4), min.cnt=rep(1, 4), p.in.cell=c(0.25, 0.3), p.in.gen=c(0.05, 0.1))}.
 #' @inheritParams filter_cell
 #' @param wk.dir The work directory where filtered data are saved in ".rds" files by \code{saveRDS}.
+#' @param norm.meth Methods used to normalize bulk and single cell data. One of \code{fct} and \code{cpm}, standing for \code{\link[scran]{computeSumFactors}} only and first \code{\link[scran]{computeSumFactors}} then further normalized by counts per million (cpm) respectively. No actual normalization is performed, only used in file names when saving filtered results.
 #' @param verbose Logical. If \code{TRUE} (default), intermediate messages are printed.
 
 #' @return Filtered data are save in \code{wk.dir}. 
@@ -52,19 +53,19 @@
 
 #' @export filter_iter
 
-filter_iter <- function(bulk, cell.lis, df.par.fil, gen.rm=NULL, wk.dir, verbose=TRUE) {
+filter_iter <- function(bulk, cell.lis, df.par.fil, gen.rm=NULL, wk.dir, norm.meth, verbose=TRUE) {
   fil.dir <- file.path(wk.dir, 'filter_res')
-  # if (!norm.meth %in% c('fct', 'cpm')) stop('"norm.meth" should be one of "fct" and "cpm"!')
+  if (!norm.meth %in% c('fct', 'cpm')) stop('"norm.meth" should be one of "fct" and "cpm"!')
   if (!dir.exists(fil.dir)) dir.create(fil.dir)
   lis <- NULL; for (i in seq_len(nrow(df.par.fil))) {
     df0 <- df.par.fil[i, ]
     blk <- filter_data(data=bulk, pOA=c(df0$p, df0$A), CV=c(df0$cv1, df0$cv2), verbose=verbose)
+    if (nrow(blk)==0) {
+      print(df0); stop('All genes are filtered out!')
+    }
     dat.fil <- filter_cell(lis=cell.lis, bulk=blk, gen.rm=gen.rm, min.cnt=df0$min.cnt, p.in.cell=df0$p.in.cell, p.in.gen=df0$p.in.gen, verbose=verbose)
     lis <- c(lis, list(dat.fil))
-    saveRDS(dat.fil, file=paste0(fil.dir, '/dat', '.fil', i, '.rds'))
-  }; names(lis) <- paste0('dat', '.fil', seq_len(nrow(df.par.fil)))
-    return(lis)
+    saveRDS(dat.fil, file=paste0(fil.dir, '/fil', i, '.', norm.meth, '.rds'))
+  }; names(lis) <- paste0('fil', seq_len(nrow(df.par.fil)), '.', norm.meth)
+  return(lis)
 }
-
-
-

@@ -36,6 +36,7 @@
 
 true_bulk <- function(sce, df.match) {
   if (!'cell' %in% colnames(df.match)) stop('The "cell" column is missing in the matching table!')
+  if (!'SVGBulk' %in% colnames(df.match)) df.match$SVGBulk <- 'none'
   true.bulk <- df.match$dataBulk; names(true.bulk) <- df.match$cell
   cdat <- colData(sce) 
   svg.bulk <- df.match$SVGBulk; names(svg.bulk) <- df.match$cell

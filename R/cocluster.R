@@ -140,7 +140,8 @@ cocluster <- function(bulk, cell.refined, df.match, min.dim=13, max.dim=50, grap
 #' @importFrom SingleCellExperiment reducedDim
 #' @importFrom pROC roc
 
-com_roc <- function(sce.coclus, dimred, dat.blk, df.match, sim.meth='spearman') { 
+com_roc <- function(sce.coclus, dimred, dat.blk, df.match, sim.meth='spearman') {
+  if (!'SVGBulk' %in% colnames(df.match)) df.match$SVGBulk <- 'none' 
   # save(sce.coclus, dimred, dat.blk, df.match, sim.meth, file='com.roc.arg')
   df.match <- df.match[!duplicated(df.match), , drop=FALSE]
   response <- NULL; dat.com <- t(reducedDim(sce.coclus, dimred))

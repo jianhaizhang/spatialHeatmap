@@ -6,6 +6,7 @@
 #' @param group.sel An entry in the \code{color.by} column. All cells under this entry are selected as a group to show.
 #' @param row.sel A numeric vector of row numbers in the \code{colData} slot of \code{sce}. The cells corresponding to these rows are highlighted and plotted on top of other cells.
 #' @param x.break,y.break Two numeric vectors for x, y axis breaks respectively. E.g. \code{seq(-10, 10, 2)}. The default is \code{NULL}.
+#' @param panel.grid Logical. If \code{TRUE}, the panel grid will be shown.
 
 #' @return An object of ggplot.
 
@@ -35,7 +36,7 @@
 
 #' @export plot_dim
 
-plot_dim <- function(sce, dim=NULL, color.by, group.sel=NULL, row.sel=NULL, x.break=NULL, y.break=NULL) {
+plot_dim <- function(sce, dim=NULL, color.by, group.sel=NULL, row.sel=NULL, x.break=NULL, y.break=NULL, panel.grid=FALSE) {
   x <- y <- key <- colour_by <- NULL
   if (is.null(dim)) dim <- reducedDimNames(sce)[1]
   dim.all <- reducedDim(sce, dim)
@@ -71,7 +72,8 @@ plot_dim <- function(sce, dim=NULL, color.by, group.sel=NULL, row.sel=NULL, x.br
     df.all <- rbind(df.other, df.sel)
     scl.col <- scale_color_manual(name='Selected', values=col.all, breaks=sel, labels=sub('\\.selected$', '', sel))
   } else scl.col <- NULL
-  gg <- ggplot(df.all, aes(x=x, y=y, key=key)) + geom_point(size=1.5, alpha=0.6, shape=19, stroke=0.5, aes(colour=colour_by)) + theme_classic() + theme(plot.title=element_text(hjust=0.5, size=14)) + labs(x=labs[1], y=labs[2], colour=color.by) + scl.col
+  gg <- ggplot(df.all, aes(x=x, y=y, key=key)) + geom_point(size=1.5, alpha=0.6, shape=19, stroke=0.5, aes(colour=colour_by)) + theme(plot.title=element_text(hjust=0.5, size=14)) + labs(x=labs[1], y=labs[2], colour=color.by) + scl.col
+  if (panel.grid==FALSE) gg <- gg + theme_classic() 
   if (!is.null(x.break) & is.null(y.break)) gg <- gg + scale_x_continuous(breaks=x.break)
   if (!is.null(y.break) & is.null(x.break)) gg <- gg + scale_y_continuous(breaks=y.break)
   if (!is.null(x.break) & !is.null(y.break)) gg <- gg + scale_x_continuous(breaks=x.break) + scale_y_continuous(breaks=y.break)

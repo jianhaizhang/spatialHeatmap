@@ -155,7 +155,7 @@
 #' @importFrom BiocParallel BatchtoolsParam MulticoreParam register bpRNGseed bpRNGseed<-
 
 coclus_opt <- function(wk.dir, parallel.info=FALSE, sc.dim.min=10, max.dim=50, dimred=c('PCA', 'UMAP'), graph.meth=c('knn', 'snn'), sim=seq(0.2, 0.8, by=0.1), sim.p=seq(0.2, 0.8, by=0.1), dim=seq(5, 40, by=1), df.match, sim.meth='spearman', batch.par=NULL, multi.core.par=MulticoreParam(workers=1, RNGseed=NULL, stop.on.error=FALSE, log=TRUE, logdir=file.path(wk.dir, 'multi_core_log')), verbose=TRUE) {
-  file.dir <- file.path(wk.dir, 'norm_res')
+  file.dir <- file.path(wk.dir, 'filter_res')
   bat.log.dir <- file.path(wk.dir, 'batch_log')
   mcore.log.dir <- file.path(wk.dir, 'multi_core_log')
   auc.dir <- file.path(wk.dir, 'auc_res')
@@ -179,7 +179,7 @@ coclus_opt <- function(wk.dir, parallel.info=FALSE, sc.dim.min=10, max.dim=50, d
     message('"RNGseed" in BatchtoolsParam and MulticoreParam is NULL')
   }
   # All single cell data names.
-  fil.nas <- list.files(file.dir, '\\.fil\\d+\\.')
+  fil.nas <- list.files(file.dir, 'fil\\d+\\.')
   sc.na.all <- NULL; for (i in fil.nas) {
     pa <- file.path(file.dir, i); dat.fil0 <- readRDS(pa)
     nas <- names(dat.fil0); sc.nas <- setdiff(nas, 'bulk')
@@ -191,7 +191,7 @@ coclus_opt <- function(wk.dir, parallel.info=FALSE, sc.dim.min=10, max.dim=50, d
 
   if (parallel.info==TRUE) {
     cat('\n Max first-level parallelizations across BatchtoolsParam workers: ', nrow(df.par.com), '\n', sep='')
-    cat('\n Max second-level parallelizations across MulticoreParam workers (--cpus-per-task in slurm template) on each BatchtoolsParam worker: ', nrow(df.spd), '\n', sep='')
+    cat('\n Max second-level parallelizations across MulticoreParam workers (e.g. --cpus-per-task in slurm template) on each BatchtoolsParam worker: ', nrow(df.spd), '\n', sep='')
     return()
   }
   fun <- function(i, df.par.com, df.spd, df.match, sc.dim.min, max.dim, sim.meth, multi.core.par, auc.dir, verbose) {
@@ -202,7 +202,7 @@ coclus_opt <- function(wk.dir, parallel.info=FALSE, sc.dim.min=10, max.dim=50, d
     if (is.null(sc)) stop(paste0(df0$cell, ' is NULL in ', df0$file, '!'))  
     fil.na <- rev(strsplit(df.para[1, ]$file, '/')[[1]])[1]
     fil.na <- sub('\\.rds$', '', fil.na)
-    out <- file.path(auc.dir, tolower(paste0('auc.', fil.na, '.', df0$cell, '.', df0$dimred, '.', df0$graph.meth)))
+    out <- file.path(auc.dir, tolower(paste0('auc.', df0$graph.meth, '.', df0$dimred, '.', fil.na, '.', df0$cell)))
     # library(spatialHeatmap)
     # In bplapply(), the environment of FUN (other than the global environment) is serialized to the workers. A consequence is that, when FUN is inside a package name space, other functions available in the name space are available to FUN on the workers.
     df.para <- coclus_meta(bulk=blk, cell=sc, df.match=df.match, df.para=df.para, sc.dim.min=sc.dim.min, max.dim=max.dim, sim.meth=sim.meth, return.all=FALSE, multi.core.par=multi.core.par, verbose=verbose, file=out); return('Done')

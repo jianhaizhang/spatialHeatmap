@@ -45,18 +45,21 @@ filter_cell <- function(lis, bulk=NULL, gen.rm=NULL, min.cnt=1, p.in.cell=0.4, p
   gen.na <- NULL                                
   if (!is.null(bulk)) gen.na <- list(rownames(bulk))
   for (i in seq_along(lis)) {
+    if (verbose==TRUE) cat(names(lis[i]), '\n')
     lis[[i]] <- preprocess_sc(data=lis[[i]], gen.rm=gen.rm, min.cnt=min.cnt, p.in.cell=p.in.cell, p.in.gen=p.in.gen, verbose=verbose) 
     gen.na <- c(gen.na, list(rownames(lis[[i]]))) 
   } 
   gen.ovl <- Reduce(intersect, gen.na)
   if (!is.null(bulk)) {
-    bulk <- SingleCellExperiment(assays=list(counts=as.matrix(bulk[gen.ovl, , drop=FALSE])))
+    bulk <- bulk[gen.ovl, , drop=FALSE]
+    if (!is(bulk, 'SummarizedExperiment') & !is(bulk, 'SingeCellExperiment')) bulk <- SingleCellExperiment(assays=list(counts=as.matrix(bulk)))
     lis <- c(list(bulk=bulk), lis)
   }
   for (i in seq_along(lis)) { 
     lis[[i]] <- lis[[i]][gen.ovl, , drop=FALSE]; if (verbose==TRUE) print(dim(lis[[i]])) 
   }; return(lis) 
 } 
+
 
 #' Filter genes/cells by proportion of min count in row/column.
 #'
@@ -84,7 +87,7 @@ filter_cell <- function(lis, bulk=NULL, gen.rm=NULL, min.cnt=1, p.in.cell=0.4, p
 #' @importFrom Matrix rowSums colSums
 #' @importFrom utils head 
 #' @importFrom SingleCellExperiment SingleCellExperiment
- 
+
 preprocess_sc <- function(data, gen.rm=NULL, min.cnt=1, p.in.cell=0.4, p.in.gen=0.2, verbose=TRUE) { 
   if (is(data, 'SummarizedExperiment') | is(data, 'SingeCellExperiment')) {
     dat <- assay(data)
@@ -113,8 +116,9 @@ preprocess_sc <- function(data, gen.rm=NULL, min.cnt=1, p.in.cell=0.4, p.in.gen=
     print(head(sort(rowSums(dat)), 5))  
     print(head(sort(colSums(dat)), 5))
   }
-  data <- SingleCellExperiment(assays=list(counts=as.matrix(data)))
+  if (!is(data, 'SummarizedExperiment') & !is(data, 'SingeCellExperiment')) data <- SingleCellExperiment(assays=list(counts=as.matrix(data)))
   return(data)
 } 
+
 
 
