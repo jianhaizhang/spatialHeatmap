@@ -8,18 +8,20 @@ spd_auc_violin(
   df.lis,
   n = 5,
   ylab = "AUC",
-  xlab,
-  x.text.size = 11,
-  y.text.size = 11,
+  xlab = "spd.set",
+  x.text.size = 13,
+  y.text.size = 13,
   x.agl = 45,
   x.vjust = 0.6,
   nrow = 3,
   title = NULL,
-  title.size = 20
+  title.size = 14,
+  sub.title.size = 13,
+  axis.title.size = 13
 )
 }
 \arguments{
-\item{df.lis}{The nested list of extracted aucs returned by \code{auc_stat}.}
+\item{df.lis}{The nested list of extracted aucs returned by \code{auc_param}.}
 
 \item{n}{Number of top \code{spd.set} ranked by frequencies to plot.}
 
@@ -34,6 +36,10 @@ spd_auc_violin(
 \item{title}{The title of composite violin plots.}
 
 \item{title.size}{The title size. Default is 20.}
+
+\item{sub.title.size}{The sub-title size.}
+
+\item{The}{size of axis titles.}
 }
 \value{
 An object of ggplot.
@@ -84,22 +90,22 @@ df.match.arab[1:3, ]
 
 # Optimization. 
 # Check parallelization guide.
-coclus_opt(wk.dir='opt_res', parallel.info=TRUE, dimred=c('PCA', 'UMAP'), graph.meth=c('knn', 'snn'), sim=seq(0.2, 0.4, by=0.1), sim.p=seq(0.2, 0.4, by=0.1), dim=seq(5, 7, by=1))
+coclus_multi(wk.dir='opt_res', parallel.info=TRUE, dimred=c('PCA', 'UMAP'), graph.meth=c('knn', 'snn'), sim=seq(0.2, 0.4, by=0.1), sim.p=seq(0.2, 0.4, by=0.1), dim=seq(5, 7, by=1))
 
 # The first-level parallel computing relies on the slurm scheduler (https://slurm.schedmd.com/documentation.html), so if it is available the whole optimization process could be parallelized at two levels. 
 file.copy(system.file("extdata/cocluster", "slurm.tmpl", package="spatialHeatmap"), './slurm.tmpl')
 
 # The first- and second-level parallelizations are set 3 and 2 respectively.
 library(BiocParallel)
-opt <- coclus_opt(wk.dir='opt_res', dimred=c('PCA', 'UMAP'), graph.meth=c('knn', 'snn'), sim=seq(0.2, 0.4, by=0.1), sim.p=seq(0.2, 0.4, by=0.1), dim=seq(5, 7, by=1), df.match=df.match.arab, batch.par=BatchtoolsParam(workers=3, cluster="slurm", template='slurm.tmpl'), multi.core.par=MulticoreParam(workers=2))
+opt <- coclus_multi(wk.dir='opt_res', dimred=c('PCA', 'UMAP'), graph.meth=c('knn', 'snn'), sim=seq(0.2, 0.4, by=0.1), sim.p=seq(0.2, 0.4, by=0.1), dim=seq(5, 7, by=1), df.match=df.match.arab, batch.par=BatchtoolsParam(workers=3, cluster="slurm", template='slurm.tmpl'), multi.core.par=MulticoreParam(workers=2))
 
 # If slurm is not available, parallelize the optimization only at the second-level through 2 workers. 
-opt <- coclus_opt(wk.dir='opt_res', dimred=c('PCA', 'UMAP'), graph.meth=c('knn', 'snn'), sim=seq(0.2, 0.4, by=0.1), sim.p=seq(0.2, 0.4, by=0.1), dim=seq(5, 7, by=1), df.match=df.match.arab, batch.par=NULL, multi.core.par=MulticoreParam(workers=2))
+opt <- coclus_multi(wk.dir='opt_res', dimred=c('PCA', 'UMAP'), graph.meth=c('knn', 'snn'), sim=seq(0.2, 0.4, by=0.1), sim.p=seq(0.2, 0.4, by=0.1), dim=seq(5, 7, by=1), df.match=df.match.arab, batch.par=NULL, multi.core.par=MulticoreParam(workers=2))
 
 # The performaces of parameter settings are measured by AUC values in ROC curve. The following demonstrates how to visualize the AUCs and select optimal parameter settings.
 
 # Extract AUCs and other parameter settings for filtering parameter sets.
-df.lis.fil <- auc_stat(wk.dir='opt_res', tar.par='filter', total.min=500, true.min=300, aucs=round(seq(0.5, 0.9, 0.1), 1))
+df.lis.fil <- auc_param(wk.dir='opt_res', tar.par='filter', total.min=500, true.min=300, aucs=round(seq(0.5, 0.9, 0.1), 1))
 df.lis.fil$df.auc.mean[1:3, ]
 
 # Mean AUCs by each filtering settings and AUC cutoff.
@@ -112,7 +118,7 @@ auc_violin(df.lis=df.lis.fil, xlab='Filtering settings')
 df.par.fil[c(1, 2, 3), ]
 
 # Extract AUCs and other parameter settings for normalization methods.
-df.lis.norm <- auc_stat(wk.dir='opt_res', tar.par='norm', total.min=500, true.min=300, aucs=round(seq(0.5, 0.9, 0.1), 1))
+df.lis.norm <- auc_param(wk.dir='opt_res', tar.par='norm', total.min=500, true.min=300, aucs=round(seq(0.5, 0.9, 0.1), 1))
 df.lis.norm$df.auc.mean[1:3, ]
 
 # Mean AUCs by each normalization method and AUC cutoff.
@@ -124,7 +130,7 @@ auc_violin(df.lis=df.lis.norm, xlab='Normalization methods')
 # Optimal normalization method: fct (computeSumFactors).
 
 # Extract AUCs and other parameter settings for graph-building methods.
-df.lis.graph <- auc_stat(wk.dir='opt_res', tar.par='graph', total.min=500, true.min=300, aucs=round(seq(0.5, 0.9, 0.1), 1))
+df.lis.graph <- auc_param(wk.dir='opt_res', tar.par='graph', total.min=500, true.min=300, aucs=round(seq(0.5, 0.9, 0.1), 1))
 df.lis.graph$df.auc.mean[1:3, ]
 
 # Mean AUCs by each graph-building method and AUC cutoff.
@@ -136,7 +142,7 @@ auc_violin(df.lis=df.lis.graph, xlab='Graph-building methods')
 # Optimal graph-building methods: knn (buildKNNGraph).
 
 # Extract AUCs and other parameter settings for dimensionality reduction methods.
-df.lis.dimred <- auc_stat(wk.dir='opt_res', tar.par='dimred', total.min=500, true.min=300, aucs=round(seq(0.5, 0.9, 0.1), 1))
+df.lis.dimred <- auc_param(wk.dir='opt_res', tar.par='dimred', total.min=500, true.min=300, aucs=round(seq(0.5, 0.9, 0.1), 1))
 df.lis.dimred$df.auc.mean[1:3, ]
 
 # Mean AUCs by each dimensionality reduction method and AUC cutoff.
@@ -148,7 +154,7 @@ auc_violin(df.lis=df.lis.dimred, xlab='Dimensionality reduction')
 # Optimal dimensionality reduction method: pca (denoisePCA).
 
 # Extract AUCs and other parameter settings for spd.sets.
-df.lis.spd <- auc_stat(wk.dir='opt_res', tar.par='spd.set', total.min=500, true.min=300, aucs=round(seq(0.5, 0.9, 0.1), 1))
+df.lis.spd <- auc_param(wk.dir='opt_res', tar.par='spd.set', total.min=500, true.min=300, aucs=round(seq(0.5, 0.9, 0.1), 1))
 df.lis.spd$auc0.5$df.frq[1:3, ]
 
 # All AUCs of top spd.sets ranked by frequency. 
@@ -158,6 +164,7 @@ spd_auc_violin(df.lis=df.lis.spd, n=5, xlab='spd.sets', x.vjust=0.6)
 \references{
 H. Wickham. ggplot2: Elegant Graphics for Data Analysis. Springer-Verlag New York, 2016.
 Baptiste Auguie (2017). gridExtra: Miscellaneous Functions for "Grid" Graphics. R package version 2.3. https://CRAN.R-project.org/package=gridExtra
+R Core Team (2022). R: A language and environment for statistical computing. R Foundation for Statistical Computing, Vienna,    Austria. URL https://www.R-project.org/.
 }
 \author{
 Jianhai Zhang \email{jzhan067@ucr.edu} \cr Dr. Thomas Girke \email{thomas.girke@ucr.edu}

@@ -38,7 +38,7 @@ random_para <- function(fil.set, norm, dimred, graph.meth, sim=round(seq(0.2, 0.
   df.spd.sel <- df.spd.all[sample(seq_len(nrow(df.spd.all)), n, replace=FALSE), ]
   # Clustering.
   graph.meth <- sample(graph.meth, n, replace=TRUE)
-  df.par.rdn <- cbind(fil.set=fil.set, norm=norm, dimred=dimred, df.spd.sel[, c('sim', 'sim.p', 'dim', 'spd.set')], graph.meth=graph.meth)
+  df.par.rdn <- cbind(norm=norm, filtering=fil.set, dimred=dimred, graph.meth=graph.meth, df.spd.sel[, c('sim', 'sim.p', 'dim', 'spd.set')])
   rownames(df.par.rdn) <- seq_len(n); return(df.par.rdn)
 }
 

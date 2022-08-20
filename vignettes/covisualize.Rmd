@@ -105,19 +105,19 @@ R as well as the corresponding [Shiny app](#autoSCE) [@shiny, @shinydashboard].
 
 The main idea behind co-visualizing bulk tissues and single cells (Figure \@ref(fig:covizOver)) is first assigning individual cells with group labels, then aggregating cells within each group by taking mean or median of assay profiles, and finally associating aggregated cell groups to aSVG spatial features (bulk tissues).    
 
-Figure \@ref(fig:covizOver).1 is the standard single cell data container `SingleCellExperiment` [@sce]. The `assays`, `colData`, `rowData`, and `reducedDims` slots contain experssion profiles, cell metadata, molecule metadata, and reduced dimensionalities produced by algorithms of PCA, TSNE, or UMAP [@scran, @scater] respectively. In co-visualization, the cell group labels are stored in the `colData` slot as shown in Figure \@ref(fig:covizOver).1. Three methods are available for obtaining cell labels. The annotation-based (Figure \@ref(fig:covizOver).2a) and manual
+Figure \@ref(fig:covizOver).1 is the standard single cell data container `SingleCellExperiment` [@sce]. The `assays`, `colData`, `rowData`, and `reducedDims` slots contain expression profiles, cell metadata, molecule metadata, and reduced dimensionalities produced by algorithms of PCA, TSNE, or UMAP [@scran, @scater] respectively. In co-visualization, the cell group labels are stored in the `colData` slot as shown in Figure \@ref(fig:covizOver).1. Three methods are available for obtaining cell labels. The annotation-based (Figure \@ref(fig:covizOver).2a) and manual
 methods (Figure \@ref(fig:covizOver).2b) are similar, since the main difference is how the cell labels are generated.
 In the annotation-based method, existing cell annotation labels are usually
 available and can be stored in a suitable format such as in a
 `SingleCellExperiment` object. For example, prepopulated instances of these
 containers are provided by the `scRNAseq` package [@scrnaseq]. The manual
 method allows users to create the cell to tissue associations one-by-one or 
-importing them from a tabular file. In contrast to this, the automatic method
+import them from a tabular file. In contrast to this, the automatic method
 aims to assign single cells to the corresponding source tissue computationally
 by a co-clustering algorithm (Figure \@ref(fig:covizOver).2c).  
 
 
-Cells with the same group label are aggregated by taking mean or median of assay profiles (Figure \@ref(fig:covizOver).3). Cells before aggregation are colored by their within-group aggregated assay profiles in an embedding plot created on reduced dimensionalities [@scran, @scater]. These cell group colors are used to fill aSVG spatial features (bulk tissues) that are matched according to cell labels. The ouput is a co-visualization plot as shown in Figure \@ref(fig:covizOver).4.   
+Cells with the same group label are aggregated by taking mean or median of assay profiles (Figure \@ref(fig:covizOver).3). Cells before aggregation are colored by their within-group aggregated assay profiles in an embedding plot created on reduced dimensionalities [@scran, @scater]. These cell group colors are used to fill aSVG spatial features (bulk tissues) that are matched according to cell labels. The output is a co-visualization plot as shown in Figure \@ref(fig:covizOver).4.   
 
 </font>
 
@@ -535,7 +535,7 @@ include_graphics('img/coclustering.jpg')
 
 <font style="color:blue">
 To obtain optimal default settings for the
-automatic method (co-clustering), main parameters related to filtering, normalization, dimension reduction, clustering, and cell cluster refining are optimized and tested on real bulk and single cell datasets, which is detailed in an external [vignette](#opt) <font style="color:blue">[JZ: update in the optimzation vignette is in progress.] </font>. The optimization utilities are included in *spatialHeatmap*, so users have the choice to optimize this method on their own real data. This section showcases application of the automatic method
+automatic method (co-clustering), main parameters related to filtering, normalization, dimension reduction, clustering, and cell cluster refining are optimized and tested on real bulk and single cell datasets, which is detailed in an external [vignette](https://jianhaizhang.github.io/spatialHeatmap_supplement/cocluster_optimize.html){target='_blank'}. The optimization utilities are included in *spatialHeatmap*, so users have the choice to optimize this method on their own real data. This section showcases application of the automatic method
 on mouse brain data with default settings obtained through optimization. The bulk RNA-seq data are generated in a research on the impact of placental endocrine on mouse cerebellar development [@Vacher2021-xg] and the scRNA-seq data are from a study of mouse brain molecular atlas [@Ortiz2020-yt]. Both bulk and single cell data sets are modified for demonstration purpose.     
 </font>
 
@@ -582,7 +582,7 @@ mus.lis.fil1 <- filter_cell(lis=list(sc.mus=sc.mus), bulk=blk.mus.fil1, min.cnt=
 
 The main different between bulk and single cell data is the sparsity in the latter. To reduce such difference, they are combined in a column-wise manner and normalized together, then separated. The whole process is a single function call on `norm_multi`.    
 
-```{r , eval=TRUE, echo=TRUE, warnings=FALSE}
+```{r , eval=TRUE, echo=TRUE, warnings=FALSE, results='hide'}
 mus.lis.nor <- read_cache(cache.pa, 'mus.lis.nor') 
 if (is.null(mus.lis.nor)) { 
   mus.lis.nor <- norm_multi(dat.lis=mus.lis.fil1, cpm=FALSE)
@@ -744,7 +744,7 @@ include_graphics('img/shiny_coviz.png')
 
 <font style="color:blue">
 When using the Shiny app, single cell data in annotation-based and manual methods or combined
-single cell and bulk data in automatic method are stored in a `SingleCellExperiment` object and saved in an `.rds` file by `saveRDS`, then the `.rds` file should be uploaded to the app. In the manual method, the manual clusters in a tabular file should be included in the `colData` slot by calling `manual_group` before creating an `.rds` file, as shown [here](#manual_clus). In the automatic method, bulk tissues and single cells are labeled by `bulk` and `cell`
+single cell and bulk data in automatic method are stored in a `SingleCellExperiment` object and saved in an `.rds` file by `saveRDS`, then the `.rds` file should be uploaded to the app. In the manual method, the manual cell group labels in a tabular file should be included in the `colData` slot by calling `manual_group` before creating an `.rds` file, as shown [here](#manual_clus). In the automatic method, bulk tissues and single cells are labeled by `bulk` and `cell`
 respectively in the `bulkCell` column in `colData` slot. The matching table between bulk tissues and aSVG features is stored in the `metadata` list with the name `df.match`. The example `.rds` file below illustrates these rules.     
 </font>
 

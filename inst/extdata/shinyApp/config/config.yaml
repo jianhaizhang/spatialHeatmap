@@ -65,7 +65,7 @@ title:
 - title:spatialHeatmap
 - width:350
 max.upload.size: 5G 
-default.dataset: brain_Prudencio
+default.dataset: mouse_Merkin
 col.row.gene: None
 separator: None
 data.matrix:

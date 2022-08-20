@@ -1,20 +1,15 @@
-#' Optimizing coclustering process with two levels of parallelizations available. 
+#' Optimizing co-clustering algorithm 
 #'
 #' Optimizing coclustering process with two levels of parallelizations available.
 
-#' @param wk.dir Working directory. Must be the same with that in \code{filter_iter}, since the filtered data will be used automatically.
+#' @param data A named \code{list} of bulk and single cell count data, where the name slot \code{bulk} indicates bulk data while all others are treated single cell data.   
+#' @param norm A character vector of normalization methods, at least one of \code{fct}, \code{cpm}. \code{fct}: \code{\link[scran]{computeSumFactors}}. \code{cpm}: first normalized by \code{\link[scran]{computeSumFactors}} then transformed to counts per million by \code{\link[scuttle]{calculateCPM}}.   
 #' @param parallel.info Logical. If \code{FALSE} (default), coclustering optimization is performed. If \code{TRUE}, parallelization guide is returned and no optimization. Users are advised to check the guide when editing the slurm template.  
-#' @inheritParams cocluster
-#' @param dimred Dimensionality redeuction methods to optimize: \code{c('PCA', 'UMAP')}.
-#' @param graph.meth Graph-building methods in coclustering: \code{c('knn', 'snn')} (see \code{\link[scran]{buildKNNGraph}}), \code{\link[scran]{buildSNNGraph}}) respectively). The clusters are detected by first creating a nearest neighbor graph using \code{snn} or \code{knn} then partitioning the graph. 
-#' @param sim,sim.p Used when refining cell clusters. Both are numeric scalars, ranging from 0 to 1. \code{sim} is a similarity (Spearman or Pearson correlation coefficient) cutoff between cells and \code{sim.p} is a proportion cutoff. In a certain cell cluster, cells having similarity >= \code{sim} with other cells in the same cluster at proportion >= \code{sim.p} would remain. Otherwise, they are discarded. The default of both is \code{seq(0.2, 0.8, by=0.1)} and can be customized.
-#' @param dim Number of principle components (PCs, equivalent to genes) in combined bulk and single cell data. Used as the minimum number of PCs to retain in \code{\link[scran]{denoisePCA}} when coclustering bulk and single cells. The default is \code{seq(5, 40, by=1)}, and can be customized.
-#' @inheritParams cocluster
-#' @param batch.par The parameters for first-level parallelization through a cluster scheduler such as SLURM. See \code{\link[BioParallel]{BatchtoolsParam}}. If \code{NULL} (default), the first-level parallelization is skipped.
-#' @param multi.core.par The parameters for second-level parallelization. See \code{\link[BioParallel]{MulticoreParam}}.
-#' @param verbose Logical. If \code{TRUE} (default), intermediate messages are printed.
+#' @inheritParams norm_multi
+#' @inheritParams filter_iter
+#' @inheritParams coclus_multi
 
-#' @return A list of normalized single cell and bulk data. 
+#' @return Saved files of AUC values and corresponding parameter settings. 
 
 #' @examples
 
@@ -61,7 +56,7 @@
 #'
 #' # Optimization. 
 #' # Check parallelization guide.
-#' coclus_opt(wk.dir='opt_res', parallel.info=TRUE, dimred=c('PCA', 'UMAP'), graph.meth=c('knn', 'snn'), sim=seq(0.2, 0.4, by=0.1), sim.p=seq(0.2, 0.4, by=0.1), dim=seq(5, 7, by=1))
+#' coclus_multi(wk.dir='opt_res', parallel.info=TRUE, dimred=c('PCA', 'UMAP'), graph.meth=c('knn', 'snn'), sim=seq(0.2, 0.4, by=0.1), sim.p=seq(0.2, 0.4, by=0.1), dim=seq(5, 7, by=1))
 #'
 #' # The first-level parallel computing relies on the slurm scheduler (https://slurm.schedmd.com/documentation.html), so if it is available the whole optimization process could be parallelized at two levels. 
 # Copy slurm template to current directory. Edit the template according to the parallelization guide and available computing resources.
@@ -69,16 +64,16 @@
 #' 
 #' # The first- and second-level parallelizations are set 3 and 2 respectively.
 #' library(BiocParallel)
-#' opt <- coclus_opt(wk.dir='opt_res', dimred=c('PCA', 'UMAP'), graph.meth=c('knn', 'snn'), sim=seq(0.2, 0.4, by=0.1), sim.p=seq(0.2, 0.4, by=0.1), dim=seq(5, 7, by=1), df.match=df.match.arab, batch.par=BatchtoolsParam(workers=3, cluster="slurm", template='slurm.tmpl', RNGseed=100, stop.on.error = FALSE, log = TRUE, logdir=file.path('opt_res', 'batch_log')), multi.core.par=MulticoreParam(workers=2))
+#' opt <- coclus_multi(wk.dir='opt_res', dimred=c('PCA', 'UMAP'), graph.meth=c('knn', 'snn'), sim=seq(0.2, 0.4, by=0.1), sim.p=seq(0.2, 0.4, by=0.1), dim=seq(5, 7, by=1), df.match=df.match.arab, batch.par=BatchtoolsParam(workers=3, cluster="slurm", template='slurm.tmpl', RNGseed=100, stop.on.error = FALSE, log = TRUE, logdir=file.path('opt_res', 'batch_log')), multi.core.par=MulticoreParam(workers=2))
 #'
 #' # If slurm is not available, parallelize the optimization only at the second-level through 2 workers. 
-#' opt <- coclus_opt(wk.dir='opt_res', dimred=c('PCA', 'UMAP'), graph.meth=c('knn', 'snn'), sim=seq(0.2, 0.4, by=0.1), sim.p=seq(0.2, 0.4, by=0.1), dim=seq(5, 7, by=1), df.match=df.match.arab, batch.par=NULL, multi.core.par=MulticoreParam(workers=2))
+#' opt <- coclus_multi(wk.dir='opt_res', dimred=c('PCA', 'UMAP'), graph.meth=c('knn', 'snn'), sim=seq(0.2, 0.4, by=0.1), sim.p=seq(0.2, 0.4, by=0.1), dim=seq(5, 7, by=1), df.match=df.match.arab, batch.par=NULL, multi.core.par=MulticoreParam(workers=2))
 #'
 #' # The performaces of parameter settings are measured by AUC values in ROC curve. The following demonstrates how to visualize the AUCs and select optimal parameter settings.
 # If one AUC is larger than 0.5, 0.6, 0.7, 0.8, or 0.9, and has total bulk assignments >= 500, true assignments >= 500, the corresponding parameter settings are extracted. 
 #'
 #' # Extract AUCs and other parameter settings for filtering parameter sets.
-#' df.lis.fil <- auc_stat(wk.dir='opt_res', tar.par='filter', total.min=500, true.min=300, aucs=round(seq(0.5, 0.9, 0.1), 1))
+#' df.lis.fil <- auc_param(wk.dir='opt_res', tar.par='filter', total.min=500, true.min=300, aucs=round(seq(0.5, 0.9, 0.1), 1))
 #' df.lis.fil$df.auc.mean[1:3, ]
 #' 
 #' # Mean AUCs by each filtering settings and AUC cutoff.
@@ -91,7 +86,7 @@
 #' df.par.fil[c(1, 2, 3), ]
 #' 
 #' # Extract AUCs and other parameter settings for normalization methods.
-#' df.lis.norm <- auc_stat(wk.dir='opt_res', tar.par='norm', total.min=500, true.min=300, aucs=round(seq(0.5, 0.9, 0.1), 1))
+#' df.lis.norm <- auc_param(wk.dir='opt_res', tar.par='norm', total.min=500, true.min=300, aucs=round(seq(0.5, 0.9, 0.1), 1))
 #' df.lis.norm$df.auc.mean[1:3, ]
 #'
 #' # Mean AUCs by each normalization method and AUC cutoff.
@@ -103,7 +98,7 @@
 #' # Optimal normalization method: fct (computeSumFactors).
 #' 
 #' # Extract AUCs and other parameter settings for graph-building methods.
-#' df.lis.graph <- auc_stat(wk.dir='opt_res', tar.par='graph', total.min=500, true.min=300, aucs=round(seq(0.5, 0.9, 0.1), 1))
+#' df.lis.graph <- auc_param(wk.dir='opt_res', tar.par='graph', total.min=500, true.min=300, aucs=round(seq(0.5, 0.9, 0.1), 1))
 #' df.lis.graph$df.auc.mean[1:3, ]
 #' 
 #' # Mean AUCs by each graph-building method and AUC cutoff.
@@ -115,7 +110,7 @@
 #' # Optimal graph-building methods: knn (buildKNNGraph).
 #' 
 #' # Extract AUCs and other parameter settings for dimensionality reduction methods.
-#' df.lis.dimred <- auc_stat(wk.dir='opt_res', tar.par='dimred', total.min=500, true.min=300, aucs=round(seq(0.5, 0.9, 0.1), 1))
+#' df.lis.dimred <- auc_param(wk.dir='opt_res', tar.par='dimred', total.min=500, true.min=300, aucs=round(seq(0.5, 0.9, 0.1), 1))
 #' df.lis.dimred$df.auc.mean[1:3, ]
 #' 
 #' # Mean AUCs by each dimensionality reduction method and AUC cutoff.
@@ -127,7 +122,7 @@
 #' # Optimal dimensionality reduction method: pca (denoisePCA).
 #' 
 #' # Extract AUCs and other parameter settings for spd.sets.
-#' df.lis.spd <- auc_stat(wk.dir='opt_res', tar.par='spd.set', total.min=500, true.min=300, aucs=round(seq(0.5, 0.9, 0.1), 1))
+#' df.lis.spd <- auc_param(wk.dir='opt_res', tar.par='spd.set', total.min=500, true.min=300, aucs=round(seq(0.5, 0.9, 0.1), 1))
 #' df.lis.spd$auc0.5$df.frq[1:3, ]
 #'
 #' # All AUCs of top spd.sets ranked by frequency. 
@@ -150,18 +145,91 @@
 #' Shahan, R., Hsu, C.-W., Nolan, T. M., Cole, B. J., Taylor, I. W., Vlot, A. H. C., Benfey, P. N., and Ohler, U. (June, 2020) A single cell Arabidopsis root atlas reveals developmental trajectories in wild type and cell identity mutants.
 #' Morgan M, Wang J, Obenchain V, Lang M, Thompson R, Turaga N (2021). BiocParallel: Bioconductor facilities for parallel evaluation. R package version 1.28.3, https://github.com/Bioconductor/BiocParallel.
 #' Yoo, A. B., Jette, M. A., and Grondona, M. (2003) SLURM: Simple Linux Utility for Resource Management. In Job Scheduling Strategies for Parallel Processing Springer Berlin Heidelberg pp. 44–60.
+#' McCarthy DJ, Campbell KR, Lun ATL, Willis QF (2017). “Scater: pre-processing, quality control, normalisation and visualisation of single-cell RNA-seq data in R.” Bioinformatics, 33, 1179-1186. doi: 10.1093/bioinformatics/btw777
 
 #' @export coclus_opt
 #' @importFrom BiocParallel BatchtoolsParam MulticoreParam register bpRNGseed bpRNGseed<-
 
-coclus_opt <- function(wk.dir, parallel.info=FALSE, sc.dim.min=10, max.dim=50, dimred=c('PCA', 'UMAP'), graph.meth=c('knn', 'snn'), sim=seq(0.2, 0.8, by=0.1), sim.p=seq(0.2, 0.8, by=0.1), dim=seq(5, 40, by=1), df.match, sim.meth='spearman', batch.par=NULL, multi.core.par=MulticoreParam(workers=1, RNGseed=NULL, stop.on.error=FALSE, log=TRUE, logdir=file.path(wk.dir, 'multi_core_log')), verbose=TRUE) {
+coclus_opt <- function(data, norm=c('fct', 'cpm'), count.kp=FALSE, quick.clus=list(min.size = 100), com.sum.fct=list(max.cluster.size = 3000, min.mean=1), log.norm=list(), df.par.fil, df.match, gen.rm=NULL, parallel.info=FALSE, sc.dim.min=10, max.dim=50, dimred=c('PCA', 'UMAP'), graph.meth=c('knn', 'snn'), sim=seq(0.2, 0.8, by=0.1), sim.p=seq(0.2, 0.8, by=0.1), dim=seq(5, 40, by=1), df.spd=NULL, df.spd.ignore=NULL, coms=NULL, sim.meth='spearman', batch.par=NULL, multi.core.par=MulticoreParam(workers=1, RNGseed=NULL, stop.on.error=FALSE), wk.dir=NULL, verbose=TRUE) {
+  if ('' %in% names(data)) stop('"data" should be a named list!')
+  if (!'bulk' %in% names(data)) stop('"bulk" is missing in the name slots of "data"!') 
+  if (!is.null(wk.dir)) if (!dir.exists(wk.dir)) dir.create(wk.dir)
+  if (!all(norm %in% c('fct', 'cpm'))) stop('Options for "norm" include "fct", "cpm"!')
+ 
+  if (!is.null(df.spd) & !is.null(df.spd.ignore)) stop('At least one of "df.spd" and "df.spd.ignore" should be NULL!')
+  cell.na <- setdiff(names(data), 'bulk')
+  # All spd.set
+  if (is.null(df.spd) & is.null(df.spd.ignore)) df.spd <- expand.grid(sim = sim, sim.p = sim.p, dim = dim, stringsAsFactors = FALSE)
+
+  if (!is.null(df.spd.ignore)) { 
+    df.spd <- expand.grid(sim=sim, sim.p=sim.p, dim=dim, stringsAsFactors = FALSE)
+    df.spd$spd.set <- paste0('s', df.spd$sim, 'p', df.spd$sim.p, 'd', df.spd$dim)
+    if (!'spd.set' %in% colnames(df.spd.ignore)) df.spd.ignore$spd.set <- paste0('s', df.spd.ignore$sim, 'p', df.spd.ignore$sim.p, 'd', df.spd.ignore$dim)
+    df.spd <- subset(df.spd, !spd.set %in% df.spd.ignore$spd.set)
+  }
+  if (!is.null(coms)) { # Select random spd.sets.
+    idx.rdm <- sample(seq_len(nrow(df.spd)), coms/length(norm)/nrow(df.par.fil)/length(dimred)/length(graph.meth), replace=FALSE)
+    df.spd <- df.spd[idx.rdm, ]
+  }
+
+
+  if (parallel.info==TRUE) {
+    cat('\n Max parallelizations across separate clusters using BatchtoolsParam: ', length(cell.na) * length(norm) * nrow(df.par.fil) * length(dimred) * length(graph.meth), '\n', sep='')
+    cat('\n Max parallelizations across forked processes using MulticoreParam (e.g. --cpus-per-task in slurm template): ', nrow(df.spd), '\n', sep='')
+    return()
+  }
+
+  # Normalization.
+  if (verbose==TRUE) message('Normalizing ...')
+  if ('fct' %in% norm ) norm.fct <- norm_multi(dat.lis=data, cpm=FALSE, count.kp=count.kp, quick.clus=quick.clus, com.sum.fct=com.sum.fct, log.norm=log.norm, wk.dir=wk.dir) # fct.
+  if ('cpm' %in% norm ) norm.cpm <- norm_multi(dat.lis=data, cpm=TRUE, count.kp=count.kp, quick.clus=quick.clus, com.sum.fct=com.sum.fct, log.norm=log.norm, wk.dir=wk.dir) # fct + cpm
+
+  if (verbose==TRUE) message('Filtering ...')
+  # Filtering data normalized by fct.
+  if ('fct' %in% norm ) fct.fil.all <- filter_iter(bulk=norm.fct$bulk, cell.lis=norm.fct[cell.na], df.par.fil=df.par.fil, gen.rm=gen.rm, wk.dir=wk.dir, norm.meth='fct', verbose=verbose)
+  # Filtering data normalized by fct + cpm. 
+  if ('cpm' %in% norm ) cpm.fil.all <- filter_iter(bulk=norm.cpm$bulk, cell.lis=norm.cpm[cell.na], df.par.fil=df.par.fil, gen.rm=gen.rm, wk.dir=wk.dir, norm.meth='cpm', verbose=verbose)
+  if (verbose==TRUE) message('Co-clustering ...')
+  opt <- coclus_multi(wk.dir=wk.dir, sc.dim.min=sc.dim.min, max.dim=max.dim, dimred=dimred, graph.meth=graph.meth, sim=sim, sim.p=sim.p, dim=dim, df.spd=df.spd, df.match=df.match, sim.meth=sim.meth, batch.par=batch.par, multi.core.par=multi.core.par, verbose=verbose)
+  return(opt)
+}
+
+
+#' Optimizing coclustering process with two levels of parallelizations available. 
+#'
+#' Optimizing coclustering process with two levels of parallelizations available.
+
+#' @param wk.dir Working directory. Must be the same with that in \code{filter_iter}, since the filtered data will be used automatically.
+#' @inheritParams cocluster
+#' @param dimred Dimensionality redeuction methods to optimize: \code{c('PCA', 'UMAP')}.
+#' @param graph.meth Graph-building methods in coclustering: \code{c('knn', 'snn')} (see \code{\link[scran]{buildKNNGraph}}), \code{\link[scran]{buildSNNGraph}}) respectively). The clusters are detected by first creating a nearest neighbor graph using \code{snn} or \code{knn} then partitioning the graph. 
+#' @param sim,sim.p Used when refining cell clusters. Both are numeric scalars, ranging from 0 to 1. \code{sim} is a similarity (Spearman or Pearson correlation coefficient) cutoff between cells and \code{sim.p} is a proportion cutoff. In a certain cell cluster, cells having similarity >= \code{sim} with other cells in the same cluster at proportion >= \code{sim.p} would remain. Otherwise, they are discarded. The default of both is \code{seq(0.2, 0.8, by=0.1)} and can be customized.
+#' @param dim Number of principle components (PCs, equivalent to genes) in combined bulk and single cell data. Used as the minimum number of PCs to retain in \code{\link[scran]{denoisePCA}} when coclustering bulk and single cells. The default is \code{seq(5, 40, by=1)}, and can be customized.
+#' @param df.spd A \code{data.frame} of \code{sim}, \code{sim.p}, \code{dim} sets, where one refers to a set of \code{sim}, \code{sim.p}, \code{dim} and the column names are \code{sim}, \code{sim.p}, \code{dim} respectively. For example, \code{data.frame(sim=0.2, sim.p=0.5, dim=10)}.   
+#' @inheritParams cocluster
+#' @param batch.par The parameters for first-level parallelization through a cluster scheduler such as SLURM. See \code{\link[BioParallel]{BatchtoolsParam}}. If \code{NULL} (default), the first-level parallelization is skipped.
+#' @param multi.core.par The parameters for second-level parallelization. See \code{\link[BioParallel]{MulticoreParam}}.
+#' @param verbose Logical. If \code{TRUE} (default), intermediate messages are printed.
+
+#' @return A list of normalized single cell and bulk data. 
+#' @keywords Internal                                                                                                              
+
+#' @author Jianhai Zhang \email{jzhan067@@ucr.edu} \cr Dr. Thomas Girke \email{thomas.girke@@ucr.edu}
+
+#' @references
+
+#' Li, S., Yamada, M., Han, X., Ohler, U., and Benfey, P. N. (November, 2016) High-Resolution Expression Map of the Arabidopsis Root Reveals Alternative Splicing and lincRNA Regulation. Dev. Cell, 39(4), 508–522.
+#' Shahan, R., Hsu, C.-W., Nolan, T. M., Cole, B. J., Taylor, I. W., Vlot, A. H. C., Benfey, P. N., and Ohler, U. (June, 2020) A single cell Arabidopsis root atlas reveals developmental trajectories in wild type and cell identity mutants.
+#' Morgan M, Wang J, Obenchain V, Lang M, Thompson R, Turaga N (2021). BiocParallel: Bioconductor facilities for parallel evaluation. R package version 1.28.3, https://github.com/Bioconductor/BiocParallel.
+#' Yoo, A. B., Jette, M. A., and Grondona, M. (2003) SLURM: Simple Linux Utility for Resource Management. In Job Scheduling Strategies for Parallel Processing Springer Berlin Heidelberg pp. 44–60.
+#' McCarthy DJ, Campbell KR, Lun ATL, Willis QF (2017). “Scater: pre-processing, quality control, normalisation and visualisation of single-cell RNA-seq data in R.” Bioinformatics, 33, 1179-1186. doi: 10.1093/bioinformatics/btw777
+
+#' @importFrom BiocParallel BatchtoolsParam MulticoreParam register bpRNGseed bpRNGseed<- bplog<- bplogdir<- 
+
+coclus_multi <- function(wk.dir, sc.dim.min=10, max.dim=50, dimred=c('PCA', 'UMAP'), graph.meth=c('knn', 'snn'), sim=seq(0.2, 0.8, by=0.1), sim.p=seq(0.2, 0.8, by=0.1), dim=seq(5, 40, by=1), df.match, sim.meth='spearman', df.spd=NULL, batch.par=NULL, multi.core.par=MulticoreParam(workers=1, RNGseed=NULL, stop.on.error=FALSE, log=TRUE, logdir=file.path(wk.dir, 'multi_core_log')), verbose=TRUE) {
   file.dir <- file.path(wk.dir, 'filter_res')
-  bat.log.dir <- file.path(wk.dir, 'batch_log')
-  mcore.log.dir <- file.path(wk.dir, 'multi_core_log')
   auc.dir <- file.path(wk.dir, 'auc_res')
   if (!dir.exists(file.dir)) dir.create(file.dir) 
-  if (!dir.exists(bat.log.dir)) dir.create(bat.log.dir) 
-  if (!dir.exists(mcore.log.dir)) dir.create(mcore.log.dir) 
   if (!dir.exists(auc.dir)) dir.create(auc.dir) 
   e.w <- tryCatch( # Check if the cluster scheduler is installed.
     expr = { is(batch.par, 'BatchtoolsParam') }, 
@@ -178,6 +246,12 @@ coclus_opt <- function(wk.dir, parallel.info=FALSE, sc.dim.min=10, max.dim=50, d
   if (!is.numeric(seed.bat) & !is.numeric(seed.mul)) {
     message('"RNGseed" in BatchtoolsParam and MulticoreParam is NULL')
   }
+  if (is(multi.core.par, 'MulticoreParam')) {
+    bplog(multi.core.par) <- TRUE 
+    mcore.logdir <- file.path(wk.dir, 'multi_core_log') 
+    if (!dir.exists(mcore.logdir)) dir.create(mcore.logdir) 
+    bplogdir(multi.core.par) <- mcore.logdir
+  }
   # All single cell data names.
   fil.nas <- list.files(file.dir, 'fil\\d+\\.')
   sc.na.all <- NULL; for (i in fil.nas) {
@@ -187,13 +261,6 @@ coclus_opt <- function(wk.dir, parallel.info=FALSE, sc.dim.min=10, max.dim=50, d
   }
 
   df.par.com <- expand.grid(file=file.path(file.dir, fil.nas), bulk='bulk', cell=sc.na.all, dimred=dimred, graph.meth=graph.meth, stringsAsFactors = FALSE)
-  df.spd <- expand.grid(sim = sim, sim.p = sim.p, dim = dim, stringsAsFactors = FALSE)
-
-  if (parallel.info==TRUE) {
-    cat('\n Max first-level parallelizations across BatchtoolsParam workers: ', nrow(df.par.com), '\n', sep='')
-    cat('\n Max second-level parallelizations across MulticoreParam workers (e.g. --cpus-per-task in slurm template) on each BatchtoolsParam worker: ', nrow(df.spd), '\n', sep='')
-    return()
-  }
   fun <- function(i, df.par.com, df.spd, df.match, sc.dim.min, max.dim, sim.meth, multi.core.par, auc.dir, verbose) {
     df0 <- df.par.com[i, ]
     df.para <- cbind(df.spd, df0, row.names=NULL)
@@ -202,6 +269,11 @@ coclus_opt <- function(wk.dir, parallel.info=FALSE, sc.dim.min=10, max.dim=50, d
     if (is.null(sc)) stop(paste0(df0$cell, ' is NULL in ', df0$file, '!'))  
     fil.na <- rev(strsplit(df.para[1, ]$file, '/')[[1]])[1]
     fil.na <- sub('\\.rds$', '', fil.na)
+
+    fil.na.sep <- strsplit(fil.na, '\\.')[[1]]
+    df.para$filter <- grep('fil\\d+', fil.na.sep, value=TRUE)
+    df.para$norm <- grep('cpm|fct', fil.na.sep, value=TRUE)  
+
     out <- file.path(auc.dir, tolower(paste0('auc.', df0$graph.meth, '.', df0$dimred, '.', fil.na, '.', df0$cell)))
     # library(spatialHeatmap)
     # In bplapply(), the environment of FUN (other than the global environment) is serialized to the workers. A consequence is that, when FUN is inside a package name space, other functions available in the name space are available to FUN on the workers.
@@ -209,6 +281,10 @@ coclus_opt <- function(wk.dir, parallel.info=FALSE, sc.dim.min=10, max.dim=50, d
   }
   # Every row in df.par.com is combined with every row in df.spd for coclustering.
   if (is(batch.par, 'BatchtoolsParam')) {
+    bplog(batch.par) <- TRUE
+    bat.log.dir <- file.path(wk.dir, 'batch_log')
+    if (!dir.exists(bat.log.dir)) dir.create(bat.log.dir)
+    bplogdir(batch.par) <- bat.log.dir
     register(batch.par)
     res <- bplapply(seq_len(nrow(df.par.com)), fun, df.par.com=df.par.com, df.spd=df.spd, df.match=df.match, sc.dim.min=sc.dim.min, max.dim=max.dim, sim.meth=sim.meth, multi.core.par=multi.core.par, auc.dir=auc.dir, verbose=verbose) 
   } else {

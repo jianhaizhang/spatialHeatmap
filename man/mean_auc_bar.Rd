@@ -11,19 +11,19 @@ mean_auc_bar(
   mean = "mean",
   bar.width = 0.8,
   title = NULL,
-  title.size = 20,
-  xlab = "AUC threshold",
+  title.size = 25,
+  xlab = "AUC cutoff",
   ylab = "Mean AUC",
-  axis.title.size = 11,
-  x.text.size = 11,
-  y.text.size = 11,
+  axis.title.size = 25,
+  x.text.size = 25,
+  y.text.size = 25,
   key.title = NULL,
   lgd.key.size = 0.05,
-  lgd.text.size = 10
+  lgd.text.size = 25
 )
 }
 \arguments{
-\item{df.auc}{The \code{data.frame} of mean AUCs in the nested list of extracted aucs returned by \code{auc_stat}.}
+\item{df.auc}{The \code{data.frame} of mean AUCs in the nested list of extracted aucs returned by \code{auc_param}.}
 
 \item{parameter}{The coloumn name of parameters in \code{df.auc}.}
 
@@ -98,22 +98,22 @@ df.match.arab[1:3, ]
 
 # Optimization. 
 # Check parallelization guide.
-coclus_opt(wk.dir='opt_res', parallel.info=TRUE, dimred=c('PCA', 'UMAP'), graph.meth=c('knn', 'snn'), sim=seq(0.2, 0.4, by=0.1), sim.p=seq(0.2, 0.4, by=0.1), dim=seq(5, 7, by=1))
+coclus_multi(wk.dir='opt_res', parallel.info=TRUE, dimred=c('PCA', 'UMAP'), graph.meth=c('knn', 'snn'), sim=seq(0.2, 0.4, by=0.1), sim.p=seq(0.2, 0.4, by=0.1), dim=seq(5, 7, by=1))
 
 # The first-level parallel computing relies on the slurm scheduler (https://slurm.schedmd.com/documentation.html), so if it is available the whole optimization process could be parallelized at two levels. 
 file.copy(system.file("extdata/cocluster", "slurm.tmpl", package="spatialHeatmap"), './slurm.tmpl')
 
 # The first- and second-level parallelizations are set 3 and 2 respectively.
 library(BiocParallel)
-opt <- coclus_opt(wk.dir='opt_res', dimred=c('PCA', 'UMAP'), graph.meth=c('knn', 'snn'), sim=seq(0.2, 0.4, by=0.1), sim.p=seq(0.2, 0.4, by=0.1), dim=seq(5, 7, by=1), df.match=df.match.arab, batch.par=BatchtoolsParam(workers=3, cluster="slurm", template='slurm.tmpl'), multi.core.par=MulticoreParam(workers=2))
+opt <- coclus_multi(wk.dir='opt_res', dimred=c('PCA', 'UMAP'), graph.meth=c('knn', 'snn'), sim=seq(0.2, 0.4, by=0.1), sim.p=seq(0.2, 0.4, by=0.1), dim=seq(5, 7, by=1), df.match=df.match.arab, batch.par=BatchtoolsParam(workers=3, cluster="slurm", template='slurm.tmpl'), multi.core.par=MulticoreParam(workers=2))
 
 # If slurm is not available, parallelize the optimization only at the second-level through 2 workers. 
-opt <- coclus_opt(wk.dir='opt_res', dimred=c('PCA', 'UMAP'), graph.meth=c('knn', 'snn'), sim=seq(0.2, 0.4, by=0.1), sim.p=seq(0.2, 0.4, by=0.1), dim=seq(5, 7, by=1), df.match=df.match.arab, batch.par=NULL, multi.core.par=MulticoreParam(workers=2))
+opt <- coclus_multi(wk.dir='opt_res', dimred=c('PCA', 'UMAP'), graph.meth=c('knn', 'snn'), sim=seq(0.2, 0.4, by=0.1), sim.p=seq(0.2, 0.4, by=0.1), dim=seq(5, 7, by=1), df.match=df.match.arab, batch.par=NULL, multi.core.par=MulticoreParam(workers=2))
 
 # The performaces of parameter settings are measured by AUC values in ROC curve. The following demonstrates how to visualize the AUCs and select optimal parameter settings.
 
 # Extract AUCs and other parameter settings for filtering parameter sets.
-df.lis.fil <- auc_stat(wk.dir='opt_res', tar.par='filter', total.min=500, true.min=300, aucs=round(seq(0.5, 0.9, 0.1), 1))
+df.lis.fil <- auc_param(wk.dir='opt_res', tar.par='filter', total.min=500, true.min=300, aucs=round(seq(0.5, 0.9, 0.1), 1))
 df.lis.fil$df.auc.mean[1:3, ]
 
 # Mean AUCs by each filtering settings and AUC cutoff.

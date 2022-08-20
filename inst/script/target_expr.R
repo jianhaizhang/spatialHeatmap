@@ -84,6 +84,14 @@ expr.mus <- cbind(expr.mus, row.met[, 'metadata', drop = FALSE])
 # colnames(expr.mus) <- gsub("_", ".", colnames(expr.mus))
 write.table(expr.mus, 'expr_mouse.txt', col.names=TRUE, row.names=TRUE, sep='\t')
 
+# Module identification.
+adj.mod.mus <- adj_mod(data=expr.mus)
+adj.mod.mus[['adj']][1:3, 1:3]
+adj.mod.mus[['mod']][1:3, ] 
+
+# Network graphs.
+node.mus <- network(ID='ENSMUSG00000041798', data=expr.mus, adj.mod=adj.mod.mus, adj.min=0.90, vertex.label.cex=0.7, vertex.cex=2, static=TRUE, return.node=TRUE)
+node.mus[1:3, , drop=FALSE]
 
 ## Make target file/Shiny app data-chicken organ example.
 

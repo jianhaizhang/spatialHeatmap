@@ -2,7 +2,7 @@
 #'
 #' In coclustering optimization, visualize means of extracted AUCs of each parameter settings by each AUC cutoff in bar plots.
 
-#' @param df.auc The \code{data.frame} of mean AUCs in the nested list of extracted aucs returned by \code{auc_stat}.
+#' @param df.auc The \code{data.frame} of mean AUCs in the nested list of extracted aucs returned by \code{auc_param}.
 #' @param parameter The coloumn name of parameters in \code{df.auc}.
 #' @param auc.thr The coloumn name of AUC cutoffs in \code{df.auc}.
 #' @param mean The coloumn name of mean AUCs in \code{df.auc}.
@@ -63,7 +63,7 @@
 #'
 #' # Optimization. 
 #' # Check parallelization guide.
-#' coclus_opt(wk.dir='opt_res', parallel.info=TRUE, dimred=c('PCA', 'UMAP'), graph.meth=c('knn', 'snn'), sim=seq(0.2, 0.4, by=0.1), sim.p=seq(0.2, 0.4, by=0.1), dim=seq(5, 7, by=1))
+#' coclus_multi(wk.dir='opt_res', parallel.info=TRUE, dimred=c('PCA', 'UMAP'), graph.meth=c('knn', 'snn'), sim=seq(0.2, 0.4, by=0.1), sim.p=seq(0.2, 0.4, by=0.1), dim=seq(5, 7, by=1))
 #' 
 #' # The first-level parallel computing relies on the slurm scheduler (https://slurm.schedmd.com/documentation.html), so if it is available the whole optimization process could be parallelized at two levels. 
 # Copy slurm template to current directory. Edit the template according to the parallelization guide and available computing resources.
@@ -71,16 +71,16 @@
 #' 
 #' # The first- and second-level parallelizations are set 3 and 2 respectively.
 #' library(BiocParallel)
-#' opt <- coclus_opt(wk.dir='opt_res', dimred=c('PCA', 'UMAP'), graph.meth=c('knn', 'snn'), sim=seq(0.2, 0.4, by=0.1), sim.p=seq(0.2, 0.4, by=0.1), dim=seq(5, 7, by=1), df.match=df.match.arab, batch.par=BatchtoolsParam(workers=3, cluster="slurm", template='slurm.tmpl'), multi.core.par=MulticoreParam(workers=2))
+#' opt <- coclus_multi(wk.dir='opt_res', dimred=c('PCA', 'UMAP'), graph.meth=c('knn', 'snn'), sim=seq(0.2, 0.4, by=0.1), sim.p=seq(0.2, 0.4, by=0.1), dim=seq(5, 7, by=1), df.match=df.match.arab, batch.par=BatchtoolsParam(workers=3, cluster="slurm", template='slurm.tmpl'), multi.core.par=MulticoreParam(workers=2))
 #'
 #' # If slurm is not available, parallelize the optimization only at the second-level through 2 workers. 
-#' opt <- coclus_opt(wk.dir='opt_res', dimred=c('PCA', 'UMAP'), graph.meth=c('knn', 'snn'), sim=seq(0.2, 0.4, by=0.1), sim.p=seq(0.2, 0.4, by=0.1), dim=seq(5, 7, by=1), df.match=df.match.arab, batch.par=NULL, multi.core.par=MulticoreParam(workers=2))
+#' opt <- coclus_multi(wk.dir='opt_res', dimred=c('PCA', 'UMAP'), graph.meth=c('knn', 'snn'), sim=seq(0.2, 0.4, by=0.1), sim.p=seq(0.2, 0.4, by=0.1), dim=seq(5, 7, by=1), df.match=df.match.arab, batch.par=NULL, multi.core.par=MulticoreParam(workers=2))
 #'
 #' # The performaces of parameter settings are measured by AUC values in ROC curve. The following demonstrates how to visualize the AUCs and select optimal parameter settings.
 # If one AUC is larger than 0.5, 0.6, 0.7, 0.8, or 0.9, and has total bulk assignments >= 500, true assignments >= 500, the corresponding parameter settings are extracted. 
 #'
 #' # Extract AUCs and other parameter settings for filtering parameter sets.
-#' df.lis.fil <- auc_stat(wk.dir='opt_res', tar.par='filter', total.min=500, true.min=300, aucs=round(seq(0.5, 0.9, 0.1), 1))
+#' df.lis.fil <- auc_param(wk.dir='opt_res', tar.par='filter', total.min=500, true.min=300, aucs=round(seq(0.5, 0.9, 0.1), 1))
 #' df.lis.fil$df.auc.mean[1:3, ]
 #' 
 #' # Mean AUCs by each filtering settings and AUC cutoff.
@@ -98,7 +98,7 @@
 
 #' @export mean_auc_bar
 
-mean_auc_bar <- function(df.auc, parameter='parameter', auc.thr='auc.thr', mean='mean', bar.width=0.8, title=NULL, title.size=20, xlab="AUC threshold", ylab='Mean AUC', axis.title.size=11, x.text.size=11, y.text.size=11, key.title=NULL, lgd.key.size=0.05, lgd.text.size=10) { 
+mean_auc_bar <- function(df.auc, parameter='parameter', auc.thr='auc.thr', mean='mean', bar.width=0.8, title=NULL, title.size=25, xlab="AUC cutoff", ylab='Mean AUC', axis.title.size=25, x.text.size=25, y.text.size=25, key.title=NULL, lgd.key.size=0.05, lgd.text.size=25) { 
   cna <- colnames(df.auc)
   cna[cna==parameter] <- 'parameter'
   cna[cna==auc.thr] <- 'auc.thr'; cna[cna==mean] <- 'mean'

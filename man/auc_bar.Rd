@@ -9,16 +9,19 @@ auc_bar(
   auc = "auc",
   thr = 0.5,
   bar.width = 0.8,
-  spd.sel = NULL,
+  sel = NULL,
   title = NULL,
-  title.size = 15,
-  xlab = "Optimized settings",
+  title.size = 25,
+  xlab = NULL,
   ylab = "AUC",
-  axis.title.size = 11,
-  x.text.size = 15,
-  y.text.size = 15,
+  axis.title.size = 25,
+  x.text.size = 25,
+  y.text.size = 25,
   x.agl = 80,
-  x.vjust = 0.6
+  x.vjust = 0.6,
+  x.breaks = NULL,
+  asterisk.vjust = 0.3,
+  asterisk.size = 5
 )
 }
 \arguments{
@@ -30,7 +33,7 @@ auc_bar(
 
 \item{bar.width}{Width of a single bar.}
 
-\item{spd.sel}{A character vector of selected \code{spd.set}, usually the common \code{spd.set} displaying desired AUCs across multiple validating data sets.}
+\item{sel}{A vector of indexes corresponding to shared combinations of settings displaying desired AUCs across multiple validating data sets.}
 
 \item{title}{The title of composite violin plots.}
 
@@ -42,7 +45,11 @@ auc_bar(
 
 \item{x.agl, x.vjust}{The angle and vertical position of x-axis text.}
 
+\item{asterisk.vjust, asterisk.size}{The vertical postion and size of astersisks respectively.}
+
 \item{x.lab, ylab}{The x and y axis label respectively.}
+
+\item{x.breaks=NULL}{A numeric vector of x-axis breaks.}
 }
 \value{
 An object of ggplot.

@@ -2,10 +2,18 @@
 % Please edit documentation in R/coclus_opt.R
 \name{coclus_opt}
 \alias{coclus_opt}
-\title{Optimizing coclustering process with two levels of parallelizations available.}
+\title{Optimizing co-clustering algorithm}
 \usage{
 coclus_opt(
-  wk.dir,
+  data,
+  norm = c("fct", "cpm"),
+  count.kp = FALSE,
+  quick.clus = list(min.size = 100),
+  com.sum.fct = list(max.cluster.size = 3000, min.mean = 1),
+  log.norm = list(),
+  df.par.fil,
+  df.match,
+  gen.rm = NULL,
   parallel.info = FALSE,
   sc.dim.min = 10,
   max.dim = 50,
@@ -14,16 +22,34 @@ coclus_opt(
   sim = seq(0.2, 0.8, by = 0.1),
   sim.p = seq(0.2, 0.8, by = 0.1),
   dim = seq(5, 40, by = 1),
-  df.match,
+  df.spd = NULL,
+  df.spd.ignore = NULL,
+  coms = NULL,
   sim.meth = "spearman",
   batch.par = NULL,
-  multi.core.par = MulticoreParam(workers = 1, RNGseed = NULL, stop.on.error = FALSE,
-    log = TRUE, logdir = file.path(wk.dir, "multi_core_log")),
+  multi.core.par = MulticoreParam(workers = 1, RNGseed = NULL, stop.on.error = FALSE),
+  wk.dir = NULL,
   verbose = TRUE
 )
 }
 \arguments{
-\item{wk.dir}{Working directory. Must be the same with that in \code{filter_iter}, since the filtered data will be used automatically.}
+\item{data}{A named \code{list} of bulk and single cell count data, where the name slot \code{bulk} indicates bulk data while all others are treated single cell data.}
+
+\item{norm}{A character vector of normalization methods, at least one of \code{fct}, \code{cpm}. \code{fct}: \code{\link[scran]{computeSumFactors}}. \code{cpm}: first normalized by \code{\link[scran]{computeSumFactors}} then transformed to counts per million by \code{\link[scuttle]{calculateCPM}}.}
+
+\item{count.kp}{Logical. If \code{FALSE} (default), the count data is discarded and only log2-scale data are kept.}
+
+\item{quick.clus}{Arguments in a named list passed to \code{\link[scran]{quickCluster}}, such as \code{quick.clus=list(min.size = 100)}.}
+
+\item{com.sum.fct}{Arguments in a named list passed to \code{\link[scran]{computeSumFactors}}, such as \code{com.sum.fct=list(max.cluster.size = 3000))}.}
+
+\item{log.norm}{Arguments in a named list passed to \code{\link[scuttle]{logNormCounts}}.}
+
+\item{df.par.fil}{A \code{data.frame} of filtering parameter settings that are passed to \code{filter_data} and \code{filter_cell} respectively. E.g. \code{df.par.fil <- data.frame(p=c(0.2, 0.3), A=rep(1, 4), cv1=c(0.2, 0.3), cv2=rep(100, 4), min.cnt=rep(1, 4), p.in.cell=c(0.25, 0.3), p.in.gen=c(0.05, 0.1))}.}
+
+\item{df.match}{The \code{data.frame} specifying matching between cells and true bulk.}
+
+\item{gen.rm}{A regular expression of gene identifiers in single cell data to remove before filtering. E.g. mitochondrial, chloroplast and protoplasting-induced genes (\code{^ATCG|^ATCG}). The default is \code{NULL}.}
 
 \item{parallel.info}{Logical. If \code{FALSE} (default), coclustering optimization is performed. If \code{TRUE}, parallelization guide is returned and no optimization. Users are advised to check the guide when editing the slurm template.}
 
@@ -31,11 +57,13 @@ coclus_opt(
 
 \item{graph.meth}{Graph-building methods in coclustering: \code{c('knn', 'snn')} (see \code{\link[scran]{buildKNNGraph}}), \code{\link[scran]{buildSNNGraph}}) respectively). The clusters are detected by first creating a nearest neighbor graph using \code{snn} or \code{knn} then partitioning the graph.}
 
-\item{sim, sim.p}{Used when refining cell clusters. Both are numeric scalars, ranging from 0 to 1. \code{sim} is a similarity (Spearman or Pearson correlation coefficient) cutoff between cells and \code{sim.p} is a proportion cutoff. In a certain cell cluster, cells having similarity >= \code{sim} with other cells in the same cluster at proportion >= \code{sim.p} would remain. Otherwise, they are discarded. The default of both is \code{seq(0.2, 0.8, by=0.1)} and can be customized.}
+\item{sim}{Used when refining cell clusters. Both are numeric scalars, ranging from 0 to 1. \code{sim} is a similarity (Spearman or Pearson correlation coefficient) cutoff between cells and \code{sim.p} is a proportion cutoff. In a certain cell cluster, cells having similarity >= \code{sim} with other cells in the same cluster at proportion >= \code{sim.p} would remain. Otherwise, they are discarded. The default of both is \code{seq(0.2, 0.8, by=0.1)} and can be customized.}
+
+\item{sim.p}{Used when refining cell clusters. Both are numeric scalars, ranging from 0 to 1. \code{sim} is a similarity (Spearman or Pearson correlation coefficient) cutoff between cells and \code{sim.p} is a proportion cutoff. In a certain cell cluster, cells having similarity >= \code{sim} with other cells in the same cluster at proportion >= \code{sim.p} would remain. Otherwise, they are discarded. The default of both is \code{seq(0.2, 0.8, by=0.1)} and can be customized.}
 
 \item{dim}{Number of principle components (PCs, equivalent to genes) in combined bulk and single cell data. Used as the minimum number of PCs to retain in \code{\link[scran]{denoisePCA}} when coclustering bulk and single cells. The default is \code{seq(5, 40, by=1)}, and can be customized.}
 
-\item{df.match}{The \code{data.frame} specifying matching between cells and true bulk.}
+\item{df.spd}{A \code{data.frame} of \code{sim}, \code{sim.p}, \code{dim} sets, where one refers to a set of \code{sim}, \code{sim.p}, \code{dim} and the column names are \code{sim}, \code{sim.p}, \code{dim} respectively. For example, \code{data.frame(sim=0.2, sim.p=0.5, dim=10)}.}
 
 \item{sim.meth}{Method to calculate similarities between bulk and cells in each cocluster when assigning bulk to cells. \code{spearman} (default) or \code{pearson}.}
 
@@ -43,10 +71,12 @@ coclus_opt(
 
 \item{multi.core.par}{The parameters for second-level parallelization. See \code{\link[BioParallel]{MulticoreParam}}.}
 
+\item{wk.dir}{The work directory where filtered data are saved in ".rds" files by \code{saveRDS}.}
+
 \item{verbose}{Logical. If \code{TRUE} (default), intermediate messages are printed.}
 }
 \value{
-A list of normalized single cell and bulk data.
+Saved files of AUC values and corresponding parameter settings.
 }
 \description{
 Optimizing coclustering process with two levels of parallelizations available.
@@ -94,22 +124,22 @@ df.match.arab[1:3, ]
 
 # Optimization. 
 # Check parallelization guide.
-coclus_opt(wk.dir='opt_res', parallel.info=TRUE, dimred=c('PCA', 'UMAP'), graph.meth=c('knn', 'snn'), sim=seq(0.2, 0.4, by=0.1), sim.p=seq(0.2, 0.4, by=0.1), dim=seq(5, 7, by=1))
+coclus_multi(wk.dir='opt_res', parallel.info=TRUE, dimred=c('PCA', 'UMAP'), graph.meth=c('knn', 'snn'), sim=seq(0.2, 0.4, by=0.1), sim.p=seq(0.2, 0.4, by=0.1), dim=seq(5, 7, by=1))
 
 # The first-level parallel computing relies on the slurm scheduler (https://slurm.schedmd.com/documentation.html), so if it is available the whole optimization process could be parallelized at two levels. 
 file.copy(system.file("extdata/cocluster", "slurm.tmpl", package="spatialHeatmap"), './slurm.tmpl')
 
 # The first- and second-level parallelizations are set 3 and 2 respectively.
 library(BiocParallel)
-opt <- coclus_opt(wk.dir='opt_res', dimred=c('PCA', 'UMAP'), graph.meth=c('knn', 'snn'), sim=seq(0.2, 0.4, by=0.1), sim.p=seq(0.2, 0.4, by=0.1), dim=seq(5, 7, by=1), df.match=df.match.arab, batch.par=BatchtoolsParam(workers=3, cluster="slurm", template='slurm.tmpl', RNGseed=100, stop.on.error = FALSE, log = TRUE, logdir=file.path('opt_res', 'batch_log')), multi.core.par=MulticoreParam(workers=2))
+opt <- coclus_multi(wk.dir='opt_res', dimred=c('PCA', 'UMAP'), graph.meth=c('knn', 'snn'), sim=seq(0.2, 0.4, by=0.1), sim.p=seq(0.2, 0.4, by=0.1), dim=seq(5, 7, by=1), df.match=df.match.arab, batch.par=BatchtoolsParam(workers=3, cluster="slurm", template='slurm.tmpl', RNGseed=100, stop.on.error = FALSE, log = TRUE, logdir=file.path('opt_res', 'batch_log')), multi.core.par=MulticoreParam(workers=2))
 
 # If slurm is not available, parallelize the optimization only at the second-level through 2 workers. 
-opt <- coclus_opt(wk.dir='opt_res', dimred=c('PCA', 'UMAP'), graph.meth=c('knn', 'snn'), sim=seq(0.2, 0.4, by=0.1), sim.p=seq(0.2, 0.4, by=0.1), dim=seq(5, 7, by=1), df.match=df.match.arab, batch.par=NULL, multi.core.par=MulticoreParam(workers=2))
+opt <- coclus_multi(wk.dir='opt_res', dimred=c('PCA', 'UMAP'), graph.meth=c('knn', 'snn'), sim=seq(0.2, 0.4, by=0.1), sim.p=seq(0.2, 0.4, by=0.1), dim=seq(5, 7, by=1), df.match=df.match.arab, batch.par=NULL, multi.core.par=MulticoreParam(workers=2))
 
 # The performaces of parameter settings are measured by AUC values in ROC curve. The following demonstrates how to visualize the AUCs and select optimal parameter settings.
 
 # Extract AUCs and other parameter settings for filtering parameter sets.
-df.lis.fil <- auc_stat(wk.dir='opt_res', tar.par='filter', total.min=500, true.min=300, aucs=round(seq(0.5, 0.9, 0.1), 1))
+df.lis.fil <- auc_param(wk.dir='opt_res', tar.par='filter', total.min=500, true.min=300, aucs=round(seq(0.5, 0.9, 0.1), 1))
 df.lis.fil$df.auc.mean[1:3, ]
 
 # Mean AUCs by each filtering settings and AUC cutoff.
@@ -122,7 +152,7 @@ auc_violin(df.lis=df.lis.fil, xlab='Filtering settings')
 df.par.fil[c(1, 2, 3), ]
 
 # Extract AUCs and other parameter settings for normalization methods.
-df.lis.norm <- auc_stat(wk.dir='opt_res', tar.par='norm', total.min=500, true.min=300, aucs=round(seq(0.5, 0.9, 0.1), 1))
+df.lis.norm <- auc_param(wk.dir='opt_res', tar.par='norm', total.min=500, true.min=300, aucs=round(seq(0.5, 0.9, 0.1), 1))
 df.lis.norm$df.auc.mean[1:3, ]
 
 # Mean AUCs by each normalization method and AUC cutoff.
@@ -134,7 +164,7 @@ auc_violin(df.lis=df.lis.norm, xlab='Normalization methods')
 # Optimal normalization method: fct (computeSumFactors).
 
 # Extract AUCs and other parameter settings for graph-building methods.
-df.lis.graph <- auc_stat(wk.dir='opt_res', tar.par='graph', total.min=500, true.min=300, aucs=round(seq(0.5, 0.9, 0.1), 1))
+df.lis.graph <- auc_param(wk.dir='opt_res', tar.par='graph', total.min=500, true.min=300, aucs=round(seq(0.5, 0.9, 0.1), 1))
 df.lis.graph$df.auc.mean[1:3, ]
 
 # Mean AUCs by each graph-building method and AUC cutoff.
@@ -146,7 +176,7 @@ auc_violin(df.lis=df.lis.graph, xlab='Graph-building methods')
 # Optimal graph-building methods: knn (buildKNNGraph).
 
 # Extract AUCs and other parameter settings for dimensionality reduction methods.
-df.lis.dimred <- auc_stat(wk.dir='opt_res', tar.par='dimred', total.min=500, true.min=300, aucs=round(seq(0.5, 0.9, 0.1), 1))
+df.lis.dimred <- auc_param(wk.dir='opt_res', tar.par='dimred', total.min=500, true.min=300, aucs=round(seq(0.5, 0.9, 0.1), 1))
 df.lis.dimred$df.auc.mean[1:3, ]
 
 # Mean AUCs by each dimensionality reduction method and AUC cutoff.
@@ -158,7 +188,7 @@ auc_violin(df.lis=df.lis.dimred, xlab='Dimensionality reduction')
 # Optimal dimensionality reduction method: pca (denoisePCA).
 
 # Extract AUCs and other parameter settings for spd.sets.
-df.lis.spd <- auc_stat(wk.dir='opt_res', tar.par='spd.set', total.min=500, true.min=300, aucs=round(seq(0.5, 0.9, 0.1), 1))
+df.lis.spd <- auc_param(wk.dir='opt_res', tar.par='spd.set', total.min=500, true.min=300, aucs=round(seq(0.5, 0.9, 0.1), 1))
 df.lis.spd$auc0.5$df.frq[1:3, ]
 
 # All AUCs of top spd.sets ranked by frequency. 
@@ -177,6 +207,7 @@ Li, S., Yamada, M., Han, X., Ohler, U., and Benfey, P. N. (November, 2016) High-
 Shahan, R., Hsu, C.-W., Nolan, T. M., Cole, B. J., Taylor, I. W., Vlot, A. H. C., Benfey, P. N., and Ohler, U. (June, 2020) A single cell Arabidopsis root atlas reveals developmental trajectories in wild type and cell identity mutants.
 Morgan M, Wang J, Obenchain V, Lang M, Thompson R, Turaga N (2021). BiocParallel: Bioconductor facilities for parallel evaluation. R package version 1.28.3, https://github.com/Bioconductor/BiocParallel.
 Yoo, A. B., Jette, M. A., and Grondona, M. (2003) SLURM: Simple Linux Utility for Resource Management. In Job Scheduling Strategies for Parallel Processing Springer Berlin Heidelberg pp. 44–60.
+McCarthy DJ, Campbell KR, Lun ATL, Willis QF (2017). “Scater: pre-processing, quality control, normalisation and visualisation of single-cell RNA-seq data in R.” Bioinformatics, 33, 1179-1186. doi: 10.1093/bioinformatics/btw777
 }
 \author{
 Jianhai Zhang \email{jzhan067@ucr.edu} \cr Dr. Thomas Girke \email{thomas.girke@ucr.edu}

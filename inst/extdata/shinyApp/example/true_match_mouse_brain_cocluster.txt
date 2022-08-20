@@ -1,0 +1,6 @@
+"SVGBulk"	"cell"	"dataBulk"
+"1"	"cerebellum"	"cere"	"CERE"
+"2"	"hippocampus"	"hipp"	"HIPP"
+"3"	"cerebral.cortex"	"isocort"	"CERE.CORTEX"
+"4"	"hippocampus"	"retrohipp"	"HIPP"
+"5"	"hypothalamus"	"hypotha"	"HYPOTHA"

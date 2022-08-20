@@ -1,7 +1,7 @@
 #' Normalize one or multiple count data sets.
 #'
 #' Normalize count data of single cell and bulk provided in a \code{list} for co-clustering. The single cell and bulk data are combined, normalized and subsequently separated. The input single cell and bulk data are replaced by normalized data respectively.
-#' @param dat.lis A named \code{list} containing count data of single cell and bulk, returned by \code{filter_iter}.
+#' @param dat.lis A named \code{list} containing count data of single cell and bulk.
 #' @inheritParams norm_cell
 
 #' @return A list of normalized single cell and bulk data. 
@@ -46,7 +46,7 @@
 #' @importFrom scuttle logNormCounts
 
 
-norm_multi <- function(dat.lis, cpm=FALSE, count.kp=FALSE, quick.clus=list(min.size = 100), com.sum.fct=list(max.cluster.size = 3000), log.norm=list(), wk.dir=NULL) {
+norm_multi <- function(dat.lis, cpm=FALSE, count.kp=FALSE, quick.clus=list(min.size = 100), com.sum.fct=list(max.cluster.size = 3000, min.mean=1), log.norm=list(), wk.dir=NULL) {
   if (!is.null(wk.dir)) norm.dir <- file.path(wk.dir, 'norm_res') else norm.dir <- NULL 
   if (!is.null(norm.dir)) if (!dir.exists(norm.dir)) dir.create(norm.dir)
   set <- NULL; nas <- names(dat.lis)

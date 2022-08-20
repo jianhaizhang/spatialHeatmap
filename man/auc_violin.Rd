@@ -10,14 +10,15 @@ auc_violin(
   ylab = "AUC",
   nrow = 3,
   title = NULL,
-  title.size = 20,
-  axis.title.size = 11,
-  x.text.size = 11,
-  y.text.size = 11
+  title.size = 18,
+  axis.title.size = 18,
+  x.text.size = 18,
+  y.text.size = 18,
+  sub.title.size = 18
 )
 }
 \arguments{
-\item{df.lis}{The nested list of extracted aucs returned by \code{auc_stat}.}
+\item{df.lis}{The nested list of extracted aucs returned by \code{auc_param}.}
 
 \item{xlab, ylab}{The x and y axis labels in the violin plots.}
 
@@ -30,6 +31,8 @@ auc_violin(
 \item{axis.title.size}{The size of x and y axis labels.}
 
 \item{x.text.size, y.text.size}{The size of x and y axis text.}
+
+\item{sub.title.size}{The sub-title size.}
 }
 \value{
 An object of ggplot.
@@ -80,22 +83,22 @@ df.match.arab[1:3, ]
 
 # Optimization. 
 # Check parallelization guide.
-coclus_opt(wk.dir='opt_res', parallel.info=TRUE, dimred=c('PCA', 'UMAP'), graph.meth=c('knn', 'snn'), sim=seq(0.2, 0.4, by=0.1), sim.p=seq(0.2, 0.4, by=0.1), dim=seq(5, 7, by=1))
+coclus_multi(wk.dir='opt_res', parallel.info=TRUE, dimred=c('PCA', 'UMAP'), graph.meth=c('knn', 'snn'), sim=seq(0.2, 0.4, by=0.1), sim.p=seq(0.2, 0.4, by=0.1), dim=seq(5, 7, by=1))
 
 # The first-level parallel computing relies on the slurm scheduler (https://slurm.schedmd.com/documentation.html), so if it is available the whole optimization process could be parallelized at two levels. 
 file.copy(system.file("extdata/cocluster", "slurm.tmpl", package="spatialHeatmap"), './slurm.tmpl')
 
 # The first- and second-level parallelizations are set 3 and 2 respectively.
 library(BiocParallel)
-opt <- coclus_opt(wk.dir='opt_res', dimred=c('PCA', 'UMAP'), graph.meth=c('knn', 'snn'), sim=seq(0.2, 0.4, by=0.1), sim.p=seq(0.2, 0.4, by=0.1), dim=seq(5, 7, by=1), df.match=df.match.arab, batch.par=BatchtoolsParam(workers=3, cluster="slurm", template='slurm.tmpl'), multi.core.par=MulticoreParam(workers=2))
+opt <- coclus_multi(wk.dir='opt_res', dimred=c('PCA', 'UMAP'), graph.meth=c('knn', 'snn'), sim=seq(0.2, 0.4, by=0.1), sim.p=seq(0.2, 0.4, by=0.1), dim=seq(5, 7, by=1), df.match=df.match.arab, batch.par=BatchtoolsParam(workers=3, cluster="slurm", template='slurm.tmpl'), multi.core.par=MulticoreParam(workers=2))
 
 # If slurm is not available, parallelize the optimization only at the second-level through 2 workers. 
-opt <- coclus_opt(wk.dir='opt_res', dimred=c('PCA', 'UMAP'), graph.meth=c('knn', 'snn'), sim=seq(0.2, 0.4, by=0.1), sim.p=seq(0.2, 0.4, by=0.1), dim=seq(5, 7, by=1), df.match=df.match.arab, batch.par=NULL, multi.core.par=MulticoreParam(workers=2))
+opt <- coclus_multi(wk.dir='opt_res', dimred=c('PCA', 'UMAP'), graph.meth=c('knn', 'snn'), sim=seq(0.2, 0.4, by=0.1), sim.p=seq(0.2, 0.4, by=0.1), dim=seq(5, 7, by=1), df.match=df.match.arab, batch.par=NULL, multi.core.par=MulticoreParam(workers=2))
 
 # The performaces of parameter settings are measured by AUC values in ROC curve. The following demonstrates how to visualize the AUCs and select optimal parameter settings.
 
 # Extract AUCs and other parameter settings for filtering parameter sets.
-df.lis.fil <- auc_stat(wk.dir='opt_res', tar.par='filter', total.min=500, true.min=300, aucs=round(seq(0.5, 0.9, 0.1), 1))
+df.lis.fil <- auc_param(wk.dir='opt_res', tar.par='filter', total.min=500, true.min=300, aucs=round(seq(0.5, 0.9, 0.1), 1))
 df.lis.fil$df.auc.mean[1:3, ]
 
 # Mean AUCs by each filtering settings and AUC cutoff.
@@ -108,6 +111,7 @@ auc_violin(df.lis=df.lis.fil, xlab='Filtering settings')
 \references{
 H. Wickham. ggplot2: Elegant Graphics for Data Analysis. Springer-Verlag New York, 2016.
 Baptiste Auguie (2017). gridExtra: Miscellaneous Functions for "Grid" Graphics. R package version 2.3. https://CRAN.R-project.org/package=gridExtra
+R Core Team (2022). R: A language and environment for statistical computing. R Foundation for Statistical Computing, Vienna, Austria. URL https://www.R-project.org/.
 }
 \author{
 Jianhai Zhang \email{jzhan067@ucr.edu} \cr Dr. Thomas Girke \email{thomas.girke@ucr.edu}

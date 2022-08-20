@@ -2,13 +2,14 @@
 #'
 #' In coclustering optimization, visualize extracted AUCs by each parameter settings in violin plots.
 
-#' @param df.lis The nested list of extracted aucs returned by \code{auc_stat}.
+#' @param df.lis The nested list of extracted aucs returned by \code{auc_param}.
 #' @param xlab,ylab The x and y axis labels in the violin plots.
 #' @param nrow The numbers of rows of all the violin plots.
 #' @param title The title of composite violin plots.
 #' @param title.size The title size. Default is 20.
 #' @param axis.title.size The size of x and y axis labels.
 #' @param x.text.size,y.text.size The size of x and y axis text.
+#' @param sub.title.size The sub-title size.
 
 #' @return An object of ggplot.
 
@@ -57,7 +58,7 @@
 #'
 #' # Optimization. 
 #' # Check parallelization guide.
-#' coclus_opt(wk.dir='opt_res', parallel.info=TRUE, dimred=c('PCA', 'UMAP'), graph.meth=c('knn', 'snn'), sim=seq(0.2, 0.4, by=0.1), sim.p=seq(0.2, 0.4, by=0.1), dim=seq(5, 7, by=1))
+#' coclus_multi(wk.dir='opt_res', parallel.info=TRUE, dimred=c('PCA', 'UMAP'), graph.meth=c('knn', 'snn'), sim=seq(0.2, 0.4, by=0.1), sim.p=seq(0.2, 0.4, by=0.1), dim=seq(5, 7, by=1))
 #'
 #' # The first-level parallel computing relies on the slurm scheduler (https://slurm.schedmd.com/documentation.html), so if it is available the whole optimization process could be parallelized at two levels. 
 # Copy slurm template to current directory. Edit the template according to the parallelization guide and available computing resources.
@@ -65,16 +66,16 @@
 #' 
 #' # The first- and second-level parallelizations are set 3 and 2 respectively.
 #' library(BiocParallel)
-#' opt <- coclus_opt(wk.dir='opt_res', dimred=c('PCA', 'UMAP'), graph.meth=c('knn', 'snn'), sim=seq(0.2, 0.4, by=0.1), sim.p=seq(0.2, 0.4, by=0.1), dim=seq(5, 7, by=1), df.match=df.match.arab, batch.par=BatchtoolsParam(workers=3, cluster="slurm", template='slurm.tmpl'), multi.core.par=MulticoreParam(workers=2))
+#' opt <- coclus_multi(wk.dir='opt_res', dimred=c('PCA', 'UMAP'), graph.meth=c('knn', 'snn'), sim=seq(0.2, 0.4, by=0.1), sim.p=seq(0.2, 0.4, by=0.1), dim=seq(5, 7, by=1), df.match=df.match.arab, batch.par=BatchtoolsParam(workers=3, cluster="slurm", template='slurm.tmpl'), multi.core.par=MulticoreParam(workers=2))
 #'
 #' # If slurm is not available, parallelize the optimization only at the second-level through 2 workers. 
-#' opt <- coclus_opt(wk.dir='opt_res', dimred=c('PCA', 'UMAP'), graph.meth=c('knn', 'snn'), sim=seq(0.2, 0.4, by=0.1), sim.p=seq(0.2, 0.4, by=0.1), dim=seq(5, 7, by=1), df.match=df.match.arab, batch.par=NULL, multi.core.par=MulticoreParam(workers=2))
+#' opt <- coclus_multi(wk.dir='opt_res', dimred=c('PCA', 'UMAP'), graph.meth=c('knn', 'snn'), sim=seq(0.2, 0.4, by=0.1), sim.p=seq(0.2, 0.4, by=0.1), dim=seq(5, 7, by=1), df.match=df.match.arab, batch.par=NULL, multi.core.par=MulticoreParam(workers=2))
 #'
 #' # The performaces of parameter settings are measured by AUC values in ROC curve. The following demonstrates how to visualize the AUCs and select optimal parameter settings.
 # If one AUC is larger than 0.5, 0.6, 0.7, 0.8, or 0.9, and has total bulk assignments >= 500, true assignments >= 500, the corresponding parameter settings are extracted. 
 #'
 #' # Extract AUCs and other parameter settings for filtering parameter sets.
-#' df.lis.fil <- auc_stat(wk.dir='opt_res', tar.par='filter', total.min=500, true.min=300, aucs=round(seq(0.5, 0.9, 0.1), 1))
+#' df.lis.fil <- auc_param(wk.dir='opt_res', tar.par='filter', total.min=500, true.min=300, aucs=round(seq(0.5, 0.9, 0.1), 1))
 #' df.lis.fil$df.auc.mean[1:3, ]
 #' 
 #' # Mean AUCs by each filtering settings and AUC cutoff.
@@ -89,31 +90,36 @@
 #' @references 
 #' H. Wickham. ggplot2: Elegant Graphics for Data Analysis. Springer-Verlag New York, 2016.
 #' Baptiste Auguie (2017). gridExtra: Miscellaneous Functions for "Grid" Graphics. R package version 2.3. https://CRAN.R-project.org/package=gridExtra
+#' R Core Team (2022). R: A language and environment for statistical computing. R Foundation for Statistical Computing, Vienna, Austria. URL https://www.R-project.org/. 
 
 #' @importFrom gridExtra grid.arrange
 #' @importFrom ggplot2 ggplot aes geom_violin geom_boxplot labs theme element_text unit ggplotGrob 
+#' @importFrom grid textGrob gpar
 
 #' @export auc_violin
 
-auc_violin <- function(df.lis, xlab, ylab='AUC', nrow=3, title=NULL, title.size=20, axis.title.size=11, x.text.size=11, y.text.size=11) {
-  parameter <- NULL
-  gg.lis <- NULL; df.na.all <- names(df.lis)
+auc_violin <- function(df.lis, xlab, ylab='AUC', nrow=3, title=NULL, title.size=18, axis.title.size=18, x.text.size=18, y.text.size=18, sub.title.size=18) { 
+  parameter <- NULL; gg.lis <- NULL; df.na.all <- names(df.lis)
   df.nas <- grep('^auc', df.na.all, value=TRUE)
-  df.par.na <- names(df.lis[[df.nas[1]]])
+  df.par.na <- names(df.lis[[df.nas[1]]]) 
   par.nas <- sub('^df\\.', '', df.par.na)
   names(par.nas) <- df.par.na
   for (i in df.nas) {
-    df.all <- NULL; for (j in seq_along(par.nas)) {  
+    df.all <- NULL; for (j in seq_along(par.nas)) {
     df0 <- df.lis[[i]][[df.par.na[j]]]
-    if (is.null(df0)) next
-    df0$parameter <- par.nas[j]; df.all <- rbind(df.all, df0)
+    if (is.null(df0)) {
+      df0 <- data.frame(parameter=par.nas[j], auc=rep(0, 5), row.names=NULL)
     }
-    gg <- ggplot(df.all, aes(x=parameter, y=auc, fill=parameter)) +
-    geom_violin() + geom_boxplot(width=0.1, show.legend=FALSE) +
-    labs(title=title, x=xlab, y=ylab)+theme(plot.title = element_text(size=title.size, hjust = 0.5, vjust=1.5)) +
+    df0$parameter <- par.nas[j]
+    df.all <- rbind(df.all, df0[, c('parameter', 'auc')])
+    } 
+    tit <- paste0('AUC cutoff at ', sub('auc', '', i)) 
+    gg <- ggplot(df.all, aes(x=parameter, y=auc, fill=parameter)) + 
+    geom_violin() + geom_boxplot(width=0.1, show.legend=FALSE) + labs(title=tit, x=xlab, y=ylab)+theme(plot.title = element_text(size=sub.title.size, hjust = 0.5, vjust=1.5)) +  
     theme(legend.position="none", axis.title = element_text(size=axis.title.size), axis.text.y = element_text(size = y.text.size), axis.text.x = element_text(size = x.text.size))
     gg.lis <- c(gg.lis, list(gg))
-  }
-  gg.grob <- lapply(gg.lis, ggplotGrob)
-  grid.arrange(grobs=gg.grob, nrow=nrow)
+  } 
+  gg.grob <- lapply(gg.lis, ggplotGrob) 
+  grid.arrange(grobs=gg.grob, nrow=nrow, top=textGrob(title, gp=gpar(fontsize=title.size))) 
 }
+

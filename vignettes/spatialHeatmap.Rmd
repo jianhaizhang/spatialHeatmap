@@ -1485,16 +1485,16 @@ previous section. The objective is to identify network modules that can be
 visualized in the following step in form of network graphs. Applied to the gene
 expression sample data used here, these network modules represent groups of
 genes sharing highly similar expression profiles. Internally, the network
-module identification includes five major steps. First, a correlation matrix is
-computed using distance or correlation-based similarity metrics. Second, the
-obtained matrix is transformed into an adjacency matrix defining the
-connections among items. Third, the adjacency matrix is used to calculate a
-topological overlap matrix (TOM) where shared neighborhood information among
-items is used to preserve robust connections, while removing spurious
-connections. Fourth, the distance transformed TOM is used for hierarchical
-clustering. To maximize time performance, the hierarchical clustering is
-performed with the `flashClust` package [@Langfelder2012-nv]. Fifth, network modules
-are identified with the `dynamicTreeCut` package [@dynamicTreeCut]. Its `ds`
+module identification includes five major steps. First, a correlation matrix 
+(Pearson or Spearman) is computed for each pair of molecules. Second, the 
+obtained correlation matrix is transformed into an adjacency matrix that 
+approximates the underlying global network to scale-free topology [@Ravasz2002-db]. 
+Third, the adjacency matrix is used to calculate a topological overlap matrix (TOM) 
+where shared neighborhood information among items is used to preserve robust 
+connections, while removing spurious connections. Fourth, the distance transformed 
+TOM is used for hierarchical clustering. To maximize time performance, the 
+hierarchical clustering is performed with the `flashClust` package [@Langfelder2012-nv]. 
+Fifth, network modules are identified with the `dynamicTreeCut` package [@dynamicTreeCut]. Its `ds`
 (`deepSplit`) argument can be assigned integer values from `0` to `3`, where
 higher values increase the stringency of the module identification process.  To
 simplify the network module identification process with WGCNA, the individual

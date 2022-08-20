@@ -9,14 +9,14 @@ norm_cell(
   cpm = FALSE,
   count.kp = FALSE,
   quick.clus = list(min.size = 100),
-  com.sum.fct = list(max.cluster.size = 3000),
+  com.sum.fct = list(max.cluster.size = 3000, min.mean = 1),
   log.norm = list()
 )
 }
 \arguments{
 \item{sce}{Single cell count data in form of \code{SingleCellExperiment} after quality control, which is returned by \code{qc_cell}.}
 
-\item{cpm}{Logical. The count data are first normalized by \code{\link[scran]{computeSumFactors}}. If \code{TRUE}, the data is  further normalized by counts per million (cpm). The default is \code{FALSE}.}
+\item{cpm}{Logical. If \code{FALSE} (default), the count data are only normalized by \code{\link[scran]{computeSumFactors}}. If \code{TRUE}, the data are first normalized by \code{\link[scran]{computeSumFactors}} then transformed to counts per million by \code{\link[scuttle]{calculateCPM}}.}
 
 \item{count.kp}{Logical. If \code{FALSE} (default), the count data is discarded and only log2-scale data are kept.}
 

@@ -6,14 +6,15 @@
 #' @param auc The column name of AUCs in \code{df.auc}.
 #' @param thr The AUC threshold, which will be labeled in the bar plot.
 #' @param bar.width Width of a single bar.
-#' @param spd.sel A character vector of selected \code{spd.set}, usually the common \code{spd.set} displaying desired AUCs across multiple validating data sets.
+#' @param sel A vector of indexes corresponding to shared combinations of settings displaying desired AUCs across multiple validating data sets.
 #' @param title The title of composite violin plots.
 #' @param title.size The title size. Default is 20.
 #' @param x.lab,ylab The x and y axis label respectively.
 #' @param axis.title.size The size of x and y axis labels.
 #' @param x.text.size,y.text.size The size of x and y axis text.
 #' @param x.agl,x.vjust The angle and vertical position of x-axis text.
-
+#' @param x.breaks=NULL A numeric vector of x-axis breaks.
+#' @param asterisk.vjust,asterisk.size The vertical postion and size of astersisks respectively.
 
 #' @return An object of ggplot.
 
@@ -36,24 +37,24 @@
 #' @references 
 #' H. Wickham. ggplot2: Elegant Graphics for Data Analysis. Springer-Verlag New York, 2016.
 
-#' @importFrom ggplot2 ggplot aes geom_bar geom_text position_dodge2 labs theme element_text geom_hline 
+#' @importFrom ggplot2 ggplot aes geom_bar geom_text position_dodge2 labs theme element_text geom_hline scale_x_continuous 
 
 #' @export auc_bar
 
-auc_bar <- function(df.auc, auc='auc', thr=0.5, bar.width=0.8, spd.sel=NULL, title=NULL, title.size=15, xlab="Optimized settings", ylab='AUC', axis.title.size=11, x.text.size=15, y.text.size=15, x.agl=80, x.vjust=0.6) { 
-  spd.set <- NULL
+auc_bar <- function(df.auc, auc='auc', thr=0.5, bar.width=0.8, sel=NULL, title=NULL, title.size=25, xlab=NULL, ylab='AUC', axis.title.size=25, x.text.size=25, y.text.size=25, x.agl=80, x.vjust=0.6, x.breaks=NULL, asterisk.vjust=0.3, asterisk.size=5) {
   cna <- colnames(df.auc); cna[cna==auc] <- 'auc'
   colnames(df.auc) <- cna
   # df0 <- subset(df.auc, sc==tar.datset)
   df.auc$auc <- round(as.numeric(df.auc$auc), 2)
-  df.auc$spd.sel <- 0
-  df.auc$spd.sel[df.auc$spd.set %in% spd.sel] <- 1 
-  gg <- ggplot(df.auc, aes(x=spd.set, y=auc)) +
-  geom_bar(color='black', width=bar.width, fill='#FF6666', position=position_dodge2(width=bar.width, preserve="single"), stat="identity") +
-  geom_text(aes(label=ifelse(spd.sel, "*", "")), 
-position = position_dodge2(width=bar.width, preserve="single"), vjust=0.3, size=10) +
+  df.auc$selected <- 0
+  df.auc$selected[df.auc$index %in% sel] <- 1
+  gg <- ggplot(df.auc, aes(x=index, y=auc)) +
+  geom_bar(color=NA, width=bar.width, fill='#FF6666', position=position_dodge2(width=bar.width, preserve="single"), stat="identity") + geom_text(aes(label=ifelse(selected, "*", "")), 
+position = position_dodge2(width=bar.width, preserve="single"), vjust=asterisk.vjust, size=asterisk.size) +
   labs(title=title, x=xlab, y=ylab)+theme(plot.title = element_text(size=title.size, hjust = 0.5, vjust=1.5)) +
   theme(axis.text.x=element_text(angle=x.agl, vjust=x.vjust, size = x.text.size), axis.title = element_text(size=axis.title.size), axis.text.y = element_text(size = y.text.size)) +
   geom_hline(yintercept=thr, linetype="dashed", color = "black", size=1)
-  gg
-}
+  if (!is.null(x.breaks)) gg <- gg + scale_x_continuous(breaks=x.breaks)
+  gg 
+}    
+

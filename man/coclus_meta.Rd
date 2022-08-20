@@ -18,8 +18,7 @@ coclus_meta(
   dimred = "PCA",
   sim.meth = "spearman",
   return.all = FALSE,
-  multi.core.par = MulticoreParam(workers = 1, RNGseed = NULL, stop.on.error = FALSE,
-    log = FALSE),
+  multi.core.par = MulticoreParam(workers = 1, RNGseed = NULL, stop.on.error = FALSE),
   verbose = TRUE,
   file = NULL
 )
@@ -31,7 +30,7 @@ coclus_meta(
 
 \item{df.match}{The \code{data.frame} specifying matching between cells and true bulk.}
 
-\item{df.para}{A \code{data.frame} of paramerter settings in coclustering, where the parameter names are the column names and one row denotes one combination of settings. Missing parameters in the \code{data.frame} are replaced by their default settings internally. E.g. In \code{df.para = data.frame(sim = 0.2, sim.p = 0.8, dim = 12, graph.meth = 'knn'))}, the default settings of \code{sc.dim.min = 10; max.dim=50; dimred='PCA'; sim.meth='spearman'} are used internally. If multiple settings combinations are contained in multiple rows respectively, parallelization can be enabled through \code{multi.core.par}.}
+\item{df.para}{A \code{data.frame} of multiple arguments, where argument names are the column names and one row denotes one combination of settings for running co-clustering. For example, \code{df.para = data.frame(sim = 0.2, sim.p = 0.8, dim = 12, graph.meth = 'knn'))}. The purpose of this argument is to allow running co-clustering with multiple combinations of settings respectively in a single function call, where parallelization can be enabled through \code{multi.core.par}. This argument takes precedence over other individual arguments.}
 
 \item{sc.dim.min}{Integer scalar specifying the minimum number of (principle components) PCs to retain in \code{\link[scran]{denoisePCA}} when clustering single cells without bulk data. The default is \code{10}.}
 

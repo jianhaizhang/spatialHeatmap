@@ -10,7 +10,7 @@ reduce_dim(
   min.dim = 13,
   max.dim = 50,
   model.var = list(),
-  top.hvg = list(n = 3000),
+  top.hvg = list(),
   de.pca = list(assay.type = "logcounts"),
   pca = FALSE,
   tsne = list(dimred = "PCA", ncomponents = 2),
