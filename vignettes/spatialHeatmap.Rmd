@@ -56,7 +56,6 @@ BiocStyle::markdown(css.files=c('file/custom.css'))
 library(knitr); opts_chunk$set(message=FALSE, warning=FALSE)
 ```
 
-<p style='color:red'>jianhai: text in red. </p>
 
 # Introduction 
 
@@ -1158,17 +1157,6 @@ The SHM plots shown so far are restricted to two dimensions: spatial features (*
 extends this to experiments with spatiotemporal resolution under different conditions. A common use case for this are 
 applications involving several development stages.  
 
-<font style='color:blue'>[ThG-Comment: This section 3.7 is far too long! In addition, it is very 
-difficult and confusing how you introduce the different experimental designs. Just
-stating how certain more complex designs are supported and showing a single SHM result for it
-would be sufficient. Also why is necessary to repeat all the preprocssing steps. This way you are scaring
-users by createing the impression that they need to become R programmers in order to use the
-package. I also don't understand the difference between section 4 and 5, both deal with 
-one or more experimental variables. So why is it necessary to have both? Combined those
-sections are as long or longer as an average vignette. Again you are overloading the reader
-and the structure of your these sections is not well thought through since it duplicates so many
-things that have been covered already.]</font>
-
 Compared with previous examples that have two dimensions of spatial features and conditions, the spatiotemporal data contains three dimensions: spatial features, conditions, and times (development stages). To visualize the spatiotemporal data, the three dimensions should be reduced to one or two dimensions by combining all or two of them to produce a composite dimension. There are three
 alternatives to generate composite dimensions: 1) combine two dimensions of spatial features and conditions;
 2) combine two dimensions of spatial features and times; or 3) combine all three dimensions of spatial features, conditions, and times.
@@ -1333,7 +1321,6 @@ In principle, the `spatialHeatmap` is extendable to as many dimensions (*e.g.* s
 
 # Extended functionalities
 
-<font style='color:red'>
 
 ## Spatial Enrichment {#se} 
 
@@ -1416,7 +1403,6 @@ The expression profiles of two selected genes (Figure \@ref(fig:enrich)) are als
 ```{r prof, eval=TRUE, echo=TRUE, warnings=FALSE, fig.wide=TRUE, fig.cap=('Line graph of gene expression profiles. The count data is normalized and replicates are aggregated by taking mean.'), out.width="100%", fig.show='show'}
 profile_gene(rbind(df.up.mus[1, ], df.down.mus[1, ]))
 ```
-</font>
 
 ## Matrix Heatmaps {#mhm}
 
@@ -1656,8 +1642,6 @@ Except for user-provided data, the database is able to store data sets downloade
 
 # Use Case
 
-<font style='color:red'> 
-
 This section showcases integrated discovery and visualization of potential new genes responsible for a particular biological process. Since network analysis/co-expression is involved, at least five spatial features (*e.g.* tissues) are required. Basically, gene abundance in target spatial feature is compared with other spatial features in a pairwise manner to obtain target-specific genes. Among these target-enriched genes, select a well characterized one as reference gene. Then network analysis is performed to detect gene modules. Genes comprising the same module are considered co-expressed and thus likely have similar functions. Therefore, in the module containing the reference gene, the genes with unkown function are candidates of new genes having similar functions with the reference gene. As the technical procedures are explained in previous sections, this section will not explain them in details.   
 
 ## Spatial Enrichment
@@ -1793,7 +1777,6 @@ spatial_hm(svg.path=svg.mus, data=deg.all.mus$deg.table, ID=c('ENSMUSG0000011197
 profile_gene(subset(up.mus, gene %in% c('ENSMUSG00000111977', 'ENSMUSG00000097960')))
 ```
 
-</font>
 
 # Supplementary Section {#sup} 
 
