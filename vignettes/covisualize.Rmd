@@ -170,7 +170,7 @@ cache.pa <- '~/.cache/shm' # Set path of the cache directory
 
 ## Quick Start {#test}
 
-To obtain reproducible results, a fixed seed is set for generating random numbers.
+To obtain for examples with randomized parameters always the same results, a fixed seed is set for generating random numbers.
 
 ```{r , eval=TRUE, echo=TRUE, warnings=FALSE}
 set.seed(10)
@@ -213,22 +213,27 @@ svg.mus.brain <- system.file("extdata/shinyApp/example", "mus_musculus.brain.svg
 feature.df <- return_feature(svg.path=svg.mus.brain)
 ```
 
+Sample features are returned from `feature.df`.
+
 ```{r , eval=TRUE, echo=TRUE, warnings=FALSE}
-tail(feature.df$feature) # Partial features are shown.
+tail(feature.df$feature) 
 ```
 
-One collapsed cell cycle is equivalent to one aSVG feature. Before co-visualization, their matching relationship needs
-to be defined. In annotation-based and manual methods, the matching
-relationship is defined by users in a named `list`, while in the automatic
-method it is automatically defined, which is the essential difference across
-the three methods. Note, one collapsed cell label can be matched to multiple
-aSVG features but not vice versa. The following is an example named `list`.   
+One collapsed cell cycle is equivalent to one aSVG feature. Before
+co-visualization, their matching relationship needs to be defined. In
+annotation-based and manual methods, the matching relationship is defined by
+users in a named `list`, while in the automatic method it is automatically
+defined, which is the essential difference across the three methods. Note, one
+collapsed cell label can be matched to multiple aSVG features but not vice
+versa. The following is an example named `list`.   
 
 ```{r , eval=TRUE, echo=TRUE, warnings=FALSE}
 lis.match.test <- list(G1=c('hypothalamus'), G0=c('brainstem', 'medulla.oblongata'))
 ```
 
-The co-visualization is created on gene `Gene_0010`. The embedding plot includes all single cells before aggregation. The `G1` and `G0` cells are colored by their respecitive aggregated expression profiles (`data=sce.aggr.test`) and indicated in the legend at the bottom. In the nearby spatial heatmap plot, aSVG features are filled by the same color as the matching cells defined in the named `list` (`lis.match.test`). The `cell.group` argument indicates which column is considered as cell labels in the `colData` slot of `sce.aggr.test`.         
+The co-visualization sample plot is created for gene `Gene_0010`. The embedding part includes all cells. The `G1` and `G0` cells are colored by their group expression value summaries (`data=sce.aggr.test`). The source tissues in the spatial heatmap plot are colored accordingly. The `cell.group` argument indicates which column is used as cell labels in the `colData` slot of `sce.aggr.test`.  
+<p style="color:red">Using a cell cycle data set as an exmple is a poor choice since
+both tissues will have cells from both cell cycles.</p>
 
 ```{r , eval=TRUE, echo=TRUE, warnings=FALSE, results='hide', fig.cap=('Example co-visualization plot. The co-visualization is created on gene `Gene_0010`. Single cells in the embedding plot and their matching aSVG features in the spatial heatmap are filled by the same color according to aggregated assay profiles within each cell label.')}
 shm.lis.test <- spatial_hm(svg.path=svg.mus.brain, data=sce.aggr.test, ID=c('Gene_0010'), height=0.7, legend.r=1.5, legend.key.size=0.02, legend.text.size=12, legend.nrow=3, sce.dimred=sce.dimred.test, dimred='PCA', cell.group='Cell_Cycle', assay.na='logcounts', tar.cell=c('matched'), lis.rematch=lis.match.test, bar.width=0.11, dim.lgd.nrow=1)
