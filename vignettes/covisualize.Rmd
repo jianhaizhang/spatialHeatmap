@@ -91,7 +91,7 @@ To co-visualize single cell with bulk tissue data (Figure
 \@ref(fig:covizOver)), the individual cells of the single cell data are mapped
 via their group labels to the the corresponding features in an aSVG image. If
 the feature labels in an aSVG are different than the corresponding group labels
-used for the single cell data, _e.g._ due to variable terminologies, then a
+used for the single cell data, _e.g._ due to variable terminologies, a
 translation table can be used to avoid manual relabelling. Throughout this
 vignette the usage of the term feature is a generalization referring in most
 cases to tissues or organs. For the implementation of the co-visualization
@@ -112,21 +112,25 @@ instances provided by the `scRNAseq` package [@scrnaseq]. The manual method
 allows users to create the cell to tissue associations one-by-one or import
 them from a tabular file. In contrast to this, the automatic method aims to
 assign single cells to the corresponding source tissues computationally by a
-co-clustering algorithm (Figure \@ref(fig:covizOver).2c). This co-clustering
-requires bulk expression data that are obtained from the tissues represented in
-the single cell data. The grouping information is visualized by using for each
-group the same color in both the single cell embedding plot and the tissue
-spatial heatmap plot Figure \@ref(fig:covizOver).4. The colors can represent
-any type of custom or numeric information. In a typical use case, heat colors
-will be used that are proportional to numeric expression information obtained
-for the single cell or bulk expression data for a chosen gene. To color by
-single cell data, one first needs to summarize the expression of a given gene
-across the cells within a group via a meaningful summary statistics, such as
-mean or median. Cells and tissues with the same group label will be colored the
-same. When coloring by bulk data the color used for each tissue will be applied
-to the corresponding cell groups represented in the embedding plot. 
+co-clustering algorithm (Figure \@ref(fig:covizOver).2c). This co-clustering is
+experimental and requires bulk expression data that are obtained from the
+tissues represented in the single cell data. The grouping information is
+visualized by using for each group the same color in both the single cell
+embedding plot and the tissue spatial heatmap plot Figure
+\@ref(fig:covizOver).4. The colors can represent any type of custom or numeric
+information. In a typical use case, either fixed tissue-specific colors or a
+heat color gradient is used that is proportional to the numeric expression
+information obtained from the single cell or bulk expression data of a chosen
+gene. When the expression values among groups are very similar, toggling
+between the two coloring option is important to track the tissue origin in
+the single cell data. To color by single cell data, one often wants to first
+summarize the expression of a given gene across the cells within a group via a
+meaningful summary statistics, such as mean or median. Cells and tissues with
+the same group label will then be colored the same. When coloring by bulk data
+the color used for each tissue will be applied to the corresponding cell groups
+represented in the embedding plot. 
 
-```{r covizOver, echo=FALSE, fig.wide=TRUE, out.width="100%", fig.cap=("Overview of single cell and tissu co-visualization. (1) Single cell data are organized in a `SingleCellExperiment` object where cell grouping information is stored in the `colData` slot. Usally, each cell group maps to a tissue in the spatial heatmap plot. (2) The cell grouping labels are managed by three methods: annotation-based, manual and automatic. Cell groups and tissues can be colored by expression values of selected genes based on provided single cell or bulk data.")} 
+```{r covizOver, echo=FALSE, fig.wide=TRUE, out.width="100%", fig.cap=("Overview of single cell and tissue co-visualization. (1) Single cell data are organized in a `SingleCellExperiment` object where cell grouping information is stored in the `colData` slot. Usally, each cell group maps to a certain tissue in the spatial heatmap plot. (2) The cell grouping labels are managed by three methods: annotation, manual and automatic. Cell groups and tissues can be colored by fixed tissue colors or by expression values of selected genes based on the provided single cell or bulk data.")} 
 include_graphics('img/covisualize.jpg')
 ```
 
