@@ -98,8 +98,8 @@ cases to tissues or organs. For the implementation of the co-visualization
 tool, _spatialHeatmap_ takes advantage of efficient and reusable Bioconductor
 core data structures such as the widely used `SingleCellExperiment` (`SCE`)
 container illustrated in Figure \@ref(fig:covizOver).1 [@sce]. The slots
-`assays`, `colData`, `rowData`, and `reducedDims` in an `SCE` contain expression data,
-cell metadata, molecule metadata, and reduced dimensionality embedding results,
+`assays`, `colData`, `rowData` and `reducedDims` in an `SCE` contain expression data,
+cell metadata, molecule metadata and reduced dimensionality embedding results,
 respectively. The cell group labels are stored in the `colData` slot as shown
 in Figure \@ref(fig:covizOver).1. For handling cell-to-tissue grouping
 information, three general methods are available including (a)
@@ -126,7 +126,7 @@ between the two coloring option is important to track the tissue origin in
 the single cell data. To color by single cell data, one often wants to first
 summarize the expression of a given gene across the cells within a group via a
 meaningful summary statistics, such as mean or median. Cells and tissues with
-the same group label will then be colored the same. When coloring by tissues
+the same group label will be colored the same. When coloring by tissues
 the color used for each tissue feature will be applied to the corresponding 
 cell groups represented in the embedding plot. 
 
@@ -170,7 +170,7 @@ cache.pa <- '~/.cache/shm' # Set path of the cache directory
 
 # Quick Start {#test}
 
-To obtain for examples with randomized parameters always the same results, a fixed seed is set for generating random numbers.
+To obtain for examples with randomized parameters always the same results, a fixed seed is set.
 
 ```{r , eval=TRUE, echo=TRUE, warnings=FALSE}
 set.seed(10)
@@ -204,28 +204,24 @@ sce.aggr.test <- aggr_rep(sce.dimred.test, assay.na='logcounts', sam.factor='Cel
 colData(sce.aggr.test)
 ```
 
-The summarized values are then used to color the tissues represented in the
-spatial heatmap. An example aSVG file of mouse brain is included in
-`spatialHeatmap`, and spatial features are extracted.   
+The summarized values are then used to color the tissue features of the corresponding
+aSVG file of mouse brain that is included in the `spatialHeatmap` package. The
+function `return_feature` is used for feature extraction. 
 
 ```{r , eval=TRUE, echo=TRUE, warnings=FALSE, results='hide'}
 svg.mus.brain <- system.file("extdata/shinyApp/example", "mus_musculus.brain.svg", package="spatialHeatmap")
 feature.df <- return_feature(svg.path=svg.mus.brain)
 ```
 
-Sample features are returned from `feature.df`.
+A subset of features is returned from `feature.df`.
 
 ```{r , eval=TRUE, echo=TRUE, warnings=FALSE}
 tail(feature.df$feature) 
 ```
 
-One collapsed cell cycle is equivalent to one aSVG feature. Before
-co-visualization, their matching relationship needs to be defined. In
-annotation-based and manual methods, the matching relationship is defined by
-users in a named `list`, while in the automated method it is computed, which 
-is the essential difference across the three methods. Note, one
-collapsed cell label can be matched to multiple aSVG features but not vice
-versa. The following is an example named `list`.   
+In the chosen example each cell cycle corresponds to one feature in the aSVG image. 
+To define this relationship, a named `list` is used. Note, each cell label can be 
+matched to multiple aSVG features but not vice versa. 
 
 <p style="color:red">Using a cell cycle data set as an exmple is a poor choice since
 all tissues in your spatial heatmap will have cells from most/all cell cycles.</p>
@@ -237,19 +233,15 @@ lis.match.test <- list(G1=c('hypothalamus'), G0=c('brainstem', 'medulla.oblongat
 even if this is juat a toy example why not using one that makes sense? Especially,
 biologists will be confused here. </p>
 
-The co-visualization sample plot is created for gene `Gene_0010`. The embedding
-part includes all cells. The `G1` and `G0` cells are colored by their group
-expression value summaries (`data=sce.aggr.test`). The source tissues in the
-spatial heatmap plot are colored accordingly. The `cell.group` argument
-indicates which column is used as cell labels in the `colData` slot of
-`sce.aggr.test`.  
+A co-visualization plot is created using gene `Gene_0010` as an example. The embedding
+plot on the left includes all cells. The `G1` and `G0` cells are colored by their 
+summarized group expression values (`data=sce.aggr.test`). The corresponding source 
+tissues in the spatial heatmap plot are colored accordingly. The `cell.group` argument
+specifies which column to use as cell labels under `colData` for `sce.aggr.test`.  
 
-```{r , eval=TRUE, echo=TRUE, warnings=FALSE, results='hide', fig.cap=('Example co-visualization plot. The co-visualization is created on gene `Gene_0010`. Single cells in the embedding plot and their matching aSVG features in the spatial heatmap are filled by the same color according to summarized assay profiles within each cell label.')}
+```{r , eval=TRUE, echo=TRUE, warnings=FALSE, results='hide', fig.cap=('Co-visualization of single cell data and tissue features. The co-visualization is created for gene `Gene_0010`. Single cells in the embedding plot on the left and their matching aSVG features in the spatial heatmap on the right are connected by the same color. Heat colors are used to represent the summarized expression values for each cell group.')}
 shm.lis.test <- spatial_hm(svg.path=svg.mus.brain, data=sce.aggr.test, ID=c('Gene_0010'), height=0.7, legend.r=1.5, legend.key.size=0.02, legend.text.size=12, legend.nrow=3, sce.dimred=sce.dimred.test, dimred='PCA', cell.group='Cell_Cycle', assay.na='logcounts', tar.cell=c('matched'), lis.rematch=lis.match.test, bar.width=0.11, dim.lgd.nrow=1)
 ```
-<p style="color:red">Since the example uses summarized expression expression values for 
-coloring there needs to be a color key in the plot defining to values the heat colors map to. Without
-this the expression information is not shown in the plot. </p>
 
 <p style="color:red">Why isn't the covisualization handled by its own function that
 calls spatial_hm. Having one function do too many things is poor software design.
@@ -261,17 +253,17 @@ calls spatial_hm. Having one function do too many things is poor software design
 
 The annotation-based mapping uses existing cell-to-tissue labels. Those can be imported 
 (_e.g._ from a tabular file) and then stored in the `colData` slot of an `SCE` object. 
-Alternatively, an `SCE` object might already contain this information, such as some of 
-the `SCE` objects provided by the `scRNAseq` package [@scrnaseq].    
+Alternatively, an `SCE` object might already contain this information. This is the 
+case in some of the `SCE` objects provided by the `scRNAseq` package [@scrnaseq].    
 
 The following example uses single cell data from oligodendrocytes of mouse
 brain [@Marques2016-ff]. This data set was obtained from the `scRNAseq`
 [@scrnaseq] package with minor modificatons. Prior to co-visualization, the
-single cell data are pre-processed with common QC, normalization and 
-dimensionality reduction steps by the `process_cell_meta` function.
-The details of the pre-processing methods are described in the corresponding 
-help file. Additional background information on these topics can be found in the [OSCA](http://bioconductor.org/books/3.14/OSCA.workflows/zeisel-mouse-brain-strt-seq.html){target='blank'}
-tutorial.
+single cell data is pre-processed by the `process_cell_meta` function 
+that applies common QC, normalization and dimensionality reduction routines.
+The details of these pre-processing methods are described in the corresponding 
+help file. Additional background information on these topics can be found in the 
+[OSCA](http://bioconductor.org/books/3.14/OSCA.workflows/zeisel-mouse-brain-strt-seq.html){target='blank'} tutorial.
 
 <!--
 [ThG: obove your referred to OSCA to find the details, Yet now you are describing some 
@@ -291,9 +283,11 @@ sce <- readRDS(sce.pa)
 sce.dimred <- process_cell_meta(sce, qc.metric=list(subsets=list(Mt=rowData(sce)$featureType=='mito'), threshold=1))
 ```
 
+The UMAP embedding results can be plotted with the `plotUMAP` function. The dots representing cells are colored by the grouping information stored in the `colData` slot of the `SCE` object. 
+
 <a name='cusLab'></a>
 
-```{r eval=TRUE, echo=TRUE, warnings=FALSE, fig.wide=TRUE, fig.cap=('Embedding plot of single cells. The cells (dots) are colored by the grouping information stored in the `colData` slot of the corresponding `SCE` object'), out.width="100%", fig.show='show'}
+```{r eval=TRUE, echo=TRUE, warnings=FALSE, fig.wide=TRUE, fig.cap=('Embedding plot of single cell data. The cells (dots) are colored by the grouping information stored in the `colData` slot of the corresponding `SCE` object'), out.width="100%", fig.show='show'}
 plotUMAP(sce.dimred, colour_by="label")
 ```
 
@@ -310,7 +304,7 @@ The expression values for each gene are summarized across the cells within each 
 sce.aggr <- aggr_rep(sce.dimred, assay.na='logcounts', sam.factor='label', con.factor='expVar', aggr='mean')
 ```
 
-A slice of the summarized data is shown below for two genes (Tcea1 and Atp6v1h), where `hypothalamus` and `control` are the grouping and treatment labels, respectively. 
+A slice of the summarized data is printed below for two genes (Tcea1 and Atp6v1h), where `hypothalamus` and `control` are the grouping and treatment information, respectively. 
 
 
 ```{r eval=TRUE, echo=TRUE, warnings=FALSE}
@@ -318,30 +312,30 @@ as.matrix(logcounts(sce.aggr)[1:2, 1:2])
 ```
 
 Next, spatial features are extracted with the `return_feature` function 
-from an aSVG image of mouse brain. This sample aSVG image file is provided by the package. 
+from an aSVG image of mouse brain. 
 
 ```{r eval=TRUE, echo=TRUE, warnings=FALSE, results='hide'}
 svg.mus.brain <- system.file("extdata/shinyApp/example", "mus_musculus.brain.svg", package="spatialHeatmap")
 feature.df <- return_feature(svg.path=svg.mus.brain)
 ```
-A subset of features is extracted as follows.  
+A subset of features can be extracted as follows.  
 
 ```{r eval=TRUE, echo=TRUE, warnings=FALSE}
 tail(feature.df$feature)
 ```
 
-In practice the labels used for the features in the aSVG images and the the cell groups in the single cell data may not be the same. To resolve this without manual relabeling, a translation list can be used to make them match, where the cell and feature labels are expected to be the names and elements of the list components, respectively. 
+In practice the labels used for the features in the aSVG image and the cell groups of the single cell data may not be the same. To resolve this without manual relabeling, a translation list is used to make them match, where the cell and feature labels are expected to be the names and elements of the list components, respectively. 
 
 ```{r scLabList, eval=TRUE, echo=TRUE, warnings=FALSE}
 lis.match <- list(hypothalamus=c('hypothalamus'), cortex.S1=c('cerebral.cortex'), corpus.callosum=c('corpus.striatum'))
 ```
 
-The following plots the corresponding co-visualization for sample gene Cops5. A co-visualization plot is generated for each experimental variable, here `control` and `6h.post.stress`. The legend under the embedding plots shows the cell labels in the matching list (`lis.match`). The source tissue information is indicated by using matching colors in the embedding and tissue plots on the left and right, respectively. 
+The following plots the corresponding co-visualization for sample gene Cops5. A co-visualization plot is generated for each experimental variable, here `control` and `6h.post.stress`. The legend under the embedding plots shows the cell labels in the matching list (`lis.match`). The source tissue information is indicated by using the same colors in the embedding and tissue plots on the left and right, respectively. 
 
-```{r scLabVis, eval=TRUE, echo=TRUE, warnings=FALSE, fig.wide=TRUE, fig.cap=('Co-visualizing single cells and bulk tissues by annotation cell labels. The expression profiles of gene `Cops5` are used. Cell population of the same annotation label is colored by their summarized expression profiles under the same condition, and the bulk tissue counterpart is colored by the same color.'), out.width="100%", fig.show='show', results='hide'}
+```{r scLabVis, eval=TRUE, echo=TRUE, warnings=FALSE, fig.wide=TRUE, fig.cap=('Co-visualizing single cells and tissues by annotation. In this plot, `Cops5` is used as an example. Each cell population is colored by its summarized expression value in the embedding plot on the left, and the corresponding tissue shares the same color in the spatial heatmap on the right.'), out.width="100%", fig.show='show', results='hide'}
 shm.lis <- spatial_hm(svg.path=svg.mus.brain, data=sce.aggr, ID=c('Cops5'), height=0.7, legend.r=1.5, legend.key.size=0.02, legend.text.size=12, legend.nrow=2, sce.dimred=sce.dimred, dimred='PCA', cell.group='label', assay.na='logcounts', tar.cell=c('matched'), lis.rematch=lis.match, bar.width=0.09, dim.lgd.nrow=2)
 ```
-<p style="color:red">Several things are missing: (1) Similarly as above, a heatcolor key/legend is missing to show/decode experssion information. (2) To track tissue assignment, if expression values are similar across tissues, there needs to be an argument toggle to color one time by expression values and another time by tissue. Otherwise tissue assignment info is lost. (3) I don't understand the plot on the bottom that shows the stress sample. Why does the sp heatmap highlight in this case only one tissue? </p>
+<p style="color:red">Several things are missing: (1) To track tissue assignment, if expression values are similar across tissues, there needs to be an argument toggle to color one time by expression values and another time by tissue. Otherwise tissue assignment info is lost. (2) I don't understand the plot on the bottom that shows the stress sample. Why does the sp heatmap highlight in this case only one tissue? </p>
 
 ## Manual Method
 
