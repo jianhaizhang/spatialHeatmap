@@ -339,12 +339,12 @@ shm.lis <- spatial_hm(svg.path=svg.mus.brain, data=sce.aggr, ID=c('Cops5'), heig
 
 ## Manual Method
 
-In the manual method, cell group or cluster labels are manually created according to criteria or methods chosen by users such as clustering methods, which is very flexible than the annotation method. The resultant manual clusters need to be stored in a tabular file, then added to the `SingleCellExperiment` by the `manual_group` function. The same single cell data and aSVG file as in the
-annotation method are used to demonstrate the manual method. The steps of
-quality control, normalization, and dimensionality reduction are the same with
-the annotation method, while a subsequent step of adding manual clusters to the `SingleCellExperiment` is required.   
-
-
+To provide additional flexibility for defining cell groupings, several manual options 
+are provided here. Here users can assign cell groups manually or by clustering
+methods that are often used in the analysis of single cell embedding data. 
+The resulting cell grouping or cluster information needs to be stored in a tabular file, 
+that will be imported into an `SCE` object (here `manual_group` function). The following
+demonstration uses the same single cell and aSVG data as the annotation example above. The only difference is an additional clustering step.
 
 An example manual group file is included in `spatialHeatmap`, where group labels are created by the clustering function `cluster_cell`. Refer to the help file for how to use this function. At least two columns are required in this file. The `cell` column contains single cell identifiers present in the rownames of `colData` slot in the `SingleCellExperiment`, while the `cluster` column contains the manual cell group labels.   
 
