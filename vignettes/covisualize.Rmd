@@ -1,5 +1,5 @@
 ---
-title: "Co-visualizing spatial heatmaps with single cell embedding plots"
+title: "Co-visualizing tissue and single cell embedding plots"
 author: "Authors: Jianhai Zhang, Jordan Hayes, Le Zhang, Bing Yang, Wolf B. Frommer, Julia Bailey-Serres, and Thomas Girke"
 date: "Last update: `r format(Sys.time(), '%d %B, %Y')`"
 output:
@@ -66,7 +66,7 @@ molecules sharing similar abundance patterns such as similar gene expression
 patterns. These functionalities are introduced in the [main
 vignette](https://bioconductor.org/packages/release/bioc/html/spatialHeatmap.html)
 of the _spatialHeatmap_ package. The following describes extended
-functionalities for integrating bulk tissue with single cell data by
+functionalities for integrating tissue with single cell data by
 co-visualizing them in composite plots that combine spatial heatmaps with
 embedding plots of high-dimensional data. The resulting spatial context
 information is important for gaining insights into the tissue-level organiztion
@@ -87,18 +87,18 @@ R as well as the corresponding [Shiny app](#autoSCE) [@shiny].
 ## Methods for Associating Cells and Bulk Tissues
 
 
-To co-visualize single cell with bulk tissue data (Figure
+To co-visualize single cell data with tissue features (Figure
 \@ref(fig:covizOver)), the individual cells of the single cell data are mapped
-via their group labels to the the corresponding features in an aSVG image. If
+via their group labels to the the corresponding tissue features in an aSVG image. If
 the feature labels in an aSVG are different than the corresponding group labels
 used for the single cell data, _e.g._ due to variable terminologies, a
-translation table can be used to avoid manual relabelling. Throughout this
+translation map can be used to avoid manual relabelling. Throughout this
 vignette the usage of the term feature is a generalization referring in most
 cases to tissues or organs. For the implementation of the co-visualization
 tool, _spatialHeatmap_ takes advantage of efficient and reusable Bioconductor
 core data structures such as the widely used `SingleCellExperiment` (`SCE`)
 container illustrated in Figure \@ref(fig:covizOver).1 [@sce]. The `SCE` slots
-`assays`, `colData`, `rowData`, and `reducedDims` contain expression profiles,
+`assays`, `colData`, `rowData`, and `reducedDims` contain expression data,
 cell metadata, molecule metadata, and reduced dimensionality embedding results,
 respectively. The cell group labels are stored in the `colData` slot as shown
 in Figure \@ref(fig:covizOver).1. For handling cell-to-tissue grouping
@@ -126,9 +126,9 @@ between the two coloring option is important to track the tissue origin in
 the single cell data. To color by single cell data, one often wants to first
 summarize the expression of a given gene across the cells within a group via a
 meaningful summary statistics, such as mean or median. Cells and tissues with
-the same group label will then be colored the same. When coloring by bulk data
-the color used for each tissue will be applied to the corresponding cell groups
-represented in the embedding plot. 
+the same group label will then be colored the same. When coloring by tissues
+the color used for each tissue feature will be applied to the corresponding 
+cell groups represented in the embedding plot. 
 
 ```{r covizOver, echo=FALSE, fig.wide=TRUE, out.width="100%", fig.cap=("Overview of single cell and tissue co-visualization. (1) Single cell data are organized in a `SingleCellExperiment` object where cell grouping information is stored in the `colData` slot. Usally, each cell group maps to a certain tissue in the spatial heatmap plot. (2) The cell grouping labels are managed by three methods: annotation, manual and automated. Cell groups and tissues can be colored by fixed tissue colors or by expression values of selected genes based on the provided single cell or bulk data.")} 
 include_graphics('img/covisualize.jpg')
