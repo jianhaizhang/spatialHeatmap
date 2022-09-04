@@ -97,8 +97,8 @@ vignette the usage of the term feature is a generalization referring in most
 cases to tissues or organs. For the implementation of the co-visualization
 tool, _spatialHeatmap_ takes advantage of efficient and reusable Bioconductor
 core data structures such as the widely used `SingleCellExperiment` (`SCE`)
-container illustrated in Figure \@ref(fig:covizOver).1 [@sce]. The `SCE` slots
-`assays`, `colData`, `rowData`, and `reducedDims` contain expression data,
+container illustrated in Figure \@ref(fig:covizOver).1 [@sce]. The slots
+`assays`, `colData`, `rowData`, and `reducedDims` in an `SCE` contain expression data,
 cell metadata, molecule metadata, and reduced dimensionality embedding results,
 respectively. The cell group labels are stored in the `colData` slot as shown
 in Figure \@ref(fig:covizOver).1. For handling cell-to-tissue grouping
