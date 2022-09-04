@@ -415,13 +415,14 @@ are various challenges to overcome to reliably co-cluster single cell data with
 the corresponding tissue-level bulk data. This is due to the different
 properties of single cell and bulk gene expression data, such as much more
 pronounced sensitity and sparsity limitations in single cell compared to bulk
-data. This section introduces a parameter optimization co-clustering method
-that includes three major steps. First, the genes in the bulk data are reduced
-to those robustly expressed in the single cell data. Second, the methods and
-their parameter settings used for preprocessing both data types are optimized
-to achieve the most robust results. Third, the best performing clustering
-method for this data is chosen. Both preprocessing and clustering parameters
-are optimized on real data with known cell-to-tissue assignments. 
+data. This section introduces a co-clustering method that is largely based on
+parameter optimization including three major steps. First, the genes in the
+bulk data are reduced to those robustly expressed in the single cell data.
+Second, the methods and their parameter settings used for preprocessing both
+data types are optimized to achieve the most robust results. Third, the best
+performing clustering method for this data is chosen. Both preprocessing and
+clustering parameters are optimized on real data with known cell-to-tissue
+assignments. 
 
 
 ### Algorithm Overview
