@@ -410,18 +410,18 @@ automatically (Figure \@ref(fig:coclusOver)). Subsequently, the predicted
 cell-to-tissue assignments can be used for co-visualizing single cell embedding
 data with tissue level bulk data. This approach could help to predict the
 source tissues for unassigned cells without prior knowledge as is required for
-the annotation and manual approaches introduced above. While attractive there are
-various challenges to overcome to reliably co-cluster single cell data with the
-corresponding tissue-level bulk data. This is due to the different properties
-of single cell and bulk gene expression data, such as much more pronounced
-sensitity and sparsity limitations in single cell compared to bulk data. This
-section introduces a parameter optimization-based co-clustering method that
-includes three major steps. First, the genes in the bulk data are reduced to
-those robustly expressed in the single cell data. Second, the methods and their
-parameter settings used for preprocessing both data types are optimized to
-achieve the most robust results. Third, the best performing clustering method
-is chosen. Both preprocessing and clustering parameters are optimized on real
-data with known cell-to-tissue assignments. 
+the annotation and manual approaches introduced above. While attractive there
+are various challenges to overcome to reliably co-cluster single cell data with
+the corresponding tissue-level bulk data. This is due to the different
+properties of single cell and bulk gene expression data, such as much more
+pronounced sensitity and sparsity limitations in single cell compared to bulk
+data. This section introduces a parameter optimization co-clustering method
+that includes three major steps. First, the genes in the bulk data are reduced
+to those robustly expressed in the single cell data. Second, the methods and
+their parameter settings used for preprocessing both data types are optimized
+to achieve the most robust results. Third, the best performing clustering
+method for this data is chosen. Both preprocessing and clustering parameters
+are optimized on real data with known cell-to-tissue assignments. 
 
 
 ### Algorithm Overview
