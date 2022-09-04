@@ -403,7 +403,21 @@ shm.lis <- spatial_hm(svg.path=svg.mus.brain, data=sce.clus.aggr, ID=c('Rpl7'), 
 ```
 
 
-## Automatated Method
+## Automated Method
+
+If both single cell and bulk gene expression data are available for the same
+tissues then co-clustering can be used to assign cells to tissues
+automatically. Subsequently, the predicted cell-to-tissue assignments can be
+used for co-visualizing single cell embedding data with tissue level bulk data.
+This approach could help to predict the source tissues for unassigned cells
+without prior knowledge as is required for the annotation and manual approaches 
+from above. While attractive there are various challenges to overcome to reliably
+co-cluster single cell data with the corresponding tissue-level bulk data.
+This is due to the different properties of single cell and bulk gene expression
+data, such as much more pronounced sensitity and sparsity limitations in single
+cell data. 
+
+
 
 The automated method (Figure \@ref(fig:covizOver).2c) assigns source bulk
 tissues to individual cells in an automated manner through a co-clustering
