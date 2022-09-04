@@ -345,9 +345,11 @@ methods that are often used in the analysis of single cell embedding data.
 The resulting cell grouping or cluster information needs to be stored in a tabular file, 
 that will be imported into an `SCE` object (here `manual_group` function). The following
 demonstration uses the same single cell and aSVG data as the annotation example above. The only difference is an additional clustering step. For demonstration purposes a small 
-example of a cluster file is included  in the `spatialHeatmap` package. In this case the group labels were created by the `cluster_cell` function. The details of this function are available in its help file. The cluster file contains at least two columns: a `cell` column containing single cell identifiers used under `colData` and a `cluster` column with the
-cell group labels.   
-
+example of a cluster file is included  in the `spatialHeatmap` package. In this case the group labels were created by the `cluster_cell` function. The details of this function are available in its help file. The cluster file contains at least two columns: a `cell` column with single cell identifiers used under `colData` and a `cluster` column with the
+cell group labels. For practical reasons of building this vignette a pure manual example
+could not be used here. However, the chosen clustering example can be easily adapted to 
+manual or hybrid grouping approach since the underlying tabular data structure is the 
+same for both that can be generated in most text or spreadsheet programs.
 
 ```{r eval=TRUE, echo=TRUE, warnings=FALSE}
 manual.clus.mus.sc.pa <- system.file("extdata/shinyApp/example", "manual_cluster_mouse_brain.txt", package="spatialHeatmap")
@@ -365,7 +367,9 @@ sce.clus <- manual_group(sce=sce.dimred, df.group=manual.clus.mus.sc, cell='cell
 colData(sce.clus)[1:3, ]
 ```
 
-An Embedding plot of single cells is created. The cells are colored by manual groups in the `cluster` column in `colData`.   
+An embedding plot of single cell data is created. The cells represented as dots are 
+colored by the grouping information stored in the `cluster` column of the `colData`
+slot of `SCE`.   
 
 ```{r eval=TRUE, echo=TRUE, warnings=FALSE, fig.wide=TRUE, fig.cap=('Embedding plot of single cells. The cells (dots) are colored by the grouping information stored in the `colData` slot of the corresponding `SCE` object .'), out.width="100%", fig.show='show'}
 plotUMAP(sce.clus, colour_by="cluster")
@@ -384,9 +388,7 @@ features.
 lis.match.clus <- list('clus1'=c('cerebral.cortex'), 'clus3'=c('hypothalamus', 'midbrain'))
 ```
 
-
-Aggregate cells by taking average (`aggr='mean'`) of gene expression profiles within each manual cluster in the `cluster` column (`sam.factor='cluster'`). To illustrate summarization only on cells, the experiment variable is not considered (`con.factor=NULL`). `assay.na='logcounts'` indicates the aggregation is based on normalized data.   
-
+The gene expression values are summarized for the cells within each group.
 
 ```{r scAutoAggr, eval=TRUE, echo=TRUE, warnings=FALSE}
 sce.clus.aggr <- aggr_rep(sce.clus, assay.na='logcounts', sam.factor='cluster', con.factor=NULL, aggr='mean')
