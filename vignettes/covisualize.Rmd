@@ -422,30 +422,21 @@ Second, the methods and their parameter settings used for preprocessing both
 data types are optimized to achieve the most robust results. Third, the best
 performing clustering method for this data is chosen. Both preprocessing and
 clustering parameters are optimized on real data with known cell-to-tissue
-assignments. 
+assignments. The following introduces the three steps of this method based 
+on RNA-Seq data.
 
-
-### Algorithm Overview
-
-
-The most desirable input bulk and single cell data would be raw count data (e.g. RNA-seq) derived from the same organ or
-tissue (Figure \@ref(fig:coclusOver).1). If same organ, the chosen bulk tissues are major or complete tissues comprising this organ, while the single cell data are assayed on the region covering at least the chosen bulk tissues or on the whole organ. Similarly, if chosen bulk tissues are sub-tissues composing partial or the complete tissue, the single cells need to cover at least the chosen sub-tissues or the whole tissue. The key point is bulk tissues and single cells have anatomical overlap. In the pre-processing step (Figure \@ref(fig:coclusOver).2), the count data of bulk tissues and single cells are initially filtered respectively to remove the noisy data for the subsequent normalization, which is explained in the downstream [Pre-processing](#proCoclus) step. The main difference between
-bulk and single cell data is the sparsity in the latter, where rows are molecules (genes, *etc*) and columns are bulk tissues or cells respectively. To reduce such difference, they are combined in a column-wise manner and normalized as a whole, then subsequently separated (Figure \@ref(fig:coclusOver).2b-c).     
-
-The normalized bulk (Figure \@ref(fig:coclusOver).3) and single-cell (Figure \@ref(fig:coclusOver).4a) data at log2-scale are filtered at a second time respectively. To increase accuracy of bulk tissue assignments in the downstream co-clustering, the filtered single-cell data are clustered (Figure \@ref(fig:coclusOver).4, @scran, @igraph) and each resultant cluster is refined to obtain more homogeneous clusters (Figure \@ref(fig:coclusOver).5). The clustering is performed on top dimensions that are produced by PCA or UMAP techniques [@scran, @scater], where one dimension is equivalent to one molecule (*e.g.* gene). When refining cell clusters, cells having low
-similarities (Spearman's or Pearson's correlation 
-coefficients) with other cells in the same cluster are filtered, which are marked by "X" in Figure \@ref(fig:coclusOver).5a. Specifically, in a cluster only cells having a minimum similarity with a minimum proportion of other cells in the same cluster are retained. As a result, each cell cluster is more homogeneous
-(Figure \@ref(fig:coclusOver).5b). Next, filtered bulk (Figure \@ref(fig:coclusOver).3) and refined single cell (Figure \@ref(fig:coclusOver).5b) data are re-combined in column-wise manner and co-clustering is performed on top dimensions of the combined data (Figure \@ref(fig:coclusOver).6) to produce co-clusters (Figure \@ref(fig:coclusOver).7).   
-
-
-There are three types of co-clusters: 1) Multiple bulk tissues are co-clustered with 
-many cells. Similarities (Spearman's or Pearson's correlation 
-coefficients) are calculated for any bulk-cell pair in the same co-cluster. If a bulk has the largest similarity with 
-a specific cell than any other bulk, this bulk is assigned to this cell as source bulk. 
-For example, in Figure \@ref(fig:coclusOver).7a bulk A is assigned to cell a1 because 
-a1 has higher similarity with A than B; 2). Only one bulk tissue is co-clustered 
-with many cells. This bulk is assigned to all the cells in the same co-cluster
-(\@ref(fig:coclusOver).7b); and 3) No bulk is present in a cluster. All these cells are treated as un-labelled (Figure \@ref(fig:coclusOver).7c), which are potential novel cell populations. These automated bulk assignments are stored in a table (Figure \@ref(fig:coclusOver).8) and are used for downstream co-visualization (Figure \@ref(fig:covizOver).2c).        
+1. The raw read count matrix of the single cell data is reduced to those genes
+   with robust expression across X cells. The bulk data is subsetted to the
+   same genes and then column-wise appended to the processed single cell count
+   matrix. As a result the sparcity in the single cell data has been largely removed
+   and the bulk data has been made more compareable by subsetting it to the same 
+   gene set.
+2. The combined single cell and bulk read count data are normalized jointly.
+   Next, the preprocessed and normalized single cell and bulk data are
+   separted. Only the single cell data is filtered a second time. Embedding 
+   is performed using PCA (UMAP or other).
+3. Co-clustering is performed on the embedding data where single cells are joined
+   with the nearest neighbor bulk tissu. 
 
 
 ```{r coclusOver, echo=FALSE, fig.wide=TRUE, out.width="100%", fig.cap=("Overview of co-clustering. (1) The input are raw count data of bulk tissues and single cells, such as RNA-seq count data. (2) Bulk and single cell data are initially filtered respectively, where rows are molecules (genes, *etc*) and columns are bulk tissues and cells respectively. Then the filtered bulk and cell data are combined in a column-wise manner and normalized as a whole. After that, bulk and single cells data are separated. (3) The normalized bulk data are filtered at a second time. (4) The normalized single cell data are filtered at a second time and then clustered on their top dimensions such as PCA of UMAP. (5) a. In each single cell cluster, cells having low similarities (Spearman's or Pearson's correlation coefficients) with other cells in the same cluster are filtered, which are indicated by \"X\". b. The resultant clusters are more homogeneous. (6) Re-combine separated bulk and refined single cell data and cluster top dimensions of the combined data. (7) a. Multiple bulk tissues are co-clustered with many cells. If a bulk tissue has the largest similarity with a certain cell, this bulk would be assigned to this cell. For example, bulk A is assigned to cell a1 because A has higher similarity with a1 than B. b. Only one bulk is co-clustered with many cells. This bulk is assigned to every cell in the same co-cluster. c. No bulk is co-clustered with cells. These cells are regarded as un-labelled. (8) The automatic bulk tissue assignments are stored in a table. ")}
