@@ -588,11 +588,21 @@ dependent, especially when they are from different sources. The matching
 aSVG features and bulk tissues. In addition, it gives flexibility for users to
 choose desired identifiers. </s></p> 
 
-<p style="color:red">The above seems a dubplication of somehting that has been 
-introduced in other section many times. So why another duplication?</p>
+<p style="color:red">The above seems a duplication of something that has been 
+introduced in other section several times already. So why another duplication?</p>
 
-The matching table for this example is included in `spatialHeatmap` and imported. The `SVGBulk` and `dataBulk` columns are aSVG features and bulk tissues respectively. Note, these two columns names are fixed so that the algorithm is able to recognize them.    
+The matching table for this example is imported from the `spatialHeatmap` package.
+imported. The `SVGBulk` and `dataBulk` columns are aSVG features and bulk
+tissues respectively. Note, these two columns names are fixed so that the
+algorithm is able to recognize them.    
 
+
+<p style="color:red">I don't think I understand what you are saying in the previous
+paragraph nor what its purpose is? Did you have the same mapping need for SVG features
+and expression data in the spatial heatmap part of the package (here SVGBulk and 
+dataBulk). Why does this need to be introduced here again? Or are you using here a 
+different data structure for the same thing? If so then this would be are really poor 
+design.</p>
 
 ```{r , eval=TRUE, echo=TRUE, warnings=FALSE}
 match.mus.brain.pa <- system.file("extdata/shinyApp/example", "match_mouse_brain_cocluster.txt", package="spatialHeatmap")
@@ -602,9 +612,13 @@ df.match.mus.brain
 
 ### Co-clustering
 
-The processes of clustering single cells (Figure \@ref(fig:coclusOver).4), refining cell clusters (Figure \@ref(fig:coclusOver).5), and
-co-clustering bulk and single cells (Figure \@ref(fig:coclusOver).6-8) are
-performed in a single function call. Setting `return.all=TRUE` returns results in a `list` (`res.lis`).     
+The processes of clustering single cell data (Figure \@ref(fig:coclusOver).4),
+refining single cell clusters (Figure \@ref(fig:coclusOver).5), and co-clustering bulk
+and single cells (Figure \@ref(fig:coclusOver).6-8) are performed in a single
+function call. Setting `return.all=TRUE` returns the obtained results in a `list`
+(`res.lis`).     
+
+<p style="color:red">As before the need of the two types of clustering steps is confusing. Also how are they connected. Does the co-clustering make use of the clustering?</p>
 
 ```{r , eval=TRUE, echo=TRUE, warnings=FALSE, results='hide'}  
 res.lis <- read_cache(cache.pa, 'res.lis')
@@ -617,13 +631,23 @@ if (is.null(res.lis)) {
 
 <a name='autoRes'></a>
 
-The source bulk tissue assignments are stored in the `colData` slot of `sce.asg` in the result list (`res.lis`), which are partialy shown below. The `assignedBulk` indicates assigned source bulk tissues for each cell, and the `SVGBulk` contains corresponding aSVG features, which is based on the matching table `df.match.mus.brain`. The `predictor` includes similarities (Spearman's correlation coefficient) between single cells and assigned bulk tissues.    
+The source bulk tissue assignments are stored in the `colData` slot of
+`sce.asg` in the result list (`res.lis`), which are partialy shown below. The
+`assignedBulk` indicates assigned source bulk tissues for each cell, and the
+`SVGBulk` contains corresponding aSVG features, which is based on the matching
+table `df.match.mus.brain`. The `predictor` includes similarities (Spearman's
+correlation coefficient) between single cells and assigned bulk tissues.    
+
+
+<p style="color:red">,,,source bulk tissue assignments..." to what is unclear.</p>
 
 ```{r , eval=TRUE, echo=TRUE, warnings=FALSE}  
 colData(res.lis$sce.asg)[1:2, c('cell', 'assignedBulk', 'predictor', 'SVGBulk')]
 ```
 
-The co-cluster information is stored in the `colData` slot of `sce.bulk.cell` in the result list (`res.lis`). The `cluster` and `cell` columns indicate co-cluster labels and bulk/cell identifiers respectively.    
+The co-cluster information is stored in the `colData` slot of `sce.bulk.cell`
+in the result list (`res.lis`). The `cluster` and `cell` columns indicate
+co-cluster labels and bulk/cell identifiers respectively.    
 
 ```{r , eval=TRUE, echo=TRUE, warnings=FALSE}
 colData(res.lis$sce.bulk.cell)[1:3, ]
@@ -637,6 +661,8 @@ plot_dim(res.lis$sce.bulk.cell, dim='PCA', color.by='cluster', group.sel='clus11
 
 
 ### Tailoring Co-clustering Results {#tailor}
+
+<p style="color:red">I would remove this entire section. All the important things you leave out such as what clustering method is used for coclustering and then actually generating a coclustering plot. I guess this somes below but why all this detail. Readers will stop reading before they actually come to the part that generates the a co-visualization plot of the coclustering results.</p>
 
 The automatic (co-clustering) method is optimized and tested on a small number of real bulk and single cell datasets, due to the limited availability of single cell datasets where single cells are assayed on a whole organ or whole large tissue and each single cell is well annotated. Thus, the accuracy of automatic source bulk tissue assignments might be also limited. As a remedy, utilities are developed for tailoring the automatic bulk tissue assignments at user preferences. Note, the tailoring step is optional, if users are satisfied with the bulk assignments, just proceed to the [co-visualization](#covisAuto) step.   
 
