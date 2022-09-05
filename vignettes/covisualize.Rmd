@@ -436,27 +436,25 @@ The following introduces the three steps of this method based on RNA-Seq data.
 3. Co-clustering is performed on the embedding data where single cells are joined
    with the nearest neighbor bulk tissue. 
 
-
 <p style="color:red">I have removed a lot of text from this section as well as the
 legent of the corresponding figure. The text was far too long and contained a lot 
 of detail that doesn't be long in section of vignette that is supposed to be a tutorial.
 In addition, I wasn't able to understand several parts making it impossible for 
 me to revise your write-up. So please fill in additional detail that is required 
 under the three steps above but be consise and focus on the essential and leave out 
-the exceptions. 
+the exceptions.</p> 
 
-A few questions I have are: (1) in many cases you say some step has been
-optimized but then you don't give the name of the method that has actually been
-chosen. For instance, what normalization method, what embedding method and most
-importantly what method for co-clustering is then actually been used? So keep it short
-but mention those relevant details. (2) As described you seem to have performed
-the embedding separatedly on the single cell and bulk data, but combine them
-for the coclustering. Are you sure this is valid. I would be very concerned
-that those embeddings are relative data that need to be generted jointly on
-both to remain compareable. Perhaps I am misunderstanding? (3) The purpose of the
-clustering step and co-clustering steps are not clearly defined. The reader will 
-think they are the same or just get confused. 
-</p>
+<p style="color:red">A few questions I have are: (1) in many cases you say some
+step has been optimized but then you don't give the name of the method that has
+actually been chosen. For instance, what normalization method, what embedding
+method and most importantly what method for co-clustering is then actually been
+used? So keep it short but mention those relevant details. (2) As described you
+seem to have performed the embedding separatedly on the single cell and bulk
+data, but combine them for the coclustering. Are you sure this is valid. I
+would be very concerned that those embeddings are relative data that need to be
+generted jointly on both to remain compareable. Perhaps I am misunderstanding?
+(3) The purpose of the clustering step and co-clustering steps are not clearly
+defined. The reader will think they are the same or just get confused. </p>
 
 ```{r coclusOver, echo=FALSE, fig.wide=TRUE, out.width="100%", fig.cap=("Overview of co-clustering. Details of each step are explained in the text.")}
 include_graphics('img/coclustering.jpg')
@@ -465,8 +463,7 @@ include_graphics('img/coclustering.jpg')
 <p style="color:red">After revising the method outline for the co-clustering
 please revise the figure 7 above accordingly. PLEASE keep it simple and clear.
 If a figure raises more questions than it answers then it defeats the purpose of
-guiding the reader. 
-</p>
+guiding the reader and providing clarity. </p>
 
 To obtain reasonably robust default settings for co-clustering, the
 preprocessing methods and their parameters have been optimized. This includes
@@ -479,8 +476,7 @@ simplified for demonstraton purposes.
 
 
 
-<p style="color:red">That's how far I could edit your text. 
-</p>
+<p style="color:red">That's how far I could edit your text. </p>
 
 ### Pre-processing {#proCoclus}
 
