@@ -499,34 +499,57 @@ To obtain reproducible results, a fixed seed is set for generating random number
 set.seed(10)
 ```
 
-The example bulk and single cell count data are included in `spatialHeatmap` and imported. Replicates of the same bulk tissue should have the same identifiers. For example, all replicates of Cerebral Cortex have the label `CERE.CORTEX` instead of `CERE.CORTEX1`, `CERE.CORTEX2`, and so on.       
+The following imports example single cell and tissue bulk data. Note, replicates
+are indicated by the same sample names (_e.g._ `CERE.CORTEX`).
+
+The bulk data is imported from the `spatialHeatmap` package.
 
 ```{r , eval=TRUE, echo=TRUE, warnings=FALSE}
-# Example bulk data.
 blk.mus.pa <- system.file("extdata/shinyApp/example", "bulk_mouse_cocluster.txt", package="spatialHeatmap") 
 blk.mus <- as.matrix(read.table(blk.mus.pa, header=TRUE, row.names=1, sep='\t', check.names=FALSE))
 blk.mus[1:3, 1:5]
+```
 
-# Example single cell data.
+The single cell data is imported from the `spatialHeatmap` package.
+
+```{r , eval=TRUE, echo=TRUE, warnings=FALSE}
 sc.mus.pa <- system.file("extdata/shinyApp/example", "cell_mouse_cocluster.txt", package="spatialHeatmap") 
 sc.mus <- as.matrix(read.table(sc.mus.pa, header=TRUE, row.names=1, sep='\t', check.names=FALSE))
 sc.mus[1:3, 1:5]
 ```
 
-Make sure bulk tissues and single cells do not share identifiers. Otherwise, the co-clustering results are not accurate.  
+Single cells and bulk data should not share the same sample identifiers. 
+<p style="color:red">Why would this be a problem? This could be easily resolved by using a data structure that distinguishes bulk and ss. </p>
 
 ```{r , eval=TRUE, echo=TRUE, warnings=FALSE}
 intersect(colnames(blk.mus), colnames(sc.mus))
 ```
 
-The raw count data of bulk tissues and single cells are initially filtered to remove noisy values for subsequent normalization. In bulk data, genes with counts over 5 across bulk tissues at a minimum proportion of 0.05 (`pOA`) and coefficient of variances (`CV`) between 0.05 and 100 are retained. Refer to `filterfun` in the `geneflter` package for more details [@Gentleman2018-xj]. In single cell data, cells with a minimum count of 1 (`min.cnt=1`) in at least 1% (`p.in.cell=0.01`) of genes are retained. Genes with a minimum count of 1 (`min.cnt=1`) in at least 5% (`p.in.gen=0.05`) of cells are retained.   
+The raw counts of the single cell and bulk data are filtered to reduce sparsity
+and low read counts. The following example filtering settings retain genes in
+the bulk data to have a read count of $\ge$ 5 at a proportion of $\ge 0.05\%$
+(`pOA`) across bulk sample and a coefficient of variance (`CV`) between
+$0.05-100$. In the single cell data the filtering is set to retain genes with a
+read count of $\ge 1$ (`min.cnt=1`) in $\ge 5\%$ (`p.in.gen=0.05`) of cells. In
+addition, only those cells are retained that have a count $\ge 1$ (`min.cnt=1`)
+in $\ge 1\%$ (`p.in.cell=0.01`) of their genes. Refer to the `filterfun` in the
+`geneflter` package for more details [@Gentleman2018-xj]. 
 
 ```{r , eval=TRUE, echo=TRUE, warnings=FALSE}
 blk.mus.fil1 <- filter_data(data=blk.mus, pOA=c(0.05, 5), CV=c(0.05, 100), verbose=FALSE) 
 mus.lis.fil1 <- filter_cell(lis=list(sc.mus=sc.mus), bulk=blk.mus.fil1, min.cnt=1, p.in.cell=0.01, p.in.gen=0.05, verbose=FALSE) 
 ```
 
-The main different between bulk and single cell data is the sparsity in the latter. To reduce such difference, they are combined in a column-wise manner and normalized together, then separated. The whole process is a single function call on `norm_multi`.    
+Compared to bulk RNA-Seq data, single cell data has a much higher level of
+sparsity. This difference is reduced by the above filtering and then subsetting
+the bulk data to the genes remaining in the filtered single cell data. This
+entire process is accomplished by the `norm_multi` function. 
+
+<p style="color:red"> What you had here before didn't make much sense "combined
+normalization" doesn't maked the data more similar rather than the subsetting
+to a joined gene set after filtering. Also the combined normalization is only 
+necessary if a quantile normalization is used. Below you are saying you obtained
+log2 normalized data from this step. If so then combining the two is unnecessary.</p> 
 
 ```{r , eval=TRUE, echo=TRUE, warnings=FALSE, results='hide'}
 mus.lis.nor <- read_cache(cache.pa, 'mus.lis.nor') 
@@ -536,7 +559,13 @@ if (is.null(mus.lis.nor)) {
 }
 ```
 
-The log2-scale normalized data of bulk tissues and single cells are filtered at a second time respectively in a similar way as the initial filtering.   
+The log2-scale normalized bulk tissues and single cell data are filtered 
+a second time respectively in a similar way as the initial filtering.
+
+<p style="color:red"> I don't understand why this is necessary. Why not making the
+filtering settings in the first step stringent enough. Most readers will stumble 
+over this since it indicates that the method hasn't be sufficiently optimized and
+that some steps and paramters are at an trial and error stage.</p>
 
 ```{r , eval=TRUE, echo=TRUE, warnings=FALSE}
 blk.mus.fil2 <- filter_data(data=mus.lis.nor$bulk, pOA=c(0.1, 1), CV=c(0.1, 50), verbose=FALSE) 
