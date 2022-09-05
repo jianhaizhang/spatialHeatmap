@@ -415,7 +415,7 @@ overlapping tissues then co-clustering can be used to assign cells to tissues
 automatically (Figure \@ref(fig:coclusOver)). Subsequently, the predicted
 cell-to-tissue assignments can be used for co-visualizing single cell embedding
 data with tissue level bulk data. This approach is useful for predicting the
-source tissues for unassigned cells without prior knowledge as is required for
+source tissues of unassigned cells without prior knowledge as is required for
 the annotation and manual approaches introduced above. While attractive there
 are various challenges to overcome to reliably co-cluster single cell data with
 the corresponding tissue-level bulk data. This is due to the different
@@ -428,19 +428,20 @@ methods and their parameter settings used for preprocessing both data types are
 optimized to achieve the most robust results. Third, the best performing
 clustering method for this data is chosen. Both preprocessing and clustering
 parameters are optimized on real data with known cell-to-tissue assignments.
-The following introduces the three steps of this method based on RNA-Seq data.
+The following introduces the three steps of this method in more detail using
+as example RNA-Seq data.
 
 1. The raw read count matrix of the single cell data is reduced to genes
    with robust expression across X% cells. The bulk data is subsetted to the
    same genes and then column-wise appended to the processed single cell count
-   matrix. As a result the sparcity in the single cell data has been reduced
-   and the bulk data has been made more compareable by subsetting it to the same 
-   genes.
+   matrix. These steps reduce the sparcity in the single cell data
+   and the bulk data are made more compareable to the single cell data by subsetting 
+   it to the same genes.
 2. The combined single cell and bulk read count data are normalized jointly.
    After separating single cell and bulk data, they are filtered a second time
    and then embedded using PCA (UMAP or other).
-3. Co-clustering is performed on the embedding data where single cells are joined
-   with the nearest neighbor bulk tissue. 
+3. Co-clustering is performed on the embedding data where single cells are assigned
+   with the nearest neighbor bulk tissues. 
 
 <p style="color:red">I have removed a lot of text from this section as well as the
 legend of the corresponding figure. The text was far too long and contained a lot 
@@ -450,17 +451,21 @@ impossible for me to revise your write-up. So please fill in additional details
 that are required under the three steps/bullets above but be consise and focus 
 on the essentials and leave out the exceptions.</p> 
 
-<p style="color:red">A few questions I have are: (1) in many cases you say some
-step has been optimized but then you don't give the name of the method that has
+<p style="color:red">A few questions I have are: (1) often you say some step
+has been optimized but then you don't give the name of the method that has
 actually been chosen. For instance, what normalization method, what embedding
 method and most importantly what method for co-clustering is then actually been
-used? So keep it short but mention those relevant details. (2) As described you
-seem to have performed the embedding separatedly on the single cell and bulk
-data, but then combine the embeddings for the co-clustering. Are you sure this 
-is valid? I would be very concerned that those embeddings are relative data that 
-need to be generted jointly on both to remain compareable. Perhaps I am 
-misunderstanding? (3) The purpose of the clustering step and co-clustering steps 
-are not clearly defined. The reader will think they are the same or just get confused. </p>
+used? This is particularly frustrating for the reader when it comes to the
+co-clustering since this is main part of this section. Not to mention what
+co-clustering methods have been tested/used here is a major oversight. So keep
+it short but mention those relevant details. (2) As described you seem to have
+performed the embedding separatedly on the single cell and bulk data, but then
+combine the embeddings and use it as input for the co-clustering. Are you sure
+this is valid? I would be very concerned that those embeddings are relative
+data that need to be generted jointly on both to remain compareable. Perhaps I
+am misunderstanding? (3) The purpose of the clustering step and co-clustering
+steps are not clearly defined. The reader will think they are the same or just
+get confused. </p>
 
 ```{r coclusOver, echo=FALSE, fig.wide=TRUE, out.width="100%", fig.cap=("Overview of co-clustering. Details of each step are explained in the text.")}
 include_graphics('img/coclustering.jpg')
@@ -477,9 +482,9 @@ preprocessing methods and their parameters have been optimized. This includes
 the filtering, normalization, dimension reduction, and cluster refinement
 steps. The details of this optimization are given
 [here](https://jianhaizhang.github.io/spatialHeatmap_supplement/cocluster_optimize.html).
-The following applies the co-clustering method using single cell and bulk data
-from mouse brain [@Vacher2021-xg; @Ortiz2020-yt]. Both data sets have been
-simplified for demonstraton purposes. 
+The following applies the best performing pre-processing co-clustering methods using 
+single cell and bulk data from mouse brain [@Vacher2021-xg; @Ortiz2020-yt]. Both 
+data sets have been simplified for demonstraton purposes. 
 
 
 
