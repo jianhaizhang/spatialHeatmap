@@ -482,9 +482,10 @@ preprocessing methods and their parameters have been optimized. This includes
 the filtering, normalization, dimension reduction, and cluster refinement
 steps. The details of this optimization are given
 [here](https://jianhaizhang.github.io/spatialHeatmap_supplement/cocluster_optimize.html).
-The following applies the best performing pre-processing co-clustering methods using 
-single cell and bulk data from mouse brain [@Vacher2021-xg; @Ortiz2020-yt]. Both 
-data sets have been simplified for demonstraton purposes. 
+The following demonstration applies the best performing pre-processing
+co-clustering methods using single cell and bulk data from mouse brain
+[@Vacher2021-xg; @Ortiz2020-yt]. Both data sets have been simplified for
+demonstraton purposes. 
 
 
 
