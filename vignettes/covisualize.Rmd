@@ -342,7 +342,7 @@ shm.lis <- spatial_hm(svg.path=svg.mus.brain, data=sce.aggr, ID=c('Cops5'), heig
 To provide additional flexibility for defining cell groupings, several manual
 options are provided. Here users can assign cell groups manually or by
 clustering methods for single cell embedding data that are often used in the
-analysis of single cell embedding data. The resulting cell grouping or cluster
+analysis of single cell data. The resulting cell grouping or cluster
 information needs to be stored in a tabular file, that will be imported into an
 `SCE` object (here `manual_group` function). The following demonstration uses
 the same single cell and aSVG data as the annotation example above. The only
@@ -354,7 +354,7 @@ least two columns: a `cell` column with single cell identifiers used under
 `colData` and a `cluster` column with the cell group labels. For practical
 reasons of building this vignette a pure manual example could not be used here.
 However, the chosen clustering example can be easily adapted to manual or
-hybrid grouping approach since the underlying tabular data structure is the
+hybrid grouping approaches since the underlying tabular data structure is the
 same for both that can be generated in most text or spreadsheet programs.
 
 ```{r eval=TRUE, echo=TRUE, warnings=FALSE}
@@ -414,7 +414,7 @@ If both single cell and bulk gene expression data are available for the same or
 overlapping tissues then co-clustering can be used to assign cells to tissues
 automatically (Figure \@ref(fig:coclusOver)). Subsequently, the predicted
 cell-to-tissue assignments can be used for co-visualizing single cell embedding
-data with tissue level bulk data. This approach could help to predict the
+data with tissue level bulk data. This approach is useful for predicting the
 source tissues for unassigned cells without prior knowledge as is required for
 the annotation and manual approaches introduced above. While attractive there
 are various challenges to overcome to reliably co-cluster single cell data with
