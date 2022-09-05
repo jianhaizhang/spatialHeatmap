@@ -339,16 +339,22 @@ shm.lis <- spatial_hm(svg.path=svg.mus.brain, data=sce.aggr, ID=c('Cops5'), heig
 
 ## Manual Method
 
-To provide additional flexibility for defining cell groupings, several manual options 
-are provided. Here users can assign cell groups manually or by clustering
-methods that are often used in the analysis of single cell embedding data. 
-The resulting cell grouping or cluster information needs to be stored in a tabular file, 
-that will be imported into an `SCE` object (here `manual_group` function). The following
-demonstration uses the same single cell and aSVG data as the annotation example above. The only difference is an additional clustering step. For demonstration purposes a small 
-example of a cluster file is included  in the `spatialHeatmap` package. In this case the group labels were created by the `cluster_cell` function. The details of this function are available in its help file. The cluster file contains at least two columns: a `cell` column with single cell identifiers used under `colData` and a `cluster` column with the
-cell group labels. For practical reasons of building this vignette a pure manual example
-could not be used here. However, the chosen clustering example can be easily adapted to 
-manual or hybrid grouping approach since the underlying tabular data structure is the 
+To provide additional flexibility for defining cell groupings, several manual
+options are provided. Here users can assign cell groups manually or by
+clustering methods for single cell embedding data that are often used in the
+analysis of single cell embedding data. The resulting cell grouping or cluster
+information needs to be stored in a tabular file, that will be imported into an
+`SCE` object (here `manual_group` function). The following demonstration uses
+the same single cell and aSVG data as the annotation example above. The only
+difference is an additional clustering step. For demonstration purposes a small
+example of a cluster file is included  in the `spatialHeatmap` package. In this
+case the group labels were created by the `cluster_cell` function. The details
+of this function are available in its help file. The cluster file contains at
+least two columns: a `cell` column with single cell identifiers used under
+`colData` and a `cluster` column with the cell group labels. For practical
+reasons of building this vignette a pure manual example could not be used here.
+However, the chosen clustering example can be easily adapted to manual or
+hybrid grouping approach since the underlying tabular data structure is the
 same for both that can be generated in most text or spreadsheet programs.
 
 ```{r eval=TRUE, echo=TRUE, warnings=FALSE}
