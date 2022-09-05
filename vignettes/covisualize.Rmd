@@ -89,7 +89,7 @@ R as well as the corresponding [Shiny app](#autoSCE) [@shiny].
 
 To co-visualize single cell data with tissue features (Figure
 \@ref(fig:covizOver)), the individual cells of the single cell data are mapped
-via their group labels to the the corresponding tissue features in an aSVG image. If
+via their group labels to the corresponding tissue features in an aSVG image. If
 the feature labels in an aSVG are different than the corresponding group labels
 used for the single cell data, _e.g._ due to variable terminologies, a
 translation map can be used to avoid manual relabelling. Throughout this
@@ -116,15 +116,15 @@ co-clustering algorithm (Figure \@ref(fig:covizOver).2c). This co-clustering is
 experimental and requires bulk expression data that are obtained from the
 tissues represented in the single cell data. The grouping information is
 visualized by using for each group the same color in both the single cell
-embedding plot and the tissue spatial heatmap plot Figure
-\@ref(fig:covizOver).4. The colors can represent any type of custom or numeric
+embedding plot and the tissue spatial heatmap plot (Figure
+\@ref(fig:covizOver).4). The colors can represent any type of custom or numeric
 information. In a typical use case, either fixed tissue-specific colors or a
 heat color gradient is used that is proportional to the numeric expression
 information obtained from the single cell or bulk expression data of a chosen
 gene. When the expression values among groups are very similar, toggling
 between the two coloring option is important to track the tissue origin in
 the single cell data. To color by single cell data, one often wants to first
-summarize the expression of a given gene across the cells within a group via a
+summarize the expression of a given gene across the cells within each group via a
 meaningful summary statistics, such as mean or median. Cells and tissues with
 the same group label will be colored the same. When coloring by tissues
 the color used for each tissue feature will be applied to the corresponding 
@@ -170,7 +170,7 @@ cache.pa <- '~/.cache/shm' # Set path of the cache directory
 
 # Quick Start {#test}
 
-To obtain for examples with randomized parameters always the same results, a fixed seed is set.
+To obtain for examples with randomized data or parameters always the same results, a fixed seed is set.
 
 ```{r , eval=TRUE, echo=TRUE, warnings=FALSE}
 set.seed(10)
@@ -178,8 +178,8 @@ set.seed(10)
 
 A single cell test data set is loaded using `mockSCE` from the `scuttle`
 package [@scater]. The data are normalized and log2-transformed
-(`logNormCounts`), and subsequently processed by dimensionality reduction
-methods including PCA, TSNE, and UMAP (`reduce_dim`).    
+(`logNormCounts`), and subsequently processed by a dimensionality reduction
+method such as PCA, TSNE or UMAP (`reduce_dim`).    
 
 ```{r , eval=TRUE, echo=TRUE, warnings=FALSE}
 sce.test <- mockSCE() 
@@ -196,8 +196,7 @@ unique(colData(sce.dimred.test)$Cell_Cycle)
 ```
 
 To visualize single cell data in spatial heatmaps, the single cell expression values
-are summarized by their source tissues using common summary statistics such as mean 
-or median. 
+are summarized by their source tissue grouping using common summary statistics such as mean or median. 
 
 ```{r , eval=TRUE, echo=TRUE, warnings=FALSE}
 sce.aggr.test <- aggr_rep(sce.dimred.test, assay.na='logcounts', sam.factor='Cell_Cycle', con.factor=NULL, aggr='mean')
@@ -219,9 +218,10 @@ A subset of features is returned from `feature.df`.
 tail(feature.df$feature) 
 ```
 
-In the chosen example each cell cycle corresponds to one feature in the aSVG image. 
-To define this relationship, a named `list` is used. Note, each cell label can be 
-matched to multiple aSVG features but not vice versa. 
+In the chosen example each cell cycle corresponds to one feature in the aSVG
+image. To define this relationship, a `list` with named components is used.
+Note, each cell label can be matched to multiple aSVG features but not vice
+versa. 
 
 <p style="color:red">Using a cell cycle data set as an exmple is a poor choice since
 all tissues in your spatial heatmap will have cells from most/all cell cycles.</p>
