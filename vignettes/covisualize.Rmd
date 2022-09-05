@@ -488,9 +488,6 @@ co-clustering methods using single cell and bulk data from mouse brain
 demonstraton purposes. 
 
 
-
-<p style="color:red">That's how far I could edit your text. </p>
-
 ### Pre-processing {#proCoclus}
 
 To obtain reproducible results, a fixed seed is set for generating random numbers.    
@@ -612,6 +609,13 @@ df.match.mus.brain
 
 ### Co-clustering
 
+<p style="color:red">I have tried my best with the co-clustering section, but had to stop since this section is FAR TO LONG and often confusing. Rather than cutting to the chase (here co-cluster and plot co-viz), you bury the interesting parts in too much detail and lengthy descriptions of exceptions. For instance the Tailoring part should be removed or moved to the supplement. After having described how the co-visualization works the co-clustering should be performed in a few lines of code and then the co-viz plot generated. That is all. Despite all of this detail your are currently providing, you are not including the relevant information such as what clustering algorithm is actually used at the end. So please do the following:</p> 
+
+1. <p style="color:red">Revise the entire tutorial section of the co-clustering to 2 short code blocks and another one that plots the co-viz. Importantly, the above pre-processing should be included in the 2 short code blocks!</p>
+2. <p style="color:red">Address my comments and questions I included in the vignette in red.  </p>
+3. <p style="color:red">Currently, the data point (dots) of the bulk data are not shown in the scatter plots after co-clustering. This would be a feature everyone would expect to see for a co-clustering utility that focuses on visualization. One also might want to have a co-clustering stringency filter that allows to show only those cells that are tightly co-clustered with the bulk data points, meaning when the stringency is increased only those cells are shown that are in closer proximity to the bulk.  Thus, showing the bulk in the scatter plot would be extremely useful.</p>
+
+
 The processes of clustering single cell data (Figure \@ref(fig:coclusOver).4),
 refining single cell clusters (Figure \@ref(fig:coclusOver).5), and co-clustering bulk
 and single cells (Figure \@ref(fig:coclusOver).6-8) are performed in a single
@@ -659,6 +663,11 @@ Each co-cluster consisting of bulk and cells can be visualized in an embedding p
 plot_dim(res.lis$sce.bulk.cell, dim='PCA', color.by='cluster', group.sel='clus11')
 ```
 
+<p style="color:red">Does the above plot shows all the genes after filtering or only 
+the ones from a specific cluster where the ones that were coclustered are given in 
+color and the grey ones that were not coclustered. Also why doesn't the plot show the 
+bulk tissue as a highlighted dot. This would be particularly important and interesting
+to show here.</p>
 
 ### Tailoring Co-clustering Results {#tailor}
 
