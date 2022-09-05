@@ -413,39 +413,42 @@ source tissues for unassigned cells without prior knowledge as is required for
 the annotation and manual approaches introduced above. While attractive there
 are various challenges to overcome to reliably co-cluster single cell data with
 the corresponding tissue-level bulk data. This is due to the different
-properties of single cell and bulk gene expression data, such as much more
-pronounced sensitity and sparsity limitations in single cell compared to bulk
-data. This section introduces a co-clustering method that is largely based on
-parameter optimization including three major steps. First, the genes in the
-bulk data are reduced to those robustly expressed in the single cell data.
-Second, the methods and their parameter settings used for preprocessing both
-data types are optimized to achieve the most robust results. Third, the best
-performing clustering method for this data is chosen. Both preprocessing and
-clustering parameters are optimized on real data with known cell-to-tissue
-assignments. The following introduces the three steps of this method based 
-on RNA-Seq data.
+properties of single cell and bulk gene expression data, such as lower
+sensitity and higher sparsity in single cell compared to bulk data. This
+section introduces a co-clustering method that is largely based on parameter
+optimization including three major steps. First, the genes in the bulk data are
+reduced to those robustly expressed in the single cell data. Second, the
+methods and their parameter settings used for preprocessing both data types are
+optimized to achieve the most robust results. Third, the best performing
+clustering method for this data is chosen. Both preprocessing and clustering
+parameters are optimized on real data with known cell-to-tissue assignments.
+The following introduces the three steps of this method based on RNA-Seq data.
 
-1. The raw read count matrix of the single cell data is reduced to those genes
-   with robust expression across X cells. The bulk data is subsetted to the
+1. The raw read count matrix of the single cell data is reduced to genes
+   with robust expression across X% cells. The bulk data is subsetted to the
    same genes and then column-wise appended to the processed single cell count
-   matrix. As a result the sparcity in the single cell data has been largely removed
+   matrix. As a result the sparcity in the single cell data has been reduced
    and the bulk data has been made more compareable by subsetting it to the same 
-   gene set.
+   genes.
 2. The combined single cell and bulk read count data are normalized jointly.
-   Next, the preprocessed and normalized single cell and bulk data are
-   separted. Only the single cell data is filtered a second time. Embedding 
-   is performed using PCA (UMAP or other).
+   After separating single cell and bulk data, they are filtered a second time
+   and then embedded using PCA (UMAP or other).
 3. Co-clustering is performed on the embedding data where single cells are joined
-   with the nearest neighbor bulk tissu. 
+   with the nearest neighbor bulk tissue. 
 
 
-```{r coclusOver, echo=FALSE, fig.wide=TRUE, out.width="100%", fig.cap=("Overview of co-clustering. (1) The input are raw count data of bulk tissues and single cells, such as RNA-seq count data. (2) Bulk and single cell data are initially filtered respectively, where rows are molecules (genes, *etc*) and columns are bulk tissues and cells respectively. Then the filtered bulk and cell data are combined in a column-wise manner and normalized as a whole. After that, bulk and single cells data are separated. (3) The normalized bulk data are filtered at a second time. (4) The normalized single cell data are filtered at a second time and then clustered on their top dimensions such as PCA of UMAP. (5) a. In each single cell cluster, cells having low similarities (Spearman's or Pearson's correlation coefficients) with other cells in the same cluster are filtered, which are indicated by \"X\". b. The resultant clusters are more homogeneous. (6) Re-combine separated bulk and refined single cell data and cluster top dimensions of the combined data. (7) a. Multiple bulk tissues are co-clustered with many cells. If a bulk tissue has the largest similarity with a certain cell, this bulk would be assigned to this cell. For example, bulk A is assigned to cell a1 because A has higher similarity with a1 than B. b. Only one bulk is co-clustered with many cells. This bulk is assigned to every cell in the same co-cluster. c. No bulk is co-clustered with cells. These cells are regarded as un-labelled. (8) The automatic bulk tissue assignments are stored in a table. ")}
+```{r coclusOver, echo=FALSE, fig.wide=TRUE, out.width="100%", fig.cap=("Overview of co-clustering. Details of each step are explained in the text.")}
 include_graphics('img/coclustering.jpg')
 ```
 
-To obtain optimal default settings for the
-automatic method (co-clustering), main parameters related to filtering, normalization, dimension reduction, clustering, and cell cluster refining are optimized and tested on real bulk and single cell datasets, which is detailed in an external [vignette](https://jianhaizhang.github.io/spatialHeatmap_supplement/cocluster_optimize.html){target='_blank'}. The optimization utilities are included in *spatialHeatmap*, so users have the choice to optimize this method on their own real data. This section showcases application of the automatic method
-on mouse brain data with default settings obtained through optimization. The bulk RNA-seq data are generated in a research on the impact of placental endocrine on mouse cerebellar development [@Vacher2021-xg] and the scRNA-seq data are from a study of mouse brain molecular atlas [@Ortiz2020-yt]. Both bulk and single cell data sets are modified for demonstration purpose.     
+To obtain reasonably robust default settings for co-clustering, the
+preprocessing methods and their parameters have been optimized. This includes
+the filtering, normalization, dimension reduction, and cluster refinement
+steps. The details of this optimization are given
+[here](https://jianhaizhang.github.io/spatialHeatmap_supplement/cocluster_optimize.html).
+The following applies the co-clustering method using single cell and bulk data
+from mouse brain [@Vacher2021-xg; @Ortiz2020-yt]. Both data sets have been
+simplified for demonstraton purposes. 
 
 ### Pre-processing {#proCoclus}
 
