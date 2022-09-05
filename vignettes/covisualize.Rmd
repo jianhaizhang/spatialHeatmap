@@ -546,7 +546,7 @@ the bulk data to the genes remaining in the filtered single cell data. This
 entire process is accomplished by the `norm_multi` function. 
 
 <p style="color:red"> What you had here before didn't make much sense "combined
-normalization" doesn't maked the data more similar rather than the subsetting
+normalization" doesn't make the data more similar rather than the subsetting
 to a joined gene set after filtering. Also the combined normalization is only 
 necessary if a quantile normalization is used. Below you are saying you obtained
 log2 normalized data from this step. If so then combining the two is unnecessary.</p> 
@@ -564,7 +564,7 @@ a second time respectively in a similar way as the initial filtering.
 
 <p style="color:red"> I don't understand why this is necessary. Why not making the
 filtering settings in the first step stringent enough. Most readers will stumble 
-over this since it indicates that the method hasn't be sufficiently optimized and
+over this since it indicates that the method hasn't been sufficiently optimized and
 that some steps and paramters are at an trial and error stage.</p>
 
 ```{r , eval=TRUE, echo=TRUE, warnings=FALSE}
@@ -572,13 +572,24 @@ blk.mus.fil2 <- filter_data(data=mus.lis.nor$bulk, pOA=c(0.1, 1), CV=c(0.1, 50),
 mus.lis.fil2 <- filter_cell(lis=list(sc.mus=mus.lis.nor$sc.mus), bulk=blk.mus.fil2, min.cnt=1, p.in.cell=0.1, p.in.gen=0.01, verbose=FALSE) 
 ```
 
-The same aSVG file of mouse brain as the [Quick Start](#test) is used. The process of extracting aSVG features is not shown.  
+The same aSVG file of mouse brain is used as in the [Quick Start](#test) section above. 
+The extracting aSVG features is omitted here for brevity.  
 
 ```{r , eval=TRUE, echo=TRUE, warnings=FALSE}
 tail(feature.df$feature) # Partial features are shown.
 ```
 
-The matching between bulk and single cells are automatic, while the matching between aSVG features and bulk tissues needs to be defined by users in a `data.frame`. Since there is no uniform naming scheme for aSVG features or bulk tissues. In most cases, identifiers of aSVG features and bulk tissues are user dependent, especially when they are from different sources. The matching `data.frame` is utilized to coordinate differences of naming schemes between aSVG features and bulk tissues. In addition, it gives flexibility for users to choose desired identifiers.  
+<p><s>The matching between bulk and single cells are automatic, while the matching
+between aSVG features and bulk tissues needs to be defined by users in a
+`data.frame`. Since there is no uniform naming scheme for aSVG features or bulk
+tissues. In most cases, identifiers of aSVG features and bulk tissues are user
+dependent, especially when they are from different sources. The matching
+`data.frame` is utilized to coordinate differences of naming schemes between
+aSVG features and bulk tissues. In addition, it gives flexibility for users to
+choose desired identifiers. </s></p> 
+
+<p style="color:red">The above seems a dubplication of somehting that has been 
+introduced in other section many times. So why another duplication?</p>
 
 The matching table for this example is included in `spatialHeatmap` and imported. The `SVGBulk` and `dataBulk` columns are aSVG features and bulk tissues respectively. Note, these two columns names are fixed so that the algorithm is able to recognize them.    
 
