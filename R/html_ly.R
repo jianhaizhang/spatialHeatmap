@@ -36,13 +36,13 @@ html_ly <- function(gg, cs.g, ft.trans, sam.uni, anm.width, anm.height, selfcont
     na.hl <- paste0(i, '.html')
     cat('Preparing', paste0("'", na.hl, "'"), '... \n')
     g <- gg[[i]]; lay.dat <- layer_data(g)
-    dat <- g$data; tis.path <- dat$feature
+    dat <- g$data; tis.path <- dat$Feature
     # g.col <- lay.dat$fill; names(g.col) <- dat$tissue
     # g.col <- g.col[!duplicated(names(g.col))] 
     ft.legend <- intersect(sam.uni, unique(tis.path))
     ft.legend <- setdiff(ft.legend, ft.trans) 
     leg.idx <- !duplicated(tis.path) & (tis.path %in% ft.legend)
-    tis.show <- as.vector(dat$tissue)[leg.idx]
+    tis.show <- as.vector(dat$Feature)[leg.idx]
     tis.show1 <- tis.path[leg.idx]
     g$theme$aspect.ratio <- NULL # Aspect ratio is not accepted.
     g2l <- gg2list(g, tooltip="text")

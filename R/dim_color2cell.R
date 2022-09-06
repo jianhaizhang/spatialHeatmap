@@ -24,39 +24,33 @@
 
 #' @importFrom ggplot2 layer_data ggplot geom_point theme_classic theme element_text element_blank labs scale_color_manual scale_shape_manual margin guide_legend 
 
-dim_color <- function(gg.dim, gg.shm.all, grob.shm.all, col.shm.all, cell.group, tar.cell='matched', con.na=TRUE, lis.match=NULL, sub.title.size=11, dim.lgd.pos='bottom', dim.lgd.nrow=2, dim.lgd.key.size=4, dim.lgd.text.size=13) {
-  # save(gg.dim, gg.shm.all, grob.shm.all, col.shm.all, cell.group, tar.cell, con.na, lis.match, sub.title.size, dim.lgd.pos, dim.lgd.nrow, dim.lgd.key.size, dim.lgd.text.size, file='dim.color.arg')
+dim_color2cell <- function(gg.dim, gg.shm.all, grob.shm.all, col.shm.all, cell.group, df.match, con.na=TRUE, lis.match=NULL, sub.title.size=11, dim.lgd.pos='bottom', dim.lgd.nrow=2, dim.lgd.key.size=4, dim.lgd.text.size=13) {
+  # save(gg.dim, gg.shm.all, grob.shm.all, col.shm.all, cell.group, df.match, con.na, lis.match, sub.title.size, dim.lgd.pos, dim.lgd.nrow, dim.lgd.key.size, dim.lgd.text.size, file='dim.color.tocell.arg')
   x <- y <- fill <- feature <- NULL
+  # Trasfer svg features to name slots of lis.match.
   lis.match <- lis.match[!unlist(lapply(lis.match, is.null))]
-  if (tar.cell[1]=='matched') tar.cell <- unique(names(lis.match))
-  dat.ft.all <- unique(gg.dim$data$colour_by)
-
-  if (any(!tar.cell %in% dat.ft.all)) stop("Make sure all entries in 'tar.cell' are in 'names(lis.match))'!")
+  lis.match.svg <- lis.match
+  for (i in seq_along(lis.match.svg)) {
+    names(lis.match.svg)[i] <- unique(subset(df.match, dataBulk==names(lis.match.svg[i]))$SVGBulk)
+  }
   # Ggplots of all reduced dim.
   n <- length(grob.shm.all); gg.dim.all <- rep(list(gg.dim), n)
   names(gg.dim.all) <- paste0('dim_', names(grob.shm.all))
   # Match colors in SHMs to dim plots. Colour order: data -> svg feature -> embedding plot.
   for (i in seq_along(gg.dim.all)) {
     gg.dim <- gg.dim.all[i]; na <- sub('^dim_', '', names(gg.dim))
+    # Relevant colors in SHM. 
     g.col <- col.shm.all[[paste0('col_', na)]]
-    dat.ft.na <- names(lis.match)
-    # 'gray80' is a reserved color.
-    dim.col <- rep('gray80', length(lis.match))
-    names(dim.col) <- dat.ft.na
-    for (j in dat.ft.na) {
-    # Matched svg fts have the same color, so only the 1st is taken. 
-      ft.svg <- lis.match[[j]][1]; matched <- g.col[ft.svg]
-      if (length(matched)==0) next else if (is.na(matched)) {
-        matched <- g.col[sub('__\\d+', '', names(g.col))==ft.svg][1]
-        if (!is.na(matched)) if (matched!='NA') dim.col[j] <- matched
-      } else if (length(matched)>0) { 
-        if (matched!='NA') dim.col[j] <- matched }
+    svg.ft.na <- names(lis.match.svg)
+    # 'gray80' is a reserved color. 
+    cell.labs <- unlist(lis.match.svg)    
+    dim.col <- rep('gray80', length(cell.labs))
+    names(dim.col) <- cell.labs 
+    for (j in svg.ft.na) { # Colors: svg to cell.
+      matched.col <- g.col[sub('__\\d+', '', names(g.col))==j][1]
+      if (matched.col!='NA') dim.col[lis.match.svg[[j]]] <- matched.col 
     }
-    # Max shapes: 128.
-    # sp <- seq_along(dim.col); names(sp) <- names(dim.col)
-    # Merge colour and shape legend: dim.col and sp have the same names.
-    # save(gg.dim, dim.col, sp, cell.group, file='gdsc')
-
+    # Data for plotting embedding plot.
     gg.dim0 <- gg.dim[[1]]
     dat <- gg.dim0$data; lay.dat <- layer_data(gg.dim0) 
     dat.all <- cbind(lay.dat, colour_by=dat$colour_by)
@@ -64,31 +58,30 @@ dim_color <- function(gg.dim, gg.shm.all, grob.shm.all, col.shm.all, cell.group,
     dat.all <- dat.all[, !colnames(dat.all) %in% 'colour']
     colnames(dat.all)[colnames(dat.all)=='colour_by'] <- 'feature'
     # dat.all$tissue <- dat.all$feature
-    ft.all <- unique(dat.all$feature)
-    ft.o <- ft.all[!ft.all %in% names(dim.col)]
+    cell.all <- unique(dat.all$feature)
+    # Cells not in lis.match.
+    ft.o <- cell.all[!cell.all %in% names(dim.col)]
     col.o <- rep('gray80', length(ft.o))
     names(col.o) <- ft.o; dim.col.all <- c(dim.col, col.o)
     dat.all$fill <- dim.col.all[dat.all$feature]
-    # sp <- seq_along(dim.col.all); names(sp) <- names(dim.col.all)
     dat.all <- rbind(subset(dat.all, fill == 'gray80'), subset(dat.all, fill != 'gray80'))
 
-    # gg.dim.all[[i]] <- ggplot(dat.all, aes(x=x, y=y, shape=feature, text=dat.all$feature)) + geom_point(size=2, alpha=1, aes(colour=feature)) + scale_color_manual(values=dim.col) + scale_shape_manual(values=sp) + theme_classic() + theme(plot.title=element_text(hjust=0.5, size=sub.title.size), axis.text = element_blank(), axis.ticks = element_blank()) + labs(title=gsub('^dim_(.*)_\\d+$', '\\1', names(gg.dim)), x=gg.dim0$labels$x, y=gg.dim0$labels$y, colour=cell.group, shape=cell.group)
-  if (con.na==TRUE) tit <- gsub('^dim_(.*)_\\d+$', '\\1', names(gg.dim)) else tit <- gsub('^dim_(.*)_con_\\d+$', '\\1', names(gg.dim))
-  # Non-target cell clusters have colour of 'gray80'.
-  non.tar <- setdiff(dat.ft.all, tar.cell)
-  dim.col.all[non.tar] <- 'gray80'
-  # Legal shapes: c(0:25, 32:127)
-  sp.sel <- c(15:18, 7:14)
-  sp.all <- c(0, 2:25, 32:127)
-  sp.all <- c(sp.sel, setdiff(sp.all, sp.sel))
-  # Cell cluster shapes.
-  sp <- sp.all[seq_along(dat.ft.all)]
-  names(sp) <- dat.ft.all
-  if (length(non.tar) > 0) br <- tar.cell else br <- dat.ft.all
-  # Re-plot dimensionlaity plot.
-  gg <- ggplot(dat.all, aes(x=x, y=y, text=dat.all$feature)) + geom_point(size=2, alpha=1, aes(colour=feature, shape=feature)) + theme_classic() + theme(plot.title=element_text(hjust=0.5, size=sub.title.size), axis.text = element_blank(), axis.ticks = element_blank(), legend.position=dim.lgd.pos, legend.text=element_text(size=dim.lgd.text.size), legend.margin = margin(t=-0.02, l=0.05, r=0.1, unit='npc')) + scale_color_manual(values=dim.col.all, breaks=br, guide=guide_legend(title=NULL, nrow=dim.lgd.nrow)) + scale_shape_manual(values=sp, breaks=br, guide=guide_legend(title=NULL, nrow=dim.lgd.nrow, override.aes = list(size=dim.lgd.key.size))) + labs(title=tit, x=gg.dim0$labels$x, y=gg.dim0$labels$y, colour=cell.group, shape=cell.group) 
-  gg.dim.all[[i]] <- gg
-
+    if (con.na==TRUE) tit <- gsub('^dim_(.*)_\\d+$', '\\1', names(gg.dim)) else tit <- gsub('^dim_(.*)_con_\\d+$', '\\1', names(gg.dim))
+    # Non-target cell clusters have colour of 'gray80'.
+    tar.cell <- unlist(lis.match)
+    non.tar <- setdiff(cell.all, tar.cell) 
+    dim.col.all[non.tar] <- 'gray80'
+    # Legal shapes: c(0:25, 32:127)
+    sp.sel <- c(15:18, 7:14)
+    sp.all <- c(0, 2:25, 32:127)
+    sp.all <- c(sp.sel, setdiff(sp.all, sp.sel))
+    # Cell cluster shapes.
+    sp <- sp.all[seq_along(cell.all)]
+    names(sp) <- cell.all
+    if (length(non.tar) > 0) br <- tar.cell else br <- cell.all
+    # Re-plot dimensionlaity plot.
+    gg <- ggplot(dat.all, aes(x=x, y=y, text=dat.all$feature)) + geom_point(size=2, alpha=1, aes(colour=feature, shape=feature)) + theme_classic() + theme(plot.title=element_text(hjust=0.5, size=sub.title.size), axis.text = element_blank(), axis.ticks = element_blank(), legend.position=dim.lgd.pos, legend.text=element_text(size=dim.lgd.text.size), legend.margin = margin(t=-0.02, l=0.05, r=0.1, unit='npc')) + scale_color_manual(values=dim.col.all, breaks=br, guide=guide_legend(title=NULL, nrow=dim.lgd.nrow)) + scale_shape_manual(values=sp, breaks=br, guide=guide_legend(title=NULL, nrow=dim.lgd.nrow, override.aes = list(size=dim.lgd.key.size))) + labs(title=tit, x=gg.dim0$labels$x, y=gg.dim0$labels$y, colour=cell.group, shape=cell.group) 
+    gg.dim.all[[i]] <- gg
   }
   # Convert all reduced dim of ggplots to grobs.
   grob.dim.all <- grob_shm(gg.dim.all, lgd.pos=NULL)

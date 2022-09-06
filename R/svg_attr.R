@@ -12,8 +12,12 @@
 
 #' @references
 #' Hadley Wickham, Jim Hester and Jeroen Ooms (2019). xml2: Parse XML. R package version 1.2.2. https://CRAN.R-project.org/package=xml2
+#' Müller K, Wickham H (2022). _tibble: Simple Data Frames_. R package version 3.1.7, <https://CRAN.R-project.org/package=tibble>  
+#' Wickham H, François R, Henry L, Müller K (2022). _dplyr: A Grammar of Data Manipulation_. R package version 1.0.9, <https://    CRAN.R-project.org/package=dplyr> 
 
 #' @importFrom xml2 xml_length xml_children xml_name xml_attr xml_remove xml_text
+#' @importFrom tibble tibble 
+#' @importFrom dplyr filter
 
 svg_attr <- function(doc, feature, br=TRUE) {
 
@@ -55,13 +59,11 @@ svg_attr <- function(doc, feature, br=TRUE) {
   title <- make.names(c(vapply(chdn.out, tit_id, character(1)), vapply(chdn.ply, tit_id, character(1)))) # Use original names, no 'make.names'. '' after applied to 'make.names' becomes 'X'.
   w <- which(title=='X'|title==''); title[w] <- ids[w]
   # Duplicated titles.
-  dup <- duplicated(title); if (any(dup)) {
-   
+  dup <- duplicated(title); if (any(dup)) { 
     tit.dup <- unique(title[dup]) 
-    if (length(intersect(tit.dup, unique(make.names(feature))))>0) return(paste0('Duplicated title text detected: ', paste0(tit.dup, collapse=' '), '!')) else {
+    if (length(intersect(tit.dup, unique(make.names(feature))))>0) return(paste0('Duplicated title detected: ', paste0(tit.dup, collapse=' '), '!')) else {
       cat('Duplicated title text detected:', title[dup], '\n'); w <- title %in% tit.dup; title[w] <- paste0(title[w], seq_len(sum(w)))
     }
-  
   }
   # Style inside groups are ignored. 
   sty <- c(xml_attr(chdn.out, 'style'), xml_attr(chdn.ply, 'style'))
@@ -84,8 +86,8 @@ svg_attr <- function(doc, feature, br=TRUE) {
     stro.w[i] <- ifelse(is.numeric(num), num, 0)
 
   }
-  df.attr <- data.frame(index=idx, index1=idx1, parent=parent, element=nas, id=ids, feature=title, color=fil.cols, stroke=as.numeric(stro.w))
-  df.attr <- subset(df.attr, element!='a')
+  df.attr <- tibble(feature=title, id=ids, fill=fil.cols, stroke=as.numeric(stro.w), parent=parent, element=nas, index.all=idx, index.sub=idx1)
+  df.attr <- filter(df.attr, element!='a')
   # 'fill' is not necessary. In Inkscape, resizing a "group" causes "matrix" in "transform" (relative positions) attribute, and this can lead to related polygons uncolored in the spatial heatmaps. Solution: ungroup and regroup to get rid of transforms and get absolute positions.
   # Change 'style' of all polygons. Since in SVG code, if no fill in style, no fill in ".ps.xml", so is the stroke.
   # "stroke" >= 0.51 px always introduces coordinates in .ps.xml, no matter "fill" is "none" or not. If "stroke" < 0.5 px, even though "fill" is not "none" there is no coordinates in ps.xml. E.g. irregular paths of dots.

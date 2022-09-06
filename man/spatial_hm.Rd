@@ -5,7 +5,7 @@
 \title{Plot Spatial Heatmaps}
 \usage{
 spatial_hm(
-  svg.path,
+  svg,
   data,
   assay.na = NULL,
   sam.factor = NULL,
@@ -13,11 +13,12 @@ spatial_hm(
   ID,
   sce.dimred = NULL,
   dimred = "PCA",
-  tar.cell = "matched",
+  cell.group = NULL,
+  tar.cell,
+  df.match = NULL,
   tar.bulk,
   profile = FALSE,
-  cell.group = NULL,
-  tmp.path = NULL,
+  raster.path = NULL,
   charcoal = FALSE,
   alpha.overlay = 1,
   lay.shm = "gene",
@@ -69,7 +70,7 @@ spatial_hm(
   vjust = 0,
   opacity = 1,
   key = TRUE,
-  line.size = 0.2,
+  line.width = 0.2,
   line.color = "grey70",
   relative.scale = NULL,
   verbose = TRUE,
@@ -86,7 +87,7 @@ spatial_hm(
 )
 }
 \arguments{
-\item{svg.path}{The path of aSVG file(s). \emph{E.g.}: system.file("extdata/shinyApp/example", "gallus_gallus.svg", package="spatialHeatmap"). Multiple aSVGs are also accepted, such as aSVGs depicting organs development across mutiple times. In this case, the aSVGs should be indexed with suffixes "_shm1", "_shm2", ..., such as "arabidopsis.thaliana_organ_shm1.svg", "arabidopsis.thaliana_organ_shm2.svg", and the paths of these aSVGs be provided in a character vector.  \cr See \code{\link{return_feature}} for details on how to directly download aSVGs from the EBI aSVG repository \url{https://github.com/ebi-gene-expression-group/anatomogram/tree/master/src/svg} and spatialHeatmap aSVG Repository \url{https://github.com/jianhaizhang/spatialHeatmap_aSVG_Repository} developed in this project.}
+\item{svg}{An object of \code{coord} containing one or multiple aSVG instances. See \code{\link{parse_svg}} for two to store aSVG files in \code{coord}.}
 
 \item{data}{An object of \code{data.frame} or \code{SummarizedExperiment}. In either case, the columns and rows should be sample/conditions and assayed items (\emph{e.g.} genes, proteins, metabolites) respectively. If \code{data.frame}, the column names should follow the naming scheme "sample__condition". The "sample" is a general term and stands for cells, tissues, organs, \emph{etc}., where the values are measured. The "condition" is also a general term and refers to experiment treatments applied to "sample" such as drug dosage, temperature, time points, \emph{etc}. If certain samples are not expected to be colored in "spatial heatmaps" (see \code{\link{spatial_hm}}), they are not required to follow this naming scheme. In the downstream interactive network (see \code{\link{network}}), if users want to see node annotation by mousing over a node, a column of row item annotation could be optionally appended to the last column. \cr In the case of \code{SummarizedExperiment}, the \code{assays} slot stores the data matrix. Similarly, the \code{rowData} slot could optionally store a data frame of row item anntation, which is only relevant to the interactive network. The \code{colData} slot usually contains a data frame with one column of sample replicates and one column of condition replicates. It is crucial that replicate names of the same sample or condition must be identical. \emph{E.g.} If sampleA has 3 replicates, "sampleA", "sampleA", "sampleA" is expected while "sampleA1", "sampleA2", "sampleA3" is regarded as 3 different samples. If original column names in the \code{assay} slot already follow the "sample__condition" scheme, then the \code{colData} slot is not required at all. \cr In the function \code{\link{spatial_hm}}, this argument can also be a numeric vector. In this vector, every value should be named, and values expected to color the "spatial heatmaps" should follow the naming scheme "sample__condition". \cr In certain cases, there is no condition associated with data. Then in the naming scheme of \code{data frame} or \code{vector}, the "__condition" part could be discarded. In \code{SummarizedExperiment}, the "condition" column could be discarded in \code{colData} slot. \cr Note, regardless of data class the double underscore is a special string that is reserved for specific purposes in "spatialHeatmap", and thus should be avoided for naming feature/samples and conditions. \cr In the case of spatial-temporal data, there are three factors: samples, conditions, and time points. The naming scheme is slightly different and includes three options: 1) combine samples and conditions to make the composite factor "sampleCondition", then concatenate the new factor and times with double underscore in between, \emph{i.e.} "sampleCondition__time"; 2) combine samples and times to make the composite factor "sampleTime", then concatenate the new factor and conditions with double underscore in between, \emph{i.e.} "sampleTime__condition"; or 3) combine all three factors to make the composite factor "sampleTimeCondition" without double underscore. See the vignette for more details by running \code{browseVignettes('spatialHeatmap')} in R.}
 
@@ -100,21 +101,23 @@ spatial_hm(
 
 \item{sce.dimred}{A \code{SingleCellExperiment} with reduced dimentionalities such as \code{PCA}, \code{UMAP}, \code{TSNE}.}
 
-\item{dimred}{One of \code{PCA}, \code{UMAP}, \code{TSNE}, specifying which reduced dimensionality to use in co-visualization of bulk and single data.}
+\item{dimred}{One of \code{PCA}, \code{UMAP}, \code{TSNE} in \code{sce.dimred}, specifying which reduced dimensionality to use in co-visualization of bulk tissues and single cells.}
 
-\item{tar.cell}{Applicable in co-visualizing bulk and single cell data through manual matching. Identifiers of target cell groups to show in embedding plot, which are defined in \code{cell.group}. The default is \code{matched} and only cell groups in the matching list will have legends in the embedding plot.}
+\item{cell.group}{Applicable in co-visualizing bulk tissues and single cells with annodation-based or manual method. A column name in \code{colData(sce.dimred)}, where one label defines a cell group, and the mapping direction is from cell groups/labels to bulk tissues.}
 
-\item{tar.bulk}{Applicable in co-visualizing bulk and single cell data through auto-matching (coclustering). One of the \code{SVGBulk} entries in the matching \code{data.frame}. Cells correctly assigned to this bulk tissue is highlighted, while other cells corresponding to this bulk but have false or no bulk assignments are colored black.}
+\item{tar.cell}{Applicable in co-visualizing bulk tissues and single cells through annodation-based or manual method. A vector of target cell labels in \code{cell.group}. Cells corresponding to these labels are mapped to bulk tissues through \code{lis.rematch}.}
 
-\item{profile}{Logical, applicable in co-visualizing bulk and single cell data through auto-matching (coclustering). If \code{TRUE}, one or multiple biological molecule (e.g. gene) identifiers need to be assigned to \code{ID}, and their abundance proifles are included in the co-visualization plot. If \code{FALSE} (default), only the bulk tissue in \code{tar.bulk} and matching cells are highlighted in the the co-visualization plot without abundance proifles.}
+\item{df.match}{Applicable in co-visualizing bulk tissues and single cells through annodation-based or manual method. A \code{data.frame} with two columns of \code{SVGBulk} and \code{dataBulk} indicating matching between spatial features in aSVG and bulk tissues in data, only required when mapping direction is bulk tissues to single cells.}
 
-\item{cell.group}{Applicable in co-visualizing bulk and single cell data through manual matching. A column name in \code{colData} such as \code{cluster} (auto-generated), \code{label} (user-defined). Cells are divided into clusters by cell groups in this column and these clusters are matched to bulk tissues.}
+\item{tar.bulk}{A vector of target bulk tissues in \code{df.match$dataBulk}, which are mapped to single cells through \code{lis.rematch}.}
 
-\item{tmp.path}{The path of the template image in the form of raster/bitmap. The template is used to create aSVGs and can be overlaid with spatial heatmaps.}
+\item{profile}{Logical, applicable in co-visualizing bulk and single cell data through auto-matching (coclustering). If \code{TRUE}, one or multiple biological molecule (e.g. gene) identifiers need to be assigned to \code{ID}, and their abundance proifles are included in the co-visualization plot. If \code{FALSE} (default), only the bulk tissue in \code{tar.cell} and matching cells are highlighted in the the co-visualization plot without abundance proifles.}
 
-\item{charcoal}{Logical, if \code{TRUE} the template image will be turned black and white.}
+\item{raster.path}{The path of the template image in the form of raster/bitmap. The template is used to create aSVGs and can be overlaid with spatial heatmaps.}
 
-\item{alpha.overlay}{The opacity of top-layer spatial heatmaps if a template image is added at the bottom layer. The default is 1.}
+\item{charcoal}{Logical, if \code{TRUE} the raster image will be turned black and white.}
+
+\item{alpha.overlay}{The opacity of top-layer spatial heatmaps if a raster image is added at the bottom layer. The default is 1.}
 
 \item{lay.shm}{One of "gene", "con", or "none". If "gene", spatial heatmaps are organized by genes proteins, or metabolites, \emph{etc.} and conditions are sorted whithin each gene. If "con", spatial heatmaps are organized by the conditions/treatments applied to experiments, and genes are sorted winthin each condition. If "none", spaital heatmaps are organized by the gene order in \code{ID} and conditions follow the order they appear in \code{data}.}
 
@@ -138,7 +141,7 @@ spatial_hm(
 
 \item{tis.trans}{This argument is deprecated and replaced by \code{ft.trans}.}
 
-\item{lis.rematch}{A list for rematching features. In each slot, the slot name is an existing feature in the data, and the slot contains a vector of features in aSVG that will be rematched to the feature in the slot name. \emph{E.g.} \code{list(featureData1 = c('featureSVG1', 'featureSVG2'), featureData2 = c('featureSVG3'))}, where features \code{c('featureSVG1', 'featureSVG2')}, \code{c('featureSVG3')} in the aSVG are rematched to features \code{'featureData1'}, \code{'featureData2'} in data, respectively.}
+\item{lis.rematch}{\describe{ \item{(1) Spatial heatmap plots of only bulk tissues without single cells.}{ A named \code{list} for rematching between tissues in data (tissue1Data, tissue2Data) and aSVG spatial features (feature1SVG, feature2SVG, feature3SVG). In each slot, the slot name is an tissue identifier in the data and the slot contains one or multiple aSVG features in a vector. \emph{E.g.} \code{list(tissue1Data = c('feature1SVG', 'feature2SVG'), tissue2Data = c('feature3SVG'))}.} \item{(2) Co-visualizing bulk tissues and single cells using annotation-based or manual methods.}{ Mapping cells to bulk tissues: a named \code{list}, where cell labels from \code{colData(sce.dimred)[, 'cell.group']} are the name slots and aSVG features are the corresponding \code{list} elements. Mapping bulk tissues to cells: a named \code{list}, where bulk tissues from \code{df.match$dataBulk} are the name slots and cells from \code{colData(sce.dimred)[, 'cell.group']} are the corresponding \code{list} elements.}}}
 
 \item{legend.r}{A numeric (between -1 and 1) to adjust the legend plot size. The default is 0.9.}
 
@@ -216,11 +219,11 @@ spatial_hm(
 
 \item{key}{Logical. The default is TRUE and keys are added in legend plot. If \code{label} is TRUE, the keys could be removed.}
 
-\item{line.size}{The thickness of each shape outline in the aSVG is maintained in spatial heatmaps, \emph{i.e.} the stroke widths in Inkscape. This argument is the extra thickness added to all outlines. Default is 0.2 in case stroke widths in the aSVG are 0.}
+\item{line.width}{The thickness of each shape outline in the aSVG is maintained in spatial heatmaps, \emph{i.e.} the stroke widths in Inkscape. This argument is the extra thickness added to all outlines. Default is 0.2 in case stroke widths in the aSVG are 0.}
 
 \item{line.color}{A character of the shape outline color. Default is "grey70".}
 
-\item{relative.scale}{A numeric to adjust the relative sizes between multiple aSVGs. Applicable only if multiple aSVG paths is assigned to \code{svg.path}. Default is \code{NULL} and all aSVGs have the same size.}
+\item{relative.scale}{A numeric to adjust the relative sizes between multiple aSVGs. Applicable only if multiple aSVG paths is assigned to \code{svg}. Default is \code{NULL} and all aSVGs have the same size.}
 
 \item{verbose}{Logical, FALSE or TRUE. If TRUE the samples in data not colored in spatial heatmaps are printed to R console. Default is TRUE.}
 
@@ -334,18 +337,22 @@ pOA=c(0.01, 5), CV=c(0.2, 100), dir=NULL)
 # how this aSVG is selected are documented in function "return_feature".
 svg.chk <- system.file("extdata/shinyApp/example", "gallus_gallus.svg",
 package="spatialHeatmap")
+
+# Parsing the chicken aSVG file.
+svg.chk <- parse_svg(svg.path=svg.chk)
+
 # Plot spatial heatmaps on gene "ENSGALG00000019846".
 # Toy data1. 
-spatial_hm(svg.path=svg.chk, data=df.fil.chk, ID='ENSGALG00000019846', height=0.4,
+spatial_hm(svg=svg.chk, data=df.fil.chk, ID='ENSGALG00000019846', height=0.4,
 legend.r=1.9, sub.title.size=7, ncol=3)
 # Save spaital heatmaps as HTML and video files by assigning "out.dir" "~/test". 
 \donttest{
 if (!dir.exists('~/test')) dir.create('~/test')
-spatial_hm(svg.path=svg.chk, data=df.fil.chk, ID='ENSGALG00000019846', height=0.4,
+spatial_hm(svg=svg.chk, data=df.fil.chk, ID='ENSGALG00000019846', height=0.4,
 legend.r=1.9, sub.title.size=7, ncol=3, out.dir='~/test')
 }
 # Toy data2.
-spatial_hm(svg.path=svg.chk, data=se.fil.chk, ID='ENSGALG00000019846', legend.r=1.9,
+spatial_hm(svg=svg.chk, data=se.fil.chk, ID='ENSGALG00000019846', legend.r=1.9,
 legend.nrow=2, sub.title.size=7, ncol=3)
 
 # The data can also come as as a simple named vector. The following gives an example on a
@@ -357,7 +364,7 @@ vec <- sample(1:100, 3)
 names(vec) <- c('brain', 'heart', 'notMapped')
 vec
 # Plot.
-spatial_hm(svg.path=svg.chk, data=vec, ID='geneX', height=0.6, legend.r=1.5, ncol=1)
+spatial_hm(svg=svg.chk, data=vec, ID='geneX', height=0.6, legend.r=1.5, ncol=1)
 
 # Plot spatial heatmaps on aSVGs of two Arabidopsis thaliana development stages.
 
@@ -374,7 +381,7 @@ package="spatialHeatmap")
 svg2 <- system.file("extdata/shinyApp/example", "arabidopsis.thaliana_organ_shm2.svg",
 package="spatialHeatmap")
 # Spatial heatmaps. 
-spatial_hm(svg.path=c(svg1, svg2), data=df.test, ID=c('gene1'), height=0.8, legend.r=1.6,
+spatial_hm(svg=c(svg1, svg2), data=df.test, ID=c('gene1'), height=0.8, legend.r=1.6,
 preserve.scale=TRUE) 
 
 # Multiple development stages can also be arranged in a single aSVG image, but the 
@@ -383,13 +390,13 @@ preserve.scale=TRUE)
 # Overlay real images with spatial heatmaps.
 
 # The first real image used as a template to create an aSVG. 
-tmp.pa1 <- system.file('extdata/shinyApp/example/maize_leaf_shm1.png',
+raster.pa1 <- system.file('extdata/shinyApp/example/maize_leaf_shm1.png',
 package='spatialHeatmap')
 # The first aSVG created with the first real image. 
 svg.pa1 <- system.file('extdata/shinyApp/example/maize_leaf_shm1.svg',
 package='spatialHeatmap')
 # The second real image used as a template to create an aSVG. 
-tmp.pa2 <- system.file('extdata/shinyApp/example/maize_leaf_shm2.png',
+raster.pa2 <- system.file('extdata/shinyApp/example/maize_leaf_shm2.png',
 package='spatialHeatmap')
 # The second aSVG created with the second real image. 
 svg.pa2 <- system.file('extdata/shinyApp/example/maize_leaf_shm2.svg',
@@ -400,7 +407,7 @@ dat.overlay <- read_fr(system.file('extdata/shinyApp/example/dat_overlay.txt',
 package='spatialHeatmap'))
 
 # Plot spatial heatmaps on top of real images.
-spatial_hm(svg.path=c(svg.pa1, svg.pa2), data=dat.overlay, tmp.path=c(tmp.pa1, tmp.pa2),
+spatial_hm(svg=c(svg.pa1, svg.pa2), data=dat.overlay, raster.path=c(raster.pa1, raster.pa2),
 charcoal=FALSE, ID=c('gene1'), alpha.overlay=0.5)
 
 
@@ -474,7 +481,7 @@ sce.manual.aggr <- aggr_rep(sce.manual, assay.na='logcounts', sam.factor='label'
 # Manually create the matching list.
 lis.match <- list(hypothalamus=c('hypothalamus'), cortex.S1=c('cerebral.cortex'))
 # Co-visualization through manual mathcing: label.
-shm.lis <- spatial_hm(svg.path=svg.mus, data=sce.manual.aggr, ID=c('St18'), height=0.7, legend.r=1.5, legend.key.size=0.02, legend.text.size=12, legend.nrow=2, sce.dimred=sce.manual, dimred='PCA', cell.group='label', assay.na='logcounts', tar.cell=c('matched'), lis.rematch=lis.match, bar.width=0.1, dim.lgd.nrow=1)
+shm.lis <- spatial_hm(svg=svg.mus, data=sce.manual.aggr, ID=c('St18'), height=0.7, legend.r=1.5, legend.key.size=0.02, legend.text.size=12, legend.nrow=2, sce.dimred=sce.manual, dimred='PCA', cell.group='label', assay.na='logcounts', tar.cell=c('matched'), lis.rematch=lis.match, bar.width=0.1, dim.lgd.nrow=1)
 
 # Matching according to cell clusters in the "cluster" column in "colData".
 unique(colData(sce.manual)$cluster) 
@@ -483,7 +490,7 @@ sce.manual.aggr <- aggr_rep(sce.manual, assay.na='logcounts', sam.factor='cluste
 # Manually create the matching list.
 lis.match <- list(clus1=c('hypothalamus'), clus3=c('cerebral.cortex', 'midbrain'))
 # Co-visualization through manual mathcing: cluster.
-shm.lis <- spatial_hm(svg.path=svg.mus, data=sce.manual.aggr, ID=c('St18'), height=0.7, legend.r=1.5, legend.key.size=0.02, legend.text.size=12, legend.nrow=3, sce.dimred=sce.manual, dimred='PCA', cell.group='cluster', assay.na='logcounts', tar.cell=c('matched'), lis.rematch=lis.match, bar.width=0.11, dim.lgd.nrow=1)
+shm.lis <- spatial_hm(svg=svg.mus, data=sce.manual.aggr, ID=c('St18'), height=0.7, legend.r=1.5, legend.key.size=0.02, legend.text.size=12, legend.nrow=3, sce.dimred=sce.manual, dimred='PCA', cell.group='cluster', assay.na='logcounts', tar.cell=c('matched'), lis.rematch=lis.match, bar.width=0.11, dim.lgd.nrow=1)
 }
 \references{
 https://www.gimp.org/tutorials/ \cr https://inkscape.org/en/doc/tutorials/advanced/tutorial-advanced.en.html \cr http://www.microugly.com/inkscape-quickguide/

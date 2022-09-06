@@ -31,7 +31,7 @@
 gg_lgd <- function(gg.all, size.key=NULL, size.text.key=8, angle.text.key=NULL, position.text.key=NULL, legend.value.vdo=NULL, sub.title.size=NULL, row=NULL, col=NULL, label=FALSE, label.size=3, label.angle=0, hjust=0, vjust=0, opacity=1, key=TRUE, aspect.ratio = NULL) {
 
   # save(gg.all, size.key, size.text.key, angle.text.key, position.text.key, legend.value.vdo, sub.title.size, row, col, label, label.size, label.angle, hjust, vjust, opacity, key, aspect.ratio, file='gg.lgd.all')
-  tissue <- x0 <- y0 <- NULL
+  feature <- x0 <- y0 <- NULL
   # Function to remove feature labels. 
   rm_label <- function(g) {    
     g.layer <- g$layer; if (length(g.layer)==1) return(g) 
@@ -50,8 +50,8 @@ gg_lgd <- function(gg.all, size.key=NULL, size.text.key=8, angle.text.key=NULL, 
       lay.dat <- layer_data(g); g.col <- lay.dat$fill
       # Single cell dimensionality point plot.
       if (all(is.na(g.col))) g.col <- lay.dat$colour
-      dat <- g$data; names(g.col) <- dat$tissue
-      df.tis <- as.vector(dat$tissue)
+      dat <- g$data; names(g.col) <- dat$feature
+      df.tis <- as.vector(dat$feature)
       if (is.null(dat$value)) df.val <- NULL else df.val <- round(dat$value, 2) # Expression values.
       g.col <- g.col[!duplicated(names(g.col))]; tis.path <- dat$feature
       # ft.legend <- intersect(unique(sam.dat), unique(tis.path))
@@ -75,9 +75,9 @@ gg_lgd <- function(gg.all, size.key=NULL, size.text.key=8, angle.text.key=NULL, 
         lab.idx <- dat$feature %in% path.tar
         dat1 <- dat[lab.idx, ]; dat1$label <- dat1$feature
         df.lab <- data.frame() 
-        for (j in unique(dat1$tissue)) {
+        for (j in unique(dat1$feature)) {
 
-          df0 <- subset(dat1, tissue==j)
+          df0 <- subset(dat1, feature==j)
           x <- mean(df0$x); y <- mean(df0$y)
           df0$x0 <- x; df0$y0 <- y
           df.lab <- rbind(df.lab, df0)

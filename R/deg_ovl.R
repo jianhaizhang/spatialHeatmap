@@ -36,10 +36,10 @@
 #' @export deg_ovl
 #' @importFrom UpSetR upset fromList
 
-deg_ovl <- function(lis.up.down, type='up', plot='upset', order.by="degree", nintersects=40, point.size=3, line.size=1, mb.ratio=c(0.6, 0.4), text.scale=1.5, axis.agl=45, font.size=5, cols=c("lightcyan3", "darkorange")) {
+deg_ovl <- function(lis.up.down, type='up', plot='upset', order.by="degree", nintersects=40, point.size=3, line.width=1, mb.ratio=c(0.6, 0.4), text.scale=1.5, axis.agl=45, font.size=5, cols=c("lightcyan3", "darkorange")) {
   if (type=='up') lis <- lis.up.down$up.lis else if (type=='down') lis <- lis.up.down$down.lis
   if (plot=='upset') {
-    upset <- upset(fromList(lis), order.by=order.by, nintersects=nintersects, point.size=point.size, line.size=line.size, mb.ratio=mb.ratio, text.scale=text.scale)
+    upset <- upset(fromList(lis), order.by=order.by, nintersects=nintersects, point.size=point.size, line.size=line.width, mb.ratio=mb.ratio, text.scale=text.scale)
     return(upset)
   } else if (plot=='matrix') {
     names(lis) <- sub('\\.up(\\.\\d+)*$|\\.down(\\.\\d+)*$', '', names(lis))

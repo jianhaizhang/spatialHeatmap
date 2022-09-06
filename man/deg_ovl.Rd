@@ -11,7 +11,7 @@ deg_ovl(
   order.by = "degree",
   nintersects = 40,
   point.size = 3,
-  line.size = 1,
+  line.width = 1,
   mb.ratio = c(0.6, 0.4),
   text.scale = 1.5,
   axis.agl = 45,
@@ -31,8 +31,6 @@ deg_ovl(
 \item{nintersects}{Number of intersections to plot. If set to NA, all intersections will be plotted.}
 
 \item{point.size}{Size of points in matrix plot}
-
-\item{line.size}{Width of lines in matrix plot}
 
 \item{mb.ratio}{Ratio between matrix plot and main bar plot (Keep in terms of hundredths)}
 

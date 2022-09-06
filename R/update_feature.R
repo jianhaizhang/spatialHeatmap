@@ -103,7 +103,7 @@ update_feature <- function(df.new, dir) {
       # Update features by order.
       for (j in seq_len(nrow(df1))) {
  
-        nod0 <- xml_children(k)[[df1$index1[j]]]
+        nod0 <- xml_children(k)[[df1$index.sub[j]]]
         if ('featurenew' %in% cna.new) {
           chil0 <- xml_children(nod0); nas <- xml_name(chil0)
         # If there is no "title" node, new feature is added to "id", and no need to add a "title" node. Otherwise, added to the text in title.

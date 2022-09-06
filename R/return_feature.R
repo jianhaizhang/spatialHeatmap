@@ -85,8 +85,8 @@ return_feature <- function(feature, species, keywords.any=TRUE, remote=NULL, dir
       cat(na); cat(', '); df0$SVG <- na; df <- rbind(df, df0)
 
     }; cat('\n')
-    cna <- colnames(df); df <- df[, c('feature', 'stroke', 'color', 'id', 'element', 'parent', 'index1', 'SVG')]
-    colnames(df)[colnames(df)=='index1'] <- 'order'
+    cna <- colnames(df); df <- df[, c('feature', 'stroke', 'fill', 'id', 'element', 'parent', 'index.sub', 'SVG')]
+    colnames(df)[colnames(df)=='index.sub'] <- 'order'
 
     if (desc==TRUE) {
   

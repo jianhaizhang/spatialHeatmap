@@ -11,17 +11,21 @@
 #' @author Jianhai Zhang \email{jzhan067@@ucr.edu} \cr Dr. Thomas Girke \email{thomas.girke@@ucr.edu}
 
 #' @references
-#' https://www.gimp.org/tutorials/ \cr https://inkscape.org/en/doc/tutorials/advanced/tutorial-advanced.en.html \cr http://www.microugly.com/inkscape-quickguide/
-#' Jeroen Ooms (2018). rsvg: Render SVG Images into PDF, PNG, PostScript, or Bitmap Arrays. R package version 1.3. https://CRAN.R-project.org/package=rsvg \cr Paul Murrell (2009). Importing Vector Graphics: The grImport Package for R. Journal of Statistical Software, 30(4), 1-37. URL http://www.jstatsoft.org/v30/i04/ \cr Hadley Wickham, Jim Hester and Jeroen Ooms (2019). xml2: Parse XML. R package version 1.2.2. https://CRAN.R-project.org/package=xml2 \cr R Core Team (2018). R: A language and environment for statistical computing. R Foundation for Statistical Computing, Vienna, Austria. RL https://www.R-project.org/ \cr    
+#' https://www.gimp.org/tutorials/ 
+#' https://inkscape.org/en/doc/tutorials/advanced/tutorial-advanced.en.html 
+#' http://www.microugly.com/inkscape-quickguide/
+#' Jeroen Ooms (2018). rsvg: Render SVG Images into PDF, PNG, PostScript, or Bitmap Arrays. R package version 1.3. https://CRAN.R-project.org/package=rsvg 
+#' Paul Murrell (2009). Importing Vector Graphics: The grImport Package for R. Journal of Statistical Software, 30(4), 1-37. URL http://www.jstatsoft.org/v30/i04/ 
+#' Hadley Wickham, Jim Hester and Jeroen Ooms (2019). xml2: Parse XML. R package version 1.2.2. https://CRAN.R-project.org/package=xml2
+#' R Core Team (2018). R: A language and environment for statistical computing. R Foundation for Statistical Computing, Vienna, Austria. RL https://www.R-project.org/ 
 
 #' @importFrom rsvg rsvg_ps 
 #' @importFrom grImport PostScriptTrace 
 #' @importFrom xml2 xml_length xml_children xml_name xml_attr xml_remove xml_text xml_attrs
-#' @importFrom data.table setDF rbindlist
 #' @importFrom parallel detectCores mclapply
 
 svg_df <- function(svg.path, feature=NULL, cores) {
-  # save(svg.path, feature, cores, file='svg.df.all')
+   save(svg.path, feature, cores, file='svg.df.all')
   # Make sure the style is correct. If the stroke width is not the same across polygons such as '0.0002px', '0.216px', some stroke outlines cannot be recognised by 'PostScriptTrace'. Then some polygons are missing. Since the ggplot is based on 'stroke' not 'fill'.
   options(stringsAsFactors=FALSE)
   doc <- read_xml(svg.path); spa <- xml_attr(doc, 'space')
@@ -43,32 +47,32 @@ svg_df <- function(svg.path, feature=NULL, cores) {
 
      na <- xml_name(xml_children(chdn.all[[i]]))
      len <- xml_length(chdn.all[[i]])-sum(na=='title')
-     tit0 <- rep(df.attr[i, 'feature'], len)
+     tit0 <- rep(df.attr$feature[i], len)
      # Add the distinct pattern '__\\d+$' to each path in a group for easy recognition downstream.
      if (len>1) tit0 <- paste0(tit0, '__', seq_along(tit0))
      tit <- c(tit, tit0)
-     id0 <- rep(df.attr[i, 'id'], len); id.all <- c(id.all, id0)
+     id0 <- rep(df.attr$id[i], len); id.all <- c(id.all, id0)
      # If the styles in paths of a group are different with group style, they can lead to messy 'fill' and 'stroke' in '.ps.xml', so they are set NULL. This step is super important.
      # xml_set_attr(xml_children(chdn.all[[i]]), 'style', NULL)
 
-    } else if (df.attr[i, 'element']=='use') {
+    } else if (df.attr$element[i]=='use') {
 
-      ref <- paste0('#', df.attr[, 'id'])
+      ref <- paste0('#', df.attr$id)
       w <- which(ref %in% xml_attr(chdn.all[[i]], 'href'))
       # If reference is inside a group, since a group contains no nested groups, so the reference is a single path and the use node must has 1 shape.
-      if (length(w)==0) { tit <- c(tit, df.attr[i, 'feature']); id.all <- c(id.all, df.attr[i, 'id']) }
+      if (length(w)==0) { tit <- c(tit, df.attr$feature[i]); id.all <- c(id.all, df.attr$id[i]) }
       # If reference is outside a group.
-      if (length(w)>0) if (df.attr[w, 'element']=='g') {
+      if (length(w)>0) if (df.attr$element[w]=='g') {
 
         na <- xml_name(xml_children(chdn.all[[w]]))
         # Length of the reference group (g).
         len.r <- xml_length(chdn.all[[w]])-sum(na %in% c('a', 'title'))
-        tit0 <- rep(df.attr[i, 'feature'], len.r); tit0 <- paste0(tit0, '__', seq_along(tit0)); tit <- c(tit, tit0)
-        id0 <- rep(df.attr[i, 'id'], len.r); id.all <- c(id.all, id0)
+        tit0 <- rep(df.attr$feature[i], len.r); tit0 <- paste0(tit0, '__', seq_along(tit0)); tit <- c(tit, tit0)
+        id0 <- rep(df.attr$id[i], len.r); id.all <- c(id.all, id0)
 
-      } else { tit <- c(tit, df.attr[i, 'feature']); id.all <- c(id.all, df.attr[i, 'id']) }
+      } else { tit <- c(tit, df.attr$feature[i]); id.all <- c(id.all, df.attr$id[i]) }
 
-    } else { tit <- c(tit, df.attr[i, 'feature']); id.all <- c(id.all, df.attr[i, 'id']) }
+    } else { tit <- c(tit, df.attr$feature[i]); id.all <- c(id.all, df.attr$id[i]) }
 
   }; tis.path <- gsub("__\\d+$", "", tit)
  # style <- 'fill:#46e8e8;fill-opacity:1;stroke:#000000;stroke-width:3;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1' # 'fill' is not necessary. In Inkscape, resizing a "group" causes "matrix" in "transform" (relative positions) attribute, and this can lead to related polygons uncolored in the spatial heatmaps. Solution: ungroup and regroup to get rid of transforms and get absolute positions.
@@ -137,19 +141,22 @@ svg_df <- function(svg.path, feature=NULL, cores) {
   # Place some shapes on the top layer on purpose.
   # idx.top <- grepl('_TOP$|_TOP__\\d+$', df$tissue)
   # df <- rbind(df[!idx.top, ], df[idx.top, ])
-  df$tissue <- factor(df$tissue, levels=unique(df$tissue))
+  df$feature <- factor(df$feature, levels=unique(df$feature))
   # Each entry in tis.path is represented by many x-y pairs in coordinate, and tissues in coord are tissues in tis.path appended '__\\d+$'.
   # Update tis.path.
-  # tis.path <- sub('__\\d+$', '', unique(df$tissue))
-  fil.cols <- df.attr$color; names(fil.cols) <- df.attr$feature
-  w.h <- c(max(df$x) - min(df$x), max(df$y) - min(df$y)); aspect.r <- w.h[1]/w.h[2]; names(aspect.r) <- NULL
+  # tis.path <- sub('__\\d+$', '', unique(df$feature))
+  # fil.cols <- df.attr$fill; names(fil.cols) <- df.attr$feature
+  w.h <- c(max(df$x) - min(df$x), max(df$y) - min(df$y))
+  # aspect.r <- w.h[1]/w.h[2]; names(aspect.r) <- NULL
   names(w.h) <- c('width', 'height')
   # tis.path=sub('_\\d+$', '', tit) introduces a potential bug, since the original single-path tissues can have '_\\d+$' pattern. Solution: in upstream append '__1', '__2', ... to the paths in a group.
-  lis <- list(df=df, tis.path=tis.path, fil.cols=fil.cols, w.h = w.h, aspect.r = aspect.r, df.attr=df.attr); return(lis)
-
+  # lis <- list(df=df, tis.path=tis.path, fil.cols=fil.cols, w.h = w.h, aspect.r = aspect.r, df.attr=df.attr); return(lis)
+  lis <- list(coordinate=df, attribute=df.attr, dimension = w.h); return(lis)
 }
 
-#' Extract children, id, element name from outline and tissue layer#' @param doc The document of SVG
+#' Extract children, id, element name from outline and tissue layer
+
+#' @param doc The document of SVG
 #' @keywords Internal
 #' @noRd
 
@@ -227,24 +234,35 @@ xy <- function(doc, parent, node, tis, use=FALSE, stroke.w, cores) {
 #' @keywords Internal
 #' @noRd
 
+#' @references
+#' Müller K, Wickham H (2022). _tibble: Simple Data Frames_. R package version 3.1.7, <https://CRAN.R-project.org/package=tibble>
+#' Wickham H, François R, Henry L, Müller K (2022). _dplyr: A Grammar of Data Manipulation_. R package version 1.0.9, <https://CRAN.R-project.org/package=dplyr>
+
+#' @importFrom tibble as_tibble 
+#' @importFrom dplyr mutate across %>%  
+
 xy0 <- function(nodeset, tit.all, stroke.w, cores) {
   # Cut node sets into chunks.
   idxs <- seq_along(tit.all); n <- ceiling(length(tit.all)/cores)
   chunk <- split(idxs, ceiling(idxs/n))
-  # Extract coordinates of all tissues in each chunk and combine the all extracted coordinates.
-  xy.mat <- setDF(rbindlist(mclapply(chunk,
+  # Extract coordinates of all tissues in each chunk and combine the all extracted coordinates. 
+  xy.mat <-  mclapply(chunk,
     function(vec) {
       # Extract coordinates of all tissues in each chunk.
       # The class nodeset is like a list. xml_children(nodeset)[-1]: extract and combine the children of each node, [-1] removes the first child of each node.
       lis0 <- xml_attrs(xml_children(nodeset[vec])[-1], c('x','y'))
-      mat0 <- as.data.frame(do.call("rbind", lis0)); return(mat0)
-    }, mc.cores=cores)))
-  xy.mat <- as.data.frame(apply(xy.mat, 2, as.numeric))
-  # Vectorize tissue and line size and add them to the coordinate data frame.
-  lens <- xml_length(nodeset)-1
+      mat0 <- as_tibble(do.call("rbind", lis0))[, c('x', 'y')]
+      return(mat0)
+    }, mc.cores=cores)
+  xy.mat <- do.call("rbind", xy.mat)
+  xy.mat <- xy.mat %>% mutate(across(c('x', 'y'), as.numeric))
+  # Vectorize feature and line size and add them to the coordinate data frame.
+  lens <- xml_length(nodeset)-1 # Length of coordinates/feature.
   widths <- stroke.w[sub('__\\d+$', '', tit.all)]
-  xy.mat$tissue <- rep(tit.all, lens)
-  xy.mat$line.size <- rep(widths, lens); return(xy.mat)
+  # nodeset and tit.all are assumed to be one-to-one matched.
+  xy.mat$feature <- rep(tit.all, lens)
+  # xy.mat$line.width <- rep(widths, lens); 
+  return(xy.mat)
 }
 
 

@@ -77,7 +77,7 @@
 #' @importFrom SingleCellExperiment SingleCellExperiment
 
 
-aggr_rep <- function(data, assay.na=NULL, sam.factor, con.factor, aggr='mean') {
+aggr_rep <- function(data, assay.na=NULL, sam.factor, con.factor=NULL, aggr='mean') {
 
   options(stringsAsFactors=FALSE)
   # Process data. "dgCMatrix" is converted to "matrix".

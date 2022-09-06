@@ -29,8 +29,8 @@ gg_2lgd <- function(gg.all, sam.dat, ft.trans, position.2nd='bottom', legend.nro
 
     g <- gg.all[[i]]; lay.dat <- layer_data(g)
     dat <- g$data; g.col <- lay.dat$fill
-    names(g.col) <- dat$tissue; df.val <- round(dat$value, 2)
-    df.tis <- as.vector(dat$tissue); tis.path <- dat$feature
+    names(g.col) <- dat$feature; df.val <- round(dat$value, 2)
+    df.tis <- as.vector(dat$feature); tis.path <- dat$feature
     g.col <- g.col[!duplicated(names(g.col))]; tis.path <- dat$feature
     ft.legend <- intersect(unique(sam.dat), unique(tis.path))
     ft.legend <- setdiff(ft.legend, ft.trans) 

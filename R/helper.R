@@ -18,10 +18,10 @@ modal <- function(title = NULL, msg, easyClose=FALSE) {
 #' Check if SVGs are paired with templates of raster images
 #'
 #' @param svg.na SVG names or paths.
-#' @param tmp.ext A vector of template image file extensions such as \code{c('.jpg', '.JPG', '.png', '.PNG')}.
+#' @param raster.ext A vector of raster image file extensions such as \code{c('.jpg', '.JPG', '.png', '.PNG')}.
 #' @param shiny If used in Shiny app, the value should be \code{TRUE}.
 
-#' @return The template path.
+#' @return The raster path.
 #' @keywords Internal
 #' @noRd
 
@@ -29,9 +29,9 @@ modal <- function(title = NULL, msg, easyClose=FALSE) {
 
 #' @importFrom shiny showModal
 
-svg_tmp <- function(svg.na, tmp.ext, shiny=TRUE) {                                                                                           
-  ext <- paste0('\\', c('.svg', tmp.ext), '$', collapse='|')
-  # Ensure the template and paired SVG names are same except for extensions.
+svg_raster <- function(svg.na, raster.ext, shiny=TRUE) {                                                                                           
+  ext <- paste0('\\', c('.svg', raster.ext), '$', collapse='|')
+  # Ensure the raster and paired SVG names are same except for extensions.
   paired <- all(table(sub(ext, '', svg.na))==2)
   if (!paired) {
     msg <- 'If raster images are provided as templates, ensure they have the same names with corresponding aSVG images. E.g. test.png, test.svg.'
@@ -43,17 +43,17 @@ svg_tmp <- function(svg.na, tmp.ext, shiny=TRUE) {
 
 #' Extract tmplate path for a selected SVG
 #'
-#' @param svg.paths,svg.nas All svg/tmp paths and names, which are in the same order.
+#' @param svg.paths,svg.nas All svg/raster paths and names, which are in the same order.
 #' @param svg.na Selected SVG name.
-#' @return The template path.
+#' @return The raster path.
 #' @keywords Internal
 #' @noRd
 
 #' @author Jianhai Zhang \email{jianhai.zhang@@email.ucr.edu} \cr Dr. Thomas Girke \email{thomas.girke@@ucr.edu}
 
-tmp_path <- function(svg.paths, svg.nas, svg.na, tmp.ext){
-  tmp.pat <- sub('\\.svg', paste0('(', paste0('\\', tmp.ext, '$', collapse='|'), ')'), svg.na)
-  tmp.pa <- svg.paths[grepl(tmp.pat, svg.nas)]; return(tmp.pa)
+raster_path <- function(svg.paths, svg.nas, svg.na, raster.ext){
+  raster.pat <- sub('\\.svg', paste0('(', paste0('\\', raster.ext, '$', collapse='|'), ')'), svg.na)
+  raster.pa <- svg.paths[grepl(raster.pat, svg.nas)]; return(raster.pa)
 }
 
 #' Apply basic functions on data frame/matrix columns.

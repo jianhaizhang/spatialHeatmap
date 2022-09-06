@@ -84,6 +84,7 @@
 #' @importFrom SingleCellExperiment logcounts
 
 cocluster <- function(bulk, cell.refined, df.match, min.dim=13, max.dim=50, graph.meth='snn', dimred='PCA', sim.meth='spearman') {
+  # save(bulk, cell.refined, df.match, min.dim, max.dim, graph.meth, dimred, sim.meth, file='cocluster.arg')
   # Combine bulk and single cell data.
   dat.kp.sc <- logcounts(cell.refined)
   cat('Single cell data: \n'); print(dim(dat.kp.sc))
@@ -105,14 +106,25 @@ cocluster <- function(bulk, cell.refined, df.match, min.dim=13, max.dim=50, grap
   # sce.tsne.com <- clus.com$sce.tsne; sce.com.nor <- clus.com$sce.nor
   # data.com: logcounts(sce.com.nor), reducedDim(sce.tsne.com, 'PCA')
   # roc <- com_roc(dat.com=logcounts(sce.com.nor), cdat.com, dat.blk=bulk)
-  roc.lis <- com_roc(sce.coclus=sce.tsne.com, dimred=dimred, dat.blk=bulk, df.match=df.match, sim.meth=sim.meth)
-  
+  roc.lis <- com_roc(sce.coclus=sce.tsne.com, dimred=dimred, dat.blk=bulk, df.match=df.match, sim.meth=sim.meth) 
   # Include assignment info to "colData".  
-  cdat <- colData(cell.refined) 
+  cdat <- colData(cell.refined)
   if (!'dataBulk' %in% colnames(cdat)) cdat$dataBulk <- 'none'
   if (!'SVGBulk' %in% colnames(cdat)) cdat$SVGBulk <- 'none'
   colData(cell.refined) <- cdat
-  sce.lis <- refine_asg(res.lis=c(list(cell.refined=cell.refined, sce.bulk.cell=sce.tsne.com), roc.lis), thr=-Inf, df.desired.bulk=NULL, df.match=df.match)
+
+  # Isolate bulk data.
+  sce.bulk <- sce.tsne.com[, !colnames(sce.tsne.com) %in% cdat$cell]
+  cdat.blk <- colData(sce.bulk)
+  cdat.blk$cluster <- NULL
+  names(cdat.blk)[names(cdat.blk)=='cell'] <- 'dataBulk'
+  svg.blk <- df.match$SVGBulk
+  data.blk <- df.match$dataBulk
+  names(svg.blk) <- data.blk
+  cdat.blk$SVGBulk <- svg.blk[cdat.blk$dataBulk]
+  colData(sce.bulk) <- cdat.blk
+
+  sce.lis <- refine_asg(res.lis=c(list(cell.refined=cell.refined, sce.bulk.cell=sce.tsne.com, sce.bulk=sce.bulk), roc.lis), thr=-Inf, df.desired.bulk=NULL, df.match=df.match)
   return(sce.lis)
 }
 

@@ -32,8 +32,8 @@
 #' @importFrom methods as
 #' @importFrom ggplot2 layer_data ggplot geom_point theme_classic theme element_text element_blank labs scale_shape_manual scale_color_manual margin guide_legend
 
-dim_color_coclus <- function(sce=NULL, row.sel=NULL, tar.bulk=NULL, profile=FALSE, gg.dim, gg.shm.all, grob.shm.all, gg.lgd.all, col.shm.all, col.lgd.all, grob.lgd.all, con.na=TRUE, lis.match=NULL, sub.title.size=11, dim.lgd.pos='bottom', dim.lgd.nrow=1, dim.lgd.key.size=4, dim.lgd.text.size=13, dim.capt.size=13) {
-# save(sce, row.sel, tar.bulk, profile, gg.dim, gg.shm.all, grob.shm.all, gg.lgd.all, col.shm.all, col.lgd.all, grob.lgd.all, con.na, lis.match, sub.title.size, dim.lgd.pos, dim.lgd.nrow, dim.lgd.text.size, dim.lgd.key.size, dim.capt.size, file='dim.color.coclus.arg')
+dim_color_coclus <- function(sce=NULL, row.sel=NULL, targ=NULL, profile=FALSE, gg.dim, gg.shm.all, grob.shm.all, gg.lgd.all, col.shm.all, col.lgd.all, grob.lgd.all, con.na=TRUE, lis.match=NULL, sub.title.size=11, dim.lgd.pos='bottom', dim.lgd.nrow=1, dim.lgd.key.size=4, dim.lgd.text.size=13, dim.capt.size=13) {
+  save(sce, row.sel, targ, profile, gg.dim, gg.shm.all, grob.shm.all, gg.lgd.all, col.shm.all, col.lgd.all, grob.lgd.all, con.na, lis.match, sub.title.size, dim.lgd.pos, dim.lgd.nrow, dim.lgd.text.size, dim.lgd.key.size, dim.capt.size, file='dim.color.coclus.arg')
   response <- feature <- idx <- x <- y <- NULL
   if (!is.null(sce) & !is.null(lis.match)) stop("Only one of 'sce' and 'lis.match' is required!")
   cdat <- colData(sce)
@@ -42,8 +42,8 @@ dim_color_coclus <- function(sce=NULL, row.sel=NULL, tar.bulk=NULL, profile=FALS
     blk.uni <- unique(cdat$SVGBulk)
     blk.uni <- setdiff(blk.uni, 'none')
     lis.match <- as(blk.uni, 'list'); names(lis.match) <- blk.uni
-    if (tar.bulk[1]=='all') tar.bulk <- blk.uni
-    if (any(!tar.bulk %in% blk.uni)) stop("Make sure all entries in 'tar.bulk' are in 'SVGBulk'!")
+    if (targ[1]=='matched') targ <- blk.uni
+    if (any(!targ %in% blk.uni)) stop("Make sure all entries in 'targ' are in 'SVGBulk'!")
   }
   lis.match <- lis.match[!unlist(lapply(lis.match, is.null))]
   
@@ -80,7 +80,7 @@ dim_color_coclus <- function(sce=NULL, row.sel=NULL, tar.bulk=NULL, profile=FALS
   if (profile==FALSE) dim.col <- col_dim_shm(gg.dim=gg.dim, gcol.all=col.lgd.all, lis.match=lis.match)
     # Target cells without assignments ('none') are assigned 'gray50'.
     true.tar <- unique(subset(cdat, SVGBulk!='none')$SVGBulk)
-    dim.col[setdiff(tar.bulk, true.tar)] <- 'gray50'
+    dim.col[setdiff(targ, true.tar)] <- 'gray50'
     
     gg.dim0 <- gg.dim[[1]]
     dat <- gg.dim0$data; lay.dat <- layer_data(gg.dim0) 
@@ -89,13 +89,13 @@ dim_color_coclus <- function(sce=NULL, row.sel=NULL, tar.bulk=NULL, profile=FALS
     df.all <- df.all[, !colnames(df.all) %in% 'colour']
 
     # The row order is the same between cdat and df.all.
-    df.all$tissue <- df.all$feature <- cdat$SVGBulk
+    df.all$feature <- cdat$SVGBulk
     df.all <- cbind(df.all, cdat[, c('cell', 'assignedBulk', 'dataBulk')])
     df.all$idx <- seq_len(nrow(df.all))
     na.sel <- paste0(unique(df.all$feature[row.sel]), '.selected')
 
     # Target cells are place on top of non-target cells.
-    idx.top <- which(df.all$tissue != 'none')
+    idx.top <- which(df.all$feature != 'none')
     df.all <- rbind(df.all[setdiff(seq_len(nrow(df.all)), idx.top), ], df.all[idx.top, , drop=FALSE])
     # Selected cells are placed on top.
     if (!is.null(row.sel)) {
@@ -106,12 +106,12 @@ dim_color_coclus <- function(sce=NULL, row.sel=NULL, tar.bulk=NULL, profile=FALS
       df.all <- rbind(subset(df.all, idx %in% un.sel.idx), subset(df.all, idx %in% row.sel))
       idx.sel <- df.all$idx %in% row.sel
       df.all$feature[idx.sel] <- paste0(df.all$feature[idx.sel], '.selected')
-    }; df.all$tissue <- df.all$feature
+    }
 
     dim.col.final <- dim.col
     if (is.null(row.sel)) {
       # Non-target cells are assigned colour gray80.
-      dim.col.final[!names(dim.col.final) %in% tar.bulk] <- 'gray80'
+      dim.col.final[!names(dim.col.final) %in% targ] <- 'gray80'
     } else { # Colours of selected cells.
       col.sel <- rep('gray50', length(na.sel))
       names(col.sel) <- na.sel
@@ -128,7 +128,7 @@ dim_color_coclus <- function(sce=NULL, row.sel=NULL, tar.bulk=NULL, profile=FALS
     sp.all <- c(0, 2:25, 32:127)
     sp.all <- c(sp.sel, setdiff(sp.all, sp.sel))
     if (is.null(row.sel)) {
-      sp[tar.bulk] <- sp.all[seq_along(tar.bulk)]
+      sp[targ] <- sp.all[seq_along(targ)]
     } else {
       sp[na.sel] <- sp.all[seq_along(na.sel)]
     }
@@ -141,8 +141,8 @@ dim_color_coclus <- function(sce=NULL, row.sel=NULL, tar.bulk=NULL, profile=FALS
   if (con.na==TRUE) tit <- gsub('^dim_(.*)_\\d+$', '\\1', names(gg.dim)) else tit <- gsub('^dim_(.*)_con_\\d+$', '\\1', names(gg.dim))
   if (profile==FALSE) tit <- NULL
   if (is.null(row.sel)) {
-    lgd.tit <- ''; lgd.show <- tar.bulk
-    br <- tar.bulk 
+    lgd.tit <- ''; lgd.show <- targ
+    br <- targ 
   } else {
     lgd.tit <- 'Selected'; lgd.show <- sub('\\.selected$', '', na.sel) 
     br <- na.sel

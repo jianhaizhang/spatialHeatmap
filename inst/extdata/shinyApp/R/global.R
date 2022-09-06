@@ -3,7 +3,7 @@ tmp.dir <- normalizePath(tempdir(check=TRUE), winslash="/", mustWork=FALSE)
 tmp.file <- normalizePath(tempfile(), winslash='/', mustWork=FALSE)
 
 # Bitmap extensions accepted in uploaded images.
-tmp.ext <- c('.jpg', '.JPG', '.png', '.PNG')
+raster.ext <- c('.jpg', '.JPG', '.png', '.PNG')
 
 # Confirm button labels.
 lab.sgl <- 'Search by single gene ID (e.g. ENSMUSG00000000031) or symbols'
@@ -38,19 +38,16 @@ url_val <- function(na, lis.url) {
 
 # Import internal functions.
 
+img_pa_na <- get('img_pa_na', envir=asNamespace('spatialHeatmap'), inherits=FALSE)
+svg_separ <- get('svg_separ', envir=asNamespace('spatialHeatmap'), inherits=FALSE)
 sc_qc_plot <- get('sc_qc_plot', envir=asNamespace('spatialHeatmap'), inherits=FALSE)
-
 detect_cluster <- get('detect_cluster', envir=asNamespace('spatialHeatmap'), inherits=FALSE)
-
 dim_color_coclus <- get('dim_color_coclus', envir=asNamespace('spatialHeatmap'), inherits=FALSE)
-
 dim_color <- get('dim_color', envir=asNamespace('spatialHeatmap'), inherits=FALSE)
-
 nn_graph <- get('nn_graph', envir=asNamespace('spatialHeatmap'), inherits=FALSE)
+svg_raster <- get('svg_raster', envir=asNamespace('spatialHeatmap'), inherits=FALSE)
 
-svg_tmp <- get('svg_tmp', envir=asNamespace('spatialHeatmap'), inherits=FALSE)
-
-tmp_path <- get('tmp_path', envir=asNamespace('spatialHeatmap'), inherits=FALSE)
+raster_path <- get('raster_path', envir=asNamespace('spatialHeatmap'), inherits=FALSE)
 
 check <- get('check', envir=asNamespace('spatialHeatmap'), inherits=FALSE)
 
@@ -265,12 +262,12 @@ extr_svg <- function(file, name) {
 }
 
 # Extract svg path/na from uploaded or internal tar files if not found in 'example' folder.
-svg_pa_na <- function(svg.path, pa.svg.upl, tmp.ext) {
+svg_pa_na <- function(svg.path, pa.svg.upl, raster.ext) {
   svg.na <- NULL; for (i in seq_along(svg.path)) {
     # Extract svg names. 
     str <- strsplit(svg.path[[i]], '/')[[1]]
     na0 <- str[length(str)]
-    if (!grepl(paste0('\\', c('.svg', tmp.ext), '$', collapse='|'), na0)) return('No aSVG/template file is detected! Solution: 1) select another aSVG and rematch it to data; 2) add an aSVG/template file for the selected data in the backend aSVG tar file or uploaded aSVG tar file.')
+    if (!grepl(paste0('\\', c('.svg', raster.ext), '$', collapse='|'), na0)) return('No aSVG/template file is detected! Solution: 1) select another aSVG and rematch it to data; 2) add an aSVG/template file for the selected data in the backend aSVG tar file or uploaded aSVG tar file.')
     svg.na <- c(svg.na, na0)
     # Complete uploaded svg paths.
     if (!grepl('example/', svg.path[[i]])) {
@@ -286,9 +283,9 @@ svg_pa_na <- function(svg.path, pa.svg.upl, tmp.ext) {
 }
 
 # Check suffixes if multiple svgs.
-svg_suffix <- function(svg.path, svg.na, tmp.ext) {
+svg_suffix <- function(svg.path, svg.na, raster.ext) {
   if (length(svg.na)>1) {
-    ext <- paste0('_shm\\d+\\', c('.svg', tmp.ext), '$', collapse='|')
+    ext <- paste0('_shm\\d+\\', c('.svg', raster.ext), '$', collapse='|')
     if (!all(grepl(ext, svg.na, perl=TRUE))) return("Suffixes of aSVGs and templates should be indexed as '_shm1.svg', '_shm1.png', '_shm2.svg', '_shm2.png', '_shm3.svg', '_shm3.png', ...")
     ord <- order(gsub('.*_(shm.*)$', '\\1', svg.na))
     svg.path <- svg.path[ord]; svg.na <- svg.na[ord]  

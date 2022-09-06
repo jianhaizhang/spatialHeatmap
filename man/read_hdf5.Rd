@@ -137,12 +137,12 @@ package="spatialHeatmap")
 svg.leaf2 <- system.file("extdata/shinyApp/example", 'maize_leaf_shm2.svg',
 package="spatialHeatmap") 
 # Paths of the two corresponsing raster images of templates.
-tmp.leaf1 <- system.file("extdata/shinyApp/example", 'maize_leaf_shm1.png',
+raster.leaf1 <- system.file("extdata/shinyApp/example", 'maize_leaf_shm1.png',
 package="spatialHeatmap")
-tmp.leaf2 <- system.file("extdata/shinyApp/example", 'maize_leaf_shm2.png',
+raster.leaf2 <- system.file("extdata/shinyApp/example", 'maize_leaf_shm2.png',
 package="spatialHeatmap") 
 # Copy the two aSVG and two template files to the same temporary directory.
-file.copy(c(svg.leaf1, svg.leaf2, tmp.leaf1, tmp.leaf2), dir.svg, overwrite=TRUE)
+file.copy(c(svg.leaf1, svg.leaf2, raster.leaf1, raster.leaf2), dir.svg, overwrite=TRUE)
 
 # Make the pairing table, which describes matchings between the data and image files.
 df.pair <- data.frame(name=c('chicken', 'arab', 'growth', 'leaf'), data=c('expr_chicken', 'expr_arab', 

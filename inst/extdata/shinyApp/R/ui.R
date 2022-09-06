@@ -278,10 +278,10 @@ shm_ui <- function(id, data.ui, search.ui) {
         #column(12, uiOutput(ns('ft.match')))
         match_ui(ns('rematch'))
       ),
-      tabPanel("Template",
+      tabPanel("Raster image",
        tags$div(title="Overlay templates of raster images with spatial heatmap images.",
          splitLayout(cellWidths=c('1%', '10%', '1%', '10%', '1%', '10%'), '', 
-           selectInput(ns('tmp'), label='Overlay', choices=c('Yes', 'No'), selected='Yes'), '',
+           selectInput(ns('raster'), label='Superimposing', choices=c('Yes', 'No'), selected='Yes'), '',
            selectInput(ns('coal'), label='Black-white', choices=c('Yes', 'No'), selected='No'), '',
            div(style='margin-top:25px',
            dropdownButton(inputId=ns('dpwAlpOver'), label='Alpha', circle=FALSE, icon=icon("", verify_fa = FALSE), status='primary', inline=FALSE, width=300,
@@ -581,7 +581,7 @@ scell_ui <- function(id) {
         )), uiOutput(ns('clus.par'))
       ) # tabPanel
      )), #tabPanel("Dimensionality Reduction", navbarPage
-      tabPanel("Manual-Matching", value='manualMatch',
+      tabPanel("Annotation-based/Manual", value='manualMatch',
       #navbarPage('Parameters:',
       #tabPanel(title="Match spatial features", value='matchCell',
         match_ui(ns('rematchCell'))
@@ -589,7 +589,7 @@ scell_ui <- function(id) {
       #) # navbarPage 
       ), #tabPanel 
 
-      tabPanel("Auto-Matching", value='autoMatch',  
+      tabPanel("Automatic", value='autoMatch',  
       navbarPage('', id='autoMatNav', selected='tailor',  
       tabPanel('Result',
         # h5(strong('Subset assignments')),  
@@ -600,29 +600,30 @@ scell_ui <- function(id) {
         dataTableOutput(ns("resAsg")) 
       ),
 
+
       tabPanel('Parameters',
-        h3(strong('Filtering bulk and cells')),  
+        h3(strong('Initial filtering bulk and cells')),  
         fluidRow(splitLayout(cellWidths=c('1%', '10%', '1%', '10%', '1%', '18%', '1%', '18%', '1%', '10%', '1%', '10%'), '',
-        numericInput(ns('filBlkP'), label='P', value=0.1, min=0, max=1, step=0.1, width=150), '',
-        numericInput(ns('filBlkA'), label='A', value=1, min=0, max=1000, step=5, width=150), '',
-        numericInput(ns('filBlkCV1'), label='Min coefficient of variation (CV1)', value=0.1, min=-1000, max=1000, step=0.1, width=200), '',
-        numericInput(ns('filBlkCV2'), label='Max coefficient of variation (CV2)', value=100, min=-1000, max=1000, step=0.1, width=200), '',
-        numericInput(ns('filPGen'), label='P by gene', value=0.01, min=0, max=1, step=0.1, width=150), '',
-        numericInput(ns('filPCell'), label='P by cell', value=0.1, min=0, max=1, step=0.1, width=150)
+        numericInput(ns('initFilBlkP'), label='P', value=0.05, min=0, max=1, step=0.1, width=150), '',
+        numericInput(ns('initFilBlkA'), label='A', value=5, min=0, max=1000, step=5, width=150), '',
+        numericInput(ns('initFilBlkCV1'), label='Min coefficient of variation (CV1)', value=0.05, min=-1000, max=1000, step=0.1, width=200), '',
+        numericInput(ns('initFilBlkCV2'), label='Max coefficient of variation (CV2)', value=100, min=-1000, max=1000, step=0.1, width=200), '',
+        numericInput(ns('initFilPGen'), label='P by gene', value=0.05, min=0, max=1, step=0.1, width=150), '',
+        numericInput(ns('initFilPCell'), label='P by cell', value=0.01, min=0, max=1, step=0.1, width=150)
         )), 
         h3(strong('Normalizing bulk and cells')),  
         fluidRow(splitLayout(cellWidths=c('1%', '15%'), '',
         selectInput(ns('normCoclus'), label='Method', choices=c('computeSumFactors'='fct', 'CPM'='cpm'), selected='fct', width=200)
         )), 
-        #h3(strong('Secondary filtering bulk and cells')),  
-        #fluidRow(splitLayout(cellWidths=c('1%', '10%', '1%', '10%', '1%', '18%', '1%', '18%', '1%', '10%', '1%', '10%'), '',
-        #numericInput(ns('filBlkP'), label='P', value=0.1, min=0, max=1, step=0.1, width=150), '',
-        #numericInput(ns('filBlkA'), label='A', value=1, min=0, max=1000, step=5, width=150), '',
-        #numericInput(ns('filBlkCV1'), label='Min coefficient of variation (CV1)', value=0.1, min=-1000, max=1000, step=0.1, width=200), '',
-        #numericInput(ns('filBlkCV2'), label='Max coefficient of variation (CV2)', value=200, min=-1000, max=1000, step=0.1, width=200), '',
-        #numericInput(ns('filPGen'), label='P by gene', value=0.01, min=0, max=1, step=0.1, width=150), '',
-        #numericInput(ns('filPCell'), label='P by cell', value=0.1, min=0, max=1, step=0.1, width=150)
-        #)), 
+        h3(strong('Secondary filtering bulk and cells')),  
+        fluidRow(splitLayout(cellWidths=c('1%', '10%', '1%', '10%', '1%', '18%', '1%', '18%', '1%', '10%', '1%', '10%'), '',
+        numericInput(ns('filBlkP'), label='P', value=0.1, min=0, max=1, step=0.1, width=150), '',
+        numericInput(ns('filBlkA'), label='A', value=1, min=0, max=1000, step=5, width=150), '',
+        numericInput(ns('filBlkCV1'), label='Min coefficient of variation (CV1)', value=0.1, min=-1000, max=1000, step=0.1, width=200), '',
+        numericInput(ns('filBlkCV2'), label='Max coefficient of variation (CV2)', value=200, min=-1000, max=1000, step=0.1, width=200), '',
+        numericInput(ns('filPGen'), label='P by gene', value=0.01, min=0, max=1, step=0.1, width=150), '',
+        numericInput(ns('filPCell'), label='P by cell', value=0.1, min=0, max=1, step=0.1, width=150)
+        )), 
         h3(strong('Clustering')),  
         fluidRow(splitLayout(cellWidths=c('1%', '14%', '1%', '13%'), '',
         selectInput(ns('clusDim'), label='Reducing dimensionality', choices=c('PCA', 'UMAP'), selected='PCA'), '',

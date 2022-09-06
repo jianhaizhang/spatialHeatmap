@@ -3,13 +3,12 @@
 #' @param gene The gene expession matrix, where rows are genes and columns are tissue/conditions.
 #' @param geneV The gene expression values used to construct the colour bar.
 #' @param con.na Logical, TRUE or FALSE. Default is TRUE, meaning conditions are available.
-#' @param coord The coordidates extracted from the SVG file..
-#' @param tmp.path The path of the template image in the form of raster/bitmap. The template is used to create aSVGs and can be overlaid with spatial heatmaps.
-#' @param charcoal Logical, if \code{TRUE} the template image will be turned black and white.
-#' @param alpha.overlay The opacity of top-layer spatial heatmaps if a template image is added at the bottom layer. The default is 1. 
+#' @param cordn The coordidates extracted from the SVG file..
+#' @param raster.path The path of the template image in the form of raster/bitmap. The template is used to create aSVGs and can be overlaid with spatial heatmaps.
+#' @param charcoal Logical, if \code{TRUE} the raster image will be turned black and white.
+#' @param alpha.overlay The opacity of top-layer spatial heatmaps if a raster image is added at the bottom layer. The default is 1. 
 #' @param ID All gene ids selected after the App is launched. 
 #' @param cols All the color codes used to construct the color bar.
-#' @param tis.path All the tissues/paths extracted from the SVG.
 #' @param lis.rematch A list for rematching features. In each slot, the slot name is an existing feature in the data, and the slot contains a vector of features in aSVG that will be rematched to the feature in the slot name. \emph{E.g.} \code{list(featureData1 = c('featureSVG1', 'featureSVG2'), featureData2 = c('featureSVG3'))}, where features \code{c('featureSVG1', 'featureSVG2')}, \code{c('featureSVG3')} in the aSVG are rematched to features \code{'featureData1'}, \code{'featureData2'} in data, respectively. 
 #' @param ft.trans A character vector of tissue/spatial feature identifiers that will be set transparent. \emph{E.g} c("brain", "heart"). This argument is used when target features are covered by  overlapping features and the latter should be transparent.
 #' @param ft.trans.shm A character vector of aSVG feature identifiers that will be set transparent only in SHMs not legend.
@@ -21,9 +20,8 @@
 #' @param legend.nrow An integer of the total rows of keys in the legend plot. The default is NULL. It is only applicable to the legend plot. If both \code{legend.ncol} and \code{legend.nrow} are used, the product of the two arguments should be equal or larger than the total number of matching spatial features.
 #' @param legend.key.size A numeric of the legend key size ("npc"), applicable to the legend plot. The default is 0.02. 
 #' @param legend.text.size A numeric of the legend label size, applicable to the legend plot. The default is 12.
-#' @param line.size The thickness of each shape outline in the aSVG is maintained in spatial heatmaps, \emph{i.e.} the stroke widths in Inkscape. This argument is the extra thickness added to all outlines. Default is 0.2 in case stroke widths in the aSVG are 0.
+#' @param line.width The thickness of each shape outline in the aSVG is maintained in spatial heatmaps, \emph{i.e.} the stroke widths in Inkscape. This argument is the extra thickness added to all outlines. Default is 0.2 in case stroke widths in the aSVG are 0.
 #' @param line.color A character of the shape outline color. Default is "grey70".
-#' @param aspect.ratio The ratio of width to height.
 #' @param legend.plot.title The title of the legend plot. The default is NULL. 
 #' @param legend.plot.title.size The title size of the legend plot. The default is 11.
 #' @param ... Other arguments passed to \code{\link[ggplot2]{ggplot}}.
@@ -43,14 +41,14 @@
 #' @importFrom magick image_read image_charcoal
 #' @importFrom parallel detectCores mclapply
 
-gg_shm <- function(gene, con.na=TRUE, geneV, coord, tmp.path=NULL, charcoal=FALSE, alpha.overlay=1, ID, cols, tis.path, lis.rematch = NULL, ft.trans=NULL, ft.trans.shm=NULL, sub.title.size, sub.title.vjust=2, ft.legend='identical', legend.col, legend.ncol=NULL, legend.nrow=NULL, legend.position='bottom', legend.direction=NULL, legend.key.size=0.02, legend.text.size=12, legend.plot.title=NULL, legend.plot.title.size=11, line.size=0.2, line.color='grey70', aspect.ratio = 1, ...) {
+gg_shm <- function(svg.all, gene, con.na=TRUE, geneV, charcoal=FALSE, alpha.overlay=1, ID, cols, lis.rematch = NULL, ft.trans=NULL, ft.trans.shm=NULL, sub.title.size, sub.title.vjust=2, ft.legend='identical', legend.ncol=NULL, legend.nrow=NULL, legend.position='bottom', legend.direction=NULL, legend.key.size=0.02, legend.text.size=12, legend.plot.title=NULL, legend.plot.title.size=11, line.width=0.2, line.color='grey70', ...) {
 
- # save(gene, con.na, geneV, coord, tmp.path, charcoal, alpha.overlay, ID, cols, tis.path, lis.rematch, ft.trans, ft.trans.shm, sub.title.size, sub.title.vjust, ft.legend, legend.col, legend.ncol, legend.nrow, legend.position, legend.direction, legend.key.size, legend.text.size, legend.plot.title, legend.plot.title.size, line.size, line.color, aspect.ratio, file='gg.shm.arg')
+ # save(svg.all, gene, con.na, geneV, charcoal, alpha.overlay, ID, cols, lis.rematch, ft.trans, ft.trans.shm, sub.title.size, sub.title.vjust, ft.legend, legend.ncol, legend.nrow, legend.position, legend.direction, legend.key.size, legend.text.size, legend.plot.title, legend.plot.title.size, line.width, line.color, file='gg.shm.arg')
   
   # Main function to create SHMs (by conditions) and legend plot.
   g_list <- function(con, lgd=FALSE, ...) {
     if (is.null(con)) cat('Legend plot ... \n') else cat(con, ' ')
-    value <- feature <- x <- y <- tissue <- NULL; tis.df <- as.vector(unique(coord[, 'tissue']))
+    value <- feature <- x <- y <- NULL; tis.df <- as.vector(unique(cordn$feature))
     # Since ggplot2 '3.3.5', 'NA' instead of NA represents transparency.
     legend.col[legend.col == 'none'] <- NA
     # tis.path and tis.df have the same length by default, but not entries, since tis.df is appended '__\\d+' at the end.
@@ -59,7 +57,7 @@ gg_shm <- function(gene, con.na=TRUE, geneV, coord, tmp.path=NULL, charcoal=FALS
     if (lgd==FALSE) {
       # Keep global text/legend colors in the main SHM. No change on the local legend colors so they are all NA. The line widths of local legend will be set 0.
       g.col <- legend.col[grep('_globalLGD$', names(legend.col))][sub('__\\d+$', '', names(g.col))]
-      names(g.col) <- tis.df # Resolves legend.col['tissue'] is NA by default. 
+      names(g.col) <- tis.df # Resolves legend.col['feature'] is NA by default. 
       # Un-related aSVG mapped to data.
       if (rematch.dif.svg) {
         # The data column index of data features that are assinged new aSVG features under a specific condition.
@@ -84,7 +82,7 @@ gg_shm <- function(gene, con.na=TRUE, geneV, coord, tmp.path=NULL, charcoal=FALS
         for (i in unique(tis.path)) {
           # Map target colors to target tissues.
           tis.idx <- which(tis.col1 %in% i); if (length(tis.idx)==1) {
-            # Account for single-shape tissue without '__\\d+$' and multi-shape tissue with '__\\d+$'.
+            # Account for single-shape feature without '__\\d+$' and multi-shape feature with '__\\d+$'.
             pat <- paste0(paste0('^', i, '$'), '|', paste0('^', i, '__\\d+$'))
             g.col[grep(pat, tis.df)] <- color.dat1[tis.idx] # names(g.col) is tis.df 
           }
@@ -97,13 +95,6 @@ gg_shm <- function(gene, con.na=TRUE, geneV, coord, tmp.path=NULL, charcoal=FALS
             col0 <- color.dat[paste0(names(lis0), '__', con)]
             # Rematching. 
             g.col[tis.path %in% lis0[[1]]] <- col0
-            # Index of features will be rematched.
-            #idx.tis.rematch <- tis.path %in% lis0[[1]]
-            # Index of color for rematching.
-            #idx.tis.rematch.color <- tis.path %in% names(lis0)
-            # if (sum(idx.tis.rematch.color) == 0) stop(paste0('Feature "', names(lis0), '" is not detected in aSVG!'))
-            #if (sum(idx.tis.rematch) == 0 | sum(idx.tis.rematch.color) == 0) next
-            #g.col[idx.tis.rematch] <- unique(g.col[idx.tis.rematch.color])
            }
          }
        }
@@ -114,7 +105,7 @@ gg_shm <- function(gene, con.na=TRUE, geneV, coord, tmp.path=NULL, charcoal=FALS
         g.col[sub('__\\d+$', '', names(g.col)) %in% dat.ft.no] <- NA
       }
     } 
-    # The colors might be internally re-ordered alphabetically during mapping, so give them names to fix the match with tissues. E.g. c('yellow', 'blue') can be re-ordered to c('blue', 'yellow'), which makes tissue mapping wrong. Correct: colours are not re-ordered. The 'tissue' in 'data=coord' are internally re-ordered according to a factor. Therfore, 'tissue' should be a factor with the right order. Otherwise, disordered mapping can happen. Alternatively, name the colors with corresponding tissue names.
+    # The colors might be internally re-ordered alphabetically during mapping, so give them names to fix the match with tissues. E.g. c('yellow', 'blue') can be re-ordered to c('blue', 'yellow'), which makes tissue mapping wrong. Correct: colours are not re-ordered. The 'tissue' in 'data=cordn' are internally re-ordered according to a factor. Therfore, 'tissue' should be a factor with the right order. Otherwise, disordered mapping can happen. Alternatively, name the colors with corresponding tissue names.
     # aes() is passed to either ggplot() or specific layer. Aesthetics supplied to ggplot() are used as defaults for every layer. 
     # Show selected or all samples in legend.
     if (length(ft.legend)==1) if (ft.legend=='identical') {
@@ -151,7 +142,7 @@ gg_shm <- function(gene, con.na=TRUE, geneV, coord, tmp.path=NULL, charcoal=FALS
        legend.col1 <- legend.col1[ft.legend]
        # Keep all colors in the original SVG.
        g.col <- legend.col[sub('__\\d+$', '', names(g.col))]
-       names(g.col) <- tis.df # Resolves "legend.col['tissue'] is NA" by default.
+       names(g.col) <- tis.df # Resolves "legend.col['feature'] is NA" by default.
        # g.col[g.col=='none'] <- NA 
        # Make selected tissues transparent by setting their colours NA.
        if (!is.null(ft.trans)) g.col[sub('__\\d+$', '', tis.df) %in% ft.trans] <- NA
@@ -171,23 +162,28 @@ gg_shm <- function(gene, con.na=TRUE, geneV, coord, tmp.path=NULL, charcoal=FALS
     }
     lgd.par <- theme(legend.position=legend.position, legend.direction=legend.direction, legend.background = element_rect(fill=alpha(NA, 0)), legend.key.size=unit(legend.key.size, "npc"), legend.text=element_text(size=legend.text.size), legend.margin=margin(l=0.1, r=0.1, unit='npc'))
     ## Add 'feature' and 'value' to coordinate data frame, since the resulting ggplot object is used in 'ggplotly'. Otherwise, the coordinate data frame is applied to 'ggplot' directly by skipping the following code.
-    coord$gene <- k; coord$condition <- con; coord$value <- NA
-    coord$feature <- sub('__\\d+$', '', coord$tissue)
+    cordn$gene <- k; cordn$condition <- con; cordn$value <- NA
+    cordn$Feature <- sub('__\\d+$', '', cordn$feature)
     # Assign values to each tissue.
-    col.na <- paste0(coord$feature, '__', coord$condition)
-    idx1 <- col.na %in% colnames(gene); df0 <- coord[idx1, ]
-    # df0$value <- unlist(gene[df0$gene[1], col.na[idx1]]) # Slow in large data.
-    col.na1 <- unique(col.na[idx1])
-    tab0 <- table(col.na[idx1])[col.na1]
-    lis.v <- lapply(col.na1, function(i) { rep(gene[df0$gene[1], i], tab0[i][[1]]) } )
-    df0$value <- unlist(lis.v) 
-    coord[idx1, ] <- df0; coord$line.size <- coord$line.size+line.size
+    if (!is.null(con) | lgd==FALSE) {
+      col.na <- paste0(cordn$Feature, '__', cordn$condition)
+      idx1 <- col.na %in% colnames(gene)
+      if (sum(idx1) > 0) {
+      df0 <- cordn[idx1, ]
+      # df0$value <- unlist(gene[df0$gene[1], col.na[idx1]]) # Slow in large data.
+      col.na1 <- unique(col.na[idx1])
+      tab0 <- table(col.na[idx1])[col.na1]
+      lis.v <- lapply(col.na1, function(i) { rep(gene[df0$gene[1], i], tab0[i][[1]]) } )
+      df0$value <- unlist(lis.v); cordn[idx1, ] <- df0
+      }
+    }
+    cordn$line.width <- cordn$line.width+line.width
     if (lgd==FALSE) { # Set line size as 0 for local legends. 
-      idx.local <- grepl('_localLGD$|_localLGD__\\d+$', coord$tissue)
-      coord$line.size[idx.local] <- 0
+      idx.local <- grepl('_localLGD$|_localLGD__\\d+$', cordn$feature)
+      cordn$line.width[idx.local] <- 0
     }
     # If "data" is not in ggplot(), g$data slot is empty. x, y, and group should be in the same aes().
-    g <- ggplot(data=coord, aes(x=x, y=y, value=value, group=tissue, text=paste0('feature: ', feature, '\n', 'value: ', value)), ...)+tmp.g+geom_polygon(aes(fill=tissue), color=line.color, size=coord$line.size, linetype='solid', alpha=alpha.overlay)+scl.fil+theme_void()+theme(plot.title=element_text(hjust=0.5, vjust=sub.title.vjust, size=sub.title.size), plot.margin=margin(0.005, 0.005, 0.005, 0.005, "npc"), legend.box.margin=margin(-3, 0, 2, 0, unit='pt'), legend.background=element_rect(color=NA), aspect.ratio = 1/aspect.ratio)+labs(x="", y="")+scale_y_continuous(expand=expansion(mult=c(0, 0)))+scale_x_continuous(expand=expansion(mult=c(0, 0)))+lgd.par
+    g <- ggplot(data=cordn, aes(x=x, y=y, value=value, group=feature, text=paste0('feature: ', Feature, '\n', 'value: ', value)), ...)+raster.g+geom_polygon(aes(fill=feature), color=line.color, size=cordn$line.width, linetype='solid', alpha=alpha.overlay)+scl.fil+theme_void()+theme(plot.title=element_text(hjust=0.5, vjust=sub.title.vjust, size=sub.title.size), plot.margin=margin(0.005, 0.005, 0.005, 0.005, "npc"), legend.box.margin=margin(-3, 0, 2, 0, unit='pt'), legend.background=element_rect(color=NA), aspect.ratio = 1/aspect.ratio)+labs(x="", y="")+scale_y_continuous(expand=expansion(mult=c(0, 0)))+scale_x_continuous(expand=expansion(mult=c(0, 0)))+lgd.par
 
     # The aspect ratio should not be calculated by margins that are inferred from original width/height (mar.lb <- (1-w.h/w.h.max*0.99)/2). It works on single plot, but will squeeze the subplots in arrangeGrob/grid.arrange. Rather the "aspect ratio" in theme should be used, which will not squeeze subplots.
     # After theme(aspect.ratio) is set, change in only top or left margin will not distort the image. Rather width/height will scale propotionally, since the aspect ratio is fixed.
@@ -199,16 +195,21 @@ gg_shm <- function(gene, con.na=TRUE, geneV, coord, tmp.path=NULL, charcoal=FALS
 
   }
 
+  svg.sel <- svg_separ(svg.all)
+  cordn <- svg.sel$cordn; tis.path <- svg.sel$tis.path
+  legend.col <- svg.sel$fil.cols; raster.path <- svg.sel$raster.path 
+  aspect.ratio <- svg.sel$aspect.r
+
   # Map colours to samples according to expression level.
   # Column names without '__' are not excluded so as to keep one-to-one match with color.dat.
   cname <- colnames(gene)
   cons <- gsub("(.*)(__)(.*)", "\\3", cname)
   sam.uni <- unique(gsub("(.*)(__)(.*)", "\\1", cname)); ft.trans <- make.names(ft.trans)
   # Template image.
-  tmp.g <- NULL; if (is.character(tmp.path)) if (all(file.exists(tmp.path))) {
-    tmp <- image_read(tmp.path)
-    if (charcoal==TRUE) tmp <- image_charcoal(tmp)
-    tmp.g <- annotation_raster(tmp, -Inf, Inf, -Inf, Inf)
+  raster.g <- NULL; if (is.character(raster.path)) if (all(file.exists(raster.path))) {
+    raster <- image_read(raster.path)
+    if (charcoal==TRUE) raster <- image_charcoal(raster)
+    raster.g <- annotation_raster(raster, -Inf, Inf, -Inf, Inf)
   }
 
   g.lis.all <- gcol.lis.all <- NULL; for (k in ID) {
@@ -292,5 +293,34 @@ diff_cols <- function(n) {
   col.all <- grDevices::colors()[grep('honeydew|aliceblue|white|gr(a|e)y|lightsteelblue|lightsteelblue(1|2)', grDevices::colors(), invert=TRUE)]
   col.na <- col.all[seq(from=1, to=length(col.all), by=floor(length(col.all)/n))]; return(col.na)
 }
+
+
+#' Extract SVG attributes for plotting SHMs.
+#'
+#' @param svg.all A \code{coord} object containing only one SVG instance. 
+#' @return A a list.
+#' @keywords Internal
+#' @noRd
+
+#' @references
+#' Wickham H, François R, Henry L, Müller K (2022). _dplyr: A Grammar of Data Manipulation_. R package version 1.0.9, <https://CRAN.R-project.org/package=dplyr>
+#' @importFrom dplyr mutate %>%
+
+svg_separ <- function(svg.all) {
+  g.df <- coordinate(svg.all)[[1]]; dimen <- dimension(svg.all)[[1]] 
+  aspect.r <- dimen['width']/dimen['height']
+  names(aspect.r) <- NULL
+  # Multiple shapes with suffix "'__\\d+$" may represent the same feature, so "unique" should be in "sub" not outside "sub". If not, these shapes will be collapsed to one. 
+  tis.path <- sub('__\\d+$', '', unique(as.vector(g.df$feature)));
+  df.attr <- attribute(svg.all)[[1]]; fil.cols <- df.attr$fill; names(fil.cols) <- df.attr$feature
+  if (!'line.width' %in% colnames(g.df)) {    
+    g.df <- g.df %>% mutate(line.width=cvt_vector(df.attr$feature, df.attr$stroke, sub('__\\d+$', '', feature)))
+  }
+  raster.pa <- raster(svg.all)
+  if (length(raster.pa)==0) raster.pa <- NULL else if (length(raster.pa) > 0) raster.pa <- raster.pa[[1]] 
+  return(list(cordn=g.df, tis.path=tis.path, fil.cols=fil.cols, raster.path=raster.pa, aspect.r=aspect.r))
+}
+
+
 
 
