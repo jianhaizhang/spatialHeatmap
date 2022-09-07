@@ -41,9 +41,9 @@
 #' @importFrom magick image_read image_charcoal
 #' @importFrom parallel detectCores mclapply
 
-gg_shm <- function(svg.all, gene, con.na=TRUE, geneV, charcoal=FALSE, alpha.overlay=1, ID, cols, lis.rematch = NULL, ft.trans=NULL, ft.trans.shm=NULL, sub.title.size, sub.title.vjust=2, ft.legend='identical', legend.ncol=NULL, legend.nrow=NULL, legend.position='bottom', legend.direction=NULL, legend.key.size=0.02, legend.text.size=12, legend.plot.title=NULL, legend.plot.title.size=11, line.width=0.2, line.color='grey70', ...) {
+gg_shm <- function(svg.all, gene, con.na=TRUE, geneV, charcoal=FALSE, alpha.overlay=1, ID, cols, covis.direc=NULL, lis.rematch = NULL, ft.trans=NULL, ft.trans.shm=NULL, sub.title.size, sub.title.vjust=2, ft.legend='identical', legend.ncol=NULL, legend.nrow=NULL, legend.position='bottom', legend.direction=NULL, legend.key.size=0.02, legend.text.size=12, legend.plot.title=NULL, legend.plot.title.size=11, line.width=0.2, line.color='grey70', ...) {
 
- # save(svg.all, gene, con.na, geneV, charcoal, alpha.overlay, ID, cols, lis.rematch, ft.trans, ft.trans.shm, sub.title.size, sub.title.vjust, ft.legend, legend.ncol, legend.nrow, legend.position, legend.direction, legend.key.size, legend.text.size, legend.plot.title, legend.plot.title.size, line.width, line.color, file='gg.shm.arg')
+ # save(svg.all, gene, con.na, geneV, charcoal, alpha.overlay, ID, cols, covis.direc, lis.rematch, ft.trans, ft.trans.shm, sub.title.size, sub.title.vjust, ft.legend, legend.ncol, legend.nrow, legend.position, legend.direction, legend.key.size, legend.text.size, legend.plot.title, legend.plot.title.size, line.width, line.color, file='gg.shm.arg')
   
   # Main function to create SHMs (by conditions) and legend plot.
   g_list <- function(con, lgd=FALSE, ...) {
@@ -133,6 +133,17 @@ gg_shm <- function(svg.all, gene, con.na=TRUE, geneV, charcoal=FALSE, alpha.over
       if (any(is.na(legend.col1))) {
         n <- sum(is.na(legend.col1)); col.na <- diff_cols(n) 
         legend.col1[is.na(legend.col1)] <- col.na[seq_len(n)]
+      }
+      # toblk: if one cell label is mapped to multiple bulk tissues, these multiple bulk tissues need to have the same color. legend.col1: tissue to show in legend, so only change colors in legend.col1 rather than legend.col.
+      if (!is.null(covis.direc)) {
+        if (covis.direc=='toblk' & is(lis.rematch, 'list')) {
+          for (i in seq_along(lis.rematch)) {
+            lis0  <- lis.rematch[[i]]
+            if (length(lis0) > 0) {
+              legend.col1[lis0] <- legend.col1[lis0][1]
+            }; remove(lis0)
+        }
+      } else if (covis.direc=='tocell' & is(lis.rematch, 'list')) ft.trans <- unique(c(ft.trans, ft.trans.shm))
       }
        # Map legend colours to tissues.
        # Exclude transparent tissues.

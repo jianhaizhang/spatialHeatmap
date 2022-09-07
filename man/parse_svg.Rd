@@ -9,7 +9,7 @@ parse_svg(svg.path, raster.path = NULL, cores = 1)
 \arguments{
 \item{svg.path}{A vector of one or multiple paths of aSVG files. If multiple aSVGs, such as aSVGs depicting organs development across mutiple times, the aSVGs should be indexed with suffixes "_shm1", "_shm2", ..., such as "arabidopsis.thaliana_organ_shm1.svg", "arabidopsis.thaliana_organ_shm2.svg".}
 
-\item{raster.path}{\itemize{ \item A vector of one or multiple paths of raster images in form of jpg or png, which are used as templates for creating aSVG images in \code{svg.path}. Optional (default is \code{NULL}), only applicable when superimposing raster images with SHM plots that are created from aSVG images. \item Matching raster and aSVG images is indicated by identical base names such as imageA.png and imageA.svg. The layout order in SHMs composed of multiple independent images is controlled by numbering the corresponding file pairs accordingly such as imageA_1.png and imageA_1.svg, imageB_2.png and imageB_2.svg, etc.}}
+\item{raster.path}{\itemize{ \item A vector of one or multiple paths of raster images in form of jpg or png, which are usually used as templates for creating aSVG images in \code{svg.path}. Optional (default is \code{NULL}), only applicable when superimposing raster images with SHM plots that are created from aSVG images. \item Matching raster and aSVG images is indicated by identical base names such as imageA.png and imageA.svg. The layout order in SHMs composed of multiple independent images is controlled by numbering the corresponding file pairs accordingly such as imageA_1.png and imageA_1.svg, imageB_2.png and imageB_2.svg, etc.}}
 
 \item{cores}{Number of CPUs to parse the aSVG files (default is \code{1}).}
 }

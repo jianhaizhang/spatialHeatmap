@@ -17,8 +17,7 @@ spatial_hm(
   tar.cell,
   df.match = NULL,
   tar.bulk,
-  profile = FALSE,
-  raster.path = NULL,
+  profile = TRUE,
   charcoal = FALSE,
   alpha.overlay = 1,
   lay.shm = "gene",
@@ -111,9 +110,7 @@ spatial_hm(
 
 \item{tar.bulk}{A vector of target bulk tissues in \code{df.match$dataBulk}, which are mapped to single cells through \code{lis.rematch}.}
 
-\item{profile}{Logical, applicable in co-visualizing bulk and single cell data through auto-matching (coclustering). If \code{TRUE}, one or multiple biological molecule (e.g. gene) identifiers need to be assigned to \code{ID}, and their abundance proifles are included in the co-visualization plot. If \code{FALSE} (default), only the bulk tissue in \code{tar.cell} and matching cells are highlighted in the the co-visualization plot without abundance proifles.}
-
-\item{raster.path}{The path of the template image in the form of raster/bitmap. The template is used to create aSVGs and can be overlaid with spatial heatmaps.}
+\item{profile}{Logical, applicable in co-visualizing bulk tissues and single cells. If \code{TRUE}, one or multiple biological molecule (e.g. gene) identifiers need to be assigned to \code{ID}, and their abundance proifles are included in the co-visualization plot. If \code{FALSE}, abundance proifles are excluded.}
 
 \item{charcoal}{Logical, if \code{TRUE} the raster image will be turned black and white.}
 

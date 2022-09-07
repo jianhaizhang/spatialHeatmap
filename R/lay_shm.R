@@ -26,20 +26,18 @@
 #' @importFrom gridExtra arrangeGrob grid.arrange
 #' @importFrom grid grobTree unit
 
-lay_shm <- function(lay.shm, con, ncol, ID.sel, grob.list = NULL, lay.mat = FALSE, scell=FALSE, profile=FALSE, coclus=FALSE, shiny = FALSE) {  
+lay_shm <- function(lay.shm, con, ncol, ID.sel, grob.list = NULL, lay.mat = FALSE, scell=FALSE, profile=FALSE, shiny = FALSE) {  
   # save(lay.shm, con, ncol, ID.sel, grob.list, lay.mat, scell, profile, shiny, file = 'lay.arg')
-  ncol <- as.numeric(ncol); # grob.all.na <- names(grob.list);
-   
-  if (profile==TRUE | coclus==FALSE) { con <- unique(con); ID.sel <- unique(ID.sel) } else {
+  ncol <- as.numeric(ncol); # grob.all.na <- names(grob.list); 
+  if (profile==TRUE) { con <- unique(con); ID.sel <- unique(ID.sel) } else {
     # Pseudo con and ID.
     con <- paste0('con', seq_along(grob.list))
     ID.sel <- 'gene'; lay.shm <- 'gene'
   }  
-
   if (lay.shm=="gene"|lay.shm=="none") {
 
     # If single-scell data, the number of cons is doubled.
-    len <- length(con); if (scell==TRUE & (profile==TRUE | coclus==FALSE)) len <- len*2
+    len <- length(con); if (scell==TRUE & profile==TRUE) len <- len*2
     all.cell <- ceiling(len/ncol)*ncol
     cell.idx <- c(seq_len(len), rep(NA, all.cell-len))
     # Matrix of a single gene.
@@ -59,7 +57,7 @@ lay_shm <- function(lay.shm, con, ncol, ID.sel, grob.list = NULL, lay.mat = FALS
   } else if (lay.shm=="con") {
     
     # If single-scell data, the number of genes is doubled.
-    len <- length(ID.sel); if (scell==TRUE & (profile==TRUE | coclus==FALSE)) len <- len*2
+    len <- length(ID.sel); if (scell==TRUE & profile==TRUE) len <- len*2
     all.cell <- ceiling(len/ncol)*ncol
     cell.idx <- c(seq_len(len), rep(NA, all.cell-len))
     # Matrix of a single condition.

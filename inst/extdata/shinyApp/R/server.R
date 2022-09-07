@@ -2147,7 +2147,6 @@ shm_server <- function(id, sch, lis.url, url.id, tab, upl.mod.lis, dat.mod.lis, 
     grob.na <- names(shm$grob.all1)
     blk <- scell.mod.lis$sce.rct$bulk
     profile <- ifelse(input$profile=='Yes', TRUE, FALSE)
-    coclus <- ifelse(is.null(blk), FALSE, TRUE)
     # Select target grobs.
     # Use definite patterns and avoid using '.*' as much as possible. Try to as specific as possible.
     pat.all <- paste0('^', pat.all(), '(_\\d+$)')
@@ -2160,7 +2159,7 @@ shm_server <- function(id, sch, lis.url, url.id, tab, upl.mod.lis, dat.mod.lis, 
     # grob.lis.p <- grob.lis.p[unique(names(grob.lis.p))]
     # Indexed cons with '_1', '_2', ... at the end.
     lay <- input$genCon; ID <- gID$geneSel; ncol <- input$col.n
-    lay <- lay_shm(lay.shm=lay, con=con, ncol=ncol, ID.sel=ID, grob.list=grob.lis.p, lay.mat = TRUE, scell=ifelse(is.null(dim.shm.grob.all$val), FALSE, TRUE), profile=profile, coclus=coclus)
+    lay <- lay_shm(lay.shm=lay, con=con, ncol=ncol, ID.sel=ID, grob.list=grob.lis.p, lay.mat = TRUE, scell=ifelse(is.null(dim.shm.grob.all$val), FALSE, TRUE), profile=profile)
     # If 'cat' is the last step, NULL is returned.
     cat('Done! \n'); lay
   })
@@ -2310,9 +2309,8 @@ shm_server <- function(id, sch, lis.url, url.id, tab, upl.mod.lis, dat.mod.lis, 
     }
     lay <- input$genCon; ID <- gID$geneSel; ncol <- input$col.n
     profile <- ifelse(input$profile=='Yes', TRUE, FALSE)
-    coclus <- ifelse(is.null(blk), FALSE, TRUE)
     # This step is plotting.
-    shmLay$val <- shm.lay <- lay_shm(lay.shm=lay, con=con, ncol=ncol, ID.sel=ID, grob.list=grob.lis.p, scell=ifelse(is.null(dim.shm.grob.lis), FALSE, TRUE), profile=profile, coclus=coclus, shiny=TRUE)
+    shmLay$val <- shm.lay <- lay_shm(lay.shm=lay, con=con, ncol=ncol, ID.sel=ID, grob.list=grob.lis.p, scell=ifelse(is.null(dim.shm.grob.lis), FALSE, TRUE), profile=profile, shiny=TRUE)
     cat('Done! \n')
     })
   })

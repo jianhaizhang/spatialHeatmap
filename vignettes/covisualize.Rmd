@@ -204,8 +204,7 @@ The `colData` slot of the test data is manipulated by including cell source tiss
 </font>> 
 
 ```{r , eval=TRUE, echo=TRUE, warnings=FALSE} 
-colData(sce.test) <- DataFrame(cell=sample(c('Medulla.Oblongata', 'Cerebral.Cortex', 'Hippocampus', 'Cerebellum', 'Brainstem', '$
-idbrain', 'Hypothalamus'), ncol(sce.test), replace=TRUE))
+colData(sce.test) <- DataFrame(cell=sample(c('Medulla.Oblongata', 'Cerebral.Cortex', 'Hippocampus', 'Cerebellum', 'Brainstem', 'Midbrain', 'Hypothalamus'), ncol(sce.test), replace=TRUE))
 colData(sce.test)[1:3, , drop=FALSE]
 ```
 
@@ -260,7 +259,7 @@ The co-visualization is created on gene `Gene_0010`. The embedding plot includes
 
 ```{r , eval=TRUE, echo=TRUE, warnings=FALSE, results='hide', fig.cap=('Example co-visualization plot. The co-visualization is created on gene `Gene_0010`. Single cells in the embedding plot and their matching aSVG features in the spatial heatmap are filled by the same color according to aggregated assay profiles within each cell label.')}
 
-shm.lis.test <- spatial_hm(svg=svg.mus.brain, data=sce.aggr.test, ID=c('Gene_0010'), height=0.7, legend.r=1.5, legend.key.size=0.02, legend.text.size=12, legend.nrow=3, sce.dimred=sce.dimred.test, dimred='PCA', cell.group='cell', assay.na='logcounts', tar.cell=c('matched'), lis.rematch=lis.match.test, bar.width=0.11, dim.lgd.nrow=1) 
+shm.lis.test <- spatial_hm(svg=svg.mus.brain, data=sce.aggr.test, ID=c('Gene_0010'), height=0.7, legend.r=1.5, legend.key.size=0.02, legend.text.size=12, legend.nrow=3, sce.dimred=sce.dimred.test, dimred='PCA', cell.group='cell', assay.na='logcounts', tar.cell=names(lis.match.test), lis.rematch=lis.match.test, bar.width=0.11, dim.lgd.nrow=1) 
 ```
 
 <p style="color:red">Why isn't the covisualization handled by its own function that
@@ -449,7 +448,7 @@ is based on the gene expression summary for each cell group obtained by clusteri
 Completely manual groupings can be provided the same way.  
 
 ```{r scAutoVis, eval=TRUE, echo=TRUE, warnings=FALSE, fig.wide=TRUE, fig.cap=('Co-visualization of single cell data and tissue features with cluster groupings. Gene `Rpl7` is used as an example and the cell groupings were obtained by clustering.'), out.width="100%", fig.show='show', results='hide'}
-shm.lis <- spatial_hm(svg.path=svg.mus.brain, data=sce.clus.aggr, ID=c('Rpl7'), height=0.7, legend.r=1.5, legend.key.size=0.02, legend.text.size=12, legend.nrow=3, sce.dimred=sce.clus, dimred='PCA', cell.group='cluster', assay.na='logcounts', tar.cell=c('matched'), lis.rematch=lis.match.clus, bar.width=0.09, dim.lgd.nrow=1)
+shm.lis <- spatial_hm(svg=svg.mus.brain, data=sce.clus.aggr, ID=c('Rpl7'), height=0.7, legend.r=1.5, legend.key.size=0.02, legend.text.size=12, legend.nrow=3, sce.dimred=sce.clus, dimred='PCA', cell.group='cluster', assay.na='logcounts', tar.cell=c('matched'), lis.rematch=lis.match.clus, bar.width=0.09, dim.lgd.nrow=1)
 ```
 
 ## Automated Method

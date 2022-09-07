@@ -24,8 +24,8 @@
 
 #' @importFrom ggplot2 layer_data ggplot geom_point theme_classic theme element_text element_blank labs scale_color_manual scale_shape_manual margin guide_legend 
 
-dim_color2cell <- function(gg.dim, gg.shm.all, grob.shm.all, col.shm.all, cell.group, df.match, con.na=TRUE, lis.match=NULL, sub.title.size=11, dim.lgd.pos='bottom', dim.lgd.nrow=2, dim.lgd.key.size=4, dim.lgd.text.size=13) {
-  # save(gg.dim, gg.shm.all, grob.shm.all, col.shm.all, cell.group, df.match, con.na, lis.match, sub.title.size, dim.lgd.pos, dim.lgd.nrow, dim.lgd.key.size, dim.lgd.text.size, file='dim.color.tocell.arg')
+dim_color2cell <- function(gg.dim, gg.shm.all, grob.shm.all, col.shm.all, gg.lgd.all, col.lgd.all, grob.lgd.all, profile=TRUE, cell.group, df.match, con.na=TRUE, lis.match=NULL, sub.title.size=11, dim.lgd.pos='bottom', dim.lgd.nrow=2, dim.lgd.key.size=4, dim.lgd.text.size=13) {
+  # save(gg.dim, gg.shm.all, grob.shm.all, col.shm.all, gg.lgd.all, col.lgd.all, grob.lgd.all, profile, cell.group, df.match, con.na, lis.match, sub.title.size, dim.lgd.pos, dim.lgd.nrow, dim.lgd.key.size, dim.lgd.text.size, file='dim.color.tocell.arg')
   x <- y <- fill <- feature <- NULL
   # Trasfer svg features to name slots of lis.match.
   lis.match <- lis.match[!unlist(lapply(lis.match, is.null))]
@@ -34,22 +34,19 @@ dim_color2cell <- function(gg.dim, gg.shm.all, grob.shm.all, col.shm.all, cell.g
     names(lis.match.svg)[i] <- unique(subset(df.match, dataBulk==names(lis.match.svg[i]))$SVGBulk)
   }
   # Ggplots of all reduced dim.
-  n <- length(grob.shm.all); gg.dim.all <- rep(list(gg.dim), n)
-  names(gg.dim.all) <- paste0('dim_', names(grob.shm.all))
+  if (profile==TRUE) {
+    n <- length(grob.shm.all); gg.dim.all <- rep(list(gg.dim), n)
+    names(gg.dim.all) <- paste0('dim_', names(grob.shm.all))
+  } else if (profile==FALSE) {
+    n <- length(gg.lgd.all); gg.dim.all <- rep(list(gg.dim), n)
+    names(gg.dim.all) <- paste0('dim_', names(gg.lgd.all))
+  } 
   # Match colors in SHMs to dim plots. Colour order: data -> svg feature -> embedding plot.
   for (i in seq_along(gg.dim.all)) {
-    gg.dim <- gg.dim.all[i]; na <- sub('^dim_', '', names(gg.dim))
-    # Relevant colors in SHM. 
-    g.col <- col.shm.all[[paste0('col_', na)]]
-    svg.ft.na <- names(lis.match.svg)
-    # 'gray80' is a reserved color. 
-    cell.labs <- unlist(lis.match.svg)    
-    dim.col <- rep('gray80', length(cell.labs))
-    names(dim.col) <- cell.labs 
-    for (j in svg.ft.na) { # Colors: svg to cell.
-      matched.col <- g.col[sub('__\\d+', '', names(g.col))==j][1]
-      if (matched.col!='NA') dim.col[lis.match.svg[[j]]] <- matched.col 
-    }
+    gg.dim <- gg.dim.all[i] 
+    if (profile==TRUE) dim.col <- col_dim_tocell(gg.dim, gcol.all=col.shm.all, lis.match.svg)
+    if (profile==FALSE) dim.col <- col_dim_tocell(gg.dim, gcol.all=col.lgd.all, lis.match.svg)
+
     # Data for plotting embedding plot.
     gg.dim0 <- gg.dim[[1]]
     dat <- gg.dim0$data; lay.dat <- layer_data(gg.dim0) 
@@ -67,6 +64,7 @@ dim_color2cell <- function(gg.dim, gg.shm.all, grob.shm.all, col.shm.all, cell.g
     dat.all <- rbind(subset(dat.all, fill == 'gray80'), subset(dat.all, fill != 'gray80'))
 
     if (con.na==TRUE) tit <- gsub('^dim_(.*)_\\d+$', '\\1', names(gg.dim)) else tit <- gsub('^dim_(.*)_con_\\d+$', '\\1', names(gg.dim))
+    if (profile==FALSE) tit <- NULL
     # Non-target cell clusters have colour of 'gray80'.
     tar.cell <- unlist(lis.match)
     non.tar <- setdiff(cell.all, tar.cell) 
@@ -93,8 +91,36 @@ dim_color2cell <- function(gg.dim, gg.shm.all, grob.shm.all, col.shm.all, cell.g
   dim.shm.grob.lis[seq(1, 2*n, 2)] <- grob.dim.all
   names(dim.shm.gg.lis)[seq(1, 2*n, 2)] <- names(dim.shm.grob.lis)[seq(1, 2*n, 2)] <- names(grob.dim.all)
   # Assign all SHMs to the empty list.
-  dim.shm.gg.lis[seq(2, 2*n, 2)] <- gg.shm.all
-  dim.shm.grob.lis[seq(2, 2*n, 2)] <- grob.shm.all
-  names(dim.shm.gg.lis)[seq(2, 2*n, 2)] <- names(dim.shm.grob.lis)[seq(2, 2*n, 2)] <- names(grob.shm.all)
+  if (profile==TRUE) {
+    dim.shm.gg.lis[seq(2, 2*n, 2)] <- gg.shm.all
+    dim.shm.grob.lis[seq(2, 2*n, 2)] <- grob.shm.all
+    names(dim.shm.gg.lis)[seq(2, 2*n, 2)] <- names(dim.shm.grob.lis)[seq(2, 2*n, 2)] <- names(grob.shm.all)
+  } else {
+    dim.shm.gg.lis[seq(2, 2*n, 2)] <- gg.lgd.all
+    dim.shm.grob.lis[seq(2, 2*n, 2)] <- grob.lgd.all
+    names(dim.shm.gg.lis)[seq(2, 2*n, 2)] <- names(dim.shm.grob.lis)[seq(2, 2*n, 2)] <- names(grob.lgd.all)
+  } 
   return(list(dim.shm.gg.lis=dim.shm.gg.lis, dim.shm.grob.lis=dim.shm.grob.lis))
+}
+
+
+#' Assign colors from SVG features to cell labels in embedding plot through a matching list when mapping bulk to cells.
+#' 
+#' @return A vector.
+#' @keywords Internal
+#' @noRd 
+
+col_dim_tocell <- function(gg.dim, gcol.all, lis.match) { 
+    na <- sub('^dim_', '', names(gg.dim))
+    # Relevant colors in SHM. 
+    g.col <- gcol.all[[paste0('col_', na)]]
+    svg.ft.na <- names(lis.match)
+    # 'gray80' is a reserved color. 
+    cell.labs <- unlist(lis.match)    
+    dim.col <- rep('gray80', length(cell.labs))
+    names(dim.col) <- cell.labs 
+    for (j in svg.ft.na) { # Colors: svg to cell.
+      matched.col <- g.col[sub('__\\d+', '', names(g.col))==j][1]
+      if (matched.col!='NA') dim.col[lis.match[[j]]] <- matched.col 
+    }; return(dim.col)
 }
