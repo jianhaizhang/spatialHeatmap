@@ -9,8 +9,7 @@
 #' @param dimred One of \code{PCA}, \code{UMAP}, \code{TSNE} in \code{sce.dimred}, specifying which reduced dimensionality to use in co-visualization of bulk tissues and single cells.
 #' @param cell.group Applicable in co-visualizing bulk tissues and single cells with annodation-based or manual method. A column name in \code{colData(sce.dimred)}, where one label defines a cell group, and the mapping direction is from cell groups/labels to bulk tissues. 
 #' @param tar.cell Applicable in co-visualizing bulk tissues and single cells through annodation-based or manual method. A vector of target cell labels in \code{cell.group}. Cells corresponding to these labels are mapped to bulk tissues through \code{lis.rematch}.  
-#' @param df.match Applicable in co-visualizing bulk tissues and single cells through annodation-based or manual method. A \code{data.frame} with two columns of \code{SVGBulk} and \code{dataBulk} indicating matching between spatial features in aSVG and bulk tissues in data, only required when mapping direction is bulk tissues to single cells.
-#' @param tar.bulk A vector of target bulk tissues in \code{df.match$dataBulk}, which are mapped to single cells through \code{lis.rematch}.
+#' @param tar.bulk A vector of target bulk tissues, which are mapped to single cells through \code{lis.rematch}.
 #' @param profile Logical, applicable in co-visualizing bulk tissues and single cells. If \code{TRUE}, one or multiple biological molecule (e.g. gene) identifiers need to be assigned to \code{ID}, and their abundance proifles are included in the co-visualization plot. If \code{FALSE}, abundance proifles are excluded.  
 #' @param bar.title.size A numeric of color bar title size. The default is 0. 
 #' @param bar.value.size A numeric of value size in the color bar y-axis. The default is 10.
@@ -48,7 +47,7 @@
 #' @param key Logical. The default is TRUE and keys are added in legend plot. If \code{label} is TRUE, the keys could be removed. 
 
 #' @param ft.trans A character vector of tissue/spatial feature identifiers that will be set transparent. \emph{E.g} c("brain", "heart"). This argument is used when target features are covered by  overlapping features and the latter should be transparent.
-#' @param lis.rematch \describe{ \item{(1) Spatial heatmap plots of only bulk tissues without single cells.}{ A named \code{list} for rematching between tissues in data (tissue1Data, tissue2Data) and aSVG spatial features (feature1SVG, feature2SVG, feature3SVG). In each slot, the slot name is an tissue identifier in the data and the slot contains one or multiple aSVG features in a vector. \emph{E.g.} \code{list(tissue1Data = c('feature1SVG', 'feature2SVG'), tissue2Data = c('feature3SVG'))}.} \item{(2) Co-visualizing bulk tissues and single cells using annotation-based or manual methods.}{ Mapping cells to bulk tissues: a named \code{list}, where cell labels from \code{colData(sce.dimred)[, 'cell.group']} are the name slots and aSVG features are the corresponding \code{list} elements. Mapping bulk tissues to cells: a named \code{list}, where bulk tissues from \code{df.match$dataBulk} are the name slots and cells from \code{colData(sce.dimred)[, 'cell.group']} are the corresponding \code{list} elements.}}
+#' @param lis.rematch \describe{ \item{(1) Spatial heatmap plots of only bulk tissues without single cells.}{ A named \code{list} for rematching between tissues in data (tissue1Data, tissue2Data) and aSVG spatial features (feature1SVG, feature2SVG, feature3SVG). In each slot, the slot name is an tissue identifier in the data and the slot contains one or multiple aSVG features in a vector. \emph{E.g.} \code{list(tissue1Data = c('feature1SVG', 'feature2SVG'), tissue2Data = c('feature3SVG'))}.} \item{(2) Co-visualizing bulk tissues and single cells using annotation-based or manual methods.}{ Mapping cells to bulk tissues: a named \code{list}, where cell labels from \code{colData(sce.dimred)[, 'cell.group']} are the name slots and aSVG features are the corresponding \code{list} elements. Mapping bulk tissues to cells: a named \code{list}, where bulk tissues are the name slots and cells from \code{colData(sce.dimred)[, 'cell.group']} are the corresponding \code{list} elements.}}
 #' @param tis.trans This argument is deprecated and replaced by \code{ft.trans}. 
 #' @param sub.title.size A numeric of the subtitle font size of each individual spatial heatmap. The default is 11.
 #' @param sub.title.vjust A numeric of vertical adjustment for subtitle. The default is \code{2}.
@@ -360,27 +359,29 @@
 #' @importFrom SingleCellExperiment reducedDimNames
 
 
-spatial_hm <- function(svg, data, assay.na=NULL, sam.factor=NULL, con.factor=NULL, ID, sce.dimred=NULL, dimred='PCA', cell.group=NULL, tar.cell, df.match=NULL, tar.bulk, profile=TRUE, charcoal=FALSE, alpha.overlay=1, lay.shm="gene", ncol=2, col.com=c('yellow', 'orange', 'red'), col.bar='selected', sig.thr=c(NA, NA), cores=NA, bar.width=0.08, bar.title.size=0, trans.scale=NULL, ft.trans=NULL, tis.trans=ft.trans, lis.rematch = NULL, legend.r=0.9, sub.title.size=11, sub.title.vjust=2, legend.plot='all', ft.legend='identical', bar.value.size=10, legend.plot.title='Legend', legend.plot.title.size=11, legend.ncol=NULL, legend.nrow=NULL, legend.position='bottom', legend.direction=NULL, legend.key.size=0.02, legend.text.size=12, angle.text.key=NULL, position.text.key=NULL, legend.2nd=FALSE, position.2nd='bottom', legend.nrow.2nd=NULL, legend.ncol.2nd=NULL, legend.key.size.2nd=0.03, legend.text.size.2nd=10, angle.text.key.2nd=0, position.text.key.2nd='right', dim.lgd.pos='bottom', dim.lgd.nrow=2, dim.lgd.key.size=4, dim.lgd.text.size=13, dim.capt.size=13, add.feature.2nd=FALSE, label=FALSE, label.size=4, label.angle=0, hjust=0, vjust=0, opacity=1, key=TRUE, line.width=0.2, line.color='grey70', relative.scale = NULL, verbose=TRUE, out.dir=NULL, animation.scale = 1, selfcontained=FALSE, video.dim='640x480', res=500, interval=1, framerate=1, bar.width.vdo=0.1, legend.value.vdo=NULL, ...) {
+spatial_hm <- function(svg, data, assay.na=NULL, sam.factor=NULL, con.factor=NULL, ID, sce.dimred=NULL, dimred='PCA', cell.group=NULL, tar.cell=NULL, tar.bulk=NULL, profile=TRUE, charcoal=FALSE, alpha.overlay=1, lay.shm="gene", ncol=2, col.com=c('yellow', 'orange', 'red'), col.bar='selected', sig.thr=c(NA, NA), cores=NA, bar.width=0.08, bar.title.size=0, trans.scale=NULL, ft.trans=NULL, tis.trans=ft.trans, lis.rematch = NULL, legend.r=0.9, sub.title.size=11, sub.title.vjust=2, legend.plot='all', ft.legend='identical', bar.value.size=10, legend.plot.title='Legend', legend.plot.title.size=11, legend.ncol=NULL, legend.nrow=NULL, legend.position='bottom', legend.direction=NULL, legend.key.size=0.02, legend.text.size=12, angle.text.key=NULL, position.text.key=NULL, legend.2nd=FALSE, position.2nd='bottom', legend.nrow.2nd=NULL, legend.ncol.2nd=NULL, legend.key.size.2nd=0.03, legend.text.size.2nd=10, angle.text.key.2nd=0, position.text.key.2nd='right', dim.lgd.pos='bottom', dim.lgd.nrow=2, dim.lgd.key.size=4, dim.lgd.text.size=13, dim.capt.size=13, add.feature.2nd=FALSE, label=FALSE, label.size=4, label.angle=0, hjust=0, vjust=0, opacity=1, key=TRUE, line.width=0.2, line.color='grey70', relative.scale = NULL, verbose=TRUE, out.dir=NULL, animation.scale = 1, selfcontained=FALSE, video.dim='640x480', res=500, interval=1, framerate=1, bar.width.vdo=0.1, legend.value.vdo=NULL, ...) {
 
-   # save(svg, data, assay.na, sam.factor, con.factor, ID, sce.dimred, dimred, tar.cell, profile, cell.group, df.match, tar.bulk, charcoal, alpha.overlay, lay.shm, ncol, col.com, col.bar, sig.thr, cores, bar.width, bar.title.size, trans.scale, ft.trans, tis.trans, lis.rematch, legend.r, sub.title.size, sub.title.vjust, legend.plot, ft.legend, bar.value.size, legend.plot.title, legend.plot.title.size, legend.ncol, legend.nrow, legend.position, legend.direction, legend.key.size, legend.text.size, angle.text.key, position.text.key, legend.2nd, position.2nd, legend.nrow.2nd, legend.ncol.2nd, legend.key.size.2nd, legend.text.size.2nd, angle.text.key.2nd, position.text.key.2nd, dim.lgd.pos, dim.lgd.nrow, dim.lgd.key.size, dim.lgd.text.size, dim.capt.size, add.feature.2nd, label, label.size, label.angle, hjust, vjust, opacity, key, line.width, line.color, relative.scale, verbose, out.dir, animation.scale, selfcontained, video.dim, res, interval, framerate, bar.width.vdo, legend.value.vdo, file='shm.arg')
+ # save(svg, data, assay.na, sam.factor, con.factor, ID, sce.dimred, dimred, tar.cell, profile, cell.group, tar.bulk, charcoal, alpha.overlay, lay.shm, ncol, col.com, col.bar, sig.thr, cores, bar.width, bar.title.size, trans.scale, ft.trans, tis.trans, lis.rematch, legend.r, sub.title.size, sub.title.vjust, legend.plot, ft.legend, bar.value.size, legend.plot.title, legend.plot.title.size, legend.ncol, legend.nrow, legend.position, legend.direction, legend.key.size, legend.text.size, angle.text.key, position.text.key, legend.2nd, position.2nd, legend.nrow.2nd, legend.ncol.2nd, legend.key.size.2nd, legend.text.size.2nd, angle.text.key.2nd, position.text.key.2nd, dim.lgd.pos, dim.lgd.nrow, dim.lgd.key.size, dim.lgd.text.size, dim.capt.size, add.feature.2nd, label, label.size, label.angle, hjust, vjust, opacity, key, line.width, line.color, relative.scale, verbose, out.dir, animation.scale, selfcontained, video.dim, res, interval, framerate, bar.width.vdo, legend.value.vdo, file='shm.arg')
 
   calls <- names(vapply(match.call(), deparse, character(1))[-1])
   if("tis.trans" %in% calls) { ft.trans <- tis.trans; warning('"tis.trans" is deprecated and replaced by "ft.trans"! \n') }
   if("svg.path" %in% calls) { svg <- svg.path; warning('"svg.path" is deprecated and replaced by "svg"! \n') }
   x <- y <- color_scale <- tissue <- NULL; options(stringsAsFactors=FALSE)
   # if (!is.null(sub.margin)) if (!is.numeric(sub.margin) | length(sub.margin)!=4 | any(sub.margin >= 1) | any(sub.margin < 0)) stop('"sub.margin" must be a 4-length numeric vector between 0 (inclusive) and 1 (exclusive)!')
-  if (missing(ID)) ID <- rownames(data)[1]
+  if (!is(svg, 'coord')) stop('The "svg" should be a "coord" object!')
+  svgs <- svg; if (missing(ID)) ID <- rownames(data)[1]
   ID <- unique(ID)
+  svg.ft.all <- unique(unlist(lapply(seq_along(svgs), function(x) {  unique(attribute(svgs[x])[[1]]$feature)
+  })))
   is.sce <- is(sce.dimred, 'SingleCellExperiment')
   profile.no <- profile==FALSE & is.sce 
   covis.direc <- NULL
   if (is.sce) { # Check coviz related data.
-    if (missing(tar.bulk)) tar.bulk <- NULL
-    lis <- check_data_covis(data, dimred, cell.group, sce.dimred, tar.bulk, df.match, lis.rematch) 
+    lis <- check_data_covis(data, dimred, cell.group, sce.dimred, tar.cell, tar.bulk, lis.rematch, svg.ft.all) 
     data <- lis$data; tar.bulk <- lis$tar.bulk
     tocell <- lis$tocell; toblk <- lis$toblk
     toblk.coclus <- lis$toblk.coclus
-    tocell.coclus <- lis$tocell.coclus; 
+    tocell.coclus <- lis$tocell.coclus;
     if (tocell) { 
       lis.rematch <- lis$lis.rematch
       lis.rematch.dim <- lis$lis.rematch.dim
@@ -422,7 +423,7 @@ spatial_hm <- function(svg, data, assay.na=NULL, sam.factor=NULL, con.factor=NUL
     gene <- t(scale(t(gene))) } else if (trans.scale=='column') { gene <- scale(gene) }
  
     # Color bar.
-    sig.thr <- check(sig.thr, as.numeric)
+    sig.thr <- dat_fun(sig.thr, as.numeric)
     if (length(sig.thr)!=2) stop('The "sig.thr" must be a two-element vecor and contain as least one numeric!')
     if (any(is.na(sig.thr))) { # Default signal threshold
       if (col.bar=="all") { 
@@ -448,13 +449,32 @@ spatial_hm <- function(svg, data, assay.na=NULL, sam.factor=NULL, con.factor=NUL
     con <- gsub("(.*)(__)(.*)", "\\3", cname[form]); con.uni <- unique(con)
     sam.uni <- unique(gsub("(.*)(__)(.*)", "\\1", cname))
 
-    if (!is(svg, 'coord')) stop('The "svg" should be a "coord" object!')
-    svgs <- svg; svg.pa.na <- img_pa_na(unlist(svgs[, 'svg']))
+    svg.pa.na <- img_pa_na(unlist(svgs[, 'svg']))
     # svg.path may not be paths, can be file names, if users provide a coord class that not includes paths.
     svg.path <- svg.pa.na$path; svg.na <- svg.pa.na$na
     # Get max width/height of multiple SVGs, and dimensions of other SVGs can be set relative to this max width/height.
     w.h.max <- max(unlist(svgs[, 'dimension']))
-    
+   
+    map.sum <- data.frame(); for (j in svg.na) { 
+      tis.path <- unique(attribute(svgs[j])[[1]]$feature)
+      not.map <- setdiff(sam.uni, unique(tis.path)); if (verbose==TRUE & length(not.map)>0) cat('Features in data not mapped:', paste0(not.map, collapse=', '), '\n')
+      sam.com <- intersect(unique(tis.path), sam.uni) 
+      if (length(sam.com)==0) next 
+
+      idx.com <- vapply(cname, function(i) grepl(paste0('^', sam.com, '__', collapse='|'), i), FUN.VALUE=logical(1))
+      map.gene <- gene[idx.com]; cna <- colnames(map.gene)
+      for (i in ID) {
+
+        df0 <- as.data.frame(t(map.gene[i, ])); colnames(df0) <- 'value'
+        featureSVG <- gsub("(.*)(__)(.*)", "\\1", cna)
+        rowID <- i; df1 <- data.frame(rowID=rowID, featureSVG=featureSVG)
+        if (con.na==TRUE) { condition <- gsub("(.*)(__)(.*)", "\\3", cna); df1 <- cbind(df1, condition=condition) }
+        df1 <- cbind(df1, df0); df1$SVG <- j
+        map.sum <- rbind(map.sum, df1)
+
+      }  
+    }; row.names(map.sum) <- NULL
+
     # A set of SHMs (gene_con*) are made for each SVG, and all sets of SHMs under different SVGs are placed in 2 lists in form of ggplots and grobs respectively. Different SHMs of same 'gene_condition' under different SVGs are indexed with suffixed of '_1', '_2', ... E.g. SHMs under shm1.svg: gene_condition1_1, gene_condition2_1; SHMs under shm2.svg: gene_condition1_2, gene_condition2_2; the 4 SHMs are stored in 2 separate lists in form of ggplots and grobs respectively. 
     # The order of ggplot SHMs, grob SHMs, and legends follow the order of SVGs, so all are same.
     ft.trans.shm <- NULL; if (is.sce) {
@@ -467,8 +487,8 @@ spatial_hm <- function(svg, data, assay.na=NULL, sam.factor=NULL, con.factor=NUL
       ft.trans.shm <- unique(setdiff(blk.uni, tar.cell))
     } else if (tocell) { # Same as rematching in SHM.
       # tar.bulk is converted to svg bulk in check_data_covis.
-      blk.uni <- unique(df.match$SVGBulk)
-      if (missing(tar.bulk)) tar.bulk <- blk.uni
+      blk.uni <- unique(sam.uni)
+      # if (missing(tar.bulk)) tar.bulk <- blk.uni
       # SVG features corresponding to non-target cells are set transparent.
       ft.trans.shm <- unique(setdiff(blk.uni, tar.bulk))
     } else if (toblk) { # Same as rematching in SHM.
@@ -571,7 +591,7 @@ spatial_hm <- function(svg, data, assay.na=NULL, sam.factor=NULL, con.factor=NUL
       dim.shm.lis <- dim_color_coclus(sce=sce.dimred, targ=targ, profile=profile, gg.dim = gg.dim, gg.shm.all=gg.all, grob.shm.all = grob.all, gg.lgd.all=lgd.all, col.shm.all = gcol.all, col.lgd.all=gcol.lgd.all, grob.lgd.all=grob.lgd.all, con.na=con.na, lis.match=NULL, sub.title.size=sub.title.size, dim.lgd.pos=dim.lgd.pos, dim.lgd.nrow=dim.lgd.nrow, dim.lgd.key.size=dim.lgd.key.size, dim.lgd.text.size=dim.lgd.text.size, dim.capt.size=dim.capt.size)
       } else if (tocell) {
       gg.dim <- plot_dim(sce.dimred, dim=dimred, color.by=cell.group)
-      dim.shm.lis <- dim_color2cell(gg.dim=gg.dim, gg.shm.all=gg.all, grob.shm.all=grob.all, col.shm.all=gcol.all, gg.lgd.all=lgd.all, col.lgd.all=gcol.lgd.all, grob.lgd.all=grob.lgd.all, profile=profile, cell.group=cell.group, df.match=df.match, con.na=con.na, lis.match=lis.rematch.dim, sub.title.size=sub.title.size, dim.lgd.pos=dim.lgd.pos, dim.lgd.nrow=dim.lgd.nrow, dim.lgd.key.size=dim.lgd.key.size, dim.lgd.text.size=dim.lgd.text.size)
+      dim.shm.lis <- dim_color2cell(gg.dim=gg.dim, gg.shm.all=gg.all, grob.shm.all=grob.all, col.shm.all=gcol.all, gg.lgd.all=lgd.all, col.lgd.all=gcol.lgd.all, grob.lgd.all=grob.lgd.all, profile=profile, cell.group=cell.group, con.na=con.na, lis.match=lis.rematch.dim, sub.title.size=sub.title.size, dim.lgd.pos=dim.lgd.pos, dim.lgd.nrow=dim.lgd.nrow, dim.lgd.key.size=dim.lgd.key.size, dim.lgd.text.size=dim.lgd.text.size)
       }
       grob.all <- dim.shm.lis$dim.shm.grob.lis
       gg.all <- dim.shm.lis$dim.shm.gg.lis
@@ -611,8 +631,7 @@ spatial_hm <- function(svg, data, assay.na=NULL, sam.factor=NULL, con.factor=NUL
       if (is.null(vdo)) cat("Video is not generated! \n")
 
     }
-    lis <- list(spatial_heatmap=as.ggplot(shm)); invisible(lis)
-
+    lis <- list(spatial_heatmap=as.ggplot(shm), mapped_feature=map.sum); invisible(lis)
 }
 
 #' Get SVG names and order SVG path/name if there are multiple SVGs.
@@ -685,10 +704,12 @@ cvt_vector <- function(from, to, target) { names(to) <- from; to[target] }
 
 #' @importFrom SummarizedExperiment colData
 
-check_data_covis <- function(data, dimred, cell.group, sce.dimred, tar.bulk, df.match, lis.rematch, ...) {
-  tocell <- toblk <- tocell.coclus <- toblk.coclus <- FALSE
+check_data_covis <- function(data, dimred, cell.group, sce.dimred, tar.cell, tar.bulk, lis.rematch, svg.ft.all) {
   lis.rematch.dim <- NULL
+  tocell <- toblk <- tocell.coclus <- toblk.coclus <- FALSE
   coclus.na <- c('SVGBulk', 'dataBulk')
+  if (is.null(tar.cell) & is.null(tar.bulk)) stop('In co-visualization, one of "tar.cell" and "tar.bulk" needs to be specified!')
+  if (!is.null(tar.cell) & !is.null(tar.bulk)) stop('In co-visualization, only one of "tar.cell" and "tar.bulk" needs to be specified!')
   if (!dimred %in% reducedDimNames(sce.dimred)) stop(paste0(dimred, " is not detected in 'reducedDimNames'!"))
   if (!is.null(cell.group)) if (!cell.group %in% colnames(colData(sce.dimred))) stop(paste0(cell.group, " is not detected in 'colData' slot!"))
   # Check cell2bulk mapping in coclustering. 
@@ -703,18 +724,17 @@ check_data_covis <- function(data, dimred, cell.group, sce.dimred, tar.bulk, df.
         tar.bulk <- cvt_vector(colData(data)$dataBulk, colData(data)$SVGBulk, tar.bulk)
         toblk.coclus <- FALSE; tocell.coclus <- TRUE
       }
-    } 
-  } else if (!is.null(lis.rematch) & !is.null(df.match)) {
-    if (is.null(tar.bulk)) tar.bulk <- unique(names(lis.rematch))
+    }
+  } else if (!is.null(lis.rematch) & !is.null(tar.bulk)) {
+    # if (is.null(tar.bulk)) tar.bulk <- unique(names(lis.rematch))
     if (any(!tar.bulk %in% names(lis.rematch))) stop("Make sure all entries in 'tar.bulk' are in 'names(lis.rematch))'!")
-    if (any(!tar.bulk %in% df.match$dataBulk)) stop("Make sure all entries in 'tar.bulk' are in 'df.match$dataBulk'!")
-    if (any(!names(lis.rematch) %in% df.match$dataBulk)) stop("Make sure all entries in 'names(lis.rematch)' are in 'df.match$dataBulk'! ")
-    tar.bulk <- cvt_vector(df.match$dataBulk, df.match$SVGBulk, tar.bulk)
-    lis.rematch.dim <- lis.rematch
+    if (any(!names(lis.rematch) %in% svg.ft.all)) stop("Make sure all entries in 'names(lis.rematch)' are from aSVG features!")
+    # tar.bulk <- cvt_vector(df.match$dataBulk, df.match$SVGBulk, tar.bulk)
+    lis.rematch.dim <- lis.rematch; lis.rematch <- NULL
     # Same as rematching in bulk SHM without cells.
-    lis.rematch[seq_along(lis.rematch)] <- cvt_vector(df.match$dataBulk, df.match$SVGBulk, names(lis.rematch)) 
+    # lis.rematch[seq_along(lis.rematch)] <- cvt_vector(df.match$dataBulk, df.match$SVGBulk, names(lis.rematch)) 
     tocell <- TRUE; toblk <- FALSE 
-  } else if (!is.null(lis.rematch) & is.null(df.match)) {
+  } else if (!is.null(lis.rematch) & !is.null(tar.cell)) {
     tocell <- FALSE; toblk <- TRUE
   }
   return(list(data=data, tar.bulk=tar.bulk, tocell=tocell, toblk=toblk, toblk.coclus=toblk.coclus, tocell.coclus=tocell.coclus, lis.rematch=lis.rematch, lis.rematch.dim=lis.rematch.dim))

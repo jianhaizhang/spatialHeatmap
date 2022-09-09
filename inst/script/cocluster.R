@@ -19,12 +19,12 @@ colData(sce.manual) <- cdat
 # Save the example data.
 saveRDS(sce.manual, file='./sce_manual_mouse.rds')
 
-# Quality control, normalization, dimensionality reduction.                                                                        
+# Quality control, normalization, dimensionality reduction.
 sce.dimred <- process_cell_meta(sce.manual, qc.metric=list(subsets=list(Mt=rowData(sce.manual)$featureType=='mito'), threshold=1)) 
-# Clustering.                                                                                                                      
-sce.clus <- cluster_cell(sce=sce.dimred, graph.meth='knn', dimred='PCA')                                                           
-# Manual cluster labels.                                                                                                           
-df.clus.mus.sc <- data.frame(cell=rownames(colData(sce.clus)), cluster=colData(sce.clus)$cluster)                                  
+# Clustering.
+sce.clus <- cluster_cell(sce=sce.dimred, graph.meth='knn', dimred='PCA') 
+# Manual cluster labels.
+df.clus.mus.sc <- data.frame(cell=rownames(colData(sce.clus)), cluster=colData(sce.clus)$cluster)
 write.table(df.clus.mus.sc, 'manual_cluster_mouse_brain.txt', col.names=TRUE, sep='\t')
 
 
@@ -46,7 +46,27 @@ gen=0.5)
 
 # Example bulk and single cell data. 
 blk.mus <- mus.brain$bulk; sc.mus <- mus.brain$sc.mus.brain 
+# blk.mus.pa <- system.file("extdata/shinyApp/example", "bulk_mouse_cocluster.txt", package="spatialHeatmap") 
+# blk.mus <- as.matrix(read.table(blk.mus.pa, header=TRUE, row.names=1, sep='\t', check.names=FALSE))
+# blk.mus[1:3, ]
+# Mouse brain aSVG.
+svg.mus.brain.pa <- system.file("extdata/shinyApp/example", "mus_musculus.brain.svg", package="spatialHeatmap")
+feature.df <- return_feature(svg.path=svg.mus.brain.pa)
+# Matching table between bulk tissues and aSVG features.
+match.mus.brain.pa <- system.file("extdata/shinyApp/example", "match_mouse_brain_cocluster.txt", package="spatialHeatmap")
+df.match.mus.brain <- read.table(match.mus.brain.pa, header=TRUE, row.names=1, sep='\t')
+df.match.mus.brain
+# Bulk tissues are named with aSVG features.
+cvt_vecter <- spatialHeatmap:::cvt_vector
+colnames(blk.mus) <- cvt_vecter(df.match.mus.brain$dataBulk, df.match.mus.brain$SVGBulk, colnames(blk.mus))
+blk.mus[1:3, ]
 write.table(blk.mus, 'bulk_mouse_cocluster.txt', col.names=TRUE, row.names=TRUE, sep='\t') 
+
+# sc.mus.pa <- system.file("extdata/shinyApp/example", "cell_mouse_cocluster.txt", package="spatialHeatmap") 
+# sc.mus <- as.matrix(read.table(sc.mus.pa, header=TRUE, row.names=1, sep='\t', check.names=FALSE))
+sc.mus[1:3, 1:5]
+intersect(colnames(sc.mus), feature.df$feature)
+intersect(colnames(sc.mus), colnames(blk.mus))
 write.table(sc.mus, 'cell_mouse_cocluster.txt', col.names=TRUE, row.names=TRUE, sep='\t') 
 
 # Example data for auto-matching in Shiny app.  

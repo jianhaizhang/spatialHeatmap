@@ -127,7 +127,7 @@ refine_asg <- function(res.lis, thr=0, df.desired.bulk=NULL, df.match=NULL, true
   x <- y <- desiredSVGBulk <- SVGBulk <- index <- predictor <- total <- true <- NULL
   # Validate labels.
   sce <- res.lis$cell.refined; labs <- colData(sce)$cluster
-  er.wa <- check(as.vector(labs), as.numeric)
+  er.wa <- dat_fun(as.vector(labs), as.numeric)
   if (is.numeric(er.wa) & length(er.wa) > 0) colData(sce)$cluster <- as.character(labs)
   # If desired bulk is provided with x-y coordinate range, convert "df.desired.bulk" to the form downloaded from Shiny app.
   xy.ran.cna <- c('x.min', 'x.max', 'y.min', 'y.max') 

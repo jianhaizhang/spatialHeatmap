@@ -1,4 +1,4 @@
-"CERE.CORTEX"	"HIPP"	"HYPOTHA"	"CERE"	"CERE.CORTEX"	"HIPP"	"HYPOTHA"	"CERE"	"CERE.CORTEX"	"HIPP"	"HYPOTHA"	"CERE"
+"cerebral.cortex"	"hippocampus"	"hypothalamus"	"cerebellum"	"cerebral.cortex"	"hippocampus"	"hypothalamus"	"cerebellum"	"cerebral.cortex"	"hippocampus"	"hypothalamus"	"cerebellum"
 "AI593442"	177	256	50	24	285	195	46	28	172	174	83	41
 "Actr3b"	513	1465	228	244	666	929	157	519	479	665	280	337
 "Adcy1"	701	1243	57	1910	836	997	55	2450	714	779	118	2500

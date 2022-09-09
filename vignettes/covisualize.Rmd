@@ -368,13 +368,13 @@ colnames(blk.mus) <- paste0(colnames(blk.mus), "__", c(rep('con1', 6), rep('con2
 colnames(blk.mus) <- gsub('(.*)__(.*)', '\\1', colnames(blk.mus))
 
 
-lis.match <- list(CERE=c('cortex.S1'), HYPOTHA=c('hippocampus.CA1', 'hypothalamus'))
+lis.match <- list(cerebellum=c('cortex.S1'), hypothalamus=c('hippocampus.CA1', 'hypothalamus'))
 
 blk.mus.aggr <- aggr_rep(blk.mus, aggr='mean')
 df.match.mus.brain
 
 
-shm.lis <- spatial_hm(svg=svg.mus.brain, data=blk.mus.aggr, ID=c('Actr3b'), height=0.7, legend.r=1.5, legend.key.size=0.02, legend.text.size=12, legend.nrow=2, sce.dimred=sce.dimred, dimred='PCA', cell.group='label', tar.bulk=names(lis.match), lis.rematch=lis.match, df.match=df.match.mus.brain, bar.width=0.09, dim.lgd.nrow=2, dim.lgd.text.size=12)
+shm.lis <- spatial_hm(svg=svg.mus.brain, data=blk.mus.aggr, ID=c('Actr3b'), height=0.7, legend.r=1.5, legend.key.size=0.02, legend.text.size=12, legend.nrow=2, sce.dimred=sce.dimred, dimred='PCA', cell.group='label', tar.bulk=names(lis.match), lis.rematch=lis.match, bar.width=0.09, dim.lgd.nrow=2, dim.lgd.text.size=12)
 
 ```
 <p style="color:red">Several things are missing: (1) To track tissue assignment, if expression values are similar across tissues, there needs to be an argument toggle to color one time by expression values and another time by tissue. Otherwise tissue assignment info is lost. (2) I don't understand the plot on the bottom that shows the stress sample. Why does the sp heatmap highlight in this case only one tissue? </p>

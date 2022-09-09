@@ -84,9 +84,9 @@ df_is_as <- function(data, fun=is.numeric) {
 #' @keywords Internal
 #' @noRd
 
-#' @author Jianhai Zhang \email{jianhai.zhang@@email.ucr.edu} \cr Dr. Thomas Girke \email{thomas.girke@@ucr.edu}
+#' @author Jianhai Zhang \email{jzhan067@@ucr.edu} \cr Dr. Thomas Girke \email{thomas.girke@@ucr.edu}
 
-check <- function(data, fun) {                                                                                                  
-  er.wa <- tryCatch({ fun(data) }, error=function(e){ return('error') }, warning=function(w) { return('warning') } )            
+dat_fun <- function(data, fun) {                                                                                                  
+  er.wa <- tryCatch({ fun(data) }, error=function(e){ return('e') }, warning=function(w) { return('w') } )            
   return(er.wa)                                                                                                                  
 }

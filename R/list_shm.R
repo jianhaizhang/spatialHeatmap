@@ -119,7 +119,6 @@ gg_shm <- function(svg.all, gene, con.na=TRUE, geneV, charcoal=FALSE, alpha.over
     if (lgd==FALSE) { # Legend plot.
       # Make selected tissues transparent by setting their colours NA.
       ft.trans <- unique(c(ft.trans, ft.trans.shm))
-
       if (!is.null(ft.trans)) g.col[sub('__\\d+$', '', tis.df) %in% ft.trans] <- NA # This step should not be merged with 'lgd=T'.
       ft.legend <- setdiff(ft.legend, ft.trans) 
       leg.idx <- !duplicated(tis.path) & (tis.path %in% ft.legend)
@@ -129,7 +128,7 @@ gg_shm <- function(svg.all, gene, con.na=TRUE, geneV, charcoal=FALSE, alpha.over
       scl.fil <- scale_fill_manual(values=g.col, breaks=tis.df[leg.idx], labels=tis.path[leg.idx], guide=guide_legend(title=NULL, ncol=legend.ncol, nrow=legend.nrow))
     } else { 
       # Assign legend key colours if identical samples between SVG and matrix have colors of "none".
-      legend.col1 <- legend.col[ft.legend] # Only includes matching samples. 
+      legend.col1 <- legend.col[ft.legend] # Only includes features to show. 
       if (any(is.na(legend.col1))) {
         n <- sum(is.na(legend.col1)); col.na <- diff_cols(n) 
         legend.col1[is.na(legend.col1)] <- col.na[seq_len(n)]
@@ -143,7 +142,8 @@ gg_shm <- function(svg.all, gene, con.na=TRUE, geneV, charcoal=FALSE, alpha.over
               legend.col1[lis0] <- legend.col1[lis0][1]
             }; remove(lis0)
         }
-      } else if (covis.direc=='tocell' & is(lis.rematch, 'list')) ft.trans <- unique(c(ft.trans, ft.trans.shm))
+      }
+      if (covis.direc %in% c('toblk', 'tocell')) ft.trans <- unique(c(ft.trans, ft.trans.shm))
       }
        # Map legend colours to tissues.
        # Exclude transparent tissues.

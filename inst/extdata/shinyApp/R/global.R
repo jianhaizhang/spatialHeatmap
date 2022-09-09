@@ -49,7 +49,7 @@ svg_raster <- get('svg_raster', envir=asNamespace('spatialHeatmap'), inherits=FA
 
 raster_path <- get('raster_path', envir=asNamespace('spatialHeatmap'), inherits=FALSE)
 
-check <- get('check', envir=asNamespace('spatialHeatmap'), inherits=FALSE)
+# dat_fun <- get('dat_fun', envir=asNamespace('spatialHeatmap'), inherits=FALSE)
 
 df_is_as <- get('df_is_as', envir=asNamespace('spatialHeatmap'), inherits=FALSE)
 

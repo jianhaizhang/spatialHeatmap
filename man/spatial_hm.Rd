@@ -14,9 +14,8 @@ spatial_hm(
   sce.dimred = NULL,
   dimred = "PCA",
   cell.group = NULL,
-  tar.cell,
-  df.match = NULL,
-  tar.bulk,
+  tar.cell = NULL,
+  tar.bulk = NULL,
   profile = TRUE,
   charcoal = FALSE,
   alpha.overlay = 1,
@@ -106,9 +105,7 @@ spatial_hm(
 
 \item{tar.cell}{Applicable in co-visualizing bulk tissues and single cells through annodation-based or manual method. A vector of target cell labels in \code{cell.group}. Cells corresponding to these labels are mapped to bulk tissues through \code{lis.rematch}.}
 
-\item{df.match}{Applicable in co-visualizing bulk tissues and single cells through annodation-based or manual method. A \code{data.frame} with two columns of \code{SVGBulk} and \code{dataBulk} indicating matching between spatial features in aSVG and bulk tissues in data, only required when mapping direction is bulk tissues to single cells.}
-
-\item{tar.bulk}{A vector of target bulk tissues in \code{df.match$dataBulk}, which are mapped to single cells through \code{lis.rematch}.}
+\item{tar.bulk}{A vector of target bulk tissues, which are mapped to single cells through \code{lis.rematch}.}
 
 \item{profile}{Logical, applicable in co-visualizing bulk tissues and single cells. If \code{TRUE}, one or multiple biological molecule (e.g. gene) identifiers need to be assigned to \code{ID}, and their abundance proifles are included in the co-visualization plot. If \code{FALSE}, abundance proifles are excluded.}
 
@@ -138,7 +135,7 @@ spatial_hm(
 
 \item{tis.trans}{This argument is deprecated and replaced by \code{ft.trans}.}
 
-\item{lis.rematch}{\describe{ \item{(1) Spatial heatmap plots of only bulk tissues without single cells.}{ A named \code{list} for rematching between tissues in data (tissue1Data, tissue2Data) and aSVG spatial features (feature1SVG, feature2SVG, feature3SVG). In each slot, the slot name is an tissue identifier in the data and the slot contains one or multiple aSVG features in a vector. \emph{E.g.} \code{list(tissue1Data = c('feature1SVG', 'feature2SVG'), tissue2Data = c('feature3SVG'))}.} \item{(2) Co-visualizing bulk tissues and single cells using annotation-based or manual methods.}{ Mapping cells to bulk tissues: a named \code{list}, where cell labels from \code{colData(sce.dimred)[, 'cell.group']} are the name slots and aSVG features are the corresponding \code{list} elements. Mapping bulk tissues to cells: a named \code{list}, where bulk tissues from \code{df.match$dataBulk} are the name slots and cells from \code{colData(sce.dimred)[, 'cell.group']} are the corresponding \code{list} elements.}}}
+\item{lis.rematch}{\describe{ \item{(1) Spatial heatmap plots of only bulk tissues without single cells.}{ A named \code{list} for rematching between tissues in data (tissue1Data, tissue2Data) and aSVG spatial features (feature1SVG, feature2SVG, feature3SVG). In each slot, the slot name is an tissue identifier in the data and the slot contains one or multiple aSVG features in a vector. \emph{E.g.} \code{list(tissue1Data = c('feature1SVG', 'feature2SVG'), tissue2Data = c('feature3SVG'))}.} \item{(2) Co-visualizing bulk tissues and single cells using annotation-based or manual methods.}{ Mapping cells to bulk tissues: a named \code{list}, where cell labels from \code{colData(sce.dimred)[, 'cell.group']} are the name slots and aSVG features are the corresponding \code{list} elements. Mapping bulk tissues to cells: a named \code{list}, where bulk tissues are the name slots and cells from \code{colData(sce.dimred)[, 'cell.group']} are the corresponding \code{list} elements.}}}
 
 \item{legend.r}{A numeric (between -1 and 1) to adjust the legend plot size. The default is 0.9.}
 

@@ -24,15 +24,15 @@
 
 #' @importFrom ggplot2 layer_data ggplot geom_point theme_classic theme element_text element_blank labs scale_color_manual scale_shape_manual margin guide_legend 
 
-dim_color2cell <- function(gg.dim, gg.shm.all, grob.shm.all, col.shm.all, gg.lgd.all, col.lgd.all, grob.lgd.all, profile=TRUE, cell.group, df.match, con.na=TRUE, lis.match=NULL, sub.title.size=11, dim.lgd.pos='bottom', dim.lgd.nrow=2, dim.lgd.key.size=4, dim.lgd.text.size=13) {
-  # save(gg.dim, gg.shm.all, grob.shm.all, col.shm.all, gg.lgd.all, col.lgd.all, grob.lgd.all, profile, cell.group, df.match, con.na, lis.match, sub.title.size, dim.lgd.pos, dim.lgd.nrow, dim.lgd.key.size, dim.lgd.text.size, file='dim.color.tocell.arg')
+dim_color2cell <- function(gg.dim, gg.shm.all, grob.shm.all, col.shm.all, gg.lgd.all, col.lgd.all, grob.lgd.all, profile=TRUE, cell.group, con.na=TRUE, lis.match=NULL, sub.title.size=11, dim.lgd.pos='bottom', dim.lgd.nrow=2, dim.lgd.key.size=4, dim.lgd.text.size=13) {
+  # save(gg.dim, gg.shm.all, grob.shm.all, col.shm.all, gg.lgd.all, col.lgd.all, grob.lgd.all, profile, cell.group, con.na, lis.match, sub.title.size, dim.lgd.pos, dim.lgd.nrow, dim.lgd.key.size, dim.lgd.text.size, file='dim.color.tocell.arg')
   x <- y <- fill <- feature <- NULL
   # Trasfer svg features to name slots of lis.match.
   lis.match <- lis.match[!unlist(lapply(lis.match, is.null))]
-  lis.match.svg <- lis.match
-  for (i in seq_along(lis.match.svg)) {
-    names(lis.match.svg)[i] <- unique(subset(df.match, dataBulk==names(lis.match.svg[i]))$SVGBulk)
-  }
+  #lis.match <- lis.match
+  #for (i in seq_along(lis.match)) {
+  #  names(lis.match)[i] <- unique(subset(df.match, dataBulk==names(lis.match[i]))$SVGBulk)
+  #}
   # Ggplots of all reduced dim.
   if (profile==TRUE) {
     n <- length(grob.shm.all); gg.dim.all <- rep(list(gg.dim), n)
@@ -44,8 +44,8 @@ dim_color2cell <- function(gg.dim, gg.shm.all, grob.shm.all, col.shm.all, gg.lgd
   # Match colors in SHMs to dim plots. Colour order: data -> svg feature -> embedding plot.
   for (i in seq_along(gg.dim.all)) {
     gg.dim <- gg.dim.all[i] 
-    if (profile==TRUE) dim.col <- col_dim_tocell(gg.dim, gcol.all=col.shm.all, lis.match.svg)
-    if (profile==FALSE) dim.col <- col_dim_tocell(gg.dim, gcol.all=col.lgd.all, lis.match.svg)
+    if (profile==TRUE) dim.col <- col_dim_tocell(gg.dim, gcol.all=col.shm.all, lis.match)
+    if (profile==FALSE) dim.col <- col_dim_tocell(gg.dim, gcol.all=col.lgd.all, lis.match)
 
     # Data for plotting embedding plot.
     gg.dim0 <- gg.dim[[1]]
