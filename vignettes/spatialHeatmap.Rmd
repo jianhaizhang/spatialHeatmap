@@ -1243,18 +1243,14 @@ target.clp <- read_fr(clp.tar)
 The three dimensions of spatial features (`organism_part`), conditions (`con`), and times (`age`) are partially shown, where `A`, `N`, and `NA` denote "aerobic", "anaerobic", and first "aerobic" then "anaerobic" respectively.   
 
 ```{r eval=TRUE, echo=TRUE, warnings=FALSE}
-target.clp[1:2, c('age', 'organism_part', 'stimulus', 'con')] # A slice of the targets file.
-unique(target.clp[, 'age']) # All development stages.
-unique(target.clp[, 'organism_part']) # All tissues.
-unique(target.clp[, 'con']) # All conditions.
+target.clp[1:2, c('organism_part', 'age', 'stimulus', 'con')] # A slice of the targets file.
 ```
 
-The three dimensions are combined using the convenience function `com_factor`, which is the main difference with the previous examples involving only two dimensions. The targets file including the new composite dimension (`SFTimeCon`) is loaded to the `colData` slot in `rse.clp` internally.   
+The three dimensions are combined using the convenience function `com_factor`, which is the main difference with the previous examples involving only two dimensions. The targets file including the new composite dimension (`SFTimeCon`) is loaded to the `colData` slot in `rse.clp` automatically.   
 
 ```{r eval=TRUE, echo=TRUE, warnings=FALSE}
 rse.clp <- com_factor(rse.clp, target.clp, factors2com=c('organism_part', 'age', 'con'), sep='.', factor.new='SFTimeCon')
-colData(rse.clp)[1:2, c('age', 'organism_part', 'stimulus', 'con', 'SFTimeCon')]
-unique(colData(rse.clp)$SFTimeCon) # All elements of the composite dimension.  
+colData(rse.clp)[1:2, c('organism_part', 'age', 'stimulus', 'con', 'SFTimeCon')]
 ```
 
 #### aSVG Image
@@ -2096,13 +2092,10 @@ clp.tar <- system.file('extdata/shinyApp/example/target_coleoptile.txt', package
 target.clp <- read_fr(clp.tar)
 ```
 
-Elements of the three dimensions are shown: spatial features, times, conditions.   
+Elements of the two dimensions spatial features and times are partially shown.   
 
 ```{r eval=TRUE, echo=TRUE, warnings=FALSE}
-target.clp[1:3, c('age', 'organism_part', 'stimulus', 'con')] # A slice of the targets file.
-unique(target.clp[, 'age']) # All development stages.
-unique(target.clp[, 'organism_part']) # All tissues.
-unique(target.clp[, 'stimulus']) # All conditions.
+target.clp[1:2, c('organism_part', 'age')] # A slice of the targets file.
 ```
 
 The spatial feature (`organism_part`) and time (`age`) dimensions are combined to form a composite dimension (`SFTime`). This is the essential difference with the [previous example](#sthm).   
@@ -2110,7 +2103,7 @@ The spatial feature (`organism_part`) and time (`age`) dimensions are combined t
 ```{r eval=TRUE, echo=TRUE, warnings=FALSE}
 rse.clp <- com_factor(rse.clp, target.clp, factors2com=c('organism_part', 'age'), factor.new='SFTime')
 target.clp <- colData(rse.clp)
-target.clp[1:3, c('age', 'organism_part', 'stimulus', 'con', 'SFTime')]
+target.clp[1:2, c('organism_part', 'age', 'SFTime')]
 ```
 
 #### aSVG Image
@@ -2142,7 +2135,7 @@ se.nor.clp <- norm_data(data=rse.clp, norm.fun='ESF', log2.trans=TRUE) # Normali
 
 ```{r eval=TRUE, echo=TRUE, warnings=FALSE, results='hide'}
 se.aggr.clp2 <- aggr_rep(data=se.nor.clp, sam.factor='SFTime', con.factor='stimulus', aggr='mean') # Replicate agggregation using mean. 
-se.fil.clp2 <- filter_data(data=se.aggr.clp2, sam.factor='SFTime', con.factor='stimulus', pOA=c(0.07, 7), CV=c(0.7, 100), dir=NULL) # Filtering of genes with low counts and varince.
+se.fil.clp2 <- filter_data(data=se.aggr.clp2, sam.factor='SFTime', con.factor='stimulus', pOA=c(0.07, 7), CV=c(0.7, 100)) # Filtering of genes with low counts and varince.
 ```
 
 A slice of the data after filtering is shown.   

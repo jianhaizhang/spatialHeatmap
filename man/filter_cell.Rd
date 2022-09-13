@@ -5,29 +5,30 @@
 \title{Filter single cell data separately in a list}
 \usage{
 filter_cell(
-  lis,
+  sce,
   bulk = NULL,
   gen.rm = NULL,
-  min.cnt = 1,
+  cutoff = 1,
   p.in.cell = 0.4,
   p.in.gen = 0.2,
+  com = FALSE,
   verbose = TRUE
 )
 }
 \arguments{
-\item{lis}{A named list of single cell data in form of \code{data.frame}, \code{SingleCellExperiment}, or \code{SummarizedExperiment}.}
-
 \item{bulk}{The bulk data in form of \code{data.frame} or \code{SummarizedExperiment}. They are only used to obtain common genes with all single cell data and not filtered. The default is \code{NULL}.}
 
 \item{gen.rm}{A regular expression of gene identifiers in single cell data to remove before filtering. E.g. mitochondrial, chloroplast and protoplasting-induced genes (\code{^ATCG|^ATCG}). The default is \code{NULL}.}
 
-\item{min.cnt}{The minmun count of gene expression. The default is \code{1}.}
+\item{cutoff}{The minmun count of gene expression. The default is \code{1}.}
 
-\item{p.in.cell}{The proportion cutoff of counts above \code{min.cnt} in a cell. The default is \code{0.4}.}
+\item{p.in.cell}{The proportion cutoff of counts above \code{cutoff} in a cell. The default is \code{0.4}.}
 
-\item{p.in.gen}{The proportion cutoff of counts above \code{min.cnt} in a gene. The default is \code{0.2}.}
+\item{p.in.gen}{The proportion cutoff of counts above \code{cutoff} in a gene. The default is \code{0.2}.}
 
 \item{verbose}{Logical. If \code{TRUE} (default), intermediate messages are printed.}
+
+\item{lis}{A named list of single cell data in form of \code{data.frame}, \code{SingleCellExperiment}, or \code{SummarizedExperiment}.}
 }
 \value{
 A list of filtered single cell data and bulk data, which have common genes.
@@ -47,7 +48,7 @@ sc.mus[1:3, 1:5]
 # Initial filtering. 
 blk.mus <- filter_data(data=blk.mus, sam.factor=NULL, con.factor=NULL, pOA=c(0.1, 5), CV=c(0.2, 100), dir=NULL)
 dim(blk.mus) 
-mus.lis <- filter_cell(lis=list(sc.mus=sc.mus), bulk=blk.mus, gen.rm=NULL, min.cnt=1, p.in.cell=0.5, p.in.gen=0.1)
+mus.lis <- filter_cell(lis=list(sc.mus=sc.mus), bulk=blk.mus, gen.rm=NULL, cutoff=1, p.in.cell=0.5, p.in.gen=0.1)
 }
 \references{
 Martin Morgan, Valerie Obenchain, Jim Hester and Hervé Pagès (2021). SummarizedExperiment: SummarizedExperiment container. R package version 1.24.0. https://bioconductor.org/packages/SummarizedExperiment

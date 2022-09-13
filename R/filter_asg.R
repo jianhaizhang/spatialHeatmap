@@ -120,54 +120,25 @@
 
 #' @export
 #' @importFrom SingleCellExperiment reducedDimNames 
-#' @importFrom SummarizedExperiment colData 
+#' @importFrom SummarizedExperiment colData colData<- 
 
-refine_asg <- function(sce.all, df.desired.bulk=NULL) {
-  # save(sce.all, df.desired.bulk, file='sub.asg.arg')
-  x <- y <- desiredBulk <- index <- predictor <- total <- true <- NULL
-  # Validate labels.
-  #sce <- res.lis$cell.refined; 
-  labs <- colData(sce.all)$cluster
-  er.wa <- dat_fun(as.vector(labs), as.numeric)
-  if (is.numeric(er.wa) & length(er.wa) > 0) colData(sce)$cluster <- as.character(labs)
-  sce <- subset(sce.all, , bulkCell=='cell')
-  # If desired bulk is provided with x-y coordinate range, convert "df.desired.bulk" to the form downloaded from Shiny app.
-  xy.ran.cna <- c('x.min', 'x.max', 'y.min', 'y.max') 
-  if (any(xy.ran.cna %in% colnames(df.desired.bulk))) {
-    if (!all(c(xy.ran.cna, 'desiredBulk', 'dimred') %in% colnames(df.desired.bulk))) stop(paste0('Make sure the "df.desired.bulk" has these columns: ', paste0(xy.ran.cna, collapse=', '), '!'))
-    x.min <- df.desired.bulk$x.min
-    x.max <- df.desired.bulk$x.max
-    y.min <- df.desired.bulk$y.min
-    y.max <- df.desired.bulk$y.max
-    dimred <- unique(df.desired.bulk$dimred)
-    if (!(all(x.min <= x.max) & all(y.min <= y.max))) stop('Make sure x.min <= x.max and y.min <= y.max !')
-    if (! dimred %in% reducedDimNames(sce)) stop(paste0(dimred, ' is not found!'))
-    gg <- plot_dim(sce, dim=dimred, color.by=colnames(colData(sce))[1])
-    dat <- gg$data; df.desire <- NULL
-    blk <- df.desired.bulk$desiredBulk
-    # Assign each bulk to cells in corresponding x-y range.
-    for (i in seq_len(nrow(df.desired.bulk))) { 
-      df.desired.bulk0 <- df.desired.bulk[i, ]
-      x.min0 <- df.desired.bulk0$x.min
-      x.max0 <- df.desired.bulk0$x.max
-      y.min0 <- df.desired.bulk0$y.min
-      y.max0 <- df.desired.bulk0$y.max
-      df0 <- subset(dat, x >= x.min0 & x <= x.max0 & y >= y.min0 & y <= y.max0)
-      if (nrow(df0)==0) {
-        cat('No cells selected for row: ', i, '!\n', sep=''); next
-      }
-      # Same form as downloaded from Shiny app.
-      df.desire0 <- data.frame(x=df0$x, y=df0$y, key=df0$key, desiredBulk=blk[i], dimred=dimred) 
-      df.desire <- rbind(df.desire, df.desire0)   
-    }; df.desired.bulk <- df.desire
+filter_asg <- function(res, min.sim=0) {  
+  if (is(res, 'SingleCellExperiment')) sce.all <- res else if (is(res, 'list')) sce.all <- res$sce.all
+  # Set 'none' to assignments filtered out.
+  cdat <- colData(sce.all)
+  cdat0 <-  subset(cdat, bulkCell=='cell' & similarity!='none')
+  cdat0$similarity <- as.numeric(cdat0$similarity)
+  idx <- cdat0$similarity < min.sim
+  cdat0$assignedBulk[idx] <- cdat0$similarity[idx] <- 'none'
+  # Optimization.
+  if (is(res, 'list')) cdat0$response[idx] <- cdat0$trueBulk[idx] <- 'none'
+  cdat[cdat0$index, ] <- cdat0; colData(sce.all) <- cdat
+
+  if (is(res, 'SingleCellExperiment')) res <- sce.all else if (is(res, 'list')) {
+    cdat <- colData(sce.all)
+    cdat0 <- subset(cdat, similarity!='none')
+    roc.obj <- roc(cdat0$response, as.numeric(cdat0$similarity), smoothed = TRUE, ci=TRUE, ci.alpha=0.9, stratified=FALSE, plot=FALSE, auc.polygon=TRUE, max.auc.polygon=TRUE, grid=TRUE, print.auc=TRUE, show.thres=TRUE, direction='<', levels=c('FALSE', 'TRUE'))
+    res$sce.all <- sce.all; res$roc.obj <- roc.obj
   }
-
-  sce$index.cell <- seq_len(ncol(sce))
-  # Check "key" and "index.cell" follow the same order in all cells.
-  all(colData(sce)[df.desired.bulk$key, ]$index.cell==df.desired.bulk$key)
-  colData(sce)[df.desired.bulk$key, ]$assignedBulk <- df.desired.bulk$desiredBulk  
-  colData(sce)[df.desired.bulk$key, ]$similarity <- 1
-  sce$index.cell <- NULL; sce.all[, sce$index] <- sce
-  sce.all$dimred <- unique(df.desired.bulk$dimred)
-  return(sce.all)
+  return(res)
 }

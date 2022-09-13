@@ -259,7 +259,7 @@ The co-visualization is created on gene `Gene_0010`. The embedding plot includes
 
 ```{r , eval=TRUE, echo=TRUE, warnings=FALSE, results='hide', fig.cap=('Example co-visualization plot. The co-visualization is created on gene `Gene_0010`. Single cells in the embedding plot and their matching aSVG features in the spatial heatmap are filled by the same color according to aggregated assay profiles within each cell label.')}
 
-shm.lis.test <- spatial_hm(svg=svg.mus.brain, data=sce.aggr.test, ID=c('Gene_0010'), height=0.7, legend.r=1.5, legend.key.size=0.02, legend.text.size=12, legend.nrow=3, sce.dimred=sce.dimred.test, dimred='PCA', cell.group='cell', assay.na='logcounts', tar.cell=names(lis.match.test), lis.rematch=lis.match.test, bar.width=0.11, dim.lgd.nrow=1) 
+shm.lis.test <- covis(svg=svg.mus.brain, data=sce.aggr.test, ID=c('Gene_0010'), height=0.7, legend.r=1.5, legend.key.size=0.02, legend.text.size=12, legend.nrow=3, sce.dimred=sce.dimred.test, dimred='PCA', cell.group='cell', assay.na='logcounts', tar.cell=names(lis.match.test), lis.rematch=lis.match.test, bar.width=0.11, dim.lgd.nrow=1) 
 ```
 
 <p style="color:red">Why isn't the covisualization handled by its own function that
@@ -362,7 +362,7 @@ The following plots the corresponding co-visualization for sample gene Cops5. A 
 
 lis.match <- list(hypothalamus=c('hypothalamus'), cortex.S1=c('cerebral.cortex', 'corpus.striatum'))
 
-shm.lis <- spatial_hm(svg=svg.mus.brain, data=sce.aggr, ID=c('Cops5'), height=0.7, legend.r=1.5, legend.key.size=0.02, legend.text.size=12, legend.nrow=2, sce.dimred=sce.dimred, dimred='PCA', cell.group='label', assay.na='logcounts', tar.cell=names(lis.match), lis.rematch=lis.match, bar.width=0.09, dim.lgd.nrow=2)
+shm.lis <- covis(svg=svg.mus.brain, data=sce.aggr, ID=c('Cops5'), height=0.7, legend.r=1.5, legend.key.size=0.02, legend.text.size=12, legend.nrow=2, sce.dimred=sce.dimred, dimred='PCA', cell.group='label', assay.na='logcounts', tar.cell=names(lis.match), lis.rematch=lis.match, bar.width=0.09, dim.lgd.nrow=2)
 
 colnames(blk.mus) <- paste0(colnames(blk.mus), "__", c(rep('con1', 6), rep('con2', 6)))
 colnames(blk.mus) <- gsub('(.*)__(.*)', '\\1', colnames(blk.mus))
@@ -371,10 +371,9 @@ colnames(blk.mus) <- gsub('(.*)__(.*)', '\\1', colnames(blk.mus))
 lis.match <- list(cerebellum=c('cortex.S1'), hypothalamus=c('hippocampus.CA1', 'hypothalamus'))
 
 blk.mus.aggr <- aggr_rep(blk.mus, aggr='mean')
-df.match.mus.brain
 
 
-shm.lis <- spatial_hm(svg=svg.mus.brain, data=blk.mus.aggr, ID=c('Actr3b'), height=0.7, legend.r=1.5, legend.key.size=0.02, legend.text.size=12, legend.nrow=2, sce.dimred=sce.dimred, dimred='PCA', cell.group='label', tar.bulk=names(lis.match), lis.rematch=lis.match, bar.width=0.09, dim.lgd.nrow=2, dim.lgd.text.size=12)
+covis.lis <- covis(svg=svg.mus.brain, data=blk.mus.aggr, ID=c('Actr3b'), height=0.7, legend.r=1.5, legend.key.size=0.02, legend.text.size=12, legend.nrow=2, sce.dimred=sce.dimred, dimred='PCA', cell.group='label', tar.bulk=names(lis.match), lis.rematch=lis.match, bar.width=0.09, dim.lgd.nrow=2, dim.lgd.text.size=12)
 
 ```
 <p style="color:red">Several things are missing: (1) To track tissue assignment, if expression values are similar across tissues, there needs to be an argument toggle to color one time by expression values and another time by tissue. Otherwise tissue assignment info is lost. (2) I don't understand the plot on the bottom that shows the stress sample. Why does the sp heatmap highlight in this case only one tissue? </p>
@@ -448,7 +447,7 @@ is based on the gene expression summary for each cell group obtained by clusteri
 Completely manual groupings can be provided the same way.  
 
 ```{r scAutoVis, eval=TRUE, echo=TRUE, warnings=FALSE, fig.wide=TRUE, fig.cap=('Co-visualization of single cell data and tissue features with cluster groupings. Gene `Rpl7` is used as an example and the cell groupings were obtained by clustering.'), out.width="100%", fig.show='show', results='hide'}
-shm.lis <- spatial_hm(svg=svg.mus.brain, data=sce.clus.aggr, ID=c('Rpl7'), height=0.7, legend.r=1.5, legend.key.size=0.02, legend.text.size=12, legend.nrow=3, sce.dimred=sce.clus, dimred='PCA', cell.group='cluster', assay.na='logcounts', tar.cell=c('matched'), lis.rematch=lis.match.clus, bar.width=0.09, dim.lgd.nrow=1)
+shm.lis <- covis(svg=svg.mus.brain, data=sce.clus.aggr, ID=c('Rpl7'), height=0.7, legend.r=1.5, legend.key.size=0.02, legend.text.size=12, legend.nrow=3, sce.dimred=sce.clus, dimred='PCA', cell.group='cluster', assay.na='logcounts', tar.cell=c('matched'), lis.rematch=lis.match.clus, bar.width=0.09, dim.lgd.nrow=1)
 ```
 
 ## Automated Method
@@ -770,12 +769,19 @@ The co-visualization of bulk and single cells is built on aggregated gene abunda
 
 ```{r , eval=TRUE, echo=TRUE, warnings=FALSE, fig.wide=TRUE, fig.cap=('Co-visualizing bulk and single cells of mouse brain with abundance profiles. The aggregated expression profile of gene `Adcy1` in cells matching the same bulk is used to fill these cells and bulk tissues.'), out.width="100%", fig.show='show', results='hide'}
 
-shm.lis1 <- spatial_hm(svg=svg.mus.brain, data=sce.aggr, ID=c('Adcy1'), legend.nrow=4, sce.dimred=res.lis$cell.refined, dimred='UMAP', tar.cell=c('hippocampus', 'hypothalamus', 'cerebellum', 'cerebral.cortex'), profile=TRUE, dim.lgd.text.size=10, dim.lgd.nrow=2, bar.width=0.1)
+shm.lis1 <- covis(svg=svg.mus.brain, data=sce.aggr, ID=c('Adcy1'), legend.nrow=4, sce.dimred=res.lis$cell.refined, dimred='UMAP', tar.cell=c('hippocampus', 'hypothalamus', 'cerebellum', 'cerebral.cortex'), profile=TRUE, dim.lgd.text.size=10, dim.lgd.nrow=2, bar.width=0.1)
 
 
 sce.aggr <- aggr_rep(data=res.lis$sce.bulk, assay.na='logcounts', sam.factor='dataBulk', aggr='mean')
 
-shm.lis1 <- spatial_hm(svg=svg.mus.brain, data=sce.aggr, ID=c('Adcy1'), legend.nrow=4, sce.dimred=res.lis$cell.refined, assay.na='logcounts', dimred='UMAP', tar.bulk=df.match.mus.brain$dataBulk, profile=TRUE, dim.lgd.text.size=10, dim.lgd.nrow=2, bar.width=0.1)
+sce.bulk <- subset(coclus.mus, , bulkCell=='bulk')
+sce.aggr <- aggr_rep(data=sce.bulk, assay.na='logcounts', sam.factor='sample', aggr='mean')
+
+sce.cell <- subset(coclus.mus, , bulkCell=='cell')
+sce.aggr <- aggr_rep(data=sce.cell, assay.na='logcounts', sam.factor='assignedBulk', aggr='mean')
+
+
+shm.lis1 <- covis(svg=svg.mus.brain, data=sce.aggr, ID=c('Adcy1'), legend.nrow=4, sce.dimred=sce.cell, assay.na='logcounts', dimred='UMAP', profile=TRUE, dim.lgd.text.size=10, dim.lgd.nrow=2, bar.width=0.1, tar.cell=unique(sce.aggr$assignedBulk))
 
 ```
 
@@ -784,7 +790,7 @@ Bulk tissues and single cells are co-visualized without abundance profiles (`pro
 </font>
 
 ```{r , eval=TRUE, echo=TRUE, warnings=FALSE, fig.wide=TRUE, fig.cap=('Co-visualizing bulk and single cells of mouse brain without abundance profiles. The matching between cells and source bulk tissues (aSVG features) is denoted by the same color between the embedding plot and anatomical image.'), out.width="100%", fig.show='show', results='hide'}
-shm.lis2 <- spatial_hm(svg=svg.mus.brain, data=sce.aggr, legend.nrow=4, sce.dimred=res.lis$cell.refined, dimred='UMAP', targ=c('hippocampus', 'hypothalamus', 'cerebellum', 'cerebral.cortex'), profile=FALSE, dim.lgd.text.size=10, dim.lgd.nrow=2)
+shm.lis2 <- covis(svg=svg.mus.brain, data=sce.aggr, legend.nrow=4, sce.dimred=res.lis$cell.refined, dimred='UMAP', targ=c('hippocampus', 'hypothalamus', 'cerebellum', 'cerebral.cortex'), profile=FALSE, dim.lgd.text.size=10, dim.lgd.nrow=2)
 ```
 
 # Shiny App {#autoSCE}

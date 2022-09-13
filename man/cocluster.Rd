@@ -6,27 +6,39 @@
 \usage{
 cocluster(
   bulk,
-  cell.refined,
-  df.match,
+  cell,
+  df.match = NULL,
   min.dim = 13,
   max.dim = 50,
-  graph.meth = "snn",
   dimred = "PCA",
+  graph.meth = "snn",
+  knn.gr = list(),
+  snn.gr = list(),
+  cluster = "wt",
+  wt.arg = list(steps = 4),
+  fg.arg = list(),
+  sl.arg = list(spins = 25),
+  le.arg = list(),
+  eb.arg = list(),
   sim.meth = "spearman"
 )
 }
 \arguments{
 \item{bulk}{The normalized and filtered bulk data in form of \code{SingleCellExperiment}, \code{matrix} (log2-scale), or \code{data.frame} (log2-scale).}
 
-\item{cell.refined}{The refined cell data in form of \code{SingleCellExperiment}, which is returned by \code{refine_cluster}.}
-
 \item{df.match}{The \code{data.frame} specifying matching between cells and true bulk.}
-
-\item{graph.meth}{Method to build a nearest-neighbor graph, \code{snn} (see \code{\link[scran]{buildSNNGraph}}) or \code{knn} (default, see \code{\link[scran]{buildKNNGraph}}). The clusters are detected by first creating a nearest neighbor graph using \code{snn} or \code{kn} then partitioning the graph.}
 
 \item{dimred}{A string of \code{PCA} (default) or \code{UMAP} specifying which reduced dimensionality to use in creating a nearest neighbor graph. Internally, before building a nearest neighbor graph the data dimensionalities are reduced by PCA and UMAP respectively.}
 
+\item{graph.meth}{Method to build a nearest-neighbor graph, \code{snn} (see \code{\link[scran]{buildSNNGraph}}) or \code{knn} (default, see \code{\link[scran]{buildKNNGraph}}). The clusters are detected by first creating a nearest neighbor graph using \code{snn} or \code{kn} then partitioning the graph.}
+
+\item{knn.gr}{Additional arguments in a named list passed to \code{\link[scran]{buildKNNGraph}}.}
+
+\item{snn.gr}{Additional arguments in a named list passed to \code{\link[scran]{buildSNNGraph}}.}
+
 \item{sim.meth}{Method to calculate similarities between bulk and cells in each cocluster when assigning bulk to cells. \code{spearman} (default) or \code{pearson}.}
+
+\item{cell.refined}{The refined cell data in form of \code{SingleCellExperiment}, which is returned by \code{refine_cluster}.}
 }
 \value{
 A list of \code{roc} object and the data frame to create the \code{roc}.

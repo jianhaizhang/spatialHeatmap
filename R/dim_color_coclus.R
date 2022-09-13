@@ -33,17 +33,18 @@
 #' @importFrom ggplot2 layer_data ggplot geom_point theme_classic theme element_text element_blank labs scale_shape_manual scale_color_manual margin guide_legend
 
 dim_color_coclus <- function(sce=NULL, row.sel=NULL, targ=NULL, profile=FALSE, gg.dim, gg.shm.all, grob.shm.all, gg.lgd.all, col.shm.all, col.lgd.all, grob.lgd.all, con.na=TRUE, lis.match=NULL, sub.title.size=11, dim.lgd.pos='bottom', dim.lgd.nrow=1, dim.lgd.key.size=4, dim.lgd.text.size=13, dim.capt.size=13) {
-  # save(sce, row.sel, targ, profile, gg.dim, gg.shm.all, grob.shm.all, gg.lgd.all, col.shm.all, col.lgd.all, grob.lgd.all, con.na, lis.match, sub.title.size, dim.lgd.pos, dim.lgd.nrow, dim.lgd.text.size, dim.lgd.key.size, dim.capt.size, file='dim.color.coclus.arg')
+ # save(sce, row.sel, targ, profile, gg.dim, gg.shm.all, grob.shm.all, gg.lgd.all, col.shm.all, col.lgd.all, grob.lgd.all, con.na, lis.match, sub.title.size, dim.lgd.pos, dim.lgd.nrow, dim.lgd.text.size, dim.lgd.key.size, dim.capt.size, file='dim.color.coclus.arg')
   response <- feature <- idx <- x <- y <- NULL
   if (!is.null(sce) & !is.null(lis.match)) stop("Only one of 'sce' and 'lis.match' is required!")
   cdat <- colData(sce)
   if (!is.null(sce)) {
     # The matching list between aggregated cells and aSVG spatial features. The former are cells with a source tissue assignment in co-clustering.   
-    blk.uni <- unique(cdat$SVGBulk)
+    blk.uni <- unique(cdat$assignedBulk)
     blk.uni <- setdiff(blk.uni, 'none')
     lis.match <- as(blk.uni, 'list'); names(lis.match) <- blk.uni
     if (targ[1]=='matched') targ <- blk.uni
-    if (any(!targ %in% blk.uni)) stop("Make sure all entries in 'targ' are in 'SVGBulk'!")
+    targ <- setdiff(targ, 'none') 
+    if (any(!targ %in% blk.uni)) stop("Make sure all entries in 'targ' are in 'assignedBulk'!")
   }
   lis.match <- lis.match[!unlist(lapply(lis.match, is.null))]
   
@@ -79,8 +80,7 @@ dim_color_coclus <- function(sce=NULL, row.sel=NULL, targ=NULL, profile=FALSE, g
   if (profile==TRUE) dim.col <- col_dim_shm(gg.dim=gg.dim, gcol.all=col.shm.all, lis.match=lis.match)
   if (profile==FALSE) dim.col <- col_dim_shm(gg.dim=gg.dim, gcol.all=col.lgd.all, lis.match=lis.match)
     # Target cells without assignments ('none') are assigned 'gray50'.
-    true.tar <- unique(subset(cdat, SVGBulk!='none')$SVGBulk)
-    dim.col[setdiff(targ, true.tar)] <- 'gray50'
+    dim.col <- c(dim.col, none='gray80')
     
     gg.dim0 <- gg.dim[[1]]
     dat <- gg.dim0$data; lay.dat <- layer_data(gg.dim0) 
@@ -89,8 +89,8 @@ dim_color_coclus <- function(sce=NULL, row.sel=NULL, targ=NULL, profile=FALSE, g
     df.all <- df.all[, !colnames(df.all) %in% 'colour']
 
     # The row order is the same between cdat and df.all.
-    df.all$feature <- cdat$SVGBulk
-    df.all <- cbind(df.all, cdat[, c('cell', 'assignedBulk', 'dataBulk')])
+    df.all$feature <- cdat$assignedBulk
+    df.all <- cbind(df.all, cdat[, c('sample', 'assignedBulk')])
     df.all$idx <- seq_len(nrow(df.all))
     na.sel <- paste0(unique(df.all$feature[row.sel]), '.selected')
 
@@ -113,7 +113,7 @@ dim_color_coclus <- function(sce=NULL, row.sel=NULL, targ=NULL, profile=FALSE, g
       # Non-target cells are assigned colour gray80.
       dim.col.final[!names(dim.col.final) %in% targ] <- 'gray80'
     } else { # Colours of selected cells.
-      col.sel <- rep('gray50', length(na.sel))
+      col.sel <- rep('blue', length(na.sel))
       names(col.sel) <- na.sel
       dim.col.final[names(dim.col.final)] <- 'gray80'
       dim.col.final <- c(dim.col.final, col.sel)
@@ -133,11 +133,11 @@ dim_color_coclus <- function(sce=NULL, row.sel=NULL, targ=NULL, profile=FALSE, g
       sp[na.sel] <- sp.all[seq_along(na.sel)]
     }
     # Cells without true bulk in the matching data frame.
-    if ('none' %in% df.all$dataBulk) {
-      dim.col.final <- c('gray80', dim.col.final)
-      names(dim.col.final)[1] <- 'none'
-      sp <- c(1, sp); names(sp)[1] <- 'none'
-    }
+    # if ('none' %in% df.all$dataBulk) {
+    #  dim.col.final <- c('gray80', dim.col.final)
+    #  names(dim.col.final)[1] <- 'none'
+    #  sp <- c(1, sp); names(sp)[1] <- 'none'
+    #}
   if (con.na==TRUE) tit <- gsub('^dim_(.*)_\\d+$', '\\1', names(gg.dim)) else tit <- gsub('^dim_(.*)_con_\\d+$', '\\1', names(gg.dim))
   if (profile==FALSE) tit <- NULL
   if (is.null(row.sel)) {

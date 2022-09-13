@@ -79,55 +79,60 @@
 #' SummarizedExperiment: SummarizedExperiment container. R package version 1.10.1 \cr R Core Team (2018). R: A language and        environment for statistical computing. R Foundation for Statistical Computing, Vienna, Austria. URL https://www.R-project.org/
 #' Amezquita R, Lun A, Becht E, Carey V, Carpp L, Geistlinger L, Marini F, Rue-Albrecht K, Risso D, Soneson C, Waldron L, Pages H, Smith M, Huber W, Morgan M, Gottardo R, Hicks S (2020). “Orchestrating single-cell analysis with Bioconductor.” Nature Methods, 17, 137–145. https://www.nature.com/articles/s41592-019-0654-x.
 
-#' @export cocluster
+#' @export
 #' @importFrom SummarizedExperiment colData colData<-
 #' @importFrom SingleCellExperiment logcounts
 
-cocluster <- function(bulk, cell.refined, df.match, min.dim=13, max.dim=50, graph.meth='snn', dimred='PCA', sim.meth='spearman') {
-  # save(bulk, cell.refined, df.match, min.dim, max.dim, graph.meth, dimred, sim.meth, file='cocluster.arg')
-  # Combine bulk and single cell data.
-  dat.kp.sc <- logcounts(cell.refined)
-  cat('Single cell data: \n'); print(dim(dat.kp.sc))
+cocluster <- function(bulk, cell, df.match=NULL, min.dim=13, max.dim=50, dimred='PCA', graph.meth='snn', knn.gr=list(), snn.gr=list(), cluster='wt', wt.arg=list(steps = 4), fg.arg=list(), sl.arg=list(spins = 25), le.arg=list(), eb.arg=list(), sim.meth='spearman') {
+  # save(bulk, cell, df.match, min.dim, max.dim, dimred, graph.meth, knn.gr, snn.gr, cluster, wt.arg, fg.arg, sl.arg, le.arg, eb.arg, sim.meth, file='cocluster.arg')
   # Two or more cells are needed.
-  if (length(unique(colnames(dat.kp.sc)))<=1) {
+  if (length(unique(colnames(cell)))<=1) {
     cat('At least two cells are needed!\n'); return()
   }
-  if (is(bulk, 'SingleCellExperiment')) bulk <- logcounts(bulk)
-  if (all(round(bulk)==bulk)) stop('The bulk data should be in log2 scale!')
-  inter <- intersect(rownames(bulk), rownames(dat.kp.sc))
-  blk.kp <- as.matrix(bulk[inter, ]); sc.kp <- dat.kp.sc[inter, ]
-  
-  com.kp <- as.matrix(cbind(blk.kp, sc.kp))
+  if (is(bulk, 'SingleCellExperiment')) {
+    bulk.log <- logcounts(bulk)
+    if (all(round(bulk.log)==bulk.log)) { 
+      message('The bulk data should be in log2 scale!')
+      return()
+    }
+  }
+  if(length(intersect(colnames(bulk), colnames(cell)))>0) stop('Common identifiers are detected between bulk and cell data!')
+  # Combine bulk and single cell data.
+  inter <- intersect(rownames(bulk), rownames(cell))
+  blk.kp <- bulk[inter, ]; sc.kp <- cell[inter, ] 
+  com.kp <- cbind(blk.kp, sc.kp)
+  com.kp$index <- seq_len(ncol(com.kp))
+  com.kp$sample <- colnames(com.kp)
   # Cluster cells+bulk.
+  message('Dimension reduction ...')
   sce.dimred <- reduce_dim(sce=com.kp, min.dim=min.dim, max.dim=max.dim)
   if (is.null(sce.dimred)) return()
-  sce.tsne.com <- cluster_cell(sce=sce.dimred, graph.meth=graph.meth, dimred=dimred)
+  sce.tsne.com <- cluster_cell(sce=sce.dimred, graph.meth=graph.meth, knn.gr=knn.gr, snn.gr=snn.gr, dimred=dimred, cluster=cluster, wt.arg=wt.arg, fg.arg=fg.arg, sl.arg=sl.arg, le.arg=le.arg, eb.arg=eb.arg)
   if (is.null(sce.tsne.com)) return()
   # sce.tsne.com <- clus.com$sce.tsne; sce.com.nor <- clus.com$sce.nor
   # data.com: logcounts(sce.com.nor), reducedDim(sce.tsne.com, 'PCA')
   # roc <- com_roc(dat.com=logcounts(sce.com.nor), cdat.com, dat.blk=bulk)
-  roc.lis <- com_roc(sce.coclus=sce.tsne.com, dimred=dimred, dat.blk=bulk, df.match=df.match, sim.meth=sim.meth) 
+  res <- com_roc(sce.coclus=sce.tsne.com, dimred=dimred, dat.blk=bulk, df.match=df.match, sim.meth=sim.meth) 
   # Include assignment info to "colData".  
-  cdat <- colData(cell.refined)
-  if (!'dataBulk' %in% colnames(cdat)) cdat$dataBulk <- 'none'
-  if (!'SVGBulk' %in% colnames(cdat)) cdat$SVGBulk <- 'none'
-  colData(cell.refined) <- cdat
+  # cdat <- colData(cell)
+  # if (!'dataBulk' %in% colnames(cdat)) cdat$dataBulk <- 'none'
+  # if (!'SVGBulk' %in% colnames(cdat)) cdat$SVGBulk <- 'none'
+  # colData(cell) <- cdat
 
   # Isolate bulk data.
-  sce.bulk <- sce.tsne.com[, !colnames(sce.tsne.com) %in% cdat$cell]
-  cdat.blk <- colData(sce.bulk)
-  cdat.blk$cluster <- NULL
-  names(cdat.blk)[names(cdat.blk)=='cell'] <- 'dataBulk'
-  svg.blk <- df.match$SVGBulk
-  data.blk <- df.match$dataBulk
-  names(svg.blk) <- data.blk
-  cdat.blk$SVGBulk <- svg.blk[cdat.blk$dataBulk]
-  colData(sce.bulk) <- cdat.blk
+  # sce.bulk <- sce.tsne.com[, !colnames(sce.tsne.com) %in% cdat$cell]
+  # cdat.blk <- colData(sce.bulk)
+  # cdat.blk$cluster <- NULL
+  # names(cdat.blk)[names(cdat.blk)=='cell'] <- 'dataBulk'
+  # svg.blk <- df.match$SVGBulk
+  # data.blk <- df.match$dataBulk
+  # names(svg.blk) <- data.blk
+  # cdat.blk$SVGBulk <- svg.blk[cdat.blk$dataBulk]
+  # colData(sce.bulk) <- cdat.blk
 
-  sce.lis <- refine_asg(res.lis=c(list(cell.refined=cell.refined, sce.bulk.cell=sce.tsne.com, sce.bulk=sce.bulk), roc.lis), thr=-Inf, df.desired.bulk=NULL, df.match=df.match)
-  return(sce.lis)
+  # sce.lis <- refine_asg(res.lis=c(list(cell=cell, sce.bulk.cell=sce.tsne.com, sce.bulk=sce.bulk), res.lis), thr=-Inf, df.desired.bulk=NULL, df.match=df.match)
+  return(res)
 }
-
 
 #' Calculate ROC/AUC for the combined bulk and single cell data
 #'
@@ -152,10 +157,12 @@ cocluster <- function(bulk, cell.refined, df.match, min.dim=13, max.dim=50, grap
 #' @importFrom SingleCellExperiment reducedDim
 #' @importFrom pROC roc
 
-com_roc <- function(sce.coclus, dimred, dat.blk, df.match, sim.meth='spearman') {
-  if (!'SVGBulk' %in% colnames(df.match)) df.match$SVGBulk <- 'none' 
+com_roc <- function(sce.coclus, dimred, dat.blk, df.match=NULL, sim.meth='spearman') {
   # save(sce.coclus, dimred, dat.blk, df.match, sim.meth, file='com.roc.arg')
-  df.match <- df.match[!duplicated(df.match), , drop=FALSE]
+  if (!is.null(df.match)) {
+  # if (!'SVGBulk' %in% colnames(df.match)) df.match$SVGBulk <- 'none' 
+    df.match <- df.match[!duplicated(df.match), , drop=FALSE]
+  }
   response <- NULL; dat.com <- t(reducedDim(sce.coclus, dimred))
   cdat.com <- colData(sce.coclus) 
   if (nrow(dat.com)<5) stop('Dimensions should be >= 5!')
@@ -167,7 +174,7 @@ com_roc <- function(sce.coclus, dimred, dat.blk, df.match, sim.meth='spearman') 
   # Co-clusters in a list.
   coclus <- lapply(lab.com.uni, function(x) sort(table(rownames(cdat.com)[lab.com==x])))
   names(coclus) <- lab.com.uni; bulk.na <- unique(colnames(dat.blk))
-  # Index all bulk and cells for convenience to selected cells with a bulk tissue assignment.
+  # Index all bulk and cells for convenience to select cells with a bulk tissue assignment.
   cna.all <- colnames(dat.com)
   names(cna.all) <- seq_along(cna.all)
 
@@ -203,33 +210,49 @@ com_roc <- function(sce.coclus, dimred, dat.blk, df.match, sim.meth='spearman') 
      blk.asg <- names(blk.sel) 
      # Matching between the cells and bulk in the co-cluster.
      # match.lis0 <- match.lis[sc0.na[j]]
-     if (!'cell' %in% colnames(df.match)) {
-       asg.idx <- unlist(lapply(df.match$dataBulk, function(x) {
-       blk.asg %in% strsplit(x, ',|;| ')[[1]] }))
-       if (sum(asg.idx)==0) { 
+     if (is.null(df.match)) {
+       #asg.idx <- unlist(lapply(df.match$dataBulk, function(x) {
+       # blk.asg %in% strsplit(x, ',|;| ')[[1]] }))
+       # if (sum(asg.idx)==0) { 
          # message(paste0('Assigned bulk for cell "', sc0.na[j], '" is not found in "df.match": ', blk.asg)); 
-         next
-       }
+       #  next
+       # }
        # index is based on bulk+cell.
-       df0 <- data.frame(SVGBulk=df.match$SVGBulk[asg.idx], dataBulk=df.match$dataBulk[asg.idx], assignedBulk=blk.asg, cell=sc0.na[j], predictor=blk.sel, index=names(cna.sc0[j]))   
-     } else {    
-       true.bulk.pas <- df.match$dataBulk[df.match$cell==sc0.na[j]]
+       df0 <- data.frame(cell=sc0.na[j], assignedBulk=blk.asg,  similarity=blk.sel, index=names(cna.sc0[j]), row.names=NULL)  
+     } else if (is(df.match, 'data.frame')) {    
+       true.bulk.pas <- df.match$trueBulk[df.match$cell==sc0.na[j]]
        if (length(true.bulk.pas)==0) { # No matching bulk.
          # message(paste0('Assigned bulk for cell "', sc0.na[j], '" is not found in "df.match": ', blk.asg));
          next
        }
        true.bulk <- strsplit(true.bulk.pas, ',|;| ')[[1]]
        true.bulk <- true.bulk[true.bulk!='']
-       svg.bulk <- df.match$SVGBulk[df.match$cell==sc0.na[j]]
+       # svg.bulk <- df.match$SVGBulk[df.match$cell==sc0.na[j]]
        # Check if the cell matches with the true bulk.
        # index is based on bulk+cell.
-       df0 <- data.frame(SVGBulk=svg.bulk, dataBulk=true.bulk.pas, assignedBulk=blk.asg, cell=sc0.na[j], response=blk.asg %in% true.bulk, predictor=blk.sel, index=names(cna.sc0[j]))
+       df0 <- data.frame(cell=sc0.na[j], assignedBulk=blk.asg, trueBulk=true.bulk.pas, response=blk.asg %in% true.bulk, similarity=blk.sel, index=names(cna.sc0[j]), row.names=NULL)
        }; df.asg <- rbind(df.asg, df0)
    }
   }
-  roc.obj <- NULL
-  if (is.null(df.asg)) return(list(df.asg=df.asg, roc.obj=roc.obj))
+  if (!is.null(df.asg)) { 
+    df.asg$index <- as.numeric(df.asg$index)
+    df.asg$similarity <- round(df.asg$similarity, 3)
+    sce.coclus$assignedBulk <- sce.coclus$similarity <- 'none'
+    idx <- df.asg$index
+    sce.coclus$assignedBulk[idx] <- df.asg$assignedBulk 
+    sce.coclus$similarity[idx] <- df.asg$similarity 
+  }
+  roc.obj <- NULL; if (is.null(df.asg)) {
+    message('No bulk tissues assigned!')
+    return(list(sce=sce.coclus, roc.obj=roc.obj))
+  }
   if ('cell' %in% colnames(df.match)) {
+    # If a cell is not assigned bulk, its true bulk is also 'none'.
+    sce.coclus$trueBulk <- sce.coclus$response <- 'none'
+    idx <- df.asg$index
+    sce.coclus$trueBulk[idx] <- df.asg$trueBulk 
+    sce.coclus$response[idx] <- df.asg$response
+
     df.tr <- subset(df.asg, response==TRUE)
     cat('TRUE and FALSE:\n'); print(dim(df.asg))
     cat('TRUE:\n'); print(dim(df.tr))
@@ -238,9 +261,15 @@ com_roc <- function(sce.coclus, dimred, dat.blk, df.match, sim.meth='spearman') 
     # index.sc.asg <- seq_along(dat.com)[as.numeric(df.asg$index)]
     # index.all <- c(rep(0, ncol(dat.blk)), seq_along(colnames(dat.com)[!colnames(dat.com) %in% bulk.na]))
     # df.asg$index <- index.all[index.sc.asg]
-    roc.obj <- roc(df.asg$response, df.asg$predictor, smoothed = TRUE, ci=TRUE, ci.alpha=0.9, stratified=FALSE, plot=FALSE, auc.polygon=TRUE, max.auc.polygon=TRUE, grid=TRUE, print.auc=TRUE, show.thres=TRUE, direction='<', levels=c('FALSE', 'TRUE'))
+    roc.obj <- roc(df.asg$response, df.asg$similarity, smoothed = TRUE, ci=TRUE, ci.alpha=0.9, stratified=FALSE, plot=FALSE, auc.polygon=TRUE, max.auc.polygon=TRUE, grid=TRUE, print.auc=TRUE, show.thres=TRUE, direction='<', levels=c('FALSE', 'TRUE'))
   }
-  df.asg$index <- as.numeric(df.asg$index) - ncol(dat.blk)
-  df.asg$predictor <- round(df.asg$predictor, 3)
-  return(list(df.asg=df.asg, roc.obj=roc.obj))
+  cdat <- colData(sce.coclus); cdat.na <- colnames(cdat)
+  sel.na <- c('cluster', 'bulkCell', 'sample', 'assignedBulk', 'similarity', 'index')
+  if ('cell' %in% colnames(df.match)) sel.na <- c('cluster', 'bulkCell', 'sample', 'assignedBulk', 'trueBulk', 'response', 'similarity', 'index')
+  cdat <- cdat[, c(sel.na, setdiff(cdat.na, sel.na))]
+  colData(sce.coclus) <- cdat
+  if ('cell' %in% colnames(df.match)) res <- list(sce.all=sce.coclus, roc.obj=roc.obj) else res <- sce.coclus
+  return(res)
+  # df.asg$index <- as.numeric(df.asg$index) - ncol(dat.blk)
+  # return(list(df.asg=df.asg, roc.obj=roc.obj))
 }

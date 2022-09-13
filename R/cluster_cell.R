@@ -34,13 +34,14 @@
 #' Csardi G, Nepusz T: The igraph software package for complex network research, InterJournal, Complex Systems 1695. 2006. https://igraph.org
 
 
-#' @export cluster_cell 
+#' @export 
 #' @importFrom SummarizedExperiment colData
 #' @importFrom SingleCellExperiment SingleCellExperiment 
 #' @importFrom scran buildSNNGraph buildSNNGraph 
 #' @importFrom igraph cluster_walktrap
 
-cluster_cell <- function(sce, graph.meth='knn', dimred='PCA', knn.gr=list(), snn.gr=list(), cluster.wk=list(steps = 4)) {
+
+cluster_cell <- function(sce, graph.meth='knn', dimred='PCA', knn.gr=list(), snn.gr=list(), cluster='wt', wt.arg=list(steps = 4), fg.arg=list(), sl.arg=list(spins = 25), le.arg=list(), eb.arg=list()) {
   if (!is(sce, 'SingleCellExperiment')) stop('The "sce" should be an "SingleCellExperiment" object!')
   if (!dimred %in% reducedDimNames(sce)) stop('The "dimred" is not detected in "reducedDimNames"!')
   if ('cluster' %in% colnames(colData(sce))) stop('The "cluster" is a reserved colname in "colData" to store cluster assignments in this function!')
@@ -52,9 +53,13 @@ cluster_cell <- function(sce, graph.meth='knn', dimred='PCA', knn.gr=list(), snn
     gr.sc <- do.call(buildSNNGraph, c(list(x=sce, use.dimred=dimred), snn.gr))
   }
   # cluster: detected cell clusters. label: customer clusters.
-  clus <- as.character(do.call(cluster_walktrap, c(list(graph=gr.sc), cluster.wk))$membership)
+
+  clus.all <- detect_cluster(graph=gr.sc, clustering=cluster, wt.arg=wt.arg, fg.arg=fg.arg, sl.arg=sl.arg, le.arg=le.arg, eb.arg=eb.arg)
+  clus <- as.character(clus.all$membership)
+
+  # clus <- as.character(do.call(cluster_walktrap, c(list(graph=gr.sc), cluster.wk))$membership)
   clus <- paste0('clus', clus)
-  cdat.sc <- colData(sce); cdat.sc$cell <- rownames(cdat.sc)
+  cdat.sc <- colData(sce); rna <- rownames(cdat.sc)
   lab.lgc <- 'label' %in% make.names(colnames(cdat.sc))
   if (lab.lgc) {
     cdat.sc <- cbind(cluster=clus, cdat.sc)
@@ -62,7 +67,7 @@ cluster_cell <- function(sce, graph.meth='knn', dimred='PCA', knn.gr=list(), snn
     cdat.sc <- cdat.sc[, c(which(idx), which(!idx))]
   } else cdat.sc <- cbind(cluster=clus, cdat.sc)
   # "cbind" removes row names in "cdat.sc". If "cdat.sc" has no row names, the existing column names in "sce" are erased.
-  rownames(cdat.sc) <- cdat.sc$cell
+  rownames(cdat.sc) <- rna
   colnames(cdat.sc) <- make.names(colnames(cdat.sc))
   colData(sce) <- cdat.sc; return(sce)
 }

@@ -2,7 +2,7 @@
 % Please edit documentation in R/plot_dim.R
 \name{plot_dim}
 \alias{plot_dim}
-\title{Plotting single cells in reduced dimensionalities}
+\title{Embedding plots of single cells/bulk tissues after co-clustering}
 \usage{
 plot_dim(
   sce,
@@ -10,9 +10,19 @@ plot_dim(
   color.by,
   group.sel = NULL,
   row.sel = NULL,
+  cocluster.only = TRUE,
   x.break = NULL,
   y.break = NULL,
-  panel.grid = FALSE
+  panel.grid = FALSE,
+  lgd.title.size = 10,
+  lgd.key.size = 0.03,
+  lgd.text.size = 10,
+  point.size = 1.5,
+  bulk.size = 3,
+  alpha = 0.6,
+  stroke = 0.5,
+  axis.text.size = 10,
+  axis.title.size = 11
 )
 }
 \arguments{
@@ -26,15 +36,27 @@ plot_dim(
 
 \item{row.sel}{A numeric vector of row numbers in the \code{colData} slot of \code{sce}. The cells corresponding to these rows are highlighted and plotted on top of other cells.}
 
+\item{cocluster.only}{Logical, if \code{TRUE} (default), only coclusters (including bulk and cells) are colored and the rest are in gray.}
+
 \item{x.break, y.break}{Two numeric vectors for x, y axis breaks respectively. E.g. \code{seq(-10, 10, 2)}. The default is \code{NULL}.}
 
 \item{panel.grid}{Logical. If \code{TRUE}, the panel grid will be shown.}
+
+\item{lgd.title.size, lgd.key.size, lgd.text.size}{The size of legend plot title, legend key, legend text respectively.}
+
+\item{point.size, bulk.size}{The size of cells and bulk tissues respectively.}
+
+\item{alpha}{The transparency of cells and bulk tissues. The default is 0.6.}
+
+\item{stroke}{The line width of cells and bulk tissues.}
+
+\item{axis.text.size, axis.title.size}{The size of axis text and title respectively.}
 }
 \value{
 An object of ggplot.
 }
 \description{
-Plotting single cells in reduced dimensionalities
+Embedding plots of single cells/bulk tissues after co-clustering
 }
 \examples{
 library(scran); library(scuttle) 

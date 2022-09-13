@@ -10,7 +10,12 @@ cluster_cell(
   dimred = "PCA",
   knn.gr = list(),
   snn.gr = list(),
-  cluster.wk = list(steps = 4)
+  cluster = "wt",
+  wt.arg = list(steps = 4),
+  fg.arg = list(),
+  sl.arg = list(spins = 25),
+  le.arg = list(),
+  eb.arg = list()
 )
 }
 \arguments{

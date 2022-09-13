@@ -25,22 +25,44 @@
 #' McCarthy DJ, Campbell KR, Lun ATL, Willis QF (2017). “Scater: pre-processing, quality control, normalisation and visualisation of single-cell RNA-seq data in R.” Bioinformatics, 33, 1179-1186. doi: 10.1093/bioinformatics/btw777.
 
 
-#' @export norm_cell
+#' @export
 #' @importFrom SingleCellExperiment altExpNames 
 #' @importFrom scuttle logNormCounts
 #' @importFrom scran quickCluster computeSumFactors 
 
-norm_cell <- function(sce, cpm=FALSE, count.kp=FALSE, quick.clus=list(min.size = 100), com.sum.fct=list(max.cluster.size = 3000, min.mean=1), log.norm=list()) {
-  # Normalization.
-  clusters <- do.call(quickCluster, c(list(x=sce), quick.clus))
-  sce <- do.call(computeSumFactors, c(list(x=sce, cluster=clusters), com.sum.fct))
-  sce <- do.call(logNormCounts, c(list(x=sce), log.norm))
-  # CPM.
-  if (cpm==TRUE) sce <- cal_cpm(sce)
-  if (count.kp==FALSE) assays(sce)$counts <- NULL
-  return(sce)
-}
-
+norm_cell <- function(sce, bulk=NULL, cpm=FALSE, count.kp=FALSE, quick.clus=list(min.size = 100), com.sum.fct=list(max.cluster.size = 3000, min.mean=1), log.norm=list(), com=FALSE, wk.dir=NULL) {
+  if (!is.null(wk.dir)) norm.dir <- file.path(wk.dir, 'norm_res') else norm.dir <- NULL
+  if (!is.null(norm.dir)) if (!dir.exists(norm.dir)) dir.create(norm.dir, recursive = TRUE)
+  # if (!is(sce, 'list')) sce <- list(sce=sce); nas <- names(sce)
+  # if (any(nas=='')) stop('The input data list should be named!')
+  #for (i in nas) { 
+    # sce0 <- sce[[i]]
+  if (!is(sce, 'SingleCellExperiment')) sce <- SingleCellExperiment(assays=list(counts=as.matrix(sce)))
+  if (!is.null(bulk)) {
+    if (!is(bulk, 'SummarizedExperiment') & !is(bulk, 'SingleCellExperiment')) bulk <- SingleCellExperiment(assays=list(counts=as.matrix(bulk)))
+    bulk$bulkCell <- 'bulk'; sce$bulkCell <- 'cell'
+    int <- intersect(rownames(bulk), rownames(sce)) 
+    sce <- cbind(bulk[int, ], sce[int, ])
+  }
+    if (quick.clus$min.size > ncol(sce)) { message(i, ': ', 'fewer cells than min size in quickCluster!'); return() }
+    # Normalization.
+    clusters <- do.call(quickCluster, c(list(x=sce), quick.clus))
+    sce <- do.call(computeSumFactors, c(list(x=sce, cluster=clusters), com.sum.fct))
+    sce <- do.call(logNormCounts, c(list(x=sce), log.norm))
+    # CPM.
+    if (cpm==TRUE) sce <- cal_cpm(sce)
+    if (count.kp==FALSE) assays(sce)$counts <- NULL
+    # sce[[i]] <- sce0 
+  # } 
+  res <- sce 
+  if (!is.null(bulk) & com==FALSE) {
+    bulk <- subset(res, , bulkCell=='bulk')
+    cell <- subset(res, , bulkCell=='cell')
+    res <- list(bulk=bulk, cell=cell)
+  }
+  if (!is.null(norm.dir)) saveRDS(res, file=paste0(norm.dir, '/', ifelse(cpm==TRUE, 'cpm', 'fct'), '.rds'))
+  return(res)
+}       
 
 #' Normalize by CPM. 
 #'

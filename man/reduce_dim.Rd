@@ -9,7 +9,7 @@ reduce_dim(
   prop = 0.1,
   min.dim = 13,
   max.dim = 50,
-  model.var = list(),
+  model.var = list(assay.type = "logcounts"),
   top.hvg = list(),
   de.pca = list(assay.type = "logcounts"),
   pca = FALSE,

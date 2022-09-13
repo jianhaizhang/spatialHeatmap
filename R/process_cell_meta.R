@@ -28,7 +28,7 @@ process_cell_meta <- function(sce, qc.metric=list(threshold=1), qc.filter=list(n
   # Quality control.
   sce.qc <- qc_cell(sce=sce, qc.metric=qc.metric, qc.filter=qc.filter)
   # Normalization.
-  sce.norm <- norm_cell(sce=sce.qc, quick.clus=quick.clus, com.sum.fct=com.sum.fct, log.norm=log.norm)
+  sce.norm <- norm_cell(sce=sce.qc, quick.clus=quick.clus, com.sum.fct=com.sum.fct, log.norm=log.norm, com=TRUE)
   # Dimensionality reduction.
   sce.dimred <- reduce_dim(sce=sce.norm, prop=prop, min.dim=min.dim, max.dim=max.dim, model.var=model.var, top.hvg=top.hvg, de.pca=de.pca, pca=pca, tsne=tsne, umap=umap)
   return(sce.dimred)
