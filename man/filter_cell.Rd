@@ -16,7 +16,9 @@ filter_cell(
 )
 }
 \arguments{
-\item{bulk}{The bulk data in form of \code{data.frame} or \code{SummarizedExperiment}. They are only used to obtain common genes with all single cell data and not filtered. The default is \code{NULL}.}
+\item{sce}{A \code{SingleCellExperiment} of single cell data.}
+
+\item{bulk}{The bulk data in form of \code{data.frame}, \code{SummarizedExperiment}, or \code{SingleCellExperiment}. They are only used to obtain overlapping genes with single cell data and not filtered. The default is \code{NULL}.}
 
 \item{gen.rm}{A regular expression of gene identifiers in single cell data to remove before filtering. E.g. mitochondrial, chloroplast and protoplasting-induced genes (\code{^ATCG|^ATCG}). The default is \code{NULL}.}
 
@@ -26,9 +28,9 @@ filter_cell(
 
 \item{p.in.gen}{The proportion cutoff of counts above \code{cutoff} in a gene. The default is \code{0.2}.}
 
-\item{verbose}{Logical. If \code{TRUE} (default), intermediate messages are printed.}
+\item{com}{Logical, if \code{TRUE} the returned cell and bulk data are column-wise combined, otherwise they are separated in a \code{list}.}
 
-\item{lis}{A named list of single cell data in form of \code{data.frame}, \code{SingleCellExperiment}, or \code{SummarizedExperiment}.}
+\item{verbose}{Logical. If \code{TRUE} (default), intermediate messages are printed.}
 }
 \value{
 A list of filtered single cell data and bulk data, which have common genes.

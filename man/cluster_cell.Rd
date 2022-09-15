@@ -29,10 +29,14 @@ cluster_cell(
 
 \item{snn.gr}{Additional arguments in a named list passed to \code{\link[scran]{buildSNNGraph}}.}
 
+\item{cluster}{The clustering method. One of \code{wt} (\code{\link[igraph]{cluster_walktrap}}, default), \code{fg} (\code{\link[igraph]{cluster_fast_greedy}}), \code{le} (\code{\link[igraph]{cluster_leading_eigen}}), \code{sl} (\code{\link[igraph]{cluster_fast_greedy}}), \code{ed} (\code{\link[igraph]{cluster_edge_betweenness}}).}
+
+\item{wt.arg, fg.arg, sl.arg, le.arg, eb.arg}{A named list of arguments passed to \code{wt}, \code{fg}, \code{le}, \code{sl},       \code{ed} respectively.}
+
 \item{cluster.wk}{Additional arguments in a named list passed to \code{\link[igraph]{cluster_walktrap}}, such as \code{cluster.wk=list(steps = 4)}.}
 }
 \value{
-A list of normalized single cell and bulk data.
+A \code{SingleCellExperiment} object.
 }
 \description{
 Cluster only single cell data or combination of single cell and bulk data. Clusters are created by first building a graph, where nodes are cells and edges represent connections between nearest neighbors, then partitioning the graph. The cluster assignments are stored in the \code{cluster} column of \code{colData} slot of \code{SingleCellExperiment}.

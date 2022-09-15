@@ -2,8 +2,8 @@
 #'
 #' Co-cluster bulk and refined single cell data and assign bulk to single cells. Since the identities of bulk tissues and single cells are labeled, ROC/AUC are calculated to evaluate the co-clustering performance.
 
-#' @param bulk The normalized and filtered bulk data in form of \code{SingleCellExperiment}, \code{matrix} (log2-scale), or \code{data.frame} (log2-scale).
-#' @param cell.refined The refined cell data in form of \code{SingleCellExperiment}, which is returned by \code{refine_cluster}. 
+#' @param bulk The normalized bulk data (log2-scale) in form of \code{SingleCellExperiment} or \code{data.frame}.
+#' @param cell The normalized single cell data in form of \code{SingleCellExperiment}. 
 #' @param df.match The \code{data.frame} specifying matching between cells and true bulk.
 #' @param sim.meth Method to calculate similarities between bulk and cells in each cocluster when assigning bulk to cells. \code{spearman} (default) or \code{pearson}.
 #' @inheritParams cluster_cell

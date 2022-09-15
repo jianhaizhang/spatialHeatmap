@@ -17,10 +17,11 @@ plot_dim(
   lgd.title.size = 10,
   lgd.key.size = 0.03,
   lgd.text.size = 10,
-  point.size = 1.5,
-  bulk.size = 3,
+  point.size = 2,
+  bulk.size = 4,
   alpha = 0.6,
-  stroke = 0.5,
+  stroke = 0.1,
+  bulk.stroke = 0.8,
   axis.text.size = 10,
   axis.title.size = 11
 )
@@ -48,7 +49,7 @@ plot_dim(
 
 \item{alpha}{The transparency of cells and bulk tissues. The default is 0.6.}
 
-\item{stroke}{The line width of cells and bulk tissues.}
+\item{stroke, bulk.stroke}{The line width of cells and bulk tissues respectively.}
 
 \item{axis.text.size, axis.title.size}{The size of axis text and title respectively.}
 }

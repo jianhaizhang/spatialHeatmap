@@ -19,6 +19,8 @@ norm_cell(
 \arguments{
 \item{sce}{Single cell count data in form of \code{SingleCellExperiment} after quality control, which is returned by \code{qc_cell}.}
 
+\item{bulk}{Bulk tissue count data in form of \code{SingleCellExperiment}, \code{SummarizedExperiment}, or \code{data.frame}.}
+
 \item{cpm}{Logical. If \code{FALSE} (default), the count data are only normalized by \code{\link[scran]{computeSumFactors}}. If \code{TRUE}, the data are first normalized by \code{\link[scran]{computeSumFactors}} then transformed to counts per million by \code{\link[scuttle]{calculateCPM}}.}
 
 \item{count.kp}{Logical. If \code{FALSE} (default), the count data is discarded and only log2-scale data are kept.}
@@ -28,6 +30,10 @@ norm_cell(
 \item{com.sum.fct}{Arguments in a named list passed to \code{\link[scran]{computeSumFactors}}, such as \code{com.sum.fct=list(max.cluster.size = 3000))}.}
 
 \item{log.norm}{Arguments in a named list passed to \code{\link[scuttle]{logNormCounts}}.}
+
+\item{com}{Logical, if \code{TRUE} the returned cell and bulk data are column-wise combined, otherwise they are separated in a \code{list}.}
+
+\item{wk.dir}{The directory path to save normalized data.}
 }
 \value{
 A \code{SingleCellExperiment} object.
@@ -45,6 +51,7 @@ sce.norm <- norm_cell(sce.qc)
 Amezquita R, Lun A, Becht E, Carey V, Carpp L, Geistlinger L, Marini F, Rue-Albrecht K, Risso D, Soneson C, Waldron L, Pages H, Smith M, Huber W, Morgan M, Gottardo R, Hicks S (2020). “Orchestrating single-cell analysis with Bioconductor.” Nature Methods, 17, 137–145. https://www.nature.com/articles/s41592-019-0654-x.
 Lun ATL, McCarthy DJ, Marioni JC (2016). “A step-by-step workflow for low-level analysis of single-cell RNA-seq data with Bioconductor.” F1000Res., 5, 2122. doi: 10.12688/f1000research.9501.2.
 McCarthy DJ, Campbell KR, Lun ATL, Willis QF (2017). “Scater: pre-processing, quality control, normalisation and visualisation of single-cell RNA-seq data in R.” Bioinformatics, 33, 1179-1186. doi: 10.1093/bioinformatics/btw777.
+Morgan M, Obenchain V, Hester J, Pagès H (2022). SummarizedExperiment: SummarizedExperiment container. R package version 1.26.1, https://bioconductor.org/packages/SummarizedExperiment
 }
 \author{
 Jianhai Zhang \email{jzhan067@ucr.edu} \cr Dr. Thomas Girke \email{thomas.girke@ucr.edu}

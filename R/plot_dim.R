@@ -11,7 +11,7 @@
 #' @param lgd.title.size,lgd.key.size,lgd.text.size The size of legend plot title, legend key, legend text respectively.
 #' @param point.size,bulk.size The size of cells and bulk tissues respectively.
 #' @param alpha The transparency of cells and bulk tissues. The default is 0.6.
-#' @param stroke The line width of cells and bulk tissues.
+#' @param stroke,bulk.stroke The line width of cells and bulk tissues respectively.
 #' @param axis.text.size,axis.title.size The size of axis text and title respectively.
 
 #' @return An object of ggplot.
@@ -40,9 +40,9 @@
 #' @export 
 #' @importFrom SummarizedExperiment colData
 #' @importFrom SingleCellExperiment reducedDim reducedDimNames
-#' @importFrom ggplot2 ggplot scale_color_manual geom_point aes theme_classic theme element_text labs scale_x_continuous scale_y_continuous
+#' @importFrom ggplot2 ggplot scale_fill_manual scale_size_manual geom_point aes theme_classic theme element_text labs scale_x_continuous scale_y_continuous
 
-plot_dim <- function(sce, dim=NULL, color.by, group.sel=NULL, row.sel=NULL, cocluster.only=TRUE, x.break=NULL, y.break=NULL, panel.grid=FALSE, lgd.title.size=10, lgd.key.size=0.03, lgd.text.size=10, point.size=1.5, bulk.size=3, alpha=0.6, stroke=0.5, axis.text.size=10, axis.title.size=11) {
+plot_dim <- function(sce, dim=NULL, color.by, group.sel=NULL, row.sel=NULL, cocluster.only=TRUE, x.break=NULL, y.break=NULL, panel.grid=FALSE, lgd.title.size=10, lgd.key.size=0.03, lgd.text.size=10, point.size=2, bulk.size=4, alpha=0.6, stroke=0.1, bulk.stroke=0.8, axis.text.size=10, axis.title.size=11) {
   # All scenarios: 1. Only cell, select by row, group, or all. 2. Bulk and cell, select by row, group, or all.
   x <- y <- key <- colour_by <- NULL
   cdat <- colData(sce); blk.cell <- FALSE
@@ -71,11 +71,13 @@ plot_dim <- function(sce, dim=NULL, color.by, group.sel=NULL, row.sel=NULL, cocl
   if (!is.null(group.sel) & !is.null(row.sel)) stop('At least one of "group.sel" and "row.sel" should be "NULL"!')
   if (is.null(group.sel) & is.null(row.sel)) row.sel <- seq_len(ncol(sce))
   if (!is.null(group.sel)) row.sel <- which(cdat[[color.by]]==group.sel)
-  ae <- aes(colour=colour_by)
-  lab <- labs(x=labs[1], y=labs[2], colour=color.by)
+  ae <- aes(fill=colour_by)
+  lab <- labs(x=labs[1], y=labs[2], fill=color.by)
+  row.only <- is.null(group.sel) & length(row.sel) < ncol(sce)
+  row.grp <- (!is.null(row.sel) | !is.null(group.sel)) & length(row.sel) < ncol(sce)
 
   # Select by rows or groups.
-  if (!is.null(row.sel) & length(row.sel) < ncol(sce)) {
+  if (row.grp) {
     df.sel <- df.all[row.sel, ]
     if (blk.cell & !is.null(group.sel)) { # Select by group in the scenario of bulk + cell.
       df.sel$colour_by <- paste0(df.sel$colour_by, '.selected.', df.sel$bulkCell)
@@ -111,7 +113,7 @@ plot_dim <- function(sce, dim=NULL, color.by, group.sel=NULL, row.sel=NULL, cocl
         col.sel <- rep('blue', length(sel))
         names(col.sel) <- sel
       } 
-    } else { # Select by group in the scenario of only cell
+    } else { # Select by row/group in the scenario of only cell
       df.sel$colour_by <- paste0(df.sel$colour_by, '.selected')
       sel <- unique(df.sel$colour_by)
       col.sel <- rep('blue', length(sel)); names(col.sel) <- sel 
@@ -124,16 +126,16 @@ plot_dim <- function(sce, dim=NULL, color.by, group.sel=NULL, row.sel=NULL, cocl
     col.all <- c(col.other, col.sel)
     df.all <- rbind(df.other, df.sel)
     if (blk.cell & !is.null(group.sel)) { # Select by group in the scenario of bulk + cell
-      scl.col <- scale_color_manual(values=col.all, breaks=sel, labels=sub('^.*selected\\.', '', sel)) 
+      scl.col <- scale_fill_manual(values=col.all, breaks=sel, labels=sub('^.*selected\\.', '', sel)) 
     } else if (blk.cell & is.null(group.sel)) {# Select by row in the scenario of bulk + cell
       sel0 <- c(grep('bulk', sel, value=TRUE)[1], grep('cell', sel, value=TRUE)[1])
       sel0 <- sel0[!is.na(sel0)]
-      scl.col <- scale_color_manual(values=col.all, breaks=sel0, labels=sub('^.*selected\\.', '', sel0)) 
+      scl.col <- scale_fill_manual(values=col.all, breaks=sel0, labels=sub('^.*selected\\.', '', sel0)) 
     } else { 
-      if (!is.null(group.sel)) { # Select by group in the scenario of only cell  
-        scl.col <- scale_color_manual(name='Selected', values=col.all, breaks=sel, labels=sub('\\.selected$', '', sel))
+      if (!is.null(group.sel)) { # Select by row/group in the scenario of only cell  
+        scl.col <- scale_fill_manual(name='Selected', values=col.all, breaks=sel, labels=sub('\\.selected$', '', sel))
       } else { # Select by row in the scenario of bulk + cell
-        scl.col <- scale_color_manual(name='Selected', values=col.all, breaks=sel[1], labels=sub('.*', '', sel[1]))
+        scl.col <- scale_fill_manual(name='Selected', values=col.all, breaks=sel[1], labels=sub('.*', '', sel[1]))
       }
     }
   } else scl.col <- NULL
@@ -141,97 +143,71 @@ plot_dim <- function(sce, dim=NULL, color.by, group.sel=NULL, row.sel=NULL, cocl
   if (blk.cell) { # In the scenario of bulk + cell
     df.all <- rbind(subset(df.all, bulkCell=='cell'), subset(df.all, bulkCell=='bulk')) 
     if (is.null(group.sel) & length(row.sel) == ncol(sce)) { # All bulk and cells.     
-      # Shape and size refer to the same variable.
-      df.all$sample.shape <- paste0(df.all$sample, '.', df.all$bulkCell)
-      sam.sp <- unique(df.all$sample.shape)
-      blk <- grep('bulk', sam.sp, value=TRUE)  
-      cell <- grep('cell', sam.sp, value=TRUE)  
-      # Shape
-      sp.blk <- rep(17, length(blk)); names(sp.blk) <- blk
-      sp.cell <- rep(19, length(cell)); names(sp.cell) <- cell
-      sp.all <- c(sp.blk, sp.cell)
-      scl.sp <- scale_shape_manual(name='sample', values=sp.all, breaks=c(blk[1], cell[1]), labels=sub('^.*\\.', '', c(blk[1], cell[1])))
       # Size
-      sz.all <- rep(point.size, length(sp.all))
-      sp.all.na <- names(sp.all) 
-      names(sz.all) <- sp.all.na
-      sz.all[grep('bulk$', sp.all.na)] <- bulk.size
-      scl.sz <- scale_size_manual(values=sz.all, breaks=c(blk[1], cell[1]), labels=sub('^.*\\.', '', c(blk[1], cell[1])))
-      ae <- aes(colour=colour_by, shape=sample.shape, size=sample.shape)
-      lab <- labs(x=labs[1], y=labs[2], colour=color.by, shape='sample', size='sample')
+      sz.all <- c(bulk=bulk.size, cell=point.size)
+      scl.sz <- scale_size_manual(values=sz.all, breaks=names(sz.all), labels=names(sz.all))
+      ae <- aes(fill=colour_by, size=bulkCell)
+      lab <- labs(x=labs[1], y=labs[2], fill=color.by, shape='sample', size='sample')
    } else if (!is.null(group.sel)) { # Select a co-cluster.
-      # Shape
-      col.all.na <- names(col.all)
-      sp.all <- rep(19, length(col.all))
-      names(sp.all) <- col.all.na
-      sp.all[grep('bulk$', col.all.na)] <- 17 
-      scl.sp <- scale_shape_manual(values=sp.all, breaks=sel, labels=sub('^.*selected\\.', '', sel))
       # Size
-      sz.all <- rep(point.size, length(col.all)) 
-      names(sz.all) <- col.all.na
-      sz.all[grep('bulk$', col.all.na)] <- bulk.size
-      scl.sz <- scale_size_manual(values=sz.all, breaks=sel, labels=sub('^.*selected\\.', '', sel))
-      ae <- aes(colour=colour_by, shape=colour_by, size=colour_by)
-      lab <- labs(x=labs[1], y=labs[2], colour=group.sel, shape=group.sel, size=group.sel)
-    } else if (is.null(group.sel) & length(row.sel) < ncol(sce)) { # Select by row.
-      # Shape
-      col.all.na <- names(col.all)
-      sp.all <- rep(19, length(col.all))
-      names(sp.all) <- col.all.na
-      sp.all[grep('bulk$', col.all.na)] <- 17
-      sel0 <- c(grep('bulk', sel, value=TRUE)[1], grep('cell', sel, value=TRUE)[1])
-      sel0 <- sel0[!is.na(sel0)]
-      scl.sp <- scale_shape_manual(values=sp.all, breaks=sel0, labels=sub('^.*selected\\.', '', sel0))
+      sz.all <- c(bulk=bulk.size, cell=point.size)
+      scl.sz <- scale_size_manual(values=sz.all, breaks=names(sz.all), labels=names(sz.all))
+      ae <- aes(fill=colour_by, size=bulkCell)
+      if (all(c('bulk', 'cell') %in% df.sel$bulkCell)) { 
+        # Fill -> colour_by, size -> bulkCell: fill and size do not conflict on the same point, so they can be merged in legend though they are referring to different varialbles.
+        lab <- labs(x=labs[1], y=labs[2], fill=group.sel, size=group.sel)
+      } else if ('cell' %in% df.sel$bulkCell) {
+        lab <- labs(x=labs[1], y=labs[2], fill=group.sel, size='sample') 
+      } else if ('bulk' %in% df.sel$bulkCell) {
+        lab <- labs(x=labs[1], y=labs[2], fill=group.sel, size='sample')
+      }
+    } else if (row.only) { # Select by row.
       # Size
-      sz.all <- rep(point.size, length(col.all))
-      names(sz.all) <- col.all.na
-      sz.all[grep('bulk$', col.all.na)] <- bulk.size
-      scl.sz <- scale_size_manual(values=sz.all, breaks=sel0, labels=sub('^.*selected\\.', '', sel0))
-      ae <- aes(colour=colour_by, shape=colour_by, size=colour_by)
-      lab <- labs(x=labs[1], y=labs[2], colour='Selected', shape='Selected', size='Selected')
+      sz.all <- c(bulk=bulk.size, cell=point.size)
+      ae <- aes(fill=colour_by, shape=colour_by, size=bulkCell)
+      scl.sz <- scale_size_manual(values=sz.all, breaks=names(sz.all), labels=names(sz.all))
+      if (all(c('bulk', 'cell') %in% df.sel$bulkCell)) { 
+        lab <- labs(x=labs[1], y=labs[2], fill='Selected', size='Selected')
+      } else if ('cell' %in% df.sel$bulkCell) {
+        lab <- labs(x=labs[1], y=labs[2], fill='Selected', size='sample') 
+      } else if ('bulk' %in% df.sel$bulkCell) {
+        lab <- labs(x=labs[1], y=labs[2], fill='Selected', size='sample')
+      }
     }
-  } else { scl.sp <- NULL; scl.sz <- NULL }
+  } else { scl.sz <- NULL }
 
   thm <- theme(plot.title=element_text(hjust=0.5, size=14), legend.title=element_text(size=lgd.title.size), legend.key.size=unit(lgd.key.size, "npc"), legend.text=element_text(size=lgd.text.size), axis.text=element_text(size=axis.text.size), axis.title=element_text(size=axis.title.size, face="plain"))
-  gg <- ggplot(df.all, aes(x=x, y=y, key=key)) + geom_point(alpha=alpha, stroke=stroke, ae) + thm + lab + scl.col + scl.sp + scl.sz
+  
+  # Stroke
+  sk <- rep(stroke, nrow(df.all))
+  sk[df.all$bulkCell == 'bulk'] <- bulk.stroke
+  df.all$stroke <- sk
+  gg <- ggplot(df.all, aes(x=x, y=y, key=key)) + geom_point(colour='black', shape=21, alpha=alpha, stroke=df.all$stroke, ae) + thm + lab + scl.col + scl.sz
 
-  if (cocluster.only==TRUE & is.null(group.sel) & length(row.sel) == ncol(sce) & 'bulk' %in% sce$bulkCell) {
+  if (cocluster.only==TRUE & is.null(group.sel) & length(row.sel) == ncol(sce) & blk.cell) {
     df1 <- gg$data; df2 <- layer_data(gg)
     int.na <- intersect(colnames(df1), colnames(df2))
     df.all <- cbind(df1[, !colnames(df1) %in% int.na], layer_data(gg))
     # All default colors.
     df.col <- subset(df.all, !duplicated(colour_by))
     clus.all <- df.col$colour_by
-    col.all <- df.col$colour; names(col.all) <- clus.all
+    col.all <- df.col$fill; names(col.all) <- clus.all
     clus.cell <- clus.all[!clus.all %in% subset(df.all, bulkCell=='bulk')$colour_by]
     col.all[clus.cell] <- 'gray80'
     coclus <- setdiff(clus.all, clus.cell)
-    scl.col <- scale_color_manual(values=col.all, breaks=coclus, labels=coclus) 
-
-    sam.sp <- unique(df.all$sample.shape)
-    blk <- grep('bulk', sam.sp, value=TRUE)  
-    cell <- grep('cell', sam.sp, value=TRUE)  
-    # Shape
-    sp.blk <- rep(17, length(blk)); names(sp.blk) <- blk
-    sp.cell <- rep(19, length(cell)); names(sp.cell) <- cell
-    sp.all <- c(sp.blk, sp.cell)
-    scl.sp <- scale_shape_manual(name='sample', values=sp.all, breaks=c(blk[1], cell[1]), labels=sub('^.*\\.', '', c(blk[1], cell[1])))
+    scl.col <- scale_fill_manual(values=col.all, breaks=coclus, labels=coclus) 
     # Size
-    sz.all <- rep(point.size, length(sp.all))
-    sp.all.na <- names(sp.all) 
-    names(sz.all) <- sp.all.na
-    sz.all[grep('bulk$', sp.all.na)] <- bulk.size
-    scl.sz <- scale_size_manual(values=sz.all, breaks=c(blk[1], cell[1]), labels=sub('^.*\\.', '', c(blk[1], cell[1])))
-    ae <- aes(colour=colour_by, shape=sample.shape, size=sample.shape)
-    lab <- labs(x=labs[1], y=labs[2], colour=color.by, shape='sample', size='sample')
+    sz.all <- c(bulk=bulk.size, cell=point.size)
+    scl.sz <- scale_size_manual(values=sz.all, breaks=names(sz.all), labels=names(sz.all))
+    ae <- aes(fill=colour_by, size=bulkCell)
+    lab <- labs(x=labs[1], y=labs[2], fill=color.by, size='sample')
     df.all <- rbind(subset(df.all, colour_by %in% clus.cell), subset(df.all, colour_by %in% coclus))
     df.all <- rbind(subset(df.all, bulkCell=='cell'), subset(df.all, bulkCell=='bulk'))
 
-    gg <- ggplot(df.all, aes(x=x, y=y, key=key)) + geom_point(alpha=alpha, stroke=stroke, ae) + thm + lab + scl.col + scl.sp + scl.sz
-
+    gg <- ggplot(df.all, aes(x=x, y=y, key=key)) + geom_point(colour='black', alpha=alpha, stroke=df.all$stroke, shape=21, ae) + thm + lab + scl.col + scl.sz
   }
   # Overwrite theme.
-  if (panel.grid==FALSE) gg <- gg + theme_classic() + thm + lab + scl.col + scl.sp + scl.sz 
+  if (panel.grid==FALSE) gg <- gg + theme_classic() + thm + lab + scl.col + scl.sz 
   if (!is.null(x.break) & is.null(y.break)) gg <- gg + scale_x_continuous(breaks=x.break)
   if (!is.null(y.break) & is.null(x.break)) gg <- gg + scale_y_continuous(breaks=y.break)
   if (!is.null(x.break) & !is.null(y.break)) gg <- gg + scale_x_continuous(breaks=x.break) + scale_y_continuous(breaks=y.break)

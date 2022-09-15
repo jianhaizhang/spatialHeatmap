@@ -1,11 +1,11 @@
 ## Example data for manual matching.
 library(spatialHeatmap); library(scRNAseq)
-sce.manual <- MarquesBrainData()
+sce.mus <- MarquesBrainData()
 # Filter cells and genes to obtain example data.
-sce.manual <- filter_cell(lis=list(sce=sce.manual), min.cnt=1, p.in.cell=0.9, p.in.gen=0.5)[[1]]
+sce.mus <- filter_cell(sce=sce.mus, cutoff=1, p.in.cell=0.9, p.in.gen=0.5)
 
 # Edit colData.
-cdat <- colData(sce.manual)[, -1]; colnames(cdat) <- make.names(colnames(cdat))
+cdat <- colData(sce.mus)[, -1]; colnames(cdat) <- make.names(colnames(cdat))
 cdat$source_name <- make.names(cdat$source_name)
 colnames(cdat)[colnames(cdat)=='source_name'] <- 'label'
 # "expVar" is a reserved colname to indicate experiment variables.
@@ -15,12 +15,13 @@ rownames(cdat) <- make.names(rownames(cdat))
 cdat <- edit_tar(cdat, 'expVar', '6hr post acute stress', '6h.post.stress')
 cdat <- edit_tar(cdat, 'expVar', 'No', 'control')
 cdat[1:2, ]
-colData(sce.manual) <- cdat
+colData(sce.mus) <- cdat
+sce.mus <- subset(sce.mus, , expVar=='control')
 # Save the example data.
-saveRDS(sce.manual, file='./sce_manual_mouse.rds')
+saveRDS(sce.mus, file='./cell_mouse_brain.rds')
 
 # Quality control, normalization, dimensionality reduction.
-sce.dimred <- process_cell_meta(sce.manual, qc.metric=list(subsets=list(Mt=rowData(sce.manual)$featureType=='mito'), threshold=1)) 
+sce.dimred <- process_cell_meta(sce.mus, qc.metric=list(subsets=list(Mt=rowData(sce.mus)$featureType=='mito'), threshold=1)) 
 # Clustering.
 sce.clus <- cluster_cell(sce=sce.dimred, graph.meth='knn', dimred='PCA') 
 # Manual cluster labels.
@@ -31,6 +32,7 @@ write.table(df.clus.mus.sc, 'manual_cluster_mouse_brain.txt', col.names=TRUE, se
 ## Example data for auto-matching/coclustering.
 
 library(spatialHeatmap); source('fun_cocluster.R')
+library(SummarizedExperiment); library(SingleCellExperiment)
 # Download mouse brain bulk data (bulk_mouse_brain.xls) at https://github.com/jianhaizhang/cocluster_data/tree/master/validate/mouse_brain.
 
 # Obtain example data by harsh filtering.
@@ -60,14 +62,16 @@ df.match.mus.brain
 cvt_vecter <- spatialHeatmap:::cvt_vector
 colnames(blk.mus) <- cvt_vecter(df.match.mus.brain$dataBulk, df.match.mus.brain$SVGBulk, colnames(blk.mus))
 blk.mus[1:3, ]
-write.table(blk.mus, 'bulk_mouse_cocluster.txt', col.names=TRUE, row.names=TRUE, sep='\t') 
+blk.mus <- SummarizedExperiment(assays=list(counts=as.matrix(blk.mus)), colData=DataFrame(tissue=colnames(blk.mus)))
+saveRDS(blk.mus, file='bulk_mouse_cocluster.rds') 
 
-# sc.mus.pa <- system.file("extdata/shinyApp/example", "cell_mouse_cocluster.txt", package="spatialHeatmap") 
-# sc.mus <- as.matrix(read.table(sc.mus.pa, header=TRUE, row.names=1, sep='\t', check.names=FALSE))
+#sc.mus.pa <- system.file("extdata/shinyApp/example", "cell_mouse_cocluster.txt", package="spatialHeatmap") 
+#sc.mus <- as.matrix(read.table(sc.mus.pa, header=TRUE, row.names=1, sep='\t', check.names=FALSE))
 sc.mus[1:3, 1:5]
 intersect(colnames(sc.mus), feature.df$feature)
 intersect(colnames(sc.mus), colnames(blk.mus))
-write.table(sc.mus, 'cell_mouse_cocluster.txt', col.names=TRUE, row.names=TRUE, sep='\t') 
+sc.mus <- SingleCellExperiment(assays=list(counts=as.matrix(sc.mus)), colData=DataFrame(cell=colnames(sc.mus)))
+saveRDS(sc.mus, file='cell_mouse_cocluster.rds') 
 
 # Example data for auto-matching in Shiny app.  
 library(SingleCellExperiment) 

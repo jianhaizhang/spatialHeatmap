@@ -263,7 +263,7 @@ BiocManager::install("spatialHeatmap")
 Next, the packages required for running the sample code in this vignette need to be loaded.  
 
 ```{r, eval=TRUE, echo=TRUE, warnings=FALSE, results='hide'}
-library(spatialHeatmap); library(SummarizedExperiment); library(ExpressionAtlas); library(GEOquery); library(igraph); library(BiocParallel); library(biomaRt)
+library(spatialHeatmap); library(SummarizedExperiment); library(ExpressionAtlas); library(GEOquery); library(igraph); library(BiocParallel); library(biomaRt); library(kableExtra)
 ```
 
 The following lists the vignette(s) of this package in an HTML browser. Clicking the corresponding name will open this vignette. 
@@ -704,10 +704,12 @@ spatial_hm(svg=svg.hum, data=se.fil.hum, ID=c('ENSG00000268433', 'ENSG0000000604
 To provide a high level of flexibility, the `spatial_hm` contains many arguments.
 An overview of important arguments and their utility is provided in Table \@ref(tab:arg).
 
-```{r arg, eval=TRUE, echo=FALSE, warnings=FALSE}
+```{r arg, eval=TRUE, echo=FALSE, warnings=FALSE} 
 arg.df <- read.table('file/spatial_hm_arg.txt', header=TRUE, row.names=1, sep='\t')
-kable((arg.df), escape=TRUE, caption="List of important argumnets of \'spatial_hm\'.")
-```
+kable(arg.df, caption='List of important argumnets of \'spatial_hm\'.', col.names=colnames(arg.df), row.names=TRUE, escape=TRUE) %>% kable_styling("striped", full_width = FALSE) %>% scroll_box(width = "700px", height = "230px")                                     
+```                           
+
+
 
 ## Mouse Organs {#mus}
 

@@ -24,7 +24,9 @@ cocluster(
 )
 }
 \arguments{
-\item{bulk}{The normalized and filtered bulk data in form of \code{SingleCellExperiment}, \code{matrix} (log2-scale), or \code{data.frame} (log2-scale).}
+\item{bulk}{The normalized bulk data (log2-scale) in form of \code{SingleCellExperiment} or \code{data.frame}.}
+
+\item{cell}{The normalized single cell data in form of \code{SingleCellExperiment}.}
 
 \item{df.match}{The \code{data.frame} specifying matching between cells and true bulk.}
 
@@ -36,9 +38,19 @@ cocluster(
 
 \item{snn.gr}{Additional arguments in a named list passed to \code{\link[scran]{buildSNNGraph}}.}
 
-\item{sim.meth}{Method to calculate similarities between bulk and cells in each cocluster when assigning bulk to cells. \code{spearman} (default) or \code{pearson}.}
+\item{cluster}{The clustering method. One of \code{wt} (\code{\link[igraph]{cluster_walktrap}}, default), \code{fg} (\code{\link[igraph]{cluster_fast_greedy}}), \code{le} (\code{\link[igraph]{cluster_leading_eigen}}), \code{sl} (\code{\link[igraph]{cluster_fast_greedy}}), \code{ed} (\code{\link[igraph]{cluster_edge_betweenness}}).}
 
-\item{cell.refined}{The refined cell data in form of \code{SingleCellExperiment}, which is returned by \code{refine_cluster}.}
+\item{wt.arg}{A named list of arguments passed to \code{wt}, \code{fg}, \code{le}, \code{sl},       \code{ed} respectively.}
+
+\item{fg.arg}{A named list of arguments passed to \code{wt}, \code{fg}, \code{le}, \code{sl},       \code{ed} respectively.}
+
+\item{sl.arg}{A named list of arguments passed to \code{wt}, \code{fg}, \code{le}, \code{sl},       \code{ed} respectively.}
+
+\item{le.arg}{A named list of arguments passed to \code{wt}, \code{fg}, \code{le}, \code{sl},       \code{ed} respectively.}
+
+\item{eb.arg}{A named list of arguments passed to \code{wt}, \code{fg}, \code{le}, \code{sl},       \code{ed} respectively.}
+
+\item{sim.meth}{Method to calculate similarities between bulk and cells in each cocluster when assigning bulk to cells. \code{spearman} (default) or \code{pearson}.}
 }
 \value{
 A list of \code{roc} object and the data frame to create the \code{roc}.

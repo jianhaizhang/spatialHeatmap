@@ -1,14 +1,15 @@
 #' Filter single cell data separately in a list
 #'
 #' Filter single cell data separately in a list and take overlap genes between all single cell and bulk data. The bulk data are not filtered and are only used to obtain overlap genes.
- 
-#' @param lis A named list of single cell data in form of \code{data.frame}, \code{SingleCellExperiment}, or \code{SummarizedExperiment}. 
-#' @param bulk The bulk data in form of \code{data.frame} or \code{SummarizedExperiment}. They are only used to obtain common genes with all single cell data and not filtered. The default is \code{NULL}.
+
+#' @param sce A \code{SingleCellExperiment} of single cell data.  
+#' @param bulk The bulk data in form of \code{data.frame}, \code{SummarizedExperiment}, or \code{SingleCellExperiment}. They are only used to obtain overlapping genes with single cell data and not filtered. The default is \code{NULL}.
 #' @param gen.rm A regular expression of gene identifiers in single cell data to remove before filtering. E.g. mitochondrial, chloroplast and protoplasting-induced genes (\code{^ATCG|^ATCG}). The default is \code{NULL}.
 #' @param cutoff The minmun count of gene expression. The default is \code{1}.
 #' @param p.in.cell The proportion cutoff of counts above \code{cutoff} in a cell. The default is \code{0.4}.
 #' @param p.in.gen The proportion cutoff of counts above \code{cutoff} in a gene. The default is \code{0.2}.
 #' @param verbose Logical. If \code{TRUE} (default), intermediate messages are printed.
+#' @inheritParams norm_cell
 
 #' @return A list of filtered single cell data and bulk data, which have common genes.
 

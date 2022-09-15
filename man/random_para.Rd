@@ -24,12 +24,6 @@ random_para(
 
 \item{graph.meth}{A character vector of graph-building methods. E.g. \code{c('knn', 'snn')}.}
 
-\item{sim}{Both are numeric scalars, ranging from 0 to 1. \code{sim} is a similarity (Spearman or Pearson correlation coefficient) cutoff between cells and \code{sim.p} is a proportion cutoff. In a certain cell cluster, cells having similarity >= \code{sim} with other cells in the same cluster at proportion >= \code{sim.p} would remain. Otherwise, they are discarded.}
-
-\item{sim.p}{Both are numeric scalars, ranging from 0 to 1. \code{sim} is a similarity (Spearman or Pearson correlation coefficient) cutoff between cells and \code{sim.p} is a proportion cutoff. In a certain cell cluster, cells having similarity >= \code{sim} with other cells in the same cluster at proportion >= \code{sim.p} would remain. Otherwise, they are discarded.}
-
-\item{dim}{Integer scalar specifying the minimum number of (principle components) PCs to retain in \code{\link[scran]{denoisePCA}} when coclustering single cells and bulk data. The default is \code{12}.}
-
 \item{df.spd.opt}{A \code{data.frame} of optimized \code{spd.set} settings. These settings are avoided in the output random settings.}
 }
 \value{

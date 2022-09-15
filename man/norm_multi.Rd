@@ -26,6 +26,8 @@ norm_multi(
 \item{com.sum.fct}{Arguments in a named list passed to \code{\link[scran]{computeSumFactors}}, such as \code{com.sum.fct=list(max.cluster.size = 3000))}.}
 
 \item{log.norm}{Arguments in a named list passed to \code{\link[scuttle]{logNormCounts}}.}
+
+\item{wk.dir}{The directory path to save normalized data.}
 }
 \value{
 A list of normalized single cell and bulk data.

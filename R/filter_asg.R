@@ -2,10 +2,8 @@
 #' 
 #' Refine the bulk-cell assignments by including custom desired bulk tissues or subsetting the assignments according to a threshold, which is a similarity value between bulk and cells. 
 
-#' @param res.lis The result list of coclustering, which is the output of \code{tests} and comprises three slots \code{sce}, \code{roc.obj}, \code{df.asg}.
-#' @param thr The threshold for subsetting bulk-cell assignments, which is a similarity value (Pearson's or Spearman's correlation coefficient) between bulk and cells. Only bulk-cell assignments with similarity values above the thresold would remain. The default is 0.
-#' @param df.desired.bulk A "data.frame" of desired bulk for some cells. The cells could be specified by providing x-y axis ranges in an embedding plot ("UMAP", "PCA", "TSNE") returned by \code{plot_dim}. E.g. \code{df.desired.bulk <- data.frame(x.min=c(4, -6), x.max=c(5, -5), y.min=c(-2.5, 2), y.max=c(-2, 2.5), desiredSVGBulk=c('CORT', 'STELE'), dimred='UMAP')}, where columns \code{x.min}, \code{x.max}, \code{y.min}, \code{y.max}, \code{desiredSVGBulk}, \code{dimred} are required. In this example, cells located in 4 <= x <= 5 and -2.5 <= y <= -2 in the "UMAP" plot are assigned "STELE", and cells located in -6 <= x <= -5 and 2 <= y <= 2.5 in the "UMAP" plot are assigned "CORT". \cr Alternatively, the "data.frame" could be downloaded from the Shiny app launched by \code{desired_bulk_shiny}. \cr \code{df.desired.bulk} and \code{df.match} together are used to tailor the co-clustering results. That is to say additional true bulk-cell assignments are created and included in the final assignments. If these assignments conflict with the co-colustering results the latter would be overwritten.
-#' @param df.match The ground-truth matching between aSVG bulk and data bulk tissues. See the example of \code{data(df.match)}.
+#' @param res The coclustering results returned by \code{cocluster}.
+#' @param min.sim The similarity cutoff for filterig bulk-cell assignments, which is a Pearson's or Spearman's correlation coefficient between bulk and cells. Only bulk-cell assignments with similarity values above the thresold would remain. The default is 0.
 
 #' @return A \code{SingleCellExperiment} of remaining bulk-cell assignments. 
 

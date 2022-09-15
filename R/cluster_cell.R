@@ -6,9 +6,11 @@
 #' @param dimred A string of \code{PCA} (default) or \code{UMAP} specifying which reduced dimensionality to use in creating a nearest neighbor graph. Internally, before building a nearest neighbor graph the data dimensionalities are reduced by PCA and UMAP respectively.
 #' @param knn.gr Additional arguments in a named list passed to \code{\link[scran]{buildKNNGraph}}.
 #' @param snn.gr Additional arguments in a named list passed to \code{\link[scran]{buildSNNGraph}}.
+#' @param cluster The clustering method. One of \code{wt} (\code{\link[igraph]{cluster_walktrap}}, default), \code{fg} (\code{\link[igraph]{cluster_fast_greedy}}), \code{le} (\code{\link[igraph]{cluster_leading_eigen}}), \code{sl} (\code{\link[igraph]{cluster_fast_greedy}}), \code{ed} (\code{\link[igraph]{cluster_edge_betweenness}}).  
+#' @param wt.arg,fg.arg,sl.arg,le.arg,eb.arg A named list of arguments passed to \code{wt}, \code{fg}, \code{le}, \code{sl},       \code{ed} respectively.
 #' @param cluster.wk Additional arguments in a named list passed to \code{\link[igraph]{cluster_walktrap}}, such as \code{cluster.wk=list(steps = 4)}.
 
-#' @return A list of normalized single cell and bulk data. 
+#' @return A \code{SingleCellExperiment} object. 
 
 #' @examples
 
@@ -33,13 +35,10 @@
 #' Lun ATL, McCarthy DJ, Marioni JC (2016). “A step-by-step workflow for low-level analysis of single-cell RNA-seq data with Bioconductor.” F1000Res., 5, 2122. doi: 10.12688/f1000research.9501.2.
 #' Csardi G, Nepusz T: The igraph software package for complex network research, InterJournal, Complex Systems 1695. 2006. https://igraph.org
 
-
 #' @export 
 #' @importFrom SummarizedExperiment colData
 #' @importFrom SingleCellExperiment SingleCellExperiment 
-#' @importFrom scran buildSNNGraph buildSNNGraph 
-#' @importFrom igraph cluster_walktrap
-
+#' @importFrom scran buildKNNGraph buildSNNGraph 
 
 cluster_cell <- function(sce, graph.meth='knn', dimred='PCA', knn.gr=list(), snn.gr=list(), cluster='wt', wt.arg=list(steps = 4), fg.arg=list(), sl.arg=list(spins = 25), le.arg=list(), eb.arg=list()) {
   if (!is(sce, 'SingleCellExperiment')) stop('The "sce" should be an "SingleCellExperiment" object!')

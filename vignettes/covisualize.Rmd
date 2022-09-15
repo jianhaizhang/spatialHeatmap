@@ -90,7 +90,7 @@ of single cell data.
 The required quantitative assay data, such as gene expression values, can be
 provided in a variety of widely used tabular data structures (_e.g._
 `data.frame`, `SummarizedExperiment` or `SingleCellExperiment`). The corresponding
-anatomic images need to be supplied as annotated SVG (aSVG) images. The
+anatomic images need to be supplied as annotated SVG (aSVG) images <font style='color:blue'> and can be stored in a specific S4 class `coord`. </font> The
 creation of aSVGs is described in the main vignette of this package. For the
 embedding plots of single cell data, several dimensionality reduction
 algorithms (_e.g._ PCA, UMAP or tSNE) are supported. To associate single cells
@@ -108,30 +108,30 @@ the feature labels in an aSVG are different than the corresponding group labels
 used for the single cell data, _e.g._ due to variable terminologies, a
 translation map can be used to avoid manual relabelling. Throughout this
 vignette the usage of the term feature is a generalization referring in most
-cases to tissues or organs. For the implementation of the co-visualization
-tool, _spatialHeatmap_ takes advantage of efficient and reusable Bioconductor
+cases to tissues or organs. <font style='color:blue'> For the implementation of the co-visualization
+tool, _spatialHeatmap_ takes advantage of efficient and reusable S4 classes for both assay data and aSVGs respectively. The former includes the Bioconductor
 core data structures such as the widely used `SingleCellExperiment` (`SCE`)
 container illustrated in Figure \@ref(fig:covizOver).1 [@sce]. The slots
 `assays`, `colData`, `rowData` and `reducedDims` in an `SCE` contain expression data,
 cell metadata, molecule metadata and reduced dimensionality embedding results,
 respectively. The cell group labels are stored in the `colData` slot as shown
-in Figure \@ref(fig:covizOver).1. For handling cell-to-tissue grouping
+in Figure \@ref(fig:covizOver).1. The S4 class `coord` (Figure \@ref(fig:covizOver).4) is developed specifically in `spatialHeatmap` for storing aSVG instances. The two most important slots `coordinate` and `attribute` stores the aSVG feature coordinates and respective attributes such as fill color, line withs, etc. respectively, while other slots `dimension`, `svg`, and `raster` stores image dimension, aSVG file paths, and raster image paths respectively. </font> For handling cell-to-tissue grouping
 information, three general methods are available including (a)
-annotation-based, (b) manual and (c) automated (Figure \@ref(fig:covizOver).2).
+annotation-based, (b) manual and (c) automated.
 The annotation-based and manual methods are similar by using known cell group
 labels. The main difference is how the cell labels are provided. In the
 annotation-based method, existing group labels are available and can be
-uploades and/or stored in the `SCE` object, as is the case in some of the `SCE`
+uploaded and/or stored in the `SCE` object, as is the case in some of the `SCE`
 instances provided by the `scRNAseq` package [@scrnaseq]. The manual method
 allows users to create the cell to tissue associations one-by-one or import
 them from a tabular file. In contrast to this, the automated method aims to
 assign single cells to the corresponding source tissues computationally by a
-co-clustering algorithm (Figure \@ref(fig:covizOver).2c). This co-clustering is
+co-clustering algorithm (Figure \@ref(fig:coclusOver)). This co-clustering is
 experimental and requires bulk expression data that are obtained from the
 tissues represented in the single cell data. The grouping information is
 visualized by using for each group the same color in both the single cell
 embedding plot and the tissue spatial heatmap plot (Figure
-\@ref(fig:covizOver).4). The colors can represent any type of custom or numeric
+\@ref(fig:covizOver).5). The colors can represent any type of custom or numeric
 information. In a typical use case, either fixed tissue-specific colors or a
 heat color gradient is used that is proportional to the numeric expression
 information obtained from the single cell or bulk expression data of a chosen
@@ -144,9 +144,12 @@ the same group label will be colored the same. When coloring by tissues
 the color used for each tissue feature will be applied to the corresponding 
 cell groups represented in the embedding plot. 
 
-```{r covizOver, echo=FALSE, fig.wide=TRUE, out.width="100%", fig.cap=("Overview of single cell and tissue co-visualization. (1) Single cell data are organized in a `SingleCellExperiment` object where cell grouping information is stored in the `colData` slot. Usally, each cell group maps to a certain tissue in the spatial heatmap plot. (2) The cell grouping labels are managed by three methods: annotation, manual and automated. Cell groups and tissues can be colored by fixed tissue colors or by expression values of selected genes based on the provided single cell or bulk data.")} 
+<font style='color:blue'> 
+```{r covizOver, echo=FALSE, fig.wide=TRUE, out.width="100%", fig.cap=("Overview of single cell and tissue co-visualization. (1) Single cell data are organized in a `SingleCellExperiment` object where cell grouping information is stored in the `colData` slot. Usually, each cell group maps to a certain tissue in the spatial heatmap plot. (2) Bulk tissue experssion data are stored in a `SummarizedExperiment` object, where tissues are grouped by aSVG feature identifiers (4) in the `colData` slot. (3) Bi-directional mapping between cell or tissue groups are supported. Cell groups and tissues can be colored by fixed tissue colors or by expression values of selected genes (5) based on the provided single cell or bulk data, where the latter case involves aggregating replicates by mean or median. (4) The aSVG instance is stored in a `coord` class. The `coordinate` slot defines spatial feature shapes in spatial heatmap (5) while the `attribute` slot defines styling of these features such as color, line with, etc. The colors in `attribute` depends on expression values in (1) or (2). (5) Cells in (1) and bulk tissues in (2) or (4) are co-visualized in and embedding plot and spatial heatmap plot respectively, where mapped cell groups and respective tissues are indicated by same colors. ")} 
 include_graphics('img/covisualize.jpg')
 ```
+
+</font>
 
 # Getting Started  
 
@@ -165,8 +168,9 @@ BiocManager::install("spatialHeatmap")
 Next, the packages required for running the sample code in this vignette need
 to be loaded.  
 
-```{r, eval=TRUE, echo=TRUE, warnings=FALSE, results='hide'}
+```{r, eval=FALSE, echo=TRUE, warnings=FALSE, results='hide'}
 library(spatialHeatmap); library(SummarizedExperiment); library(scran); library(scater); library(igraph); library(SingleCellExperiment); library(BiocParallel)
+library(kableExtra)
 ```
 
 The following lists the vignette(s) of this package in an HTML browser.
@@ -178,7 +182,7 @@ browseVignettes('spatialHeatmap')
 
 To reduce runtime, intermediate results can be cached under `~/.cache/shm`.  
 
-```{r eval=TRUE, echo=TRUE, message=FALSE, warnings=FALSE }
+```{r eval=FALSE, echo=TRUE, message=FALSE, warnings=FALSE }
 cache.pa <- '~/.cache/shm' # Set path of the cache directory
 ```
 
@@ -186,197 +190,138 @@ cache.pa <- '~/.cache/shm' # Set path of the cache directory
 
 To obtain for examples with randomized data or parameters always the same results, a fixed seed is set.
 
-```{r , eval=TRUE, echo=TRUE, warnings=FALSE}
+```{r , eval=FALSE, echo=TRUE, warnings=FALSE}
 set.seed(10)
 ```
+
 <font style="color:blue">
-A single cell test data set is loaded using `mockSCE` from the `scuttle`
-package [@scater], which is a `SingleCellExperiment` object. This quick example is demonstrated on an aSVG image of mouse brain,
-so for demonstration purpose this test data are manipulated and are assumed to be assayed from mouse brain tissues.   
-</font>
+This quick start example is demonstrated on cell-to-tissue mapping by using a single cell data set from oligodendrocytes of mouse brain [@Marques2016-ff]. This data set is obtained from the `scRNAseq` [@scrnaseq] package with minor modificatons, which is included in `spatialHeatmap`. 
+
+Prior to co-visualization the single cell data is pre-processed by the `process_cell_meta` function that applies common QC, normalization and dimensionality reduction routines.
+The details of these pre-processing methods are described in the corresponding 
+help file. Additional background information on these topics can be found in the 
+[OSCA](http://bioconductor.org/books/3.14/OSCA.workflows/zeisel-mouse-brain-strt-seq.html){target='blank'} tutorial.  
 
 ```{r , eval=TRUE, echo=TRUE, warnings=FALSE}
-sce.test <- mockSCE() 
+sce.pa <- system.file("extdata/shinyApp/example", "cell_mouse_brain.rds", package="spatialHeatmap")
+sce <- readRDS(sce.pa)
+sce.dimred.quick <- process_cell_meta(sce, qc.metric=list(subsets=list(Mt=rowData(sce)$featureType=='mito'), threshold=1))
+colData(sce.dimred.quick)[1:3, 1:2]
 ```
 
-<font style="color:blue">
-The `colData` slot of the test data is manipulated by including cell source tissues from mouse brain.  
-</font>> 
-
-```{r , eval=TRUE, echo=TRUE, warnings=FALSE} 
-colData(sce.test) <- DataFrame(cell=sample(c('Medulla.Oblongata', 'Cerebral.Cortex', 'Hippocampus', 'Cerebellum', 'Brainstem', 'Midbrain', 'Hypothalamus'), ncol(sce.test), replace=TRUE))
-colData(sce.test)[1:3, , drop=FALSE]
-```
-
-The data are normalized and log2-transformed (`logNormCounts`), and subsequently processed by dimensionality reduction methods including PCA, TSNE, and UMAP (`reduce_dim`). 
-
-```{r , eval=TRUE, echo=TRUE, warnings=FALSE}
-sce.norm.test <- logNormCounts(sce.test)
-sce.dimred.test <- reduce_dim(sce.norm.test)
-```
-<font style="color:blue">
 To visualize single cell data in spatial heatmaps, the single cell expression values
-are summarized by their source tissue grouping using common summary statistics such as mean or median. 
+are summarized using common summary statistics such as mean or median by their source tissue grouping, which is in the `label` column of `colData` slot.
 
 ```{r , eval=TRUE, echo=TRUE, warnings=FALSE}
-sce.aggr.test <- aggr_rep(sce.dimred.test, assay.na='logcounts', sam.factor='cell', con.factor=NULL, aggr='mean')
-colData(sce.aggr.test)
+sce.aggr.quick <- aggr_rep(sce.dimred.quick, assay.na='logcounts', sam.factor='label', aggr='mean')
 ```
 
 The summarized values are then used to color the tissue features of the corresponding
 aSVG file of mouse brain that is included in the `spatialHeatmap` package. The
-function `return_feature` is used for feature extraction. 
+function `parse_svg` is used for parsing the aSVG and storing it in a `coord` object `svg.mus.brain`. 
 
 ```{r , eval=TRUE, echo=TRUE, warnings=FALSE, results='hide'}
 svg.mus.brain.pa <- system.file("extdata/shinyApp/example", "mus_musculus.brain.svg", package="spatialHeatmap")
-feature.df <- return_feature(svg.path=svg.mus.brain.pa)
+svg.mus.brain <- parse_svg(svg.mus.brain.pa)
 ```
 
-A subset of features is returned from `feature.df`.
+A subset of features and related attributes are returned from `svg.mus.brain`, where `fill` and `stroke` refer to color and line width respectively.   
 
 ```{r , eval=TRUE, echo=TRUE, warnings=FALSE}
-tail(feature.df$feature) 
+tail(attribute(svg.mus.brain)[[1]])[, 1:4]
 ```
 
-In the chosen example each cell cycle corresponds to one feature in the aSVG
-image. To define this relationship, a `list` with named components is used.
-Note, each cell label can be matched to multiple aSVG features but not vice
-versa. 
-
-<p style="color:red">Using a cell cycle data set as an exmple is a poor choice since
-all tissues in your spatial heatmap will have cells from most/all cell cycles.</p>
+To map cell group labels to aSVG features, a `list` with named components is used, where cell labels are in name slots. Note, each cell label can be matched to multiple aSVG features but not vice versa. 
 
 ```{r , eval=TRUE, echo=TRUE, warnings=FALSE}
-lis.match.test <- list(Hypothalamus=c('hypothalamus'), Medulla.Oblongata=c('brainstem', 'medulla.oblongata'))
+lis.match.quick <- list(hypothalamus=c('hypothalamus'), cortex.S1=c('cerebral.cortex', 'nose'))
 ```
-<p style="color:red">Unclear why individual cell types would map to specific tissues? 
-even if this is juat a toy example why not using one that makes sense? Especially,
-biologists will be confused here. </p>
 
-<font style="color:blue">
-The co-visualization is created on gene `Gene_0010`. The embedding plot includes all single cells before aggregation. The `Hypothalamus` and `Medulla.Oblongata` cells are colored by their respecitive aggregated expression profiles (`data=sce.aggr.test`) and indicated in the legend at the bottom. In the nearby spatial heatmap plot, aSVG features are filled by the same color as the matching cells defined in the named `list` (`lis.match.test`). The `cell.group` argument indicates which column is considered as cell labels in the `colData` slot of `sce.aggr.test`.  
+The co-visualization is created on gene `Eif5b` using the function `covis`. The embedding plot includes all cells before aggregation. The `hypothalamus` and `cortex.S1` cells are colored according to  their respecitive aggregated expression values in `data=sce.aggr.quick`. In the nearby spatial heatmap plot, aSVG features are filled by the same color as the matching cells defined in `lis.match.quick`. The `cell.group` argument indicates cell group labels in the `colData` slot of `sce.aggr.quick`, `tar.cell` suggests the target cell groups to visualize, and `dimred` specifies the embedding plot.  
+
+```{r , eval=TRUE, echo=TRUE, warnings=FALSE, results='hide', fig.cap=('Co-visualization of cell-to-tissue mapping. The co-visualization is created on gene `Eif5b`. Single cells in the embedding plot and their matching aSVG features in the spatial heatmap are filled by the same color according to aggregated expression values of `Eif5b` in single cell data.')}
+shm.lis.quick <- covis(svg=svg.mus.brain, data=sce.aggr.quick, ID=c('Eif5b'), sce.dimred=sce.dimred.quick, dimred='PCA', cell.group='label', tar.cell=names(lis.match.quick), lis.rematch=lis.match.quick, assay.na='logcounts', bar.width=0.11, dim.lgd.nrow=1, height=0.7, legend.r=1.5, legend.key.size=0.02, legend.text.size=12, legend.nrow=3) 
+```
+
 </font>
 
-```{r , eval=TRUE, echo=TRUE, warnings=FALSE, results='hide', fig.cap=('Example co-visualization plot. The co-visualization is created on gene `Gene_0010`. Single cells in the embedding plot and their matching aSVG features in the spatial heatmap are filled by the same color according to aggregated assay profiles within each cell label.')}
+# Mappings between cells and tissues
 
-shm.lis.test <- covis(svg=svg.mus.brain, data=sce.aggr.test, ID=c('Gene_0010'), height=0.7, legend.r=1.5, legend.key.size=0.02, legend.text.size=12, legend.nrow=3, sce.dimred=sce.dimred.test, dimred='PCA', cell.group='cell', assay.na='logcounts', tar.cell=names(lis.match.test), lis.rematch=lis.match.test, bar.width=0.11, dim.lgd.nrow=1) 
-```
+## Annotation-based {#ann}
 
-<p style="color:red">Why isn't the covisualization handled by its own function that
-calls spatial_hm. Having one function do too many things is poor software design.
-</p>
-
-# Cell-to-Tissue Mappings
-
-## Annotation-based
-
+<font style='color:blue'> 
 The annotation-based mapping uses existing cell-to-tissue labels. Those can be imported 
 (_e.g._ from a tabular file) and then stored in the `colData` slot of an `SCE` object. 
 Alternatively, an `SCE` object might already contain this information. This is the 
-case in some of the `SCE` objects provided by the `scRNAseq` package [@scrnaseq].    
+case in some of the `SCE` objects provided by the `scRNAseq` package [@scrnaseq].   
 
-The following example uses single cell data from oligodendrocytes of mouse
-brain [@Marques2016-ff]. This data set was obtained from the `scRNAseq`
-[@scrnaseq] package with minor modificatons. Prior to co-visualization, the
-single cell data is pre-processed by the `process_cell_meta` function 
-that applies common QC, normalization and dimensionality reduction routines.
-The details of these pre-processing methods are described in the corresponding 
-help file. Additional background information on these topics can be found in the 
-[OSCA](http://bioconductor.org/books/3.14/OSCA.workflows/zeisel-mouse-brain-strt-seq.html){target='blank'} tutorial.
+The [Quick Start](#test) is domenstrated using the annotation-based method, since the single cell data are downloaded from `scRNAseq` package. In this example, the tissue-to-cell mapping will be showcased. The single cell data and aSVG file are the same as the Quick Start, and the bulk data are modified from a research on mouse cerebellar development[@Vacher2021-xg]. 
 
-<!--
-[ThG: obove your referred to OSCA to find the details, Yet now you are describing some 
-of the details here that are really not necessary for explaining the covisualization.
-Either delete the following or explain it in the help file for your process_cell_meta 
-function.]
-In QC, common per-cell metrics are cacluated such as library size, mitochodrial gene percentage, *etc*. Then problematic cells are filtered out according to these metrics. Refer to `perCellQCMetrics` and `perCellQCFilters` in the `scuttle` package for more details [@scater]. In normalization, per-cell size factors are computed using a scaling normalization method followed by a deconvolution strategy. Single cells are finally normalized by these per-cell size factors. See more details in `quickCluster`, `computeSumFactors` from the `scran` package [@scran], and `logNormCounts` from the `scuttle` package [@scater].  
-
-
-[Long version]
-
-In the QC, frequently used per-cell metrics are calculated for identifying problematic cells, such as library size, number of detected features above a threshold, mitochodrial gene percentage, etc. Then these metrics are used to determine outlier cells based on median-absolute-deviation (MAD). Refer to `perCellQCMetrics` and `perCellQCFilters` in the `scuttle` package for more details [@scater]. In the normalization, a quick-clustering method is applied to divide cells into clusters. Then a scaling normalization method is performed to obtain per-cluster size factors. Next, the size factor in each cluster is decomposed into per-cell size factors by a deconvolution strategy. Finally, all cells are normalized by per-cell size factors. See more details in `quickCluster`, `computeSumFactors` from the `scran` package [@scran], and `logNormCounts` from the `scuttle` package [@scater].   
-
-
-In dimensionality reduction, the high-dimensional gene expression data are embedded into a 2-3
-dimensional space using PCA, tSNE and UMAP. All three embedding result sets
-are stored in the `SingleCellExperiment` object. Details are seen in `denoisePCA` from `scran` [@scran], and `runUMAP`, `runTSNE` from `scater` [@scater]. Subsequently, the UMAP result is visualized as an example in form of a scatter plot where the dots are colored by the corresponding cell labels.
---> 
-
-```{r scRead, eval=TRUE, echo=TRUE, warnings=FALSE}
-sce.pa <- system.file("extdata/shinyApp/example", "sce_manual_mouse.rds", package="spatialHeatmap")
-sce <- readRDS(sce.pa)
-sce.dimred <- process_cell_meta(sce, qc.metric=list(subsets=list(Mt=rowData(sce)$featureType=='mito'), threshold=1))
-```
-
-The UMAP embedding results can be plotted with the `plotUMAP` function. The dots representing cells are colored by the grouping information stored in the `colData` slot of the `SCE` object. 
-
-<a name='cusLab'></a>
-
-```{r eval=TRUE, echo=TRUE, warnings=FALSE, fig.wide=TRUE, fig.cap=('Embedding plot of single cell data. The cells (dots) are colored by the grouping information stored in the `colData` slot of the corresponding `SCE` object'), out.width="100%", fig.show='show'}
-plotUMAP(sce.dimred, colour_by="label")
-```
-
-The following command returns a slice of the cell metadata stored in the `colData` slot of an `SCE` object. Any grouping column in `colData` can be used here as annotation labels for co-visualization. The following example uses the `label` and `expVar` columns 
-as annotations and experimental variables, respectively.    
-
-```{r scLab, eval=TRUE, echo=TRUE, warnings=FALSE}
-colData(sce.dimred)[25:27, ]
-```
-
-The expression values for each gene are summarized across the cells within each group (here `aggr='mean'`). If additional experimental variables are provided, the summaries will consider them as well (_e.g._ `label` and `expVar`). 
-
-```{r scLabAggr, eval=TRUE, echo=TRUE, warnings=FALSE}
-sce.aggr <- aggr_rep(sce.dimred, assay.na='logcounts', sam.factor='label', con.factor='expVar', aggr='mean')
-```
-
-A slice of the summarized data is printed below for two genes (Tcea1 and Atp6v1h), where `hypothalamus` and `control` are the grouping and treatment information, respectively. 
-
+The bulk count data are imported in a `SummarizedExperiment` and partial are shown. Note, replicates
+are indicated by the same sample names (_e.g._ `cerebral.cortex`).
 
 ```{r eval=TRUE, echo=TRUE, warnings=FALSE}
-as.matrix(logcounts(sce.aggr)[1:2, 1:2])
+blk.mus.pa <- system.file("extdata/shinyApp/example", "bulk_mouse_cocluster.rds", package="spatialHeatmap") 
+blk.mus <- readRDS(blk.mus.pa)
+assay(blk.mus)[1:3, 1:5]
+colData(blk.mus)[1:3, , drop=FALSE]
 ```
 
-Next, spatial features are extracted with the `return_feature` function 
-from an aSVG image of mouse brain. 
+The bulk count data are normalized using the `ESF` option, which refers to `estimateSizeFactors` from DESeq2 [@deseq2]. The expression values for each gene are summarized by mean across replicates (here `aggr='mean'`).    
 
 ```{r eval=TRUE, echo=TRUE, warnings=FALSE, results='hide'}
-svg.mus.brain.pa <- system.file("extdata/shinyApp/example", "mus_musculus.brain.svg", package="spatialHeatmap")
-svg.mus.brain <- parse_svg(svg.mus.brain.pa)
-feature.df <- return_feature(svg.path=svg.mus.brain.pa)
+# Normalization.
+blk.mus.nor <- norm_data(data=blk.mus, norm.fun='ESF', log2.trans=TRUE)
+# Aggregation.
+blk.mus.aggr <- aggr_rep(blk.mus.nor, sam.factor='tissue', aggr='mean')
+assay(blk.mus.aggr)[1:2, ]
 ```
-A subset of features can be extracted as follows.  
+
+The single cell data from the Quick Start are used in this example. Its metadata in `colData` are partially shown.  
 
 ```{r eval=TRUE, echo=TRUE, warnings=FALSE}
-tail(feature.df$feature)
+colData(sce.dimred.quick)[1:3, 1:2]
 ```
 
-In practice the labels used for the features in the aSVG image and the cell groups of the single cell data may not be the same. To resolve this without manual relabeling, a translation list is used to make them match, where the cell and feature labels are expected to be the names and elements of the list components, respectively. 
+The single cell data are plotted at the UMAP dimensions using `plot_dim`, where cells are represented by dots and are colored by the grouping information stored in the `colData` slot of the `SCE` object, here `color.by="label"`.   
+
+```{r eval=TRUE, echo=TRUE, warnings=FALSE, fig.wide=TRUE, fig.cap=('Embedding plot of single cell data. The cells (dots) are colored by the grouping information stored in the `colData` slot of the corresponding `SCE` object'), out.width="100%", fig.show='show'}
+plot_dim(sce.dimred.quick, color.by="label", dim='UMAP')
+```
+
+The aSVG instance of mouse brain from the Quick Start are used. Partial of the aSVG features are shown.  
+
+```{r eval=TRUE, echo=TRUE, warnings=FALSE}
+tail(attribute(svg.mus.brain)[[1]])[1:3, 1:4]
+```
+
+Same with conventions in the main vignette, at least one bulk tissue identifier should match with aSVG features so as to successfully plot spatial heatmaps. 
+
+```{r eval=TRUE, echo=TRUE, warnings=FALSE}
+colnames(blk.mus) %in% attribute(svg.mus.brain)[[1]]$feature
+```
+
+In practice the labels used for features in the aSVG image and the cell group labels of the single cell data may not be the same. To resolve this without manual relabeling, a translation list is used to make them match. In tissue-to-cell mapping, the feature and cell labels are expected to be the names and elements of the list components, respectively.   
 
 ```{r scLabList, eval=TRUE, echo=TRUE, warnings=FALSE}
-lis.match <- list(hypothalamus=c('hypothalamus'), cortex.S1=c('cerebral.cortex'), corpus.callosum=c('corpus.striatum'))
+lis.match.blk <- list(cerebral.cortex=c('cortex.S1'), hypothalamus=c('corpus.callosum', 'hypothalamus'))
 ```
 
-The following plots the corresponding co-visualization for sample gene Cops5. A co-visualization plot is generated for each experimental variable, here `control` and `6h.post.stress`. The legend under the embedding plots shows the cell labels in the matching list (`lis.match`). The source tissue information is indicated by using the same colors in the embedding and tissue plots on the left and right, respectively. 
+The following plots the corresponding co-visualization for sample gene Actr3b. The legend under the embedding plot shows the cell labels in the matching list (`lis.match.blk`). The source tissue information is indicated by using the same colors in the embedding and tissue plots on the left and right, respectively. In contrast to the Quick Start, the `tar.bulk` indicates target bulk tissues to show.   
 
-```{r scLabVis, eval=TRUE, echo=TRUE, warnings=FALSE, fig.wide=TRUE, fig.cap=('Co-visualizing single cells and tissues by annotation. In this plot, `Cops5` is used as an example. Each cell population is colored by its summarized expression value in the embedding plot on the left, and the corresponding tissue shares the same color in the spatial heatmap on the right.'), out.width="100%", fig.show='show', results='hide'}
-
-lis.match <- list(hypothalamus=c('hypothalamus'), cortex.S1=c('cerebral.cortex', 'corpus.striatum'))
-
-shm.lis <- covis(svg=svg.mus.brain, data=sce.aggr, ID=c('Cops5'), height=0.7, legend.r=1.5, legend.key.size=0.02, legend.text.size=12, legend.nrow=2, sce.dimred=sce.dimred, dimred='PCA', cell.group='label', assay.na='logcounts', tar.cell=names(lis.match), lis.rematch=lis.match, bar.width=0.09, dim.lgd.nrow=2)
-
-colnames(blk.mus) <- paste0(colnames(blk.mus), "__", c(rep('con1', 6), rep('con2', 6)))
-colnames(blk.mus) <- gsub('(.*)__(.*)', '\\1', colnames(blk.mus))
-
-
-lis.match <- list(cerebellum=c('cortex.S1'), hypothalamus=c('hippocampus.CA1', 'hypothalamus'))
-
-blk.mus.aggr <- aggr_rep(blk.mus, aggr='mean')
-
-
-covis.lis <- covis(svg=svg.mus.brain, data=blk.mus.aggr, ID=c('Actr3b'), height=0.7, legend.r=1.5, legend.key.size=0.02, legend.text.size=12, legend.nrow=2, sce.dimred=sce.dimred, dimred='PCA', cell.group='label', tar.bulk=names(lis.match), lis.rematch=lis.match, bar.width=0.09, dim.lgd.nrow=2, dim.lgd.text.size=12)
-
+```{r eval=TRUE, echo=TRUE, warnings=FALSE, fig.wide=TRUE, fig.cap=('Co-visualization plot through tissue-to-cell mapping. In this plot, `Actr3b` is used as an example. Each cell population is colored by its summarized expression value in the embedding plot on the left, and the corresponding tissue shares the same color in the spatial heatmap on the right.'), out.width="100%", fig.show='show', results='hide'}
+covis.lis <- covis(svg=svg.mus.brain, data=blk.mus.aggr, ID=c('Actr3b'), sce.dimred=sce.dimred.quick, dimred='UMAP', cell.group='label', tar.bulk=names(lis.match.blk), lis.rematch=lis.match.blk, bar.width=0.09, dim.lgd.nrow=2, dim.lgd.text.size=12, height=0.7, legend.r=1.5, legend.key.size=0.02, legend.text.size=12, legend.nrow=2)
 ```
+
 <p style="color:red">Several things are missing: (1) To track tissue assignment, if expression values are similar across tissues, there needs to be an argument toggle to color one time by expression values and another time by tissue. Otherwise tissue assignment info is lost. (2) I don't understand the plot on the bottom that shows the stress sample. Why does the sp heatmap highlight in this case only one tissue? </p>
+
+In scenarios where expression values are similar across tissues, the mapping between cells and tissues can be indicated by fixed contrasting colors by setting `profile=FALSE`.   
+
+```{r eval=TRUE, echo=TRUE, warnings=FALSE, fig.wide=TRUE, fig.cap=('Co-visualization plot through tissue-to-cell mapping without expression values. In this plot, mapping beween cell groups and tissues are indicated by fixed colors instead of expression values. '), out.width="100%", fig.show='show', results='hide'}
+covis.lis <- covis(svg=svg.mus.brain, data=blk.mus.aggr, ID=c('Actr3b'), profile=FALSE, sce.dimred=sce.dimred.quick, dimred='UMAP', cell.group='label', lis.rematch=lis.match.blk, tar.bulk=names(lis.match.blk), bar.width=0.09, dim.lgd.nrow=2, dim.lgd.text.size=12, height=0.7, legend.r=1.5, legend.key.size=0.02, legend.text.size=12, legend.nrow=2)
+```
+
+</font>
 
 ## Manual Method
 
@@ -386,18 +331,17 @@ clustering methods for single cell embedding data that are often used in the
 analysis of single cell data. The resulting cell grouping or cluster
 information needs to be stored in a tabular file, that will be imported into an
 `SCE` object (here `manual_group` function). The following demonstration uses
-the same single cell and aSVG data as the annotation example above. The only
+the same single cell and aSVG instance as the annotation example above. The only
 difference is an additional clustering step. For demonstration purposes a small
 example of a cluster file is included  in the `spatialHeatmap` package. In this
 case the group labels were created by the `cluster_cell` function. The details
 of this function are available in its help file. The cluster file contains at
-least two columns: a `cell` column with single cell identifiers used under
-`colData` and a `cluster` column with the cell group labels. For practical
+least two columns: a column (here `cell`) with single cell identifiers used under
+`colData` and a column (here `cluster`) with the cell group labels. For practical
 reasons of building this vignette a pure manual example could not be used here.
 However, the chosen clustering example can be easily adapted to manual or
 hybrid grouping approaches since the underlying tabular data structure is the
-same for both that can be generated in most text or spreadsheet programs.
->>>>>>> c834008cde8e3164c04154eb9234f933830ca8ee
+same for both that can be generated in most text or spreadsheet programs.  
 
 ```{r eval=TRUE, echo=TRUE, warnings=FALSE}
 manual.clus.mus.sc.pa <- system.file("extdata/shinyApp/example", "manual_cluster_mouse_brain.txt", package="spatialHeatmap")
@@ -405,14 +349,12 @@ manual.clus.mus.sc <- read.table(manual.clus.mus.sc.pa, header=TRUE, sep='\t')
 manual.clus.mus.sc[1:3, ]
 ```
 
-<a name='manual_clus'></a>
-
 The `manual_group` function can be used to append the imported group labels to the `colData` slot of an `SCE` object without interfering with other functions and methods operating
 on `SCE` objects.
 
 ```{r eval=TRUE, echo=TRUE, warnings=FALSE}
-sce.clus <- manual_group(sce=sce.dimred, df.group=manual.clus.mus.sc, cell='cell', cell.group='cluster')
-colData(sce.clus)[1:3, ]
+sce.clus <- manual_group(sce=sce.dimred.quick, df.group=manual.clus.mus.sc, cell='cell', cell.group='cluster')
+colData(sce.clus)[1:3, c('cluster', 'label', 'expVar')]
 ```
 
 An embedding plot of single cell data is created. The cells represented as dots are 
@@ -420,35 +362,41 @@ colored by the grouping information stored in the `cluster` column of the `colDa
 slot of `SCE`.   
 
 ```{r eval=TRUE, echo=TRUE, warnings=FALSE, fig.wide=TRUE, fig.cap=('Embedding plot of single cells. The cells (dots) are colored by the grouping information stored in the `colData` slot of the corresponding `SCE` object .'), out.width="100%", fig.show='show'}
-plotUMAP(sce.clus, colour_by="cluster")
+plot_dim(sce.clus, color.by="cluster", dim='UMAP')
 ```
 
 The same mouse brain aSVG as above is used here.  
 
 ```{r eval=TRUE, echo=TRUE, warnings=FALSE}
-tail(feature.df$feature)
+tail(attribute(svg.mus.brain)[[1]])[1:3, 1:4]
 ```
 
 Similarly as above, a mapping list is used to match the cell clusters with aSVG
 features.
 
-```{r scAutoList, eval=TRUE, echo=TRUE, warnings=FALSE}
-lis.match.clus <- list('clus1'=c('cerebral.cortex'), 'clus3'=c('hypothalamus', 'midbrain'))
+```{r eval=TRUE, echo=TRUE, warnings=FALSE}
+lis.match.clus <- list(clus1=c('cerebral.cortex'), clus3=c('brainstem', 'medulla.oblongata'))
+```
+<font style='color:blue'>
+
+This example is demonstrated through cell-to-tissue mapping, so gene expression values need to be summarized for the cells within each group label. Any grouping column in `colData` can be used as labels for summarizing. In this manual method, the `cluster` labels are chosen.  
+
+If additional experimental variables are provided, the summarizing will consider them as well (here `expVar`). The following example uses the `clsuter` and `expVar` columns as group labels and experimental variables, respectively.   
+
+```{r eval=TRUE, echo=TRUE, warnings=FALSE}
+sce.clus.aggr <- aggr_rep(sce.clus, assay.na='logcounts', sam.factor='cluster', con.factor='expVar', aggr='mean')
+colData(sce.clus.aggr)[1:3, c('cluster', 'label', 'expVar')]
 ```
 
-The gene expression values are summarized for the cells within each group.
-
-```{r scAutoAggr, eval=TRUE, echo=TRUE, warnings=FALSE}
-sce.clus.aggr <- aggr_rep(sce.clus, assay.na='logcounts', sam.factor='cluster', con.factor=NULL, aggr='mean')
-```
-
-The co-visualization is plotted for gene `Rpl7`. In this example the coloring
+The co-visualization is plotted for gene `Tcea1`. In this example the coloring
 is based on the gene expression summary for each cell group obtained by clustering.
 Completely manual groupings can be provided the same way.  
 
-```{r scAutoVis, eval=TRUE, echo=TRUE, warnings=FALSE, fig.wide=TRUE, fig.cap=('Co-visualization of single cell data and tissue features with cluster groupings. Gene `Rpl7` is used as an example and the cell groupings were obtained by clustering.'), out.width="100%", fig.show='show', results='hide'}
-shm.lis <- covis(svg=svg.mus.brain, data=sce.clus.aggr, ID=c('Rpl7'), height=0.7, legend.r=1.5, legend.key.size=0.02, legend.text.size=12, legend.nrow=3, sce.dimred=sce.clus, dimred='PCA', cell.group='cluster', assay.na='logcounts', tar.cell=c('matched'), lis.rematch=lis.match.clus, bar.width=0.09, dim.lgd.nrow=1)
+```{r eval=TRUE, echo=TRUE, warnings=FALSE, fig.wide=TRUE, fig.cap=('Co-visualization of single cell data and tissue features with cluster groupings. Gene `Tcea1` is used as an example and the cell groupings were obtained by clustering.'), out.width="100%", fig.show='show', results='hide'}
+shm.lis <- covis(svg=svg.mus.brain, data=sce.clus.aggr, ID=c('Tcea1'), sce.dimred=sce.clus, dimred='UMAP', cell.group='cluster', assay.na='logcounts', tar.cell=names(lis.match.clus), lis.rematch=lis.match.clus, bar.width=0.09, dim.lgd.nrow=1, height=0.7, legend.r=1.5, legend.key.size=0.02, legend.text.size=12, legend.nrow=3)
 ```
+
+</font>
 
 ## Automated Method
 
@@ -462,28 +410,24 @@ the annotation and manual approaches introduced above. While attractive there
 are various challenges to overcome to reliably co-cluster single cell data with
 the corresponding tissue-level bulk data. This is due to the different
 properties of single cell and bulk gene expression data, such as lower
-sensitity and higher sparsity in single cell compared to bulk data. This
+sensitivity and higher sparsity in single cell compared to bulk data. This
 section introduces a co-clustering method that is largely based on parameter
-optimization including three major steps. First, the genes in the bulk data are
-reduced to those robustly expressed in the single cell data. Second, the
-methods and their parameter settings used for preprocessing both data types are
-optimized to achieve the most robust results. Third, the best performing
-clustering method for this data is chosen. Both preprocessing and clustering
+optimization including three major steps. <font style='color:blue'> First, the methods and their parameter settings used for preprocessing both data types (Figure \@ref(fig:coclusOver).1a-b) are
+optimized to achieve the most robust results. Second, the genes in the bulk data are
+reduced to those robustly expressed in the single cell data (Figure \@ref(fig:coclusOver).1c). Third, the best performing
+clustering method (Figure \@ref(fig:coclusOver).2) for this data is chosen. Both preprocessing and clustering
 parameters are optimized on real data with known cell-to-tissue assignments.
 The following introduces the three steps of this method in more detail using
-as example RNA-Seq data.
+the example of RNA-Seq data.
 
-1. The raw read count matrix of the single cell data is reduced to genes
-   with robust expression across X% cells. The bulk data is subsetted to the
-   same genes and then column-wise appended to the processed single cell count
-   matrix. These steps reduce the sparcity in the single cell data
-   and the bulk data are made more compareable to the single cell data by subsetting 
-   it to the same genes.
-2. The combined single cell and bulk read count data are normalized jointly.
-   After separating single cell and bulk data, they are filtered a second time
-   and then embedded using PCA (UMAP or other).
-3. Co-clustering is performed on the embedding data where single cells are assigned
-   with the nearest neighbor bulk tissues. 
+1. The raw count matrices of bulk and single cells are column-wise combined for joint normalization (Figure \@ref(fig:coclusOver).1a). After separated from bulk data, the single cell data are reduced to genes with robust expression across X% cells and to cells with robust expression across Y% genes (Figure \@ref(fig:coclusOver).1b). In the bulk data, genes are filtered according to expression values $\ge$ A at a proportion of $\ge$ p across bulk samples and a coefficient of variance (CV) between CV1 and CV2 (Figure \@ref(fig:coclusOver).1b).   
+
+2. The bulk data are subsetted to the same genes as the single cell data (Figure \@ref(fig:coclusOver).1c). This and the previous filtering steps in single cell data reduce the sparsity in the single cell data and the bulk data are made more compareable to the single cell data by subsetting it to the same genes.
+
+3. Bulk and single cell data are column-wise combined for joint embedding using PCA (UMAP, or other). Co-clustering is performed on the embedding data and three types of clusters are produced. First, only one bulk tissue is co-clustered with cells ((Figure \@ref(fig:coclusOver).2a). This bulk is assigned to all cells in the same cocluster. Second, multiple bulk tissues are co-clustered with multiple cells (Figure \@ref(fig:coclusOver).2b). The bulk tissues are assigned according to the nearest neighbor bulk of each cell, which is measured by Spearman's correlation coefficients. Third, no bulk tissue is co-clustered with cells (Figure \@ref(fig:coclusOver).2c). All these cells are un-labeled, which are candidates for discovering novel cell types.  
+
+After co-clustering, cells are labeled by bulk tissues or un-labeled (Figure \@ref(fig:coclusOver).3) and these labels are used for co-visualization (Figure \@ref(fig:coclusOver).4), where cells in embedding plot and matching tissues in spatial heatmap are filled by same colors.   
+</font>
 
 <p style="color:red">I have removed a lot of text from this section as well as the
 legend of the corresponding figure. The text was far too long and contained a lot 
@@ -509,7 +453,7 @@ am misunderstanding? (3) The purpose of the clustering step and co-clustering
 steps are not clearly defined. The reader will think they are the same or just
 get confused. </p>
 
-```{r coclusOver, echo=FALSE, fig.wide=TRUE, out.width="100%", fig.cap=("Overview of co-clustering. Details of each step are explained in the text.")}
+```{r coclusOver, echo=FALSE, fig.wide=TRUE, out.width="100%", fig.cap=("Overview of co-clustering. (1) Raw count data are pre-processed. (2) Co-clustering is performed on embedding dimensions of combined bulk and single cell data. (3) Cells are labeled by bulk assignments. (4) Cells and bulk tissues are co-visualized according to (3). ")}
 include_graphics('img/coclustering.jpg')
 ```
 
@@ -519,16 +463,55 @@ main text to avoid duplication. PLEASE keep it simple and clear.
 If a figure raises more questions than it answers then it defeats the purpose of
 guiding the reader and providing clarity. </p>
 
-To obtain reasonably robust default settings for co-clustering, the
-preprocessing methods and their parameters have been optimized. This includes
-the filtering, normalization, dimension reduction, and cluster refinement
-steps. The details of this optimization are given
+<font style='color:blue'>
+
+To obtain reasonably robust default settings for co-clustering, 8 parameters shown in Table \@ref(tab:optPar) and Table \@ref(tab:filSet) are optimized, where bold text indicates optimal settings that are treated as robust default settings. The reason to choose these parameters is they are frequently used in routine omics data analysis. The details of this optimization are given
 [here](https://jianhaizhang.github.io/spatialHeatmap_supplement/cocluster_optimize.html).
-The following demonstration applies the best performing pre-processing
-co-clustering methods using single cell and bulk data from mouse brain
+The following demonstration applies the default settings (bold in Table \@ref(tab:optPar)) using single cell and bulk data from mouse brain
 [@Vacher2021-xg; @Ortiz2020-yt]. Both data sets have been simplified for
 demonstraton purposes. 
 
+[JH: The tables will be updated after re-optimization on the updated co-clustering workflow]
+</font>
+
+```{r optPar, eval=TRUE, echo=FALSE, warnings=FALSE}
+df.opt <- cbind(
+Parameter=c('normalization', 'bulkReplicateAggretation', 'filteringSet', 'dimensionReduction', 'topDimensions', 'graphBuilding', 'clusterDetection', 'minSimilarity'),
+Settings=c('**computeSumFactors** (**fct**, scran), calculateCPM (cpm, scuttle), TMM (edgeR), VST (DESeq2)', 
+'**TRUE (yes)**, FALSE (no)', '**fil1**, fil2, fil3, fil4', 
+'**denoisePCA** (**PCA**, scran), runUMAP (UMAP, scater)', 
+'5 to 40 at interval of 1 (**12**)', 
+'**buildKNNGraph** (**knn**), **buildSNNGraph** (**snn**) (scran)', 
+'**cluster_walktrap** (**wt**), cluster_fast_greedy (fg), cluster_leading_eigen (le), cluster_spinglass (sl), cluster_edge_betweenness (eb) (igraph)', 
+'0 to 0.9 at interval of 0.1 (**0.1**)'
+),
+Explanation=c('Normalizing methods in preprocessing',
+'TRUE: bulk tissue replicates are aggregated before co-clustering',
+'Filtering in preprocessing',
+'Dimension reduction methods',
+'Number of top reduced dimensions selected for co-clustering',
+'Methods for building a graph where nodes are cells and edges are connections between nearest neighbors',
+'Methods for partitioning the graph to generate clusters',
+'Bulk-cell assignment strigency of Spearman correlation coefficient. Assignments with similarity below this cutoff is ignored'
+)
+)
+#write.table(df.opt, 'cocluster_para.txt', col.names=TRUE, row.names=TRUE, sep='\t')
+
+kable(df.opt, caption='Parameter settings to optimize for co-clustering. Optimal settings are indicated by bold text.', col.names=colnames(df.opt), row.names=FALSE, escape=TRUE) %>%  kable_styling("striped", full_width = TRUE) %>% scroll_box(width = "700px", height = "230px")
+```
+
+```{r filSet, eval=TRUE, echo=FALSE, warnings=FALSE}
+df.fil.set <- data.frame(
+p=c(0.1, 0.2, 0.3, 0.4), A=rep(1, 4),
+cv1=c(0.1, 0.2, 0.3, 0.4), cv2=rep(50, 4), 
+cutoff=rep(1, 4), 
+p.in.cell=c(0.1, 0.2, 0.3, 0.4), 
+p.in.gen=c(0.01, 0.05, 0.1, 0.15)
+)
+rownames(df.fil.set) <- paste0('fil', rownames(df.fil.set))
+#write.table(df.fil.set, 'df_fil_set.txt', col.names=TRUE, row.names=TRUE, sep='\t')
+kable(df.fil.set, caption='Filtering parameter set', col.names=colnames(df.fil.set), row.names=TRUE, escape=TRUE) %>%  kable_styling("striped", full_width = FALSE) %>% scroll_box(width = "700px", height = "230px")
+```
 
 ### Pre-processing {#proCoclus}
 
@@ -538,51 +521,51 @@ To obtain reproducible results, a fixed seed is set for generating random number
 set.seed(10)
 ```
 
-The following imports example single cell and tissue bulk data. Note, replicates
-are indicated by the same sample names (_e.g._ `CERE.CORTEX`).
+<font style='color:blue'>
+The bulk data is the same with the tissue-to-cell mapping in the [Annotation-based method](#ann). The following imports example single cell from the `spatialHeatmap` package and shows its partial metadata in `colData` slot.  
+</font>
 
-The bulk data is imported from the `spatialHeatmap` package.
-
-```{r , eval=TRUE, echo=TRUE, warnings=FALSE}
-blk.mus.pa <- system.file("extdata/shinyApp/example", "bulk_mouse_cocluster.txt", package="spatialHeatmap") 
-blk.mus <- as.matrix(read.table(blk.mus.pa, header=TRUE, row.names=1, sep='\t', check.names=FALSE))
-blk.mus[1:3, 1:5]
+```{r eval=TRUE, echo=TRUE, warnings=FALSE}
+sc.mus.pa <- system.file("extdata/shinyApp/example", "cell_mouse_cocluster.rds", package="spatialHeatmap") 
+sc.mus <- readRDS(sc.mus.pa)
+colData(sc.mus)[1:3, , drop=FALSE]
 ```
 
-The single cell data is imported from the `spatialHeatmap` package.
+<font style='color:blue'>
+Bulk and single cell raw count data are jointly normalized by the function `norm_cell`. `cpm=FALSE` indicates the optimal normalizing method `fct` (Table \@ref(tab:optPar)), and `com=FALSE` means bulk and single cell are separated after normalization for subsequent separate filtering.  
+</font>
 
-```{r , eval=TRUE, echo=TRUE, warnings=FALSE}
-sc.mus.pa <- system.file("extdata/shinyApp/example", "cell_mouse_cocluster.txt", package="spatialHeatmap") 
-sc.mus <- as.matrix(read.table(sc.mus.pa, header=TRUE, row.names=1, sep='\t', check.names=FALSE))
-sc.mus[1:3, 1:5]
+```{r eval=TRUE, echo=TRUE, warnings=FALSE, results='hide'}
+mus.lis.nor <- read_cache(cache.pa, 'mus.lis.nor') 
+if (is.null(mus.lis.nor)) {
+  mus.lis.nor <- norm_cell(sce=sc.mus, bulk=blk.mus, cpm=FALSE, com=FALSE)
+  save_cache(dir=cache.pa, overwrite=TRUE, mus.lis.nor)
+}
 ```
 
-Single cells and bulk data should not share the same sample identifiers. 
-<p style="color:red">Why would this be a problem? This could be easily resolved by using a data structure that distinguishes bulk and ss. </p>
+<font style='color:blue'>
+The normalized single cell and bulk data (log2-scale) are filtered to reduce sparsity
+and low expression values. The following adopts optimal filtering setting `fil1` in Table \@ref(tab:optPar). In the bulk data, replicates are first aggregated by taking means using the function `aggr_rep`. Then the filtering retains genes in
+the bulk data to have expression values of $\ge$ 1 at a proportion of $\ge 10\%$ (`pOA`) across bulk samples and a coefficient of variance (`CV`) between $0.1-50$ [@Gentleman2018-xj]. 
 
-```{r , eval=TRUE, echo=TRUE, warnings=FALSE}
-intersect(colnames(blk.mus), colnames(sc.mus))
-```
+In the single cell data the filtering is set to retain genes with expression values of $\ge 1$ (`cutoff=1`) in $\ge 1\%$ (`p.in.gen=0.01`) of cells. In
+addition, only those cells are retained that have expression values $\ge 1$ (`cutoff=1`)
+in $\ge 10\%$ (`p.in.cell=0.1`) of their genes.    
+</font>
 
-The raw counts of the single cell and bulk data are filtered to reduce sparsity
-and low read counts. The following example filtering settings retain genes in
-the bulk data to have a read count of $\ge$ 5 at a proportion of $\ge 0.05\%$
-(`pOA`) across bulk sample and a coefficient of variance (`CV`) between
-$0.05-100$. In the single cell data the filtering is set to retain genes with a
-read count of $\ge 1$ (`min.cnt=1`) in $\ge 5\%$ (`p.in.gen=0.05`) of cells. In
-addition, only those cells are retained that have a count $\ge 1$ (`min.cnt=1`)
-in $\ge 1\%$ (`p.in.cell=0.01`) of their genes. Refer to the `filterfun` in the
-`geneflter` package for more details [@Gentleman2018-xj]. 
-
-```{r , eval=TRUE, echo=TRUE, warnings=FALSE}
-blk.mus.fil1 <- filter_data(data=blk.mus, pOA=c(0.05, 5), CV=c(0.05, 100), verbose=FALSE) 
-mus.lis.fil1 <- filter_cell(lis=list(sc.mus=sc.mus), bulk=blk.mus.fil1, min.cnt=1, p.in.cell=0.01, p.in.gen=0.05, verbose=FALSE) 
+```{r , eval=FALSE, echo=TRUE, warnings=FALSE}
+# Aggregate bulk replicates
+blk.mus.aggr <- aggr_rep(data=mus.lis.nor$bulk, assay.na='logcounts', sam.factor='sample', aggr='mean')
+# Filter bulk
+blk.mus.fil <- filter_data(data=blk.mus.aggr, pOA=c(0.1, 1), CV=c(0.1, 50), verbose=FALSE) 
+# Filter cell and subset bulk to genes in cell
+blk.sc.mus.fil <- filter_cell(sce=mus.lis.nor$cell, bulk=blk.mus.fil, cutoff=1, p.in.cell=0.1, p.in.gen=0.01, verbose=FALSE) 
 ```
 
 Compared to bulk RNA-Seq data, single cell data has a much higher level of
 sparsity. This difference is reduced by the above filtering and then subsetting
 the bulk data to the genes remaining in the filtered single cell data. This
-entire process is accomplished by the `norm_multi` function. 
+entire process is accomplished by the `filter_cell` function.  
 
 <p style="color:red"> What you had here before didn't make much sense "combined
 normalization" doesn't make the data more similar rather than the subsetting
@@ -590,66 +573,11 @@ to a joined gene set after filtering. Also the combined normalization is only
 necessary if a quantile normalization is used. Below you are saying you obtained
 log2 normalized data from this step. If so then combining the two is unnecessary.</p> 
 
-```{r , eval=TRUE, echo=TRUE, warnings=FALSE, results='hide'}
-mus.lis.nor <- read_cache(cache.pa, 'mus.lis.nor') 
-if (is.null(mus.lis.nor)) { 
-  mus.lis.nor <- norm_multi(dat.lis=mus.lis.fil1, cpm=FALSE)
-  save_cache(dir=cache.pa, overwrite=TRUE, mus.lis.nor)
-}
-```
-
-The log2-scale normalized bulk tissues and single cell data are filtered 
-a second time respectively in a similar way as the initial filtering.
-
-<p style="color:red"> I don't understand why this is necessary. Why not making the
-filtering settings in the first step stringent enough. Most readers will stumble 
-over this since it indicates that the method hasn't been sufficiently optimized and
-that some steps and paramters are at an trial and error stage.</p>
+The same aSVG instance of mouse brain as in the [Quick Start](#test) section above is used here and the aSVG parsing is omitted for brevity.  
 
 ```{r , eval=TRUE, echo=TRUE, warnings=FALSE}
-blk.mus.fil2 <- filter_data(data=mus.lis.nor$bulk, pOA=c(0.1, 1), CV=c(0.1, 50), verbose=FALSE) 
-mus.lis.fil2 <- filter_cell(lis=list(sc.mus=mus.lis.nor$sc.mus), bulk=blk.mus.fil2, min.cnt=1, p.in.cell=0.1, p.in.gen=0.01, verbose=FALSE) 
+tail(attribute(svg.mus.brain)[[1]])[1:3, 1:4] # Partial features are shown.
 ```
-
-The same aSVG file of mouse brain is used as in the [Quick Start](#test) section above. 
-The extracting aSVG features is omitted here for brevity.  
-
-```{r , eval=TRUE, echo=TRUE, warnings=FALSE}
-tail(feature.df$feature) # Partial features are shown.
-```
-
-<p><s>The matching between bulk and single cells are automatic, while the matching
-between aSVG features and bulk tissues needs to be defined by users in a
-`data.frame`. Since there is no uniform naming scheme for aSVG features or bulk
-tissues. In most cases, identifiers of aSVG features and bulk tissues are user
-dependent, especially when they are from different sources. The matching
-`data.frame` is utilized to coordinate differences of naming schemes between
-aSVG features and bulk tissues. In addition, it gives flexibility for users to
-choose desired identifiers. </s></p> 
-
-<p style="color:red">The above seems a duplication of something that has been 
-introduced in other section several times already. So why another duplication?</p>
-
-The matching table for this example is imported from the `spatialHeatmap` package.
-imported. The `SVGBulk` and `dataBulk` columns are aSVG features and bulk
-tissues respectively. Note, these two columns names are fixed so that the
-algorithm is able to recognize them.    
-
-<span style="color:red">[ThG: again users won't have this. The optimization belongs
-into the supplement.]</span> <span style="color:blue">[JZ: It is related to optimization.]</span>
-
-<p style="color:red">I don't think I understand what you are saying in the previous
-paragraph nor what its purpose is? Did you have the same mapping need for SVG features
-and expression data in the spatial heatmap part of the package (here SVGBulk and 
-dataBulk). Why does this need to be introduced here again? Or are you using here a 
-different data structure for the same thing? If so then this would be are really poor 
-design.</p>
-
-```{r , eval=TRUE, echo=TRUE, warnings=FALSE}
-match.mus.brain.pa <- system.file("extdata/shinyApp/example", "match_mouse_brain_cocluster.txt", package="spatialHeatmap")
-df.match.mus.brain <- read.table(match.mus.brain.pa, header=TRUE, row.names=1, sep='\t')
-df.match.mus.brain
-``` 
 
 ### Co-clustering
 
@@ -659,54 +587,42 @@ df.match.mus.brain
 2. <p style="color:red">Address my comments and questions I included in the vignette in red.  </p>
 3. <p style="color:red">Currently, the data point (dots) of the bulk data are not shown in the scatter plots after co-clustering. This would be a feature everyone would expect to see for a co-clustering utility that focuses on visualization. One also might want to have a co-clustering stringency filter that allows to show only those cells that are tightly co-clustered with the bulk data points, meaning when the stringency is increased only those cells are shown that are in closer proximity to the bulk.  Thus, showing the bulk in the scatter plot would be extremely useful.</p>
 
-
-The processes of clustering single cell data (Figure \@ref(fig:coclusOver).4),
-refining single cell clusters (Figure \@ref(fig:coclusOver).5), and co-clustering bulk
-and single cells (Figure \@ref(fig:coclusOver).6-8) are performed in a single
-function call. Setting `return.all=TRUE` returns the obtained results in a `list`
-(`res.lis`).     
-
 <p style="color:red">As before the need of the two types of clustering steps is confusing. Also how are they connected. Does the co-clustering make use of the clustering?</p>
 
-```{r , eval=TRUE, echo=TRUE, warnings=FALSE, results='hide'}  
-res.lis <- read_cache(cache.pa, 'res.lis')
-if (is.null(res.lis)) {
-  res.lis <- coclus_meta(bulk=mus.lis.fil2$bulk, cell=mus.lis.fil2$sc.mus, df.match=df.match.mus.brain, return.all=TRUE, multi.core.par=MulticoreParam(workers=1), verbose=FALSE)
-  res.lis <- res.lis[[1]]
-  save_cache(dir=cache.pa, overwrite=TRUE, res.lis)
+<font style='color:blue'>
+The co-clustering process is performed by calling the function `cocluster`. In the following, default settings obtained from optimization are shown, where `min.dim`, `dimred`, `graph.meth`, and `cluster` refers to `topDimensions`, `dimensionReduction`, `graphBuilding`, and `clusterDetection` in Table \@ref(tab:optPar) respectively.   
+</font>
+
+```{r eval=TRUE, echo=TRUE, warnings=FALSE, results='hide'}  
+coclus.mus <- read_cache(cache.pa, 'coclus.mus')
+if (is.null(coclus.mus)) {
+  coclus.mus <- cocluster(bulk=blk.sc.mus.fil$bulk, cell=blk.sc.mus.fil$cell, min.dim=12, dimred='PCA', graph.meth='knn', cluster='wt')
+  save_cache(dir=cache.pa, overwrite=TRUE, coclus.mus)
 }
 ```
 
-<a name='autoRes'></a>
+<font style='color:blue'>
+The co-clustering results are stored in the `colData` slot of `coclus.mus`. The `cluster` indicates cluster labels, the `bulkCell` indicates bulk tissues or single cells, the `sample` suggests original labels of bulk and cells, the `assignedBulk` refers to bulk tissues assigned to cells with `none` suggesting un-assigned, and the `similarity` refers to Spearman's correlation coefficients between bulk and cells for each assignment, which is a measure of assignment strigency.   
+</font>
 
-The source bulk tissue assignments are stored in the `colData` slot of
-`sce.asg` in the result list (`res.lis`), which are partialy shown below. The
-`assignedBulk` indicates assigned source bulk tissues for each cell, and the
-`SVGBulk` contains corresponding aSVG features, which is based on the matching
-table `df.match.mus.brain`. The `predictor` includes similarities (Spearman's
-correlation coefficient) between single cells and assigned bulk tissues.    
-
-
-<p style="color:red">,,,source bulk tissue assignments..." to what is unclear.</p>
-
-```{r , eval=TRUE, echo=TRUE, warnings=FALSE}  
-colData(res.lis$sce.asg)[1:2, c('cell', 'assignedBulk', 'predictor', 'SVGBulk')]
+```{r eval=TRUE, echo=TRUE, warnings=FALSE}
+colData(coclus.mus)
 ```
 
-The co-cluster information is stored in the `colData` slot of `sce.bulk.cell`
-in the result list (`res.lis`). The `cluster` and `cell` columns indicate
-co-cluster labels and bulk/cell identifiers respectively.    
+<font style='color:blue'>
+The strigency of assignments between bulk and cells can be controled by filtering the `similarity`. This utility is impletmented in function `filter_asg`, where `min.sim` is the `similarity` cutoff. Utilities are also developed to manually tailor the assignments and are explained in the [Supplementary Section](#tailor).   
+</font>
 
-```{r , eval=TRUE, echo=TRUE, warnings=FALSE}
-colData(res.lis$sce.bulk.cell)[1:3, ]
+```{r eval=TRUE, echo=TRUE, warnings=FALSE}
+coclus.mus <- filter_asg(coclus.mus, min.sim=0.1)
 ```
 
 <font style="color:blue">
-Each co-cluster consisting of bulk and cells can be visualized in an embedding plot. The following plot is the visualization of co-cluster `clus11`, where other bulk and cells are in gray.   
+The co-clusters including bulk and cells can be visualized with the function `plot_dim`. The `dim` argument specifies embedding methods and `cocluster.only=TRUE` sets cells without bulk assignments in gray. In the embedding plot, bulk tissues and cells are indicated by large and small circles respectively.   
 </font>
 
-```{r , eval=TRUE, echo=TRUE, warnings=FALSE, fig.wide=TRUE, fig.cap=('Embedding plot of co-clusters. Dots represent bulk tissues or single cells. The bulk and cells in the target co-cluster are in blue while all other bulk and cells are in gray.'), out.width="80%", fig.show='show'}
-plot_dim(res.lis$sce.bulk.cell, dim='PCA', color.by='cluster', group.sel='clus11')
+```{r , eval=TRUE, echo=TRUE, warnings=FALSE, fig.wide=TRUE, fig.cap=('Embedding plot of co-clusters. Large and small circles refer to bulk tissues and single cells respectively. '), out.width="80%", fig.show='show'}
+plot_dim(coclus.mus, dim='PCA', color.by='cluster', cocluster.only=TRUE)
 ```
 
 <p style="color:red">Does the above plot shows all the genes after filtering or only 
@@ -715,91 +631,70 @@ color and the grey ones that were not coclustered. Also why doesn't the plot sho
 bulk tissue as a highlighted dot. This would be particularly important and interesting
 to show here.</p>
 
-### Tailoring Co-clustering Results {#tailor}
-
-<p style="color:red">I would remove this entire section. All the important things you leave out such as what clustering method is used for coclustering and then actually generating a coclustering plot. I guess this somes below but why all this detail. Readers will stop reading before they actually come to the part that generates the a co-visualization plot of the coclustering results.</p>
-
-The automatic (co-clustering) method is optimized and tested on a small number of real bulk and single cell datasets, due to the limited availability of single cell datasets where single cells are assayed on a whole organ or whole large tissue and each single cell is well annotated. Thus, the accuracy of automatic source bulk tissue assignments might be also limited. As a remedy, utilities are developed for tailoring the automatic bulk tissue assignments at user preferences. Note, the tailoring step is optional, if users are satisfied with the bulk assignments, just proceed to the [co-visualization](#covisAuto) step.   
-
-The tailoring can be performed in command line or on a [Shiny app](#asgBulkShiny). This section illustrates the command-line based tailoring. First visualize single cells after single-cell cluster refining (Figure \@ref(fig:coclusOver).5) in an embedding plot as shown below. In order to define more accurate coordinates in the next step, tune the x-y axis breaks (`x.break`, `y.break`) and set `panel.grid=TRUE`.   
-</font>
-
-
-```{r , eval=TRUE, echo=TRUE, warnings=FALSE, fig.wide=TRUE, fig.cap=('PCA embedding plot of mouse brain single cell data. Single cells right after cluster refining are plotted.'), out.width="100%", fig.show='show'}
-plot_dim(res.lis$cell.refined, dim='UMAP', color.by='cell', x.break=seq(-10, 10, 1), y.break=seq(-10, 10, 1), panel.grid=TRUE)
-```
-
-<font style="color:blue">
-Define desired bulk tissues (`desiredSVGBulk`) for cells selected by x-y coordinate ranges (`x.min`, `x.max`, `y.min`, `y.max`) in the embedding plot in form of a `data.frame` (`df.desired.bulk`). The `dimred` reveals where the coordinates come from and are required. In this example, `cerebellum` is the desired bulk tissue for cells in the selected region.   
-</font>
-
-```{r , eval=TRUE, echo=TRUE, warnings=FALSE}  
-df.desired.bulk <- data.frame(x.min=c(1), x.max=c(3), y.min=c(3), y.max=c(4), desiredSVGBulk=c('hypothalamus'), dimred='UMAP')
-df.desired.bulk
-```
-
-<font style="color:blue">
-Incorporate desired bulk assignments to co-clustering results by calling `refine_asg`. The [predictors](#autoRes) corresponding to desired bulk are internally set at the maximum of 1. The `thr` argument is a predictor threshold and used to filter bulk assignments.   
-</font>
-
-<span style="color:red">[ThG: lack of context; hard to follow; does this need to be here?]</span>
-
-```{r , eval=TRUE, echo=TRUE, warnings=FALSE}  
-res.lis <- refine_asg(res.lis=res.lis, thr=0, df.desired.bulk=df.desired.bulk, df.match=df.match.mus.brain)
-```
 
 ### Co-visualization {#covisAuto}
 
 <font style="color:blue">
-Similar with the annotation-based and manual methods, cells under the same SVG feature (bulk tissue) are aggregated by averaging (`aggr='mean'`) normalized assay profiles (`assay.na='logcounts'`). The aggregated assay profiles are used to color corresponding aSVG features.   
-</font>
+Bulk assignments are treated as group labels for cells in co-visualization. Similar with annotation-based and manual methods, co-visualization options include cell-to-bulk mapping, bulk-to-cell mapping, inclusion or exclusion of expression values.  
 
-<span style="color:red">[ThG: I am unable follow. Please provide clearer explantions
-to help readers what is done here or remove this part. The fact that you are not
-showing any output or visualization in this and other code sections makes it very
-hard to understand what is happening throughout.]</span>
+In cell-to-bulk mapping, single cell data are separated from bulk and expression values are summarized by means within each cell group, _i.e._ bulk assignement.  
+</font>
 
 ```{r , eval=TRUE, echo=TRUE, warnings=FALSE}  
-sce.aggr <- aggr_rep(data=res.lis$sce.asg, assay.na='logcounts', sam.factor='SVGBulk', aggr='mean')
+# Separate single cell data.
+coclus.sc <- subset(coclus.mus, , bulkCell=='cell')
+# Summarize expression values in each cell group.
+sc.aggr.coclus <- aggr_rep(data=coclus.sc, assay.na='logcounts', sam.factor='assignedBulk', aggr='mean')
+colData(sc.aggr.coclus)
 ```
 
 <font style="color:blue">
-The co-visualization of bulk and single cells is built on aggregated gene abundance profiles (`profile=TRUE`) of gene `Adcy1`. All available bulk tissues (aSVG features) are selected as targets, *i.e.* `hippocampus`, `hypothalamus`, `cerebellum` and `cerebral.cortex`. In the embedding plot, cells matching the same target aSVG feature in the anatomical image are colored according to their aggregated assay profiles, and the same color is used to fill their matching aSVG features. The cells defined in `df.desired.bulk` in the [tailoring](#tailor) section are also colored in the embedding plot and counted when aggregating expression profiles.   
+The co-visualization through cell-to-bulk mapping is built on gene `Adcy1`. Cells in the embedding plot and respective assigned bulk tissues in spatial heatmap are revealed by same colors.
 </font>
 
-```{r , eval=TRUE, echo=TRUE, warnings=FALSE, fig.wide=TRUE, fig.cap=('Co-visualizing bulk and single cells of mouse brain with abundance profiles. The aggregated expression profile of gene `Adcy1` in cells matching the same bulk is used to fill these cells and bulk tissues.'), out.width="100%", fig.show='show', results='hide'}
+```{r , eval=TRUE, echo=TRUE, warnings=FALSE, fig.wide=TRUE, fig.cap=('Co-visualization through cell-to-bulk mapping in automated method. This plot is created on gene Adcy1. Colors between the embedding plot and spatial heatmap indicate matching of cells with bulk tissues. '), out.width="100%", fig.show='show', results='hide'}
+shm.lis <- covis(svg=svg.mus.brain, data=sc.aggr.coclus, ID=c('Adcy1'), sce.dimred=coclus.sc, dimred='UMAP', tar.cell=c('hippocampus', 'hypothalamus', 'cerebellum', 'cerebral.cortex'), dim.lgd.text.size=10, dim.lgd.nrow=2, bar.width=0.1, legend.nrow=4)
+```
 
-shm.lis1 <- covis(svg=svg.mus.brain, data=sce.aggr, ID=c('Adcy1'), legend.nrow=4, sce.dimred=res.lis$cell.refined, dimred='UMAP', tar.cell=c('hippocampus', 'hypothalamus', 'cerebellum', 'cerebral.cortex'), profile=TRUE, dim.lgd.text.size=10, dim.lgd.nrow=2, bar.width=0.1)
+<font style='color:blue'>
+In bulk-to-cell mapping, bulk data are separated from cell, where replicates are already aggregated in preprocessing.
+</font>
 
+```{r , eval=TRUE, echo=TRUE, warnings=FALSE}  
+coclus.blk <- subset(coclus.mus, , bulkCell=='bulk')
+```
 
-sce.aggr <- aggr_rep(data=res.lis$sce.bulk, assay.na='logcounts', sam.factor='dataBulk', aggr='mean')
+<font style='color:blue'>
+Same with conventions in the main vignette, at least one bulk tissue identifier should match with aSVG features so as to successfully plot spatial heatmaps. 
+</font>
 
-sce.bulk <- subset(coclus.mus, , bulkCell=='bulk')
-sce.aggr <- aggr_rep(data=sce.bulk, assay.na='logcounts', sam.factor='sample', aggr='mean')
-
-sce.cell <- subset(coclus.mus, , bulkCell=='cell')
-sce.aggr <- aggr_rep(data=sce.cell, assay.na='logcounts', sam.factor='assignedBulk', aggr='mean')
-
-
-shm.lis1 <- covis(svg=svg.mus.brain, data=sce.aggr, ID=c('Adcy1'), legend.nrow=4, sce.dimred=sce.cell, assay.na='logcounts', dimred='UMAP', profile=TRUE, dim.lgd.text.size=10, dim.lgd.nrow=2, bar.width=0.1, tar.cell=unique(sce.aggr$assignedBulk))
-
+```{r eval=TRUE, echo=TRUE, warnings=FALSE}
+colnames(coclus.blk) %in% attribute(svg.mus.brain)[[1]]$feature
 ```
 
 <font style="color:blue">
-Bulk tissues and single cells are co-visualized without abundance profiles (`profile=FALSE`). All available bulk tissues (aSVG features) are selected to show, *i.e.* `hippocampus`, `hypothalamus`, `cerebellum` and `cerebral.cortex`. They are filled by different colors in the anatomical image, while the matching cells are indicated in the embedding plot with the same color as their source bulk tissues. Cells selected in the [tailoring](#tailor) section are also colored in the embedding plot.    
+The co-visualization through bulk-to-cell mapping is built on gene `Adcy1`. Cells in the embedding plot and respective assigned bulk tissues in spatial heatmap are revealed by same colors.
 </font>
 
-```{r , eval=TRUE, echo=TRUE, warnings=FALSE, fig.wide=TRUE, fig.cap=('Co-visualizing bulk and single cells of mouse brain without abundance profiles. The matching between cells and source bulk tissues (aSVG features) is denoted by the same color between the embedding plot and anatomical image.'), out.width="100%", fig.show='show', results='hide'}
-shm.lis2 <- covis(svg=svg.mus.brain, data=sce.aggr, legend.nrow=4, sce.dimred=res.lis$cell.refined, dimred='UMAP', targ=c('hippocampus', 'hypothalamus', 'cerebellum', 'cerebral.cortex'), profile=FALSE, dim.lgd.text.size=10, dim.lgd.nrow=2)
+```{r eval=TRUE, echo=TRUE, warnings=FALSE, fig.wide=TRUE, fig.cap=('Co-visualization through bulk-to-cell mapping in automated method. This plot is created on gene Adcy1. Colors between the embedding plot and spatial heatmap indicate matching of cells with bulk tissues.'), out.width="100%", fig.show='show', results='hide'}
+shm.lis <- covis(svg=svg.mus.brain, data=coclus.blk, ID=c('Adcy1'), sce.dimred=coclus.sc, dimred='UMAP', tar.bulk=colnames(coclus.blk), assay.na='logcounts', legend.nrow=4, dim.lgd.text.size=10, dim.lgd.nrow=2, bar.width=0.08)
+```
+
+<font style="color:blue">
+By setting `profile=FALSE`, the co-visualization is created without expression values, where colors in the embedding plot and spatial heatmap only indicate matching between cells and bulk tissues.   
+</font>
+
+```{r eval=TRUE, echo=TRUE, warnings=FALSE, fig.wide=TRUE, fig.cap=('Co-visualization without expression values in automated method. Colors between the embedding plot and spatial heatmap only indicate matching of cells with bulk tissues.'), out.width="100%", fig.show='show', results='hide'}
+covis(svg=svg.mus.brain, data=coclus.blk, ID=c('Adcy1'), sce.dimred=coclus.sc, dimred='UMAP', profile=FALSE, assay.na='logcounts', legend.nrow=4, dim.lgd.text.size=10, dim.lgd.nrow=2, bar.width=0.1)
 ```
 
 # Shiny App {#autoSCE}
 
-<span style="color:red">[ThG: this section would need to show a screenshot
-showing where this is used in the shiny app.]</span>
-
 <font style="color:blue">
-The co-visualization feature is included in the integrated Shiny app that is an GUI implementation of `spatialHeatmap`, including annotation-based, maual, and automatic methods. To start this app, simply call `shiny_shm()` in R. Below is a screenshot of the co-visulization output generated by the automatic method.  
+The co-visualization feature is included in the integrated Shiny app that is an GUI implementation of `spatialHeatmap`, including annotation-based, manual, and automated methods. To start this app, simply call `shiny_shm()` in R. Below is a screenshot of the co-visulization output. 
+
+[JH: the Shiny app is still being updated. ]
+
 </font>
 
 ```{r echo=FALSE, fig.wide=TRUE, out.width="100%", fig.cap=('Screenshot of the co-visualization output in Shiny app. The co-visualization plot is generated by the automatic method.')}
@@ -807,23 +702,55 @@ include_graphics('img/shiny_coviz.png')
 ```
 
 <font style="color:blue">
-When using the Shiny app, single cell data in annotation-based and manual methods or combined
-single cell and bulk data in automatic method are stored in a `SingleCellExperiment` object and saved in an `.rds` file by `saveRDS`, then the `.rds` file should be uploaded to the app. In the manual method, the manual cell group labels in a tabular file should be included in the `colData` slot by calling `manual_group` before creating an `.rds` file, as shown [here](#manual_clus). In the automatic method, bulk tissues and single cells are labeled by `bulk` and `cell`
-respectively in the `bulkCell` column in `colData` slot. The matching table between bulk tissues and aSVG features is stored in the `metadata` list with the name `df.match`. The example `.rds` file below illustrates these rules.     
+When using the Shiny app, bulk and single cell raw count data need to be column-wise combined in a `SingleCellExperiment` object and saved as an `.rds` file using `saveRDS`. In the `colData` slot, the `bulkCell` column is populated with `bulk` and `cell` to indicate bulk and cell samples respectively such as `coclus.mus` above. Then upload the `.rds` and aSVG files to the app.   
+
 </font>
 
-```{r , eval=TRUE, echo=TRUE, warnings=FALSE}  
-sce.auto <- readRDS(system.file("extdata/shinyApp/example", 'sce_auto_bulk_cell_mouse_brain.rds', package="spatialHeatmap"))
-colData(sce.auto)
-metadata(sce.auto)$df.match
-```
 
 # Supplementary Section {#sup} 
 
-## Assigning Desired Bulk on Shiny App {#asgBulkShiny}
+## Tailoring Co-clustering Results {#tailor}
 
-<span style="color:red">[ThG: I don't understand the above paragraph. 
-The shiny part is totally out of context.]</span>
+### Assigning Desired Bulk in R
+
+<font style="color:blue">
+The bulk-cell assignments in the automated method can be manually tailored, which is optional. The tailoring can be performed in command line or on a [Shiny app](#asgBulkShiny). This section illustrates the command-line based tailoring. First visualize single cells in an embedding plot as shown below. In order to define more accurate coordinates in the next step, tune the x-y axis breaks (`x.break`, `y.break`) and set `panel.grid=TRUE`.   
+</font>
+
+```{r , eval=TRUE, echo=TRUE, warnings=FALSE, fig.wide=TRUE, fig.cap=('UMAP embedding plot of mouse brain single cell data. The single cell data are separated from bulk data after co-clustering'), out.width="100%", fig.show='show'}
+plot_dim(coclus.sc, dim='UMAP', color.by='sample', x.break=seq(-10, 10, 1), y.break=seq(-10, 10, 1), panel.grid=TRUE)
+```
+
+<font style="color:blue">
+Define desired bulk tissues (`desiredBulk`) for cells selected by x-y coordinate ranges (`x.min`, `x.max`, `y.min`, `y.max`) in the embedding plot in form of a `data.frame` (`df.desired.bulk`). The `dimred` reveals where the coordinates come from and is required. In this example, `hypothalamus` is the desired bulk tissue for cells in the selected region.   
+</font>
+
+```{r , eval=TRUE, echo=TRUE, warnings=FALSE}  
+df.desired.bulk <- data.frame(x.min=c(1.5), x.max=c(3), y.min=c(-4.5), y.max=c(-3.5), desiredBulk=c('hypothalamus'), dimred='UMAP')
+df.desired.bulk
+```
+
+<font style="color:blue">
+Incorporate desired bulk assignments to co-clustering results by calling `refine_asg`. The similarities corresponding to desired bulk are internally set at the maximum of 1. After inclusion of desired bulk, separate single cells from bulk for co-visualization. 
+</font>
+
+```{r , eval=TRUE, echo=TRUE, warnings=FALSE}  
+# Incorporate desired bulk
+coclus.mus.tailor <- refine_asg(sce.all=coclus.mus, df.desired.bulk=df.desired.bulk)
+# Separate cells from bulk
+coclus.sc.tailor <- subset(coclus.mus.tailor, , bulkCell=='cell')
+```
+
+
+<font style="color:blue">
+After tailoring, the co-visualization through bulk-to-cell mapping is built on gene `Adcy1`. Cells in the embedding plot and respective matching bulk tissues in spatial heatmap are revealed by same colors. Note cells defined in `df.desired.bulk` have the same color as the desired bulk tissue `hypothalamus`.   
+</font>
+
+```{r eval=TRUE, echo=TRUE, warnings=FALSE, fig.wide=TRUE, fig.cap=('Co-visualization through bulk-to-cell mapping after tailoring. This plot is created on gene Adcy1. Colors between the embedding plot and spatial heatmap indicate matching of cells with bulk tissues.'), out.width="100%", fig.show='show', results='hide'}
+covis(svg=svg.mus.brain, data=coclus.blk, ID=c('Adcy1'), sce.dimred=coclus.sc.tailor, dimred='UMAP', tar.bulk=colnames(coclus.blk), assay.na='logcounts', legend.nrow=4, dim.lgd.text.size=10, dim.lgd.nrow=2, bar.width=0.08)
+```
+
+### Assigning Desired Bulk on Shiny App {#asgBulkShiny}
 
 <font style="color:blue">
 This section describes [tailoring](#tailor) co-clustering results on the convenience Shiny app, which is lauched by calling `desired_bulk_shiny`. 
