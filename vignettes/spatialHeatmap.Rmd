@@ -558,7 +558,7 @@ function can be used. It supports the following pre-existing functions from
 widely used packages for analyzing count data in the next generation sequencing
 (NGS) field: `calcNormFactors` (CNF) from `edgeR` [@edgeR1]; as well as
 `estimateSizeFactors` (ESF),  `varianceStabilizingTransformation` (VST), and
-`rlog` from DESeq2 [@DESeq2].  The argument `norm.fun` specifies one of the
+`rlog` from DESeq2 [@deseq2].  The argument `norm.fun` specifies one of the
 four internal normalizing methods: `CNF`, `ESF`, `VST`, and `rlog`. If
 `norm.fun='none'`, no normalization is applied.  The arguments for each
 normalizing function are provided via a `parameter.list`, which is a `list`
@@ -1178,13 +1178,13 @@ To minimize masking of the features in the SHMs by dense regions in the raster i
 the `alpha.overlay` argument allows to adjust the transparency level. In Figure \@ref(fig:overCol), 
 the spatial features of interest are superimposed onto the raster image.   
 
-```{r overCol, eval=TRUE, echo=TRUE, warnings=FALSE, fig.wide=TRUE, fig.cap=('Overlaying real images with SHMs (colorful backaground). The expression profiles of gene1 are plotted on ABS cells.'), out.width="100%", fig.show='show', results='hide'}
+```{r overCol, eval=TRUE, echo=TRUE, warnings=FALSE, fig.wide=TRUE, fig.cap=('Superimposing raster images with SHMs (colorful backaground). The expression profiles of gene1 are plotted on ABS cells.'), out.width="100%", fig.show='show', results='hide'}
 spatial_hm(svg=svg.overlay, data=dat.overlay, raster.path=c(raster.pa1, raster.pa2), charcoal=FALSE, ID=c('gene1'), alpha.overlay=0.5, bar.width=0.09, sub.title.vjust=4)
 ```
 
 Another option for reducing masking effects is to display the raster image in black and white by setting `charcoal=TRUE` (Figure \@ref(fig:overChar)).  
 
-```{r overChar, eval=TRUE, echo=TRUE, warnings=FALSE, fig.wide=TRUE, fig.cap=('Overlaying real images with SHMs (black-white background). The expression profiles of gene1 are plotted on ABS cells.'), out.width="100%", fig.show='show', results='hide'}
+```{r overChar, eval=TRUE, echo=TRUE, warnings=FALSE, fig.wide=TRUE, fig.cap=('Superimposing raster images with SHMs (black-white background). The expression profiles of gene1 are plotted on ABS cells.'), out.width="100%", fig.show='show', results='hide'}
 spatial_hm(svg=svg.overlay, data=dat.overlay, raster.path=c(raster.pa1, raster.pa2), charcoal=TRUE, ID=c('gene1'), alpha.overlay=0.5, bar.width=0.09, sub.title.vjust=4)
 ```
 
@@ -1358,7 +1358,7 @@ In principle, the `spatialHeatmap` is extendable to as many dimensions (*e.g.* s
 
 ## Spatial Enrichment {#se} 
 
-The Spatial Enrichment (SE) is an extension of the SHMs. It identifies spatial feature-specifically expressed biological molecules (genes, proteins, metabolites, *etc.*) and thus enables the SHMs to visualize feature-specific profiles. It compares the target spatial feature with all other selected features in a pairwise manner. The molecules significantly up- or down- regulated in the target feature across all pairwise comparisons are denoted final target feature-specifically expressed. The base methods include edgeR [@edgeR], limma [@limma], DESeq2 [@DESeq2], distinct [@distinct]. The feature-specific molecules are first detected with each method independently then summarized across methods.  
+The Spatial Enrichment (SE) is an extension of the SHMs. It identifies spatial feature-specifically expressed biological molecules (genes, proteins, metabolites, *etc.*) and thus enables the SHMs to visualize feature-specific profiles. It compares the target spatial feature with all other selected features in a pairwise manner. The molecules significantly up- or down- regulated in the target feature across all pairwise comparisons are denoted final target feature-specifically expressed. The base methods include edgeR [@edgeR], limma [@limma], DESeq2 [@deseq2], distinct [@distinct]. The feature-specific molecules are first detected with each method independently then summarized across methods.  
 
 In addition to spatial feature-specific molecules, the SE is also able to identify molecules specifically expressed in a certain condition in a similar pairwise comparison, where the condition of interest is compared with every other selected condition.  
 

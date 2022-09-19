@@ -425,8 +425,7 @@ content=function(file=paste0(tmp.dir, '/batched_data_aSVGs.zip')){ zip(file, c(d
   sce.pa <- reactiveValues(val=TRUE)
   observeEvent(list(input$sglCell), { sce.pa$val <- TRUE })
   observeEvent(list(input$fileIn), { sce.pa$val <- FALSE })
-  observeEvent(input$fileIn, {
-  })
+  # observeEvent(input$fileIn, { })
   sce <- reactiveValues(); observe({
   library(SingleCellExperiment)
   library(scater); library(scran); library(BiocSingular)
@@ -1305,7 +1304,7 @@ network_server <- function(id, upload.mod.lis, dat.mod.lis, shm.mod.lis, sch.mod
 }
 
 # Match spatial features between data and aSVG.
-match_server <- function(id, sam, tab, upl.mod.lis, sce.rct=NULL, session) {
+match_server <- function(id, sam, tab, upl.mod.lis, sce.man=NULL, session) {
   moduleServer(id, function(input, output, session) { 
     ipt <- upl.mod.lis$ipt; cfg <- upl.mod.lis$cfg
   # renderUI: if the tab/page containing uiOutput('svg') is not active/clicked, the input$svg on the server side is NULL. To avoid this, the ui side should have "selectInput".
@@ -1320,7 +1319,7 @@ match_server <- function(id, sam, tab, upl.mod.lis, sce.rct=NULL, session) {
     # When customSingleCellData is selected, matching is disabled in SHM.
     if(id!='rematchCell' & ipt$fileIn=='customSingleCellData') return()
     ns <- session$ns
-    actionButton(ns("match"), 'Confirm matching', icon=NULL)
+    actionButton(ns("match"), 'Update', icon=NULL)
   })
   output$match.reset <- renderUI({
     return()
@@ -1375,7 +1374,7 @@ match_server <- function(id, sam, tab, upl.mod.lis, sce.rct=NULL, session) {
   # Matching samples are raised to top.
   pas.idx <- grepl('^path\\d+|^g\\d+', sf.all)
   sf.all <- c(sf.all[!pas.idx], sf.all[pas.idx])
-  ft.reorder$ft.svg <- sf.all; cat('Done!')
+  ft.reorder$ft.svg <- sf.all; cat('Done! \n')
   })
 
   observeEvent(list(sam(), input$svg, ipt$svgInpath1, ipt$svgInpath2), {
@@ -1392,31 +1391,31 @@ match_server <- function(id, sam, tab, upl.mod.lis, sce.rct=NULL, session) {
     ns <- session$ns; sf.all <- ft.reorder$ft.svg
     sam.all <- ft.reorder$ft.dat
     if (is.null(sf.all)|is.null(sam.all)) return()
-    flrow <- fluidRow(
-      span(class = "panel panel-default", style = 'margin-left:0px',
-        div(class = "panel-heading", strong("Features in aSVG")),
-        div(class = "panel-body", id = ns("ftSVG"), ft2tag(sf.all))
-      ),
-      div(class = "panel panel-default",
-        div(class = "panel-heading", strong("Features in data")),
-        # if (is.vector(sam.all)) lapply(sam.all, ft_dat, ns = ns) else if (is.list(sam.all)) lapply(seq_along(sam.all), function(i) ft_lis_dat(sam.all[i], ns))
-        #if (is.vector(sam.all) & !is.null(input$match)) {
-        # if(ipt$fileIn!='customSingleCellData') lapply(sam.all, ft_dat, ns = ns) else if(ipt$fileIn=='customSingleCellData' & input$match!=0) lapply(sam.all, ft_dat, ns = ns)
-        #}, 
-        #if (!is.null(input$match) & ipt$fileIn=='customSingleCellData') { 
-        #  if (input$match==0) { sam.all <- get(load('lis0'))
-        #    lapply(seq_along(sam.all), function(i) ft_lis_dat(sam.all[i], ns)) }}
-        lapply(sam.all, ft_dat, ns = ns)
-      ), lapply(c('ftSVG', sam.all), ft_js, ns = ns) # Items are interchangeable across ftSVG and sam.all.
-    ); cat('Done! \n'); flrow
+     sce.dimred <- sce.man$dimred
+    if (!is.null(sce.dimred)) {
+      covis.type <- sce.man$covis.type
+      if (covis.type %in% 'toBulk') {
+print(list('toBulk', sf.all, sam.all))
+        frow <- match_interface(to.ft=sf.all, to.div.id='ftSVG', to.div.tit='Features in aSVG', from.ft=sam.all, from.div.tit='Cell groups', ns)
+      } else if (covis.type %in% 'toCell') {
+        bulk <- sce.man$bulk; cell <- sce.man$cell
+        if (is.null(bulk)|is.null(cell)) return()
+        from.ft <- unique(bulk$label)
+        sf.by <- sce.man$sf.by
+        to.ft <- unique(colData(cell)[, sf.by])
+print(list('toCell', to.ft, from.ft))
+        frow <- match_interface(to.ft=to.ft, to.div.id='cellGroup', to.div.tit='Cell groups', from.ft=from.ft, from.div.tit='Bulk tissues', ns)
+      }
+    } else {
+      frow <- match_interface(to.ft=sf.all, to.div.id='ftSVG', to.div.tit='Features in aSVG', from.ft=sam.all, from.div.tit='Features in data', ns)
+    }
+    cat('Done! \n'); frow 
   })
   observeEvent(list(input$match), {
     if (is.null(ft.reorder$ft.dat) | is.null(ft.reorder$ft.svg)) return()
     ft.dat <- ft.reorder$ft.dat
     lis0 <- lapply(ft.dat, function(x) input[[x]])
     names(lis0) <- ft.dat; ft.reorder$ft.rematch <- lis0
-    # if (!is.null(input$match) & ipt$fileIn=='customSingleCellData') { 
-     #     if (input$match==0) ft.reorder$ft.rematch <- get(load('lis0')) }
   })
 
   but.match <- reactiveValues()
@@ -1628,6 +1627,7 @@ shm_server <- function(id, sch, lis.url, url.id, tab, upl.mod.lis, dat.mod.lis, 
     ft.reord$ft.rematch <- match.mod.lis$ft.reorder$ft.rematch
     but.match$val <- match.mod.lis$but.match$val
   })
+
 
   observeEvent(list(scell.mod.lis$match.lis$val$svg.na.rematch$svg.path, scell.mod.lis$match.lis$val$svg.na.rematch$svg.na, scell.mod.lis$match.lis$val$ft.reorder$ft.dat, scell.mod.lis$match.lis$val$ft.reorder$ft.svg, scell.mod.lis$match.lis$val$ft.reorder$ft.rematch, scell.mod.lis$match.lis$val$but.match$val), ignoreNULL = FALSE, { # Rematch in single cell data.
     match.lis <- scell.mod.lis$match.lis$val
@@ -1849,23 +1849,37 @@ shm_server <- function(id, sch, lis.url, url.id, tab, upl.mod.lis, dat.mod.lis, 
       gene <- df.aggr.tran[gID$geneSel, ]; svgs <- svgs()
       alp.over <- 1
       if (!is.null(raster.par$over)) if (raster.par$over=='Yes') alp.over <- raster.par$alp
+      
       blk <- scell.mod.lis$sce.rct$bulk
       profile <- input$profile; tar.cell <- input$tarCell
       dimred <- scell.mod.lis$sce.rct$dimred;
-      ft.trans.shm <- NULL; ft.trans <- input$tis
+      
       lis.rematch <- ft.reord$ft.rematch
+      covis.type <- scell.mod.lis$sce.upl$covis.type
+      ft.trans.shm <- NULL; ft.trans <- input$tis
+      if (covis.type %in% 'toBulk') {
+        if (is(lis.rematch, 'list')) {
+          cell.grp.uni <- unique(names(lis.rematch))
+          tar.cell <- cell.grp.uni
+          # SVG features corresponding to non-target cells are set transparent.
+          ft.trans.shm <- unique(unlist(lis.rematch[setdiff(cell.grp.uni, tar.cell)]))
+        }
+      } else if (covis.type %in% 'toCell') {
+        bulk <- scell.mod.lis$covis.man$val$sce.man$bulk
+        if (!is.null(bulk)) { 
+          blk.uni <- unique(colData(bulk)$label)
+          tar.bulk <- blk.uni
+          ft.trans.shm <- unique(setdiff(blk.uni, tar.bulk))
+          lis.rematch <- NULL 
+        }
+      }
+
       if (!is.null(blk) & profile=='Yes' & !is(lis.rematch, 'list')) {
         blk.uni <- unique(colData(dimred)$SVGBulk)
         # if (tar.cell[1]=='all') tar.cell <- blk.uni
         # SVG features corresponding to non-target cells are set transparent. 
         ft.trans.shm <- unique(setdiff(blk.uni, tar.cell))
-      } else if (is.null(blk) & is(lis.rematch, 'list')) {
-        blk.uni <- unique(names(lis.rematch))
-        # if (tar.cell[1]=='matched') tar.cell <- blk.uni 
-        tar.cell <- blk.uni 
-        # SVG features corresponding to non-target cells are set transparent.
-        ft.trans.shm <- unique(unlist(lis.rematch[setdiff(blk.uni, tar.cell)])) 
-      }
+      } 
       svg.na <- img_pa_na(unlist(svgs[, 'svg']))$na 
       # A set of SHMs are made for each SVG, and all sets of SHMs are placed in a list.
       grob.all <- gg.all <- lgd.all <- lgd.grob.all <- gcol.all <- gcol.lgd.all <- gg.grob.lis <- NULL
@@ -2210,25 +2224,35 @@ shm_server <- function(id, sch, lis.url, url.id, tab, upl.mod.lis, dat.mod.lis, 
      cat('Single-cell: compiling PCA/TSNE/UMAP and SHMs ... \n')
      if (is.null(ipt$fileIn)) return()
      if (ipt$fileIn != 'customSingleCellData') return()
-     clus <- scell.mod.lis$sce.rct$clus
+     covis.type <- scell.mod.lis$covis.man$val$sce.man$covis.type
+     if (!covis.type %in% c('toCell', 'toBulk')) return()
+     sce.dimred <- scell.mod.lis$covis.man$val$sce.man$dimred
      ft.rematch <- scell.mod.lis$match.lis$val$ft.reorder$ft.rematch
+     tar.cell <- tar.bulk <- NULL
      sf.by <- scell.mod.lis$df.lis()$sf.by
      gg.all1 <- shm$gg.all1; grob.all1 <- shm$grob.all1
+     lgd.all <- shm$lgd.all; lgd.grob.all <- shm$lgd.grob.all
      gcol.all <- shm$gcol.all; dims <- input$dims
+     gcol.lgd.all <- shm$gcol.lgd.all
      con.na <- scell.mod.lis$df.lis()$con.na
-     if (is.null(clus)|is.null(ft.rematch)|is.null(grob.all1)|is.null(gg.all1)|is.null(dims)|is.null(sf.by)) return()
-     if (dims=='TSNE') gg.dim <- plotTSNE(clus, colour_by=sf.by)
-     if (dims=='PCA') gg.dim <- plotPCA(clus, colour_by=sf.by)
-     if (dims=='UMAP') gg.dim <- plotUMAP(clus, colour_by=sf.by)
+     if (is.null(sce.dimred)|is.null(ft.rematch)|is.null(grob.all1)|is.null(gg.all1)|is.null(dims)|is.null(sf.by)) return()
+     if (dims=='TSNE') gg.dim <- plotTSNE(sce.dimred, colour_by=sf.by)
+     if (dims=='PCA') gg.dim <- plotPCA(sce.dimred, colour_by=sf.by)
+     if (dims=='UMAP') gg.dim <- plotUMAP(sce.dimred, colour_by=sf.by)
 
      scale.shm <- input$scale.shm
      if (!is.numeric(scale.shm)) return()
      if (scale.shm <= 0) return()
+     if (covis.type %in% 'toBulk') {
+       tar.cell <- names(ft.rematch)[lapply(ft.rematch, function(x) length(x)!=0)==TRUE]
+       if (length(tar.cell)==0) return(); tar.bulk <- NULL
      # source('~/spatialHeatmap/R/dim_color.R')
-     dim.shm.lis <- dim_color(gg.dim=gg.dim, gg.shm.all=gg.all1, grob.shm.all=grob.all1, col.shm.all=gcol.all, cell.group=sf.by, tar.cell='matched', con.na=con.na, lis.match=ft.rematch, sub.title.size=input$title.size * scale.shm, dim.lgd.pos='bottom', dim.lgd.nrow=2)
+     dim.shm.lis <- dim_color(gg.dim=gg.dim, gg.shm.all=gg.all1, grob.shm.all=grob.all1, col.shm.all=gcol.all, cell.group=sf.by, tar.cell=tar.cell, con.na=con.na, lis.match=ft.rematch, sub.title.size=input$title.size * scale.shm, dim.lgd.pos='bottom', dim.lgd.nrow=2)
+     } else if (covis.type %in% 'toCell') {
+     dim.shm.lis <- dim_color2cell(gg.dim=gg.dim, gg.shm.all=gg.all1, grob.shm.all=grob.all1, col.shm.all=gcol.all, gg.lgd.all=lgd.all, col.lgd.all=gcol.lgd.all, grob.lgd.all=lgd.grob.all, profile=TRUE, cell.group=sf.by, con.na=con.na, lis.match=ft.rematch, sub.title.size=input$title.size * scale.shm, dim.lgd.pos='bottom', dim.lgd.nrow=2)
+     }
      dim.shm.grob.all$val <- dim.shm.lis$dim.shm.grob.lis
      cat('Done! \n')
-
      # save(gg.all1, file='gg.all1'); save(grob.all1, file='grob.all1'); save(gcol.all, file='gcol.all'); save(gg.dim, file='gg.dim'); save(clus, file='clus'); save(ft.rematch, file='ft.rematch')
      # lgd.lis <- shm$lgd.all; save(dim.shm.grob.lis, gg.all1, gg.dim.all, gcol.all, ft.rematch, lgd.lis, file='dgggl')
 
@@ -3039,7 +3063,7 @@ deg_server <- function(id, sch, lis.url, ids, upl.mod.lis, dat.mod.lis, shm.mod.
 
   mods$deg <- deg.mod.lis <- deg_server('deg', sch, lis.url, ids, upl.mod.lis, dat.mod.lis, shm.mod.lis)
 
-dim_server <- function(id, sce, section='scell', upl.mod.lis, match.mod.lis, dat.lis, session) {
+dim_server <- function(id, sce, section='scell', upl.mod.lis, dat.lis, session) {
   moduleServer(id, function(input, output, session) {
     if (section!='scell') {
       hideElement('dimCell'); hideElement('coclusPlotBut')
@@ -3052,36 +3076,32 @@ dim_server <- function(id, sce, section='scell', upl.mod.lis, match.mod.lis, dat
       if ('cell' %in% cna$val) sel <- 'cell' else if ('label' %in% cna$val) sel <- 'label' else sel <- 'cluster'
       cna$sel <- sel
     })
-    output$cna <- renderUI({
-      if (is.null(cna$val)) return(); ns <- session$ns
-      selectInput(ns('cna'), 'Color by', cna$val, cna$sel)
-    })
     output$sf.cell <- renderUI({
-      if (is.null(cna$val)) return(); ns <- session$ns
-      sel <- cho <- NULL
+      cna.all <- cna$val; if (is.null(cna.all)) return()
+      ns <- session$ns; sel <- cho <- NULL
       if ('SVGBulk' %in% cna$val) { sel <- cho <- 'SVGBulk'
       } else { cho <- 'cluster'
         if (cna$sel=='label') cho <- c('label', 'cluster')
       }
-      selectInput(ns('sf.by'), 'Aggregate cells by', cho, cna$sel)
+      selectInput(ns('sf.by'), 'Cell groups', cna.all)
     })
     output$umap <- renderPlot({
-      sce <- sce(); cna <- input$cna
-      if (is.null(sce)|is.null(cna)) return()
-      if (!cna %in% colnames(colData(sce))) return()
-      plot_dim(sce, dim='UMAP', color.by=cna, row.sel=row.sel$val)
+      sce <- sce(); grp <- input$sf.by
+      if (is.null(sce)|is.null(grp)) return()
+      if (!grp %in% colnames(colData(sce))) return()
+      plot_dim(sce, dim='UMAP', color.by=grp, row.sel=row.sel$val)
     })
     output$tsne <- renderPlot({
-      sce <- sce(); cna <- input$cna
-      if (is.null(sce)|is.null(cna)) return()
-      if (!cna %in% colnames(colData(sce))) return()
-      plot_dim(sce, dim='TSNE', color.by=cna, row.sel=row.sel$val)
+      sce <- sce(); grp <- input$sf.by
+      if (is.null(sce)|is.null(grp)) return()
+      if (!grp %in% colnames(colData(sce))) return()
+      plot_dim(sce, dim='TSNE', color.by=grp, row.sel=row.sel$val)
     })
     output$pca <- renderPlot({
-      sce <- sce(); cna <- input$cna
-      if (is.null(sce)|is.null(cna)) return()
-      if (!cna %in% colnames(colData(sce))) return()
-      plot_dim(sce, dim='PCA', color.by=cna, row.sel=row.sel$val)
+      sce <- sce(); grp <- input$sf.by
+      if (is.null(sce)|is.null(grp)) return()
+      if (!grp %in% colnames(colData(sce))) return()
+      plot_dim(sce, dim='PCA', color.by=grp, row.sel=row.sel$val)
     })
 
     output$scellCdat <- renderDataTable({
@@ -3090,10 +3110,11 @@ dim_server <- function(id, sce, section='scell', upl.mod.lis, match.mod.lis, dat
       input$scellRowCancelBut # Deselect rows.
       cdat <- as.data.frame(colData(sce))
       cdat <- cdat[order(cdat[, 1]), , drop=FALSE]
-      match.lis <- match.mod.lis$val$ft.reorder$ft.rematch
+      # match.lis <- match.mod.lis$val$ft.reorder$ft.rematch
       # sf.by from dim_server in scell_server. 
       if (section=='scell') sf.by <- input$sf.by else sf.by <- dat.lis()$sf.by
-      if (!is.null(match.lis) & !is.null(sf.by)) { 
+      #if (!is.null(match.lis) & !is.null(sf.by)) { 
+      if (0) { 
         matched <- unlist(lapply(match.lis, function(x) {
           if (is.null(x)) return('NA') else if (is.character(x)) return(paste0(x, collapse=', ')) 
           }
@@ -3140,7 +3161,7 @@ dim_server <- function(id, sce, section='scell', upl.mod.lis, match.mod.lis, dat
    lis <- list(fluidRow(splitLayout(cellWidths=c('1%', '32%', '1%', '32%', '1%', '32%'), '',
       plotOutput(ns('tsne')), '',plotOutput(ns('umap')), '',  plotOutput(ns('pca'))
     )), br(),
-    fluidRow(splitLayout(cellWidths=c('1%', '10%', '1%', '17%', '1%', '15%', '1%', '15%'), '', uiOutput(ns('cna')), '', uiOutput(ns('sf.cell')), '', row.but, '', row.cancel.but
+    fluidRow(splitLayout(cellWidths=c('1%', '10%', '1%', '15%', '1%', '15%'), '', uiOutput(ns('sf.cell')), '', row.but, '', row.cancel.but
     )), br(),
     dataTableOutput(ns('scellCdat'))
     ); cat('Done! \n')
@@ -3369,192 +3390,299 @@ tailor_match_server <- function(id, sce, section='scell', upl.mod.lis, match.mod
   return(list(sf.by=sfBy, coclusPlotBut=coclusPlotBut, selBlkBut=selBlkBut, selBlkCancel=selBlkCancel, df.sel.cell=df.sel.cell, row.sel=row.sel))
 })}
 
-
-scell_server <- function(id, tab, upl.mod.lis, shm.mod.lis, session) {
+covis_man_server <- function(id, sce.upl, upl.mod.lis, shm.mod.lis, tab, session) {
   moduleServer(id, function(input, output, session) {
-  match.mod.lis <- reactiveValues() 
-  sce.rct <- reactiveValues()
-  observe({
-    # The id 'rematchCell' is fixed, since it is recognised internally. 
-    if (upl.mod.lis$ipt$fileIn=='customSingleCellData') match.mod.lis$val <- match_server('rematchCell', shm.mod.lis$sam, tab, upl.mod.lis, sce.rct) else match.mod.lis$val <- NULL
-  })
-  observe({
-    if (upl.mod.lis$ipt$fileIn != 'customSingleCellData') upl.mod.lis$sce$val <- sce.rct$bulk <- sce.rct$df.match <- sce.rct$val <- sce.rct$var <- sce.rct$top <- sce.rct$dimred <- sce.rct$clus <- sce.rct$graph <- sce.rct$sce.sub <- NULL
-  })
-  # Apply to switching from sce of bulk+cell to sce of cell alone.
-  observeEvent(upl.mod.lis$sce$val, {
-    sce.rct$bulk <- sce.rct$df.match <- sce.rct$val <- sce.rct$var <- sce.rct$top <- sce.rct$dimred <- sce.rct$clus <- sce.rct$graph <- sce.rct$sce.sub <- NULL
-  })
-  observeEvent(upl.mod.lis$sce$val, {
-    library(Matrix)
-    # If new sce is uploaded but aSVG is the same, then all objects calculated from previous sce are set NULL.
-    sce.rct$bulk <- sce.rct$df.match <- sce.rct$val <- sce.rct$var <- sce.rct$top <- sce.rct$dimred <- sce.rct$clus <- sce.rct$graph <- NULL
-    sce.upl <- upl.mod.lis$sce$val
-    # save(sce.upl, file='sce.upl')
-    if (!is.null(sce.upl)) {
-      assay.na <- assayNames(sce.upl)
-      if ('logcounts' %in% assay.na) logcounts(sce.upl) <- as(logcounts(sce.upl), 'dgCMatrix')
-      if ('count' %in% assay.na) assays(sce.upl)$count <- as(assays(sce.upl)$count, 'dgCMatrix') 
-      if ('counts' %in% assay.na) assays(sce.upl)$count <- as(assays(sce.upl)$counts, 'dgCMatrix') 
-    }
-    sce.rct$val <- sce.upl 
-    if (!is.null(sce.upl)) {
-      cdat <- colData(sce.upl) 
-      if ('bulkCell' %in% colnames(cdat)) {
-        dat.all <- assay(sce.upl); 
-        int <- all(round(dat.all)==dat.all)
-        if (!int) sce.rct$bulk <- NULL
-        if (!int) showModal(modal(msg='In coclustering, raw count data are needed !'))
-        validate(need(int, ''))
-        blk.cell <- cdat$bulkCell
-        blk.cell.uni <- unique(blk.cell)
-        if ('bulk' %in% blk.cell.uni) {
-          cat('Separate bulk and cells ... \n')
-          # Extract bulk data.
-          blk <- dat.all[, blk.cell %in% 'bulk', drop=FALSE]
-          cell.na <- setdiff(blk.cell.uni, 'bulk')
-          # Extract cell data in a list. 
-          cell.lis <- lapply(cell.na, function(x) dat.all[, blk.cell %in% x, drop=FALSE])
-          names(cell.lis) <- cell.na
-          sce.rct$val <- cell.lis; sce.rct$bulk <- blk
-          sce.rct$df.match <- metadata(sce.upl)$df.match
-          sce.rct$blk.cell <- dat.all
-        }
-      } else {
-        if (is.null(sce.upl)) return()
-        cnt <- 'counts' %in% names(assays(sce.upl))
-        if (!cnt) sce.rct$val <- NULL
-        if (!cnt) showModal(modal(msg='If co-clustering is not used, the "SingleCellExperiment" need to have "counts" in "assays" slot!'))
-        validate(need(cnt, ''))
-        int <- all(round(assays(sce.upl)[['counts']])==assays(sce.upl)[['counts']])
-        if (!int) sce.rct$val <- NULL
-        if (!int) showModal(modal(msg='The "counts" in "assays" should have integer values!'))
-        validate(need(int, ''))
-      }
-    }
-  })
-
-  observe({ # Data table.
-    cell <- sce.rct$val; if (is.null(cell)) return()
-    blk <- sce.rct$bulk;
-    if (is.null(blk)) {
-      dat <- as.matrix(assay(cell))
-    } else {
-      cell <- cell[[1]] 
-      if (is(cell, 'SingleCellExperiment')) cell <- assay(cell) 
-      if (is(blk, 'SingleCellExperiment')) blk <- assay(blk)
-      dat <- cbind(as.matrix(blk), as.matrix(cell))
-    }
-    if (nrow(dat) >= 300) r.idx <- 300 else r.idx <- nrow(dat) 
-    if (ncol(dat) >= 50) c.idx <- 50 else c.idx <- ncol(dat) 
-    withProgress(message="Data table: ", value=0, {
-    incProgress(0.3, detail="in progress ...")
-    output$datCell <- renderDataTable({
-      datatable(as.matrix(dat[seq_len(r.idx), seq_len(c.idx)]), selection='none', escape=FALSE, filter="top", extensions=c('Scroller', 'FixedColumns'), plugins = "ellipsis",
-      options=list(pageLength=20, lengthMenu=c(10, 20, 50, 100), autoWidth=TRUE, scrollCollapse=TRUE, deferRender=TRUE, scrollX=TRUE, scrollY=300, scroller=TRUE, searchHighlight=TRUE, search=list(regex=TRUE, smart=FALSE, caseInsensitive=TRUE), searching=TRUE, fixedColumns=list(leftColumns=1))
-      )
+   sce.man <- reactiveValues(cell=sce.upl$cell, bulk=sce.upl$bulk, method=sce.upl$method, covis.type=sce.upl$covis.type)
+  observe({ # Bulk data table.
+    sce <- sce.upl$bulk; if (is.null(sce)) return()
+    withProgress(message="Bulk data table in co-visualization: ", value=0, {
+    incProgress(0.3, detail=" ...")
+    output$datCovisBlk <- renderDataTable({
+      dat_covis_man(sce, nr=1000, nc=100)
     })
    })
   })
 
   par.qc <- reactiveValues()
   # Button of 0 cannot trigger observeEvent.
-  observeEvent(input$qc.but+1, { 
-    par.qc$cnt.thr <- input$cnt.thr; par.qc$nmads <- input$nmads
+  observeEvent(input$parManBut+1, { 
+    par.qc$cnt.thr <- input$cntThr; par.qc$nmads <- input$nmads
   })
-  observe({
+  observeEvent(list(sce.upl$cell, par.qc$cnt.thr, par.qc$nmads), {
     cat('Single cell: quality control ... \n')
     cnt.thr <- par.qc$cnt.thr; nmads <- par.qc$nmads
-    if (!is.null(sce.rct$bulk)) {
-      text <- 'This section is not available \n for co-clustering bulk and single cells.'
-      output$qc.all <- renderPlot({
-        ggplot() + annotate('text', x=4, y=25, size=8, label=text) + theme_void()
-      }); return()
-    }
-    sce.unfil <- sce <- sce.rct$val; # mito <- input$mito
-    if (is.null(sce)|!is.numeric(cnt.thr)|!is.numeric(nmads)) return()
-    # if (is.null(sce)|is.null(mito)) return()
+    cell <- sce.upl$cell
+    if (is.null(cell)|!is.numeric(cnt.thr)|!is.numeric(nmads)) return()
     withProgress(message="Quality control: ", value=0, {
-    incProgress(0.3, detail="in progress ...")
-    stats <- perCellQCMetrics(sce, subsets=list(Mt=rowData(sce)$featureType=='mito'), threshold=as.integer(cnt.thr))
-    sub.fields <- 'subsets_Mt_percent'
-    ercc <- 'ERCC' %in% altExpNames(sce)
-    if (ercc) sub.fields <- c('altexps_ERCC_percent', sub.fields)
-    qc <- perCellQCFilters(stats, sub.fields=sub.fields, nmads=as.integer(nmads))
-    # qc <- quickPerCellQC(stats, sub.fields=sub.fields)
-    sce.rct$val <- sce[, !qc$discard]
-    colData(sce.unfil) <- cbind(colData(sce.unfil), stats)
-    sce.unfil$discard <- qc$discard
-    incProgress(0.3, detail="plotting ...") 
-    output$qc.all <- renderPlot({
-      sc_qc_plot(sce.unfil, ercc = ercc)
-    }) # colSums(as.matrix(qc))
-  }); cat('Done! \n')
+      incProgress(0.3, detail="in progress ...")
+      sce.man$cell.qc <- qc_cell(sce=cell, qc.metric=list(subsets=list(Mt=rowData(cell)$featureType=='mito'), threshold=cnt.thr), qc.filter=list(nmads=nmads))
+    }); cat('Done! \n')
   })
   par.norm <- reactiveValues(min.size=100, max.size=3000)
-  observeEvent(input$norm.but+1, {
-    par.norm$min.size <- input$min.size
-    par.norm$max.size <- input$max.size
+  observeEvent(input$parManBut+1, {
+    par.norm$min.size <- input$minSize
+    par.norm$max.size <- input$maxSize
   })
-  observe({
-    sce <- sce.rct$val; if (is.null(sce)) return()
-    if (!is.null(sce.rct$bulk)) {
-      text <- 'This section is not available \n for co-clustering bulk and single cells.'
-      output$norm <- renderPlot({
-        ggplot() + annotate('text', x=4, y=25, size=8, label=text) + theme_void()
-      }); return()
-    }
+  observeEvent(list(sce.man$cell.qc, par.norm$min.size, par.norm$max.size), {
+    cat('Single cell: nomalization ... \n')
+    cell <- sce.man$cell.qc; if (is.null(cell)) return()
     min.size <- par.norm$min.size; max.size <- par.norm$max.size
     validate(need(round(min.size)==min.size, ''))
     validate(need(round(max.size)==max.size, ''))
-    cat('Single cell: nomalization ... \n')
     withProgress(message="Normalizing: ", value=0, {
-    incProgress(0.3, detail="in progress ...")
-    clusters <- quickCluster(sce, min.size=min.size)
-    sce <- computeSumFactors(sce, cluster=clusters, max.cluster.size=max.size) 
-    incProgress(0.3, detail="in progress ...")
-    sce.rct$val <- sce <- logNormCounts(sce) # log2-scale.
-    output$norm <- renderPlot({
-      plot(librarySizeFactors(sce), sizeFactors(sce), pch=16,
-      xlab="Library size factors", ylab="Deconvolution factors", log="xy")
-    })
+      incProgress(0.3, detail="in progress ...")
+      sce.man$cell.nor <- norm_cell(cell, com.sum.fct = list(max.cluster.size = max.size, min.mean = 1), quick.clus = list(min.size = min.size), com = FALSE)
+      sce.man$cell.qc <- NULL; cat('Done! \n') 
     })
   })
   par.var <- reactiveValues(hvg.n=3000, hvg.p=0.1)
-  observeEvent(input$var.but, {
-    par.var$hvg.n <- input$hvg.n; par.var$hvg.p <- input$hvg.p
+  observeEvent(input$parManBut, {
+    par.var$hvg.n <- input$hvgN; par.var$hvg.p <- input$hvgP
   })
 
   observe({
     cat('Top HVGs ... \n')
-    if (!is.null(sce.rct$bulk)) {
-      text <- 'This section is not available \n for co-clustering bulk and single cells.'
-      output$var <- renderPlot({
-        ggplot() + annotate('text', x=4, y=25, size=8, label=text) + theme_void()
-      }); return()
-    }
-    sce <- sce.rct$val; if (is.null(sce)) return()
+    cell <- sce.man$cell.nor; if (is.null(cell)) return()
     n <- par.var$hvg.n; p <- par.var$hvg.p
     validate(need(round(n)==n, '')); validate(need(p > 0 & p < 1, ''))
     withProgress(message="Variance modelling: ", value=0, {
     incProgress(0.3, detail="in progress ...")
-    if (!'logcounts' %in% assayNames(sce)) {
-      sce.rct$var <- sce.rct$top <- NULL; return()
+    if (!'logcounts' %in% assayNames(cell)) {
+      sce.man$var <- sce.man$top <- NULL; return()
     }
-    sce.rct$var <- sce.var <- modelGeneVar(sce)
+    sce.man$var <- sce.var <- modelGeneVar(cell)
     incProgress(0.3, detail="in progress ...")
-    sce.rct$top <- top.hvgs <- getTopHVGs(sce.var, prop=p, n=n)
+    sce.man$top <- top.hvgs <- getTopHVGs(sce.var, prop=p, n=n)
     cat('Done! \n')
-    output$var <- renderPlot({
-      plot(sce.var$mean, sce.var$total, pch=16, cex=0.5,
-      xlab="Mean of log-expression", ylab="Variance of log-expression")
-      curfit <- metadata(sce.var)
-      points(curfit$mean, curfit$var, col="red", pch=16)
-      curve(curfit$trend(x), col='dodgerblue', add=TRUE, lwd=2)
-    })
     })
   })
+  output$resAsg <- renderDataTable({
+    res <- res.lis$val; if (is.null(res)) return()
+    asgThr <- par.asg$asgThr # save(res, file='res')
+    validate(need(asgThr >=0 & asgThr <=1, ''))
+    df.asg <- res$df.asg; df.asg <- subset(df.asg, predictor >= asgThr)
+    datatable(df.asg, selection='none', escape=FALSE, filter="top", extensions=c('Scroller', 'FixedColumns'), plugins = "ellipsis",
+      options=list(pageLength=20, lengthMenu=c(10, 20, 50, 100), autoWidth=TRUE, scrollCollapse=TRUE, deferRender=TRUE, scrollX=TRUE, scrollY=300, scroller=TRUE, searchHighlight=TRUE, search=list(regex=TRUE, smart=FALSE, caseInsensitive=TRUE), searching=TRUE, fixedColumns=list(leftColumns=1))
+      )
+    })
 
+  par.dim <- reactiveValues()
+  # Button of 0 cannot trigger observeEvent.
+  observeEvent(input$parManBut+1, { 
+    par.dim$min.rank <- input$minRank
+    par.dim$max.rank <- input$maxRank
+    par.dim$ncomT <- input$ncomT; par.dim$ntopT <- input$ntopT
+    par.dim$steps <- input$steps
+    par.dim$ncomU <- input$ncomU; par.dim$ntopU <- input$ntopU
+    par.dim$pcs <- input$pcs
+  })
+  observe({
+    cat('Single cell: reducing dimensions ... \n'); 
+    cell <- sce.man$cell.nor; sce.var <- sce.man$var; top <- sce.man$top
+    min.rank <- par.dim$min.rank; max.rank <- par.dim$max.rank
+    ncomT <- par.dim$ncomT; ntopT <- par.dim$ntopT; steps <- par.dim$steps
+    ncomU <- par.dim$ncomU; ntopU <- par.dim$ntopU; pcs <- par.dim$pcs
+    if (is.null(cell)|is.null(sce.var)|is.null(top)) return()
+    validate(need(round(min.rank)==min.rank & round(max.rank)==max.rank & max.rank > min.rank, ''))
+    validate(need(round(ncomT)==ncomT & round(ntopT)==ntopT, ''))
+    validate(need(round(ncomU)==ncomU & round(ntopU)==ntopU & round(pcs)==pcs, ''))
+    output$msg.umap <- renderText({
+      if(pcs < ncomU) return('In "runUMAP", "Number of PCs" must be >= "Number of dimensions to obtain"!') else return()
+    })
+    validate(need(pcs >= ncomU, 'In "runUMAP", "Number of PCs" must be >= "Number of dimensions"!'))
+    withProgress(message="Reducing dimentions: ", value=0, {
+    incProgress(0.3, detail="in progress ...")
+    cell <- denoisePCA(cell, technical=sce.var, subset.row=top, min.rank=min.rank, max.rank=max.rank)
+    cell <- runTSNE(cell, dimred="PCA", ncomponents=ncomT, ntop=ntopT)
+    incProgress(0.3, detail="in progress ...")
+    cell <- runUMAP(cell, dimred="PCA", ncomponents=ncomU, ntop=ntopU, pca=pcs)
+    })
+    sce.man$cell.nor <- NULL
+    sce.man$dimred <- cell; cat('Done! \n')
+  })
+   observeEvent(sce.man$dimred, ignoreInit=FALSE, {
+     updateTabsetPanel(session, inputId="tabSetCell", selected='dimred')
+  })
+  observe({ # Cell data table.
+    sce <- sce.man$dimred; if (is.null(sce)) return()
+    withProgress(message="Cell data table in co-visualization: ", value=0, {
+    incProgress(0.3, detail=" ...")
+    output$datCell <- renderDataTable({
+      dat_covis_man(sce, nr=1000, nc=100)
+    })
+   })
+  })
+
+  observeEvent(sce.man$dimred, ignoreInit=FALSE, ignoreNULL=FALSE, {
+    covis.type <- sce.upl$covis.type
+    if (is.null(covis.type)) return()
+    if (covis.type %in% c('toBulkAuto', 'toCellAuto')) {
+        showTab('tabSetCell', target='autoMatch')
+        hideTab('tabSetCell', target='qcTab')
+        hideTab('tabSetCell', target='norm')
+        hideTab('tabSetCell', target='varMol')
+        hideTab('dimredNav', target='dimredPar')
+        hideTab('tabSetCell', target='manualMatch')
+    } else {
+        hideTab('tabSetAuto', target='autoMatch')
+        showTab('tabSetCell', target='qcTab')
+        showTab('tabSetCell', target='norm')
+        showTab('tabSetCell', target='varMol')
+        showTab('dimredNav', target='dimredPar')
+        showTab('tabSetCell', target='manualMatch')
+    }
+  })
+
+  sce.dimred <- reactive({ sce.man$dimred })
+  # Generates both embedding plots and the colData table in the scell page.
+  dim.lis <- reactive({
+    dim_server('dim', sce=sce.dimred, section='scell', upl.mod.lis=upl.mod.lis, dat.lis=NULL) 
+  }) # Avoid endless circle.
+  observe({
+    sce.man$sf.by <- dim.lis()$sf.by$val
+  })
+   match.mod.res <- reactiveValues()
+   observe({ # The id 'rematchCell' is fixed, since it is recognised internally. 
+     if (upl.mod.lis$ipt$fileIn=='customSingleCellData') match.mod.res$val <- match_server('rematchCell', shm.mod.lis$sam, tab, upl.mod.lis, sce.man=sce.man) else match.mod.res$val <- NULL
+   })
+  observe({
+   meth <- input$scell.cluster; if (is.null(meth)) return()
+   output$clus.par <- renderUI({
+     ns <- session$ns
+     if (meth=='cluster_walktrap') fluidRow(splitLayout(cellWidths = c('1%', '20%'), '', numericInput(ns('steps'), label='Random walks', value=4, min=1, max=Inf, step=1, width=150))) 
+   })
+  })
+  onBookmark(function(state) { state })
+  return(list(sce.man=sce.man, dim.lis=dim.lis, match.mod.res=match.mod.res))
+})}
+
+
+
+scell_server <- function(id, tab, upl.mod.lis, shm.mod.lis, session) {
+  moduleServer(id, function(input, output, session) {
+  sce.rct <- reactiveValues()
+  observe({
+    if (upl.mod.lis$ipt$fileIn != 'customSingleCellData') upl.mod.lis$sce$val <- sce.rct$bulk <- sce.rct$cell <- sce.rct$sce <- sce.rct$var <- sce.rct$top <- sce.rct$dimred <- sce.rct$clus <- sce.rct$graph <- sce.rct$sce.sub <- sce.rct$method <- sce.rct$covis.type <- sce.rct$cell.qc <- sce.rct$cell.nor <- NULL
+  })
+  # Apply to switching from sce of bulk+cell to sce of cell alone.
+  observeEvent(upl.mod.lis$sce$val, {
+    sce.rct$bulk <- sce.rct$cell <- sce.rct$sce <- sce.rct$var <- sce.rct$top <- sce.rct$dimred <- sce.rct$clus <- sce.rct$graph <- sce.rct$sce.sub <- sce.rct$method <- sce.rct$covis.type <- sce.rct$cell.qc <- sce.rct$cell.nor <- NULL
+  })
+  sce.upl <- reactiveValues()
+  observeEvent(upl.mod.lis$sce$val, {
+    library(Matrix)
+    # If new sce is uploaded but aSVG is the same, then all objects calculated from previous sce are set NULL.
+    sce.rct$bulk <- sce.rct$cell <- sce.rct$sce <- sce.rct$var <- sce.rct$top <- sce.rct$dimred <- sce.rct$clus <- sce.rct$graph <- sce.rct$method <- sce.rct$covis.type <- sce.rct$cell.qc <- sce.rct$cell.nor <- NULL
+    sce.all <- upl.mod.lis$sce$val
+    # save(sce.all, file='sce.all')
+    if (!is.null(sce.all)) {
+      assay.na <- assayNames(sce.all)
+      if ('logcounts' %in% assay.na) logcounts(sce.all) <- as(logcounts(sce.all), 'dgCMatrix')
+      if ('count' %in% assay.na) assays(sce.all)$count <- as(assays(sce.all)$count, 'dgCMatrix') 
+      if ('counts' %in% assay.na) assays(sce.all)$counts <- as(assays(sce.all)$counts, 'dgCMatrix') 
+    }
+    sce.upl$cell <- sce.all; if (!is.null(sce.all)) {
+      cdat <- colData(sce.all); dat.all <- assay(sce.all)
+      int <- all(round(dat.all)==dat.all)
+      if (!int) sce.upl$cell <- NULL
+      if (!int) showModal(modal(msg='In co-visualization, raw count data are needed !'))
+      validate(need(int, '')); sce.upl$method <- 'manual'
+      if ('bulkCell' %in% colnames(cdat)) {
+        blk.cell.uni <- unique(cdat$bulkCell)
+        if (all(c('bulk', 'cell') %in% blk.cell.uni)) { 
+          sce.upl$method <- 'both'
+          sce.upl$bulk <- subset(sce.all, , bulkCell=='bulk')
+          sce.upl$cell <- subset(sce.all, , bulkCell=='cell')
+        }
+      }
+    }
+  })
+  # observeEvent(sce.upl$cell, { 
+  # output$methCovis <- renderUI({
+  #  method <- sce.upl$method
+  #  if(is.null(sce.upl$cell) | is.null(method)) return()
+  #  ns <- session$ns; sel <- 'auto'
+  #  cho <- c('Annotation/manual'='man', 'Automatic'='auto')
+  #  if (method=='manual') {
+  #    cho <- c('Annotation/manual'='man'); sel <- 'man'
+  #  }
+  #  selectInput(ns('methCovis'), label='Methods', choices=cho, selected=sel)
+  # })
+  #output$direc <- renderUI({
+  #  method <- sce.upl$method; if(is.null(method)) return() 
+  #  ns <- session$ns; sel <- 'toBulk'
+  #  cho <- c('Cell2tissue'='toBulk', 'Tissue2cell'='toCell')
+  #  if (method=='manual') {
+  #    cho <- c('Cell2tissue'='toBulk'); sel <- 'toBulk'
+  #  }
+  #  selectInput(ns('direc'), label='Mapping direction', choices=cho, selected=sel)
+  #})
+  #})
+
+  observe({
+    meth.covis <- input$methCovis; direc <- input$direc
+    if (is.null(meth.covis) | is.null(direc)) return()
+    covis.type <- NULL
+    if (meth.covis=='man' & direc=='toBulk') covis.type <- 'toBulk'
+    if (meth.covis=='man' & direc=='toCell') covis.type <- 'toCell'
+    if (meth.covis=='auto' & direc=='toBulk') covis.type <- 'toBulkAuto'
+    if (meth.covis=='auto' & direc=='toCell') covis.type <- 'toCellAuto'
+    sce.upl$method <- ifelse(meth.covis=='man', 'man', 'auto')
+    sce.upl$covis.type <- covis.type
+  })
+  covis.man <- covis.auto <- reactiveValues()
+  observe({
+    meth.covis <- input$methCovis
+    if (is.null(meth.covis)) return()
+    if ('man' %in% meth.covis) {
+    covis.man$val <- covis_man_server('covisMan', sce.upl, upl.mod.lis, shm.mod.lis, tab, session)
+    # sce.man$dimred <- covis.man$val$sce.man$dimred
+    }
+  })
+  match.mod.lis <- reactiveValues()
+  observe({
+    # match.mod.lis <- covis.man$val$match.mod.res: match.mod.lis$val will be NULL
+    match.mod.lis$val <- covis.man$val$match.mod.res$val 
+  })
+  observeEvent(sce.rct$dimred, ignoreInit=FALSE, {
+     updateTabsetPanel(session, inputId="tabSetCell", selected='dimred')
+  })
+  observeEvent(sce.upl$covis.type, ignoreInit=FALSE, ignoreNULL=FALSE, {
+    covis.type <- sce.upl$covis.type
+    if (is.null(covis.type)) return()
+    if (covis.type %in% c('toBulkAuto', 'toCellAuto')) {
+        showTab('tabSetCell', target='autoMatch')
+        hideTab('tabSetCell', target='qcTab')
+        hideTab('tabSetCell', target='norm')
+        hideTab('tabSetCell', target='varMol')
+        hideTab('dimredNav', target='dimredPar')
+        hideTab('tabSetCell', target='manualMatch')
+    } else {
+        hideTab('tabSetAuto', target='autoMatch')
+        showTab('tabSetCell', target='qcTab')
+        showTab('tabSetCell', target='norm')
+        showTab('tabSetCell', target='varMol')
+        showTab('dimredNav', target='dimredPar')
+        showTab('tabSetCell', target='manualMatch')
+    }
+  })
+  output$resAsg <- renderDataTable({
+    res <- res.lis$val; if (is.null(res)) return()
+    asgThr <- par.asg$asgThr # save(res, file='res')
+    validate(need(asgThr >=0 & asgThr <=1, ''))
+    df.asg <- res$df.asg; df.asg <- subset(df.asg, predictor >= asgThr)
+    datatable(df.asg, selection='none', escape=FALSE, filter="top", extensions=c('Scroller', 'FixedColumns'), plugins = "ellipsis",
+      options=list(pageLength=20, lengthMenu=c(10, 20, 50, 100), autoWidth=TRUE, scrollCollapse=TRUE, deferRender=TRUE, scrollX=TRUE, scrollY=300, scroller=TRUE, searchHighlight=TRUE, search=list(regex=TRUE, smart=FALSE, caseInsensitive=TRUE), searching=TRUE, fixedColumns=list(leftColumns=1))
+      )
+    })
+
+  observe({
+   meth <- input$scell.cluster; if (is.null(meth)) return()
+   output$clus.par <- renderUI({
+     ns <- session$ns
+     if (meth=='cluster_walktrap') fluidRow(splitLayout(cellWidths = c('1%', '20%'), '', numericInput(ns('steps'), label='Random walks', value=4, min=1, max=Inf, step=1, width=150))) 
+   })
+  })
   # Initial filtering.
   init.fil.coclus <- reactiveValues()
   observeEvent(list(input$coclusPar+1, sce.rct$bulk), {
@@ -3713,193 +3841,46 @@ scell_server <- function(id, tab, upl.mod.lis, shm.mod.lis, session) {
     cat('Done! \n')
   })
 
-   observeEvent(sce.rct$dimred, ignoreInit=FALSE, {
-     updateTabsetPanel(session, inputId="tabSetCell", selected='dimred')
-  })
-  observeEvent(sce.rct$dimred, ignoreInit=FALSE, ignoreNULL=FALSE, {
-    bulk <- sce.rct$bulk
-    if (0) {
-        enable(selector='a[data-value="autoMatch"]')
-        disable(selector='a[data-value="qcTab"]')
-        disable(selector='a[data-value="norm"]')
-        disable(selector='a[data-value="varMol"]')
-        disable(selector='a[data-value="manualMatch"]')
-    } else if (0) {
-        enable(selector='a[data-value="qcTab"]')
-        enable(selector='a[data-value="norm"]')
-        enable(selector='a[data-value="varMol"]')
-        enable(selector='a[data-value="manualMatch"]')
-        disable(selector='a[data-value="autoMatch"]')
-    }
-    if (!is.null(bulk)) {
-        showTab('tabSetCell', target='autoMatch')
-        hideTab('tabSetCell', target='qcTab')
-        hideTab('tabSetCell', target='norm')
-        hideTab('tabSetCell', target='varMol')
-        hideTab('dimredNav', target='dimredPar')
-        hideTab('tabSetCell', target='manualMatch')
-    } else {
-        hideTab('tabSetCell', target='autoMatch')
-        showTab('tabSetCell', target='qcTab')
-        showTab('tabSetCell', target='norm')
-        showTab('tabSetCell', target='varMol')
-        showTab('dimredNav', target='dimredPar')
-        showTab('tabSetCell', target='manualMatch')
-    }
-  })
-  output$resAsg <- renderDataTable({
-    res <- res.lis$val; if (is.null(res)) return()
-    asgThr <- par.asg$asgThr # save(res, file='res')
-    validate(need(asgThr >=0 & asgThr <=1, ''))
-    df.asg <- res$df.asg; df.asg <- subset(df.asg, predictor >= asgThr)
-    datatable(df.asg, selection='none', escape=FALSE, filter="top", extensions=c('Scroller', 'FixedColumns'), plugins = "ellipsis",
-      options=list(pageLength=20, lengthMenu=c(10, 20, 50, 100), autoWidth=TRUE, scrollCollapse=TRUE, deferRender=TRUE, scrollX=TRUE, scrollY=300, scroller=TRUE, searchHighlight=TRUE, search=list(regex=TRUE, smart=FALSE, caseInsensitive=TRUE), searching=TRUE, fixedColumns=list(leftColumns=1))
-      )
-    })
 
-  par.dim <- reactiveValues()
-  # Button of 0 cannot trigger observeEvent.
-  observeEvent(input$dim.but+1, { 
-    par.dim$min.rank <- input$min.rank
-    par.dim$max.rank <- input$max.rank
-    par.dim$ncomT <- input$ncomT; par.dim$ntopT <- input$ntopT
-    par.dim$steps <- input$steps
-    par.dim$ncomU <- input$ncomU; par.dim$ntopU <- input$ntopU
-    par.dim$pcs <- input$pcs
-  })
-  observe({
-    cat('Single cell: reducing dimensionality ... \n'); 
-    sce <- sce.rct$val; sce.var <- sce.rct$var; top <- sce.rct$top
-    min.rank <- par.dim$min.rank; max.rank <- par.dim$max.rank
-    ncomT <- par.dim$ncomT; ntopT <- par.dim$ntopT; steps <- par.dim$steps
-    ncomU <- par.dim$ncomU; ntopU <- par.dim$ntopU; pcs <- par.dim$pcs
-    if (is.null(sce)|is.null(sce.var)|is.null(top)) return()
-    validate(need(round(min.rank)==min.rank & round(max.rank)==max.rank & max.rank > min.rank, ''))
-    validate(need(round(ncomT)==ncomT & round(ntopT)==ntopT, ''))
-    validate(need(round(ncomU)==ncomU & round(ntopU)==ntopU & round(pcs)==pcs, ''))
-    output$msg.umap <- renderText({
-      if(pcs < ncomU) return('In "runUMAP", "Number of PCs" must be >= "Number of dimensions to obtain"!') else return()
-    })
-    validate(need(pcs >= ncomU, 'In "runUMAP", "Number of PCs" must be >= "Number of dimensions"!'))
-    withProgress(message="Reducing dimentionality: ", value=0, {
-    incProgress(0.3, detail="in progress ...")
-    sce <- denoisePCA(sce, technical=sce.var, subset.row=top, min.rank=min.rank, max.rank=max.rank)
-    sce <- runTSNE(sce, dimred="PCA", ncomponents=ncomT, ntop=ntopT)
-    incProgress(0.3, detail="in progress ...")
-    sce <- runUMAP(sce, dimred="PCA", ncomponents=ncomU, ntop=ntopU, pca=pcs)
-    })
-    sce.rct$dimred <- sce; cat('Done! \n')
-  })
-
-  observe({ 
-   meth <- input$nn.graph; if (is.null(meth)) return()
-   output$graph.par <- renderUI({
-     ns <- session$ns
-     if (meth=='buildSNNGraph') fluidRow(splitLayout(cellWidths = c('1%', '20%', '1%', '20%', '1%', '20%'), '', numericInput(ns('k.snn'), label='Nearest neighbors to consider', value=10, min=1, max=Inf, step=1, width=150), '',
-    selectInput(ns('type'), label='Weighting scheme for neighbors', choices=c("rank", "number", "jaccard"), selected='rank'), '', 
-    selectInput(ns('dimred.s'), label='Reduced dimensionality to use', choices=c("PCA", "TSNE", "UMAP"), selected='PCA')
-    )) else if (meth=='buildKNNGraph') fluidRow(splitLayout(
-     cellWidths = c('1%', '20%', '1%', '20%'), '', numericInput(ns('k.knn'), label='Nearest neighbors to consider', value=10, min=1, max=Inf, step=1, width=150), '',
-     selectInput(ns('dimred.k'), label='Reduced dimensionality to use', choices=c("PCA", "TSNE", "UMAP"), selected='PCA')
-    ))
-   })
-  })
-
-  observe({
-   meth <- input$scell.cluster; if (is.null(meth)) return()
-   output$clus.par <- renderUI({
-     ns <- session$ns
-     if (meth=='cluster_walktrap') fluidRow(splitLayout(cellWidths = c('1%', '20%'), '', numericInput(ns('steps'), label='Random walks', value=4, min=1, max=Inf, step=1, width=150))) 
-   })
-  })
-  par.graph <- reactiveValues()
-  # Button of 0 cannot trigger observeEvent.
-  observeEvent(input$dim.but+1, { 
-    nn.graph <- input$nn.graph
-    if (is.null(nn.graph)) nn.graph <- 'buildSNNGraph'
-    if (nn.graph=='buildSNNGraph') nn.graph <- 'SNN' else if (nn.graph=='buildKNNGraph') nn.graph <- 'KNN'
-    k.snn <- input$k.snn; if (is.null(k.snn)) k.snn <- 10
-    type <- input$type; if (is.null(type)) type <- 'rank'
-    dimred.s <- input$dimred.s; if (is.null(dimred.s)) dimred.s<- 'PCA'
-    dimred.k <- input$dimred.k; if (is.null(dimred.k)) dimred.k <- 'PCA'
-    k.knn <- input$k.knn; if (is.null(k.knn)) k.knn <- 10
-    par.graph$nn.graph <- nn.graph; par.graph$k.snn <- k.snn
-    par.graph$type <- type; par.graph$dimred.s <- dimred.s
-    par.graph$dimred.k <- dimred.k; par.graph$k.knn <- k.knn 
-  })
-  observe({
-    cat('Single cell: building NN graph ... \n')
-    sce <- sce.rct$dimred; if (is.null(sce)|!is.null(sce.rct$bulk)) return()
-    nn.graph <- par.graph$nn.graph; k.snn <- par.graph$k.snn
-    type <- par.graph$type; dimred.s <- par.graph$dimred.s
-    dimred.k <- par.graph$dimred.k; k.knn <- par.graph$k.knn
-    if (nn.graph=='SNN') dimred <- dimred.s else if (nn.graph=='KNN') dimred <- dimred.k
-    withProgress(message="Building NN graph: ", value=0, {
-      incProgress(0.3, detail="in progress ...")
-    graph <- nn_graph(sce, method=nn.graph, snn.arg=list(k=k.snn, type=type), knn.arg=list(k=k.knn), use.dimred=dimred)
-    })
-    sce.rct$graph <- graph; 
-    cat('Done! \n')
-  })
-  par.clus <- reactiveValues()
-  observeEvent(input$dim.but+1, {
-    clustering <- input$scell.cluster
-    clus.meth <- c('cluster_walktrap', 'cluster_fast_greedy', 'cluster_leading_eigen', 'cluster_spinglass', 'cluster_edge_betweenness')
-    names(clus.meth) <- c('wt', 'fg', 'le', 'sl', 'eb') 
-    clustering <- names(clus.meth[clus.meth %in% clustering])
-    steps <- input$steps; if (is.null(steps)) steps <- 4
-    par.clus$clustering <- clustering; par.clus$steps <- steps 
-  })
-  observe({
-    cat('Single cell: clustering ... \n')
-    sce <- sce.rct$dimred; graph <- sce.rct$graph
-    if (is.null(sce)|is.null(graph)) return()
-    clustering <- par.clus$clustering; steps <- par.clus$steps
-    library(igraph)
-    withProgress(message="Clustering: ", value=0, {
-      incProgress(0.3, detail="in progress ...")
-    cluster <- detect_cluster(graph, clustering=clustering, wt.arg=list(steps=steps))
-    })
-    labs <- paste0('cluster', cluster$membership)
-    cdat <- colData(sce); rna <- make.names(rownames(cdat))
-    lab.lgc <- 'label' %in% make.names(colnames(cdat))
-    if (lab.lgc) { cdat <- cbind(cluster=labs, colData(sce))
-      idx <- colnames(cdat) %in% c('cluster', 'label')
-      cdat <- cdat[, c(which(idx), which(!idx))]
-    } else cdat <- cbind(cluster=labs, colData(sce))
-    rownames(cdat) <- rna
-    colnames(cdat) <- make.names(colnames(cdat))
-    colData(sce) <- cdat; sce.rct$clus <- sce; cat('Done! \n')
-    # sce.clus <- sce; save(sce.clus, file='sce.clus')
-  })
   cat('Single-cell: column data table ... \n')
-  sceClus <- reactive({
-    if (is.null(sce.rct$clus)) res.coclus()$cell.refined else if (!is.null(sce.rct$clus)) sce.rct$clus else return()
+  sce.dimred <- reactive({
+    covis.type <- sce.rct$covis.type
+    if (is.null(covis.type)) return()
+    if (covis.type %in% c('toCellAuto', 'toBulkAuto')) res.coclus()$cell.refined else sce.rct$dimred
   })
-  # Generates both embedding plots and the colData table in the scell page.
-  dim.lis <- reactive({
-    dim_server('dim', sce=sceClus, section='scell', upl.mod.lis=upl.mod.lis, match.mod.lis=match.mod.lis, dat.lis=NULL) 
-  }) # Avoid endless circle.
-  tailor.lis <- reactive({ 
-    tailor_match_server('tailor', sce=sceClus, section='scell', upl.mod.lis=upl.mod.lis, match.mod.lis=match.mod.lis, dat.lis=NULL)
+
+  tailor.lis <- reactive({ })
+
+  tailor.lis <- reactive({
+    tailor_match_server('tailor', sce=sce.dimred, section='scell', upl.mod.lis=upl.mod.lis, match.mod.lis=match.mod.lis, dat.lis=NULL)
     # sce.rct$sce.sub: causes endless circles, since output of "tailor_match_server" affects "sce.rct$sce.sub" and the latter change calls "reactive".
     # Basically, the output of A affects B and B affects input/evaluation of A, then endless circles arise.
     # if (!is.null(sce.rct$sce.sub)) tailor_match_server('tailor', sce=sceClus, section='scell', upl.mod.lis=upl.mod.lis, match.mod.lis=match.mod.lis, dat.lis=NULL) 
   }) # Avoid endless circle.
+
+
   cat('Done! \n')
   sf.by <- reactiveValues()
   # "sf.by" from scell section, passed to SHM page.
   observe({
-    if (is.null(sce.rct$sce.sub)) sf.by$val <- dim.lis()$sf.by$val else sf.by$val <- tailor.lis()$sf.by$val
+    if (is.null(covis.man$val)) return()
+    if (is.null(sce.rct$sce.sub)) sf.by$val <- covis.man$val$dim.lis()$sf.by$val else sf.by$val <- tailor.lis()$sf.by$val
   })
   df.lis <- reactive({
     cat('Single cell: aggregating cells ... \n')
     if (upl.mod.lis$ipt$fileIn!='customSingleCellData') return()
+    covis.type <- sce.upl$covis.type
+    if (is.null(covis.type)) return()
+    sce.shm <- NULL
+    if (covis.type %in% 'toBulk') sce.shm <- covis.man$val$sce.man$dimred
+    if (covis.type %in% 'toCell') sce.shm <- covis.man$val$sce.man$bulk
+print(list('df.lis', 1))
+    if (is.null(sce.shm)) return()
     sce.clus <- sce.rct$clus; sce.sub <- sce.rct$sce.sub
-    if (is.null(sce.clus) & is.null(sce.sub)) return()
+    # if (is.null(sce.clus) & is.null(sce.sub)) return()
     if (!is.null(sce.sub)) sce.clus <- sce.sub
-    df.rep <- assay(sce.clus); cna.cdat <- colnames(colData(sce.clus))
-    if ('label' %in% cna.cdat) {
+    df.rep <- assay(sce.shm); cna.cdat <- colnames(colData(sce.shm))
+    if ('label' %in% cna.cdat & !is.null(sce.clus)) {
       labs <- colLabels(sce.clus)
       # Cell labels: avoid numeric.
       er.wa <- check(as.vector(labs), as.numeric)
@@ -3911,18 +3892,19 @@ scell_server <- function(id, tab, upl.mod.lis, shm.mod.lis, session) {
       er.wa <- check(as.vector(labs), as.numeric)
       if (is.numeric(er.wa) & length(er.wa)>0) colData(sce.clus)$cluster <- as.character(labs)
     }
+print(list('df.lis', 2))
 
     # Column names: sp.ft, exp.var.
     sp.ft <- sf.by$val; if (is.null(sp.ft)) return()
-    cdat <- colData(sce.clus); con.na <- TRUE
-    if (!sp.ft %in% colnames(cdat)) return()
+    cdat <- colData(sce.shm); con.na <- TRUE
+    # if (!sp.ft %in% colnames(cdat)) return()
     # Auto-formed clusters should not be combined with expVar, since all cells under expVar are clustered. The cell labels are defined by users under control and condition independently. 
     if ('expVar' %in% colnames(cdat) & sp.ft == 'label') colnames(df.rep) <- paste0(cdat[, sp.ft], '__', cdat[, 'expVar']) else { colnames(df.rep) <- cdat[, sp.ft]; con.na <- FALSE }
     withProgress(message="Aggregating cells: ", value=0, {
       incProgress(0.3, detail="in progress ...")
     df.lis <- fread_df(df.rep, rep.aggr='mean')
     })
-    df.aggr <- df.lis$df.aggr; rdat <- rowData(sce.clus)
+    df.aggr <- df.lis$df.aggr; rdat <- rowData(sce.shm)
     idx.link <- grep('^link$', colnames(rdat), ignore.case=TRUE)
     if (length(idx.link)>0) df.link <- rdat[, idx.link[1], drop=FALSE] else df.link <- df.lis$df.met[, 'link', drop=FALSE]
     idx.met <- grep('^metadata$', colnames(rdat), ignore.case=TRUE)
@@ -3932,14 +3914,12 @@ scell_server <- function(id, tab, upl.mod.lis, shm.mod.lis, session) {
     cat('Done! \n'); return(lis)
   })
   onBookmark(function(state) { state })
-  return(list(sce.rct=sce.rct, df.lis=df.lis, match.lis=match.mod.lis, tailor.lis=tailor.lis))
+  return(list(sce.upl=sce.upl, df.lis=df.lis, match.lis=match.mod.lis, covis.man=covis.man, tailor.lis=tailor.lis))
 
 })}
-  
-  mods$scell <- scell.mod.lis <- scell_server('scell', tab, upl.mod.lis, shm.mod.lis, session)
-  
-  observeEvent(mods$scell$sce.rct$val, ignoreInit=FALSE, ignoreNULL=FALSE, {
-    if (!is.null(mods$scell$sce.rct$val)) {
+  mods$scell <- scell.mod.lis <- scell_server('scell', tab, upl.mod.lis, shm.mod.lis, session) 
+  observeEvent(mods$scell$sce.upl$cell, ignoreInit=FALSE, ignoreNULL=FALSE, {
+    if (!is.null(mods$scell$sce.upl$cell)) {
       updateTabsetPanel(session, "shm.sup", selected='scell')
       disable(selector='a[data-value="deg"]') 
     } else enable(selector='a[data-value="deg"]')

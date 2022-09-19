@@ -140,6 +140,7 @@ refine_asg <- function(sce.all, df.desired.bulk=NULL) {
     dimred <- unique(df.desired.bulk$dimred)
     if (!(all(x.min <= x.max) & all(y.min <= y.max))) stop('Make sure x.min <= x.max and y.min <= y.max !')
     if (! dimred %in% reducedDimNames(sce)) stop(paste0(dimred, ' is not found!'))
+    # Cells are selected in single cell embedding plot, so if bulk tissues are included in df.desired.bulk, they are not counted.  
     gg <- plot_dim(sce, dim=dimred, color.by=colnames(colData(sce))[1])
     dat <- gg$data; df.desire <- NULL
     blk <- df.desired.bulk$desiredBulk

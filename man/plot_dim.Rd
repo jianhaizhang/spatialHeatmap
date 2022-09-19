@@ -14,14 +14,14 @@ plot_dim(
   x.break = NULL,
   y.break = NULL,
   panel.grid = FALSE,
-  lgd.title.size = 10,
+  lgd.title.size = 13,
   lgd.key.size = 0.03,
-  lgd.text.size = 10,
-  point.size = 2,
-  bulk.size = 4,
-  alpha = 0.6,
-  stroke = 0.1,
-  bulk.stroke = 0.8,
+  lgd.text.size = 12,
+  point.size = 3,
+  bulk.size = 5,
+  alpha = 0.7,
+  stroke = 0.2,
+  bulk.stroke = 1,
   axis.text.size = 10,
   axis.title.size = 11
 )
@@ -37,7 +37,7 @@ plot_dim(
 
 \item{row.sel}{A numeric vector of row numbers in the \code{colData} slot of \code{sce}. The cells corresponding to these rows are highlighted and plotted on top of other cells.}
 
-\item{cocluster.only}{Logical, if \code{TRUE} (default), only coclusters (including bulk and cells) are colored and the rest are in gray.}
+\item{cocluster.only}{Logical, only applicable when \code{color.by='cluster'}. If \code{TRUE} (default), only coclusters (including bulk and cells) are colored and the rest are in gray.}
 
 \item{x.break, y.break}{Two numeric vectors for x, y axis breaks respectively. E.g. \code{seq(-10, 10, 2)}. The default is \code{NULL}.}
 

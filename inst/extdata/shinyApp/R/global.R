@@ -38,11 +38,14 @@ url_val <- function(na, lis.url) {
 
 # Import internal functions.
 
+qc_cell <- get('qc_cell', envir=asNamespace('spatialHeatmap'), inherits=FALSE)
+check_obj <- get('check_obj', envir=asNamespace('spatialHeatmap'), inherits=FALSE)
 img_pa_na <- get('img_pa_na', envir=asNamespace('spatialHeatmap'), inherits=FALSE)
 svg_separ <- get('svg_separ', envir=asNamespace('spatialHeatmap'), inherits=FALSE)
 sc_qc_plot <- get('sc_qc_plot', envir=asNamespace('spatialHeatmap'), inherits=FALSE)
 detect_cluster <- get('detect_cluster', envir=asNamespace('spatialHeatmap'), inherits=FALSE)
 dim_color_coclus <- get('dim_color_coclus', envir=asNamespace('spatialHeatmap'), inherits=FALSE)
+dim_color2cell <- get('dim_color2cell', envir=asNamespace('spatialHeatmap'), inherits=FALSE)
 dim_color <- get('dim_color', envir=asNamespace('spatialHeatmap'), inherits=FALSE)
 nn_graph <- get('nn_graph', envir=asNamespace('spatialHeatmap'), inherits=FALSE)
 svg_raster <- get('svg_raster', envir=asNamespace('spatialHeatmap'), inherits=FALSE)
@@ -146,6 +149,17 @@ video <- get('video', envir=asNamespace('spatialHeatmap'), inherits=FALSE)
 
 # Shown popup window. 
 modal <- get('modal', envir=asNamespace('spatialHeatmap'), inherits=FALSE)
+
+# Data table in manual covis.
+dat_covis_man <- function(sce, nr=1000, nc=100) {
+  dat <- round(assay(sce), 3)
+  if (nrow(dat) >= nr) r.idx <- nr else r.idx <- nrow(dat)
+  if (ncol(dat) >= nc) c.idx <- nc else c.idx <- ncol(dat)
+  datatable(as.matrix(dat[seq_len(r.idx), seq_len(c.idx)]), selection='none', escape=FALSE, filter="top", extensions=c('Scroller', 'FixedColumns'), plugins = "ellipsis",
+  options=list(pageLength=20, lengthMenu=c(10, 20, 50, 100), autoWidth=TRUE, scrollCollapse=TRUE, deferRender=TRUE, scrollX=TRUE,  scrollY=300, scroller=TRUE, searchHighlight=TRUE, search=list(regex=TRUE, smart=FALSE, caseInsensitive=TRUE), searching=TRUE, fixedColumns=list(leftColumns=1)) 
+  ) 
+}
+
 
 # Extract a 1-column data frame of URLs. If no column of URL is present, the default google-search URLs are composed.
 link_dat <- function(df.met) {
@@ -328,6 +342,21 @@ ft_js <- function(x, ns) {
     )
   )
 }
+
+# Complete matching interface.
+match_interface <- function(to.ft, to.div.id='ftSVG', to.div.tit='Features in aSVG', from.ft, from.div.tit='Features in data',   ns) {
+  to.ft <- sort(to.ft); from.ft <- sort(from.ft) 
+  frow <- fluidRow(
+    span(class = "panel panel-default", style = 'margin-left:0px',
+      div(class = "panel-heading", strong(to.div.tit)), 
+      div(class = "panel-body", id = ns(to.div.id), ft2tag(to.ft)) 
+      ),
+    div(class = "panel panel-default", 
+      div(class = "panel-heading", strong(from.div.tit)),  
+      lapply(from.ft, ft_dat, ns = ns)  
+    ), lapply(c(to.div.id, from.ft), ft_js, ns = ns) # Items are interchangeable across ftSVG and sam.all.
+  ); return(frow) 
+} 
 
 
 # Clean trash files in animation and video.

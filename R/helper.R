@@ -1,3 +1,17 @@
+
+#' Check validity of an object
+#'
+#' @param x An object.
+
+#' @return TRUE or FALSE
+#' @keywords Internal
+#' @noRd
+
+check_obj <- function(x) {
+  if (length(x)==0) return(FALSE); if (is.na(x)) return(FALSE)
+  return(TRUE)
+}
+
 #' Shown popup window
 #'
 #' @param msg The main content to show.
@@ -13,7 +27,6 @@ modal <- function(title = NULL, msg, easyClose=FALSE) {
     footer = tagList(modalButton("Dismiss")), size = c("m"), easyClose=easyClose
   )
 }
-
 
 #' Check if SVGs are paired with templates of raster images
 #'

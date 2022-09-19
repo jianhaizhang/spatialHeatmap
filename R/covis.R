@@ -377,7 +377,7 @@ shm_covis <- function(svg, data, assay.na=NULL, sam.factor=NULL, con.factor=NULL
   calls <- names(vapply(match.call(), deparse, character(1))[-1])
   if("tis.trans" %in% calls) warning('"tis.trans" is deprecated and replaced by "ft.trans"! \n')
   if("svg.path" %in% calls) warning('"svg.path" is deprecated and replaced by "svg"! \n')
-  # save(svg, data, assay.na, sam.factor, con.factor, ID, sce.dimred, dimred, tar.cell, profile, cell.group, tar.bulk, charcoal, alpha.overlay, lay.shm, ncol, col.com, col.bar, sig.thr, cores, bar.width, bar.title.size, trans.scale, ft.trans, tis.trans, lis.rematch, legend.r, sub.title.size, sub.title.vjust, legend.plot, ft.legend, bar.value.size, legend.plot.title, legend.plot.title.size, legend.ncol, legend.nrow, legend.position, legend.direction, legend.key.size, legend.text.size, angle.text.key, position.text.key, legend.2nd, position.2nd, legend.nrow.2nd, legend.ncol.2nd, legend.key.size.2nd, legend.text.size.2nd, angle.text.key.2nd, position.text.key.2nd, dim.lgd.pos, dim.lgd.nrow, dim.lgd.key.size, dim.lgd.text.size, dim.capt.size, add.feature.2nd, label, label.size, label.angle, hjust, vjust, opacity, key, line.width, line.color, relative.scale, verbose, out.dir, animation.scale, selfcontained, video.dim, res, interval, framerate, bar.width.vdo, legend.value.vdo, file='shm.arg')
+   # save(svg, data, assay.na, sam.factor, con.factor, ID, sce.dimred, dimred, tar.cell, profile, cell.group, tar.bulk, charcoal, alpha.overlay, lay.shm, ncol, col.com, col.bar, sig.thr, cores, bar.width, bar.title.size, trans.scale, ft.trans, tis.trans, lis.rematch, legend.r, sub.title.size, sub.title.vjust, legend.plot, ft.legend, bar.value.size, legend.plot.title, legend.plot.title.size, legend.ncol, legend.nrow, legend.position, legend.direction, legend.key.size, legend.text.size, angle.text.key, position.text.key, legend.2nd, position.2nd, legend.nrow.2nd, legend.ncol.2nd, legend.key.size.2nd, legend.text.size.2nd, angle.text.key.2nd, position.text.key.2nd, dim.lgd.pos, dim.lgd.nrow, dim.lgd.key.size, dim.lgd.text.size, dim.capt.size, add.feature.2nd, label, label.size, label.angle, hjust, vjust, opacity, key, line.width, line.color, relative.scale, verbose, out.dir, animation.scale, selfcontained, video.dim, res, interval, framerate, bar.width.vdo, legend.value.vdo, file='shm.covis.arg')
 
   x <- y <- color_scale <- tissue <- NULL; options(stringsAsFactors=FALSE)
   # if (!is.null(sub.margin)) if (!is.numeric(sub.margin) | length(sub.margin)!=4 | any(sub.margin >= 1) | any(sub.margin < 0)) stop('"sub.margin" must be a 4-length numeric vector between 0 (inclusive) and 1 (exclusive)!')
@@ -466,10 +466,11 @@ shm_covis <- function(svg, data, assay.na=NULL, sam.factor=NULL, con.factor=NULL
     svg.pa.na <- img_pa_na(unlist(svgs[, 'svg']))
     # svg.path may not be paths, can be file names, if users provide a coord class that not includes paths.
     svg.path <- svg.pa.na$path; svg.na <- svg.pa.na$na
+    svg.na.cord <- names(svgs)
     # Get max width/height of multiple SVGs, and dimensions of other SVGs can be set relative to this max width/height.
     w.h.max <- max(unlist(svgs[, 'dimension']))
    
-    map.sum <- data.frame(); for (j in svg.na) { 
+    map.sum <- data.frame(); for (j in svg.na.cord) { 
       tis.path <- unique(attribute(svgs[j])[[1]]$feature)
       not.map <- setdiff(sam.uni, unique(tis.path)); if (verbose==TRUE & length(not.map)>0) cat('Features in data not mapped:', paste0(not.map, collapse=', '), '\n')
       sam.com <- intersect(unique(tis.path), sam.uni) 
@@ -518,7 +519,7 @@ shm_covis <- function(svg, data, assay.na=NULL, sam.factor=NULL, con.factor=NULL
 
     }
     gg.lis.all <- gg.all <- grob.all <- lgd.all <- grob.lgd.all <- gcol.lgd.all <- gcol.all <- NULL; for (i in seq_along(svgs)) {
-      na0 <- names(svgs)[i]; cat('ggplots/grobs:', na0, '... \n')
+      na0 <- svg.na[i]; cat('ggplots/grobs:', na0, '... \n')
       # if (preserve.scale==TRUE & is.null(sub.margin)) sub.margin <- (1-w.h/w.h.max*0.99)/2
       # SHMs/legend of ggplots under one SVG.
       gg.lis <- gg_shm(svg.all=svgs[i], gene=gene, con.na=con.na, geneV=geneV, charcoal=charcoal, alpha.overlay=alpha.overlay, ID=ID, cols=col, covis.direc=covis.direc, lis.rematch = lis.rematch, ft.trans=ft.trans, ft.trans.shm=ft.trans.shm, sub.title.size=sub.title.size, sub.title.vjust=sub.title.vjust, ft.legend=ft.legend, legend.ncol=legend.ncol, legend.nrow=legend.nrow, legend.position=legend.position, legend.direction=legend.direction, legend.key.size=legend.key.size, legend.text.size=legend.text.size, legend.plot.title=legend.plot.title, legend.plot.title.size=legend.plot.title.size, line.width=line.width, line.color=line.color, ...)
@@ -547,8 +548,8 @@ shm_covis <- function(svg, data, assay.na=NULL, sam.factor=NULL, con.factor=NULL
       # Store colors of matching features in each SHM in a list.
       gcols <- gg.lis$gcol.lis.all; names(gcols) <- paste0(names(gcols), '_', i)
       gcol.all <- c(gcol.all, gcols)
-    }; names(lgd.all) <- names(grob.lgd.all) <- names(svgs)
-    names(gcol.lgd.all) <- paste0('col_', names(svgs))
+    }; names(lgd.all) <- names(grob.lgd.all) <- svg.na
+    names(gcol.lgd.all) <- paste0('col_', svg.na)
     pat.gen <- paste0(ID, collapse='|'); pat.con <- paste0(con.uni, collapse='|')
     # Use definite patterns and avoid using '.*' as much as possible. Try to be as specific as possible.
     pat.all <- paste0('^(', pat.gen, ')_(', pat.con, ')(_\\d+$)')

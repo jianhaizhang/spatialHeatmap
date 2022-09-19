@@ -43,46 +43,45 @@ blk.mus.brain <- filter_data(data=blk.mus.brain, pOA=c(0.3, 6), CV=c(0.55, 100))
 sc.mus.brain <- sc_dat_mus_brain(sc.pa='GSE147747_expr_raw_counts_table.tsv', meta.pa='GSE147747_meta_table.tsv')
 
 # Obtain example data by harsh filtering, and Take overlap genes between bulk and single cells. 
-sc.mus.brain <- filter_cell(lis=list(sc.mus.brain=sc.mus.brain), bulk=blk.mus.brain, gen.rm=NULL, min.cnt=1, p.in.cell=0.93, p.in. 
-gen=0.5) 
+mus.brain <- filter_cell(sce=sc.mus.brain, bulk=blk.mus.brain, gen.rm=NULL, cutoff=1, p.in.cell=0.93, p.in.gen=0.5) 
 
 # Example bulk and single cell data. 
-blk.mus <- mus.brain$bulk; sc.mus <- mus.brain$sc.mus.brain 
-# blk.mus.pa <- system.file("extdata/shinyApp/example", "bulk_mouse_cocluster.txt", package="spatialHeatmap") 
-# blk.mus <- as.matrix(read.table(blk.mus.pa, header=TRUE, row.names=1, sep='\t', check.names=FALSE))
-# blk.mus[1:3, ]
+blk.mus <- mus.brain$bulk; sc.mus <- mus.brain$cell 
+
 # Mouse brain aSVG.
 svg.mus.brain.pa <- system.file("extdata/shinyApp/example", "mus_musculus.brain.svg", package="spatialHeatmap")
 feature.df <- return_feature(svg.path=svg.mus.brain.pa)
-# Matching table between bulk tissues and aSVG features.
-match.mus.brain.pa <- system.file("extdata/shinyApp/example", "match_mouse_brain_cocluster.txt", package="spatialHeatmap")
-df.match.mus.brain <- read.table(match.mus.brain.pa, header=TRUE, row.names=1, sep='\t')
-df.match.mus.brain
+df.match.mus.brain <- df_match_mus533()
 # Bulk tissues are named with aSVG features.
 cvt_vecter <- spatialHeatmap:::cvt_vector
-colnames(blk.mus) <- cvt_vecter(df.match.mus.brain$dataBulk, df.match.mus.brain$SVGBulk, colnames(blk.mus))
+colnames(blk.mus) <- cvt_vecter(df.match.mus.brain$trueBulk, df.match.mus.brain$SVGBulk, colnames(blk.mus))
 blk.mus[1:3, ]
-blk.mus <- SummarizedExperiment(assays=list(counts=as.matrix(blk.mus)), colData=DataFrame(tissue=colnames(blk.mus)))
+blk.mus$tissue <- colnames(blk.mus)
 saveRDS(blk.mus, file='bulk_mouse_cocluster.rds') 
 
-#sc.mus.pa <- system.file("extdata/shinyApp/example", "cell_mouse_cocluster.txt", package="spatialHeatmap") 
-#sc.mus <- as.matrix(read.table(sc.mus.pa, header=TRUE, row.names=1, sep='\t', check.names=FALSE))
 sc.mus[1:3, 1:5]
 intersect(colnames(sc.mus), feature.df$feature)
 intersect(colnames(sc.mus), colnames(blk.mus))
-sc.mus <- SingleCellExperiment(assays=list(counts=as.matrix(sc.mus)), colData=DataFrame(cell=colnames(sc.mus)))
+sc.mus$cell <- colnames(sc.mus)
 saveRDS(sc.mus, file='cell_mouse_cocluster.rds') 
 
-# Example data for auto-matching in Shiny app.  
+# Example data for auto-matching in Shiny app. 
 library(SingleCellExperiment) 
-blk.sc <- as.matrix(cbind(blk.mus, sc.mus)) 
-cdat <- DataFrame(bulkCell=c(rep('bulk', ncol(blk.mus)), rep('cell', ncol(sc.mus)))) 
-sce.all <- SingleCellExperiment(assays=list(counts=blk.sc), colData=cdat)
- 
-df.match.mus.pa <- system.file("extdata/shinyApp/example", "match_mouse_brain_cocluster.txt", package="spatialHeatmap") 
-df.match <- read.table(df.match.mus.pa, header=TRUE, row.names=1, sep='\t')  
-metadata(sce.all)$df.match <- df.match
-saveRDS(sce.all, file='sce_auto_bulk_cell_mouse_brain.rds') 
+blk.mus$label <- colnames(blk.mus) 
+blk.mus$bulkCell <- 'bulk'; blk.mus$tissue <- NULL 
+sc.mus$label <- colnames(sc.mus) 
+sc.mus$bulkCell <- 'cell'; sc.mus$cell <- NULL 
+sce.all <- cbind(blk.mus, sc.mus) 
+# Secondary label of clusters.
+sce.nor <- norm_cell(sce.all, count.kp=TRUE) 
+sce.dim <- reduce_dim(sce.nor) 
+sce.sc <- cluster_cell(sce.dim)
+colnames(colData(sce.sc))[1] <- 'label1' 
+sce.sc$sizeFactor <- NULL 
+assays(sce.sc)$logcounts <- NULL 
+sce.sc$expVar <- 'control'
+saveRDS(sce.all, file='auto_bulk_cell_mouse_brain.rds')
+
 
 ## Example data of Arabidopsis thaliana root for coclustering optimization, downloaded at https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE152766. 
 

@@ -136,3 +136,12 @@ sc_dat_mus_brain <- function(sc.pa=NULL, meta.pa=NULL) {
   all(colnames(sc.brain)==sc.brain.met$V1)
   colnames(sc.brain) <- sc.brain.met$cell; return(sc.brain)
 }
+
+# Matching table of mouse brain bulk 533.
+df_match_mus533 <- function() {
+  SVGBulk <- c('cerebellum', 'hippocampus', 'cerebral.cortex', 'hippocampus', 'hypothalamus')
+  cell <- c('cere', 'hipp', 'isocort', 'retrohipp', 'hypotha')
+  trueBulk <- c('CERE', 'HIPP', 'CERE.CORTEX', 'HIPP', 'HYPOTHA')
+  df.match <- data.frame(SVGBulk=SVGBulk, cell=cell, trueBulk=trueBulk)
+  return(df.match)
+}

@@ -4,7 +4,7 @@
 
 #' @param bulk The normalized bulk data (log2-scale) in form of \code{SingleCellExperiment} or \code{data.frame}.
 #' @param cell The normalized single cell data in form of \code{SingleCellExperiment}. 
-#' @param df.match The \code{data.frame} specifying matching between cells and true bulk.
+#' @param df.match A \code{data.frame} specifying matching between cells and true bulk, applicable in co-clustering optimization. 
 #' @param sim.meth Method to calculate similarities between bulk and cells in each cocluster when assigning bulk to cells. \code{spearman} (default) or \code{pearson}.
 #' @inheritParams cluster_cell
 

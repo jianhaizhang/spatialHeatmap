@@ -25,7 +25,7 @@
 #' @importFrom parallel detectCores mclapply
 
 svg_df <- function(svg.path, feature=NULL, cores) {
-   save(svg.path, feature, cores, file='svg.df.all')
+  # save(svg.path, feature, cores, file='svg.df.all')
   # Make sure the style is correct. If the stroke width is not the same across polygons such as '0.0002px', '0.216px', some stroke outlines cannot be recognised by 'PostScriptTrace'. Then some polygons are missing. Since the ggplot is based on 'stroke' not 'fill'.
   options(stringsAsFactors=FALSE)
   doc <- read_xml(svg.path); spa <- xml_attr(doc, 'space')
