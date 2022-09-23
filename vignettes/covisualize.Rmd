@@ -81,7 +81,7 @@ algorithms (_e.g._ PCA, UMAP or tSNE) are supported. To associate single cells
 with their source tissues, the user can choose among three major methods including 
 annotation-based, manual and automated methods (Figure \@ref(fig:covizOver)). Similar 
 to other functionalities in _spatialHeatmap_, these functionalities are available within
-R as well as the corresponding [Shiny app](#autoSCE) [@shiny].   
+R as well as the corresponding [Shiny app](#autoSCE)  [@shiny].   
 
 ## Methods for Associating Cells and Bulk Tissues
 
