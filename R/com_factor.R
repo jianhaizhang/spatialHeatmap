@@ -11,13 +11,14 @@
 
 #' @examples
 
-#' clp.tar <- system.file('extdata/shinyApp/example/target_coleoptile.txt', package='spatialHeatmap')
-#' target.clp <- read_fr(clp.tar)
-#' target.clp <- com_factor(target=target.clp, factors2com=c('organism_part', 'age'), factor.new='samTime')
+#' library(SummarizedExperiment)
+#' mus.se.pa <- system.file('extdata/shinyApp/example/mus_brain_vars_se.rds', package='spatialHeatmap')
+#' mus.se <- readRDS(mus.se.pa); targets.info <- colData(mus.se)
+#' targets.new <- com_factor(target=targets.info, factors2com=c('time', 'treatment', 'injury'), factor.new='comDim')
 
 #' @author Jianhai Zhang \email{jzhan067@@ucr.edu} \cr Dr. Thomas Girke \email{thomas.girke@@ucr.edu}
 #' @references
-#' Narsai, Reena, David Secco, Matthew D Schultz, Joseph R Ecker, Ryan Lister, and James Whelan. 2017. "Dynamic and Rapid Changes in the Transcriptome and Epigenome During Germination and in Developing Rice (Oryza Sativa) Coleoptiles Under Anoxia and Re-Oxygenation." Plant J. 89 (4): 805–24
+#' Attilio, Peter J, Dustin M Snapper, Milan Rusnak, Akira Isaac, Anthony R Soltis, Matthew D Wilkerson, Clifton L Dalgard, and Aviva J Symes. 2021. “Transcriptomic Analysis of Mouse Brain After Traumatic Brain Injury Reveals That the Angiotensin Receptor Blocker Candesartan Acts Through Novel Pathways.” Front. Neurosci. 15 (March): 636259
 
 #' @export com_factor
 #' @importFrom SummarizedExperiment colData colData<-

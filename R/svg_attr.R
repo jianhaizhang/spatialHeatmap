@@ -20,7 +20,6 @@
 #' @importFrom dplyr filter
 
 svg_attr <- function(doc, feature, br=TRUE) {
-
   options(stringsAsFactors=FALSE); name <- element <- NULL
   len <- xml_length(doc); out <- xml_children(doc)[[len-1]]; ply <- xml_children(doc)[[len]]
 
@@ -81,10 +80,8 @@ svg_attr <- function(doc, feature, br=TRUE) {
   stro.w <- sty_val(sty, 'stroke-width:')
   # Convert real width to numeric.
   for (i in seq_along(stro.w)) {
-
     num <- tryCatch({ as.numeric(stro.w[i]) }, error=function(e){ return('error') }, warning=function(w) { return('warning') } )
     stro.w[i] <- ifelse(is.numeric(num), num, 0)
-
   }
   df.attr <- tibble(feature=title, id=ids, fill=fil.cols, stroke=as.numeric(stro.w), parent=parent, element=nas, index.all=idx, index.sub=idx1)
   df.attr <- filter(df.attr, element!='a')

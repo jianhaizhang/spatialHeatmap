@@ -174,55 +174,52 @@ expr.sh <- cbind.data.frame(expr.sh, metadata=rowData(se.fil.sh)[, 'Target.Descr
 # expr.sh <- expr.sh[c(9, 1:8, 10:230), ]
 write.table(expr.sh, 'expr_arab.txt', col.names=TRUE, row.names=TRUE, sep='\t')
 
+## SHM of multiple variables.
+# Data source: https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE163415
+# Read data of 3DPI.
+# dat3 <- read.table('~/Downloads/mus_time_treat/GSE163415_3DPI_samples_counts_table.txt', header=TRUE, sep='\t', row.names=NULL)
+dat3 <- read.table('GSE163415_3DPI_samples_counts_table.txt', header=TRUE, sep='\t', row.names=NULL)
+rownames(dat3) <- dat3$Gene; dat3 <- dat3[, -1]
+cna3 <- DataFrame(do.call('rbind', strsplit(colnames(dat3), '\\.'))[, 1:4])
+colnames(cna3) <- c('time', 'tissue', 'treatment', 'injury')
+cna3$time <- sub('^X', '', cna3$time)
+cna3 <- cna3[, c('tissue', 'time', 'treatment', 'injury')]
 
-## Make target file/Shiny app data-coleoptile example.
-# Retrieve the data. 
-rse.clp <- read_cache(cache.pa, 'rse.clp') # Retrieve data from cache.
-if (is.null(rse.clp)) { # Save downloaded data to cache if it is not cached.
-  rse.clp <- getAtlasData('E-GEOD-115371')[[1]][[1]]
-  save_cache(dir=cache.pa, overwrite=TRUE, rse.clp)
-}
+se3 <- SummarizedExperiment(assays=list(counts=dat3), colData=cna3)
+se3$comVar <- paste(se3$time, se3$treatment, se3$injury, sep='.')
+# Reduce replicates.
+se3 <- se3[, seq(1, ncol(se3), 2)]
 
-# Experimental design.
-cdat <- colData(rse.clp)
+# Read data of 29DPI.
+# dat29 <- read.table('~/Downloads/mus_time_treat/GSE163415_29DPI_samples_counts_table.txt', header=TRUE, sep='\t', row.names=NULL)
+dat29 <- read.table('GSE163415_29DPI_samples_counts_table.txt', header=TRUE, sep='\t', row.names=NULL)
+rownames(dat29) <- dat29$Gene; dat29 <- dat29[, -1]
+cna29 <- DataFrame(do.call('rbind', strsplit(colnames(dat29), '\\.'))[, 1:4])
+colnames(cna29) <- c('time', 'tissue', 'treatment', 'injury')
+cna29$time <- sub('^X', '', cna29$time)
+cna29 <- cna29[, c('tissue', 'time', 'treatment', 'injury')]
 
-# Edit condition entries.
-old <- c('none', 'anaerobic environment', '72 hour anaerobic environment; 24 hour aerobic environment')
-new <- c('aerobic', 'anaerobic', 'NA')
-tar <- edit_tar(cdat, 'stimulus', old, new)
-tar <- as.data.frame(tar)
-unique(tar$stimulus)
+se29 <- SummarizedExperiment(assays=list(counts=dat29), colData=cna29)
+se29$comVar <- paste(se29$time, se29$treatment, se29$injury, sep='.')
+# Reduce replicates.
+se29 <- se29[, seq(1, ncol(se29), 2)]
 
-# Copy stimulus as a condition column.
-tar$con <- tar$stimulus
-# Edit contidion column.
-tar <- edit_tar(tar, 'con', c('aerobic', 'anaerobic'), c('A', 'N'))
-unique(tar$con)
+# Combine 3DPI and 29DPI.
+se.mus.vars <- cbind(se3, se29)
 
-# Edit time entries.
-tar <- edit_tar(tar, 'age', unique(tar$age), c('0h', '1h', '3h', '12h', '24h', '48h', '72h', '96h'))
-tar <- edit_tar(tar, 'age', '96h', '72N24A', tar$stimulus=='NA')
-unique(tar$age)
+se.mus.vars$tissue[grepl('Hipp', se.mus.vars$tissue)] <- 'hippocampus'
+se.mus.vars$tissue[grepl('Thal', se.mus.vars$tissue)] <- 'thalamus'
+se.mus.vars$tissue[grepl('Hypo', se.mus.vars$tissue)] <- 'hypothalamus'
+# thalamus is not representated in mouse brain aSVG.
+se.mus.vars <- subset(se.mus.vars, , tissue!='thalamus')
+colnames(se.mus.vars) <- paste0('assay', seq_len(ncol(se.mus.vars)))
 
-# Edit spatial feature entries.
-tar <- edit_tar(tar, 'organism_part', unique(tar$organism_part), c('embryo', 'embryoColeoptile', 'coleoptile'))
-unique(tar$organism_part)
-
-# Export targets file.
-write.table(tar, 'target_coleoptile.txt', sep='\t')
-
-# Create tissue-time-condition factor.
-rse.clp <- com_factor(rse.clp, tar, factors2com=c('organism_part', 'age', 'con'), factor.new='samTimeCon')
-colData(rse.clp)[1:3, ]
-
-# Normalize data.
-se.nor.clp <- norm_data(data=rse.clp, norm.fun='ESF')
-# Aggregate data.
-se.aggr.clp <- aggr_rep(data=se.nor.clp, sam.factor='samTimeCon', con.factor=NULL, aggr='mean')
-# Filter genes with low counts and low variance.
-se.fil.clp <- filter_data(data=se.aggr.clp, sam.factor='samTimeCon', con.factor=NULL, pOA=c(0.07, 7), CV=c(0.7, 100), dir=NULL)
-# Export gene expression matrix for use in the Shiny app.
-write.table(assay(se.fil.clp), 'expr_coleoptile_samTimeCon.txt', sep='\t')
+# Filter raw counts.
+se.mus.vars.fil <- filter_data(data=se.mus.vars, sam.factor='tissue', con.factor=NULL, pOA=c(0.05, 10), CV=c(1.5, 50)); se.mus.vars.fil
+# Example data for vignette.
+saveRDS(se.mus.vars.fil, file='mus_brain_vars_se.rds')
+# Example data for Shiny app.
+se.mus.vars.fil <- filter_data(data=se.mus.vars, sam.factor='tissue', con.factor='comVar', pOA=c(0.05, 10), CV=c(1.5, 50)); se.mus.vars.fil
 
 
 ## Toy data in help files.

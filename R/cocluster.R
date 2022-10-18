@@ -1,73 +1,73 @@
-#' Co-cluster bulk and single cell data Calculate ROC/AUC for the combined bulk and single cell data
+#' Co-clustering bulk and single cell data 
 #'
-#' Co-cluster bulk and refined single cell data and assign bulk to single cells. Since the identities of bulk tissues and single cells are labeled, ROC/AUC are calculated to evaluate the co-clustering performance.
+#' Automatically assigns bulk tissues to single cells through co-clustering.
 
-#' @param bulk The normalized bulk data (log2-scale) in form of \code{SingleCellExperiment} or \code{data.frame}.
+#' @param bulk The normalized bulk data (log2-scale) in form of \code{SingleCellExperiment}.
 #' @param cell The normalized single cell data in form of \code{SingleCellExperiment}. 
-#' @param df.match A \code{data.frame} specifying matching between cells and true bulk, applicable in co-clustering optimization. 
+#' @param df.match A \code{data.frame} specifying ground-truth matching between cells and bulk, applicable in co-clustering optimization. 
 #' @param sim.meth Method to calculate similarities between bulk and cells in each cocluster when assigning bulk to cells. \code{spearman} (default) or \code{pearson}.
+#' @inheritParams reduce_dim
 #' @inheritParams cluster_cell
 
-#' @return A list of \code{roc} object and the data frame to create the \code{roc}.
+#' @return A list of coclustering results in \code{SingleCellExperiment} and an \code{roc} object (relevant in optimization).
 
 #' @examples
 
+#' # To obtain reproducible results, a fixed seed is set for generating random numbers.
+#' set.seed(10); library(SummarizedExperiment)
 #' # Example bulk data of mouse brain for coclustering (Vacher et al 2021).
-#' blk.mus.pa <- system.file("extdata/shinyApp/example", "bulk_mouse_cocluster.txt", package="spatialHeatmap") 
-#'blk.mus <- as.matrix(read.table(blk.mus.pa, header=TRUE, row.names=1, sep='\t', check.names=FALSE))
-#' blk.mus[1:3, 1:5]
+#' blk.mus.pa <- system.file("extdata/shinyApp/example", "bulk_mouse_cocluster.rds", 
+#' package="spatialHeatmap") 
+#' blk.mus <- readRDS(blk.mus.pa)
+#' assay(blk.mus)[1:3, 1:5]
 #'
 #' # Example single cell data for coclustering (Ortiz et al 2020).
-#' sc.mus.pa <- system.file("extdata/shinyApp/example", "cell_mouse_cocluster.txt", package="spatialHeatmap") 
-#'sc.mus <- as.matrix(read.table(sc.mus.pa, header=TRUE, row.names=1, sep='\t', check.names=FALSE))
-#' sc.mus[1:3, 1:5]
+#' sc.mus.pa <- system.file("extdata/shinyApp/example", "cell_mouse_cocluster.rds", 
+#' package="spatialHeatmap") 
+#' sc.mus <- readRDS(sc.mus.pa)
+#' colData(sc.mus)[1:3, , drop=FALSE]
 #'
-#' # Initial filtering. 
-#' blk.mus <- filter_data(data=blk.mus, sam.factor=NULL, con.factor=NULL, pOA=c(0.1, 5), CV=c(0.2, 100), dir=NULL) 
-#' dim(blk.mus)
-#' mus.lis <- filter_cell(lis=list(sc.mus=sc.mus), bulk=blk.mus, gen.rm=NULL, min.cnt=1, p.in.cell=0.5, p.in.gen=0.1) 
-
 #' \donttest{
-
 #' # Normalization: bulk and single cell are combined and normalized, then separated.
-#' mus.lis.nor <- norm_multi(dat.lis=mus.lis, cpm=FALSE)
+#' mus.lis.nor <- norm_cell(sce=sc.mus, bulk=blk.mus, com=FALSE)
 #'
-#' # Secondary filtering.
-#' library(SingleCellExperiment)
-#' blk.mus.fil <- filter_data(data=logcounts(mus.lis.nor$bulk), sam.factor=NULL, con.factor=NULL, pOA=c(0.1, 0.5), CV=c(0.2, 100)) 
-#' dim(blk.mus.fil)
+#' # Aggregate bulk replicates.
+#' blk.mus.aggr <- aggr_rep(data=mus.lis.nor$bulk, assay.na='logcounts', sam.factor='sample', 
+#' aggr='mean')
+#' # Filter bulk
+#' blk.mus.fil <- filter_data(data=blk.mus.aggr, pOA=c(0.1, 1), CV=c(0.1, 50), verbose=FALSE) 
+#' # Filter cell and subset bulk to genes in cell
+#' blk.sc.mus.fil <- filter_cell(sce=mus.lis.nor$cell, bulk=blk.mus.fil, cutoff=1, p.in.cell=0.1,
+#' p.in.gen=0.01, verbose=FALSE) 
+#' # Co-cluster bulk and single cells.
+#' coclus.mus <- cocluster(bulk=blk.sc.mus.fil$bulk, cell=blk.sc.mus.fil$cell, min.dim=12, 
+#' dimred='PCA', graph.meth='knn', cluster='wt')
+#' # Co-clustering results. The 'cluster' indicates cluster labels, the 'bulkCell' indicates bulk
+#' # tissues or single cells, the 'sample' suggests original labels of bulk and cells, the 
+#' # 'assignedBulk' refers to bulk tissues assigned to cells with none suggesting un-assigned, 
+#' # and the 'similarity' refers to Spearman's correlation coefficients for assignments between 
+#' # bulk and cells, which is a measure of assignment strigency.
+#' colData(coclus.mus)
 #' 
-#' mus.lis.fil <- filter_cell(lis=list(sc.mus=logcounts(mus.lis.nor$sc.mus)), bulk=blk.mus.fil, gen.rm=NULL, min.cnt=1, p.in.cell=0.05, p.in.gen=0.02)
-#'
-#' # The aSVG file of mouse brain.
-#' svg.mus <- system.file("extdata/shinyApp/example", "mus_musculus.brain.svg", package="spatialHeatmap")
-#' # Spatial features.  
-#' feature.df <- return_feature(svg.path=svg.mus) 
-#'
-#' # Matching table indicating true bulk tissues of each cell type and corresponding SVG bulk (spatial feature).
-#' df.match.mus.pa <- system.file("extdata/shinyApp/example", "match_mouse_brain_cocluster.txt", package="spatialHeatmap")
-#' df.match <- read.table(df.match.mus.pa, header=TRUE, row.names=1, sep='\t')
-#' df.match
-#'
-#' # The SVG bulk tissues are in the aSVG file.  
-#' df.match$SVGBulk %in% feature.df$feature
-#'
-#' # Dimensionality reduction.
-#' sce.dimred.sc <- reduce_dim(sce=mus.lis.fil$sc.mus, prop=0.1, min.dim=13, max.dim=50, de.pca=list(assay.type ="logcounts"))
-#' # Cluster single cells.
-#' clus.sc <- cluster_cell(sce=sce.dimred.sc, graph.meth='knn', dimred='PCA')
-#' # Cluster labels are stored in the "cluster" column in "colData".
-#'colData(clus.sc)[1:3, ]
-#'
-#' # Refine cell clusters.
-#' cell.refined <- refine_cluster(clus.sc, sim=0.2, sim.p=0.8, sim.meth='spearman')
-#'
-#' # Include matching information in "colData".
-#' # cell.refined <- true_bulk(cell.refined, df.match)
-#' # colData(cell.refined)[1:3, ]
-#'
-#' # Cocluster bulk and single cells.
-#' roc.lis <- cocluster(bulk=mus.lis.fil$bulk, cell.refined=cell.refined, df.match=df.match, min.dim=13, max.dim=50, graph.meth='knn', dimred='PCA', sim.meth='spearman') 
+#' # Filter bulk-cell assignments according a similarity cutoff (min.sim).
+#' coclus.mus <- filter_asg(coclus.mus, min.sim=0.1)
+#' 
+#' # Tailor bulk-cell assignments in R.
+#' plot_dim(coclus.mus, dim='UMAP', color.by='sample', x.break=seq(-10, 10, 1), 
+#' y.break=seq(-10, 10, 1), panel.grid=TRUE)
+#' # Define desired bulk tissues for selected cells.
+#' df.desired.bulk <- data.frame(x.min=c(-8), x.max=c(-3.5), y.min=c(-2.5), y.max=c(0.5), 
+#' desiredBulk=c('hippocampus'), dimred='UMAP')
+#' df.desired.bulk
+#' # Tailor bulk-cell assignments.
+#' coclus.mus.tailor <- refine_asg(sce.all=coclus.mus, df.desired.bulk=df.desired.bulk)
+#' 
+#' # Define desired bulk tissues for selected cells on a Shiny app.
+#' # Save "coclus.mus" using "saveRDS" then upload the saved ".rds" file to the Shiny app.
+#' saveRDS(coclus.mus, file='coclus.mus.rds')
+#' 
+#' # Start the Shiny app.
+#' desired_bulk_shiny()
 #' }
 
 
@@ -155,9 +155,9 @@ cocluster <- function(bulk, cell, df.match=NULL, min.dim=13, max.dim=50, dimred=
 
 #' @importFrom SummarizedExperiment colData
 #' @importFrom SingleCellExperiment reducedDim
-#' @importFrom pROC roc
 
 com_roc <- function(sce.coclus, dimred, dat.blk, df.match=NULL, sim.meth='spearman') {
+  if (any(c('e', 'w') %in% check_pkg('pROC'))) stop('The package "pROC" is not detected!')
   # save(sce.coclus, dimred, dat.blk, df.match, sim.meth, file='com.roc.arg')
   if (!is.null(df.match)) {
   # if (!'SVGBulk' %in% colnames(df.match)) df.match$SVGBulk <- 'none' 
@@ -261,7 +261,7 @@ com_roc <- function(sce.coclus, dimred, dat.blk, df.match=NULL, sim.meth='spearm
     # index.sc.asg <- seq_along(dat.com)[as.numeric(df.asg$index)]
     # index.all <- c(rep(0, ncol(dat.blk)), seq_along(colnames(dat.com)[!colnames(dat.com) %in% bulk.na]))
     # df.asg$index <- index.all[index.sc.asg]
-    roc.obj <- roc(df.asg$response, df.asg$similarity, smoothed = TRUE, ci=TRUE, ci.alpha=0.9, stratified=FALSE, plot=FALSE, auc.polygon=TRUE, max.auc.polygon=TRUE, grid=TRUE, print.auc=TRUE, show.thres=TRUE, direction='<', levels=c('FALSE', 'TRUE'))
+    roc.obj <- pROC::roc(df.asg$response, df.asg$similarity, smoothed = TRUE, ci=TRUE, ci.alpha=0.9, stratified=FALSE, plot=FALSE, auc.polygon=TRUE, max.auc.polygon=TRUE, grid=TRUE, print.auc=TRUE, show.thres=TRUE, direction='<', levels=c('FALSE', 'TRUE'))
   }
   cdat <- colData(sce.coclus); cdat.na <- colnames(cdat)
   sel.na <- c('cluster', 'bulkCell', 'sample', 'assignedBulk', 'similarity', 'index')

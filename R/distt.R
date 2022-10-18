@@ -2,7 +2,7 @@
 #'
 #' Perform all pairwise comparisons for all spatial features in the selected column in \code{colData} slot.
 
-#' @param se A \code{SummarizedExperiment} object, which is returned by \code{sub_data}. The \code{colData} slot is required to contain at least two columns of "features" and "factors" respectively. The \code{rowData} slot can optionally contain a column of discriptions of each gene and the column name should be \code{metadata}. 
+#' @param se A \code{SummarizedExperiment} object, which is returned by \code{tar_ref}. The \code{colData} slot is required to contain at least two columns of "features" and "factors" respectively. The \code{rowData} slot can optionally contain a column of discriptions of each gene and the column name should be \code{metadata}. 
 #' @param com.factor The column name of spatial features to compare in \code{colData} slot.
 #' @param return.all Logical. If \code{TRUE}, all the comparison results are returned in a data frame. The default is \code{FALSE}.
 #' @param log2.fc The log2-fold change cutoff. The default is 1.
@@ -68,8 +68,8 @@
 #' se.fil.chk <- filter_data(data=se.chk, sam.factor='organism_part', con.factor='age',
 #' pOA=c(0.1, 5), CV=c(3.5, 100), dir=NULL)
 #' # Subset the data.
-#' data.sub <- sub_data(data=se.fil.chk, feature='organism_part', features=c('brain', 'heart', 'kidney'),
-#' factor='age', factors=c('day10', 'day12'), com.by='feature', target='brain')
+#' data.sub <- tar_ref(data=se.fil.chk, feature='organism_part', ft.sel=c('brain', 'heart', 'kidney'),
+#' variable='age', var.sel=c('day10', 'day12'), com.by='feature', target='brain')
 #' # Perform all pairwise comparisons in "organism_part" in "colData" slot.
 #' dis <- distinct(se=data.sub, com.factor='organism_part')
 
@@ -81,12 +81,12 @@
 #' \cr Martin Morgan, Valerie Obenchain, Jim Hester and Hervé Pagès (2018). SummarizedExperiment: SummarizedExperiment container. R package version 1.10.1
 #' \cr Simone Tiberi and Mark D. Robinson. (2020). distinct: distinct: a method for differential analyses via hierarchical permutation tests. R package version 1.2.0. https://github.com/SimoneTiberi/distinct
 
-#' @importFrom SummarizedExperiment assay colData colData<-
-#' @importFrom distinct distinct_test log2_FC
+#' @importFrom SummarizedExperiment assay assay<- colData colData<-
 #' @importFrom utils combn
 #' @importFrom stats model.matrix
 
 distt <- function(se, norm.fun='CNF', parameter.list=NULL, log2.trans=TRUE, com.factor, return.all=FALSE, log2.fc=1, fdr=0.05) {
+  if (any(c('e', 'w') %in% check_pkg('distinct'))) stop('The package "distinct" is not detected!')
   filtered <- NULL
   if (!is.null(norm.fun)) { cat('Normalizing counts ... \n')
   se <- norm_data(data=se, norm.fun=norm.fun, parameter.list=parameter.list, log2.trans=log2.trans) }
@@ -119,10 +119,10 @@ distt <- function(se, norm.fun='CNF', parameter.list=NULL, log2.trans=TRUE, com.
       rownames(dsg) <- colData(se0)[, 'rep.distt']
       # set.seed(100)
       # Genes with values <=0 in less than min_non_zero_cells are disgarded.
-      res0 <- distinct_test(x=se0, name_assays_expression=assayNames(se0)[1], name_cluster=sam.factor, name_sample='rep.distt', design=dsg, column_to_test=2, min_non_zero_cells=ceiling((min(table(fct))+1)/2), n_cores=1)
+      res0 <- distinct::distinct_test(x=se0, name_assays_expression=assayNames(se0)[1], name_cluster=sam.factor, name_sample='rep.distt', design=dsg, column_to_test=2, min_non_zero_cells=ceiling((min(table(fct))+1)/2), n_cores=1)
       # Log2 FC requires count matrix.
-      SummarizedExperiment::assay(se0) <- 2^SummarizedExperiment::assay(se0)
-      res1 <- log2_FC(res=res0, x=se0, name_assays_expression=assayNames(se0)[1], name_cluster=sam.factor, name_group=con.factor)
+      assay(se0) <- 2^SummarizedExperiment::assay(se0)
+      res1 <- distinct::log2_FC(res=res0, x=se0, name_assays_expression=assayNames(se0)[1], name_cluster=sam.factor, name_group=con.factor)
       cna.res <- colnames(res1)
       colnames(res1)[cna.res=='p_adj.loc'] <- paste0(vs, '_FDR') 
       colnames(res1)[grepl('^log2FC', cna.res)] <- paste0(vs, '_log2FC')

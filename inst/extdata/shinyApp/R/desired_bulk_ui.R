@@ -31,11 +31,11 @@ desired_bulk_ui <- function(request) {
      })
    ')),
 
-  tabsetPanel(
-    tabPanel("Upload data", br(),
-    fileInput("sglCell", "Upload single cell data (.rds)", accept=c(".rds"), multiple=FALSE)
+  tabsetPanel(type = "pills", id='asgBulk', selected='upl',
+    tabPanel(title="Upload data", value='upl', br(),
+    fileInput("sglCell", "Upload co-clustering results (.rds)", accept=c(".rds"), multiple=FALSE)
     ),
-    tabPanel("Assign bulk",
+    tabPanel(title="Assign bulk", value='asg',
       column(6, id='dimCellBut', 
       fluidRow(splitLayout(cellWidths=c('1%', '50%', '1%', '20%', '1%'), '',
       selectInput('dimCell', label='Embedding plot', choices=c("UMAP", "PCA", "TSNE")), '', 

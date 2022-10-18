@@ -68,11 +68,9 @@
 
 #' @export return_feature
 #' @importFrom xml2 read_xml
-#' @importFrom rols term termDesc
 #' @importFrom utils unzip
 
 return_feature <- function(feature, species, keywords.any=TRUE, remote=NULL, dir=NULL, svg.path=NULL, desc=FALSE, match.only=TRUE, return.all=FALSE) {
-
   options(stringsAsFactors=FALSE)
   # Parse and return features.
   ftr_return <- function(svgs, desc=desc) {
@@ -89,16 +87,13 @@ return_feature <- function(feature, species, keywords.any=TRUE, remote=NULL, dir
     colnames(df)[colnames(df)=='index.sub'] <- 'order'
 
     if (desc==TRUE) {
-  
+      if (any(c('e', 'w') %in% check_pkg('rols'))) stop('The package "rols" is not detected!')
       cat('Appending descriptions... \n')
       df$description <- NA; for (i in seq_len(nrow(df))) {
-
         ont <- df[i, 'id']; abbr <- tolower(sub('_.*', '', ont))
-        trm <- tryCatch({ term(abbr, ont) }, error=function(e) { return(NA) })
-        if (is(trm, 'Term')) { des <- termDesc(trm); if (!is.null(des)) df[i, 'description'] <- termDesc(trm) }
-  
+        trm <- tryCatch({ rols::term(abbr, ont) }, error=function(e) { return(NA) })
+        if (is(trm, 'Term')) { des <- rols::termDesc(trm); if (!is.null(des)) df[i, 'description'] <- rols::termDesc(trm) }
       }
-
     }; return(df)
 
   }

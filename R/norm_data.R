@@ -67,8 +67,6 @@
 #' @export norm_data
 #' @importFrom SummarizedExperiment assays assay assays<-
 #' @importFrom edgeR DGEList calcNormFactors cpm
-#' @importFrom DESeq2 DESeqDataSetFromMatrix estimateSizeFactors counts varianceStabilizingTransformation rlog
-
 
 norm_data <- function(data, assay.na=NULL, norm.fun='CNF', parameter.list=NULL, log2.trans=TRUE, data.trans) {
   calls <- names(vapply(match.call(), deparse, character(1))[-1]) 
@@ -107,14 +105,18 @@ norm_data <- function(data, assay.na=NULL, norm.fun='CNF', parameter.list=NULL, 
       cat('Computing CPM ... \n')
       expr <- cpm(y, normalized.lib.sizes=TRUE, log=(log2.trans==TRUE))
 
-    } else dds <- DESeqDataSetFromMatrix(countData=expr, colData=data.frame(col.dat=colnames(expr)), design=~1) # "design" does not affect "rlog" and "varianceStabilizingTransformation".
+    } else {
+      if (any(c('e', 'w') %in% check_pkg('DESeq2'))) stop('The package "DESeq2" is not detected!')
+      dds <- DESeq2::DESeqDataSetFromMatrix(countData=expr, colData=data.frame(col.dat=colnames(expr)), design=~1) # "design" does not affect "rlog" and "varianceStabilizingTransformation".
+    }
 
     if (norm.fun=='ESF') {
 
       na <- names(parameter.list); if (!('type' %in% na)|is.null(parameter.list)) { parameter.list <- c(list(type='ratio'), parameter.list) }
       cat('Normalising:', norm.fun, '\n'); print(unlist(parameter.list))
-      dds <- do.call(estimateSizeFactors, c(list(object=dds), parameter.list))
-      expr <- counts(dds, normalized=TRUE)
+      if (any(c('e', 'w') %in% check_pkg('DESeq2'))) stop('The package "DESeq2" is not detected!')
+      dds <- do.call(DESeq2::estimateSizeFactors, c(list(object=dds), parameter.list))
+      expr <- DESeq2::counts(dds, normalized=TRUE)
       if (log2.trans==TRUE) expr <- log2(expr+1)
 
     } else if (norm.fun=='VST') { 
@@ -124,8 +126,9 @@ norm_data <- function(data, assay.na=NULL, norm.fun='CNF', parameter.list=NULL, 
       na <- names(parameter.list); if (!('fitType' %in% na)) { parameter.list <- c(list(fitType='parametric'), parameter.list) }
       if (!('blind' %in% na)) { parameter.list <- c(list(blind=TRUE), parameter.list) }    
       cat('Normalising:', norm.fun, '\n'); print(unlist(parameter.list))
+      if (any(c('e', 'w') %in% check_pkg('DESeq2'))) stop('The package "DESeq2" is not detected!')
       # Returns log2-scale data. 
-      vsd <- do.call(varianceStabilizingTransformation, c(list(object=dds), parameter.list))
+      vsd <- do.call(DESeq2::varianceStabilizingTransformation, c(list(object=dds), parameter.list))
       expr <- assay(vsd)
       if (log2.trans==FALSE) expr <- 2^expr
 
@@ -135,8 +138,9 @@ norm_data <- function(data, assay.na=NULL, norm.fun='CNF', parameter.list=NULL, 
       na <- names(parameter.list); if (!('fitType' %in% na)) { parameter.list <- c(list(fitType='parametric'), parameter.list) }
       if (!('blind' %in% na)) { parameter.list <- c(list(blind=TRUE), parameter.list) }    
       cat('Normalising:', norm.fun, '\n'); print(unlist(parameter.list))
+      if (any(c('e', 'w') %in% check_pkg('DESeq2'))) stop('The package "DESeq2" is not detected!')
       # Apply A 'Regularized Log' Transformation. 
-      rld <- do.call(rlog, c(list(object=dds), parameter.list))
+      rld <- do.call(DESeq2::rlog, c(list(object=dds), parameter.list))
       expr <- assay(rld) 
       if (log2.trans==FALSE) expr <- 2^expr  
 

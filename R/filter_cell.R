@@ -1,6 +1,6 @@
-#' Filter single cell data separately in a list
+#' Filtering single cell data
 #'
-#' Filter single cell data separately in a list and take overlap genes between all single cell and bulk data. The bulk data are not filtered and are only used to obtain overlap genes.
+#' Filter single cell data and take overlap genes between cell and bulk data. The bulk data are not filtered as they are only used to obtain overlap genes.
 
 #' @param sce A \code{SingleCellExperiment} of single cell data.  
 #' @param bulk The bulk data in form of \code{data.frame}, \code{SummarizedExperiment}, or \code{SingleCellExperiment}. They are only used to obtain overlapping genes with single cell data and not filtered. The default is \code{NULL}.
@@ -13,21 +13,7 @@
 
 #' @return A list of filtered single cell data and bulk data, which have common genes.
 
-#' @examples
-
-#' # Example bulk data of mouse brain for coclustering (Vacher et al 2021). 
-#' blk.mus.pa <- system.file("extdata/shinyApp/example", "bulk_mouse_cocluster.txt", package="spatialHeatmap")
-#' blk.mus <- as.matrix(read.table(blk.mus.pa, header=TRUE, row.names=1, sep='\t', check.names=FALSE))  
-#' blk.mus[1:3, 1:5] 
-#'# Example single cell data for coclustering (Ortiz et al 2020).
-#' sc.mus.pa <- system.file("extdata/shinyApp/example", "cell_mouse_cocluster.txt", package="spatialHeatmap")  
-#' sc.mus <- as.matrix(read.table(sc.mus.pa, header=TRUE, row.names=1, sep='\t', check.names=FALSE)) 
-#'sc.mus[1:3, 1:5]  
- 
-#' # Initial filtering. 
-#' blk.mus <- filter_data(data=blk.mus, sam.factor=NULL, con.factor=NULL, pOA=c(0.1, 5), CV=c(0.2, 100), dir=NULL)
-#' dim(blk.mus) 
-#' mus.lis <- filter_cell(lis=list(sc.mus=sc.mus), bulk=blk.mus, gen.rm=NULL, cutoff=1, p.in.cell=0.5, p.in.gen=0.1)
+#' @rdname cocluster
 
 #' @author Jianhai Zhang \email{jzhan067@@ucr.edu} \cr Dr. Thomas Girke \email{thomas.girke@@ucr.edu}
 

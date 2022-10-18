@@ -40,11 +40,11 @@
 #' @export 
 #' @importFrom SummarizedExperiment colData
 #' @importFrom SingleCellExperiment reducedDim reducedDimNames
-#' @importFrom ggplot2 ggplot scale_fill_manual scale_size_manual geom_point aes theme_classic theme element_text labs scale_x_continuous scale_y_continuous guide_legend
+#' @importFrom ggplot2 ggplot scale_fill_manual scale_size_manual geom_point aes theme_classic theme element_text labs scale_x_continuous scale_y_continuous guides guide_legend
  
 plot_dim <- function(sce, dim=NULL, color.by, group.sel=NULL, row.sel=NULL, cocluster.only=TRUE, x.break=NULL, y.break=NULL, panel.grid=FALSE, lgd.title.size=13, lgd.key.size=0.03, lgd.text.size=12, point.size=3, bulk.size=5, alpha=0.7, stroke=0.2, bulk.stroke=1, axis.text.size=10, axis.title.size=11) {
   # All scenarios: 1. Only cell, select by row, group, or all. 2. Bulk and cell, select by row, group, or all.
-  x <- y <- key <- colour_by <- NULL
+  x <- y <- key <- colour_by <- bulkCell <- NULL
   cdat <- colData(sce); blk.cell <- FALSE
   if (all(c('bulk', 'cell') %in% cdat$bulkCell)) blk.cell <- TRUE
 

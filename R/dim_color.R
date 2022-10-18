@@ -24,11 +24,11 @@
 
 #' @importFrom ggplot2 layer_data ggplot geom_point theme_classic theme element_text element_blank labs scale_color_manual scale_shape_manual margin guide_legend 
 
-dim_color <- function(gg.dim, gg.shm.all, grob.shm.all, col.shm.all, gg.lgd.all, col.lgd.all, grob.lgd.all, profile=TRUE, cell.group, tar.cell='matched', con.na=TRUE, lis.match=NULL, sub.title.size=11, dim.lgd.pos='bottom', dim.lgd.nrow=2, dim.lgd.key.size=4, dim.lgd.text.size=13) {
+dim_color <- function(gg.dim, gg.shm.all, grob.shm.all, col.shm.all, gg.lgd.all, col.lgd.all, grob.lgd.all, profile=TRUE, cell.group, tar.cell, con.na=TRUE, lis.match=NULL, sub.title.size=11, dim.lgd.pos='bottom', dim.lgd.nrow=2, dim.lgd.key.size=4, dim.lgd.text.size=13) {
   # save(gg.dim, gg.shm.all, grob.shm.all, col.shm.all, cell.group, gg.lgd.all, col.lgd.all, grob.lgd.all, profile, tar.cell, con.na, lis.match, sub.title.size, dim.lgd.pos, dim.lgd.nrow, dim.lgd.key.size, dim.lgd.text.size, file='dim.color.arg')
   x <- y <- fill <- feature <- NULL
   lis.match <- lis.match[!unlist(lapply(lis.match, is.null))]
-  if (tar.cell[1]=='matched') tar.cell <- unique(names(lis.match))
+  # if (tar.cell[1]=='matched') tar.cell <- unique(names(lis.match))
   dat.ft.all <- unique(gg.dim$data$colour_by)
 
   if (any(!tar.cell %in% dat.ft.all)) stop("Make sure all entries in 'tar.cell' are in 'names(lis.match))'!")
@@ -69,6 +69,7 @@ dim_color <- function(gg.dim, gg.shm.all, grob.shm.all, col.shm.all, gg.lgd.all,
   if (con.na==TRUE) tit <- gsub('^dim_(.*)_\\d+$', '\\1', names(gg.dim)) else tit <- gsub('^dim_(.*)_con_\\d+$', '\\1', names(gg.dim))
   if (profile==FALSE) tit <- NULL
   # Non-target cell clusters have colour of 'gray80'.
+  # tar.cell is not required, since aSVG features corresponding to non-target cells are already transparent in SHM.
   non.tar <- setdiff(dat.ft.all, tar.cell)
   dim.col.all[non.tar] <- 'gray80'
   # Legal shapes: c(0:25, 32:127)

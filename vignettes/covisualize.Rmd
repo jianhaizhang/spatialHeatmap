@@ -1,5 +1,5 @@
 ---
-title: "Co-visualizing tissue and single cell embedding plots"
+itle: "Co-visualizing tissue and single cell embedding plots"
 author: "Authors: Jianhai Zhang, Jordan Hayes, Le Zhang, Bing Yang, Wolf B. Frommer, Julia Bailey-Serres, and Thomas Girke"
 date: "Last update: `r format(Sys.time(), '%d %B, %Y')`"
 output:
@@ -54,6 +54,7 @@ library(knitr); opts_chunk$set(message=FALSE, warning=FALSE)
 
 # Introduction 
 
+
 ## Overview
 
 The primary utility of the _spatialHeatmap_ package is the generation of
@@ -74,7 +75,7 @@ of single cell data.
 The required quantitative assay data, such as gene expression values, can be
 provided in a variety of widely used tabular data structures (_e.g._
 `data.frame`, `SummarizedExperiment` or `SingleCellExperiment`). The corresponding
-anatomic images need to be supplied as annotated SVG (aSVG) images and can be stored in a specific S4 class `coord`. The
+anatomic images need to be supplied as annotated SVG (aSVG) images and can be stored in a specific S4 class `SVG`. The
 creation of aSVGs is described in the main vignette of this package. For the
 embedding plots of single cell data, several dimensionality reduction
 algorithms (_e.g._ PCA, UMAP or tSNE) are supported. To associate single cells
@@ -92,14 +93,14 @@ the feature labels in an aSVG are different than the corresponding group labels
 used for the single cell data, _e.g._ due to variable terminologies, a
 translation map can be used to avoid manual relabelling. Throughout this
 vignette the usage of the term feature is a generalization referring in most
-cases to tissues or organs. For the implementation of the co-visualization
+cases to tissues or organs.  For the implementation of the co-visualization
 tool, _spatialHeatmap_ takes advantage of efficient and reusable S4 classes for both assay data and aSVGs respectively. The former includes the Bioconductor
 core data structures such as the widely used `SingleCellExperiment` (`SCE`)
 container illustrated in Figure \@ref(fig:covizOver).1 [@sce]. The slots
 `assays`, `colData`, `rowData` and `reducedDims` in an `SCE` contain expression data,
 cell metadata, molecule metadata and reduced dimensionality embedding results,
 respectively. The cell group labels are stored in the `colData` slot as shown
-in Figure \@ref(fig:covizOver).1. The S4 class `coord` (Figure \@ref(fig:covizOver).4) is developed specifically in `spatialHeatmap` for storing aSVG instances. The two most important slots `coordinate` and `attribute` stores the aSVG feature coordinates and respective attributes such as fill color, line withs, etc. respectively, while other slots `dimension`, `svg`, and `raster` stores image dimension, aSVG file paths, and raster image paths respectively. For handling cell-to-tissue grouping
+in Figure \@ref(fig:covizOver).1. The S4 class `SVG` (Figure \@ref(fig:covizOver).4) is developed specifically in `spatialHeatmap` for storing aSVG instances. The two most important slots `coordinate` and `attribute` stores the aSVG feature coordinates and respective attributes such as fill color, line withs, etc. respectively, while other slots `dimension`, `svg`, and `raster` stores image dimension, aSVG file paths, and raster image paths respectively. For handling cell-to-tissue grouping
 information, three general methods are available including (a)
 annotation-based, (b) manual and (c) automated.
 The annotation-based and manual methods are similar by using known cell group
@@ -128,7 +129,7 @@ the same group label will be colored the same. When coloring by tissues
 the color used for each tissue feature will be applied to the corresponding 
 cell groups represented in the embedding plot. 
 
-```{r covizOver, echo=FALSE, fig.wide=TRUE, out.width="100%", fig.cap=("Overview of single cell and tissue co-visualization. (1) Single cell data are organized in a `SingleCellExperiment` object where cell grouping information is stored in the `colData` slot. Usually, each cell group maps to a certain tissue in the spatial heatmap plot. (2) Bulk tissue experssion data are stored in a `SummarizedExperiment` object, where tissues are grouped by aSVG feature identifiers (4) in the `colData` slot. (3) Bi-directional mapping between cell or tissue groups are supported. Cell groups and tissues can be colored by fixed tissue colors or by expression values of selected genes (5) based on the provided single cell or bulk data, where the latter case involves aggregating replicates by mean or median. (4) The aSVG instance is stored in a `coord` class. The `coordinate` slot defines spatial feature shapes in spatial heatmap (5) while the `attribute` slot defines styling of these features such as color, line with, etc. The colors in `attribute` depends on expression values in (1) or (2). (5) Cells in (1) and bulk tissues in (2) or (4) are co-visualized in and embedding plot and spatial heatmap plot respectively, where mapped cell groups and respective tissues are indicated by same colors. ")} 
+```{r covizOver, echo=FALSE, fig.wide=TRUE, out.width="100%", fig.cap=("Overview of single cell and tissue co-visualization. (1) Single cell data are organized in a `SingleCellExperiment` object where cell grouping information is stored in the `colData` slot. Usually, each cell group maps to a certain tissue in the spatial heatmap plot. (2) Bulk tissue experssion data are stored in a `SummarizedExperiment` object, where tissues are grouped by aSVG feature identifiers (4) in the `colData` slot. (3) Bi-directional mapping between cell or tissue groups are supported. Cell groups and tissues can be colored by fixed tissue colors or by expression values of selected genes (5) based on the provided single cell or bulk data, where the latter case involves aggregating replicates by mean or median. (4) The aSVG instance is stored in an `SVG` class. The `coordinate` slot defines spatial feature shapes in spatial heatmap (5) while the `attribute` slot defines styling of these features such as color, line with, etc. The colors in `attribute` depends on expression values in (1) or (2). (5) Cells in (1) and bulk tissues in (2) or (4) are co-visualized in and embedding plot and spatial heatmap plot respectively, where mapped cell groups and respective tissues are indicated by same colors. ")} 
 include_graphics('img/covisualize.jpg')
 ```
 
@@ -199,11 +200,11 @@ sce.aggr.quick <- aggr_rep(sce.dimred.quick, assay.na='logcounts', sam.factor='l
 
 The summarized values are then used to color the tissue features of the corresponding
 aSVG file of mouse brain that is included in the `spatialHeatmap` package. The
-function `parse_svg` is used for parsing the aSVG and storing it in a `coord` object `svg.mus.brain`. 
+function `read_svg` is used for parsing the aSVG and storing it in an `SVG` object `svg.mus.brain`. 
 
 ```{r , eval=TRUE, echo=TRUE, warnings=FALSE, results='hide'}
 svg.mus.brain.pa <- system.file("extdata/shinyApp/example", "mus_musculus.brain.svg", package="spatialHeatmap")
-svg.mus.brain <- parse_svg(svg.mus.brain.pa)
+svg.mus.brain <- read_svg(svg.mus.brain.pa)
 ```
 
 A subset of features and related attributes are returned from `svg.mus.brain`, where `fill` and `stroke` refer to color and line width respectively.   
@@ -291,6 +292,7 @@ The following plots the corresponding co-visualization for sample gene Actr3b. T
 ```{r eval=TRUE, echo=TRUE, warnings=FALSE, fig.wide=TRUE, fig.cap=('Co-visualization plot through tissue-to-cell mapping. In this plot, `Actr3b` is used as an example. Each cell population is colored by its summarized expression value in the embedding plot on the left, and the corresponding tissue shares the same color in the spatial heatmap on the right.'), out.width="100%", fig.show='show', results='hide'}
 covis.lis <- covis(svg=svg.mus.brain, data=blk.mus.aggr, ID=c('Actr3b'), sce.dimred=sce.dimred.quick, dimred='UMAP', cell.group='label', tar.bulk=names(lis.match.blk), lis.rematch=lis.match.blk, bar.width=0.09, dim.lgd.nrow=2, dim.lgd.text.size=12, height=0.7, legend.r=1.5, legend.key.size=0.02, legend.text.size=12, legend.nrow=2)
 ```
+
 
 In scenarios where expression values are similar across tissues, the mapping between cells and tissues can be indicated by fixed contrasting colors by setting `profile=FALSE`.   
 
@@ -408,33 +410,26 @@ After co-clustering, cells are labeled by bulk tissues or un-labeled (Figure \@r
 include_graphics('img/coclustering.jpg')
 ```
 
-After revising the method outline for the co-clustering
-please revise the figure 7 above accordingly. The legend can just refer to the
-main text to avoid duplication. PLEASE keep it simple and clear.
-If a figure raises more questions than it answers then it defeats the purpose of
-guiding the reader and providing clarity.  
 
 
-To obtain reasonably robust default settings for co-clustering, 8 parameters shown in Table \@ref(tab:optPar) and Table \@ref(tab:filSet) are optimized, where bold text indicates optimal settings that are treated as robust default settings. The reason to choose these parameters is they are frequently used in routine omics data analysis. The details of this optimization are given
+To obtain reasonably robust default settings for co-clustering, several parameters shown in Table \@ref(tab:optPar) are optimized, where bold text indicates optimal settings that are treated as robust default settings. The reason to choose these parameters is they are most relevant to the co-clustering workflow. The details of this optimization are given
 [here](https://jianhaizhang.github.io/spatialHeatmap_supplement/cocluster_optimize.html).
 The following demonstration applies the default settings (bold in Table \@ref(tab:optPar)) using single cell and bulk data from mouse brain
 [@Vacher2021-xg; @Ortiz2020-yt]. Both data sets have been simplified for
 demonstraton purposes. 
 
+
 ```{r optPar, eval=TRUE, echo=FALSE, warnings=FALSE}
 df.opt <- cbind(
-Parameter=c('normalization', 'bulkReplicateAggretation', 'filteringSet', 'dimensionReduction', 'topDimensions', 'graphBuilding', 'clusterDetection', 'minSimilarity'),
-Settings=c('**computeSumFactors** (**fct**, scran), calculateCPM (cpm, scuttle), TMM (edgeR), VST (DESeq2)', 
-'**TRUE (yes)**, FALSE (no)', '**fil1**, fil2, fil3, fil4', 
+Parameter=c('dimensionReduction', 'topDimensions', 'graphBuilding', 'clusterDetection', 'minSimilarity'),
+Settings=c( 
 '**denoisePCA** (**PCA**, scran), runUMAP (UMAP, scater)', 
 '5 to 40 at interval of 1 (**12**)', 
 '**buildKNNGraph** (**knn**), **buildSNNGraph** (**snn**) (scran)', 
-'**cluster_walktrap** (**wt**), cluster_fast_greedy (fg), cluster_leading_eigen (le), cluster_spinglass (sl), cluster_edge_betweenness (eb) (igraph)', 
+'**cluster_walktrap** (**wt**), cluster_fast_greedy (fg), cluster_leading_eigen (le)', 
 '0 to 0.9 at interval of 0.1 (**0.1**)'
 ),
-Explanation=c('Normalizing methods in preprocessing',
-'TRUE: bulk tissue replicates are aggregated before co-clustering',
-'Filtering in preprocessing',
+Explanation=c(
 'Dimension reduction methods',
 'Number of top reduced dimensions selected for co-clustering',
 'Methods for building a graph where nodes are cells and edges are connections between nearest neighbors',
@@ -447,19 +442,6 @@ Explanation=c('Normalizing methods in preprocessing',
 kable(df.opt, caption='Parameter settings to optimize for co-clustering. Optimal settings are indicated by bold text.', col.names=colnames(df.opt), row.names=FALSE, escape=TRUE) %>%  kable_styling("striped", full_width = TRUE) %>% scroll_box(width = "700px", height = "230px")
 ```
 
-```{r filSet, eval=TRUE, echo=FALSE, warnings=FALSE}
-df.fil.set <- data.frame(
-p=c(0.1, 0.2, 0.3, 0.4), A=rep(1, 4),
-cv1=c(0.1, 0.2, 0.3, 0.4), cv2=rep(50, 4), 
-cutoff=rep(1, 4), 
-p.in.cell=c(0.1, 0.2, 0.3, 0.4), 
-p.in.gen=c(0.01, 0.05, 0.1, 0.15)
-)
-rownames(df.fil.set) <- paste0('fil', rownames(df.fil.set))
-#write.table(df.fil.set, 'df_fil_set.txt', col.names=TRUE, row.names=TRUE, sep='\t')
-kable(df.fil.set, caption='Filtering parameter set', col.names=colnames(df.fil.set), row.names=TRUE, escape=TRUE) %>%  kable_styling("striped", full_width = FALSE) %>% scroll_box(width = "700px", height = "230px")
-```
-
 ### Pre-processing {#proCoclus}
 
 To obtain reproducible results, a fixed seed is set for generating random numbers.    
@@ -468,7 +450,7 @@ To obtain reproducible results, a fixed seed is set for generating random number
 set.seed(10)
 ```
 
-The bulk data is the same with the tissue-to-cell mapping in the [Annotation-based method](#ann). The following imports example single cell from the `spatialHeatmap` package and shows its partial metadata in `colData` slot.  
+The bulk data (`blk.mus`) is the same with the tissue-to-cell mapping in the [Annotation-based method](#ann). The following imports example single cell from the `spatialHeatmap` package and shows its partial metadata in `colData` slot.  
 
 ```{r eval=TRUE, echo=TRUE, warnings=FALSE}
 sc.mus.pa <- system.file("extdata/shinyApp/example", "cell_mouse_cocluster.rds", package="spatialHeatmap") 
@@ -476,18 +458,18 @@ sc.mus <- readRDS(sc.mus.pa)
 colData(sc.mus)[1:3, , drop=FALSE]
 ```
 
-Bulk and single cell raw count data are jointly normalized by the function `norm_cell`. `cpm=FALSE` indicates the optimal normalizing method `fct` (Table \@ref(tab:optPar)), and `com=FALSE` means bulk and single cell are separated after normalization for subsequent separate filtering.  
+Bulk and single cell raw count data are jointly normalized by the function `norm_cell`, which is a wrapper of `computeSumFactors` from `scran` [@scran]. `com=FALSE` means bulk and single cells are separated after normalization for subsequent separate filtering.  
 
 ```{r eval=TRUE, echo=TRUE, warnings=FALSE, results='hide'}
 mus.lis.nor <- read_cache(cache.pa, 'mus.lis.nor') 
 if (is.null(mus.lis.nor)) {
-  mus.lis.nor <- norm_cell(sce=sc.mus, bulk=blk.mus, cpm=FALSE, com=FALSE)
+  mus.lis.nor <- norm_cell(sce=sc.mus, bulk=blk.mus, com=FALSE)
   save_cache(dir=cache.pa, overwrite=TRUE, mus.lis.nor)
 }
 ```
 
 The normalized single cell and bulk data (log2-scale) are filtered to reduce sparsity
-and low expression values. The following adopts optimal filtering setting `fil1` in Table \@ref(tab:optPar). In the bulk data, replicates are first aggregated by taking means using the function `aggr_rep`. Then the filtering retains genes in
+and low expression values. In the bulk data, replicates are first aggregated by taking means using the function `aggr_rep`. Then the filtering retains genes in
 the bulk data to have expression values of $\ge$ 1 at a proportion of $\ge 10\%$ (`pOA`) across bulk samples and a coefficient of variance (`CV`) between $0.1-50$ [@Gentleman2018-xj]. 
 
 In the single cell data the filtering is set to retain genes with expression values of $\ge 1$ (`cutoff=1`) in $\ge 1\%$ (`p.in.gen=0.01`) of cells. In
@@ -517,6 +499,8 @@ tail(attribute(svg.mus.brain)[[1]])[1:3, 1:4] # Partial features are shown.
 
 ### Co-clustering
 
+
+
 The co-clustering process is performed by calling the function `cocluster`. In the following, default settings obtained from optimization are shown, where `min.dim`, `dimred`, `graph.meth`, and `cluster` refers to `topDimensions`, `dimensionReduction`, `graphBuilding`, and `clusterDetection` in Table \@ref(tab:optPar) respectively.   
 
 ```{r eval=TRUE, echo=TRUE, warnings=FALSE, results='hide'}  
@@ -527,7 +511,7 @@ if (is.null(coclus.mus)) {
 }
 ```
 
-The co-clustering results are stored in the `colData` slot of `coclus.mus`. The `cluster` indicates cluster labels, the `bulkCell` indicates bulk tissues or single cells, the `sample` suggests original labels of bulk and cells, the `assignedBulk` refers to bulk tissues assigned to cells with `none` suggesting un-assigned, and the `similarity` refers to Spearman's correlation coefficients between bulk and cells for each assignment, which is a measure of assignment strigency.   
+The co-clustering results are stored in the `colData` slot of `coclus.mus`. The `cluster` indicates cluster labels, the `bulkCell` indicates bulk tissues or single cells, the `sample` suggests original labels of bulk and cells, the `assignedBulk` refers to bulk tissues assigned to cells with `none` suggesting un-assigned, and the `similarity` refers to Spearman's correlation coefficients for assignments between bulk and cells, which is a measure of assignment strigency.   
 
 ```{r eval=TRUE, echo=TRUE, warnings=FALSE}
 colData(coclus.mus)
@@ -544,6 +528,8 @@ The co-clusters including bulk and cells can be visualized with the function `pl
 ```{r , eval=TRUE, echo=TRUE, warnings=FALSE, fig.wide=TRUE, fig.cap=('Embedding plot of co-clusters. Large and small circles refer to bulk tissues and single cells respectively. '), out.width="80%", fig.show='show'}
 plot_dim(coclus.mus, dim='PCA', color.by='cluster', cocluster.only=TRUE)
 ```
+
+
 
 ### Co-visualization {#covisAuto}
 
@@ -597,7 +583,19 @@ The co-visualization feature is included in the integrated Shiny app that is an 
 include_graphics('img/shiny_coviz.png')
 ```
 
-When using the Shiny app, bulk and single cell raw count data need to be column-wise combined in a `SingleCellExperiment` object and saved as an `.rds` file using `saveRDS`. In the `colData` slot, the `bulkCell` column is populated with `bulk` and `cell` to indicate bulk and cell samples respectively such as `coclus.mus` above. Then upload the `.rds` and aSVG files to the app.   
+When using the Shiny app, if bulk and single cell raw count data are provided, column-wise combine them in a `SCE` object, and format the metadata in the `colData` slot according to the following rules:    
+
+1. In the `bulkCell` column, use `bulk` and `cell` to indicate bulk and cell samples respectively. If no `bulk` is included in this column, all samples are considered cells.   
+
+2. If multiple cell group labels (annotation-based, or manually created) are provided, include them in columns of `label`, `label1`, `label2`, and so on respectively. In each of these label columns include corresponding aSVG features as bulk tissue labels.  
+
+After formatting the metadata, save the `SCE` object as an `.rds` file using `saveRDS`, then upload the `.rds` and aSVG file to the app. An example of bulk and single cell data for use in the Shiny app are included in `spatialHeatmap` and shown below.  
+
+```{r eval=TRUE, echo=TRUE, warnings=FALSE}  
+shiny.dat.pa <- system.file("extdata/shinyApp/example", "shiny_covis_bulk_cell_mouse_brain.rds", package="spatialHeatmap")
+shiny.dat <- readRDS(shiny.dat.pa)
+colData(shiny.dat)
+``` 
 
 
 
@@ -640,7 +638,7 @@ covis(svg=svg.mus.brain, data=coclus.blk, ID=c('Adcy1'), sce.dimred=coclus.sc.ta
 
 This section describes [tailoring](#tailor) co-clustering results on the convenience Shiny app, which is lauched by calling `desired_bulk_shiny`. 
 
-Figure \@ref(fig:tailorShiny) is the screenshot of the Shiny app. The file to upload is an `.rds` file of a `SingleCellExperiment` object saved by `saveRDS`. An example of how to generate such a file is seen in the help file of `desired_bulk_shiny`. On the left embedding plot, cells are selected with the "Lasso Select" tool. On the right, selected cells and their coordinates are listed in a table, and the desired bulk tissues (aSVG features) can be selected from the dropdown list, here `cerebral.cortex`. To download the table just click the "Download" button. The "Help" button gives more instructions.  
+Figure \@ref(fig:tailorShiny) is the screenshot of the Shiny app. The file to upload is the co-clustering result returned by `cocluster`, here `coclus.mus`. It should be saved in an `.rds` file by using `saveRDS` before uploaded to the app. On the left embedding plot, cells are selected with the "Lasso Select" tool. On the right, selected cells and their coordinates are listed in a table, and the desired bulk tissues (aSVG features) can be selected from the dropdown list, here `hippocampus`. To download the table just click the "Download" button. The "Help" button gives more instructions.  
 
 ```{r tailorShiny, echo=FALSE, fig.wide=TRUE, out.width="100%", fig.cap=('Screenshot of the Shiny app for selecting desired bulk tissues. On the left is the embedding plot of single cells, where target cells are selected with the "Lasso Select" tool. On the right, desired bulk tissues are assigned for selected cell.')}
 include_graphics('img/assign_bulk.png')

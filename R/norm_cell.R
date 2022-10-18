@@ -14,7 +14,7 @@
 
 #' @examples
 
-#' library(scran); library(scuttle) 
+#' library(scran); library(scuttle); library(SummarizedExperiment) 
 #' sce <- mockSCE()
 #' sce.qc <- qc_cell(sce, qc.metric=list(subsets=list(Mt=rowData(sce)$featureType=='mito'), threshold=1))
 #' sce.norm <- norm_cell(sce.qc)
@@ -35,6 +35,7 @@
 #' @importFrom scran quickCluster computeSumFactors 
 
 norm_cell <- function(sce, bulk=NULL, cpm=FALSE, count.kp=FALSE, quick.clus=list(min.size = 100), com.sum.fct=list(max.cluster.size = 3000, min.mean=1), log.norm=list(), com=FALSE, wk.dir=NULL) {
+  bulkCell <- NULL
   if (!is.null(wk.dir)) norm.dir <- file.path(wk.dir, 'norm_res') else norm.dir <- NULL
   if (!is.null(norm.dir)) if (!dir.exists(norm.dir)) dir.create(norm.dir, recursive = TRUE)
   # if (!is(sce, 'list')) sce <- list(sce=sce); nas <- names(sce)
@@ -51,7 +52,7 @@ norm_cell <- function(sce, bulk=NULL, cpm=FALSE, count.kp=FALSE, quick.clus=list
     int <- intersect(rownames(bulk), rownames(sce)) 
     sce <- cbind(bulk[int, ], sce[int, ])
   }
-    if (quick.clus$min.size > ncol(sce)) { message(i, ': ', 'fewer cells than min size in quickCluster!'); return() }
+    if (quick.clus$min.size > ncol(sce)) { message('fewer cells than min size in quickCluster!'); return() }
     # Normalization.
     clusters <- do.call(quickCluster, c(list(x=sce), quick.clus))
     sce <- do.call(computeSumFactors, c(list(x=sce, cluster=clusters), com.sum.fct))

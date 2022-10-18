@@ -14,7 +14,7 @@
 
 <title></title>
 
-<script src="about_files/jquery-1.11.3/jquery.min.js"></script>
+<script src="about_files/jquery-3.6.0/jquery-3.6.0.min.js"></script>
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <link href="about_files/bootstrap-3.3.5/css/bootstrap.min.css" rel="stylesheet" />
 <script src="about_files/bootstrap-3.3.5/js/bootstrap.min.js"></script>
@@ -28,7 +28,7 @@
        h5 {font-size: 16px;}
        h6 {font-size: 12px;}
        code {color: inherit; background-color: rgba(0, 0, 0, 0.04);}
-       pre:not([class]) { background-color: white }</style>
+</style>
 <script src="about_files/navigation-1.1/tabsets.js"></script>
 <script src="about_files/navigation-1.1/codefolding.js"></script>
 <link href="about_files/highlightjs-9.12.0/default.css" rel="stylesheet" />
@@ -53,6 +53,7 @@ if (window.hljs) {
   }
 }
 </script>
+
 
 
 
@@ -84,8 +85,8 @@ button.code-folding-btn:focus {
 summary {
   display: list-item;
 }
-pre code {
-  padding: 0;
+details > summary > p:only-child {
+  display: inline;
 }
 </style>
 
@@ -175,7 +176,7 @@ function toggle_visibility(id1) {
 <div id="header">
 
 <div class="btn-group pull-right float-right">
-<button type="button" class="btn btn-default btn-xs btn-secondary btn-sm dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><span>Code</span> <span class="caret"></span></button>
+<button type="button" class="btn btn-default btn-xs btn-secondary btn-sm dropdown-toggle" data-toggle="dropdown" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><span>Code</span> <span class="caret"></span></button>
 <ul class="dropdown-menu dropdown-menu-right" style="min-width: 50px;">
 <li><a id="rmd-show-all-code" href="#">Show All Code</a></li>
 <li><a id="rmd-hide-all-code" href="#">Hide All Code</a></li>
@@ -261,21 +262,19 @@ brain_Prudencio: RNA-seq, <span class="citation">Prudencio et al. (2015)</span>,
 mouse_Merkin: RNA-seq, <span class="citation">Merkin et al. (2012)</span>, accessed through the R package ExpressionAtlas <span class="citation">(Keays 2019)</span>.<br />
 chicken_Cardoso.Moreira: RNA-seq, <span class="citation">Cardoso-Moreira et al. (2019)</span>, accessed through the R package ExpressionAtlas <span class="citation">(Keays 2019)</span>.<br />
 shoot_Mustroph/organ_Mustroph/root_Mustroph/shootRoot_Mustroph/rootRootTip_Mustroph: microarray, <span class="citation">Mustroph et al. (2009)</span>, accessed through the R package GEOquery <span class="citation">(S. Davis and Meltzer 2007)</span>.<br />
-spatiotemporal_Narsai: RNA-seq, <span class="citation">Narsai et al. (2017)</span>, accessed through the R package ExpressionAtlas <span class="citation">(Keays 2019)</span>.<br />
-growthStage_Mustroph: random data.<br />
-map_Census: <span class="citation">Bureau (2018)</span>.</p>
+multiDimensions_Attilio: RNA-seq, <span class="citation">Attilio et al. (2021)</span>, downloaded from GEO with access number GSE163415.<br />
+growthStage_Mustroph: random data.</p>
 <p><strong>Image Source</strong><br />
 brain_Prudencio/mouse_Merkin/chicken_Cardoso.Moreira: <a href="https://github.com/ebi-gene-expression-group/anatomogram/tree/master/src/svg" target="_blank">Expression Atlas-EMBL-EBI</a><br />
 shoot_Mustroph/organ_Mustroph/root_Mustroph/shootRoot_Mustroph/rootRootTip_Mustroph/growthStage_Mustroph: <span class="citation">Merkin et al. (2012)</span>.<br />
-spatiotemporal_Narsai: <span class="citation">Narsai et al. (2017)</span>.<br />
-map_Census: <span class="citation">Trip8.Co (2018)</span>.</p>
-<p><strong>Fund source</strong> This project has been funded by NSF awards: PGRP-1546879, PGRP-1810468, PGRP-1936492.</p>
+multiDimensions_Attilio: <a href="https://github.com/ebi-gene-expression-group/anatomogram/tree/master/src/svg" target="_blank">Expression Atlas-EMBL-EBI</a></p>
+<p><strong>Fund source</strong> This project has been funded by NSF awards: <a href="https://www.nsf.gov/awardsearch/showAward?AWD_ID=1546879&amp;HistoricalAwards=false" target="_blank">PGRP-1546879</a>, <a href="https://www.nsf.gov/awardsearch/showAward?AWD_ID=1810468" target="_blank">PGRP-1810468</a>, <a href="https://www.nsf.gov/awardsearch/showAward?AWD_ID=1936492&amp;HistoricalAwards=false" target="_blank">PGRP-1936492</a>.</p>
 </div>
 <div id="reference" class="section level1 unnumbered">
 <h1>Reference</h1>
 <div id="refs" class="references">
-<div id="ref-US_Census_Bureau">
-<p>Bureau, U.S. Census. 2018. “Annual Population Estimates, Estimated Components of Resident Population Change, and Rates of the Components of Resident Population Change for the United States, States, and Puerto Rico: April 1, 2010 to July 1, 2018.” <a href="https://www.census.gov/data/datasets/time-series/demo/popest/2010s-state-total.html" class="uri">https://www.census.gov/data/datasets/time-series/demo/popest/2010s-state-total.html</a>.</p>
+<div id="ref-Attilio2021-pp">
+<p>Attilio, Peter J, Dustin M Snapper, Milan Rusnak, Akira Isaac, Anthony R Soltis, Matthew D Wilkerson, Clifton L Dalgard, and Aviva J Symes. 2021. “Transcriptomic Analysis of Mouse Brain After Traumatic Brain Injury Reveals That the Angiotensin Receptor Blocker Candesartan Acts Through Novel Pathways.” <em>Front. Neurosci.</em> 15 (March): 636259.</p>
 </div>
 <div id="ref-Cardoso-Moreira2019-yq">
 <p>Cardoso-Moreira, Margarida, Jean Halbert, Delphine Valloton, Britta Velten, Chunyan Chen, Yi Shao, Angélica Liechti, et al. 2019. “Gene Expression Across Mammalian Organ Development.” <em>Nature</em> 571 (7766): 505–9.</p>
@@ -307,9 +306,6 @@ map_Census: <span class="citation">Trip8.Co (2018)</span>.</p>
 <div id="ref-Mustroph2009-nu">
 <p>Mustroph, Angelika, M Eugenia Zanetti, Charles J H Jang, Hans E Holtan, Peter P Repetti, David W Galbraith, Thomas Girke, and Julia Bailey-Serres. 2009. “Profiling Translatomes of Discrete Cell Populations Resolves Altered Cellular Priorities During Hypoxia in Arabidopsis.” <em>Proc Natl Acad Sci U S A</em> 106 (44): 18843–8.</p>
 </div>
-<div id="ref-Narsai2017-ql">
-<p>Narsai, Reena, David Secco, Matthew D Schultz, Joseph R Ecker, Ryan Lister, and James Whelan. 2017. “Dynamic and Rapid Changes in the Transcriptome and Epigenome During Germination and in Developing Rice ( Oryza Sativa ) Coleoptiles Under Anoxia and Re-Oxygenation.” <em>Plant J.</em> 89 (4): 805–24.</p>
-</div>
 <div id="ref-Prudencio2015-wd">
 <p>Prudencio, Mercedes, Veronique V Belzil, Ranjan Batra, Christian A Ross, Tania F Gendron, Luc J Pregent, Melissa E Murray, et al. 2015. “Distinct Brain Transcriptome Profiles in C9orf72-Associated and Sporadic ALS.” <em>Nat. Neurosci.</em> 18 (8): 1175–82.</p>
 </div>
@@ -318,9 +314,6 @@ map_Census: <span class="citation">Trip8.Co (2018)</span>.</p>
 </div>
 <div id="ref-distinct">
 <p>Tiberi, Simone, Helena L Crowell, Lukas M Weber, Pantelis Samartsidis, and Mark D Robinson. n.d. “Distinct : A Novel Approach to Differential Distribution Analyses.” <em>BioRxiv</em>.</p>
-</div>
-<div id="ref-Trip8.Co">
-<p>Trip8.Co. 2018. “Us Map States.” <a href="http://trip8.co/interactive-map-of-us-states-us-map-states-interactive-us-map/interactive-map-of-us-states-us-map-states-interactive-us-map-new-united-states-map-interactive-detail-color-usa-with-name-inside/" class="uri">http://trip8.co/interactive-map-of-us-states-us-map-states-interactive-us-map/interactive-map-of-us-states-us-map-states-interactive-us-map-new-united-states-map-interactive-detail-color-usa-with-name-inside/</a>.</p>
 </div>
 </div>
 </div>
@@ -392,6 +385,28 @@ $(document).ready(function () {
     script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
     document.getElementsByTagName("head")[0].appendChild(script);
   })();
+</script>
+
+<script type="text/javascript">
+$(document).ready(function ()  {
+  
+  // Map "enter" keypress to the same action as a cursor click
+  function navigateLink(e) {
+    if (e.key === "Enter") {
+      $(this).trigger("click");
+    }
+  }
+
+  var toc_items = document.querySelectorAll(".tocify-item");
+  for (var i = 0; i < toc_items.length; i++) {
+    // The link role tells screen readers this is for navigation
+    toc_items.item(i).setAttribute("role", "link");
+    // tabindex = 0 allows selection via keyboard tab presses
+    toc_items.item(i).setAttribute("tabindex", "0");
+    // Listen for "Enter" keypress when item is selected
+    toc_items.item(i).addEventListener("keydown", navigateLink);
+  }
+});
 </script>
 
 </body>

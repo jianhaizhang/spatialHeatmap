@@ -15,7 +15,7 @@
 
 #' @examples
 
-#' library(scran); library(scuttle) 
+#' library(scran); library(scuttle); library(SummarizedExperiment) 
 #' sce <- mockSCE()
 #' sce.dimred <- process_cell_meta(sce, qc.metric=list(subsets=list(Mt=rowData(sce)$featureType=='mito'), threshold=1))
 

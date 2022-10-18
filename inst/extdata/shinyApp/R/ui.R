@@ -73,11 +73,11 @@ data_ui <- function(id, dim.ui=NULL, tailor.ui=NULL, deg=FALSE) {
       tabPanel('Selected Profile', value='dTabSelProf',
         actionButton(ns("tran.scale.but.prof"), "Transform/scale data", style='margin-top:10px'),
         fluidRow(splitLayout(cellWidths=c("1%", "98%", "1%"), "", plotOutput(ns("selProf")), ""))
-      ), 
-      tabPanel('Single-cell metadata', value='dTabScell',
-        column(12, id='colTailorUI', tailor.ui),
-        column(12, id='colDimUI', dim.ui) 
       )
+      #tabPanel('Single-cell metadata', value='dTabScell',
+      #  column(12, id='colTailorUI', tailor.ui),
+      #  column(12, id='colDimUI', dim.ui) 
+      #)
    ) # tabsetPanel(
 
   ) else if (deg == TRUE) {
@@ -146,7 +146,7 @@ upload_ui <- function(id) {
       fluidRow(splitLayout(cellWidths=c('1%', '21%', '1%', '21%', '1%', '24%', '1%', '24%'), '',
       downloadButton(ns("dld.sgl"), "Example1: data & a single aSVG"), '',
       downloadButton(ns("dld.mul"), "Example2: data & multiple aSVGs"), '',
-      downloadButton(ns("dld.st"), "Example3: spatiotemporal data & aSVG"), '',
+      downloadButton(ns("dld.st"), "Example3: multi-dimensional data & aSVG"), '',
       downloadButton(ns("dld.covis"), "Example4: co-visualization data & aSVG")
       ))), br(), 
 
@@ -171,10 +171,11 @@ upload_ui <- function(id) {
 match_ui <- function(id) { 
   ns <- NS(id)
   list(
-  column(12, fluidRow(splitLayout(cellWidths=c('1%', '40%', '5%', '10%', '3%', '10%'), '',
+  column(12, fluidRow(splitLayout(cellWidths=c('1%', '40%', '5%', '10%', '1%', '10%', '1%', '5%'), '',
     uiOutput(ns('svgs'), style = 'margin-left:5px'), '',
     uiOutput(ns('match.but'), style = 'margin-top:23px'), '',
-    uiOutput(ns('match.reset'), style = 'margin-top:23px') 
+    uiOutput(ns('match.reset'), style = 'margin-top:23px'), '',
+    actionButton(ns("matHelp"), "Help", icon = icon('question-circle'), style='margin-top:24px')
     ))), verbatimTextOutput(ns('msg.match')),
   column(12, uiOutput(ns('ft.match')))
   )
@@ -227,8 +228,10 @@ shm_ui <- function(id, data.ui, search.ui) {
       textOutput(ns('h.w.c')), textOutput(ns('msg.col')), div(style='margin-top:10px') 
       ), # tabPanel
       tabPanel("Transparency",
-        fluidRow(splitLayout(cellWidths=c('0.5%', '99.5%'), '',  checkboxGroupInput(inputId=ns("tis"), label="Select features to be transparent", choices='', selected='', inline=TRUE)))  
-      ),
+        fluidRow(splitLayout(cellWidths=c('1%', '5%', '3%', '90%'), '',
+        actionButton(ns("transBut"), "Update", icon=icon("sync"), style = "margin-top: 24px;"), '', 
+        selectizeInput(ns('tis'), label='Transparent features', choices='', multiple = TRUE, options=list(placeholder = 'Selected features will be transparent.'))
+      ))),
       tabPanel("Value legend",
       fluidRow(splitLayout(cellWidths=c('1%', '10%', '1%', '10%', '1%', '10%', '1%', '10%', '1%', '10%'), '', 
       numericInput(inputId=ns('val.lgd.row'), label='Rows', value='', min=1, max=Inf, step=1, width=150), '',
@@ -292,12 +295,13 @@ shm_ui <- function(id, data.ui, search.ui) {
          )
        )
       ), # tabPanel
-      tabPanel("Single cell", value='scellTab', 
-        tags$div(title="Single cell",
-        fluidRow(splitLayout(cellWidths=c('1%', '7%', '1%', '15%', '1%', '10%'), '',  
-        selectInput(ns('profile'), label='Profile', choices=c('No', 'Yes'), selected='No'), '', 
-        selectInput(ns('dims'), label='Dimentionality reduction', choices=c('TSNE', 'PCA', 'UMAP'), selected='UMAP'), '', 
-        uiOutput(ns('tarCell'))
+      tabPanel("Co-visualization", value='scellTab', 
+        tags$div(title="",
+        fluidRow(splitLayout(cellWidths=c('1%', '12%', '1%', '15%', '1%', '10%', '1%', '19%'), '',  
+        selectInput(ns('profile'), label='Expression values', choices=c('No', 'Yes'), selected='Yes'), '', 
+        selectInput(ns('dims'), label='Dimentionality reduction', choices=c('PCA', 'UMAP', 'TSNE'), selected='UMAP'), '', 
+        uiOutput(ns('tarCellBlk')), '',
+        numericInput(ns('dimLgdRows'), label='Legend rows in embedding plot', value=2, min=1, max=Inf, step=1, width=270)
         ))
        )
       ) # tabPanel
@@ -423,14 +427,13 @@ network_ui <- function(id) {
 deg_ui <- function(id) { 
   ns <- NS(id)
   tabPanel('Spatial Enrichment', value='deg',
-    data_ui(ns("datDEG"), deg=TRUE),
     box(title='Spatial Enrichment', status="primary", solidHeader=TRUE, collapsible=TRUE, width=12,
       navbarPage(NULL, 
         tabPanel(title="Parameters",
           dataTableOutput(ns("dt.vs3")), br(),
           fluidRow(splitLayout(cellWidths=c('1%', '30%', '1%', '30%', '1%', '12%', '1%', '12%'), '',
             uiOutput(ns('ssg.sam')), '', uiOutput(ns('ssg.con')), '', 
-            selectInput(ns("sam.con"), "Compare by", c('feature', 'factor', 'feature__factor'), 'feature'), '',
+            selectInput(ns("sam.con"), "Compare by", c('feature', 'variable'), 'feature'), '',
             uiOutput(ns('ssg.tar'))
            )),
           fluidRow(splitLayout(cellWidths=c('1%', '20%', '1%', '20%', '1%', '20%', '1%', '10%', '1%', '10%'), '',
@@ -454,7 +457,8 @@ deg_ui <- function(id) {
           downloadButton(ns("dld.ssg.tab"), "Download")
         ) 
       ) # navbarPage
-    ) # box(title='Spatial Enrich'
+    ), # box(title='Spatial Enrich'
+    data_ui(ns("datDEG"), deg=TRUE)
   )
 }
 
@@ -474,17 +478,20 @@ dim_ui <- function(id) {
 tailor_match_ui <- function(id) { 
   ns <- NS(id)
   col1 <- column(6, id='dimCellBut', 
-  fluidRow(splitLayout(cellWidths=c('1%', '50%', '1%', '20%', '1%', '5%'), '',
-    selectInput(ns('dimCell'), label='Cells before co-clusterings', choices=c("UMAP", "PCA", "TSNE")), '', 
-    actionButton(ns("coclusPlotBut"), label='Covisualizing results', style='margin-bottom:-60px'), ''
+  fluidRow(splitLayout(cellWidths=c('1%', '27%', '1%', '20%', '1%', '5%'), '',
+    selectInput(ns('dimCell'), label='Dimension reduction', choices=c("UMAP", "PCA", "TSNE")), '', 
+    actionButton(ns("coclusPlotBut"), label='Co-visualizing', style='margin-bottom:-60px'), ''
   ))
   );
   col2 <- column(6, id='selBlkButCan',
-  fluidRow(splitLayout(cellWidths=c('1%', '40%', '1%', '25%', '1%', '12%'), '', uiOutput(ns('selBlk')), '',
+  #div(style="overflow-x: auto; z-index:0",
+  fluidRow(splitLayout(cellWidths=c('3%', '40%', '1%', '24%', '1%', '10%', '1%', '15%'), '', uiOutput(ns('selBlk')), '',
   actionButton(ns("selBlkBut"), label='Final confirmation', style='margin-bottom:-60px'), '',
   actionButton(ns("selBlkCancel"), label='Reset', style='margin-bottom:-60px'), '',
-  actionButton(ns("tailorHelp"), "Help", style='margin-bottom:-60px', icon = icon('question-circle'))
+  actionButton(ns("tailorHelp"), "Help", style='margin-bottom:-60px', icon = icon('question-circle')), '',
+  downloadButton(ns("dld"), "Download", style = "margin-top: 24px;")
   ))
+  #)
   ) 
   list( # Inside the list: "," is the separator. Outside the list ";" is the separator.
   col1, col2,
@@ -498,6 +505,11 @@ covis_man_ui <- function(id) {
     tabsetPanel(type = "pills", id=ns('tabSetCell'), selected="datCell",
       tabPanel(title="Parameters", value='parMan', br(),
         actionButton(ns("parManBut"), "Update"), 
+        h4(strong('Bulk tissues')), br(),
+        fluidRow(splitLayout(cellWidths=c('1%', '10%'), '',
+        selectInput(ns("normBlk"), "Normalization", c('None'='none', "CNF-TMM", "CNF-TMMwsp", "CNF-RLE", "CNF-upperquartile", "ESF", "VST", "rlog"), selected='VST')
+        )), 
+        h4(strong('Single Cells')), br(),
         h5(strong('Quality Control')),
         fluidRow(splitLayout(cellWidths=c('1%', '10%','1%', '33%'), '',
           numericInput(ns('cntThr'), label='Min counts', value=0, min=0, max=Inf, step=50, width=150), '',
@@ -539,7 +551,7 @@ covis_man_ui <- function(id) {
         numericInput(ns('ncomU'), label='UMAP dimensions to obtain', value=2, min=2, max=Inf, step=1, width=150), '',
         numericInput(ns('ntopU'), label='Number of top HVGs', value=500, min=50, max=Inf, step=100, width=150), '',
         numericInput(ns('pcs'), label='Number of PCs', value=50, min=5, max=Inf, step=5, width=150)
-        )), span(textOutput(ns('msg.umap')), style='color:red'),
+        )), 
         bsTooltip(ns('ncomU'), title = "runUMAP", placement = "bottom", trigger = "hover"),
         bsTooltip(ns('ntopU'), title = "runUMAP", placement = "bottom", trigger = "hover"),
         fluidRow(splitLayout(cellWidths=c('1%', '13%', '1%', '5%'), '',
@@ -578,75 +590,75 @@ covis_man_ui <- function(id) {
       ) #tabPanel
   ) 
 }
-scell_ui <- function(id) { 
+
+covis_auto_ui <- function(id) { 
   ns <- NS(id)
-  tabPanel("Co-visualization", value='scell', icon=NULL,
-    fluidRow(splitLayout(cellWidths=c('1%', '15%','1%', '15%'), '',
-      # uiOutput(ns('methCovis')), '', uiOutput(ns('direc'))
-      selectInput(ns('methCovis'), label='Methods', choices=c('Annotation/manual'='man', 'Automatic'='auto'), selected='man'), '',
-      selectInput(ns('direc'), label='Mapping direction', choices=cho <- c('Cell2Bulk'='toBulk', 'Bulk2Cell'='toCell'), selected='toBulk')
-    )),
-    covis_man_ui(ns('covisMan')),
-
-    tabsetPanel(type = "pills", id=ns('tabSetAuto'), selected="autoMatch",
-      tabPanel("Automatic", value='autoMatch',  
-      navbarPage('', id='autoMatNav', selected='tailor',  
-      tabPanel('Result',
-        # h5(strong('Subset assignments')),  
-        fluidRow(splitLayout(cellWidths=c('1%', '10%', '1%', '10%'), '',
-        numericInput(ns('asgThr'), label='Assignment threshold', value=0, min=0, max=1, step=0.1, width=150), '',
-        actionButton(ns("coclusAsg"), "Confirm", style='margin-top:24px')
-        )),
-        dataTableOutput(ns("resAsg")) 
-      ),
-
-
-      tabPanel('Parameters',
-        h3(strong('Initial filtering bulk and cells')),  
-        fluidRow(splitLayout(cellWidths=c('1%', '10%', '1%', '10%', '1%', '18%', '1%', '18%', '1%', '10%', '1%', '10%'), '',
-        numericInput(ns('initFilBlkP'), label='P', value=0.05, min=0, max=1, step=0.1, width=150), '',
-        numericInput(ns('initFilBlkA'), label='A', value=5, min=0, max=1000, step=5, width=150), '',
-        numericInput(ns('initFilBlkCV1'), label='Min coefficient of variation (CV1)', value=0.05, min=-1000, max=1000, step=0.1, width=200), '',
-        numericInput(ns('initFilBlkCV2'), label='Max coefficient of variation (CV2)', value=100, min=-1000, max=1000, step=0.1, width=200), '',
-        numericInput(ns('initFilPGen'), label='P by gene', value=0.05, min=0, max=1, step=0.1, width=150), '',
-        numericInput(ns('initFilPCell'), label='P by cell', value=0.01, min=0, max=1, step=0.1, width=150)
-        )), 
-        h3(strong('Normalizing bulk and cells')),  
-        fluidRow(splitLayout(cellWidths=c('1%', '15%'), '',
+  tabsetPanel(type = "pills", id=ns('tabSetCellAuto'), selected="datCell",
+    tabPanel(title="Parameters", value='parAuto', br(),
+      actionButton(ns("parAutoBut"), "Update", style='margin-top:1px'),
+      h5(strong('Normalizing bulk and cell data')),  
+      fluidRow(splitLayout(cellWidths=c('1%', '15%'), '',
         selectInput(ns('normCoclus'), label='Method', choices=c('computeSumFactors'='fct', 'CPM'='cpm'), selected='fct', width=200)
-        )), 
-        h3(strong('Secondary filtering bulk and cells')),  
-        fluidRow(splitLayout(cellWidths=c('1%', '10%', '1%', '10%', '1%', '18%', '1%', '18%', '1%', '10%', '1%', '10%'), '',
+      )), 
+      h5(strong('Filtering')),  
+      fluidRow(splitLayout(cellWidths=c('1%', '6%', '1%', '6%', '1%', '28%', '1%', '28%', '1%', '6%', '1%', '6%'), '',
         numericInput(ns('filBlkP'), label='P', value=0.1, min=0, max=1, step=0.1, width=150), '',
         numericInput(ns('filBlkA'), label='A', value=1, min=0, max=1000, step=5, width=150), '',
         numericInput(ns('filBlkCV1'), label='Min coefficient of variation (CV1)', value=0.1, min=-1000, max=1000, step=0.1, width=200), '',
         numericInput(ns('filBlkCV2'), label='Max coefficient of variation (CV2)', value=200, min=-1000, max=1000, step=0.1, width=200), '',
-        numericInput(ns('filPGen'), label='P by gene', value=0.01, min=0, max=1, step=0.1, width=150), '',
-        numericInput(ns('filPCell'), label='P by cell', value=0.1, min=0, max=1, step=0.1, width=150)
-        )), 
-        h3(strong('Clustering')),  
-        fluidRow(splitLayout(cellWidths=c('1%', '14%', '1%', '13%'), '',
-        selectInput(ns('clusDim'), label='Reducing dimensionality', choices=c('PCA', 'UMAP'), selected='PCA'), '',
-        selectInput(ns('clusMeth'), label='Building graph', choices=c('buildSNNGraph'='snn', 'buildKNNGraph'='knn'), selected='knn')
-        # selectInput(ns('clusSim'), label='Similarity', choices=c('Spearman', 'Pearson'), selected='Spearman')
-        )),
-        h5(strong('Refining cell clusters')),
-        fluidRow(splitLayout(cellWidths=c('1%', '10%', '1%', '10%'), '',
-        numericInput(ns('clusSimT'), label='Similarity threshold', value=0.2, min=0, max=1, step=0.1, width=150), '',
-        numericInput(ns('clusSimP'), label='Similarity proportion', value=0.8, min=0, max=1, step=0.1, width=150)
-        )),
-        h5(strong('Co-clustering bulk and cells')),
-        fluidRow(splitLayout(cellWidths=c('1%', '10%'), '',
-        numericInput(ns('clusDimN'), label='Top dims', value=13, min=5, max=50, step=1, width=150)
-        )), 
-        actionButton(ns("coclusPar"), "Confirm parameters", style='margin-top:1px')
-      ), #tabPanel 
-     tabPanel("Tailoring matching", value='tailor',
-         tailor_match_ui(ns('tailor'))
-     ) #tabPanel("Tailoring matching", navbarPage     
-     )) # tabPanel("Auto-matching", navbarPage(
+        numericInput(ns('filPGen'), label='P in gene', value=0.01, min=0, max=1, step=0.1, width=150), '',
+        numericInput(ns('filPCell'), label='P in cell', value=0.1, min=0, max=1, step=0.1, width=150)
+      )), 
+      bsTooltip(ns('filBlkP'), title = "Filtering bulk data", placement = "bottom", trigger = "hover"),
+      bsTooltip(ns('filBlkA'), title = "Filtering bulk data", placement = "bottom", trigger = "hover"),
+      bsTooltip(ns('filBlkCV1'), title = "Filtering bulk data", placement = "bottom", trigger = "hover"),
+      bsTooltip(ns('filBlkCV2'), title = "Filtering bulk data", placement = "bottom", trigger = "hover"),
+      bsTooltip(ns('filPGen'), title = "Filtering cell data", placement = "bottom", trigger = "hover"),
+      bsTooltip(ns('filPCell'), title = "Filtering cell data", placement = "bottom", trigger = "hover"),
+      h5(strong('Dimension reduction')),
+      fluidRow(splitLayout(cellWidths=c('1%', '11%', '1%', '11%'), '',
+        numericInput(ns('minRank'), label='Min dimensions', value=5, min=2, max=Inf, step=1, width=150), '',
+        numericInput(ns('maxRank'), label='Max dimensions', value=50, min=3, max=Inf, step=5, width=150)
+      )),
+      h5(strong('Co-clustering')),
+      fluidRow(splitLayout(cellWidths=c('1%', '20%', '1%', '14%', '1%', '13%', '1%', '10%'), '',
+        selectInput(ns('dimSel'), label='Dimensions for building graphs', choices=c('PCA', 'UMAP'), selected='PCA'), '',
+        selectInput(ns('graphMeth'), label='Building graphs', choices=c('buildSNNGraph'='snn', 'buildKNNGraph'='knn'), selected='knn'), '',
+        selectInput(ns('clusMeth'), label='Detecting clusters', choices=c('cluster_walktrap'='wt', 'cluster_fast_greedy'='fg', 'cluster_leading_eigen'='le'), selected='wt'), '',
+        numericInput(ns('asgThr'), label='Similarity cutoff', value=0, min=0, max=1, step=0.1, width=150)
+      )),
+      bsTooltip(ns('asgThr'), title = "Assignments with similarities above this cutoff are retained.", placement = "bottom", trigger = "hover")
+    ), # tabPanel(title="Parameters"
+      
+    tabPanel(title="Data Table", value='datCell', br(),
+      box(id='bulk', title = "Bulk Data", width = 12, closable = FALSE, solidHeader = TRUE, collapsible = TRUE, enable_sidebar = FALSE, status = "primary", enable_dropdown = FALSE,
+      dataTableOutput(ns("datCovisBlk"))
+      ),
+      box(id='cell', title = "Cell Data", width = 12, closable = FALSE, solidHeader = TRUE, collapsible = TRUE, enable_sidebar = FALSE, status = "primary", enable_dropdown = FALSE,
+      dataTableOutput(ns("datCovisCell"))
+      )
+      ), # navbarPage tabPanel 
+      tabPanel("Results", value='result', dim_ui(ns('dim'))),
+     tabPanel("Tailoring assignments", value='tailor',
+       tailor_match_ui(ns('tailor'))
+     ) #tabPanel
+  ) 
+}
 
-   ) # tabsetPanel(
+
+
+scell_ui <- function(id) { 
+  ns <- NS(id)
+  tabPanel("Co-visualization", value='scell', icon=NULL,
+    fluidRow(splitLayout(cellWidths=c('1%', '15%','1%', '15%', '1%', '5%'), '',
+      # uiOutput(ns('methCovis')), '', uiOutput(ns('direc'))
+      selectInput(ns('methCovis'), label='Methods', choices=c('Annotation/manual'='man', 'Automatic'='auto'), selected='auto'), '',
+      selectInput(ns('direc'), label='Mapping direction', choices=cho <- c('Cell2Bulk'='toBulk', 'Bulk2Cell'='toCell'), selected='toBulk'), '',
+      actionButton(ns("covisHelp"), "Help", icon = icon('question-circle'), style='margin-top:24px')
+    )),
+    column(id=ns('covisMan'), width=12, covis_man_ui(ns('covisMan'))), 
+    column(id=ns('covisAuto'), width=12, covis_auto_ui(ns('covisAuto')))
+
   ) # tabPanel("Single Cell",
 }
 
@@ -680,7 +692,7 @@ ui <- function(request) {
      })
    ')),
     fluidRow( 
-      do.call(tabsetPanel, append(list(type = "pills", id = 'shm.sup', selected="landing", upload_ui('upl'), shm_ui('shmAll', data_ui('dat', dim_ui('datDim'), tailor_match_ui('datDimTailor')), search_ui('sear')), deg_ui('deg'), scell_ui('scell')),
+      do.call(tabsetPanel, append(list(type = "pills", id = 'shm.sup', selected="landing", upload_ui('upl'), shm_ui('shmAll', data_ui('dat', dim_ui('datDim')), search_ui('sear')), deg_ui('deg'), scell_ui('scell')),
         list(tabPanel("About", value='about',
           if (0) box(width = 12, title = "", closable = FALSE, solidHeader = TRUE, collapsible = TRUE, enable_sidebar = FALSE, status = "primary", enable_dropdown = FALSE,
           ),

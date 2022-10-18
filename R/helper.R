@@ -1,4 +1,15 @@
 
+#' Check availability of packages.
+#' @keywords Internal
+#' @noRd
+
+check_pkg <- function(x) { 
+  tryCatch(
+    utils::packageVersion(x), error = function(e){'e'},
+    warning = function(w){'w'} 
+  )  
+} 
+
 #' Check validity of an object
 #'
 #' @param x An object.

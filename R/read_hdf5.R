@@ -173,17 +173,16 @@
 
 #' @export read_hdf5
 #' @importFrom SummarizedExperiment rowData assay assay<-
-#' @importFrom HDF5Array loadHDF5SummarizedExperiment
 #' @importFrom utils untar
 
 read_hdf5 <- function(file, prefix) {
-
+  if (any(c('e', 'w') %in% check_pkg('HDF5Array'))) stop('The package "HDF5Array" is not detected!')
   options(stringsAsFactors=FALSE)
   dir <- paste0(tempdir(check=TRUE), '/data_shm')
   if (!dir.exists(dir)) dir.create(dir)
   # Check existence of data in prefix.
   untar(file, c('df_pair_assays.h5', 'df_pair_se.rds'), exdir=dir, tar='tar')
-  df.pair <- as.data.frame(assay(loadHDF5SummarizedExperiment(dir=dir, prefix='df_pair_')))
+  df.pair <- as.data.frame(assay(HDF5Array::loadHDF5SummarizedExperiment(dir=dir, prefix='df_pair_')))
   valid <- prefix[!prefix %in% df.pair$data]
   if (length(valid)==1) if (valid!='df_pair') return("The data defined in 'prefix' is not detected!")
   valid <- valid[valid!='df_pair']
@@ -196,7 +195,7 @@ read_hdf5 <- function(file, prefix) {
       cat(paste0('This data is not detected: ', i, '!'), '\n')
       dat <- list('none'); names(dat) <- 'none'; lis <- c(lis, dat); next
     }
-    dat <- loadHDF5SummarizedExperiment(dir=dir, prefix=paste0(i, '_'))
+    dat <- HDF5Array::loadHDF5SummarizedExperiment(dir=dir, prefix=paste0(i, '_'))
     assay(dat) <- as.data.frame(assay(dat))
     assay.na <- names(assay(dat))
     if (!is.null(assay.na)) if (assay.na[1]=='merge') dat <- cbind(assay(dat), rowData(dat))

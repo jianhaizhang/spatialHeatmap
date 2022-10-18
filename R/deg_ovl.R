@@ -8,6 +8,7 @@
 #' @inheritParams UpSetR::upset
 #' @param axis.agl The angle of axis text.
 #' @param font.size The font size of all text in overlap matrix.
+#' @param line.width The line thickness. 
 #' @param cols A vector of two colors indicating low and high values in the overlap matrix respectively. The default is \code{c("lightcyan3", "darkorange")}.
 
 #' @return An upset plot or matrix plot, which displays overlap of spatially-enriched genes across methods. 

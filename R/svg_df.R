@@ -41,10 +41,9 @@ svg_df <- function(svg.path, feature=NULL, cores) {
   na.no <- na.all[!na.all %in% c('g', 'path', 'rect', 'ellipse', 'use', 'title')]
   if (length(na.no)>0) { cat('\n\n'); cat('Warning: accepted SVG elements are "g", "path", "rect", "ellipse", "use", and "title". Please remove these elements in Inkscape:', na.no, '\n\n') }
   # Get ids and titles for every path, including paths inside groups, except for 'a' nodes.
-  tit <- id.all <- NULL; for (i in seq_along(chdn.all)) {
-
-    if (df.attr[i, 'element']=='g') {
-
+  tit <- id.all <- sub.feature <- NULL
+  for (i in seq_along(chdn.all)) {
+    if (df.attr$element[i]=='g') {
      na <- xml_name(xml_children(chdn.all[[i]]))
      len <- xml_length(chdn.all[[i]])-sum(na=='title')
      tit0 <- rep(df.attr$feature[i], len)
@@ -52,6 +51,7 @@ svg_df <- function(svg.path, feature=NULL, cores) {
      if (len>1) tit0 <- paste0(tit0, '__', seq_along(tit0))
      tit <- c(tit, tit0)
      id0 <- rep(df.attr$id[i], len); id.all <- c(id.all, id0)
+     sub.feature <- c(sub.feature, tit_id(xml_children(chdn.all[[i]])[na!='title']))
      # If the styles in paths of a group are different with group style, they can lead to messy 'fill' and 'stroke' in '.ps.xml', so they are set NULL. This step is super important.
      # xml_set_attr(xml_children(chdn.all[[i]]), 'style', NULL)
 
@@ -60,21 +60,38 @@ svg_df <- function(svg.path, feature=NULL, cores) {
       ref <- paste0('#', df.attr$id)
       w <- which(ref %in% xml_attr(chdn.all[[i]], 'href'))
       # If reference is inside a group, since a group contains no nested groups, so the reference is a single path and the use node must has 1 shape.
-      if (length(w)==0) { tit <- c(tit, df.attr$feature[i]); id.all <- c(id.all, df.attr$id[i]) }
+      if (length(w)==0) {
+        tit <- c(tit, df.attr$feature[i]); id.all <- c(id.all, df.attr$id[i])
+        sub.feature <- c(sub.feature, df.attr$feature[i]) 
+      }
       # If reference is outside a group.
       if (length(w)>0) if (df.attr$element[w]=='g') {
-
         na <- xml_name(xml_children(chdn.all[[w]]))
         # Length of the reference group (g).
         len.r <- xml_length(chdn.all[[w]])-sum(na %in% c('a', 'title'))
-        tit0 <- rep(df.attr$feature[i], len.r); tit0 <- paste0(tit0, '__', seq_along(tit0)); tit <- c(tit, tit0)
-        id0 <- rep(df.attr$id[i], len.r); id.all <- c(id.all, id0)
-
-      } else { tit <- c(tit, df.attr$feature[i]); id.all <- c(id.all, df.attr$id[i]) }
-
-    } else { tit <- c(tit, df.attr$feature[i]); id.all <- c(id.all, df.attr$id[i]) }
-
+        tit0 <- rep(df.attr$feature[i], len.r)
+        tit0 <- paste0(tit0, '__', seq_along(tit0))
+        tit <- c(tit, tit0); id0 <- rep(df.attr$id[i], len.r)
+        id.all <- c(id.all, id0)
+        sub.feature <- c(sub.feature, tit0) 
+      } else {
+        tit <- c(tit, df.attr$feature[i]); id.all <- c(id.all, df.attr$id[i]) 
+        sub.feature <- c(sub.feature, df.attr$feature[i]) 
+      }
+    } else { 
+      tit <- c(tit, df.attr$feature[i]); id.all <- c(id.all, df.attr$id[i]) 
+      sub.feature <- c(sub.feature, df.attr$feature[i]) 
+    }
   }; tis.path <- gsub("__\\d+$", "", tit)
+  # Include subfeatures (features in groups).
+  reps <- table(tis.path)[unique(tis.path)]
+  df.attr.rep <- df.attr[rep(rownames(df.attr), reps), ]
+  df.attr.rep$sub.feature <- sub.feature
+  # Index: match with subfeatures in coordinates.
+  df.attr.rep$index <- seq_along(sub.feature)
+  cna.attr.sel <- c('feature', 'id', 'fill', 'stroke', 'sub.feature', 'index', 'element') 
+  df.attr.rep <- df.attr.rep[, c(cna.attr.sel, setdiff(colnames(df.attr.rep), cna.attr.sel))]
+
  # style <- 'fill:#46e8e8;fill-opacity:1;stroke:#000000;stroke-width:3;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1' # 'fill' is not necessary. In Inkscape, resizing a "group" causes "matrix" in "transform" (relative positions) attribute, and this can lead to related polygons uncolored in the spatial heatmaps. Solution: ungroup and regroup to get rid of transforms and get absolute positions.
   # Change 'style' of all polygons. Since in SVG code, if no fill in style, no fill in ".ps.xml", so is the stroke.
   # "stroke" >= 0.51 px always introduces coordinates in .ps.xml, no matter "fill" is "none" or not. If "stroke" < 0.5 px, even though "fill" is not "none" there is no coordinates in ps.xml. E.g. irregular paths of dots. 
@@ -123,8 +140,15 @@ svg_df <- function(svg.path, feature=NULL, cores) {
     df.ply <- cord_parent(svg.path, 'ply', feature, stroke.w, cores)
     if (is(df.ply, 'character')) return(df.ply)
     df <- rbind(df.out$df, df.ply$df); id.no <- c(df.out$ids, df.ply$ids)
-    if (!is.null(id.no)) { cat('No coordinates were extracted for these element(s):', id.no, '!\n') }
+    if (!is.null(id.no)) { 
+      cat('No coordinates were extracted for these element(s):', id.no, '!\n') 
+      df.attr.rep <- filter(df.attr.rep, !sub.feature %in% id.no) 
+    }
   }
+  # Index: match with subfeatures in attributes.
+  df.ft <- df$feature
+  df$index <- rep(df.attr.rep$index, table(df.ft)[unique(df.ft)])
+
   # return("The 'transform' attribute with a 'matrix' value is not allowed in groups! Please remove them by ungrouping and regrouping the related groups in Inkscape if exist!") 
   # Get coordinates from '.ps.xml'.
   # nodeset <- chdn1[which(xml_attr(chdn1, 'type')=='stroke')]
@@ -141,8 +165,8 @@ svg_df <- function(svg.path, feature=NULL, cores) {
   # Place some shapes on the top layer on purpose.
   # idx.top <- grepl('_TOP$|_TOP__\\d+$', df$tissue)
   # df <- rbind(df[!idx.top, ], df[idx.top, ])
-  df$feature <- factor(df$feature, levels=unique(df$feature))
-  # Each entry in tis.path is represented by many x-y pairs in coordinate, and tissues in coord are tissues in tis.path appended '__\\d+$'.
+  # df$feature <- factor(df$feature, levels=unique(df$feature))
+  # Each entry in tis.path is represented by many x-y pairs in coordinate, and tissues in SVG are tissues in tis.path appended '__\\d+$'.
   # Update tis.path.
   # tis.path <- sub('__\\d+$', '', unique(df$feature))
   # fil.cols <- df.attr$fill; names(fil.cols) <- df.attr$feature
@@ -151,7 +175,7 @@ svg_df <- function(svg.path, feature=NULL, cores) {
   names(w.h) <- c('width', 'height')
   # tis.path=sub('_\\d+$', '', tit) introduces a potential bug, since the original single-path tissues can have '_\\d+$' pattern. Solution: in upstream append '__1', '__2', ... to the paths in a group.
   # lis <- list(df=df, tis.path=tis.path, fil.cols=fil.cols, w.h = w.h, aspect.r = aspect.r, df.attr=df.attr); return(lis)
-  lis <- list(coordinate=df, attribute=df.attr, dimension = w.h); return(lis)
+  lis <- list(coordinate=df, attribute=df.attr.rep, dimension = w.h); return(lis)
 }
 
 #' Extract children, id, element name from outline and tissue layer
@@ -403,6 +427,5 @@ cord_parent <- function(svg.path, parent, feature, stroke.w, cores) {
   if (parent=='out') df.par <- cord(doc, out, ply, out, stroke.w, cores) else if (parent=='ply') df.par <- cord(doc, out, ply, ply, stroke.w, cores)
   return(df.par)
 }
-
 
 

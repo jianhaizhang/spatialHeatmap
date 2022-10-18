@@ -2,8 +2,8 @@
 #'
 #' This functionality is an extension of the spatial heatmap. It identifies spatial feature-specifically expressed genes and thus enables the spatial heatmap to visualize feature-specific profiles. The spatial features include cellular compartments, tissues, organs, \emph{etc}. The function compares the target feature with all other selected features in a pairwise manner. The genes significantly up- or down-regulated in the target feature across all pairwise comparisons are denoted final target feature-specifcally expressed genes. The underlying methods include edgeR (Robinson et al, 2010), limma (Ritchie et al, 2015), DESeq2 (Love et al, 2014), distinct (Tiberi et al, 2020). The feature-specific genes are first detected with each method and can be summarized across methods. \cr In addition to feature-specific genes, this function is also able to identify genes specifically expressed in certain condition or in composite factor. The latter is a combination of multiple expermental factors. \code{E.g.} the spatiotemporal factor is a combination of feature and time points.
 
-#' @param data A \code{SummarizedExperiment} object, which is returned by \code{sub_data}. The \code{colData} slot is required to contain at least two columns of "features" and "factors" respectively. The \code{rowData} slot can optionally contain a column of discriptions of each gene and the column name should be \code{metadata}. 
-#' @param methods One or more of \code{edgeR}, \code{limma}, \code{DESeq2}, \code{distinct}. The default is \code{c('edgeR', 'limma')}.
+#' @param data A \code{SummarizedExperiment} object, which is returned by \code{tar_ref}. The \code{colData} slot is required to contain at least two columns of "features" and "factors" respectively. The \code{rowData} slot can optionally contain a column of discriptions of each gene and the column name should be \code{metadata}. 
+#' @param methods One or more of \code{edgeR}, \code{limma}, \code{DESeq2}, \code{distinct}. The default is \code{c('edgeR')}.
 #' @param norm The normalization method (\code{TMM}, \code{RLE}, \code{upperquartile}, \code{none}) in edgeR. The default is \code{TMM}. Details: https://www.rdocumentation.org/packages/edgeR/versions/3.14.0/topics/calcNormFactors
 
 #' @param log2.trans.dis Logical, only applicable when \code{distinct} is in \code{methods}. The default is \code{TRUE}, and the count data is transformed to log-2 scale.
@@ -58,8 +58,8 @@
 #' rowData(se.chk) <- DataFrame(metadata=metadata)
 #'
 #' # Subset the data by selected features (brain, heart, kidney) and factors (day10, day12).
-#' data.sub <- sub_data(data=se.chk, feature='organism_part', features=c('brain', 'heart', 
-#' 'kidney'), factor='age', factors=c('day10', 'day12'), com.by='feature', target='brain')
+#' data.sub <- tar_ref(data=se.chk, feature='organism_part', ft.sel=c('brain', 'heart', 
+#' 'kidney'), variable='age', var.sel=c('day10', 'day12'), com.by='feature', target='brain')
 #' 
 #' ## As conventions, raw sequencing count data should be normalized and filtered to
 #' ## reduce noise. Since normalization will be performed in spatial enrichment, only filtering
@@ -79,11 +79,12 @@
 #' # Up-regulated genes detected by edgeR.
 #' deg.lis$lis.up.down$up.lis$edgeR.up[1:5]
 
-#' # The aSVG path.
+#' # Read aSVG image into an "SVG" object.
 #' svg.chk <- system.file("extdata/shinyApp/example", "gallus_gallus.svg", 
 #' package="spatialHeatmap")
+#' svg.chk <- read_svg(svg.chk)
 #' # Plot one brain-specific gene in spatial heatmap.
-#' spatial_hm(svg.path=svg.chk, data=deg.lis$deg.table, ID=deg.lis$deg.table$gene[1], legend.r=1.9, legend.nrow=2, sub.title.size=7, ncol=2, bar.width=0.11)
+#' spatial_hm(svg=svg.chk, data=deg.lis$deg.table, ID=deg.lis$deg.table$gene[1], legend.r=1.9, legend.nrow=2, sub.title.size=7, ncol=2, bar.width=0.11)
 
 #' # Overlap of up-regulated brain-specific genes across methods.
 #' deg_ovl(deg.lis$lis.up.down, type='up', plot='upset')
@@ -92,7 +93,7 @@
 #' deg_ovl(deg.lis$lis.up.down, type='down', plot='upset')
 #' deg_ovl(deg.lis$lis.up.down, type='down', plot='matrix')
 #' # Line graph of gene expression profile.
-#' profile_gene(deg.lis$deg.table[1, ])
+#' graph_line(deg.lis$deg.table[1, ])
 
 #' @author Jianhai Zhang \email{jianhai.zhang@@email.ucr.edu} \cr Dr. Thomas Girke \email{thomas.girke@@ucr.edu}
 
@@ -108,7 +109,8 @@
 #' @export spatial_enrich
 #' @importFrom SummarizedExperiment colData rowData
 
-spatial_enrich <- function(data, methods=c('edgeR', 'limma'), norm='TMM', log2.trans.dis=TRUE, log2.fc=1, p.adjust='BH', fdr=0.05, aggr='mean', log2.trans.aggr=TRUE) {
+spatial_enrich <- function(data, methods=c('edgeR'), norm='TMM', log2.trans.dis=TRUE, log2.fc=1, p.adjust='BH', fdr=0.05, aggr='mean', log2.trans.aggr=TRUE) {
+  #save(data, methods, norm, log2.trans.dis, log2.fc, p.adjust, fdr, aggr, log2.trans.aggr, file='spatial.enrich.arg')
   cdat <- colData(data); com.factor <- colnames(cdat)[1]
   edg <- dsq <- lim <- dis <- NULL
   if ('edgeR' %in% methods) { cat('edgeR ... \n')
@@ -133,12 +135,14 @@ spatial_enrich <- function(data, methods=c('edgeR', 'limma'), norm='TMM', log2.t
   deg.lis1 <- deg_lis(lis, sam=tar, 'up')
   deg.lis2 <- deg_lis(lis, sam=tar, 'down')
   if (length(deg.lis1) == 1) { # Only one method is selected.
+    na0 <- names(deg.lis1)
     deg.lis1 <- c(deg.lis1[1], deg.lis1[1])
-    names(deg.lis1) <- paste0(names(deg.lis1), c('', '.1')) 
+    names(deg.lis1) <- c(na0, sub('\\.', '1\\.', na0)) 
   }
   if (length(deg.lis2) == 1) { # Only one method is selected.
+    na0 <- names(deg.lis2)
     deg.lis2 <- c(deg.lis2[1], deg.lis2[1])
-    names(deg.lis2) <- paste0(names(deg.lis2), c('', '.1'))
+    names(deg.lis2) <- c(na0, sub('\\.', '1\\.', na0))
   }
   lis.up.dn <- list(up.lis = deg.lis1, down.lis = deg.lis2)
   cat('DEG table ... \n')
@@ -186,7 +190,10 @@ deg_lis <- function(lis, sam, deg='up') {
   lis.all <- NULL; for (i in meths) {
     lis0 <- lis[[i]]
     rna <- rownames(lis0[[sam]][[paste0(sam, '_', deg)]])
-    if (length(rna)>0) { lis1 <- list(rna); names(lis1) <- paste0(i, '.', deg); lis.all <- c(lis.all, lis1) } else cat('No genes detected in', i, '! \n')
+    if (length(rna)>0) { 
+      lis1 <- list(rna); names(lis1) <- paste0(i, '.', deg)
+      lis.all <- c(lis.all, lis1) 
+    } else cat('No genes detected in', i, '! \n')
   }; return(lis.all)
 
 }
@@ -208,6 +215,7 @@ deg_lis <- function(lis, sam, deg='up') {
 #' @importFrom gplots venn 
 
 venn_inter <- function(lis.all) {
+  # save(lis.all, file='venn.inter.arg')
   if (is.null(lis.all)) return (data.frame())
   gen.all <- unique(unlist(lis.all))
   # Create an empty data frame, where rows are all genes and columns are methods.
@@ -230,8 +238,8 @@ venn_inter <- function(lis.all) {
   df.all <- cbind(type=suf, total=rowSums(df.all), df.all)
   # Matrix accepts dupliated rows. Some genes might be up in one method while down in other methods, so when combine up and down table in a single table, there could be duplicated row names. In data frame, duplicated row names are appended 1.
   df.all <- as.matrix(df.all[order(df.all$total, decreasing=TRUE), ])
+  # If one method is selected, remove duplicated column of method.
+  idx <- grep('edgeR\\d+$|limma\\d+$|DESeq2\\d+$|distinct\\d+$', colnames(df.all))
+  if (length(idx)>0) { df.all <- df.all[, -idx]; df.all[, 'total'] <- 1 }
   return(df.all)
 }
-
-
-

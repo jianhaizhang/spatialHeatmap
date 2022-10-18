@@ -97,7 +97,8 @@ df_match <- function() {
 
   dataBulk <-c('NONHAIR,LRC_NONHAIR', 'COLU', 'COLU', 'COLU', 'COLU', 'COLU', 'CORT', 'CORT', 'ENDO,ENDO_QC', 'LRC_NONHAIR', 'LRC_NONHAIR', 'LRC_NONHAIR', 'LRC_NONHAIR', 'XYLEM,PERI,PHLM_COMP,PHLOEM,STELE', 'XYLEM,PERI,PHLM_COMP,PHLOEM,STELE', 'XYLEM,PERI,PHLM_COMP,PHLOEM,STELE', 'XYLEM,PERI,PHLM_COMP,PHLOEM,STELE', 'XYLEM,PERI,PHLM_COMP,PHLOEM,STELE', 'XYLEM,PERI,PHLM_COMP,PHLOEM,STELE', 'XYLEM,PERI,PHLM_COMP,PHLOEM,STELE', 'ENDO_QC,QC', 'ENDO_QC,QC', 'ENDO_QC,QC', 'HAIR', 'XYLEM,PERI,PHLM_COMP,PHLOEM,STELE', 'XYLEM,PERI,PHLM_COMP,PHLOEM,STELE', 'XYLEM,PERI,PHLM_COMP,PHLOEM,STELE', 'XYLEM,PERI,PHLM_COMP,PHLOEM,STELE')
 
-  df.match <- data.frame(SVGBulk=SVGBulk, cell=cell, dataBulk=dataBulk)
+  # df.match <- data.frame(SVGBulk=SVGBulk, cell=cell, dataBulk=dataBulk)
+  df.match <- data.frame(cell=cell, dataBulk=dataBulk)
   return(df.match)
 }
 
@@ -142,6 +143,7 @@ df_match_mus533 <- function() {
   SVGBulk <- c('cerebellum', 'hippocampus', 'cerebral.cortex', 'hippocampus', 'hypothalamus')
   cell <- c('cere', 'hipp', 'isocort', 'retrohipp', 'hypotha')
   trueBulk <- c('CERE', 'HIPP', 'CERE.CORTEX', 'HIPP', 'HYPOTHA')
-  df.match <- data.frame(SVGBulk=SVGBulk, cell=cell, trueBulk=trueBulk)
+  # df.match <- data.frame(SVGBulk=SVGBulk, cell=cell, trueBulk=trueBulk)
+  df.match <- data.frame(cell=cell, trueBulk=trueBulk)
   return(df.match)
 }

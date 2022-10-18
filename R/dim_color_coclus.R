@@ -30,7 +30,7 @@
 
 #' @importFrom SummarizedExperiment colData
 #' @importFrom methods as
-#' @importFrom ggplot2 layer_data ggplot geom_point theme_classic theme element_text element_blank labs scale_shape_manual scale_color_manual margin guide_legend
+#' @importFrom ggplot2 layer_data ggplot geom_point theme_classic theme element_text element_blank labs scale_shape_manual scale_colour_manual margin guide_legend
 
 dim_color_coclus <- function(sce=NULL, row.sel=NULL, targ=NULL, profile=FALSE, gg.dim, gg.shm.all, grob.shm.all, gg.lgd.all, col.shm.all, col.lgd.all, grob.lgd.all, con.na=TRUE, lis.match=NULL, sub.title.size=11, dim.lgd.pos='bottom', dim.lgd.nrow=1, dim.lgd.key.size=4, dim.lgd.text.size=13, dim.capt.size=13) {
  # save(sce, row.sel, targ, profile, gg.dim, gg.shm.all, grob.shm.all, gg.lgd.all, col.shm.all, col.lgd.all, grob.lgd.all, con.na, lis.match, sub.title.size, dim.lgd.pos, dim.lgd.nrow, dim.lgd.text.size, dim.lgd.key.size, dim.capt.size, file='dim.color.coclus.arg')
@@ -42,7 +42,7 @@ dim_color_coclus <- function(sce=NULL, row.sel=NULL, targ=NULL, profile=FALSE, g
     blk.uni <- unique(cdat$assignedBulk)
     blk.uni <- setdiff(blk.uni, 'none')
     lis.match <- as(blk.uni, 'list'); names(lis.match) <- blk.uni
-    if (targ[1]=='matched') targ <- blk.uni
+    # if (targ[1]=='matched') targ <- blk.uni
     targ <- setdiff(targ, 'none') 
     if (any(!targ %in% blk.uni)) stop("Make sure all entries in 'targ' are in 'assignedBulk'!")
   }

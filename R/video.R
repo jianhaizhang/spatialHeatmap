@@ -32,11 +32,11 @@
 #' Jeroen Ooms (2020). av: Working with Audio and Video in R. R package version 0.5.0. https://CRAN.R-project.org/package=av
 #' Baptiste Auguie (2017). gridExtra: Miscellaneous Functions for "Grid" Graphics. R package version 2.3. https://CRAN.R-project.org/package=gridExtra
 
-#' @importFrom av av_capture_graphics
 #' @importFrom gridExtra grid.arrange
 
 video <- function(gg, cs.g, sub.title.size=NULL, bar.width=0.1, bar.value.size=NULL, lgd.key.size=0.02, lgd.text.size=8, angle.text.key=NULL, position.text.key=NULL, lgd.row=2, lgd.col=NULL, legend.value.vdo=NULL, label=FALSE, label.size=4, label.angle=0, hjust=0, vjust=0, opacity=1, key=TRUE, video.dim='640x480', res=500, interval=1, framerate=1, out.dir) {
 
+  if (any(c('e', 'w') %in% check_pkg('av'))) stop('The package "av" is not detected!')
   try(test_ffm()); ffm <- tryCatch({ test_ffm() }, error=function(e){ return('error') }, warning=function(w) { return('warning') } )
   if (grepl('error|warning', ffm)) return()
 
@@ -49,7 +49,7 @@ video <- function(gg, cs.g, sub.title.size=NULL, bar.width=0.1, bar.value.size=N
   res.r=res/144; w.h <- round(as.numeric(strsplit(video.dim, 'x')[[1]])*res.r)
   if (w.h[1] %% 2!=0) w.h[1] <- w.h[1]+1
   if (w.h[2] %% 2!=0) w.h[2] <- w.h[2]+1
-  av_capture_graphics(expr=for (i in na) { print(grid.arrange(cs.g, gg1[[i]], widths=unit(c(bar.width, 1-bar.width), 'npc'), 
+  av::av_capture_graphics(expr=for (i in na) { print(grid.arrange(cs.g, gg1[[i]], widths=unit(c(bar.width, 1-bar.width), 'npc'), 
   heights=unit(c(0.05, 0.99, 0.05), 'npc'), layout_matrix=lay)) }, 
   output=paste0(normalizePath(out.dir, winslash="/", mustWork=FALSE), "/shm.mp4"), width=w.h[1], height=w.h[2], res=res, vfilter=paste0('framerate=fps=', framerate))
 
@@ -61,7 +61,8 @@ video <- function(gg, cs.g, sub.title.size=NULL, bar.width=0.1, bar.value.size=N
 #' @noRd
 
 test_ffm <- function() {
-  av_capture_graphics(expr=for (i in seq_len(2)) plot(i), output=paste0(normalizePath(tempdir(check=TRUE), winslash="/", mustWork=FALSE), '/tmp.mp4'))
+  if (any(c('e', 'w') %in% check_pkg('av'))) stop('The package "av" is not detected!')
+  av::av_capture_graphics(expr=for (i in seq_len(2)) plot(i), output=paste0(normalizePath(tempdir(check=TRUE), winslash="/", mustWork=FALSE), '/tmp.mp4'))
 }
 
 

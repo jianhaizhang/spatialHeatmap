@@ -2,7 +2,7 @@
 #'
 #' Perform all pairwise comparisons for all spatial features in the selected column in \code{colData} slot.
 
-#' @param se A \code{SummarizedExperiment} object, which is returned by \code{sub_data}. The \code{colData} slot is required to contain at least two columns of "features" and "factors" respectively. The \code{rowData} slot can optionally contain a column of discriptions of each gene and the column name should be \code{metadata}. 
+#' @param se A \code{SummarizedExperiment} object, which is returned by \code{tar_ref}. The \code{colData} slot is required to contain at least two columns of "features" and "factors" respectively. The \code{rowData} slot can optionally contain a column of discriptions of each gene and the column name should be \code{metadata}. 
 #' @param method.norm The normalization method in edgeR (Robinson et al, 2010). The default is \code{TMM}.
 #' @param com.factor The column name of spatial features to compare in \code{colData} slot.
 #' @param method.adjust The method to adjust p values in multiple testing. The default is \code{BH}.
@@ -66,8 +66,8 @@
 #' se.fil.chk <- filter_data(data=se.chk, sam.factor='organism_part', con.factor='age',
 #' pOA=c(0.1, 5), CV=c(3.5, 100), dir=NULL)
 #' # Subset the data.
-#' data.sub <- sub_data(data=se.fil.chk, feature='organism_part', features=c('brain', 'heart', 'kidney'),
-#' factor='age', factors=c('day10', 'day12'), com.by='feature', target='brain')
+#' data.sub <- tar_ref(data=se.fil.chk, feature='organism_part', ft.sel=c('brain', 'heart', 'kidney'),
+#' variable='age', var.sel=c('day10', 'day12'), com.by='feature', target='brain')
 #' # Perform all pairwise comparisons in "organism_part" in "colData" slot.
 #' edg <- edgeR(se=data.sub, com.factor='organism_part')
 

@@ -32,7 +32,7 @@ word-wrap: initial !important;
 }
 ```
 
-```{r global_options, include=FALSE}
+```{r global_options, echo=FALSE, include=TRUE}
 ## ThG: chunk added to enable global knitr options. The below turns on
 ## caching for faster vignette re-build during text editing.
 knitr::opts_chunk$set(cache=TRUE)
@@ -89,7 +89,7 @@ public server or running on a private system. The core functionalities of the
 `spatialHeatmap` package are illustrated in Figure \@ref(fig:illus).   
 
 
-```{r illus, echo=FALSE, fig.wide=TRUE, out.width="100%", fig.cap=("Overview of spatialHeatmap. (A) The _saptialHeatmap_ package plots numeric assay data onto spatially annotated images. A wide range of omics technologies is supported including genomic, transcriptomic, proteomic and metabolomic profiling data. The assay data can be provided as numeric vectors, tabular data, _SummarizedExperiment_, or_SingleCellExperiment_ objects. The latter two are widely used data containers for organizing both assay data as well as associated annotation and experimental design data. (B) Anatomical and other spatial images need to be provided as annotated SVG (aSVG) files where the spatial features and the corresponding data components of the assay data have matching labels (_e.g._ tissue labels). An SVG container _coord_ is developed to store feature coordinates and related attributes. The assay data are used to color the matching spatial features in aSVG images according to a color key. The result is called a spatial heatmap (SHM). In the regular SHM (C), the feature profiles may or may not be contrasting, while in the enriched SHM (D) there are clear contrasting profiles across features. (E) Single cell embedding results (PCA, UMAP, TSNE) are co-visualized with SHMs. (F) Data mining graphics, such as matrix heatmaps and network graphs, are integrated to facilitate the identification of factors with similar assay profiles. The functionalities of _spatialHeatmap_ can be accessed from local computers via the R console or a graphical user interface based on Shiny. In addition, the latter can be deployed as a web service on custom servers or cloud-based systems.")}
+```{r illus, echo=FALSE, fig.wide=TRUE, out.width="100%", fig.cap=("Overview of spatialHeatmap. (A) The _saptialHeatmap_ package plots numeric assay data onto spatially annotated images. The assay data can be provided as numeric vectors, tabular data, _SummarizedExperiment_, or _SingleCellExperiment_ objects. The latter two are widely used data containers for organizing both assays as well as associated annotation data and experimental designs. (B) Anatomical and other spatial images need to be provided as annotated SVG (aSVG) files where the spatial features and the corresponding components of the assay data have matching labels (_e.g._ tissue labels). To work with SVG data efficiently, the _SVG_ S4 class container has been developed. The assay data are used to color the matching spatial features in aSVG images according to a color key. (C)-(D) The result is called a spatial heatmap (SHM). Moreover, (E) Single cell embedding results can be co-visualized with SHMs. (F) Data mining graphics such as matrix heatmaps and network graphs can be integrated to facilitate the identification of transcripts or other molecules with similar abundance profiles.")}
 include_graphics('img/graphical_overview_shm.jpg')
 ```
 
@@ -97,8 +97,8 @@ include_graphics('img/graphical_overview_shm.jpg')
 As anatomical images the package supports both tissue maps from public
 repositories and custom images provided by the user. In general any type of
 image can be used as long as it can be provided in SVG (Scalable Vector
-Graphics) format, where the corresponding spatial features (*e.g.* organs, tissues, cellular compartments) have been defined
-(see [aSVG](#term) below). The numeric values plotted onto an SHM
+Graphics) format, where the corresponding spatial features, such as organs, tissues, cellular compartments, are annotated (see [aSVG](#term) below). The numeric values 
+plotted onto an SHM
 are usually quantitative measurements from a wide range of profiling
 technologies, such as microarrays, next generation sequencing (_e.g._ RNA-Seq
 and scRNA-Seq), proteomics, metabolomics, or many other small- or large-scale
@@ -163,8 +163,6 @@ such as measurements with only one or a few data points. The details about how t
 access the SVG images and properly format the associated expression data are
 provided in the [Supplementary Section](#data_form) of this vignette.  
 
-For the purpose of generalization and standardization on annotated SVGs, an S4 class `coord` (Figure \@ref(fig:illus)B) is developed as the SVG container and is explaned in the next section.    
-
 ## Image Format: SVG {#term}
 
 SHMs are images where colors encode numeric values in features of
@@ -177,7 +175,10 @@ colors. In case of biological images suitable for SHMs, the shapes
 often represent anatomical or cell structures. To assign colors to specific
 features in SHMs, _annotated SVG_ (aSVG) files are used where the
 shapes of interest are labeled according to certain conventions so that they
-can be addressed and colored programmatically. One or multiple aSVG files can be parsed automatically by utilities in `spatialHeatmap` and stored in an S4 class `coord` (Figure \@ref(fig:illus)B). The slots of `coord` include `coordinate`, `attribute`, `dimension`, `svg`, and `raster`, corresponding to feature coordinates, styling attributes (color, line width, etc.), width and heigth, aSVG file paths, and raster image paths respectively. The raster images are only required when they are superimposed with SHMs (Figure \@ref(fig:overCol)).   
+can be addressed and colored programmatically. One or multiple aSVG files can be parsed and stored in the `SVG` S4 container with utilities provided by the _spatialHeatmap_ package (Figure \@ref(fig:illus)B). The data slots of `SVG` include `coordinate`, 
+`attribute`, `dimension`, `svg`, and `raster`. They correspond to feature coordinates, styling attributes (color, line width, etc.), width and heigth, aSVG file paths, 
+and raster image paths, respectively. Raster images are optional and only required to
+include photographic image components in SHMs (Figure \@ref(fig:overCol)).  
 
 SVGs and aSVGs of anatomical structures can
 be downloaded from many sources including the repositories described [below](#data_repo).
@@ -220,25 +221,26 @@ our guidlines.
 The following sections of this vignette showcase the most important
 functionalities of the `spatialHeatmap` package using as initial example a simple
 to understand testing data set, and then more complex mRNA profiling data from the
-Expression Atlas and GEO databases. The co-visualization is explained in a separate vignette. 
+Expression Atlas and GEO databases. The co-visualization of tissue and single cell 
+embedding plot is explained in a separate vignette (see [SCSHM-CoViz](https://www.bioconductor.org/packages/release/bioc/vignettes/spatialHeatmap/inst/doc/covisualize.html)). 
 First, SHM plots are generated for both the testing
 and mRNA expression data. The latter include gene expression data sets from
 RNA-Seq and microarray experiments of [Human Brain](#hum), [Mouse
 Organs](#mus), [Chicken Organs](#chk), and [Arabidopsis Shoots](#shoot). The
 first three are RNA-Seq data from the [Expression
 Atlas](https://www.ebi.ac.uk/gxa/home), while the last one is a microarray data
-set from [GEO](https://www.ncbi.nlm.nih.gov/geo/).  Second, gene context
+set from [GEO](https://www.ncbi.nlm.nih.gov/geo/). Second, gene context
 analysis tools are introduced, which facilitate the visualization of
 gene modules sharing similar expression patterns. This includes the
 visualization of hierarchical clustering results with traditional matrix
 heatmaps ([Matrix Heatmap](#mhm)) as well co-expression network plots
-([Network](#net)). Third, the [Spatial Enrichemnt](#se) functionality is illustrated 
+([Network](#net)). Third, the [Spatial Enrichment](#se) functionality is illustrated 
 with mouse RNA-seq data. Lastly, an overview of the corresponding [Shiny App](#shiny)
 is presented that provides access to the same functionalities as the R
 functions, but executes them in an interactive GUI environment [@shiny;
-@shinydashboard]. Fourth, more advanced features for plotting customized
-SHMs are covered using brain data from human as an example.  
+@shinydashboard].     
 
+In addition, a use case is presented in an external [vignette](https://jianhaizhang.github.io/spatialHeatmap_supplement/use_case.html){target='_blank'}, which focuses on integrated workflow of discovery and visualization of potential new genes responsible for a particular biological process.   
 
 # Getting Started  
 
@@ -258,7 +260,7 @@ BiocManager::install("spatialHeatmap")
 Next, the packages required for running the sample code in this vignette need to be loaded.  
 
 ```{r, eval=TRUE, echo=TRUE, warnings=FALSE, results='hide'}
-library(spatialHeatmap); library(SummarizedExperiment); library(ExpressionAtlas); library(GEOquery); library(igraph); library(BiocParallel); library(biomaRt); library(kableExtra)
+library(spatialHeatmap); library(SummarizedExperiment); library(ExpressionAtlas); library(GEOquery); library(igraph); library(BiocParallel); library(kableExtra)
 ```
 
 The following lists the vignette(s) of this package in an HTML browser. Clicking the corresponding name will open this vignette. 
@@ -276,30 +278,31 @@ and intuitive overview how these plots are generated, the following uses a
 generalized tesing example where a small vector of random numeric values is
 generated that are used to color features in an aSVG image. The image chosen
 for this example is an aSVG depicting the human brain. The corresponding image
-file 'homo_sapiens.brain.svg' is included in this package for testing purposes.
-The path to this image on a user\'s system, where `spatialHeatmap` is
-installed, can be obtained with the `system.file` function.
+file `homo_sapiens.brain.svg` is included in this package for testing purposes.   
 
 ### aSVG Image
 
-
-After the full path to the chosen target aSVG image on a user's system is obtained, the function `parse_svg` is used to automatically parse the aSVG file and the information relevant for creating SHMs is stored in a `coord` object `svg.hum`.
+After the full path to the chosen target aSVG image on a user's system is
+obtained with the `system.file` function, the function `read_svg` is used to import the aSVG information relevant for creating SHMs, which is stored in a `SVG` object
+`svg.hum`.
 
 ```{r eval=TRUE, echo=TRUE, warnings=FALSE, results='hide'}
 svg.hum.pa <- system.file("extdata/shinyApp/example", 'homo_sapiens.brain.svg', package="spatialHeatmap")
-svg.hum <- parse_svg(svg.hum.pa)
+svg.hum <- read_svg(svg.hum.pa)
 ```
 
-All features and their attributes can be accessed with the `attribute` function, where `fill` and `stroke` are the two most important ones that indicate colors and line widths respectively.
+All features and their attributes can be accessed with the `attribute`
+function, where `fill` and `stroke` are the two most important ones providing
+color and line width information, respectively. The `feature` column includes group labels for sub-features in `sub.feature`. In the downstream, SHM plots are created by mapping assay data to labels in `feature`. 
 
-```{r eval=TRUE, echo=TRUE, warnings=FALSE}
-feature.df.hum <- attribute(svg.hum)[[1]]
-tail(feature.df.hum, 3) # Partial features and respective attributes
+```{r eval=TRUE, echo=TRUE, warnings=FALSE, collapse=TRUE}
+feature.hum <- attribute(svg.hum)[[1]]
+tail(feature.hum[, 1:6], 3) # Partial features and respective attributes
 ```
 
-Coordinates of all features can be accessed with the `coordinate` function.  
+Feature coordinates can be accessed with the `coordinate` function.  
 
-```{r eval=TRUE, echo=TRUE, warnings=FALSE}
+```{r eval=TRUE, echo=TRUE, warnings=FALSE, collapse=TRUE}
 coord.df <- coordinate(svg.hum)[[1]]
 tail(coord.df, 3) # Partial features and respective coordinates
 ```
@@ -308,23 +311,18 @@ tail(coord.df, 3) # Partial features and respective coordinates
 ### Numeric Data
 
 
-The following example generates a small numeric testing vector, where the data slot
-contains four numbers and its name slot is populated with three "lobe" feature
-names selected from the above aSVG instance (`feature.df.hum`). In addition, a non-matching entry
-(here 'notMapped') is included for demonstration purposes. Note, the numbers
+The following generates a small named vector for testing, 
+where the data slot contains four numbers, and the name slot is populated with 
+three feature names and one missing one (here 'notMapped"). This example is the same 
+as the aSVG example above named `feature.hum`. Note, the numbers
 are mapped to features via matching names among the numeric vector and the aSVG,
 respectively. Accordingly, only numbers and features with matching name
-counterparts can be colored in the aSVG image. Entries without name matches
-are indicated by a message printed to the R console, here "notMapped". This
-behavior can be turned off with `verbose=FALSE` in the corresponding function
-call. In addition, a summary of the numeric assay to feature mappings is stored
+counterparts can be colored in the aSVG image. In addition, a summary of the numeric assay to feature mappings is stored
 in a `data.frame` returned by the `spatial_hm` function (see below). 
 
-
-```{r eval=TRUE, echo=TRUE, warnings=FALSE }
-feature.df.hum$feature # All aSVG features
-my_vec <- sample(1:100, 4)
-names(my_vec) <- c('occipital.lobe', 'parietal.lobe', 'temporal.lobe', 'notMapped')
+```{r eval=TRUE, echo=TRUE, warnings=FALSE, collapse=TRUE }
+unique(feature.hum$feature) # All aSVG features
+my_vec <- setNames(sample(1:100, 4), c('substantia.nigra', 'putamen', 'prefrontal.cortex', 'notMapped'))
 my_vec
 ```
 
@@ -333,52 +331,38 @@ my_vec
 Next, the SHM is plotted with the `spatial_hm` function (Figure
 \@ref(fig:testshm)). Internally, the numbers in `my_vec` are translated into
 colors based on the color key assigned to the `col.com` argument, and then
-painted onto the corresponding features in the aSVG, where the aSVG instance is defined by `svg=svg.hum`. The remaining arguments used here include:
-`ID` for defining the title of the plot; `ncol` for setting the column-wise layout 
-of the plot excluding the feature legend plot on the right; and `height` for defining 
-the height of the SHM relative to its width. To view overlapping features, transparancy
-can be controlled via the `ft.trans` argument. The mouse example in Figure 
-\@ref(fig:musshm) provides additional details on this topic. In the given example
-(Figure \@ref(fig:testshm)) only three features in `my_vec` ('occipital.lobe', 
-'parietal.lobe', and 'temporal.lobe') have matching entries in the corresponding 
-aSVG.   
+painted onto the corresponding features in the aSVG, where the aSVG instance is defined by the `svg` argument. In the given example
+(Figure \@ref(fig:testshm)) only three features in `my_vec` ('substantia.nigra', 'putamen', and 'prefrontal.cortex') have matching entries in the corresponding aSVG.   
 
-```{r testshm, eval=TRUE, echo=TRUE, warnings=FALSE, fig.wide=TRUE, fig.cap=("SHM of human brain with testing data. The plots from left to right represent: color key, SHM and legend. The colors in the first two plots depict the user provided numeric values, whereas in the legend plot they are used to map the feature labels to the corresponding spatial regions in the image. "), out.width="100%" }
-shm.lis <- spatial_hm(svg=svg.hum, data=my_vec, ID='testing', ncol=1, height=0.9, width=0.8, sub.title.size=20, legend.nrow=3, ft.trans=c('g4320'))
+```{r testshm, eval=TRUE, echo=TRUE, warnings=FALSE, fig.wide=TRUE, results='hide', fig.cap=("SHM of human brain with testing data. The plots from the left to the right represent the color key for the numeric data, followed by four SHM plots and the legend of the spatial features. The numeric values provided in `my_vec` are used to color the corresponding features in the SHM plots according to the color key on the left. The legend plot identifies the spatial regions in the SHM plots. "), out.width="100%" }
+shm.lis <- spatial_hm(svg=svg.hum, data=my_vec, ID='testing', ncol=1, sub.title.size=20, legend.nrow=3)
 ```
 
 The named numeric values in `my_vec`, that have name matches with the features in the 
 chosen aSVG, are stored in the `mapped_feature` slot.  
 
-```{r eval=TRUE, echo=TRUE, warnings=FALSE} 
-# The SHM and mapped features are stored in a list.
-names(shm.lis)
+```{r eval=TRUE, echo=TRUE, warnings=FALSE, collapse=TRUE} 
 # Mapped features
 shm.lis$mapped_feature
 ```
 
 ## Human Brain {#hum} 
 
-This subsection introduces how to find cell- and tissue-specific assay data in
-the Expression Atlas database. After choosing a gene expression experiment, the
-data is downloaded directly into a user\'s R session. Subsequently, the 
+
+This subsection introduces how to query and download cell- and tissue-specific assay data in
+the Expression Atlas database using the `ExpressionAtlas` package [@ebi]. After the choosen data is downloaded directly into a user\'s R session, the 
 expression values for selected genes can be plotted onto a chosen aSVG image with 
-or without prior preprocessing steps (_e.g._ normalization). For querying and 
-downloading expression data from the Expression Atlas database, functions from 
-the `ExpressionAtlas` package are used [@ebi]. 
+or without prior preprocessing steps (_e.g._ normalization).   
 
 ### Gene Expression Data
 
 The following example searches the Expression Atlas for expression data derived from
 specific tissues and species of interest, here _'cerebellum'_ and _'Homo sapiens'_,
 respectively. To reduce the runtime of the subsequent steps, some of the intermediate
-results cached in `~/.cache/shm`.  
+results are cached in `~/.cache/shm`.   
 
-```{r eval=TRUE, echo=TRUE, message=FALSE, warnings=FALSE }
+```{r eval=TRUE, echo=TRUE, message=FALSE, warnings=FALSE, results='hide'}
 cache.pa <- '~/.cache/shm' # The path of cache.
-```
-
-```{r eval=TRUE, echo=TRUE, message=FALSE, warnings=FALSE }
 all.hum <- read_cache(cache.pa, 'all.hum') # Retrieve data from cache.
 if (is.null(all.hum)) { # Save downloaded data to cache if it is not cached.
   all.hum <- searchAtlasExperiments(properties="cerebellum", species="Homo sapiens")
@@ -386,14 +370,13 @@ if (is.null(all.hum)) { # Save downloaded data to cache if it is not cached.
 }
 ```
 
-The search result is stored in a `DFrame` containing `r nrow(all.hum)`
-accessions matching the above query. For the following sample code, the
+The search result contains `r nrow(all.hum)`
+accessions. In the following code, the
 accession
 '[E-GEOD-67196](https://www.ebi.ac.uk/arrayexpress/experiments/E-GEOD-67196/){target="_blank"}'
 from Prudencio _et al._ [-@Prudencio2015-wd] has been chosen, which corresponds
 to an RNA-Seq profiling experiment of _'cerebellum'_ and _'frontal cortex'_ brain
-tissue from patients with amyotrophic lateral sclerosis (ALS). Details about the
-corresponding record can be returned as follows.
+tissue from patients with amyotrophic lateral sclerosis (ALS).   
 
 ```{r eval=TRUE, echo=TRUE, warnings=FALSE }
 all.hum[2, ]
@@ -403,7 +386,7 @@ The `getAtlasData` function allows to download the chosen RNA-Seq experiment
 from the Expression Atlas and import it into a `RangedSummarizedExperiment`
 object of a user\'s R session.   
 
-```{r eval=TRUE, echo=TRUE, warnings=FALSE }
+```{r eval=TRUE, echo=TRUE, warnings=FALSE, results='hide'}
 rse.hum <- read_cache(cache.pa, 'rse.hum') # Read data from cache.
 if (is.null(rse.hum)) { # Save downloaded data to cache if it is not cached.
   rse.hum <- getAtlasData('E-GEOD-67196')[[1]][[1]]
@@ -412,28 +395,22 @@ if (is.null(rse.hum)) { # Save downloaded data to cache if it is not cached.
 ```
 
 The design of the downloaded RNA-Seq experiment is described in the `colData` slot of 
-`rse.hum`. The following returns only its first five rows and columns.
+`rse.hum`. The following returns only its first four rows and columns.
 
-```{r eval=TRUE, echo=TRUE, warnings=FALSE }
-colData(rse.hum)[1:5, 1:5]
+```{r eval=TRUE, echo=TRUE, warnings=FALSE, collapse=TRUE }
+colData(rse.hum)[1:2, c(2, 4)]
 ```
 
 ### aSVG Image {#humSVG} 
 
 The following example shows how to download from the above described [SVG
 repositories](#data_repo) an aSVG image that matches the tissues and species
-assayed in the gene expression data set downloaded in the previous subsection.
+assayed in the gene expression data set downloaded above.
 The `return_feature` function queries the repository for feature- and
 species-related keywords, here `c('frontal cortex', 'cerebellum')` and `c('homo
-sapiens', 'brain')`, respectively. To return matching aSVGs, the argument
-`keywords.any` is set to `TRUE` by default. When `return.all=FALSE`, only aSVGs
-matching the query keywords are returned and saved under `dir`. Otherwise, all
-aSVGs are returned regardless of the keywords. To avoid overwriting of existing
-SVG files, it is recommended to start with an empty target directory, here
-`tmp.dir.shm`. To search a local directory for matching aSVG images, the argument
-setting `remote=NULL` needs to be used, while specifying the path of the
-corresponding directory under `dir`. All or only matching features are returned
-if `match.only` is set to `FALSE` or `TRUE`, respectively.  
+sapiens', 'brain')`, respectively. To avoid overwriting of existing
+SVG files, an empty target directory is recommended, here
+`tmp.dir.shm`.         
 
 The remote data are downloaded before calling `return_feature`.    
 
@@ -459,15 +436,14 @@ Code chunk not evaluated to save time building this vignette.
 -->
 ```{r eval=FALSE, echo=TRUE, warnings=FALSE, results='hide' }
 tmp.dir.shm <- file.path(tempdir(check=TRUE), 'shm') # Create empty directory
-feature.df.hum <- return_feature(feature=c('frontal cortex', 'cerebellum'), species=c('homo sapiens', 'brain'), keywords.any=TRUE, return.all=FALSE, dir=tmp.dir.shm, remote=remote, match.only=TRUE, desc=FALSE) # Query aSVGs
+feature.df.hum <- return_feature(feature=c('frontal cortex', 'cerebellum'), species=c('homo sapiens', 'brain'), dir=tmp.dir.shm, remote=remote) # Query aSVGs
 feature.df.hum[1:8, ] # Return first 8 rows for checking
 unique(feature.df.hum$SVG) # Return all matching aSVGs
 ```
 
 To build this vignettes according to Bioconductor's package requirements, the
 following code section uses aSVG file instances included in the
-`spatialHeatmap` package rather than the downloaded instance from the previous
-example. 
+`spatialHeatmap` package rather than the downloaded instances above.  
 
 ```{r eval=TRUE, echo=TRUE, warnings=FALSE, results='hide' }
 svg.dir <- system.file("extdata/shinyApp/example", package="spatialHeatmap") # Directory of the aSVG collection in spatialHeatmap
@@ -477,133 +453,76 @@ feature.df.hum <- return_feature(feature=c('frontal cortex', 'cerebellum'), spec
 Note, the target tissues `frontal cortex` and `cerebellum` are included in both
 the experimental design slot of the downloaded expression data as well as the 
 annotations of the aSVG. This way these features can be colored in the downstream
-SHM plots. If necessary users can also change from within R the feature identifiers 
-and names in an aSVG. Details on this utility are provided in the [Supplementary Section](#update).  
+SHM plots. If necessary users can also change from within R the feature identifiers in an aSVG (see [Supplementary Section](#update)).    
 
-Since the Expression Atlas supports the [cross-species anatomy
-ontology](http://uberon.github.io/){target="_blank"}, the corresponding UBERON identifiers are
-included in the `id` column of the `data.frame` returned by the above function
-call of `return_feature` [@Mungall2012-ma]. This ontology is also supported
-by the `rols` Bioconductor package [@rols].
-
-```{r eval=TRUE, echo=TRUE, warnings=FALSE }
-feature.df.hum[1:5, ]
+```{r eval=TRUE, echo=TRUE, warnings=FALSE, collapse=TRUE }
+tail(feature.df.hum[, c('feature', 'stroke', 'SVG')], 3)
 ```
-Among the returned aSVG files, `homo_sapiens.brain.svg` is chosen for creating SHMs. Since it is the same as the one in [Quick Start](#test), the latter stored in `hum.svg` is used downstream to avoid re-parsing.  
 
-```{r eval=TRUE, echo=TRUE, warnings=FALSE }
-unique(feature.df.hum$SVG)
-```
+Among the returned aSVG files, `homo_sapiens.brain.svg` is chosen for creating SHMs. Since it is the same as the one in [Quick Start](#test), the one stored in `svg.hum` is used in the downstream steps for simplicity.    
 
 ### Experimental Design
 
-For organizing experimental designs and downstream plotting purposes, it can be
-desirable to customize the text in certain columns of `colData`. This way one can
-use the source data for displaying 'pretty' sample names in columns and legends
-of all downstream tables and plots, respectively, in a consistent and automated
-manner. To achieve this, the following example imports a 'targets' file that
-can be generated and edited by the user in a text or spreadsheet program. In
-the following example the target file content is used to replace the text in the
+To display 'pretty' sample names in columns and legends of downstream tables and plots respectively, the following example imports a 'targets' file that can be customized by users in a text program. The targets file content is used to replace the text in the
 `colData` slot of the `RangedSummarizedExperiment` object with a version containing
-shorter sample names that are more suitable for plotting purposes. 
+shorter sample names for plotting purposes. 
 
+The custom targets file is imported and then loaded into `colData` slot of `rse.hum`. A slice of the simplified `colData` object is shown below.    
 
-The following imports a custom target file containing simplified sample labels 
-and experimental design information.
-
-```{r eval=TRUE, echo=TRUE, warnings=FALSE }
+```{r eval=TRUE, echo=TRUE, warnings=FALSE, collapse=TRUE }
 hum.tar <- system.file('extdata/shinyApp/example/target_human.txt', package='spatialHeatmap')
-target.hum <- read.table(hum.tar, header=TRUE, row.names=1, sep='\t')
-```
-
-Load custom target data into `colData` slot.  
-
-```{r eval=TRUE, echo=TRUE, warnings=FALSE }
-colData(rse.hum) <- DataFrame(target.hum)
-```
-
-A slice of the simplified `colData` object is shown below, where the `disease`
-column contains now shorter labels than in the original data set. Additional
-details for generating and using target files in `spatialHeatmap` are provided
-in the [Supplementary Section](#data_form) of this vignette.  
-
-
-```{r eval=TRUE, echo=TRUE, warnings=FALSE}
-colData(rse.hum)[c(1:3, 41:42), 4:5]
+target.hum <- read.table(hum.tar, header=TRUE, row.names=1, sep='\t') # Importing
+colData(rse.hum) <- DataFrame(target.hum) # Loading to "colData"
+colData(rse.hum)[c(1:2, 41:42), 4:5]
 ```
 
 ### Preprocess Assay Data
 
-The actual gene expression data of the downloaded RNA-Seq experiment is stored
-in the `assay` slot of `rse.hum`. Since it contains raw count data, it can be
-desirable to apply basic preprocessing routines prior to plotting spatial
-heatmaps. The following shows how to normalize the count data, aggregate
-replicates and then remove genes with unreliable expression responses.  These
-preprocessing steps are optional and can be skipped if needed. For this,
-the expression data can be provided to the `spatial_hm` function directly, where
-it is important to assign to the `sam.factor` and `con.factor` arguments 
-the corresponding sample and condition column names (Table \@ref(tab:arg)).  
+The raw count gene expression data is stored
+in the `assay` slot of `rse.hum`. The following shows how to apply basic preprocessing routines on the count data, such as normalizing, aggregating replicates, and removing genes with unreliable expression responses, which are optional for plotting SHMs.    
 
-For normalizing raw count data from RNA-Seq experiments, the `norm_data`
-function can be used. It supports the following pre-existing functions from
-widely used packages for analyzing count data in the next generation sequencing
-(NGS) field: `calcNormFactors` (CNF) from `edgeR` [@edgeR1]; as well as
-`estimateSizeFactors` (ESF),  `varianceStabilizingTransformation` (VST), and
-`rlog` from DESeq2 [@deseq2].  The argument `norm.fun` specifies one of the
-four internal normalizing methods: `CNF`, `ESF`, `VST`, and `rlog`. If
-`norm.fun='none'`, no normalization is applied.  The arguments for each
-normalizing function are provided via a `parameter.list`, which is a `list`
-with named slots. For example, `norm.fun='ESF'` and
-`parameter.list=list(type='ratio')` is equivalent to
-`estimateSizeFactors(object, type='ratio')`.  If `paramter.list=NULL`, the
-default arguments are used by the normalizing function assigned to `norm.fun`.
-For additional details, users want to consult the help file of the `norm_data`
-function by typing `?norm_data` in the R console. 
+The `norm_data` function is developed to normalize RNA-seq raw count data. The following example uses the `ESF` normalization option due to its good time performance, which is `estimateSizeFactors` from DESeq2 [@deseq2].    
 
-The following example uses the `ESF` normalization option. This method has been 
-chosen mainly due to its good time performance.   
 
-```{r eval=TRUE, echo=TRUE, warnings=FALSE }
+```{r eval=TRUE, echo=TRUE, warnings=FALSE, results='hide'}
 se.nor.hum <- norm_data(data=rse.hum, norm.fun='ESF', log2.trans=TRUE)
 ```
 
-Replicates are aggregated with the `aggr_rep` function, where the summary
-statistics can be chosen under the `aggr` argument (_e.g._ `aggr='mean'`). The
+Replicates are aggregated with the summary
+statistics chosen under the `aggr` argument (_e.g._ `aggr='mean'`). The
 columns specifying replicates can be assigned to the `sam.factor` and
 `con.factor` arguments corresponding to samples and conditions, respectively.
 For tracking, the corresponding sample/condition labels are used as column
 titles in the aggregated `assay` instance, where they are concatenated with a
-double underscore as separator. In addition, the corresponding rows in the
-`colData` slot are collapsed accordingly.
+double underscore as separator (Table \@ref(tab:humtab)).    
 
-
-```{r eval=TRUE, echo=TRUE, warnings=FALSE }
-se.aggr.hum <- aggr_rep(data=se.nor.hum, sam.factor='organism_part', con.factor='disease', aggr='mean')
-assay(se.aggr.hum)[1:3, ]
-```
-
-To remove unreliable expression measures, filtering can be applied.
-The following example retains genes with expression values
-larger than 5 (log2 space) in at least 1% of all samples (`pOA=c(0.01, 5)`), and
-a coefficient of variance (CV) between 0.30 and 100 (`CV=c(0.30, 100)`).  
 
 ```{r eval=TRUE, echo=TRUE, warnings=FALSE, results='hide'}
-se.fil.hum <- filter_data(data=se.aggr.hum, sam.factor='organism_part', con.factor='disease', pOA=c(0.01, 5), CV=c(0.3, 100), dir=NULL)
-```
-
-To inspect the results, the following returns three selected rows of the fully
-preprocessed data matrix (Table \@ref(tab:humtab)). 
-
-```{r eval=FALSE, echo=TRUE, warnings=FALSE }
-assay(se.fil.hum)[c(5, 733:734), ]
+se.aggr.hum <- aggr_rep(data=se.nor.hum, sam.factor='organism_part', con.factor='disease', aggr='mean')
+assay(se.aggr.hum)[c(120, 49939, 49977), ]
 ```
 
 ```{r humtab, eval=TRUE, echo=FALSE, warnings=FALSE}
 cna <- c("cerebellum\\_\\_ALS", "frontal.cortex\\_\\_ALS", "cerebellum\\_\\_normal", "frontal.cortex\\_\\_normal")
-kable(assay(se.fil.hum)[c(5, 733:734), ], caption='Slice of fully preprocessed expression matrix.', col.names=cna, escape=TRUE)
+kable(assay(se.aggr.hum)[c(120, 49939, 49977), ], caption='Slice of aggregated expression matrix.', col.names=cna, escape=TRUE, row.names=TRUE) %>% kable_styling("striped", full_width = FALSE) %>% scroll_box(width = "700px", height = "220px")
+```
+
+The filtering example below retains genes with expression values
+larger than 5 (log2 space) in at least 1% of all samples (`pOA=c(0.01, 5)`), and
+a coefficient of variance (CV) between 0.30 and 100 (`CV=c(0.30, 100)`).      
+
+```{r eval=TRUE, echo=TRUE, warnings=FALSE, results='hide'}
+se.fil.hum <- filter_data(data=se.aggr.hum, sam.factor='organism_part', con.factor='disease', pOA=c(0.01, 5), CV=c(0.3, 100))
 ```
 
 ### SHM: Single Gene
+
+The aSVG features in `svg.hum` are subsetted with the function `sub_ft` so that only colored sub-images are shown in Figure \@ref(fig:humshm), \@ref(fig:mul), and \@ref(fig:remat). Features of interest are retained by assigning their indexes (see below) to the argument `show`, which corresponding to 'brain outline', 'prefrontal.cortex', 'frontal.cortex', and 'cerebellum' respectively.   
+
+```{r eval=TRUE, echo=TRUE, warnings=FALSE, collapse=TRUE }
+svg.hum.sub <- sub_ft(svg.hum, show=c(64:132, 162:164, 190:218))
+tail(attribute(svg.hum.sub)[[1]], 3)
+```
 
 The preprocessed expression values for any gene in the `assay` slot of
 `se.fil.hum` can be plotted as an SHM. The following uses gene
@@ -611,25 +530,12 @@ The preprocessed expression values for any gene in the `assay` slot of
 brain where the assayed featured are colored by the corresponding expression
 values in `se.fil.hum`.  
 
-<!--
-This image is hidden to meet the 5MB requirement on vignette.
--->
 <a name='hum_single'></a>
 ```{r humshm, eval=TRUE, echo=TRUE, warnings=FALSE, fig.wide=TRUE, fig.cap=("SHM of human brain. Only cerebellum and frontal cortex are colored, because they are present in both the aSVG and the expression data. The legend plot on the right maps the feature labels to the corresponding spatial regions in the image."), out.width="100%", fig.show='show', results='hide'}
-shm.lis <- spatial_hm(svg=svg.hum, data=se.fil.hum, ID=c('ENSG00000268433'), height=0.7, legend.r=1.5, legend.key.size=0.02, legend.text.size=12, legend.nrow=2, ft.trans=c('g4320'))
+spatial_hm(svg=svg.hum.sub, data=se.fil.hum, ID=c('ENSG00000268433'), legend.r=1.5, legend.key.size=0.02, legend.text.size=12, legend.nrow=2, lay='con', ncol=1)
 ```
 
-The plotting instructions of the SHM along with the corresponding 
-mapped features with their attributes are stored as a `list`, here named `shm.lis`. Its components
-can be accessed as follows.  
-
-```{r eval=TRUE, echo=TRUE, warnings=FALSE }
-names(shm.lis) # All slots.
-shm.lis[['mapped_feature']] # Mapped features.
-shm.lis[['feature_attribute']][1:3, ] # Feature attributes.
-```
-
-In the above example, the normalized expression values of gene `ENSG00000268433` 
+In the above example, the normalized expression values of gene `ENSG00000268434` 
 are colored in the frontal cortex and cerebellum, where the different conditions, 
 here normal and ALS, are given in separate SHMs plotted next to 
 each other. The color and feature mappings are defined
@@ -645,35 +551,17 @@ values across genes and/or conditions, the `lay.shm` parameter can be assigned
 `'gene'` or `'con'`, respectively. For instance, in Figure \@ref(fig:mul) the
 SHMs of the genes `ENSG00000268433` and `ENSG00000006047` are organized
 by condition in a horizontal view. This functionality is particularly useful when
-comparing gene families. Users can also customize the order of the SHM subplots, by
-assigning `lay.shm='none'`. With this setting the SHM subplots are organized according 
-to the gene and condition order under `ID` and `data`, respectively.    
-
+comparing gene families.
+ 
 ```{r mul, eval=TRUE, echo=TRUE, warnings=FALSE, fig.wide=TRUE, fig.cap=("SHMs of two genes. The subplots are organized by \"condition\" with the `lay.shm='con'` setting."), out.width="100%", results='hide'}
-spatial_hm(svg=svg.hum, data=se.fil.hum, ID=c('ENSG00000268433', 'ENSG00000006047'), lay.shm='con', width=0.8, height=1, legend.r=1.5, legend.nrow=2, ft.trans=c('g4320'))
+spatial_hm(svg=svg.hum.sub, data=se.fil.hum, ID=c('ENSG00000268433', 'ENSG00000006047'), lay.shm='con', legend.r=1.5, legend.nrow=2)
 ```
 
-### SHM: Re-matching
-
-SHMs supports re-matching between data and aSVG features, *i.e.* re-match one spatial feature in the data to a different counterpart or multiple counterparts in the aSVG. The re-matching is defined in a named list, where a name slot refers to a spatial feature in data and the corresponding element in the list are one or multiple aSVG features to re-match.   
-
-Take Figure \@ref(fig:humshm) as an example. The data feature `frontal.cortex` is re-matched to aSVG features `frontal.cortex` and `prefrontal.cortex` in a list. 
-
-```{r eval=TRUE, echo=TRUE, warnings=FALSE }
-remat.hum <- list(frontal.cortex=c('frontal.cortex', 'prefrontal.cortex'))
-```
-
-SHM plots of re-matching. Examples of re-matching application include mapping gene expression profiles of one species to a closely related species in the same anatomical region, or mapping gene assay profiles of a sub-tissue to the whole tissue, where the gene abundance profiles of the whole tissue are hard to assay and only a sub-tissue is assayed.     
-
-```{r remat, eval=TRUE, echo=TRUE, warnings=FALSE, fig.wide=TRUE, fig.cap=("SHMs of re-matching. The data feature `frontal.cortex` is re-matched to aSVG features `frontal.cortex` and `prefrontal.cortex`."), out.width="100%" }
-spatial_hm(svg=svg.hum, data=se.fil.hum, ID=c('ENSG00000268433'), lay.shm='gene', ncol=2, width=1, height=1, legend.r=0.8, legend.nrow=2, ft.trans=c('g4320'), lis.rematch=remat.hum)
-```
+The matching between data and aSVG features can be customized, such as matching a spatial feature in the data to a different or multiple counterparts in the aSVG. This advanced function is demonstrated in the [Supplementary Section](#remat).  
 
 ### SHM: HTML and Video
 
-SHMs can be saved to interactive HTML files as well as video files. To trigger
-this export behavior, the argument `out.dir` needs to be assinged a directory
-path where the HTML and video files will be stored. Each HTML file
+SHMs can be saved to interactive HTML files as well as video files. Each HTML file
 contains an interactive SHM with zoom in and out functionality. Hovering over
 graphics features will display data, gene, condition and other information. The
 video will play the SHM subplots in the order specified under the `lay.shm`
@@ -686,8 +574,8 @@ a directory named `tmp.dir.shm`.
 Code chunk not evaluated to save time building this vignette.
 -->
 ```{r eval=FALSE, echo=TRUE, warnings=FALSE, results='hide'}
-tmp.dir.shm <- paste0(normalizePath(tempdir(check=TRUE), winslash="/"), '/shm')
-spatial_hm(svg=svg.hum, data=se.fil.hum, ID=c('ENSG00000268433', 'ENSG00000006047'), lay.shm='con', width=0.8, height=1, legend.r=1.5, legend.nrow=2, out.dir=tmp.dir.shm, ft.trans=c('g4320'))
+tmp.dir.shm <- file.path(tempdir(check=TRUE), 'shm')
+spatial_hm(svg=svg.hum, data=se.fil.hum, ID=c('ENSG00000268433', 'ENSG00000006047'), lay.shm='con', legend.r=1.5, legend.nrow=2, out.dir=tmp.dir.shm)
 ```
 
 ### SHM: Customization
@@ -699,8 +587,6 @@ An overview of important arguments and their utility is provided in Table \@ref(
 arg.df <- read.table('file/spatial_hm_arg.txt', header=TRUE, row.names=1, sep='\t')
 kable(arg.df, caption='List of important argumnets of \'spatial_hm\'.', col.names=colnames(arg.df), row.names=TRUE, escape=TRUE) %>% kable_styling("striped", full_width = FALSE) %>% scroll_box(width = "700px", height = "230px")                                     
 ```                           
-
-
 
 ## Mouse Organs {#mus}
 
@@ -715,7 +601,7 @@ The chosen mouse RNA-Seq data compares tissue level gene expression across
 mammalian species [@Merkin2012-ak]. The following searches the Expression 
 Atlas for expression data from _'heart'_ and _'Mus musculus'_.
 
-```{r eval=TRUE, echo=TRUE, warnings=FALSE }
+```{r eval=TRUE, echo=TRUE, warnings=FALSE, results='hide'}
 all.mus <- read_cache(cache.pa, 'all.mus') # Retrieve data from cache.
 if (is.null(all.mus)) { # Save downloaded data to cache if it is not cached.
   all.mus <- searchAtlasExperiments(properties="heart", species="Mus musculus")
@@ -725,7 +611,7 @@ if (is.null(all.mus)) { # Save downloaded data to cache if it is not cached.
 
 Among the many matching entries, accession 'E-MTAB-2801' will be downloaded.  
 
-```{r eval=TRUE, echo=TRUE, warnings=FALSE }
+```{r eval=TRUE, echo=TRUE, warnings=FALSE, results='hide'}
 all.mus[7, ]
 rse.mus <- read_cache(cache.pa, 'rse.mus') # Read data from cache.
 if (is.null(rse.mus)) { # Save downloaded data to cache if it is not cached.
@@ -737,89 +623,65 @@ if (is.null(rse.mus)) { # Save downloaded data to cache if it is not cached.
 The design of the downloaded RNA-Seq experiment is described in the `colData` slot of 
 `rse.mus`. The following returns only its first three rows.
 
-```{r eval=TRUE, echo=TRUE, warnings=FALSE }
+```{r eval=TRUE, echo=TRUE, warnings=FALSE, collapse=TRUE }
 colData(rse.mus)[1:3, ]
 ```
 
 ### aSVG Image  
 
-The following example shows how to retrieve from the above described [remote SVG
+The following example shows how to retrieve from the [remote SVG
 repositories](#data_repo) an aSVG image that matches the tissues and species
-assayed in the gene expression data set downloaded in the previous subsection.
-The following downloads and uses the sample data from [Human Brain](#humSVG).
-As before the image is saved to a directory named `tmp.dir.shm`.  
+assayed in the downloaded data above. The sample data from [Human Brain](#humSVG) are used such as `remote`.      
 
 <!--
 Code chunk not evaluated to save time building this vignette.
 -->
 ```{r eval=FALSE, echo=TRUE, warnings=FALSE, results='hide' }
 tmp.dir.shm <- file.path(tempdir(check=TRUE), 'shm')
-feature.df.mus <- return_feature(feature=c('heart', 'kidney'), species=c('Mus musculus'), keywords.any=TRUE, return.all=FALSE, dir=tmp.dir.shm, remote=remote, match.only=FALSE)
+feature.df.mus <- return_feature(feature=c('heart', 'kidney'), species=c('Mus musculus'), dir=tmp.dir.shm, remote=remote)
 ```
 
-To build this vignettes according to the R/Bioconductor package requirements, the
-following code section uses the aSVG file instance included in the
-`spatialHeatmap` package rather than the downloaded instance from the example in
-the previous step. 
-
+To meet the R/Bioconductor package requirements, the following uses aSVG file instances included in the
+`spatialHeatmap` package rather than the downloaded instances.   
 
 ```{r eval=TRUE, echo=TRUE, warnings=FALSE, results='hide' }
-feature.df.mus <- return_feature(feature=c('heart', 'kidney'), species=NULL, keywords.any=TRUE, return.all=FALSE, dir=svg.dir, remote=NULL, match.only=FALSE) 
+feature.df.mus <- return_feature(feature=c('heart', 'kidney'), species=NULL, dir=svg.dir, remote=NULL) 
 ```
 
 Return the names of the matching aSVG files.
 
-```{r eval=TRUE, echo=TRUE, warnings=FALSE }
+```{r eval=TRUE, echo=TRUE, warnings=FALSE, collapse=TRUE}
 unique(feature.df.mus$SVG)
 ```
 
-The following first selects `mus_musculus.male.svg` as target aSVG, then
-returns the first three rows of the resulting `feature.df.mus`, and finally prints
-the unique set of all aSVG features.   
-
-```{r eval=TRUE, echo=TRUE, warnings=FALSE }
-feature.df.mus <- subset(feature.df.mus, SVG=='mus_musculus.male.svg')
-feature.df.mus[1:3, ]
-unique(feature.df.mus$feature)
-```
-
-Obtain the target aSVG path on user system and parse the aSVG file. 
+The `mus_musculus.male.svg` instance is selected as target aSVG and imported.   
 
 ```{r eval=TRUE, echo=TRUE, warnings=FALSE, results='hide'}
 svg.mus.pa <- system.file("extdata/shinyApp/example", "mus_musculus.male.svg", package="spatialHeatmap")
-svg.mus <- parse_svg(svg.mus.pa)
+svg.mus <- read_svg(svg.mus.pa)
 ```
 
 ### Experimental Design
 
-The following imports a sample target file that is included in this package.
-To inspect its content, the first three rows of the target file are printed to the 
-screen.
+A sample target file that is included in this package is imported and then loaded to the `colData` slot of `rse.mus`. To inspect its content, the first three rows are shown.   
 
-```{r eval=TRUE, echo=TRUE, warnings=FALSE }
+```{r eval=TRUE, echo=TRUE, warnings=FALSE, collapse=TRUE}
 mus.tar <- system.file('extdata/shinyApp/example/target_mouse.txt', package='spatialHeatmap')
-target.mus <- read.table(mus.tar, header=TRUE, row.names=1, sep='\t')
+target.mus <- read.table(mus.tar, header=TRUE, row.names=1, sep='\t') # Importing
+colData(rse.mus) <- DataFrame(target.mus) # Loading
 target.mus[1:3, ]
-unique(target.mus[, 3])
-```
-
-Load custom target data into `colData` slot.  
-
-```{r eval=TRUE, echo=TRUE, warnings=FALSE }
-colData(rse.mus) <- DataFrame(target.mus)
 ```
 
 ### Preprocess Assay Data
 
 The raw RNA-Seq count are preprocessed with the following steps: (1)
-normalization, (2) aggregation of replicates, and (3) filtering of reliable
-expression data. The details of these steps are explained in the sub-section 
-above using data from human.
+normalization, (2) aggregation of replicates, and (3) filtering of un-reliable
+expression data. The details of these steps are explained in the sub-section of the [Human Brain](#humSVG) example.    
 
 ```{r eval=TRUE, echo=TRUE, warnings=FALSE, results='hide'}
 se.nor.mus <- norm_data(data=rse.mus, norm.fun='ESF', log2.trans=TRUE) # Normalization
 se.aggr.mus <- aggr_rep(data=se.nor.mus, sam.factor='organism_part', con.factor='strain', aggr='mean') # Aggregation of replicates
-se.fil.mus <- filter_data(data=se.aggr.mus, sam.factor='organism_part', con.factor='strain', pOA=c(0.01, 5), CV=c(0.6, 100), dir=NULL) # Filtering of genes with low counts and variance 
+se.fil.mus <- filter_data(data=se.aggr.mus, sam.factor='organism_part', con.factor='strain', pOA=c(0.01, 5), CV=c(0.6, 100)) # Filtering of genes with low counts and variance 
 ```
 
 ### SHM: Transparency
@@ -829,7 +691,7 @@ of an SHM. In this case the plot includes expression data for 8 tissues across 3
 mouse strains. 
 
 ```{r, musshm, eval=TRUE, echo=TRUE, warnings=FALSE, fig.wide=TRUE, fig.cap=("SHM of mouse organs. This is a multiple-layer image where the shapes of the 'skeletal muscle' is set transparent to expose 'lung' and 'heart'."), out.width="100%", results='hide'}
-shm.lis <- spatial_hm(svg=svg.mus, data=se.fil.mus, ID=c('ENSMUSG00000000037'), height=0.7, legend.width=0.7, legend.text.size=10, sub.title.size=9, ncol=3, ft.trans=c('skeletal muscle', 'path4204'), legend.nrow=4, line.size=0.2, line.color='grey70')
+spatial_hm(svg=svg.mus, data=se.fil.mus, ID=c('ENSMUSG00000000037'), legend.width=0.7, legend.text.size=10, sub.title.size=9, ncol=3, ft.trans=c('skeletal muscle'), legend.nrow=4, line.size=0.2, line.color='grey70')
 ```
 
 The SHM plots in Figures \@ref(fig:musshm) and below demonstrate
@@ -837,145 +699,17 @@ the usage of the transparency feature via the `ft.trans` parameter. The
 corresponding mouse organ aSVG image includes overlapping tissue layers. In
 this case the skelectal muscle layer partially overlaps with lung and heart
 tissues. To view lung and heart in Figure \@ref(fig:musshm), the skelectal
-muscle tissue is set transparent with `ft.trans=c('skeletal muscle', 'path4204')`. To view
-in the same aSVG the skeletal muscle tissue instead, `ft.trans` is assigned
-`path4204` as shown below.  
+muscle tissue is set transparent with `ft.trans=c('skeletal muscle')`.    
 
 To fine control the visual effects in feature rich aSVGs, the `line.size` and
 `line.color` parameters are useful. This way one can adjust the thickness and 
 color of complex structures.
 
-
 ```{r, musshm1, eval=TRUE, echo=TRUE, warnings=FALSE, fig.wide=TRUE, fig.cap=("SHM of mouse organs. This is a multiple-layer image where the view onto 'lung' and 'heart' is obstructed by displaying the 'skeletal muscle' tissue."), out.width="100%", fig.show='show', results='hide'}
-spatial_hm(svg=svg.mus, data=se.fil.mus, ID=c('ENSMUSG00000000037'), height=0.6, legend.text.size=10, sub.title.size=9, ncol=3, legend.ncol=2, line.size=0.1, line.color='grey70', ft.trans='path4204')
+spatial_hm(svg=svg.mus, data=se.fil.mus, ID=c('ENSMUSG00000000037'), legend.text.size=10, sub.title.size=9, ncol=3, legend.ncol=2, line.size=0.1, line.color='grey70')
 ```
 
-## Chicken Organs {#chk}
-
-This section generates an SHM plot for chicken data from the Expression Atlas.
-The code components are very similar to the [Human Brain](#hum) example. For
-brevity, the corresponding text explaining the code has been reduced to a
-minimum. 
-
-### Gene Expression Data
-
-The chosen chicken RNA-Seq experiment compares the developmental changes across 
-nine time points of seven organs [@Cardoso-Moreira2019-yq].
-
-The following searches the Expression Atlas for expression data from _'heart'_
-and _'gallus'_.
-
-```{r eval=TRUE, echo=TRUE, warnings=FALSE }
-all.chk <- read_cache(cache.pa, 'all.chk') # Retrieve data from cache.
-if (is.null(all.chk)) { # Save downloaded data to cache if it is not cached.
-  all.chk <- searchAtlasExperiments(properties="heart", species="gallus")
-  save_cache(dir=cache.pa, overwrite=TRUE, all.chk)
-}
-```
-
-Among the matching entries, accession 'E-MTAB-6769' will be downloaded.  
-
-```{r eval=TRUE, echo=TRUE, warnings=FALSE }
-all.chk[3, ]
-rse.chk <- read_cache(cache.pa, 'rse.chk') # Read data from cache.
-if (is.null(rse.chk)) { # Save downloaded data to cache if it is not cached.
-  rse.chk <- getAtlasData('E-MTAB-6769')[[1]][[1]]
-  save_cache(dir=cache.pa, overwrite=TRUE, rse.chk)
-}
-```
-
-The design of the downloaded RNA-Seq experiment is described in the `colData`
-slot of `rse.chk`. The following returns only its first three rows.
-
-```{r eval=TRUE, echo=TRUE, warnings=FALSE } 
-colData(rse.chk)[1:3, ]
-```
-
-### aSVG Image  
-
-The following example shows how to download from the above introduced [SVG
-repositories](#data_repo) an aSVG image that matches the tissues and species
-assayed in the gene expression data set downloaded in the previous subsection.
-As before the image is saved to a directory named `tmp.dir.shm`.  
-
-<!--
-Code chunk not evaluated to save time building this vignette.
--->
-```{r eval=FALSE, echo=TRUE, warnings=FALSE, results='hide' }
-tmp.dir.shm <- file.path(tempdir(check=TRUE), 'shm')
-# Query aSVGs.
-feature.df <- return_feature(feature=c('heart', 'kidney'), species=c('gallus'), keywords.any=TRUE, return.all=FALSE, dir=tmp.dir.shm, remote=remote, match.only=FALSE)
-```
-
-To build this vignettes according to the R/Bioconductor package requirements, the
-following code section uses the aSVG file instance included in the
-`spatialHeatmap` package rather than the downloaded instance from the previous
-step. 
-
-```{r eval=TRUE, echo=TRUE, warnings=FALSE, results='hide' }
-feature.df <- return_feature(feature=c('heart', 'kidney'), species=c('gallus'), keywords.any=TRUE, return.all=FALSE, dir=svg.dir, remote=NULL, match.only=FALSE)
-feature.df[1:3, ] # A slice of the features.
-```
-
-Obtain the target aSVG path on user system and parse the aSVG file. 
-
-```{r eval=TRUE, echo=TRUE, warnings=FALSE}
-svg.chk.pa <- system.file("extdata/shinyApp/example", "gallus_gallus.svg", package="spatialHeatmap")
-svg.chk <- parse_svg(svg.chk.pa)
-```
-
-### Experimental Design
-
-The following imports a sample target file that is included in this package.
-To inspect its content, the first three rows of the target file are printed to the 
-screen.
-
-```{r eval=TRUE, echo=TRUE, warnings=FALSE }
-chk.tar <- system.file('extdata/shinyApp/example/target_chicken.txt', package='spatialHeatmap')
-target.chk <- read.table(chk.tar, header=TRUE, row.names=1, sep='\t')
-target.chk[1:3, ]
-```
-
-Load custom target data into `colData` slot.  
-
-```{r eval=TRUE, echo=TRUE, warnings=FALSE }
-colData(rse.chk) <- DataFrame(target.chk)
-```
-
-Return samples used for plotting SHMs.  
-
-```{r eval=TRUE, echo=TRUE, warnings=FALSE }
-unique(colData(rse.chk)[, 'organism_part'])
-```
-
-Return conditions considered for plotting downstream SHM.  
-
-```{r eval=TRUE, echo=TRUE, warnings=FALSE }
-unique(colData(rse.chk)[, 'age'])
-```
-
-### Preprocess Assay Data
-
-The raw RNA-Seq count are preprocessed with the following steps: (1)
-normalization, (2) aggregation of replicates, and (3) filtering of reliable
-expression data. The details of these steps are explained in the above
-sub-section on human data.
-
-```{r eval=TRUE, echo=TRUE, warnings=FALSE, results='hide'}
-se.nor.chk <- norm_data(data=rse.chk, norm.fun='ESF', log2.trans=TRUE) # Normalization
-se.aggr.chk <- aggr_rep(data=se.nor.chk, sam.factor='organism_part', con.factor='age', aggr='mean') # Replicate agggregation using mean 
-se.fil.chk <- filter_data(data=se.aggr.chk, sam.factor='organism_part', con.factor='age', pOA=c(0.01, 5), CV=c(0.6, 100), dir=NULL) # Filtering of genes with low counts and varince
-```
-
-### SHM: Time Series
-
-The expression profile for gene `ENSGALG00000006346` is plotted across nine time
-points in four organs in form of a composite SHM with 9 panels. Their layout in
-three columns is controlled with the argument setting `ncol=3`. 
-
-```{r chkshm, eval=TRUE, echo=TRUE, warnings=FALSE, fig.wide=TRUE, fig.cap=("Time course of chicken organs. The SHM shows the expression profile of a single gene across nine time points and four organs."), out.width="100%", results='hide'}
-spatial_hm(svg=svg.chk, data=se.fil.chk, ID='ENSGALG00000006346', width=0.9, legend.width=0.9, legend.r=1.5, sub.title.size=9, ncol=3, legend.nrow=2, label=TRUE)
-```
+A third example on real data from Expression Atlas is SHMs of time series across chicken organs. Since the procedures are the same with the examples above, this example is illustrated in the [Supplementary Section](#chk).  
 
 ## Arabidopsis Shoot {#shoot}
 
@@ -990,15 +724,13 @@ generating SHMs are very similar to the previous examples. For brevity, the
 text in this section explains mainly the steps that are specific to this data
 set. 
 
-
 ### Gene Expression Data
 
-The GSE14502 data set will be downloaded with the `getGEO` function from the
-`GEOquery` package. Intermediately, the expression data is stored in an
+The GSE14502 data set is downloaded with the `getGEO` function from the `GEOquery` package. Intermediately, the expression data is stored in an
 `ExpressionSet` container [@biobase], and then converted to a
 `SummarizedExperiment` object.  
 
-```{r eval=TRUE, echo=TRUE, warnings=FALSE}
+```{r eval=TRUE, echo=TRUE, warnings=FALSE, results='hide'}
 gset <- read_cache(cache.pa, 'gset') # Retrieve data from cache.
 if (is.null(gset)) { # Save downloaded data to cache if it is not cached.
   gset <- getGEO("GSE14502", GSEMatrix=TRUE, getGPL=TRUE)[[1]]
@@ -1015,94 +747,45 @@ under `Gene.Symbol`.
 rownames(se.sh) <- make.names(rowData(se.sh)[, 'Gene.Symbol'])
 ```
 
-The following returns a slice of the experimental design stored in the
-`colData` slot. Both the samples and conditions are contained in the `title` column.
-The samples include promoters (pGL2, pCO2, pSCR, pWOL, p35S), tissues 
-and organs (root atrichoblast epidermis, root cortex meristematic zone, root 
-endodermis, root vasculature, root_total and shoot_total); and the conditions 
-are control and hypoxia.  
+A slice of the experimental design stored in the
+`colData` slot is returned. Both the samples and treatments are contained in the `title` column.
+The samples are indicated by corresponding promoters (pGL2, pCO2, pSCR, pWOL, p35S) and treatments include control and hypoxia.  
 
-```{r eval=TRUE, echo=TRUE, warnings=FALSE}
-colData(se.sh)[60:63, 1:4]
+```{r eval=TRUE, echo=TRUE, warnings=FALSE, collapse=TRUE}
+colData(se.sh)[60:63, 1:2]
 ```
 
 ### aSVG Image  
 
 In this example, the aSVG image has been generated in Inkscape from 
-the corresponding figure in @Mustroph2009-nu. The resulting custom figure
-has been included as a sample aSVG file in the `spatialHeatmap` package. Detailed 
-instructions for generating custom aSVG images in Inkscape are provided in the 
-[SVG tutorial](https://jianhaizhang.github.io/SVG_tutorial_file/){target="_blank"}.   
+the corresponding figure in @Mustroph2009-nu. Detailed instructions for generating custom aSVG images are provided in the 
+[SVG tutorial](https://jianhaizhang.github.io/SVG_tutorial_file/){target="_blank"}. The resulting custom aSVG file 'arabidopsis.thaliana_shoot_shm.svg' is included in the `spatialHeatmap` package and imported as below.    
 
-The annotations in the corresponding aSVG file located under `svg.dir` can be
-queried with the `return_features` function.  
-
-```{r eval=TRUE, echo=TRUE, warnings=FALSE, results='hide' }
-feature.df <- return_feature(feature=c('pGL2', 'pRBCS'), species=c('shoot'), keywords.any=TRUE, return.all=FALSE, dir=svg.dir, remote=NULL, match.only=FALSE)
-```
-
-The unique set of the matching aSVG files can be returned as follows.   
-
-```{r eval=TRUE, echo=TRUE, warnings=FALSE } 
-unique(feature.df$SVG)
-```
-
-The aSVG file `arabidopsis.thaliana_shoot_shm.svg` is chosen to generate the SHM in this section.
-
-```{r eval=TRUE, echo=TRUE, warnings=FALSE }
-feature.df <- subset(feature.df, SVG=='arabidopsis.thaliana_shoot_shm.svg')
-feature.df[1:3, ]
-```
-
-Obtain the target aSVG path on user system and parse the aSVG file. 
-
-```{r eval=TRUE, echo=TRUE, warnings=FALSE }
+```{r eval=TRUE, echo=TRUE, warnings=FALSE, results='hide'}
 svg.sh.pa <- system.file("extdata/shinyApp/example", "arabidopsis.thaliana_shoot_shm.svg", package="spatialHeatmap")
-svg.sh <- parse_svg(svg.sh.pa)
+svg.sh <- read_svg(svg.sh.pa)
 ```
 
 ### Experimental Design
 
-The following imports a sample target file that is included in this package.
-To inspect its content, four selected rows of this target file are printed to the 
-screen.
+A sample target file that is included in this package is imported and then loaded to the `colData` slot of `se.sh`. To inspect its content, four selected rows are returned.  
 
-```{r eval=TRUE, echo=TRUE, warnings=FALSE}
+```{r eval=TRUE, echo=TRUE, warnings=FALSE, collapse=TRUE}
 sh.tar <- system.file('extdata/shinyApp/example/target_arab.txt', package='spatialHeatmap')
-target.sh <- read.table(sh.tar, header=TRUE, row.names=1, sep='\t')
+target.sh <- read.table(sh.tar, header=TRUE, row.names=1, sep='\t') # Importing
+colData(se.sh) <- DataFrame(target.sh) # Loading
 target.sh[60:63, ]
-```
-
-Return all samples present in target file.     
-
-```{r eval=TRUE, echo=TRUE, warnings=FALSE}
-unique(target.sh[, 'samples'])
-```
-
-Return all conditions present in target file.  
-
-```{r eval=TRUE, echo=TRUE, warnings=FALSE}
-unique(target.sh[, 'conditions'])
-```
-
-Load custom target data into `colData` slot.  
-
-```{r eval=TRUE, echo=TRUE, warnings=FALSE}
-colData(se.sh) <- DataFrame(target.sh)
 ```
 
 ### Preprocess Assay Data
 
 The downloaded GSE14502 data set has already been normalized with the RMA
-algorithm [@affy]. Thus, the pre-processing steps can be restricted to the
-aggregation of replicates and filtering of reliably expressed genes. For the
-latter, the following code will retain genes with expression values larger than
-6 (log2 space) in at least 3% of all samples (pOA=c(0.03, 6)), and with a
-coefficient of variance (CV) between 0.30 and 100 (CV=c(0.30, 100)).   
+algorithm [@affy]. Thus, the pre-processing steps can be restricted to replicate aggregation and filtering.   
 
+ 
 ```{r eval=TRUE, echo=TRUE, warnings=FALSE, results='hide'}
 se.aggr.sh <- aggr_rep(data=se.sh, sam.factor='samples', con.factor='conditions', aggr='mean') # Replicate agggregation using mean
-se.fil.arab <- filter_data(data=se.aggr.sh, sam.factor='samples', con.factor='conditions', pOA=c(0.03, 6), CV=c(0.30, 100), dir=NULL) # Filtering of genes with low intensities and variance
+se.fil.arab <- filter_data(data=se.aggr.sh, sam.factor='samples', con.factor='conditions', pOA=c(0.03, 6), CV=c(0.30, 100)) # Filtering of genes with low intensities and variance
 ```
 
 ### SHM: Microarray 
@@ -1111,7 +794,7 @@ The expression profile for the HRE2 gene is plotted for the control and the hypo
 across six cell types (Figure \@ref(fig:shshm)).
 
 ```{r shshm, eval=TRUE, echo=TRUE, warnings=FALSE, fig.wide=TRUE, fig.cap=('SHM of Arabidopsis shoots. The expression profile of the HRE2 gene is plotted for control and hypoxia treatment across six cell types.'), out.width="100%", results='hide'}
-spatial_hm(svg=svg.sh, data=se.fil.arab, ID=c("HRE2"), height=0.7, legend.nrow=3, legend.text.size=11)
+spatial_hm(svg=svg.sh, data=se.fil.arab, ID=c("HRE2"), legend.nrow=3, legend.text.size=11)
 ```
 
 ## Superimposing raster and vector graphics 
@@ -1142,23 +825,20 @@ Import paths of second png/svg image pair:
 ```{r eval=TRUE, echo=TRUE, warnings=FALSE}
 raster.pa2 <- system.file('extdata/shinyApp/example/maize_leaf_shm2.png', package='spatialHeatmap')
 svg.pa2 <- system.file('extdata/shinyApp/example/maize_leaf_shm2.svg', package='spatialHeatmap')
-svg.overlay <- parse_svg(svg.path=c(svg.pa1, svg.pa2), raster.path=c(raster.pa1, raster.pa2))
 ```
 
-The two pairs of png/svg images are parsed and stored in the `coord` container `svg.overlay`.  
+The two pairs of png/svg images are imported in the `SVG` container `svg.overlay`.     
 ```{r eval=TRUE, echo=TRUE, warnings=FALSE, results='hide'}
-svg.overlay <- parse_svg(svg.path=c(svg.pa1, svg.pa2), raster.path=c(raster.pa1, raster.pa2))
-```
-Each pair of png/svg images is named with respective aSVG file name by default and can be updated, here `pair1` and `pair2`.
-```{r eval=TRUE, echo=TRUE, warnings=FALSE}
-names(svg.overlay)
-names(svg.overlay) <- c('pair1', 'pair2') # Update names of png/svg pair
-names(svg.overlay)
+svg.overlay <- read_svg(svg.path=c(svg.pa1, svg.pa2), raster.path=c(raster.pa1, raster.pa2))
 ```
 
+A slice of attributes in the first aSVG instance is shown.   
+```{r eval=TRUE, echo=TRUE, warnings=FALSE, collapse=TRUE}
+attribute(svg.overlay)[[1]][1:3, ]
+```
 
 Import of quantitative assay data: 
-```{r eval=TRUE, echo=TRUE, warnings=FALSE}
+```{r eval=TRUE, echo=TRUE, warnings=FALSE, collapse=TRUE}
 dat.overlay <- read_fr(system.file('extdata/shinyApp/example/dat_overlay.txt', package='spatialHeatmap'))
 dat.overlay[1:2, ]
 ```
@@ -1167,148 +847,105 @@ To minimize masking of the features in the SHMs by dense regions in the raster i
 the `alpha.overlay` argument allows to adjust the transparency level. In Figure \@ref(fig:overCol), 
 the spatial features of interest are superimposed onto the raster image.   
 
-```{r overCol, eval=TRUE, echo=TRUE, warnings=FALSE, fig.wide=TRUE, fig.cap=('Superimposing raster images with SHMs (colorful backaground). The expression profiles of gene1 are plotted on ABS cells.'), out.width="100%", fig.show='show', results='hide'}
-spatial_hm(svg=svg.overlay, data=dat.overlay, raster.path=c(raster.pa1, raster.pa2), charcoal=FALSE, ID=c('gene1'), alpha.overlay=0.5, bar.width=0.09, sub.title.vjust=4)
+```{r overCol, eval=TRUE, echo=TRUE, warnings=FALSE, fig.wide=TRUE, fig.cap=('Superimposing raster images with SHMs (colorful backaground). The expression profiles of gene1 are plotted on ABS cells.'), out.width="80%", fig.show='show', results='hide'}
+spatial_hm(svg=svg.overlay, data=dat.overlay, charcoal=FALSE, ID=c('gene1'), alpha.overlay=0.5, bar.width=0.09, sub.title.vjust=4, legend.r=0.2)
 ```
 
 Another option for reducing masking effects is to display the raster image in black and white by setting `charcoal=TRUE` (Figure \@ref(fig:overChar)).  
 
-```{r overChar, eval=TRUE, echo=TRUE, warnings=FALSE, fig.wide=TRUE, fig.cap=('Superimposing raster images with SHMs (black-white background). The expression profiles of gene1 are plotted on ABS cells.'), out.width="100%", fig.show='show', results='hide'}
-spatial_hm(svg=svg.overlay, data=dat.overlay, raster.path=c(raster.pa1, raster.pa2), charcoal=TRUE, ID=c('gene1'), alpha.overlay=0.5, bar.width=0.09, sub.title.vjust=4)
+```{r overChar, eval=TRUE, echo=TRUE, warnings=FALSE, fig.wide=TRUE, fig.cap=('Superimposing raster images with SHMs (black and white background). The expression profiles of gene1 are plotted on ABS cells.'), out.width="80%", fig.show='show', results='hide'}
+spatial_hm(svg=svg.overlay, data=dat.overlay, charcoal=TRUE, ID=c('gene1'), alpha.overlay=0.5, bar.width=0.09, sub.title.vjust=4, legend.r=0.2)
 ```
 
 
-## Spatiotemporal Heatmaps {#sthm} 
-
-The SHM plots shown so far are restricted to two dimensions: spatial features (*e.g.* organs, tissues, cellular compartments) and conditions. This section
-extends this to experiments with spatiotemporal resolution under different conditions. A common use case for this are 
-applications involving several development stages.  
+## SHMs of Multiple Dimensions {#sthm} 
 
 
-Compared with previous examples that have two dimensions of spatial features and conditions, the spatiotemporal data contains three dimensions: spatial features, conditions, and times (development stages). To visualize the spatiotemporal data, the three dimensions should be reduced to one or two dimensions by combining all or two of them to produce a composite dimension. There are three
-alternatives to generate composite dimensions: 1) combine two dimensions of spatial features and conditions;
-2) combine two dimensions of spatial features and times; or 3) combine all three dimensions of spatial features, conditions, and times.
-More details are provided in the [Supplementary Section](#spa.tem).  
+The SHM plots shown so far are restricted to two dimensions, here spatial features
+(*e.g.* organs, tissues, cellular compartments) and treatments. In theory, the complexity of experimental designs scales 
+to any number of dimensions in `spatialHeatmap`. This section
+extends to experiments with three or more dimensions, such as experiments 
+with spatiotemporal resolution and geographical locations, genotypes, treatments, *etc*.    
 
-Which option to choose depends on the specific data and aSVGs, and the chosen
-one should achieve optimal visualization effects. In this example, the third is the
-best choice and will be showcased. Meanwhile, for
-demonstration purpose the second choice is illustrated in the [Supplementary Section](#sthmComTwo). If different development stages are represented in separate aSVG images, there is another option to create spatiotemporal heatmaps (STHMs) by aligning the time dimension with separate aSVG images, which is presented in the [second part](#mul_svg) of the STHM section.    
-
-### Combining Three Dimensions
-
-#### Gene Expression Data
-
-The data is from the transcriptome analysis on rice coleoptile during
-germinating and developing stages under anoxia and re-oxygenation
-[@Narsai2017-ql], which is also downloaded with `ExpressionAtlas`.   
-
-```{r eval=TRUE, echo=TRUE, warnings=FALSE}
-rse.clp <- read_cache(cache.pa, 'rse.clp') # Retrieve data from cache.
-if (is.null(rse.clp)) { # Save downloaded data to cache if it is not cached.
-  rse.clp <- getAtlasData('E-GEOD-115371')[[1]][[1]]
-  save_cache(dir=cache.pa, overwrite=TRUE, rse.clp)
-}
-```
-
-#### Experimental Design
-
-The targets file is prepared according to the experiment design stored in `colData` slot of `res.clp` and pre-packaged in `spatialHeatmap`.    
-
-```{r eval=TRUE, echo=TRUE, warnings=FALSE}
-clp.tar <- system.file('extdata/shinyApp/example/target_coleoptile.txt', package='spatialHeatmap')
-target.clp <- read_fr(clp.tar)
-```
-
-The three dimensions of spatial features (`organism_part`), conditions (`con`), and times (`age`) are partially shown, where `A`, `N`, and `NA` denote "aerobic", "anaerobic", and first "aerobic" then "anaerobic" respectively.   
-
-```{r eval=TRUE, echo=TRUE, warnings=FALSE}
-target.clp[1:2, c('organism_part', 'age', 'stimulus', 'con')] # A slice of the targets file.
-```
-
-The three dimensions are combined using the convenience function `com_factor`, which is the main difference with the previous examples involving only two dimensions. The targets file including the new composite dimension (`SFTimeCon`) is loaded to the `colData` slot in `rse.clp` automatically.   
-
-```{r eval=TRUE, echo=TRUE, warnings=FALSE}
-rse.clp <- com_factor(rse.clp, target.clp, factors2com=c('organism_part', 'age', 'con'), sep='.', factor.new='SFTimeCon')
-colData(rse.clp)[1:2, c('organism_part', 'age', 'stimulus', 'con', 'SFTimeCon')]
-```
-
-#### aSVG Image
-
-Similar with the Arabidopsis Shoot example, the aSVG image has been generated in Inkscape from 
-the corresponding figure in @Narsai2017-ql according to the [SVG tutorial](https://jianhaizhang.github.io/SVG_tutorial_file/){target="_blank"} and included in `spatialHeatmap` as `oryza.sativa_coleoptile.ANT_shm.svg`.  
-
-Obtain the aSVG path on user system and parse the aSVG file.
-```{r eval=TRUE, echo=TRUE, warnings=FALSE, results='hide'} 
-svg.clp.pa1 <- system.file("extdata/shinyApp/example", "oryza.sativa_coleoptile.ANT_shm.svg", package="spatialHeatmap")
-svg.clp1 <- parse_svg(svg.clp.pa1)
-```
-
-<a name='idt'></a>
-
-The composite dimension `SFTimeCon` will be mapped to aSVG features, so there should be at leat one overlapping element between the two.   
-
-```{r eval=TRUE, echo=TRUE, warnings=FALSE } 
-unique(colData(rse.clp)$SFTimeCon) %in% unique(attribute(svg.clp1)[[1]]$feature)
-```
-
-#### Preprocess Assay Data
-
-The raw RNA-Seq count data are preprocessed with the following steps: (1) normalization, (2) aggregation of replicates, and (3) filtering. The details of these steps are explained in the previous [human brain](#hum) example, so this section only gives brief description.      
+To visualize multi-dimensional spatial data, these dimensions are reduced to two by keeping the spatial feature dimension and combining all other dimensions into a composite one. For instance, the following example contains four dimensions including spatial features, time points, drug treatments and injury conditions. The latter three are combined to produce a composite dimension.   
 
 
-<a name='sam.time.con1'></a>
+### Gene Expression Data
 
-The normalization (`norm_data`) is the same as the [human brain](#hum) example, while replicate aggregation is performed on the composite dimension (`sam.factor='SFTimeCon'`) by taking mean (`aggr='mean'`) of gene expression profiles.   
+The following uses transcriptomic data of mouse brain after traumatic brain injury (TBI), which include RAN-seq data from hippocampus, thalamus and hypothalamus at 3 or 29 days post injury (DPI) treated with either candesartan or vehicle [@Attilio2021-pp]. The original data are modified for demonstration purpose and included in `spatialHeatmap` as a `SummarizedExperiment` object, which is imported below.   
 
 ```{r eval=TRUE, echo=TRUE, warnings=FALSE, results='hide'}
-se.nor.clp <- norm_data(data=rse.clp, norm.fun='ESF', log2.trans=TRUE) # Normalization
-se.aggr.clp1 <- aggr_rep(data=se.nor.clp, sam.factor='SFTimeCon', con.factor=NULL, aggr='mean') # Replicate agggregation using mean
-se.fil.clp1 <- filter_data(data=se.aggr.clp1, sam.factor='SFTimeCon', con.factor=NULL, pOA=c(0.07, 7), CV=c(0.7, 100), dir=NULL) # Filtering of genes with low counts and variance.
+se.mus.vars <- readRDS(system.file('extdata/shinyApp/example/mus_brain_vars_se.rds', package='spatialHeatmap'))
 ```
 
-<a name='sam.time.con2'></a>
-A slice of filtered data is shown.   
+The experiment design is stored in `colData` slot, where 'Veh', 'Drug', 'TBI', and 'NoTBI' refer to 'vehicle', 'candesartan', 'traumatic brain injury', and 'sham injury' respectively. The `time`, `treatment` and `injury` dimensions are combined into a composite dimension `comVar`, which will be used for creating SHMs of multiple dimensions.   
 
-```{r eval=TRUE, echo=TRUE, warnings=FALSE }
-assay(se.fil.clp1)[1:3, 1:3] 
+```{r eval=TRUE, echo=TRUE, warnings=FALSE, collapse=TRUE}
+colData(se.mus.vars)[1:3, ]
+unique(colData(se.mus.vars)$comVar)
 ```
 
-#### STHM: combining three dimensions 
+Since this example data are small, the pre-processing only involves normalization without the filtering step. The expression values are aggregated across replicates in tissues (`tissue`) and replicates in the composite dimension (`comVar`) with the summary statistic of mean, which is similar with the [Human Brain](#hum) exmple.    
 
-The expression profile of gene `Os12g0630200` and `Os01g0106300` in coleoptile is plotted across eight time
-points under anoxia and re-oxygenation in form of a composite STHM.   
-
-```{r clpshm, eval=TRUE, echo=TRUE, warnings=FALSE, fig.wide=TRUE, fig.cap=("Spatiotemporal heatmap at combination of three dimensions. Gene expression profile of two genes in coleoptile across eight time points under anoxia and re-oxygenation is visualized in a composite image."), out.width="100%", results='hide' }
-shm.lis <- spatial_hm(svg=svg.clp1, data=se.fil.clp1, ID=c('Os12g0630200', 'Os01g0106300'), legend.r=0.7, legend.key.size=0.01, legend.text.size=8, legend.nrow=8, ncol=1, width=0.8, line.size=0)
+```{r eval=TRUE, echo=TRUE, warnings=FALSE, collapse=TRUE}
+se.mus.vars.nor <- norm_data(data=se.mus.vars, norm.fun='ESF', log2.trans=TRUE) # Normalization.
+se.mus.vars.aggr <- aggr_rep(data=se.mus.vars.nor, sam.factor='tissue', con.factor='comVar', aggr='mean') # Aggregate replicates.
+assay(se.mus.vars.aggr)[1:3, 1:3]
 ```
+
+### aSVG Image
+
+The aSVG image of mouse brain is downloaded from the repository maintained by [EBI Gene Expression
+Group](https://github.com/ebi-gene-expression-group/anatomogram/tree/master/src/svg){target="_blank"} and included in `spatialHeatmap`, which is imported as below.  
+
+```{r eval=TRUE, echo=TRUE, warnings=FALSE, results='hide'}
+svg.mus.brain.pa <- system.file("extdata/shinyApp/example", "mus_musculus.brain.svg", package="spatialHeatmap")
+svg.mus.brain <- read_svg(svg.mus.brain.pa)
+```
+
+The aSVG features and attributes are partially shown.  
+
+```{r eval=TRUE, echo=TRUE, warnings=FALSE, collapse=TRUE}
+tail(attribute(svg.mus.brain)[[1]], 3)
+```
+
+
+### SHM: Multiple Dimensions
+
+The expression values of gene Acnat1 in hippocampus and hypothalamus across the composite dimension are mapped to matching aSVG features. The output SHM plots of each composite dimension are organized in a composite plot in Figure \@ref(fig:dimshm).   
+
+```{r dimshm, eval=TRUE, echo=TRUE, warnings=FALSE, fig.wide=TRUE, fig.cap=("SHM plots of multiple dimension. Gene expression values of Acnat1 in hippocampus and hypothalamus under composite dimensions are mapped to corresponding aSVG features. "), out.width="100%", results='hide' }
+spatial_hm(svg=svg.mus.brain, data=se.mus.vars.aggr, ID=c('Acnat1'), legend.r=1.5, legend.key.size=0.02, legend.text.size=12, legend.nrow=2)
+```
+
+
 
 ### Multiple aSVGs {#mul_svg}
 
-In the spatiotemporal application, different development stages may need to be represented in separate aSVG images. In that case, the `spatial_hm` function is able to arrange multiple aSVGs in a single SHM plot. To organize the subplots, the names
+In a spatiotemporal application, different development stages may need to be represented 
+in separate aSVG images. In such a case, the `spatial_hm` function is able to arrange 
+multiple aSVGs in a single SHM plot. To organize the subplots, the names
 of the separate aSVG files are expected to include the following suffixes: `*_shm1.svg`,
-`*_shm2.svg`, *etc*. The paths to the aSVG files are provided under the
-`svg.path` argument. By default, every aSVG image will have a legend plot on
-the right. The `legend` argument provides fine control over which legend plots
-to display. 
+`*_shm2.svg`, *etc*.   
+As a simple testing example, the following stores random numbers as expression
+values in a `data.frame`.  
 
-As a simple testing example, the following stores random numbers in a 
-`data.frame`.  
-
-```{r eval=TRUE, echo=TRUE, warnings=FALSE}
+```{r eval=TRUE, echo=TRUE, warnings=FALSE, collapse=TRUE}
 df.random <- data.frame(matrix(sample(x=1:100, size=50, replace=TRUE), nrow=10))
 colnames(df.random) <- c('shoot_totalA__condition1', 'shoot_totalA__condition2', 'shoot_totalB__condition1', 'shoot_totalB__condition2', 'notMapped') # Assign column names
 rownames(df.random) <- paste0('gene', 1:10) # Assign row names 
-df.random[1:3, ]
+df.random[1:2, ]
 ```
 
-The paths to the aSVG files are obtained, here for younger and older plants using `*_shm1` 
-and `*_shm1`, respectively, which are made from @Mustroph2009-nu. Then the two aSVG files are parsed with `parse_svg`.
+The paths to the aSVG files are obtained, here for younger and older plants
+using `*_shm1` and `*_shm1`, respectively, which are generated from
+@Mustroph2009-nu. Subsequently, the two aSVG files are loaded with the `read_svg`
+function.
 
 ```{r eval=TRUE, echo=TRUE, warnings=FALSE, results='hide'}
 svg.sh1 <- system.file("extdata/shinyApp/example", "arabidopsis.thaliana_organ_shm1.svg", package="spatialHeatmap")
 svg.sh2 <- system.file("extdata/shinyApp/example", "arabidopsis.thaliana_organ_shm2.svg", package="spatialHeatmap")
-svg.sh.mul <- parse_svg(c(svg.sh1, svg.sh2))
+svg.sh.mul <- read_svg(c(svg.sh1, svg.sh2))
 ```
 
 The following generates the corresponding SHMs plot for `gene1`. The orginal 
@@ -1323,95 +960,98 @@ This image is hidden to meet the 5MB requirement on vignette.
 spatial_hm(svg=svg.sh.mul, data=df.random, ID=c('gene1'), width=0.7, legend.r=0.2, legend.width=1, preserve.scale=TRUE, bar.width=0.09, line.color='grey50') 
 ```
 
-Note in Figure \@ref(fig:arabshm) shoots have thicker outlines than roots. This is another feature of `spatial_hm`, *i.e.* preserves the outline thicknesses defined in aSVG files. This feature is particularly useful in cellular SHMs where different cell types have different cell-wall thicknesses. The outline widths can be updated with `update_feature` programatically or with Inkscape manually. The former is illustrated in the Supplementary Section.   
-
-## Multi-dimension Spatial Heatmaps {#multFactor}
-
-In principle, the `spatialHeatmap` is extendable to as many dimensions (*e.g.* spatial features, conditions, times) as possible. The most common scenario involves only two dimensions of spatial features and conditions ([Section 3](#shm)). If more dimensions are relevant such as development stages, geographical locations, genotypes, *etc*, these multiple dimensions need to be reduced to [one](#sthm) or [two](#sthmComTwo) by combining all or selected dimensions respectively. The [spatiotemporal section](#sthm) is an illustration of three dimensions. Similar combining strategies should be appied in cases of four or more dimensions. A rule of thumb is the composite dimension of interest must have at least one matching counterpart in the aSVG file, otherwise no spatial features are not colored in the output spatial heatmaps.   
+Note in Figure \@ref(fig:arabshm) shoots are drawn with thicker outlines than roots. 
+This is another useful feature of `spatial_hm`, *i.e.* preserving the outline 
+thicknesses defined in aSVG files. This feature is particularly useful in cellular SHMs
+where different cell types may have different cell-wall thicknesses. The outline
+widths can be updated with `update_feature` programatically, or within Inkscape
+manually. The former is illustrated in the Supplementary Section.   
 
 # Extended functionalities
 
-
 ## Spatial Enrichment {#se} 
 
-The Spatial Enrichment (SE) is an extension of the SHMs. It identifies spatial feature-specifically expressed biological molecules (genes, proteins, metabolites, *etc.*) and thus enables the SHMs to visualize feature-specific profiles. It compares the target spatial feature with all other selected features in a pairwise manner. The molecules significantly up- or down- regulated in the target feature across all pairwise comparisons are denoted final target feature-specifically expressed. The base methods include edgeR [@edgeR], limma [@limma], DESeq2 [@deseq2], distinct [@distinct]. The feature-specific molecules are first detected with each method independently then summarized across methods.  
+The Spatial Enrichment (SE) functionality is an extension of the SHMs to identify groups of
+transcripts, proteins or other molecules that are particularly abundant or
+enriched in certain spatial regions, such as tissue-specific transcripts. For
+this, it compares the abundance profiles of molecules between the target spatial feature and each other reference feature in a pairwise manner. The molecules significantly up- or down-regulated in the target feature across all pairwise comparisons are denoted target feature-specifically expressed. The methods for detecting differentially-expressed genes (DEGs) in SE include edgeR [@edgeR], limma [@limma], DESeq2 [@deseq2], distinct
+[@distinct].     
 
-In addition to spatial feature-specific molecules, the SE is also able to identify molecules specifically expressed in a certain condition in a similar pairwise comparison, where the condition of interest is compared with every other selected condition.  
 
-The application of SE is illustrated on the mouse brain in the following example, which could be extended to other examples in a similar way. For domenstration purpose, `brain` is selected as the target feature, `liver` and `kidney` as the reference features, and all the three strains `DBA.2J`, `C57BL.6`, `CD1` as the conditions. 
+In addition to spatial feature-specific molecules, the SE is also able to
+identify molecules specifically expressed in a certain treatment in a similar
+pairwise comparison, where the treatment of interest is compared with every other reference treatment. 
 
-All the spatial features and conditions are shown below.   
+The application of SE is illustrated here using the 
+above [mouse brain data](#mus) as example. In the following, only three features 'brain', 'liver', and 'kidney' are selected so as to reduce runtime. Among the three features, 'brain' is chosen as the target under the argument `target`. The experimental variable of three strains 'DBA.2J', 'C57BL.6', 'CD1' will be treated as replicates for each feature.  
 
-```{r eval=TRUE, echo=TRUE, warnings=FALSE }
-unique(colData(rse.mus)$organism_part) # All spatial features.
-unique(colData(rse.mus)$strain) # All conditions. 
+
+```{r eval=TRUE, echo=TRUE, warnings=FALSE, collapse=TRUE}
+data.sub.mus <- tar_ref(data=rse.mus, feature='organism_part', ft.sel=c('brain', 'liver', 'kidney'), variable='strain', var.sel=c('DBA.2J', 'C57BL.6', 'CD1'), com.by='feature', target='brain')
+colData(data.sub.mus)[1:3, c('organism_part', 'target', 'strain')]
 ```
- 
-Subset the data according to the selected features (brain, liver, kidney) and conditions (DBA.2J, C57BL.6, CD1) that are used for domenstration purpose.      
 
-```{r eval=TRUE, echo=TRUE, warnings=FALSE }
-data.sub.mus <- sub_data(data=rse.mus, feature='organism_part', features=c('brain', 'liver', 'kidney'), factor='strain', factors=c('DBA.2J', 'C57BL.6', 'CD1'), com.by='feature', target='brain')
-```
-
-The SE requires replicates in the count data and has build-in normalizing utilities, thus the pre-processing only involves filtering at this step. The explanation of filtering is detailed in the [human brain](#hum) section.   
+The SE method requires replicates that is stored here under count data. As it has 
+build-in normalizing utilities, the pre-processing only requires a filtering step. 
+The details about this filtering step are given under the [human brain](#hum) section.   
 
 ```{r eval=TRUE, echo=TRUE, warnings=FALSE, results='hide'}
-data.sub.mus.fil <- filter_data(data=data.sub.mus, sam.factor='organism_part', con.factor='strain', pOA=c(0.2, 15), CV=c(0.8, 100))
+data.sub.mus.fil <- filter_data(data=data.sub.mus, sam.factor='organism_part', con.factor='strain', pOA=c(0.2, 15), CV=c(0.8, 100), verbose=FALSE)
 ```
 
-The base methods in SE include four opitions: `edgeR`, `limma`, `DESeq2`, `distinct`, and the default are the first two. The count data are internally normalized by `TMM` method from `edgeR`. In each of the selected methods, the strains in each feature are treated as replicates and the target feature `brain` is compared with `liver` and `kidney` in a pairwise manner. The brain-specific genes are selected by log2 fold change (`log2.fc`) and FDR (`fdr`).   
+The SE is implemented in function `spatial_enrich`. In the following, the count data are internally
+normalized by `TMM` method from `edgeR`. The default method 'edgeR' is used for detecting spatial feature-specific genes. The
+brain-specific genes are selected here by log2 fold change (`log2.fc`) and FDR
+(`fdr`) thresholds.   
+
+If multiple methods are selected, the feature-specific molecules are first detected with each method
+independently then summarized in a table. The overlaps of feature-specific molecules across methods can be plotted in an UpSet [@upsetr] or matrix plot. An example is provided in the [Supplementary Section](#seMulMeth).   
 
 ```{r eval=TRUE, echo=TRUE, warnings=FALSE, results='hide'}
-deg.lis.mus <- spatial_enrich(data.sub.mus.fil, methods=c('edgeR', 'limma'), norm='TMM', log2.fc=1, fdr=0.05, aggr='mean', log2.trans.aggr=TRUE)
+deg.lis.mus <- spatial_enrich(data.sub.mus.fil, methods=c('edgeR'), norm='TMM', log2.fc=1, fdr=0.05, aggr='mean', log2.trans.aggr=TRUE)
 ```
 
-The up- and down- regulated genes detected by `edgeR` in brain are accessed as following.    
+The up- and down- regulated genes detected by `edgeR` in brain can be accessed as
+follows.    
 
-```{r eval=TRUE, echo=TRUE, warnings=FALSE }
-deg.lis.mus$lis.up.down$up.lis$edgeR.up[1:3] # Up-regulated.
-deg.lis.mus$lis.up.down$down.lis$edgeR.down[1:3] # Down-regulated. 
+```{r eval=TRUE, echo=TRUE, warnings=FALSE, collapse=TRUE}
+deg.lis.mus$lis.up.down$up.lis$edgeR.up[1:2] # Up-regulated.
+deg.lis.mus$lis.up.down$down.lis$edgeR.down[1:2] # Down-regulated. 
 ```
 
-Overlap of up-regulated genes in brain across methods is displayed in UpSet plot.   
+The identified brain-specific genes are stored in a tabular format. The `type` column
+indicates up- or down-regulated; the `total` column shows how many methods
+identify a gene as up or down as specified in `type`, here only 'edgeR'; and `1` under the `edgeR` column indicates this DEG method identifies an up or down gene as specified in `type`. The columns to the right are the 
+data used by the `spatial_enrich` function. 
 
-```{r upset, eval=TRUE, echo=TRUE, warnings=FALSE, fig.wide=TRUE, fig.cap=('UpSet plot of up-regulated genes in mouse brain. The overlap of up-regulated genes detected by edgeR and limma is indicated by bars.'), out.width="100%", fig.show='show'}
-deg_ovl(deg.lis.mus$lis.up.down, type='up', plot='upset')
-```
 
-Overlap of up-regulated genes in brain across methods is displayed in matrix plot.   
-
-```{r matrix, eval=TRUE, echo=TRUE, warnings=FALSE, fig.wide=TRUE, fig.cap=('Matrix plot of up-regulated genes in mouse brain. The matrix plot displays any overlap between up-regulated genes detected by edgeR and limma.'), out.width="70%", fig.show='show'}
-deg_ovl(deg.lis.mus$lis.up.down, type='up', plot='matrix')
-```
-
-The brain-specific genes are also summarized in a table. The `type` column indicates up- or down- regulated, the `total` column shows how many methods identify a gene as up or down, and the `edgeR` and `limma` columns have entry `1` if the method identifies a gene as up or down otherwise the entry will be `0`. The data provided to `spatial_enrich` is normalized and replicates are aggregated by mean internally, and appended to the right of the table.    
-
-```{r eval=TRUE, echo=TRUE, warnings=FALSE }
+```{r eval=TRUE, echo=TRUE, warnings=FALSE, collapse=TRUE}
 deg.table.mus <- deg.lis.mus$deg.table; deg.table.mus[1:2, 1:9] 
 ```
 
-The numbers in `total` column are stringency measures of gene specificity, where the larger, the more strigent. For example, the up- and down-regulated genes in brain can be subsetted with the highest stringency `total==2`.   
+The up- or down-regulated
+genes in brain can be subsetted with the `type` and `total` columns.  
 
-```{r eval=TRUE, echo=TRUE, warnings=FALSE }
-df.up.mus <- subset(deg.table.mus, type=='up' & total==2)
-df.up.mus[1:2, 1:9]
+```{r eval=TRUE, echo=TRUE, warnings=FALSE, collapse=TRUE}
+df.up.mus <- subset(deg.table.mus, type=='up' & total==1)
+df.up.mus[1:2, 1:8]
+df.down.mus <- subset(deg.table.mus, type=='down' & total==1)
+df.down.mus[1:2, 1:8]
 ```
 
-```{r eval=TRUE, echo=TRUE, warnings=FALSE }
-df.down.mus <- subset(deg.table.mus, type=='down' & total==2)
-df.down.mus[1:2, 1:9]
-```
-
-Create SHMs on one up-regulated (`ENSMUSG00000026764`) and one down-regulated (`ENSMUSG00000025479`) gene in mouse brain. The resultant SHMs are termed spatially-enriched heatmaps.   
-
+Plot SHMs on one up-regulated (`ENSMUSG00000026764`) and one down-regulated
+(`ENSMUSG00000025479`) gene in mouse brain. The resulting SHMs are termed
+here as SHMs of spatially-enriched molecules (transcripts).
+ 
 ```{r enrich, eval=TRUE, echo=TRUE, warnings=FALSE, fig.wide=TRUE, fig.cap=('Spatially-enriched heatmaps. The two genes in the image are enriched in the mouse brain relative to kidney and liver. Top: down-regulated in brain. Bottom: up-regulated in brain.'), out.width="100%", fig.show='show', results='hide'}
 spatial_hm(svg=svg.mus, data=deg.lis.mus$deg.table, ID=c('ENSMUSG00000026764', 'ENSMUSG00000025479'), legend.r=1, legend.nrow=3, sub.title.size=6.1, ncol=3, bar.width=0.09)
 ```
 
-The expression profiles of two selected genes (Figure \@ref(fig:enrich)) are also presented in line graphs.    
+The expression profiles of the two spatially enriched genes (Figure \@ref(fig:enrich)) are
+also presented in line graphs.    
 
 ```{r prof, eval=TRUE, echo=TRUE, warnings=FALSE, fig.wide=TRUE, fig.cap=('Line graph of gene expression profiles. The count data is normalized and replicates are aggregated by taking mean.'), out.width="100%", fig.show='show'}
-profile_gene(rbind(df.up.mus[1, ], df.down.mus[1, ]))
+graph_line(rbind(df.up.mus[1, ], df.down.mus[1, ]))
 ```
 
 ## Matrix Heatmaps {#mhm}
@@ -1426,16 +1066,11 @@ clustering and network analysis methods. The following introduces both
 approaches using as sample data the gene expression data from Arabidopsis
 shoots from the previous section.
 
-To identify similar molecules, the `submatrix` function can be used. The latter
-identifies molecules sharing similar profiles with one or more query molecules of
+To identify similar molecules, the `submatrix` function can be used. It identifies molecules sharing similar profiles with one or more query molecules of
 interest. The given example uses correlation coefficients as similarity metric.
-Three filtering parameters are provided to control the similarity and number of
-molecules in the result. First, the `p` argument allows to restrict the number of
+The `p` argument allows to restrict the number of
 similar molecules to return based on a percentage cutoff relative to the number of
-molecules in the assay data set (_e.g._ 1% of the top most similar molecules). Second,
-a fixed number `n` of the most similar molecules can be returned.  Third, all molecules
-above a user definable correlation coefficient cutoff value can be returned,
-such as a Pearson correlation coefficient (PCC) of at least 0.6. If several
+molecules in the assay data set (_e.g._ 1% of the top most similar molecules). If several
 query molecules are provided then the function returns the similar genes for each
 query, while assuring uniqueness among molecules in the result. 
 
@@ -1583,8 +1218,9 @@ The dashboard panels of the Shiny App are organized as follows:
 
 1. Landing Page: gallery of pre-upload examples, menu for uploading custom files, selecting default files, or downloading example files.  
 2. Spatial Heatmap: spatially colored images based on aSVG images selected and/or uploaded by user, matrix heatmap, network graph, data table (replicates aggregated). 
-3. Spatial Enrichment: data table (with replicates), menu for enrichment, enrichment results. 
-4. Parameter Control Menu: postioned on top of each panel.  
+3. Spatial Enrichment: data table (with replicates), menu for enrichment, enrichment results.
+4. Co-visualization: co-visualization of bulk tissues in SHMs and single cells in embedding plots, methods options (annotation/manual, automatic), mapping direction options (cell-to-bulk, bulk-to-cell).   
+5. Parameter Control Menu: postioned on top of each panel.  
 
 
 A screenshot is shown below depicting an SHM plot generated with the Shiny App of `spatialHeatmap` 
@@ -1650,143 +1286,6 @@ To maintain scalability, the customized Shiny app is designed to work with HDF5-
 Except for user-provided data, the database is able to store data sets downloaded from GEO and Expression Atlas. The detailed examples of the database utility are documented in the help file of `write_hdf5`. 
 
 
-# Use Case
-
-
-This section showcases integrated discovery and visualization of potential new genes responsible for a particular biological process. Since network analysis/co-expression is involved, at least five spatial features (*e.g.* tissues) are required. Basically, gene abundance in target spatial feature is compared with other spatial features in a pairwise manner to obtain target-specific genes. Among these target-enriched genes, select a well characterized one as reference gene. Then network analysis is performed to detect gene modules. Genes comprising the same module are considered co-expressed and thus likely have similar functions. Therefore, in the module containing the reference gene, the genes with unkown function are candidates of new genes having similar functions with the reference gene. As the technical procedures are explained in previous sections, this section will not explain them in details.   
-
-## Spatial Enrichment
-
-The same data in [Mouse Organ](#mus) section are used. Five tissues are selected: brain, heart, colon, kidney, and liver, where brain is the target.    
-
-```{r eval=TRUE, echo=TRUE, warnings=FALSE }
-data.enrich.mus <- sub_data(data=rse.mus, feature='organism_part', features=c('brain', 'heart', 'colon', 'kidney', 'liver'), factor='strain', factors=c('DBA.2J', 'C57BL.6', 'CD1'), com.by='feature', target='brain')
-```
-
-The spatial enrichment (SE) requires replicates in the count data and has build-in normalizing utilities, thus the pre-processing only involves filtering at this step.   
-
-```{r eval=TRUE, echo=TRUE, warnings=FALSE, results='hide'}
-data.enrich.mus.fil <- filter_data(data=data.enrich.mus, sam.factor='organism_part', con.factor='strain', pOA=c(0.2, 15), CV=c(0.8, 100))
-```
-
-The count data are normalized by `TMM` method from `edgeR`. Pairwise comparisons are conducted among the five tissues by `edgeR` and `limma`.   
-
-```{r eval=TRUE, echo=TRUE, warnings=FALSE, results='hide'}
-deg.all.mus <- spatial_enrich(data.enrich.mus.fil, methods=c('edgeR', 'limma'), norm='TMM', log2.fc=1, fdr=0.05, aggr='mean', log2.trans.aggr=TRUE)
-```
-
-The up- and down-regulated genes detected by `edgeR` in brain are accessed.  
-
-```{r eval=TRUE, echo=TRUE, warnings=FALSE }
-deg.all.mus$lis.up.down$up.lis$edgeR.up[1:3] # Up-regulated.
-deg.all.mus$lis.up.down$down.lis$edgeR.down[1:3] # Down-regulated. 
-```
-
-Overlap of up-regulated genes in brain across methods is presented in UpSet plot.   
-
-```{r eval=TRUE, echo=TRUE, warnings=FALSE, fig.wide=TRUE, fig.cap=('UpSet plot of up-regulated genes in mouse brain. The overlap of up-regulated genes detected by edgeR and limma is indicated by bars.'), out.width="100%", fig.show='show'}
-deg_ovl(deg.all.mus$lis.up.down, type='up', plot='upset')
-```
-
-Overlap of up-regulated genes in brain across methods is presented in matrix plot.   
-
-```{r eval=TRUE, echo=TRUE, warnings=FALSE, fig.wide=TRUE, fig.cap=('Matrix plot of up-regulated genes in mouse brain. The matrix plot displays any overlap between up-regulated genes detected by edgeR and limma.'), out.width="70%", fig.show='show'}
-deg_ovl(deg.all.mus$lis.up.down, type='up', plot='matrix')
-```
-
-The information of brain-specific genes are also summarized in a table. The `total` column indicates how many methods detect a gene as up- or down- regulated, which is a stringency measure of gene specificity. Details of the table is explained in the [Spatial Enrichment](#se) section.    
-
-```{r eval=TRUE, echo=TRUE, warnings=FALSE }
-deg.tab.mus <- deg.all.mus$deg.table; deg.tab.mus[1:2, 1:9] 
-```
-
-The up- and down-regulated genes in brain can be subsetted with the highest stringency `total==2`. Gene `ENSMUSG00000026764` (`Kif5c`) is selected as the reference gene for downstream analysis, since its function in synaptic transmission is well studied.    
-
-```{r eval=TRUE, echo=TRUE, warnings=FALSE }
-up.mus <- subset(deg.tab.mus, type=='up' & total==2)
-up.mus[1:2, 1:9]
-```
-
-## Subsetting Data 
-
-The filtered count data are normalized and then subsetted according to similarities with the reference gene `Kif5c`. The normalization method is the same (`TMM` in `edgeR`) as in the previous `spatial_enrich` call.      
-
-```{r eval=TRUE, echo=TRUE, warnings=FALSE}
-se.nor.enrich.mus <- norm_data(data=data.enrich.mus.fil, norm.fun='CNF', parameter.list=list(method='TMM'), log2.trans=TRUE)
-```
-
-Subset normalized data according to similarities (Pearson's correlation coefficient, `fun='cor'`) with the reference gene `ENSMUSG00000026764` (`Kif5c`). `p=0.1` indicates genes that have top 10% largest similarities with the reference gene.  
-
-```{r eval=TRUE, echo=TRUE, warnings=FALSE}
-sub.mat.mus <- submatrix(data=se.nor.enrich.mus, ID=c('ENSMUSG00000026764'), p=0.1, fun='cor')
-sub.mat.mus[1:2, ] # Subsetted assay matrix
-```
-
-The subsetted data are presented in matrix heatmap, where the reference gene `ENSMUSG00000026764` is indicated by black lines.   
-
-```{r eval=TRUE, echo=TRUE, warnings=FALSE, fig.cap=("Matrix Heatmap. Rows are genes and columns are samples. The reference gene is tagged by black lines."), out.width='100%'}
-matrix_hm(ID=c('ENSMUSG00000026764'), data=sub.mat.mus, angleCol=80, angleRow=35, cexRow=0.8, cexCol=0.8, margin=c(10, 8), static=TRUE, arg.lis1=list(offsetRow=0.01, offsetCol=0.01))
-```   
-
-## Module Identification
-
-Module identification is carried out on the subsetted data so as to detect genes with unknown function but classified in the same module with the reference gene. Details of module identification is explained in the [Network Graphs](#net) section.    
-
-```{r eval=TRUE, echo=TRUE, warnings=FALSE, results=FALSE}
-adj.mod.mus <- adj_mod(data=sub.mat.mus)
-```
-
-A slice of the adjacency matrix is shown below.    
-
-```{r eval=TRUE, echo=TRUE, warnings=FALSE}
-adj.mod.mus[['adj']][1:3, 1:3]
-```
-
-The module assignments are stored in a `data frame`. Its columns contain the results
-for the `ds=2` and `ds=3` settings. Integer values $>0$ are the module labels, while $0$ 
-indicates unassigned genes. The following returns the first three rows of the module 
-assignment result.  
-
-```{r eval=TRUE, echo=TRUE, warnings=FALSE}
-adj.mod.mus[['mod']][1:3, ] 
-```
-
-Visualize the module containing the reference gene `ENSMUSG00000026764` tagged by `_target`. The genes in this module are returned in a table and ranked by connectivities.   
-
-```{r modMus, eval=TRUE, echo=TRUE, warnings=FALSE, fig.cap=("Static network. Node size denotes gene connectivity while edge thickness stands for co-expression similarity.") }
-node.mus <- network(ID='ENSMUSG00000026764', data=sub.mat.mus, adj.mod=adj.mod.mus, adj.min=0.90, vertex.label.cex=0.7, vertex.cex=2, static=TRUE, return.node=TRUE)
-node.mus[1:3, , drop=FALSE]
-```
-
-The annotation information from `biomaRt` is appended to all genes in the module containing the reference gene.  
-
-```{r eval=TRUE, echo=TRUE, warnings=FALSE}
-ann.mus <- read_cache(cache.pa, 'ann.mus')
-if (is.null(ann.mus)) {
-  ensem <- useEnsembl("ensembl", dataset = "mmusculus_gene_ensembl")
-  ann.mus <- getBM(filters='ensembl_gene_id', values=rownames(node.mus), attributes=c("ensembl_gene_id", "go_id", "description"), mart=ensem)
-  ann.mus <- subset(ann.mus, !duplicated(description))
-  rownames(ann.mus) <- ann.mus$ensembl_gene_id
-  save_cache(dir=cache.pa, overwrite=TRUE, ann.mus)
-}
-ann.mus <- ann.mus[rownames(node.mus), ]
-node.mus <- cbind(node.mus, ann.mus[, c('go_id', 'description')])
-node.mus[1:2, ]
-```   
-
-## Visualizing Discovery
-
-According to annotations on [Ensembl](https://www.ensembl.org/index.html){target='_blank'}, in the gene module shown in Figure \@ref(fig:modMus), ENSMUSG00000026764 (Kif5c), ENSMUSG00000021536 (Adcy2 ENSMUSG00000021536), ENSMUSG00000007207 (Stx1a), and ENSMUSG00000041263 (Rusc1) are responsible for synaptic signal transmission. Particularly, Kif5c is a well-characterized kinesin and its transportation activity in axons is experimentally studied. ENSMUSG00000028246 (Faxc) plays potential roles in axonal development. ENSMUSG00000021730 (Hcn1) is responsible for hyperpolarization-activated potassium/sodium channel, which contributes to currents in neurons. ENSMUSG00000024176 (Sox8) and ENSMUSG00000045903 (Npas4) are both transcription factors. Sox8 may play a role in central nervous system while Npas4 regulates excitatory-inhibitory balance within neural circuits, which is experimentally studied. ENSMUSG00000047842 (Diras2) encodes a GTP-binding protein and involves in signal transduction, while ENSMUSG00000032131 (Abcg4) encodes a ATP binding protein and functions in transmembrane transport. According to these functions, this gene module has a high probability of regulating signal transmission in neurons. 
-
-ENSMUSG00000111977 (Gm47163) and ENSMUSG00000097960 have unclear functions. Since they are co-expressed with other genes in this module (Figure \@ref(fig:modMus)), they are potential new genes responsible for synaptic signal transmission in mouse brain. Their expression profiles are visualized in Figure \@ref(fig:shmNovel) in form of SHMs and in Figure \@ref(fig:lineNovel) in form of line graph.   
-
-```{r shmNovel, eval=TRUE, echo=TRUE, warnings=FALSE, fig.wide=TRUE, fig.cap=('SHMs of new gene candidates in mouse brain synaptic transmission. Genes ENSMUSG00000111977 and ENSMUSG00000097960 are potential new genes involved in mouse brain synaptic transmission, which are identified by `spatialHeatmap`. Their expression profiles are visualized in form of SHMs.'), out.width="100%", fig.show='show', results='hide'}
-spatial_hm(svg=svg.mus, data=deg.all.mus$deg.table, ID=c('ENSMUSG00000111977', 'ENSMUSG00000097960'), legend.r=1, legend.nrow=3, sub.title.size=9, ncol=3, bar.width=0.08)
-```
-
-```{r lineNovel, eval=TRUE, echo=TRUE, warnings=FALSE, fig.wide=TRUE, fig.cap=('Line graph of new gene candidates in mouse brain synaptic transmission. The count data are normalized and replicates are aggregated by taking mean of assay profiles.'), out.width="100%", fig.show='show'}
-profile_gene(subset(up.mus, gene %in% c('ENSMUSG00000111977', 'ENSMUSG00000097960')))
-```
 
 
 # Supplementary Section {#sup} 
@@ -1818,11 +1317,11 @@ To also specify conditions, their labels need to be appended to the feature name
 with double underscores as separator, _i.e._ 'feature__condition'. 
 
 The following example replots the [testing example](#test) for two spatial features 
-('occipital lobe' and 'parietal lobe') and two conditions ('1' and '2'). 
+('putamen' and 'prefrontal.cortex') and two conditions ('1' and '2'). 
 
 ```{r eval=TRUE, echo=TRUE, warnings=FALSE }
 vec <- sample(x=1:100, size=5) # Random numeric values
-names(vec) <- c('occipital lobe__condition1', 'occipital lobe__condition2', 'parietal lobe__condition1', 'parietal lobe__condition2', 'notMapped') # Assign unique names to random values
+names(vec) <- c('putamen__condition1', 'putamen__condition2', 'prefrontal.cortex__condition1', 'prefrontal.cortex__condition2', 'notMapped') # Assign unique names to random values
 vec
 ```
 
@@ -1832,7 +1331,7 @@ To keep the build time and storage size of this package to a minimum, the
 `spatial_hm` function call in the code block below is not evaluated. Thus,
 the corresponding SHM is not shown in this vignette. 
 
-```{r vecshm, eval=FALSE, echo=TRUE, warnings=FALSE, fig.wide=FALSE, fig.cap=c('SHMs on a vector. \'occipital lobe\' and \'parietal lobe\' are 2 aSVG features and \'condition1\' and \'condition2\' are conditions.'), results='hide'}
+```{r vecshm, eval=FALSE, echo=TRUE, warnings=FALSE, fig.wide=FALSE, fig.cap=c('SHMs on a vector. \'putamen\' and \'prefrontal.cortex\' are 2 aSVG features and \'condition1\' and \'condition2\' are conditions.'), results='hide'}
 spatial_hm(svg=svg.hum, data=vec, ID='testing', ncol=1, legend.r=1.2, sub.title.size=14, ft.trans='g4320')
 ```
 
@@ -1860,7 +1359,7 @@ With the resulting `data.frame` one can generate the same SHM as in the previous
 example, that used a named vector as input to the `spatial_hm` function. Additionally,
 one can now select each row by its name (here gene ID) under the `ID` argument.
 
-```{r dfshm, eval=FALSE, echo=TRUE, warnings=FALSE, fig.wide=FALSE, fig.cap=c('SHMs on a data frame. \'occipital lobe\' and \'parietal lobe\' are 2 aSVG features and \'condition1\' and \'condition2\' are conditions.'), results='hide'}
+```{r dfshm, eval=FALSE, echo=TRUE, warnings=FALSE, fig.wide=FALSE, fig.cap=c('SHMs on a data frame. \'putamen\' and \'prefrontal.cortex\' are 2 aSVG features and \'condition1\' and \'condition2\' are conditions.'), results='hide'}
 spatial_hm(svg=svg.hum, data=df.test, ID=c('gene1'), ncol=1, legend.r=1.2, sub.title.size=14)
 ```
 
@@ -1909,12 +1408,12 @@ the `spatial_hm` function, the target file should meet the following requirement
    should be avoided for naming feature/samples and conditions. 
 
 The following example illustrates the design of a valid `SummarizedExperiment`
-object for generating SHMs. In this example, the 'occipital lobe' tissue has 2
+object for generating SHMs. In this example, the 'putamen' tissue has 2
 conditions and each condition has 2 replicates. Thus, there are 4 assays for
-`occipital lobe`, and the same design applies to the `parietal lobe` tissue. 
+`putamen`, and the same design applies to the `prefrontal.cortex` tissue. 
 
 ```{r eval=TRUE, echo=TRUE, warnings=FALSE }
-sample <- c(rep('occipital lobe', 4), rep('parietal lobe', 4))
+sample <- c(rep('putamen', 4), rep('prefrontal.cortex', 4))
 condition <- rep(c('condition1', 'condition1', 'condition2', 'condition2'), 2)
 target.test <- data.frame(sample=sample, condition=condition, row.names=paste0('assay', 1:8))
 target.test
@@ -1960,11 +1459,11 @@ assay(se.aggr)[1:3, ]
 With the fully configured `SummarizedExperiment` object, a similar SHM is plotted as 
 in the previous examples. 
 
-```{r seshm, eval=FALSE, echo=TRUE, warnings=FALSE, fig.wide=FALSE, fig.cap=c('SHMs on a SummarizedExperiment. \'occipital lobe\' and \'parietal lobe\' are 2 aSVG features and \'condition1\' and \'condition2\' are conditions.'), results='hide'}
+```{r seshm, eval=FALSE, echo=TRUE, warnings=FALSE, fig.wide=FALSE, fig.cap=c('SHMs on a SummarizedExperiment. \'putamen\' and \'prefrontal.cortex\' are 2 aSVG features and \'condition1\' and \'condition2\' are conditions.'), results='hide'}
 spatial_hm(svg=svg.hum, data=se.aggr, ID=c('gene1'), ncol=1, legend.r=1.2, sub.title.size=14, ft.trans=c('g4320'))
 ```
 
-## aSVG File
+## aSVG Files
 
 ### aSVG repository {#svg_repo}
 
@@ -2042,101 +1541,183 @@ Finally, the features, strokes, and colors are updated in the aSVG file(s) locat
 update_feature(df.new=feature.df.new, dir=tmp.dir1)
 ```
 
-## Spatiotemporal Heatmaps {#sthmComTwo} 
+## Advanced Functionalities
 
-This section showcases spatiotemporal heatmaps (STHMs) created by combining two dimensions of spatial features and times. Since most steps are similar with the combination of [three dimensions](#sthm), the following process is reduced to minimum.   
+### SHM: Re-matching {#remat}
 
-#### Gene Expression Data
+SHMs supports re-matching between data and aSVG features, *i.e.* re-match one spatial feature in the data to a different or multiple counterparts in the aSVG. The re-matching is defined in a named list, where a name slot refers to a spatial feature in data and the corresponding element in the list are one or multiple aSVG features to re-match.   
 
-The same RNA-seq count data as the [previous example](#sthm) from @Narsai2017-ql is downloaded.  
+The example below takes data from the [Human Brain](#hum) section, such as `svg.hum.sub` and `se.fil.hum`. The re-matching is demonstrated on Figure \@ref(fig:humshm). The data feature `frontal.cortex` is re-matched to aSVG features `frontal.cortex` and `prefrontal.cortex` in a list. 
 
-```{r eval=TRUE, echo=TRUE, warnings=FALSE}
-rse.clp <- read_cache(cache.pa, 'rse.clp')
-if (is.null(rse.clp)) {
-  rse.clp <- getAtlasData('E-GEOD-115371')[[1]][[1]]
-  save_cache(dir=cache.pa, overwrite=TRUE, rse.clp)
+```{r eval=TRUE, echo=TRUE, warnings=FALSE }
+remat.hum <- list(frontal.cortex=c('frontal.cortex', 'prefrontal.cortex'))
+```
+
+SHM plots of re-matching. Examples of re-matching application include mapping gene expression profiles of one species to a closely related species in the same anatomical region, or mapping gene assay profiles of a sub-tissue to the whole tissue, where the gene abundance profiles of the whole tissue are hard to assay and only a sub-tissue is assayed.     
+
+```{r remat, eval=TRUE, echo=TRUE, warnings=FALSE, fig.wide=TRUE, fig.cap=("SHMs of re-matching. The data feature `frontal.cortex` is re-matched to aSVG features `frontal.cortex` and `prefrontal.cortex`."), out.width="100%", results='hide'}
+spatial_hm(svg=svg.hum.sub, data=se.fil.hum, ID=c('ENSG00000268433'), lay.shm='con', ncol=1, legend.r=0.8, legend.nrow=2, lis.rematch=remat.hum)
+```
+ 
+### Spatial Enrichment: Multiple Methods {#seMulMeth}
+
+This section showcases using multiple DEG methods for SE and the data are taken from [Spatial Enrichment](#se) such as `data.sub.mus.fil`. In the following, the selected DEG methods are 'edgeR' and 'limma'. In each of the two methods, the target feature
+`brain` is compared with `liver` and `kidney` in a pairwise manner separately. The
+brain-specific genes are selected here by log2 fold change (`log2.fc`) and FDR (`fdr`) thresholds.   
+
+```{r eval=TRUE, echo=TRUE, warnings=FALSE, results='hide'}
+deg.lis.mus.mul <- spatial_enrich(data.sub.mus.fil, methods=c('edgeR', 'limma'), norm='TMM', log2.fc=1, fdr=0.05, aggr='mean', log2.trans.aggr=TRUE)
+```
+
+The up- and down- regulated genes detected by `edgeR` in brain can be accessed as
+follows.    
+
+```{r eval=TRUE, echo=TRUE, warnings=FALSE, collapse=TRUE}
+deg.lis.mus.mul$lis.up.down$up.lis$edgeR.up[1:2] # Up-regulated.
+deg.lis.mus.mul$lis.up.down$down.lis$edgeR.down[1:2] # Down-regulated. 
+```
+
+The overlap of up-regulated genes in brain tissue for two DEG methods is displayed in 
+form of an UpSet plot.   
+
+```{r upset, eval=TRUE, echo=TRUE, warnings=FALSE, fig.wide=TRUE, fig.cap=('UpSet plot of up-regulated genes in mouse brain. The overlap of up-regulated genes detected by edgeR and limma is indicated by bars.'), out.width="100%", fig.show='show'}
+deg_ovl(deg.lis.mus.mul$lis.up.down, type='up', plot='upset')
+```
+
+Alternatively, the overlap can be displayed in form of a matrix plot.   
+
+```{r matrix, eval=TRUE, echo=TRUE, warnings=FALSE, fig.wide=TRUE, fig.cap=('Matrix plot of up-regulated genes in mouse brain. The matrix plot displays any overlap between up-regulated genes detected by edgeR and limma.'), out.width="70%", fig.show='show'}
+deg_ovl(deg.lis.mus.mul$lis.up.down, type='up', plot='matrix')
+```
+
+The identified brain-specific genes are stored in a tabular format. The `type` column
+indicates up- or down-regulated; the `total` column shows how many methods
+identify a gene as up or down; and `1` under the `edgeR` and
+`limma` columns indicates the corresponding DEG method identifies a gene
+as up- or down-regulated as specfied in `type`. The columns to the right are the input
+data used by the `spatial_enrich` function.   
+
+```{r eval=TRUE, echo=TRUE, warnings=FALSE, collapse=TRUE}
+deg.table.mus.mul <- deg.lis.mus.mul$deg.table; deg.table.mus.mul[1:2, 1:8] 
+```
+
+The numbers in the `total` column are stringency measures of gene specificity,
+where the larger the more strigent. For example, the up- or down-regulated
+genes in brain can be subsetted with the highest stringency, here `total==2`.   
+
+```{r eval=TRUE, echo=TRUE, warnings=FALSE, collapse=TRUE}
+df.up.mus <- subset(deg.table.mus.mul, type=='up' & total==2)
+df.up.mus[1:2, 1:8]
+```
+
+```{r eval=TRUE, echo=TRUE, warnings=FALSE, collapse=TRUE}
+df.down.mus <- subset(deg.table.mus.mul, type=='down' & total==2)
+df.down.mus[1:2, 1:9]
+```
+
+
+To plot SHMs using spatially-enriched molecules refer to the [Spatial Enrichment](#se) section.   
+
+
+## SHMs of Time Series {#chk}
+
+This section generates a SHM plot for chicken data from the Expression Atlas.
+The code components are very similar to the [Human Brain](#hum) example. For
+brevity, the corresponding text explaining the code has been reduced to a
+minimum. 
+
+### Gene Expression Data
+
+The following searches the Expression Atlas for expression data from _'heart'_ and _'gallus'_.
+
+```{r eval=TRUE, echo=TRUE, warnings=FALSE, results='hide'}
+all.chk <- read_cache(cache.pa, 'all.chk') # Retrieve data from cache.
+if (is.null(all.chk)) { # Save downloaded data to cache if it is not cached.
+  all.chk <- searchAtlasExperiments(properties="heart", species="gallus")
+  save_cache(dir=cache.pa, overwrite=TRUE, all.chk)
 }
 ```
 
-#### Experimental Design
-
-The same targets file as the [previous example](#sthm) is imported.   
-
-```{r eval=TRUE, echo=TRUE, warnings=FALSE}
-clp.tar <- system.file('extdata/shinyApp/example/target_coleoptile.txt', package='spatialHeatmap')
-target.clp <- read_fr(clp.tar)
-```
-
-Elements of the two dimensions spatial features and times are partially shown.   
-
-```{r eval=TRUE, echo=TRUE, warnings=FALSE}
-target.clp[1:2, c('organism_part', 'age')] # A slice of the targets file.
-```
-
-The spatial feature (`organism_part`) and time (`age`) dimensions are combined to form a composite dimension (`SFTime`). This is the essential difference with the [previous example](#sthm).   
-
-```{r eval=TRUE, echo=TRUE, warnings=FALSE}
-rse.clp <- com_factor(rse.clp, target.clp, factors2com=c('organism_part', 'age'), factor.new='SFTime')
-target.clp <- colData(rse.clp)
-target.clp[1:2, c('organism_part', 'age', 'SFTime')]
-```
-
-#### aSVG Image
-
-Similarly, the custom aSVG image is generated in Inkscape from 
-the corresponding figure in @Narsai2017-ql according to the [SVG tutorial](https://jianhaizhang.github.io/SVG_tutorial_file/){target="_blank"} and included in `spatialHeatmap` as `oryza.sativa_coleoptile.NT_shm.svg`.   
-
-
-Obtain the aSVG file path and parse the aSVG.
+Among the matching entries, accession 'E-MTAB-6769' will be downloaded, which is an RNA-Seq experiment comparing the developmental changes across 
+nine time points of seven organs [@Cardoso-Moreira2019-yq].
 
 ```{r eval=TRUE, echo=TRUE, warnings=FALSE, results='hide'}
-svg.clp.pa2 <- system.file("extdata/shinyApp/example", "oryza.sativa_coleoptile.NT_shm.svg", package="spatialHeatmap")
-svg.clp2 <- parse_svg(svg.clp.pa2)
+all.chk[3, ]
+rse.chk <- read_cache(cache.pa, 'rse.chk') # Read data from cache.
+if (is.null(rse.chk)) { # Save downloaded data to cache if it is not cached.
+  rse.chk <- getAtlasData('E-MTAB-6769')[[1]][[1]]
+  save_cache(dir=cache.pa, overwrite=TRUE, rse.chk)
+}
 ```
 
-The composite dimesion `SFTime` should have at least one overlapping element with aSVG features.  
+The first three rows of the design in the downloaded experiment are shown.    
 
 ```{r eval=TRUE, echo=TRUE, warnings=FALSE } 
-unique(target.clp$SFTime) %in% unique(attribute(svg.clp2)[[1]]$feature)
+colData(rse.chk)[1:3, ]
 ```
 
-#### Preprocess Assay Data
+### aSVG Image  
 
-The raw RNA-Seq count are preprocessed with the following steps: (1) normalization, (2) aggregation of replicates, and (3) filtering. The normalization step is the same as the [previous example](#sthm), while the replicates aggregation is performed on the new composite dimension `SFTime` by taking mean of gene expression profiles (`aggr='mean'`). The condition dimension `stimulus` is assigned to `con.factor`.        
+The following example shows how to download from the above [SVG
+repositories](#data_repo) an aSVG image that matches the tissues and species
+assayed in the downloaded data. As before downloaded images are saved to the directory `tmp.dir.shm`.   
 
-```{r eval=TRUE, echo=TRUE, warnings=FALSE }
-se.nor.clp <- norm_data(data=rse.clp, norm.fun='ESF', log2.trans=TRUE) # Normalization
+<!--
+Code chunk not evaluated to save time building this vignette.
+-->
+```{r eval=FALSE, echo=TRUE, warnings=FALSE, results='hide' }
+tmp.dir.shm <- file.path(tempdir(check=TRUE), 'shm')
+# Query aSVGs.
+feature.df <- return_feature(feature=c('heart', 'kidney'), species=c('gallus'), dir=tmp.dir.shm, remote=remote)
 ```
+
+To meet the R/Bioconductor package requirements, the following uses aSVG file instances included in the `spatialHeatmap` package rather than the downloaded instances.   
+
+```{r eval=TRUE, echo=TRUE, warnings=FALSE, results='hide' }
+feature.df <- return_feature(feature=c('heart', 'kidney'), species=c('gallus'), dir=svg.dir, remote=NULL)
+feature.df[1:2, c('feature', 'stroke', 'SVG')] # A slice of the search result.
+```
+
+The target aSVG instance `gallus_gallus.svg` is imported.   
 
 ```{r eval=TRUE, echo=TRUE, warnings=FALSE, results='hide'}
-se.aggr.clp2 <- aggr_rep(data=se.nor.clp, sam.factor='SFTime', con.factor='stimulus', aggr='mean') # Replicate agggregation using mean. 
-se.fil.clp2 <- filter_data(data=se.aggr.clp2, sam.factor='SFTime', con.factor='stimulus', pOA=c(0.07, 7), CV=c(0.7, 100)) # Filtering of genes with low counts and varince.
+svg.chk.pa <- system.file("extdata/shinyApp/example", "gallus_gallus.svg", package="spatialHeatmap")
+svg.chk <- read_svg(svg.chk.pa)
 ```
 
-A slice of the data after filtering is shown.   
+### Experimental Design
 
-```{r eval=TRUE, echo=TRUE, warnings=FALSE }
-df.fil.clp <- assay(se.fil.clp2) 
-df.fil.clp[1:3, 1:3] 
-```
+A sample target file that is included in this package is imported and then loaded to the `colData` slot of `rse.chk`, the first three rows of which are displayed.   
 
-The optimal viusalization effects on all conditions (`aerobic`, `anaerobic`, `anaerobic` + `aerobic`) are achieved by combining all three dimensions in the [previous example](#sthm). The purpose of this section is to demonstrate the application of combining two dimensions. To also obtain the best effects in this example, the data under aerobic is excluded.   
-
-<a name='sam.time'></a>
-```{r eval=TRUE, echo=TRUE, warnings=FALSE }
-df.fil.clp1 <- df.fil.clp[, !grepl('__aerobic', colnames(df.fil.clp))] # Exclude aerobic data.  
-df.fil.clp1[1:3, 1:3] # A slice of the data table without aerobic data.
-```
-
-#### STHM: combining two dimensions
-
-The expression profile of gene `Os12g0630200` in coleoptile is plotted across eight time points under anoxia (`anaerobic`) and re-oxygenation (`NA`) respectively.   
-
-```{r clpshm1, eval=TRUE, echo=TRUE, warnings=FALSE, fig.wide=TRUE, fig.cap=("Spatiotemporal heatmaps at combination of two dimensions. Gene expression profile of one gene in coleoptile across eight time points under anoxia and re-oxygenation is visualized in two images respectively."), out.width="100%", fig.show='show', results='hide'}
-shm.lis <- spatial_hm(svg=svg.clp2, data=df.fil.clp1, ID=c('Os12g0630200'), legend.r=0.9, legend.key.size=0.02, legend.text.size=9, legend.nrow=8, ncol=1, line.size=0)
+```{r eval=TRUE, echo=TRUE, warnings=FALSE, collapse=TRUE}
+chk.tar <- system.file('extdata/shinyApp/example/target_chicken.txt', package='spatialHeatmap')
+target.chk <- read.table(chk.tar, header=TRUE, row.names=1, sep='\t') # Importing
+colData(rse.chk) <- DataFrame(target.chk) # Loading
+target.chk[1:3, ]
 ```
 
 
+### Preprocess Assay Data
+
+The raw RNA-Seq count are preprocessed with the following steps: (1)
+normalization, (2) aggregation of replicates, and (3) filtering of reliable
+expression data, details of which are seen in the [Human Brain](#hum) example.  
+
+```{r eval=TRUE, echo=TRUE, warnings=FALSE, results='hide'}
+se.nor.chk <- norm_data(data=rse.chk, norm.fun='ESF', log2.trans=TRUE) # Normalization
+se.aggr.chk <- aggr_rep(data=se.nor.chk, sam.factor='organism_part', con.factor='age', aggr='mean') # Replicate agggregation using mean 
+se.fil.chk <- filter_data(data=se.aggr.chk, sam.factor='organism_part', con.factor='age', pOA=c(0.01, 5), CV=c(0.6, 100)) # Filtering of genes with low counts and varince
+```
+
+### SHM: Time Series
+
+The expression profile for gene `ENSGALG00000006346` is plotted across nine time
+points in four organs in form of a composite SHM with 9 panels. Their layout in
+three columns is controlled with the argument setting `ncol=3`. 
+
+```{r chkshm, eval=TRUE, echo=TRUE, warnings=FALSE, fig.wide=TRUE, fig.cap=("Time course of chicken organs. The SHM shows the expression profile of a single gene across nine time points and four organs."), out.width="100%", results='hide'}
+spatial_hm(svg=svg.chk, data=se.fil.chk, ID='ENSGALG00000006346', width=0.9, legend.width=0.9, legend.r=1.5, sub.title.size=9, ncol=3, legend.nrow=2, label=TRUE)
+```
 
 <br/>
 

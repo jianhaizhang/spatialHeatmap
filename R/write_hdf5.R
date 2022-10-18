@@ -220,11 +220,11 @@
 
 #' @export write_hdf5
 #' @importFrom SummarizedExperiment assay rowData colData SummarizedExperiment
-#' @importFrom HDF5Array saveHDF5SummarizedExperiment
 #' @importFrom utils untar tar
 
 write_hdf5 <- function(dat.lis, dir='./data_shm', replace=FALSE, chunkdim=NULL, level=NULL, verbose=FALSE, svg.dir=NULL) {
 
+  if (any(c('e', 'w') %in% check_pkg('HDF5Array'))) stop('The package "HDF5Array" is not detected!')
   options(stringsAsFactors=FALSE); dir <- normalizePath(dir, winslash="/", mustWork=FALSE)
   na.all <- names(dat.lis)
   if (!'df_pair' %in% na.all) stop('The "df_pair" data frame is required!')
@@ -266,7 +266,7 @@ write_hdf5 <- function(dat.lis, dir='./data_shm', replace=FALSE, chunkdim=NULL, 
      } else if (any(form) & na.all[i]!='df_pair') {
        if (any(duplicated(colnames(assay(data))))) stop(paste0(na.all[i], ': duplicated "sample__condition" replicates are detected! Please use "aggr_rep" to aggregate replicates.'))
      }
-     saveHDF5SummarizedExperiment(data, dir=dir, prefix=paste0(na.all[i], '_'), replace=replace, chunkdim=chunkdim, level=level, verbose=verbose)
+     HDF5Array::saveHDF5SummarizedExperiment(data, dir=dir, prefix=paste0(na.all[i], '_'), replace=replace, chunkdim=chunkdim, level=level, verbose=verbose)
     } else cat(paste0('Accepted data classes are: data.frame, matrix, DFrame, dgCMatrix, SummarizedExperiment! This data is not saved: ', na.all[i]), '\n')
 
   }; wd <- getwd(); setwd(dir)

@@ -38,6 +38,7 @@
 reduce_dim <- function(sce, prop=0.1, min.dim=13, max.dim=50, model.var=list(assay.type="logcounts"), top.hvg=list(), de.pca=list(assay.type = "logcounts"), pca=FALSE, tsne=list(dimred="PCA", ncomponents=2), umap=list(dimred="PCA")) {
   # getTopHVGs: prop=0.1 is super more important than n=3000 in co-clustering.
   #  save(sce, prop, min.dim, max.dim, model.var, top.hvg, de.pca, pca, tsne, umap, file='reduce.dim.arg')
+  min.dim <- as.numeric(min.dim); max.dim <- as.numeric(min.dim)
   if (is(sce, 'dgCMatrix')|is(sce, 'matrix')|is(sce, 'data.frame')) {
     if (all(round(sce)==sce)) stop('The "sce" should be in log2 scale!')
     sce <- SingleCellExperiment(list(logcounts=as.matrix(sce)))

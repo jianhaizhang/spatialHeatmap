@@ -1,5 +1,11 @@
 ########################################
-# Getters/setters for coord class.
+# Methods for SVG class.
+
+#' @export
+setGeneric("covis", function(svg, ...) standardGeneric("covis"))
+
+#' @export
+setGeneric("spatial_hm", function(svg, ...) standardGeneric("spatial_hm"))
 
 #' @export
 setGeneric("cmb", function(x, y) standardGeneric("cmb"))
@@ -34,7 +40,7 @@ setGeneric("svg", function(x) standardGeneric("svg"))
 #' @export
 setGeneric("svg<-", function(x, value) standardGeneric("svg<-"))
 
-
-
+#' @export
+setGeneric("sub_ft", function(svg, ...) standardGeneric("sub_ft"))
 
 

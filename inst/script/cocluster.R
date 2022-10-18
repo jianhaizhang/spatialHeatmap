@@ -72,15 +72,24 @@ blk.mus$bulkCell <- 'bulk'; blk.mus$tissue <- NULL
 sc.mus$label <- colnames(sc.mus) 
 sc.mus$bulkCell <- 'cell'; sc.mus$cell <- NULL 
 sce.all <- cbind(blk.mus, sc.mus) 
-# Secondary label of clusters.
+
+# Secondary label of clusters.  
 sce.nor <- norm_cell(sce.all, count.kp=TRUE) 
 sce.dim <- reduce_dim(sce.nor) 
-sce.sc <- cluster_cell(sce.dim)
-colnames(colData(sce.sc))[1] <- 'label1' 
-sce.sc$sizeFactor <- NULL 
-assays(sce.sc)$logcounts <- NULL 
-sce.sc$expVar <- 'control'
-saveRDS(sce.all, file='auto_bulk_cell_mouse_brain.rds')
+sce <- cluster_cell(sce.dim) 
+colnames(colData(sce))[1] <- 'label1' 
+cdat <- colData(sce) 
+cdat.na <- colnames(cdat)
+cdat.na <- c(c('label', 'label1'), setdiff(cdat.na, c('label', 'label1'))) 
+colData(sce) <- cdat[, cdat.na] 
+sce$sizeFactor <- NULL
+assays(sce)$logcounts <- NULL 
+sce$expVar <- 'control' 
+# Bulk tissue labels should always be aSVG features. 
+blk.idx <- sce$bulkCell %in% 'bulk' 
+sce$label1[blk.idx] <- sce$label[blk.idx] 
+saveRDS(sce, file='shiny_covis_bulk_cell_mouse_brain.rds')
+
 
 
 ## Example data of Arabidopsis thaliana root for coclustering optimization, downloaded at https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE152766. 

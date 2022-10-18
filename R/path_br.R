@@ -13,18 +13,18 @@
 #' Hadley Wickham, Jim Hester and Jeroen Ooms (2019). xml2: Parse XML. R package version 1.2.2. https://CRAN.R-project.org/package=xml2
 
 
-#' @importFrom xml2 xml_attr xml_add_sibling xml_name xml_children xml_remove xml_add_child xml_set_attr 
+#' @importFrom xml2 xml_attr xml_attr<- xml_add_sibling xml_name xml_name<- xml_children xml_remove xml_add_child xml_set_attr 
 
 path_br <- function(node, g=TRUE) {
 
- na <- xml2::xml_name(node); if (na!='g') {
+ na <- xml_name(node); if (na!='g') {
    id <- xml_attr(node, 'id')
    if (na=='a') { xml_remove(node); cat('Element "a" is removed:', id, '!\n'); return() }
    if (na %in% c('a', 'g', 'use', 'title', 'ellipse', 'rect')) return() 
    # Delete the node if tiny/dot path.
    dot <- rm_dot(node); if (dot=='yes') return() 
 
-   d <- xml2::xml_attr(node, 'd') 
+   d <- xml_attr(node, 'd') 
    if (grepl('m ', d)) return('Please use absolute coordinates for all paths!')
    if (grepl('Z M', d)) {
  
@@ -38,7 +38,7 @@ path_br <- function(node, g=TRUE) {
        if (length(z)==1) { xml_attr(node, 'd'); return() }
        ids <- paste0(id, '_', seq_along(z))
        # Make node empty.
-       xml2::xml_attr(node, 'd') <- NA
+       xml_attr(node, 'd') <- NA
        # Break the combined path to a group.
       if (g==TRUE) {
         
@@ -57,7 +57,7 @@ path_br <- function(node, g=TRUE) {
         xml_set_attr(node.chl, 'd', z)
         xml_set_attr(node.chl, 'id', ids)  
         # Name node 'g'.
-        xml2::xml_name(node) <- 'g'; xml2::xml_attr(node, 'd') <- NULL
+        xml_name(node) <- 'g'; xml_attr(node, 'd') <- NULL
         if (length(w)>0) xml_add_child(node, tit, .where=0)
 
       } else {

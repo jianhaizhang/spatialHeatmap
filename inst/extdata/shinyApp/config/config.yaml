@@ -39,10 +39,9 @@ dataset10:
   data: example/expr_arab.txt
   svg: example/arabidopsis.thaliana_root.roottip_shm.svg
 dataset11:
-  name: spatiotemporal_Narsai
-  data: example/expr_coleoptile_samTimeCon.txt
-  svg:
-  - example/oryza.sativa_coleoptile.ANT_shm.svg
+  name: multiDimensions_Attilio
+  data: example/mus_brain_vars.txt
+  svg: example/mus_musculus.brain.svg
 dataset12:
   name: growthStage_Mustroph
   data: example/random_data_multiple_aSVGs.txt
@@ -57,15 +56,11 @@ dataset13:
   - example/maize_leaf_shm1.svg
   - example/maize_leaf_shm2.png
   - example/maize_leaf_shm2.svg
-dataset14:
-  name: map_Census
-  data: example/us_population2018.txt
-  svg: example/us_map_shm.svg
 title:
 - title:spatialHeatmap
 - width:350
 max.upload.size: 5G 
-default.dataset: customSingleCellData
+default.dataset: mouse_Merkin
 col.row.gene: None
 separator: None
 data.matrix:
@@ -140,8 +135,7 @@ download_spatial_temporal:
   svg: example/oryza.sativa_coleoptile.ANT_shm.svg
 download_covisualization:
   data:
-  - example/sce_manual_mouse.rds
-  - example/sce_auto_bulk_cell_mouse_brain.rds
+  - example/shiny_covis_bulk_cell_mouse_brain.rds
   svg: example/mus_musculus.brain.svg
 download_batched_data_aSVGs:
   data: example/aSVGs_shm.tar

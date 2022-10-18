@@ -1,5 +1,5 @@
 "argument"	"description"
-"1"	"svg"	"A coord object containing aSVG instances"
+"1"	"svg"	"An SVG object containing aSVG instances"
 "2"	"data"	"Input data of SummarizedExperiment (SE), data frame, or vector"
 "3"	"sam.factor"	"Applies to SE. Column name of sample replicates in colData slot. Default is NULL"
 "4"	"con.factor"	"Applies to SE. Column name of condition replicates in colData slot. Default is NULL"

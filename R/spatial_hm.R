@@ -7,8 +7,9 @@
 #' @return An image of spatial heatmap(s), a two-component list of the spatial heatmap(s) in \code{ggplot} format and a \code{data.frame} of mapping between assayed samples and aSVG features.
 
 #' @section Details:
-#' See the package vignette (\code{browseVignettes('spatialHeatmap')}).  
-
+#' See the package vignette (\code{browseVignettes('spatialHeatmap')}). 
+#' @name spatial_hm 
+#' @docType methods
 #' @examples
 
 #' ## In the following examples, the 2 toy data come from an RNA-seq analysis on development of 7
@@ -91,8 +92,8 @@
 #' svg.chk <- system.file("extdata/shinyApp/example", "gallus_gallus.svg",
 #' package="spatialHeatmap")
 #'
-#' # Parsing the chicken aSVG file.
-#' svg.chk <- parse_svg(svg.path=svg.chk)
+#' # Reading the chicken aSVG file.
+#' svg.chk <- read_svg(svg.path=svg.chk)
 #' 
 #' # Plot spatial heatmaps on gene "ENSGALG00000019846".
 #' # Toy data1. 
@@ -134,8 +135,10 @@
 #' # aSVG of development stage 2.
 #' svg2 <- system.file("extdata/shinyApp/example", "arabidopsis.thaliana_organ_shm2.svg",
 #' package="spatialHeatmap")
+#' # Import aSVGs.
+#' svg.sh.mul <- read_svg(c(svg1, svg2))
 #' # Spatial heatmaps. 
-#' spatial_hm(svg=c(svg1, svg2), data=df.test, ID=c('gene1'), height=0.8, legend.r=1.6,
+#' spatial_hm(svg=svg.sh.mul, data=df.test, ID=c('gene1'), height=0.8, legend.r=1.6,
 #' preserve.scale=TRUE) 
 #'
 #' # Multiple development stages can also be arranged in a single aSVG image, but the 
@@ -157,102 +160,15 @@
 #' svg.pa2 <- system.file('extdata/shinyApp/example/maize_leaf_shm2.svg',
 #' package='spatialHeatmap')
 #'
+#' # Import aSVGs and raster images.
+#' svg.overlay <- read_svg(svg.path=c(svg.pa1, svg.pa2), raster.path=c(raster.pa1, raster.pa2))
 #' # The data table.
 #' dat.overlay <- read_fr(system.file('extdata/shinyApp/example/dat_overlay.txt',
 #' package='spatialHeatmap'))
 #' 
 #' # Plot spatial heatmaps on top of real images.
-#' spatial_hm(svg=c(svg.pa1, svg.pa2), data=dat.overlay, raster.path=c(raster.pa1, raster.pa2),
+#' spatial_hm(svg=svg.overlay, data=dat.overlay, raster.path=c(raster.pa1, raster.pa2),
 #' charcoal=FALSE, ID=c('gene1'), alpha.overlay=0.5)
-
-#'
-#'
-#' # Co-visualizing single cell and bulk tissues through manual matching.
-
-#' # Example single cell data from mouse brain (Marques et al. (2016)).
-#' sce.manual.pa <- system.file("extdata/shinyApp/example", "sce_manual_mouse.rds", package="spatialHeatmap")
-#' sce.manual <- readRDS(sce.manual.pa)
-
-#' # The following are simplified steps on single cell data analysis. Details are available at http://bioconductor.org/books/3.14/OSCA.workflows/zeisel-mouse-brain-strt-seq.html
-#'
-#' # Quality control
-#' library(scuttle)
-#' stats <- perCellQCMetrics(sce.manual, subsets=list(Mt=rowData(sce.manual)$featureType=='mito'), threshold=1)
-#' sub.fields <- 'subsets_Mt_percent'
-#' ercc <- 'ERCC' %in% altExpNames(sce.manual)
-#' if (ercc) sub.fields <- c('altexps_ERCC_percent', sub.fields)
-#' qc <- perCellQCFilters(stats, sub.fields=sub.fields, nmads=3)
-#'
-#' # Discard unreliable cells.
-#' colSums(as.matrix(qc))
-#' sce.manual <- sce.manual[, !qc$discard]
-#'
-#' # Normalization
-#' library(scran); set.seed(1000)
-#' clusters <- quickCluster(sce.manual)
-#' sce.manual <- computeSumFactors(sce.manual, cluster=clusters) 
-#' sce.manual <- logNormCounts(sce.manual)
-#'
-#' # Variance modelling.
-#' df.var <- modelGeneVar(sce.manual)
-#' top.hvgs <- getTopHVGs(df.var, prop = 0.1, n = 3000)
-#'
-#' # Dimensionality reduction.
-#' library(scater) 
-#' sce.manual <- denoisePCA(sce.manual, technical=df.var, subset.row=top.hvgs)
-#' sce.manual <- runTSNE(sce.manual, dimred="PCA")
-#' sce.manual <- runUMAP(sce.manual, dimred = "PCA")
-#'
-#' # Clustering.
-#' library(igraph)
-#' snn.gr <- buildSNNGraph(sce.manual, use.dimred="PCA")
-#' # Cell clusters.
-#' cluster <- paste0('clus', cluster_walktrap(snn.gr)$membership)
-#' table(cluster)
-#' # Cell cluster/group assignments need to store in "colData" slot of "SingleCellExperiment". Cell clusters/groups pre-defined by users are expected to store in the "label" column while cell clusters automatically detected by clustering algorithm are stored in the "cluster" column. If there are experimental variables such as treatments or time points, they should be stored in the "expVar" column.
-#' cdat <- colData(sce.manual) 
-#' lab.lgc <- 'label' %in% make.names(colnames(cdat))
-#' if (lab.lgc) {
-#'   cdat <- cbind(cluster=cluster, colData(sce.manual))
-#'   idx <- colnames(cdat) %in% c('cluster', 'label')
-#'  cdat <- cdat[, c(which(idx), which(!idx))]
-#' } else cdat <- cbind(cluster=cluster, colData(sce.manual))
-#' colnames(cdat) <- make.names(colnames(cdat))
-#' colData(sce.manual) <- cdat; cdat[1:3, ]
-#'
-#' \donttest{
-#' plotUMAP(sce.manual, colour_by="label")
-#' plotUMAP(sce.manual, colour_by="cluster")
-#' }
-#'
-#' # The aSVG file of mouse brain.
-#' svg.mus <- system.file("extdata/shinyApp/example", "mus_musculus.brain.svg", package="spatialHeatmap")
-#' # Spatial features to match with single cell clusters.
-#' feature.df <- return_feature(svg.path=svg.mus)
-#' feature.df$feature
-#'
-#' # The single cells can be matched to bulk tissues according to cluster assignments in the "label" or "cluster" column in "colData".
-#' # Matching according to cell clusters in the "label" column in "colData", which are the cell sources provided in the original study. 
-#' unique(colData(sce.manual)$label) 
-#' # Aggregate cells by cell clusters defined in the "label" column.
-#' sce.manual.aggr <- aggr_rep(sce.manual, assay.na='logcounts', sam.factor='label', con.factor='expVar', aggr='mean')
-
-#' # Manually create the matching list.
-#' lis.match <- list(hypothalamus=c('hypothalamus'), cortex.S1=c('cerebral.cortex'))
-
-#' # Co-visualization through manual mathcing: label.
-#' shm.lis <- spatial_hm(svg=svg.mus, data=sce.manual.aggr, ID=c('St18'), height=0.7, legend.r=1.5, legend.key.size=0.02, legend.text.size=12, legend.nrow=2, sce.dimred=sce.manual, dimred='PCA', cell.group='label', assay.na='logcounts', tar.cell=c('matched'), lis.rematch=lis.match, bar.width=0.1, dim.lgd.nrow=1)
-#'
-#' # Matching according to cell clusters in the "cluster" column in "colData".
-#' unique(colData(sce.manual)$cluster) 
-#' # Aggregate cells by cell clusters defined in the "label" column.
-#' sce.manual.aggr <- aggr_rep(sce.manual, assay.na='logcounts', sam.factor='cluster', con.factor=NULL, aggr='mean')
-
-#' # Manually create the matching list.
-#' lis.match <- list(clus1=c('hypothalamus'), clus3=c('cerebral.cortex', 'midbrain'))
-
-#' # Co-visualization through manual mathcing: cluster.
-#' shm.lis <- spatial_hm(svg=svg.mus, data=sce.manual.aggr, ID=c('St18'), height=0.7, legend.r=1.5, legend.key.size=0.02, legend.text.size=12, legend.nrow=3, sce.dimred=sce.manual, dimred='PCA', cell.group='cluster', assay.na='logcounts', tar.cell=c('matched'), lis.rematch=lis.match, bar.width=0.11, dim.lgd.nrow=1)
 
 #' @author Jianhai Zhang \email{jianhai.zhang@@email.ucr.edu} \cr Dr. Thomas Girke \email{thomas.girke@@ucr.edu}
 
@@ -268,18 +184,15 @@
 #' Amezquita R, Lun A, Becht E, Carey V, Carpp L, Geistlinger L, Marini F, Rue-Albrecht K, Risso D, Soneson C, Waldron L, Pages H, Smith M, Huber W, Morgan M, Gottardo R, Hicks S (2020). “Orchestrating single-cell analysis with Bioconductor.” Nature Methods, 17, 137–145. https://www.nature.com/articles/s41592-019-0654-x.
 
 #' @export
-
-spatial_hm <- function(svg, data, assay.na=NULL, sam.factor=NULL, con.factor=NULL, ID, charcoal=FALSE, alpha.overlay=1, lay.shm="gene", ncol=2, col.com=c('yellow', 'orange', 'red'), col.bar='selected', sig.thr=c(NA, NA), cores=NA, bar.width=0.08, bar.title.size=0, trans.scale=NULL, ft.trans=NULL, tis.trans=ft.trans, lis.rematch = NULL, legend.r=0.9, sub.title.size=11, sub.title.vjust=2, legend.plot='all', ft.legend='identical', bar.value.size=10, legend.plot.title='Legend', legend.plot.title.size=11, legend.ncol=NULL, legend.nrow=NULL, legend.position='bottom', legend.direction=NULL, legend.key.size=0.02, legend.text.size=12, angle.text.key=NULL, position.text.key=NULL, legend.2nd=FALSE, position.2nd='bottom', legend.nrow.2nd=NULL, legend.ncol.2nd=NULL, legend.key.size.2nd=0.03, legend.text.size.2nd=10, angle.text.key.2nd=0, position.text.key.2nd='right', add.feature.2nd=FALSE, label=FALSE, label.size=4, label.angle=0, hjust=0, vjust=0, opacity=1, key=TRUE, line.width=0.2, line.color='grey70', relative.scale = NULL, verbose=TRUE, out.dir=NULL, animation.scale = 1, selfcontained=FALSE, video.dim='640x480', res=500, interval=1, framerate=1, bar.width.vdo=0.1, legend.value.vdo=NULL, ...) {
+setMethod("spatial_hm", c(svg="SVG"), function(svg, data, assay.na=NULL, sam.factor=NULL, con.factor=NULL, ID, charcoal=FALSE, alpha.overlay=1, lay.shm="gene", ncol=2, col.com=c('yellow', 'orange', 'red'), col.bar='selected', sig.thr=c(NA, NA), cores=NA, bar.width=0.08, bar.title.size=0, trans.scale=NULL, ft.trans=NULL, tis.trans=ft.trans, lis.rematch = NULL, legend.r=0.9, sub.title.size=11, sub.title.vjust=2, legend.plot='all', ft.legend='identical', bar.value.size=10, legend.plot.title='Legend', legend.plot.title.size=11, legend.ncol=NULL, legend.nrow=NULL, legend.position='bottom', legend.direction=NULL, legend.key.size=0.02, legend.text.size=12, angle.text.key=NULL, position.text.key=NULL, legend.2nd=FALSE, position.2nd='bottom', legend.nrow.2nd=NULL, legend.ncol.2nd=NULL, legend.key.size.2nd=0.03, legend.text.size.2nd=10, angle.text.key.2nd=0, position.text.key.2nd='right', add.feature.2nd=FALSE, label=FALSE, label.size=4, label.angle=0, hjust=0, vjust=0, opacity=1, key=TRUE, line.width=0.2, line.color='grey70', relative.scale = NULL, verbose=TRUE, out.dir=NULL, animation.scale = 1, selfcontained=FALSE, video.dim='640x480', res=500, interval=1, framerate=1, bar.width.vdo=0.1, legend.value.vdo=NULL, ...) {
   calls <- names(vapply(match.call(), deparse, character(1))[-1])
   if("tis.trans" %in% calls) warning('"tis.trans" is deprecated and replaced by "ft.trans"! \n')
   if("svg.path" %in% calls) warning('"svg.path" is deprecated and replaced by "svg"! \n')
 
   res <- shm_covis(svg=svg, data=data, assay.na=assay.na, sam.factor=sam.factor, con.factor=con.factor, ID=ID, charcoal=charcoal, alpha.overlay=alpha.overlay, lay.shm=lay.shm, ncol=ncol, col.com=col.com, col.bar=col.bar, sig.thr=sig.thr, cores=cores, bar.width=bar.width, bar.title.size=bar.title.size, trans.scale=trans.scale, ft.trans=ft.trans, lis.rematch = lis.rematch, legend.r=legend.r, sub.title.size=sub.title.size, sub.title.vjust=sub.title.vjust, legend.plot=legend.plot, ft.legend=ft.legend, bar.value.size=bar.value.size, legend.plot.title=legend.plot.title, legend.plot.title.size=legend.plot.title.size, legend.ncol=legend.ncol, legend.nrow=legend.nrow, legend.position=legend.position, legend.direction=legend.direction, legend.key.size=legend.key.size, legend.text.size=legend.text.size, angle.text.key=angle.text.key, position.text.key=position.text.key, legend.2nd=legend.2nd, position.2nd=position.2nd, legend.nrow.2nd=legend.nrow.2nd, legend.ncol.2nd=legend.ncol.2nd, legend.key.size.2nd=legend.key.size.2nd, legend.text.size.2nd=legend.text.size.2nd, angle.text.key.2nd=angle.text.key.2nd, position.text.key.2nd=position.text.key.2nd, add.feature.2nd=add.feature.2nd, label=label, label.size=label.size, label.angle=label.angle, hjust=hjust, vjust=vjust, opacity=opacity, key=key, line.width=line.width, line.color=line.color, relative.scale = relative.scale, verbose=verbose, out.dir=out.dir, animation.scale = animation.scale, selfcontained=selfcontained, video.dim=video.dim, res=res, interval=interval, framerate=framerate, bar.width.vdo=bar.width.vdo, legend.value.vdo=legend.value.vdo, ...)
   invisible(res)
-}
+})
 
 
-
-
-  
+ 
 
