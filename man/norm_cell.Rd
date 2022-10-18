@@ -42,7 +42,7 @@ A \code{SingleCellExperiment} object.
 A meta function for normalizing single-cell RNA-seq data.
 }
 \examples{
-library(scran); library(scuttle) 
+library(scran); library(scuttle); library(SummarizedExperiment) 
 sce <- mockSCE()
 sce.qc <- qc_cell(sce, qc.metric=list(subsets=list(Mt=rowData(sce)$featureType=='mito'), threshold=1))
 sce.norm <- norm_cell(sce.qc)

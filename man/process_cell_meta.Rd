@@ -37,9 +37,7 @@ process_cell_meta(
 
 \item{prop}{Numeric scalar specifying the proportion of genes to report as highly variable genes (HVGs) in \code{\link[scran]{getTopHVGs}}. The default is \code{0.1}.}
 
-\item{min.dim}{Integer scalars specifying the minimum (\code{min.dim}) and maximum (\code{max.dim}) number of (principle components) PCs to retain respectively in \code{\link[scran]{denoisePCA}}. The default is \code{min.dim=13}, \code{max. dim=50}.}
-
-\item{max.dim}{Integer scalars specifying the minimum (\code{min.dim}) and maximum (\code{max.dim}) number of (principle components) PCs to retain respectively in \code{\link[scran]{denoisePCA}}. The default is \code{min.dim=13}, \code{max. dim=50}.}
+\item{min.dim, max.dim}{Integer scalars specifying the minimum (\code{min.dim}) and maximum (\code{max.dim}) number of (principle components) PCs to retain respectively in \code{\link[scran]{denoisePCA}}. The default is \code{min.dim=13}, \code{max. dim=50}.}
 
 \item{model.var}{Additional arguments in a named list passed to \code{\link[scran]{modelGeneVar}}.}
 
@@ -65,7 +63,7 @@ In the normalization, a quick-clustering method is applied to divide cells into 
 In dimensionality reduction, the high-dimensional gene expression data are embedded into a 2-3 dimensional space using PCA, tSNE and UMAP. All three embedding result sets are stored in a \code{SingleCellExperiment} object. Details are seen in \code{denoisePCA} from scran, and \code{runUMAP}, \code{runTSNE} from scater.
 }
 \examples{
-library(scran); library(scuttle) 
+library(scran); library(scuttle); library(SummarizedExperiment) 
 sce <- mockSCE()
 sce.dimred <- process_cell_meta(sce, qc.metric=list(subsets=list(Mt=rowData(sce)$featureType=='mito'), threshold=1))
 }

@@ -32,6 +32,8 @@ deg_ovl(
 
 \item{point.size}{Size of points in matrix plot}
 
+\item{line.width}{The line thickness.}
+
 \item{mb.ratio}{Ratio between matrix plot and main bar plot (Keep in terms of hundredths)}
 
 \item{text.scale}{Numeric, value to scale the text sizes, applies to all axis labels, tick labels, and numbers above bar plot. Can be a universal scale, or a vector containing individual scales

@@ -21,15 +21,7 @@ write_hdf5(
 
 \item{replace}{If data with the same slot names in \code{dat.lis} are already saved in \code{dir}, should the \code{dir} be emptied? Default is FALSE. If TRUE, the existing content in \code{dir} will be lost.}
 
-\item{chunkdim}{
-    The dimensions of the chunks and the compression level to use for
-    writing the assay data to disk.
-
-    Passed to the internal calls to \code{writeHDF5Array}.
-    See \code{?\link[HDF5Array]{writeHDF5Array}} for more information.
-  }
-
-\item{level}{
+\item{chunkdim, level}{
     The dimensions of the chunks and the compression level to use for
     writing the assay data to disk.
 

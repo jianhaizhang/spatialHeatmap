@@ -30,4 +30,4 @@ Imports: av, BiocParallel, BiocFileCache, data.table, DESeq2, distinct, dplyr, e
         UpSetR, xml2, yaml
 BugReports: https://github.com/jianhaizhang/spatialHeatmap/issues
 URL: https://github.com/jianhaizhang/spatialHeatmap
-RoxygenNote: 7.1.2
+RoxygenNote: 7.2.1

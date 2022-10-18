@@ -256,21 +256,23 @@ svg.chk <- paste0(tmp.dir, '/gallus_gallus.svg')
 # Get the matching aSVG path from the package.
 svg.chk <- system.file("extdata/shinyApp/example", "gallus_gallus.svg", 
 package="spatialHeatmap")
+# Reading the chicken aSVG file.
+svg.chk <- read_svg(svg.path=svg.chk)
 
 # Plot spatial heatmaps on gene "ENSGALG00000019846". In the middle are spatial heatmaps. Only
 # aSVG features with matching countparts in data are colored. On the right is the legend plot,
 # only the matching features are labeled.
 # Toy data1. 
-spatial_hm(svg.path=svg.chk, data=df.fil.chk, ID='ENSGALG00000019846', height=0.4, 
+spatial_hm(svg=svg.chk, data=df.fil.chk, ID='ENSGALG00000019846', height=0.4, 
 legend.r=1.9, sub.title.size=7, ncol=3)
 # Save spaital heatmaps as HTML and video files by assigning "tmp.dir" to "out.dir". 
 \donttest{    
 tmp.dir <- paste0(normalizePath(tempdir(check=TRUE), winslash="/", mustWork=FALSE), '/shm')
-spatial_hm(svg.path=svg.chk, data=df.fil.chk, ID='ENSGALG00000019846', height=0.4, legend.r=1.9,
+spatial_hm(svg=svg.chk, data=df.fil.chk, ID='ENSGALG00000019846', height=0.4, legend.r=1.9,
 sub.title.size=7, ncol=3, out.dir=tmp.dir)
 }
 # Toy data2.
-spatial_hm(svg.path=svg.chk, data=se.fil.chk, ID='ENSGALG00000019846', legend.r=1.9, 
+spatial_hm(svg=svg.chk, data=se.fil.chk, ID='ENSGALG00000019846', legend.r=1.9, 
 legend.nrow=2, sub.title.size=7, ncol=3)
 
 # When plot spatial heatmaps, the data can also come as as a simple vector. The following 
@@ -282,7 +284,7 @@ vec <- sample(1:100, 3)
 names(vec) <- c('brain', 'heart', 'notMapped')
 vec
 # Plot.
-spatial_hm(svg.path=svg.chk, data=vec, ID='geneX', height=0.6, legend.r=1.5, ncol=1)
+spatial_hm(svg=svg.chk, data=vec, ID='geneX', height=0.6, legend.r=1.5, ncol=1)
 
 # Plot spatial heatmaps on aSVGs of two Arabidopsis thaliana development stages.
 
@@ -299,8 +301,10 @@ package="spatialHeatmap")
 # aSVG of development stage 2.
 svg2 <- system.file("extdata/shinyApp/example", "arabidopsis.thaliana_organ_shm2.svg",
 package="spatialHeatmap")
+# Import aSVGs.
+svg.sh.mul <- read_svg(c(svg1, svg2))
 # Spatial heatmaps.
-spatial_hm(svg.path=c(svg1, svg2), data=df.test, ID=c('gene1'), height=0.8, legend.r=1.6, 
+spatial_hm(svg=svg.sh.mul, data=df.test, ID=c('gene1'), height=0.8, legend.r=1.6, 
 preserve.scale=TRUE) 
 
 ## If users want to use custom identifiers for spatial features in the aSVG file, the function

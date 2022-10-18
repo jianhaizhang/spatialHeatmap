@@ -21,25 +21,23 @@ cluster_cell(
 \arguments{
 \item{sce}{The single cell data or combination of single cell and bulk data at log2 scale after dimensionality reduction in form of \code{SingleCellExperiment}.}
 
-\item{graph.meth}{Method to build a nearest-neighbor graph, \code{snn} (see \code{\link[scran]{buildSNNGraph}}) or \code{knn} (default, see \code{\link[scran]{buildKNNGraph}}). The clusters are detected by first creating a nearest neighbor graph using \code{snn} or \code{kn} then partitioning the graph.}
+\item{graph.meth}{Method to build a nearest-neighbor graph, \code{snn} (see \code{\link[scran]{buildSNNGraph}}) or \code{knn} (default, see \code{\link[scran]{buildKNNGraph}}). The clusters are detected by first creating a nearest neighbor graph using \code{snn} or \code{knn} then partitioning the graph.}
 
-\item{dimred}{A string of \code{PCA} (default) or \code{UMAP} specifying which reduced dimensionality to use in creating a nearest neighbor graph. Internally, before building a nearest neighbor graph the data dimensionalities are reduced by PCA and UMAP respectively.}
+\item{dimred}{A string of \code{PCA} (default) or \code{UMAP} specifying which reduced dimensions to use for creating a nearest neighbor graph.}
 
 \item{knn.gr}{Additional arguments in a named list passed to \code{\link[scran]{buildKNNGraph}}.}
 
 \item{snn.gr}{Additional arguments in a named list passed to \code{\link[scran]{buildSNNGraph}}.}
 
-\item{cluster}{The clustering method. One of \code{wt} (\code{\link[igraph]{cluster_walktrap}}, default), \code{fg} (\code{\link[igraph]{cluster_fast_greedy}}), \code{le} (\code{\link[igraph]{cluster_leading_eigen}}), \code{sl} (\code{\link[igraph]{cluster_fast_greedy}}), \code{ed} (\code{\link[igraph]{cluster_edge_betweenness}}).}
+\item{cluster}{The clustering method. One of \code{wt} (\code{\link[igraph]{cluster_walktrap}}, default), \code{fg} (\code{\link[igraph]{cluster_fast_greedy}}), \code{le} (\code{\link[igraph]{cluster_leading_eigen}}), \code{sl} (\code{\link[igraph]{cluster_fast_greedy}}), \code{eb} (\code{\link[igraph]{cluster_edge_betweenness}}).}
 
-\item{wt.arg, fg.arg, sl.arg, le.arg, eb.arg}{A named list of arguments passed to \code{wt}, \code{fg}, \code{le}, \code{sl},       \code{ed} respectively.}
-
-\item{cluster.wk}{Additional arguments in a named list passed to \code{\link[igraph]{cluster_walktrap}}, such as \code{cluster.wk=list(steps = 4)}.}
+\item{wt.arg, fg.arg, sl.arg, le.arg, eb.arg}{A named list of arguments passed to \code{wt}, \code{fg}, \code{le}, \code{sl},       \code{eb} respectively.}
 }
 \value{
 A \code{SingleCellExperiment} object.
 }
 \description{
-Cluster only single cell data or combination of single cell and bulk data. Clusters are created by first building a graph, where nodes are cells and edges represent connections between nearest neighbors, then partitioning the graph. The cluster assignments are stored in the \code{cluster} column of \code{colData} slot of \code{SingleCellExperiment}.
+Cluster only single cell data or combination of single cell and bulk data. Clusters are created by first building a graph, where nodes are cells and edges represent connections between nearest neighbors, then partitioning the graph. The cluster labels are stored in the \code{cluster} column of \code{colData} slot of \code{SingleCellExperiment}.
 }
 \examples{
 library(scran); library(scuttle) 

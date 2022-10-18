@@ -48,14 +48,14 @@ package='spatialHeatmap')
 # The list with name slots of "name", "data", and "svg".
 lis.dat1 <- list(name='shoot', data=data.path1, svg=svg.path1)
 
-# Get the paths of spatiotemporal data and aSVG files and assembly them into a list for 
+# Get the paths of multi-dimensional data and aSVG files and assembly them into a list for 
 # creating default dataset.
-data.path.st <- system.file('extdata/shinyApp/example/expr_coleoptile_samTimeCon.txt', 
+data.path.st <- system.file('extdata/shinyApp/example/mus_brain_vars.txt', 
 package='spatialHeatmap')
-svg.path.st <- system.file('extdata/shinyApp/example/oryza.sativa_coleoptile.ANT_shm.svg', 
+svg.path.st <- system.file('extdata/shinyApp/example/mus_musculus.brain.svg', 
 package='spatialHeatmap')
 # The list with name slots of "name", "data", and "svg".
-lis.dat.st <- list(name='spatiotemporal', data=data.path.st, svg=svg.path.st)
+lis.dat.st <- list(name='multiDimensions', data=data.path.st, svg=svg.path.st)
 
 # Get one data path and two aSVG paths and assembly them into a list for creating default 
 # dataset, which include two growth stages.
@@ -81,8 +81,8 @@ lis.dld.single <- list(name='organ', data=data.path.dld1, svg=svg.path.dld1)
 # downloadable dataset of two growth stages. 
 lis.dld.mul <- list(data=data.path2, svg=c(svg.path2.1, svg.path2.2))
 
-# For demonstration purpose, the same spatiotemporal data and aSVG are used to create the
-# downloadable spatiotemporal dataset.
+# For demonstration purpose, the same multi-dimensional data and aSVG are used to create the
+# downloadable multi-dimensional dataset.
 lis.dld.st <- list(data=data.path.st, svg=svg.path.st)
 
 # Retrieve the default parameters.

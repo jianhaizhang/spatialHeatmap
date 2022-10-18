@@ -6,7 +6,7 @@
 \usage{
 spatial_enrich(
   data,
-  methods = c("edgeR", "limma"),
+  methods = c("edgeR"),
   norm = "TMM",
   log2.trans.dis = TRUE,
   log2.fc = 1,
@@ -17,9 +17,9 @@ spatial_enrich(
 )
 }
 \arguments{
-\item{data}{A \code{SummarizedExperiment} object, which is returned by \code{sub_data}. The \code{colData} slot is required to contain at least two columns of "features" and "factors" respectively. The \code{rowData} slot can optionally contain a column of discriptions of each gene and the column name should be \code{metadata}.}
+\item{data}{A \code{SummarizedExperiment} object, which is returned by \code{tar_ref}. The \code{colData} slot is required to contain at least two columns of "features" and "factors" respectively. The \code{rowData} slot can optionally contain a column of discriptions of each gene and the column name should be \code{metadata}.}
 
-\item{methods}{One or more of \code{edgeR}, \code{limma}, \code{DESeq2}, \code{distinct}. The default is \code{c('edgeR', 'limma')}.}
+\item{methods}{One or more of \code{edgeR}, \code{limma}, \code{DESeq2}, \code{distinct}. The default is \code{c('edgeR')}.}
 
 \item{norm}{The normalization method (\code{TMM}, \code{RLE}, \code{upperquartile}, \code{none}) in edgeR. The default is \code{TMM}. Details: https://www.rdocumentation.org/packages/edgeR/versions/3.14.0/topics/calcNormFactors}
 
@@ -78,8 +78,8 @@ metadata <- paste0('meta', seq_len(nrow(count.chk))); metadata[1:3]
 rowData(se.chk) <- DataFrame(metadata=metadata)
 
 # Subset the data by selected features (brain, heart, kidney) and factors (day10, day12).
-data.sub <- sub_data(data=se.chk, feature='organism_part', features=c('brain', 'heart', 
-'kidney'), factor='age', factors=c('day10', 'day12'), com.by='feature', target='brain')
+data.sub <- tar_ref(data=se.chk, feature='organism_part', ft.sel=c('brain', 'heart', 
+'kidney'), variable='age', var.sel=c('day10', 'day12'), com.by='feature', target='brain')
 
 ## As conventions, raw sequencing count data should be normalized and filtered to
 ## reduce noise. Since normalization will be performed in spatial enrichment, only filtering
@@ -98,11 +98,12 @@ deg.lis <- spatial_enrich(data.sub.fil)
 deg.lis$deg.table[1:3, ]
 # Up-regulated genes detected by edgeR.
 deg.lis$lis.up.down$up.lis$edgeR.up[1:5]
-# The aSVG path.
+# Read aSVG image into an "SVG" object.
 svg.chk <- system.file("extdata/shinyApp/example", "gallus_gallus.svg", 
 package="spatialHeatmap")
+svg.chk <- read_svg(svg.chk)
 # Plot one brain-specific gene in spatial heatmap.
-spatial_hm(svg.path=svg.chk, data=deg.lis$deg.table, ID=deg.lis$deg.table$gene[1], legend.r=1.9, legend.nrow=2, sub.title.size=7, ncol=2, bar.width=0.11)
+spatial_hm(svg=svg.chk, data=deg.lis$deg.table, ID=deg.lis$deg.table$gene[1], legend.r=1.9, legend.nrow=2, sub.title.size=7, ncol=2, bar.width=0.11)
 # Overlap of up-regulated brain-specific genes across methods.
 deg_ovl(deg.lis$lis.up.down, type='up', plot='upset')
 deg_ovl(deg.lis$lis.up.down, type='up', plot='matrix')
@@ -110,7 +111,7 @@ deg_ovl(deg.lis$lis.up.down, type='up', plot='matrix')
 deg_ovl(deg.lis$lis.up.down, type='down', plot='upset')
 deg_ovl(deg.lis$lis.up.down, type='down', plot='matrix')
 # Line graph of gene expression profile.
-profile_gene(deg.lis$deg.table[1, ])
+graph_line(deg.lis$deg.table[1, ])
 }
 \references{
 Cardoso-Moreira, Margarida, Jean Halbert, Delphine Valloton, Britta Velten, Chunyan Chen, Yi Shao, Angélica Liechti, et al. 2019. “Gene Expression Across Mammalian Organ Development.” Nature 571 (7766): 505–9
