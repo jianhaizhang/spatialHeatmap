@@ -1,3 +1,8 @@
+Changes in version 2.3.1 (2022-10-22)
+ + In co-visualization, a new feature of bulk-to-cell mapping was developed, co-clustering method was simplified, and Shiny app was updated with options of Annotation/manual, Automatic, cell2bulk, bulk2cell. 
+ + An S4 class of "SVG" was developed to store aSVG instances.
+ + Vignettes were updated. 
+
 Changes in version 2.1.1 (2022-04-06)
  + Developed the new functionality co-visualization of bulk and single cell data through auto-matching/coclustering, i.e. source bulk tissues are matched/assigned to single cells automatically through coclustering. This feature is implemented in both command line and Shiny app with testing data provided. 
  + Developed optimization functions for coclustering workflow with testing data provided.

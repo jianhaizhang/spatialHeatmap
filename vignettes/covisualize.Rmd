@@ -1,5 +1,5 @@
 ---
-itle: "Co-visualizing tissue and single cell embedding plots"
+title: "Co-visualizing tissue and single cell embedding plots"
 author: "Authors: Jianhai Zhang, Jordan Hayes, Le Zhang, Bing Yang, Wolf B. Frommer, Julia Bailey-Serres, and Thomas Girke"
 date: "Last update: `r format(Sys.time(), '%d %B, %Y')`"
 output:
@@ -55,6 +55,7 @@ library(knitr); opts_chunk$set(message=FALSE, warning=FALSE)
 # Introduction 
 
 
+
 ## Overview
 
 The primary utility of the _spatialHeatmap_ package is the generation of
@@ -82,7 +83,7 @@ algorithms (_e.g._ PCA, UMAP or tSNE) are supported. To associate single cells
 with their source tissues, the user can choose among three major methods including 
 annotation-based, manual and automated methods (Figure \@ref(fig:covizOver)). Similar 
 to other functionalities in _spatialHeatmap_, these functionalities are available within
-R as well as the corresponding [Shiny app](#autoSCE)  [@shiny].   
+R as well as the corresponding [Shiny app](#autoSCE) [@shiny].   
 
 ## Methods for Associating Cells and Bulk Tissues
 
@@ -93,7 +94,7 @@ the feature labels in an aSVG are different than the corresponding group labels
 used for the single cell data, _e.g._ due to variable terminologies, a
 translation map can be used to avoid manual relabelling. Throughout this
 vignette the usage of the term feature is a generalization referring in most
-cases to tissues or organs.  For the implementation of the co-visualization
+cases to tissues or organs. For the implementation of the co-visualization
 tool, _spatialHeatmap_ takes advantage of efficient and reusable S4 classes for both assay data and aSVGs respectively. The former includes the Bioconductor
 core data structures such as the widely used `SingleCellExperiment` (`SCE`)
 container illustrated in Figure \@ref(fig:covizOver).1 [@sce]. The slots
@@ -388,12 +389,8 @@ the corresponding tissue-level bulk data. This is due to the different
 properties of single cell and bulk gene expression data, such as lower
 sensitivity and higher sparsity in single cell compared to bulk data. This
 section introduces a co-clustering method that is largely based on parameter
-optimization including three major steps. First, the methods and their parameter settings used for preprocessing both data types (Figure \@ref(fig:coclusOver).1a-b) are
-optimized to achieve the most robust results. Second, the genes in the bulk data are
-reduced to those robustly expressed in the single cell data (Figure \@ref(fig:coclusOver).1c). Third, the best performing
-clustering method (Figure \@ref(fig:coclusOver).2) for this data is chosen. Both preprocessing and clustering
-parameters are optimized on real data with known cell-to-tissue assignments.
-The following introduces the three steps of this method in more detail using
+optimization including three major steps. First, both data are preprocessed to retain the most reliable expression values (Figure \@ref(fig:coclusOver).1a-b). Second, the genes in the bulk data are
+reduced to those robustly expressed in the single cell data (Figure \@ref(fig:coclusOver).1c). Third, bulk and cell data are co-clustered by using optimal default settings (Table \@ref(tab:optPar)) that are obtained through optimization on real data with known cell-to-tissue assignments. The following introduces the three steps of this method in more detail using
 the example of RNA-Seq data.
 
 1. The raw count matrices of bulk and single cells are column-wise combined for joint normalization (Figure \@ref(fig:coclusOver).1a). After separated from bulk data, the single cell data are reduced to genes with robust expression across X% cells and to cells with robust expression across Y% genes (Figure \@ref(fig:coclusOver).1b). In the bulk data, genes are filtered according to expression values $\ge$ A at a proportion of $\ge$ p across bulk samples and a coefficient of variance (CV) between CV1 and CV2 (Figure \@ref(fig:coclusOver).1b).   
@@ -405,14 +402,18 @@ the example of RNA-Seq data.
 After co-clustering, cells are labeled by bulk tissues or un-labeled (Figure \@ref(fig:coclusOver).3) and these labels are used for co-visualization (Figure \@ref(fig:coclusOver).4), where cells in embedding plot and matching tissues in spatial heatmap are filled by same colors.   
 
 
-
 ```{r coclusOver, echo=FALSE, fig.wide=TRUE, out.width="100%", fig.cap=("Overview of co-clustering. (1) Raw count data are pre-processed. (2) Co-clustering is performed on embedding dimensions of combined bulk and single cell data. (3) Cells are labeled by bulk assignments. (4) Cells and bulk tissues are co-visualized according to (3). ")}
 include_graphics('img/coclustering.jpg')
 ```
 
+After revising the method outline for the co-clustering
+please revise the figure 7 above accordingly. The legend can just refer to the
+main text to avoid duplication. PLEASE keep it simple and clear.
+If a figure raises more questions than it answers then it defeats the purpose of
+guiding the reader and providing clarity.   
 
 
-To obtain reasonably robust default settings for co-clustering, several parameters shown in Table \@ref(tab:optPar) are optimized, where bold text indicates optimal settings that are treated as robust default settings. The reason to choose these parameters is they are most relevant to the co-clustering workflow. The details of this optimization are given
+To obtain reasonably robust default settings for co-clustering, four parameters shown in Table \@ref(tab:optPar) are optimized, where bold text indicates optimal settings that are treated as robust default settings. The reason to choose these parameters is they are most relevant to the co-clustering step. The details of this optimization are given
 [here](https://jianhaizhang.github.io/spatialHeatmap_supplement/cocluster_optimize.html).
 The following demonstration applies the default settings (bold in Table \@ref(tab:optPar)) using single cell and bulk data from mouse brain
 [@Vacher2021-xg; @Ortiz2020-yt]. Both data sets have been simplified for
@@ -421,20 +422,18 @@ demonstraton purposes.
 
 ```{r optPar, eval=TRUE, echo=FALSE, warnings=FALSE}
 df.opt <- cbind(
-Parameter=c('dimensionReduction', 'topDimensions', 'graphBuilding', 'clusterDetection', 'minSimilarity'),
+Parameter=c('dimensionReduction', 'topDimensions', 'graphBuilding', 'clusterDetection'),
 Settings=c( 
 '**denoisePCA** (**PCA**, scran), runUMAP (UMAP, scater)', 
-'5 to 40 at interval of 1 (**12**)', 
-'**buildKNNGraph** (**knn**), **buildSNNGraph** (**snn**) (scran)', 
-'**cluster_walktrap** (**wt**), cluster_fast_greedy (fg), cluster_leading_eigen (le)', 
-'0 to 0.9 at interval of 0.1 (**0.1**)'
+'5 to 80 (**11**, **19**, **33**, **22**)', 
+'**buildKNNGraph** (**knn**), buildSNNGraph (snn) (scran)', 
+'**cluster_walktrap** (**wt**), cluster_fast_greedy (fg), cluster_leading_eigen (le) (igraph)'
 ),
-Explanation=c(
+Description=c(
 'Dimension reduction methods',
-'Number of top reduced dimensions selected for co-clustering',
+'Number of top dimensions selected for co-clustering',
 'Methods for building a graph where nodes are cells and edges are connections between nearest neighbors',
-'Methods for partitioning the graph to generate clusters',
-'Bulk-cell assignment strigency of Spearman correlation coefficient. Assignments with similarity below this cutoff is ignored'
+'Methods for partitioning the graph to generate clusters'
 )
 )
 #write.table(df.opt, 'cocluster_para.txt', col.names=TRUE, row.names=TRUE, sep='\t')
@@ -500,13 +499,12 @@ tail(attribute(svg.mus.brain)[[1]])[1:3, 1:4] # Partial features are shown.
 ### Co-clustering
 
 
-
 The co-clustering process is performed by calling the function `cocluster`. In the following, default settings obtained from optimization are shown, where `min.dim`, `dimred`, `graph.meth`, and `cluster` refers to `topDimensions`, `dimensionReduction`, `graphBuilding`, and `clusterDetection` in Table \@ref(tab:optPar) respectively.   
 
 ```{r eval=TRUE, echo=TRUE, warnings=FALSE, results='hide'}  
 coclus.mus <- read_cache(cache.pa, 'coclus.mus')
 if (is.null(coclus.mus)) {
-  coclus.mus <- cocluster(bulk=blk.sc.mus.fil$bulk, cell=blk.sc.mus.fil$cell, min.dim=12, dimred='PCA', graph.meth='knn', cluster='wt')
+  coclus.mus <- cocluster(bulk=blk.sc.mus.fil$bulk, cell=blk.sc.mus.fil$cell, min.dim=11, dimred='PCA', graph.meth='knn', cluster='wt')
   save_cache(dir=cache.pa, overwrite=TRUE, coclus.mus)
 }
 ```
@@ -530,7 +528,6 @@ plot_dim(coclus.mus, dim='PCA', color.by='cluster', cocluster.only=TRUE)
 ```
 
 
-
 ### Co-visualization {#covisAuto}
 
 Bulk assignments are treated as group labels for cells in co-visualization. Similar with annotation-based and manual methods, co-visualization options include cell-to-bulk mapping, bulk-to-cell mapping, inclusion or exclusion of expression values.  
@@ -548,7 +545,7 @@ colData(sc.aggr.coclus)
 The co-visualization through cell-to-bulk mapping is built on gene `Adcy1`. Cells in the embedding plot and respective assigned bulk tissues in spatial heatmap are revealed by same colors.
 
 ```{r , eval=TRUE, echo=TRUE, warnings=FALSE, fig.wide=TRUE, fig.cap=('Co-visualization through cell-to-bulk mapping in automated method. This plot is created on gene Adcy1. Colors between the embedding plot and spatial heatmap indicate matching of cells with bulk tissues. '), out.width="100%", fig.show='show', results='hide'}
-shm.lis <- covis(svg=svg.mus.brain, data=sc.aggr.coclus, ID=c('Adcy1'), sce.dimred=coclus.sc, dimred='UMAP', tar.cell=c('hippocampus', 'hypothalamus', 'cerebellum', 'cerebral.cortex'), dim.lgd.text.size=10, dim.lgd.nrow=2, bar.width=0.1, legend.nrow=4)
+covis(svg=svg.mus.brain, data=sc.aggr.coclus, ID=c('Adcy1'), sce.dimred=coclus.sc, dimred='UMAP', tar.cell=c('hippocampus', 'hypothalamus', 'cerebellum', 'cerebral.cortex'), dim.lgd.text.size=10, dim.lgd.nrow=2, bar.width=0.1, legend.nrow=4)
 ```
 
 In bulk-to-cell mapping, bulk data are separated from cell, where replicates are already aggregated in preprocessing.
@@ -566,7 +563,7 @@ colnames(coclus.blk) %in% attribute(svg.mus.brain)[[1]]$feature
 The co-visualization through bulk-to-cell mapping is built on gene `Adcy1`. Cells in the embedding plot and respective assigned bulk tissues in spatial heatmap are revealed by same colors.
 
 ```{r eval=TRUE, echo=TRUE, warnings=FALSE, fig.wide=TRUE, fig.cap=('Co-visualization through bulk-to-cell mapping in automated method. This plot is created on gene Adcy1. Colors between the embedding plot and spatial heatmap indicate matching of cells with bulk tissues.'), out.width="100%", fig.show='show', results='hide'}
-shm.lis <- covis(svg=svg.mus.brain, data=coclus.blk, ID=c('Adcy1'), sce.dimred=coclus.sc, dimred='UMAP', tar.bulk=colnames(coclus.blk), assay.na='logcounts', legend.nrow=4, dim.lgd.text.size=10, dim.lgd.nrow=2, bar.width=0.08)
+covis(svg=svg.mus.brain, data=coclus.blk, ID=c('Adcy1'), sce.dimred=coclus.sc, dimred='UMAP', tar.bulk=colnames(coclus.blk), assay.na='logcounts', legend.nrow=4, dim.lgd.text.size=10, dim.lgd.nrow=2, bar.width=0.08)
 ```
 
 By setting `profile=FALSE`, the co-visualization is created without expression values, where colors in the embedding plot and spatial heatmap only indicate matching between cells and bulk tissues.   

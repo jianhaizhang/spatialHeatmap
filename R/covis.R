@@ -129,7 +129,8 @@
 
 #' @name covis
 #' @rdname covis
-#' @docType methods
+#' @aliases covis,SVG-method
+
 #' @export
 
 setMethod("covis", c(svg="SVG"), function(svg, data, assay.na=NULL, sam.factor=NULL, con.factor=NULL, ID, sce.dimred=NULL, dimred='PCA', cell.group=NULL, tar.cell=NULL, tar.bulk=NULL, profile=TRUE, charcoal=FALSE, alpha.overlay=1, lay.shm="gene", ncol=2, col.com=c('yellow', 'orange', 'red'), col.bar='selected', sig.thr=c(NA, NA), cores=NA, bar.width=0.08, bar.title.size=0, trans.scale=NULL, ft.trans=NULL, tis.trans=ft.trans, lis.rematch = NULL, legend.r=0.9, sub.title.size=11, sub.title.vjust=2, legend.plot='all', ft.legend='identical', bar.value.size=10, legend.plot.title='Legend', legend.plot.title.size=11, legend.ncol=NULL, legend.nrow=NULL, legend.position='bottom', legend.direction=NULL, legend.key.size=0.02, legend.text.size=12, angle.text.key=NULL, position.text.key=NULL, legend.2nd=FALSE, position.2nd='bottom', legend.nrow.2nd=NULL, legend.ncol.2nd=NULL, legend.key.size.2nd=0.03, legend.text.size.2nd=10, angle.text.key.2nd=0, position.text.key.2nd='right', dim.lgd.pos='bottom', dim.lgd.nrow=2, dim.lgd.key.size=4, dim.lgd.text.size=13, dim.capt.size=13, add.feature.2nd=FALSE, label=FALSE, label.size=4, label.angle=0, hjust=0, vjust=0, opacity=1, key=TRUE, line.width=0.2, line.color='grey70', relative.scale = NULL, verbose=TRUE, out.dir=NULL, animation.scale = 1, selfcontained=FALSE, video.dim='640x480', res=500, interval=1, framerate=1, bar.width.vdo=0.1, legend.value.vdo=NULL, ...) {
@@ -144,6 +145,7 @@ setMethod("covis", c(svg="SVG"), function(svg, data, assay.na=NULL, sam.factor=N
 #' 
 #' @keywords Internal
 #' @noRd
+
 
 #' @importFrom SummarizedExperiment assay colData
 #' @importFrom ggplot2 ggplot geom_bar aes theme element_blank margin element_rect coord_flip scale_y_continuous scale_x_continuous ggplotGrob geom_polygon scale_fill_manual ggtitle element_text labs

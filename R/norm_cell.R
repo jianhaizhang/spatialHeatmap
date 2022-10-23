@@ -49,8 +49,9 @@ norm_cell <- function(sce, bulk=NULL, cpm=FALSE, count.kp=FALSE, quick.clus=list
     colData(sce) <- colData(bulk) <- NULL
     bulk$bulkCell <- 'bulk'; sce$bulkCell <- 'cell'
     bulk$sample <- colnames(bulk); sce$sample <- colnames(sce)
-    int <- intersect(rownames(bulk), rownames(sce)) 
-    sce <- cbind(bulk[int, ], sce[int, ])
+    int <- intersect(rownames(bulk), rownames(sce))
+    if (any(c('e', 'w') %in% check_pkg('BiocGenerics'))) stop('The package "BiocGenerics" is not detected!') 
+    sce <- BiocGenerics::cbind(bulk[int, ], sce[int, ])
   }
     if (quick.clus$min.size > ncol(sce)) { message('fewer cells than min size in quickCluster!'); return() }
     # Normalization.

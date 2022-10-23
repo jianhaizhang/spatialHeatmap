@@ -1,6 +1,7 @@
 ########################################
 # Methods for SVG class.
 
+
 #' @export
 setGeneric("covis", function(svg, ...) standardGeneric("covis"))
 

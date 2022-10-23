@@ -3,14 +3,14 @@
 #' A meta function for reducing dimensionality in count data.
 
 #' @param sce Normalized single cell data in \code{SingleCellExperiment} returned by \code{norm_cell}. Alternative forms include \code{dgCMatrix}, \code{matrix}, \code{data.frame}.
-#' @param prop Numeric scalar specifying the proportion of genes to report as highly variable genes (HVGs) in \code{\link[scran]{getTopHVGs}}. The default is \code{0.1}.                                                                        
-#' @param min.dim,max.dim Integer scalars specifying the minimum (\code{min.dim}) and maximum (\code{max.dim}) number of (principle components) PCs to retain respectively in \code{\link[scran]{denoisePCA}}. The default is \code{min.dim=13}, \code{max. dim=50}.                                                                                                                           
-#' @param model.var Additional arguments in a named list passed to \code{\link[scran]{modelGeneVar}}.                              
-#' @param top.hvg Additional arguments in a named list passed to \code{\link[scran]{getTopHVGs}}, such as \code{top.hvg=list(n =   3000)}.                                                                                                                            
-#' @param de.pca Additional arguments in a named list passed to \code{\link[scran]{denoisePCA}}, such as \code{de.pca=list(assay.  type = "logcounts")}.                                                                                                              
-#' @param pca Logical, if \code{TRUE} only the data with reduced dimentionality by PCA is returned and no clustering is performed. The default is \code{FALSE} and clustering is performed after dimensionality reduction.                                            
-#' @param tsne Additional arguments in a named list passed to \code{\link[scater]{runTSNE}}, such as \code{tsne=list(dimred="PCA", ncomponents=2)}.                                                                                                                   
-#' @param umap Additional arguments in a named list passed to \code{\link[scater]{runUMAP}}, such as                               \code{umap=list(dimred="PCA")}.                                                                                                    
+#' @param prop Numeric scalar specifying the proportion of genes to report as highly variable genes (HVGs) in \code{\link[scran]{getTopHVGs}}. The default is \code{0.1}. 
+#' @param min.dim,max.dim Integer scalars specifying the minimum (\code{min.dim}) and maximum (\code{max.dim}) number of (principle components) PCs to retain respectively in \code{\link[scran]{denoisePCA}}. The default is \code{min.dim=11}, \code{max. dim=50}.  
+#' @param model.var Additional arguments in a named list passed to \code{\link[scran]{modelGeneVar}}. 
+#' @param top.hvg Additional arguments in a named list passed to \code{\link[scran]{getTopHVGs}}, such as \code{top.hvg=list(n =   3000)}. 
+#' @param de.pca Additional arguments in a named list passed to \code{\link[scran]{denoisePCA}}, such as \code{de.pca=list(assay.  type = "logcounts")}.
+#' @param pca Logical, if \code{TRUE} only the data with reduced dimentionality by PCA is returned and no clustering is performed. The default is \code{FALSE} and clustering is performed after dimensionality reduction. 
+#' @param tsne Additional arguments in a named list passed to \code{\link[scater]{runTSNE}}, such as \code{tsne=list(dimred="PCA", ncomponents=2)}. 
+#' @param umap Additional arguments in a named list passed to \code{\link[scater]{runUMAP}}, such as \code{umap=list(dimred="PCA")}. 
 
 #' @return A \code{SingleCellExperiment} object. 
 

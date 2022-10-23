@@ -321,6 +321,7 @@ counterparts can be colored in the aSVG image. In addition, a summary of the num
 in a `data.frame` returned by the `spatial_hm` function (see below). 
 
 ```{r eval=TRUE, echo=TRUE, warnings=FALSE, collapse=TRUE }
+set.seed(20) # To obtain reproducible results, a fixed seed is set.
 unique(feature.hum$feature) # All aSVG features
 my_vec <- setNames(sample(1:100, 4), c('substantia.nigra', 'putamen', 'prefrontal.cortex', 'notMapped'))
 my_vec
@@ -517,7 +518,7 @@ se.fil.hum <- filter_data(data=se.aggr.hum, sam.factor='organism_part', con.fact
 
 ### SHM: Single Gene
 
-The aSVG features in `svg.hum` are subsetted with the function `sub_ft` so that only colored sub-images are shown in Figure \@ref(fig:humshm), \@ref(fig:mul), and \@ref(fig:remat). Features of interest are retained by assigning their indexes (see below) to the argument `show`, which corresponding to 'brain outline', 'prefrontal.cortex', 'frontal.cortex', and 'cerebellum' respectively.   
+The aSVG features in `svg.hum` are subsetted with the function `sub_ft` so that only colored sub-images are shown in Figure \@ref(fig:humshm), \@ref(fig:mul), and \@ref(fig:remat). Features of interest are retained by assigning their indexes (see below) to the argument `show`, which corresponding to 'brain outline', 'prefrontal.cortex', 'frontal.cortex', and 'cerebellum' respectively.     
 
 ```{r eval=TRUE, echo=TRUE, warnings=FALSE, collapse=TRUE }
 svg.hum.sub <- sub_ft(svg.hum, show=c(64:132, 162:164, 190:218))
@@ -559,6 +560,7 @@ spatial_hm(svg=svg.hum.sub, data=se.fil.hum, ID=c('ENSG00000268433', 'ENSG000000
 
 The matching between data and aSVG features can be customized, such as matching a spatial feature in the data to a different or multiple counterparts in the aSVG. This advanced function is demonstrated in the [Supplementary Section](#remat).  
 
+
 ### SHM: HTML and Video
 
 SHMs can be saved to interactive HTML files as well as video files. Each HTML file
@@ -599,12 +601,12 @@ been reduced to a minimum.
 
 The chosen mouse RNA-Seq data compares tissue level gene expression across 
 mammalian species [@Merkin2012-ak]. The following searches the Expression 
-Atlas for expression data from _'heart'_ and _'Mus musculus'_.
+Atlas for expression data from _'kidney'_ and _'Mus musculus'_.
 
 ```{r eval=TRUE, echo=TRUE, warnings=FALSE, results='hide'}
 all.mus <- read_cache(cache.pa, 'all.mus') # Retrieve data from cache.
 if (is.null(all.mus)) { # Save downloaded data to cache if it is not cached.
-  all.mus <- searchAtlasExperiments(properties="heart", species="Mus musculus")
+  all.mus <- searchAtlasExperiments(properties="kidney", species="Mus musculus")
   save_cache(dir=cache.pa, overwrite=TRUE, all.mus)
 }
 ```
@@ -870,6 +872,7 @@ with spatiotemporal resolution and geographical locations, genotypes, treatments
 To visualize multi-dimensional spatial data, these dimensions are reduced to two by keeping the spatial feature dimension and combining all other dimensions into a composite one. For instance, the following example contains four dimensions including spatial features, time points, drug treatments and injury conditions. The latter three are combined to produce a composite dimension.   
 
 
+
 ### Gene Expression Data
 
 The following uses transcriptomic data of mouse brain after traumatic brain injury (TBI), which include RAN-seq data from hippocampus, thalamus and hypothalamus at 3 or 29 days post injury (DPI) treated with either candesartan or vehicle [@Attilio2021-pp]. The original data are modified for demonstration purpose and included in `spatialHeatmap` as a `SummarizedExperiment` object, which is imported below.   
@@ -978,6 +981,7 @@ this, it compares the abundance profiles of molecules between the target spatial
 [@distinct].     
 
 
+
 In addition to spatial feature-specific molecules, the SE is also able to
 identify molecules specifically expressed in a certain treatment in a similar
 pairwise comparison, where the treatment of interest is compared with every other reference treatment. 
@@ -1041,8 +1045,8 @@ df.down.mus[1:2, 1:8]
 
 Plot SHMs on one up-regulated (`ENSMUSG00000026764`) and one down-regulated
 (`ENSMUSG00000025479`) gene in mouse brain. The resulting SHMs are termed
-here as SHMs of spatially-enriched molecules (transcripts).
- 
+here as SHMs of spatially-enriched molecules (transcripts).   
+
 ```{r enrich, eval=TRUE, echo=TRUE, warnings=FALSE, fig.wide=TRUE, fig.cap=('Spatially-enriched heatmaps. The two genes in the image are enriched in the mouse brain relative to kidney and liver. Top: down-regulated in brain. Bottom: up-regulated in brain.'), out.width="100%", fig.show='show', results='hide'}
 spatial_hm(svg=svg.mus, data=deg.lis.mus$deg.table, ID=c('ENSMUSG00000026764', 'ENSMUSG00000025479'), legend.r=1, legend.nrow=3, sub.title.size=6.1, ncol=3, bar.width=0.09)
 ```
@@ -1547,7 +1551,7 @@ update_feature(df.new=feature.df.new, dir=tmp.dir1)
 
 SHMs supports re-matching between data and aSVG features, *i.e.* re-match one spatial feature in the data to a different or multiple counterparts in the aSVG. The re-matching is defined in a named list, where a name slot refers to a spatial feature in data and the corresponding element in the list are one or multiple aSVG features to re-match.   
 
-The example below takes data from the [Human Brain](#hum) section, such as `svg.hum.sub` and `se.fil.hum`. The re-matching is demonstrated on Figure \@ref(fig:humshm). The data feature `frontal.cortex` is re-matched to aSVG features `frontal.cortex` and `prefrontal.cortex` in a list. 
+The example below takes data from the [Human Brain](#hum) section, such as `svg.hum.sub` and `se.fil.hum`. The re-matching is demonstrated on Figure \@ref(fig:humshm).  The data feature `frontal.cortex` is re-matched to aSVG features `frontal.cortex` and `prefrontal.cortex` in a list. 
 
 ```{r eval=TRUE, echo=TRUE, warnings=FALSE }
 remat.hum <- list(frontal.cortex=c('frontal.cortex', 'prefrontal.cortex'))

@@ -13,10 +13,10 @@ cocluster(
   bulk,
   cell,
   df.match = NULL,
-  min.dim = 13,
+  min.dim = 11,
   max.dim = 50,
   dimred = "PCA",
-  graph.meth = "snn",
+  graph.meth = "knn",
   knn.gr = list(),
   snn.gr = list(),
   cluster = "wt",
@@ -52,7 +52,7 @@ refine_asg(sce.all, df.desired.bulk = NULL)
 
 \item{df.match}{A \code{data.frame} specifying ground-truth matching between cells and bulk, applicable in co-clustering optimization.}
 
-\item{min.dim, max.dim}{Integer scalars specifying the minimum (\code{min.dim}) and maximum (\code{max.dim}) number of (principle components) PCs to retain respectively in \code{\link[scran]{denoisePCA}}. The default is \code{min.dim=13}, \code{max. dim=50}.}
+\item{min.dim, max.dim}{Integer scalars specifying the minimum (\code{min.dim}) and maximum (\code{max.dim}) number of (principle components) PCs to retain respectively in \code{\link[scran]{denoisePCA}}. The default is \code{min.dim=11}, \code{max. dim=50}.}
 
 \item{dimred}{A string of \code{PCA} (default) or \code{UMAP} specifying which reduced dimensions to use for creating a nearest neighbor graph.}
 
