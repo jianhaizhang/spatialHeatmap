@@ -1,7 +1,7 @@
 Package: spatialHeatmap
 Type: Package
 Title: spatialHeatmap
-Version: 2.3.1
+Version: 2.3.2
 Date: 2022-10-22
 Authors@R: c(
   person(given="Jianhai", family="Zhang", role=c("aut", "trl", "cre"), email="jzhan067@ucr.edu", comment=""),
