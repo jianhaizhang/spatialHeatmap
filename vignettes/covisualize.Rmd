@@ -291,14 +291,14 @@ lis.match.blk <- list(cerebral.cortex=c('cortex.S1'), hypothalamus=c('corpus.cal
 The following plots the corresponding co-visualization for sample gene Actr3b. The legend under the embedding plot shows the cell labels in the matching list (`lis.match.blk`). The source tissue information is indicated by using the same colors in the embedding and tissue plots on the left and right, respectively. In contrast to the Quick Start, the `tar.bulk` indicates target bulk tissues to show.   
 
 ```{r eval=TRUE, echo=TRUE, warnings=FALSE, fig.wide=TRUE, fig.cap=('Co-visualization plot through tissue-to-cell mapping. In this plot, `Actr3b` is used as an example. Each cell population is colored by its summarized expression value in the embedding plot on the left, and the corresponding tissue shares the same color in the spatial heatmap on the right.'), out.width="100%", fig.show='show', results='hide'}
-covis.lis <- covis(svg=svg.mus.brain, data=blk.mus.aggr, ID=c('Actr3b'), sce.dimred=sce.dimred.quick, dimred='UMAP', cell.group='label', tar.bulk=names(lis.match.blk), lis.rematch=lis.match.blk, bar.width=0.09, dim.lgd.nrow=2, dim.lgd.text.size=12, height=0.7, legend.r=1.5, legend.key.size=0.02, legend.text.size=12, legend.nrow=2)
+covis(svg=svg.mus.brain, data=blk.mus.aggr, ID=c('Actr3b'), sce.dimred=sce.dimred.quick, dimred='UMAP', cell.group='label', tar.bulk=names(lis.match.blk), lis.rematch=lis.match.blk, bar.width=0.09, dim.lgd.nrow=2, dim.lgd.text.size=12, height=0.7, legend.r=1.5, legend.key.size=0.02, legend.text.size=12, legend.nrow=2)
 ```
 
 
 In scenarios where expression values are similar across tissues, the mapping between cells and tissues can be indicated by fixed contrasting colors by setting `profile=FALSE`.   
 
 ```{r eval=TRUE, echo=TRUE, warnings=FALSE, fig.wide=TRUE, fig.cap=('Co-visualization plot through tissue-to-cell mapping without expression values. In this plot, mapping beween cell groups and tissues are indicated by fixed colors instead of expression values. '), out.width="100%", fig.show='show', results='hide'}
-covis.lis <- covis(svg=svg.mus.brain, data=blk.mus.aggr, ID=c('Actr3b'), profile=FALSE, sce.dimred=sce.dimred.quick, dimred='UMAP', cell.group='label', lis.rematch=lis.match.blk, tar.bulk=names(lis.match.blk), bar.width=0.09, dim.lgd.nrow=2, dim.lgd.text.size=12, height=0.7, legend.r=1.5, legend.key.size=0.02, legend.text.size=12, legend.nrow=2)
+covis(svg=svg.mus.brain, data=blk.mus.aggr, ID=c('Actr3b'), profile=FALSE, sce.dimred=sce.dimred.quick, dimred='UMAP', cell.group='label', lis.rematch=lis.match.blk, tar.bulk=names(lis.match.blk), bar.width=0.09, dim.lgd.nrow=2, dim.lgd.text.size=12, height=0.7, legend.r=1.5, legend.key.size=0.02, legend.text.size=12, legend.nrow=2)
 ```
 
 
@@ -371,7 +371,7 @@ is based on the gene expression summary for each cell group obtained by clusteri
 Completely manual groupings can be provided the same way.  
 
 ```{r eval=TRUE, echo=TRUE, warnings=FALSE, fig.wide=TRUE, fig.cap=('Co-visualization of single cell data and tissue features with cluster groupings. Gene `Tcea1` is used as an example and the cell groupings were obtained by clustering.'), out.width="100%", fig.show='show', results='hide'}
-shm.lis <- covis(svg=svg.mus.brain, data=sce.clus.aggr, ID=c('Tcea1'), sce.dimred=sce.clus, dimred='UMAP', cell.group='cluster', assay.na='logcounts', tar.cell=names(lis.match.clus), lis.rematch=lis.match.clus, bar.width=0.09, dim.lgd.nrow=1, height=0.7, legend.r=1.5, legend.key.size=0.02, legend.text.size=12, legend.nrow=3)
+covis(svg=svg.mus.brain, data=sce.clus.aggr, ID=c('Tcea1'), sce.dimred=sce.clus, dimred='UMAP', cell.group='cluster', assay.na='logcounts', tar.cell=names(lis.match.clus), lis.rematch=lis.match.clus, bar.width=0.09, dim.lgd.nrow=1, height=0.7, legend.r=1.5, legend.key.size=0.02, legend.text.size=12, legend.nrow=3)
 ```
 
 
@@ -460,11 +460,11 @@ colData(sc.mus)[1:3, , drop=FALSE]
 Bulk and single cell raw count data are jointly normalized by the function `norm_cell`, which is a wrapper of `computeSumFactors` from `scran` [@scran]. `com=FALSE` means bulk and single cells are separated after normalization for subsequent separate filtering.  
 
 ```{r eval=TRUE, echo=TRUE, warnings=FALSE, results='hide'}
-mus.lis.nor <- read_cache(cache.pa, 'mus.lis.nor') 
-if (is.null(mus.lis.nor)) {
+#mus.lis.nor <- read_cache(cache.pa, 'mus.lis.nor') 
+#if (is.null(mus.lis.nor)) {
   mus.lis.nor <- norm_cell(sce=sc.mus, bulk=blk.mus, com=FALSE)
-  save_cache(dir=cache.pa, overwrite=TRUE, mus.lis.nor)
-}
+#  save_cache(dir=cache.pa, overwrite=TRUE, mus.lis.nor)
+#}
 ```
 
 The normalized single cell and bulk data (log2-scale) are filtered to reduce sparsity
@@ -490,7 +490,7 @@ the bulk data to the genes remaining in the filtered single cell data. This
 entire process is accomplished by the `filter_cell` function.  
 
 
-The same aSVG instance of mouse brain as in the [Quick Start](#test) section above is used here and the aSVG parsing is omitted for brevity.  
+The same aSVG instance of mouse brain as in the [Quick Start](#test) section above is used here and the aSVG importing is omitted for brevity.  
 
 ```{r , eval=TRUE, echo=TRUE, warnings=FALSE}
 tail(attribute(svg.mus.brain)[[1]])[1:3, 1:4] # Partial features are shown.
@@ -502,11 +502,11 @@ tail(attribute(svg.mus.brain)[[1]])[1:3, 1:4] # Partial features are shown.
 The co-clustering process is performed by calling the function `cocluster`. In the following, default settings obtained from optimization are shown, where `min.dim`, `dimred`, `graph.meth`, and `cluster` refers to `topDimensions`, `dimensionReduction`, `graphBuilding`, and `clusterDetection` in Table \@ref(tab:optPar) respectively.   
 
 ```{r eval=TRUE, echo=TRUE, warnings=FALSE, results='hide'}  
-coclus.mus <- read_cache(cache.pa, 'coclus.mus')
-if (is.null(coclus.mus)) {
+#coclus.mus <- read_cache(cache.pa, 'coclus.mus')
+#if (is.null(coclus.mus)) {
   coclus.mus <- cocluster(bulk=blk.sc.mus.fil$bulk, cell=blk.sc.mus.fil$cell, min.dim=11, dimred='PCA', graph.meth='knn', cluster='wt')
-  save_cache(dir=cache.pa, overwrite=TRUE, coclus.mus)
-}
+#  save_cache(dir=cache.pa, overwrite=TRUE, coclus.mus)
+#}
 ```
 
 The co-clustering results are stored in the `colData` slot of `coclus.mus`. The `cluster` indicates cluster labels, the `bulkCell` indicates bulk tissues or single cells, the `sample` suggests original labels of bulk and cells, the `assignedBulk` refers to bulk tissues assigned to cells with `none` suggesting un-assigned, and the `similarity` refers to Spearman's correlation coefficients for assignments between bulk and cells, which is a measure of assignment strigency.   
@@ -611,13 +611,13 @@ plot_dim(coclus.mus, dim='UMAP', color.by='sample', x.break=seq(-10, 10, 1), y.b
 Define desired bulk tissues (`desiredBulk`) for cells selected by x-y coordinate ranges (`x.min`, `x.max`, `y.min`, `y.max`) in the embedding plot in form of a `data.frame` (`df.desired.bulk`). The `dimred` reveals where the coordinates come from and is required. In this example, cell populations near the bulk `hippocampus` are selected and `hippocampus` is the desired bulk tissue.   
 
 ```{r , eval=TRUE, echo=TRUE, warnings=FALSE}  
-df.desired.bulk <- data.frame(x.min=c(-8), x.max=c(-3.5), y.min=c(-2.5), y.max=c(0.5), desiredBulk=c('hippocampus'), dimred='UMAP')
+df.desired.bulk <- data.frame(x.min=c(6), x.max=c(8), y.min=c(-1), y.max=c(0.5), desiredBulk=c('hippocampus'), dimred='UMAP')
 df.desired.bulk
 ```
 
 Incorporate desired bulk assignments to co-clustering results by calling `refine_asg`. The similarities corresponding to desired bulk are internally set at the maximum of 1. After inclusion of desired bulk, separate single cells from bulk for co-visualization. 
 
-```{r , eval=TRUE, echo=TRUE, warnings=FALSE}  
+```{r , eval=TRUE, echo=TRUE, warnings=FALSE, results='hide'}  
 # Incorporate desired bulk
 coclus.mus.tailor <- refine_asg(sce.all=coclus.mus, df.desired.bulk=df.desired.bulk)
 # Separate cells from bulk

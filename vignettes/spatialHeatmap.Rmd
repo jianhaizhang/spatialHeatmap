@@ -177,8 +177,7 @@ features in SHMs, _annotated SVG_ (aSVG) files are used where the
 shapes of interest are labeled according to certain conventions so that they
 can be addressed and colored programmatically. One or multiple aSVG files can be parsed and stored in the `SVG` S4 container with utilities provided by the _spatialHeatmap_ package (Figure \@ref(fig:illus)B). The data slots of `SVG` include `coordinate`, 
 `attribute`, `dimension`, `svg`, and `raster`. They correspond to feature coordinates, styling attributes (color, line width, etc.), width and heigth, aSVG file paths, 
-and raster image paths, respectively. Raster images are optional and only required to
-include photographic image components in SHMs (Figure \@ref(fig:overCol)).  
+and raster image paths, respectively. Raster images are required only when including photographic image components in SHMs (Figure \@ref(fig:overCol)), which is optional.  
 
 SVGs and aSVGs of anatomical structures can
 be downloaded from many sources including the repositories described [below](#data_repo).
@@ -268,6 +267,11 @@ The following lists the vignette(s) of this package in an HTML browser. Clicking
 ```{r, eval=FALSE, echo=TRUE, warnings=FALSE}
 browseVignettes('spatialHeatmap')
 ```
+
+To reduce runtime, intermediate results can be cached under `~/.cache/shm`.   
+```{r eval=TRUE, echo=TRUE, message=FALSE, warnings=FALSE } 
+cache.pa <- '~/.cache/shm' # Set path of the cache directory 
+```  
 
 # Spatial Heatmaps {#shm}
 
@@ -359,11 +363,9 @@ or without prior preprocessing steps (_e.g._ normalization).
 
 The following example searches the Expression Atlas for expression data derived from
 specific tissues and species of interest, here _'cerebellum'_ and _'Homo sapiens'_,
-respectively. To reduce the runtime of the subsequent steps, some of the intermediate
-results are cached in `~/.cache/shm`.   
+respectively.     
 
 ```{r eval=TRUE, echo=TRUE, message=FALSE, warnings=FALSE, results='hide'}
-cache.pa <- '~/.cache/shm' # The path of cache.
 all.hum <- read_cache(cache.pa, 'all.hum') # Retrieve data from cache.
 if (is.null(all.hum)) { # Save downloaded data to cache if it is not cached.
   all.hum <- searchAtlasExperiments(properties="cerebellum", species="Homo sapiens")

@@ -1,0 +1,180 @@
+# Module for plotting SHMs.
+shm_ui <- function(id, data.ui, search.ui) {
+  ns <- NS(id)
+  tabPanel("Spatial Heatmap", value='shmPanelAll', icon=NULL,
+    div(style='margin-top:10px'),
+    # list(
+    # width = ifelse(input$lgdTog %% 2 == 0, 9, 12), 
+      # boxPad(color = NULL, title = NULL, solidHeader = FALSE, 
+    # Append matrix heatmap, network with SHMs.    
+    do.call(tabsetPanel, append(list(type="pills", id=ns('shmMhNet'), selected="shm1",
+    # tabsetPanel(type = "pills", id=NULL, selected="shm1", 
+      tabPanel(title="Image", value='shm1',
+      column(12, search.ui, style='z-index:5'),  
+      navbarPage('Parameters:', id=ns('shmPar'),
+      tabPanel("Basic", value='basic', 
+      fluidRow(splitLayout(cellWidths=c('0.5%', '8%', '0.5%', '8%', '0.5%', '8%', '0.5%', '9%', '0.5%', '11%', '0.5%', '8%', '0.5%', '8%', '0.5%', '8%'), '',  
+      actionButton(ns("fs"), "Full screen", onclick = "openFullscreen(document.getElementById('barSHM'))"), '',
+      div(title = 'Number of columns for the subplots.',
+      dropdownButton(inputId=ns('colDrop'), label='Columns', circle=FALSE, icon=NULL, status='primary', inline=FALSE, width='100%',
+        sliderInput(ns("col.n"), "", min=1, max=50, step=1, value=2, width='100%')
+      )
+      ), '',
+      div(title='Data column: by the column order in data matrix.',
+      dropdownButton(inputId=ns('disDrop'), label='Display by', circle=FALSE, icon=NULL, status='primary', inline=FALSE, width=250,
+        radioButtons(inputId=ns('genCon'), label='', choices=c("Gene"="gene", "Condition"="con", "Data column"="none"), selected='', inline=FALSE, width='100%')
+      )), '',
+      dropdownButton(inputId=ns('scaleDrop'), label='Scale plots', circle=FALSE, icon=NULL, status='primary', inline=FALSE, width=250,
+        sliderInput(ns("scale.shm"), "", min=0.1, max=10, step=0.1, value=1, width='100%')
+      ), '',
+      dropdownButton(inputId=ns('scroDrop'), label='Scrolling height', circle=FALSE, icon=NULL, status='primary', inline=FALSE, width=250,
+        sliderInput(ns("scrollH"), "", min=50, max=10000, step=50, value=450, width='100%')
+      ), '',
+      dropdownButton(inputId=ns('titDrop'), label='Title size', circle=FALSE, icon=NULL, status='primary', inline=FALSE, width=250,
+        sliderInput(ns("title.size"), "", min=0, max=100, step=0.5, value=12, width='100%')
+      ), '',
+      dropdownButton(inputId=ns('dropdown'), label='Color key', circle=FALSE, icon=NULL, status='primary', inline=FALSE, width=250,
+      fluidRow(splitLayout(cellWidths=c('1%', '60%', '35%'), '', textInput(ns("color"), "Color scheme", '', placeholder=paste0('Eg: ', ''), width=200),
+      actionButton(ns("col.but"), "Confirm", icon=NULL, style = "margin-top: 24px;"))), 
+      radioButtons(inputId=ns('cs.v'), label='Color key based on', choices=c("Selected rows", "All rows"), selected='', inline=TRUE)
+      ), '', 
+      dropdownButton(inputId=ns('togDrop'), label='Horizontal layout', circle=FALSE, icon=NULL, status='primary', inline=FALSE, width=250,
+        sliderInput(ns("togSld"), "Adjust horizontal layout", min=0, max=1, step=0.05, value=0.67, width='100%')
+      )
+      )), # fluidRow
+      # bsPopover(id=ns('genCon'), title="Data column: by the column order in data matrix.", placement = "top", trigger = "hover"),
+      textOutput(ns('h.w.c')), textOutput(ns('msg.col')), div(style='margin-top:10px') 
+      ), # tabPanel
+      tabPanel("Transparency",
+        fluidRow(splitLayout(cellWidths=c('1%', '5%', '3%', '90%'), '',
+        actionButton(ns("transBut"), "Update", icon=icon("sync"), style = "margin-top: 24px;"), '', 
+        selectizeInput(ns('tis'), label='Transparent features', choices='', multiple = TRUE, options=list(placeholder = 'Selected features will be transparent.'))
+      ))),
+      tabPanel("Value legend",
+      fluidRow(splitLayout(cellWidths=c('1%', '10%', '1%', '10%', '1%', '10%', '1%', '10%', '1%', '10%'), '', 
+      numericInput(inputId=ns('val.lgd.row'), label='Rows', value='', min=1, max=Inf, step=1, width=150), '',
+      numericInput(inputId=ns('val.lgd.key'), label='Key size', value='', min=0.0001, max=1, step=0.01, width=150), '',
+      numericInput(inputId=ns('val.lgd.text'), label='Text size', value='', min=0.0001, max=Inf, step=1, width=140), '',
+      radioButtons(inputId=ns('val.lgd.feat'), label='Include features', choices=c('No', 'Yes'), selected='', inline=TRUE), '',
+      actionButton(ns("val.lgd"), "Add/Remove", icon=icon("sync"), style = "margin-top: 24px;") 
+      ))
+      ), # tabPanel
+      tabPanel("Shape outline",
+      splitLayout(cellWidths=c('1%', '15%', '1%', '13%'), '', 
+      selectInput(ns('line.color'), label='Line color', choices=c('grey70', 'black', 'red', 'green', 'blue'), selected=''), '', 
+      numericInput(inputId=ns('line.size'), label='Line size', value='', min=0.05, max=Inf, step=0.05, width=150) 
+      )), # tabPanel
+     tabPanel("Download",
+
+#     tags$div(title="Download the spatial heatmaps and legend plot.",
+      # h1(strong("Download paramters:"), style = "font-size:20px;"),
+      fluidRow(splitLayout(cellWidths=c('0.7%', '15%', '1%', '10%', '1%', '12%', '1%', '12%', '1%', '8%', '1%', '8%'), '',
+      radioButtons(inputId=ns('ext'), label='File type', choices=c("jpg", "png", "pdf"), selected='jpg', inline=TRUE), '', 
+      numericInput(inputId=ns('res'), label='Resolution (dpi)', value='', min=10, max=Inf, step=10, width=150), '',
+      radioButtons(inputId=ns('lgd.incld'), label='Include legend plot', choices=c('Yes', 'No'), selected='', inline=TRUE), '', 
+      numericInput(inputId=ns('lgd.size'), label='Legend plot size', value='', min=-1, max=Inf, step=0.1, width=140), '',
+      actionButton(ns("dld.but"), "Confirm", icon=icon("sync"), style = "margin-top: 24px;"), '',
+      # downloadButton(ns("dld.shm"), "Download", style = "margin-top: 24px;")
+      uiOutput(ns('dldBut'))
+      )), # fluidRow
+      bsTooltip(id=ns('ext'), title="Select a file type to download.", placement = "bottom", trigger = "hover")
+
+      #fluidRow(splitLayout(cellWidths=c('18%', '1%', '25%', '1%', '18%') 
+      # tags$div(title="Alegend plot.",
+      # ), '', 
+      #)) # fluidRow 
+      ), # tabPanel 
+     
+     # navbarMenu("More", # Create dropdown menu.
+     tabPanel("Relative size",
+       tags$div(title="Only applicable in multiple aSVGs.",
+       numericInput(inputId=ns('relaSize'), label='Relative sizes', value='', min=0.01, max=Inf, step=0.1, width=140))
+      ), # tabPanel
+
+      tabPanel(title="Re-match features", value='rematch',
+        # column(12, fluidRow(splitLayout(cellWidths=c('1%', "40%", '10%', "30%"), '',
+        #  uiOutput(ns('svg'), style = 'margin-left:-5px'), '', 
+        #  actionButton(ns("match"), "Confirm re-matching", icon=icon("sync"))
+        #))), verbatimTextOutput(ns('msg.match')),
+        #column(12, uiOutput(ns('ft.match')))
+        match_ui(ns('rematch'))
+      ),
+      tabPanel("Raster image",
+       tags$div(title="Overlay templates of raster images with spatial heatmap images.",
+         splitLayout(cellWidths=c('1%', '10%', '1%', '10%', '1%', '10%'), '', 
+           selectInput(ns('raster'), label='Superimposing', choices=c('Yes', 'No'), selected='Yes'), '',
+           selectInput(ns('coal'), label='Black-white', choices=c('Yes', 'No'), selected='No'), '',
+           div(style='margin-top:25px',
+           dropdownButton(inputId=ns('dpwAlpOver'), label='Alpha', circle=FALSE, icon=icon("", verify_fa = FALSE), status='primary', inline=FALSE, width=300,
+           fluidRow(splitLayout(cellWidths=c('1%', '60%', '35%'), '',
+           sliderInput(ns('alpOver'), "", min=0, max=1, step=0.05, value=1, width='100%'),
+           actionButton(ns("alpOverBut"), "Confirm", icon=icon("sync"), style='margin-top:31px')))
+           ))
+         )
+       )
+      ), # tabPanel
+      tabPanel("Co-visualization", value='scellTab', 
+        tags$div(title="",
+        fluidRow(splitLayout(cellWidths=c('1%', '12%', '1%', '15%', '1%', '10%', '1%', '19%'), '',  
+        selectInput(ns('profile'), label='Expression values', choices=c('No', 'Yes'), selected='Yes'), '', 
+        selectInput(ns('dims'), label='Dimentionality reduction', choices=c('PCA', 'UMAP', 'TSNE'), selected='UMAP'), '', 
+        uiOutput(ns('tarCellBlk')), '',
+        numericInput(ns('dimLgdRows'), label='Legend rows in embedding plot', value=2, min=1, max=Inf, step=1, width=270)
+        ))
+       )
+      ) # tabPanel
+      #) # navbarMenu
+      ), # navbarPage 
+ 
+    verbatimTextOutput(ns('msgSHM')), uiOutput(ns('shm.ui')), data.ui
+    ), # tabPanel 
+
+      tabPanel(title='Interactive', value='interTab',
+      navbarPage('', id=ns('interNav'),
+      tabPanel('Plot', value='interPlot',
+        fluidRow(splitLayout(cellWidths=c("1%", "13%", '5%', "80%"), '',
+        actionButton(ns("ggly.but"), "Click to show/update", icon=icon("sync"), style="color:#fff; background-color:#499fe9;border-color:#2e6da4"), '',
+        uiOutput(ns('sld.fm'))
+        )),
+        # The input ids should be unique, so no legend plot parameters are added here.
+        fluidRow(splitLayout(cellWidths=c("1%", "7%", "61%", "30%"), "", plotOutput(ns("bar2")), htmlOutput(ns("ggly")), plotOutput(ns("lgd2"))))
+      ),
+      tabPanel('Parameters',
+        fluidRow(splitLayout(cellWidths=c('1.5%', '16%', '1%', '12%', '1%', '12%'), '',
+          numericInput(ns('t'), label='Transition time (s)', value=2, min=0.1, max=Inf, step=NA, width=270), '',
+          numericInput(ns('scale.ly'), label='Scale plot', value=1, min=0.1, max=Inf, step=0.1, width=170), '',
+          downloadButton(ns("dld.anm"), "Download", style = "margin-top: 24px;") 
+         )), textOutput(ns('tran'))
+      )) # navbarPage
+      ),
+      tabPanel(title='Video', value='vdoTab',
+      navbarPage('', id=ns('vdoNav'),
+      tabPanel('Video', value='video',
+      actionButton(ns("vdo.but"), "Click to show/update", icon=icon("sync"), style="color:#fff; background-color:#499fe9;border-color:#2e6da4"),
+      fluidRow(splitLayout(cellWidths=c("1%", "98%", "1%"), "", uiOutput(ns('video')), ""))
+      ),
+      tabPanel("Parameters",
+      fluidRow(splitLayout(cellWidths=c('1%', '8%', '1%', '10%', '1%', '13%', '1%', '10%', '1%', '8%', '2%', '14%', '1%', '8%'), '',
+      numericInput(inputId=ns('vdo.key.row'), label='Key rows', value=2, min=1, max=Inf, step=1, width=270), '',
+      numericInput(inputId=ns('vdo.key.size'), label='Key size', value=0.04, min=0.01, max=Inf, step=0.1, width=270), '',
+      radioButtons(inputId=ns("vdo.val.lgd"), label="Key value", choices=c("Yes", "No"), selected='No', inline=TRUE), '', 
+      radioButtons(inputId=ns("vdo.label"), label="Feature label", choices=c("Yes", "No"), selected='No', inline=TRUE), '',
+      numericInput(inputId=ns('vdo.lab.size'), label='Label size', value=2, min=0, max=Inf, step=0.5, width=150), '',
+      selectInput(ns("vdo.dim"), label="Fixed dimension", choices=c('1920x1080', '1280x800', '320x568', '1280x1024', '1280x720', '320x480', '480x360', '600x600', '800x600', '640x480'), selected='640x480', width=110), '',
+      numericInput(inputId=ns('vdo.bar.width'), label='Color bar width', value=0.1, min=0.01, max=0.9, step=0.03, width=270)
+      )), # fluidRow
+
+      fluidRow(splitLayout(cellWidths=c('1%', '14%', '1%', '13%'), '', 
+      numericInput(inputId=ns('vdo.itvl'), label='Transition time (s)', value=1, min=0.1, max=Inf, step=1, width=270), '',
+      numericInput(inputId=ns('vdo.res'), label='Resolution (dpi)', value=400, min=1, max=1000, step=5, width=270)
+      )), # fluidRow
+      textOutput(ns('tran.vdo')), htmlOutput(ns('ffm')) 
+      )
+      ) # navbarPage
+      ) # tabPanel
+      ), network_ui(ns('net')) )) # append, do.call
+
+    #  ) # list
+
+  )
+}
