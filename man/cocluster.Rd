@@ -19,7 +19,7 @@ cocluster(
   graph.meth = "knn",
   knn.gr = list(),
   snn.gr = list(),
-  cluster = "wt",
+  cluster = "fg",
   wt.arg = list(steps = 4),
   fg.arg = list(),
   sl.arg = list(spins = 25),

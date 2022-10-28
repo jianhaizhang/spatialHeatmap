@@ -101,7 +101,7 @@ container illustrated in Figure \@ref(fig:covizOver).1 [@sce]. The slots
 `assays`, `colData`, `rowData` and `reducedDims` in an `SCE` contain expression data,
 cell metadata, molecule metadata and reduced dimensionality embedding results,
 respectively. The cell group labels are stored in the `colData` slot as shown
-in Figure \@ref(fig:covizOver).1. The S4 class `SVG` (Figure \@ref(fig:covizOver).4) is developed specifically in `spatialHeatmap` for storing aSVG instances. The two most important slots `coordinate` and `attribute` stores the aSVG feature coordinates and respective attributes such as fill color, line withs, etc. respectively, while other slots `dimension`, `svg`, and `raster` stores image dimension, aSVG file paths, and raster image paths respectively. For handling cell-to-tissue grouping
+in Figure \@ref(fig:covizOver).1. The S4 class `SVG` (Figure \@ref(fig:covizOver).3) is developed specifically in `spatialHeatmap` for storing aSVG instances. The two most important slots `coordinate` and `attribute` stores the aSVG feature coordinates and respective attributes such as fill color, line withs, etc. respectively, while other slots `dimension`, `svg`, and `raster` stores image dimension, aSVG file paths, and raster image paths respectively. For handling cell-to-tissue grouping
 information, three general methods are available including (a)
 annotation-based, (b) manual and (c) automated.
 The annotation-based and manual methods are similar by using known cell group
@@ -130,7 +130,7 @@ the same group label will be colored the same. When coloring by tissues
 the color used for each tissue feature will be applied to the corresponding 
 cell groups represented in the embedding plot. 
 
-```{r covizOver, echo=FALSE, fig.wide=TRUE, out.width="100%", fig.cap=("Overview of single cell and tissue co-visualization. (1) Single cell data are organized in a `SingleCellExperiment` object where cell grouping information is stored in the `colData` slot. Usually, each cell group maps to a certain tissue in the spatial heatmap plot. (2) Bulk tissue experssion data are stored in a `SummarizedExperiment` object, where tissues are grouped by aSVG feature identifiers (4) in the `colData` slot. (3) Bi-directional mapping between cell or tissue groups are supported. Cell groups and tissues can be colored by fixed tissue colors or by expression values of selected genes (5) based on the provided single cell or bulk data, where the latter case involves aggregating replicates by mean or median. (4) The aSVG instance is stored in an `SVG` class. The `coordinate` slot defines spatial feature shapes in spatial heatmap (5) while the `attribute` slot defines styling of these features such as color, line with, etc. The colors in `attribute` depends on expression values in (1) or (2). (5) Cells in (1) and bulk tissues in (2) or (4) are co-visualized in and embedding plot and spatial heatmap plot respectively, where mapped cell groups and respective tissues are indicated by same colors. ")} 
+```{r covizOver, echo=FALSE, fig.wide=TRUE, out.width="100%", fig.cap=("Overview of single cell and bulk tissue co-visualization. (1) Single cell data are organized in a `SingleCellExperiment` object where cell grouping information is stored in the `colData` slot. (2) Bulk tissue expression data are stored in a `SummarizedExperiment` object, where tissues are labelled by aSVG feature identifiers (3) in the `colData` slot. (3) The aSVG instance is stored in an `SVG` class. The `coordinate` slot defines spatial feature shapes in spatial heatmap (5) while the `attribute` slot defines styling of these features such as color, line with, etc. (4) Bi-directional mapping between cell or tissue groups are supported. Cell groups and tissues can be colored by fixed colors or by expression values of selected genes. (5) Cells in (1) and bulk tissues in (2) are co-visualized in and embedding plot and spatial heatmap plot respectively, where mapped cell groups and respective tissues are indicated by same colors. ")} 
 include_graphics('img/covisualize.jpg')
 ```
 
@@ -427,7 +427,7 @@ Settings=c(
 '**denoisePCA** (**PCA**, scran), runUMAP (UMAP, scater)', 
 '5 to 80 (**11**, **19**, **33**, **22**)', 
 '**buildKNNGraph** (**knn**), buildSNNGraph (snn) (scran)', 
-'**cluster_walktrap** (**wt**), cluster_fast_greedy (fg), cluster_leading_eigen (le) (igraph)'
+'cluster_walktrap (wt), **cluster_fast_greedy** (**fg**), cluster_leading_eigen (le) (igraph)'
 ),
 Description=c(
 'Dimension reduction methods',
@@ -504,7 +504,7 @@ The co-clustering process is performed by calling the function `cocluster`. In t
 ```{r eval=TRUE, echo=TRUE, warnings=FALSE, results='hide'}  
 #coclus.mus <- read_cache(cache.pa, 'coclus.mus')
 #if (is.null(coclus.mus)) {
-  coclus.mus <- cocluster(bulk=blk.sc.mus.fil$bulk, cell=blk.sc.mus.fil$cell, min.dim=11, dimred='PCA', graph.meth='knn', cluster='wt')
+  coclus.mus <- cocluster(bulk=blk.sc.mus.fil$bulk, cell=blk.sc.mus.fil$cell, min.dim=11, dimred='PCA', graph.meth='knn', cluster='fg')
 #  save_cache(dir=cache.pa, overwrite=TRUE, coclus.mus)
 #}
 ```

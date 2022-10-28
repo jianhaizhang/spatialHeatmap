@@ -83,7 +83,7 @@
 #' @importFrom SummarizedExperiment colData colData<-
 #' @importFrom SingleCellExperiment logcounts
 
-cocluster <- function(bulk, cell, df.match=NULL, min.dim=11, max.dim=50, dimred='PCA', graph.meth='knn', knn.gr=list(), snn.gr=list(), cluster='wt', wt.arg=list(steps = 4), fg.arg=list(), sl.arg=list(spins = 25), le.arg=list(), eb.arg=list(), sim.meth='spearman') {
+cocluster <- function(bulk, cell, df.match=NULL, min.dim=11, max.dim=50, dimred='PCA', graph.meth='knn', knn.gr=list(), snn.gr=list(), cluster='fg', wt.arg=list(steps = 4), fg.arg=list(), sl.arg=list(spins = 25), le.arg=list(), eb.arg=list(), sim.meth='spearman') {
   # save(bulk, cell, df.match, min.dim, max.dim, dimred, graph.meth, knn.gr, snn.gr, cluster, wt.arg, fg.arg, sl.arg, le.arg, eb.arg, sim.meth, file='cocluster.arg')
   # Two or more cells are needed.
   if (length(unique(colnames(cell)))<=1) {
