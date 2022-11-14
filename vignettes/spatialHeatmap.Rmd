@@ -75,7 +75,7 @@ molecules with related abundance profiles using matrix heatmaps combined with
 hierarchical clustering and network representations (SCE), and to co-visualize
 single cell embedding results with SHMs (SCSHM-CoViz). The latter co-visualization
 functionality (Figure \@ref(fig:illus)E) is described in a separate vignette called
-[SCSHM-CoViz](https://bioconductor.org/packages/release/bioc/vignettes/spatialHeatmap/inst/doc/scSHM-CoViz.html).     
+[SCSHM-CoViz](https://bioconductor.org/packages/release/bioc/vignettes/spatialHeatmap/inst/doc/covisualize.html){target='_blank'}.     
 
 The functionalities of _spatialHeatmap_ can be used either in a command-driven mode
 from within R or a graphical user interface (GUI) provided by a Shiny App that
@@ -979,7 +979,7 @@ manually. The former is illustrated in the Supplementary Section.
 The Spatial Enrichment (SE) functionality is an extension of the SHMs to identify groups of
 transcripts, proteins or other molecules that are particularly abundant or
 enriched in certain spatial regions, such as tissue-specific transcripts. For
-this, it compares the abundance profiles of molecules between the target spatial feature and each other reference feature in a pairwise manner. The molecules significantly up- or down-regulated in the target feature across all pairwise comparisons are denoted target feature-specifically expressed. The methods for detecting differentially-expressed genes (DEGs) in SE include edgeR [@edgeR], limma [@limma], DESeq2 [@deseq2], distinct
+this, it compares the abundance profiles of molecules between the target spatial feature and each other reference feature in a pairwise manner. The molecules significantly up- or down-regulated in the target feature across all pairwise comparisons are denoted spatially-enriched molecules. The methods for detecting differentially-expressed genes (DEGs) in SE include edgeR [@edgeR], limma [@limma], DESeq2 [@deseq2], distinct
 [@distinct].     
 
 
@@ -989,7 +989,7 @@ identify molecules specifically expressed in a certain treatment in a similar
 pairwise comparison, where the treatment of interest is compared with every other reference treatment. 
 
 The application of SE is illustrated here using the 
-above [mouse brain data](#mus) as example. In the following, only three features 'brain', 'liver', and 'kidney' are selected so as to reduce runtime. Among the three features, 'brain' is chosen as the target under the argument `target`. The experimental variable of three strains 'DBA.2J', 'C57BL.6', 'CD1' will be treated as replicates for each feature.  
+above [mouse organ data](#mus) as example. In the following, only three features 'brain', 'liver', and 'kidney' are selected so as to reduce runtime. Among the three features, 'brain' is chosen as the target under the argument `target`. The experimental variable of three strains 'DBA.2J', 'C57BL.6', 'CD1' will be treated as replicates for each feature.  
 
 
 ```{r eval=TRUE, echo=TRUE, warnings=FALSE, collapse=TRUE}

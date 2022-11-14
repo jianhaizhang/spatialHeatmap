@@ -298,7 +298,7 @@ covis(svg=svg.mus.brain, data=blk.mus.aggr, ID=c('Actr3b'), sce.dimred=sce.dimre
 In scenarios where expression values are similar across tissues, the mapping between cells and tissues can be indicated by fixed contrasting colors by setting `profile=FALSE`.   
 
 ```{r eval=TRUE, echo=TRUE, warnings=FALSE, fig.wide=TRUE, fig.cap=('Co-visualization plot through tissue-to-cell mapping without expression values. In this plot, mapping beween cell groups and tissues are indicated by fixed colors instead of expression values. '), out.width="100%", fig.show='show', results='hide'}
-covis(svg=svg.mus.brain, data=blk.mus.aggr, ID=c('Actr3b'), profile=FALSE, sce.dimred=sce.dimred.quick, dimred='UMAP', cell.group='label', lis.rematch=lis.match.blk, tar.bulk=names(lis.match.blk), bar.width=0.09, dim.lgd.nrow=2, dim.lgd.text.size=12, height=0.7, legend.r=1.5, legend.key.size=0.02, legend.text.size=12, legend.nrow=2)
+covis(svg=svg.mus.brain, data=blk.mus.aggr, profile=FALSE, sce.dimred=sce.dimred.quick, dimred='UMAP', cell.group='label', lis.rematch=lis.match.blk, tar.bulk=names(lis.match.blk), bar.width=0.09, dim.lgd.nrow=2, dim.lgd.text.size=12, height=0.7, legend.r=1.5, legend.key.size=0.02, legend.text.size=12, legend.nrow=2)
 ```
 
 
@@ -397,7 +397,7 @@ the example of RNA-Seq data.
 
 2. The bulk data are subsetted to the same genes as the single cell data (Figure \@ref(fig:coclusOver).1c). This and the previous filtering steps in single cell data reduce the sparsity in the single cell data and the bulk data are made more compareable to the single cell data by subsetting it to the same genes.
 
-3. Bulk and single cell data are column-wise combined for joint embedding using PCA (UMAP, or other). Co-clustering is performed on the embedding data and three types of clusters are produced. First, only one bulk tissue is co-clustered with cells ((Figure \@ref(fig:coclusOver).2a). This bulk is assigned to all cells in the same cocluster. Second, multiple bulk tissues are co-clustered with multiple cells (Figure \@ref(fig:coclusOver).2b). The bulk tissues are assigned according to the nearest neighbor bulk of each cell, which is measured by Spearman's correlation coefficients. Third, no bulk tissue is co-clustered with cells (Figure \@ref(fig:coclusOver).2c). All these cells are un-labeled, which are candidates for discovering novel cell types.  
+3. Bulk and single cell data are column-wise combined for joint embedding using PCA (UMAP, or other). Co-clustering is performed on the embedding data and three types of clusters are produced. First, only one bulk tissue is co-clustered with cells (Figure \@ref(fig:coclusOver).2a). This bulk is assigned to all cells in the same cocluster. Second, multiple bulk tissues are co-clustered with multiple cells (Figure \@ref(fig:coclusOver).2b). The nearest-neighbor bulk is assigned to each cell, which is measured by Spearman's correlation coefficients. Third, no bulk tissue is co-clustered with cells (Figure \@ref(fig:coclusOver).2c). All these cells are un-labeled, which are candidates for discovering novel cell types.  
 
 After co-clustering, cells are labeled by bulk tissues or un-labeled (Figure \@ref(fig:coclusOver).3) and these labels are used for co-visualization (Figure \@ref(fig:coclusOver).4), where cells in embedding plot and matching tissues in spatial heatmap are filled by same colors.   
 
@@ -405,12 +405,6 @@ After co-clustering, cells are labeled by bulk tissues or un-labeled (Figure \@r
 ```{r coclusOver, echo=FALSE, fig.wide=TRUE, out.width="100%", fig.cap=("Overview of co-clustering. (1) Raw count data are pre-processed. (2) Co-clustering is performed on embedding dimensions of combined bulk and single cell data. (3) Cells are labeled by bulk assignments. (4) Cells and bulk tissues are co-visualized according to (3). ")}
 include_graphics('img/coclustering.jpg')
 ```
-
-After revising the method outline for the co-clustering
-please revise the figure 7 above accordingly. The legend can just refer to the
-main text to avoid duplication. PLEASE keep it simple and clear.
-If a figure raises more questions than it answers then it defeats the purpose of
-guiding the reader and providing clarity.   
 
 
 To obtain reasonably robust default settings for co-clustering, four parameters shown in Table \@ref(tab:optPar) are optimized, where bold text indicates optimal settings that are treated as robust default settings. The reason to choose these parameters is they are most relevant to the co-clustering step. The details of this optimization are given
@@ -542,10 +536,10 @@ sc.aggr.coclus <- aggr_rep(data=coclus.sc, assay.na='logcounts', sam.factor='ass
 colData(sc.aggr.coclus)
 ```
 
-The co-visualization through cell-to-bulk mapping is built on gene `Adcy1`. Cells in the embedding plot and respective assigned bulk tissues in spatial heatmap are revealed by same colors.
+The co-visualization through cell-to-bulk mapping is built on gene `Atp2b1`. Cells in the embedding plot and respective assigned bulk tissues in spatial heatmap are revealed by same colors.
 
-```{r , eval=TRUE, echo=TRUE, warnings=FALSE, fig.wide=TRUE, fig.cap=('Co-visualization through cell-to-bulk mapping in automated method. This plot is created on gene Adcy1. Colors between the embedding plot and spatial heatmap indicate matching of cells with bulk tissues. '), out.width="100%", fig.show='show', results='hide'}
-covis(svg=svg.mus.brain, data=sc.aggr.coclus, ID=c('Adcy1'), sce.dimred=coclus.sc, dimred='UMAP', tar.cell=c('hippocampus', 'hypothalamus', 'cerebellum', 'cerebral.cortex'), dim.lgd.text.size=10, dim.lgd.nrow=2, bar.width=0.1, legend.nrow=4)
+```{r , eval=TRUE, echo=TRUE, warnings=FALSE, fig.wide=TRUE, fig.cap=('Co-visualization through cell-to-bulk mapping in automated method. This plot is created on gene Atp2b1. Colors between the embedding plot and spatial heatmap indicate matching of cells with bulk tissues. '), out.width="100%", fig.show='show', results='hide'}
+covis(svg=svg.mus.brain, data=sc.aggr.coclus, ID=c('Atp2b1'), sce.dimred=coclus.sc, dimred='UMAP', tar.cell=c('hippocampus', 'hypothalamus', 'cerebellum', 'cerebral.cortex'), dim.lgd.text.size=10, dim.lgd.nrow=2, bar.width=0.1, legend.nrow=4)
 ```
 
 In bulk-to-cell mapping, bulk data are separated from cell, where replicates are already aggregated in preprocessing.
@@ -560,16 +554,16 @@ Same with conventions in the main vignette, at least one bulk tissue identifier 
 colnames(coclus.blk) %in% attribute(svg.mus.brain)[[1]]$feature
 ```
 
-The co-visualization through bulk-to-cell mapping is built on gene `Adcy1`. Cells in the embedding plot and respective assigned bulk tissues in spatial heatmap are revealed by same colors.
+The co-visualization through bulk-to-cell mapping is built on gene `Atp2b1`. Cells in the embedding plot and respective assigned bulk tissues in spatial heatmap are revealed by same colors.
 
-```{r eval=TRUE, echo=TRUE, warnings=FALSE, fig.wide=TRUE, fig.cap=('Co-visualization through bulk-to-cell mapping in automated method. This plot is created on gene Adcy1. Colors between the embedding plot and spatial heatmap indicate matching of cells with bulk tissues.'), out.width="100%", fig.show='show', results='hide'}
-covis(svg=svg.mus.brain, data=coclus.blk, ID=c('Adcy1'), sce.dimred=coclus.sc, dimred='UMAP', tar.bulk=colnames(coclus.blk), assay.na='logcounts', legend.nrow=4, dim.lgd.text.size=10, dim.lgd.nrow=2, bar.width=0.08)
+```{r eval=TRUE, echo=TRUE, warnings=FALSE, fig.wide=TRUE, fig.cap=('Co-visualization through bulk-to-cell mapping in automated method. This plot is created on gene Atp2b1. Colors between the embedding plot and spatial heatmap indicate matching of cells with bulk tissues.'), out.width="100%", fig.show='show', results='hide'}
+covis(svg=svg.mus.brain, data=coclus.blk, ID=c('Atp2b1'), sce.dimred=coclus.sc, dimred='UMAP', tar.bulk=colnames(coclus.blk), assay.na='logcounts', legend.nrow=4, dim.lgd.text.size=10, dim.lgd.nrow=2, bar.width=0.08)
 ```
 
 By setting `profile=FALSE`, the co-visualization is created without expression values, where colors in the embedding plot and spatial heatmap only indicate matching between cells and bulk tissues.   
 
 ```{r eval=TRUE, echo=TRUE, warnings=FALSE, fig.wide=TRUE, fig.cap=('Co-visualization without expression values in automated method. Colors between the embedding plot and spatial heatmap only indicate matching of cells with bulk tissues.'), out.width="100%", fig.show='show', results='hide'}
-covis(svg=svg.mus.brain, data=coclus.blk, ID=c('Adcy1'), sce.dimred=coclus.sc, dimred='UMAP', profile=FALSE, assay.na='logcounts', legend.nrow=4, dim.lgd.text.size=10, dim.lgd.nrow=2, bar.width=0.1)
+covis(svg=svg.mus.brain, data=coclus.blk, sce.dimred=coclus.sc, dimred='UMAP', profile=FALSE, assay.na='logcounts', legend.nrow=4, dim.lgd.text.size=10, dim.lgd.nrow=2, bar.width=0.1)
 ```
 
 # Shiny App {#autoSCE}
@@ -625,10 +619,10 @@ coclus.sc.tailor <- subset(coclus.mus.tailor, , bulkCell=='cell')
 ```
 
 
-After tailoring, the co-visualization through bulk-to-cell mapping is built on gene `Adcy1`. To reveal the tailoring result, only `hippocampus` is shown through the argument `tar.bulk` in the plot, where cells defined in `df.desired.bulk` have the same color as the desired bulk `hippocampus`. `hippocampus` cells in the embedding plot include tailored cells in `df.desired.bulk` and those labeled `hippocampus` in coclustering.    
+After tailoring, the co-visualization through bulk-to-cell mapping is built on gene `Atp2b1`. To reveal the tailoring result, only `hippocampus` is shown through the argument `tar.bulk` in the plot, where cells defined in `df.desired.bulk` have the same color as the desired bulk `hippocampus`. `hippocampus` cells in the embedding plot include tailored cells in `df.desired.bulk` and those labeled `hippocampus` in coclustering.    
 
-```{r eval=TRUE, echo=TRUE, warnings=FALSE, fig.wide=TRUE, fig.cap=('Co-visualization through bulk-to-cell mapping after tailoring. This plot is created on gene Adcy1. Only hippocampus cells and tissue are shown to display the tailoring result. '), out.width="100%", fig.show='show', results='hide'}
-covis(svg=svg.mus.brain, data=coclus.blk, ID=c('Adcy1'), sce.dimred=coclus.sc.tailor, dimred='UMAP', tar.bulk=c('hippocampus'), assay.na='logcounts', legend.nrow=4, dim.lgd.text.size=10, dim.lgd.nrow=2, bar.width=0.08)
+```{r eval=TRUE, echo=TRUE, warnings=FALSE, fig.wide=TRUE, fig.cap=('Co-visualization through bulk-to-cell mapping after tailoring. This plot is created on gene Atp2b1. Only hippocampus cells and tissue are shown to display the tailoring result. '), out.width="100%", fig.show='show', results='hide'}
+covis(svg=svg.mus.brain, data=coclus.blk, ID=c('Atp2b1'), sce.dimred=coclus.sc.tailor, dimred='UMAP', tar.bulk=c('hippocampus'), assay.na='logcounts', legend.nrow=4, dim.lgd.text.size=10, dim.lgd.nrow=2, bar.width=0.08)
 ```
 
 ### Assigning Desired Bulk on Shiny App {#asgBulkShiny}

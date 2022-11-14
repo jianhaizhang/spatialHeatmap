@@ -232,7 +232,7 @@ shm_covis <- function(svg, data, assay.na=NULL, sam.factor=NULL, con.factor=NULL
     if (is.numeric(thr1) & !is.na(thr1)) min.v <- thr1
     if (is.numeric(thr2) & !is.na(thr2)) max.v <- thr2
      
-     if (max.v <= min.v) stop('Make sure the max signal threshold is larger than the min!')
+    if (max.v <= min.v) stop('Make sure the max signal threshold is larger than the min!')
     bar.len=1000; geneV <- seq(min.v, max.v, len=bar.len)
 
     col <- colorRampPalette(col.com)(length(geneV))
