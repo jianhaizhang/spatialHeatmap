@@ -22,7 +22,7 @@
 
 #' @importFrom ggplot2 ggplot geom_bar theme element_blank margin coord_flip scale_y_continuous scale_x_continuous 
 
-col_bar <- function(geneV, cols, width, title='', bar.title.size=0, x.title='', x.title.size=16, y.agl=45, bar.value.size=10, mar=c(0.02, 0.05, 0.14, 0.06)) {        
+col_bar <- function(geneV, cols, width, title=NULL, bar.title.size=0, x.title='', x.title.size=16, y.agl=45, bar.value.size=10, mar=c(0.02, 0.05, 0.14, 0.06)) {        
 
   color_scale <- y <- NULL
   cs.df <- data.frame(color_scale=geneV, y=1)

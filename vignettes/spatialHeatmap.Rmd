@@ -924,7 +924,6 @@ spatial_hm(svg=svg.mus.brain, data=se.mus.vars.aggr, ID=c('Acnat1'), legend.r=1.
 ```
 
 
-
 ### Multiple aSVGs {#mul_svg}
 
 In a spatiotemporal application, different development stages may need to be represented 
