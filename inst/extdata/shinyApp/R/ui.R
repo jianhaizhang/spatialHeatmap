@@ -1,8 +1,10 @@
 # The Shiny modules (e.g. search_ui) are temporarily placed in this file only for debugging purpose, and will be moved to independent files in the R folder after the App development is completed.
 
 library(shiny); library(shinydashboard); library(shinydashboardPlus); library(yaml); library(plotly); library(visNetwork); library(DT); library(shinyWidgets); library(shinyBS); library(shinyjs)
-lis.cfg <- yaml.load_file('config/config.yaml')
-tit <- sub('^(title|width):', '', lis.cfg$title)
+requireNamespace('DESeq2'); requireNamespace('av'); requireNamespace('BiocGenerics'); requireNamespace('distinct')
+requireNamespace('dendextend'); requireNamespace('HDF5Array'); requireNamespace('magick'); requireNamespace('DT');
+requireNamespace('pROC'); requireNamespace('shinyWidgets'); requireNamespace('shinyjs'); requireNamespace('htmltools');
+requireNamespace('shinyBS'); requireNamespace('sortable')
 
 
 js <- "function openFullscreen(elem) {

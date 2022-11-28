@@ -31,7 +31,7 @@ detect_cluster <- function(graph, clustering='wt', wt.arg=list(steps = 4), fg.ar
     do.call('cluster_edge_betweenness', c(list(graph=graph), eb.arg))
   }, warning = function(w){ 'w' }, error = function(e){ 'e' } 
   )
-  if (any(c('w', 'e') %in% clus)) {
+  if (!is(clus, 'communities')) if (any(c('w', 'e') %in% clus)) {
     message('Failed to detect clusters!'); return() 
   } else return(clus)
 }

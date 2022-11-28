@@ -145,7 +145,7 @@ mods$shm <- shm.mod.lis <- shm_server('shmAll', sch, lis.url, url.id, tab, upl.m
   })
   # hideTab(inputId='tabSetCell', target="qcTab")
 
-  setBookmarkExclude(c("dat-dtSel_rows_all", "dat-dtSel_rows_current", "dat-dtSel_search_columns", "dat-dtAll_rows_all", "dat-dtAll_rows_current", "dat-dtAll_search_columns")) 
+  setBookmarkExclude(c("dat-dtSel_rows_all", "dat-dtSel_rows_current", "dat-dtSel_search_columns", "dat-dtAll_rows_all", "dat-dtAll_rows_current", "dat-dtAll_search_columns", "dat-dtAll_state", "cell", "bulk", 'scell-covisMan-rematchCell-matHelp', 'right.bar', 'shmAll-net-dpbMea', 'scell-covisAuto-tailor-selBlkCancel', 'sidebarCollapsed', 'sear-sch.mul.but', 'shmAll-val.lgd', 'scell-covisAuto-tabSetCellAuto', 'dat-dat.all.but', 'scell-covisMan-dimredNav', 'deg-degAll', 'shmAll-shms.in', 'shmAll-col.but', 'sear-sch.mul', 'sear-sch.mode', 'deg-deg-sch.mode', 'dat-dtAll_columns_selected', 'scell-covisAuto-tailor-coclusPlotBut', 'scell-covisAuto-parAutoBut', 'shmAll-rematch-matHelp', 'shmAll-transBut', 'dat-tran.scale.but.sel', 'shmAll-dropdown', 'dat-dtAll_rows_selected', 'upl-tar', 'shmAll-net-gen.sel', 'shmAll-dld.but', 'scell-covisHelp', 'dat-fil.but', 'scell-covisMan-parManBut', 'deg-datDEG-fil.but', 'shmAll-net-col.but.net', 'dat-sig.but', 'dat-tran.scale.but.prof', 'shmAll-net-cpt.nw', 'shmAll-net-mhm.but', 'shmAll-ggly.but', 'deg-ssg.update')) 
   observe({
     lis.ipt <- reactiveValuesToList(input); session$doBookmark()
     # lapply(seq_along(lis.ipt), function(i) {if (length(lis.ipt[[i]])<1000) { print(lis.ipt[i]) }})

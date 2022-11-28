@@ -27,8 +27,8 @@ Imports: BiocParallel, BiocFileCache, data.table, dplyr, edgeR, WGCNA, flashClus
         scuttle, scran, stats, SummarizedExperiment, SingleCellExperiment, shinydashboard, S4Vectors, tibble, utils, visNetwork, 
         UpSetR, xml2, yaml
 Suggests: av, knitr, rmarkdown, BiocStyle, BiocSingular, RUnit, BiocGenerics,
-          DESeq2, distinct, HDF5Array, kableExtra, magick, ExpressionAtlas, DT, Biobase, GEOquery, 
+          DESeq2, distinct, dendextend, HDF5Array, kableExtra, magick, ExpressionAtlas, DT, Biobase, GEOquery, 
           pROC, rols, shinyWidgets, shinyjs, htmltools, shinyBS, sortable
 BugReports: https://github.com/jianhaizhang/spatialHeatmap/issues
 URL: https://github.com/jianhaizhang/spatialHeatmap
-RoxygenNote: 7.2.1
+RoxygenNote: 7.2.2
