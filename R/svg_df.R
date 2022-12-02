@@ -239,8 +239,8 @@ xy <- function(doc, parent, node, tis, use=FALSE, stroke.w, cores) {
   cnt <- as.numeric(xml_attr(cld[length(cld)], 'count'))
   if (use==TRUE) {
     # cat("Extracting coordinates for element 'use':", tis[1], '.. \n')
-    # Reference and use nodes should generate the same coodinates.
-    if (cnt %% 2 != 0) { cat(tis, ': problematic coordinates detected!\n'); return('no') }
+    # Reference and use nodes should generate the same coodinates (doubled).
+    if (cnt %% 2 != 0 | !(length(tis) * 2 * 2 %in% cnt)) { cat(tis, ': problematic coordinates detected!\n'); return('no') }
     # The cooridnates at odd number.
     cld <- cld[seq(cnt/2 + 1, cnt, by=2)]; return(xy0(cld, tis, stroke.w, cores))
   } else {

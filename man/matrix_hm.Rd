@@ -72,6 +72,7 @@ A static image or an interactive instance lauched on the web browser.
 This function visualizes the input assayed items (gene, protein, metabolite, \emph{etc}) in context of their nearest neighbors, which are subsetted by \code{submatrix}. The visualization is in form of  static or interactive matrix heatmap, where rows and columns are sorted by hierarchical clustering dendrograms and the row of target items are tagged by two lines. In the interactive heatmap, users can zoom in and out by drawing a rectangle and by double clicking the image, respectively.
 }
 \examples{
+library(dendextend)
 ## In the following examples, the 2 toy data come from an RNA-seq analysis on development of 7
 ## chicken organs under 9 time points (Cardoso-Moreira et al. 2019). For conveninece, they are
 ## included in this package. The complete raw count data are downloaded using the R package
@@ -154,9 +155,13 @@ se.sub.mat[c('ENSGALG00000019846', 'ENSGALG00000000112'), c(1:2, 63)]
 
 ## Matrix heatmap.
 # Static matrix heatmap.
-matrix_hm(ID=c('ENSGALG00000019846', 'ENSGALG00000000112'), data=se.sub.mat, angleCol=80,
+mhm.res <-matrix_hm(ID=c('ENSGALG00000019846', 'ENSGALG00000000112'), data=se.sub.mat, angleCol=80,
 angleRow=35, cexRow=0.8, cexCol=0.8, margin=c(8, 10), static=TRUE, 
 arg.lis1=list(offsetRow=0.01, offsetCol=0.01))
+# Cut row dendrogram.
+dendro.x <- mhm.res$rowDendrogram
+clus <- cutree(dendro.x, k = 2)[order.dendrogram(dendro.x)]
+
 # Interactive matrix heatmap.
 \donttest{ matrix_hm(ID=c('ENSGALG00000019846', 'ENSGALG00000000112'), data=se.sub.mat, 
 angleCol=80, angleRow=35, cexRow=0.8, cexCol=0.8, margin=c(8, 10), static=FALSE, 

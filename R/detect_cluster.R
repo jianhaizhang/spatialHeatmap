@@ -16,13 +16,13 @@
 
 #' @importFrom igraph cluster_walktrap cluster_fast_greedy cluster_leading_eigen cluster_spinglass cluster_edge_betweenness 
 
-detect_cluster <- function(graph, clustering='wt', wt.arg=list(steps = 4), fg.arg=list(), sl.arg=list(spins = 25), le.arg=list(), eb.arg=list()) {
+detect_cluster <- function(graph, clustering='fg', wt.arg=list(steps = 4), fg.arg=list(), sl.arg=list(spins = 25), le.arg=list(), eb.arg=list()) {
   cat('Scell: clustering ... \n') 
   clus <- tryCatch( 
   if (clustering=='wt') { 
     do.call('cluster_walktrap', c(list(graph=graph), wt.arg)) 
   } else if (clustering=='fg') { 
-    do.call('cluster_fast_greedy', c(list(graph=graph),fg.arg)) 
+    do.call('cluster_fast_greedy', c(list(graph=graph), fg.arg)) 
   } else if (clustering=='le') { 
     do.call('cluster_leading_eigen', c(list(graph=graph), le.arg)) 
   } else if (clustering=='sl') { 
@@ -31,7 +31,7 @@ detect_cluster <- function(graph, clustering='wt', wt.arg=list(steps = 4), fg.ar
     do.call('cluster_edge_betweenness', c(list(graph=graph), eb.arg))
   }, warning = function(w){ 'w' }, error = function(e){ 'e' } 
   )
-  if (!is(clus, 'communities')) if (any(c('w', 'e') %in% clus)) {
+  if (!is(clus, 'communities')) {
     message('Failed to detect clusters!'); return() 
   } else return(clus)
 }

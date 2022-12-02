@@ -40,7 +40,7 @@
 #' @importFrom SingleCellExperiment SingleCellExperiment 
 #' @importFrom scran buildKNNGraph buildSNNGraph 
 
-cluster_cell <- function(sce, graph.meth='knn', dimred='PCA', knn.gr=list(), snn.gr=list(), cluster='wt', wt.arg=list(steps = 4), fg.arg=list(), sl.arg=list(spins = 25), le.arg=list(), eb.arg=list()) {
+cluster_cell <- function(sce, graph.meth='knn', dimred='PCA', knn.gr=list(), snn.gr=list(), cluster='fg', wt.arg=list(steps = 4), fg.arg=list(), sl.arg=list(spins = 25), le.arg=list(), eb.arg=list()) {
   if (!is(sce, 'SingleCellExperiment')) stop('The "sce" should be an "SingleCellExperiment" object!')
   if (!dimred %in% reducedDimNames(sce)) stop('The "dimred" is not detected in "reducedDimNames"!')
   if ('cluster' %in% colnames(colData(sce))) stop('The "cluster" is a reserved colname in "colData" to store cluster assignments in this function!')
