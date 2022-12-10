@@ -17,7 +17,8 @@
 #' Jeroen Ooms (2018). rsvg: Render SVG Images into PDF, PNG, PostScript, or Bitmap Arrays. R package version 1.3. https://CRAN.R-project.org/package=rsvg 
 #' Paul Murrell (2009). Importing Vector Graphics: The grImport Package for R. Journal of Statistical Software, 30(4), 1-37. URL http://www.jstatsoft.org/v30/i04/ 
 #' Hadley Wickham, Jim Hester and Jeroen Ooms (2019). xml2: Parse XML. R package version 1.2.2. https://CRAN.R-project.org/package=xml2
-#' R Core Team (2018). R: A language and environment for statistical computing. R Foundation for Statistical Computing, Vienna, Austria. RL https://www.R-project.org/ 
+#' R Core Team (2018). R: A language and environment for statistical computing. R Foundation for Statistical Computing, Vienna, Austria. RL https://www.R-project.org/
+#' Wickham H, François R, Henry L, Müller K (2022). _dplyr: A Grammar of Data Manipulation_. R package version 1.0.9, <https://CRAN.R-project.org/package=dplyr> 
 
 #' @importFrom rsvg rsvg_ps 
 #' @importFrom grImport PostScriptTrace 
@@ -27,6 +28,7 @@
 svg_df <- function(svg.path, feature=NULL, cores) {
   # save(svg.path, feature, cores, file='svg.df.all')
   # Make sure the style is correct. If the stroke width is not the same across polygons such as '0.0002px', '0.216px', some stroke outlines cannot be recognised by 'PostScriptTrace'. Then some polygons are missing. Since the ggplot is based on 'stroke' not 'fill'.
+  id <- NULL
   options(stringsAsFactors=FALSE)
   doc <- read_xml(svg.path); spa <- xml_attr(doc, 'space')
   if (!is.na(spa)) if (spa=='preserve') xml_set_attr(doc, 'xml:space', 'default')
@@ -142,7 +144,8 @@ svg_df <- function(svg.path, feature=NULL, cores) {
     df <- rbind(df.out$df, df.ply$df); id.no <- c(df.out$ids, df.ply$ids)
     if (!is.null(id.no)) { 
       cat('No coordinates were extracted for these element(s):', id.no, '!\n') 
-      df.attr.rep <- filter(df.attr.rep, !sub.feature %in% id.no) 
+      if(!requireNamespace('dplyr', quietly=TRUE)) stop('The package "dplyr" is not detected!')
+      df.attr.rep <- dplyr::filter(df.attr.rep, !id %in% id.no) 
     }
   }
   # Index: match with subfeatures in attributes.

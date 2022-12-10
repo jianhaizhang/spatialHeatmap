@@ -46,7 +46,7 @@ ui <- function(request) {
    # Place title on the right of dashboard header.
    tags$script(HTML('
      $(document).ready(function() {
-       $("header").find("nav").append(\'<img src="logo.png" width="175">\');
+       $("header").find("nav").append(\'<img src="logo.png" width="270">\');
      })
    ')),
     fluidRow( 

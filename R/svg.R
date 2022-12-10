@@ -49,7 +49,7 @@
 
 #' @docType class
 #' @export
-#' @rdname coord
+#' @rdname SVG
 
 SVG <- function(coordinate=list(), attribute=list(), dimension=list(), svg=list(), raster=list()) {
   if (length(dimension)==0) {
@@ -120,15 +120,15 @@ check_SVG <- function(coord, attr, wh, svg, raster) {
 setMethod("show", c(object="SVG"), function(object) {
   x <- object; nas <- names(x)
   if (length(nas) > 1) {
-    na.pas <- paste(paste(nas[1:2], collapse=','), '...')
+    na.pas <- paste(paste(nas[seq_len(2)], collapse=','), '...')
   } else na.pas <- nas
   message('Class "SVG": ', length(x), ' instance(s)', ' - ', na.pas)
   cat('Slots: coordinate, attribute, dimension, ... \n')
   message(nas[1], ':')
   cordn <- coordinate(x)[[1]]; attrb <- attribute(x)[[1]]
-  if (nrow(cordn) > 3) r.cordn <- 1:3 else r.cordn <- seq_len(nrow(cordn))
+  if (nrow(cordn) > 3) r.cordn <- seq_len(3) else r.cordn <- seq_len(nrow(cordn))
   message('coordinate:'); print(cordn[r.cordn, ])
-  if (nrow(attrb) > 3) r.attrb <- 1:3 else r.attrb <- seq_len(nrow(attrb))
+  if (nrow(attrb) > 3) r.attrb <- seq_len(3) else r.attrb <- seq_len(nrow(attrb))
   message('attribute:'); print(attrb[r.attrb, ])
   dim1 <- dimension(x)[[1]]
   cat('dimension: '); cat(names(dim1), '\n')
