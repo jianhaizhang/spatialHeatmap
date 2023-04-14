@@ -9,12 +9,12 @@ shm_ui <- function(id, data.ui, search.ui) {
     # Append matrix heatmap, network with SHMs.    
     do.call(tabsetPanel, append(list(type="pills", id=ns('shmMhNet'), selected="shm1",
     # tabsetPanel(type = "pills", id=NULL, selected="shm1", 
-      tabPanel(title="Image", value='shm1',
+      tabPanel(title="Static Image", value='shm1',
       column(12, search.ui, style='z-index:5'),  
-      navbarPage('Parameters:', id=ns('shmPar'),
+      navbarPage('Settings:', id=ns('shmPar'),
       tabPanel("Basic", value='basic', 
       fluidRow(splitLayout(cellWidths=c('0.5%', '8%', '0.5%', '8%', '0.5%', '8%', '0.5%', '9%', '0.5%', '11%', '0.5%', '8%', '0.5%', '8%', '0.5%', '8%'), '',  
-      actionButton(ns("fs"), "Full screen", onclick = "openFullscreen(document.getElementById('barSHM'))"), '',
+      actionButton(ns("fs"), "Full screen", onclick = "fullsn(document.getElementById('barSHM'))"), '',
       div(title = 'Number of columns for the subplots.',
       dropdownButton(inputId=ns('colDrop'), label='Columns', circle=FALSE, icon=NULL, status='primary', inline=FALSE, width='100%',
         sliderInput(ns("col.n"), "", min=1, max=50, step=1, value=2, width='100%')
@@ -43,7 +43,7 @@ shm_ui <- function(id, data.ui, search.ui) {
       )
       )), # fluidRow
       # bsPopover(id=ns('genCon'), title="Data column: by the column order in data matrix.", placement = "top", trigger = "hover"),
-      textOutput(ns('h.w.c')), textOutput(ns('msg.col')), div(style='margin-top:10px') 
+      div(style='margin-top:10px') 
       ), # tabPanel
       tabPanel("Transparency",
         fluidRow(splitLayout(cellWidths=c('1%', '5%', '3%', '90%'), '',
@@ -100,12 +100,12 @@ shm_ui <- function(id, data.ui, search.ui) {
         match_ui(ns('rematch'))
       ),
       tabPanel("Raster image",
-       tags$div(title="Overlay templates of raster images with spatial heatmap images.",
+       tags$div(title="Superimposing raster images with spatial heatmaps.",
          splitLayout(cellWidths=c('1%', '10%', '1%', '10%', '1%', '10%'), '', 
            selectInput(ns('raster'), label='Superimposing', choices=c('Yes', 'No'), selected='Yes'), '',
            selectInput(ns('coal'), label='Black-white', choices=c('Yes', 'No'), selected='No'), '',
            div(style='margin-top:25px',
-           dropdownButton(inputId=ns('dpwAlpOver'), label='Alpha', circle=FALSE, icon=icon("", verify_fa = FALSE), status='primary', inline=FALSE, width=300,
+           dropdownButton(inputId=ns('dpwAlpOver'), label='Alpha', circle=FALSE, icon=NULL, status='primary', inline=FALSE, width=300,
            fluidRow(splitLayout(cellWidths=c('1%', '60%', '35%'), '',
            sliderInput(ns('alpOver'), "", min=0, max=1, step=0.05, value=1, width='100%'),
            actionButton(ns("alpOverBut"), "Confirm", icon=icon("sync"), style='margin-top:31px')))
@@ -113,33 +113,31 @@ shm_ui <- function(id, data.ui, search.ui) {
          )
        )
       ), # tabPanel
-      tabPanel("Co-visualization", value='scellTab', 
-        tags$div(title="",
-        fluidRow(splitLayout(cellWidths=c('1%', '12%', '1%', '15%', '1%', '10%', '1%', '19%'), '',  
-        selectInput(ns('profile'), label='Expression values', choices=c('No', 'Yes'), selected='Yes'), '', 
-        selectInput(ns('dims'), label='Dimentionality reduction', choices=c('PCA', 'UMAP', 'TSNE'), selected='UMAP'), '', 
+      tabPanel(title='Co-visualization', value='scellTab', 
+        fluidRow(splitLayout(cellWidths=c('12px', '130px', '1px', '150px', '1px', '140px', '1px', '220px'), '',  
+        selectInput(ns('profile'), label='Coloring options', choices=c('Cell-by-value'='idp', 'Cell-by-group'='cellgrp', 'Feature-by-group'='ftgrp', 'Fixed-group'='fixed'), selected='idp'), '', 
+        selectInput(ns('dims'), label='Dimension reduction', choices=c('PCA', 'UMAP', 'TSNE'), selected='PCA'), '', 
         uiOutput(ns('tarCellBlk')), '',
-        numericInput(ns('dimLgdRows'), label='Legend rows in embedding plot', value=2, min=1, max=Inf, step=1, width=270)
+        numericInput(ns('dimLgdRows'), label='Legend rows in embedding plot', value=2, min=1, max=Inf, step=1)
         ))
-       )
       ) # tabPanel
+      # bsTooltip(id='scellTab', title='This panel is active for co-visualization.', placement = "top", trigger = "hover")
       #) # navbarMenu
-      ), # navbarPage 
- 
-    verbatimTextOutput(ns('msgSHM')), uiOutput(ns('shm.ui')), data.ui
+      ), # navbarPage  
+    uiOutput(ns('shm.ui')), data.ui
     ), # tabPanel 
 
-      tabPanel(title='Interactive', value='interTab',
+      tabPanel(title='Interactive Image', value='interTab',
       navbarPage('', id=ns('interNav'),
       tabPanel('Plot', value='interPlot',
         fluidRow(splitLayout(cellWidths=c("1%", "13%", '5%', "80%"), '',
-        actionButton(ns("ggly.but"), "Click to show/update", icon=icon("sync"), style="color:#fff; background-color:#499fe9;border-color:#2e6da4"), '',
+        actionButton(ns("ggly.but"), "Run", icon=icon("sync"), style="color:#fff;background-color:#c685c4;border-color:#ddd"), '',
         uiOutput(ns('sld.fm'))
         )),
         # The input ids should be unique, so no legend plot parameters are added here.
         fluidRow(splitLayout(cellWidths=c("1%", "7%", "61%", "30%"), "", plotOutput(ns("bar2")), htmlOutput(ns("ggly")), plotOutput(ns("lgd2"))))
       ),
-      tabPanel('Parameters',
+      tabPanel('Settings',
         fluidRow(splitLayout(cellWidths=c('1.5%', '16%', '1%', '12%', '1%', '12%'), '',
           numericInput(ns('t'), label='Transition time (s)', value=2, min=0.1, max=Inf, step=NA, width=270), '',
           numericInput(ns('scale.ly'), label='Scale plot', value=1, min=0.1, max=Inf, step=0.1, width=170), '',
@@ -150,10 +148,10 @@ shm_ui <- function(id, data.ui, search.ui) {
       tabPanel(title='Video', value='vdoTab',
       navbarPage('', id=ns('vdoNav'),
       tabPanel('Video', value='video',
-      actionButton(ns("vdo.but"), "Click to show/update", icon=icon("sync"), style="color:#fff; background-color:#499fe9;border-color:#2e6da4"),
+      actionButton(ns("vdo.but"), "Run", icon=icon("sync"), style="color:#fff;background-color:#c685c4;border-color:#ddd"),
       fluidRow(splitLayout(cellWidths=c("1%", "98%", "1%"), "", uiOutput(ns('video')), ""))
       ),
-      tabPanel("Parameters",
+      tabPanel("Settings",
       fluidRow(splitLayout(cellWidths=c('1%', '8%', '1%', '10%', '1%', '13%', '1%', '10%', '1%', '8%', '2%', '14%', '1%', '8%'), '',
       numericInput(inputId=ns('vdo.key.row'), label='Key rows', value=2, min=1, max=Inf, step=1, width=270), '',
       numericInput(inputId=ns('vdo.key.size'), label='Key size', value=0.04, min=0.01, max=Inf, step=0.1, width=270), '',
@@ -172,7 +170,7 @@ shm_ui <- function(id, data.ui, search.ui) {
       )
       ) # navbarPage
       ) # tabPanel
-      ), network_ui(ns('net')) )) # append, do.call
+      ), analysis_ui(ns('net')) )) # append, do.call
 
     #  ) # list
 

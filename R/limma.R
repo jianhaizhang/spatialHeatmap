@@ -26,7 +26,7 @@
 #' ## Set up toy data.
 #' 
 #' # Access toy data. 
-#' cnt.chk <- system.file('extdata/shinyApp/example/count_chicken.txt', package='spatialHeatmap')
+#' cnt.chk <- system.file('extdata/shinyApp/data/count_chicken.txt', package='spatialHeatmap')
 #' count.chk <- read.table(cnt.chk, header=TRUE, row.names=1, sep='\t')
 #' count.chk[1:3, 1:5]
 #'
@@ -36,12 +36,12 @@
 #' # package and accessed below. 
 
 #' # Access the count table. 
-#' cnt.chk <- system.file('extdata/shinyApp/example/count_chicken.txt', package='spatialHeatmap')
+#' cnt.chk <- system.file('extdata/shinyApp/data/count_chicken.txt', package='spatialHeatmap')
 #' count.chk <- read.table(cnt.chk, header=TRUE, row.names=1, sep='\t')
 #' count.chk[1:3, 1:5]
 
 #' # Access the example targets file. 
-#' tar.chk <- system.file('extdata/shinyApp/example/target_chicken.txt', package='spatialHeatmap')
+#' tar.chk <- system.file('extdata/shinyApp/data/target_chicken.txt', package='spatialHeatmap')
 #' target.chk <- read.table(tar.chk, header=TRUE, row.names=1, sep='\t')
 #' # Every column in toy data corresponds with a row in targets file. 
 #' target.chk[1:5, ]
@@ -62,7 +62,7 @@
 #' # at least 10% samples (pOA), and coefficient of variance (CV) between 3.5 and 100 are 
 #' # retained.
 #' se.fil.chk <- filter_data(data=se.chk, sam.factor='organism_part', con.factor='age',
-#' pOA=c(0.1, 5), CV=c(3.5, 100), dir=NULL)
+#' pOA=c(0.1, 5), CV=c(3.5, 100))
 #' # Subset the data.
 #' data.sub <- tar_ref(data=se.fil.chk, feature='organism_part', ft.sel=c('brain', 'heart', 'kidney'),
 #' variable='age', var.sel=c('day10', 'day12'), com.by='feature', target='brain')
@@ -84,7 +84,7 @@
 #' @importFrom stats model.matrix 
 #' @importFrom utils combn
 
-limma <- function(se, m.array=FALSE, method.norm='TMM', com.factor, method.adjust='BH', return.all=FALSE, log2.fc=1, fdr=0.05) {
+limma <- function(se, m.array=FALSE, method.norm='TMM', com.factor, method.adjust='BH', return.all=FALSE, log2.fc=1, fdr=0.05, outliers=0) {
 
   # Design matrix.
   expr <- assay(se); fct <- factor(colData(se)[, com.factor]); design <- model.matrix(~0+fct)
@@ -114,7 +114,7 @@ limma <- function(se, m.array=FALSE, method.norm='TMM', com.factor, method.adjus
   }; df.all <- df.all[, -1]
   if (return.all==TRUE) return(df.all)
   # Up and down DEGs.
-  UD <- up_dn(sam.all=levels(fct), df.all=df.all, log.fc=abs(log2.fc), fdr=fdr, log.na='logFC', fdr.na='adj.P.Val'); return(UD)
+  UD <- up_dn(sam.all=levels(fct), df.all=df.all, log.fc=abs(log2.fc), fdr=fdr, log.na='logFC', fdr.na='adj.P.Val', method=ifelse(m.array==TRUE, 'limma', 'limma.voom'), outliers=outliers); return(UD)
 
 }
 

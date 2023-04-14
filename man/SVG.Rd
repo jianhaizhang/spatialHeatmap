@@ -11,7 +11,8 @@ SVG(
   attribute = list(),
   dimension = list(),
   svg = list(),
-  raster = list()
+  raster = list(),
+  angle = list()
 )
 }
 \arguments{
@@ -24,6 +25,8 @@ SVG(
 \item{svg}{A named \code{list} of directory path(s) of one or multile aSVG files respectively. The \code{list} name slots refer to aSVG instances respectively and must match those in \code{coordinate}, e.g. list(SVGInstance1=svg.path1, SVGInstance2=svg.path2).}
 
 \item{raster}{A named \code{list} of directory path(s) of one or multile raster image files (jpg, png) respectively. This argument is relevant only when superimposing raster images with spatial heatmap plots that are created from aSVG images. The default is \code{NULL} for each aSVG instance. aSVG images are usually created by using these raster images as templates, otherwise spatial features between the two will not match. The \code{list} name slots refer to aSVG instances respectively and must match those in \code{coordinate}, e.g. list(SVGInstance1=raster.path1, SVGInstance2=raster.path2).}
+
+\item{angle}{Applicable in the case of spatially resolved single-cell data. A named \code{list} of one or multiple rotation degrees of the shapes with the identifier `overlay` in one or muptiple aSVGs respectively. The \code{list} name slots refer to aSVG instances respectively and must be the same with \code{coordinate}, e.g. list(SVGInstance1=90, SVGInstance2=45).}
 }
 \value{
 A SVG object.
@@ -34,16 +37,16 @@ The SVG class is designed to represent annotated SVG (aSVG) instances.
 \examples{
 
 # The first raste image used as a template to create an aSVG. 
-raster.pa1 <- system.file('extdata/shinyApp/example/maize_leaf_shm1.png',
+raster.pa1 <- system.file('extdata/shinyApp/data/maize_leaf_shm1.png',
 package='spatialHeatmap')
 # The first aSVG created with the first template. 
-svg.pa1 <- system.file('extdata/shinyApp/example/maize_leaf_shm1.svg',
+svg.pa1 <- system.file('extdata/shinyApp/data/maize_leaf_shm1.svg',
 package='spatialHeatmap')
 # The second raster image used as a template to create an aSVG. 
-raster.pa2 <- system.file('extdata/shinyApp/example/maize_leaf_shm2.png',
+raster.pa2 <- system.file('extdata/shinyApp/data/maize_leaf_shm2.png',
 package='spatialHeatmap')
 # The second aSVG created with the second template. 
-svg.pa2 <- system.file('extdata/shinyApp/example/maize_leaf_shm2.svg',
+svg.pa2 <- system.file('extdata/shinyApp/data/maize_leaf_shm2.svg',
 package='spatialHeatmap')
 
 # Parse these two aSVGs without association with raster images.
@@ -62,7 +65,7 @@ svgs[, 'coordinate'][1]; coordinate(svgs)[1] # The coordinates of the first aSVG
 # Combine two "SVG" objects.
 x <- svgs[1, ]; y <- svgs[2, ]; cmb(x, y)
 # Extract slots from "svgs" and create a new "SVG" object.
-lis <- list(cordn=coordinate(svgs), attrb=attribute(svgs), svg=svg(svgs), raster=raster(svgs))
+lis <- list(cordn=coordinate(svgs), attrb=attribute(svgs), svg=svg_pa(svgs), raster=raster_pa(svgs))
 new.svgs <- SVG(coordinate=lis$cordn, attribute=lis$attrb, svg=lis$svg, raster=lis$raster)
 # Change aSVG instance names.
 names(new.svgs) <- c('aSVG1', 'aSVG2')

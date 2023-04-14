@@ -247,7 +247,7 @@ norm_opt <- function(cell, bulk, norm, com=FALSE) {
       nor <- SingleCellExperiment(assays=list(logcounts=as.matrix(nor)))
      colData(nor) <- colData(sce)
     } else if ('TMM' %in% norm) {
-      nor <- norm_data(data=sce, norm.fun='CNF', parameter.list=list(method='TMM'))
+      nor <- norm_data(data=sce, norm.fun='CNF', par.list=list(method='TMM'))
     } else if ('VST' %in% norm) {
       nor <- norm_data(data=sce, norm.fun='VST')
     }
@@ -355,7 +355,7 @@ coclus_fun <- function(i, dat.lis=dat.lis, df.para, split, multi.core.par, coclu
     res <- cocluster(bulk=bulk, cell=cell, min.dim=df0$dims, dimred=df0$dimred, graph.meth=df0$graph, cluster=df0$cluster, df.match=df.match)
     roc.obj <- res$roc.obj 
     if (!is.null(roc.obj)) {
-      if (any(c('e', 'w') %in% check_pkg('pROC'))) stop('The package "pROC" is not detected!') 
+      pkg <- check_pkg('pROC'); if (is(pkg, 'character')) stop(pkg)
       best <- round(pROC::coords(roc.obj, x='best', ret=c("threshold", "specificity", "sensitivity", "accuracy")), 3)
       if (nrow(best)>0) { 
         best <- best[1, ]  

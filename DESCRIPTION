@@ -1,8 +1,8 @@
 Package: spatialHeatmap
 Type: Package
 Title: spatialHeatmap
-Version: 2.5.3
-Date: 2022-10-22
+Version: 2.5.4
+Date: 2023-04-14
 Authors@R: c(
   person(given="Jianhai", family="Zhang", role=c("aut", "trl", "cre"), email="jzhan067@ucr.edu", comment=""),
   person(given="Jordan", family="Hayes", role="aut", email="jhayes@ucr.edu", comment=""),
@@ -24,11 +24,12 @@ Depends: R (>= 3.5.0)
 Imports: BiocParallel, BiocFileCache, data.table, dplyr, edgeR, WGCNA, flashClust, htmlwidgets, genefilter,
         ggplot2, ggdendro, grImport, grid, gridExtra, gplots, igraph, limma, methods, Matrix, rsvg,
         shiny, dynamicTreeCut, grDevices, graphics, ggplotify, parallel, plotly, rappdirs, reshape2, scater, 
-        scuttle, scran, stats, SummarizedExperiment, SingleCellExperiment, shinydashboard, S4Vectors, tibble, utils, visNetwork, 
-        UpSetR, xml2, yaml
-Suggests: av, knitr, rmarkdown, BiocStyle, BiocSingular, RUnit, BiocGenerics,
-          DESeq2, distinct, dendextend, HDF5Array, kableExtra, magick, ExpressionAtlas, DT, Biobase, GEOquery, 
-          pROC, rols, shinyWidgets, shinyjs, htmltools, shinyBS, sortable
+        scuttle, scran, stats, SummarizedExperiment, SingleCellExperiment, shinydashboard, S4Vectors, tibble,
+        utils, visNetwork, UpSetR, xml2, yaml
+Suggests: AnnotationDbi, av, BiocGenerics, BiocStyle, BiocSingular, Biobase, cachem, DESeq2, distinct, dendextend, 
+          DT, HDF5Array, htmltools, kableExtra, knitr, magick, memoise, ExpressionAtlas, GEOquery, org.Hs.eg.db, 
+          org.Mm.eg.db, org.At.tair.db, org.Dr.eg.db, org.Dm.eg.db, pROC, rmarkdown, rols, RUnit, Rtsne,  
+          shinyWidgets, shinyjs, shinyBS, sortable, Seurat, SeuratData, uwot
 BugReports: https://github.com/jianhaizhang/spatialHeatmap/issues
 URL: https://github.com/jianhaizhang/spatialHeatmap
-RoxygenNote: 7.2.2
+RoxygenNote: 7.2.3

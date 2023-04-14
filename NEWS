@@ -1,3 +1,10 @@
+Changes in version 2.5.4 (2023-04-13)
+ + Developed the SPHM class for storing aSVG, bulk data, single-cell data, and matching list.
+ + Spatial Enrichement: outlier spatial featuers in references are supported.
+ + Shiny App: added K-means clustering, functional enrichment, and cluster downloading, redesigned Data Mining and Spatial Enrichment.
+ + Updated data structures in the background (R functions, Shiny App), and data pre-processing steps in SHM.
+ + Co-visualization: developed a new feature of coloring each cell by its own value of a chosen biomolecule; developed a new feature of co-visualizing bulk and spatially resolved single-cell data; developed a new feature of visualizing deconvolution results.
+
 Changes in version 2.3.1 (2022-10-22)
  + In co-visualization, a new feature of bulk-to-cell mapping was developed, co-clustering method was simplified, and Shiny app was updated with options of Annotation/manual, Automatic, cell2bulk, bulk2cell. 
  + An S4 class of "SVG" was developed to store aSVG instances.

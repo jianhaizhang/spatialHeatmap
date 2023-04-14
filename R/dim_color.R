@@ -22,10 +22,10 @@
 #' @references
 #' H. Wickham. ggplot2: Elegant Graphics for Data Analysis. Springer-Verlag New York, 2016
 
-#' @importFrom ggplot2 layer_data ggplot geom_point theme_classic theme element_text element_blank labs scale_color_manual scale_shape_manual margin guide_legend 
+#' @importFrom ggplot2 layer_data ggplot geom_point theme_classic theme element_text element_blank labs scale_color_manual scale_shape_manual margin guide_legend element_rect 
 
-dim_color <- function(gg.dim, gg.shm.all, grob.shm.all, col.shm.all, gg.lgd.all, col.lgd.all, grob.lgd.all, profile=TRUE, cell.group, tar.cell, con.na=TRUE, lis.match=NULL, sub.title.size=11, dim.lgd.pos='bottom', dim.lgd.nrow=2, dim.lgd.key.size=4, dim.lgd.text.size=13) {
-  # save(gg.dim, gg.shm.all, grob.shm.all, col.shm.all, cell.group, gg.lgd.all, col.lgd.all, grob.lgd.all, profile, tar.cell, con.na, lis.match, sub.title.size, dim.lgd.pos, dim.lgd.nrow, dim.lgd.key.size, dim.lgd.text.size, file='dim.color.arg')
+dim_color <- function(gg.dim, gg.shm.all, grob.shm.all, col.shm.all, gg.lgd.all, col.lgd.all, grob.lgd.all, profile=TRUE, cell.group, tar.cell, con.na=TRUE, lis.match=NULL, sub.title.size=11, dim.lgd.pos='bottom', dim.lgd.nrow=2, dim.lgd.key.size=4, dim.lgd.text.size=13, dim.axis.font.size=10, alpha.pt=0.8, shape=NULL) {
+ # save(gg.dim, gg.shm.all, grob.shm.all, col.shm.all, cell.group, gg.lgd.all, col.lgd.all, grob.lgd.all, profile, tar.cell, con.na, lis.match, sub.title.size, dim.lgd.pos, dim.lgd.nrow, dim.lgd.key.size, dim.lgd.text.size, dim.axis.font.size, alpha.pt, shape, file='dim.color.arg')
   x <- y <- fill <- feature <- NULL
   lis.match <- lis.match[!unlist(lapply(lis.match, is.null))]
   # if (tar.cell[1]=='matched') tar.cell <- unique(names(lis.match))
@@ -73,15 +73,16 @@ dim_color <- function(gg.dim, gg.shm.all, grob.shm.all, col.shm.all, gg.lgd.all,
   non.tar <- setdiff(dat.ft.all, tar.cell)
   dim.col.all[non.tar] <- 'gray80'
   # Legal shapes: c(0:25, 32:127)
-  sp.sel <- c(15:18, 7:14)
-  sp.all <- c(0, 2:25, 32:127)
-  sp.all <- c(sp.sel, setdiff(sp.all, sp.sel))
+  # sp.sel <- c(15:18, 7:14)
+  # sp.all <- c(0, 2:25, 32:127)
+  # sp.all <- c(sp.sel, setdiff(sp.all, sp.sel))
   # Cell cluster shapes.
-  sp <- sp.all[seq_along(dat.ft.all)]
-  names(sp) <- dat.ft.all
+  # sp <- sp.all[seq_along(dat.ft.all)]
+  # names(sp) <- dat.ft.all
+  sp <- shp(shape, dat.ft.all)
   if (length(non.tar) > 0) br <- tar.cell else br <- dat.ft.all
   # Re-plot dimensionlaity plot.
-  gg <- ggplot(dat.all, aes(x=x, y=y, text=dat.all$feature)) + geom_point(size=2, alpha=1, aes(colour=feature, shape=feature)) + theme_classic() + theme(plot.title=element_text(hjust=0.5, size=sub.title.size), axis.text = element_blank(), axis.ticks = element_blank(), legend.position=dim.lgd.pos, legend.text=element_text(size=dim.lgd.text.size), legend.margin = margin(t=-0.02, l=0.05, r=0.1, unit='npc')) + scale_color_manual(values=dim.col.all, breaks=br, guide=guide_legend(title=NULL, nrow=dim.lgd.nrow)) + scale_shape_manual(values=sp, breaks=br, guide=guide_legend(title=NULL, nrow=dim.lgd.nrow, override.aes = list(size=dim.lgd.key.size))) + labs(title=tit, x=gg.dim0$labels$x, y=gg.dim0$labels$y, colour=cell.group, shape=cell.group) 
+  gg <- ggplot(dat.all, aes(x=x, y=y, text=dat.all$feature)) + geom_point(size=2, alpha=alpha.pt, aes(colour=feature, shape=feature)) + theme_classic() + theme(plot.title=element_text(hjust=0.5, size=sub.title.size), legend.position=dim.lgd.pos, legend.text=element_text(size=dim.lgd.text.size), legend.margin = margin(t=-0.02, l=0.05, r=0.1, unit='npc'), legend.background = element_rect(fill='transparent'), axis.text = element_blank(), axis.ticks = element_blank(), axis.title=element_text(size=dim.axis.font.size)) + scale_color_manual(values=dim.col.all, breaks=br, guide=guide_legend(title=NULL, nrow=dim.lgd.nrow)) + scale_shape_manual(values=sp, breaks=br, guide=guide_legend(title=NULL, nrow=dim.lgd.nrow, override.aes = list(size=dim.lgd.key.size))) + labs(title=tit, x=gg.dim0$labels$x, y=gg.dim0$labels$y, colour=cell.group, shape=cell.group) 
   gg.dim.all[[i]] <- gg
 
   }

@@ -2,12 +2,11 @@
 % Please edit documentation in R/submatrix.R
 \name{submatrix}
 \alias{submatrix}
-\title{Subset Target Assayed Items and Their Nearest Neighbors}
+\title{Subsetting data matrix}
 \usage{
 submatrix(
   data,
   assay.na = NULL,
-  ann = NULL,
   ID,
   p = 0.3,
   n = NULL,
@@ -16,128 +15,137 @@ submatrix(
   cor.absolute = FALSE,
   arg.cor = list(method = "pearson"),
   arg.dist = list(method = "euclidean"),
-  dir = NULL
+  file = NULL
 )
 }
 \arguments{
-\item{data}{A "data.frame", "SummarizedExperiment", or "SingleCellExperiment" object returned by the function \code{\link{filter_data}}, where the columns and rows of the data matrix are samples/conditions and assayed items (\emph{e.g.} genes, proteins) respectively. Since this function builds on coexpression analysis, variables of sample/condition should be at least 5. Otherwise, the results are not reliable.}
+\item{data}{A `data.frame`, `SummarizedExperiment`, or `SingleCellExperiment` object, where the columns and rows of the data matrix are samples and biomolecules respectively. Since this function builds on co-expression analysis, samples should be at least 5, otherwise, the results are not reliable.}
 
-\item{assay.na}{Applicable when \code{data} is "SummarizedExperiment" or "SingleCellExperiment", where multiple assays could be stored. The name of target assay to use. The default is \code{NULL}.}
+\item{assay.na}{Applicable when \code{data} is `SummarizedExperiment` or `SingleCellExperiment`, where multiple assays could be stored. The name of assay to use.}
 
-\item{ann}{Applicable when \code{data} is "SummarizedExperiment" or "SingleCellExperiment". The column name corresponding to row item annotation in the \code{rowData} slot. Default is NULL.}
+\item{ID}{A vector of biomolecules of interest.}
 
-\item{ID}{A vector of target item identifiers.}
+\item{p}{The proportion of top biomolecules with most similar expression profiles with a given biomolecule. Only biomolecules within this proportion are returned. It applies to each biomolecule independently and selected biomolecules of each given biomolecule are returned together.}
 
-\item{p}{The proportion of top items with most similar expression profiles with the target items. Only items within this proportion are returned. Default is 0.3. It applies to each target item independently, and selected items of each target are returned together.}
+\item{n}{An integer of top biomolecules with most similar expression profiles with a given biomolecule. Only biomolecules within this number are returned. It applies to each biomolecule independently and selected biomolecules of each given biomolecule are returned together.}
 
-\item{n}{An integer of top items with most similar expression profiles with the target items. Only items within this number are returned. Default is NULL. It applies to each target independently, and selected items of each target are returned together.}
+\item{v}{A cutoff of correlation coefficient (CC, -1 to 1) or distance (>=0) for subsetting biomolecules sharing the most similar expression profiles with a given biomolecule. If \code{fun='cor'}, only biomolecules with CC larger than \code{v} are returned. If \code{fun='dist'}, only biomolecules with distance less than \code{v} are returned. It applies to each given biomolecule independently and selected biomolecules of each given biomolecule are returned together.}
 
-\item{v}{A numeric of correlation (-1 to 1) or distance (>=0) threshold to select items sharing the most similar expression profiles with the target items. If \code{fun='cor'}, only items with correlation coefficient larger than \code{v} are returned. If \code{fun='dist'}, only items with distance less than \code{v} are returned. Default is NULL. It applies to each target independently, and selected items of each target are returned together.}
+\item{fun}{The function to calculate similarity/distance measures, `cor` (default) or `dist`, corresponding to \code{\link[stats]{cor}} or \code{\link[stats]{dist}} from the "stats" package respectively.}
 
-\item{fun}{The function to calculate similarity/distance measure, 'cor' or 'dist', corresponding to \code{\link[stats]{cor}} or \code{\link[stats]{dist}} from the "stats" package respectively. Default is 'cor'.}
+\item{cor.absolute}{Logical. If `TRUE`, absolute correlation coefficients (CCs) are used. Only applies to \code{fun='cor'}. Default is `FALSE`, meaning the CCs preserve the negative sign when subsetting biomolecules.}
 
-\item{cor.absolute}{Logical, TRUE or FALSE. Use absolute values or not. Only applies to \code{fun='cor'}. Default is FALSE, meaning the correlation coefficient preserves the negative sign when selecting items.}
+\item{arg.cor}{A list of arguments passed to \code{\link[stats]{cor}} in the "stats" package. Default is \code{list(method="pearson")}.}
 
-\item{arg.cor}{A list of arguments passed to \code{\link[stats]{cor}} in the "stats" package. \cr Default is \code{list(method="pearson")}.}
+\item{arg.dist}{A list of arguments passed to \code{\link[stats]{dist}} in the "stats" package. Default is \code{list(method="euclidean")}.}
 
-\item{arg.dist}{A list of arguments passed to \code{\link[stats]{dist}} in the "stats" package. \cr Default is \code{list(method="euclidean")}.}
-
-\item{dir}{The directory where the folder "customComputedData" is created automatically to save the subsetted matrix as a TSV-format file "sub_matrix.txt", which is ready to upload to the Shiny app launched by \code{\link{shiny_shm}}. In the "sub_matrix.txt", the rows are assayed items and column names are in the syntax "sample__condition". This argument should be the same with the \code{dir} in \code{\link{adj_mod}} so that the files "adj.txt" and "mod.txt" generated by \code{\link{adj_mod}} are saved in the same folder "customComputedData". The default is NULL and no file is saved. This argument is used only when using the "customComputedData" in the Shiny app.}
+\item{file}{The file name to save subset data matrix.}
 }
 \value{
-The subsetted matrix of target items and their nearest neighbors.
+The subset data matrix in form of `data.frame`, `SummarizedExperiment`, or `SingleCellExperiment`.
 }
 \description{
-Given a vector of target assayed items (gene, protein, metabolite, \emph{etc}), this function selects nearest neighbors for every target item independently, which share most similar abundance profiles with the targets. The selection is based on correlation or distance matrix computed by \code{\link[stats]{cor}} or \code{\link[stats]{dist}} from the "stats" package respectively. One of three alternative arguments \code{p}, \code{n}, \code{v} sets a cutoff for the selection.
+Given one or multiple biomolecules (gene, protein, metabolite, \emph{etc}) from a data matrix, this function subsets other biomolecules that have similar expression profiles with each of the given biomolecule independently. The subset data matrix of each biomolecule is combined in a row-wise manner and returned.
 }
 \examples{
-## In the following examples, the 2 toy data come from an RNA-seq analysis on development of 7
-## chicken organs under 9 time points (Cardoso-Moreira et al. 2019). For conveninece, they are
-## included in this package. The complete raw count data are downloaded using the R package
-## ExpressionAtlas (Keays 2019) with the accession number "E-MTAB-6769". Toy data1 is used as
-## a "data frame" input to exemplify data of simple samples/conditions, while toy data2 as
-## "SummarizedExperiment" to illustrate data involving complex samples/conditions.   
 
-## Set up toy data.
+## The example data included in this package come from an RNA-seq analysis on 
+## development of 7 chicken organs under 9 time points (Cardoso-Moreira et al. 2019). 
+## The complete raw count data are downloaded using the R package ExpressionAtlas
+## (Keays 2019) with the accession number "E-MTAB-6769". 
 
-# Access toy data1.
-cnt.chk.simple <- system.file('extdata/shinyApp/example/count_chicken_simple.txt', 
-package='spatialHeatmap')
-df.chk <- read.table(cnt.chk.simple, header=TRUE, row.names=1, sep='\t', check.names=FALSE)
-# Columns follow the namig scheme "sample__condition", where "sample" and "condition" stands
-# for organs and time points respectively.
-df.chk[1:3, ]
-
-# A column of gene annotation can be appended to the data frame, but is not required.  
-ann <- paste0('ann', seq_len(nrow(df.chk))); ann[1:3]
-df.chk <- cbind(df.chk, ann=ann)
-df.chk[1:3, ]
-
-# Access toy data2. 
-cnt.chk <- system.file('extdata/shinyApp/example/count_chicken.txt', package='spatialHeatmap')
-count.chk <- read.table(cnt.chk, header=TRUE, row.names=1, sep='\t')
+# Access example count data. 
+count.chk <- read.table(system.file('extdata/shinyApp/data/count_chicken.txt', 
+package='spatialHeatmap'), header=TRUE, row.names=1, sep='\t')
 count.chk[1:3, 1:5]
 
-# A targets file describing samples and conditions is required for toy data2. It should be made
-# based on the experiment design, which is accessible through the accession number
-# "E-MTAB-6769" in the R package ExpressionAtlas. An example targets file is included in this
-# package and accessed below. 
-# Access the example targets file. 
-tar.chk <- system.file('extdata/shinyApp/example/target_chicken.txt', package='spatialHeatmap')
-target.chk <- read.table(tar.chk, header=TRUE, row.names=1, sep='\t')
-# Every column in toy data2 corresponds with a row in targets file. 
+# A targets file describing spatial features and variables is made based on the 
+# experiment design.
+target.chk <- read.table(system.file('extdata/shinyApp/data/target_chicken.txt', 
+package='spatialHeatmap'), header=TRUE, row.names=1, sep='\t')
+# Every column in example data 2 corresponds with a row in the targets file. 
 target.chk[1:5, ]
-# Store toy data2 in "SummarizedExperiment".
+# Store example data in "SummarizedExperiment".
 library(SummarizedExperiment)
 se.chk <- SummarizedExperiment(assay=count.chk, colData=target.chk)
-# The "rowData" slot can store a data frame of gene annotation, but not required.
-rowData(se.chk) <- DataFrame(ann=ann)
 
-## As conventions, raw sequencing count data should be normalized, aggregated, and filtered to
-## reduce noise.
+# Normalize data.
+se.chk.nor <- norm_data(data=se.chk, norm.fun='CNF', log2.trans=TRUE)
 
-# Normalize count data.
-# The normalizing function "calcNormFactors" (McCarthy et al. 2012) with default settings
-# is used.  
-df.nor.chk <- norm_data(data=df.chk, norm.fun='CNF', log2.trans=TRUE)
-se.nor.chk <- norm_data(data=se.chk, norm.fun='CNF', log2.trans=TRUE)
-# Aggregate count data.
-# Aggregate "sample__condition" replicates in toy data1.
-df.aggr.chk <- aggr_rep(data=df.nor.chk, aggr='mean')
-df.aggr.chk[1:3, ]
-# Aggregate "sample_condition" replicates in toy data2, where "sample" is "organism_part" and
-# "condition" is "age". 
-se.aggr.chk <- aggr_rep(data=se.nor.chk, sam.factor='organism_part', con.factor='age',
+# Aggregate replicates of "spatialFeature_variable", where spatial features are organs
+# and variables are ages.
+se.chk.aggr <- aggr_rep(data=se.chk.nor, sam.factor='organism_part', con.factor='age',
 aggr='mean')
-assay(se.aggr.chk)[1:3, 1:3]
-# Filter out genes with low counts and low variance. Genes with counts over 5 (log2 unit) in at
-# least 1\% samples (pOA), and coefficient of variance (CV) between 0.2 and 100 are retained.
-# Filter toy data1.
-df.fil.chk <- filter_data(data=df.aggr.chk, pOA=c(0.01, 5), CV=c(0.2, 100), dir=NULL)
-# Filter toy data2.
-se.fil.chk <- filter_data(data=se.aggr.chk, sam.factor='organism_part', con.factor='age', 
-pOA=c(0.01, 5), CV=c(0.2, 100), dir=NULL)
+assay(se.chk.aggr)[1:3, 1:3]
 
-## Select nearest neighbors for target genes 'ENSGALG00000019846' and 'ENSGALG00000000112',
-## which are usually genes visualized in spatial heatmaps.
-# Toy data1.
-df.sub.mat <- submatrix(data=df.fil.chk, ID=c('ENSGALG00000019846', 'ENSGALG00000000112'),
-p=0.1)
-# Toy data2.
-se.sub.mat <- submatrix(data=se.fil.chk, ann='ann', ID=c('ENSGALG00000019846', 
+# Genes with experssion values >= 5 in at least 1\% of all samples (pOA), and coefficient
+# of variance (CV) between 0.2 and 100 are retained.
+se.chk.fil <- filter_data(data=se.chk.aggr, sam.factor='organism_part', con.factor='age', 
+pOA=c(0.01, 5), CV=c(0.2, 100), file=NULL)
+
+## Subset the data matrix for gene 'ENSGALG00000019846' and 'ENSGALG00000000112'.
+se.sub.mat <- submatrix(data=se.chk.fil, ID=c('ENSGALG00000019846', 
 'ENSGALG00000000112'), p=0.1) 
 
-# In the following, "df.sub.mat" and "se.sub.mat" is used in the same way, so only
-# "se.sub.mat" illustrated.
+## Hierarchical clustering. 
+library(dendextend)
+# Static matrix heatmap.
+mhm.res <- matrix_hm(ID=c('ENSGALG00000019846', 'ENSGALG00000000112'), data=se.sub.mat, 
+angleCol=80, angleRow=35, cexRow=0.8, cexCol=0.8, margin=c(8, 10), static=TRUE, 
+arg.lis1=list(offsetRow=0.01, offsetCol=0.01))
+# Clusters containing "ENSGALG00000019846".
+cut_dendro(mhm.res$rowDendrogram, h=15, 'ENSGALG00000019846')
 
-# The subsetted matrix is partially shown below.
-se.sub.mat[c('ENSGALG00000019846', 'ENSGALG00000000112'), c(1:2, 63)]
+# Interactive matrix heatmap.
+\donttest{ matrix_hm(ID=c('ENSGALG00000019846', 'ENSGALG00000000112'), data=se.sub.mat, 
+angleCol=80, angleRow=35, cexRow=0.8, cexCol=0.8, margin=c(8, 10), static=FALSE, 
+arg.lis1=list(offsetRow=0.01, offsetCol=0.01)) 
+}
+
+# In case the interactive heatmap is not automatically opened, run the following code snippet.
+# It saves the heatmap as an HTML file that is assigned to the "file" argument.
+\donttest{
+mhm <- matrix_hm(ID=c('ENSGALG00000019846', 'ENSGALG00000000112'), data=se.sub.mat, 
+angleCol=80, angleRow=35, cexRow=0.8, cexCol=0.8, margin=c(8, 10), static=FALSE, 
+arg.lis1=list(offsetRow=0.01, offsetCol=0.01))
+htmlwidgets::saveWidget(widget=mhm, file='mhm.html', selfcontained=FALSE)
+browseURL('mhm.html')
+}
+
+## Adjacency matrix and module identification 
+adj.mod <- adj_mod(data=se.sub.mat)
+
+# The adjacency is a measure of co-expression similarity between genes, where larger
+# value denotes higher similarity.
+adj.mod[['adj']][1:3, 1:3]
+
+# The modules are identified at four sensitivity levels (ds=0, 1, 2, or 3). From 0 to 3, 
+# more modules are identified but module sizes are smaller. The 4 sets of module 
+# assignments are returned in a data frame, where column names are sensitivity levels. 
+# The numbers in each column are module labels, where "0" means genes not assigned to 
+# any module.
+adj.mod[['mod']][1:3, ]
+
+# Static network graph. Nodes are genes and edges are adjacencies between genes. 
+# The thicker edge denotes higher adjacency (co-expression similarity) while larger node
+# indicates higher gene connectivity (sum of a gene's adjacencies with all its direct 
+# neighbors). The target gene is labeled by "_target".
+network(ID="ENSGALG00000019846", data=se.sub.mat, adj.mod=adj.mod, adj.min=0, 
+vertex.label.cex=1.5, vertex.cex=4, static=TRUE)
+
+# Interactive network. The target gene ID is appended "_target".  
+\donttest{ network(ID="ENSGALG00000019846", data=se.sub.mat, adj.mod=adj.mod, static=FALSE) }
+
 }
 \references{
-Langfelder P and Horvath S, WGCNA: an R package for weighted correlation network analysis. BMC Bioinformatics 2008, 9:559 doi:10.1186/1471-2105-9-559 \cr Peter Langfelder, Steve Horvath (2012). Fast R Functions for Robust Correlations and Hierarchical Clustering. Journal of Statistical Software, 46(11), 1-17. URL http://www.jstatsoft.org/v46/i11/ \cr R Core Team (2018). R: A language and environment for statistical computing. R Foundation for Statistical Computing, Vienna, Austria. URL https://www.R-project.org/ \cr Peter Langfelder, Bin Zhang and with contributions from Steve Horvath (2016). dynamicTreeCut: Methods for Detection of Clusters in Hierarchical Clustering Dendrograms. R package version 1.63-1. https://CRAN.R-project.org/package=dynamicTreeCut \cr Martin Morgan, Valerie Obenchain, Jim Hester and Hervé Pagès (2018). SummarizedExperiment: SummarizedExperiment container. R package version 1.10.1 
-\cr Keays, Maria. 2019. ExpressionAtlas: Download Datasets from EMBL-EBI Expression Atlas
-\cr Love, Michael I., Wolfgang Huber, and Simon Anders. 2014. "Moderated Estimation of Fold Change and Dispersion for RNA-Seq Data with DESeq2." Genome Biology 15 (12): 550. doi:10.1186/s13059-014-0550-8
-\cr Cardoso-Moreira, Margarida, Jean Halbert, Delphine Valloton, Britta Velten, Chunyan Chen, Yi Shao, Angélica Liechti, et al. 2019. “Gene Expression Across Mammalian Organ Development.” Nature 571 (7766): 505–9
+Langfelder P and Horvath S, WGCNA: an R package for weighted correlation network analysis. BMC Bioinformatics 2008, 9:559 doi:10.1186/1471-2105-9-559 
+Peter Langfelder, Steve Horvath (2012). Fast R Functions for Robust Correlations and Hierarchical Clustering. Journal of Statistical Software, 46(11), 1-17. URL http://www.jstatsoft.org/v46/i11/
+R Core Team (2018). R: A language and environment for statistical computing. R Foundation for Statistical Computing, Vienna, Austria. URL https://www.R-project.org/
+Peter Langfelder, Bin Zhang and with contributions from Steve Horvath (2016). dynamicTreeCut: Methods for Detection of Clusters in Hierarchical Clustering Dendrograms. R package version 1.63-1. https://CRAN.R-project.org/package=dynamicTreeCut
+Martin Morgan, Valerie Obenchain, Jim Hester and Hervé Pagès (2018). SummarizedExperiment: SummarizedExperiment container. R package version 1.10.1 
+Keays, Maria. 2019. ExpressionAtlas: Download Datasets from EMBL-EBI Expression Atlas
+Love, Michael I., Wolfgang Huber, and Simon Anders. 2014. "Moderated Estimation of Fold Change and Dispersion for RNA-Seq Data with DESeq2." Genome Biology 15 (12): 550. doi:10.1186/s13059-014-0550-8
+Cardoso-Moreira, Margarida, Jean Halbert, Delphine Valloton, Britta Velten, Chunyan Chen, Yi Shao, Angélica Liechti, et al. 2019. “Gene Expression Across Mammalian Organ Development.” Nature 571 (7766): 505–9
 }
 \author{
 Jianhai Zhang \email{jzhan067@ucr.edu} \cr Dr. Thomas Girke \email{thomas.girke@ucr.edu}

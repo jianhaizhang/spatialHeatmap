@@ -26,19 +26,27 @@
 #' @importFrom gridExtra arrangeGrob grid.arrange
 #' @importFrom grid grobTree unit
 
-lay_shm <- function(lay.shm, con, ncol, ID.sel, grob.list = NULL, lay.mat = FALSE, scell=FALSE, profile=FALSE, shiny = FALSE) {  
-  # save(lay.shm, con, ncol, ID.sel, grob.list, lay.mat, scell, profile, shiny, file = 'lay.arg')
+lay_shm <- function(lay.shm, con, ncol, ID.sel, grob.list = NULL, lay.mat = FALSE, scell=FALSE, decon=FALSE, srsc=FALSE, profile=FALSE, h=0.99, shiny = FALSE) {  
+  # save(lay.shm, con, ncol, ID.sel, grob.list, lay.mat, scell, decon, srsc, profile, h, shiny, file = 'lay.arg')
+  message('Plot layout ... ')
   ncol <- as.numeric(ncol); # grob.all.na <- names(grob.list); 
-  if (profile==TRUE) { con <- unique(con); ID.sel <- unique(ID.sel) } else {
-    # Pseudo con and ID.
+  if (profile==TRUE) {  
+    if ((scell==TRUE | decon==TRUE) & srsc==TRUE) { 
+      msg <- 'Single-cell data and spatially resolved single-cell data are specified at the same time!'
+      warning(msg); return(msg)
+    }; con <- unique(con); ID.sel <- unique(ID.sel) 
+  } else { # Pseudo con and ID.
     con <- paste0('con', seq_along(grob.list))
     ID.sel <- 'gene'; lay.shm <- 'gene'
   }  
   if (lay.shm=="gene"|lay.shm=="none") {
-
     # If single-scell data, the number of cons is doubled.
-    len <- length(con); if (scell==TRUE & profile==TRUE) len <- len*2
+    len <- length(con); if (profile==TRUE) {
+      if (scell==TRUE | decon==TRUE) len <- len*2
+      if (srsc==TRUE) len <- len*3
+    }
     all.cell <- ceiling(len/ncol)*ncol
+    # Additional cells are NAs.
     cell.idx <- c(seq_len(len), rep(NA, all.cell-len))
     # Matrix of a single gene.
     m <- matrix(cell.idx, ncol=as.numeric(ncol), byrow=TRUE)
@@ -52,12 +60,14 @@ lay_shm <- function(lay.shm, con, ncol, ID.sel, grob.list = NULL, lay.mat = FALS
        
     g.tr <- lapply(grob.list[seq_len(length(grob.list))], grobTree)
     n.col <- ncol(lay); n.row <- nrow(lay)
-    g.arr <- arrangeGrob(grobs=g.tr, layout_matrix=lay, widths=unit(rep(0.99/n.col, n.col), "npc"), heights=unit(rep(0.99/n.row, n.row), "npc"))
+    g.arr <- arrangeGrob(grobs=g.tr, layout_matrix=lay, widths=unit(rep(0.99/n.col, n.col), "npc"), heights=unit(rep(h/n.row, n.row), "npc"))
 
-  } else if (lay.shm=="con") {
-    
+  } else if (lay.shm=="con") { 
     # If single-scell data, the number of genes is doubled.
-    len <- length(ID.sel); if (scell==TRUE & profile==TRUE) len <- len*2
+    len <- length(ID.sel); if (profile==TRUE) {  
+      if (scell==TRUE | decon==TRUE) len <- len*2
+      if (srsc==TRUE) len <- len*3
+    }
     all.cell <- ceiling(len/ncol)*ncol
     cell.idx <- c(seq_len(len), rep(NA, all.cell-len))
     # Matrix of a single condition.
@@ -70,8 +80,6 @@ lay_shm <- function(lay.shm, con, ncol, ID.sel, grob.list = NULL, lay.mat = FALS
     if (shiny==TRUE & length(grob.list)>=1) return(list(shm=grid.arrange(grobs=grob.list, layout_matrix=lay, newpage=TRUE), lay=lay))
     g.tr <- lapply(grob.list, grobTree); g.tr <- g.tr[names(grob.list)]
     n.col <- ncol(lay); n.row <- nrow(lay)
-    g.arr <- arrangeGrob(grobs=g.tr, layout_matrix=lay, widths=unit(rep(0.99/n.col, n.col), "npc"), heights=unit(rep(0.99/n.row, n.row), "npc")) 
-
-  }; return(g.arr)
-
+    g.arr <- arrangeGrob(grobs=g.tr, layout_matrix=lay, widths=unit(rep(0.99/n.col, n.col), "npc"), heights=unit(rep(h/n.row, n.row), "npc")) 
+  }; message('Done!'); return(g.arr)
 }

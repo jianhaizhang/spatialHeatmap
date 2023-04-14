@@ -19,7 +19,7 @@ In co-clustering, assign true bulk to cells in \code{colData} slot.
 }
 \examples{
 # Matching table.
-match.mus.brain.pa <- system.file("extdata/shinyApp/example", "match_mouse_brain_cocluster.txt", package="spatialHeatmap")
+match.mus.brain.pa <- system.file("extdata/shinyApp/data", "match_mouse_brain_cocluster.txt", package="spatialHeatmap")
 df.match.mus.brain <- read.table(match.mus.brain.pa, header=TRUE, row.names=1, sep='\t')
 df.match.mus.brain
 

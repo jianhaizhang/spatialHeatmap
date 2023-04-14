@@ -4,7 +4,7 @@
 \alias{read_svg}
 \title{Parsing annotated SVG (aSVG) files}
 \usage{
-read_svg(svg.path, raster.path = NULL, cores = 1)
+read_svg(svg.path, raster.path = NULL, cores = 1, srsc = FALSE)
 }
 \arguments{
 \item{svg.path}{A vector of one or multiple paths of aSVG files. If multiple aSVGs, such as aSVGs depicting organs development across mutiple times, the aSVGs should be indexed with suffixes "_shm1", "_shm2", ..., such as "arabidopsis.thaliana_organ_shm1.svg", "arabidopsis.thaliana_organ_shm2.svg".}
@@ -12,6 +12,8 @@ read_svg(svg.path, raster.path = NULL, cores = 1)
 \item{raster.path}{\itemize{ \item A vector of one or multiple paths of raster images in form of jpg or png, which are usually used as templates for creating aSVG images in \code{svg.path}. Optional (default is \code{NULL}), only applicable when superimposing raster images with SHM plots that are created from aSVG images. \item Matching raster and aSVG images is indicated by identical base names such as imageA.png and imageA.svg. The layout order in SHMs composed of multiple independent images is controlled by numbering the corresponding file pairs accordingly such as imageA_1.png and imageA_1.svg, imageB_2.png and imageB_2.svg, etc.}}
 
 \item{cores}{Number of CPUs to parse the aSVG files (default is \code{1}).}
+
+\item{srsc}{Logical. If `TRUE`, the aSVG is considered for co-visualizing spatially resolved single-cell and bulk data, and the rotation angle of the tissue section for spatial assays will be recorded.}
 }
 \value{
 An object of \code{SVG} class, containing one or multiple aSVG instances.
@@ -22,16 +24,16 @@ Parse one or multiple aSVG files and store their coordinates and related attribu
 \examples{
 
 # The first raste image used as a template to create an aSVG. 
-raster.pa1 <- system.file('extdata/shinyApp/example/maize_leaf_shm1.png',
+raster.pa1 <- system.file('extdata/shinyApp/data/maize_leaf_shm1.png',
 package='spatialHeatmap')
 # The first aSVG created with the first template. 
-svg.pa1 <- system.file('extdata/shinyApp/example/maize_leaf_shm1.svg',
+svg.pa1 <- system.file('extdata/shinyApp/data/maize_leaf_shm1.svg',
 package='spatialHeatmap')
 # The second raster image used as a template to create an aSVG. 
-raster.pa2 <- system.file('extdata/shinyApp/example/maize_leaf_shm2.png',
+raster.pa2 <- system.file('extdata/shinyApp/data/maize_leaf_shm2.png',
 package='spatialHeatmap')
 # The second aSVG created with the second template. 
-svg.pa2 <- system.file('extdata/shinyApp/example/maize_leaf_shm2.svg',
+svg.pa2 <- system.file('extdata/shinyApp/data/maize_leaf_shm2.svg',
 package='spatialHeatmap')
 
 # Parse these two aSVGs without association with raster images.

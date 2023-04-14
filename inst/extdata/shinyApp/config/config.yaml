@@ -1,61 +1,79 @@
 dataset1:
   name: customBulkData
+  display: customBulkData
   data: none
   svg: none
 dataset2:
-  name: customSingleCellData
+  name: customCovisData
+  display: customCovisData
   data: none
   svg: none
 dataset3:
-  name: brain_Prudencio
-  data: example/expr_human.txt
-  svg: example/homo.sapiens_brain.shiny_shm.svg
-dataset4:
   name: mouse_Merkin
-  data: example/expr_mouse.txt
-  svg: example/mus_musculus.male.svg
+  display: Mouse organs (SHM, Merkin)
+  data: data/expr_mouse.txt
+  svg: data/mus_musculus.male.svg
+dataset4:
+  name: covis_Ortiz_Vacher
+  display: Mouse brain (covisualization, Ortiz, Vacher)
+  data: data/shiny_covis_bulk_cell_mouse_brain.rds
+  svg: data/mus_musculus.brain.svg
 dataset5:
-  name: chicken_Cardoso.Moreira
-  data: example/expr_chicken.txt
-  svg: example/gallus_gallus.svg
+  name: brain_Prudencio
+  display: Human brain (SHM, Prudencio)
+  data: data/expr_human.txt
+  svg: data/homo.sapiens_brain.shiny_shm.svg
 dataset6:
-  name: shoot_Mustroph
-  data: example/expr_arab.txt
-  svg: example/arabidopsis.thaliana_shoot_shm.svg
+  name: chicken_Cardoso.Moreira
+  display: Chicken organs (SHM, Cardoso.Moreira)
+  data: data/expr_chicken.txt
+  svg: data/gallus_gallus.svg
 dataset7:
-  name: organ_Mustroph
-  data: example/expr_arab.txt
-  svg: example/arabidopsis.thaliana_organ_shm.svg
+  name: shoot_Mustroph
+  display: Arabidopsis shoot (SHM, Mustroph)
+  data: data/expr_arab.txt
+  svg: data/arabidopsis.thaliana_shoot_shm.svg
 dataset8:
-  name: root_Mustroph
-  data: example/expr_arab.txt
-  svg: example/arabidopsis.thaliana_root.cross_shm.svg
+  name: organ_Mustroph
+  display: Arabidopsis organs (SHM, Mustroph)
+  data: data/expr_arab.txt
+  svg: data/arabidopsis.thaliana_organ_shm.svg
 dataset9:
-  name: shootRoot_Mustroph
-  data: example/expr_arab.txt
-  svg: example/arabidopsis.thaliana_shoot.root_shm.svg
+  name: root_Mustroph
+  display: Arabidopsis root (SHM, Mustroph)
+  data: data/expr_arab.txt
+  svg: data/arabidopsis.thaliana_root.cross_shm.svg
 dataset10:
-  name: rootRootTip_Mustroph
-  data: example/expr_arab.txt
-  svg: example/arabidopsis.thaliana_root.roottip_shm.svg
+  name: shootRoot_Mustroph
+  display: Arabidopsis shoot/root (SHM, Mustroph)
+  data: data/expr_arab.txt
+  svg: data/arabidopsis.thaliana_shoot.root_shm.svg
 dataset11:
-  name: multiDimensions_Attilio
-  data: example/mus_brain_vars.txt
-  svg: example/mus_musculus.brain.svg
+  name: rootRootTip_Mustroph
+  display: Arabidopsis root/rootTip (SHM, Mustroph)
+  data: data/expr_arab.txt
+  svg: data/arabidopsis.thaliana_root.roottip_shm.svg
 dataset12:
-  name: growthStage_Mustroph
-  data: example/random_data_multiple_aSVGs.txt
-  svg:
-  - example/arabidopsis.thaliana_organ_shm1.svg
-  - example/arabidopsis.thaliana_organ_shm2.svg
+  name: multiVariables_Attilio
+  display: Multiple variables (SHM, Attilio)
+  data: data/mus_brain_vars.txt
+  svg: data/mus_musculus.brain.svg
 dataset13:
-  name: overlay
-  data: example/dat_overlay.txt
+  name: growthStage_Mustroph
+  display: Multiple aSVGs (SHM, Mustroph)
+  data: data/random_data_multiple_aSVGs.txt
   svg:
-  - example/maize_leaf_shm1.png
-  - example/maize_leaf_shm1.svg
-  - example/maize_leaf_shm2.png
-  - example/maize_leaf_shm2.svg
+  - data/arabidopsis.thaliana_organ_shm1.svg
+  - data/arabidopsis.thaliana_organ_shm2.svg
+dataset14:
+  name: overlay
+  display: Overlaying (SHM, Bezrutczyk)
+  data: data/dat_overlay.txt
+  svg:
+  - data/maize_leaf_shm1.png
+  - data/maize_leaf_shm1.svg
+  - data/maize_leaf_shm2.png
+  - data/maize_leaf_shm2.svg
 title:
 - title:spatialHeatmap
 - width:350
@@ -63,14 +81,17 @@ max.upload.size: 5G
 default.dataset: mouse_Merkin
 col.row.gene: None
 separator: None
+# Settings for Data Table on the Spatial Heatmap panel.
 data.matrix:
+- norm:CNF-TMM
 - A:0
 - P:0
 - CV1:-10000
 - CV2:10000
 - log.exp:No
-- scale:Row
-- selected.id:ENSMUSG00000000031
+- scale:No
+- selected.id:Tbx2
+# Settings for spatial heatmaps on the Spatial Heatmap panel.
 shm.img:
 - columns:2
 - display.by:gene
@@ -123,20 +144,20 @@ network:
 - ds:3
 - max.edges:10
 download_single:
-  data: example/expr_arab.txt
-  svg: example/arabidopsis.thaliana_shoot_shm.svg
+  data: data/expr_arab.txt
+  svg: data/arabidopsis.thaliana_shoot_shm.svg
 download_multiple:
-  data: example/random_data_multiple_aSVGs.txt
+  data: data/random_data_multiple_aSVGs.txt
   svg:
-  - example/arabidopsis.thaliana_organ_shm1.svg
-  - example/arabidopsis.thaliana_organ_shm2.svg
-download_spatial_temporal:
-  data: example/expr_coleoptile_samTimeCon.txt
-  svg: example/oryza.sativa_coleoptile.ANT_shm.svg
+  - data/arabidopsis.thaliana_organ_shm1.svg
+  - data/arabidopsis.thaliana_organ_shm2.svg
+download_multiple_variables:
+  data: data/expr_coleoptile_samTimeCon.txt
+  svg: data/oryza.sativa_coleoptile.ANT_shm.svg
 download_covisualization:
   data:
-  - example/shiny_covis_bulk_cell_mouse_brain.rds
-  svg: example/mus_musculus.brain.svg
+  - data/shiny_covis_bulk_cell_mouse_brain.rds
+  svg: data/mus_musculus.brain.svg
 download_batched_data_aSVGs:
-  data: example/aSVGs_shm.tar
-  svg: example/data_shm.tar
+  data: data/aSVGs_shm.tar
+  svg: data/data_shm.tar

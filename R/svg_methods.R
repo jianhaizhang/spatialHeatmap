@@ -40,15 +40,15 @@
 #' @name SVGMethods
 #' @rdname SVGMethods
 #' @docType methods
-#' @aliases coordinate coordinate<- attribute attribute<- dimension dimension<- svg svg<- raster raster<- cmb names names<-,SVG-method sub_ft
+#' @aliases coordinate coordinate<- attribute attribute<- dimension dimension<- svg_pa svg_pa<- raster_pa raster_pa<- cmb names names<-,SVG-method sub_sf angle angle<-
 #' @examples
-
+#'
 #' # Create the first aSVG instance. 
-#' svg.pa1 <- system.file('extdata/shinyApp/example/maize_leaf_shm1.svg',
+#' svg.pa1 <- system.file('extdata/shinyApp/data/maize_leaf_shm1.svg',
 #' package='spatialHeatmap')
 #' svg1 <- read_svg(svg.path=c(svg.pa1)); names(svg1); length(svg1); slotNames(svg1)
 #' # Create the second aSVG instance. 
-#' svg.pa2 <- system.file('extdata/shinyApp/example/maize_leaf_shm2.svg',
+#' svg.pa2 <- system.file('extdata/shinyApp/data/maize_leaf_shm2.svg',
 #' package='spatialHeatmap')
 #' svg2 <- read_svg(svg.path=c(svg.pa2)); names(svg2); length(svg2)
 #' # Combine these two instances.
@@ -58,11 +58,11 @@
 #' # Coordinates of the first aSVG instance 
 #' svg3[, 'coordinate'][1]; coordinate(svg3)[1]
 #' # Extract slots from "svg3" into a list and create a new "SVG" object.
-#' lis <- list(cordn=coordinate(svg3), attrb=attribute(svg3), svg=svg(svg3))
+#' lis <- list(cordn=coordinate(svg3), attrb=attribute(svg3), svg=svg_pa(svg3))
 #' new.svgs <- SVG(coordinate=lis$cordn, attribute=lis$attrb, svg=lis$svg)
 #' # Change aSVG instance names.
 #' names(new.svgs) <- c('aSVG1', 'aSVG2'); names(new.svgs)
-#' # Replace an instance.
+#' # Replace the second instance in "svg3".
 #' svg3[2] <- new.svgs[2]
 #' # Replace a slot content.
 #' coordinate(svg3)[[1]] <- coordinate(new.svgs)[[1]]
@@ -70,17 +70,16 @@ NULL
 
  
 #' @rdname SVGMethods
-#' @param value A value for replacement.
 #' @export
 setMethod("coordinate", "SVG", function(x) { x@coordinate })
 #' @rdname SVGMethods
 
 #' @export
+#' @param value A value for replacement.
 #' @importFrom methods slot slot<-
 
 setReplaceMethod("coordinate", "SVG", function(x, value) {
-  index <- NULL
-  x@coordinate <- value 
+  index <- NULL; x@coordinate <- value 
   for (i in seq_along(x)) { 
     svg0 <- x[i]; cordn0 <- coordinate(svg0)[[1]] 
     attr0 <- attribute(svg0)[[1]] 
@@ -88,15 +87,16 @@ setReplaceMethod("coordinate", "SVG", function(x, value) {
     slot(x[i], 'coordinate')[[1]] <- subset(cordn0, index %in% inter)
     slot(x[i], 'attribute')[[1]] <- subset(attr0, index %in% inter) 
   }  
-  check_SVG(coord=x@coordinate, attr=x@attribute, wh=x@dimension, svg=x@svg, raster=x@raster)
+  check_SVG(coord=x@coordinate, attr=x@attribute, wh=x@dimension, svg=x@svg, raster=x@raster, angle=x@angle)
   x 
 })
 
 #' @rdname SVGMethods
-#' @export attribute<-
+#' @export
 setMethod("attribute", "SVG", function(x) { x@attribute })
 
 #' @rdname SVGMethods
+#' @param value A value for replacement.
 #' @references
 #' Wickham H, François R, Henry L, Müller K (2022). _dplyr: A Grammar of Data Manipulation_. R package version 1.0.9, <https://    CRAN.R-project.org/package=dplyr>
 #' @importFrom dplyr filter mutate %>%  
@@ -147,7 +147,7 @@ setReplaceMethod("attribute", "SVG", function(x, value) {
     names(w.h) <- c('width', 'height')
     slot(x[k], 'dimension')[[1]] <- w.h 
   }  
-  check_SVG(coord=x@coordinate, attr=x@attribute, wh=x@dimension, svg=x@svg, raster=x@raster)
+  check_SVG(coord=x@coordinate, attr=x@attribute, wh=x@dimension, svg=x@svg, raster=x@raster, angle=x@angle)
   x 
 })  
 
@@ -166,26 +166,36 @@ setReplaceMethod("dimension", "SVG", function(x, value) {
 
 #' @rdname SVGMethods
 #' @export
-setMethod("raster", "SVG", function(x) { x@raster })
+setMethod("raster_pa", "SVG", function(x) { x@raster })
 
 #' @rdname SVGMethods
 #' @param value A value for replacement.
 #' @export
-setReplaceMethod("raster", "SVG", function(x, value) {
+setReplaceMethod("raster_pa", "SVG", function(x, value) {
     x@raster <- value; x
 })
 
 #' @rdname SVGMethods
 #' @export
-setMethod("svg", "SVG", function(x) { x@svg })
+setMethod("svg_pa", "SVG", function(x) { x@svg })
 
 #' @rdname SVGMethods
 #' @param value A value for replacement.
 #' @export
-setReplaceMethod("svg", "SVG", function(x, value) {
+setReplaceMethod("svg_pa", "SVG", function(x, value) {
     x@svg <- value; x
 })
 
+#' @rdname SVGMethods
+#' @export
+setMethod("angle", "SVG", function(x) { x@angle })
+
+#' @rdname SVGMethods
+#' @param value A value for replacement.
+#' @export
+setReplaceMethod("angle", "SVG", function(x, value) {
+    x@angle <- value; x
+})
 
 #' @rdname SVGMethods
 #' @param i,j Two integers specifying an aSVG instance and a slot of the same aSVG respectively. 
@@ -193,8 +203,8 @@ setReplaceMethod("svg", "SVG", function(x, value) {
 #' @importFrom methods new slot 
 
 setMethod("[", c("SVG"), function(x, i, j) {
-  if (!missing(i)) coord0 <- new('SVG', coordinate=x@coordinate[i], attribute=x@attribute[i], dimension=x@dimension[i], svg=x@svg[i], raster=x@raster[i])
-  if (!missing(j)) lis <- list(coordinate=x@coordinate, attribute=x@attribute, dimension=x@dimension, svg=x@svg, raster=x@raster)
+  if (!missing(i)) coord0 <- new('SVG', coordinate=x@coordinate[i], attribute=x@attribute[i], dimension=x@dimension[i], svg=x@svg[i], raster=x@raster[i], angle=x@angle[i])
+  if (!missing(j)) lis <- list(coordinate=x@coordinate, attribute=x@attribute, dimension=x@dimension, svg=x@svg, raster=x@raster, angle=x@angle)
   if (missing(j) & !missing(i)) return(coord0)
   if (missing(i) & !missing(j)) return(lis[[j]]) 
   if (!missing(i) & !missing(j)) {
@@ -205,6 +215,7 @@ setMethod("[", c("SVG"), function(x, i, j) {
 })
 
 #' @rdname SVGMethods
+#' @param value A value for replacement.
 #' @export
 #' @importFrom methods slot slot<- new
 
@@ -216,9 +227,10 @@ setMethod("[<-", c("SVG"), function(x, i, value) {
     slot(x, 'dimension')[i] <- NULL
     slot(x, 'svg')[i] <- NULL
     slot(x, 'raster')[i] <- NULL
+    slot(x, 'angle')[i] <- NULL
     return(x)
   } 
-  if (is(value, 'SVG')) value <- list(coordinate=value@coordinate, attribute=value@attribute, dimension=value@dimension, svg=value@svg, raster=value@raster)
+  if (is(value, 'SVG')) value <- list(coordinate=value@coordinate, attribute=value@attribute, dimension=value@dimension, svg=value@svg, raster=value@raster, angle=value@angle)
   if (length(value$dimension)==0) {
     value$dimension <- lapply(value$coordinate, function(x) c(width=1, height=1))
   }
@@ -228,9 +240,12 @@ setMethod("[<-", c("SVG"), function(x, i, value) {
   if (length(value$raster)==0) {
     value$raster <- lapply(value$coordinate, function(x) return(NULL))
   }
-  check_SVG(coord=value$coordinate, attr=value$attribute, wh=value$dimension, svg=value$svg, raster=value$raster)
+  if (length(value$angle)==0) {
+    value$angle <- lapply(value$coordinate, function(x) return(NULL))
+  }
+  check_SVG(coord=value$coordinate, attr=value$attribute, wh=value$dimension, svg=value$svg, raster=value$raster, angle=value$angle)
   
-  lis <- list(coordinate=x@coordinate, attribute=x@attribute, dimension=x@dimension, svg=x@svg, raster=x@raster)
+  lis <- list(coordinate=x@coordinate, attribute=x@attribute, dimension=x@dimension, svg=x@svg, raster=x@raster, angle=x@angle)
   for (k in seq_along(lis)) {
     na0 <- names(value[[k]])
     if (is.null(na0)) stop('The "list" provided to "value" should be named!')
@@ -247,31 +262,32 @@ setMethod("[<-", c("SVG"), function(x, i, value) {
       }
     }
   }
-  new('SVG', coordinate=lis$coordinate, attribute=lis$attribute, dimension=lis$dimension, svg=lis$svg, raster=lis$raster)
+  new('SVG', coordinate=lis$coordinate, attribute=lis$attribute, dimension=lis$dimension, svg=lis$svg, raster=lis$raster, angle=lis$angle)
 })
 
 #' @rdname SVGMethods
 #' @export
 setMethod("length", "SVG", function(x) {
-  max(c(length(x@coordinate), length(x@attribute), length(x@dimension), length(x@svg), length(x@raster)))
+  max(c(length(x@coordinate), length(x@attribute), length(x@dimension), length(x@svg), length(x@raster), length(x@angle)))
 })
 
 #' @rdname SVGMethods
 #' @export
 setMethod("names", "SVG", function(x) {
-  unique(c(names(x@coordinate), names(x@attribute), names(x@dimension), names(x@svg), names(x@raster)))
+  unique(c(names(x@coordinate), names(x@attribute), names(x@dimension), names(x@svg), names(x@raster), names(x@angle)))
 })
 
 #' @rdname SVGMethods
+#' @param value A value for replacement.
 #' @export
 #' @importFrom methods new
 setReplaceMethod("names", "SVG", function(x, value) {
   # if (length(i)!=length(value)) stop('"i" and "value" should have the same size!')
   if (!is(x,  'SVG')) stop('"x" should be an object of "SVG"!')
   if (any(duplicated(value))) stop('Names should be unique!')
-  lis <- list(coordinate=x@coordinate, attribute=x@attribute, dimension=x@dimension, svg=x@svg, raster=x@raster)
+  lis <- list(coordinate=x@coordinate, attribute=x@attribute, dimension=x@dimension, svg=x@svg, raster=x@raster, angle=x@angle)
   lis <- lapply(lis, function(x) { names(x) <- value; x })
-  new('SVG', coordinate=lis$coordinate, attribute=lis$attribute, dimension=lis$dimension, svg=lis$svg, raster=lis$raster)
+  new('SVG', coordinate=lis$coordinate, attribute=lis$attribute, dimension=lis$dimension, svg=lis$svg, raster=lis$raster, angle=lis$angle)
 })
 
 #' @rdname SVGMethods
@@ -281,14 +297,13 @@ setReplaceMethod("names", "SVG", function(x, value) {
 setMethod("cmb", c(x="SVG", y='SVG'), function(x, y) {
   if (!is(x, 'SVG') | !is(y, 'SVG')) stop('The input should be SVG classes!')
   if (length(intersect(names(x), names(y)))>0) stop('Instance names should be unique!')
-  new('SVG', coordinate=c(x@coordinate, y@coordinate), attribute=c(x@attribute, y@attribute), dimension=c(x@dimension, y@dimension), svg=c(x@svg, y@svg), raster=c(x@raster, y@raster))
+  new('SVG', coordinate=c(x@coordinate, y@coordinate), attribute=c(x@attribute, y@attribute), dimension=c(x@dimension, y@dimension), svg=c(x@svg, y@svg), raster=c(x@raster, y@raster), angle=c(x@angle, y@angle))
 })
 
 
 #' @rdname SVGMethods
 #' @param svg An \code{SVG} object.
 #' @param show,hide Two vectors of indexes in the \code{attribute} slot. aSVG features corresponding to these indexes will be shown or hidden in spatial heatmap plots respectively.
-#' @return An \code{SVG} object.
 
 #' @references
 #' Wickham H, François R, Henry L, Müller K (2022). _dplyr: A Grammar of Data Manipulation_. R package version 1.0.9, <https://CRAN.R-project.org/package=dplyr>
@@ -296,7 +311,7 @@ setMethod("cmb", c(x="SVG", y='SVG'), function(x, y) {
 #' @export
 #' @importFrom dplyr filter 
 
-setMethod("sub_ft", c(svg="SVG"), function(svg, show=NULL, hide=NULL) {
+setMethod("sub_sf", c(svg="SVG"), function(svg, show=NULL, hide=NULL) {
   index <- NULL
   if (!is.null(show) & !is.null(hide)) stop('At least one of "show" and "hide" should be NULL!')
   if (is.null(show) & is.null(hide)) return(svg)

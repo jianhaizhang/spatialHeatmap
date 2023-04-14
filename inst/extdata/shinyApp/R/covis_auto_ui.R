@@ -2,52 +2,59 @@
 covis_auto_ui <- function(id) { 
   ns <- NS(id)
   tabsetPanel(type = "pills", id=ns('tabSetCellAuto'), selected="datCell",
-    tabPanel(title="Parameters", value='parAuto', br(),
-      actionButton(ns("parAutoBut"), "Update", style='margin-top:1px'),
-      h5(strong('Normalizing bulk and cell data')),  
-      fluidRow(splitLayout(cellWidths=c('1%', '15%'), '',
+    tabPanel(title="Settings", value='parAuto', br(),
+      actionButton(ns("parAutoBut"), "Run", style=run.col),
+      h5(strong('Jointly normalizing bulk and cell data')),  
+      fluidRow(splitLayout(cellWidths=c('12px', '250px'), '',
         selectInput(ns('normCoclus'), label='Method', choices=c('computeSumFactors'='fct', 'CPM'='cpm'), selected='fct', width=200)
       )), 
       h5(strong('Filtering')),  
-      fluidRow(splitLayout(cellWidths=c('1%', '6%', '1%', '6%', '1%', '28%', '1%', '28%', '1%', '6%', '1%', '6%'), '',
-        numericInput(ns('filBlkP'), label='P', value=0.1, min=0, max=1, step=0.1, width=150), '',
-        numericInput(ns('filBlkA'), label='A', value=1, min=0, max=1000, step=5, width=150), '',
-        numericInput(ns('filBlkCV1'), label='Min coefficient of variation (CV1)', value=0.1, min=-1000, max=1000, step=0.1, width=200), '',
-        numericInput(ns('filBlkCV2'), label='Max coefficient of variation (CV2)', value=200, min=-1000, max=1000, step=0.1, width=200), '',
-        numericInput(ns('filPGen'), label='P in gene', value=0.01, min=0, max=1, step=0.1, width=150), '',
-        numericInput(ns('filPCell'), label='P in cell', value=0.1, min=0, max=1, step=0.1, width=150)
-      )), 
-      bsTooltip(ns('filBlkP'), title = "Filtering bulk data", placement = "bottom", trigger = "hover"),
-      bsTooltip(ns('filBlkA'), title = "Filtering bulk data", placement = "bottom", trigger = "hover"),
-      bsTooltip(ns('filBlkCV1'), title = "Filtering bulk data", placement = "bottom", trigger = "hover"),
-      bsTooltip(ns('filBlkCV2'), title = "Filtering bulk data", placement = "bottom", trigger = "hover"),
-      bsTooltip(ns('filPGen'), title = "Filtering cell data", placement = "bottom", trigger = "hover"),
-      bsTooltip(ns('filPCell'), title = "Filtering cell data", placement = "bottom", trigger = "hover"),
+      div(id=ns('filBlk'),
+      fluidRow(splitLayout(cellWidths=c('12px', '70px', '1px', '70px', '1px', '72px', '1px', '72px'), '',
+        numericInput(ns('filBlkP'), label='P', value=0.1, min=0, max=1, step=0.1), '',
+        numericInput(ns('filBlkA'), label='A', value=1, min=0, max=1000, step=5), '',
+        numericInput(ns('filBlkCV1'), label='CV1 (min)', value=0.1, min=-1000, max=1000, step=0.1), '',
+        numericInput(ns('filBlkCV2'), label='CV2 (max)', value=200, min=-1000, max=1000, step=0.1)
+      ))),
+      div(id=ns('filCell'),
+      fluidRow(splitLayout(cellWidths=c('12px', '72px', '1px', '98px', '1px', '98px'), '',
+        numericInput(ns('cutoff'), label='Cutoff', value=1, min=-Inf, max=Inf, step=0.5), '',
+        numericInput(ns('filPGen'), label='P in gene (P1)', value=0.01, min=0, max=1, step=0.1), '',
+        numericInput(ns('filPCell'), label='P in cell (P2)', value=0.1, min=0, max=1, step=0.1)
+      ))),
+      bsTooltip(ns('filBlk'), title = "Filtering bulk data: rows passing the following filtering will remain. <br/> 1. Expression values >= A across >= P of all samples <br/> 2. Coefficient of variation (CV) is between CV1 and CV2.", placement = "bottom", trigger = "hover"),
+      bsTooltip(ns('filCell'), title = "Filtering cell data: <br/> 1. genes with expression values >= Cutoff across >= P1 cells will remain <br/> 2. cells with expression values >= Cutoff across >= P2 genes will remain.", placement = "bottom", trigger = "hover"),
       h5(strong('Dimension reduction')),
-      fluidRow(splitLayout(cellWidths=c('1%', '11%', '1%', '11%'), '',
-        numericInput(ns('minRank'), label='Min dimensions', value=5, min=2, max=Inf, step=1, width=150), '',
-        numericInput(ns('maxRank'), label='Max dimensions', value=50, min=3, max=Inf, step=5, width=150)
+      fluidRow(splitLayout(cellWidths=c('12px', '112px', '1px', '112px'), '',
+        numericInput(ns('minRank'), label='Min dimensions', value=5, min=2, max=Inf, step=1), '',
+        numericInput(ns('maxRank'), label='Max dimensions', value=50, min=3, max=Inf, step=5)
       )),
       h5(strong('Co-clustering')),
-      fluidRow(splitLayout(cellWidths=c('1%', '20%', '1%', '14%', '1%', '13%', '1%', '10%'), '',
+      fluidRow(splitLayout(cellWidths=c('12px', '223px', '1px', '145px', '1px', '150px', '1px', '107px'), '',
         selectInput(ns('dimSel'), label='Dimensions for building graphs', choices=c('PCA', 'UMAP'), selected='PCA'), '',
         selectInput(ns('graphMeth'), label='Building graphs', choices=c('buildSNNGraph'='snn', 'buildKNNGraph'='knn'), selected='knn'), '',
         selectInput(ns('clusMeth'), label='Detecting clusters', choices=c('cluster_walktrap'='wt', 'cluster_fast_greedy'='fg', 'cluster_leading_eigen'='le'), selected='wt'), '',
         numericInput(ns('asgThr'), label='Similarity cutoff', value=0, min=0, max=1, step=0.1, width=150)
       )),
-      bsTooltip(ns('asgThr'), title = "Assignments with similarities above this cutoff are retained.", placement = "bottom", trigger = "hover")
+      bsTooltip(ns('asgThr'), title = "Bulk-cell assignments with similarities above this cutoff are retained.", placement = "top", trigger = "hover")
     ), # tabPanel(title="Parameters"
       
     tabPanel(title="Data Table", value='datCell', br(),
-      box(id='bulk', title = "Bulk Data", width = 12, closable = FALSE, solidHeader = TRUE, collapsible = TRUE, enable_sidebar = FALSE, status = "primary", enable_dropdown = FALSE,
-      dataTableOutput(ns("datCovisBlk"))
-      ),
-      box(id='cell', title = "Cell Data", width = 12, closable = FALSE, solidHeader = TRUE, collapsible = TRUE, enable_sidebar = FALSE, status = "primary", enable_dropdown = FALSE,
-      dataTableOutput(ns("datCovisCell"))
+      actionButton(ns("subdat"), "Run", icon=icon("sync"), style = run.col),
+      div(id=ns('submsg'),
+      fluidRow(splitLayout(cellWidths=c('12px', '70px', '1px', '70px', '1px', '95px', '1px', '89px'), '',
+        numericInput(ns('r1'), label='Row start', value=1, min=1, max=Inf, step=1), '',
+        numericInput(ns('r2'), label='Row end', value=500, min=2, max=Inf, step=1), '',
+        numericInput(ns('c1'), label='Column start', value=1, min=1, max=Inf, step=1), '',
+        numericInput(ns('c2'), label='Column end', value=20, min=2, max=Inf, step=1)
+      ))),
+      bsTooltip(id=ns('submsg'), title="Subsetting the data matrix for display only, not for downstream analysis.", placement =    "top", trigger = "hover"),
+      box(id='datall', title = "", width = 12, closable = FALSE, solidHeader = TRUE, collapsible = TRUE, enable_sidebar = FALSE, status = "primary", enable_dropdown = FALSE,
+      dataTableOutput(ns("datall"))
       )
-      ), # navbarPage tabPanel 
-      tabPanel("Results", value='result', dim_ui(ns('dim'))),
-     tabPanel("Tailoring assignments", value='tailor',
+    ), # navbarPage tabPanel 
+     tabPanel("Results", value='result', dim_ui(ns('dim'))),
+     tabPanel("Tailoring Assignments", value='tailor',
        tailor_match_ui(ns('tailor'))
      ) #tabPanel
   ) 

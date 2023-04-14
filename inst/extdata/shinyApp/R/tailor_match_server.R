@@ -4,21 +4,12 @@ tailor_match_server <- function(id, sce, sce.upl, section='scell', upl.mod.lis, 
   ns <- session$ns
   observeEvent(input$tailorHelp, {
     showModal(
-    div(id='tailorHel', modalDialog(title= HTML('<strong><center>Instructions for Tailoring Assignment results</center></strong>'),
+    div(id = 'tailorIns',
+    modalDialog(title = HTML('<strong><center>Tailoring Assignment Results (optional)</center></strong>'),
       div(style = 'overflow-y:scroll;overflow-x:scroll',
-      p('The tailoring is designed to assign desired bulk tissues to selected cells and is totally optional. If no desired bulk tissues to assign, simply click "Covisualizing".'),
-      HTML('
-      <ol>
-        <li>Mouse over the top of left embedding plot and select "Lasso Select".</li>
-        <li>Select target cells on the embedding plot.</li>
-        <li>Selected cells are listed on the right table. Select a desired bulk tissue from the dropdown menu.</li>
-        <li>If more bulk tissues need to assign, repeat step 2 and 3.</li>
-        <li>After all target cells are selected and assigned desired bulk tissues, click "Final confirmation".</li>
-      </ol>
-      '),
-        p('To recover the matching results before tailoring, click "Reset".')
-      ))))
-    })
+      HTML('<img src="image/tailoring.jpg">'),
+    ))))
+  })
     if (section!='scell') {
       # "hideElement" cannot remove space of the elements while "removeUI" can.
       removeUI(selector="#dimCellBut"); removeUI(selector="#selBlkButCan")
@@ -130,14 +121,14 @@ tailor_match_server <- function(id, sce, sce.upl, section='scell', upl.mod.lis, 
       # dom='t' overwrites search box.
       # If "fixedColumns" is used, rows cannot be selected on the fixed part.
       tab <- datatable(cdat, selection=list(mode="multiple", target="row", selected='none'), escape=FALSE, filter="top", extensions=c('Scroller'), plugins = "ellipsis",
-      options=list(pageLength=20, lengthMenu=c(10, 20, 50, 100), autoWidth=TRUE, scrollCollapse=TRUE, deferRender=TRUE, scrollX=TRUE, scrollY=300, scroller=TRUE, searchHighlight=TRUE, search=list(regex=TRUE, smart=FALSE, caseInsensitive=TRUE), searching=TRUE, columnDefs=cols), 
+      options=list(pageLength=20, lengthMenu=c(10, 20, 50, 100), autoWidth=TRUE, scrollCollapse=TRUE, deferRender=TRUE, scrollX=TRUE, scrollY=250, scroller=TRUE, searchHighlight=TRUE, search=list(regex=TRUE, smart=FALSE, caseInsensitive=TRUE), searching=TRUE, columnDefs=cols), 
       class='cell-border strip hover') %>% formatStyle(0, backgroundColor="white", cursor='pointer')
       cat('Done! \n'); tab
     })
 
   output$selBlk <- renderUI({
     input$selBlkCancel
-    if (upl.mod.lis$ipt$fileIn!='customSingleCellData') return()
+    if (!grepl(na.sgl, upl.mod.lis$ipt$fileIn)) return()
     # New selection causes 'none'.
     if (!is(dimred$val, 'ggplot')) return()
     event.df <- event_data(event="plotly_selected", source='dim')
@@ -147,7 +138,7 @@ tailor_match_server <- function(id, sce, sce.upl, section='scell', upl.mod.lis, 
   })
 
  output$selCellTab <- renderDataTable({
-    if (upl.mod.lis$ipt$fileIn!='customSingleCellData') return()
+    if (!grepl(na.sgl, upl.mod.lis$ipt$fileIn)) return()
     sce <- sce(); sel.blk <- input$selBulk; 
     if (is.null(sel.blk)|is.null(sce)) return()
     if (!is(dimred$val, 'ggplot')) return()
@@ -159,15 +150,14 @@ tailor_match_server <- function(id, sce, sce.upl, section='scell', upl.mod.lis, 
     event.df <- event.df[, c('desiredBulk', 'cell', 'x', 'y', 'key')]
     if (is.null(event.df)) return()
     datatable(event.df, selection='none', escape=FALSE, filter="top", extensions=c('Scroller'), plugins = "ellipsis", 
-    options=list(pageLength=20, lengthMenu=c(10, 20, 50, 100), autoWidth=TRUE, scrollCollapse=TRUE, deferRender=TRUE, scrollX=TRUE, scrollY=300, scroller=TRUE, searchHighlight=TRUE, search=list(regex=TRUE, smart=FALSE, caseInsensitive=TRUE), searching=TRUE, columnDefs=NULL), class='cell-border strip hover') %>% formatStyle(0, backgroundColor="white", cursor='pointer') 
+    options=list(pageLength=20, lengthMenu=c(10, 20, 50, 100), autoWidth=TRUE, scrollCollapse=TRUE, deferRender=TRUE, scrollX=TRUE, scrollY=250, scroller=TRUE, searchHighlight=TRUE, search=list(regex=TRUE, smart=FALSE, caseInsensitive=TRUE), searching=TRUE, columnDefs=NULL), class='cell-border strip hover') %>% formatStyle(0, backgroundColor="white", cursor='pointer') 
   })
 
   output$dim.ui <- renderUI({
    cat('Tailoring: building ui of colData table ... \n')
-   if (upl.mod.lis$ipt$fileIn!='customSingleCellData') return()
+   if (!grepl(na.sgl, upl.mod.lis$ipt$fileIn)) return()
    row.but <- actionButton(ns('scellRowBut'), 'Confirm row selection', style='margin-top:24px')
    row.cancel.but <- actionButton(ns('scellRowCancelBut'), 'Deselect rows', style='margin-top:24px')
-   covis.but <- actionButton(ns('covisBut'), 'Co-visualizing', style='margin-top:24px')
    lis <- list(
      column(6, 
      fluidRow(splitLayout(cellWidths=c('1%', '97%', '1%'), '',
@@ -175,7 +165,8 @@ tailor_match_server <- function(id, sce, sce.upl, section='scell', upl.mod.lis, 
       plotlyOutput(ns('dimly')), ''
     ))
     ),
-    column(6, dataTableOutput(ns('selCellTab'))),
+    column(6, style='border-color:#3c8dbc;border-width:1px;border-style:solid;margin-bottom:5px;padding-top:2px;height:420px',
+    dataTableOutput(ns('selCellTab'))),
     column(12, fluidRow(splitLayout(cellWidths=c('1%', '12%', '1%', '15%', '1%', '10%', '1%', '10%'), '', uiOutput(ns('samGrp')), '', row.but, '', row.cancel.but, '', uiOutput(ns('coclus'))
     ))
     ),

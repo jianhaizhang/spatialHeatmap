@@ -121,13 +121,13 @@ No argument is required, this function launches the Shiny app directly.
 # To obtain reproducible results, a fixed seed is set for generating random numbers.
 set.seed(10); library(SummarizedExperiment)
 # Example bulk data of mouse brain for coclustering (Vacher et al 2021).
-blk.mus.pa <- system.file("extdata/shinyApp/example", "bulk_mouse_cocluster.rds", 
+blk.mus.pa <- system.file("extdata/shinyApp/data", "bulk_mouse_cocluster.rds", 
 package="spatialHeatmap") 
 blk.mus <- readRDS(blk.mus.pa)
 assay(blk.mus)[1:3, 1:5]
 
 # Example single cell data for coclustering (Ortiz et al 2020).
-sc.mus.pa <- system.file("extdata/shinyApp/example", "cell_mouse_cocluster.rds", 
+sc.mus.pa <- system.file("extdata/shinyApp/data", "cell_mouse_cocluster.rds", 
 package="spatialHeatmap") 
 sc.mus <- readRDS(sc.mus.pa)
 colData(sc.mus)[1:3, , drop=FALSE]

@@ -24,7 +24,7 @@ A data frame.
 This function reads data from a tabular file, which is a wrapper of \link[data.table]{fread}. If the tabular file contains both character and numeric columns, it is able to maintain the character or numeric attribute for each column in the returned data frame. In addition, it is able to detect separators automatically.
 }
 \examples{
-sh.tar <- system.file('extdata/shinyApp/example/target_arab.txt', package='spatialHeatmap')
+sh.tar <- system.file('extdata/shinyApp/data/target_arab.txt', package='spatialHeatmap')
 target.sh <- read_fr(sh.tar); target.sh[60:63, ]
 }
 \references{

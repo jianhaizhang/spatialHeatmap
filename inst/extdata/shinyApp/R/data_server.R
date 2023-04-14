@@ -1,379 +1,481 @@
 # Module for processing data.
-data_server <- function(id, sch, lis.url, ids, deg = FALSE, upl.mod.lis, scell.mod.lis=NULL, session) {
+data_server <- function(id, sch, lis.url, ids, upl.mod.lis, deg.mod.lis=NULL, scell.mod.lis=NULL, shm.mod=NULL, session) {
   moduleServer(id, function(input, output, session) {
-    ipt <- upl.mod.lis$ipt; cfg <- upl.mod.lis$cfg
-  # Filter parameters.
-  fil <- reactiveValues(P=0, A=0, CV1=-Inf, CV2=Inf)
-  observe({
-    if (!is.null(lis.url)) return()
-    ipt$fileIn; ipt$geneInpath; input$log 
-    fil$P <- 0; fil$A <- 0; fil$CV1 <- -Inf; fil$CV2 <- Inf
+  ipt <- upl.mod.lis$ipt; cfg <- upl.mod.lis$cfg
+  con.na <- reactiveValues(v=FALSE)
+  con.na.cell <- reactiveValues(v=FALSE)
+  met.pat <- '^metadata$|^link$|^type$|^total$|^method$'
+  # test <- reactive({ req(''); 1})
+  # Error: observe({ print(test()) })
+  # "test2" will be suspended: observe({ print('test1'); test(); print('test2') })
+  observeEvent(list(deg.mod.lis$input$eSHMBut, scell.mod.lis$covis.auto$but.covis, scell.mod.lis$covis.man$match.mod.lis$but.match$val), {
+   fileIn <- ipt$fileIn
+   cho <- c("Complete"='all'); sel <- 'all'
+   query.res <- check_exp(check_obj(deg.mod.lis$query.res()))
+   if (!is(query.res, 'character') & !is.null(query.res) & !grepl(na.sgl, fileIn)) {
+     cho <- c("Complete"='all', 'Spatial enrichment'='enr')
+     sel <- 'enr'
+   } else if (grepl(na.sgl, fileIn)) {
+     cho <- c("Co-visualization"='covis'); sel <- 'covis'
+   }
+   updateSelectInput(session, inputId='datIn', choices=cho, selected=sel)
   })
-
-  # By default, observeEvent is trigerred on start.
-  observeEvent(list(input$fil.but, lis.url), {
-    # if (ipt$fileIn=="none") return(NULL)
-    fil$P <- input$P; fil$A <- input$A; fil$CV1 <- input$CV1; fil$CV2 <- input$CV2
+  observeEvent(list(ipt$fileIn, dat(), input$datIn), {
+    dat <- dat(); if (!check_obj(list(dat))) return()
+    def <- cfg$lis.par$data.matrix['norm', 'default']
+    assay <- assay(dat$se.rep)
+    if (all(round(assay)==assay)) sel <- def else sel <- 'None' 
+    updateSelectInput(session, inputId='normDat', selected=sel)
   })
-
-  output$fil.par <- renderText({    
-    if (ipt$fileIn=="none") return(NULL)  
-    P <- input$P
-    validate(need(try(P<=1 & P>=0), 'P should be between 0 to 1 !'))
-  })
-
   # Import data, row metadata, targets file, aggregate replicates.
-  geneIn0 <- reactive({
+  dat <- reactive({
     cat('Import data, row metadata, targets files ... \n')
     fileIn <- ipt$fileIn; geneInpath <- ipt$geneInpath; dimName <- ipt$dimName
     svgInpath1 <- ipt$svgInpath1; svgInpath2 <- ipt$svgInpath2
     # validate/need: Suspend the process and no return, can cause errors, so "if" is choosen.
-    if (fileIn=="none") return(NULL)
+    if (grepl(na.sgl, fileIn)) {
+     sce.res <- scell.mod.lis$sce.res
+     if (is.null(sce.res)) req('')
+     sce.lis <- sce.res()$sce.lis
+     message('Done!'); return(sce.lis)
+    }
     withProgress(message="Loading data: ", value = 0, {
-    if (any(fileIn %in% cfg$na.def)) {
+    if (fileIn %in% cfg$na.def & !grepl(na.sgl, fileIn)) {
       incProgress(0.5, detail="loading matrix, please wait ...")
-      dat.na <- cfg$dat.def[fileIn]
+      dat.na <- cfg$dat.def[fileIn] 
       # All default example data have genes in rows.
-      if ('example' %in% strsplit(dat.na, '/')[[1]]) df.te <- fread_df(input=dat.na, isRowGene=TRUE) else { 
+      if (!'data_shm.tar' %in% basename(dat.na)) {
+        if (grepl('\\.rds$', dat.na)) {
+          # SummarizedExperiment
+          dat.ex <- readRDS(dat.na)
+          if (is(dat.ex, 'SummarizedExperiment')) {
+            dat.ex <- check_se(dat.ex)
+            lgc.se <- is.character(dat.ex)
+            if (lgc.se) showModal(modal(msg = dat)); req(!lgc.se)
+            dat.ex <- fread_df(input=assay(dat.ex), isRowGene=TRUE, rep.aggr=NULL)
+          }
+        } else {
+          dat.ex <- fread_df(input=dat.na, isRowGene=TRUE, rep.aggr=NULL) 
+        }  
+      } else { 
         # Exrtact data from uploaded tar.
         dat <- NULL; if (!is.null(cfg$pa.dat.upl)) if (file.exists(cfg$pa.dat.upl)) {
           cat('Extracting uploaded data... \n')
           # The prefix is not input$fileIn. The returned value of read_hdf5 is either data.frame or SE.
-          dat <- read_hdf5(cfg$pa.dat.upl, prefix=dat.na)[[1]]
+          dat <- read_hdf5(cfg$pa.dat.upl, dat.na)[[1]]
         }
         if (is.null(dat)|is.character(dat)|is.null(ipt$tar)) {
-          cat('Extracting internal data... \n')
-          dat <- read_hdf5('example/data_shm.tar', dat.na)[[1]]
+          cat('Extracting data from internal database ... \n')
+          # "spFeature" and "variable" are are already checked when creating "data_shm.tar".
+          dat <- readRDS(read_hdf5(dat.na, fileIn)[[1]]$data)
+          lgc.se <- is.character(dat)
+          if (lgc.se) showModal(modal(msg = dat)); req(!lgc.se)
         }
-        validate(need(try(is(dat, 'data.frame')|is(dat, 'SummarizedExperiment')), 'The selected data is empty! Solution: 1) select another data, then rematch its samples to the selected aSVG; 2) include a data for the selected aSVG file in the backend database or the uploaded database.'))
-        if (is(dat, 'SummarizedExperiment')) {
-          dat <- se_from_db(dat)
-          validate(need(try(!is.character(dat)), dat))
-        }; df.te <- fread_df(input=dat, isRowGene=TRUE)
-      }; return(df.te)
+        dat.ex <- fread_df(input=assay(dat), isRowGene=TRUE, rep.aggr=NULL)
+      }
+      incProgress(0.3, detail="loading assay matrix ...")
+      message('Done!'); return(dat.ex)
     }; dimNa <- dimName
-    if (fileIn %in% cfg$na.cus) {
-      if (is.null(dimNa)) return()
-      if (is.null(geneInpath) | dimNa=="None") return()
-      incProgress(0.25, detail="importing matrix, please wait ...")
+    if (fileIn %in% cfg$na.cus & !grepl(na.sgl, fileIn)) {
+      if (is.null(dimNa)) req('')
+      if ((is.null(svgInpath1) & is.null(svgInpath2))) req('')
+      if (is.null(geneInpath) | dimNa=="None") req('')
+      incProgress(0.25, detail="importing data matrix ...")
       geneInpath <- geneInpath$datapath; targetInpath <- ipt$target$datapath; metInpath <- ipt$met$datapath
       # Keep replicates unchaged, and compared with targets/metadata files.
-      df.upl <- fread_df(read_fr(geneInpath), isRowGene=(dimNa=='Row'), rep.aggr=NULL)
-      df.rep <- df.upl$df.rep; df.met <- df.upl$df.met
+      dat.cus <- fread_df(read_fr(geneInpath), isRowGene=(dimNa=='Row'), rep.aggr=NULL)
+      se.rep <- dat.cus$se.rep; # df.met <- dat.cus$df.met
       if (!is.null(targetInpath)) {
         df.tar <- read_fr(targetInpath)
-        # If errors detected, modalDialog terminates the app, while validate only stops the current step. 
-        if (nrow(df.tar) != ncol(df.rep)) showModal(modal(msg = 'Ensure "columns" in the data matrix corresponds with "rows" in the targets file respectively!'))
-        validate(need(try(nrow(df.tar) == ncol(df.rep)), 'Ensure "columns" in the data matrix corresponds with "rows" in the targets file respectively!'))
+        # If errors detected, modalDialog terminates the app, while validate only stops the current step.
+        lgc.tar <- nrow(df.tar) == ncol(se.rep) 
+        if (!lgc.tar) showModal(modal(msg = 'Ensure "columns" in the assay matrix corresponds with "rows" in the targets file respectively!')); req(lgc.tar)
         # Check feature/variable columns in targets file.
-        cna.tar <- colnames(df.tar) <- tolower(colnames(df.tar))
-        if (all(c('feature', 'variable') %in% cna.tar)) cna <- paste0(df.tar$feature, '__', df.tar$variable) else if ('feature' %in% cna.tar) cna <- paste0(df.tar$feature, '__', 'con')
-        colnames(df.rep) <- cna
-      }     
-
-      if (!is.null(metInpath)) df.met <- read_fr(metInpath)
-      if (nrow(df.met) != nrow(df.rep)) showModal(modal(msg = 'Ensure "rows" in the data matrix corresponds with "rows" in the row metadata file respectively!'))
-      validate(need(try(nrow(df.met) == nrow(df.rep)), 'Ensure "rows" in the data matrix corresponds with "rows" in the row metadata file respectively!'))
-      rownames(df.met) <- rownames(df.rep)
+        cna.tar <- colnames(df.tar)
+        if (all(c('spFeature', 'variable') %in% cna.tar)) { 
+          cna <- paste0(df.tar$spFeature, '__', df.tar$variable)
+          ft <- df.tar$spFeature; vari <- df.tar$variable
+        } else if ('spFeature' %in% cna.tar) { 
+          cna <- paste0(df.tar$spFeature, '__', 'con')
+          ft <- df.tar$spFeature; vari <- 'con'
+        }
+          se.rep$spFeature <- ft; se.rep$variable <- vari
+          colnames(se.rep) <- cna
+      } 
+      if (!is.null(metInpath)) { 
+        df.met <- read_fr(metInpath); lgc.met <- nrow(df.met) == nrow(se.rep)
+        if (!lgc.met) showModal(modal(msg = 'Ensure "rows" in the assay matrix corresponds with "rows" in the row metadata file respectively!')); req(lgc.met)
+        rownames(df.met) <- rownames(se.rep)
+        rdat <- rowData(se.rep)
+        rdat <- cbind(DataFrame(df.met[, !colnames(df.met) %in% colnames(rdat), drop=FALSE]), DataFrame(rdat))
+        rowData(se.rep) <- rdat; dat.cus$se.rep <- se.rep
+        if (!is.null(dat.cus$se.aggr)) rowData(dat.cus$se.aggr) <- rdat
+      }
       # Aggregate replicates after targets file is processed.
-      df.upl1 <- fread_df(df.rep, isRowGene=(dimNa=='Row'), rep.aggr = 'mean')
-      df.upl$df.aggr <- df.upl1$df.aggr
-      df.upl$df.rep <- df.rep; df.upl$df.met <- df.met 
-      df.upl$con.na <- df.upl1$con.na; cat('Done! \n')
-      if ((!is.null(svgInpath1) | !is.null(svgInpath2))) 
-      cat('Done! \n'); return(df.upl) 
+      # dat.cus <- fread_df(se.rep, isRowGene=(dimNa=='Row'), rep.aggr = NULL)
+      incProgress(0.3, detail="loading assay matrix ...")
+      cat('Done! \n'); return(dat.cus) 
     }
-
     })
-
   })
-  thr <- reactiveValues()
-  output$msg.sig.thr <- renderText({
+ 
+  nor.par <- reactiveValues()
+  observeEvent(list(input$run, dat(), input$datIn, deg.mod.lis$input$eSHMBut, scell.mod.lis$covis.auto$but.covis, scell.mod.lis$covis.man$match.mod.lis$but.match$val, shm.mod$ipt$profile), {
+  run <- input$run; dat <- dat(); datIn <- input$datIn
+  fileIn <- ipt$fileIn; profile <- shm.mod$ipt$profile
+  if (!check_obj(list(input$normDat, run, dat, datIn))) return()
+  pars <- list(input$normDat, dat, datIn)
+  query.res <- check_exp(deg.mod.lis$query.res())
+  if (!is(query.res, 'character') & !is.null(query.res) & !grepl(na.sgl, fileIn)) {
+     pars <- list(normDat=input$normDat, dat=dat, query.res=query.res, datIn=datIn)
+   } else if (grepl(na.sgl, fileIn)) {
+     if (!check_obj(profile)) return()
+     if (!'idp' %in% profile) { 
+       sce.res <- scell.mod.lis$sce.res
+       if (is.null(sce.res)) req('')
+       se.aggr <- sce.res()$sce.lis$se.aggr
+       pars <- list(normDat=input$normDat, se.aggr=se.aggr, datIn=datIn, profile=profile)
+     } else {
+       covis.type <- scell.mod.lis$sce.upl$covis.type 
+       if (!check_obj(covis.type)) return() 
+       if (covis.type %in% c('toBulkAuto', 'toCellAuto')) { 
+         blk.sc <- scell.mod.lis$covis.auto$res
+         # By default, data in co-clustering have no variables.
+         colnames(blk.sc) <- paste0(colnames(blk.sc), '__con')
+         blk.sc$variable <- 'con'
+         con.na$v <- scell.mod.lis$covis.auto$con.na
+       } else if (covis.type %in% c('toBulk', 'toCell')) {
+         # Format features and variables in bulk.
+         label <- scell.mod.lis$covis.man$covisGrp; bulk <- scell.mod.lis$covis.man$bulk
+         if (!check_obj(list(label, bulk))) return()
+         cdat.blk <- colData(bulk) 
+         if (!'variable' %in% colnames(cdat.blk)) { bulk$variable <- 'con' } else con.na$v <- TRUE
+         colnames(bulk) <- paste0(cdat.blk[, label], '__', cdat.blk[, 'variable'])
+         vars.blk <- unique(colData(bulk)[, 'variable'])
+         # Format features and variables in cell.
+         cell <- scell.mod.lis$covis.man$dimred; var.cell <- NULL
+         if ('variable' %in% colnames(colData(cell))) var.cell <- 'variable'
+         sce.lis <- check_sce(sce=cell, label, var.cell)
+         lgc.sc <- is(sce.lis, 'list')
+         if (!lgc.sc) show_mod(lgc.sc, msg=sce.lis); req(lgc.sc)
+         cell <- sce.lis$sce; var.cell <- sce.lis$var.cell
+         con.na.cell$v <- sce.lis$con.na.cell
+         vars.cell <- unique(colData(cell)[, var.cell]) 
+         
+         lgc.var <- identical(sort(vars.blk), sort(vars.cell))
+         if (!lgc.var) show_mod(lgc.var, msg='Variables between bulk and single cell data should be the same!')
+         req(lgc.var)
+         # To combine bulk and cell. Bulk do not have reduced dimensions.
+         reducedDim(cell, 'PCA') <- reducedDim(cell, 'UMAP') <- reducedDim(cell, 'TSNE') <- NULL
+         reducedDim(bulk, 'PCA') <- reducedDim(bulk, 'UMAP') <- reducedDim(bulk, 'TSNE') <- NULL
+         # By default, bulk and cell data have the same column names in colData, since they are stored in the same SCE. 
+         req(identical(colnames(colData(bulk)), colnames(colData(cell))))
+         blk.sc <- cbind(bulk, cell)
+       }
+       pars <- list(normDat=input$normDat, blk.sc=blk.sc, datIn=datIn, profile=profile) 
+     }
+   }; nor.par$pars <- pars
+  })
+  dat.nor <- eventReactive(nor.par$pars, {
+    message('SHM: normalizing ... ')
+    fileIn <- ipt$fileIn; dat <- dat(); normDat <- input$normDat
+    datIn <- input$datIn
+    if (!check_obj(list(fileIn, dat, normDat, datIn))) req('')
+    se <- dat$se.rep
+    if ('enr' %in% datIn & !grepl(na.sgl, fileIn)) {
+      se <- nor.par$pars$query.res
+    } else if ('covis' %in% datIn & grepl(na.sgl, fileIn)) {
+      prof <- nor.par$pars$profile
+      if (!check_obj(prof)) return()
+      if (! 'idp' %in% prof) se <- nor.par$pars$se.aggr else se <- nor.par$pars$blk.sc
+      return(se)
+    }
+    # Organize rowData.
+    rdat <- rowData(se); idx.met <- grep(met.pat, colnames(rdat))
+    rdat.sel <- rdat[, idx.met, drop=FALSE]
+    cna.sel <- colnames(rdat.sel)
+    idx.md <- grep('^metadata$', cna.sel)
+    if (length(idx.md)>0) rdat.sel <- cbind(rdat.sel[, idx.md, drop=FALSE], rdat.sel[, -idx.md, drop=FALSE])
+    rdat <- cbind(rdat.sel, rdat[, -idx.met, drop=FALSE])
+    rowData(se) <- rdat 
+
+    assay <- assay(se); lgc.as <- all(round(assay)==assay)
+    # Must be before req(lgc.as).
+    if ('None' %in% normDat) {
+      if (!lgc.as) { message('Done!'); return(se) } else normDat <- cfg$lis.par$data.matrix['norm', 'default'] 
+    }
+    if (!lgc.as) {
+      showNotification(HTML('Spatial Heatmap -> Data Table -> Settings: <br> normalization is skipped, since the input data are not count matrix.'), duration=2, closeButton = TRUE) 
+      updateSelectInput(session, inputId='normDat', selected='None')
+      se.aggr <- aggr_rep(data=se, assay.na=NULL, sam.factor='spFeature', con.factor='variable', aggr='mean')
+      message('Done!'); return(se)
+    }; req(lgc.as)
+    withProgress(message="Normalizing: ", value = 0, {
+      incProgress(0.5, detail="please wait ...")
+      if (grepl('^CNF-', normDat)) {
+        norm.fun <- 'CNF'
+        par.lis <- list(method=sub('.*-', '', normDat))
+      } else { norm.fun <- normDat; par.lis <- NULL }
+        se.nor <- norm_data(data=se, norm.fun=norm.fun, par.list=par.lis, log2.trans=TRUE)
+        se.aggr <- aggr_rep(data=se.nor, assay.na=NULL, sam.factor='spFeature', con.factor='variable', aggr='mean')
+        incProgress(0.4, detail="...")
+        message('Done!'); return(se.aggr)
+    })
+  })
+
+  tran.par <- reactiveValues()
+  observeEvent(list(input$run, dat.nor()), {
+    run <- input$run; dat.nor <- dat.nor()
+    if (!check_obj(list(input$log, run, dat.nor))) req('')
+    pars <- list(input$log, dat.nor)
+    tran.par$pars <- pars
+  })
+  dat.tran <- eventReactive(tran.par$pars, {
+    message('SHM: log2/exp2 ... ')
+    dat.nor <- dat.nor(); log <- input$log
+    if (!check_obj(list(dat.nor, log))) req('')
+    assay <- assay(dat.nor)
+    lgc.as <- all(round(assay)==assay)
+    if (lgc.as & 'exp2' %in% log) { 
+      showNotification(HTML('Spatial Heatmap -> Data Table -> Settings: <br> exponent transformation is skipped, since the input assay data in this step are integers.'), duration=2, closeButton = TRUE) 
+      message('Done!'); return(dat.nor)
+    }
+    if (!lgc.as & 'log2' %in% log) { 
+      showNotification(HTML('Spatial Heatmap -> Data Table -> Settings: <br> exponent transformation is skipped, since the input assay data in this step are integers.'), duration=2, closeButton = TRUE) 
+     message('Done!'); return(dat.nor)
+    }
+    withProgress(message="Log/exponent transformation: ", value = 0, {
+      incProgress(0.2, detail="please wait ...")
+      incProgress(0.4, detail="...")
+      if ('log2' %in% log) {
+        lgc.pos <- (min(assay) >= 0)
+        if (!lgc.pos) { 
+          showModal(modal(msg = 'Only non-negative intergers are accepted in log2 transformation!')); req('')
+        }
+        if (min(assay)==0) assay <- assay +1
+        assay(dat.nor) <- log2(assay)
+      } else if ('exp2' %in% log) { assay(dat.nor) <- 2^assay }
+      incProgress(0.2, detail="...")
+      message('Done!'); return(dat.nor)
+    })
+  })
+ 
+  fil.par <- reactiveValues()
+  observeEvent(list(input$run, dat.tran()), {
+    A <- input$A; P <- input$P; CV1 <- input$CV1
+    CV2 <- input$CV2; dat.tran <- dat.tran()
+    if (!check_obj(list(A, P, CV1, CV2, dat.tran))) req('')
+    pars <- list(A, P, CV1, CV2, dat.tran)
+    fil.par$pars <- pars
+  })
+   se.fil <- eventReactive(list(fil.par$pars), {
+     message('SHM: filtering ... ')
+     A <- input$A; P <- input$P; CV1 <- input$CV1
+     CV2 <- input$CV2; dat.tran <- dat.tran()
+     if (!check_obj(list(A, P, CV1, CV2, dat.tran))) req('')
+     p.lgc <- (P >= 0 & P <=1)
+     show_mod(p.lgc, 'P should be between 0-1!'); req(p.lgc)
+     cv.lgc <- (CV1 < CV2)
+     show_mod(cv.lgc, 'CV1 should be less than CV2!'); req(cv.lgc)
+     se.fil <- filter_data(data=dat.tran, sam.factor=NULL, con.factor=NULL, pOA=c(P, A), CV = c(CV1, CV2), verbose=FALSE)
+     se.lgc <- (nrow(se.fil) >= 5)
+     show_mod(se.lgc, 'Less than 5 rows remain!'); req(se.lgc)
+     message('Done!'); se.fil
+   })
+  thr.par <- reactiveValues()
+  observeEvent(list(input$run, se.fil()), {
+    run <- input$run; se.fil <- se.fil()
     sig.max <- input$sig.max; sig.min <- input$sig.min
-    er.wa1 <- er.wa2 <- 1
-    if (sig.min!='') er.wa1 <- check(sig.min, as.numeric)
-    if (sig.max!='') er.wa2 <- check(sig.max, as.numeric)
-    if (!is.numeric(c(er.wa1, er.wa2))) return('Signal thresholds must be numeric!') 
-    if (!is.null(thr$max)) return(thr$max)
-    if (!is.null(thr$min)) return(thr$min)
-    if (!is.null(thr$vs)) return(thr$vs)
+    if (!check_obj(list(sig.max, sig.min, run, se.fil))) req('')
+    pars <- list(sig.min, sig.max, se.fil)
+    thr.par$pars <- pars
   })
-  # Transform data.
-  geneIn1 <- reactive({
-    cat('Scale/tranform data ... \n')
-    norm.meth <- input$normDat; scale.dat <- input$scaleDat
-    df.aggr.thr <- NULL
-    if (deg == FALSE) {
-      # A default single-cell example should be considered in the "if" statement.
-      if (ipt$fileIn!='customSingleCellData') { # Bulk data. 
-        if (is.null(geneIn0())|is.null(norm.meth)|is.null(scale.dat)|is.null(input$log)) return() 
-        df.aggr <- df.aggr.tran <- geneIn0()[['df.aggr']]
-        # Normalization
-        if (grepl('^CNF-', norm.meth)) {
-          norm.fun <- 'CNF'
-          par.lis <- list(method=sub('.*-', '', norm.meth))
-        } else { norm.fun <- norm.meth; par.lis <- NULL }
-        if (all(df.aggr.tran==round(df.aggr.tran))) df.aggr.tran <- norm_data(data=df.aggr.tran, norm.fun=norm.fun, parameter.list=par.lis, log2.trans=FALSE)
-      } else if (ipt$fileIn=='customSingleCellData') { # Single-cell data.
-        if (is.null(scell.mod.lis)) return()
-        df.aggr <- df.aggr.tran <- scell.mod.lis$df.lis()$df.aggr
-        if (is.null(df.aggr)) return()
-    } else return()
-
-    if (input$log=='log2') { 
-      g.min <- min(df.aggr.tran)
-      if (g.min<0) df.aggr.tran <- df.aggr.tran-g.min+1; if (g.min==0) df.aggr.tran <- df.aggr.tran+1; df.aggr.tran <- log2(df.aggr.tran)
-    } else if (input$log=='exp2') df.aggr.tran <- 2^df.aggr.tran
-
-    input$sig.but; isolate({
-      cat('Threshold ... \n')
-      thr$max <- thr$min <- thr$vs <- NULL
-      max.v <- max(df.aggr.tran); min.v <- min(df.aggr.tran)
-      max.v1 <- min.v1 <- NULL
-      sig.max <- input$sig.max; sig.min <- input$sig.min
-      if (sig.min!='') { er.wa <- check(sig.min, as.numeric)
-        if (is.numeric(er.wa)) { min.v1 <- er.wa
-          if (min.v1 >= max.v) thr$min <- paste0('The min threshold should be < the max un-scaled value: ', max.v, '!')
-        }
-      }
-      if (sig.max!='') { er.wa <- check(sig.max, as.numeric)
-        if (is.numeric(er.wa)) { max.v1 <- er.wa
-          if (min.v >= max.v1) thr$max <- paste0('The max threshold should be > the min un-scaled value: ', min.v, '!')
-        }
-      }
-      # validate/need can give rise to errors to downstream processes while if condition not.
-      # validate(need(min.v < max.v, ''))
-      if (!is.null(max.v1)) if (max.v1 < max.v) max.v <- max.v1 
-      if (!is.null(min.v1)) if (min.v1 > min.v) min.v <- min.v1
-      if (!is.null(max.v1) & !is.null(min.v1)) {
-        if (max.v1 <= min.v1) thr$vs <- 'The max threshold must be > min threshold!'
-      }
-      if (max.v <= min.v) thr$vs <- 'The max threshold must be > min threshold!'
-      if (max.v > min.v) {
-      df.aggr.tran[df.aggr.tran >= max.v] <- max.v
-      df.aggr.tran[df.aggr.tran <= min.v] <- min.v
-      }
-    })
-    # The only difference between "df.aggr.thr" and "df.aggr.tran" is scaling. The former is used to indicate un-scaled range in the colour bar title.
-    df.aggr.thr <- df.aggr.tran
-    # Scale by row/column
-    if (scale.dat=='Row') { df.aggr.tran <- t(scale(t(df.aggr.tran))) } else if (scale.dat=='Selected') {
-      # validate(need(!is.null(ids$sel), ''))
-      idx.sel <- rownames(df.aggr.tran) %in% ids$sel
-      df.sel <- df.aggr.tran[idx.sel, ]
-      df.aggr.tran[idx.sel, ] <- scale_all(df.sel) 
-    } else if (scale.dat=='All') { df.aggr.tran <- scale_all(df.aggr.tran) }
-    } else if (deg == TRUE) {   
-      if (is.null(geneIn0())) return()
-      df.aggr <- df.aggr.tran <- geneIn0()[['df.aggr']]
-    }
-    if (ipt$fileIn!='customSingleCellData') { 
-      df.met <- geneIn0()[['df.met']]; df.rep <- geneIn0()[['df.rep']]
-      con.na <- geneIn0()$con.na
-    } else {
-      if (is.null(scell.mod.lis)) return()
-      df.lis <- scell.mod.lis$df.lis()
-      df.met <- df.lis$df.met; df.rep <- df.lis$df.rep
-      con.na <- df.lis$con.na
-    }
-    cat('Done! \n'); return(list(df.aggr=df.aggr, df.aggr.tran=df.aggr.tran, df.aggr.thr=df.aggr.thr, df.met=df.met, df.rep=df.rep, con.na=con.na))
-
+   se.thr <- eventReactive(list(thr.par$pars), {
+     message('SHM: thresholding ... ')
+     sig.max <- input$sig.max; sig.min <- input$sig.min
+     se.fil <- se.fil()
+     if (!check_obj(list(sig.max, sig.min))) req('')
+     assay <- assay(se.fil)
+     assay <- thr(thr.min=sig.min, thr.max=sig.max, data=assay)
+     lgc.as <- !is(assay, 'character')
+     if (!lgc.as) msg <- assay else NULL
+     show_mod(lgc.as, msg); req(lgc.as)
+     assay(se.fil) <- assay; message('Done!'); se.fil
+   })
+  scl.par <- reactiveValues()
+  observeEvent(list(input$run, se.thr()), {
+    scl <- input$scl; run <- input$run; se.thr <- se.thr()
+    if (!check_obj(list(scl, run, se.thr))) req('')
+    pars <- list(scl, se.thr)
+    scl.par$pars <- pars
   })
-
-  output$col.order <- renderUI({
-    if (is.null(geneIn1())) return()
-    col.nas <- colnames(geneIn1()[['df.aggr.tran']])
-    column(12, actionButton("col.cfm", "Confirm", icon=icon("sync")), 
-    selectizeInput(inputId="col.na", label='', choices=col.nas, selected=col.nas, multiple=TRUE, options= list(plugins=list('drag_drop')))
-    )
+   se.scl <- eventReactive(list(scl.par$pars), {
+     message('SHM: scaling ... ')
+     scl <- input$scl; run <- input$run; se.thr <- se.thr()
+     if (!check_obj(list(scl, run, se.thr))) req('') 
+     assay <- assay(se.thr)
+     # Scale by row/column
+     if (scl=='Row') { assay <- t(scale(t(assay))) 
+     } else if (scl=='All') { assay <- scale_all(assay) }
+     assay(se.thr) <- assay; cna <- colnames(se.thr)
+     # Co-clustering unlabeled cells.
+     idx <- grepl('^none$|^none__', colnames(se.thr))
+     se.thr <- cbind(se.thr[, !idx], se.thr[, idx])
+     message('Done!'); se.thr
+   })
+  scl.sel.par <- reactiveValues()
+  observeEvent(list(input$run, se.scl(), ids$sel), {
+    scl <- input$scl; run <- input$run; se.scl <- se.scl()
+    if (!check_obj(list(scl, run, se.scl, ids$sel))) return()
+    pars <- list(scl, se.scl, ids$sel)
+    scl.sel.par$pars <- pars
   })
+   se.scl.sel <- eventReactive(list(scl.sel.par$pars), {
+     message('SHM: selected data ... ')
+     scl <- input$scl; run <- input$run; se.scl <- se.scl()
+     if (!check_obj(list(scl, run, se.scl, ids$sel))) return()
+     if (!all(ids$sel %in% rownames(se.scl))) return()
+     se.scl.sel <- se.scl[ids$sel, ]
+     assay.sel <- assay(se.scl.sel)
+     if (scl=='Selected') { assay.sel <- scale_all(assay.sel) }
+     assay(se.scl.sel) <- assay.sel
+     message('Done!'); se.scl.sel
+   })
+
   sear <- reactiveValues(id=NULL)
   observeEvent(ipt$fileIn, { sear$id <- NULL })
   observeEvent(sch$but, {
-    if (is.null(geneIn1())) return()
+    se.scl <- se.scl()
+    if (!check_obj(list(se.scl))) req('')
     if (sch$sch=='') sel <- as.numeric(cfg$lis.par$data.matrix['row.selected', 'default']) else {
       gens <- strsplit(gsub(' |,', '_', sch$sch), '_')[[1]]
       pat <- paste0('^', gens, '$', collapse='|')
-      sel <- which(grepl(pat, x=rownames(geneIn1()[['df.aggr.tran']]), ignore.case=TRUE, perl=TRUE))
+      sel <- which(grepl(pat, x=rownames(se.scl), ignore.case=TRUE, perl=TRUE))
       if (length(sel)==0) sel <- as.numeric(cfg$lis.par$data.matrix['row.selected', 'default'])
      }; sear$id <- sel
   })
-
-  col.reorder <- reactiveValues(col.re='Y', col.na.re = NULL)
-  observe({
-    if (is.null(geneIn1())) return()
-    # input$col.na is NULL on loading.
-    if (is.null(input$col.na)) col.reorder$col.na.re <- colnames(geneIn1()$df.aggr.tran) else col.reorder$col.na.re <- input$col.na
-  })
-
-  geneIn <- reactive({
-    cat('Filtering data ... \n')
-    gene.lis <- geneIn1(); if (is.null(gene.lis)) return()
-    df.aggr <- gene.lis[['df.aggr']]
-    if (is.null(df.aggr)) return()
-    df.aggr.tran <- gene.lis[['df.aggr.tran']]
-    df.aggr.thr <- gene.lis$df.aggr.thr
-    df.met <- gene.lis[['df.met']]; df.rep <- gene.lis[['df.rep']]
-    input$fil.but; lis.url
-    if (deg==FALSE) {
-      if (is.null(df.aggr.thr)) return()
-      # Filter un-scaled values.
-      df2fil <- df.aggr.thr
-      # When ipt$fileIn changes, col.reorder$col.na.re of last session still exists and causes errors.
-      if (!identical(sort(col.reorder$col.na.re), sort(colnames(df2fil)))) return()
-    } else df2fil <- df.rep
-    # Input variables in "isolate" will not triger re-excution, but if the whole reactive object is trigered by "input$fil.but" then code inside "isolate" will re-excute.
-    scale.dat <- input$scaleDat
-    isolate({ 
-      se <- SummarizedExperiment(assays=list(expr=as.matrix(df2fil)), rowData=df.met)
-      ann.col <- NULL
-      if (!is.null(df.met)) if (ncol(df.met)>0 & 'metadata' %in% colnames(df.met)) ann.col <- 'metadata'
-      # If scaled by row, sd is 1, mean is 0, cv is Inf.
-      if (deg == FALSE) CVs <- c(ifelse(scale.dat %in% c('Row', 'Selected'), -Inf, fil$CV1), ifelse(scale.dat %in% c('Row', 'Selected'), Inf, fil$CV2)) else CVs <- c(fil$CV1, fil$CV2)
-      se <- filter_data(data=se, ann=ann.col, sam.factor=NULL, con.factor=NULL, pOA=c(fil$P, fil$A), CV = CVs, dir=NULL, verbose=FALSE)
-      if (fil$P!=0 | fil$A!=0 | fil$CV1!=-10000 | fil$CV2!=10000) showNotification("Filtering is applied on un-scaled values.", duration=2)
-      # In case all rows are filtered, the app continues to work without refreshing after the filter parameters are reduced.
-      if (nrow(se)==0) { validate(need(try(nrow(se)>0), 'All rows are filtered out!')); return() }
-      # se <- filter_data(data=se, ann=ann.col, sam.factor=NULL, con.factor=NULL, pOA=c(fil$P, fil$A), CV=CVs, dir=NULL, verbose=FALSE)
-      df2fil <- as.data.frame(assay(se), stringsAsfactors=FALSE)
-      colnames(df2fil) <- make.names(colnames(df2fil))
-      rna.fil <- rownames(df2fil)
-      df.aggr <- df.aggr[rna.fil, , drop=FALSE]
-      df.aggr.tran <- df.aggr.tran[rna.fil, , drop=FALSE]
-      df.met <- as.data.frame(rowData(se))[, , drop=FALSE]
-    })
-    cat('Preparing data matrix ... \n')
-    if (deg == FALSE) {
-    if (is.null(sear$id)) rows <- seq_len(nrow(df.aggr.tran)) else rows <- sear$id
-    if (length(rows)==1 & rows[1]==as.numeric(cfg$lis.par$data.matrix['row.selected', 'default'])) rows <- seq_len(nrow(df.aggr.tran))
-    df.aggr.tran.order <- df.aggr.tran[rows, col.reorder$col.na.re, drop=FALSE]
-    df.aggr.thr <- df2fil
-    df.aggr.tran <- df.aggr.tran[rows, , drop=FALSE]
-    df.aggr.thr <- df.aggr.thr[rows, , drop=FALSE]
-    df.aggr <- df.aggr[rows, , drop=FALSE]
-    df.met <- df.met[rows, , drop = FALSE]
-    } else {
-      # Only "df.rep" is used.
-      df.aggr.tran.order <- df.aggr.tran
-      df.rep <- df2fil  
-    }
-    if (!is.null(df.aggr.thr)) df.aggr.thr <- as.data.frame(as.matrix(df.aggr.thr))
-    # df.aggr.tran is used for SHMs.
-    cat('Done! \n'); return(list(df.aggr = as.data.frame(as.matrix(df.aggr)), df.aggr.tran = as.data.frame(as.matrix(df.aggr.tran)), df.aggr.tran.order = as.data.frame(as.matrix(df.aggr.tran.order)), df.aggr.thr = df.aggr.thr, df.met=df.met, df.rep = as.data.frame(as.matrix(df.rep)), con.na=gene.lis$con.na))
-
-  })
-  dt.shm <- reactive({
-    cat('Preparing data matrix ... \n')
-    if (is.null(geneIn())|length(ids$sel)==0) return()
-    if ((ipt$fileIn %in% cfg$na.cus & is.null(geneIn()) & is.null(scell.mod.lis))|ipt$fileIn=="none") return()
+  dt.shm <- eventReactive(list(se.scl()), {
+    cat('Prepaing data table ... \n')
+    se.scl <- se.scl(); dat <- dat()
+    if (!check_obj(list(se.scl, dat))) req('')
+    assay <- assay(se.scl); rdat <- rowData(se.scl)
     withProgress(message="Data table: ", value = 0, {
-      incProgress(0.5, detail="Preparing data matrix, please wait ...")
-      if (ipt$fileIn!="none") {
-      df.all <- geneIn()
-      if (deg == FALSE) gene.dt <- cbind.data.frame(df.all[["df.met"]][, , drop=FALSE], df.all[["df.aggr.tran"]][, , drop=FALSE], stringsAsFactors=FALSE) else gene.dt <- cbind.data.frame(df.all[["df.met"]][, , drop=FALSE], df.all[["df.rep"]][, , drop=FALSE], stringsAsFactors=FALSE)
+      incProgress(0.5, detail="please wait ...")
+      rdat <- rdat[, grep(met.pat, colnames(rdat)), drop=FALSE]
+      if (!all(assay==round(assay))) assay <- round(assay, 2)
+      if (ncol(rdat) > 0) df.tab <- cbind.data.frame(rdat, assay, stringsAsFactors=FALSE) else df.tab <- assay
       # Remove '__con' only in the data table, not in the downstream (shm, network).
-      if (df.all$con.na==FALSE) colnames(gene.dt) <- sub('__con$', '', colnames(gene.dt))
-   }
-   cat('Done!\n'); gene.dt
+      if (dat$con.na==FALSE) colnames(df.tab) <- sub('__con$', '', colnames(df.tab))
+      incProgress(0.4, detail="...")
+      cat('Done!\n'); df.tab
     })
+  }); observe({ dt.shm() })
+  output$selProf <- renderPlot({
+    cat('Profile of selected rows ... \n') 
+    scl <- input$scl; se.scl.sel <- se.scl.sel(); dat <- dat()
+    if (!check_obj(list(se.scl.sel, dat, scl))) req('')
+    # validate(need(length(ids$sel)<=100, 'Due to space limitation, profiles of 100+ genes are not plotted!')) 
+    dt.sel <- assay(se.scl.sel)
+    if (dat$con.na==FALSE) colnames(dt.sel) <- sub('__con$', '', colnames(dt.sel)) 
+    if (scl=='No') title <- 'No scaling' else if (scl=='Row') title <- 'Scaled by row' else if (scl=='Selected') title <- 'Scaled across selected rows' else if (scl=='All') title <- 'Scaled across all rows' else title <- '' 
+    lgd.guide <- guides(color=guide_legend(nrow=2, byrow=FALSE, title=NULL))
+    # grid.arrange(g1, g2, nrow=2)
+    if ('No' %in% scl) { 
+      y.title=paste0('Un-scaled values (', round(min(dt.sel), 2), '-', round(max(dt.sel), 2), ')')
+    } else {
+      y.title=paste0(title, ' (', round(min(dt.sel), 2), '-', round(max(dt.sel), 2), ')')
+    }
+    g <- graph_line(dt.sel, y.title=y.title, text.size=12, lgd.guide=lgd.guide); message('Done!'); g
   })
-
-  if (deg==FALSE) output$selProf <- renderPlot(height=800, {
-    cat('Profile of selected genes ... \n')
-    gene.dt <- dt.shm(); df.all <- geneIn()
-    df.aggr.thr <- df.all$df.aggr.thr
-    if (is.null(gene.dt)|length(ids$sel)==0|is.null(df.aggr.thr)) return()
-    validate(need(length(ids$sel)<=100, 'Due to space limitation, profiles of 100+ genes are not plotted!'))
-    dt.sel <- gene.dt[ids$sel, , drop=FALSE]
-    dt.sel <- dt.sel[, !colnames(dt.sel) %in% c('metadata', 'link'), drop=FALSE]
-    df.aggr.thr <- df.aggr.thr[ids$sel, , drop=FALSE]
-    scale.dat <- input$scaleDat; if (is.null(scale.dat)) return()
-    if (!is.null(scale.dat)) if (scale.dat=='No') title <- 'No scaling' else if (scale.dat=='Row') title <- 'Scaled by row' else if (scale.dat=='Selected') title <- 'Scaled across selected genes' else if (scale.dat=='All') title <- 'Scaled across all genes' else title <- '' 
-    # print(list('sel.prof', dim(df.all$df.aggr), dim(gene.dt)))
-    g1 <- graph_line(dt.sel, y.title=paste0(title, ' (', round(min(df.aggr.thr), 2), '-', round(max(df.aggr.thr), 2), ')'), text.size=12)
-    dt.sel.ori <- df.all$df.aggr[ids$sel, , drop=FALSE]
-    if (df.all$con.na==FALSE) colnames(dt.sel.ori) <- sub('__con$', '', colnames(dt.sel.ori))
-    g2 <- graph_line(dt.sel.ori, y.title=paste0('Un-scaled values (', round(min(dt.sel.ori), 2), '-', round(max(dt.sel.ori), 2), ')'))
-    cat('Done! \n'); grid.arrange(g1, g2, nrow=2)
-  })
-  if (deg==FALSE) output$dtSel <- renderDataTable({
+  output$dtSel <- renderDataTable({
     cat('Preparing selected data matrix ... \n')
-    gene.dt <- dt.shm()
-    if (is.null(gene.dt)|length(ids$sel)==0) return()
-    # Decimals.
-    df.num <- gene.dt[, !colnames(gene.dt) %in% c('metadata', 'link'), drop=FALSE]
-    geneIn <- geneIn(); cna <- colnames(geneIn$df.aggr.tran)
-    if (geneIn$con.na==FALSE) cna <- sub('__con$', '', cna)
-    if (all(df.num==round(df.num))) deci <- 0 else deci <- 2
-    dt.sel <- gene.dt[ids$sel, , drop=FALSE]
+    se.scl.sel <- se.scl.sel(); dat <- dat()
+    if (!check_obj(list(se.scl.sel, dat))) req('')
+    assay.sel <- assay(se.scl.sel); rdat <- rowData(se.scl.sel)
+    if (!all(assay.sel==round(assay.sel))) assay.sel <- round(assay.sel, 2)
+    withProgress(message="Data table (selected): ", value = 0, {
+      incProgress(0.5, detail="please wait ...")
+      if (dat$con.na==FALSE) colnames(assay.sel) <- sub('__con$', '', colnames(assay.sel))
+      rdat <- rdat[, grep(met.pat, colnames(rdat)), drop=FALSE]
+      if (ncol(rdat) > 0) df.tab <- cbind.data.frame(rdat, assay.sel, stringsAsFactors=FALSE) else df.tab <- assay.sel
+      # Remove '__con' only in the data table, not in the downstream (shm, network).
+    # Decimals. 
+    # if (all(assay.sel==round(assay.sel))) deci <- 0 else deci <- 2
     # Tooltip on metadata.
     col1 <- list(list(targets = c(1), render = DT::JS("$.fn.dataTable.render.ellipsis(40, false)")))
     # In case no metadata column.
-    if (colnames(dt.sel)[1]!='metadata') col1 <- NULL
-    dtab <- datatable(dt.sel, selection='none', escape=FALSE, filter="top", extensions=c('Scroller', 'FixedColumns'), plugins = "ellipsis",
-   options=list(pageLength=5, lengthMenu=c(5, 15, 20), autoWidth=TRUE, scrollCollapse=TRUE, deferRender=TRUE, scrollX=TRUE, scrollY=300, scroller=TRUE, searchHighlight=TRUE, search=list(regex=TRUE, smart=FALSE, caseInsensitive=TRUE), searching=FALSE, columnDefs=col1, dom='t', fixedColumns = list(leftColumns=2)), 
-   class='cell-border strip hover') %>% formatStyle(0, backgroundColor="orange", cursor='pointer') %>% 
-   formatRound(cna, deci)
+    if (colnames(df.tab)[1]!='metadata') col1 <- NULL
+    dtab <- datatable(df.tab[, seq(subdat$c1, subdat$c2, 1), drop=FALSE], selection='none', escape=FALSE, filter="top", extensions=c('Scroller', 'FixedColumns'), plugins = "ellipsis",
+   options=list(pageLength=5, lengthMenu=c(5, 15, 20), autoWidth=TRUE, scrollCollapse=TRUE, deferRender=TRUE, scrollX=TRUE, scrollY=300, scroller=TRUE, searchHighlight=TRUE, search=list(regex=TRUE, smart=FALSE, caseInsensitive=TRUE), searching=TRUE, columnDefs=col1, dom='t', fixedColumns = list(leftColumns=2)), 
+   class='cell-border strip hover') %>% formatStyle(0, backgroundColor="orange", cursor='pointer')
+   # formatRound(colnames(assay.sel), deci)
+   incProgress(0.4, detail="please wait ...")
     cat('Done! \n'); dtab
   })
+  })
+  subdat <- reactiveValues(r1=1, r2=500, c1=1, c2=20)
+  observeEvent(list(input$run+1, dt.shm()), ignoreInit=FALSE, {
+    r1 <- input$r1; r2 <- input$r2
+    c1 <- input$c1; c2 <- input$c2
+    gene.dt <- dt.shm()
+    if (!check_obj(list(r1, r2, c1, c2, gene.dt))) return() 
+    if (r1 < 1) r1 <- 1; if (c1 < 1) c1 <- 1
+    lgc.r <- r2 > r1; if (!lgc.r) {
+      show_mod(lgc.r, msg='Row End should > Row Start!')
+    }; req(lgc.r)
+    lgc.c <- c2 > c1; if (!lgc.c) {
+      show_mod(lgc.c, msg='Column End should > Column Start!')
+    }; req(lgc.c)
+    if (nrow(gene.dt) < r2) r2 <- nrow(gene.dt)
+    if (ncol(gene.dt) < c2) c2 <- ncol(gene.dt)
+    subdat$r1 <- r1; subdat$r2 <- r2
+    subdat$c1 <- c1; subdat$c2 <- c2
+  })
   dt.sel <- reactiveValues(val='none')
-  if (deg==FALSE) output$dtAll <- renderDataTable({
+  output$dtAll <- renderDataTable({
     cat('Preparing complete data matrix ... \n')
     gene.dt <- dt.shm(); page.h <- input$page
     if (is.null(gene.dt)|!is.numeric(page.h)) return()
     # Decimals.
-    df.num <- gene.dt[, !colnames(gene.dt) %in% c('metadata', 'link'), drop=FALSE]
-    geneIn <- geneIn(); cna <- colnames(geneIn$df.aggr.tran)
-    if (geneIn$con.na==FALSE) cna <- sub('__con$', '', cna)
-    if (all(df.num==round(df.num))) deci <- 0 else deci <- 2
+    #idx.num <- grep(met.pat, colnames(gene.dt), invert=TRUE)
+    #df.num <- gene.dt[, idx.num, drop=FALSE]
+    #if (all(df.num==round(df.num))) deci <- 0 else deci <- 2
     # Tooltip on metadata.
     col1 <- list(list(targets = c(1), render = DT::JS("$.fn.dataTable.render.ellipsis(40, false)")))
     if (colnames(gene.dt)[1]!='metadata') col1 <- NULL
-    dtab <- datatable(gene.dt, selection=list(mode="multiple", target="row", selected=dt.sel$val), escape=FALSE, filter="top", extensions=c('Scroller', 'FixedColumns'), plugins = "ellipsis",
-   options=list(pageLength=5, lengthMenu=c(5, 15, 20), autoWidth=TRUE, scrollCollapse=TRUE, deferRender=TRUE, scrollX=TRUE, scrollY=page.h, scroller=TRUE, searchHighlight=TRUE, search=list(regex=TRUE, smart=FALSE, caseInsensitive=TRUE), searching=FALSE, columnDefs=col1), 
-   class='cell-border strip hover') %>% formatStyle(0, backgroundColor="orange", cursor='pointer') %>% 
-   formatRound(cna, deci)
-    cat('Done! \n'); dtab
+    dtab <- datatable(gene.dt[seq(subdat$r1, subdat$r2, 1), seq(subdat$c1, subdat$c2, 1), drop=FALSE], selection=list(mode="multiple", target="row", selected=dt.sel$val), escape=FALSE, filter="top", extensions=c('Scroller', 'FixedColumns'), plugins = "ellipsis",
+   options=list(pageLength=5, lengthMenu=c(5, 15, 20), autoWidth=TRUE, scrollCollapse=TRUE, deferRender=TRUE, scrollX=TRUE, scrollY=page.h, scroller=TRUE, searchHighlight=TRUE, search=list(regex=TRUE, smart=FALSE, caseInsensitive=TRUE), searching=TRUE, columnDefs=col1), 
+   class='cell-border strip hover') %>% formatStyle(0, backgroundColor="orange", cursor='pointer'); cat('Done! \n'); dtab 
+   # formatRound(idx.num, deci); cat('Done! \n'); dtab
   })
 
-  if (deg==TRUE) output$dtRep <- renderDataTable({
-    cat('Preparing complete data matrix ... \n')
-    gene.dt <- dt.shm(); if (is.null(gene.dt)) return()
-    col1 <- list(list(targets = c(1), render = DT::JS("$.fn.dataTable.render.ellipsis(40, false)")))
-    # In case no metadata column.
-    if (colnames(gene.dt)[1]!='metadata') col1 <- NULL
-    dtab <- datatable(gene.dt, selection='none', escape=FALSE, filter="top", extensions=c('Scroller', 'FixedColumns'), plugins = "ellipsis",
-   options=list(pageLength=5, lengthMenu=c(5, 15, 20), autoWidth=TRUE, scrollCollapse=TRUE, deferRender=TRUE, scrollX=TRUE, scrollY=300, scroller=TRUE, searchHighlight=TRUE, search=list(regex=TRUE, smart=FALSE, caseInsensitive=TRUE), searching=FALSE, columnDefs=col1, dom = 't', fixedColumns = list(leftColumns=2)), 
-   class='cell-border strip hover') %>% formatStyle(0, backgroundColor="orange", cursor='pointer') %>% 
-   formatRound(colnames(geneIn()[["df.aggr.tran"]]), 0)
-    cat('Done! \n'); dtab
-  })
-  observeEvent(input$dat.all.but, { # Select genes in table.
+  observeEvent(list(input$selRow), { # Select genes in table.
     gene.dt <- dt.shm(); if (is.null(gene.dt)) return()
     ids$sel <- rownames(gene.dt)[input$dtAll_rows_selected]
     dt.sel$val <- input$dtAll_rows_selected
   })
+  observeEvent(list(input$deSel), { # Select genes in table.
+    gene.dt <- dt.shm(); if (is.null(gene.dt)) return()
+    ids$sel <- NULL; dt.sel$val <- 'none'
+  })
   observe({
     ipt$fileIn; ipt$geneInpath; lis.par <- cfg$lis.par; lis.url
     url.val <- url_val('dat-log', lis.url)
-    updateSelectInput(session, inputId='log', label='Log/exp transform', selected=ifelse(url.val!='null', url.val, cfg$lis.par$data.matrix['log.exp', 'default']), )
+    updateSelectInput(session, inputId='log', selected=ifelse(url.val!='null', url.val, cfg$lis.par$data.matrix['log.exp', 'default']))
     url.val <- url_val('dat-scale', lis.url)
-    updateSelectInput(session, 'scaleDat', label='Scale by', selected=ifelse(url.val!='null', url.val, cfg$lis.par$data.matrix['scale', 'default']))
+    updateSelectInput(session, 'scl', selected=ifelse(url.val!='null', url.val, cfg$lis.par$data.matrix['scale', 'default']))
   })
 
   observe({
     ipt$fileIn; ipt$geneInpath; input$log; lis.url
     url.val <- url_val('dat-A', lis.url)
-    updateNumericInput(session, inputId="A", label="Threshold (A) to exceed", value=ifelse(url.val!='null', url.val, as.numeric(cfg$lis.par$data.matrix['A', 'default']))) 
+    updateNumericInput(session, inputId="A", value=ifelse(url.val!='null', url.val, as.numeric(cfg$lis.par$data.matrix['A', 'default']))) 
     url.val <- url_val('dat-P', lis.url)
-    updateNumericInput(session, inputId="P", label="Proportion (P) of samples with values >= A", value=ifelse(url.val!='null', url.val, as.numeric(cfg$lis.par$data.matrix['P', 'default'])), min=0, max=1)
+    updateNumericInput(session, inputId="P", value=ifelse(url.val!='null', url.val, as.numeric(cfg$lis.par$data.matrix['P', 'default'])), min=0, max=1)
     url.val <- url_val('dat-CV1', lis.url)
-    updateNumericInput(session, inputId="CV1", label="Min coefficient of variation (CV1)", value=ifelse(url.val!='null', url.val, as.numeric(cfg$lis.par$data.matrix['CV1', 'default'])))
+    updateNumericInput(session, inputId="CV1", value=ifelse(url.val!='null', url.val, as.numeric(cfg$lis.par$data.matrix['CV1', 'default'])))
     url.val <- url_val('dat-CV2', lis.url)
-    updateNumericInput(session, inputId="CV2", label="Max coefficient of variation (CV2)", value=ifelse(url.val!='null', url.val, as.numeric(cfg$lis.par$data.matrix['CV2', 'default']))) 
-  })
-  observeEvent(list(input$tran.scale.but.sel, input$tran.scale.but.prof), ignoreInit=TRUE, {
-    updateTabsetPanel(session, "dtab.shm", selected='dTabAll')
+    updateNumericInput(session, inputId="CV2", value=ifelse(url.val!='null', url.val, as.numeric(cfg$lis.par$data.matrix['CV2', 'default']))) 
   })
 
   observeEvent(scell.mod.lis$covis.man$match.mod.lis$but.match$val, ignoreInit=TRUE, {
@@ -382,15 +484,19 @@ data_server <- function(id, sch, lis.url, ids, deg = FALSE, upl.mod.lis, scell.m
   ipt.dat <- reactiveValues()
   observe({ ipt.dat$dt_rows_selected <- input$dt_rows_selected })
   col.cfm <- reactive({ input$col.cfm })
-  col.na <- reactive({ input$na })
-  scaleDat <- reactive({ input$scaleDat })
+  scl <- reactive({ input$scl })
   log <- reactive({ input$log }); A <- reactive({ input$A })
   CV1 <- reactive({ input$CV1 }); CV2 <- reactive({ input$CV2 })
   P <- reactive({ input$P })
   search.but <- reactive({ sch$but })
   sig.but <- reactive({ input$sig.but })
+  observe({
+    dat <- dat(); profile <- shm.mod$ipt$profile; fileIn <- ipt$fileIn
+    if (!check_obj(list(dat, profile, fileIn))) return()
+    if (! 'idp' %in% profile | !grepl(na.sgl, fileIn)) con.na$v <- dat$con.na     
+  })
   onBookmark(function(state) { state })
-  return(list(geneIn0 = geneIn0, geneIn1 = geneIn1, geneIn = geneIn, sear = sear, ipt.dat = ipt.dat, col.reorder = col.reorder, col.cfm = col.cfm, col.na = col.na, scaleDat=scaleDat, log = log, A = A, P = P, CV1 = CV1, CV2 = CV2, search.but = search.but, sig.but=sig.but))
+  return(list(sear = sear, ipt.dat = ipt.dat, col.cfm = col.cfm, scaleDat=scl, log = log, A = A, P = P, CV1 = CV1, CV2 = CV2, search.but = search.but, sig.but=sig.but, dat=dat, se.scl=se.scl, se.scl.sel=se.scl.sel, con.na=con.na, con.na.cell=con.na.cell, se.thr=se.thr))
   })
 
 }

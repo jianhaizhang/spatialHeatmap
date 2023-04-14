@@ -3,16 +3,12 @@ scell_server <- function(id, tab, upl.mod.lis, shm.mod.lis, session) {
   moduleServer(id, function(input, output, session) {
   cat('Module scell_server ... \n')
   ns <- session$ns;
-  observeEvent(input$covisHelp, {
-    showModal(
-    div(id='covisHel', modalDialog(title= HTML('Click "Co-visualizing" to see the co-visualization plot.'),
-      )))
-    }) 
   # Apply to switching from sce of bulk+cell to sce of cell alone.
   sce.upl <- reactiveValues()
   observeEvent(upl.mod.lis$sce$val, {
     library(Matrix)
     sce.all <- upl.mod.lis$sce$val
+    reducedDim(sce.all, 'PCA') <- reducedDim(sce.all, 'UMAP') <- reducedDim(sce.all, 'TSNE') <- NULL
     # save(sce.all, file='sce.all')
     if (!is.null(sce.all)) {
       assay.na <- assayNames(sce.all)
@@ -28,13 +24,21 @@ scell_server <- function(id, tab, upl.mod.lis, shm.mod.lis, session) {
       validate(need(int, '')); sce.upl$method <- 'manual'
       if ('bulkCell' %in% colnames(cdat)) {
         blk.cell.uni <- unique(cdat$bulkCell)
-        if (all(c('bulk', 'cell') %in% blk.cell.uni)) { 
+        if (all(c('bulk', 'cell') %in% blk.cell.uni)) {
+          cdat.na <- colnames(cdat)
+          lab.na <- grep('^label$|^label\\d+', cdat.na, value=TRUE)
+          if (length(lab.na)==0) {
+            show_mod(length(lab.na)>0, msg='At least one label column in "colData" slot is required, such as "label", "label1", "label2", ...')
+          }; validate(need(length(lab.na) > 0, ''))
           sce.upl$method <- 'both'
-          sce.upl$bulk <- subset(sce.all, , bulkCell=='bulk')
+          bulk <- subset(sce.all, , bulkCell=='bulk')
+          # Bulk data are aggregated. 
+          bulk <- aggr_rep(data=bulk, sam.factor=lab.na[1], aggr='mean')
+          assay(bulk) <- round(assay(bulk)); sce.upl$bulk <- bulk
           sce.upl$cell <- subset(sce.all, , bulkCell=='cell')
         }
       } else {
-        updateSelectInput(session, 'methCovis', choices=c('Annotation/manual'='man'), selected='man')
+        updateSelectInput(session, 'methCovis', choices=c('Annotation/Manual'='man'), selected='man')
       }
     }
   })
@@ -62,19 +66,12 @@ scell_server <- function(id, tab, upl.mod.lis, shm.mod.lis, session) {
   # Initiate three reactive values in the same line can cause problems, since covisGrp slots can be assigned to covis.auto if the former have slots while the latter has no slots.
   # covis.man <- covis.auto <- covisGrp <- reactiveValues()
   covisGrp <- reactiveValues()
-  covis.man <- reactiveValues(); covis.auto <- reactiveValues()
+  covis.man <- reactiveValues(); covis.auto <- reactiveValues(con.na=FALSE)
   observe({
     meth.covis <- input$methCovis; direc <- input$direc
     cell <- sce.upl$cell; covis.type <- NULL
     if (is.null(meth.covis)|is.null(direc)|is.null(cell)) return()
     if ('man' %in% meth.covis) {
-      cdat.na <- colnames(colData(cell))
-      lab.na <- grep('^label$|^label\\d+', cdat.na, value=TRUE) 
-      if (length(lab.na)==0) {
-        showModal(modalDialog(title='In annotation-based or manual matching, at least one label column in "colData" slot is required for single cell data, such as "label", "label1", "label2", ...' 
-        ))
-      }
-      validate(need(length(lab.na) > 0, ''))
       if (direc=='toBulk') covis.type <- 'toBulk'
       if (direc=='toCell') covis.type <- 'toCell'
     }
@@ -111,9 +108,9 @@ scell_server <- function(id, tab, upl.mod.lis, shm.mod.lis, session) {
       covisGrp$val <- covis.auto$covisGrp
     }
   })
-  df.lis <- reactive({
+  sce.res <- reactive({
     cat('Single cell: aggregating cells ... \n')
-    if (upl.mod.lis$ipt$fileIn!='customSingleCellData') return()
+    if (!grepl(na.sgl, upl.mod.lis$ipt$fileIn)) return()
     covis.type <- sce.upl$covis.type; method <- sce.upl$method
     if (is.null(covis.type)|is.null(method)) return()
     sce.shm <- NULL
@@ -134,25 +131,21 @@ scell_server <- function(id, tab, upl.mod.lis, shm.mod.lis, session) {
 
     # Column names: sp.ft, exp.var.
     sp.ft <- covisGrp$val; if (is.null(sp.ft)) return()
-    cdat <- colData(sce.shm); con.na <- TRUE
+    cdat <- colData(sce.shm)
     if (!sp.ft %in% colnames(cdat)) return()
-    # Auto-formed clusters should not be combined with expVar, since all cells under expVar are clustered. The cell labels are defined by users under control and condition independently.
-    if ('expVar' %in% colnames(cdat) & 'man' %in% method) colnames(df.rep) <- paste0(cdat[, sp.ft], '__', cdat[, 'expVar']) else { colnames(df.rep) <- cdat[, sp.ft]; con.na <- FALSE }
-    withProgress(message="Aggregating cells: ", value=0, {
-      incProgress(0.3, detail="please wait ...")
-    df.lis <- fread_df(df.rep, rep.aggr='mean')
+    # Auto-formed clusters should not be combined with variable, since all cells under variable are clustered. The cell labels are defined by users under control and condition independently.
+    if ('variable' %in% colnames(cdat) & 'man' %in% method) colnames(df.rep) <- paste0(cdat[, sp.ft], '__', cdat[, 'variable']) else { colnames(df.rep) <- cdat[, sp.ft] }
+    withProgress(message="Covis: ", value=0, {
+      incProgress(0.3, detail="aggregating cells or bulk ...")
+      sce.lis <- fread_df(cbind(as(df.rep, 'matrix'), rowData(sce.shm)), rep.aggr='mean')
+      incProgress(0.3, detail="aggregating cells or bulk ...")
     })
-    df.aggr <- df.lis$df.aggr; rdat <- rowData(sce.shm)
-    idx.link <- grep('^link$', colnames(rdat), ignore.case=TRUE)
-    if (length(idx.link)>0) df.link <- rdat[, idx.link[1], drop=FALSE] else df.link <- df.lis$df.met[, 'link', drop=FALSE]
-    idx.met <- grep('^metadata$', colnames(rdat), ignore.case=TRUE)
-    if (length(idx.met)>0) df.met <- cbind(rdat[, idx.met[1], drop=FALSE], df.link) else df.met <- df.link
-    lis <- list(df.aggr=df.aggr, df.aggr.tran=df.aggr, df.met=df.met, df.rep=df.rep, con.na=df.lis$con.na, covisGrp=sp.ft)
+    lis <- list(sce.lis=sce.lis, covisGrp=sp.ft)
     # save(lis, file='lis')
     cat('Done! \n'); return(lis)
   })
   cat('Module scell_server done! \n')
   onBookmark(function(state) { state })
-  return(list(sce.upl=sce.upl, df.lis=df.lis, covis.man=covis.man, covis.auto=covis.auto))
+  return(list(sce.upl=sce.upl, sce.res=sce.res, covis.man=covis.man, covis.auto=covis.auto, input=input))
 
 })}

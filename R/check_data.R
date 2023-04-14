@@ -55,21 +55,26 @@ check_data <- function(data, assay.na=NULL, sam.factor=NULL, con.factor=NULL, us
     if (!is.null(sam.factor) & !is.null(con.factor)) { fct.cna <- colnames(dat) <- paste0(col.meta[, sam.factor], '__', col.meta[, con.factor]); con.na <- TRUE } 
 
     if (usage=='shm') {
-
       if (!is.null(sam.factor) & is.null(con.factor)) { sam.na <- as.vector(col.meta[, sam.factor]); fct.cna <- paste0(sam.na, "__", "con"); con.na <- FALSE } else if (is.null(sam.factor)) { form <- grepl("__", cna); if (sum(form)==0) { fct.cna <- paste0(cna, '__', 'con'); con.na <- FALSE } else con.na <- TRUE }
       if (!is.null(fct.cna)) { colnames(dat) <- make.names(fct.cna); if (!identical(fct.cna, make.names(fct.cna))) cat('Syntactically valid column names are made! \n') }
       if (any(duplicated(colnames(dat)))) stop("Please use function \'aggr_rep\' to aggregate \'sample__condition\' replicates!")
-    
-    } else if (usage %in% c('aggr', 'filter')) {
- 
+    } else if (usage %in% c('aggr', 'filter')) { 
       if (!is.null(sam.factor) & is.null(con.factor)) {  fct.cna <- as.vector(col.meta[, sam.factor]) } else if (is.null(sam.factor) & !is.null(con.factor)) { fct.cna <- as.vector(col.meta[, con.factor]) } else fct.cna <- colnames(dat)
       if (!identical(fct.cna, make.names(fct.cna))) cat('Syntactically valid column names are made! \n')
       fct.cna <- colnames(dat) <- make.names(fct.cna) 
-
     }
-
-  } else { stop('Accepted data classes are "data.frame", "matrix", "DFrame", "dgCMatrix", "SummarizedExperiment", or "SingleCellExperiment" except that "spatial_hm" also accepts a "vector".')
- 
-  }; return(list(dat=dat, fct.cna=fct.cna, col.meta=col.meta, row.meta=row.meta, con.na=con.na)) 
-
+    col.meta <- DataFrame(col.meta)
+    rownames(col.meta) <- fct.cna
+  } else { stop('Accepted data classes are "data.frame", "matrix", "DFrame", "dgCMatrix", "SummarizedExperiment", or "SingleCellExperiment" except that "spatial_hm" also accepts a "vector".') 
+  };
+  cname <- colnames(dat); form <- grepl('__', cname) 
+  # con <- gsub("(.*)(__)(.*)", "\\3", cname[form]) 
+  if (sum(form)>0) con <- gsub("(.*)(__)(.*)", "\\3", cname)  
+  sam <- gsub("(.*)(__)(.*)", "\\1", cname)
+  if (is(data, 'SummarizedExperiment') | is(data, 'SingleCellExperiment')) {
+    rownames(dat) <- rownames(row.meta)
+    se <- SummarizedExperiment(assays=list(data=as.matrix(dat)), colData=DataFrame(col.meta), rowData=DataFrame(row.meta))
+  } else se <- SummarizedExperiment(assays=list(data=as.matrix(dat)))
+  se$spFeature <- sam; if (sum(form)>0) se$variable <- con
+  return(list(dat=dat, fct.cna=fct.cna, col.meta=col.meta, row.meta=row.meta, con.na=con.na, se=se)) 
 }

@@ -9,7 +9,7 @@ norm_cell(
   bulk = NULL,
   cpm = FALSE,
   count.kp = FALSE,
-  quick.clus = list(min.size = 100),
+  quick.clus = list(min.size = 100, d = NULL),
   com.sum.fct = list(max.cluster.size = 3000, min.mean = 1),
   log.norm = list(),
   com = FALSE,

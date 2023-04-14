@@ -34,7 +34,7 @@
  
 #' @seealso \code{spatial_enrich}
 
-#' @export deg_ovl
+#' @export
 #' @importFrom UpSetR upset fromList
 
 deg_ovl <- function(lis.up.down, type='up', plot='upset', order.by="degree", nintersects=40, point.size=3, line.width=1, mb.ratio=c(0.6, 0.4), text.scale=1.5, axis.agl=45, font.size=5, cols=c("lightcyan3", "darkorange")) {

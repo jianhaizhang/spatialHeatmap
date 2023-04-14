@@ -13,6 +13,9 @@
 #' @param alpha The transparency of cells and bulk tissues. The default is 0.6.
 #' @param stroke,bulk.stroke The line width of cells and bulk tissues respectively.
 #' @param axis.text.size,axis.title.size The size of axis text and title respectively.
+#' @param lgd.pos The legend position, one of \code{top}, \code{right}, \code{bottom}, \code{left}.
+#' @param lgd.ncol The number of legend columns.
+#' @param lgd.l,lgd.r The left and right margins of legends. 
 
 #' @return An object of ggplot.
 
@@ -42,7 +45,8 @@
 #' @importFrom SingleCellExperiment reducedDim reducedDimNames
 #' @importFrom ggplot2 ggplot scale_fill_manual scale_size_manual geom_point aes theme_classic theme element_text labs scale_x_continuous scale_y_continuous guides guide_legend
 
-plot_dim <- function(sce, dim=NULL, color.by, group.sel=NULL, row.sel=NULL, cocluster.only=TRUE, x.break=NULL, y.break=NULL, panel.grid=FALSE, lgd.title.size=13, lgd.key.size=0.03, lgd.text.size=12, point.size=3, bulk.size=5, alpha=0.7, stroke=0.2, bulk.stroke=1, axis.text.size=10, axis.title.size=11) {
+plot_dim <- function(sce, dim=NULL, color.by, group.sel=NULL, row.sel=NULL, cocluster.only=TRUE, x.break=NULL, y.break=NULL, panel.grid=FALSE, lgd.title.size=13, lgd.key.size=0.03, lgd.text.size=12, point.size=3, bulk.size=5, alpha=0.7, stroke=0.2, bulk.stroke=1, axis.text.size=10, axis.title.size=11, lgd.pos='right', lgd.ncol=1, lgd.l=0, lgd.r=0.01) {
+ # save(sce, dim, color.by, group.sel, row.sel, cocluster.only, x.break, y.break, panel.grid, lgd.title.size, lgd.key.size, lgd.text.size, point.size, bulk.size, alpha, stroke, bulk.stroke, axis.text.size, axis.title.size, lgd.pos, lgd.l, lgd.r, file='plot.dim.arg')
   # All scenarios: 1. Only cell, select by row, group, or all. 2. Bulk and cell, select by row, group, or all.
   x <- y <- key <- colour_by <- bulkCell <- NULL
   cdat <- colData(sce); blk.cell <- FALSE
@@ -189,7 +193,7 @@ plot_dim <- function(sce, dim=NULL, color.by, group.sel=NULL, row.sel=NULL, cocl
     }
   } else { scl.sz <- NULL }
 
-  thm <- theme(plot.title=element_text(hjust=0.5, size=14), legend.title=element_text(size=lgd.title.size), legend.key.size=unit(lgd.key.size, "npc"), legend.text=element_text(size=lgd.text.size), axis.text=element_text(size=axis.text.size), axis.title=element_text(size=axis.title.size, face="plain"))
+  thm <- theme(plot.title=element_text(hjust=0.5, size=14), legend.title=element_text(size=lgd.title.size), legend.key.size=unit(lgd.key.size, "npc"), legend.text=element_text(size=lgd.text.size), axis.text=element_text(size=axis.text.size), axis.title=element_text(size=axis.title.size, face="plain"), legend.position=lgd.pos, legend.margin=margin(l=lgd.l, r=lgd.r, unit='npc'))
   
   # Stroke
   sk <- rep(stroke, nrow(df.all))
@@ -224,7 +228,7 @@ plot_dim <- function(sce, dim=NULL, color.by, group.sel=NULL, row.sel=NULL, cocl
 
     gg <- ggplot(df.all, aes(x=x, y=y, key=key)) + geom_point(colour='black', alpha=alpha, stroke=df.all$stroke, shape=21, ae) + thm + lab + scl.col + scl.sz
   }
-  gg <- gg + guides(fill = guide_legend(override.aes = list(size=point.size)))
+  gg <- gg + guides(fill = guide_legend(override.aes = list(size=point.size), ncol = lgd.ncol, byrow = TRUE), size = guide_legend(ncol = lgd.ncol, byrow = TRUE))
   # Overwrite theme.
   if (panel.grid==FALSE) gg <- gg + theme_classic() + thm + lab + scl.col + scl.sz 
   if (!is.null(x.break) & is.null(y.break)) gg <- gg + scale_x_continuous(breaks=x.break)

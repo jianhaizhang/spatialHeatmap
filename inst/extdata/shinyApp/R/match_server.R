@@ -1,29 +1,32 @@
 # Match spatial features between data and aSVG.
-match_server <- function(id, sam, tab, upl.mod.lis, covis.man=NULL, session) {
-  moduleServer(id, function(input, output, session) { 
+match_server <- function(id, sam, tab, upl.mod.lis, covis.man=NULL, col.idp=FALSE, session) {
+  moduleServer(id, function(input, output, session) {
   observeEvent(input$matHelp, {
     showModal(
-    div(id='matHel', modalDialog(title= HTML('Use mouse to match at least one item, then click "Update" to see the output plot.')
-      )))
-    })
+    div(id = 'matchHel',
+    modalDialog(title = HTML('<strong><center>Matching spatial features</center></strong>'),
+      div(style = 'overflow-y:scroll;overflow-x:scroll',
+      HTML('<img src="image/match.jpg">'),
+    ))))
+  })
   ipt <- upl.mod.lis$ipt; cfg <- upl.mod.lis$cfg
   # renderUI: if the tab/page containing uiOutput('svg') is not active/clicked, the input$svg on the server side is NULL. To avoid this, the ui side should have "selectInput".
   output$svgs <- renderUI({
-    # When customSingleCellData is selected, matching is disabled in SHM.
-    if(id!='rematchCell' & ipt$fileIn=='customSingleCellData') return()
-    ns <- session$ns; nas <- c(names(cfg$pa.svg.reg), names(cfg$svg.def))
-    selectInput(ns('svg'), label='Choose an aSVG to match', choices=nas, selected=ipt$fileIn)
+    # When customCovisData is selected, matching is disabled in SHM.
+    if(id!='rematchCell' & grepl(na.sgl, ipt$fileIn)) return()
+    ns <- session$ns; # nas <- c(names(cfg$pa.svg.reg), names(cfg$svg.def))
+    selectInput(ns('svg'), label='Choose an aSVG to match', choices=cfg$na.def, selected=ipt$fileIn)
   })
 
   output$match.but <- renderUI({
-    # When customSingleCellData is selected, matching is disabled in SHM.
-    if(id!='rematchCell' & ipt$fileIn=='customSingleCellData') return()
+    # When customCovisData is selected, matching is disabled in SHM.
+    if(id!='rematchCell' & grepl(na.sgl, ipt$fileIn)) return()
     ns <- session$ns
-    actionButton(ns("match"), 'Update', icon=NULL)
+    actionButton(ns("match"), 'Run', icon=icon("sync"), style=run.col)
   })
   output$match.reset <- renderUI({
-    # When customSingleCellData is selected, matching is disabled in SHM.
-    if(id!='rematchCell' & ipt$fileIn=='customSingleCellData') return()
+    # When customCovisData is selected, matching is disabled in SHM.
+    if(id!='rematchCell' & grepl(na.sgl, ipt$fileIn)) return()
     ns <- session$ns
     actionButton(ns("matReset"), 'Reset', icon=icon("sync"))
   })
@@ -41,14 +44,20 @@ match_server <- function(id, sam, tab, upl.mod.lis, covis.man=NULL, session) {
   # Extract features in data and aSVG and create user interface to host these features.
   observeEvent(list(input$svg, ipt$svgInpath1, ipt$svgInpath2), {
     cat('Re-matching: features in aSVG ... \n')
-    if (is.null(ipt$fileIn)|is.null(cfg$svg.def)|is.null(input$svg)) return()
-    if (ipt$fileIn=='none') return()
-    if (input$svg!='uploaded') {
+    svg.in <- input$svg; svg.def <- cfg$svg.def
+    if (is.null(ipt$fileIn)|is.null(svg.def)|is.null(svg.in)) return()
+    if (svg.in!='uploaded') {
+      svg.path <- svg.def[[svg.in]]
+      if ('data_shm.tar' %in% basename(svg.path)) {
+        svg.path <- read_hdf5('data/data_shm.tar', svg.in)[[1]]$svg
+        validate(need(try(file.exists(svg.path)), svg.path))
+      }
+      svg.na <- basename(svg.path)
       # Single or multiple svg paths are treated same way.
-      lis <- svg_pa_na(cfg$svg.def[[input$svg]], cfg$pa.svg.upl, raster.ext)
-      output$msg.match <- renderText({ validate(need(try(!is.character(lis)), lis)) })
-      validate(need(try(!is.character(lis)), lis))
-      svg.path <- lis$svg.path; svg.na <- lis$svg.na
+      # lis <- svg_pa_na(svg.def[[svg.in]], cfg$pa.svg.upl, raster.ext)
+      # output$msg.match <- renderText({ validate(need(try(!is.character(lis)), lis)) })
+      # validate(need(try(!is.character(lis)), lis))
+      # svg.path <- lis$svg.path; svg.na <- lis$svg.na
     } else { # aSVGs uploaded in regular files, not tar.
       svg.path <- cfg$pa.svg.reg[[1]]
       svg.na <- vapply(strsplit(svg.path, '/'), function(x) {x[length(x)]}, character(1))
@@ -65,7 +74,7 @@ match_server <- function(id, sam, tab, upl.mod.lis, covis.man=NULL, session) {
     cat('Extract all spatial features for re-matching ... \n')
     # Whether a single or multiple SVGs, all are returned a coord.
     svg.paths <- grep('\\.svg$', svg.path, value=TRUE)
-    svgs <- read_svg(svg.path=svg.paths)
+    svgs <- read_svg_m(svg.path=svg.paths)
     validate(need(!is.character(svgs), svgs))
     sf.all <- unique(unlist(lapply(seq_along(svgs), function(x) { svg_separ(svg.all=svgs[x])$tis.path })))
   })
@@ -76,10 +85,21 @@ match_server <- function(id, sam, tab, upl.mod.lis, covis.man=NULL, session) {
   ft.reorder$ft.svg <- sf.all; cat('Done! \n')
   })
 
+  observeEvent(list(ft.reorder$ft.svg, col.idp), {
+    ft.svg <- ft.reorder$ft.svg; bulk <- covis.man$bulk
+    covisGrp <- covis.man$covisGrp
+    if (!check_obj(list(ft.svg, col.idp, bulk))) return()
+    if (col.idp==TRUE) {
+      # In covis independent coloring, fts abesent in data are excluded, since even if matched with cell groups, they will be transparent.
+      ft.dat.blk <- unique(colData(bulk)[, covisGrp][bulk$bulkCell %in% 'bulk'])
+      ft.svg <- intersect(ft.svg, ft.dat.blk)
+      if (length(ft.svg)==0) ft.svg <- NULL 
+      ft.reorder$ft.svg <- ft.svg
+    }
+  })
   observeEvent(list(sam(), input$svg, ipt$svgInpath1, ipt$svgInpath2), {
     cat('Re-matching: features in data ... \n')
     if (is.null(ipt$fileIn)|is.null(cfg$svg.def)|is.null(input$svg)) return()
-    if (ipt$fileIn=='none') return()
     sams <- sam(); if (is.null(sams)) return()
     ft.reorder$ft.dat <- unique(sams); cat('Done! \n')
   })
@@ -91,7 +111,8 @@ match_server <- function(id, sam, tab, upl.mod.lis, covis.man=NULL, session) {
       # Set NULL to from.ft in last matching.
       for (i in ft.reorder$ft.dat) {
         if (length(input[[i]])>0) {
-          runjs(paste0("Shiny.onInputChange('", session$ns(i), "', null)"))
+          runjs(paste0("setipt('", session$ns(i), "', null)"))
+          # runjs(paste0("Shiny.onInputChange('", session$ns(i), "', null)"))
         }; clean$val <- 'yes'
       }
     }
@@ -101,16 +122,20 @@ match_server <- function(id, sam, tab, upl.mod.lis, covis.man=NULL, session) {
       for (i in ft.reorder$ft.dat) {
         # Set NULL to from.ft in last matching.
         if (length(input[[i]])>0) {
-          runjs(paste0("Shiny.onInputChange('", session$ns(i), "', null)")) 
+          # Inside this observeEvent, input[[session$ns(i)]] will not change. It is NULL only outside this observeEvent.
+          runjs(paste0("setipt('", session$ns(i), "', null)"))
+          #runjs(paste0("Shiny.onInputChange('", session$ns(i), "', null)"))  
         }; clean$val <- 'yes'
       }
   })
+  # Inside Shiny modules, change input values: always use session$ns; access input values: do not use session$ns, e.g. input$test.
+  # observe({ runjs(paste0("setipt('", session$ns('test'), "', 100)")) })
 
   output$ft.match <- renderUI({
     cat('Re-matching: preparing interface of data/aSVG features ... \n')
     input$matReset
-    # When customSingleCellData is selected, matching is disabled in SHM.
-    if(id!='rematchCell' & ipt$fileIn=='customSingleCellData') return()
+    # When customCovisData is selected, matching is disabled in SHM.
+    if(id!='rematchCell' & grepl(na.sgl, ipt$fileIn)) return()
     ns <- session$ns; to.ft <- ft.reorder$ft.svg
     from.ft <- ft.reorder$ft.dat
     if (is.null(to.ft)|is.null(from.ft)) return()
@@ -138,8 +163,11 @@ match_server <- function(id, sam, tab, upl.mod.lis, covis.man=NULL, session) {
     lis0 <- lapply(ft.dat, function(x) input[[x]])
     names(lis0) <- ft.dat 
     lis0 <- lis0[lapply(lis0, function(x) length(x)>0)==TRUE]
+    # save(lis0, file='lis0')
+    if (length(lis0)==0) showModal(modal(msg ='No spatial features are matched!')); validate(need(try(length(lis0)>0), ''))
     ft.reorder$ft.rematch <- lis0
   })
+  observeEvent(list(input$matReset), { ft.reorder$ft.rematch <- list() })
 
   but.match <- reactiveValues()
   observe({

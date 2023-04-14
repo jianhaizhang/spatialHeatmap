@@ -25,7 +25,7 @@ This is a helper function for data/aSVGs involving three or more factors such as
 }
 \examples{
 library(SummarizedExperiment)
-mus.se.pa <- system.file('extdata/shinyApp/example/mus_brain_vars_se.rds', package='spatialHeatmap')
+mus.se.pa <- system.file('extdata/shinyApp/data/mus_brain_vars_se.rds', package='spatialHeatmap')
 mus.se <- readRDS(mus.se.pa); targets.info <- colData(mus.se)
 targets.new <- com_factor(target=targets.info, factors2com=c('time', 'treatment', 'injury'), factor.new='comDim')
 }

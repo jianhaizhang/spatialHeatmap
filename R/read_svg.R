@@ -4,7 +4,8 @@
 
 #' @param svg.path A vector of one or multiple paths of aSVG files. If multiple aSVGs, such as aSVGs depicting organs development across mutiple times, the aSVGs should be indexed with suffixes "_shm1", "_shm2", ..., such as "arabidopsis.thaliana_organ_shm1.svg", "arabidopsis.thaliana_organ_shm2.svg". 
 #' @param raster.path \itemize{ \item A vector of one or multiple paths of raster images in form of jpg or png, which are usually used as templates for creating aSVG images in \code{svg.path}. Optional (default is \code{NULL}), only applicable when superimposing raster images with SHM plots that are created from aSVG images. \item Matching raster and aSVG images is indicated by identical base names such as imageA.png and imageA.svg. The layout order in SHMs composed of multiple independent images is controlled by numbering the corresponding file pairs accordingly such as imageA_1.png and imageA_1.svg, imageB_2.png and imageB_2.svg, etc.}
-#' @param cores Number of CPUs to parse the aSVG files (default is \code{1}).  
+#' @param cores Number of CPUs to parse the aSVG files (default is \code{1}). 
+#' @param srsc Logical. If `TRUE`, the aSVG is considered for co-visualizing spatially resolved single-cell and bulk data, and the rotation angle of the tissue section for spatial assays will be recorded.   
 #' @return An object of \code{SVG} class, containing one or multiple aSVG instances. 
 
 #' @seealso
@@ -13,16 +14,16 @@
 #' @examples
 #' 
 #' # The first raste image used as a template to create an aSVG. 
-#' raster.pa1 <- system.file('extdata/shinyApp/example/maize_leaf_shm1.png',
+#' raster.pa1 <- system.file('extdata/shinyApp/data/maize_leaf_shm1.png',
 #' package='spatialHeatmap')
 #' # The first aSVG created with the first template. 
-#' svg.pa1 <- system.file('extdata/shinyApp/example/maize_leaf_shm1.svg',
+#' svg.pa1 <- system.file('extdata/shinyApp/data/maize_leaf_shm1.svg',
 #' package='spatialHeatmap')
 #' # The second raster image used as a template to create an aSVG. 
-#' raster.pa2 <- system.file('extdata/shinyApp/example/maize_leaf_shm2.png',
+#' raster.pa2 <- system.file('extdata/shinyApp/data/maize_leaf_shm2.png',
 #' package='spatialHeatmap')
 #' # The second aSVG created with the second template. 
-#' svg.pa2 <- system.file('extdata/shinyApp/example/maize_leaf_shm2.svg',
+#' svg.pa2 <- system.file('extdata/shinyApp/data/maize_leaf_shm2.svg',
 #' package='spatialHeatmap')
 #'
 #' # Parse these two aSVGs without association with raster images.
@@ -33,12 +34,11 @@
 #' # superimposing raster images with SHM plots.
 #' svgs <- read_svg(svg.path=c(svg.pa1, svg.pa2), raster.path=c(raster.pa1, raster.pa2))
 
-
 #' @author Jianhai Zhang \email{jzhan067@@ucr.edu} \cr Dr. Thomas Girke \email{thomas.girke@@ucr.edu}
 
 #' @export
 
-read_svg <- function(svg.path, raster.path=NULL, cores=1) {
+read_svg <- function(svg.path, raster.path=NULL, cores=1, srsc=FALSE) {
     # Get SVG/raster names and order their path/name if there are multiple images.
     svg.pa.na <- img_pa_na(svg.path); svg.path <- svg.pa.na$path; svg.na <- svg.pa.na$na
     raster.na <- NULL; if (length(raster.path)==0) raster.path <- NULL
@@ -49,11 +49,11 @@ read_svg <- function(svg.path, raster.path=NULL, cores=1) {
       if (!is.null(msg)) stop(msg)
     }
     # Coordinates of each SVG are extracted and placed in a list.
-    cordn <- attrb <- dimen <- svg <- raster <- NULL
+    cordn <- attrb <- dimen <- svg <- raster <- angle <- NULL
     for (i in seq_along(svg.na)) {
       cat('Parsing:', svg.na[i], '...', '\n') # '... \n' renders two new lines.
       cores <- deter_core(cores, svg.path[i]); cat('CPU cores:', cores, '\n')
-      svg.lis <- svg_df(svg.path=svg.path[i], feature=NULL, cores=cores)
+      svg.lis <- svg_df(svg.path=svg.path[i], feature=NULL, cores=cores, srsc=srsc)
       if (is.character(svg.lis)) {
         msg <- paste0(svg.na[i], ': ', svg.lis)
         warning(msg); return(msg) 
@@ -62,10 +62,11 @@ read_svg <- function(svg.path, raster.path=NULL, cores=1) {
       attrb <- c(attrb, list(svg.lis$attribute))
       dimen <- c(dimen, list(svg.lis$dimension))
       raster <- c(raster, list(raster.path[i]))
+      angle <- c(angle, list(svg.lis$angle))
       svg <- c(svg, list(svg.path[i]))
     }
-    names(cordn) <- names(attrb) <- names(dimen) <- names(raster) <- names(svg) <- svg.na
-    svg.all <- SVG(coordinate=cordn, attribute=attrb, dimension=dimen, svg=svg, raster=raster); svg.all
+    names(cordn) <- names(attrb) <- names(dimen) <- names(raster) <- names(svg) <- names(angle) <- svg.na
+    svg.all <- SVG(coordinate=cordn, attribute=attrb, dimension=dimen, svg=svg, raster=raster, angle=angle); svg.all
 }
 
 

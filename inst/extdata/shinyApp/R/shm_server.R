@@ -6,22 +6,32 @@ shm_server <- function(id, sch, lis.url, url.id, tab, upl.mod.lis, dat.mod.lis, 
     ipt <- upl.mod.lis$ipt; cfg <- upl.mod.lis$cfg
   # The reactive type in and outside module is the same: sear is a reactiveValue in and outside module; geneIn is reactive expression in and outside module. "geneIn()" is accessing the content of a reactive expression, and loses the "reactive" attribute.
   # As long as the content of reactiveValues (col.reorder$col.na.re) is not accessed, the operation does not need to be inside reactive environment (observe).
+  se.scl <- dat.mod.lis$se.scl
+  se.scl.sel <- dat.mod.lis$se.scl.sel
+  con.na <- dat.mod.lis$con.na
+  con.na.cell <- dat.mod.lis$con.na.cell
   ipt.dat <- reactiveValues()
   ipt.dat$dat <- dat.mod.lis$ipt.dat; sear <- dat.mod.lis$sear
-  col.reorder <- reactiveValues(); col.reorder <- dat.mod.lis$col.reorder
-  geneIn0 <- dat.mod.lis$geneIn0; geneIn1 <- dat.mod.lis$geneIn1
   geneIn <- dat.mod.lis$geneIn
-  col.na <- dat.mod.lis$col.na; col.cfm <- dat.mod.lis$col.cfm 
   scaleDat <- dat.mod.lis$scaleDat
   log <- dat.mod.lis$log; A <- dat.mod.lis$A
   search.but <- dat.mod.lis$search.but
   sig.but <- dat.mod.lis$sig.but
   ids <- sch.mod.lis$ids
   gID <- reactiveValues(geneSel="none", new=NULL, all=NULL)
+  observeEvent(scell.mod.lis$sce.upl$covis.type, {
+    covis.type <- scell.mod.lis$sce.upl$covis.type
+    if (!check_obj(list(covis.type))) return()
+    cho <- c('Cell-by-value'='idp', 'Fixed-group'='fixed')
+    if (covis.type %in% c('toBulk', 'toBulkAuto')) cho <- c(cho, 'Cell-by-group'='cellgrp')
+    if (covis.type %in% c('toCell', 'toCellAuto')) cho <- c(cho, 'Feature-by-group'='ftgrp')
+    updateSelectizeInput(session, inputId='profile', choices=cho, selected='idp')
+  })
+
   observe({ ipt$geneInpath; ipt$fileIn; gID$geneSel <- "none"
     gID$new <- gID$all <- NULL
   })
-  observe({ if (is.null(geneIn())) gID$geneSel <- "none" })
+  observe({ if (is.null(se.scl())) gID$geneSel <- "none" })
   # To make the "gID$new" and "gID$all" updated with the new "input$fileIn", since the selected row is fixed (3rd row), the "gID$new" is not updated when "input$fileIn" is changed, and the downstream is not updated either. The shoot/root examples use the same data matrix, so the "gID$all" is the same (pre-selected 3rd row) when change from the default "shoot" to others like "organ". As a result, the "gene$new" is null and downstream is not updated. Also the "gene$new" is the same when change from shoot to organ, and downstream is not updated, thus "gene$new" and "gene$all" are both set NULL above upon new "input$fileIn".  
 
   init <- reactiveValues(but=0, new=0)
@@ -30,7 +40,8 @@ shm_server <- function(id, sch, lis.url, url.id, tab, upl.mod.lis, dat.mod.lis, 
   rna.fil <- reactiveValues(val=NULL)
   observe({ # Filtered data.
     if (length(ids$sel)==0) return(); if (ids$sel[1]=='') return()
-    rna.fil$val <- rownames(geneIn()$df.aggr.tran)
+    if (!check_obj(list(se.scl()))) return()
+    rna.fil$val <- rownames(se.scl())
   })
   # The on-start ID processing is controlled by 0 and 1 states.
   observeEvent(list(session, ipt$fileIn, rna.fil$val), { init$but <- 0 })
@@ -68,26 +79,19 @@ shm_server <- function(id, sch, lis.url, url.id, tab, upl.mod.lis, dat.mod.lis, 
     cat('New ID:', gID$new, 'Selected ID:', gID$geneSel, 'All ID:', gID$all, '\n'); cat('Done! \n')
     # if (any(is.na(gID$geneSel))) gID$geneSel <- "none"
   })
-
   geneV <- reactive({
     cat('All colour key values ... \n')
-    geneIn <- geneIn(); df.aggr.tran <- geneIn$df.aggr.tran
-    df.aggr.thr <- geneIn$df.aggr.thr
-    if (is.null(df.aggr.thr)) return()
+    se.scl <- se.scl(); se.scl.sel <- se.scl.sel()
+    if (!check_obj(list(se.scl, se.scl.sel))) req('')
+    assay <- assay(se.scl); assay.sel <- assay(se.scl.sel)
     validate(need(!any(is.na(gID$geneSel)) & gID$geneSel[1]!='', ''))
     # if (any(is.na(gID$geneSel))) return()
-    if (is.null(geneIn)|sum(gID$geneSel[1]!='none')==0) return(NULL)
+    if (sum(gID$geneSel[1]!='none')==0) return(NULL)
     if (input$cs.v=="Selected rows" & length(ids$sel)==0) return(NULL)
-    if (ipt$fileIn!="none") {
-      if (input$cs.v=="Selected rows") { 
-        df.aggr.tran <- df.aggr.tran[gID$geneSel, ]
-        df.aggr.thr <- df.aggr.thr[gID$geneSel, ]
-      }
-      # if (input$cs.v=="All rows") gene <- df.aggr.tran 
-    }
-    if (!all(gID$geneSel %in% rownames(df.aggr.tran))) return()
-    bar.v <- seq(min(df.aggr.tran), max(df.aggr.tran), len=1000) # len must be same with that from the function "spatial_hm()". Otherwise the mapping of a gene value to the colour bar is not accurate.
-    thr <- c(min(df.aggr.thr), max(df.aggr.thr))
+    if (input$cs.v=="Selected rows") assay <- assay.sel
+    if (!all(gID$geneSel %in% rownames(assay))) return()
+    bar.v <- seq(min(assay), max(assay), len=1000) # len must be same with that from the function "spatial_hm()". Otherwise the mapping of a gene value to the colour bar is not accurate.
+    thr <- c(min(assay), max(assay))
     cat('Done! \n'); return(list(bar.v=bar.v, thr=thr))
   })
 
@@ -111,6 +115,7 @@ shm_server <- function(id, sch, lis.url, url.id, tab, upl.mod.lis, dat.mod.lis, 
     if(col.but==0) color$col <- colorRampPalette(col_sep(col0))(length(geneV()$bar.v))
     cat('Done! \n')
   })
+
   # As long as a button is used, observeEvent should be used. All variables inside 'observeEvent' trigger code evaluation, not only 'eventExpr'.  
   observeEvent(input$col.but, {
     cat('Customized color code for color key ... \n') 
@@ -124,20 +129,21 @@ shm_server <- function(id, sch, lis.url, url.id, tab, upl.mod.lis, dat.mod.lis, 
   observe({
     thr <- geneV()$thr; if (is.null(thr)) return()
     scale.dat <- scaleDat(); if (is.null(scale.dat)) return()
-    if (!is.null(scale.dat)) if (scale.dat=='No') title <- 'No scaling' else if (scale.dat=='Row') title <- 'Scaled by row' else if (scale.dat=='Selected') title <- 'Scaled on selected genes' else if (scale.dat=='All') title <- 'Scaled on all genes' else title <- ''
+    if (!is.null(scale.dat)) if (scale.dat=='No') title <- 'No scaling' else if (scale.dat=='Row') title <- 'Scaling by row' else if (scale.dat=='Selected') title <- 'Scaling selected rows together' else if (scale.dat=='All') title <- 'Scaling all rows together' else title <- ''
     x.title$val <- paste0(title, ' (', round(thr[1], 2), '-', round(thr[2], 2), ')')
   })
   shm.bar <- reactive({
     cat('Colour key ... \n')
-    if (is.null(gID$all)) return(NULL)
-    if ((any(ipt$fileIn %in% cfg$na.def) & !is.null(geneIn()))|(ipt$fileIn %in% cfg$na.cus & (!is.null(ipt$svgInpath1)|!is.null(ipt$svgInpath2)) & !is.null(geneIn()))) {
+    if (is.null(gID$all)) return(); se.scl <- se.scl()
+    if ((ipt$fileIn %in% cfg$na.def & !is.null(se.scl))|(ipt$fileIn %in% cfg$na.cus & (!is.null(ipt$svgInpath1)|!is.null(ipt$svgInpath2)) & !is.null(se.scl))) {
       bar.v <- geneV()$bar.v
       if (length(color$col=="none")==0|input$color==""|is.null(bar.v)) return(NULL)
-      withProgress(message="Color scale: ", value = 0, {
-        incProgress(0.75, detail="plotting, please wait ...")
+      withProgress(message="Color key: ", value = 0, {
+        incProgress(0.75, detail="plotting ...")
         cell <- scell.mod.lis$sce.upl$cell
-        if (!is.null(cell) & input$profile=='No') return(ggplot())
+        if (!is.null(cell) & input$profile=='fixed') return(ggplot())
         cs.g <- col_bar(geneV=bar.v, cols=color$col, width=1, x.title=x.title$val, x.title.size=10)
+        incProgress(0.1, detail="plotting ...")
         # save(cs.g, file='cs.g')
         cat('Done! \n'); return(cs.g)
       })
@@ -152,28 +158,40 @@ shm_server <- function(id, sch, lis.url, url.id, tab, upl.mod.lis, dat.mod.lis, 
   }) 
 
   svg.path <- reactive({ # Organise svg name and path in a nested list.
-    if (ipt$fileIn=='none') return()
-    if (ipt$fileIn %in% cfg$na.cus) {
+    message('Access aSVG path ...')
+    fileIn <- ipt$fileIn; svg.def <- cfg$svg.def
+    if (fileIn %in% cfg$na.cus) {
       if (is.null(ipt$svgInpath2)) svgIn.df <- ipt$svgInpath1 else svgIn.df <- ipt$svgInpath2
       svg.path <- svgIn.df$datapath; svg.na <- svgIn.df$name
     } else {
       # Extract svg path and name: single or multiple svg paths are treated same way.
-      svg.def <- cfg$svg.def; pa.svg.upl <- cfg$pa.svg.upl
+      svg.path <- svg.def[[fileIn]]
+      # pa.svg.upl <- cfg$pa.svg.upl
+      if ('data_shm.tar' %in% basename(svg.path)) {
+        svg.path <- read_hdf5('data/data_shm.tar', fileIn)[[1]]$svg
+        validate(need(try(file.exists(svg.path)), svg.path))
+      }
+      svg.na <- basename(svg.path)
       # Check if SVGs are paired with templates of raster images.
-      svg.raster <- lapply(svg.def, function(x) { if (any(!grepl('\\.svg$', x))) svg_raster(x, raster.ext) } )
-      lis <- svg_pa_na(cfg$svg.def[[ipt$fileIn]], cfg$pa.svg.upl, raster.ext)
-      validate(need(try(!is.character(lis)), lis))
-      svg.path <- lis$svg.path; svg.na <- lis$svg.na
-    }; cat('Access aSVG path... \n')
+      if (any(!grepl('\\.svg$', svg.na))) svg_raster(svg.na, raster.ext)   
+    }
     # If multiple svgs/templates (treated same way), check suffixes.
     lis <- svg_suffix(svg.path, svg.na, raster.ext)
-    validate(need(try(!is.character(lis)), lis)); return(lis)
+    validate(need(try(!is.character(lis)), lis))
+    message('Done!'); return(lis)
   })
 
-  sam <- reactive({ 
-    if (is.null(geneIn())) return() 
-    cname <- colnames(geneIn()$df.aggr); idx <- grep("__", cname); c.na <- cname[idx]
-    if (length(grep("__", c.na))>=1) gsub("(.*)(__)(.*$)", "\\1", c.na) else return(NULL) 
+  sam <- reactive({
+    se.scl <- se.scl(); if (!check_obj(list(se.scl))) req('')
+    prof <- input$profile; blk <- scell.mod.lis$sce.upl$bulk
+    covis.type <- scell.mod.lis$sce.upl$covis.type
+    if ('idp' %in% prof & !is.null(blk) & 'bulkCell' %in% colnames(colData(se.scl))) { 
+      if ('toBulk' %in% covis.type) se.scl <- subset(se.scl, , bulkCell=='cell')
+      if ('toCell' %in% covis.type) se.scl <- subset(se.scl, , bulkCell=='bulk')
+    } 
+    cname <- colnames(se.scl); idx <- grep("__", cname)
+    c.na <- cname[idx]
+    if (length(grep("__", c.na))>=1) gsub("(.*)(__)(.*$)", "\\1", c.na) else return() 
   })
 
   svg.na.remat <- reactiveValues(svg.path=NULL, svg.na=NULL)
@@ -181,7 +199,7 @@ shm_server <- function(id, sch, lis.url, url.id, tab, upl.mod.lis, dat.mod.lis, 
 
   but.match <- reactiveValues(); match.mod.lis <- NULL
     # Put the code belew in observe below: leads to infinite circles.
-    # if (ipt$fileIn!='customSingleCellData'): if condition cannot supress module execution.
+    # if (ipt$fileIn!='customCovisData'): if condition cannot supress module execution.
     match.mod.lis <- match_server('rematch', sam, tab, upl.mod.lis)
   observeEvent(list(match.mod.lis$svg.na.rematch$svg.path, match.mod.lis$svg.na.rematch$svg.na, match.mod.lis$ft.reorder$ft.dat, match.mod.lis$ft.reorder$ft.svg, match.mod.lis$ft.reorder$ft.rematch, match.mod.lis$but.match$val), ignoreNULL = FALSE, { # Rematch in bulk data.
     # if (is.null(match.mod.lis$ft.reorder$ft.rematch)) return()
@@ -198,7 +216,8 @@ shm_server <- function(id, sch, lis.url, url.id, tab, upl.mod.lis, dat.mod.lis, 
   cell.match <- reactiveValues()
   observe({ cell.match$val <- scell.mod.lis$covis.man$match.mod.lis })
 
-  observeEvent(list(cell.match$val$svg.na.rematch$svg.path, cell.match$val$svg.na.rematch$svg.na, cell.match$val$ft.reorder$ft.dat, cell.match$val$ft.reorder$ft.svg, cell.match$val$ft.reorder$ft.rematch, cell.match$val$but.match$val), ignoreNULL = FALSE, { # Rematch in single cell data.
+  observeEvent(list(cell.match$val$svg.na.rematch$svg.path, cell.match$val$svg.na.rematch$svg.na, cell.match$val$ft.reorder$ft.dat, cell.match$val$ft.reorder$ft.svg, cell.match$val$ft.reorder$ft.rematch, cell.match$val$but.match$val), ignoreNULL = FALSE, {
+    # Rematch in single cell data.
     match.lis <- cell.match$val
     # if (is.null(match.lis$ft.reorder$ft.rematch)) return()
     svg.na.remat$svg.path <- match.lis$svg.na.rematch$svg.path
@@ -222,7 +241,7 @@ shm_server <- function(id, sch, lis.url, url.id, tab, upl.mod.lis, dat.mod.lis, 
   # cna.match <- reactiveValues(cna=NULL)
 
   svgs <- reactive({
-    cat('Parsing aSVGs ... \n')
+    cat('Reading aSVGs ... \n')
     fileIn <- ipt$fileIn; geneInpath <- ipt$geneInpath; dimName <- ipt$dimName
     svgInpath1 <- ipt$svgInpath1; svgInpath2 <- ipt$svgInpath2
     if (fileIn =='customBulkData') {
@@ -232,12 +251,12 @@ shm_server <- function(id, sch, lis.url, url.id, tab, upl.mod.lis, dat.mod.lis, 
     if ((fileIn %in% cfg$na.cus & 
     (!is.null(svgInpath1)|!is.null(svgInpath2)))|any(fileIn %in% cfg$na.def)) {
       withProgress(message="Spatial heatmap: ", value=0, {
-      incProgress(0.5, detail="parsing aSVGs, please wait ...")
+      incProgress(0.5, detail="reading aSVG ...")
       svg.path <- svg.path1()$svg.path; svg.na <- svg.path1()$svg.na
       # Whether a single or multiple SVGs, all are returned a coord.
       svg.paths <- grep('\\.svg$', svg.path, value=TRUE)
       raster.paths <- setdiff(svg.path, svg.paths)
-      svgs <- read_svg(svg.path=svg.paths, raster.path=raster.paths)
+      svgs <- read_svg_m(svg.path=svg.paths, raster.path=raster.paths)
       validate(need(!is.character(svgs), svgs))
       cat('Done! \n'); return(svgs)
       })
@@ -246,7 +265,7 @@ shm_server <- function(id, sch, lis.url, url.id, tab, upl.mod.lis, dat.mod.lis, 
 
   observe({
     if (!is.null(ft.reord$ft.rematch)) return()
-    ipt$fileIn; geneIn(); ipt$adj.modInpath; svgs(); input$lgdTog; input$scrollH; svgs <- svgs()
+    ipt$fileIn; se.scl(); ipt$adj.modInpath; svgs(); input$lgdTog; input$scrollH; svgs <- svgs()
     ft.path.all <- NULL; for (i in seq_along(svgs)) { 
       ft.path.all <- c(ft.path.all, svg_separ(svgs[i])$tis.path)
     }
@@ -263,20 +282,22 @@ shm_server <- function(id, sch, lis.url, url.id, tab, upl.mod.lis, dat.mod.lis, 
     updateSelectizeInput(session, inputId='tis', choices=intersect(unique(ft.svg.reorder), unique(ft.path.all)))
   })
   tis.trans <- reactiveValues()
-  observeEvent(input$transBut, {
-    tis.trans$v <- input$tis
-  })
-  con <- reactive({
-    cat('All expVars ... \n'); geneIn <- geneIn()
-    if (is.null(geneIn)) return()
-    cname <- colnames(geneIn$df.aggr); idx <- grep("__", cname); c.na <- cname[idx]
-    if (length(grep("__", c.na))>=1) cons <- gsub("(.*)(__)(.*$)", "\\3", c.na) else cons <- return(NULL) 
+  observeEvent(input$transBut, { tis.trans$v <- input$tis })
+  con <- eventReactive(se.scl(), {
+    cat('All variables ... \n'); se.scl <- se.scl() 
+    if (!check_obj(list(se.scl))) req('')
+    cname <- colnames(se.scl); idx <- grep("__", cname)
+    c.na <- cname[idx]
+    if (length(grep("__", c.na))>=1) cons <- gsub("(.*)(__)(.*$)", "\\3", c.na) else cons <- NULL 
     cat('Done! \n'); cons
   })
 
   # General selected gene/condition pattern.
-  pat.con <- reactive({ con.uni <- unique(con()); if (is.null(con.uni)) return(NULL); paste0(con.uni, collapse='|') })
-
+  pat.con <- reactive({
+   con <- con(); if (!check_obj(list(con))) return()
+   con.uni <- unique(con); if (is.null(con.uni)) return()
+   paste0(con.uni, collapse='|') 
+  })
   pat.gen <- reactive({ if (is.null(gID$geneSel)) return(); if (gID$geneSel[1]=='none') return(NULL);  paste0(gID$geneSel, collapse='|') })
 
   pat.all <- reactive({ if (is.null(pat.con())|is.null(pat.gen())) return(NULL); paste0('(', pat.gen(), ')_(', pat.con(), ')') })
@@ -298,13 +319,15 @@ shm_server <- function(id, sch, lis.url, url.id, tab, upl.mod.lis, dat.mod.lis, 
     }
   })
 
-  msg.shm <- reactiveValues(msg=NULL)
   # Avoid repetitive computation under input$cs.v=='All rows'.
   gs.new <- reactive({
     cat('New grob/ggplot: \n ')
-    # print(list(is.null(svgs()), is.null(geneIn()), gID$new, gID$all, ids$sel, color$col[1]))
-    geneIn <- geneIn(); validate(
-      need(!is.null(svgs()) & !is.null(geneIn) & length(gID$new) > 0 & !is.null(gID$all) & length(ids$sel)>0 & color$col[1]!='none', '')
+    # print(list(is.null(svgs()), is.null(se.scl.sel()), gID$new, gID$all, ids$sel, color$col[1]))
+    se.scl.sel <- se.scl.sel(); prof <- input$profile 
+    if (!check_obj(list(se.scl.sel, prof))|is.null(con.na$v)) return()
+    col.idp <- 'idp' %in% prof & grepl(na.sgl, ipt$fileIn)
+    validate(
+      need(!is.null(svgs()) & !is.null(se.scl.sel) & length(gID$new) > 0 & !is.null(gID$all) & length(ids$sel)>0 & color$col[1]!='none', '')
     )
     scale.shm <- input$scale.shm
     if (!is.numeric(scale.shm)) return()
@@ -329,7 +352,7 @@ shm_server <- function(id, sch, lis.url, url.id, tab, upl.mod.lis, dat.mod.lis, 
     if (any(grepl(pat.new, names(shm$grob.all)))) return()
     withProgress(message="Spatial heatmap: ", value=0, { 
       incProgress(0.25, detail="preparing data ...")
-      gene <- geneIn[["df.aggr.tran"]]
+      gene <- assay(se.scl.sel)
       # When input$fileIn updates, ID is from last session while gene is from new session.
       if (!all(ID %in% rownames(gene))) return()
       if (is.null(raster.par$coal)) charcoal <- FALSE else if (raster.par$coal=='Yes') charcoal <- TRUE else if (raster.par$coal=='No') charcoal <- FALSE
@@ -338,29 +361,31 @@ shm_server <- function(id, sch, lis.url, url.id, tab, upl.mod.lis, dat.mod.lis, 
       svgs <- svgs()
       lis.rematch <- ft.reord$ft.rematch
       ft.trans.shm <- NULL; ft.trans <- tis.trans$v
-      covisGrp <- scell.mod.lis$df.lis()$covisGrp
+      covisGrp <- scell.mod.lis$sce.res()$covisGrp
       covis.type <- scell.mod.lis$sce.upl$covis.type
       method <- scell.mod.lis$sce.upl$method
       tar.cell.blk <- input$tarCellBlk
-      if (ipt$fileIn=='customSingleCellData') { 
+      if (grepl(na.sgl, ipt$fileIn)) { 
         if (is.null(covis.type)|is.null(method)|is.null(tar.cell.blk)) return()
         if ('man' %in% method) {
         dimred <- scell.mod.lis$covis.man$dimred
         bulk <- scell.mod.lis$covis.man$bulk
-        if (is.null(dimred)) return()
+        if (!check_obj(list(dimred, covisGrp))) return()
         cell.all <- unique(colData(dimred)[, covisGrp]) 
         if (!is.null(bulk)) bulk.all <- unique(colData(bulk)[, covisGrp])
         ft.all <- unique(unlist(lapply(seq_along(svgs), function(i) attribute(svgs[i])[[1]]$feature)))
-        covis.trans <- covis_trans(bulk.all=bulk.all, cell.all=cell.all, ft.all=ft.all, tar.bulk=tar.cell.blk, tar.cell=tar.cell.blk, lis.match=lis.rematch, covis.type=covis.type)
+        covis.trans <- covis_trans(bulk.all=bulk.all, cell.all=cell.all, ft.all=ft.all, tar.bulk=tar.cell.blk, tar.cell=tar.cell.blk, lis.match=lis.rematch, covis.type=covis.type, col.idp=col.idp)
         ft.trans.shm <- covis.trans$ft.trans.shm
         lis.rematch <- covis.trans$lis.match 
+        if (col.idp) gene <- gene[, grep('^bulk$', se.scl.sel$bulkCell), drop=FALSE] 
       } else if ('auto' %in% method) {
         res <- scell.mod.lis$covis.auto$res
         cell.all <- setdiff(unique(subset(res, , bulkCell=='cell')$assignedBulk), 'none')
         bulk.all <- unique(subset(res, , bulkCell=='bulk')$sample)
-        covis.trans <- covis_trans(bulk.all=bulk.all, cell.all=cell.all, ft.all=NULL, tar.bulk=tar.cell.blk, tar.cell=tar.cell.blk, lis.match=NULL, covis.type=covis.type)
+        covis.trans <- covis_trans(bulk.all=bulk.all, cell.all=cell.all, ft.all=NULL, tar.bulk=tar.cell.blk, tar.cell=tar.cell.blk, lis.match=NULL, covis.type=covis.type, col.idp=col.idp)
         ft.trans.shm <- covis.trans$ft.trans.shm
         lis.rematch <- NULL
+        if (col.idp) gene <- gene[, grep('^bulk$', res$bulkCell), drop=FALSE] 
       }
       }
       svg.na <- img_pa_na(unlist(svgs[, 'svg']))$na 
@@ -370,14 +395,14 @@ shm_server <- function(id, sch, lis.url, url.id, tab, upl.mod.lis, dat.mod.lis, 
         cat(ID, ' \n')
         size.key <- as.numeric(cfg$lis.par$legend['key.size', 'default']) 
         svg0 <- svgs[i]
-        if (is.null(raster.par$over)) raster(svg0)[[1]] <- NULL
+        if (is.null(raster.par$over)) raster_pa(svg0)[[1]] <- NULL
         # Cores: the orders in svg.path(), names(svg.df.lis) are same.
-        gg.lis <- gg_shm(svg.all=svg0, gene=gene, con.na=geneIn[['con.na']], geneV=geneV()$bar.v, charcoal=charcoal, alpha.overlay=alp.over, ID=ID, cols=color$col, covis.type=covis.type, ft.trans=ft.trans, ft.trans.shm=ft.trans.shm, sub.title.size=input$title.size * scale.shm, legend.nrow=as.numeric(cfg$lis.par$legend['key.row', 'default']), legend.key.size=size.key, legend.text.size=8*size.key*33, line.width=input$line.size, line.color=input$line.color, lis.rematch = lis.rematch) # Only gID$new is used.
-        msg <- paste0(svg.na[i], ': no spatial features that have matching sample identifiers in data are detected!')
+        gg.lis <- gg_shm(svg.all=svg0, gene=gene, con.na=con.na$v, geneV=geneV()$bar.v, col.idp=col.idp, charcoal=charcoal, alpha.overlay=alp.over, ID=ID, cols=color$col, covis.type=covis.type, ft.trans=ft.trans, ft.trans.shm=ft.trans.shm, sub.title.size=input$title.size * scale.shm, legend.nrow=as.numeric(cfg$lis.par$legend['key.row', 'default']), legend.key.size=size.key, legend.text.size=8*size.key*33, line.width=input$line.size, line.color=input$line.color, lis.rematch = lis.rematch) # Only gID$new is used.
+        msg <- paste0(svg.na[i], ': no common spatial features detected between data and aSVG!')
         if (is.null(gg.lis)) {
-          cat(msg, '\n'); msg.shm$msg <- msg
-        } else msg.shm$msg <- NULL
-        if (is.null(gg.lis)) showModal(modal(msg=msg))
+        showNotification(msg, duration=2, closeButton = TRUE)
+        cat(msg, '\n'); 
+        }
        validate(need(!is.null(gg.lis), msg)) 
        # Append suffix '_i' for the SHMs of ggplot under SVG[i], and store them in a list.
        ggs <- gg.lis$g.lis.all; names(ggs) <- paste0(names(ggs), '_', i)
@@ -404,59 +429,57 @@ shm_server <- function(id, sch, lis.url, url.id, tab, upl.mod.lis, dat.mod.lis, 
 
   })
 
-  output$msgSHM <- renderText({
-    if (ipt$fileIn=='customSingleCellData') return()
-    msg <- msg.shm$msg; validate(need(is.null(msg), msg)) 
-  })
   # Extension of 'observeEvent': any of 'input$log; tis.trans$v; input$col.but; input$cs.v' causes evaluation of all code. 
   # tis.trans$v as an argument in "gg_shm" will not cause evaluation of all code, thus it is listed here.
   # Use "observeEvent" to replace "observe" and list events (input$log, tis.trans$v, ...), since if the events are in "observe", every time a new gene is clicked, "input$dt_rows_selected" causes the evaluation of all code in "observe", and the evaluation is duplicated with "gs.new".
-  observeEvent(col.na(), { if (col.cfm()>0) col.reorder$col.re <- 'N' })
   # Update SHMs, above theme().
-  observeEvent(list(log(), tis.trans$v, color$col, sig.but(), input$cs.v, col.cfm(), scaleDat(), but.match$val, input$line.size, input$line.color, raster.par$over, raster.par$coal, raster.par$alp, input$profile, input$tarCellBlk), {
+  observeEvent(list(log(), tis.trans$v, color$col, sig.but(), input$cs.v, scaleDat(), but.match$val, ft.reord$ft.rematch, input$line.size, input$line.color, raster.par$over, raster.par$coal, raster.par$alp, input$profile, input$tarCellBlk), {
     shm$grob.all <- shm$gg.all <- shm$lgd.all <- shm$lgd.grob.all <- shm$gcol.all <- shm$gcol.lgd.all <- shm$grob.gg.all <- NULL; gs.all <- reactive({ 
       cat('Updating all SHMs ... \n')
-      geneIn <- geneIn()
+      se.scl.sel <- se.scl.sel(); prof <- input$profile
+      if (!check_obj(list(se.scl.sel, prof))|is.null(con.na$v)) req('')
+      col.idp <- 'idp' %in% prof & grepl(na.sgl, ipt$fileIn)
       # print(list(is.null(svgs()), is.null(geneIn), ids$sel, color$col[1], gID$geneSel))
-      if.con <- is.null(svgs())|is.null(geneIn)|length(ids$sel)==0|color$col[1]=='none'|gID$geneSel[1]=='none'
+      if.con <- is.null(svgs())|is.null(se.scl.sel)|length(ids$sel)==0|color$col[1]=='none'|gID$geneSel[1]=='none'
       if (length(if.con==FALSE)==0) if (length(if.con)==0) return(); if (is.na(if.con)|if.con==TRUE) return(NULL)
       scale.shm <- input$scale.shm
       if (!is.numeric(scale.shm)) return()
       if (scale.shm <= 0) return()
       withProgress(message="Spatial heatmap: ", value=0, {
-      incProgress(0.25, detail="preparing data ...")
+      incProgress(0.25, detail="in progress ...")
       #if (input$cs.v=="Selected rows") gene <- geneIn()[["df.aggr.tran"]][ipt.dat$dat$dt_rows_selected, ]
       #if (input$cs.v=="All rows") gene <- geneIn()[["df.aggr.tran"]]
-      df.aggr.tran <- geneIn$df.aggr.tran
-      gene <- df.aggr.tran[gID$geneSel, ]
+      gene <- assay(se.scl.sel)
       alp.over <- 1
       if (!is.null(raster.par$over)) if (raster.par$over=='Yes') alp.over <- raster.par$alp
       svgs <- svgs()
       lis.rematch <- ft.reord$ft.rematch
       ft.trans.shm <- NULL; ft.trans <- tis.trans$v
-      covisGrp <- scell.mod.lis$df.lis()$covisGrp
+      covisGrp <- scell.mod.lis$sce.res()$covisGrp
       covis.type <- scell.mod.lis$sce.upl$covis.type
       method <- scell.mod.lis$sce.upl$method
       tar.cell.blk <- input$tarCellBlk
-      if (ipt$fileIn=='customSingleCellData') { 
+      if (grepl(na.sgl, ipt$fileIn)) { 
         if (is.null(covis.type)|is.null(method)|is.null(tar.cell.blk)) return()
         if ('man' %in% method) {
         dimred <- scell.mod.lis$covis.man$dimred
         bulk <- scell.mod.lis$covis.man$bulk
-        if (is.null(dimred)) return()
+        if (!check_obj(list(dimred, covisGrp))) return()
         cell.all <- unique(colData(dimred)[, covisGrp]) 
         if (!is.null(bulk)) bulk.all <- unique(colData(bulk)[, covisGrp])
         ft.all <- unique(unlist(lapply(seq_along(svgs), function(i) attribute(svgs[i])[[1]]$feature)))
-        covis.trans <- covis_trans(bulk.all=bulk.all, cell.all=cell.all, ft.all=ft.all, tar.bulk=tar.cell.blk, tar.cell=tar.cell.blk, lis.match=lis.rematch, covis.type=covis.type)
+        covis.trans <- covis_trans(bulk.all=bulk.all, cell.all=cell.all, ft.all=ft.all, tar.bulk=tar.cell.blk, tar.cell=tar.cell.blk, lis.match=lis.rematch, covis.type=covis.type, col.idp=col.idp)
         ft.trans.shm <- covis.trans$ft.trans.shm
         lis.rematch <- covis.trans$lis.match 
+        if (col.idp) gene <- gene[, grep('^bulk$', se.scl.sel$bulkCell), drop=FALSE] 
       } else if ('auto' %in% method) {
         res <- scell.mod.lis$covis.auto$res
         cell.all <- setdiff(unique(subset(res, , bulkCell=='cell')$assignedBulk), 'none')
         bulk.all <- unique(subset(res, , bulkCell=='bulk')$sample)
-        covis.trans <- covis_trans(bulk.all=bulk.all, cell.all=cell.all, ft.all=NULL, tar.bulk=tar.cell.blk, tar.cell=tar.cell.blk, lis.match=NULL, covis.type=covis.type)
+        covis.trans <- covis_trans(bulk.all=bulk.all, cell.all=cell.all, ft.all=NULL, tar.bulk=tar.cell.blk, tar.cell=tar.cell.blk, lis.match=NULL, covis.type=covis.type, col.idp=col.idp)
         ft.trans.shm <- covis.trans$ft.trans.shm
         lis.rematch <- NULL
+        if (col.idp) gene <- gene[, grep('^bulk$', res$bulkCell), drop=FALSE] 
       }
       }
       svg.na <- img_pa_na(unlist(svgs[, 'svg']))$na 
@@ -468,11 +491,13 @@ shm_server <- function(id, sch, lis.url, url.id, tab, upl.mod.lis, dat.mod.lis, 
         incProgress(0.75, detail=paste0('preparing ', paste0(gID$geneSel, collapse=';')))
         size.key <- as.numeric(cfg$lis.par$legend['key.size', 'default'])
         svg0 <- svgs[i]
-        if (is.null(raster.par$over)) raster(svg0)[[1]] <- NULL
-        gg.lis <- gg_shm(svg.all=svg0, gene=gene, con.na=geneIn[['con.na']], geneV=geneV()$bar.v, charcoal=charcoal, alpha.overlay=alp.over, ID=gID$geneSel, cols=color$col, covis.type=covis.type, ft.trans=ft.trans, ft.trans.shm=ft.trans.shm, sub.title.size=input$title.size * scale.shm, legend.nrow=as.numeric(cfg$lis.par$legend['key.row', 'default']), legend.key.size=size.key, legend.text.size=8*size.key*33, line.width=input$line.size, line.color=input$line.color, lis.rematch = lis.rematch) # All gene IDs are used.
-        msg <- paste0(svg.na[i], ': no matching features are detected between data and aSVG!')
-        if (is.null(gg.lis)) { cat(msg, '\n'); msg.shm$msg <- msg } else msg.shm$msg <- NULL
-        if (is.null(gg.lis)) showModal(modal(msg=msg))
+        if (is.null(raster.par$over)) raster_pa(svg0)[[1]] <- NULL
+        gg.lis <- gg_shm(svg.all=svg0, gene=gene, con.na=con.na$v, geneV=geneV()$bar.v, col.idp=col.idp, charcoal=charcoal, alpha.overlay=alp.over, ID=gID$geneSel, cols=color$col, covis.type=covis.type, ft.trans=ft.trans, ft.trans.shm=ft.trans.shm, sub.title.size=input$title.size * scale.shm, legend.nrow=as.numeric(cfg$lis.par$legend['key.row', 'default']), legend.key.size=size.key, legend.text.size=8*size.key*33, line.width=input$line.size, line.color=input$line.color, lis.rematch = lis.rematch) # All gene IDs are used.
+        msg <- paste0(svg.na[i], ': no common spatial features detected between data and aSVG!')
+        if (is.null(gg.lis)) {
+        showNotification(msg, duration=2, closeButton = TRUE)
+        cat(msg, '\n'); 
+        }
         validate(need(!is.null(gg.lis), msg))
        # Append suffix '_i' for the SHMs of ggplot under SVG[i], and store them in a list.
        ggs <- gg.lis$g.lis.all; names(ggs) <- paste0(names(ggs), '_', i)
@@ -504,51 +529,53 @@ shm_server <- function(id, sch, lis.url, url.id, tab, upl.mod.lis, dat.mod.lis, 
     shm$grob.gg.all <- gs.all()$gg.grob.lis
   }) # observeEvent
   # Avoid repetitive computation under input$cs.v=='All rows'.
-  observeEvent(list(gID$geneSel), { 
+  observeEvent(list(gID$geneSel, se.scl.sel()), { 
     cat('Updating all SHMs caused by selected IDs ... \n')
     if.con <- is.null(input$cs.v)|gID$geneSel[1]=='none'|input$cs.v=='All rows'
     if (length(if.con==FALSE)==0) if (length(if.con)==0) return(); if (is.na(if.con)|if.con==TRUE) return(NULL)
     ID <- gID$geneSel
     shm$grob.all <- shm$gg.all <- shm$lgd.all <- shm$lgd.grob.all <- shm$gcol.all <- shm$gcol.lgd.all <- shm$grob.gg.all <- NULL; gs.all <- reactive({
      # print(list(ID, is.null(svgs()), is.null(geneIn()), ids$sel, color$col[1], class(color$col[1])))
-      geneIn <- geneIn()
-      if.con <- is.null(svgs())|is.null(geneIn)|length(ids$sel)==0|color$col[1]=='none'
+      se.scl.sel <- se.scl.sel(); prof <- input$profile
+      if (!check_obj(list(se.scl.sel, prof))|is.null(con.na$v)) req('')
+      col.idp <- 'idp' %in% prof & grepl(na.sgl, ipt$fileIn)
+      if.con <- is.null(svgs())|is.null(se.scl.sel)|length(ids$sel)==0|color$col[1]=='none'
       if (length(if.con==FALSE)==0) if (length(if.con)==0) return(); if (is.na(if.con)|if.con==TRUE) return(NULL)
       scale.shm <- input$scale.shm
       if (!is.numeric(scale.shm)) return()
       if (scale.shm <= 0) return()
       withProgress(message="Spatial heatmap: ", value=0, {
       incProgress(0.25, detail="preparing data ...")
-      df.aggr.tran <- geneIn$df.aggr.tran
-      gene <- df.aggr.tran[gID$geneSel, ]
-      alp.over <- 1
+      gene <- assay(se.scl.sel); alp.over <- 1
       if (!is.null(raster.par$over)) if (raster.par$over=='Yes') alp.over <- raster.par$alp
       svgs <- svgs()
       lis.rematch <- ft.reord$ft.rematch
       ft.trans.shm <- NULL; ft.trans <- tis.trans$v
-      covisGrp <- scell.mod.lis$df.lis()$covisGrp
+      covisGrp <- scell.mod.lis$sce.res()$covisGrp
       covis.type <- scell.mod.lis$sce.upl$covis.type
       method <- scell.mod.lis$sce.upl$method
       tar.cell.blk <- input$tarCellBlk
-      if (ipt$fileIn=='customSingleCellData') { 
+      if (grepl(na.sgl, ipt$fileIn)) { 
         if (is.null(covis.type)|is.null(method)|is.null(tar.cell.blk)) return()
         if ('man' %in% method) {
         dimred <- scell.mod.lis$covis.man$dimred
         bulk <- scell.mod.lis$covis.man$bulk
-        if (is.null(dimred)) return()
+        if (!check_obj(list(dimred, covisGrp))) return()
         cell.all <- unique(colData(dimred)[, covisGrp]) 
         if (!is.null(bulk)) bulk.all <- unique(colData(bulk)[, covisGrp])
         ft.all <- unique(unlist(lapply(seq_along(svgs), function(i) attribute(svgs[i])[[1]]$feature)))
-        covis.trans <- covis_trans(bulk.all=bulk.all, cell.all=cell.all, ft.all=ft.all, tar.bulk=tar.cell.blk, tar.cell=tar.cell.blk, lis.match=lis.rematch, covis.type=covis.type)
+        covis.trans <- covis_trans(bulk.all=bulk.all, cell.all=cell.all, ft.all=ft.all, tar.bulk=tar.cell.blk, tar.cell=tar.cell.blk, lis.match=lis.rematch, covis.type=covis.type, col.idp=col.idp)
         ft.trans.shm <- covis.trans$ft.trans.shm
         lis.rematch <- covis.trans$lis.match 
+        if (col.idp) gene <- gene[, grep('^bulk$', se.scl.sel$bulkCell), drop=FALSE] 
       } else if ('auto' %in% method) {
         res <- scell.mod.lis$covis.auto$res
         cell.all <- setdiff(unique(subset(res, , bulkCell=='cell')$assignedBulk), 'none')
         bulk.all <- unique(subset(res, , bulkCell=='bulk')$sample)
-        covis.trans <- covis_trans(bulk.all=bulk.all, cell.all=cell.all, ft.all=NULL, tar.bulk=tar.cell.blk, tar.cell=tar.cell.blk, lis.match=NULL, covis.type=covis.type)
+        covis.trans <- covis_trans(bulk.all=bulk.all, cell.all=cell.all, ft.all=NULL, tar.bulk=tar.cell.blk, tar.cell=tar.cell.blk, lis.match=NULL, covis.type=covis.type, col.idp=col.idp)
         ft.trans.shm <- covis.trans$ft.trans.shm
         lis.rematch <- NULL
+        if (col.idp) gene <- gene[, grep('^bulk$', res$bulkCell), drop=FALSE] 
       }
       }
       svg.na <- img_pa_na(unlist(svgs[, 'svg']))$na 
@@ -564,11 +591,13 @@ shm_server <- function(id, sch, lis.url, url.id, tab, upl.mod.lis, dat.mod.lis, 
         #}
         size.key <- as.numeric(cfg$lis.par$legend['key.size', 'default'])
         svg0 <- svgs[i]
-        if (is.null(raster.par$over)) raster(svg0)[[1]] <- NULL
-        gg.lis <- gg_shm(svg.all=svg0, gene=gene, con.na=geneIn[['con.na']], geneV=geneV()$bar.v, charcoal=charcoal, alpha.overlay=alp.over, ID=ID, cols=color$col, covis.type=covis.type, ft.trans=ft.trans, ft.trans.shm=ft.trans.shm, sub.title.size=input$title.size * scale.shm, legend.nrow=as.numeric(cfg$lis.par$legend['key.row', 'default']), legend.key.size=size.key, legend.text.size=8*size.key*33, line.size=input$line.size, line.color=input$line.color, lis.rematch = lis.rematch) # All gene IDs are used.
-        msg <- paste0(svg.na[i], ': no spatial features that have matching sample identifiers in data are detected!')
-        if (is.null(gg.lis)) { cat(msg, '\n'); msg.shm$msg <- msg } else msg.shm$msg <- NULL
-       if (is.null(gg.lis)) showModal(modal(msg=msg))
+        if (is.null(raster.par$over)) raster_pa(svg0)[[1]] <- NULL
+        gg.lis <- gg_shm(svg.all=svg0, gene=gene, con.na=con.na$v, geneV=geneV()$bar.v, col.idp=col.idp, charcoal=charcoal, alpha.overlay=alp.over, ID=ID, cols=color$col, covis.type=covis.type, ft.trans=ft.trans, ft.trans.shm=ft.trans.shm, sub.title.size=input$title.size * scale.shm, legend.nrow=as.numeric(cfg$lis.par$legend['key.row', 'default']), legend.key.size=size.key, legend.text.size=8*size.key*33, line.size=input$line.size, line.color=input$line.color, lis.rematch = lis.rematch) # All gene IDs are used.
+        msg <- paste0(svg.na[i], ': no common spatial features detected between data and aSVG!')
+        if (is.null(gg.lis)) {
+        showNotification(msg, duration=2, closeButton = TRUE)
+        cat(msg, '\n'); 
+        }
        validate(need(!is.null(gg.lis), msg))
        # Append suffix '_i' for the SHMs of ggplot under SVG[i], and store them in a list.
        ggs <- gg.lis$g.lis.all; names(ggs) <- paste0(names(ggs), '_', i)
@@ -662,17 +691,14 @@ shm_server <- function(id, sch, lis.url, url.id, tab, upl.mod.lis, dat.mod.lis, 
     shm$grob.gg.all <- grob.gg.all
     cat('Done!\n')
   })
- 
-  output$h.w.c <- renderText({
-    
-    if (is.null(geneIn())|length(ids$sel)==0|is.null(svgs())|is.null(shm$grob.all)) return(NULL)
 
-    height <- input$height; width <- input$width
-    col.n <- input$col.n;
-    # validate(need(height>=0.1 & !is.na(height), 'Height should be a positive numeric !'))
-    # validate(need(width>=0.1 & !is.na(width), 'Width should be a positive numeric !'))
-    validate(need(col.n>=1 & as.integer(col.n)==col.n & !is.na(col.n), 'No. of columns should be a positive integer !'))
-
+  observe({
+    if (is.null(se.scl.sel())|length(ids$sel)==0|is.null(svgs())|is.null(shm$grob.all)) return(NULL)
+    col.n <- input$col.n; if (!check_obj(list(col.n))) return()
+    lgc.nc <- col.n>=1 & as.integer(col.n)==col.n 
+    if (!lgc.nc) {
+      show_mod(lgc.nc, msg='No. of columns should be a positive integer!')
+    }; req(lgc.nc)
   })
   # shm$lgd.all can update itself and lead to endless circles, thus it cannot be used to update the observeEvent below. In addition, when using bookmarked url, shm$lgd.all is first NULL (legend parameters are updating observeEvent below) then real ggplot object (parameters will not update oberverEvent again since they didn't change). Therefore, use lgd.par as an anchor. Only none of shm$lgd.all and legend parameters is NULL, will the observeEvent below be updated. 
   lgd.par <- reactiveValues(par=NULL)
@@ -737,20 +763,19 @@ shm_server <- function(id, sch, lis.url, url.id, tab, upl.mod.lis, dat.mod.lis, 
     }; cat('Done! \n')
 
   })
-  observeEvent(col.cfm(), { col.reorder$col.re <- 'Y' })
   # In "observe" and "observeEvent", if one code return (NULL), then all the following code stops. If one code changes, all the code renews.
     lay.shm <- reactive({
     cat('Spatial heatmaps layout ... \n')
-    if.con <- is.null(geneIn())|length(ids$sel)==0|is.null(svgs())|gID$geneSel[1]=="none"|is.null(shm$grob.all1)
+    se.scl.sel <- se.scl.sel()
+    if (!check_obj(list(se.scl.sel))) req('')
+    if.con <- is.null(se.scl.sel)|length(ids$sel)==0|is.null(svgs())|gID$geneSel[1]=="none"|is.null(shm$grob.all1)
     if (length(if.con==FALSE)==0) if (length(if.con)==0) return(); if (is.na(if.con)|if.con==TRUE) return(NULL)
-  if (col.reorder$col.re=='N') return()
     if.con <- length(ids$sel)==0|is.null(svgs())|gID$geneSel[1]=="none"|is.null(shm$grob.all1)
     if (length(if.con==FALSE)==0) if (length(if.con)==0) return(); if (is.na(if.con)|if.con==TRUE) return(NULL)
     if (is.na(color$col[1])|length(color$col=="none")==0|input$color=="") return(NULL)
-    r.na <- rownames(geneIn()[["df.aggr.tran"]])
     grob.na <- names(shm$grob.all1)
     cell <- scell.mod.lis$sce.upl$cell
-    profile <- ifelse(input$profile=='Yes', TRUE, FALSE)
+    profile <- ifelse(input$profile!='fixed', TRUE, FALSE)
     # Select target grobs.
     # Use definite patterns and avoid using '.*' as much as possible. Try to as specific as possible.
     pat.all <- paste0('^', pat.all(), '(_\\d+$)')
@@ -789,6 +814,7 @@ shm_server <- function(id, sch, lis.url, url.id, tab, upl.mod.lis, dat.mod.lis, 
     }; shm$grob.all <- grob.all; shm$gg.all <- gg.all; shm$grob.gg.all <- grob.gg.all
   })
    dim.shm.grob.all <- reactiveValues()
+   dim.lgd.lis <- reactiveValues()
 
    output$tarCellBlk <- renderUI({
      covis.type <- scell.mod.lis$sce.upl$covis.type
@@ -812,7 +838,7 @@ shm_server <- function(id, sch, lis.url, url.id, tab, upl.mod.lis, dat.mod.lis, 
        cho <- c('all', names(ft.rematch)); lab <- 'Target cell' 
      }
      ns <- session$ns
-     if (ipt$fileIn!='customSingleCellData') return()
+     if (!grepl(na.sgl, ipt$fileIn)) return()
      selectInput(ns('tarCellBlk'), label=lab, choices=cho)
    })
 
@@ -822,24 +848,24 @@ shm_server <- function(id, sch, lis.url, url.id, tab, upl.mod.lis, dat.mod.lis, 
    #  dim.shm.par$val <- scell.mod.lis$, match.lis$val$but.match$val
    # })
    # Single-cell reduced dimensionality for each gene__con. 
-   observeEvent(list(shm$grob.all, shm$grob.all1, input$dims, input$dimLgdRows), {
-     cat('Single-cell: compiling PCA/TSNE/UMAP and SHMs ... \n')
+   observeEvent(list(shm$grob.all, shm$grob.all1, input$dims, input$dimLgdRows, input$profile), {
+     cat('Manual: compiling PCA/TSNE/UMAP and SHMs ... \n')
      if (is.null(ipt$fileIn)) return()
-     if (ipt$fileIn != 'customSingleCellData') return()
+     if (!grepl(na.sgl, ipt$fileIn)) return()
      covis.type <- scell.mod.lis$covis.man$covis.type
      if (all(!c('toCell', 'toBulk') %in% covis.type)) return()
      sce.dimred <- scell.mod.lis$covis.man$dimred
      ft.rematch <- scell.mod.lis$covis.man$match.mod.lis$ft.reorder$ft.rematch
-     tar.cell <- input$tarCellBlk; profile <- input$profile
-     covisGrp <- scell.mod.lis$df.lis()$covisGrp
+     targ <- tar.bulk <- tar.cell <- input$tarCellBlk; profile <- input$profile
+     covisGrp <- scell.mod.lis$sce.res()$covisGrp
      gg.all1 <- shm$gg.all1; grob.all1 <- shm$grob.all1
      lgd.all <- shm$lgd.all; lgd.grob.all <- shm$lgd.grob.all
      gcol.all <- shm$gcol.all; dims <- input$dims
      gcol.lgd.all <- shm$gcol.lgd.all
-     con.na <- scell.mod.lis$df.lis()$con.na
+     con.na <- scell.mod.lis$sce.res()$sce.lis$con.na
      dimLgdRows <- input$dimLgdRows
-     if (is.null(sce.dimred)|is.null(ft.rematch)|is.null(grob.all1)|is.null(gg.all1)|is.null(dims)|is.null(covisGrp)|is.null(tar.cell)|is.null(profile)|is.null(dimLgdRows)) return()
-     profile <- ifelse(profile=='Yes', TRUE, FALSE)
+     if (is.null(sce.dimred)|is.null(ft.rematch)|is.null(grob.all1)|is.null(gg.all1)|is.null(dims)|is.null(covisGrp)|is.null(targ)|is.null(profile)|is.null(dimLgdRows)) return()
+     prof <- ifelse(profile!='fixed', TRUE, FALSE)
      if (dims=='TSNE') gg.dim <- plotTSNE(sce.dimred, colour_by=covisGrp)
      if (dims=='PCA') gg.dim <- plotPCA(sce.dimred, colour_by=covisGrp)
      if (dims=='UMAP') gg.dim <- plotUMAP(sce.dimred, colour_by=covisGrp)
@@ -847,14 +873,52 @@ shm_server <- function(id, sch, lis.url, url.id, tab, upl.mod.lis, dat.mod.lis, 
      scale.shm <- input$scale.shm
      if (!is.numeric(scale.shm)) return()
      if (scale.shm <= 0) return()
+     tit.size <- input$title.size * scale.shm
      if (covis.type %in% 'toBulk') {
-       if (tar.cell=='all') tar.cell <- names(ft.rematch)
-       if (length(tar.cell)==0) return();
-     # source('~/spatialHeatmap/R/dim_color.R')
-     dim.shm.lis <- dim_color(gg.dim=gg.dim, gg.shm.all=gg.all1, grob.shm.all=grob.all1, col.shm.all=gcol.all, cell.group=covisGrp, tar.cell=tar.cell, gg.lgd.all=lgd.all, col.lgd.all=gcol.lgd.all, grob.lgd.all=lgd.grob.all, profile=profile, con.na=con.na, lis.match=ft.rematch, sub.title.size=input$title.size * scale.shm, dim.lgd.pos='bottom', dim.lgd.nrow=dimLgdRows)
+       if (targ=='all') { 
+         tar.cell <- names(ft.rematch)
+         if (length(tar.cell)==0) return()
+       }; tar.bulk <- NULL
      } else if (covis.type %in% 'toCell') {
-     dim.shm.lis <- dim_color2cell(gg.dim=gg.dim, gg.shm.all=gg.all1, grob.shm.all=grob.all1, col.shm.all=gcol.all, gg.lgd.all=lgd.all, col.lgd.all=gcol.lgd.all, grob.lgd.all=lgd.grob.all, profile=profile, cell.group=covisGrp, con.na=con.na, lis.match=ft.rematch, sub.title.size=input$title.size * scale.shm, dim.lgd.pos='bottom', dim.lgd.nrow=2)
+       if (targ=='all') { 
+         tar.bulk <- names(ft.rematch)
+         if (length(tar.bulk)==0) return()
+       }; tar.cell <- NULL
      }
+    withProgress(message="Embedding plot: ", value=0, {
+     incProgress(0.25, detail="please wait ...")
+     if (!'idp' %in% profile) { 
+       if (covis.type %in% 'toBulk') {
+         # source('~/spatialHeatmap/R/dim_color.R')
+         dim.shm.lis <- dim_color(gg.dim=gg.dim, gg.shm.all=gg.all1, grob.shm.all=grob.all1, col.shm.all=gcol.all, cell.group=covisGrp, tar.cell=tar.cell, gg.lgd.all=lgd.all, col.lgd.all=gcol.lgd.all, grob.lgd.all=lgd.grob.all, profile=prof, con.na=con.na, lis.match=ft.rematch, sub.title.size=tit.size, dim.lgd.pos='bottom', dim.lgd.nrow=dimLgdRows)
+         incProgress(0.25, detail="please wait ...")
+        } else if (covis.type %in% 'toCell') {
+          # Tar bulk is in SHM already.
+          dim.shm.lis <- dim_color2cell(gg.dim=gg.dim, gg.shm.all=gg.all1, grob.shm.all=grob.all1, col.shm.all=gcol.all, gg.lgd.all=lgd.all, col.lgd.all=gcol.lgd.all, grob.lgd.all=lgd.grob.all, profile=prof, cell.group=covisGrp, con.na=con.na, lis.match=ft.rematch, sub.title.size=tit.size, dim.lgd.pos='bottom', dim.lgd.nrow=2)
+          incProgress(0.25, detail="please wait ...")
+        } 
+    } else {
+       ID <- gID$geneSel; se.scl.sel <- se.scl.sel()
+       req('bulkCell' %in% colnames(colData(se.scl.sel)))
+       geneV <- geneV()$bar.v; cols <- color$col
+       if ('none' %in% cols[1]) return()
+       if (!check_obj(list(ID, se.scl.sel, geneV, cols))) return()
+       vars.cell <- unique(sce.dimred$variable)
+       # In data_server, in order to combine bulk and cell for joint scaling, reduced dims in cell are erased.
+       gg.dim.lis <- NULL; for (i in vars.cell) {
+         sce.dimred0 <- subset(sce.dimred, , variable==i)
+         gg.dim <- plot_dim(sce.dimred0, dim=dims, color.by=covisGrp)
+         gg.dim.lis <- c(gg.dim.lis, list(gg.dim))
+      }; names(gg.dim.lis) <- vars.cell
+      blk.n <- sum(se.scl.sel$bulkCell=='bulk')
+      cell.n <- sum(se.scl.sel$bulkCell=='cell')
+      assay <- assay(se.scl.sel)
+      as.cell <- assay[, seq_len(cell.n) + blk.n, drop=FALSE]
+      dim.shm.lis <- dim_color_idp(sce=sce.dimred, covis.type=covis.type, ID=ID, gene=as.cell, tar.cell=tar.cell, tar.bulk=tar.bulk, con.na.cell=con.na.cell$v, geneV=geneV, cols=cols, gg.dim=gg.dim.lis, gg.shm.all=gg.all1, grob.shm.all=grob.all1, col.shm.all=gcol.all, gg.lgd.all=lgd.all, col.lgd.all=gcol.lgd.all, grob.lgd.all=lgd.grob.all, profile=prof, cell.group=covisGrp, lis.match=ft.rematch, sub.title.size=tit.size, dim.lgd.pos='bottom', dim.lgd.nrow=dimLgdRows, lgd.plot.margin=margin(t=0.01, r=0.2, b=0.01, l=0.2, unit="npc"))
+      incProgress(0.25, detail="please wait ...")
+      dim.lgd.lis$v <- dim.shm.lis$dim.lgd.lis
+     }
+    })
      dim.shm.grob.all$val <- dim.shm.lis$dim.shm.grob.lis
      cat('Done! \n')
      # save(gg.all1, file='gg.all1'); save(grob.all1, file='grob.all1'); save(gcol.all, file='gcol.all'); save(gg.dim, file='gg.dim'); save(clus, file='clus'); save(ft.rematch, file='ft.rematch')
@@ -867,12 +931,14 @@ shm_server <- function(id, sch, lis.url, url.id, tab, upl.mod.lis, dat.mod.lis, 
    observeEvent(list(covisAuto$v$res, covisAuto$v$tailor.lis$v$df.sel.cell$val1, input$tarCellBlk, input$profile, shm$grob.all, shm$grob.all1, input$dims, input$dimLgdRows), ignoreNULL=FALSE, {
      cat('Coclustering: compiling PCA/TSNE/UMAP and SHMs ... \n')
      if (is.null(ipt$fileIn)) return()
-     if (ipt$fileIn != 'customSingleCellData') return()
+     if (!grepl(na.sgl, ipt$fileIn)) return()
      covis.type <- scell.mod.lis$covis.auto$covis.type
      if (all(!c('toCellAuto', 'toBulkAuto') %in% covis.type)) return()
      targ <- input$tarCellBlk; profile <- input$profile
      res <- covisAuto$v$res
-     covisGrp <- scell.mod.lis$df.lis()$covisGrp
+     # covisGrp <- scell.mod.lis$sce.res()$covisGrp
+     # Only cell groups are need here.
+     covisGrp <- 'assignedBulk'
      gg.all1 <- shm$gg.all1; grob.all1 <- shm$grob.all1
      gcol.all <- shm$gcol.all; dims <- input$dims
      lgd.all <- shm$lgd.all; lgd.grob.all <- shm$lgd.grob.all
@@ -880,32 +946,61 @@ shm_server <- function(id, sch, lis.url, url.id, tab, upl.mod.lis, dat.mod.lis, 
      dimLgdRows <- input$dimLgdRows
      # tar.cell interace is generated by renderUI, it will not be NULL until the relevant tab is clicked.
      if (is.null(targ)|is.null(grob.all1)|is.null(gg.all1)|is.null(lgd.all)|is.null(dims)|is.null(covisGrp)|is.null(profile)|is.null(res)|is.null(dimLgdRows)) return()
+     prof <- !'fixed' %in% profile
      cell <- subset(res, , bulkCell=='cell') 
      if (dims=='TSNE') gg.dim <- plotTSNE(cell, colour_by=covisGrp)
      if (dims=='PCA') gg.dim <- plotPCA(cell, colour_by=covisGrp)
      if (dims=='UMAP') gg.dim <- plotUMAP(cell, colour_by=covisGrp)
-     profile <- ifelse(input$profile=='Yes', TRUE, FALSE)
-     con.na <- scell.mod.lis$df.lis()$con.na
+     con.na <- scell.mod.lis$sce.res()$sce.lis$con.na
      scale.shm <- input$scale.shm
      if (!is.numeric(scale.shm)) return()
      if (scale.shm <= 0) return()
+     tit.size <- input$title.size * scale.shm
      if ('all' %in% targ) {
        if ('toBulkAuto' %in% covis.type) targ <- setdiff(unique(cell$assignedBulk), 'none')
        if ('toCellAuto' %in% covis.type) targ <- unique(subset(res, , bulkCell=='bulk')$sample)
      }
      # source('~/spatialHeatmap/R/dim_color_coclus.R')
-     dim.shm.lis <- dim_color_coclus(sce=cell, targ=targ, profile=profile, gg.dim = gg.dim, gg.shm.all=gg.all1, grob.shm.all = grob.all1, gg.lgd.all=lgd.all, col.shm.all = gcol.all, col.lgd.all=gcol.lgd.all, grob.lgd.all=lgd.grob.all, con.na=con.na, lis.match=NULL, sub.title.size=input$title.size * scale.shm, dim.lgd.pos='bottom', dim.lgd.nrow=dimLgdRows)
-     # save(dim.shm.lis, file='dim.shm.lis')
+
+    withProgress(message="Embedding plot: ", value=0, {
+     incProgress(0.25, detail="please wait ...")
+     if (!'idp' %in% profile) {
+       message('coloring by group or fixed colors ...')
+       dim.shm.lis <- dim_color_coclus(sce=cell, targ=targ, profile=prof, gg.dim = gg.dim, gg.shm.all=gg.all1, grob.shm.all = grob.all1, gg.lgd.all=lgd.all, col.shm.all = gcol.all, col.lgd.all=gcol.lgd.all, grob.lgd.all=lgd.grob.all, con.na=con.na, lis.match=NULL, sub.title.size=tit.size, dim.lgd.pos='bottom', dim.lgd.nrow=dimLgdRows) 
+       incProgress(0.25, detail="please wait ...")
+     } else {
+      message('independent coloring ...')
+      ID <- gID$geneSel; se.scl.sel <- se.scl.sel()
+      req('bulkCell' %in% colnames(colData(se.scl.sel)))
+      geneV <- geneV()$bar.v; cols <- color$col
+      if ('none' %in% cols[1]) return()
+      if (!check_obj(list(ID, se.scl.sel, geneV, cols))) return()
+      gg.dim <- plot_dim(cell, dim=dims, color.by=covisGrp)
+      gg.dim.lis <- list(con=gg.dim); assay <- assay(se.scl.sel)
+      blk.n <- sum(se.scl.sel$bulkCell=='bulk')
+      cell.n <- sum(se.scl.sel$bulkCell=='cell')
+      as.cell <- assay[, seq_len(cell.n) + blk.n, drop=FALSE]
+      dim.shm.lis <- dim_color_idp(sce=cell, covis.type=covis.type, targ=targ, ID=ID, gene=as.cell, con.na.cell=FALSE, geneV=geneV, cols=cols, gg.dim=gg.dim.lis, gg.shm.all=gg.all1, grob.shm.all=grob.all1, col.shm.all=gcol.all, gg.lgd.all=lgd.all, col.lgd.all=gcol.lgd.all, grob.lgd.all=lgd.grob.all, profile=prof, cell.group=covisGrp, sub.title.size=tit.size, dim.lgd.pos='bottom', dim.lgd.nrow=dimLgdRows, lgd.plot.margin=margin(t=0.01, r=0.2, b=0.01, l=0.2, unit="npc"))
+      incProgress(0.25, detail="please wait ...")
+      dim.lgd.lis$v <- dim.shm.lis$dim.lgd.lis
+      }
+    })
+      #grob.all <- dim.shm.lis$dim.shm.grob.lis
+      #gg.all <- dim.shm.lis$dim.shm.gg.lis
+      #dim.lgd.lis <- dim.shm.lis$dim.lgd.lis
+      # save(dim.shm.lis, file='dim.shm.lis')
      dim.shm.grob.all$val <- dim.shm.lis$dim.shm.grob.lis
      #dim.shm.gg.lis <- dim.shm.lis$dim.shm.gg.lis
      #save(dim.shm.gg.lis, file='dim.shm.gg.lis')
      cat('Done! \n')
    }) 
-   observeEvent(ipt$fileIn, { dim.shm.grob.all$val <- NULL })
+   observeEvent(ipt$fileIn, { 
+     dim.shm.grob.all$val <- NULL; dim.lgd.lis$v <- NULL
+   })
    observe({
    # observeEvent(scell.mod.lis$sce.upl$covis.type, ignoreInit=FALSE, ignoreNULL=FALSE, { 
      covis.type <- scell.mod.lis$sce.upl$covis.type
-     if (is.null(covis.type)|!'customSingleCellData' %in% ipt$fileIn) { 
+     if (is.null(covis.type)|!grepl(na.sgl, ipt$fileIn)) { 
        hideTab(inputId="shmPar", target="scellTab") 
        updateTabsetPanel(session, inputId="shmPar", selected='basic')
      } else {
@@ -928,7 +1023,6 @@ shm_server <- function(id, sch, lis.url, url.id, tab, upl.mod.lis, dat.mod.lis, 
     shmLay$height <- height <- nrow(lay) * 300 * scale.shm
     output$shm <- renderPlot(width = width, height = height, { 
       cat('Plotting spatial heatmaps ... \n')
-      if (col.reorder$col.re=='N') return()
       if.con <- length(ids$sel)==0|is.null(svgs())|gID$geneSel[1]=="none"|is.null(shm$grob.all1)
 
     if (length(if.con==FALSE)==0) if (length(if.con)==0) return(); if (is.na(if.con)|if.con==TRUE) return(NULL)
@@ -941,7 +1035,7 @@ shm_server <- function(id, sch, lis.url, url.id, tab, upl.mod.lis, dat.mod.lis, 
     # Indexed cons with '_1', '_2', ... at the end.
     con <- unique(gsub(pat.all, '\\2\\3', names(grob.lis.p))); if (length(con)==0) return()
     profile <- input$profile; if (is.null(profile)) return()
-    profile <- ifelse(profile=='Yes', TRUE, FALSE)
+    profile <- ifelse(profile!='fixed', TRUE, FALSE)
     method <- scell.mod.lis$sce.upl$method
     if (!is.null(dim.shm.grob.lis)) { # Select dimred and SHMs.
       if (is.null(method)) return()
@@ -998,7 +1092,7 @@ shm_server <- function(id, sch, lis.url, url.id, tab, upl.mod.lis, dat.mod.lis, 
   )
 
   observe({ 
-    ipt$fileIn; geneIn(); ipt$adj.modInpath; A(); input$p; input$cv1; input$cv2; ids$sel; tis.trans$v; input$genCon  
+    ipt$fileIn; se.scl.sel(); ipt$adj.modInpath; A(); input$p; input$cv1; input$cv2; ids$sel; tis.trans$v; input$genCon  
     url.val <- url_val('shmAll-ext', lis.url)
     updateRadioButtons(session, inputId='ext', selected=ifelse(url.val!='null', url.val, cfg$lis.par$shm.img['file.type', 'default']))
     url.val <- url_val('shmAll-ggly.but', lis.url)
@@ -1022,11 +1116,24 @@ shm_server <- function(id, sch, lis.url, url.id, tab, upl.mod.lis, dat.mod.lis, 
     validate(need(try(lgd.key.size>0 & lgd.key.size<1), 'Legend key size should be between 0 and 1!'))
     svg.path <- svg.path1()
     if (is.null(svg.path1())|is.null(shm$lgd.all)|(length(svg.path$svg.na)>1 & is.null(input$shms.in))) return(ggplot())
+    if (grepl(na.sgl, ipt$fileIn) & 'fixed' %in% input$profile) return(ggplot())
       # Width and height in original SVG.
-      if (length(svg.path$svg.na)>1) svg.na <- input$shms.in else svg.na <- 1
-      g.lgd <- shm$lgd.all[[svg.na]]
-      # g.lgd <- g.lgd+coord_fixed(ratio=r); # Aspect.ratio is fixed allready through theme(aspect.ratio). 
-      cat('Done! \n'); return(g.lgd)
+    if (length(svg.path$svg.na)>1) svg.na <- input$shms.in else svg.na <- 1
+    g.lgd <- shm$lgd.all[[svg.na]]
+    if (!grepl(na.sgl, ipt$fileIn) | !'idp' %in% input$profile) {
+      message('Done! \n'); return(g.lgd)
+    } else {
+     dim.lgd <- dim.lgd.lis$v; se.scl <- se.scl()
+     if (!check_obj(list(se.scl))|is.null(dim.lgd)) return()
+     # In covis, "variable" is added by users or upstream in the app.
+     vars.cell <- unique(se.scl$variable); lgd.lis <- shm$lgd.all
+     for (i in vars.cell) {
+       dim.lgd0 <- dim.lgd[[i]]$dim.lgd
+       lgd.lis <- c(lgd.lis, setNames(list(dim.lgd0), paste0(i, '_dim.lgd')))
+     }; na.lgd <- names(lgd.lis); len <- length(na.lgd)
+     grob.lgd.lis <- lapply(lgd.lis, ggplotGrob)
+     res <- grid.arrange(grobs=grob.lgd.lis, layout_matrix=matrix(seq_along(na.lgd), ncol=1), newpage=TRUE, widths=unit(c(0.99), 'npc'), heights=unit(rep(c(0.99/len), len), 'npc')); message('Done!'); res
+    }
   })
   observe({
     ggly.but <- input$ggly.but
@@ -1062,7 +1169,7 @@ shm_server <- function(id, sch, lis.url, url.id, tab, upl.mod.lis, dat.mod.lis, 
 
 
   output$tran <- renderText({
-    if (is.null(geneIn())|length(ids$sel)==0|is.null(svgs())|gID$geneSel[1]=="none"|is.null(shm$grob.all)) return(NULL)
+    if (is.null(se.scl.sel())|length(ids$sel)==0|is.null(svgs())|gID$geneSel[1]=="none"|is.null(shm$grob.all)) return(NULL)
     if (!is.null(input$t)) validate(need(try(input$t>=0.1), 'Transition time should be at least 0.1 second!'))
   })
 
@@ -1080,7 +1187,7 @@ shm_server <- function(id, sch, lis.url, url.id, tab, upl.mod.lis, dat.mod.lis, 
     scale.ly <- input$scale.ly; ggly.but <- input$ggly.but
     if (is.null(scale.ly)|is.null(ggly.but)) return()
     if (ggly.but==0) return()
-    if (is.null(geneIn())|is.null(gID$new)|length(ids$sel)==0|is.null(svgs())|gID$geneSel[1]=="none"|is.null(shm$gg.all1)) return(NULL)
+    if (is.null(se.scl.sel())|is.null(gID$new)|length(ids$sel)==0|is.null(svgs())|gID$geneSel[1]=="none"|is.null(shm$gg.all1)) return(NULL)
     if (length(color$col=="none")==0|input$color=="") return(NULL)
 
     withProgress(message="Animation: ", value=0, {
@@ -1148,7 +1255,7 @@ shm_server <- function(id, sch, lis.url, url.id, tab, upl.mod.lis, dat.mod.lis, 
     cat('Animation: plotting', gly.url$url, '\n')
     if (is.null(ggly.but)) return()
     if (ggly.but==0|is.null(gly.url) | is.null(scale.ly)) return()
-    if (is.null(svgs())|is.null(geneIn())|length(ids$sel)==0|color$col[1]=='none') return(NULL)
+    if (is.null(svgs())|is.null(se.scl.sel())|length(ids$sel)==0|color$col[1]=='none') return()
     withProgress(message="Animation: ", value=0, {
     incProgress(0.75, detail="plotting ...")
     width <- 700*scale.ly; cat('Done! \n')
@@ -1160,7 +1267,7 @@ shm_server <- function(id, sch, lis.url, url.id, tab, upl.mod.lis, dat.mod.lis, 
   anm.dld <- reactive({
     scale.ly <- input$scale.ly; gly.url <- gly.url()
     if (input$ggly.but==0|is.null(gly.url)) return()
-    if (is.null(svgs())|is.null(geneIn())|length(ids$sel)==0|color$col[1]=='none') return(NULL) 
+    if (is.null(svgs())|is.null(se.scl.sel())|length(ids$sel)==0|color$col[1]=='none') return(NULL) 
     withProgress(message="Downloading animation: ", value=0, {
     incProgress(0.1, detail="in progress ...")
     gg.all <- shm$gg.all1; na <- names(gg.all)
@@ -1196,7 +1303,7 @@ shm_server <- function(id, sch, lis.url, url.id, tab, upl.mod.lis, dat.mod.lis, 
     vdo.but <- input$vdo.but; bar.width <- input$vdo.bar.width
     if (is.null(vdo.but)|!is.numeric(vdo.itvl)|!is.numeric(vdo.res)|!is.numeric(bar.width)) return(NULL)
     if (vdo.but==0|is.null(pat.all())) return(NULL)
-    if (is.null(svgs())|is.null(geneIn())|length(ids$sel)==0|color$col[1]=='none') return(NULL)
+    if (is.null(svgs())|is.null(se.scl.sel())|length(ids$sel)==0|color$col[1]=='none') return(NULL)
     validate(need(try(!is.na(vdo.itvl) & vdo.itvl>0), 'Transition time should be a positive numeric!'))
     validate(need(try(!is.na(vdo.res) & vdo.res>=1 & vdo.res<=700), 'Resolution should be between 1 and 700!'))
  
@@ -1266,20 +1373,20 @@ shm_server <- function(id, sch, lis.url, url.id, tab, upl.mod.lis, dat.mod.lis, 
     shmMhNet <- input$shmMhNet; interNav <- input$interNav
     if (is.null(shmMhNet)|is.null(interNav)) return()
     tab.inter <- ifelse(shmMhNet=='interTab' & interNav=='interPlot', 'yes', 'no')
-    if (input$ggly.but==0 & tab.inter=='yes') showModal(modal(msg=HTML('To see the latest interactive image, always click the button <strong>"Click to show/update"</strong>!'), easyClose=TRUE))
+    if (input$ggly.but==0 & tab.inter=='yes') showModal(modal(msg=HTML('To see the latest results, always click the <strong>"Run"</strong> button!'), easyClose=TRUE))
   })
   observe({
     shmMhNet <- input$shmMhNet; vdoNav <- input$vdoNav
     if (is.null(shmMhNet)|is.null(vdoNav)) return()
     tab.vdo <- ifelse(shmMhNet=='vdoTab' & vdoNav=='video', 'yes', 'no')
-    if (input$vdo.but==0 & tab.vdo=='yes') showModal(modal(msg=HTML('To see the latest video, always click the button <strong>"Click to show/update"</strong>!'), easyClose=TRUE))
+    if (input$vdo.but==0 & tab.vdo=='yes') showModal(modal(msg=HTML('To see the latest results, always click the <strong>"Run"</strong> button!'), easyClose=TRUE))
   })
-  network_server('net', upl.mod.lis, dat.mod.lis, shm.mod.lis=list(gID=gID, tab.act.lis=tab.act.lis), sch.mod.lis)
+  analysis_server('net', upl.mod.lis, dat.mod.lis, shm.mod.lis=list(gID=gID, tab.act.lis=tab.act.lis), sch.mod.lis)
 
   observe({
     ipt$fileIn; ipt$geneInpath; lis.par <- cfg$lis.par
     url.val <- url_val('shmAll-cs.v', lis.url)
-    updateRadioButtons(session, inputId='cs.v', label='Color key based on', choices=c("Selected rows", "All rows"), selected=ifelse(url.val!='null', url.val, cfg$lis.par$shm.img['color.scale', 'default']), inline=TRUE)
+    updateRadioButtons(session, inputId='cs.v', selected=ifelse(url.val!='null', url.val, cfg$lis.par$shm.img['color.scale', 'default']), inline=TRUE)
     url.val <- url_val('shmAll-col.n', lis.url)
     updateSliderInput(session, inputId='col.n', label='', value=ifelse(url.val!='null', url.val, as.numeric(cfg$lis.par$shm.img['columns', 'default'])), min=1, max=50, step=1)
     url.val <- url_val('shmAll-genCon', lis.url)
@@ -1291,8 +1398,6 @@ shm_server <- function(id, sch, lis.url, url.id, tab, upl.mod.lis, dat.mod.lis, 
   updateSliderInput(session, inputId='title.size', label='', value=ifelse(url.val!='null', url.val, as.numeric(cfg$lis.par$shm.img['title.size', 'default'])), min=0, max=100, step=0.5)
     url.val <- url_val('shmAll-color', lis.url)
   updateTextInput(session, "color", "Color scheme", ifelse(url.val!='null', url.val, cfg$lis.par$shm.img['color', 'default']), placeholder=paste0('Eg: ', cfg$lis.par$shm.img['color', 'default']))
-  url.val <- url_val('shmAll-cs.v', lis.url) 
-  updateRadioButtons(session, inputId='cs.v', label='Color key based on', choices=c("Selected rows", "All rows"), selected=ifelse(url.val!='null', url.val, cfg$lis.par$shm.img['color.scale', 'default']), inline=TRUE)
   url.val <- url_val('shmAll-val.lgd.row', lis.url)
   updateNumericInput(session, inputId='val.lgd.row', label='Rows', value=ifelse(url.val!='null', url.val, as.numeric(cfg$lis.par$shm.img['value.legend.rows', 'default'])), min=1, max=Inf, step=1)
   url.val <- url_val('shmAll-val.lgd.key', lis.url)
@@ -1336,5 +1441,5 @@ shm_server <- function(id, sch, lis.url, url.id, tab, upl.mod.lis, dat.mod.lis, 
 
   })
   onBookmark(function(state) { state })
-  return(list(gID=gID, sam=sam, svgs=svgs, shmLay=shmLay))
+  return(list(gID=gID, sam=sam, svgs=svgs, shmLay=shmLay, ipt=input))
 })} # shm_server

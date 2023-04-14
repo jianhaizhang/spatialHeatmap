@@ -1,9 +1,38 @@
 ########################################
-# Methods for SVG class.
 
+# Methods for SPHM class.
 
 #' @export
-setGeneric("covis", function(svg, ...) standardGeneric("covis"))
+setGeneric("shm", function(data, ...) standardGeneric("shm"))
+#' @export
+setGeneric("covis", function(data, ...) standardGeneric("covis"))
+
+#' @export
+setGeneric("svg", function(x) standardGeneric("svg"))
+#' @export
+setGeneric("svg<-", function(x, value) standardGeneric("svg<-"))
+#' @export
+setGeneric("name", function(x) standardGeneric("name"))
+#' @export
+setGeneric("bulk", function(x) standardGeneric("bulk"))
+#' @export
+setGeneric("bulk<-", function(x, value) standardGeneric("bulk<-"))
+#' @export
+setGeneric("cell", function(x) standardGeneric("cell"))
+#' @export
+setGeneric("cell<-", function(x, value) standardGeneric("cell<-"))
+#' @export
+setGeneric("match", function(x) standardGeneric("match"))
+#' @export
+setGeneric("match<-", function(x, value) standardGeneric("match<-"))
+#' @export
+setGeneric("output", function(x) standardGeneric("output"))
+#' @export
+setGeneric("output<-", function(x, value) standardGeneric("output<-"))
+
+
+# Methods for SVG class.
+
 
 #' @export
 setGeneric("spatial_hm", function(svg, ...) standardGeneric("spatial_hm"))
@@ -30,18 +59,20 @@ setGeneric("dimension", function(x) standardGeneric("dimension"))
 setGeneric("dimension<-", function(x, value) standardGeneric("dimension<-"))
 
 #' @export
-setGeneric("raster", function(x) standardGeneric("raster"))
+setGeneric("svg_pa", function(x) standardGeneric("svg_pa"))
+#' @export
+setGeneric("svg_pa<-", function(x, value) standardGeneric("svg_pa<-"))
+#' @export
+setGeneric("raster_pa", function(x) standardGeneric("raster_pa"))
+#' @export
+setGeneric("raster_pa<-", function(x, value) standardGeneric("raster_pa<-"))
 
 #' @export
-setGeneric("raster<-", function(x, value) standardGeneric("raster<-"))
+setGeneric("angle", function(x) standardGeneric("angle"))
+#' @export
+setGeneric("angle<-", function(x, value) standardGeneric("angle<-"))
 
 #' @export
-setGeneric("svg", function(x) standardGeneric("svg"))
-
-#' @export
-setGeneric("svg<-", function(x, value) standardGeneric("svg<-"))
-
-#' @export
-setGeneric("sub_ft", function(svg, ...) standardGeneric("sub_ft"))
+setGeneric("sub_sf", function(svg, ...) standardGeneric("sub_sf"))
 
 

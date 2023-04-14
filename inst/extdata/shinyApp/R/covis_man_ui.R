@@ -2,81 +2,49 @@
 covis_man_ui <- function(id) { 
   ns <- NS(id)
     tabsetPanel(type = "pills", id=ns('tabSetCell'), selected="datCell",
-      tabPanel(title="Parameters", value='parMan', br(),
-        actionButton(ns("parManBut"), "Update"), 
-        h4(strong('Bulk tissues')), br(),
-        fluidRow(splitLayout(cellWidths=c('1%', '10%'), '',
-        selectInput(ns("normBlk"), "Normalization", c('None'='none', "CNF-TMM", "CNF-TMMwsp", "CNF-RLE", "CNF-upperquartile", "ESF", "VST", "rlog"), selected='VST')
-        )), 
-        h4(strong('Single Cells')), br(),
-        h5(strong('Quality Control')),
-        fluidRow(splitLayout(cellWidths=c('1%', '10%','1%', '33%'), '',
-          numericInput(ns('cntThr'), label='Min counts', value=0, min=0, max=Inf, step=50, width=150), '',
-          numericInput(ns('nmads'), label='Min median absolute deviations (MADs)', value=3, min=1, max=Inf, step=1, width=150)
-        )),
-        bsTooltip(ns('cntThr'), title = "perCellQCMetrics", placement = "bottom", trigger = "hover"),
-        bsTooltip(ns('nmads'), title = "isOutlier", placement = "bottom", trigger = "hover"),  
-        
-        h5(strong('Normalization')),
-        fluidRow(splitLayout(cellWidths=c('1%', '8%','1%', '8%'), '',
-          numericInput(ns('minSize'), label='Min size', value=100, min=5, max=Inf, step=50, width=150), '',
-          numericInput(ns('maxSize'), label='Max size', value=3000, min=10, max=Inf, step=100, width=150)
-        )),
-        bsTooltip(ns('minSize'), title = "quickCluster", placement = "bottom", trigger = "hover"),
-        bsTooltip(ns('maxSize'), title = "computeSumFactors", placement = "bottom", trigger = "hover"),
-
-        h5(strong('Variance Modelling')),
-        fluidRow(splitLayout(cellWidths=c('1%', '23%','1%', '23%'), '',
-          numericInput(ns('hvgN'), label='Top variable genes by number', value=3000, min=5, max=Inf, step=50, width=150), '',
-          numericInput(ns('hvgP'), label='Top variable genes by proportion', value=0.1, min=0.0001, max=1, step=0.1, width=150)
-        )),
-        bsTooltip(ns('hvgN'), title = "getTopHVGs", placement = "bottom", trigger = "hover"),
-        bsTooltip(ns('hvgP'), title = "getTopHVGs", placement = "bottom", trigger = "hover"),
-
-        h5(strong('Dimension reduction')),
-        fluidRow(splitLayout(cellWidths=c('1%', '20%', '1%', '20%'), '',
-        numericInput(ns('minRank'), label='Min PCs', value=5, min=2, max=Inf, step=1, width=150), '',
-        numericInput(ns('maxRank'), label='Max PCs', value=50, min=3, max=Inf, step=5, width=150)
-        )),
-        bsTooltip(ns('minRank'), title = "denoisePCA", placement = "bottom", trigger = "hover"),
-        bsTooltip(ns('maxRank'), title = "denoisePCA", placement = "bottom", trigger = "hover"),
-        fluidRow(splitLayout(cellWidths=c('1%', '20%', '1%', '20%'), '',
-        numericInput(ns('ncomT'), label='t-SNE dimensions to obtain', value=2, min=2, max=Inf, step=1, width=150), '',
-        numericInput(ns('ntopT'), label='Number of top HVGs', value=500, min=50, max=Inf, step=100, width=150)
-        )),
-        bsTooltip(ns('ncomT'), title = "runTSNE", placement = "bottom", trigger = "hover"),
-        bsTooltip(ns('ntopT'), title = "runTSNE", placement = "bottom", trigger = "hover"),
-        fluidRow(splitLayout(cellWidths=c('1%', '20%', '1%', '20%', '1%', '20%'), '',
-        numericInput(ns('ncomU'), label='UMAP dimensions to obtain', value=2, min=2, max=Inf, step=1, width=150), '',
-        numericInput(ns('ntopU'), label='Number of top HVGs', value=500, min=50, max=Inf, step=100, width=150), '',
-        numericInput(ns('pcs'), label='Number of PCs', value=50, min=5, max=Inf, step=5, width=150)
-        )), 
-        bsTooltip(ns('ncomU'), title = "runUMAP", placement = "bottom", trigger = "hover"),
-        bsTooltip(ns('ntopU'), title = "runUMAP", placement = "bottom", trigger = "hover"),
-        fluidRow(splitLayout(cellWidths=c('1%', '13%', '1%', '5%'), '',
-        h5(strong('Build neighbor graphs'))
-        )),
-        fluidRow(splitLayout(cellWidths=c('1%', '20%'), '',
-        selectInput(ns('nn.graph'), label='Method', choices=c('buildSNNGraph', 'buildKNNGraph'), selected='buildSNNGraph')
-        )), uiOutput(ns('graph.par')),
-        fluidRow(splitLayout(cellWidths=c('1%', '13%', '1%', '5%'), '',
-          h5(strong('Clustering')),  
-        )),
-        fluidRow(splitLayout(cellWidths=c('1%', '20%'), '',
-        selectInput(ns('scell.cluster'), label='Method', choices=c('cluster_walktrap', 'cluster_fast_greedy', 'cluster_leading_eigen'), selected='cluster_walktrap')
-        )), uiOutput(ns('clus.par'))
- 
+      tabPanel(title="Settings", value='parMan', br(),
+      actionButton(ns("parManBut"), "Run", style=run.col),
+      h5(strong('Jointly normalizing bulk and cell data')),
+      fluidRow(splitLayout(cellWidths=c('12px', '250px'), '',
+        selectInput(ns('norm'), label='Method', choices=c('computeSumFactors'='fct', 'CPM'='cpm'), selected='fct')
+      )),
+      h5(strong('Filtering')),
+      div(id=ns('filBlk'),
+      fluidRow(splitLayout(cellWidths=c('12px', '70px', '1px', '70px', '1px', '72px', '1px', '72px'), '',
+        numericInput(ns('filBlkP'), label='P', value=0.1, min=0, max=1, step=0.1), '',
+        numericInput(ns('filBlkA'), label='A', value=1, min=0, max=1000, step=5), '',
+        numericInput(ns('filBlkCV1'), label='CV1 (min)', value=0.1, min=-1000, max=1000, step=0.1), '',
+        numericInput(ns('filBlkCV2'), label='CV2 (max)', value=200, min=-1000, max=1000, step=0.1)
+      ))),
+      div(id=ns('filCell'),
+      fluidRow(splitLayout(cellWidths=c('12px', '72px', '1px', '98px', '1px', '98px'), '',
+        numericInput(ns('cutoff'), label='Cutoff', value=1, min=-Inf, max=Inf, step=0.5), '',
+        numericInput(ns('filPGen'), label='P in gene (P1)', value=0.01, min=0, max=1, step=0.1), '',
+        numericInput(ns('filPCell'), label='P in cell (P2)', value=0.1, min=0, max=1, step=0.1)
+      ))),
+      bsTooltip(ns('filBlk'), title = "Filtering bulk data: rows passing the following filtering will remain. <br/> 1. Expression  values >= A across >= P of all samples <br/> 2. Coefficient of variation (CV) is between CV1 and CV2.", placement = "bottom",      trigger = "hover"),
+      bsTooltip(ns('filCell'), title = "Filtering cell data: <br/> 1. genes with expression values >= Cutoff across >= P1 cells    will remain <br/> 2. cells with expression values >= Cutoff across >= P2 genes will remain.", placement = "bottom", trigger =      "hover"),
+      h5(strong('Dimension reduction')),
+      fluidRow(splitLayout(cellWidths=c('12px', '112px', '1px', '112px'), '',
+        numericInput(ns('minRank'), label='Min dimensions', value=5, min=2, max=Inf, step=1), '',
+        numericInput(ns('maxRank'), label='Max dimensions', value=50, min=3, max=Inf, step=5)
+      )) 
     ), # tabPanel(title="Parameters"
       tabPanel(title="Data Table", value='datCell', br(),
-      box(id='bulk', title = "Bulk Data", width = 12, closable = FALSE, solidHeader = TRUE, collapsible = TRUE, enable_sidebar = FALSE, status = "primary", enable_dropdown = FALSE,
-      dataTableOutput(ns("datCovisBlk"))
-      ),
-      box(id='cell', title = "Cell Data", width = 12, closable = FALSE, solidHeader = TRUE, collapsible = TRUE, enable_sidebar = FALSE, status = "primary", enable_dropdown = FALSE,
-      dataTableOutput(ns("datCell"))
+      actionButton(ns("subdat"), "Run", icon=icon("sync"), style = run.col),
+      div(id=ns('submsg'), 
+      fluidRow(splitLayout(cellWidths=c('12px', '70px', '1px', '70px', '1px', '95px', '1px', '89px'), '',
+        numericInput(ns('r1'), label='Row start', value=1, min=1, max=Inf, step=1), '',
+        numericInput(ns('r2'), label='Row end', value=500, min=2, max=Inf, step=1), '',
+        numericInput(ns('c1'), label='Column start', value=1, min=1, max=Inf, step=1), '',
+        numericInput(ns('c2'), label='Column end', value=20, min=2, max=Inf, step=1)
+      ))),
+      bsTooltip(id=ns('submsg'), title="Subsetting the data matrix for display only, not for downstream analysis.", placement =    "top", trigger = "hover"),
+      box(id='datall', title = "", width = 12, closable = FALSE, solidHeader = TRUE, collapsible = TRUE, enable_sidebar = FALSE, status = "primary", enable_dropdown = FALSE,
+      dataTableOutput(ns("datall"))
       )
-
       ), # navbarPage tabPanel 
-      tabPanel("Dimensionality Reduction", value='dimred',
+      tabPanel("Dimension Reduction", value='dimred',
       navbarPage('', id=ns('dimredNav'), 
       tabPanel('Plot', dim_ui(ns('dim'))),
      )), #tabPanel("Dimensionality Reduction", navbarPage

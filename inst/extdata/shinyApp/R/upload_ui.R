@@ -2,7 +2,7 @@
 upload_ui <- function(id) {
    ns <- NS(id)
    tabPanel(title="Datasets", value='landing',
-   navbarPage('', 
+   navbarPage('', selected='instr', 
      tabPanel(title="Gallery", value='gallery',
       fluidRow(
         column(4, id='brainHum', style='text-align:center', uiOutput(ns('brain.hum'))),
@@ -51,23 +51,26 @@ upload_ui <- function(id) {
       fluidRow(splitLayout(cellWidths=c('1%', '21%', '1%', '21%', '1%', '24%', '1%', '24%'), '',
       downloadButton(ns("dld.sgl"), "Example1: data & a single aSVG"), '',
       downloadButton(ns("dld.mul"), "Example2: data & multiple aSVGs"), '',
-      downloadButton(ns("dld.st"), "Example3: multi-dimensional data & aSVG"), '',
+      downloadButton(ns("dld.st"), "Example3: multi-variable data & aSVG"), '',
       downloadButton(ns("dld.covis"), "Example4: co-visualization data & aSVG")
-      ))), br(), 
+      ))) # br(), 
 
-      h4(strong("Additional files")), 
-      fluidRow(splitLayout(cellWidths=c('1%', '24%', '1%', '35%'), '',
-      tags$div(class='tp', span(class='tpt', 'Upload a config file in ".yaml" format.'),
-      fileInput(ns("config"), "Upload a config file (optional)", accept=".yaml", multiple=FALSE)), '',
-      tags$div(class='tp', span(class='tpt', 'The batched data sets will be listed under "Step 1".'),
-      fileInput(ns("tar"), "Upload batched data, aSVGs in two separate tar files (optional)", accept=c(".tar"), multiple=TRUE))
-      )),
-      div(style = "font-size: 10px; padding: 0px 0px; margin:0%",
-      fluidRow(splitLayout(cellWidths=c('1%', '24%', '1%', '35%'), '',
-      downloadButton(ns("dld.cfg"), "Example config file"), '', downloadButton(ns("dld.bat"), "Example data/aSVGs in batch")
-      )))
-   ) # tabPanel(title="Data & aSVGs",
-   ) # tabsetPanel(selected="gallery",
+      #h4(strong("Additional files")), 
+      #fluidRow(splitLayout(cellWidths=c('1%', '24%', '1%', '35%'), '',
+      #tags$div(class='tp', span(class='tpt', 'Upload a config file in ".yaml" format.'),
+      #fileInput(ns("config"), "Upload a config file (optional)", accept=".yaml", multiple=FALSE)), '',
+      #tags$div(class='tp', span(class='tpt', 'The batched data sets will be listed under "Step 1".'),
+      #fileInput(ns("tar"), "Upload batched data, aSVGs in two separate tar files (optional)", accept=c(".tar"), multiple=TRUE))
+      #)),
+      #div(style = "font-size: 10px; padding: 0px 0px; margin:0%",
+      #fluidRow(splitLayout(cellWidths=c('1%', '24%', '1%', '35%'), '',
+      #downloadButton(ns("dld.cfg"), "Example config file"), '', downloadButton(ns("dld.bat"), "Example data/aSVGs in batch")
+      # )))
+   ), # tabPanel(title="Data & aSVGs",
+   tabPanel(title="Instructions", value='instr',
+     tags$iframe(style="height: 100vh", src="image/shiny_instr.pdf",  width = "100%", scrolling = 'no')
+   ) 
+  ) # tabsetPanel(selected="gallery",
    ) # tabPanel(title="Datasets", 
   
 }

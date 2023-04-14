@@ -35,8 +35,7 @@
 #' @importFrom gridExtra grid.arrange
 
 video <- function(gg, cs.g, sub.title.size=NULL, bar.width=0.1, bar.value.size=NULL, lgd.key.size=0.02, lgd.text.size=8, angle.text.key=NULL, position.text.key=NULL, lgd.row=2, lgd.col=NULL, legend.value.vdo=NULL, label=FALSE, label.size=4, label.angle=0, hjust=0, vjust=0, opacity=1, key=TRUE, video.dim='640x480', res=500, interval=1, framerate=1, out.dir) {
-
-  if (any(c('e', 'w') %in% check_pkg('av'))) stop('The package "av" is not detected!')
+  pkg <- check_pkg('av'); if (is(pkg, 'character')) stop(pkg)
   try(test_ffm()); ffm <- tryCatch({ test_ffm() }, error=function(e){ return('error') }, warning=function(w) { return('warning') } )
   if (grepl('error|warning', ffm)) return()
 

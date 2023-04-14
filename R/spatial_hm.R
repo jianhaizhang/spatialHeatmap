@@ -4,6 +4,14 @@
 
 
 #' @inheritParams covis
+#' @param svg An \code{SVG} object containing one or multiple aSVG instances (see \code{\link{SVG}} and \code{\link{read_svg}}). In the aSVGs, spatial features (tissues, organs, etc) having counterparts with the same identifiers in the `bulk` data will be colored accoording to expression profiles of chosen biomolecules (genes, proteins, etc). 
+#' @param lis.rematch The \code{list} for re-matching in SHMs (only bulk data) or matching between single-cell and bulk data in co-visualization.
+#' \describe{ 
+#'  \item{SHMs}{ A named \code{list} for rematching spatial features between numeric data (ftA, ftB) and aSVGs (ftC, ftD, ftE). In each slot, the slot name is a spatial feature from the data and the corresponding element is one or multiple spatial features from the aSVG. \emph{E.g.} \code{list(ftA = c('ftC', 'ftD'), ftB = c('ftE'))}.
+#'  } 
+#'  \item{Co-visualization plots}{ Mapping cells to tissues: a named \code{list}, where cell group labels from \code{colData(sce.  dimred)[, 'cell.group']} are the name slots and aSVG features are the corresponding \code{list} elements. Mapping tissues to cells: a named \code{list}, where tissues are the name slots and cells from \code{colData(sce.dimred)[, 'cell.group']} are the corresponding \code{list} elements. Applicable when cell grouping methods are annodation labels, marker genes, clustering, or manual assignments. 
+#'  }
+#' }
 #' @return An image of spatial heatmap(s), a two-component list of the spatial heatmap(s) in \code{ggplot} format and a \code{data.frame} of mapping between assayed samples and aSVG features.
 
 #' @section Details:
@@ -21,7 +29,7 @@
 #' ## Set up toy data.
 #' 
 #' # Access toy data1.
-#' cnt.chk.simple <- system.file('extdata/shinyApp/example/count_chicken_simple.txt',
+#' cnt.chk.simple <- system.file('extdata/shinyApp/data/count_chicken_simple.txt',
 #' package='spatialHeatmap')
 #' df.chk <- read.table(cnt.chk.simple, header=TRUE, row.names=1, sep='\t', check.names=FALSE)
 #' # Columns follow the namig scheme "sample__condition", where "sample" and "condition" stands
@@ -34,7 +42,7 @@
 #' df.chk[1:3, ]
 #'
 #' # Access toy data2. 
-#' cnt.chk <- system.file('extdata/shinyApp/example/count_chicken.txt', package='spatialHeatmap')
+#' cnt.chk <- system.file('extdata/shinyApp/data/count_chicken.txt', package='spatialHeatmap')
 #' count.chk <- read.table(cnt.chk, header=TRUE, row.names=1, sep='\t')
 #' count.chk[1:3, 1:5]
 #'
@@ -44,7 +52,7 @@
 #' # package and accessed below. 
 
 #' # Access the example targets file. 
-#' tar.chk <- system.file('extdata/shinyApp/example/target_chicken.txt', package='spatialHeatmap')
+#' tar.chk <- system.file('extdata/shinyApp/data/target_chicken.txt', package='spatialHeatmap')
 #' target.chk <- read.table(tar.chk, header=TRUE, row.names=1, sep='\t')
 #' # Every column in toy data2 corresponds with a row in targets file. 
 #' target.chk[1:5, ]
@@ -77,10 +85,10 @@
 #' # Filter out genes with low counts and low variance. Genes with counts over 5 (log2 unit) in
 #' # at least 1% samples (pOA), and coefficient of variance (CV) between 0.2 and 100 are retained.
 #' # Filter toy data1.
-#' df.fil.chk <- filter_data(data=df.aggr.chk, pOA=c(0.01, 5), CV=c(0.2, 100), dir=NULL)
+#' df.fil.chk <- filter_data(data=df.aggr.chk, pOA=c(0.01, 5), CV=c(0.2, 100))
 #' # Filter toy data2.
 #' se.fil.chk <- filter_data(data=se.aggr.chk, sam.factor='organism_part', con.factor='age',
-#' pOA=c(0.01, 5), CV=c(0.2, 100), dir=NULL)
+#' pOA=c(0.01, 5), CV=c(0.2, 100))
 #'
 #' ## Spatial heatmaps.
 #'
@@ -88,7 +96,7 @@
 #' # (https://github.com/ebi-gene-expression-group/anatomogram/tree/master/src/svg) directly with
 #' # function "return_feature". It is included in this package and accessed as below. Details on
 #' # how this aSVG is selected are documented in function "return_feature".
-#' svg.chk <- system.file("extdata/shinyApp/example", "gallus_gallus.svg",
+#' svg.chk <- system.file("extdata/shinyApp/data", "gallus_gallus.svg",
 #' package="spatialHeatmap")
 #'
 #' # Reading the chicken aSVG file.
@@ -108,66 +116,6 @@
 #' spatial_hm(svg=svg.chk, data=se.fil.chk, ID='ENSGALG00000019846', legend.r=1.9,
 #' legend.nrow=2, sub.title.size=7, ncol=3)
 #'
-#' # The data can also come as as a simple named vector. The following gives an example on a
-#' # vector of 3 random values. 
-#' # Random values.
-#' vec <- sample(1:100, 3)
-#' # Name the vector. The last name is assumed as a random sample without a matching feature
-#' # in aSVG.
-#' names(vec) <- c('brain', 'heart', 'notMapped')
-#' vec
-#' # Plot.
-#' spatial_hm(svg=svg.chk, data=vec, ID='geneX', height=0.6, legend.r=1.5, ncol=1)
-#'
-#' # Plot spatial heatmaps on aSVGs of two Arabidopsis thaliana development stages.
-#' 
-#' # Make up a random numeric data frame.
-#' df.test <- data.frame(matrix(sample(x=1:100, size=50, replace=TRUE), nrow=10))
-#' colnames(df.test) <- c('shoot_totalA__condition1', 'shoot_totalA__condition2', 
-#' 'shoot_totalB__condition1', 'shoot_totalB__condition2', 'notMapped')
-#' rownames(df.test) <- paste0('gene', 1:10) # Assign row names 
-#' df.test[1:3, ]
-
-#' # aSVG of development stage 1.
-#' svg1 <- system.file("extdata/shinyApp/example", "arabidopsis.thaliana_organ_shm1.svg",
-#' package="spatialHeatmap")
-#' # aSVG of development stage 2.
-#' svg2 <- system.file("extdata/shinyApp/example", "arabidopsis.thaliana_organ_shm2.svg",
-#' package="spatialHeatmap")
-#' # Import aSVGs.
-#' svg.sh.mul <- read_svg(c(svg1, svg2))
-#' # Spatial heatmaps. 
-#' spatial_hm(svg=svg.sh.mul, data=df.test, ID=c('gene1'), height=0.8, legend.r=1.6,
-#' preserve.scale=TRUE) 
-#'
-#' # Multiple development stages can also be arranged in a single aSVG image, but the 
-#' # samples, stages, and conditions should be formatted in different ways. See the vignette
-#' # for details by running "browseVignette('spatialHeatmap')" in R. 
-
-#' # Overlay real images with spatial heatmaps.
-#' 
-#' # The first real image used as a template to create an aSVG. 
-#' raster.pa1 <- system.file('extdata/shinyApp/example/maize_leaf_shm1.png',
-#' package='spatialHeatmap')
-#' # The first aSVG created with the first real image. 
-#' svg.pa1 <- system.file('extdata/shinyApp/example/maize_leaf_shm1.svg',
-#' package='spatialHeatmap')
-#' # The second real image used as a template to create an aSVG. 
-#' raster.pa2 <- system.file('extdata/shinyApp/example/maize_leaf_shm2.png',
-#' package='spatialHeatmap')
-#' # The second aSVG created with the second real image. 
-#' svg.pa2 <- system.file('extdata/shinyApp/example/maize_leaf_shm2.svg',
-#' package='spatialHeatmap')
-#'
-#' # Import aSVGs and raster images.
-#' svg.overlay <- read_svg(svg.path=c(svg.pa1, svg.pa2), raster.path=c(raster.pa1, raster.pa2))
-#' # The data table.
-#' dat.overlay <- read_fr(system.file('extdata/shinyApp/example/dat_overlay.txt',
-#' package='spatialHeatmap'))
-#' 
-#' # Plot spatial heatmaps on top of real images.
-#' spatial_hm(svg=svg.overlay, data=dat.overlay, raster.path=c(raster.pa1, raster.pa2),
-#' charcoal=FALSE, ID=c('gene1'), alpha.overlay=0.5)
 
 #' @author Jianhai Zhang \email{jianhai.zhang@@email.ucr.edu} \cr Dr. Thomas Girke \email{thomas.girke@@ucr.edu}
 
@@ -187,12 +135,15 @@
 #' @aliases spatial_hm,SVG-method
 #' @export
 
-setMethod("spatial_hm", c(svg="SVG"), function(svg, data, assay.na=NULL, sam.factor=NULL, con.factor=NULL, ID, charcoal=FALSE, alpha.overlay=1, lay.shm="gene", ncol=2, col.com=c('yellow', 'orange', 'red'), col.bar='selected', sig.thr=c(NA, NA), cores=NA, bar.width=0.08, bar.title.size=0, trans.scale=NULL, ft.trans=NULL, tis.trans=ft.trans, lis.rematch = NULL, legend.r=0.9, sub.title.size=11, sub.title.vjust=2, legend.plot='all', ft.legend='identical', bar.value.size=10, legend.plot.title='Legend', legend.plot.title.size=11, legend.ncol=NULL, legend.nrow=NULL, legend.position='bottom', legend.direction=NULL, legend.key.size=0.02, legend.text.size=12, angle.text.key=NULL, position.text.key=NULL, legend.2nd=FALSE, position.2nd='bottom', legend.nrow.2nd=NULL, legend.ncol.2nd=NULL, legend.key.size.2nd=0.03, legend.text.size.2nd=10, angle.text.key.2nd=0, position.text.key.2nd='right', add.feature.2nd=FALSE, label=FALSE, label.size=4, label.angle=0, hjust=0, vjust=0, opacity=1, key=TRUE, line.width=0.2, line.color='grey70', relative.scale = NULL, verbose=TRUE, out.dir=NULL, animation.scale = 1, selfcontained=FALSE, video.dim='640x480', res=500, interval=1, framerate=1, bar.width.vdo=0.1, legend.value.vdo=NULL, ...) {
+setMethod("spatial_hm", c(svg="SVG"), function(svg, data, assay.na=NULL, sam.factor=NULL, con.factor=NULL, ID, charcoal=FALSE, alpha.overlay=1, lay.shm="gene", ncol=2, col.com=c('yellow', 'orange', 'red'), col.bar='selected', thr=c(NA, NA), cores=NA, bar.width=0.08, bar.title=NULL, bar.title.size=0, scale=NULL, ft.trans=NULL, tis.trans=ft.trans, lis.rematch = NULL, legend.r=0.9, sub.title.size=11, sub.title.vjust=2, legend.plot='all', ft.legend='identical', bar.value.size=10, legend.plot.title='Legend', legend.plot.title.size=11, legend.ncol=NULL, legend.nrow=NULL, legend.position='bottom', legend.direction=NULL, legend.key.size=0.02, legend.text.size=12, angle.text.key=NULL, position.text.key=NULL, legend.2nd=FALSE, position.2nd='bottom', legend.nrow.2nd=NULL, legend.ncol.2nd=NULL, legend.key.size.2nd=0.03, legend.text.size.2nd=10, angle.text.key.2nd=0, position.text.key.2nd='right', add.feature.2nd=FALSE, label=FALSE, label.size=4, label.angle=0, hjust=0, vjust=0, opacity=1, key=TRUE, line.width=0.2, line.color='grey70', relative.scale = NULL, verbose=TRUE, out.dir=NULL, animation.scale = 1, selfcontained=FALSE, video.dim='640x480', res=500, interval=1, framerate=1, bar.width.vdo=0.1, legend.value.vdo=NULL, ...) {
+  # if ('spatial_hm' %in% as.character(match.call()[[1]])) warning('The function "spatial_hm" is deprecated and replaced by "shm"!', call. = FALSE)
+  # if ('spatial_hm' %in% deparse(sys.call(0)[[1]])) warning('The function "spatial_hm" is deprecated and replaced by "shm"!', call. = FALSE)
+  warning('The function "spatial_hm" will be deprecated and replaced by "shm"!', call. = FALSE)
   calls <- names(vapply(match.call(), deparse, character(1))[-1])
   if("tis.trans" %in% calls) warning('"tis.trans" is deprecated and replaced by "ft.trans"! \n')
   if("svg.path" %in% calls) warning('"svg.path" is deprecated and replaced by "svg"! \n')
 
-  res <- shm_covis(svg=svg, data=data, assay.na=assay.na, sam.factor=sam.factor, con.factor=con.factor, ID=ID, charcoal=charcoal, alpha.overlay=alpha.overlay, lay.shm=lay.shm, ncol=ncol, col.com=col.com, col.bar=col.bar, sig.thr=sig.thr, cores=cores, bar.width=bar.width, bar.title.size=bar.title.size, trans.scale=trans.scale, ft.trans=ft.trans, lis.rematch = lis.rematch, legend.r=legend.r, sub.title.size=sub.title.size, sub.title.vjust=sub.title.vjust, legend.plot=legend.plot, ft.legend=ft.legend, bar.value.size=bar.value.size, legend.plot.title=legend.plot.title, legend.plot.title.size=legend.plot.title.size, legend.ncol=legend.ncol, legend.nrow=legend.nrow, legend.position=legend.position, legend.direction=legend.direction, legend.key.size=legend.key.size, legend.text.size=legend.text.size, angle.text.key=angle.text.key, position.text.key=position.text.key, legend.2nd=legend.2nd, position.2nd=position.2nd, legend.nrow.2nd=legend.nrow.2nd, legend.ncol.2nd=legend.ncol.2nd, legend.key.size.2nd=legend.key.size.2nd, legend.text.size.2nd=legend.text.size.2nd, angle.text.key.2nd=angle.text.key.2nd, position.text.key.2nd=position.text.key.2nd, add.feature.2nd=add.feature.2nd, label=label, label.size=label.size, label.angle=label.angle, hjust=hjust, vjust=vjust, opacity=opacity, key=key, line.width=line.width, line.color=line.color, relative.scale = relative.scale, verbose=verbose, out.dir=out.dir, animation.scale = animation.scale, selfcontained=selfcontained, video.dim=video.dim, res=res, interval=interval, framerate=framerate, bar.width.vdo=bar.width.vdo, legend.value.vdo=legend.value.vdo, ...)
+  res <- shm_covis(svg=svg, data=data, assay.na=assay.na, sam.factor=sam.factor, con.factor=con.factor, ID=ID, charcoal=charcoal, alpha.overlay=alpha.overlay, lay.shm=lay.shm, ncol=ncol, col.com=col.com, col.bar=col.bar, thr=thr, cores=cores, bar.width=bar.width, bar.title=bar.title, bar.title.size=bar.title.size, scale=scale, ft.trans=ft.trans, lis.rematch = lis.rematch, legend.r=legend.r, sub.title.size=sub.title.size, sub.title.vjust=sub.title.vjust, legend.plot=legend.plot, ft.legend=ft.legend, bar.value.size=bar.value.size, legend.plot.title=legend.plot.title, legend.plot.title.size=legend.plot.title.size, legend.ncol=legend.ncol, legend.nrow=legend.nrow, legend.position=legend.position, legend.direction=legend.direction, legend.key.size=legend.key.size, legend.text.size=legend.text.size, angle.text.key=angle.text.key, position.text.key=position.text.key, legend.2nd=legend.2nd, position.2nd=position.2nd, legend.nrow.2nd=legend.nrow.2nd, legend.ncol.2nd=legend.ncol.2nd, legend.key.size.2nd=legend.key.size.2nd, legend.text.size.2nd=legend.text.size.2nd, angle.text.key.2nd=angle.text.key.2nd, position.text.key.2nd=position.text.key.2nd, add.feature.2nd=add.feature.2nd, label=label, label.size=label.size, label.angle=label.angle, hjust=hjust, vjust=vjust, opacity=opacity, key=key, line.width=line.width, line.color=line.color, relative.scale = relative.scale, verbose=verbose, out.dir=out.dir, animation.scale = animation.scale, selfcontained=selfcontained, video.dim=video.dim, res=res, interval=interval, framerate=framerate, bar.width.vdo=bar.width.vdo, legend.value.vdo=legend.value.vdo, ...)
   invisible(res)
 })
 

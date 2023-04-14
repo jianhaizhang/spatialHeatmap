@@ -8,66 +8,105 @@ norm_data(
   data,
   assay.na = NULL,
   norm.fun = "CNF",
-  parameter.list = NULL,
+  par.list = NULL,
   log2.trans = TRUE,
   data.trans
 )
 }
 \arguments{
-\item{data}{An object of \code{data.frame} or \code{SummarizedExperiment}. In either case, the columns and rows should be sample/conditions and assayed items (\emph{e.g.} genes, proteins, metabolites) respectively. If \code{data.frame}, the column names should follow the naming scheme "sample__condition". The "sample" is a general term and stands for cells, tissues, organs, \emph{etc}., where the values are measured. The "condition" is also a general term and refers to experiment treatments applied to "sample" such as drug dosage, temperature, time points, \emph{etc}. If certain samples are not expected to be colored in "spatial heatmaps" (see \code{\link{spatial_hm}}), they are not required to follow this naming scheme. In the downstream interactive network (see \code{\link{network}}), if users want to see node annotation by mousing over a node, a column of row item annotation could be optionally appended to the last column. \cr In the case of \code{SummarizedExperiment}, the \code{assays} slot stores the data matrix. Similarly, the \code{rowData} slot could optionally store a data frame of row item anntation, which is only relevant to the interactive network. The \code{colData} slot usually contains a data frame with one column of sample replicates and one column of condition replicates. It is crucial that replicate names of the same sample or condition must be identical. \emph{E.g.} If sampleA has 3 replicates, "sampleA", "sampleA", "sampleA" is expected while "sampleA1", "sampleA2", "sampleA3" is regarded as 3 different samples. If original column names in the \code{assay} slot already follow the "sample__condition" scheme, then the \code{colData} slot is not required at all. \cr In the function \code{\link{spatial_hm}}, this argument can also be a numeric vector. In this vector, every value should be named, and values expected to color the "spatial heatmaps" should follow the naming scheme "sample__condition". \cr In certain cases, there is no condition associated with data. Then in the naming scheme of \code{data frame} or \code{vector}, the "__condition" part could be discarded. In \code{SummarizedExperiment}, the "condition" column could be discarded in \code{colData} slot. \cr Note, regardless of data class the double underscore is a special string that is reserved for specific purposes in "spatialHeatmap", and thus should be avoided for naming feature/samples and conditions. \cr In the case of spatial-temporal data, there are three factors: samples, conditions, and time points. The naming scheme is slightly different and includes three options: 1) combine samples and conditions to make the composite factor "sampleCondition", then concatenate the new factor and times with double underscore in between, \emph{i.e.} "sampleCondition__time"; 2) combine samples and times to make the composite factor "sampleTime", then concatenate the new factor and conditions with double underscore in between, \emph{i.e.} "sampleTime__condition"; or 3) combine all three factors to make the composite factor "sampleTimeCondition" without double underscore. See the vignette for more details by running \code{browseVignettes('spatialHeatmap')} in R.}
+\item{data}{\describe{
+ \item{Terms}{
+  spatial features: cells, tissues, organs, \emph{etc}; variables: experimental variables such as drug dosage, temperature, time points, \emph{etc}; biomolecules: genes, proteins, metabolites, \emph{etc}; spatial heatmap: SHM.
+ }
+ \item{`SummarizedExperiment`}{
+  The \code{assays} slot stores the data matrix, where rows and columns are biomolecules and spatial featues respectively. Typically, at least two columns of spatial features and variables are stored in the \code{colData} slot respectively. When plotting SHMs, only identical spatial features between the data and aSVG will be colored according to the expression values of chosen biomolecules. Replicates of the same type in these two columns should be identical, \emph{e.g.} "tissueA", "tissueA" rather than "tissueA1", "tissueA2". If column names in the \code{assays} slot follow the "spatialFeature__variable" scheme, \emph{i.e.} spatial features and variables are concatenated by double underscore, then the \code{colData} slot is not required at all. If the data do not have experiment variables, the variable column in \code{colData} or the double underscore scheme is not required.   
+ }
+ \item{`data.frame`}{
+  Rows and columns are biomolecules and spatial featues respectively. If there are experiment variables, the column names should follow the naming scheme "spatialFeature__variable". Otherwise, the column names should only include spatial features. The double underscore is a reserved string for specific purposes in \code{spatialHeatmap}, and thus should be avoided for naming spatial feature or variables. A column of biomolecule description can be included. This is only applicable in the interactive network graph (see \code{\link{network}}), where mousing over a node displays the corresponding description. 
+ }
+ \item{vector}{
+  In the function \code{\link{shm}}, the data can be provided in a numeric \code{vector} for testing with a single gene. If so, the naming schme of the vector is the same with the \code{data.frame}.   
+ }
+ \item{Multiple variables}{
+  For plotting SHMs, multiple variables contained in the data can be combined into a composite one, and the composite variable will be treated as a regular single variable. See the vignette for more details by running \code{browseVignettes('spatialHeatmap')} in R.  
+ }
+}}
 
-\item{assay.na}{Applicable when \code{data} is "SummarizedExperiment" or "SingleCellExperiment", where multiple assays could be stored. The name of target assay to use. The default is \code{NULL}.}
+\item{assay.na}{The name of target assay to use when \code{data} is \code{SummarizedExperiment}.}
 
-\item{norm.fun}{One of the normalizing functions: "CNF", "ESF", "VST", "rlog", "none". Specifically, "CNF" stands for \code{\link[edgeR]{calcNormFactors}} from edgeR (McCarthy et al. 2012), and "EST", "VST", and "rlog" is equivalent to \code{\link[DESeq2]{estimateSizeFactors}}, \cr \code{\link[DESeq2]{varianceStabilizingTransformation}}, and \code{\link[DESeq2]{rlog}} from DESeq2 respectively (Love, Huber, and Anders 2014). If "none", no normalization is applied. The default is "CNF" and the output data is processed by \code{\link[edgeR]{cpm}} (Counts Per Million). The parameters of each normalization function are provided through \code{parameter.list}.}
+\item{norm.fun}{Normalizing functions, one of "CNF", "ESF", "VST", "rlog", "none". Specifically, "CNF" stands for \code{\link[edgeR]{calcNormFactors}} from edgeR (McCarthy et al. 2012), and "EST", "VST", and "rlog" is equivalent to \code{\link[DESeq2]{estimateSizeFactors}}, \cr \code{\link[DESeq2]{varianceStabilizingTransformation}}, and \code{\link[DESeq2]{rlog}} from DESeq2 respectively (Love, Huber, and Anders 2014). If "none", no normalization is applied. The default is "CNF" and the output data is processed by \code{\link[edgeR]{cpm}} (Counts Per Million). The parameters of each normalization function are provided through \code{par.list}.}
 
-\item{parameter.list}{A list of parameters for each normalizing function assigned in \code{norm.fun}. The default is NULL and \code{list(method='TMM')}, \code{list(type='ratio')}, \cr \code{list(fitType='parametric', blind=TRUE)}, \cr \code{list(fitType='parametric', blind=TRUE)} is internally set for "CNF", "ESF", "VST", "rlog" respectively. Note the slot name of each element in the list is required. \emph{E.g.} \code{list(method='TMM')} is expected while \code{list('TMM')} would cause errors. \cr Complete parameters of "CNF": https://www.rdocumentation.org/packages/edgeR/ \cr versions/3.14.0/topics/calcNormFactors \cr Complete parameters of "ESF": https://www.rdocumentation.org/packages/ \cr DESeq2/versions/1.12.3/topics/estimateSizeFactors \cr Complete parameters of "VST": https://www.rdocumentation.org/packages/ \cr DESeq2/versions/1.12.3/topics/varianceStabilizingTransformation \cr Complete parameters of "rlog": https://www.rdocumentation.org/packages/ \cr DESeq2/versions/1.12.3/topics/rlog}
+\item{par.list}{A list of parameters for each normalizing function assigned in \code{norm.fun}. The default is NULL and \code{list(method='TMM')}, \code{list(type='ratio')}, \cr \code{list(fitType='parametric', blind=TRUE)}, \cr \code{list(fitType='parametric', blind=TRUE)} is internally set for "CNF", "ESF", "VST", "rlog" respectively. Note the slot name of each element in the \code{list} is required, \emph{e.g.} \code{list(method='TMM')} rather than \code{list('TMM')}. \cr Complete parameters of "CNF": https://www.rdocumentation.org/packages/edgeR/ \cr versions/3.14.0/topics/calcNormFactors \cr Complete parameters of "ESF": https://www.rdocumentation.org/packages/ \cr DESeq2/versions/1.12.3/topics/estimateSizeFactors \cr Complete parameters of "VST": https://www.rdocumentation.org/packages/ \cr DESeq2/versions/1.12.3/topics/varianceStabilizingTransformation \cr Complete parameters of "rlog": https://www.rdocumentation.org/packages/ \cr DESeq2/versions/1.12.3/topics/rlog}
 
-\item{log2.trans}{Logical, TRUE or FALSE. If TRUE (default) and the selected normalization method does not use log2 scale by default ("ESF"), the output data is log2-transformed after normalization. If FALSE and the selected normalization method uses log2 scale by default ("VST", "rlog"), the output data is 2-exponent transformed after normalization.}
+\item{log2.trans}{Logical. If \code{TRUE} (default) and the selected normalization method does not use log2 scale by default ("ESF"), the output data is log2-transformed after normalization. If \code{FALSE} and the selected normalization method uses log2 scale by default ("VST", "rlog"), the output data is 2-exponent transformed after normalization.}
 
 \item{data.trans}{This argument is deprecated and replaced by \code{log2.trans}. One of "log2", "exp2", and "none", corresponding to transform the count matrix by "log2", "2-based exponent", and "no transformation" respecitvely. The default is "none".}
 }
 \value{
-If the input data is \code{SummarizedExperiment}, the retured value is also a \code{SummarizedExperiment} containing normalized data matrix and metadata (optional). If the input data is a \code{data.frame}, the returned value is a \code{data.frame} of normalized data and metadata (optional).
+An object of \code{SummarizedExperiment} or \code{data.frame}, depending on the input data.
 }
 \description{
-This function normalizes sequencing count data. It accepts the count matrix and sample metadata (optional) in form of \code{SummarizedExperiment} or \code{data.frame}. In either class, the columns and rows of the count matix should be sample/conditions and genes respectively.
+This function normalizes sequencing count data in form of \code{SummarizedExperiment} or \code{data.frame}. In either class, the columns and rows of the count matix should be samples/conditions and genes respectively.
 }
 \examples{
-## In the following examples, the 2 toy data come from an RNA-seq analysis on development of 7
-## chicken organs under 9 time points (Cardoso-Moreira et al. 2019). For conveninece, they are
-## included in this package. The complete raw count data are downloaded using the R package
-## ExpressionAtlas (Keays 2019) with the accession number "E-MTAB-6769". Toy data1 is used as
-## a "data frame" input to exemplify data of simple samples/conditions, while toy data2 as
-## "SummarizedExperiment" to illustrate data involving complex samples/conditions.   
 
-## Set up toy data.
+## Two example data sets are showcased for the data formats of "data.frame" and 
+## "SummarizedExperiment" respectively. Both come from an RNA-seq analysis on 
+## For conveninece, they are included in this package. The complete raw count data are
+## downloaded using the R package ExpressionAtlas (Keays 2019) with the accession 
+## number "E-MTAB-6769". 
 
-# Access toy data1.
-cnt.chk.simple <- system.file('extdata/shinyApp/example/count_chicken_simple.txt',
-package='spatialHeatmap')
-df.chk <- read.table(cnt.chk.simple, header=TRUE, row.names=1, sep='\t', check.names=FALSE)
-# Columns follow the namig scheme "sample__condition", where "sample" and "condition" stands
-# for organs and time points respectively.
+# Access example data 1.
+df.chk <- read.table(system.file('extdata/shinyApp/data/count_chicken_simple.txt', 
+package='spatialHeatmap'), header=TRUE, row.names=1, sep='\t', check.names=FALSE)
+
+# Column names follow the naming scheme
+# "spatialFeature__variable".  
 df.chk[1:3, ]
 
-# A column of gene annotation can be appended to the data frame, but is not required.  
+# A column of gene description can be optionally appended.
 ann <- paste0('ann', seq_len(nrow(df.chk))); ann[1:3]
 df.chk <- cbind(df.chk, ann=ann)
 df.chk[1:3, ]
 
-# Access toy data2. 
-cnt.chk <- system.file('extdata/shinyApp/example/count_chicken.txt', package='spatialHeatmap')
-count.chk <- read.table(cnt.chk, header=TRUE, row.names=1, sep='\t')
+# Access example data 2. 
+count.chk <- read.table(system.file('extdata/shinyApp/data/count_chicken.txt', 
+package='spatialHeatmap'), header=TRUE, row.names=1, sep='\t')
 count.chk[1:3, 1:5]
 
-# Store toy data2 in "SummarizedExperiment".
-library(SummarizedExperiment)
-se.chk <- SummarizedExperiment(assay=count.chk)
+# A targets file describing spatial features and variables is required for example  
+# data 2, which should be made based on the experiment design. 
 
-# Normalize raw count data. The normalizing function "calcNormFactors" (McCarthy et al. 2012)
-# with default settings is used.  
-df.nor.chk <- norm_data(data=df.chk, norm.fun='CNF', log2.trans=TRUE)
-se.nor.chk <- norm_data(data=se.chk, norm.fun='CNF', log2.trans=TRUE)
+# Access the targets file. 
+target.chk <- read.table(system.file('extdata/shinyApp/data/target_chicken.txt', 
+package='spatialHeatmap'), header=TRUE, row.names=1, sep='\t')
+# Every column in example data 2 corresponds with a row in the targets file. 
+target.chk[1:5, ]
+# Store example data 2 in "SummarizedExperiment".
+library(SummarizedExperiment)
+se.chk <- SummarizedExperiment(assay=count.chk, colData=target.chk)
+# The "rowData" slot can optionally store a data frame of gene annotation.
+rowData(se.chk) <- DataFrame(ann=ann)
+
+# Normalize data.
+df.chk.nor <- norm_data(data=df.chk, norm.fun='CNF', log2.trans=TRUE)
+se.chk.nor <- norm_data(data=se.chk, norm.fun='CNF', log2.trans=TRUE)
+
+# Aggregate replicates of "spatialFeature_variable", where spatial features are organs
+# and variables are ages.
+df.chk.aggr <- aggr_rep(data=df.chk.nor, aggr='mean')
+df.chk.aggr[1:3, ]
+
+se.chk.aggr <- aggr_rep(data=se.chk.nor, sam.factor='organism_part', con.factor='age',
+aggr='mean')
+assay(se.chk.aggr)[1:3, 1:3]
+
+# Genes with experssion values >= 5 in at least 1\% of all samples (pOA), and coefficient
+# of variance (CV) between 0.2 and 100 are retained.
+df.chk.fil <- filter_data(data=df.chk.aggr, pOA=c(0.01, 5), CV=c(0.2, 100))
+se.chk.fil <- filter_data(data=se.chk.aggr, sam.factor='organism_part', con.factor='age', 
+pOA=c(0.01, 5), CV=c(0.2, 100), file=NULL)
+
 }
 \references{
 SummarizedExperiment: SummarizedExperiment container. R package version 1.10.1 \cr R Core Team (2018). R: A language and environment for statistical computing. R Foundation for Statistical Computing, Vienna, Austria. URL https://www.R-project.org/

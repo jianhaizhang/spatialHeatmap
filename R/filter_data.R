@@ -1,80 +1,104 @@
-#' Filter the Data Matrix
+#' Filtering the Data Matrix
 #' 
-#' This function is designed to filter the numeric data in class of "data.frame" or "SummarizedExperiment". The filtering builds on two functions \code{\link[genefilter]{pOverA}} and \code{\link[genefilter]{cv}} from the package \pkg{genefilter} (Gentleman et al. 2018). 
+#' This function is designed to filter the numeric data in form of \code{data.frame} or \code{SummarizedExperiment}. The filtering builds on two functions \code{\link[genefilter]{pOverA}} and \code{\link[genefilter]{cv}} from the package \pkg{genefilter} (Gentleman et al. 2018). 
 
-#' @param data An object of \code{data.frame} or \code{SummarizedExperiment}. In either case, the columns and rows should be sample/conditions and assayed items (\emph{e.g.} genes, proteins, metabolites) respectively. If \code{data.frame}, the column names should follow the naming scheme "sample__condition". The "sample" is a general term and stands for cells, tissues, organs, \emph{etc}., where the values are measured. The "condition" is also a general term and refers to experiment treatments applied to "sample" such as drug dosage, temperature, time points, \emph{etc}. If certain samples are not expected to be colored in "spatial heatmaps" (see \code{\link{spatial_hm}}), they are not required to follow this naming scheme. In the downstream interactive network (see \code{\link{network}}), if users want to see node annotation by mousing over a node, a column of row item annotation could be optionally appended to the last column. \cr In the case of \code{SummarizedExperiment}, the \code{assays} slot stores the data matrix. Similarly, the \code{rowData} slot could optionally store a data frame of row item anntation, which is only relevant to the interactive network. The \code{colData} slot usually contains a data frame with one column of sample replicates and one column of condition replicates. It is crucial that replicate names of the same sample or condition must be identical. \emph{E.g.} If sampleA has 3 replicates, "sampleA", "sampleA", "sampleA" is expected while "sampleA1", "sampleA2", "sampleA3" is regarded as 3 different samples. If original column names in the \code{assay} slot already follow the "sample__condition" scheme, then the \code{colData} slot is not required at all. \cr In the function \code{\link{spatial_hm}}, this argument can also be a numeric vector. In this vector, every value should be named, and values expected to color the "spatial heatmaps" should follow the naming scheme "sample__condition". \cr In certain cases, there is no condition associated with data. Then in the naming scheme of \code{data frame} or \code{vector}, the "__condition" part could be discarded. In \code{SummarizedExperiment}, the "condition" column could be discarded in \code{colData} slot. \cr Note, regardless of data class the double underscore is a special string that is reserved for specific purposes in "spatialHeatmap", and thus should be avoided for naming feature/samples and conditions. \cr In the case of spatial-temporal data, there are three factors: samples, conditions, and time points. The naming scheme is slightly different and includes three options: 1) combine samples and conditions to make the composite factor "sampleCondition", then concatenate the new factor and times with double underscore in between, \emph{i.e.} "sampleCondition__time"; 2) combine samples and times to make the composite factor "sampleTime", then concatenate the new factor and conditions with double underscore in between, \emph{i.e.} "sampleTime__condition"; or 3) combine all three factors to make the composite factor "sampleTimeCondition" without double underscore. See the vignette for more details by running \code{browseVignettes('spatialHeatmap')} in R.
-#' @param assay.na Applicable when \code{data} is "SummarizedExperiment" or "SingleCellExperiment", where multiple assays could be stored. The name of target assay to use. The default is \code{NULL}. 
-#' @param pOA It specifies parameters of the filter function \code{\link[genefilter]{pOverA}} from the package \pkg{genefilter} (Gentleman et al. 2018), where genes with expression values larger than "A" in at least the proportion of "P" samples are retained. The input is a vector of two numbers with the first being "P" and the second being "A". The default is c(0, 0), which means no filter is applied. \cr \emph{E.g.} c(0.1, 2) means genes with expression values over 2 in at least 10\% of all samples are kept. 
+#' @param data 
+#' \describe{
+#'  \item{Terms}{
+#'   spatial features: cells, tissues, organs, \emph{etc}; variables: experimental variables such as drug dosage, temperature, time points, \emph{etc}; biomolecules: genes, proteins, metabolites, \emph{etc}; spatial heatmap: SHM.
+#'  }
+#'  \item{`SummarizedExperiment`}{
+#'   The \code{assays} slot stores the data matrix, where rows and columns are biomolecules and spatial featues respectively. Typically, at least two columns of spatial features and variables are stored in the \code{colData} slot respectively. When plotting SHMs, only identical spatial features between the data and aSVG will be colored according to the expression values of chosen biomolecules. Replicates of the same type in these two columns should be identical, \emph{e.g.} "tissueA", "tissueA" rather than "tissueA1", "tissueA2". If column names in the \code{assays} slot follow the "spatialFeature__variable" scheme, \emph{i.e.} spatial features and variables are concatenated by double underscore, then the \code{colData} slot is not required at all. If the data do not have experiment variables, the variable column in \code{colData} or the double underscore scheme is not required.   
+#'  }
+#'  \item{`data.frame`}{
+#'   Rows and columns are biomolecules and spatial featues respectively. If there are experiment variables, the column names should follow the naming scheme "spatialFeature__variable". Otherwise, the column names should only include spatial features. The double underscore is a reserved string for specific purposes in \code{spatialHeatmap}, and thus should be avoided for naming spatial feature or variables. A column of biomolecule description can be included. This is only applicable in the interactive network graph (see \code{\link{network}}), where mousing over a node displays the corresponding description. 
+#'  }
+#'  \item{vector}{
+#'   In the function \code{\link{shm}}, the data can be provided in a numeric \code{vector} for testing with a single gene. If so, the naming schme of the vector is the same with the \code{data.frame}.   
+#'  }
+#'  \item{Multiple variables}{
+#'   For plotting SHMs, multiple variables contained in the data can be combined into a composite one, and the composite variable will be treated as a regular single variable. See the vignette for more details by running \code{browseVignettes('spatialHeatmap')} in R.  
+#'  }
+#' }
 
-#' @param CV It specifies parameters of the filter function \code{\link[genefilter]{cv}} from the package \pkg{genefilter} (Gentleman et al. 2018), which filters genes according to the coefficient of variation (CV). The input is a vector of two numbers that specify the CV range. The default is c(-Inf, Inf), which means no filtering is applied. \cr \emph{E.g.} c(0.1, 5) means genes with CV between 0.1 and 5 are kept.
+#' @param assay.na The name of target assay to use when \code{data} is \code{SummarizedExperiment}.  
+#' @param pOA Parameters of the filter function \code{\link[genefilter]{pOverA}} from the package \pkg{genefilter} (Gentleman et al. 2018). Genes with expression values >= "A" at the proportion >= "P" of all samples are retained. It is a vector of two numbers, where the first and second is "P" and "A" respectively. The default is \code{c(0, 0)}, which means no filtering is applied.  
+#' @param CV Parameters of the filter function \code{\link[genefilter]{cv}} from the package \pkg{genefilter} (Gentleman et al. 2018). Genes with coefficient of variation (CV) between CV1 and CV2 are retained. It is a vector of two numbers, where the first and second is CV1 and CV2 respectively. The default is \code{c(-Inf, Inf)}, which means no filtering is applied.  
 
-#' @param top.CV The proportion of top coefficient of variations (CVs), which ranges from 0 to 1. Only row items with CVs in this proportion are kept. \emph{E.g.} if the proportion is 0.7, only row items with CVs ranked in the top 70\% are retained. Default is 1, which means all items are retained. Note this argument takes precedence over \code{CV}.
+#' @param top.CV The proportion (0-1) of top coefficient of variations (CVs). Only genes with CVs in this proportion are kept. \emph{E.g.} if \code{top.CV=0.7}, only genes with CVs ranked in the top 70\% are retained. Default is 1, which means all genes are retained. Note this argument takes precedence over \code{CV}.
 
-#' @param ann The column name of row item (gene, proteins, \emph{etc}.) annotation in the \code{rowData} slot of \code{SummarizedExperiment}. The default is NULL. In \code{\link{filter_data}}, this argument is only relevant if \code{dir} is specified, while in \code{\link{network}} it is only relevant if users want to see annotation when mousing over a node. 
+#' @param desc A column name in the \code{rowData} slot of \code{SummarizedExperiment}. The default is NULL. In \code{\link{filter_data}}, this argument is only applicable if \code{file} is specified. 
 
-#' @param sam.factor The column name corresponding to samples in the \code{colData} of \code{SummarizedExperiment}. If the original column names in the \code{assay} slot already follows the scheme "sample__condition", then the \code{colData} slot is not required and accordingly this argument could be NULL. 
+#' @param sam.factor The column name corresponding to spatial features in \code{colData} of \code{SummarizedExperiment}. If the column names in the \code{assay} slot already follows the scheme "spatialFeature__variable", then the \code{colData} slot is not required and accordingly this argument could be NULL. 
 
-#' @param con.factor The column name corresponding to conditions in the \code{colData} of \code{SummarizedExperiment}. Could be NULL if column names of in the \code{assay} slot already follows the scheme "sample__condition", or no condition is associated with the data.
+#' @param con.factor The column name corresponding to experimental variables in \code{colData} of \code{SummarizedExperiment}. It can be NULL if column names of in the \code{assay} slot already follows the scheme "spatialFeature__variable", or no variable is associated with the data.
 
-#' @param dir The directory path where the filtered data matrix is saved as a TSV-format file "customData.txt", which is ready to upload to the Shiny app launched by \code{\link{shiny_shm}}. In the "customData.txt", the rows are assayed items and column names are in the syntax "sample__condition". If gene annotation is provided to \code{ann}, it is appended to "customData.txt". The default is NULL and no file is saved. This argument is used only when the data is stored in \code{SummarizedExperiment} and need to be uploaded to the "customData" in the Shiny app.
+#' @param file The output file name for saving the filtered data matrix in TSV format, which is ready to upload in the Shiny App (see \code{\link{shiny_shm}}). In this file, the rows are biomoleclues and column names are in the scheme "spatialFeature__variable". If row annotation is provided to \code{desc}, it will be appended to the output file. The default is NULL and no file is saved. This argument is applicable only when the data is in \code{SummarizedExperiment} and need to be uploaded to the the Shiny App. 
 
-#' @param verbose TRUE or FALSE. If TRUE (default), the summary of statistics is printed. 
+#' @param verbose Logical. If TRUE (default), the summary of statistics is printed. 
 
-#' @return The returned value is the same class with the input data, a \code{data.frame} or \code{SummarizedExperiment}. In either case, the column names of the data matrix follows the "sample__condition" scheme. If \code{dir} is specified, the filtered data matrix is saved in a TSV-format file "customData.txt". 
+#' @return An object of a \code{data.frame} or \code{SummarizedExperiment}, depending on the input data. 
 
 #' @examples
-
-#' ## In the following examples, the 2 toy data come from an RNA-seq analysis on development of 7
-#' ## chicken organs under 9 time points (Cardoso-Moreira et al. 2019). For conveninece, they are
-#' ## included in this package. The complete raw count data are downloaded using the R package 
-#' ## ExpressionAtlas (Keays 2019) with the accession number "E-MTAB-6769". Toy data1 is used as
-#' ## a "data frame" input to exemplify data of simple samples/conditions, while toy data2 as 
-#' ## "SummarizedExperiment" to illustrate data involving complex samples/conditions.   
-#' 
-#' ## Set up toy data.
-#' 
-#' # Access toy data1.
-#' cnt.chk.simple <- system.file('extdata/shinyApp/example/count_chicken_simple.txt', 
-#' package='spatialHeatmap')
-#' df.chk <- read.table(cnt.chk.simple, header=TRUE, row.names=1, sep='\t', check.names=FALSE)
-#' # Columns follow the naming scheme "sample__condition", where "sample" and "condition" stands
-#' # for organs and time points respectively.
+#'
+#' ## Two example data sets are showcased for the data formats of "data.frame" and 
+#' ## "SummarizedExperiment" respectively. Both come from an RNA-seq analysis on 
+#  ## development of 7 chicken organs under 9 time points (Cardoso-Moreira et al. 2019).
+#' ## For conveninece, they are included in this package. The complete raw count data are
+#' ## downloaded using the R package ExpressionAtlas (Keays 2019) with the accession 
+#' ## number "E-MTAB-6769". 
+#'
+#' # Access example data 1.
+#' df.chk <- read.table(system.file('extdata/shinyApp/data/count_chicken_simple.txt', 
+#' package='spatialHeatmap'), header=TRUE, row.names=1, sep='\t', check.names=FALSE)
+#'
+#' # Column names follow the naming scheme
+#' # "spatialFeature__variable".  
 #' df.chk[1:3, ]
 #'
-#' # A column of gene annotation can be appended to the data frame, but is not required.  
+#' # A column of gene description can be optionally appended.
 #' ann <- paste0('ann', seq_len(nrow(df.chk))); ann[1:3]
 #' df.chk <- cbind(df.chk, ann=ann)
 #' df.chk[1:3, ]
 #'
-#' # Access toy data2. 
-#' cnt.chk <- system.file('extdata/shinyApp/example/count_chicken.txt', package='spatialHeatmap')
-#' count.chk <- read.table(cnt.chk, header=TRUE, row.names=1, sep='\t')
+#' # Access example data 2. 
+#' count.chk <- read.table(system.file('extdata/shinyApp/data/count_chicken.txt', 
+#' package='spatialHeatmap'), header=TRUE, row.names=1, sep='\t')
 #' count.chk[1:3, 1:5]
 #'
-#' # A targets file describing samples and conditions is required for toy data2. It should be 
-#' # made based on the experiment design, which is accessible through the accession number 
-#' # "E-MTAB-6769" in the R package ExpressionAtlas. An example targets file is included in 
-#' # this package and accessed below. 
-
-#' # Access the example targets file. 
-#' tar.chk <- system.file('extdata/shinyApp/example/target_chicken.txt', package='spatialHeatmap')
-#' target.chk <- read.table(tar.chk, header=TRUE, row.names=1, sep='\t')
-#' # Every column in toy data2 corresponds with a row in targets file. 
+#' # A targets file describing spatial features and variables is required for example  
+#' # data 2, which should be made based on the experiment design. 
+#'
+#' # Access the targets file. 
+#' target.chk <- read.table(system.file('extdata/shinyApp/data/target_chicken.txt', 
+#' package='spatialHeatmap'), header=TRUE, row.names=1, sep='\t')
+#' # Every column in example data 2 corresponds with a row in the targets file. 
 #' target.chk[1:5, ]
-#' # Store toy data2 in "SummarizedExperiment".
+#' # Store example data 2 in "SummarizedExperiment".
 #' library(SummarizedExperiment)
 #' se.chk <- SummarizedExperiment(assay=count.chk, colData=target.chk)
-#' # The "rowData" slot can store a data frame of gene annotation, but not required.
+#' # The "rowData" slot can optionally store a data frame of gene annotation.
 #' rowData(se.chk) <- DataFrame(ann=ann)
 #'
-#' # Filter out genes with low counts and low variance. Genes with counts over 5 (log2 unit) in 
-#' # at least 1% samples (pOA), and coefficient of variance (CV) between 0.2 and 100 are retained.
-#' # Filter toy data1.
-#' df.fil.chk <- filter_data(data=df.chk, pOA=c(0.01, 5), CV=c(0.2, 100), dir=NULL)
-#' # Filter toy data2.
-#' se.fil.chk <- filter_data(data=se.chk, sam.factor='organism_part', con.factor='age', 
-#' pOA=c(0.01, 5), CV=c(0.2, 100), dir=NULL)
-
+#' # Normalize data.
+#' df.chk.nor <- norm_data(data=df.chk, norm.fun='CNF', log2.trans=TRUE)
+#' se.chk.nor <- norm_data(data=se.chk, norm.fun='CNF', log2.trans=TRUE)
+#'
+#' # Aggregate replicates of "spatialFeature_variable", where spatial features are organs
+#' # and variables are ages.
+#' df.chk.aggr <- aggr_rep(data=df.chk.nor, aggr='mean')
+#' df.chk.aggr[1:3, ]
+#'
+#' se.chk.aggr <- aggr_rep(data=se.chk.nor, sam.factor='organism_part', con.factor='age',
+#' aggr='mean')
+#' assay(se.chk.aggr)[1:3, 1:3]
+#'
+#' # Genes with experssion values >= 5 in at least 1% of all samples (pOA), and coefficient
+#' # of variance (CV) between 0.2 and 100 are retained.
+#' df.chk.fil <- filter_data(data=df.chk.aggr, pOA=c(0.01, 5), CV=c(0.2, 100))
+#' se.chk.fil <- filter_data(data=se.chk.aggr, sam.factor='organism_part', con.factor='age', 
+#' pOA=c(0.01, 5), CV=c(0.2, 100), file=NULL)
+#'
 #' @author Jianhai Zhang \email{jzhan067@@ucr.edu} \cr Dr. Thomas Girke \email{thomas.girke@@ucr.edu}
 
 #' @references
@@ -92,8 +116,7 @@
 #' @importFrom utils write.table
 #' @importFrom stats sd
 
-filter_data <- function(data, assay.na=NULL, pOA=c(0, 0), CV=c(-Inf, Inf), top.CV=1, ann=NULL, sam.factor=NULL, con.factor=NULL, dir=NULL, verbose=TRUE) {
-
+filter_data <- function(data, assay.na=NULL, pOA=c(0, 0), CV=c(-Inf, Inf), top.CV=1, desc=NULL, sam.factor=NULL, con.factor=NULL, file=NULL, verbose=TRUE) {
   options(stringsAsFactors=FALSE)
   if (top.CV>1|top.CV<0) stop('"top.CV" should be between 0 and 1!')
   # Process data.
@@ -120,38 +143,34 @@ filter_data <- function(data, assay.na=NULL, pOA=c(0, 0), CV=c(-Inf, Inf), top.C
                              # match 'rownames(expr)' anymore. This will cause the
                              # call to 'SummarizedExperiment()' below to fail with
                              # SummarizedExperiment 1.23.2.
-  if (!is.null(dir)) {
-    dir <- normalizePath(dir, winslash="/", mustWork=FALSE)
-    if (!dir.exists(dir)) stop(paste0(dir, ' does not exist!'))
+  if (!is.null(file)) {
+    file <- normalizePath(file, winslash="/", mustWork=FALSE)
+    if (file.exists(file)) stop(paste0(file, ' already exists!'))
     if (is(data, 'data.frame')|is(data, 'matrix')) {
       expr1 <- cbind.data.frame(expr, row.meta, stringsAsFactors=FALSE)
     }  else if (is(data, 'SummarizedExperiment') | is(data, 'SingleCellExperiment')) {
       
-      if (ncol(row.meta)>0 & !is.null(ann)) {
-        expr1 <- cbind.data.frame(expr, row.meta[, ann], stringsAsFactors=FALSE)
-        colnames(expr1)[ncol(expr1)] <- ann
+      if (ncol(row.meta)>0 & !is.null(desc)) {
+        expr1 <- cbind.data.frame(expr, row.meta[, desc], stringsAsFactors=FALSE)
+        colnames(expr1)[ncol(expr1)] <- desc
       } else expr1 <- expr
 
     }
-    write.table(expr1, paste0(dir, "/customData.txt"), sep="\t", row.names=TRUE, col.names=TRUE)  
+    write.table(expr1, file, sep="\t", row.names=TRUE, col.names=TRUE)  
   }
 
-  if (is(data, 'data.frame')|is(data, 'matrix')|is(data, 'dgCMatrix')) { return(cbind(expr, row.meta)) } else if (is(data, 'SummarizedExperiment') | is(data, 'SingleCellExperiment')) {
+  if (is(data, 'data.frame')|is(data, 'DFrame')|is(data, 'matrix')|is(data, 'dgCMatrix')) { return(cbind(expr, row.meta)) } else if (is(data, 'SummarizedExperiment') | is(data, 'SingleCellExperiment')) {
     if (is.null(assay.na)) {
       if (length(assays(data)) > 1) stop("Please specify which assay to use by assigning the assay name to 'assay.na'!") else if (length(assays(data)) == 1) assay.na <- 1
     }
     rownames(col.meta) <- NULL # If row names present in colData(data), if will become column names of assay(data).
     # if (is(data, 'SingleCellExperiment')) { 
     # expr <- SingleCellExperiment(assays=list(expr=expr), rowData=row.meta, colData=col.meta)
-
      expr <- sce_sub(sce=data, mat=expr, cna=colnames(expr), assay.na=assay.na, row.idx=filtered, rdat=row.meta, cdat=col.meta)
      if (is.null(assayNames(data))) assayNames(expr)[1] <- 'expr'; return(expr)
-
-
 #else {
 #expr <- SummarizedExperiment(assays=list(expr=expr), rowData=row.meta, colData=col.meta) } 
 #    }
-
   }
 
 }

@@ -73,7 +73,7 @@ svg.chk <- '~/test/gallus_gallus.svg'
 # The spatialHeatmap package has a small aSVG collection and can be used to demonstrate the
 # local query.
 # Get the path of local aSVGs from the package.
-svg.dir <- system.file("extdata/shinyApp/example", package="spatialHeatmap")
+svg.dir <- system.file("extdata/shinyApp/data", package="spatialHeatmap")
 # Query the local aSVG repo. The "species" argument is set NULL on purpose so as to illustrate
 # how to select the target aSVG among all matching aSVGs.
 feature.df <- return_feature(feature=c('heart', 'brain'), species=NULL, dir=svg.dir, 

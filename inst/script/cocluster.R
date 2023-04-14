@@ -2,21 +2,21 @@
 library(spatialHeatmap); library(scRNAseq)
 sce.mus <- MarquesBrainData()
 # Filter cells and genes to obtain example data.
-sce.mus <- filter_cell(sce=sce.mus, cutoff=1, p.in.cell=0.9, p.in.gen=0.5)
+sce.mus <- filter_cell(sce=sce.mus, cutoff=1, p.in.cell=0.85, p.in.gen=0.5)
 
 # Edit colData.
 cdat <- colData(sce.mus)[, -1]; colnames(cdat) <- make.names(colnames(cdat))
 cdat$source_name <- make.names(cdat$source_name)
 colnames(cdat)[colnames(cdat)=='source_name'] <- 'label'
-# "expVar" is a reserved colname to indicate experiment variables.
-colnames(cdat)[colnames(cdat)=='treatment'] <- 'expVar'
+# "variable" is a reserved colname to indicate experiment variables.
+colnames(cdat)[colnames(cdat)=='treatment'] <- 'variable'
 rownames(cdat) <- make.names(rownames(cdat))
 
-cdat <- edit_tar(cdat, 'expVar', '6hr post acute stress', '6h.post.stress')
-cdat <- edit_tar(cdat, 'expVar', 'No', 'control')
+cdat <- edit_tar(cdat, 'variable', '6hr post acute stress', '6h.post.stress')
+cdat <- edit_tar(cdat, 'variable', 'No', 'control')
 cdat[1:2, ]
 colData(sce.mus) <- cdat
-sce.mus <- subset(sce.mus, , expVar=='control')
+sce.mus <- subset(sce.mus, , variable=='control')
 # Save the example data.
 saveRDS(sce.mus, file='./cell_mouse_brain.rds')
 
@@ -33,13 +33,13 @@ write.table(df.clus.mus.sc, 'manual_cluster_mouse_brain.txt', col.names=TRUE, se
 
 library(spatialHeatmap); source('fun_cocluster.R')
 library(SummarizedExperiment); library(SingleCellExperiment)
-# Download mouse brain bulk data (bulk_mouse_brain.xls) at https://github.com/jianhaizhang/cocluster_data/tree/master/validate/mouse_brain.
+# Download mouse brain bulk data (bulk_mouse_brain.xls) at https://github.com/jianhaizhang/cocluster_data/tree/master/validate/mouse_brain. (Male mice, WT 30-day old).
 
 # Obtain example data by harsh filtering.
 blk.mus.brain <- read.table('bulk_mouse_brain.xls', header=TRUE, sep='\t', row.names=1) 
 blk.mus.brain <- filter_data(data=blk.mus.brain, pOA=c(0.3, 6), CV=c(0.55, 100)); dim(blk.mus.brain)
  
-# Import single cell data of mouse brain according to instructions at https://github.com/jianhaizhang/cocluster_data. 
+# Import single cell data of mouse brain according to instructions at https://github.com/jianhaizhang/cocluster_data. (Male mice strain C57/BL6, 9 weeks old). 
 sc.mus.brain <- sc_dat_mus_brain(sc.pa='GSE147747_expr_raw_counts_table.tsv', meta.pa='GSE147747_meta_table.tsv')
 
 # Obtain example data by harsh filtering, and Take overlap genes between bulk and single cells. 
@@ -49,7 +49,7 @@ mus.brain <- filter_cell(sce=sc.mus.brain, bulk=blk.mus.brain, gen.rm=NULL, cuto
 blk.mus <- mus.brain$bulk; sc.mus <- mus.brain$cell 
 
 # Mouse brain aSVG.
-svg.mus.brain.pa <- system.file("extdata/shinyApp/example", "mus_musculus.brain.svg", package="spatialHeatmap")
+svg.mus.brain.pa <- system.file("extdata/shinyApp/data", "mus_musculus.brain.svg", package="spatialHeatmap")
 feature.df <- return_feature(svg.path=svg.mus.brain.pa)
 df.match.mus.brain <- df_match_mus533()
 # Bulk tissues are named with aSVG features.
@@ -84,10 +84,23 @@ cdat.na <- c(c('label', 'label1'), setdiff(cdat.na, c('label', 'label1')))
 colData(sce) <- cdat[, cdat.na] 
 sce$sizeFactor <- NULL
 assays(sce)$logcounts <- NULL 
-sce$expVar <- 'control' 
+sce$variable <- 'control' 
 # Bulk tissue labels should always be aSVG features. 
 blk.idx <- sce$bulkCell %in% 'bulk' 
 sce$label1[blk.idx] <- sce$label[blk.idx] 
+
+
+library(org.Mm.eg.db)
+columns(org.Mm.eg.db); keytypes(org.Mm.eg.db)
+
+# sce <- readRDS('../extdata/shinyApp/data/shiny_covis_bulk_cell_mouse_brain.rds')
+
+row.met <- select(org.Mm.eg.db, keys=rownames(sce), columns=c('SYMBOL', 'GENENAME'), keytype="SYMBOL")
+row.met <- row.met[!duplicated(row.met$SYMBOL), ]
+row.met$metadata <- row.met$GENENAME
+all(rownames(sce)==row.met$SYMBOL)
+row.met[, c('SYMBOL', 'GENENAME')] <- NULL
+rowData(sce) <- row.met
 saveRDS(sce, file='shiny_covis_bulk_cell_mouse_brain.rds')
 
 

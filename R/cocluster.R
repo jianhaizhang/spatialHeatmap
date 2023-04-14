@@ -16,13 +16,13 @@
 #' # To obtain reproducible results, a fixed seed is set for generating random numbers.
 #' set.seed(10); library(SummarizedExperiment)
 #' # Example bulk data of mouse brain for coclustering (Vacher et al 2021).
-#' blk.mus.pa <- system.file("extdata/shinyApp/example", "bulk_mouse_cocluster.rds", 
+#' blk.mus.pa <- system.file("extdata/shinyApp/data", "bulk_mouse_cocluster.rds", 
 #' package="spatialHeatmap") 
 #' blk.mus <- readRDS(blk.mus.pa)
 #' assay(blk.mus)[1:3, 1:5]
 #'
 #' # Example single cell data for coclustering (Ortiz et al 2020).
-#' sc.mus.pa <- system.file("extdata/shinyApp/example", "cell_mouse_cocluster.rds", 
+#' sc.mus.pa <- system.file("extdata/shinyApp/data", "cell_mouse_cocluster.rds", 
 #' package="spatialHeatmap") 
 #' sc.mus <- readRDS(sc.mus.pa)
 #' colData(sc.mus)[1:3, , drop=FALSE]
@@ -100,7 +100,7 @@ cocluster <- function(bulk, cell, df.match=NULL, min.dim=11, max.dim=50, dimred=
   # Combine bulk and single cell data.
   inter <- intersect(rownames(bulk), rownames(cell))
   blk.kp <- bulk[inter, ]; sc.kp <- cell[inter, ]
-  if (any(c('e', 'w') %in% check_pkg('BiocGenerics'))) stop('The package "BiocGenerics" is not detected!') 
+  pkg <- check_pkg('BiocGenerics'); if (is(pkg, 'character')) stop(pkg)
   com.kp <- BiocGenerics::cbind(blk.kp, sc.kp)
   com.kp$index <- seq_len(ncol(com.kp))
   com.kp$sample <- colnames(com.kp)
@@ -158,7 +158,7 @@ cocluster <- function(bulk, cell, df.match=NULL, min.dim=11, max.dim=50, dimred=
 #' @importFrom SingleCellExperiment reducedDim
 
 com_roc <- function(sce.coclus, dimred, dat.blk, df.match=NULL, sim.meth='spearman') {
-  if (any(c('e', 'w') %in% check_pkg('pROC'))) stop('The package "pROC" is not detected!')
+  pkg <- check_pkg('pROC'); if (is(pkg, 'character')) stop(pkg)
   # save(sce.coclus, dimred, dat.blk, df.match, sim.meth, file='com.roc.arg')
   if (!is.null(df.match)) {
   # if (!'SVGBulk' %in% colnames(df.match)) df.match$SVGBulk <- 'none' 

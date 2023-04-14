@@ -28,19 +28,24 @@ colData(rse.hum) <- DataFrame(target.hum)
 se.nor.hum <- norm_data(data=rse.hum, norm.fun='ESF', log2.trans = FALSE)
 
 # Filter.
-se.fil.hum <- filter_data(data=se.nor.hum, sam.factor='organism_part', con.factor='disease', pOA=c(0.7, 50), CV=c(0.5, 100), dir=NULL); se.fil.hum
+se.fil.hum <- filter_data(data=se.nor.hum, sam.factor='organism_part', con.factor='disease', pOA=c(0.7, 50), CV=c(0.5, 100)); se.fil.hum
 # Data matrix.
 expr.hum <- as.data.frame(assay(se.fil.hum))
 
 # Row metadata.
 library(org.Hs.eg.db)
 columns(org.Hs.eg.db); keytypes(org.Hs.eg.db)
-row.met <- select(org.Hs.eg.db, keys=rownames(expr.hum), columns=c('ENSEMBL', 'SYMBOL', 'GENENAME'), keytype="ENSEMBL")
+row.met <- select(org.Hs.eg.db, keys=rownames(expr.hum), keytype="ENSEMBL", columns=c('ENSEMBL', 'SYMBOL', 'GENENAME', 'ENTREZID'))
 row.met <- row.met[!duplicated(row.met$ENSEMBL), ]
-row.met$metadata <- paste0(row.met$SYMBOL, ' ', row.met$GENENAME)
+ow.met$metadata <- row.met$GENENAME
 # Append row metadata to data matrix.
 expr.hum <- expr.hum[row.met$ENSEMBL, ]
+all(row.met$ENSEMBL==rownames(expr.hum))
 expr.hum <- cbind(expr.hum, row.met[, 'metadata', drop = FALSE])
+# Convert ENSEMBL ids to Uniprot ids.
+expr.hum <- cvt_id(db='org.Hs.eg.db', data=expr.hum, from.id='ENSEMBL', to.id='SYMBOL')
+expr.hum <- expr.hum[!grepl('^ENSG', rownames(expr.hum)), , drop=FALSE]
+rownames(expr.hum) <- make.names(rownames(expr.hum))
 
 # colnames(expr.hum) <- gsub("_", ".", colnames(expr.hum))
 write.table(expr.hum, 'expr_human.txt', col.names=TRUE, row.names=TRUE, sep='\t')
@@ -64,10 +69,10 @@ write.table(target.mus, 'target_mouse.txt', col.names=TRUE, row.names=TRUE, sep=
 
 colData(rse.mus) <- DataFrame(target.mus)
 
-rse.mus <- subset(rse.mus, select=colData(rse.mus)$organism_part %in% c('brain', 'heart', 'colon', 'kidney', 'liver'))
+rse.mus <- subset(rse.mus, select=colData(rse.mus)$organism_part %in% c('brain', 'lung', 'colon', 'kidney', 'liver'))
 
 se.nor.mus <- norm_data(data=rse.mus, norm.fun='ESF', log2.trans = FALSE)
-se.fil.mus <- filter_data(data=se.nor.mus, sam.factor='organism_part', con.factor='strain', pOA=c(0.3, 30), CV=c(1.5, 100), dir=NULL); se.fil.mus
+se.fil.mus <- filter_data(data=se.nor.mus, sam.factor='organism_part', con.factor='strain', pOA=c(0.3, 30), CV=c(1.5, 100)); se.fil.mus
 # Data matrix.
 expr.mus <- as.data.frame(assay(se.fil.mus))
 
@@ -76,22 +81,32 @@ library(org.Mm.eg.db)
 columns(org.Mm.eg.db); keytypes(org.Mm.eg.db)
 row.met <- select(org.Mm.eg.db, keys=rownames(expr.mus), columns=c('ENSEMBL', 'SYMBOL', 'GENENAME'), keytype="ENSEMBL")
 row.met <- row.met[!duplicated(row.met$ENSEMBL), ]
-row.met$metadata <- paste0(row.met$SYMBOL, ' ', row.met$GENENAME)
+row.met$metadata <- row.met$GENENAME
+row.met$GENENAME <- NULL
 # Append row metadata to data matrix.
 expr.mus <- expr.mus[row.met$ENSEMBL, ]
+all(rownames(expr.mus)==row.met$ENSEMBL)
 expr.mus <- cbind(expr.mus, row.met[, 'metadata', drop = FALSE])
-
-# colnames(expr.mus) <- gsub("_", ".", colnames(expr.mus))
-write.table(expr.mus, 'expr_mouse.txt', col.names=TRUE, row.names=TRUE, sep='\t')
+# Convert ENSEMBL ids to Uniprot ids.
+expr.mus <- cvt_id(db='org.Mm.eg.db', data=expr.mus, from.id='ENSEMBL', to.id='SYMBOL')
+expr.mus <- expr.mus[!grepl('^ENSMUSG', rownames(expr.mus)), , drop=FALSE]
 
 # Module identification.
 adj.mod.mus <- adj_mod(data=expr.mus)
 adj.mod.mus[['adj']][1:3, 1:3]
-adj.mod.mus[['mod']][1:3, ] 
+mod <- adj.mod.mus[['mod']]; mod[1:3, ]
+
+# Place genes assigned a module on top.
+idx.m0 <- mod[, '3']==0; rna.mus <- rownames(mod)
+expr.mus <- expr.mus[c(rna.mus[!idx.m0], rna.mus[idx.m0]), , drop=FALSE]
 
 # Network graphs.
-node.mus <- network(ID='ENSMUSG00000041798', data=expr.mus, adj.mod=adj.mod.mus, adj.min=0.90, vertex.label.cex=0.7, vertex.cex=2, static=TRUE, return.node=TRUE)
+node.mus <- network(ID='Cav2', data=expr.mus, adj.mod=adj.mod.mus, ds='3', adj.min=0.90, vertex.label.cex=0.7, vertex.cex=2, static=TRUE, return.node=TRUE)
 node.mus[1:3, , drop=FALSE]
+
+# colnames(expr.mus) <- gsub("_", ".", colnames(expr.mus))
+write.table(expr.mus, 'expr_mouse.txt', col.names=TRUE, row.names=TRUE, sep='\t')
+
 
 ## Make target file/Shiny app data-chicken organ example.
 
@@ -112,16 +127,22 @@ colData(rse.chk) <- DataFrame(target.chk)
 se.nor.chk <- norm_data(data=rse.chk, norm.fun='ESF')
 # Average the tissue-condition replicates.
 se.aggr.chk <- aggr_rep(data=se.nor.chk, sam.factor='organism_part', con.factor='age', aggr='mean')
-se.fil.chk <- filter_data(data=se.aggr.chk, sam.factor='organism_part', con.factor='age', pOA=c(0.05, 5), CV=c(1.5, 100), dir=NULL)
+se.fil.chk <- filter_data(data=se.aggr.chk, sam.factor='organism_part', con.factor='age', pOA=c(0.05, 5), CV=c(1.5, 100))
 # Data matrix.
 expr.chk <- assay(se.fil.chk)
+
+# Row metadata.
+library(org.Gg.eg.db)
+columns(org.Gg.eg.db); keytypes(org.Gg.eg.db)
+# row.met <- select(org.Gg.eg.db, keys=rownames(expr.chk), columns=c('ENSEMBL', 'SYMBOL', 'GENENAME'), keytype="ENSEMBL")
+
 # colnames(expr.chk) <- gsub("_", ".", colnames(expr.chk))
 write.table(expr.chk, 'expr_chicken.txt', col.names=TRUE, row.names=TRUE, sep='\t')
 
 # Keep replicates.
 colData(rse.chk) <- DataFrame(target.chk)
 se.nor.chk <- norm_data(data=rse.chk, norm.fun='ESF', log2.trans = FALSE)
-se.fil.chk <- filter_data(data=se.nor.chk, sam.factor='organism_part', con.factor='age', pOA=c(0.3, 700), CV=c(0.5, 100), dir=NULL); se.fil.chk
+se.fil.chk <- filter_data(data=se.nor.chk, sam.factor='organism_part', con.factor='age', pOA=c(0.3, 700), CV=c(0.5, 100)); se.fil.chk
 # Data matrix.
 expr.chk <- assay(se.fil.chk)
 # colnames(expr.chk) <- gsub("_", ".", colnames(expr.chk))
@@ -166,7 +187,7 @@ se.sh <- SummarizedExperiment(assays=list(expr=mat), rowData=rdat, colData=targe
 
 # Average the sample-condition replicates.
 se.aggr.sh <- aggr_rep(data=se.sh, sam.factor='samples', con.factor='conditions', aggr='mean')
-se.fil.sh <- filter_data(data=se.aggr.sh, sam.factor='samples', con.factor='conditions', pOA=c(0.03, 6), CV=c(0.25, 100), dir=NULL)
+se.fil.sh <- filter_data(data=se.aggr.sh, sam.factor='samples', con.factor='conditions', pOA=c(0.03, 6), CV=c(0.25, 100))
 # Data matrix.
 expr.sh <- assay(se.fil.sh)
 # colnames(expr.sh) <- gsub("_", ".", colnames(expr.sh))
@@ -230,13 +251,13 @@ if (is.null(rse.chk)) { # Save downloaded data to cache if it is not cached.
   save_cache(dir=cache.pa, overwrite=TRUE, rse.chk)
 }
 # Targets file.
-chk.tar <- system.file('extdata/shinyApp/example/target_chicken.txt', package='spatialHeatmap')
+chk.tar <- system.file('extdata/shinyApp/data/target_chicken.txt', package='spatialHeatmap')
 target.chk <- read.table(chk.tar, header=TRUE, row.names=1, sep='\t')
 target.chk[1:3, ]
 colData(rse.chk) <- DataFrame(target.chk)
 cna <- colnames(rse.chk)
 # Filter raw counts.
-se.chk <- filter_data(data=rse.chk, sam.factor='organism_part', con.factor='age', pOA=c(0.05, 50), CV=c(3, 100), dir=NULL)
+se.chk <- filter_data(data=rse.chk, sam.factor='organism_part', con.factor='age', pOA=c(0.05, 50), CV=c(3, 100))
 count.chk <- assay(se.chk)
 # Toy data1: subset 2 tissues, each under 3 times, each tissue-time has 2 replicates.
 count.chk.simple <- count.chk[, grepl('brain|heart', colnames(count.chk)) & grepl('day0|day70|day155',colnames(count.chk))]

@@ -21,10 +21,7 @@ BiocManager::install("spatialHeatmap")
 To obtain the most recent updates immediately, one can install it directly from github as follow:
                                                                                                                                                                  
 ```{r, eval=FALSE, echo=TRUE, warnings=FALSE}
-
-if (!requireNamespace("BiocManager", quietly=TRUE))
-    install.packages("BiocManager")
-BiocManager::install("jianhaizhang/spatialHeatmap", build_vignettes=TRUE, dependencies=TRUE)
+devtools::install_github("jianhaizhang/spatialHeatmap", build_vignettes=TRUE, dependencies=TRUE)
 ```
 
 # Usage

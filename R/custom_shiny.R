@@ -1,108 +1,117 @@
-#' Create Customized Shiny App of Spaital Heatmap
+#' Create Customized spatialHeatmap Shiny Apps
 #'
-#' This function creates customized Shiny App with user-provided data, aSVG files, and default parameters. Default settings are defined in the "config.yaml" file in the "config" folder of the app, and can be edited directly in a yaml file editor.  
+#' This function creates customized spatialHeatmap Shiny Apps with user-provided data, aSVG files, and default parameters by using the spatialHeatmap Shiny App as the template. 
 
-#' @param ... Separate lists of paired data matrix and aSVG files, which are included as default datasets in the Shiny app. Each list must have three elements with name slots of "name", "data", and "svg" respectively. For example, list(name='dataset1', data='./data1.txt', svg='./root_shm.svg'). The "name" element (\emph{e.g.} 'dataset1') is listed under "Step 1: data sets" in the app, while "data" and "svg" are the paths of data matrix and aSVG files. If multiple aSVGs (\emph{e.g.} growth stages) are included in one list, the respective paths are stored in a vector in the "svg" slot (see example below). After calling this function, the data and aSVGs are copied to the "example" folder in the app. See detailed examples below.
+#' @param data A nested `list` of custom data and aSVG files that will be the pre-included examples in the custom App. File paths of each data-aSVG pair should be included in a `list` that have four slots: `name`, `display`, `data`, and `svg`, e.g. `lis1 <- list(name='mus.brain', display='Mouse brain (SHM)', data='./mus_brain.txt', svg='./mus_brain.svg')`. The `name` will be syntactically valide for R code, while the `display` will be shown on the user interface, so the latter can include special characters. The `data` and `svg` is the file path of numeric data and corresponding aSVG respectively. If multiple aSVGs (e.g. growth stages) correspond to a single numeric data set, the respective paths will be stored in a vector in the `svg` slot (see example below). After store the data-aSVG pairs in separate `list`s, store these `list`s in another `list` (nested `list`), e.g. `list(lis1, lis2)`. The data and aSVGs in the nested `list` will be copied to the `data` folder in the custom App.
+#' @param db Pairs of data and aSVG in a tar file that will be used as a backend database. See \code{\link{write_hdf5}}.  
+#' @param lis.par A `list` of custom parameters of the Shiny App that will be the default when the custom App is launched. See \code{par.tmp}. Default is `NULL` and the default parameters in the spatialHeatmap Shiny App will be inherited. 
+#' @param par.tmp Logical. If `TRUE` the default paramters in the spatialHeatmap Shiny App are returned in a `list`, and users can edit these settings then assign the `list` back to \code{lis.par}. Note, only the existing values in the `list` can be edited and the hierarchy of the `list` should be preserved. Otherwise, it cannot be recognized by the internal program. 
+#' @param dld.sgl A `list` of paired data matrix and single aSVG file, which would be downloadable example dataset on the App for testing. The `list` consists of paths of the data matrix and aSVG file with name slots of `data` and `svg` respectively, e.g. \code{list(data='./data_download.txt', svg='./root_download_shm.svg')}. The specified data and aSVG will copied to the `data` folder in the App. 
+#' @param dld.mul A `list` of paired data matrix and multiple aSVG files, which would be downloadable example dataset on the App for testing. It is the same as `dld.sgl` except that in the `svg` slot, multiple aSVG file paths are stored, e.g. `list(data='./data_download.txt', svg=c('./root_young_download_shm1.svg', './root_old_download_shm2.svg'))`. 
+#' @param dld.vars A `list` of paired data matrix and single aSVG file, which would be downloadable data.tmp dataset on the App for testing. It is the same as `dld.sgl` except that multiple experimental variables are combined in the data matrix (see package viengettes for details.)
+#' @param data.tmp Logical. If `TRUE` (default), both example data sets in the spatialHeatmap Shiny App and custom data sets in `data` will be included in the custom App.
+#' @param app.dir The directory to create the Shiny App. Default is current work directory \code{.}.
 
-#' @param lis.par A list of default parameters of the Shiny app. See \code{ lis.par.tmp }. Default is NULL, which means default parameters are adopted.
-
-#' @param lis.par.tmp Logical, TRUE (default) or FALSE. If TRUE the template of default paramter list is returned, and users can set customized default values then assign this list to \code{ lis.par }. Note, only the existing values in the list can be changed while the hierarchy of the list should be preserved. Otherwise, it cannot be recognized by the internal program. 
-#' @param lis.dld.single A list of paired data matrix and single aSVG file, which would be downloadable on the app for testing. The list should have two elements with name slots of "data" and "svg" respectively, which are the paths of the data matrix and aSVG file repectively. After the function call, the specified data and aSVG are copied to the "example" folder in the app. Note the two name slots should not be changed. \emph{E.g.} \code{list(data='./data_download.txt', svg='./root_download_shm.svg')}.
-#' @param lis.dld.mul A list of paired data matrix and multiple aSVG files, which would be downloadable on the app for testing. The multiple aSVG files could be multiple growth stages of a plant. The list should have two elements with name slots of "data" and "svg" respectively, which are the paths of the data matrix and aSVG files repectively. The data and aSVG should only include the spatial dimension, no temporal dimension. After the function call, the specified data and aSVGs are copied to the "example" folder in the app. Note the two name slots should not be changed. \emph{E.g.} list(data='./data_download.txt', svg=c('./root_young_download_shm.svg', './root_old_download_shm.svg')).
-#' @param lis.dld.st A list of paired data matrix and single aSVG file, which would be downloadable on the app for testing. The list should have two elements with name slots of "data" and "svg" respectively, which are the paths of the data matrix and aSVG file repectively. Compared with \code{lis.dld.single}, the only difference is the data and aSVG include spatial and temporal dimension. See the example section for details. After the function call, the specified data and aSVG are copied to the "example" folder in the app. Note the two name slots should not be changed. \emph{E.g.} \code{list(data='./data_download.txt', svg='./root_download_shm.svg')}.
-
-#' @param example Logical, TRUE or FALSE. If TRUE (default), the default examples in "spatialHeatmap" package are included in the app as well as those provided to \code{...} by users.
-#' @param app.dir The directory to create the Shiny app. Default is current work directory \code{.}.
-
-#' @return If \code{lis.par.tmp==TRUE}, the template of default paramter list is returned. Otherwise, a customized Shiny app is generated in the path of \code{app.dir}. 
+#' @return If \code{par.tmp==TRUE}, the default paramters in spatialHeatmap Shiny App are returned in a `list`. Otherwise, a customized Shiny App is generated in the path of \code{app.dir}. 
 
 #' @examples
-
-#' # The examples build on pre-packaged examples in spatialHeatmap.
 #'
-#' # Get one data path and one aSVG path and assembly them into a list for creating default dataset.
-#' data.path1 <- system.file('extdata/shinyApp/example/expr_arab.txt', package='spatialHeatmap')
-#' svg.path1 <- system.file('extdata/shinyApp/example/arabidopsis.thaliana_shoot_shm.svg', 
+#' # The data sets in spatialHeatmap are used for demonstrations.
+#' 
+#' ## Below are demonstrations of simple usage.
+#' # File paths of one data matrix and one aSVG path.
+#' data.path1 <- system.file('extdata/shinyApp/data/expr_arab.txt', package='spatialHeatmap')
+#' svg.path1 <- system.file('extdata/shinyApp/data/arabidopsis.thaliana_shoot_shm.svg', 
 #' package='spatialHeatmap')
-#' # The list with name slots of "name", "data", and "svg".
-#' lis.dat1 <- list(name='shoot', data=data.path1, svg=svg.path1)
-#'
-#' # Get the paths of multi-dimensional data and aSVG files and assembly them into a list for 
-#' # creating default dataset.
-#' data.path.st <- system.file('extdata/shinyApp/example/mus_brain_vars.txt', 
-#' package='spatialHeatmap')
-#' svg.path.st <- system.file('extdata/shinyApp/example/mus_musculus.brain.svg', 
-#' package='spatialHeatmap')
-#' # The list with name slots of "name", "data", and "svg".
-#' lis.dat.st <- list(name='multiDimensions', data=data.path.st, svg=svg.path.st)
-#'
-#' # Get one data path and two aSVG paths and assembly them into a list for creating default 
-#' # dataset, which include two growth stages.
-#' data.path2 <- system.file('extdata/shinyApp/example/random_data_multiple_aSVGs.txt', 
-#' package='spatialHeatmap')
-#' svg.path2.1 <- system.file('extdata/shinyApp/example/arabidopsis.thaliana_organ_shm1.svg', 
-#' package='spatialHeatmap')
-#' svg.path2.2 <- system.file('extdata/shinyApp/example/arabidopsis.thaliana_organ_shm2.svg', 
-#' package='spatialHeatmap')
-#' # The list with name slots of "name", "data", and "svg", where the two aSVG paths are stored
-#' # in a vector in "svg".
-#' lis.dat2 <- list(name='growthStage', data=data.path2, svg=c(svg.path2.1, svg.path2.2))
-#'
-#' # Get one data path and one aSVG path and assembly them into a list for creating downloadable
-#' # dataset.
-#' data.path.dld1 <- system.file('extdata/shinyApp/example/expr_arab.txt', 
-#' package='spatialHeatmap')
-#' svg.path.dld1 <- system.file('extdata/shinyApp/example/arabidopsis.thaliana_organ_shm.svg', 
-#' package='spatialHeatmap')
-#' # The list with name slots of "data", and "svg".
-#' lis.dld.single <- list(name='organ', data=data.path.dld1, svg=svg.path.dld1)
-
-#' # For demonstration purpose, the same data and aSVGs are used to make the list for creating 
-#' # downloadable dataset of two growth stages. 
-#' lis.dld.mul <- list(data=data.path2, svg=c(svg.path2.1, svg.path2.2))
-#'
-#' # For demonstration purpose, the same multi-dimensional data and aSVG are used to create the
-#' # downloadable multi-dimensional dataset.
-#' lis.dld.st <- list(data=data.path.st, svg=svg.path.st)
-#'
-#' # Retrieve the default parameters.
-#' lis.par <- custom_shiny(lis.par.tmp=TRUE)
-#' # Change default values.
-#' lis.par$shm.img['color', ] <- 'yellow,orange,blue'
-#' # The default dataset to show upon the app is launched.
-#' lis.par$default.dataset <- 'shoot'
-
+#' # Save the file paths in a list with name slots of "name", "display", "data", and "svg".
+#' lis.dat1 <- list(name='shoot', display='Arabidopsis shoot (SHM)', data=data.path1, svg=svg.path1)
+#' # Create custom Shiny Apps.
 #' \donttest{
 #' if (!dir.exists('~/test_shiny')) dir.create('~/test_shiny')
 #' # Create custom Shiny app by feeding this function these datasets and parameters.
-#' custom_shiny(lis.dat1, lis.dat2, lis.dat.st, lis.par=lis.par, lis.dld.single=lis.dld.single, 
-#' lis.dld.mul=lis.dld.mul, lis.dld.st=lis.dld.st, app.dir='~/test_shiny')
+#' custom_shiny(data=list(lis.dat1), app.dir='~/test_shiny')
 #' # Lauch the app.
 #' shiny::runApp('~/test_shiny/shinyApp') 
 #' }
 #'
-#' # The customized Shiny app is able to take database backend as well. Examples are 
+#' ## Below are demonstrations of advanced usage. 
+#'
+#' # Paths of one data matrix and two aSVGs (two growth stages).
+#' data.path2 <- system.file('extdata/shinyApp/data/random_data_multiple_aSVGs.txt', 
+#' package='spatialHeatmap')
+#' svg.path2.1 <- system.file('extdata/shinyApp/data/arabidopsis.thaliana_organ_shm1.svg', 
+#' package='spatialHeatmap')
+#' svg.path2.2 <- system.file('extdata/shinyApp/data/arabidopsis.thaliana_organ_shm2.svg', 
+#' package='spatialHeatmap')
+#' # Save the file paths in a list with name slots of "name", "display", "data", and "svg".
+#' lis.dat2 <- list(name='growthStage', display='Multiple aSVGs (SHM)',data=data.path2, svg=c(svg.path2.1, svg.path2.2))
+#'
+#' # Paths of one data matrix with combined variables and one aSVG.
+#' data.path.vars <- system.file('extdata/shinyApp/data/mus_brain_vars.txt', 
+#' package='spatialHeatmap')
+#' svg.path.vars <- system.file('extdata/shinyApp/data/mus_musculus.brain.svg', 
+#' package='spatialHeatmap')
+#' # Save the file paths in a list with name slots of "name", "display", "data", and "svg".
+#' lis.dat.vars <- list(name='multiVariables', display='Multiple variables (SHM)', data=data.path.vars, svg=svg.path.vars)
+#'
+#' # Paths of one data matrix and one aSVGs for creating downloadable example data sets.
+#' data.path.dld1 <- system.file('extdata/shinyApp/data/expr_arab.txt', 
+#' package='spatialHeatmap')
+#' svg.path.dld1 <- system.file('extdata/shinyApp/data/arabidopsis.thaliana_organ_shm.svg', 
+#' package='spatialHeatmap')
+#' # Save the file paths in a list with name slots of "name", "display", "data", and "svg".
+#' dld.sgl <- list(name='organ', data=data.path.dld1, svg=svg.path.dld1)
+#'
+#' # For demonstration purpose, the same data and aSVGs are used to make the list for creating 
+#' # downloadable example dataset of two growth stages. 
+#' dld.mul <- list(data=data.path2, svg=c(svg.path2.1, svg.path2.2))
+#'
+#' # For demonstration purpose, the same multi-variable data and aSVG are used to create the
+#' # downloadable example multi-variable dataset.
+#' dld.vars <- list(data=data.path.vars, svg=svg.path.vars)
+#'
+#' # Retrieve the default parameters in the App template.
+#' lis.par <- custom_shiny(par.tmp=TRUE)
+#' # Change default setting of color scheme in the color key.
+#' lis.par$shm.img['color', ] <- 'yellow,orange,blue'
+#' # The default dataset to show when the app is launched.
+#' lis.par$default.dataset <- 'shoot'
+#' 
+#' # Store all default data sets in a nested list.
+#' dat.all <- list(lis.dat1, lis.dat2, lis.dat.vars)
+#'
+#' # Create custom Shiny Apps.
+#' \donttest{
+#' if (!dir.exists('~/test_shiny')) dir.create('~/test_shiny')
+#' custom_shiny(data=dat.all, lis.par=lis.par, dld.sgl=dld.sgl, dld.mul=dld.mul, dld.vars=dld.vars, 
+#' app.dir='~/test_shiny')
+#' # Lauch the App.
+#' shiny::runApp('~/test_shiny/shinyApp') 
+#' }
+#'
+#' # The customized Shiny App is able to take database backend as well. Examples are 
 #' # demonstrated in the function "write_hdf5".
-
+#'
 #' @author Jianhai Zhang \email{jzhan067@@ucr.edu} \cr Dr. Thomas Girke \email{thomas.girke@@ucr.edu}
 
 #' @references
 #' Jeremy Stephens, Kirill Simonov, Yihui Xie, Zhuoer Dong, Hadley Wickham, Jeffrey Horner, reikoch, Will Beasley, Brendan O'Connor and Gregory R. Warnes (2020). yaml: Methods to Convert R Data to YAML and Back. R package version 2.2.1. https://CRAN.R-project.org/package=yaml
-#' \cr Winston Chang, Joe Cheng, JJ Allaire, Yihui Xie and Jonathan McPherson (2017). shiny: Web Application Framework for R. R package version 1.0.3. https://CRAN.R-project.org/package=shiny 
+#' Winston Chang, Joe Cheng, JJ Allaire, Yihui Xie and Jonathan McPherson (2017). shiny: Web Application Framework for R. R package version 1.0.3. https://CRAN.R-project.org/package=shiny 
 
-#' @export custom_shiny
+#' @export
 #' @importFrom yaml yaml.load_file write_yaml
 #' @importFrom grDevices colors
 
-custom_shiny <- function(..., lis.par=NULL, lis.par.tmp=FALSE, lis.dld.single=NULL, lis.dld.mul=NULL, lis.dld.st=NULL, example=TRUE, app.dir='.') {
-
+custom_shiny <- function(data=NULL, db=NULL, lis.par=NULL, par.tmp=FALSE, dld.sgl=NULL, dld.mul=NULL, dld.vars=NULL, data.tmp=TRUE, app.dir='.') {
   options(stringsAsFactors=FALSE)
+  if (is.null(data) & is.null(db) & par.tmp==FALSE) stop("Both 'data' and 'db' are 'NULL'!")
+  if (!dir.exists(app.dir)) dir.create(app.dir) 
   # Default config file.
   cfg.def <- yaml.load_file(system.file('extdata/shinyApp/config/config.yaml', package='spatialHeatmap'))
   # Default parameters.
-  lis.par.def <- cfg.def[!grepl('^dataset\\d+|download_single|download_multiple|download_spatial_temporal|download_covisualization|download_batched_data_aSVGs', names(cfg.def))]
+  lis.par.def <- cfg.def[!grepl('^dataset\\d+|download_single|download_multiple|download_multiple_variables|download_covisualization|download_batched_data_aSVGs', names(cfg.def))]
   # Return parameter template.
-  if (lis.par.tmp==TRUE) {
+  if (par.tmp==TRUE) {
     for (i in seq_along(lis.par.def)) {
       lis0 <- lis.par.def[[i]]; if (length(lis0)>1) { 
         name <- default <- NULL; for (j in seq_along(lis0)) {
@@ -114,36 +123,26 @@ custom_shiny <- function(..., lis.par=NULL, lis.par.tmp=FALSE, lis.dld.single=NU
     }; return(lis.par.def)
   }
   app.dir0 <- normalizePath(app.dir, winslash="/", mustWork=FALSE)
-  app.dir <- paste0(app.dir0, '/shinyApp')
-  app.path <- system.file('extdata/shinyApp', package='spatialHeatmap')
-  # Remove residues from spatialHeatmap.
-  file.copy(app.path, app.dir0, recursive=TRUE, overwrite=TRUE) 
-  file.remove(list.files(paste0(app.dir, '/www/video'), '*.mp4$', full.names=TRUE))
-  file.remove(list.files(paste0(app.dir, '/www/ggly'), '*.html$', full.names=TRUE))
-  file.remove(list.files(paste0(app.dir, '/www/ggly/lib'), '*', full.names=TRUE))
-  unlink(paste0(app.dir, '/rsconnect'), recursive=TRUE) 
-  file.remove(list.files(paste0(app.dir, '/html_shm'), '*.html$', full.names=TRUE))
-  file.remove(list.files(paste0(app.dir, '/html_shm/lib/'), '*', full.names=TRUE))
-  lis.dat <- list(...)
-  # Load default parameter list.
-  if (is.null(lis.par)) { lis.par <- lis.par.def } else {
+  app.dir <- file.path(app.dir0, 'shinyApp')
+  cp_app(app.dir=app.dir0) # Copy Shiny App from spatialHeatmap to the target directory.
   
+  # Load default parameter list.
+  if (is.null(lis.par)) { lis.par <- lis.par.def } else {  
     for (i in seq_along(lis.par)) {
       # Names and values are concatenated by ':', thus ':' cannot be used in values.
       df0 <- lis.par[[i]]; if (is.data.frame(df0)) {
       pair <- paste0(row.names(df0), ':', df0$default); lis.par[[i]] <- pair
       }
-
     }
   }
 
   # Include default examples or not.
-  if (example==FALSE) { 
+  if (data.tmp==FALSE) { 
     # If exclude default examples and no download files are provided, default download files are retained.
     pat.dld <- 'dummyfile|expr_arab.txt|arabidopsis.thaliana_root.cross_shm.svg|random_data_multiple_aSVGs.txt|arabidopsis.thaliana_organ_shm1.svg|arabidopsis.thaliana_organ_shm2.svg'
-    file.remove(grep(pat.dld, list.files(paste0(app.dir, '/example'), '*', full.names=TRUE), invert=TRUE, value=TRUE))
-    if (!is.null(lis.dld.single)) file.remove(list.files(paste0(app.dir, '/example'), 'expr_arab.txt|arabidopsis.thaliana_root.cross_shm.svg', full.names=TRUE))
-    if (!is.null(lis.dld.mul)) file.remove(list.files(paste0(app.dir, '/example'), 'random_data_multiple_aSVGs.txt|arabidopsis.thaliana_organ_shm1.svg|arabidopsis.thaliana_organ_shm2.svg', full.names=TRUE))
+    file.remove(grep(pat.dld, list.files(paste0(app.dir, '/data'), '*', full.names=TRUE), invert=TRUE, value=TRUE))
+    if (!is.null(dld.sgl)) file.remove(list.files(paste0(app.dir, '/data'), 'expr_arab.txt|arabidopsis.thaliana_root.cross_shm.svg', full.names=TRUE))
+    if (!is.null(dld.mul)) file.remove(list.files(paste0(app.dir, '/data'), 'random_data_multiple_aSVGs.txt|arabidopsis.thaliana_organ_shm1.svg|arabidopsis.thaliana_organ_shm2.svg', full.names=TRUE))
     exp <- NULL
   } else {
     # Include all default examples.
@@ -156,51 +155,80 @@ custom_shiny <- function(..., lis.par=NULL, lis.par.tmp=FALSE, lis.dld.single=NU
   # Validate colours.
   col_check('shm.img', lis.par$shm.img)
   col_check('network', lis.par$network)
-  # Copy data/svg in list of two tar files and isolate data/svg list of tar file. 
-  idx <- lis.dat1 <- NULL; for (i in seq_along(lis.dat)) {
-    lis0 <- lis.dat[[i]]; if (length(lis0)==2) { 
-      idx <- c(idx, i); for (j in lis0) {
-        j <- normalizePath(j, winslash="/")
-        if (grepl('data_shm.tar$', j)) lis.dat1 <- pair2lis(read_hdf5(j, 'df_pair')[[1]], db=TRUE)
-        if (grepl('\\.tar$', j)) file.copy(j, paste0(app.dir, '/example'), overwrite=TRUE, recursive=TRUE) else stop('Compressed data and aSVGs should be two independent ".tar" files respectively!')
-      }
-    }
+  dat.db <- NULL
+  if (!is.null(db)) if (grepl('\\.tar$', db)) {
+    # Copy data/svg in tar file to the App.
+    file.copy(db, file.path(app.dir, 'data'), overwrite=TRUE, recursive=TRUE)
+    # Check overlap between data lists from "data" and "db".
+    check.dat <- ovl_dat_db(data=data, db=db)
+    data <- check.dat$data; dat.db <- check.dat$dat.db 
   }
-  if (is.null(idx)) lis.dat <- cp_file(lis.dat, app.dir, 'example') else { 
-    lis.dat <- cp_file(lis.dat[-idx], app.dir, 'example')
-    # Data in tar file take precedence over in list.
-    na.all <- vapply(lis.dat, function(x) { na <- NULL; na <- c(na, x$name) }, character(1)) 
-    na.all1 <- vapply(lis.dat1, function(x) { na <- NULL; na <- c(na, x$name) }, character(1))
-    lis.dat <- lis.dat[!(na.all %in% na.all1)]
-  }
-  if (!is.null(lis.dld.single)) lis.dld1 <- cp_file(lis.dld.single, app.dir, 'example') else {
+  if (!is.null(dld.sgl)) lis.dld1 <- cp_file(dld.sgl, app.dir, 'data') else {
     # Use default download files.
-    lis.dld1 <- list(data="example/expr_arab.txt", svg="example/arabidopsis.thaliana_root.cross_shm.svg")
+    lis.dld1 <- list(data="data/expr_arab.txt", svg="data/arabidopsis.thaliana_root.cross_shm.svg")
   }
-  if (!is.null(lis.dld.mul)) lis.dld2 <- cp_file(lis.dld.mul, app.dir, 'example') else {
+  if (!is.null(dld.mul)) lis.dld2 <- cp_file(dld.mul, app.dir, 'data') else {
     # Use default download files. 
-    lis.dld2 <- list(data="example/random_data_multiple_aSVGs.txt", svg=c('example/arabidopsis.thaliana_organ_shm1.svg', 'example/arabidopsis.thaliana_organ_shm2.svg'))
-
+    lis.dld2 <- list(data="data/random_data_multiple_aSVGs.txt", svg=c('data/arabidopsis.thaliana_organ_shm1.svg', 'data/arabidopsis.thaliana_organ_shm2.svg'))
   } 
-  if (!is.null(lis.dld.st)) lis.dld3 <- cp_file(lis.dld.st, app.dir, 'example') else {
+  if (!is.null(dld.vars)) lis.dld3 <- cp_file(dld.vars, app.dir, 'data') else {
     # Use default download files.
-    lis.dld3 <- list(data="example/expr_coleoptile_samTimeCon.txt", svg="example/oryza.sativa_coleoptile.ANT_shm.svg")
-  }; lis.dld <- list(download_single=lis.dld1, download_multiple=lis.dld2, download_spatial_temporal=lis.dld3)
+    lis.dld3 <- list(data="data/expr_coleoptile_samTimeCon.txt", svg="data/oryza.sativa_coleoptile.ANT_shm.svg")
+  }; lis.dld <- list(download_single=lis.dld1, download_multiple=lis.dld2, download_multiple_variables=lis.dld3)
   # Custom options are always included.
   # lis.cus1 <- lis.cus2 <- NULL
   # if (custom==TRUE) 
-  lis.cus1 <- list(name='customData', data='none', svg='none')
+  lis.cus1 <- list(name='customBulkData', display='customBulkData', data='none', svg='none')
   # if (custom.computed==TRUE) 
-  lis.cus2 <- list(name='customComputedData', data='none', svg='none')
+  lis.cus2 <- list(name='customCovisData', display='customCovisData', data='none', svg='none')
   # All data sets.
-  lis.dat <- c(list(list(name='none', data='none', svg='none'), lis.cus1, lis.cus2), lis.dat, lis.dat1, exp)
-  lis.dat <- lis.dat[!vapply(lis.dat, is.null, logical(1))]
+  lis.dat <- data
+  data <- c(list(lis.cus1, lis.cus2), data, dat.db, exp)
+  data <- data[!vapply(data, is.null, logical(1))]
   # Name the complete list.
-  names(lis.dat) <- paste0('dataset', seq_along(lis.dat))
-  lis.all <- c(lis.dat, lis.par, lis.dld)
+  names(data) <- paste0('dataset', seq_along(data))
+  lis.all <- c(data, lis.par, lis.dld)
   write_yaml(lis.all, paste0(app.dir, '/config/config.yaml')); cat('Done! \n')
-
 }
+
+
+#' Check overlap between separate data sets and database
+#'
+#' @keywords Internal
+#' @noRd
+
+ovl_dat_db <- function(data, db) { 
+  dat.db <- read_hdf5(db, name='match')
+  for (i in seq_along(dat.db)) dat.db[[i]]$data <- dat.db[[i]]$svg <- 'data/data_shm.tar'
+  if (is.null(data)) return(list(data=data, dat.db=dat.db))
+  nas <- lapply(data, function(x) x$name) 
+  nas.db <- lapply(dat.db, function(x) x$name)
+  # Data in tar file take precedence over in list.
+  data <- data[!nas %in% nas.db]
+  return(list(data=data, dat.db=dat.db))
+}  
+
+#' Copy Shiny App from spatialHeatmap to the target directory
+#'
+#' @keywords Internal
+#' @noRd
+
+cp_app <- function(app.dir) { 
+  app.dir <- normalizePath(app.dir, winslash="/", mustWork=FALSE)
+  app.dir <- file.path(app.dir, 'shinyApp')
+  if (!dir.exists(app.dir)) dir.create(app.dir)
+  app.path <- system.file('extdata/shinyApp', package='spatialHeatmap')
+  # Remove residues from spatialHeatmap.
+  for (i in c('app.R', 'config', 'data', 'html_shm', 'instruction', 'R', 'www')) {
+    file.copy(file.path(app.path, i), app.dir, recursive=TRUE, overwrite=TRUE) 
+  }
+  file.remove(list.files(file.path(app.dir, 'www/video'), '*.mp4$', full.names=TRUE))
+  file.remove(list.files(file.path(app.dir, 'www/ggly'), '*.html$', full.names=TRUE))
+  file.remove(list.files(file.path(app.dir, 'www/ggly/lib'), '*', full.names=TRUE))
+  file.remove(list.files(file.path(app.dir, 'html_shm'), '*.html$', full.names=TRUE))
+  file.remove(list.files(file.path(app.dir, 'html_shm/lib/'), '*', full.names=TRUE))
+}
+  
 
 #' Check validity of color indredients in the yaml file
 #'
@@ -235,8 +263,8 @@ pair2lis <- function(df.pair, db=FALSE) {
       strs <- strsplit(svg, ';| |,')[[1]]; svg <- strs[strs!='']
 
     }
-  # Data of txt file and db are distinguished by 'example/' in the dataset list.
-  if (db==FALSE) lis.dat0 <- c(lis.dat0, list(list(name=na.all[i], data=paste0('example/', dat.all[i]), svg=paste0('example/', svg)))) else lis.dat0 <- c(lis.dat0, list(list(name=na.all[i], data=dat.all[i], svg=svg)))
+  # Data of txt file and db are distinguished by 'data/' in the dataset list.
+  if (db==FALSE) lis.dat0 <- c(lis.dat0, list(list(name=na.all[i], data=paste0('data/', dat.all[i]), svg=paste0('data/', svg)))) else lis.dat0 <- c(lis.dat0, list(list(name=na.all[i], data=dat.all[i], svg=svg)))
 
   }; return(lis.dat0)
 
@@ -249,12 +277,9 @@ pair2lis <- function(df.pair, db=FALSE) {
 #' @noRd
 
 cp_file <- function(lis, app.dir, folder) {
-
   if (is.null(lis)) return()
   for (i in seq_along(lis)) { 
-
     lis0 <- lis[[i]]; for (k in seq_along(lis0)) {
-
       # Copy files.
       vec <- lis0[[k]]; if (!all(file.exists(vec))) next
       files <- NULL; for (v in vec) files <- c(files, v)
@@ -262,23 +287,14 @@ cp_file <- function(lis, app.dir, folder) {
       file.copy(files, paste0(app.dir, '/', folder), overwrite=TRUE)
       # Shorten paths.
       if (length(vec)==1) { 
-          
         str <- strsplit(vec, '/')[[1]]
         lis[[i]][[k]] <- paste0(folder, '/', str[length(str)])
-        
       } else if (length(vec)>1) {
-
         svgs <- NULL; for (j in seq_along(vec)) {
-
           str <- strsplit(vec[j], '/')[[1]]
           svgs <- c(svgs, paste0(folder, '/', str[length(str)]))
-
         }; lis[[i]][[k]] <- svgs
-        
       }
-
     }
-
   }; return(lis)
-
 }

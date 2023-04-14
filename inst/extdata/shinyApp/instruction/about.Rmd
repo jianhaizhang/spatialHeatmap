@@ -109,13 +109,13 @@ brain_Prudencio: RNA-seq, @Prudencio2015-wd, accessed through the R package Expr
 mouse_Merkin: RNA-seq, @Merkin2012-ak, accessed through the R package ExpressionAtlas [@ebi].  
 chicken_Cardoso.Moreira: RNA-seq, @Cardoso-Moreira2019-yq, accessed through the R package ExpressionAtlas [@ebi].  
 shoot_Mustroph/organ_Mustroph/root_Mustroph/shootRoot_Mustroph/rootRootTip_Mustroph: microarray, @Mustroph2009-nu, accessed through the R package GEOquery [@geo].  
-multiDimensions_Attilio: RNA-seq, @Attilio2021-pp, downloaded from GEO with access number GSE163415.  
+multiVariables_Attilio: RNA-seq, @Attilio2021-pp, downloaded from GEO with access number GSE163415.  
 growthStage_Mustroph: random data.  
 
 **Image Source**  
 brain_Prudencio/mouse_Merkin/chicken_Cardoso.Moreira: [Expression Atlas-EMBL-EBI](https://github.com/ebi-gene-expression-group/anatomogram/tree/master/src/svg){target='_blank'}  
 shoot_Mustroph/organ_Mustroph/root_Mustroph/shootRoot_Mustroph/rootRootTip_Mustroph/growthStage_Mustroph: @Merkin2012-ak.  
-multiDimensions_Attilio: [Expression Atlas-EMBL-EBI](https://github.com/ebi-gene-expression-group/anatomogram/tree/master/src/svg){target='_blank'}   
+multiVariables_Attilio: [Expression Atlas-EMBL-EBI](https://github.com/ebi-gene-expression-group/anatomogram/tree/master/src/svg){target='_blank'}   
 
 **Fund source** This project has been funded by NSF awards: [PGRP-1546879](https://www.nsf.gov/awardsearch/showAward?AWD_ID=1546879&HistoricalAwards=false){target="_blank"}, [PGRP-1810468](https://www.nsf.gov/awardsearch/showAward?AWD_ID=1810468){target="_blank"}, [PGRP-1936492](https://www.nsf.gov/awardsearch/showAward?AWD_ID=1936492&HistoricalAwards=false){target="_blank"}.  
 

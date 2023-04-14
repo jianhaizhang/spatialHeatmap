@@ -10,7 +10,7 @@ cluster_cell(
   dimred = "PCA",
   knn.gr = list(),
   snn.gr = list(),
-  cluster = "fg",
+  cluster = "wt",
   wt.arg = list(steps = 4),
   fg.arg = list(),
   sl.arg = list(spins = 25),

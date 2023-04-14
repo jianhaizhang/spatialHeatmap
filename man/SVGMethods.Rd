@@ -9,31 +9,35 @@
 \alias{attribute<-}
 \alias{dimension}
 \alias{dimension<-}
-\alias{svg}
-\alias{svg<-}
-\alias{raster}
-\alias{raster<-}
+\alias{svg_pa}
+\alias{svg_pa<-}
+\alias{raster_pa}
+\alias{raster_pa<-}
 \alias{cmb}
 \alias{names}
 \alias{names<-,SVG-method}
-\alias{sub_ft}
+\alias{sub_sf}
+\alias{angle}
+\alias{angle<-}
 \alias{coordinate,SVG-method}
 \alias{coordinate<-,SVG-method}
 \alias{attribute,SVG-method}
 \alias{attribute<-,SVG-method}
 \alias{dimension,SVG-method}
 \alias{dimension<-,SVG-method}
-\alias{raster,SVG-method}
-\alias{raster<-,SVG-method}
-\alias{svg,SVG-method}
-\alias{svg<-,SVG-method}
+\alias{raster_pa,SVG-method}
+\alias{raster_pa<-,SVG-method}
+\alias{svg_pa,SVG-method}
+\alias{svg_pa<-,SVG-method}
+\alias{angle,SVG-method}
+\alias{angle<-,SVG-method}
 \alias{[,SVG,ANY,ANY,ANY-method}
 \alias{[<-,SVG,ANY,ANY,ANY-method}
 \alias{length,SVG-method}
 \alias{names,SVG-method}
 \alias{names<-,SVG,ANY-method}
 \alias{cmb,SVG,SVG-method}
-\alias{sub_ft,SVG-method}
+\alias{sub_sf,SVG-method}
 \title{Methods for S4 class \code{SVG}}
 \usage{
 \S4method{coordinate}{SVG}(x)
@@ -48,13 +52,17 @@
 
 \S4method{dimension}{SVG}(x) <- value
 
-\S4method{raster}{SVG}(x)
+\S4method{raster_pa}{SVG}(x)
 
-\S4method{raster}{SVG}(x) <- value
+\S4method{raster_pa}{SVG}(x) <- value
 
-\S4method{svg}{SVG}(x)
+\S4method{svg_pa}{SVG}(x)
 
-\S4method{svg}{SVG}(x) <- value
+\S4method{svg_pa}{SVG}(x) <- value
+
+\S4method{angle}{SVG}(x)
+
+\S4method{angle}{SVG}(x) <- value
 
 \S4method{[}{SVG,ANY,ANY,ANY}(x, i, j)
 
@@ -68,7 +76,7 @@
 
 \S4method{cmb}{SVG,SVG}(x, y)
 
-\S4method{sub_ft}{SVG}(svg, show = NULL, hide = NULL)
+\S4method{sub_sf}{SVG}(svg, show = NULL, hide = NULL)
 }
 \arguments{
 \item{x, y}{Two \code{SVG} objects.}
@@ -83,8 +91,6 @@
 }
 \value{
 An object of \code{SVG}, \code{data.frame}, or \code{numeric}.
-
-An \code{SVG} object.
 }
 \description{
 These are methods for subsetting, getting, setting, or combining \linkS4class{SVG} objects.
@@ -118,12 +124,13 @@ In the following code snippets, \code{cordn} is a \linkS4class{SVG} object.
 }
 
 \examples{
+
 # Create the first aSVG instance. 
-svg.pa1 <- system.file('extdata/shinyApp/example/maize_leaf_shm1.svg',
+svg.pa1 <- system.file('extdata/shinyApp/data/maize_leaf_shm1.svg',
 package='spatialHeatmap')
 svg1 <- read_svg(svg.path=c(svg.pa1)); names(svg1); length(svg1); slotNames(svg1)
 # Create the second aSVG instance. 
-svg.pa2 <- system.file('extdata/shinyApp/example/maize_leaf_shm2.svg',
+svg.pa2 <- system.file('extdata/shinyApp/data/maize_leaf_shm2.svg',
 package='spatialHeatmap')
 svg2 <- read_svg(svg.path=c(svg.pa2)); names(svg2); length(svg2)
 # Combine these two instances.
@@ -133,11 +140,11 @@ svg3[1]
 # Coordinates of the first aSVG instance 
 svg3[, 'coordinate'][1]; coordinate(svg3)[1]
 # Extract slots from "svg3" into a list and create a new "SVG" object.
-lis <- list(cordn=coordinate(svg3), attrb=attribute(svg3), svg=svg(svg3))
+lis <- list(cordn=coordinate(svg3), attrb=attribute(svg3), svg=svg_pa(svg3))
 new.svgs <- SVG(coordinate=lis$cordn, attribute=lis$attrb, svg=lis$svg)
 # Change aSVG instance names.
 names(new.svgs) <- c('aSVG1', 'aSVG2'); names(new.svgs)
-# Replace an instance.
+# Replace the second instance in "svg3".
 svg3[2] <- new.svgs[2]
 # Replace a slot content.
 coordinate(svg3)[[1]] <- coordinate(new.svgs)[[1]]

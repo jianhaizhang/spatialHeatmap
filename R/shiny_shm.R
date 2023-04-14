@@ -73,7 +73,7 @@
 #'
 #' Almende B.V., Benoit Thieurmel and Titouan Robert (2017). visNetwork: Network Visualization using 'vis.js' Library. R package version 2.0.1. https://CRAN.R-project.org/package=visNetwork
 
-#' @export shiny_shm
+#' @export
 #' @importFrom shiny runApp
 
 shiny_shm <- function() {

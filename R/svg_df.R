@@ -25,11 +25,11 @@
 #' @importFrom xml2 xml_length xml_children xml_name xml_attr xml_remove xml_text xml_attrs
 #' @importFrom parallel detectCores mclapply
 
-svg_df <- function(svg.path, feature=NULL, cores) {
+svg_df <- function(svg.path, feature=NULL, cores, srsc=FALSE) {
   # save(svg.path, feature, cores, file='svg.df.all')
   # Make sure the style is correct. If the stroke width is not the same across polygons such as '0.0002px', '0.216px', some stroke outlines cannot be recognised by 'PostScriptTrace'. Then some polygons are missing. Since the ggplot is based on 'stroke' not 'fill'.
-  id <- NULL
   options(stringsAsFactors=FALSE)
+  id <- NULL
   doc <- read_xml(svg.path); spa <- xml_attr(doc, 'space')
   if (!is.na(spa)) if (spa=='preserve') xml_set_attr(doc, 'xml:space', 'default')
   # Even though 'out' and 'ply' are not returned by 'svg_attr', the paths in doc are broken accordingly, since the node in doc are pointed, any change on the node is actually changing the doc. 
@@ -42,6 +42,12 @@ svg_df <- function(svg.path, feature=NULL, cores) {
   chdn.all <- c(chdn.out, chdn.ply)
   na.no <- na.all[!na.all %in% c('g', 'path', 'rect', 'ellipse', 'use', 'title')]
   if (length(na.no)>0) { cat('\n\n'); cat('Warning: accepted SVG elements are "g", "path", "rect", "ellipse", "use", and "title". Please remove these elements in Inkscape:', na.no, '\n\n') }
+  # Obtain the overlay angle.
+  ovl.agl <- 0; if (srsc==TRUE) {
+    idx.ovl <- df.attr$feature=='overlay'
+    if (sum(idx.ovl)!=1) return('When visualizing spatially resolved single-cell data, only one overlay shape is required!')
+    ovl.agl <- as.numeric(gsub('(.*\\()(.*)(\\))', '\\2', xml_attr(chdn.all[idx.ovl][[1]], 'transform')))
+  }
   # Get ids and titles for every path, including paths inside groups, except for 'a' nodes.
   tit <- id.all <- sub.feature <- NULL
   for (i in seq_along(chdn.all)) {
@@ -178,7 +184,7 @@ svg_df <- function(svg.path, feature=NULL, cores) {
   names(w.h) <- c('width', 'height')
   # tis.path=sub('_\\d+$', '', tit) introduces a potential bug, since the original single-path tissues can have '_\\d+$' pattern. Solution: in upstream append '__1', '__2', ... to the paths in a group.
   # lis <- list(df=df, tis.path=tis.path, fil.cols=fil.cols, w.h = w.h, aspect.r = aspect.r, df.attr=df.attr); return(lis)
-  lis <- list(coordinate=df, attribute=df.attr.rep, dimension = w.h); return(lis)
+  lis <- list(coordinate=df, attribute=df.attr.rep, dimension = w.h, angle=ovl.agl); return(lis)
 }
 
 #' Extract children, id, element name from outline and tissue layer

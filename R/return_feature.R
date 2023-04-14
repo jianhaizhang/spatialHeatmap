@@ -47,7 +47,7 @@
 #' # The spatialHeatmap package has a small aSVG collection and can be used to demonstrate the
 #' # local query.
 #' # Get the path of local aSVGs from the package.
-#' svg.dir <- system.file("extdata/shinyApp/example", package="spatialHeatmap")
+#' svg.dir <- system.file("extdata/shinyApp/data", package="spatialHeatmap")
 #' # Query the local aSVG repo. The "species" argument is set NULL on purpose so as to illustrate
 #' # how to select the target aSVG among all matching aSVGs.
 #' feature.df <- return_feature(feature=c('heart', 'brain'), species=NULL, dir=svg.dir, 
@@ -87,7 +87,7 @@ return_feature <- function(feature, species, keywords.any=TRUE, remote=NULL, dir
     colnames(df)[colnames(df)=='index.sub'] <- 'order'
 
     if (desc==TRUE) {
-      if (any(c('e', 'w') %in% check_pkg('rols'))) stop('The package "rols" is not detected!')
+      pkg <- check_pkg('rols'); if (is(pkg, 'character')) stop(pkg)
       cat('Appending descriptions... \n')
       df$description <- NA; for (i in seq_len(nrow(df))) {
         ont <- df[i, 'id']; abbr <- tolower(sub('_.*', '', ont))

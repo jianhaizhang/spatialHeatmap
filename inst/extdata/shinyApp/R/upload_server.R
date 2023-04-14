@@ -3,12 +3,12 @@
 upload_server <- function(id, lis.url=NULL, session) {
   moduleServer(id, function(input, output, session) {
   message('Upload module starts ... ')
-  na.cus <- c('customBulkData', 'customSingleCellData')
   output$bulk.sce <- renderUI({
     ns <- session$ns; fileIn <- input$fileIn
     if (fileIn=='customBulkData') {
     list(
-    fluidRow(splitLayout(cellWidths=c('1%', '20%', '1%', '10%'), '', h4(strong("Step 2: upload custom data")), '', actionButton(ns("cusHelp"), "Help", icon = icon('question-circle')))),
+    fluidRow(splitLayout(cellWidths=c('1%', '20%', '1%', '10%'), '', h4(strong("Step 2: upload custom data")), '',
+      actionButton(ns("cusHelp"), "Help", icon = icon('question-circle')))),
       fluidRow(splitLayout(cellWidths=c('1%', '24%', '1%', '18%', '1%', '25%', '1%', '25%'), '',
       fileInput(ns("geneInpath"), "2A: upload formatted data matrix", accept=c(".txt", ".csv"), multiple=FALSE), '',
       radioButtons(inputId=ns('dimName'), label='2B: is column or row gene?', choices=c("None", "Row", "Column"), selected='None', inline=TRUE), '',
@@ -18,9 +18,9 @@ upload_server <- function(id, lis.url=NULL, session) {
       fileInput(ns("met"), "2D (optional): upload metadata file for rows", accept=c(".txt", ".csv"), multiple=FALSE))
       ))
     )
-    } else if (fileIn=='customSingleCellData') {
+    } else if (fileIn=='customCovisData') {
       list(
-      h4(strong('Step 2: single-cell data')),
+      h4(strong('Step 2: single-cell/bulk data')),
       fileInput(ns("sglCell"), "", accept=c(".rds"), multiple=FALSE)
       )
    }
@@ -48,13 +48,21 @@ upload_server <- function(id, lis.url=NULL, session) {
     })
 
   cfg <- reactiveValues(lis.dat=NULL, lis.dld=NULL, lis.par=NULL, na.def=NULL, dat.def=NULL, svg.def=NULL, pa.upl=NULL, pa.dat.upl=NULL, pa.svg.upl=NULL, na.cus=NULL, pa.svg.reg=NULL)
+  lis.cfg <- yaml.load_file('config/config.yaml')
+  lis.cfg <- lis.cfg[!vapply(lis.cfg, is.null, logical(1))]
+  # Separate default datasets, downloadable datasets, and parameters.
+  lis.dat <- lis.cfg[grepl('^dataset\\d+', names(lis.cfg))]
+  db.pa <- 'data/data_shm.tar'
+  # Merge separate data sets and data base.
+  if (file.exists(db.pa)) { 
+    lis.dat.db <- ovl_dat_db(data=lis.dat, db=db.pa)
+    lis.dat <- lis.dat.db$data; db.dat <- lis.dat.db$dat.db
+    lis.dat <- c(lis.dat, db.dat)
+    names(lis.dat) <- paste0('dataset', seq_along(lis.dat))
+  }
+  dld.na <- c('download_single', 'download_multiple', 'download_multiple_variables', 'download_batched_data_aSVGs', 'download_covisualization')
+  lis.dld <- lis.cfg[grepl(paste0(dld.na, collapse='|'), names(lis.cfg))]
   observe({
-    lis.cfg <- yaml.load_file('config/config.yaml')
-    lis.cfg <- lis.cfg[!vapply(lis.cfg, is.null, logical(1))]
-    # Separate data sets, download files, and parameters.
-    lis.dat <- lis.cfg[grepl('^dataset\\d+', names(lis.cfg))]
-    dld.na <- c('download_single', 'download_multiple', 'download_spatial_temporal', 'download_batched_data_aSVGs', 'download_covisualization')
-    lis.dld <- lis.cfg[grepl(paste0(dld.na, collapse='|'), names(lis.cfg))]
     if (is.null(input$config)) lis.par <- lis.cfg[!grepl(paste0(c('^dataset\\d+', dld.na), collapse='|'), names(lis.cfg))] else lis.par <- yaml.load_file(input$config$datapath[1])
     upl.size <- toupper(lis.par$max.upload.size)
     num <- as.numeric(gsub('(\\d+)(G|M)', '\\1', upl.size))
@@ -73,14 +81,14 @@ upload_server <- function(id, lis.url=NULL, session) {
     }
 
     # Separate data, svg.
-    na.ipt <- dat.ipt <- svg.ipt <- NULL; for (i in lis.dat) {  
+    na.ipt <- dis.ipt <- dat.ipt <- svg.ipt <- NULL; for (i in lis.dat) {  
       na.ipt <- c(na.ipt, i$name); dat.ipt <- c(dat.ipt, i$data)
-      svg.ipt <- c(svg.ipt, list(i$svg))
+      svg.ipt <- c(svg.ipt, list(i$svg)); dis.ipt <- c(dis.ipt, i$display);
     }; names(dat.ipt) <- names(svg.ipt) <- na.ipt
     # Uploaded tar files.
     df.tar <- input$tar; dat.upl <- svg.upl <- NULL
     tar.num <- grepl('\\.tar$', df.tar$datapath)
-    if (!is.null(df.tar)) validate(need(try(sum(tar.num)==2), 'Two separate tar files of data and aSVGs respectively are expected!'))
+    if (!is.null(df.tar)) validate(need(try(sum(tar.num)==2), 'Two separate tar files of respective data and aSVGs are expected!'))
     if (sum(tar.num)==2) {
       cat('Processing uploaded tar files ... \n')
       p <- df.tar$datapath[1]; strs <- strsplit(p, '/')[[1]]
@@ -100,17 +108,20 @@ upload_server <- function(id, lis.url=NULL, session) {
       }; cat('Done! \n')
     }
     # Separate data, svg of default and customization. 
-    na.def <- na.ipt[!na.ipt %in% c('customBulkData', 'customSingleCellData')]
+    idx.def <- !na.ipt %in% na.cus; na.def <- na.ipt[idx.def]
+    dis.def <- dis.ipt[idx.def] 
     # Data in uploaded tar files are also included in default.
     dat.def <- c(dat.upl, dat.ipt[na.def]); svg.def <- c(svg.upl, svg.ipt[na.def])
+    dis.def <- unique(c(names(dat.upl), dis.def))
     # If data/svg are duplicated between the server and upload, the data/svg on server side is removed.
     dat.def <- dat.def[unique(names(dat.def))]; svg.def <- svg.def[unique(names(svg.def))]
-    cfg$lis.dat <- lis.dat; cfg$lis.dld <- lis.dld; cfg$lis.par <- lis.par; cfg$na.def <- names(dat.def); cfg$svg.def <- svg.def; cfg$dat.def <- dat.def; cfg$na.cus <- na.cus
-
-    dat.nas <- c(na.cus, names(dat.def))
+    cfg$lis.dat <- lis.dat; cfg$lis.dld <- lis.dld; cfg$lis.par <- lis.par; cfg$na.def <- setNames(names(dat.def), dis.def)
+    cfg$svg.def <- svg.def; cfg$dat.def <- dat.def; cfg$na.cus <- setNames(na.cus, na.cus.dis)
+    save(svg.def, dat.def, file='sd')
+    dat.nas <- c(na.cus, names(dat.def)); names(dat.nas) <- c(na.cus.dis, dis.def) 
     url.val <- url_val('upl-fileIn', lis.url)
     updateSelectInput(session, 'fileIn', choices=dat.nas, selected=ifelse(url.val=='null', lis.par$default.dataset, url.val))
-    updateRadioButtons(session, inputId='dimName', label='2B: is column or row gene?', choices=c("None", "Row", "Column"), selected=lis.par$col.row.gene, inline=TRUE)
+    updateRadioButtons(session, inputId='dimName', selected=lis.par$col.row.gene, inline=TRUE)
 
   })
   observe({ # aSVG uploaded in regular files (not tar), used in re-matching.
@@ -140,7 +151,7 @@ upload_server <- function(id, lis.url=NULL, session) {
     dld.exp <- reactiveValues(sgl=NULL, mul=NULL, st=NULL, bat = NULL)
     dld.exp$sgl <- cfg$lis.dld$download_single
     dld.exp$mul <- cfg$lis.dld$download_multiple
-    dld.exp$st <- cfg$lis.dld$download_spatial_temporal
+    dld.exp$st <- cfg$lis.dld$download_multiple_variables
     dld.exp$bat <- cfg$lis.dld$download_batched_data_aSVGs
     dld.exp$covis <- cfg$lis.dld$download_covisualization
 
@@ -160,8 +171,8 @@ upload_server <- function(id, lis.url=NULL, session) {
       filename=function(){ "multiple_aSVG_data.zip" }, content=function(file=paste0(tmp.dir, '/multiple_aSVG_data.zip')){ zip(file, c(dld.exp$mul$data, dld.exp$mul$svg)) }
   ) 
     output$dld.st <- downloadHandler(   
-      filename=function(){ "multiDimensions_aSVG_data.zip" },
-content=function(file=paste0(tmp.dir, '/multiDimensions_aSVG_data.zip')){ zip(file, c(dld.exp$st$data, dld.exp$st$svg)) }
+      filename=function(){ "multiVariables_aSVG_data.zip" },
+content=function(file=paste0(tmp.dir, '/multiVariables_aSVG_data.zip')){ zip(file, c(dld.exp$st$data, dld.exp$st$svg)) }
   )
     output$dld.covis <- downloadHandler(   
       filename=function(){ "covisualization_aSVG_data.zip" },
@@ -218,7 +229,7 @@ content=function(file=paste0(tmp.dir, '/batched_data_aSVGs.zip')){ zip(file, c(d
   })
   output$clp.rice <-renderUI({
   tagList(
-    p('Mouse brain multi-dimensional data', style='font-size:18px'),
+    p('Mouse brain multi-variable data', style='font-size:18px'),
     a(img(width='97%', src="image/mus_multi_dim.png"), href=paste0('http://', lis.url$hos.port, mus.multi.dim.url), target="_blank")
     )
   })
@@ -239,10 +250,11 @@ content=function(file=paste0(tmp.dir, '/batched_data_aSVGs.zip')){ zip(file, c(d
   sce <- reactiveValues(); observe({
   library(SingleCellExperiment)
   library(scater); library(scran); library(BiocSingular)
-  sgl.cell.ipt <- input$sglCell
+  sgl.cell.ipt <- input$sglCell; pa <- NULL
   # save(sgl.cell.ipt, file='sgl.cell.ipt')
-  if (is.null(sgl.cell.ipt) | sce.pa$val==FALSE) { sce$val <- NULL; return() }
-  pa <- sgl.cell.ipt$datapath
+  if (is.null(sgl.cell.ipt) | sce.pa$val==FALSE) { sce$val <- NULL } else pa <- sgl.cell.ipt$datapath
+  if (!is.null(input$fileIn)) if (grepl(na.sgl.def, input$fileIn)) pa <- cfg$dat.def[input$fileIn] 
+  if (is.null(pa)) return()
   if (grepl('\\.rds$', pa)) sce$val <- readRDS(pa)
   })
   onBookmark(function(state) { state })

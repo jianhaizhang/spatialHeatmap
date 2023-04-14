@@ -6,7 +6,8 @@
 #' @param attribute A named \code{list} of attributes of coordinates in \code{coordinate}. Attributes are represented in at least four columns \code{feature}, \code{id}, \code{fill} and \code{stroke} in form of \code{data.frame} or \code{tbl}, corresponding to \code{feature} in \code{coordinate}, ids of \code{feature}, fill colors of \code{feature}, and line widths of \code{feature} respectively. \code{id} can be the same as \code{feature} or ontology ids. The \code{list} name slots refer to aSVG instances respectively and must match those in \code{coordinate}, e.g. list(SVGInstance1=attribute1, SVGInstance2=attribute2).  
 #' @param dimension A named \code{list} of width/height parsed from one or multile aSVG files respectively, which is calculated from \code{coordinate} automatically. Each pair of width/height is stored in a named vector. The \code{list} name slots refer to aSVG instances respectively and must match those in \code{coordinate}, e.g. list(SVGInstance1=c(with=100, height=8), SVGInstance2=c(with=20, height=15)).  
 #' @param svg A named \code{list} of directory path(s) of one or multile aSVG files respectively. The \code{list} name slots refer to aSVG instances respectively and must match those in \code{coordinate}, e.g. list(SVGInstance1=svg.path1, SVGInstance2=svg.path2).  
-#' @param raster A named \code{list} of directory path(s) of one or multile raster image files (jpg, png) respectively. This argument is relevant only when superimposing raster images with spatial heatmap plots that are created from aSVG images. The default is \code{NULL} for each aSVG instance. aSVG images are usually created by using these raster images as templates, otherwise spatial features between the two will not match. The \code{list} name slots refer to aSVG instances respectively and must match those in \code{coordinate}, e.g. list(SVGInstance1=raster.path1, SVGInstance2=raster.path2).  
+#' @param raster A named \code{list} of directory path(s) of one or multile raster image files (jpg, png) respectively. This argument is relevant only when superimposing raster images with spatial heatmap plots that are created from aSVG images. The default is \code{NULL} for each aSVG instance. aSVG images are usually created by using these raster images as templates, otherwise spatial features between the two will not match. The \code{list} name slots refer to aSVG instances respectively and must match those in \code{coordinate}, e.g. list(SVGInstance1=raster.path1, SVGInstance2=raster.path2).
+#' @param angle Applicable in the case of spatially resolved single-cell data. A named \code{list} of one or multiple rotation degrees of the shapes with the identifier `overlay` in one or muptiple aSVGs respectively. The \code{list} name slots refer to aSVG instances respectively and must be the same with \code{coordinate}, e.g. list(SVGInstance1=90, SVGInstance2=45).  
 
 #' @return A SVG object.
 #' @author Jianhai Zhang \email{jzhan067@@ucr.edu} \cr Dr. Thomas Girke \email{thomas.girke@@ucr.edu}
@@ -14,16 +15,16 @@
 #' @examples
 #' 
 #' # The first raste image used as a template to create an aSVG. 
-#' raster.pa1 <- system.file('extdata/shinyApp/example/maize_leaf_shm1.png',
+#' raster.pa1 <- system.file('extdata/shinyApp/data/maize_leaf_shm1.png',
 #' package='spatialHeatmap')
 #' # The first aSVG created with the first template. 
-#' svg.pa1 <- system.file('extdata/shinyApp/example/maize_leaf_shm1.svg',
+#' svg.pa1 <- system.file('extdata/shinyApp/data/maize_leaf_shm1.svg',
 #' package='spatialHeatmap')
 #' # The second raster image used as a template to create an aSVG. 
-#' raster.pa2 <- system.file('extdata/shinyApp/example/maize_leaf_shm2.png',
+#' raster.pa2 <- system.file('extdata/shinyApp/data/maize_leaf_shm2.png',
 #' package='spatialHeatmap')
 #' # The second aSVG created with the second template. 
-#' svg.pa2 <- system.file('extdata/shinyApp/example/maize_leaf_shm2.svg',
+#' svg.pa2 <- system.file('extdata/shinyApp/data/maize_leaf_shm2.svg',
 #' package='spatialHeatmap')
 #'
 #' # Parse these two aSVGs without association with raster images.
@@ -42,7 +43,7 @@
 #' # Combine two "SVG" objects.
 #' x <- svgs[1, ]; y <- svgs[2, ]; cmb(x, y)
 #' # Extract slots from "svgs" and create a new "SVG" object.
-#' lis <- list(cordn=coordinate(svgs), attrb=attribute(svgs), svg=svg(svgs), raster=raster(svgs))
+#' lis <- list(cordn=coordinate(svgs), attrb=attribute(svgs), svg=svg_pa(svgs), raster=raster_pa(svgs))
 #' new.svgs <- SVG(coordinate=lis$cordn, attribute=lis$attrb, svg=lis$svg, raster=lis$raster)
 #' # Change aSVG instance names.
 #' names(new.svgs) <- c('aSVG1', 'aSVG2')
@@ -51,7 +52,7 @@
 #' @export
 #' @rdname SVG
 
-SVG <- function(coordinate=list(), attribute=list(), dimension=list(), svg=list(), raster=list()) {
+SVG <- function(coordinate=list(), attribute=list(), dimension=list(), svg=list(), raster=list(), angle=list()) {
   if (length(dimension)==0) {
     dimension <- lapply(coordinate, function(x) c(width=1, height=1))
   }
@@ -61,30 +62,33 @@ SVG <- function(coordinate=list(), attribute=list(), dimension=list(), svg=list(
   if (length(svg)==0) {
     svg <- lapply(coordinate, function(x) return(names(coordinate)[x]))
   }
-  check_SVG(coord=coordinate, attr=attribute, wh=dimension, svg=svg, raster=raster)
+  if (length(angle)==0) {
+    angle <- lapply(coordinate, function(x) return(NULL))
+  }
+  check_SVG(coord=coordinate, attr=attribute, wh=dimension, svg=svg, raster=raster, angle=angle)
   dimension <- lapply(seq_along(dimension), function(i, cordn) {
     cordn0 <- cordn[[i]] 
     w.h <- c(max(cordn0$x) - min(cordn0$x), max(cordn0$y) - min(cordn0$y))
     names(w.h) <- c('width', 'height'); w.h
   }, coordinate)
   names(dimension) <- names(coordinate)
-  methods::new('SVG', coordinate=coordinate, attribute=attribute, dimension=dimension, svg=svg, raster=raster)
+  methods::new('SVG', coordinate=coordinate, attribute=attribute, dimension=dimension, svg=svg, raster=raster, angle=angle)
 }
 
 #' # Check validity of slots.
 #' @keywords Internal
 #' @noRd
 
-check_SVG <- function(coord, attr, wh, svg, raster) {
+check_SVG <- function(coord, attr, wh, svg, raster, angle) {
   if (!is(coord, 'list') | !is(attr, 'list') | !is(wh, 'list')) stop('Each slot shoule be a named "list"!')
-  len.inst <- unique(c(length(coord), length(attr), length(wh), length(svg), length(raster)))
+  len.inst <- unique(c(length(coord), length(attr), length(wh), length(svg), length(raster), length(angle)))
   if (length(len.inst) > 1) stop('Each instance should have a value in each slot!')
   na.cor <- names(coord); na.att <- names(attr)
   na.wh <- names(wh); na.svg <- names(svg)
-  na.raster <- names(raster)
-  if (is.null(na.cor) | is.null(na.att) | is.null(na.wh) | is.null(na.svg) | is.null(na.raster)) stop('Each slot should be a "list" named by instance(s)!')
+  na.raster <- names(raster); na.angle <- names(angle)
+  if (is.null(na.cor) | is.null(na.att) | is.null(na.wh) | is.null(na.svg) | is.null(na.raster) | is.null(na.angle)) stop('Each slot should be a "list" named by instance(s)!')
   for (i in seq_len(len.inst)) {
-    inst <- table(c(na.cor[i], na.att[i], na.wh[i], na.svg[i], na.raster[i]))
+    inst <- table(c(na.cor[i], na.att[i], na.wh[i], na.svg[i], na.raster[i], na.angle[i]))
     if (length(inst)!=1) stop('An instance should have the same name across slots!')
   }
   for (i in seq_along(coord)) {
@@ -133,8 +137,10 @@ setMethod("show", c(object="SVG"), function(object) {
   dim1 <- dimension(x)[[1]]
   cat('dimension: '); cat(names(dim1), '\n')
   cat('           ', dim1,'\n')
-  raster <- raster(x)[[1]]
+  raster <- raster_pa(x)[[1]]
   if (!is.null(raster)) message('raster: ', raster)
+  angle <- angle(x)[[1]]
+  if (!is.null(angle)) message('angle: ', angle)
 })
 
 

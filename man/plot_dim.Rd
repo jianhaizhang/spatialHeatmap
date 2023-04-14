@@ -23,7 +23,11 @@ plot_dim(
   stroke = 0.2,
   bulk.stroke = 1,
   axis.text.size = 10,
-  axis.title.size = 11
+  axis.title.size = 11,
+  lgd.pos = "right",
+  lgd.ncol = 1,
+  lgd.l = 0,
+  lgd.r = 0.01
 )
 }
 \arguments{
@@ -52,6 +56,12 @@ plot_dim(
 \item{stroke, bulk.stroke}{The line width of cells and bulk tissues respectively.}
 
 \item{axis.text.size, axis.title.size}{The size of axis text and title respectively.}
+
+\item{lgd.pos}{The legend position, one of \code{top}, \code{right}, \code{bottom}, \code{left}.}
+
+\item{lgd.ncol}{The number of legend columns.}
+
+\item{lgd.l, lgd.r}{The left and right margins of legends.}
 }
 \value{
 An object of ggplot.

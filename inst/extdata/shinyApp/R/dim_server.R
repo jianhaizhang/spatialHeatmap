@@ -2,6 +2,9 @@
 dim_server <- function(id, sce, sce.upl, section='scell', upl.mod.lis, dat.lis=NULL, session) {
   moduleServer(id, function(input, output, session) {
    ns <- session$ns
+   observeEvent(input$covisHelp, {
+     showModal(modal(msg=HTML('Click <strong>"Co-visualizing"</strong> to see the co-visualization plot.')))
+    })
    if (section!='scell') {
       hideElement('dimCell'); hideElement('coclusPlotBut')
       hideElement('selBlk'); hideElement('selBlkBut')
@@ -13,6 +16,7 @@ dim_server <- function(id, sce, sce.upl, section='scell', upl.mod.lis, dat.lis=N
       if (is.null(sce)|is.null(covis.type)) return()
       cdat.na <- colnames(colData(sce))
       if (all(c('assignedBulk', 'similarity') %in% cdat.na)) {
+        # covisGrp: bulk or cell labels for aggregating. 
         if ('toCellAuto' %in% covis.type) {
           selectInput(ns('covisGrp'), 'Bulk groups', 'sample')
         } else if ('toBulkAuto' %in% covis.type) {
@@ -52,26 +56,13 @@ dim_server <- function(id, sce, sce.upl, section='scell', upl.mod.lis, dat.lis=N
       dim.par$group.sel <- NULL
   })
     observeEvent(input$scellRowCancelBut, { row.sel$val <- NULL})
-    output$umap <- renderPlot({
+    output$dimPlot <- renderPlot({
       grp <- dim.par$grp; grp.sel <- dim.par$group.sel
       sce <- sce(); cocluster.only <- dim.par$cocluster.only
-      if (is.null(sce)|is.null(grp)|is.null(cocluster.only)) return()
-      if (!is.null(row.sel$val) & !is.null(grp.sel)) return()
-      plot_dim(sce, dim='UMAP', color.by=grp, group.sel=grp.sel, row.sel=row.sel$val, cocluster.only=cocluster.only)
-    })
-    output$tsne <- renderPlot({
-      grp <- dim.par$grp; grp.sel <- dim.par$group.sel
-      sce <- sce(); cocluster.only <- dim.par$cocluster.only
-      if (is.null(sce)|is.null(grp)|is.null(cocluster.only)) return()
-      if (!is.null(row.sel$val) & !is.null(grp.sel)) return()
-      plot_dim(sce, dim='TSNE', color.by=grp, group.sel=grp.sel, row.sel=row.sel$val, cocluster.only=cocluster.only)
-    })
-    output$pca <- renderPlot({
-      grp <- dim.par$grp; grp.sel <- dim.par$group.sel
-      sce <- sce(); cocluster.only <- dim.par$cocluster.only
-      if (is.null(sce)|is.null(grp)|is.null(cocluster.only)) return()
-      if (!is.null(row.sel$val) & !is.null(grp.sel)) return()
-      plot_dim(sce, dim='PCA', color.by=grp, group.sel=grp.sel, row.sel=row.sel$val, cocluster.only=cocluster.only)
+      dimMeth <- input$dimMeth
+      if (!check_obj(list(sce, grp, dimMeth)) | is.null(cocluster.only)) return()
+      if (!is.null(row.sel$val) & !is.null(grp.sel)) return()  
+      plot_dim(sce, dim=dimMeth, color.by=grp, group.sel=grp.sel, row.sel=row.sel$val, cocluster.only=cocluster.only, lgd.pos=ifelse(TRUE %in% cocluster.only, 'bottom', 'right'), lgd.l=ifelse(TRUE %in% cocluster.only, -0.07, 0), lgd.r=0.07)
     })
 
     output$scellCdat <- renderDataTable({
@@ -82,9 +73,9 @@ dim_server <- function(id, sce, sce.upl, section='scell', upl.mod.lis, dat.lis=N
       # match.lis <- match.mod.lis$val$ft.reorder$ft.rematch
       # covisGrp from dim_server in scell_server. 
       if (section=='scell') covisGrp <- input$covisGrp else covisGrp <- dat.lis()$covisGrp
-    cols <- list(list(targets=seq_len(ncol(cdat)), render = DT::JS("$.fn.dataTable.render.ellipsis(40, false)")))
-    sel <- list(mode="multiple", target="row", selected='none')
-    if (section!='scell') sel <- 'none'
+      cols <- list(list(targets=seq_len(ncol(cdat)), render = DT::JS("$.fn.dataTable.render.ellipsis(40, false)")))
+      sel <- list(mode="multiple", target="row", selected='none')
+      if (section!='scell') sel <- 'none'
       # The 1st column is "lable" or "cluster".
       # dom='t' overwrites search box.
       tab <- datatable(cdat, selection=sel, escape=FALSE, filter="top", extensions=c('Scroller', 'FixedColumns'), plugins = "ellipsis",
@@ -95,16 +86,22 @@ dim_server <- function(id, sce, sce.upl, section='scell', upl.mod.lis, dat.lis=N
 
   output$dim.ui <- renderUI({
    cat('Manual matching: building ui of colData table ... \n')
-   if (upl.mod.lis$ipt$fileIn!='customSingleCellData') return()
+   if (!grepl(na.sgl, upl.mod.lis$ipt$fileIn)) return()
+   dimMeth <- selectInput(ns('dimMeth'), label='Dimension reduction', choices=c('TSNE', 'UMAP', 'PCA'), selected='TSNE')
    row.but <- actionButton(ns('scellRowBut'), 'Confirm row selection', style='margin-top:24px')
    row.cancel.but <- actionButton(ns('scellRowCancelBut'), 'Deselect rows', style='margin-top:24px')
-   if ('auto' %in% sce.upl$method) covis.but <- actionButton(ns('covisBut'), 'Co-visualizing', style='margin-top:24px') else covis.but <- NULL
-   lis <- list(fluidRow(splitLayout(cellWidths=c('1%', '32%', '1%', '32%', '1%', '32%'), '',
-      plotOutput(ns('pca')), '',plotOutput(ns('umap')), '',  plotOutput(ns('tsne'))
-    )), br(),
-    fluidRow(splitLayout(cellWidths=c('1%', '12%', '1%', '15%', '1%', '10%', '1%', '10%', '1%', '12%'), '', uiOutput(ns('samGrp')), '', row.but, '', row.cancel.but, '', uiOutput(ns('coclus')), '', covis.but
-    )), br(),
-    dataTableOutput(ns('scellCdat'))
+   covis.but <- help.but <- NULL
+   if ('auto' %in% sce.upl$method) { 
+     covis.but <- actionButton(ns('covisBut'), 'Co-visualizing', style="margin-top:24px;color:#fff;background-color:#c685c4;border-color:#ddd")
+     help.but <- actionButton(ns("covisHelp"), "Help", icon = icon('question-circle'), style='margin-top:24px')
+   }
+   lis <- list(
+     fluidRow(splitLayout(cellWidths=c('10px', '150px', '1px', '135px', '1px', '160px', '1px', '112px', '1px', '110px', '1px', '111px', '1px', '71px'), '', 
+     dimMeth, '', uiOutput(ns('samGrp')), '', row.but, '', row.cancel.but, '', uiOutput(ns('coclus')), '', covis.but, '', help.but
+     )), # div(style='margin-top:10px'),
+     fluidRow(splitLayout(cellWidths=c('1%', '30%', '1%', '70%'), '',
+     plotOutput(ns('dimPlot')), '', dataTableOutput(ns('scellCdat')) 
+     ))
     ); cat('Done! \n')
    if (section!='scell') dataTableOutput(ns('scellCdat')) else lis 
   })

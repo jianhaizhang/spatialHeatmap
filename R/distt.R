@@ -30,7 +30,7 @@
 #' ## Set up toy data.
 #' 
 #' # Access toy data. 
-#' cnt.chk <- system.file('extdata/shinyApp/example/count_chicken.txt', package='spatialHeatmap')
+#' cnt.chk <- system.file('extdata/shinyApp/data/count_chicken.txt', package='spatialHeatmap')
 #' count.chk <- read.table(cnt.chk, header=TRUE, row.names=1, sep='\t')
 #' count.chk[1:3, 1:5]
 #'
@@ -40,12 +40,12 @@
 #' # package and accessed below. 
 
 #' # Access the count table. 
-#' cnt.chk <- system.file('extdata/shinyApp/example/count_chicken.txt', package='spatialHeatmap')
+#' cnt.chk <- system.file('extdata/shinyApp/data/count_chicken.txt', package='spatialHeatmap')
 #' count.chk <- read.table(cnt.chk, header=TRUE, row.names=1, sep='\t')
 #' count.chk[1:3, 1:5]
 
 #' # Access the example targets file. 
-#' tar.chk <- system.file('extdata/shinyApp/example/target_chicken.txt', package='spatialHeatmap')
+#' tar.chk <- system.file('extdata/shinyApp/data/target_chicken.txt', package='spatialHeatmap')
 #' target.chk <- read.table(tar.chk, header=TRUE, row.names=1, sep='\t')
 #' # Every column in toy data corresponds with a row in targets file. 
 #' target.chk[1:5, ]
@@ -66,7 +66,7 @@
 #' # at least 10% samples (pOA), and coefficient of variance (CV) between 3.5 and 100 are 
 #' # retained.
 #' se.fil.chk <- filter_data(data=se.chk, sam.factor='organism_part', con.factor='age',
-#' pOA=c(0.1, 5), CV=c(3.5, 100), dir=NULL)
+#' pOA=c(0.1, 5), CV=c(3.5, 100))
 #' # Subset the data.
 #' data.sub <- tar_ref(data=se.fil.chk, feature='organism_part', ft.sel=c('brain', 'heart', 'kidney'),
 #' variable='age', var.sel=c('day10', 'day12'), com.by='feature', target='brain')
@@ -85,11 +85,11 @@
 #' @importFrom utils combn
 #' @importFrom stats model.matrix
 
-distt <- function(se, norm.fun='CNF', parameter.list=NULL, log2.trans=TRUE, com.factor, return.all=FALSE, log2.fc=1, fdr=0.05) {
-  if (any(c('e', 'w') %in% check_pkg('distinct'))) stop('The package "distinct" is not detected!')
+distt <- function(se, norm.fun='CNF', par.list=NULL, log2.trans=TRUE, com.factor, return.all=FALSE, log2.fc=1, fdr=0.05, outliers=0) {
+  pkg <- check_pkg('distinct'); if (is(pkg, 'character')) stop(pkg)
   filtered <- NULL
   if (!is.null(norm.fun)) { cat('Normalizing counts ... \n')
-  se <- norm_data(data=se, norm.fun=norm.fun, parameter.list=parameter.list, log2.trans=log2.trans) }
+  se <- norm_data(data=se, norm.fun=norm.fun, par.list=par.list, log2.trans=log2.trans) }
    
   # Replicate names are the rownames of design matrix, and should not be duplicated, so avoid duplicated replicate names. 
   # cdat <- as.data.frame(colData(se)) # Duplicated row names are numbered.
@@ -133,7 +133,7 @@ distt <- function(se, norm.fun='CNF', parameter.list=NULL, log2.trans=TRUE, com.
       df.all1 <- cbind(df.all1[int0, ], res1[int0, ])
     }; df.all1 <- df.all1[, -1]
     if (return.all==TRUE) return(df.all1)
-    UD <- up_dn(sam.all=con.uni0, df.all=df.all1, log.fc=abs(log2.fc), fdr=fdr, log.na='log2FC', fdr.na='FDR'); cat('\n')
+    UD <- up_dn(sam.all=con.uni0, df.all=df.all1, log.fc=abs(log2.fc), fdr=fdr, log.na='log2FC', fdr.na='FDR', method='distinct', outliers=outliers); cat('\n')
     lis0 <- list(UD); names(lis0) <- i; lis.all <- c(lis.all, lis0)
   }; return(lis.all)
 }

@@ -1,7 +1,16 @@
 # Module for co-visualization through automatic method.
 covis_auto_server <- function(id, sce.upl, upl.mod.lis, shm.mod.lis, tab, covis.auto, session) {
   moduleServer(id, function(input, output, session) {
-   ns <- session$ns 
+   ns <- session$ns
+   cnt.help <- reactiveValues(v=0)
+   observeEvent(input$tabSetCellAuto, {
+     if (!'tailor' %in% input$tabSetCellAuto | cnt.help$v > 2) return()
+      showModal(div(id = 'tailorIns',
+      modalDialog(title = HTML('<strong><center>Tailoring Assignment Results (optional)</center></strong>'),
+      div(style = 'overflow-y:scroll;overflow-x:scroll',
+      HTML('<img src="image/tailoring.jpg">'),
+      )))); cnt.help$v <- cnt.help$v+1
+    })
    observe({
      covis.auto$method <- sce.upl$method
      covis.auto$covis.type <- sce.upl$covis.type
@@ -15,13 +24,13 @@ covis_auto_server <- function(id, sce.upl, upl.mod.lis, shm.mod.lis, tab, covis.
   })
   # eventReactive avoids endless circles.
   dat.nor <- eventReactive(list(norm.coclus$val, sce.upl$bulk, sce.upl$cell), {
-    cat('Auto-matching: normalizing ... \n')
+    cat('Co-clustering: normalizing ... \n')
     norm.meth <- input$normCoclus
     bulk <- sce.upl$bulk; cell <- sce.upl$cell
     if (is.null(norm.meth)|is.null(bulk)|is.null(cell)) return()
     withProgress(message="Normalizing: ", value=0, {
     incProgress(0.3, detail="in progress ...")
-    dat.nor <- norm_cell(sce=cell, bulk=bulk, cpm=ifelse(norm.meth=='cpm', TRUE, FALSE)); cat('Done! \n'); return(dat.nor)
+    dat.nor <- norm_cell_m(sce=cell, bulk=bulk, cpm=ifelse(norm.meth=='cpm', TRUE, FALSE)); cat('Done! \n'); return(dat.nor)
     })
   }) 
  
@@ -39,33 +48,31 @@ covis_auto_server <- function(id, sce.upl, upl.mod.lis, shm.mod.lis, tab, covis.
     blk <- dat.nor$bulk; cell <- dat.nor$cell
     filBlkP <- input$filBlkP; filBlkA <- input$filBlkA
     filBlkCV1 <- input$filBlkCV1
-    filBlkCV2 <- input$filBlkCV2
+    filBlkCV2 <- input$filBlkCV2; cutoff <- input$cutoff
     filPGen <- input$filPGen; filPCell <- input$filPCell
-    validate(need((filBlkP >=0 & filBlkP <=1) & (filBlkA >= 0) & (filPGen >=0 & filPGen <=1) & (filPCell >=0 & filPCell <=1) & (filBlkCV1 >= -1000 & filBlkCV1 <= 1000 & filBlkCV2 >= -1000 & filBlkCV2 <= 1000 & filBlkCV1 < filBlkCV2), ''))
+    validate(need((filBlkP >=0 & filBlkP <=1) & (filBlkA >= 0) & (filPGen >=0 & filPGen <=1) & (filPCell >=0 & filPCell <=1) & (filBlkCV1 >= -1000 & filBlkCV1 <= 1000 & filBlkCV2 >= -1000 & filBlkCV2 <= 1000 & filBlkCV1 < filBlkCV2) & is(cutoff,'numeric'), ''))
     withProgress(message="Filtering: ", value=0, {
     incProgress(0.3, detail="please wait ...")
     blk.aggr <- aggr_rep(data=blk, assay.na='logcounts', sam.factor='sample', aggr='mean')
     blk.fil <- filter_data(data=blk.aggr, pOA=c(filBlkP, filBlkA), CV=c(filBlkCV1, filBlkCV2), verbose=FALSE)
     incProgress(0.3, detail="please wait ...")
-    dat.fil <- filter_cell(sce=cell, bulk=blk.fil, gen.rm=NULL, cutoff=1, p.in.cell=filPCell, p.in.gen=filPGen, verbose=FALSE)
+    dat.fil <- filter_cell(sce=cell, bulk=blk.fil, gen.rm=NULL, cutoff=cutoff, p.in.cell=filPCell, p.in.gen=filPGen, verbose=FALSE)
     cat('Done! \n'); return(dat.fil)
     })
   })
-
-  observe({
+  observeEvent(input$subdat+1, ignoreInit=FALSE, { 
     withProgress(message="Data table in co-visualization: ", value=0, {
     incProgress(0.3, detail="please wait ...")
     dat.fil <- dat.fil()
-    bulk <- dat.fil$bulk; cell <- dat.fil$cell
-    if (is.null(bulk)|is.null(cell)) return()
-    output$datCovisBlk <- renderDataTable({
-      dat_covis_man(bulk, nr=1000, nc=100)
-    })
-    output$datCovisCell <- renderDataTable({
-      dat_covis_man(cell, nr=1000, nc=100)
-    })
-   })
-  })
+    r1 <- input$r1; r2 <- input$r2 
+    c1 <- input$c1; c2 <- input$c2
+    bulk <- dat.fil$bulk; cell <- dat.fil$cell 
+    if (!check_obj(list(r1, r2, c1, c2, bulk, cell))) return()
+    output$datall <- renderDataTable({ 
+      dat_covis_man(cbind(bulk, cell), r1=r1, r2=r2, c1=c1, c2=c2) 
+    }); incProgress(0.3, detail="please wait ...") 
+   }) 
+  }) 
 
   # Dimension reduction.
   par.dim <- reactiveValues()
@@ -88,7 +95,7 @@ covis_auto_server <- function(id, sce.upl, upl.mod.lis, shm.mod.lis, tab, covis.
     com.kp$sample <- colnames(com.kp)
     withProgress(message="Reducing dimensions: ", value=0, {
     incProgress(0.3, detail="please wait ...")
-    dimred <- reduce_dim(sce = com.kp, min.dim = minRank, max.dim = maxRank); cat('Done! \n'); return(dimred)
+    dimred <- reduce_dim_m(sce = com.kp, min.dim = minRank, max.dim = maxRank); cat('Done! \n'); return(dimred)
     })
   })
   
@@ -128,7 +135,7 @@ covis_auto_server <- function(id, sce.upl, upl.mod.lis, shm.mod.lis, tab, covis.
     if (is.null(gr)|is.null(clusMeth)|is.null(dimred)) return()
     withProgress(message="Detecting clusters: ", value=0, {
     incProgress(0.3, detail="please wait ...")
-    clus.all <- detect_cluster(graph = gr, clustering = clusMeth)
+    clus.all <- detect_cluster_m(graph = gr, clustering = clusMeth)
     clus <- as.character(clus.all$membership)
     clus <- paste0("clus", clus); cdat.sc <- colData(dimred)
     rna <- rownames(cdat.sc)
@@ -164,6 +171,7 @@ covis_auto_server <- function(id, sce.upl, upl.mod.lis, shm.mod.lis, tab, covis.
   })
    observeEvent(res(), ignoreInit=FALSE, {
      updateTabsetPanel(session, inputId="tabSetCellAuto", selected='result')
+     if (!is.null(res())) showModal(modal(msg=HTML('Click <strong>"Co-visualizing"</strong> to see the co-visualization plot.')))
   })
 
   tailor.lis <- reactiveValues()

@@ -11,7 +11,7 @@ server <- function(input, output, session) {
   set.seed(10)
   lis.url <- reactiveValues(par=NULL)
   observe({
-    # The url on browser is captured only if the url is refreshed or the "Enter" key is pressed, which applies in the cases shiny app is first launched or users modified parameters in the url. Otherwise the query is null.
+    # The url on browser is captured only if the url is refreshed or the "Enter" key is pressed, which applies in the cases that shiny app is first launched or users modified parameters in the url. Otherwise the query is null.
     # lis.url$par is an empty list not NULL before refreshing/bookmarking.
     hos.port <- session$clientData
     lis.url$par <- parseQueryString(hos.port$url_search)
@@ -27,8 +27,8 @@ server <- function(input, output, session) {
     lis.cfg <- lis.cfg[!vapply(lis.cfg, is.null, logical(1))]
     # Separate data sets, download files, and parameters.
     lis.dat <- lis.cfg[grepl('^dataset\\d+', names(lis.cfg))]
-    lis.dld <- lis.cfg[grepl('download_single|download_multiple|download_spatial_temporal|download_batched_data_aSVGs', names(lis.cfg))]
-    lis.par <- lis.cfg[!grepl('^dataset\\d+|download_single|download_multiple|download_spatial_temporal|download_batched_data_aSVGs', names(lis.cfg))]
+    lis.dld <- lis.cfg[grepl('download_single|download_multiple|download_multiple_variables|download_batched_data_aSVGs', names(lis.cfg))]
+    lis.par <- lis.cfg[!grepl('^dataset\\d+|download_single|download_multiple|download_multiple_variables|download_batched_data_aSVGs', names(lis.cfg))]
 
     na.ipt <- NULL; na.ipt <- unlist(lapply(lis.dat, function(x) na.ipt <- c(na.ipt, x$name)))
     names(na.ipt) <- NULL
@@ -41,15 +41,16 @@ server <- function(input, output, session) {
   observe({
     # validate(need(input$start.but>0, ''))
     withProgress(message="Loading dependencies: ", value=0, {
-    incProgress(0.3, detail="in progress ...")
+    incProgress(0.2, detail="in progress ...")
     library(spatialHeatmap); library(SummarizedExperiment); library(shiny); library(shinydashboard); library(shinydashboardPlus); library(grImport); library(rsvg); library(ggplot2); library(DT) 
-    incProgress(0.6, detail="in progress ...")
+    incProgress(0.2, detail="in progress ...")
     library(gridExtra); library(ggdendro); library(grid); library(xml2); library(plotly); library(data.table); library(genefilter); library(flashClust); library(visNetwork); 
     showModal(modal(title = HTML('<center><b>Welcome to spatialHeatmap!</b><center>'), msg = strong('Please wait for the app to set up!')))
-    incProgress(0.9, detail="in progress...")
+    incProgress(0.2, detail="in progress...")
    library(reshape2); library(igraph); library(animation); library(av); library(shinyWidgets); library(yaml); library(HDF5Array); library(sortable); library(shinyBS); library(shinyjs); library(htmltools)
     # DEG
     library(gplots); library(UpSetR)
+    incProgress(0.2, detail="in progress...")
   })
   })
 
@@ -65,11 +66,10 @@ server <- function(input, output, session) {
   observe({ sch$sch <- input$search; sch$but <- input$search.but })
   #ipt0 <- reactiveValues(url.but=NULL, but=NULL)
   # observe({ ipt0$url.but <- input$url.but })
-  mods$data <- dat.mod.lis <- data_server('dat', sch, lis.url, ids, deg=FALSE, upl.mod.lis, scell.mod.lis=mods$scell)
+  mods$data <- dat.mod.lis <- data_server('dat', sch, lis.url, ids, upl.mod.lis, deg.mod.lis=mods$deg, scell.mod.lis=mods$scell, shm.mod=mods$shm)
 
   mods$search <- sch.mod.lis <- search_server('sear', ids, lis.url, url.id, upl.mod.lis, dat.mod.lis)
  
-
  # Active tab.
  tab <- reactiveValues(); observe({ tab$val <- input$shm.sup })
 
@@ -82,21 +82,36 @@ mods$shm <- shm.mod.lis <- shm_server('shmAll', sch, lis.url, url.id, tab, upl.m
   })
   observeEvent(svgs.upd(), ignoreInit=FALSE, ignoreNULL=TRUE, {
     svgs <- svgs.upd()
-    if (!is.null(svgs) & mods$upload$ipt$fileIn !='customSingleCellData') updateTabsetPanel(session, "shm.sup", selected='shmPanelAll')
+    if (!is.null(svgs) & (!grepl(na.sgl, mods$upload$ipt$fileIn))) updateTabsetPanel(session, "shm.sup", selected='shmPanelAll')
   })
 
   mods$deg <- deg.mod.lis <- deg_server('deg', sch, lis.url, url.id, ids, upl.mod.lis, dat.mod.lis, shm.mod.lis)
-
+  output$sumar <- renderText({
+    cfg <- upl.mod.lis$cfg; sce.ipt <- scell.mod.lis$input
+    fileIn <- upl.mod.lis$ipt$fileIn
+    if (!check_obj(list(cfg, sce.ipt, fileIn))) return()
+    files <- c(cfg$na.cus, cfg$na.def)
+    dat <- names(files[files %in% fileIn])
+    sumar <- paste0('Dataset: ', dat)
+    if (grepl('^covis_', fileIn)) {
+      meth <- sce.ipt$methCovis; direc <- sce.ipt$direc
+      meth.sel <- ifelse('man' %in% meth, 'Annoatation labels/Manual assignments', 'Automated co-clustering') 
+      direc.sel <- ifelse('toBulk' %in% direc, 'Cell-to-bulk', 'Bulk-to-cell')
+      sumar <- paste0(sumar, ', Cell group labels: ', meth.sel, ', Mapping direction: ', direc.sel)
+    }; sumar
+  })
   mods$scell <- scell.mod.lis <- scell_server('scell', tab, upl.mod.lis, shm.mod.lis, session)
   observe({
   # observeEvent(mods$scell$sce.upl$cell, ignoreInit=FALSE, ignoreNULL=FALSE, {
     ipt <- mods$upload$ipt; fileIn <- ipt$fileIn
     svgs <- grepl('\\.svg$', c(ipt$svgInpath1, ipt$svgInpath2))
-    if (!is.null(mods$scell$sce.upl$cell) & 'customSingleCellData' %in% fileIn & sum(svgs)>0) {
+    lgc.upl <- !is.null(mods$scell$sce.upl$cell) & 'customCovisData' %in% fileIn & sum(svgs)>0
+    lgc.def <- grepl(na.sgl.def, fileIn)
+    if (lgc.upl | lgc.def) {
       enable(selector='a[data-value="scell"]')
       disable(selector='a[data-value="deg"]') 
       updateTabsetPanel(session, "shm.sup", selected='scell')
-    } else if (!'customSingleCellData' %in% fileIn) { 
+    } else if (!grepl(na.sgl, fileIn)) { 
       enable(selector='a[data-value="deg"]')
       disable(selector='a[data-value="scell"]') 
     }
@@ -108,19 +123,33 @@ mods$shm <- shm.mod.lis <- shm_server('shmAll', sch, lis.url, url.id, tab, upl.m
   #  if (is.null(sce.sub)) sce.clus else NULL
   #})
   # Only generates the colData table in the SHM page.
-  #mods$dim <- dim.mod.lis <- dim_server('datDim', sce=dimred, sce.upl=mods$scell$sce.upl, section='data', upl.mod.lis=mods$upload, dat.lis=mods$scell$df.lis)
+  #mods$dim <- dim.mod.lis <- dim_server('datDim', sce=dimred, sce.upl=mods$scell$sce.upl, section='data', upl.mod.lis=mods$upload, dat.lis=mods$scell$sce.res)
 
   # Only after the "Single-cell metadata" is clicked, this "renderUI" is called, so this "ui" is often rendered after "hideElement" in the server (tailor_match_server). As a result, elements are not hidden. Since "hideElement" should be called after the elements are rendered. The solution is to hide the elements through an argument (hide=TRUE) passed to ui. But if "hide=TRUE", "dimCellBut", "coclusPlotBut", "selBlkBut", "selBlkButCan" on ui are NULL, and the server is not executed. As a result, no table is shown on "Single-cell metadata". Thus the ui (tailor_match_ui) should be generated on the general ui part.
   # The downside of "renderUI" is some inputs are NULL before it is called, and the server might not be executed.
  
   # If 'eventExpr' is a list, one slot of NULL will trigger 'observeEvent', though ignoreNULL = TRUE, so these 'observeEvents' are not merged. 
   # Switch to SHM tab.
-  observeEvent(list(mods$deg$but.sgl()), ignoreInit=TRUE, {
-    if (is.null(mods$deg$but.sgl())) return()
-    updateTabsetPanel(session, "shm.sup", selected='shmPanelAll')
+  #observeEvent(list(mods$deg$but.sgl()), ignoreInit=TRUE, {
+  #  but.sgl <- mods$deg$but.sgl()
+  #  if (is.null(but.sgl)) return(); if (but.sgl==0) return()
+  #  updateTabsetPanel(session, "shm.sup", selected='shmPanelAll')
+  #})
+  #observeEvent(mods$deg$but.mul(), ignoreInit=TRUE, {
+  #  but.mul <- mods$deg$but.mul()
+  #  if (is.null(but.mul)) return(); if (but.mul==0) return()
+  #  updateTabsetPanel(session, "shm.sup", selected='shmPanelAll')
+  #})
+  cnt.deg <- reactiveValues(v=0)
+  observeEvent(input$shm.sup, {
+    if (!'deg' %in% input$shm.sup|cnt.deg$v > 1) return()
+    show_mod(FALSE, 'Click "Run" to see the latest results.')
+    cnt.deg$v <- cnt.deg$v + 1
   })
-  observeEvent(mods$deg$but.mul(), ignoreInit=TRUE, {
-    if (is.null(mods$deg$but.mul())) return()
+
+  observeEvent(mods$deg$input$eSHMBut, ignoreInit=TRUE, {
+    but <- mods$deg$input$eSHMBut
+    if (is.null(but)) return(); if (but==0) return()
     updateTabsetPanel(session, "shm.sup", selected='shmPanelAll')
   })
 
@@ -134,9 +163,9 @@ mods$shm <- shm.mod.lis <- shm_server('shmAll', sch, lis.url, url.id, tab, upl.m
     if (is.null(mods$scell)) return()
     if (is.null(mods$scell$covis.auto$res)) return()
     lis <- mods$scell$covis.auto$tailor.lis
-    df.lis <- mods$scell$df.lis()
+    sce.res <- mods$scell$sce.res()
     if (is.null(lis$coclusPlotBut)) return()
-    if (is.null(lis)|is.null(df.lis)) return()
+    if (is.null(lis)|is.null(sce.res)) return()
     if (lis$selBlkBut()==0 & lis$selBlkCancel()==0 & lis$coclusPlotBut()==0) return()
     list(lis$coclusPlotBut(), lis$selBlkBut(), lis$selBlkCancel())
   })
@@ -154,7 +183,9 @@ mods$shm <- shm.mod.lis <- shm_server('shmAll', sch, lis.url, url.id, tab, upl.m
   })
  onBookmarked(function(url) { updateQueryString(url) })
  # onBookmarked(updateQueryString)
-  onStop(function() { ggly_rm(); vdo_rm(); cat("Session stopped! \n") })
+  onStop(function() { ggly_rm(); vdo_rm(); data_mining_rm()
+    message("Session stopped! \n") 
+  })
 
 }
 

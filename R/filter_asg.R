@@ -33,7 +33,7 @@ filter_asg <- function(res, min.sim=0) {
   cdat[cdat0$index, ] <- cdat0; colData(sce.all) <- cdat
 
   if (is(res, 'SingleCellExperiment')) res <- sce.all else if (is(res, 'list')) {
-    if (any(c('e', 'w') %in% check_pkg('pROC'))) stop('The package "pROC" is not detected!')
+    pkg <- check_pkg('pROC'); if (is(pkg, 'character')) stop(pkg)
     cdat <- colData(sce.all)
     cdat0 <- subset(cdat, similarity!='none')
     roc.obj <- pROC::roc(cdat0$response, as.numeric(cdat0$similarity), smoothed = TRUE, ci=TRUE, ci.alpha=0.9, stratified=FALSE, plot=FALSE, auc.polygon=TRUE, max.auc.polygon=TRUE, grid=TRUE, print.auc=TRUE, show.thres=TRUE, direction='<', levels=c('FALSE', 'TRUE'))

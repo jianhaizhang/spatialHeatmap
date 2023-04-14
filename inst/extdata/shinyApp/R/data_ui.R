@@ -1,66 +1,61 @@
 # Module for processing data.
-data_ui <- function(id, dim.ui=NULL, tailor.ui=NULL, deg=FALSE) {
+data_ui <- function(id, dim.ui=NULL, tailor.ui=NULL) {
   ns <- NS(id)
   # if (deg == FALSE) tabPanel("Primary Visualization", value='primary',
-  if (deg==FALSE) box(width = 12, title = "Data (replicates aggregated)", closable = FALSE, solidHeader = TRUE, collapsible = TRUE, enable_sidebar = FALSE, status = "primary", enable_dropdown = FALSE,
-    tabsetPanel(type="pills", id=ns('dtab.shm'), selected='dTabAll',
-      tabPanel('Complete', value='dTabAll',
-      navbarPage('Parameters:',
-      tabPanel("Basic",
-      fluidRow(splitLayout(cellWidths=c('1%', '15%', '1%', '15%', '1%', '15%', '1%', '15%', '1%', '15%'), '',
-      actionButton(ns("dat.all.but"), "Confirm selection", style='margin-top:24px'), '',
-      selectInput(ns("normDat"), "Normalize", c('None'='none', "CNF-TMM", "CNF-TMMwsp", "CNF-RLE", "CNF-upperquartile", "ESF", "VST", "rlog"), selected='none'), '',
-      selectInput(inputId=ns('log'), label='Log/exp-transform', choices=c("No", 'Log2'="log2", 'Exp2'="exp2"), selected='No'), '', 
-      selectInput(inputId=ns('scaleDat'), label='Scale by', choices=c('No'='No', 'Row'='Row', 'Selected'='Selected', 'All'='All'), selected='Row'), '',
-      numericInput(ns('page'), label='Page height', value=300, min=50, max=Inf, step=50, width=150)
-      )),
-      bsTooltip(id=ns('normDat'), title="CNF: calcNormFactors in edgeR. <br/> ESF: estimateSizeFactors in DESeq2. <br/> VST: varianceStabilizingTransformation in DESeq2. <br/> rlog: regularized log in DESeq2.", placement = "top", trigger = "hover"),
-      bsTooltip(id=ns('scaleDat'), title="Row: scale each row independently. <br/> Selected: scale across all selected genes as a whole. <br/> All: scale across all genes as a whole.", placement = "top", trigger = "hover"),
-      bsTooltip(id=ns('log'), title="No: original values in uploaded data are used. <br/> Log2: transform data to log2-scale. <br/> Exp2: transform data to the power of 2.", placement = "top", trigger = "hover")
+  box(width = 12, title = "Data Table", closable = FALSE, solidHeader = TRUE, collapsible = TRUE, enable_sidebar = FALSE, status = "primary", enable_dropdown = FALSE,
+      navbarPage('', id=ns('settNav'), selected='dat', 
+      tabPanel("Settings", value='sett', 
+      actionButton(ns("run"), "Run", icon=icon("sync"), style = run.col),
+      div(id=ns('submsg'),
+      fluidRow(splitLayout(cellWidths=c('12px', '70px', '1px', '70px', '1px', '95px', '1px', '89px'), '',
+        numericInput(ns('r1'), label='Row start', value=1, min=1, max=Inf, step=1), '',
+        numericInput(ns('r2'), label='Row end', value=500, min=2, max=Inf, step=1), '',
+        numericInput(ns('c1'), label='Column start', value=1, min=1, max=Inf, step=1), '',
+        numericInput(ns('c2'), label='Column end', value=20, min=2, max=Inf, step=1)
+      ))),
+      fluidRow(splitLayout(cellWidths=c('5px', '120px', '1px', '150px', '15px', '424px', '30px', '202px', '1px', '100px'), '',
+      selectInput(ns("normDat"), "1. Normalize", c('None', "CNF-TMM", "CNF-TMMwsp", "CNF-RLE", "CNF-upperquartile", "ESF", "VST", "rlog"), selected='CNF-TMM'), '',
+      selectInput(ns('log'), label='2. Log/exp-transform', choices=c("No", 'Log2'="log2", 'Exp2'="exp2"), selected='No'), '',
+      div(id=ns('filter'),
+      fluidRow(splitLayout(cellWidths=c('1px', '100px', '1px', '120px', '1px', '100px', '1px', '100px'), '',
+      numericInput(ns("A"), label="3.a Cutoff (A)", value=0), '',
+      numericInput(ns("P"), label="3.b Proportion (P)", value=0), '',
+      numericInput(ns("CV1"), label="3.c CV1", value=-10^4), '',
+      numericInput(ns("CV2"), label="3.d CV2", value=10^4)
+      ))), '', 
+      div(id=ns('thr'),
+      fluidRow(splitLayout(cellWidths=c('1px', '100px', '1px', '100px'), '', 
+      numericInput(ns("sig.min"), "4.a Min value", value=-10^4), '',
+      numericInput(ns("sig.max"), "4.b Max value", value=10^4)
+      ))), '', 
+      selectInput(ns('scl'), label='5. Scale by', choices=c('No'='No', 'Row'='Row', 'Selected'='Selected', 'All'='All'), selected='No')
+      )), div(style='height:200px'),
+      bsTooltip(id=ns('submsg'), title="Subsetting the data matrix for display only, not for downstream analysis.", placement = "top", trigger = "hover"),
+      bsTooltip(id=ns('normDat'), title="Output: log2 scale. <br/> CNF: calcNormFactors (edgeR). <br/> ESF: estimateSizeFactors (DESeq2). <br/> VST: varianceStabilizingTransformation (DESeq2). <br/> rlog: regularized log (DESeq2).", placement = "right", trigger = "hover"),
+      bsTooltip(id=ns('scl'), title="Row: scale each row independently. <br/> Selected: scale across all selected rows as a whole. <br/> All: scale across all rows as a whole.", placement = "top", trigger = "hover"),
+      bsTooltip(id=ns('log'), title="No: skipping this step. <br/> Log2: transform data to log2-scale. <br/> Exp2: transform data to the power of 2.", placement = "top", trigger = "hover"),
+      bsTooltip(id=ns('filter'), title="Rows passing the following filtering will remain: <br/> 1. Expression values >= A across >= P of all samples <br/> 2. Coefficient of variation (CV) is between CV1 and CV2.", placement = "top", trigger = "hover"),
+      bsTooltip(id=ns('thr'), title='Values > "Max value": set to "Max value". <br/> Values < "Min value": set to "Min value".', placement = "top", trigger = "hover")
       ), # tabPanel
-      tabPanel("Filter",
-      fluidRow(splitLayout(cellWidths=c('1%', '14%', '1%', '30%', '1%', '24%', '1%', '24%'), '',
-      numericInput(inputId=ns("A"), label="Threshold (A) to exceed", value=0), '',
-      numericInput(inputId=ns("P"), label="Proportion (P) of samples with values >= A", value=0), '',
-      numericInput(inputId=ns("CV1"), label="Min coefficient of variation (CV1)", value=-10^4), '', 
-      numericInput(inputId=ns("CV2"), label="Max coefficient of variation (CV2)", value=10^4)
-      )), actionButton(inputId=ns('fil.but'), label="Submit"), verbatimTextOutput(ns("fil.par")) 
-      ),
-      tabPanel("Threshold",
-      fluidRow(splitLayout(cellWidths=c('1%', '20%', '1%', '20%', '1%', '10%'), '', 
-      textInput(ns("sig.max"), "Signal threshold (max)", '', placeholder=('Default to max signal.'), width=200), '',
-      textInput(ns("sig.min"), "Signal threshold (min)", '', placeholder=('Default to min signal.'), width=200), '',
-      actionButton(ns("sig.but"), "Confirm", icon=NULL, style = "margin-top: 24px;")
-      )), br(), span(uiOutput(ns('msg.sig.thr')), style='color:red')  
-      ),
-      tabPanel("Re-order columns", column(12, uiOutput(ns('col.order'))))
-      ), # navbarPage 
+
+      tabPanel("Complete", value='dat',
+      fluidRow(splitLayout(cellWidths=c('5px', '130px', '1px', '115px', '1px', '80px', '1px', '170px'), '',
+      actionButton(ns("selRow"), "Confirm selection", style=run.top), '',
+      actionButton(ns("deSel"), "Deselect rows", style='margin-top:24px'), '',
+      numericInput(ns('page'), label='Page height', value=300, min=50, max=Inf, step=50, width=150), '',
+      selectInput(ns('datIn'), label='Input data', choices=c('Complete'='all'), selected='all') 
+      )),
       fluidRow(splitLayout(cellWidths=c("1%", "98%", "1%"), "", dataTableOutput(ns("dtAll")), ""))
-     ), # tabPanel('Complete'
+      ), # tabPanel
       tabPanel('Selected', value='dTabSel',
-        actionButton(ns("tran.scale.but.sel"), "Transform/scale data", style='margin-top:10px'),
-        fluidRow(splitLayout(cellWidths=c("1%", "98%", "1%"), "", dataTableOutput(ns("dtSel")), ""))
-      ),
-      tabPanel('Selected Profile', value='dTabSelProf',
-        actionButton(ns("tran.scale.but.prof"), "Transform/scale data", style='margin-top:10px'),
+        fluidRow(splitLayout(cellWidths=c("1%", "98%", "1%"), "", dataTableOutput(ns("dtSel")), "")),
         fluidRow(splitLayout(cellWidths=c("1%", "98%", "1%"), "", plotOutput(ns("selProf")), ""))
       )
+      # navbarPage 
       #tabPanel('Single-cell metadata', value='dTabScell',
       #  column(12, id='colTailorUI', tailor.ui),
       #  column(12, id='colDimUI', dim.ui) 
       #)
    ) # tabsetPanel(
-
-  ) else if (deg == TRUE) {
-    box(width = 12, title = "Data (with replicates)", closable = FALSE, solidHeader = TRUE, 
-      collapsible = TRUE, enable_sidebar = FALSE, status = "primary", enable_dropdown = FALSE,
-      fluidRow(splitLayout(cellWidths=c('1%', '14%', '1%', '30%', '1%', '24%', '1%', '24%'), '',
-      numericInput(inputId=ns("A"), label="Threshold (A) to exceed", value=0), '',
-      numericInput(inputId=ns("P"), label="Proportion (P) of samples with values >= A", value=0), '',
-      numericInput(inputId=ns("CV1"), label="Min coefficient of variation (CV1)", value=-10^4), '', 
-      numericInput(inputId=ns("CV2"), label="Max coefficient of variation (CV2)", value=10^4)
-      )), actionButton(inputId=ns('fil.but'), label="Submit"), verbatimTextOutput(ns("fil.par")),
-      fluidRow(splitLayout(cellWidths=c("1%", "98%", "1%"), "", dataTableOutput(ns("dtRep")),  ""))
-    )
-  }
+  ) 
 }

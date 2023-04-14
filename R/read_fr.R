@@ -11,7 +11,7 @@
 
 #' @examples
 
-#' sh.tar <- system.file('extdata/shinyApp/example/target_arab.txt', package='spatialHeatmap')
+#' sh.tar <- system.file('extdata/shinyApp/data/target_arab.txt', package='spatialHeatmap')
 #' target.sh <- read_fr(sh.tar); target.sh[60:63, ]
 
 #' @author Jianhai Zhang \email{jzhan067@@ucr.edu} \cr Dr. Thomas Girke \email{thomas.girke@@ucr.edu}

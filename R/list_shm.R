@@ -37,12 +37,14 @@
 #' @references
 #' H. Wickham. ggplot2: Elegant Graphics for Data Analysis. Springer-Verlag New York, 2016. \cr R Core Team (2018). R: A language and environment for statistical computing. R Foundation for Statistical Computing, Vienna, Austria. RL https://www.R-project.org/ \cr Mustroph, Angelika, M Eugenia Zanetti, Charles J H Jang, Hans E Holtan, Peter P Repetti, David W Galbraith, Thomas Girke, and Julia Bailey-Serres. 2009. “Profiling Translatomes of Discrete Cell Populations Resolves Altered Cellular Priorities During Hypoxia in Arabidopsis.” Proc Natl Acad Sci U S A 106 (44): 18843–8
 
-#' @importFrom ggplot2 ggplot aes theme element_blank margin element_rect scale_y_continuous scale_x_continuous expansion ggplotGrob geom_polygon scale_fill_manual ggtitle element_text labs guide_legend alpha coord_fixed annotation_raster theme_void
+#' @importFrom ggplot2 ggplot aes theme element_blank margin element_rect scale_y_continuous scale_x_continuous expansion ggplotGrob geom_polygon scale_fill_manual ggtitle element_text labs guide_legend alpha coord_fixed annotation_raster theme_void element_rect
 #' @importFrom parallel detectCores mclapply
 
-gg_shm <- function(svg.all, gene, con.na=TRUE, geneV, charcoal=FALSE, alpha.overlay=1, ID, cols, covis.type=NULL, lis.rematch = NULL, ft.trans=NULL, ft.trans.shm=NULL, sub.title.size, sub.title.vjust=2, ft.legend='identical', legend.ncol=NULL, legend.nrow=NULL, legend.position='bottom', legend.direction=NULL, legend.key.size=0.02, legend.text.size=12, legend.plot.title=NULL, legend.plot.title.size=11, line.width=0.2, line.color='grey70', ...) {
-
-  # save(svg.all, gene, con.na, geneV, charcoal, alpha.overlay, ID, cols, covis.type, lis.rematch, ft.trans, ft.trans.shm, sub.title.size, sub.title.vjust, ft.legend, legend.ncol, legend.nrow, legend.position, legend.direction, legend.key.size, legend.text.size, legend.plot.title, legend.plot.title.size, line.width, line.color, file='gg.shm.arg')
+gg_shm <- function(svg.all, gene, col.idp=FALSE, con.na=TRUE, geneV, charcoal=FALSE, alpha.overlay=1, ID, cols, covis.type=NULL, lis.rematch = NULL, ft.trans=NULL, ft.trans.shm=NULL, sub.title.size, sub.title.vjust=2, ft.legend='identical', legend.ncol=NULL, legend.nrow=NULL, legend.position='bottom', legend.direction=NULL, legend.key.size=0.02, legend.text.size=12, legend.plot.title=NULL, legend.plot.title.size=11, line.width=0.2, line.color='grey70', ...) {
+  # svg_separ <- spatialHeatmap:::svg_separ
+  # diff_cols <- spatialHeatmap:::diff_cols
+  # value2color <- spatialHeatmap:::value2color
+  # save(svg.all, gene, col.idp, con.na, geneV, charcoal, alpha.overlay, ID, cols, covis.type, lis.rematch, ft.trans, ft.trans.shm, sub.title.size, sub.title.vjust, ft.legend, legend.ncol, legend.nrow, legend.position, legend.direction, legend.key.size, legend.text.size, legend.plot.title, legend.plot.title.size, line.width, line.color, file='gg.shm.arg')
   # Main function to create SHMs (by conditions) and legend plot.
   g_list <- function(con, lgd=FALSE, ...) {
     if (is.null(con)) cat('Legend plot ... \n') else cat(con, ' ')
@@ -53,9 +55,10 @@ gg_shm <- function(svg.all, gene, con.na=TRUE, geneV, charcoal=FALSE, alpha.over
     # tis.path and tis.df have the same length by default, but not entries, since tis.df is appended '__\\d+' at the end.
     # Assign default colours to each path.
     g.col <- rep(NA, length(tis.path)); names(g.col) <- tis.df
+    gcol.na.dup <- sub('__\\d+$', '', names(g.col))
     if (lgd==FALSE) {
       # Keep global text/legend colors in the main SHM. No change on the local legend colors so they are all NA. The line widths of local legend will be set 0.
-      g.col <- legend.col[grep('_globalLGD$', names(legend.col))][sub('__\\d+$', '', names(g.col))]
+      g.col <- legend.col[grep('_globalLGD$', names(legend.col))][gcol.na.dup]
       names(g.col) <- tis.df # Resolves legend.col['feature'] is NA by default. 
       # Un-related aSVG mapped to data.
       if (rematch.dif.svg) {
@@ -91,7 +94,7 @@ gg_shm <- function(svg.all, gene, con.na=TRUE, geneV, charcoal=FALSE, alpha.over
           }
         }
         # Rematch features between the same pair of data-aSVG.
-        if (is.list(lis.rematch)) {
+        if (is.list(lis.rematch) & FALSE %in% col.idp) {
           for (i in seq_along(lis.rematch)) {
             lis0 <- lis.rematch[i]; if (!is.character(lis0[[1]])) next
             # Color for remathing: picked up from original color pool.
@@ -102,10 +105,18 @@ gg_shm <- function(svg.all, gene, con.na=TRUE, geneV, charcoal=FALSE, alpha.over
          }
        }
       # lis.rematch: data feature (names(lis.rematch)) in tis.path but not in the matched SVG feature is set NA.
-      if (is(lis.rematch, 'list')) {
+      if (is(lis.rematch, 'list') & FALSE %in% col.idp) {
         match.na <- names(lis.rematch); match.ft.uni <- unique(unlist(lis.rematch)) 
         dat.ft.no <- match.na[match.na %in% unique(tis.path) & (!match.na %in% match.ft.uni)]
-        g.col[sub('__\\d+$', '', names(g.col)) %in% dat.ft.no] <- NA
+        g.col[gcol.na.dup %in% dat.ft.no] <- NA
+      }
+      # Covis independent coloring.
+      if (TRUE %in% col.idp) {
+        if ('toBulk' %in% covis.type) {
+          g.col[!gcol.na.dup %in% unlist(lis.rematch)] <- NA
+        } else if ('toCell' %in% covis.type) {
+          g.col[!gcol.na.dup %in% names(lis.rematch)] <- NA
+        }
       }
     } 
     # The colors might be internally re-ordered alphabetically during mapping, so give them names to fix the match with tissues. E.g. c('yellow', 'blue') can be re-ordered to c('blue', 'yellow'), which makes tissue mapping wrong. Correct: colours are not re-ordered. The 'tissue' in 'data=cordn' are internally re-ordered according to a factor. Therfore, 'tissue' should be a factor with the right order. Otherwise, disordered mapping can happen. Alternatively, name the colors with corresponding tissue names.
@@ -119,10 +130,10 @@ gg_shm <- function(svg.all, gene, con.na=TRUE, geneV, charcoal=FALSE, alpha.over
       ft.legend <- unique(c(ft.legend, ft.legend.remat))
     } else if (ft.legend=='all') ft.legend <- unique(tis.path)
     
+    ft.trans <- unique(c(ft.trans, ft.trans.shm))
     if (lgd==FALSE) { # Legend plot.
       # Make selected tissues transparent by setting their colours NA.
-      ft.trans <- unique(c(ft.trans, ft.trans.shm))
-      if (!is.null(ft.trans)) g.col[sub('__\\d+$', '', tis.df) %in% ft.trans] <- NA # This step should not be merged with 'lgd=T'.
+      if (!is.null(ft.trans)) g.col[sub('__\\d+$', '', tis.df) %in% ft.trans] <- NA # This step should not be merged with 'lgd=TRUE'.
       ft.legend <- setdiff(ft.legend, ft.trans) 
       leg.idx <- !duplicated(tis.path) & (tis.path %in% ft.legend)
       # Bottom legends are set for each SHM and then removed in 'ggplotGrob', but a copy with legend is saved separately for later use in video.
@@ -146,16 +157,19 @@ gg_shm <- function(svg.all, gene, con.na=TRUE, geneV, charcoal=FALSE, alpha.over
             }; remove(lis0)
         }
       }
-      if (covis.type %in% c('toBulk', 'toCell')) ft.trans <- unique(c(ft.trans, ft.trans.shm))
+      if (TRUE %in% col.idp & is(lis.rematch, 'list')) {
+        if ('toBulk' %in% covis.type) ft.trans <- unique(c(ft.trans, setdiff(tis.path, unlist(lis.rematch))))
+        if ('toCell' %in% covis.type) ft.trans <- unique(c(ft.trans, setdiff(tis.path, names(lis.rematch))))
+      }
+      # if (covis.type %in% c('toBulk', 'toCell')) ft.trans <- unique(c(ft.trans, ft.trans.shm))
       }
        # Map legend colours to tissues.
        # Exclude transparent tissues.
        ft.legend <- setdiff(ft.legend, ft.trans) 
-
        leg.idx <- !duplicated(tis.path) & (tis.path %in% ft.legend)
        legend.col1 <- legend.col1[ft.legend]
        # Keep all colors in the original SVG.
-       g.col <- legend.col[sub('__\\d+$', '', names(g.col))]
+       g.col <- legend.col[gcol.na.dup]
        names(g.col) <- tis.df # Resolves "legend.col['feature'] is NA" by default.
        # g.col[g.col=='none'] <- NA 
        # Make selected tissues transparent by setting their colours NA.
@@ -172,7 +186,11 @@ gg_shm <- function(svg.all, gene, con.na=TRUE, geneV, charcoal=FALSE, alpha.over
        # No matter the tissues in coordinate data frame are vector or factor, the coloring are decided by the named color vector (order of colors does not matter as long as names are right) in scale_fill_manual.
        # Since ggplot2 '3.3.5', 'NA' instead of NA represents transparency.
        g.col[is.na(g.col)] <- 'NA'
-       scl.fil <- scale_fill_manual(values=g.col, breaks=tis.df[leg.idx], labels=tis.path[leg.idx], guide=guide_legend(title=NULL, ncol=legend.ncol, nrow=legend.nrow)) 
+       trans <- g.col[g.col %in% 'NA'][1]; tr.lab <- 'Un-meansured'
+       if (is.na(trans)) trans <- tr.lab <- NULL
+       br <- c(tis.df[leg.idx], names(trans))
+       br.lab <- c(tis.path[leg.idx], tr.lab) 
+       scl.fil <- scale_fill_manual(values=g.col, breaks=br, labels=br.lab, guide=guide_legend(title=NULL, ncol=legend.ncol, nrow=legend.nrow)) 
     }
     lgd.par <- theme(legend.position=legend.position, legend.direction=legend.direction, legend.background = element_rect(fill=alpha(NA, 0)), legend.key.size=unit(legend.key.size, "npc"), legend.text=element_text(size=legend.text.size), legend.margin=margin(l=0.1, r=0.1, unit='npc'))
     ## Add 'feature' and 'value' to coordinate data frame, since the resulting ggplot object is used in 'ggplotly'. Otherwise, the coordinate data frame is applied to 'ggplot' directly by skipping the following code.
@@ -206,7 +224,7 @@ gg_shm <- function(svg.all, gene, con.na=TRUE, geneV, charcoal=FALSE, alpha.over
     # cordn$feature <- as.vector(cordn$feature)
     cordn$feature <- factor(cordn$feature, levels=unique(as.vector(cordn$feature))) 
     # If "data" is not in ggplot(), g$data slot is empty. x, y, and group should be in the same aes(). 
-    g <- ggplot(data=cordn, aes(x=x, y=y, value=value, group=feature, text=paste0('feature: ', Feature, '\n', 'value: ', value)), ...)+raster.g+geom_polygon(aes(fill=feature), color=line.color, size=cordn$line.width, linetype='solid', alpha=alpha.overlay)+scl.fil+theme_void()+theme(plot.title=element_text(hjust=0.5, vjust=sub.title.vjust, size=sub.title.size), plot.margin=margin(0.005, 0.005, 0.005, 0.005, "npc"), legend.box.margin=margin(-3, 0, 2, 0, unit='pt'), legend.background=element_rect(color=NA), aspect.ratio = 1/aspect.ratio)+labs(x="", y="")+scale_y_continuous(expand=expansion(mult=c(0, 0)))+scale_x_continuous(expand=expansion(mult=c(0, 0)))+lgd.par
+    g <- ggplot(data=cordn, aes(x=x, y=y, value=value, group=feature, text=paste0('feature: ', Feature, '\n', 'value: ', value)), ...)+raster.g+geom_polygon(aes(fill=feature), color=line.color, linewidth=cordn$line.width, linetype='solid', alpha=alpha.overlay)+scl.fil+theme_void()+theme(plot.title=element_text(hjust=0.5, vjust=sub.title.vjust, size=sub.title.size), plot.margin=margin(0.005, 0.005, 0.005, 0.005, "npc"), legend.box.margin=margin(-3, 0, 2, 0, unit='pt'), legend.background=element_rect(color=NA, fill='transparent'), aspect.ratio = 1/aspect.ratio)+labs(x="", y="")+scale_y_continuous(expand=expansion(mult=c(0, 0)))+scale_x_continuous(expand=expansion(mult=c(0, 0)))+lgd.par
 
     # The aspect ratio should not be calculated by margins that are inferred from original width/height (mar.lb <- (1-w.h/w.h.max*0.99)/2). It works on single plot, but will squeeze the subplots in arrangeGrob/grid.arrange. Rather the "aspect ratio" in theme should be used, which will not squeeze subplots.
     # After theme(aspect.ratio) is set, change in only top or left margin will not distort the image. Rather width/height will scale propotionally, since the aspect ratio is fixed.
@@ -215,7 +233,6 @@ gg_shm <- function(svg.all, gene, con.na=TRUE, geneV, charcoal=FALSE, alpha.over
     if (lgd==TRUE) {
       g <- g+theme(plot.margin=margin(0.005, 0.005, 0.2, 0, "npc"), plot.title=element_text(hjust=0.5, vjust=sub.title.vjust, size=legend.plot.title.size))+ggtitle(legend.plot.title)
     }; return(list(g=g, g.col=g.col))
-
   }
 
   svg.sel <- svg_separ(svg.all)
@@ -230,7 +247,7 @@ gg_shm <- function(svg.all, gene, con.na=TRUE, geneV, charcoal=FALSE, alpha.over
   sam.uni <- unique(gsub("(.*)(__)(.*)", "\\1", cname)); ft.trans <- make.names(ft.trans)
   # Template image.
   raster.g <- NULL; if (is.character(raster.path)) if (all(file.exists(raster.path))) {
-    if (any(c('e', 'w') %in% check_pkg('magick'))) stop('The package "magick" is not detected!')  
+    pkg <- check_pkg('magick'); if (is(pkg, 'character')) stop(pkg)
     raster <- magick::image_read(raster.path)
     if (charcoal==TRUE) raster <- magick::image_charcoal(raster)
     raster.g <- annotation_raster(raster, -Inf, Inf, -Inf, Inf)
@@ -238,10 +255,7 @@ gg_shm <- function(svg.all, gene, con.na=TRUE, geneV, charcoal=FALSE, alpha.over
 
   g.lis.all <- gcol.lis.all <- NULL; for (k in ID) {
     # Match color key values to selected genes.
-    color.dat <- NULL; for (i in gene[k, ]) { 
-      ab <- abs(i-geneV); col.ind <- which(ab==min(ab))[1]
-      color.dat <- c(color.dat, cols[col.ind])
-    }; names(color.dat) <- colnames(gene)
+    color.dat <- value2color(gene[k, , drop=FALSE], geneV, cols)
 
     # idx <- grep("__", cname); c.na <- cname[idx]
     # Column names without '__' are also included so as to keep one-to-one match with color.dat.
@@ -344,11 +358,25 @@ svg_separ <- function(svg.all) {
   if (!'line.width' %in% colnames(g.df)) {    
     g.df <- g.df %>% mutate(line.width=cvt_vector(df.attr$feature, df.attr$stroke, sub('__\\d+$', '', feature)))
   }
-  raster.pa <- raster(svg.all)
+  raster.pa <- raster_pa(svg.all)
   if (length(raster.pa)==0) raster.pa <- NULL else if (length(raster.pa) > 0) raster.pa <- raster.pa[[1]] 
   return(list(cordn=g.df, tis.path=tis.path, fil.cols=fil.cols, raster.path=raster.pa, aspect.r=aspect.r))
 }
 
 
+#' Translate expression values to colors.
+#'
+#' @param data Assay matrix of one row.
+#' @param values,colors All numeric values and colors in the color key.
+#' @return A vector of colors.
+#' @keywords Internal
+#' @noRd
 
+value2color <- function(data, values, colors) {
+  data <- as.matrix(data)
+  color.dat <- NULL; for (i in data) { 
+    ab <- abs(i-values); col.ind <- which(ab==min(ab))[1]
+    color.dat <- c(color.dat, colors[col.ind])
+  }; names(color.dat) <- colnames(data); return(color.dat)
+}
 

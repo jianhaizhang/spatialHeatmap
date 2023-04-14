@@ -30,11 +30,11 @@
 
 #' @export
 #' @importFrom SingleCellExperiment altExpNames 
-#' @importFrom SummarizedExperiment colData<-  
+#' @importFrom SummarizedExperiment colData<- colData
 #' @importFrom scuttle logNormCounts
 #' @importFrom scran quickCluster computeSumFactors 
 
-norm_cell <- function(sce, bulk=NULL, cpm=FALSE, count.kp=FALSE, quick.clus=list(min.size = 100), com.sum.fct=list(max.cluster.size = 3000, min.mean=1), log.norm=list(), com=FALSE, wk.dir=NULL) {
+norm_cell <- function(sce, bulk=NULL, cpm=FALSE, count.kp=FALSE, quick.clus=list(min.size = 100, d=NULL), com.sum.fct=list(max.cluster.size = 3000, min.mean=1), log.norm=list(), com=FALSE, wk.dir=NULL) {
   bulkCell <- NULL
   if (!is.null(wk.dir)) norm.dir <- file.path(wk.dir, 'norm_res') else norm.dir <- NULL
   if (!is.null(norm.dir)) if (!dir.exists(norm.dir)) dir.create(norm.dir, recursive = TRUE)
@@ -43,14 +43,23 @@ norm_cell <- function(sce, bulk=NULL, cpm=FALSE, count.kp=FALSE, quick.clus=list
   #for (i in nas) { 
     # sce0 <- sce[[i]]
   if (!is(sce, 'SingleCellExperiment')) sce <- SingleCellExperiment(assays=list(counts=as.matrix(sce)))
+  cdat.sc <- colData(sce)
   if (!is.null(bulk)) {
     if (!is(bulk, 'SummarizedExperiment') & !is(bulk, 'SingleCellExperiment')) bulk <- SingleCellExperiment(assays=list(counts=as.matrix(bulk)))
-    if (is(bulk, 'SummarizedExperiment')) bulk <- as(bulk, 'SingleCellExperiment') 
-    colData(sce) <- colData(bulk) <- NULL
+    if (is(bulk, 'SummarizedExperiment')) bulk <- as(bulk, 'SingleCellExperiment')
+    cdat.blk <- colData(bulk) 
+  
+    # Erase input metadata in colData if input bulk and cell data do not have the same colnames in colData.
+    if (ncol(cdat.sc)==0 | ncol(cdat.blk)== 0 | ncol(cdat.sc)!=ncol(cdat.blk)) { 
+      colData(sce) <- colData(bulk) <- NULL
+    }
+    if (ncol(cdat.sc) > 0 & ncol(cdat.blk) > 0 & ncol(cdat.sc)==ncol(cdat.blk)) {
+      if (!all(colnames(cdat.sc)==colnames(cdat.blk))) colData(sce) <- colData(bulk) <- NULL
+    }
     bulk$bulkCell <- 'bulk'; sce$bulkCell <- 'cell'
     bulk$sample <- colnames(bulk); sce$sample <- colnames(sce)
     int <- intersect(rownames(bulk), rownames(sce))
-    if (any(c('e', 'w') %in% check_pkg('BiocGenerics'))) stop('The package "BiocGenerics" is not detected!') 
+    pkg <- check_pkg('BiocGenerics'); if (is(pkg, 'character')) stop(pkg)
     sce <- BiocGenerics::cbind(bulk[int, ], sce[int, ])
   }
     if (quick.clus$min.size > ncol(sce)) { message('fewer cells than min size in quickCluster!'); return() }

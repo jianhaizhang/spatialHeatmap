@@ -16,16 +16,17 @@ search_server <- function(id, ids, lis.url, url.id, upl.mod.lis, dat.mod.lis, se
       url.id$sch.mul <- lis.url$par[['sear-sch.mul']] <- unlist(strsplit(gsub(' |,', '__', url_val('sear-sch.mul', lis.url)), '__'))
       cat('Parsing IDs from URL ... done! \n')
     })
-    geneIn <- reactiveValues(lis=NULL)
+    datIn <- reactiveValues()
     observe({
-      if (is.null(dat.mod.lis)) return()
-      gene.all <- dat.mod.lis$geneIn; geneIn$lis <- gene.all()
+      se.scl <- check_exp(dat.mod.lis$se.scl())
+      if (is(se.scl, 'character')) req('')
+      if (!check_obj(list(se.scl))) req('')
+      datIn$v <- se.scl
     })
     pre.id <- reactiveValues(id=NULL)
     observe({ # Pre-selected ids in config file.
-      if (is.null(geneIn$lis)) return()
-      df.aggr.tran <- geneIn$lis$df.aggr.tran 
-      rna <- rownames(df.aggr.tran)
+      if (is.null(datIn$v)) return()
+      rna <- rownames(datIn$v)
       id <- cfg$lis.par$data.matrix['selected.id', 'default']
       if (length(id)==0) { pre.id$id <- rna[1]; return() }
       id <- make.names(strsplit(id, ',')[[1]])
@@ -34,10 +35,9 @@ search_server <- function(id, ids, lis.url, url.id, upl.mod.lis, dat.mod.lis, se
     })
     sch.sgl <- reactiveValues(cho=NULL, sel=NULL)
     observe({ # Accounts for IDs in URL for single search box.
-      if (is.null(geneIn$lis)) return()
-      # geneIn <- dat.mod.lis$geneIn; gen.lis <- geneIn()
-      df.aggr.tran <- geneIn$lis$df.aggr.tran
-      rna <- rownames(df.aggr.tran); df.met <- geneIn$lis$df.met
+      se.scl <- datIn$v
+      if (!check_obj(list(se.scl))) return()
+      rna <- rownames(se.scl); df.met <- rowData(se.scl)
       cho <- paste0(rna, ' ', ifelse(rep('metadata' %in% colnames(df.met), length(rna)), df.met[, 'metadata'], ''))
       id <- pre.id$id
       if (!is.null(url.id$sch.sgl)) if (url.id$sch.sgl[1]!='null') {
@@ -45,7 +45,8 @@ search_server <- function(id, ids, lis.url, url.id, upl.mod.lis, dat.mod.lis, se
         sel <- sub(' .*', '', url.id$sch.sgl)
         id <- sel[sel %in% rna]
       }
-      sel <- paste0(id, ' ', df.met[id, 'metadata'])
+      if (!all(id %in% rna)) req('')
+      if ('metadata' %in% colnames(df.met)) sel <- paste0(id, ' ', df.met[id, 'metadata']) else sel <- paste0(id, ' ')
       sch.sgl$cho <- cho; sch.sgl$sel <- sel
       # updateSelectizeInput(session, 'sch.sgl', choices=cho, selected=sel, server=TRUE)
     })
@@ -56,16 +57,17 @@ search_server <- function(id, ids, lis.url, url.id, upl.mod.lis, dat.mod.lis, se
     mul.val <- paste0(mul.val, collapse=',')
     # At the very beginning, two search buttons and two search boxes are all NULL, since they are not rendered. When toggling between search modes, one of two buttons is reverted to 0 not NULL, while the search content is reverted to NULL then strings.
     if (sch.mod=='Single') { 
-      sbox <- selectizeInput(ns('sch.sgl'), p(lab.sgl, actionButton(ns("sch.sgl.but"), "Confirm selection")), choices='none', selected='none', multiple = TRUE, options=list(placeholder = 'Supports auto-completion.')) 
+      sbox <- selectizeInput(ns('sch.sgl'), p(lab.sgl, actionButton(ns("sch.sgl.but"), "Confirm selection", style=conf.col)), choices='none', selected='none', multiple = TRUE, options=list(placeholder = 'Supports auto-completion.')) 
     } else if (sch.mod=='Multiple') { 
-    sbox <- textInput(inputId=ns('sch.mul'), p(lab.mul, actionButton(ns("sch.mul.but"), "Confirm selection")), value=mul.val, placeholder='Muliple IDs must ONLY be separated by space or comma.', width='100%')
+    sbox <- textInput(inputId=ns('sch.mul'), p(lab.mul, actionButton(ns("sch.mul.but"), "Confirm selection", style=conf.col)), value=mul.val, placeholder='Muliple IDs must ONLY be separated by space or comma.', width='100%')
    }; cat('Done! \n'); sbox
 
   })
   rna <- reactiveValues(val=NULL)
   observe({ # rna$val: accounts for filtered data.  
-    if (is.null(geneIn$lis)) return()
-    rna$val <- rownames(geneIn$lis$df.aggr.tran)
+    se.scl <- datIn$v
+    if (is.null(se.scl)) return()
+    rna$val <- rownames(se.scl)
   })
   upd.sel <- reactiveValues()
   observe({
@@ -80,7 +82,7 @@ search_server <- function(id, ids, lis.url, url.id, upl.mod.lis, dat.mod.lis, se
   observeEvent(list(input$sch.sgl.but, rna$val), { 
     cat('Single search IDs ... \n')
     if (is.null(input$sch.sgl)) return()
-    if (is.null(geneIn$lis)|'none' %in% input$sch.sgl) return()
+    if (is.null(datIn$v)|'none' %in% input$sch.sgl) return()
     sel <- sub(' .*', '', input$sch.sgl)
     # validate: holds on til condition is met, can address issues in execution orders.
     validate(need(all(sel %in% rna$val), ''))
