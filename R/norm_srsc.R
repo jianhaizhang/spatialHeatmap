@@ -8,13 +8,14 @@
 #' @author Jianhai Zhang \email{jzhan067@@ucr.edu} \cr Dr. Thomas Girke \email{thomas.girke@@ucr.edu}
 #' @examples
 
-#' library(Seurat); library(SeuratData); library(SummarizedExperiment)
-#' if (!'stxBrain' %in% InstalledData()$Dataset) InstallData("stxBrain")
+#' library(Seurat); library(SummarizedExperiment)
 #' # Bulk data. 
 #' blk.mus <- readRDS(system.file("extdata/shinyApp/data", "bulk_mouse_cocluster.rds", package="spatialHeatmap"))
 #' assay(blk.mus)[1:3, 1:5] 
 #' # Spatial single-cell data.
-#' brain <- LoadData("stxBrain", type = "anterior1") 
+#' # library(SeuratData)
+#' # if (!'stxBrain' %in% InstalledData()$Dataset) InstallData("stxBrain")
+#' # brain <- LoadData("stxBrain", type = "anterior1") 
 #' # Joint normalization. 
 #' # nor.lis <- norm_srsc(cell=brain, assay='Spatial', bulk=blk.mus) 
 #' # Separate bulk and cell data. 

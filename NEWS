@@ -1,4 +1,4 @@
-Changes in version 2.5.4 (2023-04-13)
+Changes in version 2.5.4 (2023-04-14)
  + Developed the SPHM class for storing aSVG, bulk data, single-cell data, and matching list.
  + Spatial Enrichement: outlier spatial featuers in references are supported.
  + Shiny App: added K-means clustering, functional enrichment, and cluster downloading, redesigned Data Mining and Spatial Enrichment.

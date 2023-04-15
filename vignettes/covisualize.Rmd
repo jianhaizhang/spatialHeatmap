@@ -509,7 +509,7 @@ blk.sp <- readRDS(system.file("extdata/shinyApp/data", "bulk_sp.rds", package="s
 # Bulk assay data are partially shown.
 assay(blk.sp)[1:3, ]
 # Importing SRSC data.
-srt.sc <- readRDS(system.file("extdata/shinyApp/data", "srt_sc.rds", package="spatialHeatmap"))
+srt.sc <- readRDS(gzcon(url("https://github.com/jianhaizhang/SHM_data/raw/main/spatial_single_cell/srt_sc.rds")))
 # SRSC assay data are partially shown.
 srt.sc@assays$SCT@data[1:3, 1:2]
 ```
@@ -534,7 +534,7 @@ The aSVG of mouse brain is included in `spatialHeatmap` and imported into an `SV
 svg.mus.sp <- read_svg(system.file("extdata/shinyApp/data", "mus_musculus.brain_sp.svg", package="spatialHeatmap"), srsc=TRUE)
 ```
 
-In order to position spatial spots in the SRSC data correctly in the aSVG, a shape named `overlay` that defines the region of the spatial spots is required in the aSVG. By using this shape as a reference, the spatial coordinates in the SRSC data are transformed so that all spatial spots are positioned with this shape. The `overlay` shape can be created using the spatial plot created by the `SpatialFeaturePlot` function in `Seurat` as a template. 
+In order to position spatial spots in the SRSC data correctly in the aSVG, a shape named `overlay` that defines the region of the spatial spots is required in the aSVG. By using this shape as a reference, the spatial coordinates in the SRSC data are transformed so that all spatial spots are positioned within this shape. The `overlay` shape can be created by using the spatial plot created by the `SpatialFeaturePlot` function in `Seurat` as a template. 
 
 ```{r eval=TRUE, echo=TRUE, warnings=FALSE}
 attribute(svg.mus.sp)[[1]][7:8, c('feature', 'id', 'fill', 'stroke')]
