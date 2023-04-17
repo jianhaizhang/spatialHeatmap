@@ -16,21 +16,19 @@
 #' Lori Shepherd and Martin Morgan (2020). BiocFileCache: Manage Files Across Sessions. R package version 1.12.1.
 
 #' @export save_cache
-#' @importFrom BiocFileCache BiocFileCache bfcremove bfcquery bfcnew bfccache
-#' @importFrom rappdirs user_cache_dir
 
 save_cache <- function(dir=NULL, overwrite=TRUE, ...) {
-
+  pkg <- check_pkg('BiocFileCache'); if (is(pkg, 'character')) { warning(pkg); return(pkg) }
+  pkg <- check_pkg('rappdirs'); if (is(pkg, 'character')) { warning(pkg); return(pkg) }
   dir.con <- is.na(dir)|is.null(dir) 
   if (length(dir.con)==0|sum(dir.con)==1) {
-      bfc <- BiocFileCache(user_cache_dir(appname="shm"), ask=FALSE)
-  } else bfc <- BiocFileCache(dir, ask=FALSE)
+      bfc <- BiocFileCache::BiocFileCache(rappdirs::user_cache_dir(appname="shm"), ask=FALSE)
+  } else bfc <- BiocFileCache::BiocFileCache(dir, ask=FALSE)
   na <- deparse(substitute(...))
-  if (overwrite==TRUE) bfcremove(bfc, bfcquery(bfc, na, exact=TRUE)$rid)
-  path <- bfcnew(bfc, na); save(..., file=path)
-  cat('Cache directory:', bfccache(bfc),  '\n')
-  return(bfccache(bfc))
-
+  if (overwrite==TRUE) BiocFileCache::bfcremove(bfc, BiocFileCache::bfcquery(bfc, na, exact=TRUE)$rid)
+  path <- BiocFileCache::bfcnew(bfc, na); save(..., file=path)
+  pa <- BiocFileCache::bfccache(bfc)
+  cat('Cache directory:', pa,  '\n'); return(pa)
 }
 
 
@@ -54,19 +52,17 @@ save_cache <- function(dir=NULL, overwrite=TRUE, ...) {
 #' Lori Shepherd and Martin Morgan (2020). BiocFileCache: Manage Files Across Sessions. R package version 1.12.1.
 
 #' @export read_cache
-#' @importFrom BiocFileCache BiocFileCache bfcrpath bfcquery bfcinfo
 
 read_cache <- function(dir, name, info=FALSE) {
-
-    bfc <- tryCatch({ BiocFileCache(dir, ask=FALSE) }, error=function(e){ return('error') }, warning=function(w) { return('warning') } )
-    if (!is(bfc, 'BiocFileCache')) { cat('No valid cache is detected in the provided "dir"! \n'); return() }
-    if (info==TRUE) return(bfcinfo(bfc))
-    rid <- bfcquery(bfc, name, exact=TRUE)$rid
-    if (length(rid)==0) { cat('No valid record is detected for', name, '!\n'); return() }
-    if (length(rid)>1) cat('Multiple files matched, the newest one is returned! \n\n')
-    id <- rid[length(rid)]
-    return(get(load(bfcrpath(bfc, rids=id))))
-
+  pkg <- check_pkg('BiocFileCache'); if (is(pkg, 'character')) { warning(pkg); return(pkg) }
+  bfc <- tryCatch({ BiocFileCache::BiocFileCache(dir, ask=FALSE) }, error=function(e){ return('error') }, warning=function(w) { return('warning') } )
+  if (!is(bfc, 'BiocFileCache')) { cat('No valid cache is detected in the provided "dir"! \n'); return() }
+  if (info==TRUE) return(BiocFileCache::bfcinfo(bfc))
+  rid <- BiocFileCache::bfcquery(bfc, name, exact=TRUE)$rid
+  if (length(rid)==0) { cat('No valid record is detected for', name, '!\n'); return() }
+  if (length(rid)>1) cat('Multiple files matched, the newest one is returned! \n\n')
+  id <- rid[length(rid)]
+  return(get(load(BiocFileCache::bfcrpath(bfc, rids=id))))
 }
 
 

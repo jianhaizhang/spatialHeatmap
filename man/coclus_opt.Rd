@@ -9,7 +9,7 @@ coclus_opt(
   df.para,
   df.fil.set,
   batch.par = NULL,
-  multi.core.par = MulticoreParam(workers = 1, RNGseed = 50),
+  multi.core.par = NULL,
   wk.dir,
   verbose = TRUE
 )

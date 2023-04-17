@@ -76,19 +76,20 @@
 #' Shahan, Rachel, Che-Wei Hsu, Trevor M Nolan, Benjamin J Cole, Isaiah W Taylor, Anna Hendrika Cornelia Vlot, Philip N Benfey, and Uwe Ohler. 2020. "A Single Cell Arabidopsis Root Atlas Reveals Developmental Trajectories in Wild Type and Cell Identity Mutants." BioRxiv.
 
 #' @export
-#' @importFrom BiocParallel bpRNGseed bpRNGseed<- register bpnworkers bplapply MulticoreParam
 
-coclus_opt <- function(dat.lis, df.para, df.fil.set, batch.par=NULL, multi.core.par=MulticoreParam(workers=1, RNGseed=50), wk.dir, verbose=TRUE) {
+coclus_opt <- function(dat.lis, df.para, df.fil.set, batch.par=NULL, multi.core.par=NULL, wk.dir, verbose=TRUE) {
+  pkg <- check_pkg('BiocParallel'); if (is(pkg, 'character')) { warning(pkg); return(pkg) }
   e.w <- tryCatch( # Check if the cluster scheduler is installed.
     expr = { is(batch.par, 'BatchtoolsParam') }, 
     error = function(e){ return('e') }, warning = function(w){ return('w') } 
   ) 
   # Check random seed.
   seed.bat <- seed.mul <- NULL
-  if (!e.w %in% c('e', 'w')) if (is(batch.par, 'BatchtoolsParam')) seed.bat <- bpRNGseed(batch.par)
-  if (is(multi.core.par, 'MulticoreParam')) seed.mul <- bpRNGseed(multi.core.par)
+  if (!e.w %in% c('e', 'w')) if (is(batch.par, 'BatchtoolsParam')) seed.bat <- BiocParallel::bpRNGseed(batch.par)
+  if (is.null(multi.core.par)) multi.core.par <- BiocParallel::MulticoreParam(workers=1, RNGseed=50)
+  if (is(multi.core.par, 'MulticoreParam')) seed.mul <- BiocParallel::bpRNGseed(multi.core.par)
   if (is.numeric(seed.bat) & is.numeric(seed.mul)) { 
-    bpRNGseed(multi.core.par) <- NULL
+    BiocParallel::bpRNGseed(multi.core.par) <- NULL
     if (verbose==TRUE) message('"RNGseed" in MulticoreParam is set NULL, since it is already set in BatchtoolsParam.')
   }
   if (!is.numeric(seed.bat) & !is.numeric(seed.mul)) {
@@ -105,12 +106,12 @@ coclus_opt <- function(dat.lis, df.para, df.fil.set, batch.par=NULL, multi.core.
   df.para.nor$file.norm <- file.path(nor.dir, tolower(paste0(df.para.nor$norm, '.', df.para.nor$dataset, '.rds')))
 
   if (is(batch.par, 'BatchtoolsParam')) {
-    register(batch.par); workers <- bpnworkers(batch.par)
+    BiocParallel::register(batch.par); workers <- BiocParallel::bpnworkers(batch.par)
     rows <- seq_len(nrow(df.para.nor))
     split <- split(rows, ceiling(seq_along(rows) / ceiling(length(rows)/workers)))
     # Cut: is not able to deal with workers=1.
     # split <- split(rows, cut(seq_along(rows), workers, labels = FALSE))
-    res.nor <- bplapply(seq_along(split), norm_fun, dat.lis=dat.lis, df.para=df.para.nor, split=split, multi.core.par=multi.core.par, com=FALSE, nor.dir=nor.dir)
+    res.nor <- BiocParallel::bplapply(seq_along(split), norm_fun, dat.lis=dat.lis, df.para=df.para.nor, split=split, multi.core.par=multi.core.par, com=FALSE, nor.dir=nor.dir)
   } else {
     split <- list('1'=seq_len(nrow(df.para.nor))) 
     res.nor <- norm_fun(1, dat.lis, df.para=df.para.nor, split, multi.core.par, com=FALSE, nor.dir=nor.dir)
@@ -130,11 +131,11 @@ coclus_opt <- function(dat.lis, df.para, df.fil.set, batch.par=NULL, multi.core.
   df.para.fil$file.norm <- file.path(nor.dir, df.para.fil$file.norm)
   df.para.fil$file.fil <- file.path(fil.dir, df.para.fil$file.fil)
   if (is(batch.par, 'BatchtoolsParam')) { 
-    register(batch.par); workers <- bpnworkers(batch.par)
+    BiocParallel::register(batch.par); workers <- BiocParallel::bpnworkers(batch.par)
     rows <- seq_len(nrow(df.para.fil))
     split <- split(rows, ceiling(seq_along(rows) / ceiling(length(rows)/workers)))
     # split <- split(rows, cut(seq_along(rows), workers, labels = FALSE))
-    res.fil <- bplapply(seq_along(split), fil_fun, df.para=df.para.fil, split=split, bulk.aggr=TRUE, aggr='mean', df.fil.set, multi.core.par=multi.core.par, com=FALSE, fil.dir=fil.dir)
+    res.fil <- BiocParallel::bplapply(seq_along(split), fil_fun, df.para=df.para.fil, split=split, bulk.aggr=TRUE, aggr='mean', df.fil.set, multi.core.par=multi.core.par, com=FALSE, fil.dir=fil.dir)
   } else {
     split <- list('1'=seq_len(nrow(df.para.fil)))
     res.fil <- fil_fun(1, df.para=df.para.fil, split=split, bulk.aggr=TRUE, aggr='mean', df.fil.set, multi.core.par=multi.core.par, com=FALSE, fil.dir=fil.dir)
@@ -154,11 +155,11 @@ coclus_opt <- function(dat.lis, df.para, df.fil.set, batch.par=NULL, multi.core.
   df.para.coclus$file.coclus <- file.path(coclus.dir, df.para.coclus$file.coclus)
 
   if (is(batch.par, 'BatchtoolsParam')) {
-    register(batch.par); workers <- bpnworkers(batch.par)
+    BiocParallel::register(batch.par); workers <- BiocParallel::bpnworkers(batch.par)
     rows <- seq_len(nrow(df.para.coclus))
     split <- split(rows, ceiling(seq_along(rows) / ceiling(length(rows)/workers)))
     # split <- split(rows, cut(seq_along(rows), workers, labels = FALSE))
-    res.coclus <- bplapply(seq_along(split), coclus_fun, dat.lis=dat.lis, df.para=df.para.coclus, split=split, multi.core.par=multi.core.par, coclus.dir=coclus.dir)
+    res.coclus <- BiocParallel::bplapply(seq_along(split), coclus_fun, dat.lis=dat.lis, df.para=df.para.coclus, split=split, multi.core.par=multi.core.par, coclus.dir=coclus.dir)
     df.res <- do.call('rbind', lapply(res.coclus, function(x) do.call("rbind", x)))
   } else {
     split <- list('1'=seq_len(nrow(df.para.coclus)))
@@ -185,25 +186,25 @@ coclus_opt <- function(dat.lis, df.para, df.fil.set, batch.par=NULL, multi.core.
 #' Morgan M, Wang J, Obenchain V, Lang M, Thompson R, Turaga N (2022). _BiocParallel: Bioconductor facilities for parallel evaluation_. R package version 1.30.3, <https://github.com/Bioconductor/BiocParallel>.
 
 #' @importFrom parallel detectCores
-#' @importFrom BiocParallel bpnworkers bplog bplog<- bplogdir<-
 
 opt_dir <- function(wk.dir, sub.dir, batch.par, multi.core.par) {
+  pkg <- check_pkg('BiocParallel'); if (is(pkg, 'character')) { warning(pkg); return(pkg) }
   dir <- file.path(wk.dir, sub.dir)
   if (!dir.exists(dir)) dir.create(dir, recursive = TRUE) 
   if (is(multi.core.par, 'MulticoreParam')) {
-    cpus <- detectCores(); workers <- bpnworkers(multi.core.par)
+    cpus <- detectCores(); workers <- BiocParallel::bpnworkers(multi.core.par)
     if (workers <= 0) stop('The minimum worker(s) is 1 !')
     if (cpus - workers < 1) stop('The maximum worker(s) should be 1 less than all available workers (parallel::detectCores()) !')
-    bplog(multi.core.par) <- TRUE 
+    BiocParallel::bplog(multi.core.par) <- TRUE 
     mcore.logdir <- file.path(dir, 'multi_core_log') 
     if (!dir.exists(mcore.logdir)) dir.create(mcore.logdir, recursive = TRUE) 
-    bplogdir(multi.core.par) <- mcore.logdir
+    BiocParallel::bplogdir(multi.core.par) <- mcore.logdir
   }
   if (is(batch.par, 'BatchtoolsParam')) {
-    if (bplog(batch.par)==FALSE) bplog(batch.par) <- TRUE
+    if (BiocParallel::bplog(batch.par)==FALSE) BiocParallel::bplog(batch.par) <- TRUE
     bat.log.dir <- file.path(dir, 'batch_log')
     if (!dir.exists(bat.log.dir)) dir.create(bat.log.dir, recursive = TRUE)
-    bplogdir(batch.par) <- bat.log.dir
+    BiocParallel::bplogdir(batch.par) <- bat.log.dir
   }; return(list(dir=dir, batch.par=batch.par, multi.core.par=multi.core.par))
 }
 
@@ -274,11 +275,10 @@ norm_opt <- function(cell, bulk, norm, com=FALSE) {
 #' @references
 #' Morgan M, Wang J, Obenchain V, Lang M, Thompson R, Turaga N (2022). _BiocParallel: Bioconductor facilities for parallel evaluation_. R package version 1.30.3, <https://github.com/Bioconductor/BiocParallel>.
 
-#' @importFrom BiocParallel bplapply
-
 norm_fun <- function(i, dat.lis, df.para, split, multi.core.par, com=FALSE, nor.dir=NULL) {
+  pkg <- check_pkg('BiocParallel'); if (is(pkg, 'character')) { warning(pkg); return(pkg) }
   df.para0 <- df.para[split[[i]], ]
-  lis <- bplapply(seq_len(nrow(df.para0)), BPPARAM=multi.core.par, FUN=function(j) {
+  lis <- BiocParallel::bplapply(seq_len(nrow(df.para0)), BPPARAM=multi.core.par, FUN=function(j) {
   # lis <- bplapply(seq_len(nrow(df.para0)), FUN=function(j) {
   cell <- dat.lis[[df.para0$dataset[j]]]$cell
   bulk <- dat.lis[[df.para0$dataset[j]]]$bulk
@@ -305,11 +305,11 @@ norm_fun <- function(i, dat.lis, df.para, split, multi.core.par, com=FALSE, nor.
 #' @references
 #' Morgan M, Wang J, Obenchain V, Lang M, Thompson R, Turaga N (2022). _BiocParallel: Bioconductor facilities for parallel evaluation_. R package version 1.30.3, <https://github.com/Bioconductor/BiocParallel>.
 
-#' @importFrom BiocParallel bplapply
 
 fil_fun <- function(i, df.para, split, bulk.aggr=TRUE, aggr='mean', df.fil.set, multi.core.par, com=FALSE, fil.dir=NULL) { 
+  pkg <- check_pkg('BiocParallel'); if (is(pkg, 'character')) { warning(pkg); return(pkg) }
   df.para0 <- df.para[split[[i]], ]
-  lis <- bplapply(seq_len(nrow(df.para0)), BPPARAM=multi.core.par, FUN=function(j) {
+  lis <- BiocParallel::bplapply(seq_len(nrow(df.para0)), BPPARAM=multi.core.par, FUN=function(j) {
   # lis <- bplapply(seq_len(nrow(df.para0)), FUN=function(j) {
     blk.cell <- readRDS(df.para0$file.norm[j])
     if (bulk.aggr==TRUE) blk.aggr <- aggr_rep(data=blk.cell$bulk, assay.na='logcounts', sam.factor='sample', aggr=aggr)
@@ -337,11 +337,11 @@ fil_fun <- function(i, df.para, split, bulk.aggr=TRUE, aggr='mean', df.fil.set, 
 #' Morgan M, Wang J, Obenchain V, Lang M, Thompson R, Turaga N (2022). _BiocParallel: Bioconductor facilities for parallel evaluation_. R package version 1.30.3, <https://github.com/Bioconductor/BiocParallel>.
 #' Xavier Robin, Natacha Turck, Alexandre Hainard, Natalia Tiberti, Frédérique Lisacek, Jean-Charles Sanchez and Markus Müller (2011). pROC: an open-source package for R and S+ to analyze and compare ROC curves. BMC Bioinformatics, 12, p. 77.  DOI: 10.1186/1471-2105-12-77 <http://www.biomedcentral.com/1471-2105/12/77/>
 
-#' @importFrom BiocParallel bplapply
 
 coclus_fun <- function(i, dat.lis=dat.lis, df.para, split, multi.core.par, coclus.dir=NULL) {
+  pkg <- check_pkg('BiocParallel'); if (is(pkg, 'character')) { warning(pkg); return(pkg) }
   df.para0 <- df.para[split[[i]], ]
-  lis <- bplapply(seq_len(nrow(df.para0)), BPPARAM=multi.core.par, FUN=function(j) {
+  lis <- BiocParallel::bplapply(seq_len(nrow(df.para0)), BPPARAM=multi.core.par, FUN=function(j) {
   # lis <- lapply(seq_len(nrow(df.para0)), FUN=function(j) {
 
     df0 <- df.para0[j, ]; print(df0); fil.file <- df0$file.fil

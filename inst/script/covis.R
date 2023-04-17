@@ -6,6 +6,7 @@ blk.mus <- readRDS(blk.mus.pa)
 assay(blk.mus)[1:3, 1:5]
 
 # Spatial single-cell data.
+if (!'stxBrain' %in% InstalledData()$Dataset) InstallData("stxBrain")
 brain <- LoadData("stxBrain", type = "anterior1")
 # as.SingleCellExperiment(brain, assay='SCT')
 # p <- SpatialFeaturePlot(brain, features = c("Hpca"))

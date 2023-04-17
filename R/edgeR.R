@@ -81,7 +81,6 @@
 
 #' @importFrom SummarizedExperiment assay colData
 #' @importFrom edgeR DGEList calcNormFactors estimateDisp glmFit glmLRT topTags
-#' @importFrom limma makeContrasts
 #' @importFrom stats model.matrix 
 #' @importFrom utils combn
 
@@ -96,7 +95,8 @@ edgeR <- function(se, method.norm='TMM', com.factor, method.adjust='BH', return.
   y <- estimateDisp(y, design); fit <- glmFit(y, design)
 
   com <- combn(x=colnames(design), m=2); con <- paste(com[1,], com[2,], sep="-")
-  con.ma <- makeContrasts(contrasts=con, levels=design)
+  pkg <- check_pkg('limma'); if (is(pkg, 'character')) { warning(pkg); return(pkg) }
+  con.ma <- limma::makeContrasts(contrasts=con, levels=design)
   cna.con <- colnames(con.ma); cna.con1 <- sub('-', '_VS_', cna.con)
   cat('Computing DEGs ...', '\n')
   df.all <- data.frame(rm=rep(NA, nrow(df.cnt))); for (i in seq_len(length(cna.con))) {

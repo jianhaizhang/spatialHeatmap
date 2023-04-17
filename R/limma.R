@@ -80,12 +80,11 @@
 
 #' @importFrom SummarizedExperiment assay colData
 #' @importFrom edgeR DGEList calcNormFactors
-#' @importFrom limma voom lmFit makeContrasts contrasts.fit eBayes topTable
 #' @importFrom stats model.matrix 
 #' @importFrom utils combn
 
 limma <- function(se, m.array=FALSE, method.norm='TMM', com.factor, method.adjust='BH', return.all=FALSE, log2.fc=1, fdr=0.05, outliers=0) {
-
+  pkg <- check_pkg('limma'); if (is(pkg, 'character')) { warning(pkg); return(pkg) }
   # Design matrix.
   expr <- assay(se); fct <- factor(colData(se)[, com.factor]); design <- model.matrix(~0+fct)
   colnames(design) <- levels(fct); rownames(design) <- colnames(expr)
@@ -96,19 +95,19 @@ limma <- function(se, m.array=FALSE, method.norm='TMM', com.factor, method.adjus
     y <- DGEList(counts=assay(se)); cat('Normalising:', method.norm, '\n')
     # To store normalized counts in 'se' and set method.norm='none' is not right, since the 'norm.factors' are essentially used but they are 1 if method.norm='none'.
     y <- calcNormFactors(y, method=method.norm)
-    v <- voom(y, design, plot=FALSE); fit <- lmFit(v, design)
+    v <- limma::voom(y, design, plot=FALSE); fit <- limma::lmFit(v, design)
 
-  } else if (m.array==TRUE) fit <- lmFit(expr, design) # Microarray data.
+  } else if (m.array==TRUE) fit <- limma::lmFit(expr, design) # Microarray data.
 
   # Contrast matrix.
   com <- combn(x=colnames(design), m=2); con <- paste(com[1,], com[2,], sep="-")
-  con.mat <- makeContrasts(contrasts=con, levels=design)
+  con.mat <- limma::makeContrasts(contrasts=con, levels=design)
   cna.con <- colnames(con.mat); cna.con1 <- sub('-', '_VS_', cna.con)
-  fit1 <- contrasts.fit(fit, con.mat); fit2  <- eBayes(fit1)
+  fit1 <- limma::contrasts.fit(fit, con.mat); fit2  <- limma::eBayes(fit1)
 
   df.all <- data.frame(rm=rep(NA, nrow(expr))); for (i in seq_along(cna.con)) {
 
-    top <- topTable(fit2, coef=cna.con[i], number=Inf, p.value=1, adjust.method="BH", lfc=0, sort.by='none')
+    top <- limma::topTable(fit2, coef=cna.con[i], number=Inf, p.value=1, adjust.method="BH", lfc=0, sort.by='none')
     colnames(top) <- paste0(cna.con1[i], '_', colnames(top)); df.all <- cbind(df.all, top)
 
   }; df.all <- df.all[, -1]
