@@ -355,5 +355,5 @@ Amezquita R, Lun A, Becht E, Carey V, Carpp L, Geistlinger L, Marini F, Rue-Albr
 Vacher, Claire-Marie, Helene Lacaille, Jiaqi J O’Reilly, Jacquelyn Salzbank, Dana Bakalar, Sonia Sebaoui, Philippe Liere, et al. 2021. “Placental Endocrine Function Shapes Cerebellar Development and Social Behavior.” Nat. Neurosci. 24 (10). Nature Publishing Group: 1392–1401
 }
 \author{
-Jianhai Zhang \email{jzhan067@.ucr.edu} \cr Dr. Thomas Girke \email{thomas.girke@ucr.edu}
+Jianhai Zhang \email{jzhan067@ucr.edu} \cr Dr. Thomas Girke \email{thomas.girke@ucr.edu}
 }

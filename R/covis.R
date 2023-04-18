@@ -149,7 +149,7 @@
 #' # More examples of co-visualization are provided in the package vignette: https://www.bioconductor.org/packages/release/bioc/vignettes/spatialHeatmap/inst/doc/covisualize.html
 #'
 #'
-#' @author Jianhai Zhang \email{jzhan067@@.ucr.edu} \cr Dr. Thomas Girke \email{thomas.girke@@ucr.edu}
+#' @author Jianhai Zhang \email{jzhan067@@ucr.edu} \cr Dr. Thomas Girke \email{thomas.girke@@ucr.edu}
 
 #' @references
 #' https://www.gimp.org/tutorials/
