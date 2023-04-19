@@ -509,7 +509,11 @@ blk.sp <- readRDS(system.file("extdata/shinyApp/data", "bulk_sp.rds", package="s
 # Bulk assay data are partially shown.
 assay(blk.sp)[1:3, ]
 # Importing SRSC data.
-srt.sc <- readRDS(gzcon(url("https://github.com/jianhaizhang/SHM_data/raw/main/spatial_single_cell/srt_sc.rds")))
+srt.sc <- read_cache(cache.pa, 'srt.sc') 
+if (is.null(srt.sc)) {
+  srt.sc <- readRDS(gzcon(url("https://zenodo.org/record/7843362/files/srt_sc.rds?download=1")))
+  save_cache(dir=cache.pa, overwrite=TRUE, srt.sc)
+}
 # SRSC assay data are partially shown.
 srt.sc@assays$SCT@data[1:3, 1:2]
 ```
