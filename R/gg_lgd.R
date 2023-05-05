@@ -53,16 +53,24 @@ gg_lgd <- function(gg.all, size.key=NULL, size.text.key=8, angle.text.key=NULL, 
       dat <- g$data; names(g.col) <- dat$feature
       df.tis <- as.vector(dat$feature)
       if (is.null(dat$value)) df.val <- NULL else df.val <- round(dat$value, 2) # Expression values.
-      g.col <- g.col[!duplicated(names(g.col))]; tis.path <- dat$feature
+      g.col <- g.col[!duplicated(names(g.col))]
+      tis.path <- sub('__\\d+$', '', dat$feature)
       # ft.legend <- intersect(unique(sam.dat), unique(tis.path))
       # Single-cell data: length(ft.legend)==0.
       # if (length(ft.legend)==0) ft.legend <- unique(sub('__\\d+', '', names(g.col[!is.na(g.col) & !g.col=='NA'])))  
       # ft.legend <- setdiff(ft.legend, ft.trans) 
       # Identify tissues with colours: applies to regular bulk SHM and single cell.
-      ft.legend <- unique(sub('__\\d+', '', names(g.col[!is.na(g.col) & !g.col=='NA'])))  
+      ft.legend <- unique(sub('__\\d+', '', names(g.col[!is.na(g.col) & !g.col=='NA'])))
       leg.idx <- !duplicated(tis.path) & (tis.path %in% ft.legend)
-      df.tar <- df.tis[leg.idx]; lab <- path.tar <- tis.path[leg.idx]; val.tar <- df.val[leg.idx]
-      if (sum(legend.value.vdo)==1) { 
+      # df.tar <- df.tis[leg.idx]; lab <- path.tar <- tis.path[leg.idx]; val.tar <- df.val[leg.idx]
+      trans <- g.col[g.col %in% 'NA'][1]
+      tr.lab <- 'Un-measured' 
+      if (is.na(trans)) trans <- tr.lab <- NULL
+      df.tar <- c(df.tis[leg.idx], names(trans))
+      lab <- c(tis.path[leg.idx], tr.lab) 
+      val.tar <- df.val[leg.idx]
+      path.tar <- tis.path[leg.idx]
+      if (sum(legend.value.vdo)==1) {
         if (!is.null(val.tar)) lab <- paste0(path.tar, ' (', val.tar, ')') else lab <- path.tar
       }
       if (opacity!=1) g.col <- alpha(g.col, opacity)
@@ -70,23 +78,18 @@ gg_lgd <- function(gg.all, size.key=NULL, size.text.key=8, angle.text.key=NULL, 
       if (key==FALSE) gde <- FALSE
       if (!is.null(row)|!is.null(col)|opacity!=1|key==FALSE|!is.null(angle.text.key)|!is.null(position.text.key)|!is.null(legend.value.vdo)) g <- g+scale_fill_manual(values=g.col, breaks=df.tar, labels=lab, guide=gde)
       if (label==TRUE) {
-
         dat$x0 <- dat$y0 <- dat$label <- NA
         lab.idx <- dat$feature %in% path.tar
         dat1 <- dat[lab.idx, ]; dat1$label <- dat1$feature
         df.lab <- data.frame() 
         for (j in unique(dat1$feature)) {
-
           df0 <- subset(dat1, feature==j)
           x <- mean(df0$x); y <- mean(df0$y)
           df0$x0 <- x; df0$y0 <- y
           df.lab <- rbind(df.lab, df0)
-       
          } 
          g <- rm_label(g)+geom_text(data=df.lab, aes(label=label, x=x0, y=y0), check_overlap=TRUE, size=label.size, angle=label.angle, hjust=hjust, vjust=vjust)
-
       }; gg.all[[i]] <- rm_label(g)
-
     } # if 
     if (label==FALSE) { gg.all[[i]] <- rm_label(g) }
     if (!is.null(aspect.ratio)) if (aspect.ratio > 0) gg.all[[i]] <- g + theme(aspect.ratio=1/aspect.ratio) 

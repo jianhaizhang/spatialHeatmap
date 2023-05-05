@@ -49,7 +49,7 @@ server <- function(input, output, session) {
     incProgress(0.2, detail="in progress...")
    library(reshape2); library(igraph); library(animation); library(av); library(shinyWidgets); library(yaml); library(HDF5Array); library(sortable); library(shinyBS); library(shinyjs); library(htmltools)
     # DEG
-    library(gplots); library(UpSetR)
+    library(gplots); library(UpSetR); library(sparkline)
     incProgress(0.2, detail="in progress...")
   })
   })

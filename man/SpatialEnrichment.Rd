@@ -36,7 +36,7 @@ query_enrich(res, query)
 ovl_enrich(
   res,
   type = "up",
-  plot = "upset",
+  plot = "matrix",
   order.by = "freq",
   nintersects = 40,
   point.size = 3,
@@ -54,7 +54,7 @@ ovl_enrich(
 graph_line(
   data,
   scale = "none",
-  x.title = "Samples/conditions",
+  x.title = "Samples",
   y.title = "Assay values",
   text.size = 15,
   text.angle = 60,
@@ -109,7 +109,7 @@ graph_line(
 
 \item{type}{One of \code{up} (default) or \code{down}, which refers to up- or down-regulated biomolecules.}
 
-\item{plot}{One of \code{upset} (default), \code{matrix}, or \code{venn}, corresponding to upset plot, overlap matrix, or Venn diagram respectively.}
+\item{plot}{One of \code{upset}, \code{matrix}, or \code{venn}, corresponding to upset plot, overlap matrix, or Venn diagram respectively.}
 
 \item{order.by}{How the intersections in the matrix should be ordered by. Options include frequency (entered as "freq"), degree, or both in any order.}
 
@@ -256,5 +256,5 @@ H. Wickham. ggplot2: Elegant Graphics for Data Analysis. Springer-Verlag New Yor
 Hadley Wickham (2007). Reshaping Data with the reshape Package. Journal of Statistical Software, 21(12), 1-20. URL http://www.jstatsoft.org/v21/i12/.
 }
 \author{
-Jianhai Zhang \email{jianhai.zhang@email.ucr.edu} \cr Dr. Thomas Girke \email{thomas.girke@ucr.edu}
+Jianhai Zhang \email{jzhan067@ucr.edu} \cr Dr. Thomas Girke \email{thomas.girke@ucr.edu}
 }

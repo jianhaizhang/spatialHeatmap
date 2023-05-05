@@ -398,11 +398,11 @@ colData(sc.mus)[1:3, , drop=FALSE]
 Bulk and single cell raw count data are jointly normalized by the function `norm_cell`, which is a wrapper of `computeSumFactors` from `scran` [@scran]. `com=FALSE` means bulk and single cells are separated after normalization for subsequent separate filtering.  
 
 ```{r eval=TRUE, echo=TRUE, warnings=FALSE, results='hide'}
-mus.lis.nor <- read_cache(cache.pa, 'mus.lis.nor') 
-if (is.null(mus.lis.nor)) {
+#mus.lis.nor <- read_cache(cache.pa, 'mus.lis.nor') 
+#if (is.null(mus.lis.nor)) {
   mus.lis.nor <- norm_cell(sce=sc.mus, bulk=blk.mus, com=FALSE)
-  save_cache(dir=cache.pa, overwrite=TRUE, mus.lis.nor)
-}
+#  save_cache(dir=cache.pa, overwrite=TRUE, mus.lis.nor)
+#}
 ```
 
 The normalized single cell and bulk data (log2-scale) are filtered to reduce sparsity

@@ -16,16 +16,14 @@
 #' C. Sievert. Interactive Web-Based Data Visualization with R, plotly, and shiny. Chapman and Hall/CRC Florida, 2020.
 #' Ramnath Vaidyanathan, Yihui Xie, JJ Allaire, Joe Cheng and Kenton Russell (2019). htmlwidgets: HTML Widgets for R. R package version 1.5.1. https://CRAN.R-project.org/package=htmlwidgets
 
-#' @importFrom plotly gg2list as_widget subplot 
-#' @importFrom htmlwidgets saveWidget
-
 html_ly <- function(gg, cs.g, ft.trans, sam.uni, anm.width, anm.height, selfcontained=FALSE, out.dir) {
   # save(gg, cs.g, ft.trans, sam.uni, anm.width, anm.height, selfcontained, out.dir, file ='all.ly')
-
+  pkg <- check_pkg('plotly'); if (is(pkg, 'character')) { warning(pkg); return(pkg) }
+  pkg <- check_pkg('htmlwidgets'); if (is(pkg, 'character')) { warning(pkg); return(pkg) }
   cs.g$theme$aspect.ratio <- NULL
-  gg.na <- names(gg); cs.lis <- gg2list(cs.g, tooltip='color_scale')
+  gg.na <- names(gg); cs.lis <- plotly::gg2list(cs.g, tooltip='color_scale')
   cs.lis$layout$title$text <- NULL 
-  csly <- as_widget(cs.lis, tooltip='color_scale') 
+  csly <- plotly::as_widget(cs.lis, tooltip='color_scale') 
   dir <- paste0(normalizePath(out.dir, winslash="/", mustWork=FALSE), '/html_shm')
   if (!dir.exists(dir)) dir.create(dir, recursive=TRUE)
   rd1 <- '1. Double click the "html" files to display the interactive spatial heatmaps on a web browser.'
@@ -45,17 +43,17 @@ html_ly <- function(gg, cs.g, ft.trans, sam.uni, anm.width, anm.height, selfcont
     tis.show <- as.vector(dat$Feature)[leg.idx]
     tis.show1 <- tis.path[leg.idx]
     g$theme$aspect.ratio <- NULL # Aspect ratio is not accepted.
-    g2l <- gg2list(g, tooltip="text")
+    g2l <- plotly::gg2list(g, tooltip="text")
     cat('Preparing legend for', paste0("'", na.hl, "'"), '... \n')
     for (i in seq_along(g2l$data)) {
      
       idx.tis <- tis.show %in% g2l$data[[i]]$name
       if (any(idx.tis)) g2l$data[[i]]$name <- tis.show1[idx.tis] else g2l$data[[i]]$showlegend <- FALSE
 
-    }; ggly <- as_widget(g2l)
-    subly <- subplot(csly, ggly, nrows=1, shareX=FALSE, shareY=FALSE, margin=0, widths=c(0.05, 0.95))
+    }; ggly <- plotly::as_widget(g2l)
+    subly <- plotly::subplot(csly, ggly, nrows=1, shareX=FALSE, shareY=FALSE, margin=0, widths=c(0.05, 0.95))
     subly$width <- anm.width; subly$height <- anm.height
-    saveWidget(subly, na.hl, selfcontained=selfcontained, libdir="lib")
+    htmlwidgets::saveWidget(subly, na.hl, selfcontained=selfcontained, libdir="lib")
     file.rename(na.hl, paste0(dir, '/', na.hl)) 
   }; unlink(paste0(dir, '/lib'), recursive=TRUE)
 

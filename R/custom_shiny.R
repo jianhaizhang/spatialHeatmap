@@ -99,15 +99,15 @@
 #' Winston Chang, Joe Cheng, JJ Allaire, Yihui Xie and Jonathan McPherson (2017). shiny: Web Application Framework for R. R package version 1.0.3. https://CRAN.R-project.org/package=shiny 
 
 #' @export
-#' @importFrom yaml yaml.load_file write_yaml
 #' @importFrom grDevices colors
 
 custom_shiny <- function(data=NULL, db=NULL, lis.par=NULL, par.tmp=FALSE, dld.sgl=NULL, dld.mul=NULL, dld.vars=NULL, data.tmp=TRUE, app.dir='.') {
   options(stringsAsFactors=FALSE)
+  pkg <- check_pkg('yaml'); if (is(pkg, 'character')) { warning(pkg); return(pkg) }
   if (is.null(data) & is.null(db) & par.tmp==FALSE) stop("Both 'data' and 'db' are 'NULL'!")
   if (!dir.exists(app.dir)) dir.create(app.dir) 
   # Default config file.
-  cfg.def <- yaml.load_file(system.file('extdata/shinyApp/config/config.yaml', package='spatialHeatmap'))
+  cfg.def <- yaml::yaml.load_file(system.file('extdata/shinyApp/config/config.yaml', package='spatialHeatmap'))
   # Default parameters.
   lis.par.def <- cfg.def[!grepl('^dataset\\d+|download_single|download_multiple|download_multiple_variables|download_covisualization|download_batched_data_aSVGs', names(cfg.def))]
   # Return parameter template.
@@ -146,7 +146,7 @@ custom_shiny <- function(data=NULL, db=NULL, lis.par=NULL, par.tmp=FALSE, dld.sg
     exp <- NULL
   } else {
     # Include all default examples.
-    cfg.def <- yaml.load_file(system.file('extdata/shinyApp/config/config.yaml', package='spatialHeatmap'))
+    cfg.def <- yaml::yaml.load_file(system.file('extdata/shinyApp/config/config.yaml', package='spatialHeatmap'))
     lis.dat.def <- cfg.def[grepl('^dataset\\d+', names(cfg.def))]
     idx.rm <- NULL; for (i in seq_along(lis.dat.def)) {
     if (any(lis.dat.def[[i]]$svg=='none')) idx.rm <- c(idx.rm, i)
@@ -188,7 +188,7 @@ custom_shiny <- function(data=NULL, db=NULL, lis.par=NULL, par.tmp=FALSE, dld.sg
   # Name the complete list.
   names(data) <- paste0('dataset', seq_along(data))
   lis.all <- c(data, lis.par, lis.dld)
-  write_yaml(lis.all, paste0(app.dir, '/config/config.yaml')); cat('Done! \n')
+  yaml::write_yaml(lis.all, paste0(app.dir, '/config/config.yaml')); cat('Done! \n')
 }
 
 

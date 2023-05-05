@@ -186,7 +186,7 @@ gg_shm <- function(svg.all, gene, col.idp=FALSE, con.na=TRUE, geneV, charcoal=FA
        # No matter the tissues in coordinate data frame are vector or factor, the coloring are decided by the named color vector (order of colors does not matter as long as names are right) in scale_fill_manual.
        # Since ggplot2 '3.3.5', 'NA' instead of NA represents transparency.
        g.col[is.na(g.col)] <- 'NA'
-       trans <- g.col[g.col %in% 'NA'][1]; tr.lab <- 'Un-meansured'
+       trans <- g.col[g.col %in% 'NA'][1]; tr.lab <- 'Un-measured'
        if (is.na(trans)) trans <- tr.lab <- NULL
        br <- c(tis.df[leg.idx], names(trans))
        br.lab <- c(tis.path[leg.idx], tr.lab) 

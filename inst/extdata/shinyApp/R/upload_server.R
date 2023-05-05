@@ -117,7 +117,6 @@ upload_server <- function(id, lis.url=NULL, session) {
     dat.def <- dat.def[unique(names(dat.def))]; svg.def <- svg.def[unique(names(svg.def))]
     cfg$lis.dat <- lis.dat; cfg$lis.dld <- lis.dld; cfg$lis.par <- lis.par; cfg$na.def <- setNames(names(dat.def), dis.def)
     cfg$svg.def <- svg.def; cfg$dat.def <- dat.def; cfg$na.cus <- setNames(na.cus, na.cus.dis)
-    save(svg.def, dat.def, file='sd')
     dat.nas <- c(na.cus, names(dat.def)); names(dat.nas) <- c(na.cus.dis, dis.def) 
     url.val <- url_val('upl-fileIn', lis.url)
     updateSelectInput(session, 'fileIn', choices=dat.nas, selected=ifelse(url.val=='null', lis.par$default.dataset, url.val))
@@ -188,49 +187,49 @@ content=function(file=paste0(tmp.dir, '/batched_data_aSVGs.zip')){ zip(file, c(d
   output$brain.hum <-renderUI({
   tagList(
     p('Human brain', style='font-size:18px'),
-  a(img(width='97%', src="image/brain_hum.png"), href=paste0('http://', lis.url$hos.port, brain.hum.url), target='_blank')
+  a(img(width='97%', src="image/brain_hum.png"), href='')
     )
   })
   output$mouse <-renderUI({
   tagList(
     p('Mouse organ', style='font-size:18px'),
-    a(img(width='97%', src="image/mouse.png"), href=paste0('http://', lis.url$hos.port, mouse.url), target="_blank")
+    a(img(width='97%', src="image/mouse.png"), href='')
   )
   })
   output$chicken <-renderUI({
   tagList(
     p('Chicken organ', style='font-size:18px'),
-    a(img(width='97%', src="image/chicken.png"), href=paste0('http://', lis.url$hos.port, chicken.url), target="_blank")
+    a(img(width='97%', src="image/chicken.png"), href='')
     )
   })
   output$organ.arab <-renderUI({
   tagList(
     p('Organ', style='font-size:18px'),
-    a(img(width='97%', src="image/organ_arab.png"), href=paste0('http://', lis.url$hos.port, organ.arab.url), target="_blank")
+    a(img(width='97%', src="image/organ_arab.png"), href='')
     )
   })
   output$shoot.arab <-renderUI({
   tagList(
     p('Shoot tissue', style='font-size:18px'),
-    a(img(width='97%', src="image/shoot_arab.png"), href=paste0('http://', lis.url$hos.port, shoot.arab.url), target="_blank")
+    a(img(width='97%', src="image/shoot_arab.png"), href='')
   )
   })
   output$root.arab <-renderUI({
   tagList(
     p('Root tissue', style='font-size:18px'),
-    a(img(width='97%', src="image/root_arab.png"), href=paste0('http://', lis.url$hos.port, root.arab.url), target="_blank")
+    a(img(width='97%', src="image/root_arab.png"), href='')
     )
   })
   output$stage.arab <-renderUI({
   tagList(
     p('Developmental stage', style='font-size:18px'),
-    a(img(width='97%', src="image/stage_arab.png"), href=paste0('http://', lis.url$hos.port, stage.arab.url), target="_blank")
+    a(img(width='97%', src="image/stage_arab.png"), href='')
     )
   })
   output$clp.rice <-renderUI({
   tagList(
     p('Mouse brain multi-variable data', style='font-size:18px'),
-    a(img(width='97%', src="image/mus_multi_dim.png"), href=paste0('http://', lis.url$hos.port, mus.multi.dim.url), target="_blank")
+    a(img(width='97%', src="image/mus_multi_dim.png"), href='')
     )
   })
 

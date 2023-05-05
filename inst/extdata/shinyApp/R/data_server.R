@@ -354,16 +354,26 @@ data_server <- function(id, sch, lis.url, ids, upl.mod.lis, deg.mod.lis=NULL, sc
       if (length(sel)==0) sel <- as.numeric(cfg$lis.par$data.matrix['row.selected', 'default'])
      }; sear$id <- sel
   })
-  dt.shm <- eventReactive(list(se.scl()), {
+  dt.shm <- eventReactive(list(se.scl(), input$spk), {
     cat('Prepaing data table ... \n')
-    se.scl <- se.scl(); dat <- dat()
-    if (!check_obj(list(se.scl, dat))) req('')
+    se.scl <- se.scl(); dat <- dat(); spk <- input$spk
+    if (!check_obj(list(se.scl, dat, spk))) req('')
     assay <- assay(se.scl); rdat <- rowData(se.scl)
     withProgress(message="Data table: ", value = 0, {
       incProgress(0.5, detail="please wait ...")
       rdat <- rdat[, grep(met.pat, colnames(rdat)), drop=FALSE]
       if (!all(assay==round(assay))) assay <- round(assay, 2)
-      if (ncol(rdat) > 0) df.tab <- cbind.data.frame(rdat, assay, stringsAsFactors=FALSE) else df.tab <- assay
+      if ('Yes' %in% spk) {
+      spk.code <- NULL
+      for (i in seq_len(nrow(assay))) {
+        spk.code <- c(spk.code, spk_chr(setNames(unlist(assay[i, ]), NULL), lineColor = 'black', fillColor = '#ccc', chartRangeMin = 0, chartRangeMax = 8, width = 80, height = 30, highlightLineColor = 'orange', highlightSpotColor = 'orange'))
+      }; df.spk <- cbind.data.frame(Sparklines=spk.code, assay) 
+      }
+      if (ncol(rdat) > 0) {
+        if ('Yes' %in% spk) df.tab <- cbind.data.frame(rdat, df.spk, stringsAsFactors=FALSE) else df.tab <- cbind.data.frame(rdat, assay, stringsAsFactors=FALSE)
+      } else {   
+        if ('Yes' %in% spk) df.tab <- df.spk else df.tab <- assay
+      }
       # Remove '__con' only in the data table, not in the downstream (shm, network).
       if (dat$con.na==FALSE) colnames(df.tab) <- sub('__con$', '', colnames(df.tab))
       incProgress(0.4, detail="...")
@@ -387,32 +397,6 @@ data_server <- function(id, sch, lis.url, ids, upl.mod.lis, deg.mod.lis=NULL, sc
     }
     g <- graph_line(dt.sel, y.title=y.title, text.size=12, lgd.guide=lgd.guide); message('Done!'); g
   })
-  output$dtSel <- renderDataTable({
-    cat('Preparing selected data matrix ... \n')
-    se.scl.sel <- se.scl.sel(); dat <- dat()
-    if (!check_obj(list(se.scl.sel, dat))) req('')
-    assay.sel <- assay(se.scl.sel); rdat <- rowData(se.scl.sel)
-    if (!all(assay.sel==round(assay.sel))) assay.sel <- round(assay.sel, 2)
-    withProgress(message="Data table (selected): ", value = 0, {
-      incProgress(0.5, detail="please wait ...")
-      if (dat$con.na==FALSE) colnames(assay.sel) <- sub('__con$', '', colnames(assay.sel))
-      rdat <- rdat[, grep(met.pat, colnames(rdat)), drop=FALSE]
-      if (ncol(rdat) > 0) df.tab <- cbind.data.frame(rdat, assay.sel, stringsAsFactors=FALSE) else df.tab <- assay.sel
-      # Remove '__con' only in the data table, not in the downstream (shm, network).
-    # Decimals. 
-    # if (all(assay.sel==round(assay.sel))) deci <- 0 else deci <- 2
-    # Tooltip on metadata.
-    col1 <- list(list(targets = c(1), render = DT::JS("$.fn.dataTable.render.ellipsis(40, false)")))
-    # In case no metadata column.
-    if (colnames(df.tab)[1]!='metadata') col1 <- NULL
-    dtab <- datatable(df.tab[, seq(subdat$c1, subdat$c2, 1), drop=FALSE], selection='none', escape=FALSE, filter="top", extensions=c('Scroller', 'FixedColumns'), plugins = "ellipsis",
-   options=list(pageLength=5, lengthMenu=c(5, 15, 20), autoWidth=TRUE, scrollCollapse=TRUE, deferRender=TRUE, scrollX=TRUE, scrollY=300, scroller=TRUE, searchHighlight=TRUE, search=list(regex=TRUE, smart=FALSE, caseInsensitive=TRUE), searching=TRUE, columnDefs=col1, dom='t', fixedColumns = list(leftColumns=2)), 
-   class='cell-border strip hover') %>% formatStyle(0, backgroundColor="orange", cursor='pointer')
-   # formatRound(colnames(assay.sel), deci)
-   incProgress(0.4, detail="please wait ...")
-    cat('Done! \n'); dtab
-  })
-  })
   subdat <- reactiveValues(r1=1, r2=500, c1=1, c2=20)
   observeEvent(list(input$run+1, dt.shm()), ignoreInit=FALSE, {
     r1 <- input$r1; r2 <- input$r2
@@ -431,21 +415,40 @@ data_server <- function(id, sch, lis.url, ids, upl.mod.lis, deg.mod.lis=NULL, sc
     subdat$r1 <- r1; subdat$r2 <- r2
     subdat$c1 <- c1; subdat$c2 <- c2
   })
+  output$dtSel <- renderDataTable({
+    cat('Preparing selected data matrix ... \n')
+    gene.dt <- dt.shm()
+    if (!check_obj(list(gene.dt, ids$sel))) req('')
+    withProgress(message="Data table (selected): ", value = 0, {
+      incProgress(0.5, detail="please wait ...") 
+      # Tooltip on metadata.
+      col1 <- list(list(targets = c(1), render = DT::JS("$.fn.dataTable.render.ellipsis(40, false)")))
+      # In case no metadata column.
+      if (colnames(gene.dt)[1]!='metadata') col1 <- NULL
+      dtab <- datatable(gene.dt[ids$sel, seq(subdat$c1, subdat$c2, 1), drop=FALSE], selection='none', escape=FALSE, filter="top", extensions=c('Scroller', 'FixedColumns'), plugins = "ellipsis",
+   options=list(pageLength=5, lengthMenu=c(5, 15, 20), autoWidth=TRUE, scrollCollapse=TRUE, deferRender=TRUE, scrollX=TRUE, scrollY=300, scroller=TRUE, searchHighlight=TRUE, search=list(regex=TRUE, smart=FALSE, caseInsensitive=TRUE), searching=TRUE, columnDefs=col1, dom='t', fixedColumns = list(leftColumns=3), class='cell-border strip hover', 
+   fnDrawCallback = htmlwidgets::JS('function(){HTMLWidgets.staticRender()}')
+   )) %>% formatStyle(0, backgroundColor="orange", cursor='pointer') %>% spk_add_deps()
+   # formatRound(colnames(assay.sel), deci)
+   incProgress(0.4, detail="please wait ...")
+    cat('Done! \n'); dtab
+  })
+  })
   dt.sel <- reactiveValues(val='none')
   output$dtAll <- renderDataTable({
     cat('Preparing complete data matrix ... \n')
     gene.dt <- dt.shm(); page.h <- input$page
     if (is.null(gene.dt)|!is.numeric(page.h)) return()
     # Decimals.
-    #idx.num <- grep(met.pat, colnames(gene.dt), invert=TRUE)
-    #df.num <- gene.dt[, idx.num, drop=FALSE]
-    #if (all(df.num==round(df.num))) deci <- 0 else deci <- 2
     # Tooltip on metadata.
     col1 <- list(list(targets = c(1), render = DT::JS("$.fn.dataTable.render.ellipsis(40, false)")))
     if (colnames(gene.dt)[1]!='metadata') col1 <- NULL
+    dat <- gene.dt[seq(subdat$r1, subdat$r2, 1), seq(subdat$c1, subdat$c2, 1), drop=FALSE]
     dtab <- datatable(gene.dt[seq(subdat$r1, subdat$r2, 1), seq(subdat$c1, subdat$c2, 1), drop=FALSE], selection=list(mode="multiple", target="row", selected=dt.sel$val), escape=FALSE, filter="top", extensions=c('Scroller', 'FixedColumns'), plugins = "ellipsis",
-   options=list(pageLength=5, lengthMenu=c(5, 15, 20), autoWidth=TRUE, scrollCollapse=TRUE, deferRender=TRUE, scrollX=TRUE, scrollY=page.h, scroller=TRUE, searchHighlight=TRUE, search=list(regex=TRUE, smart=FALSE, caseInsensitive=TRUE), searching=TRUE, columnDefs=col1), 
-   class='cell-border strip hover') %>% formatStyle(0, backgroundColor="orange", cursor='pointer'); cat('Done! \n'); dtab 
+   options=list(pageLength=5, lengthMenu=c(5, 15, 20), autoWidth=TRUE, scrollCollapse=TRUE, deferRender=TRUE, scrollX=TRUE, scrollY=page.h, scroller=TRUE, searchHighlight=TRUE, search=list(regex=TRUE, smart=FALSE, caseInsensitive=TRUE), searching=TRUE, class='cell-border strip hover', columnDefs=col1, fixedColumns = list(leftColumns=3), 
+   fnDrawCallback = htmlwidgets::JS('function(){HTMLWidgets.staticRender()}')
+   )) %>% formatStyle(0, backgroundColor="orange", cursor='pointer') %>% spk_add_deps()
+   cat('Done! \n'); dtab
    # formatRound(idx.num, deci); cat('Done! \n'); dtab
   })
 
@@ -500,3 +503,8 @@ data_server <- function(id, sch, lis.url, ids, upl.mod.lis, deg.mod.lis=NULL, sc
   })
 
 }
+
+
+
+
+

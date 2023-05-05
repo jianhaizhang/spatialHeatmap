@@ -1,3 +1,4 @@
+
 # Module for plotting SHMs.
 shm_server <- function(id, sch, lis.url, url.id, tab, upl.mod.lis, dat.mod.lis, sch.mod.lis, scell.mod.lis, dim.mod.lis, session) {  
   moduleServer(id, function(input, output, session) {

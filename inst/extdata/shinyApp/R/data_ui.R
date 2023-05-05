@@ -9,7 +9,7 @@ data_ui <- function(id, dim.ui=NULL, tailor.ui=NULL) {
       div(id=ns('submsg'),
       fluidRow(splitLayout(cellWidths=c('12px', '70px', '1px', '70px', '1px', '95px', '1px', '89px'), '',
         numericInput(ns('r1'), label='Row start', value=1, min=1, max=Inf, step=1), '',
-        numericInput(ns('r2'), label='Row end', value=500, min=2, max=Inf, step=1), '',
+        numericInput(ns('r2'), label='Row end', value=100, min=2, max=Inf, step=1), '',
         numericInput(ns('c1'), label='Column start', value=1, min=1, max=Inf, step=1), '',
         numericInput(ns('c2'), label='Column end', value=20, min=2, max=Inf, step=1)
       ))),
@@ -39,10 +39,11 @@ data_ui <- function(id, dim.ui=NULL, tailor.ui=NULL) {
       ), # tabPanel
 
       tabPanel("Complete", value='dat',
-      fluidRow(splitLayout(cellWidths=c('5px', '130px', '1px', '115px', '1px', '80px', '1px', '170px'), '',
+      fluidRow(splitLayout(cellWidths=c('5px', '130px', '1px', '115px', '1px', '80px', '1px', '80px', '1px', '170px'), '',
       actionButton(ns("selRow"), "Confirm selection", style=run.top), '',
       actionButton(ns("deSel"), "Deselect rows", style='margin-top:24px'), '',
       numericInput(ns('page'), label='Page height', value=300, min=50, max=Inf, step=50, width=150), '',
+      selectInput(ns('spk'), label='Sparklines', choices=c('No', 'Yes'), selected='No'), '',
       selectInput(ns('datIn'), label='Input data', choices=c('Complete'='all'), selected='all') 
       )),
       fluidRow(splitLayout(cellWidths=c("1%", "98%", "1%"), "", dataTableOutput(ns("dtAll")), ""))

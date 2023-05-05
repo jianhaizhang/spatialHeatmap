@@ -4,7 +4,7 @@ library(shiny); library(shinydashboard); library(shinydashboardPlus); library(ya
 requireNamespace('DESeq2'); requireNamespace('av'); requireNamespace('BiocGenerics'); requireNamespace('distinct')
 requireNamespace('dendextend'); requireNamespace('HDF5Array'); requireNamespace('magick'); requireNamespace('DT');
 requireNamespace('pROC'); requireNamespace('shinyWidgets'); requireNamespace('shinyjs'); requireNamespace('htmltools');
-requireNamespace('shinyBS'); requireNamespace('sortable'); requireNamespace('org.Hs.eg.db'); requireNamespace('org.Mm.eg.db'); requireNamespace('org.At.tair.db'); requireNamespace('org.Dr.eg.db'); requireNamespace('org.Dm.eg.db'); requireNamespace('AnnotationDbi'); requireNamespace('Seurat')
+requireNamespace('shinyBS'); requireNamespace('sortable'); requireNamespace('org.Hs.eg.db'); requireNamespace('org.Mm.eg.db'); requireNamespace('org.At.tair.db'); requireNamespace('org.Dr.eg.db'); requireNamespace('org.Dm.eg.db'); requireNamespace('AnnotationDbi'); requireNamespace('Seurat'); requireNamespace('sparkline')
 
 
 # A module can only have a "ui" element without the "server".

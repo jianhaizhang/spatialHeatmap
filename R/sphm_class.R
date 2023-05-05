@@ -61,7 +61,7 @@ SPHM <- function(svg=NULL, bulk=NULL, cell=NULL, match=list(), output=list()) {
 
 check_SPHM <- function(svg=NULL, bulk=NULL, cell=NULL, match=NULL, output=NULL) {
   if (!is.null(svg)) if (!is(svg, 'SVG')) stop('"svg" should be an "SVG" object!')
-  if (!is.null(bulk)) if (!is(bulk, 'numeric') & !is(bulk, 'data.frame') & !is(bulk, 'DFrame') & !is(bulk, 'SummarizedExperiment')) stop('"bulk" should be one of "numeric vector", "data.frame", "DFrame", or "SummarizedExperiment" object!')
+  if (!is.null(bulk)) if (!is(bulk, 'numeric') & !is(bulk, 'data.frame') & !is(bulk, 'matrix') & !is(bulk, 'DFrame') & !is(bulk, 'SummarizedExperiment')) stop('"bulk" should be one of "numeric vector", "data.frame", "DFrame", or "SummarizedExperiment" object!')
   if (!is.null(cell)) if (!is(cell, 'SingleCellExperiment') & !is.null(cell) & !is(cell, 'Seurat')) stop('"cell" should be "NULL", "SingleCellExperiment", or "Seurat" object!')
   if (!is.null(match)) {
     if (!is(match, 'list')) stop('"match" should be a "list" object!') else {

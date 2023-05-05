@@ -1,8 +1,8 @@
 Package: spatialHeatmap
 Type: Package
 Title: spatialHeatmap
-Version: 2.5.7
-Date: 2023-04-18
+Version: 2.5.8
+Date: 2023-05-05
 Authors@R: c(
   person(given="Jianhai", family="Zhang", role=c("aut", "trl", "cre"), email="jzhan067@ucr.edu", comment=""),
   person(given="Jordan", family="Hayes", role="aut", email="jhayes@ucr.edu", comment=""),
@@ -21,15 +21,15 @@ biocViews: Spatial, Visualization, Microarray, Sequencing, GeneExpression,
         CellBiology, GeneTarget
 VignetteBuilder: knitr
 Depends: R (>= 3.5.0)
-Imports: data.table, dplyr, edgeR, WGCNA, flashClust, htmlwidgets, genefilter, ggplot2, ggdendro, grImport, grid, gridExtra,
-         gplots, igraph, methods, Matrix, rsvg,
-         shiny, dynamicTreeCut, grDevices, graphics, ggplotify, parallel, plotly, reshape2, scater, 
-         scuttle, scran, stats, SummarizedExperiment, SingleCellExperiment, shinydashboard, S4Vectors, tibble,
-         utils, visNetwork, UpSetR, xml2, yaml
+Imports: data.table, dplyr, edgeR, WGCNA, flashClust, genefilter, ggplot2, ggdendro, grImport, grid, gridExtra,
+         gplots, igraph, methods, Matrix, rsvg, shiny, dynamicTreeCut, grDevices, graphics, ggplotify, parallel, 
+         reshape2, scater, scuttle, scran, stats, SummarizedExperiment, SingleCellExperiment, shinydashboard, 
+         S4Vectors, tibble, utils, xml2
 Suggests: AnnotationDbi, av, BiocParallel, BiocFileCache, BiocGenerics, BiocStyle, BiocSingular, Biobase, cachem, DESeq2,
-          distinct, dendextend, DT, HDF5Array, htmltools, kableExtra, knitr, limma, magick, memoise, ExpressionAtlas, 
-          GEOquery, org.Hs.eg.db, org.Mm.eg.db, org.At.tair.db, org.Dr.eg.db, org.Dm.eg.db, pROC, rmarkdown, rols, rappdirs,
-          RUnit, Rtsne, shinyWidgets, shinyjs, shinyBS, sortable, Seurat, uwot
+          distinct, dendextend, DT, HDF5Array, htmltools, htmlwidgets, kableExtra, knitr, limma, magick, memoise, 
+          ExpressionAtlas, GEOquery, org.Hs.eg.db, org.Mm.eg.db, org.At.tair.db, org.Dr.eg.db, org.Dm.eg.db, pROC, plotly,
+          rmarkdown, rols, rappdirs, RUnit, Rtsne, shinyWidgets, shinyjs, shinyBS, sortable, Seurat, sparkline, uwot, UpSetR, 
+          visNetwork, yaml
 BugReports: https://github.com/jianhaizhang/spatialHeatmap/issues
 URL: https://github.com/jianhaizhang/spatialHeatmap
 RoxygenNote: 7.2.3
