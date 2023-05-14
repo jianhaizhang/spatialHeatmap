@@ -28,9 +28,9 @@
 
 #' @importFrom ggplot2 theme layer_data scale_fill_manual unit element_text guide_legend ggplot_build
 
-gg_lgd <- function(gg.all, size.key=NULL, size.text.key=8, angle.text.key=NULL, position.text.key=NULL, legend.value.vdo=NULL, sub.title.size=NULL, row=NULL, col=NULL, label=FALSE, label.size=3, label.angle=0, hjust=0, vjust=0, opacity=1, key=TRUE, aspect.ratio = NULL) {
+gg_lgd <- function(gg.all, size.key=NULL, size.text.key=8, angle.text.key=NULL, position.text.key=NULL, legend.value.vdo=NULL, sub.title.size=NULL, row=NULL, col=NULL, label=FALSE, label.size=3, label.angle=0, hjust=0, vjust=0, opacity=1, key=TRUE, aspect.ratio = NULL, lgd.space.x=NULL, title=NULL) {
 
-  # save(gg.all, size.key, size.text.key, angle.text.key, position.text.key, legend.value.vdo, sub.title.size, row, col, label, label.size, label.angle, hjust, vjust, opacity, key, aspect.ratio, file='gg.lgd.all')
+  # save(gg.all, size.key, size.text.key, angle.text.key, position.text.key, legend.value.vdo, sub.title.size, row, col, label, label.size, label.angle, hjust, vjust, opacity, key, aspect.ratio, title, file='gg.lgd.all')
   feature <- x0 <- y0 <- NULL
   # Function to remove feature labels. 
   rm_label <- function(g) {    
@@ -40,11 +40,11 @@ gg_lgd <- function(gg.all, size.key=NULL, size.text.key=8, angle.text.key=NULL, 
       if (all(c('check_overlap', 'angle', 'size') %in% na.lay)) g$layers[[k]] <- NULL
     }; return(g)
   }
-  for (i in seq_along(gg.all)) {
-  
+  for (i in seq_along(gg.all)) { 
     g <- gg.all[[i]] 
-    if (!is.null(size.key)) g <- g+theme(legend.key.size=unit(size.key, "npc"), legend.text=element_text(size=ifelse(is.null(size.text.key), 8*size.key*33, size.text.key)))
+    if (!is.null(size.key)) g <- g+theme(legend.key.height=unit(size.key, "npc"), legend.key.width=unit(size.key, "npc"), legend.text=element_text(size=ifelse(is.null(size.text.key), 8*size.key*33, size.text.key)))
     if (!is.null(sub.title.size)) g <- g+theme(plot.title=element_text(hjust=0.5, size=sub.title.size))
+    if (!is.null(lgd.space.x)) g <- g+theme(legend.spacing.x = unit(lgd.space.x, 'npc'))
     if (!is.null(row)|!is.null(col)|label==TRUE|opacity!=1|!is.null(angle.text.key)|!is.null(position.text.key)|!is.null(legend.value.vdo)) {
 
       lay.dat <- layer_data(g); g.col <- lay.dat$fill
@@ -90,9 +90,11 @@ gg_lgd <- function(gg.all, size.key=NULL, size.text.key=8, angle.text.key=NULL, 
          } 
          g <- rm_label(g)+geom_text(data=df.lab, aes(label=label, x=x0, y=y0), check_overlap=TRUE, size=label.size, angle=label.angle, hjust=hjust, vjust=vjust)
       }; gg.all[[i]] <- rm_label(g)
-    } # if 
-    if (label==FALSE) { gg.all[[i]] <- rm_label(g) }
-    if (!is.null(aspect.ratio)) if (aspect.ratio > 0) gg.all[[i]] <- g + theme(aspect.ratio=1/aspect.ratio) 
+    } # if
+    if (!is.null(title)) g <- g + labs(title=title) 
+    if (label==FALSE) { g <- rm_label(g) }
+    if (!is.null(aspect.ratio)) if (aspect.ratio > 0) g <- g + theme(aspect.ratio=1/aspect.ratio)
+    gg.all[[i]] <- g 
   } # for 
   return(gg.all)
 

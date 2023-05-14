@@ -192,7 +192,7 @@ gg_shm <- function(svg.all, gene, col.idp=FALSE, con.na=TRUE, geneV, charcoal=FA
        br.lab <- c(tis.path[leg.idx], tr.lab) 
        scl.fil <- scale_fill_manual(values=g.col, breaks=br, labels=br.lab, guide=guide_legend(title=NULL, ncol=legend.ncol, nrow=legend.nrow)) 
     }
-    lgd.par <- theme(legend.position=legend.position, legend.direction=legend.direction, legend.background = element_rect(fill=alpha(NA, 0)), legend.key.size=unit(legend.key.size, "npc"), legend.text=element_text(size=legend.text.size), legend.margin=margin(l=0.1, r=0.1, unit='npc'))
+    lgd.par <- theme(legend.position=legend.position, legend.direction=legend.direction, legend.background = element_rect(fill=alpha(NA, 0)), legend.key.height=unit(legend.key.size, "npc"), legend.key.width=unit(legend.key.size, "npc"), legend.text=element_text(size=legend.text.size), legend.margin=margin(l=0.1, r=0.1, unit='npc'))
     ## Add 'feature' and 'value' to coordinate data frame, since the resulting ggplot object is used in 'ggplotly'. Otherwise, the coordinate data frame is applied to 'ggplot' directly by skipping the following code.
     cordn$gene <- k; cordn$condition <- con; cordn$value <- NA
     cordn$Feature <- sub('__\\d+$', '', cordn$feature)

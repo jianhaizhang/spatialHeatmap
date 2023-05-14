@@ -2,10 +2,10 @@
 library(spatialHeatmap); library(scRNAseq)
 sce.mus <- MarquesBrainData()
 # Filter cells and genes to obtain example data.
-sce.mus <- filter_cell(sce=sce.mus, cutoff=1, p.in.cell=0.85, p.in.gen=0.5)
+sce.mus.fil <- filter_cell(sce=sce.mus, cutoff=1, p.in.cell=0.85, p.in.gen=0.5)
 
 # Edit colData.
-cdat <- colData(sce.mus)[, -1]; colnames(cdat) <- make.names(colnames(cdat))
+cdat <- colData(sce.mus.fil)[, -1]; colnames(cdat) <- make.names(colnames(cdat))
 cdat$source_name <- make.names(cdat$source_name)
 colnames(cdat)[colnames(cdat)=='source_name'] <- 'label'
 # "variable" is a reserved colname to indicate experiment variables.
@@ -15,13 +15,13 @@ rownames(cdat) <- make.names(rownames(cdat))
 cdat <- edit_tar(cdat, 'variable', '6hr post acute stress', '6h.post.stress')
 cdat <- edit_tar(cdat, 'variable', 'No', 'control')
 cdat[1:2, ]
-colData(sce.mus) <- cdat
-sce.mus <- subset(sce.mus, , variable=='control')
+colData(sce.mus.fil) <- cdat
+sce.mus.fil <- subset(sce.mus.fil, , variable=='control')
 # Save the example data.
-saveRDS(sce.mus, file='./cell_mouse_brain.rds')
+saveRDS(sce.mus.fil, file='./cell_mouse_brain.rds')
 
 # Quality control, normalization, dimensionality reduction.
-sce.dimred <- process_cell_meta(sce.mus, qc.metric=list(subsets=list(Mt=rowData(sce.mus)$featureType=='mito'), threshold=1)) 
+sce.dimred <- process_cell_meta(sce.mus.fil, qc.metric=list(subsets=list(Mt=rowData(sce.mus.fil)$featureType=='mito'), threshold=1)) 
 # Clustering.
 sce.clus <- cluster_cell(sce=sce.dimred, graph.meth='knn', dimred='PCA') 
 # Manual cluster labels.

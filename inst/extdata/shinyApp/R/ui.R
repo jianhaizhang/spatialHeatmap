@@ -33,7 +33,7 @@ ui <- function(request) {
    # Place title on the right of dashboard header.
    tags$script(HTML('
      $(document).ready(function() {
-       $("header").find("nav").append(\'<span class="mainTitle" style="color:black;font-weight:bold;font-size:18px">spatialHeatmap Shiny App</span>\');
+       $("header").find("nav").append(\'<span class="mainTitle" style="color:black;font-weight:bold;font-size:18px">spatialHeatmap Shiny App (2023-05-14)</span>\');
      })
    ')),
     tags$script(HTML('$(document).tooltip({show: {effect:"none", delay:0}})')),

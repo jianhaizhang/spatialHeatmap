@@ -564,7 +564,7 @@ The following example saves the interactive HTML and video files under the direc
 Code chunk not evaluated to save time building this vignette.
 -->
 ```{r eval=FALSE, echo=TRUE, warnings=FALSE, results='hide'}
-shm(data=dat.hum, ID=c('MTDHP3', 'YBX2'), lay.shm='con', legend.r=1.5, legend.nrow=3, h=0.6, out.dir=tmp.dir)
+shm(data=dat.hum, ID=c('OLFM4', 'LOC440742'), lay.shm='con', legend.r=1.5, legend.nrow=3, h=0.6, aspr=2.3, animation.scale=0.7,    bar.width=0.1, bar.value.size=4, out.dir=tmp.dir)
 ```
 
 ### SHM: Customization

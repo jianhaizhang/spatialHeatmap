@@ -296,7 +296,7 @@ data_server <- function(id, sch, lis.url, ids, upl.mod.lis, deg.mod.lis=NULL, sc
      se.fil <- se.fil()
      if (!check_obj(list(sig.max, sig.min))) req('')
      assay <- assay(se.fil)
-     assay <- thr(thr.min=sig.min, thr.max=sig.max, data=assay)
+     assay <- thrsd(thr.min=sig.min, thr.max=sig.max, data=assay)
      lgc.as <- !is(assay, 'character')
      if (!lgc.as) msg <- assay else NULL
      show_mod(lgc.as, msg); req(lgc.as)

@@ -23,7 +23,7 @@ shm_server <- function(id, sch, lis.url, url.id, tab, upl.mod.lis, dat.mod.lis, 
   observeEvent(scell.mod.lis$sce.upl$covis.type, {
     covis.type <- scell.mod.lis$sce.upl$covis.type
     if (!check_obj(list(covis.type))) return()
-    cho <- c('Cell-by-value'='idp', 'Fixed-group'='fixed')
+    cho <- c('Cell-by-value'='idp', 'Fixed-by-group'='fixed')
     if (covis.type %in% c('toBulk', 'toBulkAuto')) cho <- c(cho, 'Cell-by-group'='cellgrp')
     if (covis.type %in% c('toCell', 'toCellAuto')) cho <- c(cho, 'Feature-by-group'='ftgrp')
     updateSelectizeInput(session, inputId='profile', choices=cho, selected='idp')
@@ -154,8 +154,8 @@ shm_server <- function(id, sch, lis.url, url.id, tab, upl.mod.lis, dat.mod.lis, 
   output$bar1 <- bar2 <- renderPlot({ if (!is.null(shm.bar)) shm.bar() })
   # output$bar2 <- renderPlot({ if (!is.null(shm.bar)) shm.bar() })
   observe({
-    ggly.but <- input$ggly.but
-    if (is.null(ggly.but)) output$bar2 <- NULL else if (ggly.but==0) output$bar2 <- NULL else output$bar2 <- bar2
+    glyBut <- input$glyBut
+    if (is.null(glyBut)) output$bar2 <- NULL else if (glyBut==0) output$bar2 <- NULL else output$bar2 <- bar2
   }) 
 
   svg.path <- reactive({ # Organise svg name and path in a nested list.
@@ -814,6 +814,7 @@ shm_server <- function(id, sch, lis.url, url.id, tab, upl.mod.lis, dat.mod.lis, 
       grob.all <- c(grob.all, grob.lis) 
     }; shm$grob.all <- grob.all; shm$gg.all <- gg.all; shm$grob.gg.all <- grob.gg.all
   })
+   dim.shm.gg.all <- reactiveValues()
    dim.shm.grob.all <- reactiveValues()
    dim.lgd.lis <- reactiveValues()
 
@@ -921,6 +922,7 @@ shm_server <- function(id, sch, lis.url, url.id, tab, upl.mod.lis, dat.mod.lis, 
      }
     })
      dim.shm.grob.all$val <- dim.shm.lis$dim.shm.grob.lis
+     dim.shm.gg.all$val <- dim.shm.lis$dim.shm.gg.lis
      cat('Done! \n')
      # save(gg.all1, file='gg.all1'); save(grob.all1, file='grob.all1'); save(gcol.all, file='gcol.all'); save(gg.dim, file='gg.dim'); save(clus, file='clus'); save(ft.rematch, file='ft.rematch')
      # lgd.lis <- shm$lgd.all; save(dim.shm.grob.lis, gg.all1, gg.dim.all, gcol.all, ft.rematch, lgd.lis, file='dgggl')
@@ -991,12 +993,14 @@ shm_server <- function(id, sch, lis.url, url.id, tab, upl.mod.lis, dat.mod.lis, 
       #dim.lgd.lis <- dim.shm.lis$dim.lgd.lis
       # save(dim.shm.lis, file='dim.shm.lis')
      dim.shm.grob.all$val <- dim.shm.lis$dim.shm.grob.lis
+     dim.shm.gg.all$val <- dim.shm.lis$dim.shm.gg.lis
      #dim.shm.gg.lis <- dim.shm.lis$dim.shm.gg.lis
      #save(dim.shm.gg.lis, file='dim.shm.gg.lis')
      cat('Done! \n')
    }) 
    observeEvent(ipt$fileIn, { 
-     dim.shm.grob.all$val <- NULL; dim.lgd.lis$v <- NULL
+     dim.shm.gg.all$val <- NULL; dim.shm.grob.all$val <- NULL
+     dim.lgd.lis$v <- NULL
    })
    observe({
    # observeEvent(scell.mod.lis$sce.upl$covis.type, ignoreInit=FALSE, ignoreNULL=FALSE, { 
@@ -1096,8 +1100,8 @@ shm_server <- function(id, sch, lis.url, url.id, tab, upl.mod.lis, dat.mod.lis, 
     ipt$fileIn; se.scl.sel(); ipt$adj.modInpath; A(); input$p; input$cv1; input$cv2; ids$sel; tis.trans$v; input$genCon  
     url.val <- url_val('shmAll-ext', lis.url)
     updateRadioButtons(session, inputId='ext', selected=ifelse(url.val!='null', url.val, cfg$lis.par$shm.img['file.type', 'default']))
-    url.val <- url_val('shmAll-ggly.but', lis.url)
-    # updateRadioButtons(session, inputId="ggly.but", label="Show animation", choices=c("Yes", "No"), selected=ifelse(url.val!='null', url.val, cfg$lis.par$shm.anm['show', 'default']), inline=TRUE)
+    url.val <- url_val('shmAll-glyBut', lis.url)
+    # updateRadioButtons(session, inputId="glyBut", label="Show animation", choices=c("Yes", "No"), selected=ifelse(url.val!='null', url.val, cfg$lis.par$shm.anm['show', 'default']), inline=TRUE)
     url.val <- url_val('shmAll-vdo.but', lis.url)
     # updateRadioButtons(session, inputId="vdo.but", label="Show/update video", choices=c("Yes", "No"), selected=ifelse(url.val!='null', url.val, cfg$lis.par$shm.video['show', 'default']), inline=TRUE)
 
@@ -1137,8 +1141,8 @@ shm_server <- function(id, sch, lis.url, url.id, tab, upl.mod.lis, dat.mod.lis, 
     }
   })
   observe({
-    ggly.but <- input$ggly.but
-    if (is.null(ggly.but)) output$lgd2 <- NULL else if (ggly.but==0) output$lgd2 <- NULL else output$lgd2 <- lgd2
+    glyBut <- input$glyBut
+    if (is.null(glyBut)) output$lgd2 <- NULL else if (glyBut==0) output$lgd2 <- NULL else output$lgd2 <- lgd2
   }) 
 
   output$lgd.ui <- renderUI({ 
@@ -1168,163 +1172,156 @@ shm_server <- function(id, sch, lis.url, url.id, tab, upl.mod.lis, dat.mod.lis, 
 
   })
 
-
-  output$tran <- renderText({
-    if (is.null(se.scl.sel())|length(ids$sel)==0|is.null(svgs())|gID$geneSel[1]=="none"|is.null(shm$grob.all)) return(NULL)
-    if (!is.null(input$t)) validate(need(try(input$t>=0.1), 'Transition time should be at least 0.1 second!'))
-  })
-
   observeEvent(list(ipt$fileIn, log(), tis.trans$v, input$col.but, input$sig.but, input$cs.v, input$preScale), { ggly_rm(); vdo_rm() })
 
-  # Once dimension of each frame is changed, delete previous frames.
-  observeEvent(list(input$scale.ly), {
-    if (dir.exists('html_shm/')) { unlink('html_shm/lib', recursive=TRUE)
-      file.remove(list.files('html_shm/', '*.html$', full.names=TRUE))
-    } else dir.create('html_shm/')
+  gly.par <- reactiveValues()
+  observeEvent(input$glyBut, {
+    if (is.null(input$glyBut)) return()
+    gly.par$val <- list(input$aspr, input$scale.ly, shm$gg.all1, shm.bar(), dim.lgd.lis$v, dim.shm.gg.all$val)
   })
-
-  observeEvent(list(input$ggly.but), {
-    cat('Preparing animation frames ... \n')
-    scale.ly <- input$scale.ly; ggly.but <- input$ggly.but
-    if (is.null(scale.ly)|is.null(ggly.but)) return()
-    if (ggly.but==0) return()
-    if (is.null(se.scl.sel())|is.null(gID$new)|length(ids$sel)==0|is.null(svgs())|gID$geneSel[1]=="none"|is.null(shm$gg.all1)) return(NULL)
-    if (length(color$col=="none")==0|input$color=="") return(NULL)
-
-    withProgress(message="Animation: ", value=0, {
-    incProgress(0.25, detail="preparing frames ...") 
-    gg.all <- shm$gg.all1; na <- names(gg.all)
+  # eventReactive avoids endless circles.
+  res.gly <- eventReactive(list(gly.par$val), {
+    aspr <- input$aspr; scl <- input$scale.ly
+    pat.all <- pat.all(); gg.all <- shm$gg.all1
+    cs.g <- shm.bar(); na <- names(gg.all); fileIn <- ipt$fileIn
+    if (!check_obj(list(aspr, scl, pat.all, gg.all, cs.g, fileIn))) return()
     # Only take the selected genes.
-    na <- na[grepl(paste0('^', pat.all(), '_\\d+$'), na)]; gg.all <- gg.all[na]
-    for (i in seq_along(gg.all)) {
-      na0 <- paste0(na[i], ".html")
-      if (length(list.files('www/ggly/', na0))>0) next
-      # Aspect ratio is not accepted in 'ggplotly'.
-      gg.all[[i]]$theme$aspect.ratio <- NULL
-      gg0 <- gg.all[[i]]
-      # tit.size <- gg0$theme$plot.title$size
-      # This step is invalid due to the "next" above.
-      # gg0$theme$plot.title$size <- tit.size*scale.ly
-      gly <- ggplotly(gg0, tooltip='text') %>% layout(showlegend=FALSE)
-      gly$sizingPolicy$padding <- 0
-      incProgress(0.2, detail=paste0('preparing ', na0, ' ...'))
-      cat('Animation: saving', na0, '\n')
-      saveWidget(gly, na0, selfcontained=FALSE, libdir="lib")
-      file.rename(na0, paste0('www/ggly/', na0))
+    na <- na[grepl(paste0('^', pat.all, '_\\d+$'), na)]
+    if (length(na) == 0) return(); gg.all <- gg.all[na]
 
-    }
-    if (!dir.exists('www/ggly/lib')) file.rename('lib', 'www/ggly/lib') else if (dir.exists('lib/')) unlink('lib', recursive=TRUE); cat('Done! \n')
-    })
+    if (grepl(na.sgl, fileIn)) {
+      prof <- input$profile; dim.shm <- dim.shm.gg.all$val
+      if (!check_obj(list(prof, dim.shm))) return()
+      dim.gg <- dim.shm[paste0('dim_', na)]
+    } else dim.gg <- NULL
 
+    out.dir <- 'www'; html.dir <- file.path(out.dir, 'html_shm')
+    if (dir.exists(html.dir)) unlink(html.dir, recursive=TRUE)
+    withProgress(message="Animation: ", value=0, {
+      incProgress(0.25, detail="preparing frames ...") 
+      lis <- html_ly(gg.all=c(dim.gg, gg.all), cs.g=cs.g, aspr=aspr, anm.scale=scl, selfcontained=FALSE, out.dir=out.dir)
+      if (!is(lis, 'list')) return()
+      incProgress(0.25, detail="preparing frames ...") 
+    }); return(c(lis, list(na=na)))
+  }); observe({ res.gly() })
+
+  output$ggly <- renderUI({
+    message('Animation: accessing HTML files ...')
+    lis <- res.gly(); if (!is(lis, 'list')) return()
+    fm <- input$fm; if (is.null(fm)) return()
+    na <- lis$na; na.sel <- na[as.integer(fm)]
+    na.sel <- list.files('www/html_shm', pattern=na.sel)
+    if (!check_obj(list(na.sel))) return(); 
+    message(na.sel, ' Done!')
+    tags$iframe(src=file.path('html_shm', na.sel), height = lis$height, width=lis$width, scrolling='yes') 
   })
-
+  
   output$sld.fm <- renderUI({
-    if (input$ggly.but==0) return()
-    ns <- NS(id) 
+    if (input$glyBut==0) return(); ns <- NS(id) 
     if (is.null(shm$gg.all)|is.null(pat.all())|is.null(gID$geneSel)) return(NULL) 
     gen.con.pat <- paste0('^', pat.all(), '_\\d+$') 
-    sliderInput(inputId=ns('fm'), 'Frames', min=1, max=sum(grepl(gen.con.pat, names(shm$gg.all1))), step=1, value=1, animate=animationOptions(interval=input$t*10^3, loop=FALSE, playButton=icon('play'), pauseButton=icon('pause')))
-  
-  })
-
-  # As long as the variable of 'reactive' is used in the 'ui.R', changes of elements in 'reactive' would cause chain change all the way to 'ui.R'. E.g. the change in "input$ggly.but=='No'" leads to changes in 'output$ggly' and 'ui.R', not necessarily changes in 'output$ggly' call changes in 'gly.url'.
-  gly.url <- reactive({
-    ggly.but <- input$ggly.but; fm <- input$fm 
-    if (is.null(ggly.but)|is.null(fm)) return() 
-    if (is.null(shm$gg.all1)|ggly.but==0|gID$geneSel[1]=='none'|is.null(pat.all())) return()
-    gg.all <- shm$gg.all1; na <- names(gg.all)
-    # Only take the selected genes.
-    na <- na[grepl(paste0('^', pat.all(), '_\\d+$'), na)]
-    if (length(na) == 0) return()
-    na1 <- na[as.integer(fm)]
-    asp.r <- gg.all[[na1]]$theme$aspect.ratio
-    na2 <- list.files('www/ggly', pattern=na1)
-    if (length(na2) == 0) return(); if (is.na(na2)) return()
-    cat('Animation: access', na2, 'path \n')
-    return(list(url = paste0('ggly/', na2), asp.r = asp.r))
-  })
-  observe({
-    cfg
-    updateNumericInput(session, 't', label='Transition time (s)', value=as.numeric(cfg$lis.par$shm.anm['transition', 'default']), min=0.1, max=Inf, step=0.5)
-    updateNumericInput(session, 'scale.ly', label='Scale plot', value = as.numeric(cfg$lis.par$shm.anm['scale.plot', 'default']), min=0.1, max=Inf, step=0.1)
-  })
-  observeEvent(list(log(), tis.trans$v, input$col.but, input$sig.but, input$cs.v, input$preScale, input$ggly.but, input$fm), {
-  
-  output$ggly <- renderUI({
-    scale.ly <- input$scale.ly; gly.url <- gly.url()
-    ggly.but <- input$ggly.but
-    cat('Animation: plotting', gly.url$url, '\n')
-    if (is.null(ggly.but)) return()
-    if (ggly.but==0|is.null(gly.url) | is.null(scale.ly)) return()
-    if (is.null(svgs())|is.null(se.scl.sel())|length(ids$sel)==0|color$col[1]=='none') return()
-    withProgress(message="Animation: ", value=0, {
-    incProgress(0.75, detail="plotting ...")
-    width <- 700*scale.ly; cat('Done! \n')
-    tags$iframe(src=gly.url$url, height = width*gly.url$asp.r, width=width, scrolling='yes')  
-    })
-  })
+    sliderInput(inputId=ns('fm'), 'Frames', min=1, max=sum(grepl(gen.con.pat, names(shm$gg.all1))), step=1, value=1, animate=animationOptions(interval=input$t*10^3, loop=FALSE, playButton=icon('play'), pauseButton=icon('pause'))) 
   })
 
   anm.dld <- reactive({
     scale.ly <- input$scale.ly; gly.url <- gly.url()
-    if (input$ggly.but==0|is.null(gly.url)) return()
+    if (input$glyBut==0|is.null(gly.url)) return()
     if (is.null(svgs())|is.null(se.scl.sel())|length(ids$sel)==0|color$col[1]=='none') return(NULL) 
     withProgress(message="Downloading animation: ", value=0, {
     incProgress(0.1, detail="in progress ...")
     gg.all <- shm$gg.all1; na <- names(gg.all)
     gg.na <- na[grepl(paste0('^', pat.all(), '_\\d+$'), na)]
     gg <- gg.all[gg.na]
-    pro <- 0.1; for (i in seq_along(gg.na)) {
-    incProgress(pro+0.2, detail=paste0('preparing ', gg.na[i], '.html...'))
-    anm.width <- 550 * scale.ly / gly.url$asp.r
-    html_ly(gg=gg[i], cs.g=shm.bar(), ft.trans=tis.trans$v, sam.uni=sam(), anm.width = anm.width, anm.height = 550 * scale.ly, out.dir='.') }
+    html_ly(gg.all=gg, cs.g=shm.bar(), anm.scale=1, out.dir=out.dir)
+    incProgress(0.5, detail=paste0('preparing HTML files ...'))
    })
   })
 
   # This step leaves 'fil.na' in 'output$dld.anm' being a global variable.
   output$dld.anm <- downloadHandler( 
-    # The rest code will run only after 'anm.dld()' is done.
-    filename=function(){ anm.dld(); "html_shm.zip" },
-    fil.na <- paste0(tmp.dir, '/html_shm.zip'),
-    content=function(fil.na){ cat('Downloading animation... \n'); zip(fil.na, 'html_shm/') }
+    filename=function(){ "html_shm.zip" },
+    fil.na <- file.path(tmp.dir, 'html_shm.zip'),
+    content=function(fil.na){ cat('Downloading animation... \n'); zip(fil.na, 'www/html_shm/'); message('Done!') }
   )
 
   observe({
-    cfg; updateSelectInput(session, "vdo.dim", label="Fixed dimension", choices=c('1920x1080', '1280x800', '320x568', '1280x1024', '1280x720', '320x480', '480x360', '600x600', '800x600', '640x480'), selected=cfg$lis.par$shm.video['dimension', 'default'])
+    cfg; updateSelectInput(session, "vdo.dim", selected=cfg$lis.par$shm.video['dimension', 'default'])
+  })
+  observe({
+   fileIn  <- ipt$fileIn; if(!check_obj(list(fileIn))) return()
+   if (!grepl(na.sgl, fileIn)) { 
+     shinyjs::hide(id = "lgdVdo"); shinyjs::show(id = "shmVdo")
+   } else { 
+     shinyjs::show(id = "lgdVdo"); shinyjs::hide(id = "shmVdo")
+   }
   })
 
-  output$ffm <- renderText({
-    ffm <- tryCatch({ test_ffm() }, error=function(e){ return('error') }, warning=function(w) { return('warning') } )
-    if (grepl('error|warning', ffm)) paste("<span style=\"color:red\">Error: \"ffmpeg\" is required to make videos!\"</span>")
+  vdo.par <- reactiveValues(); observeEvent(input$vdo.but, {
+    if (is.null(input$vdo.but)) return()
+    ffm <- check_exp(test_ffm())
+    idx <- 'w' %in% ffm | 'e' %in% ffm
+    if (idx) {
+      msg <- "'ffmpeg' is required to make videos!"
+      show_mod(!idx, msg=msg); return()
+    }
+    vdo.par$val <- list(input$vdo.key.row, input$vdo.key.size, input$vdo.val.lgd, input$vdo.label, input$vdo.lab.size, input$vdoLgdDimRow, input$vdoLgdDimText, input$vdoLgdDimkey, input$vdoLgdKeyRow, input$vdoLgdText, input$vdoLgdkey, input$vdoH, input$vdo.bar.width, input$lgdR, input$vdo.dim, input$vdo.itvl, input$vdo.res, shm$gg.all1, dim.lgd.lis$v, dim.shm.gg.all$val)
   })
-
-  observeEvent(list(input$vdo.but), {
-    cat('Making video ... \n')
-    vdo.itvl <- input$vdo.itvl; vdo.res <- input$vdo.res
-    vdo.but <- input$vdo.but; bar.width <- input$vdo.bar.width
-    if (is.null(vdo.but)|!is.numeric(vdo.itvl)|!is.numeric(vdo.res)|!is.numeric(bar.width)) return(NULL)
-    if (vdo.but==0|is.null(pat.all())) return(NULL)
-    if (is.null(svgs())|is.null(se.scl.sel())|length(ids$sel)==0|color$col[1]=='none') return(NULL)
-    validate(need(try(!is.na(vdo.itvl) & vdo.itvl>0), 'Transition time should be a positive numeric!'))
-    validate(need(try(!is.na(vdo.res) & vdo.res>=1 & vdo.res<=700), 'Resolution should be between 1 and 700!'))
+  observeEvent(list(vdo.par$val), {
+    message('Making video ... \n')
+    vdo.key.row <- input$vdo.key.row
+    vdo.key.size <- input$vdo.key.size
+    vdo.val.lgd <- input$vdo.val.lgd
+    vdoText2 <- input$vdoText2; prof <- input$profile
+    vdo.label <- input$vdo.label
+    vdo.lab.size <- input$vdo.lab.size
+    vdoLgdDimRow <- input$vdoLgdDimRow
+    vdoLgdDimText <- input$vdoLgdDimText;
+    vdoLgdDimkey <- input$vdoLgdDimkey
+    vdoLgdKeyRow <- input$vdoLgdKeyRow
+    vdoLgdText <- input$vdoLgdText
+    vdoLgdkey <- input$vdoLgdkey; vdo.res <- input$vdo.res
+    vdoH <- input$vdoH; lgdR <- input$lgdR
+    vdo.bar.width <- input$vdo.bar.width
+    vdo.dim <- input$vdo.dim; vdo.itvl <- input$vdo.itvl
+    pat.all <- pat.all(); svgs <- svgs()
+    se.scl.sel <- se.scl.sel(); gg.all <- shm$gg.all1
+    shm.bar <- shm.bar(); fileIn <- ipt$fileIn
  
+    if (!check_obj(list(vdo.key.row, vdo.key.size, vdo.val.lgd, vdoText2, vdo.label, vdo.lab.size, vdo.res, vdoH, vdo.bar.width, vdo.dim, vdo.itvl, pat.all, svgs, se.scl.sel, gg.all, shm.bar, fileIn))) return()
+    if (length(ids$sel)==0|color$col[1]=='none') return()
+    idx <- vdo.res>=1 & vdo.res<=700 
+    if (!idx) {
+      msg <- "Resolution should be between 1 and 700!"
+      show_mod(idx, msg=msg); return()
+    }
     withProgress(message="Video: ", value=0, {
     incProgress(0.75, detail="in progress ...")
-    gg.all <- shm$gg.all1; na <- names(gg.all)
-    pat <- paste0('^', pat.all(), '_\\d+$'); na <- na[grepl(pat, na)]
-    gg.all1 <- gg.all[na]
+    na <- names(gg.all); pat <- paste0('^', pat.all, '_\\d+$')
+    na <- na[grepl(pat, na)]; gg.sel <- gg.all[na]
     res <- vdo.res; dim <- input$vdo.dim
-    if (dim %in% c('1280x800', '1280x1024', '1280x720')&res>450) res <- 450
-    if (dim=='1920x1080'&res>300) res <- 300
-    # selectInput("vdo.dim", label="Fixed dimension:", choices=c('1920x1080', '1280x800', '320x568', '1280x1024', '1280x720', '320x480', '480x360', '600x600', '800x600', '640x480'), selected='640x480', width=110) 
-    vdo <- video(gg=gg.all1, cs.g=shm.bar(), bar.width=bar.width, lgd.key.size=input$vdo.key.size, lgd.text.size=NULL, position.text.key='right', legend.value.vdo=(input$'vdo.val.lgd'=='Yes'), label=(input$vdo.label=='Yes'), label.size=input$vdo.lab.size, sub.title.size=8, bar.value.size=6, lgd.row=input$vdo.key.row, video.dim=dim, interval=vdo.itvl, res=res, out.dir='./www/video')
+    if (vdo.dim %in% c('1280x800', '1280x1024', '1280x720') & vdo.res > 450) vdo.res <- 450
+    if (vdo.dim=='1920x1080' & vdo.res > 300) vdo.res <- 300
+  
+    dim.lgd <- dim.gg <- NULL
+    if (!grepl(na.sgl, fileIn)) type <- 'shm' else {
+      dim.lgd <- dim.lgd.lis$v; se.scl <- se.scl()
+      dim.shm <- dim.shm.gg.all$val; lgd.lis <- shm$lgd.all
+      if (!check_obj(list(prof, dim.lgd, se.scl, dim.shm, lgd.lis, lgdR, vdoLgdDimRow, vdoLgdDimText, vdoLgdDimkey, vdoLgdKeyRow, vdoLgdText, vdoLgdkey))) return()
+      if ('idp' %in% prof) type <- 'col.idp' else type <- 'col.grp'
+      dim.gg <- dim.shm[paste0('dim_', na)]
+      vars.cell <- unique(se.scl$variable) 
+      for (i in vars.cell) { # Combine SHM and dim legends.
+        dim.lgd0 <- dim.lgd[[i]]$dim.lgd
+        lgd.lis <- c(lgd.lis, setNames(list(dim.lgd0), paste0(i, '_dim.lgd')))
+      }
+    }
+    vdo <- video(gg=c(dim.gg, gg.sel), cs.g=shm.bar, lgd=lgd.lis, lgd.r=lgdR, lgd.title='Legend', h=vdoH, type=type, sub.title.size=7, bar.width=vdo.bar.width, bar.value.size=4, lgd.key.size=vdoLgdkey, lgd.text.size=vdoLgdText, lgd.key.size.2nd=vdo.key.size, lgd.text.size.2nd=vdoText2, lgd.row=vdoLgdKeyRow, lgd.row.2nd=vdo.key.row, legend.value.vdo=('Yes' %in% vdo.val.lgd), label=('Yes' %in% vdo.label), label.size=vdo.lab.size, dim.lgd.text.size=vdoLgdDimText, dim.lgd.key.size=vdoLgdDimkey, dim.lgd.nrow=vdoLgdDimRow, video.dim=vdo.dim, res=vdo.res, interval=vdo.itvl, out.dir='www/video')
     if (is.null(vdo)) return()
     cat('Presenting video ... \n')
-    incProgress(0.95, detail="Presenting video...")
-    w.h <- as.numeric(strsplit(input$vdo.dim, 'x')[[1]])
+    incProgress(0.95, detail="Presenting video ...")
+    w.h <- as.numeric(strsplit(vdo.dim, 'x')[[1]])
     output$video <-renderUI({ tags$video(id="video", type="video/mp4", src="video/shm.mp4", width=w.h[1], height=w.h[2], controls="controls") }); cat('Done! \n')
     })
-
   })
     scroll.h <- reactiveValues()
     observe({ h <- input$scrollH; scroll.h$h <- ifelse(is.null(h), 450, h) })
@@ -1374,7 +1371,7 @@ shm_server <- function(id, sch, lis.url, url.id, tab, upl.mod.lis, dat.mod.lis, 
     shmMhNet <- input$shmMhNet; interNav <- input$interNav
     if (is.null(shmMhNet)|is.null(interNav)) return()
     tab.inter <- ifelse(shmMhNet=='interTab' & interNav=='interPlot', 'yes', 'no')
-    if (input$ggly.but==0 & tab.inter=='yes') showModal(modal(msg=HTML('To see the latest results, always click the <strong>"Run"</strong> button!'), easyClose=TRUE))
+    if (input$glyBut==0 & tab.inter=='yes') showModal(modal(msg=HTML('To see the latest results, always click the <strong>"Run"</strong> button!'), easyClose=TRUE))
   })
   observe({
     shmMhNet <- input$shmMhNet; vdoNav <- input$vdoNav
@@ -1394,7 +1391,7 @@ shm_server <- function(id, sch, lis.url, url.id, tab, upl.mod.lis, dat.mod.lis, 
     updateRadioButtons(session, inputId="genCon", selected = ifelse(url.val!='null', url.val, cfg$lis.par$shm.img['display.by', 'default']))
   # addPopover(session, "genCon", title="Data column: by the column order in data matrix.", placement="bottom", trigger='hover')
     url.val <- url_val('shmAll-scale.shm', lis.url)
-  updateSliderInput(session, inputId='scale.shm', label='', value=ifelse(url.val!='null', url.val, as.numeric(cfg$lis.par$shm.img['scale.plots', 'default'])), min=0.1, max=10, step=0.1)
+  updateSliderInput(session, inputId='scale.shm', value=ifelse(url.val!='null', url.val, as.numeric(cfg$lis.par$shm.img['scale.plots', 'default'])))
     url.val <- url_val('shmAll-title.size', lis.url)
   updateSliderInput(session, inputId='title.size', label='', value=ifelse(url.val!='null', url.val, as.numeric(cfg$lis.par$shm.img['title.size', 'default'])), min=0, max=100, step=0.5)
     url.val <- url_val('shmAll-color', lis.url)
@@ -1426,17 +1423,17 @@ shm_server <- function(id, sch, lis.url, url.id, tab, upl.mod.lis, dat.mod.lis, 
   url.val <- url_val('shmAll-vdo.key.size', lis.url)
   updateNumericInput(session, inputId='vdo.key.size', label='Key size', value=ifelse(url.val!='null', url.val, as.numeric(cfg$lis.par$shm.video['key.size', 'default'])), min=0.01, max=Inf, step=0.1)
   url.val <- url_val('shmAll-vdo.val.lgd', lis.url)
-  updateRadioButtons(session, inputId="vdo.val.lgd", label="Key value", choices=c("Yes", "No"), selected=ifelse(url.val!='null', url.val, cfg$lis.par$shm.video['value.legend', 'default']), inline=TRUE)
+  updateSelectInput(session, inputId="vdo.val.lgd", selected=ifelse(url.val!='null', url.val, cfg$lis.par$shm.video['value.legend', 'default']))
   url.val <- url_val('shmAll-vdo.label', lis.url)
-  updateRadioButtons(session, inputId="vdo.label", label="Feature label", choices=c("Yes", "No"), selected=ifelse(url.val!='null', url.val, cfg$lis.par$shm.video['feature.label', 'default']), inline=TRUE)
+  updateSelectInput(session, inputId="vdo.label", selected=ifelse(url.val!='null', url.val, cfg$lis.par$shm.video['feature.label', 'default']))
   url.val <- url_val('shmAll-vdo.lab.size', lis.url)
-  updateNumericInput(session, inputId='vdo.lab.size', label='Label size', value=ifelse(url.val!='null', url.val, as.numeric(cfg$lis.par$shm.video['label.size', 'default'])), min=0, max=Inf, step=0.5)
+  updateNumericInput(session, inputId='vdo.lab.size', value=ifelse(url.val!='null', url.val, as.numeric(cfg$lis.par$shm.video['label.size', 'default'])))
   url.val <- url_val('shmAll-vdo.bar.width', lis.url)
   updateNumericInput(session, inputId='vdo.bar.width', value=ifelse(url.val!='null', url.val, as.numeric(cfg$lis.par$shm.video['bar.width.video', 'default'])))
   url.val <- url_val('shmAll-vdo.itvl', lis.url)
-  updateNumericInput(session, inputId='vdo.itvl', label='Transition time (s)', value=ifelse(url.val!='null', url.val, as.numeric(cfg$lis.par$shm.video['transition', 'default'])), min=0.1, max=Inf, step=1)
+  updateNumericInput(session, inputId='vdo.itvl', value=ifelse(url.val!='null', url.val, as.numeric(cfg$lis.par$shm.video['transition', 'default'])))
   url.val <- url_val('shmAll-vdo.res', lis.url)
-  updateNumericInput(session, inputId='vdo.res', label='Resolution (dpi)', value=ifelse(url.val!='null', url.val, as.numeric(cfg$lis.par$shm.video['dpi', 'default'])), min=1, max=1000, step=5)
+  updateNumericInput(session, inputId='vdo.res', value=ifelse(url.val!='null', url.val, as.numeric(cfg$lis.par$shm.video['dpi', 'default'])))
   url.val <- url_val('shmAll-vdo.but', lis.url)
   # updateRadioButtons(session, inputId="vdo.but", label="Show/update video", choices=c("Yes", "No"), selected=ifelse(url.val!='null', url.val, cfg$lis.par$shm.video['show', 'default']), inline=TRUE)
 

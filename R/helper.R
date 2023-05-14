@@ -85,7 +85,7 @@ check_obj <- function(x) {
     if (length(y)>1) return(TRUE); if (length(y)==0) return(FALSE)
     if (is.na(y)) return(FALSE)
     # 0==FALSE is TRUE
-    if (y==FALSE & !is.numeric(y)) return(FALSE)
+    if (is(y, 'logical')) if (y==FALSE) return(FALSE)
     if (y=='') return(FALSE)
     return(TRUE)
   }

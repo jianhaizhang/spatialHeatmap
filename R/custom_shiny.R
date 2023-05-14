@@ -223,8 +223,8 @@ cp_app <- function(app.dir) {
     file.copy(file.path(app.path, i), app.dir, recursive=TRUE, overwrite=TRUE) 
   }
   file.remove(list.files(file.path(app.dir, 'www/video'), '*.mp4$', full.names=TRUE))
-  file.remove(list.files(file.path(app.dir, 'www/ggly'), '*.html$', full.names=TRUE))
-  file.remove(list.files(file.path(app.dir, 'www/ggly/lib'), '*', full.names=TRUE))
+  file.remove(list.files(file.path(app.dir, 'www/html_shm'), '*.html$', full.names=TRUE))
+  file.remove(list.files(file.path(app.dir, 'www/html_shm/lib'), '*', full.names=TRUE))
   file.remove(list.files(file.path(app.dir, 'html_shm'), '*.html$', full.names=TRUE))
   file.remove(list.files(file.path(app.dir, 'html_shm/lib/'), '*', full.names=TRUE))
 }

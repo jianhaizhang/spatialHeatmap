@@ -130,43 +130,64 @@ shm_ui <- function(id, data.ui, search.ui) {
       tabPanel(title='Interactive Image', value='interTab',
       navbarPage('', id=ns('interNav'),
       tabPanel('Plot', value='interPlot',
-        fluidRow(splitLayout(cellWidths=c("1%", "13%", '5%', "80%"), '',
-        actionButton(ns("ggly.but"), "Run", icon=icon("sync"), style="color:#fff;background-color:#c685c4;border-color:#ddd"), '',
+        fluidRow(splitLayout(cellWidths=c("10px", "70px", '1px', "400px"), '',
+        actionButton(ns("glyBut"), "Run", icon=icon("sync"), style=run.col), '',
         uiOutput(ns('sld.fm'))
         )),
         # The input ids should be unique, so no legend plot parameters are added here.
-        fluidRow(splitLayout(cellWidths=c("1%", "7%", "61%", "30%"), "", plotOutput(ns("bar2")), htmlOutput(ns("ggly")), plotOutput(ns("lgd2"))))
+        fluidRow(splitLayout(cellWidths=c("1%", "90%", "1%"), "", htmlOutput(ns("ggly"))))
       ),
       tabPanel('Settings',
-        fluidRow(splitLayout(cellWidths=c('1.5%', '16%', '1%', '12%', '1%', '12%'), '',
+        fluidRow(splitLayout(cellWidths=c('10px', '80px', '1px', '70px', '1px', '120px', '1px', '110px'), '',
+          numericInput(ns('aspr'), label='Aspect ratio', value=0.8, min=0.1, max=Inf, step=0.1, width=170), '',
+          numericInput(ns('scale.ly'), label='Scaling', value=1, min=0.1, max=Inf, step=0.1, width=170), '',
           numericInput(ns('t'), label='Transition time (s)', value=2, min=0.1, max=Inf, step=NA, width=270), '',
-          numericInput(ns('scale.ly'), label='Scale plot', value=1, min=0.1, max=Inf, step=0.1, width=170), '',
           downloadButton(ns("dld.anm"), "Download", style = "margin-top: 24px;") 
-         )), textOutput(ns('tran'))
+         ))
       )) # navbarPage
       ),
       tabPanel(title='Video', value='vdoTab',
       navbarPage('', id=ns('vdoNav'),
       tabPanel('Video', value='video',
-      actionButton(ns("vdo.but"), "Run", icon=icon("sync"), style="color:#fff;background-color:#c685c4;border-color:#ddd"),
+      actionButton(ns("vdo.but"), "Run", icon=icon("sync"), style=run.col),
       fluidRow(splitLayout(cellWidths=c("1%", "98%", "1%"), "", uiOutput(ns('video')), ""))
       ),
       tabPanel("Settings",
-      fluidRow(splitLayout(cellWidths=c('1%', '8%', '1%', '10%', '1%', '13%', '1%', '10%', '1%', '8%', '2%', '14%', '1%', '8%'), '',
-      numericInput(inputId=ns('vdo.key.row'), label='Key rows', value=2, min=1, max=Inf, step=1, width=270), '',
-      numericInput(inputId=ns('vdo.key.size'), label='Key size', value=0.04, min=0.01, max=Inf, step=0.1, width=270), '',
-      radioButtons(inputId=ns("vdo.val.lgd"), label="Key value", choices=c("Yes", "No"), selected='No', inline=TRUE), '', 
-      radioButtons(inputId=ns("vdo.label"), label="Feature label", choices=c("Yes", "No"), selected='No', inline=TRUE), '',
-      numericInput(inputId=ns('vdo.lab.size'), label='Label size', value=2, min=0, max=Inf, step=0.5, width=150), '',
-      selectInput(ns("vdo.dim"), label="Fixed dimension", choices=c('1920x1080', '1280x800', '320x568', '1280x1024', '1280x720', '320x480', '480x360', '600x600', '800x600', '640x480'), selected='640x480', width=110), '',
-      numericInput(inputId=ns('vdo.bar.width'), label='Color bar width', value=0.1, min=0.01, max=0.9, step=0.03, width=270)
+      div(id=ns('shmVdo'),
+      h5(strong('Spatial heatmap')),
+      fluidRow(splitLayout(cellWidths=c('10px', '60px', '1px', '75px', '1px', '65px', '1px', '115px', '1px', '90px', '1px', '70px'), '',
+      numericInput(inputId=ns('vdo.key.row'), label='Key rows', value=2, min=1, max=Inf, step=1), '',
+      numericInput(inputId=ns('vdo.key.size'), label='Key size', value=0.04, min=0.01, max=Inf, step=0.1), '',
+      selectInput(inputId=ns("vdo.val.lgd"), label="Key value", choices=c("Yes", "No"), selected='No'), '', 
+      numericInput(inputId=ns('vdoText2'), label='Legend text size', value=7, min=1, max=Inf, step=1), '',
+      selectInput(inputId=ns("vdo.label"), label="Feature label", choices=c("Yes", "No"), selected='No'), '',
+      numericInput(inputId=ns('vdo.lab.size'), label='Label size', value=2, min=0, max=Inf, step=0.5)
+      )) # fluidRow
+      ),
+      div(id=ns('lgdVdo'),
+      h5(strong('Legend plot: dimension reduction plot')),
+      fluidRow(splitLayout(cellWidths=c('10px', '60px', '1px', '60px', '1px', '75px'), '',
+      numericInput(inputId=ns('vdoLgdDimText'), label='Text size', value=4, min=1, max=Inf, step=1), '',
+      numericInput(inputId=ns('vdoLgdDimRow'), label='Key rows', value=2, min=1, max=Inf, step=1), '',
+      numericInput(inputId=ns('vdoLgdDimkey'), label='Key size', value=1, min=0.01, max=Inf, step=0.5)
       )), # fluidRow
-
-      fluidRow(splitLayout(cellWidths=c('1%', '14%', '1%', '13%'), '', 
-      numericInput(inputId=ns('vdo.itvl'), label='Transition time (s)', value=1, min=0.1, max=Inf, step=1, width=270), '',
+      h5(strong('Legend plot: spatial heatmap')),
+      fluidRow(splitLayout(cellWidths=c('10px', '60px', '1px', '60px', '1px', '75px'), '',
+      numericInput(inputId=ns('vdoLgdText'), label='Text size', value=4, min=1, max=Inf, step=1), '',
+      numericInput(inputId=ns('vdoLgdKeyRow'), label='Key rows', value=3, min=1, max=Inf, step=1), '',
+      numericInput(inputId=ns('vdoLgdkey'), label='Key size', value=0.01, min=0.01, max=Inf, step=0.1)
+      )) # fluidRow
+      ),
+      h5(strong('Other')),
+      fluidRow(splitLayout(cellWidths=c('10px', '75px', '1px', '105px', '1px', '145px', '1px', '110px', '1px', '100px', '1px', '110px'), '',
+      numericInput(inputId=ns('vdoH'), label='Height', value=0.6, min=0.01, max=1, step=0.05), '',
+      numericInput(inputId=ns('vdo.bar.width'), label='Color key width', value=0.08, min=0.01, max=0.9, step=0.03, width=270), '',
+      numericInput(inputId=ns('lgdR'), label='Scaling legend plots', value=0.7, min=0.01, max=Inf, step=0.05), '',
+      selectInput(ns("vdo.dim"), label="Dimension", choices=c('1920x1080', '1280x800', '320x568', '1280x1024', '1280x720', '320x480', '480x360', '600x600', '800x600', '640x480'), selected='640x480'), '',
+      numericInput(inputId=ns('vdo.itvl'), label='Transition time', value=1, min=0.1, max=Inf, step=1), '',
       numericInput(inputId=ns('vdo.res'), label='Resolution (dpi)', value=400, min=1, max=1000, step=5, width=270)
       )), # fluidRow
-      textOutput(ns('tran.vdo')), htmlOutput(ns('ffm')) 
+      textOutput(ns('tran.vdo')) 
       )
       ) # navbarPage
       ) # tabPanel

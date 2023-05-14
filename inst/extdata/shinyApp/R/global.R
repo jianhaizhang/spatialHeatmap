@@ -76,7 +76,7 @@ raster_path <- get('raster_path', envir=asNamespace('spatialHeatmap'), inherits=
 
 df_is_as <- get('df_is_as', envir=asNamespace('spatialHeatmap'), inherits=FALSE)
 
-thr <- get('thr', envir=asNamespace('spatialHeatmap'), inherits=FALSE)
+thrsd <- get('thrsd', envir=asNamespace('spatialHeatmap'), inherits=FALSE)
 scale_all <- get('scale_all', envir=asNamespace('spatialHeatmap'), inherits=FALSE)
 
 edgeR <- get('edgeR', envir=asNamespace('spatialHeatmap'), inherits=FALSE)
@@ -374,13 +374,13 @@ data_mining_rm <- function() {
 
 # Clean trash files in animation and video.
 ggly_rm <- function() {
-  if (dir.exists('www/ggly/')) {
-    cat("Removing animation files in 'www/ggly/' ... \n")
-    unlink('www/ggly/lib', recursive=TRUE)
-    file.remove(list.files('www/ggly/', '*.html$', full.names=TRUE))
-  } else dir.create('www/ggly', recursive=TRUE)
+  if (dir.exists('www/html_shm')) {
+    cat("Removing animation files in 'www/html_shm' ... \n")
+    unlink('www/html_shm/lib', recursive=TRUE)
+    file.remove(list.files('www/html_shm/', '*.html$', full.names=TRUE))
+  } else dir.create('www/html_shm', recursive=TRUE)
   if (dir.exists('R/www')) {
-    cat("Removing animation files in 'R/www/ggly/' ... \n")
+    cat("Removing animation files in 'R/www/html_shm' ... \n")
     unlink('R/www', recursive=TRUE)
   }
 }

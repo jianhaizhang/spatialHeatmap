@@ -64,6 +64,7 @@
   verbose = TRUE,
   out.dir = NULL,
   animation.scale = 1,
+  aspr = 1,
   selfcontained = FALSE,
   video.dim = "640x480",
   res = 500,
@@ -188,6 +189,8 @@
 \item{out.dir}{The directory to save SHMs as interactive HTML files and videos. Default is `NULL`, and the HTML files and videos are not saved.}
 
 \item{animation.scale}{A numeric to scale the SHM size in the HTML files. The default is 1, and the height is 550px and the width is calculated according to the original aspect ratio in the aSVG file.}
+
+\item{aspr}{The aspect ratio (width to height) in the interative HTML files.}
 
 \item{selfcontained}{Whether to save the HTML as a single self-contained file
 (with external resources base64 encoded) or a file with external resources

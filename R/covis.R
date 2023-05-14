@@ -86,6 +86,7 @@
 #' @param verbose Logical. If `TRUE`, spatial features in data not colored in SHMs are printed to R console. Default is `TRUE`.
 #' @param out.dir The directory to save SHMs as interactive HTML files and videos. Default is `NULL`, and the HTML files and videos are not saved.
 #' @param animation.scale A numeric to scale the SHM size in the HTML files. The default is 1, and the height is 550px and the width is calculated according to the original aspect ratio in the aSVG file.
+#' @param aspr The aspect ratio (width to height) in the interative HTML files.
 #' @param video.dim A single character of the dimension of video frame in form of 'widthxheight', such as '1920x1080', '1280x800', '320x568', '1280x1024', '1280x720', '320x480', '480x360', '600x600', '800x600', '640x480' (default). The aspect ratio of SHMs are decided by \code{width} and \code{height}. 
 #' @param interval The time interval (seconds) between SHM frames in the video. Default is 1.
 #' @param framerate An integer of video framerate in frames per seconds. Default is 1. Larger values make the video smoother. 
@@ -146,6 +147,14 @@
 #' dim.lgd.text.size=10, h=0.6, legend.r=0.1, legend.key.size=0.01, legend.text.size=10,
 #' legend.nrow=2, dim.lgd.plot.margin=margin(t=0.01, r=0.15, b=0.01, l=0.15, unit="npc"))
 #'
+#' # Save plots to HTML files and videos in the folder "test". 
+#' # covis(data=dat.ann.tocell, ID=c('Cacnb4', 'Apod'), col.idp=TRUE, dimred='UMAP', 
+#' # cell.group='label', tar.bulk=names(lis.match.blk), bar.width=0.12, bar.value.size=4, 
+#' # dim.lgd.nrow=3, dim.lgd.text.size=7, h=0.5, legend.r=1, animation.scale=0.8, aspr=1.1,
+#' # legend.key.size=0.01, legend.text.size=7, legend.nrow=3, legend.nrow.2nd=3, 
+#' # dim.lgd.plot.margin=margin(t=0.01, r=0.15, b=0.01, l=0.15, unit="npc"), out.dir='test', 
+#' # dim.lgd.key.size=2)
+
 #' # More examples of co-visualization are provided in the package vignette: https://www.bioconductor.org/packages/release/bioc/vignettes/spatialHeatmap/inst/doc/covisualize.html
 #'
 #'
@@ -178,10 +187,10 @@
 
 #' @export
 
-setMethod("covis", c(data="SPHM"), function(data, assay.na=NULL, sam.factor=NULL, con.factor=NULL, ID, var.cell=NULL, dimred='PCA', cell.group=NULL, tar.cell=NULL, tar.bulk=NULL, size.pt=1, alpha.pt=0.8, shape=NULL, col.idp=FALSE, decon=FALSE, profile=TRUE, charcoal=FALSE, alpha.overlay=1, lay.shm="gene", ncol=2, h=0.99, size.r=1, col.com=c('yellow', 'orange', 'red'), col.bar='selected', thr=c(NA, NA), cores=NA, bar.width=0.08, bar.title=NULL, bar.title.size=0, scale='no', ft.trans=NULL, tis.trans=ft.trans, legend.r=0, sub.title.size=11, sub.title.vjust=3, legend.plot='all', ft.legend='identical', bar.value.size=10, legend.plot.title='Legend', legend.plot.title.size=11, legend.ncol=NULL, legend.nrow=NULL, legend.position='bottom', legend.direction=NULL, legend.key.size=0.02, legend.text.size=12, angle.text.key=NULL, position.text.key=NULL, legend.2nd=FALSE, position.2nd='bottom', legend.nrow.2nd=NULL, legend.ncol.2nd=NULL, legend.key.size.2nd=0.03, legend.text.size.2nd=10, angle.text.key.2nd=0, position.text.key.2nd='right', dim.lgd.pos='bottom', dim.lgd.nrow=2, dim.lgd.key.size=4, dim.lgd.text.size=13, dim.axis.font.size=8, dim.lgd.plot.margin=NULL, dim.capt.size=13, size.lab.pt=5, hjust.lab.pt=0.5, vjust.lab.pt=1.5, add.feature.2nd=FALSE, label=FALSE, label.size=4, label.angle=0, hjust=0, vjust=0, opacity=1, key=TRUE, line.width=0.2, line.color='grey70', relative.scale = NULL, verbose=TRUE, out.dir=NULL, animation.scale = 1, selfcontained=FALSE, video.dim='640x480', res=500, interval=1, framerate=1, bar.width.vdo=0.1, legend.value.vdo=NULL, ...) {
+setMethod("covis", c(data="SPHM"), function(data, assay.na=NULL, sam.factor=NULL, con.factor=NULL, ID, var.cell=NULL, dimred='PCA', cell.group=NULL, tar.cell=NULL, tar.bulk=NULL, size.pt=1, alpha.pt=0.8, shape=NULL, col.idp=FALSE, decon=FALSE, profile=TRUE, charcoal=FALSE, alpha.overlay=1, lay.shm="gene", ncol=2, h=0.99, size.r=1, col.com=c('yellow', 'orange', 'red'), col.bar='selected', thr=c(NA, NA), cores=NA, bar.width=0.08, bar.title=NULL, bar.title.size=0, scale='no', ft.trans=NULL, tis.trans=ft.trans, legend.r=0, sub.title.size=11, sub.title.vjust=3, legend.plot='all', ft.legend='identical', bar.value.size=10, legend.plot.title='Legend', legend.plot.title.size=11, legend.ncol=NULL, legend.nrow=NULL, legend.position='bottom', legend.direction=NULL, legend.key.size=0.02, legend.text.size=12, angle.text.key=NULL, position.text.key=NULL, legend.2nd=FALSE, position.2nd='bottom', legend.nrow.2nd=2, legend.ncol.2nd=NULL, legend.key.size.2nd=0.03, legend.text.size.2nd=10, angle.text.key.2nd=0, position.text.key.2nd='right', dim.lgd.pos='bottom', dim.lgd.nrow=2, dim.lgd.key.size=4, dim.lgd.text.size=13, dim.axis.font.size=8, dim.lgd.plot.margin=NULL, dim.capt.size=13, size.lab.pt=5, hjust.lab.pt=0.5, vjust.lab.pt=1.5, add.feature.2nd=FALSE, label=FALSE, label.size=4, label.angle=0, hjust=0, vjust=0, opacity=1, key=TRUE, line.width=0.2, line.color='grey70', relative.scale = NULL, verbose=TRUE, out.dir=NULL, animation.scale = 1, selfcontained=FALSE, aspr=1, video.dim='640x480', res=500, interval=1, framerate=1, bar.width.vdo=0.1, legend.value.vdo=NULL, ...) {
   sce.dimred <- data@cell; bulkCell <- NULL
   if (!is(sce.dimred, 'Seurat')) if ('bulkCell' %in% colnames(sce.dimred)) sce.dimred <- subset(sce.dimred, , bulkCell=='cell')
-  res <- shm_covis(svg=data@svg, data=data@bulk, assay.na=assay.na, sam.factor=sam.factor, con.factor=con.factor, ID=ID, var.cell=var.cell, sce.dimred=sce.dimred, dimred=dimred, cell.group=cell.group, tar.cell=tar.cell, tar.bulk=tar.bulk, size.pt=size.pt, alpha.pt=alpha.pt, shape=shape, col.idp=col.idp, decon=decon, profile=profile, charcoal=charcoal, alpha.overlay=alpha.overlay, lay.shm=lay.shm, ncol=ncol, h=h, size.r=size.r, col.com=col.com, col.bar=col.bar, thr=thr, cores=cores, bar.width=bar.width, bar.title=bar.title, bar.title.size=bar.title.size, scale=scale, ft.trans=ft.trans, lis.rematch = data@match, legend.r=legend.r, sub.title.size=sub.title.size, sub.title.vjust=sub.title.vjust, legend.plot=legend.plot, ft.legend=ft.legend, bar.value.size=bar.value.size, legend.plot.title=legend.plot.title, legend.plot.title.size=legend.plot.title.size, legend.ncol=legend.ncol, legend.nrow=legend.nrow, legend.position=legend.position, legend.direction=legend.direction, legend.key.size=legend.key.size, legend.text.size=legend.text.size, angle.text.key=angle.text.key, position.text.key=position.text.key, legend.2nd=legend.2nd, position.2nd=position.2nd, legend.nrow.2nd=legend.nrow.2nd, legend.ncol.2nd=legend.ncol.2nd, legend.key.size.2nd=legend.key.size.2nd, legend.text.size.2nd=legend.text.size.2nd, angle.text.key.2nd=angle.text.key.2nd, position.text.key.2nd=position.text.key.2nd, dim.lgd.pos=dim.lgd.pos, dim.lgd.nrow=dim.lgd.nrow, dim.lgd.key.size=dim.lgd.key.size, dim.lgd.text.size=dim.lgd.text.size, dim.axis.font.size=dim.axis.font.size, dim.lgd.plot.margin=dim.lgd.plot.margin, dim.capt.size=dim.capt.size, size.lab.pt=size.lab.pt, hjust.lab.pt=hjust.lab.pt, vjust.lab.pt=vjust.lab.pt, add.feature.2nd=add.feature.2nd, label=label, label.size=label.size, label.angle=label.angle, hjust=hjust, vjust=vjust, opacity=opacity, key=key, line.width=line.width, line.color=line.color, relative.scale = relative.scale, verbose=verbose, out.dir=out.dir, animation.scale = animation.scale, selfcontained=selfcontained, video.dim=video.dim, res=res, interval=interval, framerate=framerate, bar.width.vdo=bar.width.vdo, legend.value.vdo=legend.value.vdo, ...)
+  res <- shm_covis(svg=data@svg, data=data@bulk, assay.na=assay.na, sam.factor=sam.factor, con.factor=con.factor, ID=ID, var.cell=var.cell, sce.dimred=sce.dimred, dimred=dimred, cell.group=cell.group, tar.cell=tar.cell, tar.bulk=tar.bulk, size.pt=size.pt, alpha.pt=alpha.pt, shape=shape, col.idp=col.idp, decon=decon, profile=profile, charcoal=charcoal, alpha.overlay=alpha.overlay, lay.shm=lay.shm, ncol=ncol, h=h, size.r=size.r, col.com=col.com, col.bar=col.bar, thr=thr, cores=cores, bar.width=bar.width, bar.title=bar.title, bar.title.size=bar.title.size, scale=scale, ft.trans=ft.trans, lis.rematch = data@match, legend.r=legend.r, sub.title.size=sub.title.size, sub.title.vjust=sub.title.vjust, legend.plot=legend.plot, ft.legend=ft.legend, bar.value.size=bar.value.size, legend.plot.title=legend.plot.title, legend.plot.title.size=legend.plot.title.size, legend.ncol=legend.ncol, legend.nrow=legend.nrow, legend.position=legend.position, legend.direction=legend.direction, legend.key.size=legend.key.size, legend.text.size=legend.text.size, angle.text.key=angle.text.key, position.text.key=position.text.key, legend.2nd=legend.2nd, position.2nd=position.2nd, legend.nrow.2nd=legend.nrow.2nd, legend.ncol.2nd=legend.ncol.2nd, legend.key.size.2nd=legend.key.size.2nd, legend.text.size.2nd=legend.text.size.2nd, angle.text.key.2nd=angle.text.key.2nd, position.text.key.2nd=position.text.key.2nd, dim.lgd.pos=dim.lgd.pos, dim.lgd.nrow=dim.lgd.nrow, dim.lgd.key.size=dim.lgd.key.size, dim.lgd.text.size=dim.lgd.text.size, dim.axis.font.size=dim.axis.font.size, dim.lgd.plot.margin=dim.lgd.plot.margin, dim.capt.size=dim.capt.size, size.lab.pt=size.lab.pt, hjust.lab.pt=hjust.lab.pt, vjust.lab.pt=vjust.lab.pt, add.feature.2nd=add.feature.2nd, label=label, label.size=label.size, label.angle=label.angle, hjust=hjust, vjust=vjust, opacity=opacity, key=key, line.width=line.width, line.color=line.color, relative.scale = relative.scale, verbose=verbose, out.dir=out.dir, animation.scale = animation.scale, aspr=aspr, selfcontained=selfcontained, video.dim=video.dim, res=res, interval=interval, framerate=framerate, bar.width.vdo=bar.width.vdo, legend.value.vdo=legend.value.vdo, ...)
   data@output <- res; invisible(data)
 })
 
@@ -216,12 +225,12 @@ setMethod("covis", c(data="SPHM"), function(data, assay.na=NULL, sam.factor=NULL
 #' @importFrom ggplotify as.ggplot
 #' @importFrom SingleCellExperiment reducedDimNames
 
-shm_covis <- function(svg, data, assay.na=NULL, sam.factor=NULL, con.factor=NULL, ID, var.cell=NULL, sce.dimred=NULL, dimred='PCA', cell.group=NULL, tar.cell=NULL, tar.bulk=NULL, size.pt=1, alpha.pt=0.8, shape=NULL, col.idp=FALSE, decon=FALSE, profile=TRUE, charcoal=FALSE, alpha.overlay=1, lay.shm="gene", ncol=2, h=0.99, size.r=1, col.com=c('yellow', 'orange', 'red'), col.bar='selected', thr=c(NA, NA), cores=NA, bar.width=0.08, bar.title=NULL, bar.title.size=0, scale='no', ft.trans=NULL, tis.trans=ft.trans, lis.rematch = NULL, legend.r=0, sub.title.size=11, sub.title.vjust=3, legend.plot='all', ft.legend='identical', bar.value.size=10, legend.plot.title='Legend', legend.plot.title.size=11, legend.ncol=NULL, legend.nrow=NULL, legend.position='bottom', legend.direction=NULL, legend.key.size=0.02, legend.text.size=12, angle.text.key=NULL, position.text.key=NULL, legend.2nd=FALSE, position.2nd='bottom', legend.nrow.2nd=NULL, legend.ncol.2nd=NULL, legend.key.size.2nd=0.03, legend.text.size.2nd=10, angle.text.key.2nd=0, position.text.key.2nd='right', dim.lgd.pos='bottom', dim.lgd.nrow=2, dim.lgd.key.size=4, dim.lgd.text.size=13, dim.axis.font.size=10, dim.lgd.plot.margin=margin(t=0.01, r=0.01, b=0.01, l=0.01, unit="npc"), dim.capt.size=13, size.lab.pt=5, hjust.lab.pt=0.5, vjust.lab.pt=1.5, add.feature.2nd=FALSE, label=FALSE, label.size=4, label.angle=0, hjust=0, vjust=0, opacity=1, key=TRUE, line.width=0.2, line.color='grey70', relative.scale = NULL, verbose=TRUE, out.dir=NULL, animation.scale = 1, selfcontained=FALSE, video.dim='640x480', res=500, interval=1, framerate=1, bar.width.vdo=0.1, legend.value.vdo=NULL, ...) {
+shm_covis <- function(svg, data, assay.na=NULL, sam.factor=NULL, con.factor=NULL, ID, var.cell=NULL, sce.dimred=NULL, dimred='PCA', cell.group=NULL, tar.cell=NULL, tar.bulk=NULL, size.pt=1, alpha.pt=0.8, shape=NULL, col.idp=FALSE, decon=FALSE, profile=TRUE, charcoal=FALSE, alpha.overlay=1, lay.shm="gene", ncol=2, h=0.99, size.r=1, col.com=c('yellow', 'orange', 'red'), col.bar='selected', thr=c(NA, NA), cores=NA, bar.width=0.08, bar.title=NULL, bar.title.size=0, scale='no', ft.trans=NULL, tis.trans=ft.trans, lis.rematch = NULL, legend.r=0, sub.title.size=11, sub.title.vjust=3, legend.plot='all', ft.legend='identical', bar.value.size=10, legend.plot.title='Legend', legend.plot.title.size=11, legend.ncol=NULL, legend.nrow=NULL, legend.position='bottom', legend.direction=NULL, legend.key.size=0.02, legend.text.size=12, angle.text.key=NULL, position.text.key=NULL, legend.2nd=FALSE, position.2nd='bottom', legend.nrow.2nd=2, legend.ncol.2nd=NULL, legend.key.size.2nd=0.03, legend.text.size.2nd=10, angle.text.key.2nd=0, position.text.key.2nd='right', dim.lgd.pos='bottom', dim.lgd.nrow=2, dim.lgd.key.size=4, dim.lgd.text.size=13, dim.axis.font.size=10, dim.lgd.plot.margin=margin(t=0.01, r=0.01, b=0.01, l=0.01, unit="npc"), dim.capt.size=13, size.lab.pt=5, hjust.lab.pt=0.5, vjust.lab.pt=1.5, add.feature.2nd=FALSE, label=FALSE, label.size=4, label.angle=0, hjust=0, vjust=0, opacity=1, key=TRUE, line.width=0.2, line.color='grey70', relative.scale = NULL, verbose=TRUE, out.dir=NULL, animation.scale = 1, aspr=1, selfcontained=FALSE, video.dim='640x480', res=500, interval=1, framerate=1, bar.width.vdo=0.1, legend.value.vdo=NULL, ...) {
   
   calls <- names(vapply(match.call(), deparse, character(1))[-1])
   if("tis.trans" %in% calls) warning('"tis.trans" is deprecated and replaced by "ft.trans"! \n')
   if("svg.path" %in% calls) warning('"svg.path" is deprecated and replaced by "svg"! \n')
-  # save(svg, data, assay.na, sam.factor, con.factor, ID, sce.dimred, var.cell, dimred, col.idp, decon, tar.cell, profile, cell.group, tar.bulk, size.pt, alpha.pt, shape, charcoal, alpha.overlay, lay.shm, ncol, h, size.r, col.com, col.bar, thr, cores, bar.width, bar.title, bar.title.size, scale, ft.trans, tis.trans, lis.rematch, legend.r, sub.title.size, sub.title.vjust, legend.plot, ft.legend, bar.value.size, legend.plot.title, legend.plot.title.size, legend.ncol, legend.nrow, legend.position, legend.direction, legend.key.size, legend.text.size, angle.text.key, position.text.key, legend.2nd, position.2nd, legend.nrow.2nd, legend.ncol.2nd, legend.key.size.2nd, legend.text.size.2nd, angle.text.key.2nd, position.text.key.2nd, dim.lgd.pos, dim.lgd.nrow, dim.lgd.key.size, dim.lgd.text.size, dim.axis.font.size, dim.lgd.plot.margin, dim.capt.size, add.feature.2nd, label, label.size, label.angle, hjust, vjust, opacity, key, line.width, line.color, relative.scale, verbose, out.dir, animation.scale, selfcontained, video.dim, res, interval, framerate, bar.width.vdo, legend.value.vdo, file='shm.covis.arg')
+  # save(svg, data, assay.na, sam.factor, con.factor, ID, sce.dimred, var.cell, dimred, col.idp, decon, tar.cell, profile, cell.group, tar.bulk, size.pt, alpha.pt, shape, charcoal, alpha.overlay, lay.shm, ncol, h, size.r, col.com, col.bar, thr, cores, bar.width, bar.title, bar.title.size, scale, ft.trans, tis.trans, lis.rematch, legend.r, sub.title.size, sub.title.vjust, legend.plot, ft.legend, bar.value.size, legend.plot.title, legend.plot.title.size, legend.ncol, legend.nrow, legend.position, legend.direction, legend.key.size, legend.text.size, angle.text.key, position.text.key, legend.2nd, position.2nd, legend.nrow.2nd, legend.ncol.2nd, legend.key.size.2nd, legend.text.size.2nd, angle.text.key.2nd, position.text.key.2nd, dim.lgd.pos, dim.lgd.nrow, dim.lgd.key.size, dim.lgd.text.size, dim.axis.font.size, dim.lgd.plot.margin, dim.capt.size, add.feature.2nd, label, label.size, label.angle, hjust, vjust, opacity, key, line.width, line.color, relative.scale, verbose, out.dir, animation.scale, aspr, selfcontained, video.dim, res, interval, framerate, bar.width.vdo, legend.value.vdo, file='shm.covis.arg')
 
   x <- y <- color_scale <- tissue <- bulkCell <- variable <- NULL
   options(stringsAsFactors=FALSE)
@@ -312,7 +321,7 @@ shm_covis <- function(svg, data, assay.na=NULL, sam.factor=NULL, con.factor=NULL
     thr <- dat_fun(thr, as.numeric)
     if (length(thr)!=2) stop('The "thr" must be a two-element vecor and contain as least one numeric!')
     # Customized signal threshold.
-    gene <- thr(thr.min=thr[1], thr.max=thr[2], data=gene)
+    gene <- thrsd(thr.min=thr[1], thr.max=thr[2], data=gene)
     if (is(gene, 'character')) stop(gene)
     # Scaling. 
     if ('row' %in% scale) { 
@@ -404,7 +413,7 @@ shm_covis <- function(svg, data, assay.na=NULL, sam.factor=NULL, con.factor=NULL
     if (file.exists(tmp)) do.call(file.remove, list(tmp))
     if (!is(h, 'numeric')) stop('"h" should be between 0 and 1!')
     if (h > 1) h <- 1 else if (h < 0) h <- 0
-    cs.arr <- arrangeGrob(grobs=list(grobTree(cs.grob)), layout_matrix=cbind(1), widths=unit(1, "npc"), heights=unit(0.7 * h, "npc")) # "mm" is fixed, "npc" is scalable.
+    cs.arr <- arrangeGrob(grobs=list(grobTree(cs.grob)), layout_matrix=cbind(1), widths=unit(1, "npc"), heights=unit(0.8 * h, "npc")) # "mm" is fixed, "npc" is scalable.
     if (legend.2nd==TRUE) {
       gg.all <- gg_2lgd(gg.all=gg.all, sam.dat=sam.uni, ft.trans=ft.trans, position.2nd=position.2nd, legend.nrow.2nd=legend.nrow.2nd, legend.ncol.2nd=legend.ncol.2nd, legend.key.size.2nd=legend.key.size.2nd, add.feature.2nd=add.feature.2nd, legend.text.size.2nd=legend.text.size.2nd, angle.text.key.2nd=angle.text.key.2nd, position.text.key.2nd=position.text.key.2nd)
       grob.all <- lapply(gg.all, ggplotGrob)
@@ -504,17 +513,15 @@ shm_covis <- function(svg, data, assay.na=NULL, sam.factor=NULL, con.factor=NULL
       if (!profile.no) shm <- grid.arrange(cs.arr, g.arr, ncol=2, widths=unit(c(bar.width-0.005, shm.w), 'npc')) else shm <- grid.arrange(g.arr, ncol=1, widths=unit(c(1-0.005), 'npc'))
     }
 
-    if (!is.null(out.dir)) { 
-
-      for (i in names(gg.all)) {
-        g0 <- gg.all[[i]]
-        anm.height <- 550 * animation.scale; anm.width <- anm.height / g0$theme$aspect.ratio
-        html_ly(gg=gg.all[i], cs.g=cs.g, ft.trans=ft.trans, sam.uni=sam.uni, anm.width=anm.width, anm.height=anm.height, out.dir=out.dir)
-      }
-
-      vdo <- video(gg=gg.all, cs.g=cs.g, bar.width=bar.width.vdo, lgd.key.size=legend.key.size.2nd, lgd.text.size=legend.text.size.2nd, angle.text.key=angle.text.key.2nd, position.text.key=position.text.key.2nd, lgd.row=legend.nrow.2nd, lgd.col=legend.ncol.2nd, legend.value.vdo=legend.value.vdo, label=label, label.size=label.size, label.angle=label.angle, hjust=hjust, vjust=vjust, opacity=opacity, key=key, video.dim=video.dim, res=res, interval=interval, framerate=framerate, out.dir=out.dir)
+    if (!is.null(out.dir)) {
+      message('HTML files ... ') 
+      html_ly(gg.all=gg.all, cs.g=cs.g, aspr=aspr, anm.scale=animation.scale, out.dir=out.dir)
+      message('Video ...')
+      if (!sc) type <- 'shm' else {
+        if (FALSE %in% col.idp) type <- 'col.grp' else type <- 'col.idp'
+      } 
+      vdo <- video(gg=gg.all, cs.g=cs.g, lgd=lgd.lis, lgd.r=legend.r, h=h, type=type, sub.title.size=sub.title.size, bar.width=bar.width, bar.value.size=bar.value.size, lgd.key.size=legend.key.size, lgd.text.size=legend.text.size, lgd.key.size.2nd=legend.key.size.2nd, lgd.text.size.2nd=legend.text.size.2nd, angle.text.key=angle.text.key.2nd, position.text.key=position.text.key.2nd, lgd.row=legend.nrow, lgd.row.2nd=legend.nrow.2nd, lgd.col=legend.ncol.2nd, legend.value.vdo=legend.value.vdo, label=label, label.size=label.size, label.angle=label.angle, hjust=hjust, vjust=vjust, opacity=opacity, key=key, dim.lgd.text.size=dim.lgd.text.size, dim.lgd.key.size=dim.lgd.key.size, dim.lgd.nrow=dim.lgd.nrow, dim.lgd.plot.margin=dim.lgd.plot.margin, video.dim=video.dim, res=res, interval=interval, framerate=framerate, out.dir=out.dir)
       if (is.null(vdo)) cat("Video is not generated! \n")
-
     }
     lis <- list(spatial_heatmap=as.ggplot(shm), mapped_feature=map.sum); return(lis)
 }
@@ -721,7 +728,7 @@ covis_trans <- function(bulk.all, cell.all, ft.all, tar.bulk='all', tar.cell='al
 #' @keywords Internal
 #' @noRd
 
-thr <- function(thr.min, thr.max, data) {
+thrsd <- function(thr.min, thr.max, data) {
   max.v <- max(data); min.v <- min(data) 
   if (is.numeric(thr.min) & !is.na(thr.min)) { 
     lgc.min <- (thr.min < max.v) 
@@ -869,4 +876,5 @@ check_decon <- function(cell, cell.group, tar.cell, var.cell, bulk, var.bulk, sv
   }
   return(list(cell=cell, bulk=bulk, con.na.cell=con.na.cell, var.cell=var.cell, vars.cell=vars.cell))
 }
+
 
