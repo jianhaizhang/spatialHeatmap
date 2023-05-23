@@ -266,6 +266,12 @@ To reduce runtime, intermediate results can be cached under `~/.cache/shm`.
 cache.pa <- '~/.cache/shm' # Path of the cache directory.
 ```  
 
+A temporary directory is created to save output files.    
+
+```{r eval=TRUE, echo=TRUE, message=FALSE, warnings=FALSE }  
+tmp.dir <- normalizePath(tempdir(check=TRUE), winslash="/", mustWork=FALSE)   
+```  
+
 # Spatial Heatmaps {#shm}
 
 ## Quick Start {#test}
@@ -417,7 +423,6 @@ Code chunk not evaluated to save time building this vignette.
 ```{r eval=FALSE, echo=TRUE, warnings=FALSE }
 # Remote aSVG repos.
 data(aSVG.remote.repo)
-tmp.dir <- normalizePath(tempdir(check=TRUE), winslash="/", mustWork=FALSE)
 tmp.dir.ebi <- file.path(tmp.dir, 'ebi.zip')
 tmp.dir.shm <- file.path(tmp.dir, 'shm.zip')
 # Download the remote aSVG repos as zip files.
@@ -550,7 +555,8 @@ by the corresponding color key and legend plot on the left and right, respective
 
 By default, spatial features in assay data are mapped to their counterparts in aSVG according to the same identifiers on a one-to-one basis. However, the mapping can be customized, such as mapping a spatial feature in the data to a different or multiple counterparts in the aSVG. This advanced functionality is demonstrated in the [Supplementary Section](#remat).  
 
-### SHM: HTML and Video
+
+### SHM: Other Selected Features
 
 SHMs can be saved to interactive HTML files as well as video files. Each HTML file
 contains an interactive SHM with zooming in and out functionality. Hovering over
@@ -564,7 +570,26 @@ The following example saves the interactive HTML and video files under the direc
 Code chunk not evaluated to save time building this vignette.
 -->
 ```{r eval=FALSE, echo=TRUE, warnings=FALSE, results='hide'}
-shm(data=dat.hum, ID=c('OLFM4', 'LOC440742'), lay.shm='con', legend.r=1.5, legend.nrow=3, h=0.6, aspr=2.3, animation.scale=0.7,    bar.width=0.1, bar.value.size=4, out.dir=tmp.dir)
+shm(data=dat.hum, ID=c('OLFM4', 'LOC440742'), lay.shm='con', legend.r=1.5, legend.nrow=3, h=0.6, aspr=2.3, animation.scale=0.7, bar.width=0.1, bar.value.size=4, out.dir=tmp.dir)
+```
+
+The following code saves the SHMs into an SVG file `shm_hum.svg` with the color scale and legend plot included.  
+
+```{r eval=FALSE, echo=TRUE, warnings=FALSE, results='hide'}
+res <- shm(data=dat.hum, ID=c('OLFM4', 'LOC440742'), lay.shm='con', legend.r=1.5, legend.nrow=3, h=0.5, aspr=2.3, animation.scale=0.7, bar.width=0.08, bar.value.size=12)
+ggsave(file="./shm_hum.svg", plot=output(res)$spatial_heatmap, width=10, height=8) 
+```
+
+The following code colors spatial features in the original aSVG file with heat color from SHMs, and the resulting aSVG files are saved in `tmp.dir`.  
+
+```{r eval=FALSE, echo=TRUE, warnings=FALSE, results='hide'}
+color_svg(input=res, out.dir=tmp.dir)
+```
+
+A meta function `plot_meta` is developed as a wraper of individual steps necessary for plotting SHMs. The benefit of this function is creating SHMs with the Linux command line as shown below.  
+
+```{r eval=FALSE, echo=TRUE, warnings=FALSE, results='hide'}
+Rscript -e "spatialHeatmap::plot_meta(svg.path=system.file('extdata/shinyApp/data', 'mus_musculus.brain.svg', package='spatialHeatmap'), bulk=system.file('extdata/shinyApp/data', 'bulk_mouse_cocluster.rds', package='spatialHeatmap'), sam.factor='tissue', aggr='mean', ID=c('AI593442', 'Adora1'), ncol=1, bar.width=0.1, legend.nrow=5, h=0.6)"
 ```
 
 ### SHM: Customization

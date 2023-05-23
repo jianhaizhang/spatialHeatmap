@@ -95,7 +95,9 @@ svg_df <- function(svg.path, feature=NULL, cores, srsc=FALSE) {
   reps <- table(tis.path)[unique(tis.path)]
   df.attr.rep <- df.attr[rep(rownames(df.attr), reps), ]
   df.attr.rep$sub.feature <- sub.feature
-  # Index: match with subfeatures in coordinates.
+  # index.all: counting groups of outlines and main shapes together.
+  # index.sub: counting groups of outlines and main shapes independently.
+  # Index: match with subfeatures in coordinates and count each subfeature together.
   df.attr.rep$index <- seq_along(sub.feature)
   cna.attr.sel <- c('feature', 'id', 'fill', 'stroke', 'sub.feature', 'index', 'element') 
   df.attr.rep <- df.attr.rep[, c(cna.attr.sel, setdiff(colnames(df.attr.rep), cna.attr.sel))]

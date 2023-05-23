@@ -31,7 +31,7 @@ aggr_rep <- function(data, assay.na=NULL, sam.factor, con.factor=NULL, aggr='mea
   # Process data. "dgCMatrix" is converted to "matrix".
   dat.lis <- check_data(data=data, assay.na=assay.na, sam.factor=sam.factor, con.factor=con.factor, usage='aggr')
   mat <- assay(dat.lis$se); fct.cna <- dat.lis$fct.cna
-  row.meta <- dat.lis$row.meta; col.meta <- dat.lis$col.meta
+  row.meta <- dat.lis$row.meta; col.meta <- colData(dat.lis$se)
   rownames(data) <- rownames(row.meta)
   # To keep colnames, "X" should be a character, not a factor.
   if (aggr=='mean') mat <- vapply(unique(fct.cna), function(x) rowMeans(mat[, fct.cna==x, drop=FALSE]), numeric(nrow(mat)))

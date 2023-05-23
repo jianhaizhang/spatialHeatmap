@@ -195,6 +195,53 @@ setMethod("covis", c(data="SPHM"), function(data, assay.na=NULL, sam.factor=NULL
 })
 
 
+#' Meta function for plotting spatial heatmaps or co-visualizing bulk and single cell data
+#'
+#' This is a meta function for plotting spatial heatmaps or co-visualizing bulk and single cell data that takes as input file paths of assay data and aSVG files.
+
+#' @param svg.path File paths of aSVG files.
+#' @param bulk,cell File paths of bulk and single cell data that are saved with \link{saveRDS} respectively.
+#' @param match.lis The file path of matching list that is saved with \link{saveRDS}. See \code{match} in \link{SPHM}. 
+
+#' @inheritParams aggr_rep
+#' @inheritParams covis
+
+#' @return A `SPHM` class.
+
+#' @examples
+#' 
+#' # Path of mouse brain aSVG.
+#' svg.mus.brain.pa <- system.file("extdata/shinyApp/data", "mus_musculus.brain.svg", package="spatialHeatmap")
+#' # Bulk data path.
+#' blk.mus.pa <- system.file("extdata/shinyApp/data", "bulk_mouse_cocluster.rds", package="spatialHeatmap") 
+#' # Plotting spatial heatmaps.
+#' plot_meta(svg.path=svg.mus.brain.pa, bulk=blk.mus.pa, sam.factor='tissue', aggr='mean', ID=c('AI593442', 'Adora1'), ncol=1, bar.width=0.1, legend.nrow=5, h=0.6)
+
+#'
+#' @author Jianhai Zhang \email{jzhan067@@ucr.edu} \cr Dr. Thomas Girke \email{thomas.girke@@ucr.edu}
+
+#' @export
+
+plot_meta <- function(svg.path, bulk, cell=NULL, match.lis=NULL, assay.na=NULL, sam.factor=NULL, con.factor=NULL, aggr='mean', ID, var.cell=NULL, dimred='PCA', cell.group=NULL, tar.cell=NULL, tar.bulk=NULL, size.pt=1, alpha.pt=0.8, shape=NULL, col.idp=FALSE, decon=FALSE, profile=TRUE, charcoal=FALSE, alpha.overlay=1, lay.shm="gene", ncol=2, h=0.99, size.r=1, col.com=c('yellow', 'orange', 'red'), col.bar='selected', thr=c(NA, NA), cores=NA, bar.width=0.08, bar.title=NULL, bar.title.size=0, scale='no', ft.trans=NULL, tis.trans=ft.trans, legend.r=0, sub.title.size=11, sub.title.vjust=3, legend.plot='all', ft.legend='identical', bar.value.size=10, legend.plot.title='Legend', legend.plot.title.size=11, legend.ncol=NULL, legend.nrow=NULL, legend.position='bottom', legend.direction=NULL, legend.key.size=0.02, legend.text.size=12, angle.text.key=NULL, position.text.key=NULL, legend.2nd=FALSE, position.2nd='bottom', legend.nrow.2nd=2, legend.ncol.2nd=NULL, legend.key.size.2nd=0.03, legend.text.size.2nd=10, angle.text.key.2nd=0, position.text.key.2nd='right', dim.lgd.pos='bottom', dim.lgd.nrow=2, dim.lgd.key.size=4, dim.lgd.text.size=13, dim.axis.font.size=8, dim.lgd.plot.margin=NULL, dim.capt.size=13, size.lab.pt=5, hjust.lab.pt=0.5, vjust.lab.pt=1.5, add.feature.2nd=FALSE, label=FALSE, label.size=4, label.angle=0, hjust=0, vjust=0, opacity=1, key=TRUE, line.width=0.2, line.color='grey70', relative.scale = NULL, verbose=TRUE, out.dir=NULL, animation.scale = 1, selfcontained=FALSE, aspr=1, video.dim='640x480', res=500, interval=1, framerate=1, bar.width.vdo=0.1, legend.value.vdo=NULL, ...) {
+
+  svg.ob <- read_svg(svg.path)
+  if (!is.null(bulk)) if (is(bulk, 'character') & file.exists(bulk)) { 
+    bulk <- readRDS(bulk) 
+    bulk <- aggr_rep(data=bulk, sam.factor=sam.factor, con.factor=con.factor, assay.na=assay.na, aggr=aggr)
+  } else bulk <- NULL
+  if (!is.null(cell)) if (is(cell, 'character') & file.exists(cell)) cell <- readRDS(cell) else cell <- NULL
+  if (is.null(match.lis)) match.lis <- list() else if (is(match.lis, 'character')) { 
+  if (file.exists(match.lis)) match.lis <- readRDS(match.lis) else match.lis <- list()
+  }
+  data <- SPHM(svg=svg.ob, bulk=bulk, cell=cell, match=match.lis)
+
+  sce.dimred <- data@cell; bulkCell <- NULL
+  if (!is(sce.dimred, 'Seurat')) if ('bulkCell' %in% colnames(sce.dimred)) sce.dimred <- subset(sce.dimred, , bulkCell=='cell')
+  res <- shm_covis(svg=data@svg, data=data@bulk, assay.na=assay.na, sam.factor=sam.factor, con.factor=con.factor, ID=ID, var.cell=var.cell, sce.dimred=sce.dimred, dimred=dimred, cell.group=cell.group, tar.cell=tar.cell, tar.bulk=tar.bulk, size.pt=size.pt, alpha.pt=alpha.pt, shape=shape, col.idp=col.idp, decon=decon, profile=profile, charcoal=charcoal, alpha.overlay=alpha.overlay, lay.shm=lay.shm, ncol=ncol, h=h, size.r=size.r, col.com=col.com, col.bar=col.bar, thr=thr, cores=cores, bar.width=bar.width, bar.title=bar.title, bar.title.size=bar.title.size, scale=scale, ft.trans=ft.trans, lis.rematch = data@match, legend.r=legend.r, sub.title.size=sub.title.size, sub.title.vjust=sub.title.vjust, legend.plot=legend.plot, ft.legend=ft.legend, bar.value.size=bar.value.size, legend.plot.title=legend.plot.title, legend.plot.title.size=legend.plot.title.size, legend.ncol=legend.ncol, legend.nrow=legend.nrow, legend.position=legend.position, legend.direction=legend.direction, legend.key.size=legend.key.size, legend.text.size=legend.text.size, angle.text.key=angle.text.key, position.text.key=position.text.key, legend.2nd=legend.2nd, position.2nd=position.2nd, legend.nrow.2nd=legend.nrow.2nd, legend.ncol.2nd=legend.ncol.2nd, legend.key.size.2nd=legend.key.size.2nd, legend.text.size.2nd=legend.text.size.2nd, angle.text.key.2nd=angle.text.key.2nd, position.text.key.2nd=position.text.key.2nd, dim.lgd.pos=dim.lgd.pos, dim.lgd.nrow=dim.lgd.nrow, dim.lgd.key.size=dim.lgd.key.size, dim.lgd.text.size=dim.lgd.text.size, dim.axis.font.size=dim.axis.font.size, dim.lgd.plot.margin=dim.lgd.plot.margin, dim.capt.size=dim.capt.size, size.lab.pt=size.lab.pt, hjust.lab.pt=hjust.lab.pt, vjust.lab.pt=vjust.lab.pt, add.feature.2nd=add.feature.2nd, label=label, label.size=label.size, label.angle=label.angle, hjust=hjust, vjust=vjust, opacity=opacity, key=key, line.width=line.width, line.color=line.color, relative.scale = relative.scale, verbose=verbose, out.dir=out.dir, animation.scale = animation.scale, aspr=aspr, selfcontained=selfcontained, video.dim=video.dim, res=res, interval=interval, framerate=framerate, bar.width.vdo=bar.width.vdo, legend.value.vdo=legend.value.vdo, ...)
+  data@output <- res; invisible(data)
+}
+
+
 #' SHM plots and co-visaulization plots 
 #' 
 #' @param sce.dimred A \code{SingleCellExperiment} with reduced dimentions such as \code{PCA}, \code{UMAP}, \code{TSNE}.
