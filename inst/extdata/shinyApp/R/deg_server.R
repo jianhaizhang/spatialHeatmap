@@ -1,22 +1,25 @@
 # Module for spatial enrichment.
-deg_server <- function(id, sch, lis.url, url.id, ids, upl.mod.lis, dat.mod.lis, shm.mod.lis, session) {
+deg_server <- function(id, sch, lis.url, url.id, ids, upl.mod.lis, dat.mod.lis, shm.mod.lis, parent=NULL, session) {
   moduleServer(id, function(input, output, session) {
   ipt <- upl.mod.lis$ipt; cfg <- upl.mod.lis$cfg
   gID <- shm.mod.lis$gID; datIn <- dat.mod.lis$dat
 
-  cnt.q.res <- reactiveValues(v=0)
-  observeEvent(input$degAll, {
-    if (!'dt.deg' %in% input$degAll|cnt.q.res$v > 2) return()
-    show_mod(FALSE, 'Please click "Enrichment SHMs".')
-    cnt.q.res$v <- cnt.q.res$v + 1
-  })
+  quick <- reactiveValues(v=0)  
+  observeEvent(list(parent$input$tabTop, input$degAll), {
+    tabTop <- parent$input$tabTop; degAll <- input$degAll
+    if (quick$v <= 3 & 'deg' %in% tabTop & !'help' %in% degAll) { 
+      showModal(modal(title = HTML('<center><b>Quick start!</b><center>'), msg = 'Showing 4 times only!', img='enrich_quick.jpg', img.w="100%"))
+       quick$v <- quick$v + 1
+    }
+  })  
   # dat.deg.mod.lis <- data_server('datDEG', sch, lis.url, ids, deg=TRUE, upl.mod.lis)
   dat <- reactive({
     cat('DEG: SummarizedExperiment, features, variables ... \n')
     datIn <- datIn(); if (is.null(datIn)|grepl(na.sgl, ipt$fileIn)) return()
     se.rep <- datIn$se.rep; df.rep <- as.matrix(assay(se.rep))
     int <- all(round(df.rep) == df.rep)
-    show_mod(int, 'Only count matrix is accepted!', title='Spatial Enrichment'); req(int)
+    #show_mod(int, 'Only count matrix is accepted!', title='Spatial Enrichment'); 
+    req(int)
     rows <- nrow(se.rep) >= 50
     show_mod(rows, 'Make sure count matrix includes at least 10 biomolecules!'); req(rows)
     cna <- colnames(se.rep)
@@ -69,23 +72,23 @@ deg_server <- function(id, sch, lis.url, url.id, ids, upl.mod.lis, dat.mod.lis, 
     cat('Done! \n'); se.nor
   })
 
-  output$ssg.sam <- renderUI({
+  output$sam <- renderUI({
     ns <- session$ns
     dat <- dat(); if (is.null(dat)) return()
     cho <- c('all', unique(dat$sams))
-    selectInput(ns('ssg.sam'), label='Select spatial features', choices=cho, selected=cho[2:3], multiple=TRUE)
+    selectInput(ns('sams'), label='Select spatial features', choices=cho, selected=cho[2:3], multiple=TRUE)
   })
-  output$ssg.con <- renderUI({
+  output$con <- renderUI({
     ns <- session$ns
     dat <- dat(); if (is.null(dat)) return()
     cho <- c('all', unique(dat$cons))
-    selectInput(ns('ssg.con'), label='Select variables', choices=cho, selected=cho[2:3], multiple=TRUE)
+    selectInput(ns('cons'), label='Select variables', choices=cho, selected=cho[2:3], multiple=TRUE)
   })
 
   se.sub <- reactive({
     cat('Subsetting SE with input features/variables ... \n')
     se.fil <- se.fil(); comBy <- input$comBy
-    sam <- input$ssg.sam; con <- input$ssg.con
+    sam <- input$sams; con <- input$cons
     if (!check_obj(list(se.fil, comBy, sam, con))) return()
     if ('all' %in% sam) sam <- unique(se.fil$sams)
     if ('all' %in% con) con <- unique(se.fil$cons)
@@ -110,9 +113,9 @@ deg_server <- function(id, sch, lis.url, url.id, ids, upl.mod.lis, dat.mod.lis, 
   }) 
 
   # Pairwise comparison coefficients.
-  output$dt.vs1 <- output$dt.vs2 <- renderDataTable({
+  output$dtvs1 <- output$dtvs2 <- renderDataTable({
     cat('Pairwise comparison coefficients ... \n')
-    dat <- dat(); sam <- input$ssg.sam; con <- input$ssg.con
+    dat <- dat(); sam <- input$sams; con <- input$cons
     comBy <- input$comBy; tar <- input$query
     if (is.null(dat)|!is.character(sam)|!is.character(con)|!is.character(comBy)|!is.character(tar)) return()
     if ('all' %in% sam) sam <- unique(dat$sams)
@@ -144,6 +147,7 @@ deg_server <- function(id, sch, lis.url, url.id, ids, upl.mod.lis, dat.mod.lis, 
       vs <- rbind(vs, c(tar, 'VS', ref))
       colnames(vs) <- c('query', 'VS', paste0('reference', seq_along(ref))) 
     }
+    for (i in seq_len(ncol(vs))) { vs[, i] <- sub('__', '_', vs[, i]) }
     d.tab <- datatable(vs, selection='none', extensions='Scroller', plugins = "ellipsis", class='cell-border strip hover', options = list(dom = 't', scrollX = TRUE))
     cat('Done! \n'); d.tab
   })
@@ -255,6 +259,16 @@ deg_server <- function(id, sch, lis.url, url.id, ids, upl.mod.lis, dat.mod.lis, 
     se.nor.sub <- aggr_rep(se.nor.sub, sam.factor=NULL, con.factor=NULL, aggr='mean')
     list(result=up.dn, data=se.nor.sub)
   })
+  observe({
+    res <- check_exp(res())
+    if (!is(res, 'list')) {
+      disable(selector='a[data-value="ovl"]')
+      disable(selector='a[data-value="dtDeg"]')
+    } else {
+      enable(selector='a[data-value="ovl"]')
+      enable(selector='a[data-value="dtDeg"]')
+    }
+  })
   output$upset <- renderPlot({
     meth <- input$meth; enrType <- input$enrType; res <- res()
     if (!check_obj(list(res, meth, enrType, res))) return()
@@ -279,7 +293,7 @@ deg_server <- function(id, sch, lis.url, url.id, ids, upl.mod.lis, dat.mod.lis, 
   
   query.res <- eventReactive(list(input$query, res()), {
     query <- input$query; meth <- input$meth; res <- res()
-    if (!check_obj(list(res, query, meth, res))) return()
+    if (!check_obj(list(query, meth, res))) return()
     q.res <- query_enrich(res=res, query=query)
     if (is.character(q.res)) {
       showModal(modal(msg = msg)) 
@@ -312,14 +326,14 @@ deg_server <- function(id, sch, lis.url, url.id, ids, upl.mod.lis, dat.mod.lis, 
       write.table(dt.deg(), file, sep='\t', col.names=TRUE, row.names=TRUE) }
     )
     
-  output$dt.deg <- renderDataTable({
+  output$dtDeg <- renderDataTable({
     cat('DEG summary table ... \n'); dt.deg <- dt.deg()
     if (is.null(dt.deg)) return()
     col1 <- list(list(targets=c(1), render=DT::JS("$.fn.dataTable.render.ellipsis(40, false)")))
     # In case no metadata column.
     if (colnames(dt.deg)[1]!='metadata') col1 <- NULL
     d.tab <- datatable(dt.deg, selection=list(mode="multiple", target="row"), escape=FALSE, filter="top", extensions='Scroller', plugins = "ellipsis",
-    options=list(pageLength=5, lengthMenu=c(5, 15, 20), autoWidth=TRUE, scrollCollapse=TRUE, deferRender=TRUE, scrollX=TRUE, scrollY=300, scroller=TRUE, searchHighlight=TRUE, search=list(regex=TRUE, smart=FALSE, caseInsensitive=TRUE), searching=TRUE, columnDefs=col1), 
+    options=list(pageLength=5, lengthMenu=c(5, 15, 20), autoWidth=FALSE, scrollCollapse=TRUE, deferRender=TRUE, scrollX=TRUE, scrollY=300, scroller=TRUE, searchHighlight=TRUE, search=list(regex=TRUE, smart=FALSE, caseInsensitive=TRUE), searching=TRUE, columnDefs=col1, fixedColumns = list(leftColumns=2)), 
     class='cell-border strip hover') %>% formatStyle(0, backgroundColor="orange", cursor='pointer'); cat('Done! \n')
     d.tab
   })
@@ -330,23 +344,12 @@ deg_server <- function(id, sch, lis.url, url.id, ids, upl.mod.lis, dat.mod.lis, 
       se.nor <- se.nor(); norMeth <- input$norMeth
       if (!check_obj(list(se.nor, norMeth))) req('')
       dat.all <- se.nor
-    }; df.met <- rowData(dat.all)
-    if ('metadata' %in% colnames(df.met)) dat.all <- cbind.data.frame(df.met[, 'metadata', drop=FALSE], round(assay(dat.all), 2), stringsAsFactors=FALSE) else dat.all <- round(assay(dat.all), 2)
-    dat.all
+    }; dat.all
   })
- output$datAll <- renderDataTable({
-    message('DEG: complete data matrix ...')
-    dat.all <- dat.all(); run <- input$run
-    if (!check_obj(list(run))) return()
-    if (!check_obj(list(dat.all)) & run > 0) return()
-    col1 <- list(list(targets = c(1), render = DT::JS("$.fn.dataTable.render.ellipsis(40, false)")))
-    # In case no metadata column.
-    if (colnames(dat.all)[1]!='metadata') col1 <- NULL
-    dtab <- datatable(dat.all, selection='none', escape=FALSE, filter="top", extensions=c('Scroller', 'FixedColumns'), plugins = "ellipsis",
-   options=list(pageLength=5, lengthMenu=c(5, 15, 20), autoWidth=TRUE, scrollCollapse=TRUE, deferRender=TRUE, scrollX=TRUE, scrollY=300, scroller=TRUE, searchHighlight=TRUE, search=list(regex=TRUE, smart=FALSE, caseInsensitive=TRUE), searching=TRUE, columnDefs=col1, fixedColumns = list(leftColumns=2)),
-   class='cell-border strip hover') %>% formatStyle(0, backgroundColor="orange", cursor='pointer')
-    message('Done!'); dtab
-  })
+ dat_all_server(id='dat', dat.all, r2=NULL, c2=NULL)
+   output$help <- renderUI({
+    tags$iframe(seamless="seamless", src= "html/shm_shiny_manual.html#3_Spatial_Enrichment", width='100%', height='100%') 
+  }) 
 
   dat.mod.lis.deg <- reactiveValues()
   #sch.mod.lis <- reactiveValues()
@@ -361,6 +364,16 @@ deg_server <- function(id, sch, lis.url, url.id, ids, upl.mod.lis, dat.mod.lis, 
   #})
   #but.sgl <- reactive({ sch.mod.lis$val$ids$but.sgl })
   #but.mul <- reactive({ sch.mod.lis$val$ids$but.mul })
+  observe({
+    lis.par <- cfg$lis.par; lis.url                                                                    
+    req(check_obj(list(lis.par, lis.url)))
+    updateNumericInput(session, 'A', value=url_val('deg-A', lis.url, as.numeric(lis.par$enrich.set['A', 'default'])))
+    updateNumericInput(session, 'P', value=url_val('deg-P', lis.url, as.numeric(lis.par$enrich.set['P', 'default'])))
+    updateNumericInput(session, 'CV1', value=url_val('deg-CV1', lis.url, as.numeric(lis.par$enrich.set['CV1', 'default'])))
+    updateNumericInput(session, 'CV2', value=url_val('deg-CV2', lis.url, as.numeric(lis.par$enrich.set['CV2', 'default'])))
+    updateNumericInput(session, 'ssg.fc', value=url_val('deg-ssg.fc', lis.url, as.numeric(lis.par$enrich.set['log2.fc', 'default'])))
+    updateNumericInput(session, 'ssg.fdr', value=url_val('deg-ssg.fdr', lis.url, as.numeric(lis.par$enrich.set['fdr', 'default'])))
+  })
   onBookmark(function(state) { state })
   # return(list(but.sgl=but.sgl, but.mul=but.mul, query.res=query.res, input=input))
   return(list(query.res=query.res, input=input))

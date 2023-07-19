@@ -2,7 +2,7 @@
 upload_ui <- function(id) {
    ns <- NS(id)
    tabPanel(title="Datasets", value='landing',
-   navbarPage('', selected='instr', 
+   navbarPage('', selected='datSVG', 
      tabPanel(title="Gallery", value='gallery',
       fluidRow(
         column(4, id='brainHum', style='text-align:center', uiOutput(ns('brain.hum'))),
@@ -23,8 +23,11 @@ upload_ui <- function(id) {
       ),
      ), # tabPanel(title="Gallery",
      tabPanel(title="Data & aSVGs", value='datSVG',
-      h4(strong("Step 1: choose custom or default data sets")),
-      fluidRow(splitLayout(cellWidths=c('1%', '30%'), '', 
+      fluidRow(splitLayout(cellWidths=c('10px', '430px', '1px', '70px'), '', 
+      h4(strong("Step1: upload custom or select default datasets")),
+      actionButton(ns("dathelp"), 'Help', style=paste0('margin-top:10px;', hp))
+      )),
+      fluidRow(splitLayout(cellWidths=c('1px', '430px'), '', 
       selectInput(ns("fileIn"), label=NULL, choices=c('customBulkData'), selected='')
       )),
       uiOutput(ns('bulk.sce')), uiOutput(ns('svg.upl')),
@@ -46,14 +49,7 @@ upload_ui <- function(id) {
       #tags$div(class='tp', span(class='tpt', 'The data is matched with multiple aSVG files (e.g. developmental stages).'),
       #fileInput(ns("svgInpath2"), "3B (optional): upload multiple aSVG files", accept=".svg", multiple=TRUE))
       #)),
-      bsTooltip(id='svgInpath', title = "The data is matched with a single aSVG file.", placement = "bottom", trigger = "hover"),
-      div(style = "font-size: 10px; padding: 0px 0px; margin:0%",
-      fluidRow(splitLayout(cellWidths=c('1%', '21%', '1%', '21%', '1%', '24%', '1%', '24%'), '',
-      downloadButton(ns("dld.sgl"), "Example1: data & a single aSVG"), '',
-      downloadButton(ns("dld.mul"), "Example2: data & multiple aSVGs"), '',
-      downloadButton(ns("dld.st"), "Example3: multi-variable data & aSVG"), '',
-      downloadButton(ns("dld.covis"), "Example4: co-visualization data & aSVG")
-      ))) # br(), 
+      bsTooltip(id='svgInpath', title = "The data is matched with a single aSVG file.", placement = "bottom", trigger = "hover")
 
       #h4(strong("Additional files")), 
       #fluidRow(splitLayout(cellWidths=c('1%', '24%', '1%', '35%'), '',
@@ -67,10 +63,15 @@ upload_ui <- function(id) {
       #downloadButton(ns("dld.cfg"), "Example config file"), '', downloadButton(ns("dld.bat"), "Example data/aSVGs in batch")
       # )))
    ), # tabPanel(title="Data & aSVGs",
-   tabPanel(title="Instructions", value='instr',
-     tags$iframe(style="height: 100vh", src="image/shiny_instr.pdf",  width = "100%", scrolling = 'no')
-   ) 
+   tabPanel(title="Example datasets", value='exDat',
+     h4(strong("Download pre-configured assay/image datasets.")),
+     fluidRow(splitLayout(cellWidths=c('10px', '250px', '1px', '255px', '1px', '285px', '1px', '295px'), '',
+     downloadButton(ns("dld.sgl"), "Example1: data & a single aSVG"), '',
+     downloadButton(ns("dld.mul"), "Example2: data & multiple aSVGs"), '',
+     downloadButton(ns("dld.st"), "Example3: multi-variable data & aSVG"), '',
+     downloadButton(ns("dld.covis"), "Example4: co-visualization data & aSVG")
+     )) # br(), 
+   ), tabPanel(title=span('Help', style=hp), value='help', htmlOutput(ns('help'))) 
   ) # tabsetPanel(selected="gallery",
    ) # tabPanel(title="Datasets", 
-  
 }

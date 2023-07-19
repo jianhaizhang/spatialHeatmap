@@ -1,3 +1,14 @@
+if (interactive()) {
+  requireNamespace('DESeq2'); requireNamespace('av'); requireNamespace('BiocGenerics'); requireNamespace('distinct') 
+  requireNamespace('dendextend'); requireNamespace('HDF5Array'); requireNamespace('magick'); requireNamespace('DT'); 
+  requireNamespace('pROC'); requireNamespace('shinyWidgets'); requireNamespace('shinyjs'); requireNamespace('htmltools');
+  requireNamespace('shinyBS'); requireNamespace('sortable'); requireNamespace('org.Hs.eg.db'); requireNamespace('org.Mm.eg.db')
+  requireNamespace('org.At.tair.db'); requireNamespace('org.Dr.eg.db'); requireNamespace('org.Dm.eg.db');
+  requireNamespace('AnnotationDbi'); requireNamespace('sparkline'); requireNamespace('spsComps')
+}
+
+# Accessing local html files by iframes.
+# addResourcePath("tmpuser", getwd())
 # Application-level cache, max size is 1G.
 shiny::shinyOptions(cache = cachem::cache_disk(dir="./app_cache/cache/", max_size = 1024 * 1024^2))
 
@@ -10,11 +21,18 @@ na.sgl <- c('^covis_|^customCovisData$')
 tmp.dir <- normalizePath(tempdir(check=TRUE), winslash="/", mustWork=FALSE)
 tmp.file <- normalizePath(tempfile(), winslash='/', mustWork=FALSE)
 
+# Tooltip of colData table in covis.
+msg.meta.ann <- 'Metadata of single-cell (see "bulkCell") data. "label", "label1": cell group labels obtained from annotation labels, marker genes, etc.'
+msg.meta.coclus <- "Metadata of bulk and single-cell data after co-clustering. <br/> 1. 'cluster': clusters containing only cells or cells and tissues (co-clusters); <br/> 2. 'bulkCell': 'bulk' and 'cell' indicate tissues and cells respectively; <br/> 3. 'assignedBulk': tissue lables assinged to cells as group labels, 'none' indicates no assignment; <br/> 4. 'similarity': Spearman correlation efficient used for tissue-cell assignment through a nearest-neighbor approach."
+
 # Run button colors.
-run.col <- "color:#fff;background-color:#c685c4;border-color:#ddd"
-run.top <- "margin-top:24px;color:#fff;background-color:#c685c4;border-color:#ddd"
+hp <- 'background-color:#e7e7e7'
+hp.txt <- 'color:black'
+run.msg <- 'Always click the <span style="color:white;font-weight:bold;background-color:#369ef7;font-size:20px">"Run"</span> button to see the latest results!'
+run.col <- "color:white;background-color:#369ef7;border-color:#ddd"
+run.top <- "margin-top:24px;color:white;background-color:#369ef7;border-color:#ddd"
 # Confirm buttons.
-conf.col <- 'margin-top:2px;margin-bottom:-10px;margin-left:20px;padding-top:2px;padding-bottom:2px;color:#fff;background-color:#c685c4;border-color:#ddd'
+conf.col <- 'margin-top:2px;margin-bottom:-10px;margin-left:20px;padding-top:2px;padding-bottom:2px;color:white;background-color:#369ef7;border-color:#ddd'
 # Rectangle.
 rec <- 'border-color:#3c8dbc;border-width:1px;border-style:solid'
 
@@ -28,13 +46,13 @@ lab.mul <- 'Search by single or multiple gene IDs (e.g. Cav2,Apoh)'
 # Search portion of URLs on the landing page.
 
 # Extract parameter values from url.
-url_val <- function(na, lis.url) {
+url_val <- function(na, lis.url, def=NULL) {
   # if (!exists('lis.url')) return('null')
-  if (!na %in% names(lis.url$par)) return('null')
-  if (length(lis.url$par)==0) val <- 'null' else val <- lis.url$par[[na]]
-  # In "ifelse", the length of returned value is same with the first argument.
-  # val <- ifelse(length(lis.url$par)==0, 'null', lis.url$par[[na]])
-  gsub('\\"', '', val)
+  if (!na %in% names(lis.url$par)) val <- 'null' else if (length(lis.url$par)==0) val <- 'null' else val <- lis.url$par[[na]]
+    # In "ifelse", the length of returned value is same with the first argument.
+    # val <- ifelse(length(lis.url$par)==0, 'null', lis.url$par[[na]])
+   val <- gsub('\\"', '', val)
+   if (!is.null(def)) ifelse('null' %in% val[1], def, val) else val
 }
 
 # Import internal functions.
@@ -169,40 +187,29 @@ video <- get('video', envir=asNamespace('spatialHeatmap'), inherits=FALSE)
 show_mod <- get('show_mod', envir=asNamespace('spatialHeatmap'), inherits=FALSE)
 modal <- get('modal', envir=asNamespace('spatialHeatmap'), inherits=FALSE)
 
-# Data table in covis.
-dat_covis_man <- function(sce, r1=1, r2=500, c1=1, c2=20) {
-  if (r1 < 1) r1 <- 1; if (c1 < 1) c1 <- 1
-  lgc.r <- r2 > r1; if (!lgc.r) {
-    show_mod(lgc.r, msg='Row End should > Row Start!')
-  }; req(lgc.r)  
-  lgc.c <- c2 > c1; if (!lgc.c) {
-    show_mod(lgc.c, msg='Column End should > Column Start!')
-  }; req(lgc.c) 
-  dat <- round(assay(sce), 2)
-  if (nrow(dat) < r2) r2 <- nrow(dat)
-  if (ncol(dat) < c2) c2 <- ncol(dat)
-  datatable(as.matrix(dat[seq(r1, r2, 1), seq(c1, c2, 1), drop=FALSE]), selection='none', escape=FALSE, filter="top", extensions=c('Scroller', 'FixedColumns'), plugins = "ellipsis",
-  options=list(pageLength=20, lengthMenu=c(10, 20, 50, 100), autoWidth=TRUE, scrollCollapse=TRUE, deferRender=TRUE, scrollX=TRUE,  scrollY=300, scroller=TRUE, searchHighlight=TRUE, search=list(regex=TRUE, smart=FALSE, caseInsensitive=TRUE), searching=TRUE, fixedColumns=list(leftColumns=1)) 
-  ) 
-}
-
-
 # Extract a 1-column data frame of URLs. If no column of URL is present, the default google-search URLs are composed.
-link_dat <- function(df.met) {
+link_dat <- function(df.met, link.only=TRUE) {
+  # save(df.met, link.only, file='link.dat.arg')
   cna <- colnames(df.met); rna <- rownames(df.met)
-  link.idx <- grep('link|links', cna, ignore.case=TRUE)[1]
-  if (is.na(link.idx)) {
-    # Iterative operation on data frame: vectorization is faster than for/lapply loop.
-    link <- paste0('<a href=\"https://www.google.com/search?q=', rna, '" target="_blank">link</a>')
+  link.idx <- grep('link|links', cna, ignore.case=TRUE)[1] 
+  if (is.na(link.idx)) {   
+    # Iterative operation on data frame: vectorization is faster than for/lapply loop.  
+    link <- paste0('<a href=\"https://www.google.com/search?q=', rna, '" target="_blank">link</a>')  
     # link <- lapply(rownames(df.met), function(x) a("link", href=paste0('https://www.google.com/search?q=', x), target="_blank"))
-    # link <- unlist(lapply(link, as.character))
-  } else { link <- df.met[, link.idx]; link <- gsub('\\\\"', '\'', link) }
-  return(data.frame(link=link, row.names=rownames(df.met)))
-}
-
+    # link <- unlist(lapply(link, as.character))  
+  } else { link <- df.met[, link.idx]
+    link <- paste0('<a href="', gsub('\\\\"', '\'', link), '" target="_blank">link</a>')  
+  }
+  df.lk <- data.frame(link=link, row.names=rownames(df.met))
+  # df.met: 0 or 1 column, return(df.lk)
+  if (link.only==TRUE | ncol(df.met)<=1) return(df.lk) else {
+    cna.other <- setdiff(colnames(df.met), colnames(df.lk))
+    df.met <- cbind(df.met[, cna.other[1], drop=FALSE], df.lk, df.met[, cna.other[setdiff(seq_along(cna.other), 1)], drop=FALSE]); return(df.met)
+  }
+} 
 
 # Import input matrix, able to deal with separate numeric matrix, character matrix, and mixture of both.
-fread_df <- function(input, isRowGene=TRUE, header=TRUE, sep='auto', fill=TRUE, rep.aggr='mean', check.names=FALSE, rdat=NULL) { 
+fread_df <- function(input, isRowGene=TRUE, header=TRUE, sep='auto', fill=TRUE, rep.aggr='mean', check.names=FALSE) { 
   if (is(input, 'dgCMatrix')|is(input, 'matrix')|is(input, 'data.frame')|is(input, 'DFrame')|is(input, 'DelayedMatrix')) input <- as.data.frame(as.matrix(input))
   if (!is(input, 'data.frame')) {
   df0 <- tryCatch({
@@ -253,10 +260,10 @@ fread_df <- function(input, isRowGene=TRUE, header=TRUE, sep='auto', fill=TRUE, 
   if(sum(is.na(as.numeric(as.matrix(df.num))))>=1) return('Make sure all values in data matrix are numeric.')
   
   df.rep <- df.num; df.rep <- df_is_as(df.rep, as.numeric)
-  if (!is.null(rdat)) {
-    rdat <- cbind(DataFrame(df.met[, !colnames(df.met) %in% colnames(rdat)]), DataFrame(rdat))
-  }
-  se.rep <- SummarizedExperiment(assays=list(rep=as.matrix(df.rep)), colData=df.cdat, rowData=rdat)
+  #if (TRUE %in% rdat) {
+  #  rdat <- cbind(DataFrame(df.met[, !colnames(df.met) %in% colnames(rdat)]), DataFrame(rdat))
+  # } else rdat <- NULL
+  se.rep <- SummarizedExperiment(assays=list(rep=as.matrix(df.rep)), colData=df.cdat, rowData=df.met)
   if (!is.null(rep.aggr)) { 
     se.aggr <- aggr_rep(data=se.rep, assay.na=NULL, sam.factor=NULL, con.factor=NULL, aggr=rep.aggr)
     assayNames(se.aggr) <- 'aggr'

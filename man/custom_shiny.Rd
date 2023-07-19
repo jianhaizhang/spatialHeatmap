@@ -13,13 +13,15 @@ custom_shiny(
   dld.mul = NULL,
   dld.vars = NULL,
   data.tmp = TRUE,
+  ldg = NULL,
+  about = NULL,
   app.dir = "."
 )
 }
 \arguments{
 \item{data}{A nested `list` of custom data and aSVG files that will be the pre-included examples in the custom App. File paths of each data-aSVG pair should be included in a `list` that have four slots: `name`, `display`, `data`, and `svg`, e.g. `lis1 <- list(name='mus.brain', display='Mouse brain (SHM)', data='./mus_brain.txt', svg='./mus_brain.svg')`. The `name` will be syntactically valide for R code, while the `display` will be shown on the user interface, so the latter can include special characters. The `data` and `svg` is the file path of numeric data and corresponding aSVG respectively. If multiple aSVGs (e.g. growth stages) correspond to a single numeric data set, the respective paths will be stored in a vector in the `svg` slot (see example below). After store the data-aSVG pairs in separate `list`s, store these `list`s in another `list` (nested `list`), e.g. `list(lis1, lis2)`. The data and aSVGs in the nested `list` will be copied to the `data` folder in the custom App.}
 
-\item{db}{Pairs of data and aSVG in a tar file that will be used as a backend database. See \code{\link{write_hdf5}}.}
+\item{db}{Paired assay data and aSVGs in a tar file that will be used as a backend database. See \code{\link{write_hdf5}}.}
 
 \item{lis.par}{A `list` of custom parameters of the Shiny App that will be the default when the custom App is launched. See \code{par.tmp}. Default is `NULL` and the default parameters in the spatialHeatmap Shiny App will be inherited.}
 
@@ -32,6 +34,8 @@ custom_shiny(
 \item{dld.vars}{A `list` of paired data matrix and single aSVG file, which would be downloadable data.tmp dataset on the App for testing. It is the same as `dld.sgl` except that multiple experimental variables are combined in the data matrix (see package viengettes for details.)}
 
 \item{data.tmp}{Logical. If `TRUE` (default), both example data sets in the spatialHeatmap Shiny App and custom data sets in `data` will be included in the custom App.}
+
+\item{ldg, about}{The paths of ".html" files that will be used for the landing and about pages in the custom Shiny App respectively. The default is `NULL`, indicating default ".html" files will be used.}
 
 \item{app.dir}{The directory to create the Shiny App. Default is current work directory \code{.}.}
 }
@@ -46,12 +50,12 @@ This function creates customized spatialHeatmap Shiny Apps with user-provided da
 # The data sets in spatialHeatmap are used for demonstrations.
 
 ## Below are demonstrations of simple usage.
-# File paths of one data matrix and one aSVG path.
-data.path1 <- system.file('extdata/shinyApp/data/expr_arab.txt', package='spatialHeatmap')
-svg.path1 <- system.file('extdata/shinyApp/data/arabidopsis.thaliana_shoot_shm.svg', 
+# File paths of one data matrix and one aSVG.
+data.path1 <- system.file('extdata/shinyApp/data/expr_mouse.txt', package='spatialHeatmap')
+svg.path1 <- system.file('extdata/shinyApp/data/mus_musculus.male.svg', 
 package='spatialHeatmap')
 # Save the file paths in a list with name slots of "name", "display", "data", and "svg".
-lis.dat1 <- list(name='shoot', display='Arabidopsis shoot (SHM)', data=data.path1, svg=svg.path1)
+lis.dat1 <- list(name='Mouse', display='Mouse (SHM)', data=data.path1, svg=svg.path1)
 # Create custom Shiny Apps.
 \donttest{
 if (!dir.exists('~/test_shiny')) dir.create('~/test_shiny')
@@ -74,7 +78,7 @@ package='spatialHeatmap')
 lis.dat2 <- list(name='growthStage', display='Multiple aSVGs (SHM)',data=data.path2, svg=c(svg.path2.1, svg.path2.2))
 
 # Paths of one data matrix with combined variables and one aSVG.
-data.path.vars <- system.file('extdata/shinyApp/data/mus_brain_vars.txt', 
+data.path.vars <- system.file('extdata/shinyApp/data/mus_brain_vars_se_shiny.rds', 
 package='spatialHeatmap')
 svg.path.vars <- system.file('extdata/shinyApp/data/mus_musculus.brain.svg', 
 package='spatialHeatmap')
@@ -82,12 +86,12 @@ package='spatialHeatmap')
 lis.dat.vars <- list(name='multiVariables', display='Multiple variables (SHM)', data=data.path.vars, svg=svg.path.vars)
 
 # Paths of one data matrix and one aSVGs for creating downloadable example data sets.
-data.path.dld1 <- system.file('extdata/shinyApp/data/expr_arab.txt', 
+data.path.dld1 <- system.file('extdata/shinyApp/data/expr_mouse.txt', 
 package='spatialHeatmap')
-svg.path.dld1 <- system.file('extdata/shinyApp/data/arabidopsis.thaliana_organ_shm.svg', 
+svg.path.dld1 <- system.file('extdata/shinyApp/data/mus_musculus.male.svg', 
 package='spatialHeatmap')
 # Save the file paths in a list with name slots of "name", "display", "data", and "svg".
-dld.sgl <- list(name='organ', data=data.path.dld1, svg=svg.path.dld1)
+dld.sgl <- list(data=data.path.dld1, svg=svg.path.dld1)
 
 # For demonstration purpose, the same data and aSVGs are used to make the list for creating 
 # downloadable example dataset of two growth stages. 

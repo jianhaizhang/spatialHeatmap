@@ -92,17 +92,18 @@ sce$label1[blk.idx] <- sce$label[blk.idx]
 
 library(org.Mm.eg.db)
 columns(org.Mm.eg.db); keytypes(org.Mm.eg.db)
-
-# sce <- readRDS('../extdata/shinyApp/data/shiny_covis_bulk_cell_mouse_brain.rds')
-
 row.met <- select(org.Mm.eg.db, keys=rownames(sce), columns=c('SYMBOL', 'GENENAME'), keytype="SYMBOL")
 row.met <- row.met[!duplicated(row.met$SYMBOL), ]
 row.met$metadata <- row.met$GENENAME
 all(rownames(sce)==row.met$SYMBOL)
 row.met[, c('SYMBOL', 'GENENAME')] <- NULL
 rowData(sce) <- row.met
-saveRDS(sce, file='shiny_covis_bulk_cell_mouse_brain.rds')
 
+# sce <- readRDS('../extdata/shinyApp/data/shiny_covis_bulk_cell_mouse_brain.rds')
+
+df.meta <- data.frame(name=c('assayBulk', 'assayCell', 'aSVG'), link=c('https://www.ncbi.nlm.nih.gov/bioproject/PRJNA725533', 'https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE147747', 'https://raw.githubusercontent.com/ebi-gene-expression-group/anatomogram/master/src/svg/mus_musculus.male.svg'), species=c('Mus musculus', 'Mus musculus', 'Mus musculus'), technology=c('RNA-seq', 'RNA-seq', 'NA'), database=c('BioProject', 'GEO', 'EBI anatomogram'), id=c('PRJNA725533', 'GSE147747', 'NA'), description=c('Long-term impact of placental allopregnanolone insufficiency on the mouse transcriptome of cerebral cortex, hippocampus, hypothalamus and cerebellum', 'Hybridized 75 coronal sections from one brain hemisphere of 3 adult mice with Spatial Transcriptomics and defined a molecular atlas using clustering algorithms.', 'An annotated SVG (aSVG) file.'))
+metadata(sce)$df.meta <- df.meta
+saveRDS(sce, file='shiny_covis_bulk_cell_mouse_brain.rds')
 
 
 ## Example data of Arabidopsis thaliana root for coclustering optimization, downloaded at https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE152766. 

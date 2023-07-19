@@ -26,31 +26,36 @@
 #' @references 
 #' H. Wickham. ggplot2: Elegant Graphics for Data Analysis. Springer-Verlag New York, 2016.
 
-#' @importFrom ggplot2 theme layer_data scale_fill_manual unit element_text guide_legend ggplot_build
+#' @importFrom ggplot2 theme layer_data ggplot_build scale_fill_manual unit element_text guide_legend ggplot_build
 
-gg_lgd <- function(gg.all, size.key=NULL, size.text.key=8, angle.text.key=NULL, position.text.key=NULL, legend.value.vdo=NULL, sub.title.size=NULL, row=NULL, col=NULL, label=FALSE, label.size=3, label.angle=0, hjust=0, vjust=0, opacity=1, key=TRUE, aspect.ratio = NULL, lgd.space.x=NULL, title=NULL) {
+gg_lgd <- function(gg.all, gcol.lgd=NULL, size.key=NULL, size.text.key=8, angle.text.key=NULL, position.text.key=NULL, legend.value.vdo=NULL, sub.title.size=NULL, row=NULL, col=NULL, label=FALSE, label.size=3, label.angle=0, hjust=0, vjust=0, opacity=1, key=TRUE, aspect.ratio = NULL, lgd.space.x=NULL, title=NULL) {
 
-  # save(gg.all, size.key, size.text.key, angle.text.key, position.text.key, legend.value.vdo, sub.title.size, row, col, label, label.size, label.angle, hjust, vjust, opacity, key, aspect.ratio, title, file='gg.lgd.all')
+  # save(gg.all, gcol.lgd, size.key, size.text.key, angle.text.key, position.text.key, legend.value.vdo, sub.title.size, row, col, label, label.size, label.angle, hjust, vjust, opacity, key, aspect.ratio, lgd.space.x, title, file='gg.lgd.all')
   feature <- x0 <- y0 <- NULL
   # Function to remove feature labels. 
   rm_label <- function(g) {    
     g.layer <- g$layer; if (length(g.layer)==1) return(g) 
     for (k in rev(seq_along(g.layer))) {
       na.lay <- unique(names(as.list(g.layer[[k]])$geom_params))
-      if (all(c('check_overlap', 'angle', 'size') %in% na.lay)) g$layers[[k]] <- NULL
+      if (all(c('check_overlap') %in% na.lay)) g$layers[[k]] <- NULL
     }; return(g)
   }
   for (i in seq_along(gg.all)) { 
-    g <- gg.all[[i]] 
+    g <- gg.all[[i]]; nas <- names(gg.all); rast <- FALSE
     if (!is.null(size.key)) g <- g+theme(legend.key.height=unit(size.key, "npc"), legend.key.width=unit(size.key, "npc"), legend.text=element_text(size=ifelse(is.null(size.text.key), 8*size.key*33, size.text.key)))
     if (!is.null(sub.title.size)) g <- g+theme(plot.title=element_text(hjust=0.5, size=sub.title.size))
     if (!is.null(lgd.space.x)) g <- g+theme(legend.spacing.x = unit(lgd.space.x, 'npc'))
     if (!is.null(row)|!is.null(col)|label==TRUE|opacity!=1|!is.null(angle.text.key)|!is.null(position.text.key)|!is.null(legend.value.vdo)) {
-
-      lay.dat <- layer_data(g); g.col <- lay.dat$fill
+      lay.dat <- layer_data(g); dat <- g$data
+      if (nrow(lay.dat)==1) {
+        lay.dat <- ggplot_build(g)$data[[2]]; rast <- TRUE 
+      }
+      dat <- g$data; g.col <- lay.dat$fill
       # Single cell dimensionality point plot.
-      if (all(is.na(g.col))) g.col <- lay.dat$colour
-      dat <- g$data; names(g.col) <- dat$feature
+      if (all(is.na(g.col))|is.null(g.col)) g.col <- lay.dat$colour
+      names(g.col) <- dat$feature
+      # In videos, heat colors rather than legend colors are used, so the colors should be extracted from ggplots not the "gcol.lgd".
+      # g.col <- gcol.lgd[grepl(paste0(nas[i], '$'), names(gcol.lgd))][[1]]
       df.tis <- as.vector(dat$feature)
       if (is.null(dat$value)) df.val <- NULL else df.val <- round(dat$value, 2) # Expression values.
       g.col <- g.col[!duplicated(names(g.col))]
@@ -64,12 +69,11 @@ gg_lgd <- function(gg.all, size.key=NULL, size.text.key=8, angle.text.key=NULL, 
       leg.idx <- !duplicated(tis.path) & (tis.path %in% ft.legend)
       # df.tar <- df.tis[leg.idx]; lab <- path.tar <- tis.path[leg.idx]; val.tar <- df.val[leg.idx]
       trans <- g.col[g.col %in% 'NA'][1]
-      tr.lab <- 'Un-measured' 
+      tr.lab <- 'Unmeasured' 
       if (is.na(trans)) trans <- tr.lab <- NULL
       df.tar <- c(df.tis[leg.idx], names(trans))
       lab <- c(tis.path[leg.idx], tr.lab) 
-      val.tar <- df.val[leg.idx]
-      path.tar <- tis.path[leg.idx]
+      val.tar <- df.val[leg.idx]; path.tar <- tis.path[leg.idx]
       if (sum(legend.value.vdo)==1) {
         if (!is.null(val.tar)) lab <- paste0(path.tar, ' (', val.tar, ')') else lab <- path.tar
       }
@@ -77,7 +81,8 @@ gg_lgd <- function(gg.all, size.key=NULL, size.text.key=8, angle.text.key=NULL, 
       if (key==TRUE) gde <- guide_legend(title=NULL, nrow=row, ncol=col, label.theme=element_text(angle=angle.text.key, size=g$theme$legend.text$size), label.position=position.text.key)
       if (key==FALSE) gde <- FALSE
       if (!is.null(row)|!is.null(col)|opacity!=1|key==FALSE|!is.null(angle.text.key)|!is.null(position.text.key)|!is.null(legend.value.vdo)) g <- g+scale_fill_manual(values=g.col, breaks=df.tar, labels=lab, guide=gde)
-      if (label==TRUE) {
+      if (label==TRUE & rast==FALSE) {
+        # nrow(lay.dat) >1: not superimposed with raster images.
         dat$x0 <- dat$y0 <- dat$label <- NA
         lab.idx <- dat$feature %in% path.tar
         dat1 <- dat[lab.idx, ]; dat1$label <- dat1$feature
@@ -92,7 +97,7 @@ gg_lgd <- function(gg.all, size.key=NULL, size.text.key=8, angle.text.key=NULL, 
       }; gg.all[[i]] <- rm_label(g)
     } # if
     if (!is.null(title)) g <- g + labs(title=title) 
-    if (label==FALSE) { g <- rm_label(g) }
+    if (label==FALSE & rast==FALSE) { g <- rm_label(g) }
     if (!is.null(aspect.ratio)) if (aspect.ratio > 0) g <- g + theme(aspect.ratio=1/aspect.ratio)
     gg.all[[i]] <- g 
   } # for 

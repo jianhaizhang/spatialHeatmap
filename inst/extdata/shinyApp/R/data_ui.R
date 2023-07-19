@@ -2,12 +2,29 @@
 data_ui <- function(id, dim.ui=NULL, tailor.ui=NULL) {
   ns <- NS(id)
   # if (deg == FALSE) tabPanel("Primary Visualization", value='primary',
-  box(width = 12, title = "Data Table", closable = FALSE, solidHeader = TRUE, collapsible = TRUE, enable_sidebar = FALSE, status = "primary", enable_dropdown = FALSE,
-      navbarPage('', id=ns('settNav'), selected='dat', 
+  box(id=ns('dat'), width = 12, title = "Experiment and Image Data", closable = FALSE, solidHeader = TRUE, collapsible = TRUE, enable_sidebar = FALSE, status = "primary", enable_dropdown = FALSE,
+      navbarPage('', id=ns('settNav'), selected='dat',
+      tabPanel("Overview", value='over', 
+        fluidRow(splitLayout(cellWidths=c("1%", "98%", "1%"), "", DTOutput(ns("over")), "")),
+      ), 
+      tabPanel('Experiment design', value='expDsg',
+        fluidRow(splitLayout(cellWidths=c("1%", "98%", "1%"), "", dataTableOutput(ns("expDsg")), "")),
+      ),
+      tabPanel("Assay data", value='dat',
+      fluidRow(splitLayout(cellWidths=c('5px', '70px', '1px', '115px', '1px', '80px', '1px', '80px', '1px', '170px'), '',
+      actionButton(ns("selRow"), "Plotting", style=run.top), '',
+      actionButton(ns("deSel"), "Deselect rows", style='margin-top:24px'), '',
+      numericInput(ns('page'), label='Table height', value=300, min=50, max=Inf, step=50, width=150), '',
+      selectInput(ns('spk'), label='Sparklines', choices=c('No', 'Yes'), selected='No'), '',
+      selectInput(ns('datIn'), label='Input data', choices=c('Complete'='all'), selected='all') 
+      )),
+      bsTooltip(id=ns('selRow'), title="Click to plot spatial heatmaps.", placement = "top", trigger = "hover"),
+      fluidRow(splitLayout(cellWidths=c("1%", "98%", "1%"), "", dataTableOutput(ns("dtAll")), ""))
+      ), # tabPanel
       tabPanel("Settings", value='sett', 
       actionButton(ns("run"), "Run", icon=icon("sync"), style = run.col),
-      div(id=ns('submsg'),
-      fluidRow(splitLayout(cellWidths=c('12px', '70px', '1px', '70px', '1px', '95px', '1px', '89px'), '',
+      div(id=ns('submsg'), style='width:400px',
+      fluidRow(splitLayout(cellWidths=c('12px', '90px', '1px', '90px', '1px', '95px', '1px', '90px'), '',
         numericInput(ns('r1'), label='Row start', value=1, min=1, max=Inf, step=1), '',
         numericInput(ns('r2'), label='Row end', value=100, min=2, max=Inf, step=1), '',
         numericInput(ns('c1'), label='Column start', value=1, min=1, max=Inf, step=1), '',
@@ -31,27 +48,16 @@ data_ui <- function(id, dim.ui=NULL, tailor.ui=NULL) {
       selectInput(ns('scl'), label='5. Scale by', choices=c('No'='No', 'Row'='Row', 'Selected'='Selected', 'All'='All'), selected='No')
       )), div(style='height:200px'),
       bsTooltip(id=ns('submsg'), title="Subsetting the data matrix for display only, not for downstream analysis.", placement = "top", trigger = "hover"),
-      bsTooltip(id=ns('normDat'), title="Output: log2 scale. <br/> CNF: calcNormFactors (edgeR). <br/> ESF: estimateSizeFactors (DESeq2). <br/> VST: varianceStabilizingTransformation (DESeq2). <br/> rlog: regularized log (DESeq2).", placement = "right", trigger = "hover"),
+      bsTooltip(id=ns('normDat'), title="CNF: calcNormFactors (edgeR). <br/> ESF: estimateSizeFactors (DESeq2). <br/> VST: varianceStabilizingTransformation (DESeq2). <br/> rlog: regularized log (DESeq2).", placement = "right", trigger = "hover"),
       bsTooltip(id=ns('scl'), title="Row: scale each row independently. <br/> Selected: scale across all selected rows as a whole. <br/> All: scale across all rows as a whole.", placement = "top", trigger = "hover"),
       bsTooltip(id=ns('log'), title="No: skipping this step. <br/> Log2: transform data to log2-scale. <br/> Exp2: transform data to the power of 2.", placement = "top", trigger = "hover"),
-      bsTooltip(id=ns('filter'), title="Rows passing the following filtering will remain: <br/> 1. Expression values >= A across >= P of all samples <br/> 2. Coefficient of variation (CV) is between CV1 and CV2.", placement = "top", trigger = "hover"),
+      bsTooltip(id=ns('filter'), title="Rows passing the following filtering will remain: <br/> 1. Expression values > A across at least P of all samples <br/> 2. Coefficient of variation (CV) is between CV1 and CV2.", placement = "top", trigger = "hover"),
       bsTooltip(id=ns('thr'), title='Values > "Max value": set to "Max value". <br/> Values < "Min value": set to "Min value".', placement = "top", trigger = "hover")
-      ), # tabPanel
-
-      tabPanel("Complete", value='dat',
-      fluidRow(splitLayout(cellWidths=c('5px', '130px', '1px', '115px', '1px', '80px', '1px', '80px', '1px', '170px'), '',
-      actionButton(ns("selRow"), "Confirm selection", style=run.top), '',
-      actionButton(ns("deSel"), "Deselect rows", style='margin-top:24px'), '',
-      numericInput(ns('page'), label='Page height', value=300, min=50, max=Inf, step=50, width=150), '',
-      selectInput(ns('spk'), label='Sparklines', choices=c('No', 'Yes'), selected='No'), '',
-      selectInput(ns('datIn'), label='Input data', choices=c('Complete'='all'), selected='all') 
-      )),
-      fluidRow(splitLayout(cellWidths=c("1%", "98%", "1%"), "", dataTableOutput(ns("dtAll")), ""))
-      ), # tabPanel
-      tabPanel('Selected', value='dTabSel',
-        fluidRow(splitLayout(cellWidths=c("1%", "98%", "1%"), "", dataTableOutput(ns("dtSel")), "")),
-        fluidRow(splitLayout(cellWidths=c("1%", "98%", "1%"), "", plotOutput(ns("selProf")), ""))
-      )
+      ) # tabPanel
+      #tabPanel('Selected', value='dTabSel',
+      #  fluidRow(splitLayout(cellWidths=c("1%", "98%", "1%"), "", dataTableOutput(ns("dtSel")), "")),
+      #  fluidRow(splitLayout(cellWidths=c("1%", "98%", "1%"), "", plotOutput(ns("selProf")), ""))
+      #),
       # navbarPage 
       #tabPanel('Single-cell metadata', value='dTabScell',
       #  column(12, id='colTailorUI', tailor.ui),

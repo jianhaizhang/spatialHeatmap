@@ -537,7 +537,7 @@ shm_covis <- function(svg, data, assay.na=NULL, sam.factor=NULL, con.factor=NULL
       lgd.lis <- lgd.all[na.lgd]
  
       # Add labels to target shapes/adjust keys in legend plots.
-      lgd.lis <- gg_lgd(gg.all=lgd.lis, angle.text.key=angle.text.key, position.text.key=position.text.key, label=label, label.size=label.size, label.angle=label.angle, hjust=hjust, vjust=vjust, opacity=opacity, key=key)
+      lgd.lis <- gg_lgd(gg.all=lgd.lis, gcol.lgd=gcol.lgd.all, angle.text.key=angle.text.key, position.text.key=position.text.key, label=label, label.size=label.size, label.angle=label.angle, hjust=hjust, vjust=vjust, opacity=opacity, key=key)
       # Include dim plots in legends: covis color by cell.
       if (!is.null(dim.lgd.lis) & (col.idp==TRUE | decon==TRUE)) {
         for (i in vars.cell) {

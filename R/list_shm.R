@@ -186,7 +186,7 @@ gg_shm <- function(svg.all, gene, col.idp=FALSE, con.na=TRUE, geneV, charcoal=FA
        # No matter the tissues in coordinate data frame are vector or factor, the coloring are decided by the named color vector (order of colors does not matter as long as names are right) in scale_fill_manual.
        # Since ggplot2 '3.3.5', 'NA' instead of NA represents transparency.
        g.col[is.na(g.col)] <- 'NA'
-       trans <- g.col[g.col %in% 'NA'][1]; tr.lab <- 'Un-measured'
+       trans <- g.col[g.col %in% 'NA'][1]; tr.lab <- 'Unmeasured'
        if (is.na(trans)) trans <- tr.lab <- NULL
        br <- c(tis.df[leg.idx], names(trans))
        br.lab <- c(tis.path[leg.idx], tr.lab) 
@@ -303,17 +303,23 @@ gg_shm <- function(svg.all, gene, col.idp=FALSE, con.na=TRUE, geneV, charcoal=FA
 #' @importFrom parallel detectCores mclapply
 
 grob_shm <- function(gg.lis, cores=1, lgd.pos='none') {
+  # save(gg.lis, cores, lgd.pos, file='grob.shm.arg')
   tmp <- normalizePath(tempfile(), winslash='/', mustWork=FALSE)
   cat('Converting "ggplot" to "grob" ... \n')
   # mclapply does not give speed gain here.
   # Child jobs (on each core) are conducted in different orders, which can be reflected by "cat", but all final jobs are assembled in the original order.
   # Repress popups by saving it to a png file, then delete it.
   nas <- names(gg.lis)
-  png(tmp); grob.lis <- mclapply(seq_along(gg.lis), function(x) {
+  png(tmp); if (!is.na(cores)) grob.lis <- mclapply(seq_along(gg.lis), function(x) {
     cat(nas[x], ' '); x <- gg.lis[[x]]
     # Remove legends in SHMs.
     if (!is.null(lgd.pos)) x <- x + theme(legend.position=lgd.pos); ggplotGrob(x) 
-  }, mc.cores=cores); dev.off(); cat('\n')
+  }, mc.cores=cores) else { 
+  grob.lis <- lapply(seq_along(gg.lis), function(x) {
+    cat(nas[x], ' '); x <- gg.lis[[x]]
+    # Remove legends in SHMs.
+    if (!is.null(lgd.pos)) x <- x + theme(legend.position=lgd.pos); ggplotGrob(x) 
+  }) }; dev.off(); cat('\n')
   names(grob.lis) <- nas; return(grob.lis)
 }
 
@@ -329,7 +335,7 @@ grob_shm <- function(gg.lis, cores=1, lgd.pos='none') {
 #' @importFrom grDevices colors
 
 diff_cols <- function(n) {
-  col.all <- grDevices::colors()[grep('honeydew|aliceblue|white|gr(a|e)y|lightsteelblue|lightsteelblue(1|2)', grDevices::colors(), invert=TRUE)]
+  col.all <- grDevices::colors()[grep('lightyellow3|seashell4|honeydew|aliceblue|white|gr(a|e)y|lightsteelblue|lightsteelblue(1|2)', grDevices::colors(), invert=TRUE)]
   col.na <- col.all[seq(from=1, to=length(col.all), by=floor(length(col.all)/n))]; return(col.na)
 }
 

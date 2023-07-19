@@ -1,8 +1,8 @@
 # Module for co-visualization through annotation/manual methods.
-covis_man_server <- function(id, sce.upl, upl.mod.lis, shm.mod.lis, tab, covis.man, session) {
+covis_man_server <- function(id, sce.upl, upl.mod.lis, shm.mod.lis, tab, covis.man, lis.url, parent, session) {
   moduleServer(id, function(input, output, session) {
   cat('Module covis_man_server ... \n')
-   ns <- session$ns; 
+   ns <- session$ns; cfg <- upl.mod.lis$cfg 
    observe({
      # sce.man <- reactiveValues(bulk=sce.upl$bulk): if outside "observe", only runs one time when the app is started.
      # covis.man$bulk <- sce.upl$bulk
@@ -54,6 +54,7 @@ covis_man_server <- function(id, sce.upl, upl.mod.lis, shm.mod.lis, tab, covis.m
     incProgress(0.3, detail="please wait ...")
     if (!is.null(blk)) {
       blk.aggr <- aggr_rep(data=blk, assay.na='logcounts', sam.factor='sample', aggr='mean')
+      blk.aggr$spFeature <- NULL
       blk.fil <- filter_data(data=blk.aggr, pOA=c(filBlkP, filBlkA), CV=c(filBlkCV1, filBlkCV2), verbose=FALSE)
     } else blk.fil <- NULL 
     incProgress(0.3, detail="please wait ...")
@@ -63,23 +64,7 @@ covis_man_server <- function(id, sce.upl, upl.mod.lis, shm.mod.lis, tab, covis.m
     cat('Done! \n'); return(dat.fil)
     })
   })
-
-  observeEvent(input$subdat+1, ignoreInit=FALSE, {
-    withProgress(message="Data table in co-visualization: ", value=0, {
-    incProgress(0.3, detail="please wait ...")
-    dat.fil <- dat.fil() 
-    if (is(dat.fil, 'list')) { 
-      blk <- dat.fil$bulk; cell <- dat.fil$cell
-    } else { blk <- NULL; cell <- dat.fil }
-    r1 <- input$r1; r2 <- input$r2
-    c1 <- input$c1; c2 <- input$c2
-    if (!check_obj(list(r1, r2, c1, c2))) return()
-    output$datall <- renderDataTable({
-      dat_covis_man(cbind(blk, cell), r1=r1, r2=r2, c1=c1, c2=c2)
-    }); incProgress(0.3, detail="please wait ...")
-   })
-  })
-
+  dat_all_server(id='dat', dat.fil, r2=500, c2=50)
   # Dimension reduction.
   par.dim <- reactiveValues()
   # Button of 0 cannot trigger observeEvent.
@@ -109,33 +94,23 @@ covis_man_server <- function(id, sce.upl, upl.mod.lis, shm.mod.lis, tab, covis.m
 
    cnt.help <- reactiveValues(v=0)
    observeEvent(input$tabSetCell, {
-     if (!'dimred' %in% input$tabSetCell | cnt.help$v > 3) return()
-      showModal(div(id = 'matchHel',
-      modalDialog(title = HTML('<strong><center>Matching Tissues and Cell Groups</center></strong>'),
-      div(style = 'overflow-y:scroll;overflow-x:scroll',
-      HTML('<img src="image/match.jpg">'),
-      )))); cnt.help$v <- cnt.help$v+1
+     if (!'dimred' %in% input$tabSetCell | cnt.help$v >= 3) return()
+      showModal(modal(title='Quick start!', msg = 'Showing 3 times only!', img='ann_quick.jpg', img.w="100%"))
+      cnt.help$v <- cnt.help$v+1
     })
   observeEvent(covis.man$dimred, ignoreInit=FALSE, ignoreNULL=FALSE, {
     covis.type <- sce.upl$covis.type
     if (is.null(covis.type)) return()
     if (covis.type %in% c('toBulkAuto', 'toCellAuto')) {
         showTab('tabSetCell', target='autoMatch')
-        hideTab('tabSetCell', target='qcTab')
-        hideTab('tabSetCell', target='norm')
-        hideTab('tabSetCell', target='varMol')
-        hideTab('dimredNav', target='dimredPar')
         hideTab('tabSetCell', target='manualMatch')
     } else {
-        hideTab('tabSetAuto', target='autoMatch')
-        showTab('tabSetCell', target='qcTab')
-        showTab('tabSetCell', target='norm')
-        showTab('tabSetCell', target='varMol')
-        showTab('dimredNav', target='dimredPar')
         showTab('tabSetCell', target='manualMatch')
     }
   })
-
+  output$help <- renderUI({ 
+    tags$iframe(seamless="seamless", src= "html/shm_shiny_manual.html#ann", width='100%', height='100%') 
+  })
   sce.dimred <- reactive({ covis.man$dimred })
   # Generates both embedding plots and the colData table in the scell page.
   dim.lis <- reactive({
@@ -147,6 +122,21 @@ covis_man_server <- function(id, sce.upl, upl.mod.lis, shm.mod.lis, tab, covis.m
    observe({ # The id 'rematchCell' is fixed, since it is recognised internally.
      if (grepl(na.sgl, upl.mod.lis$ipt$fileIn)) covis.man$match.mod.lis <- match_server('rematchCell', shm.mod.lis$sam, tab, upl.mod.lis, covis.man=covis.man, col.idp='idp' %in% shm.mod.lis$ipt$profile) else covis.man$match.mod.lis <- NULL
    })
+   observe({
+     lis.par <- cfg$lis.par; lis.url
+     req(check_obj(list(lis.par, lis.url)))
+     updateSelectInput(session, 'norm', selected=url_val('scell-covisMan-norm', lis.url, def=lis.par$ann.set['norm', 'default']))
+     updateNumericInput(session, 'filBlkA', value=url_val('scell-covisAuto-filBlkA', lis.url, def=as.numeric(lis.par$ann.set['A', 'default']))) 
+     updateNumericInput(session, 'filBlkP', value=url_val('scell-covisAuto-filBlkP', lis.url, def=as.numeric(lis.par$ann.set['P', 'default']))) 
+     updateNumericInput(session, 'filBlkCV1', value=url_val('scell-covisAuto-filBlkCV1', lis.url, def=as.numeric(lis.par$ann.set['CV1', 'default']))) 
+     updateNumericInput(session, 'filBlkCV2', value=url_val('scell-covisAuto-filBlkCV2', lis.url, def=as.numeric(lis.par$ann.set['CV2', 'default']))) 
+     updateNumericInput(session, 'cutoff', value=url_val('scell-covisAuto-cutoff', lis.url, def=as.numeric(lis.par$ann.set['cutoff', 'default']))) 
+     updateNumericInput(session, 'filPGen', value=url_val('scell-covisAuto-filPGen', lis.url, def=as.numeric(lis.par$ann.set['filPGen', 'default']))) 
+     updateNumericInput(session, 'filPCell', value=url_val('scell-covisAuto-filPCell', lis.url, def=as.numeric(lis.par$ann.set['filPCell', 'default']))) 
+     updateNumericInput(session, 'minRank', value=url_val('scell-covisAuto-minRank', lis.url, def=as.numeric(lis.par$ann.set['minRank', 'default']))) 
+     updateNumericInput(session, 'maxRank', value=url_val('scell-covisAuto-maxRank', lis.url, def=as.numeric(lis.par$ann.set['maxRank', 'default']))) 
+  })
+
   cat('Module covis_man_server done !\n')
   onBookmark(function(state) { state })
   # return(list(match.mod.res=match.mod.res))

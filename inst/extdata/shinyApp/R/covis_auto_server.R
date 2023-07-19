@@ -1,7 +1,15 @@
 # Module for co-visualization through automatic method.
-covis_auto_server <- function(id, sce.upl, upl.mod.lis, shm.mod.lis, tab, covis.auto, session) {
+covis_auto_server <- function(id, sce.upl, upl.mod.lis, shm.mod.lis, tab, covis.auto, lis.url, parent, session) {
   moduleServer(id, function(input, output, session) {
-   ns <- session$ns
+   ns <- session$ns; cfg <- upl.mod.lis$cfg 
+   quick <- reactiveValues(v=0)
+   observeEvent(list(parent$input$tabTop, input$tabSetCellAuto), {
+     tabTop <- parent$input$tabTop; if (!check_obj(tabTop)) return()
+     if (quick$v <= 2 & 'scell' %in% tabTop & 'result' %in% input$tabSetCellAuto & 'auto' %in% covis.auto$method) {
+         showModal(modal(title = HTML('<b>Quick start!</b>'), msg = 'Showing 3 times only!', img='coclus_quick.jpg', img.w="100%")) 
+         quick$v <- quick$v + 1
+     }
+   }) 
    cnt.help <- reactiveValues(v=0)
    observeEvent(input$tabSetCellAuto, {
      if (!'tailor' %in% input$tabSetCellAuto | cnt.help$v > 2) return()
@@ -15,7 +23,9 @@ covis_auto_server <- function(id, sce.upl, upl.mod.lis, shm.mod.lis, tab, covis.
      covis.auto$method <- sce.upl$method
      covis.auto$covis.type <- sce.upl$covis.type
    })
-
+   observe({
+    hideTab(inputId="tabSetCellAuto", target="tailor")
+   })
   # Normalize bulk and cells.
   norm.coclus <- reactiveValues()
   observeEvent(input$parAutoBut+1, {
@@ -54,25 +64,14 @@ covis_auto_server <- function(id, sce.upl, upl.mod.lis, shm.mod.lis, tab, covis.
     withProgress(message="Filtering: ", value=0, {
     incProgress(0.3, detail="please wait ...")
     blk.aggr <- aggr_rep(data=blk, assay.na='logcounts', sam.factor='sample', aggr='mean')
+    blk.aggr$spFeature <- NULL
     blk.fil <- filter_data(data=blk.aggr, pOA=c(filBlkP, filBlkA), CV=c(filBlkCV1, filBlkCV2), verbose=FALSE)
     incProgress(0.3, detail="please wait ...")
     dat.fil <- filter_cell(sce=cell, bulk=blk.fil, gen.rm=NULL, cutoff=cutoff, p.in.cell=filPCell, p.in.gen=filPGen, verbose=FALSE)
     cat('Done! \n'); return(dat.fil)
     })
   })
-  observeEvent(input$subdat+1, ignoreInit=FALSE, { 
-    withProgress(message="Data table in co-visualization: ", value=0, {
-    incProgress(0.3, detail="please wait ...")
-    dat.fil <- dat.fil()
-    r1 <- input$r1; r2 <- input$r2 
-    c1 <- input$c1; c2 <- input$c2
-    bulk <- dat.fil$bulk; cell <- dat.fil$cell 
-    if (!check_obj(list(r1, r2, c1, c2, bulk, cell))) return()
-    output$datall <- renderDataTable({ 
-      dat_covis_man(cbind(bulk, cell), r1=r1, r2=r2, c1=c1, c2=c2) 
-    }); incProgress(0.3, detail="please wait ...") 
-   }) 
-  }) 
+  dat_all_server(id='dat', dat.fil, r2=500, c2=50)
 
   # Dimension reduction.
   par.dim <- reactiveValues()
@@ -171,7 +170,7 @@ covis_auto_server <- function(id, sce.upl, upl.mod.lis, shm.mod.lis, tab, covis.
   })
    observeEvent(res(), ignoreInit=FALSE, {
      updateTabsetPanel(session, inputId="tabSetCellAuto", selected='result')
-     if (!is.null(res())) showModal(modal(msg=HTML('Click <strong>"Co-visualizing"</strong> to see the co-visualization plot.')))
+     if (!is.null(res()) & 'auto' %in% covis.auto$method) showModal(modal(title = HTML('<b>Quick start!</b>'), msg = NULL, img='coclus_quick.jpg', img.w="100%")) 
   })
 
   tailor.lis <- reactiveValues()
@@ -191,6 +190,28 @@ covis_auto_server <- function(id, sce.upl, upl.mod.lis, shm.mod.lis, tab, covis.
   observe({ 
     covis.auto$covisGrp <- dim.lis()$covisGrp$val 
     covis.auto$but.covis <- dim.lis()$but.covis$v 
+  })
+   output$help <- renderUI({ 
+    tags$iframe(seamless="seamless", src= "html/shm_shiny_manual.html#coclus", width='100%', height='100%') 
+  })
+
+  observe({
+    lis.par <- cfg$lis.par; lis.url
+    req(check_obj(list(lis.par, lis.url)))
+    updateSelectInput(session, 'normCoclus', selected=url_val('scell-covisAuto-normCoclus', lis.url, def=lis.par$coclus.set['normCoclus', 'default']))  
+    updateNumericInput(session, 'filBlkA', value=url_val('scell-covisAuto-filBlkA', lis.url, def=as.numeric(lis.par$coclus.set['A', 'default'])))  
+    updateNumericInput(session, 'filBlkP', value=url_val('scell-covisAuto-filBlkP', lis.url, def=as.numeric(lis.par$coclus.set['P', 'default'])))  
+    updateNumericInput(session, 'filBlkCV1', value=url_val('scell-covisAuto-filBlkCV1', lis.url, def=as.numeric(lis.par$coclus.set['CV1', 'default'])))  
+    updateNumericInput(session, 'filBlkCV2', value=url_val('scell-covisAuto-filBlkCV2', lis.url, def=as.numeric(lis.par$coclus.set['CV2', 'default'])))  
+    updateNumericInput(session, 'cutoff', value=url_val('scell-covisAuto-cutoff', lis.url, def=as.numeric(lis.par$coclus.set['cutoff', 'default'])))  
+    updateNumericInput(session, 'filPGen', value=url_val('scell-covisAuto-filPGen', lis.url, def=as.numeric(lis.par$coclus.set['filPGen', 'default'])))  
+    updateNumericInput(session, 'filPCell', value=url_val('scell-covisAuto-filPCell', lis.url, def=as.numeric(lis.par$coclus.set['filPCell', 'default'])))  
+    updateNumericInput(session, 'minRank', value=url_val('scell-covisAuto-minRank', lis.url, def=as.numeric(lis.par$coclus.set['minRank', 'default'])))  
+    updateNumericInput(session, 'maxRank', value=url_val('scell-covisAuto-maxRank', lis.url, def=as.numeric(lis.par$coclus.set['maxRank', 'default'])))  
+    updateSelectInput(session, 'dimSel', selected=url_val('scell-covisAuto-dimSel', lis.url, def=lis.par$coclus.set['dimSel', 'default']))  
+    updateSelectInput(session, 'graphMeth', selected=url_val('scell-covisAuto-graphMeth', lis.url, def=lis.par$coclus.set['graphMeth', 'default']))  
+    updateSelectInput(session, 'clusMeth', selected=url_val('scell-covisAuto-clusMeth', lis.url, def=lis.par$coclus.set['clusMeth', 'default']))  
+    updateNumericInput(session, 'asgThr', value=url_val('scell-covisAuto-asgThr', lis.url, def=as.numeric(lis.par$coclus.set['asgThr', 'default'])))  
   })
   onBookmark(function(state) { state })
   # return(list(covis.auto=covis.auto, tailor.lis=tailor.lis))

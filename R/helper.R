@@ -81,6 +81,8 @@ check_pkg <- function(x) {
 check_obj <- function(x) {
   check0 <- function(y) {
     if (isS4(y)) return(TRUE)
+    # data.frame can have 0 row.
+    if (is(y, 'data.frame')|is(y, 'DFrame')|is(y, 'matrix')|is(y, 'dgCMatrix')) return(TRUE)
     # Only check one-element vector. 
     if (length(y)>1) return(TRUE); if (length(y)==0) return(FALSE)
     if (is.na(y)) return(FALSE)
@@ -94,7 +96,7 @@ check_obj <- function(x) {
   if (is(x, 'list')) all(unlist(lapply(x, function(i) check0(i))))
 }
 
-#' Shown popup window
+#' Show popup window
 #'
 #' @param msg The main content to show.
 
@@ -102,13 +104,15 @@ check_obj <- function(x) {
 #' @keywords Internal
 #' @noRd
 
-#' @importFrom shiny modalDialog span tagList modalButton
-
-modal <- function(title = NULL, msg, easyClose=FALSE) {
-  modalDialog(title = title, span(msg),
-    footer = tagList(modalButton("Dismiss")), size = c("m"), easyClose=easyClose
-  )
-}
+#' @importFrom shiny modalDialog span HTML div tagList modalButton
+modal <- function(title = NULL, msg=NULL, img=NULL, img.w="70%", easyClose=FALSE) { 
+  modalDialog(title = title, span(msg), 
+    if (!is.null(img)) div(style = 'overflow-y:scroll;overflow-x:scroll;margin-top:20px', 
+      HTML(paste0("<img ", "src='image/", img, "' width='", img.w, "'>")) 
+    ), 
+    footer = tagList(modalButton("Dismiss")), size = c("m"), easyClose=easyClose 
+  ) 
+}  
 
 #' Shown popup window
 #'
@@ -120,8 +124,8 @@ modal <- function(title = NULL, msg, easyClose=FALSE) {
 
 #' @importFrom shiny showModal
 
-show_mod <- function(lgc, msg, title=NULL) {
-  if (!lgc) showModal(modal(title=title, msg = msg))
+show_mod <- function(lgc, msg, img=NULL, title=NULL) {
+  if (!lgc) showModal(modal(title=title, msg = msg, img=img))
 }
 
 

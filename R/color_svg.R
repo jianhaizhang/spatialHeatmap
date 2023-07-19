@@ -1,6 +1,6 @@
-#' Coloring spatial features in aSVG files.
+#' Exporting each spatial heatmap to a separate SVG file
 #' 
-#' This function copies the original aSVG file into a specified directory, and colors the spatial features in the new aSVG file with heat colors in spatial heatmaps. 
+#' This function exports each spatial heatmap (associated with a specific gene and condition) as separate SVG files. In contrast to the original aSVG file, spatial features in the output SVG files are assigned heat colors.   
 
 #' @param input The output returned by \link{shm} or \link{covis}. 
 #' @param out.dir The directory path where the colored aSVG file will be saved.
@@ -25,8 +25,8 @@
 #' dat.quick <- SPHM(svg=svg.hum, bulk=my_vec)
 #' shm.res <- shm(data=dat.quick, ID='testing', ncol=1, sub.title.size=20, legend.nrow=3,
 #' bar.width=0.1)
-#' # Color the spatial features in the original aSVG file with heat colors in the spatial
-#' # heatmap. The output aSVG file is saved in a temporary directory.
+#' # Export each spatial heatmap (under a certain gene and condition) to a separate SVG 
+#' # file in a temporary directory.
 #' color_svg(input=shm.res, out.dir=tempdir(check = TRUE))
 
 #' @author Jianhai Zhang \email{jzhan067@@ucr.edu} \cr Dr. Thomas Girke \email{thomas.girke@@ucr.edu}

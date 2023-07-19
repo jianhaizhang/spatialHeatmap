@@ -1,7 +1,7 @@
 # Module for processing data.
-data_server <- function(id, sch, lis.url, ids, upl.mod.lis, deg.mod.lis=NULL, scell.mod.lis=NULL, shm.mod=NULL, session) {
+data_server <- function(id, sch, lis.url, ids, upl.mod.lis, deg.mod.lis=NULL, scell.mod.lis=NULL, shm.mod=NULL, session, parent=NULL) {
   moduleServer(id, function(input, output, session) {
-  ipt <- upl.mod.lis$ipt; cfg <- upl.mod.lis$cfg
+  ns <- session$ns; ipt <- upl.mod.lis$ipt; cfg <- upl.mod.lis$cfg
   con.na <- reactiveValues(v=FALSE)
   con.na.cell <- reactiveValues(v=FALSE)
   met.pat <- '^metadata$|^link$|^type$|^total$|^method$'
@@ -21,8 +21,9 @@ data_server <- function(id, sch, lis.url, ids, upl.mod.lis, deg.mod.lis=NULL, sc
    updateSelectInput(session, inputId='datIn', choices=cho, selected=sel)
   })
   observeEvent(list(ipt$fileIn, dat(), input$datIn), {
-    dat <- dat(); if (!check_obj(list(dat))) return()
-    def <- cfg$lis.par$data.matrix['norm', 'default']
+    dat <- dat(); lis.par <- cfg$lis.par
+    if (!check_obj(list(dat, lis.par))) return()
+    def <- lis.par$data.matrix['norm', 'default']
     assay <- assay(dat$se.rep)
     if (all(round(assay)==assay)) sel <- def else sel <- 'None' 
     updateSelectInput(session, inputId='normDat', selected=sel)
@@ -51,8 +52,19 @@ data_server <- function(id, sch, lis.url, ids, upl.mod.lis, deg.mod.lis=NULL, sc
           if (is(dat.ex, 'SummarizedExperiment')) {
             dat.ex <- check_se(dat.ex)
             lgc.se <- is.character(dat.ex)
-            if (lgc.se) showModal(modal(msg = dat)); req(!lgc.se)
-            dat.ex <- fread_df(input=assay(dat.ex), isRowGene=TRUE, rep.aggr=NULL)
+            if (lgc.se) showModal(modal(msg = dat.ex)); req(!lgc.se)
+            se <- dat.ex$se; rdat <- rowData(se); rowData(se) <- link_dat(rdat, link.only=FALSE)
+            # Assay metadata. 
+            df.meta <- metadata(se)$df.meta
+            if (!is.null(df.meta)) {
+              if (ncol(data.frame(df.meta))<2) { 
+                lgc.mt <- FALSE; msg <- 'The "df.meta" in the "metadata" slot should be a "data.frame" with at least two columns!';  
+               if (!lgc.mt) showModal(modal(msg = msg)); req(!lgc.mt)
+              } else {
+                 metadata(se)$df.meta <- link_dat(df.meta, link.only=FALSE)
+              }
+            }
+            dat.ex <- list(se.rep=se, se.aggr=NULL, con.na=dat.ex$con.na)
           }
         } else {
           dat.ex <- fread_df(input=dat.na, isRowGene=TRUE, rep.aggr=NULL) 
@@ -71,7 +83,10 @@ data_server <- function(id, sch, lis.url, ids, upl.mod.lis, deg.mod.lis=NULL, sc
           lgc.se <- is.character(dat)
           if (lgc.se) showModal(modal(msg = dat)); req(!lgc.se)
         }
-        dat.ex <- fread_df(input=assay(dat), isRowGene=TRUE, rep.aggr=NULL)
+        dat <- check_se(dat); lgc.se <- is.character(dat)
+        if (lgc.se) showModal(modal(msg = dat)); req(!lgc.se)
+        se <- dat$se; rdat <- rowData(se); rowData(se) <- link_dat(rdat, link.only=FALSE)
+        dat.ex <- list(se.rep=se, se.aggr=NULL, con.na=dat$con.na)
       }
       incProgress(0.3, detail="loading assay matrix ...")
       message('Done!'); return(dat.ex)
@@ -81,9 +96,17 @@ data_server <- function(id, sch, lis.url, ids, upl.mod.lis, deg.mod.lis=NULL, sc
       if ((is.null(svgInpath1) & is.null(svgInpath2))) req('')
       if (is.null(geneInpath) | dimNa=="None") req('')
       incProgress(0.25, detail="importing data matrix ...")
-      geneInpath <- geneInpath$datapath; targetInpath <- ipt$target$datapath; metInpath <- ipt$met$datapath
+      geneInpath <- geneInpath$datapath; targetInpath <- ipt$target$datapath
+      metInpath <- ipt$met$datapath; asymetp <- ipt$asymet$datapath
       # Keep replicates unchaged, and compared with targets/metadata files.
-      dat.cus <- fread_df(read_fr(geneInpath), isRowGene=(dimNa=='Row'), rep.aggr=NULL)
+      if (grepl('\\.rds$', geneInpath)) {
+        dat <- readRDS(geneInpath)
+        dat <- check_se(dat); lgc.se <- is.character(dat)
+        if (lgc.se) showModal(modal(msg = dat)); req(!lgc.se)
+        se <- dat$se; rdat <- rowData(se); rowData(se) <- link_dat(rdat, link.only=FALSE)
+        dat <- list(se.rep=se, se.aggr=NULL, con.na=dat$con.na)
+        return(dat)
+      } else dat.cus <- fread_df(read_fr(geneInpath), isRowGene=(dimNa=='Row'), rep.aggr=NULL)
       se.rep <- dat.cus$se.rep; # df.met <- dat.cus$df.met
       if (!is.null(targetInpath)) {
         df.tar <- read_fr(targetInpath)
@@ -110,6 +133,19 @@ data_server <- function(id, sch, lis.url, ids, upl.mod.lis, deg.mod.lis=NULL, sc
         rdat <- cbind(DataFrame(df.met[, !colnames(df.met) %in% colnames(rdat), drop=FALSE]), DataFrame(rdat))
         rowData(se.rep) <- rdat; dat.cus$se.rep <- se.rep
         if (!is.null(dat.cus$se.aggr)) rowData(dat.cus$se.aggr) <- rdat
+      }
+      if (!is.null(asymetp)) { 
+        df.meta <- read_fr(asymetp)
+        if (!is.null(df.meta)) {
+          if (ncol(data.frame(df.meta))<2) { 
+            lgc.mt <- FALSE; msg <- 'The "df.meta" in the "metadata" slot should be a "data.frame" with at least two columns!';  
+            if (!lgc.mt) showModal(modal(msg = msg)); req(!lgc.mt)
+          } else {
+            df.meta <- link_dat(df.meta, link.only=FALSE)
+            metadata(dat.cus$se.rep)$df.meta <- df.meta
+            if (!is.null(dat.cus$se.aggr)) metadata(dat.cus$se.aggr)$df.meta <- df.meta
+          }
+        }
       }
       # Aggregate replicates after targets file is processed.
       # dat.cus <- fread_df(se.rep, isRowGene=(dimNa=='Row'), rep.aggr = NULL)
@@ -179,8 +215,8 @@ data_server <- function(id, sch, lis.url, ids, upl.mod.lis, deg.mod.lis=NULL, sc
   dat.nor <- eventReactive(nor.par$pars, {
     message('SHM: normalizing ... ')
     fileIn <- ipt$fileIn; dat <- dat(); normDat <- input$normDat
-    datIn <- input$datIn
-    if (!check_obj(list(fileIn, dat, normDat, datIn))) req('')
+    datIn <- input$datIn; lis.par <- cfg$lis.par
+    if (!check_obj(list(fileIn, dat, normDat, datIn, lis.par))) req('')
     se <- dat$se.rep
     if ('enr' %in% datIn & !grepl(na.sgl, fileIn)) {
       se <- nor.par$pars$query.res
@@ -202,7 +238,7 @@ data_server <- function(id, sch, lis.url, ids, upl.mod.lis, deg.mod.lis=NULL, sc
     assay <- assay(se); lgc.as <- all(round(assay)==assay)
     # Must be before req(lgc.as).
     if ('None' %in% normDat) {
-      if (!lgc.as) { message('Done!'); return(se) } else normDat <- cfg$lis.par$data.matrix['norm', 'default'] 
+      if (!lgc.as) { message('Done!'); return(se) } else normDat <- lis.par$data.matrix['norm', 'default'] 
     }
     if (!lgc.as) {
       showNotification(HTML('Spatial Heatmap -> Data Table -> Settings: <br> normalization is skipped, since the input data are not count matrix.'), duration=2, closeButton = TRUE) 
@@ -345,13 +381,13 @@ data_server <- function(id, sch, lis.url, ids, upl.mod.lis, deg.mod.lis=NULL, sc
   sear <- reactiveValues(id=NULL)
   observeEvent(ipt$fileIn, { sear$id <- NULL })
   observeEvent(sch$but, {
-    se.scl <- se.scl()
-    if (!check_obj(list(se.scl))) req('')
-    if (sch$sch=='') sel <- as.numeric(cfg$lis.par$data.matrix['row.selected', 'default']) else {
+    se.scl <- se.scl(); lis.par <- cfg$lis.par
+    if (!check_obj(list(se.scl, lis.par))) req('')
+    if (sch$sch=='') sel <- as.numeric(lis.par$data.matrix['row.selected', 'default']) else {
       gens <- strsplit(gsub(' |,', '_', sch$sch), '_')[[1]]
       pat <- paste0('^', gens, '$', collapse='|')
       sel <- which(grepl(pat, x=rownames(se.scl), ignore.case=TRUE, perl=TRUE))
-      if (length(sel)==0) sel <- as.numeric(cfg$lis.par$data.matrix['row.selected', 'default'])
+      if (length(sel)==0) sel <- as.numeric(lis.par$data.matrix['row.selected', 'default'])
      }; sear$id <- sel
   })
   dt.shm <- eventReactive(list(se.scl(), input$spk), {
@@ -397,12 +433,27 @@ data_server <- function(id, sch, lis.url, ids, upl.mod.lis, deg.mod.lis=NULL, sc
     }
     g <- graph_line(dt.sel, y.title=y.title, text.size=12, lgd.guide=lgd.guide); message('Done!'); g
   })
+
+  observeEvent(list(input$run), ignoreInit=FALSE, {
+    updateNavbarPage(session, inputId='settNav', selected = 'dat')
+  })
+
+  observeEvent(dt.shm(), {
+    gene.dt <- dt.shm(); if (!check_obj(list(gene.dt))) return() 
+    updateNumericInput(session, inputId="r2", value=nrow(gene.dt)) 
+    updateNumericInput(session, inputId="c2", value=ncol(gene.dt)) 
+  })
   subdat <- reactiveValues(r1=1, r2=500, c1=1, c2=20)
   observeEvent(list(input$run+1, dt.shm()), ignoreInit=FALSE, {
     r1 <- input$r1; r2 <- input$r2
     c1 <- input$c1; c2 <- input$c2
     gene.dt <- dt.shm()
     if (!check_obj(list(r1, r2, c1, c2, gene.dt))) return() 
+    if (0 %in% input$run) {
+      subdat$r2 <- nrow(gene.dt)
+      if (ncol(gene.dt) >= 30) subdat$c2 <- 30 else subdat$c2 <- ncol(gene.dt)
+      return()
+    }
     if (r1 < 1) r1 <- 1; if (c1 < 1) c1 <- 1
     lgc.r <- r2 > r1; if (!lgc.r) {
       show_mod(lgc.r, msg='Row End should > Row Start!')
@@ -426,7 +477,7 @@ data_server <- function(id, sch, lis.url, ids, upl.mod.lis, deg.mod.lis=NULL, sc
       # In case no metadata column.
       if (colnames(gene.dt)[1]!='metadata') col1 <- NULL
       dtab <- datatable(gene.dt[ids$sel, seq(subdat$c1, subdat$c2, 1), drop=FALSE], selection='none', escape=FALSE, filter="top", extensions=c('Scroller', 'FixedColumns'), plugins = "ellipsis",
-   options=list(pageLength=5, lengthMenu=c(5, 15, 20), autoWidth=TRUE, scrollCollapse=TRUE, deferRender=TRUE, scrollX=TRUE, scrollY=300, scroller=TRUE, searchHighlight=TRUE, search=list(regex=TRUE, smart=FALSE, caseInsensitive=TRUE), searching=TRUE, columnDefs=col1, dom='t', fixedColumns = list(leftColumns=3), class='cell-border strip hover', 
+   options=list(pageLength=5, lengthMenu=c(5, 15, 20), autoWidth=FALSE, scrollCollapse=TRUE, deferRender=TRUE, scrollX=TRUE, scrollY=300, scroller=TRUE, searchHighlight=TRUE, search=list(regex=TRUE, smart=FALSE, caseInsensitive=TRUE), searching=TRUE, columnDefs=col1, dom='t', fixedColumns = list(leftColumns=3), class='cell-border strip hover', 
    fnDrawCallback = htmlwidgets::JS('function(){HTMLWidgets.staticRender()}')
    )) %>% formatStyle(0, backgroundColor="orange", cursor='pointer') %>% spk_add_deps()
    # formatRound(colnames(assay.sel), deci)
@@ -443,7 +494,8 @@ data_server <- function(id, sch, lis.url, ids, upl.mod.lis, deg.mod.lis=NULL, sc
     # Tooltip on metadata.
     col1 <- list(list(targets = c(1), render = DT::JS("$.fn.dataTable.render.ellipsis(40, false)")))
     if (colnames(gene.dt)[1]!='metadata') col1 <- NULL
-    dat <- gene.dt[seq(subdat$r1, subdat$r2, 1), seq(subdat$c1, subdat$c2, 1), drop=FALSE]
+    # dat <- gene.dt[seq(subdat$r1, subdat$r2, 1), seq(subdat$c1, subdat$c2, 1), drop=FALSE]
+    colnames(gene.dt) <- sub('__', '_', colnames(gene.dt))
     dtab <- datatable(gene.dt[seq(subdat$r1, subdat$r2, 1), seq(subdat$c1, subdat$c2, 1), drop=FALSE], selection=list(mode="multiple", target="row", selected=dt.sel$val), escape=FALSE, filter="top", extensions=c('Scroller', 'FixedColumns'), plugins = "ellipsis",
    options=list(pageLength=5, lengthMenu=c(5, 15, 20), autoWidth=TRUE, scrollCollapse=TRUE, deferRender=TRUE, scrollX=TRUE, scrollY=page.h, scroller=TRUE, searchHighlight=TRUE, search=list(regex=TRUE, smart=FALSE, caseInsensitive=TRUE), searching=TRUE, class='cell-border strip hover', columnDefs=col1, fixedColumns = list(leftColumns=3), 
    fnDrawCallback = htmlwidgets::JS('function(){HTMLWidgets.staticRender()}')
@@ -452,33 +504,85 @@ data_server <- function(id, sch, lis.url, ids, upl.mod.lis, deg.mod.lis=NULL, sc
    # formatRound(idx.num, deci); cat('Done! \n'); dtab
   })
 
+  output$expDsg <- renderDataTable({
+    cat('Preparing Experiment design ... \n')
+    se.scl <- se.scl(); dat <- dat()
+    if (!check_obj(list(se.scl, dat))) req('')
+    cdat <- colData(se.scl)
+    withProgress(message="Experiment design: ", value = 0, {
+      incProgress(0.5, detail="please wait ...") 
+      # Tooltip on metadata.
+      col1 <- list(list(targets = seq_len(ncol(cdat)), render = DT::JS("$.fn.dataTable.render.ellipsis(50, false)")))
+      rownames(cdat) <- sub('__', '_', rownames(cdat))
+      dtab <- datatable(data.frame(cdat), selection='none', escape=FALSE, filter="top", extensions=c('Scroller', 'FixedColumns'), plugins = "ellipsis",
+   options=list(pageLength=5, lengthMenu=c(5, 15, 20), autoWidth=FALSE, scrollCollapse=TRUE, deferRender=TRUE, scrollX=TRUE, scrollY=300, scroller=TRUE, searchHighlight=TRUE, search=list(regex=TRUE, smart=FALSE, caseInsensitive=TRUE), searching=TRUE, class='cell-border strip hover', columnDefs=col1, fixedColumns =NULL, 
+   fnDrawCallback = htmlwidgets::JS('function(){HTMLWidgets.staticRender()}')
+   )) %>% formatStyle(0, backgroundColor="orange", cursor='pointer')
+   # formatRound(colnames(assay.sel), deci)
+   incProgress(0.4, detail="please wait ...")
+    cat('Done! \n'); dtab
+  })
+  })
+  output$over <- renderDT({
+    cat('Preparing assay metadata ... \n')
+    se.scl <- se.scl(); dat <- dat()
+    if (!check_obj(list(se.scl, dat))) req('')
+    meta <- metadata(se.scl)$df.meta
+    if (is.null(meta)) return() 
+    withProgress(message="Assay/image overview: ", value = 0, {
+      incProgress(0.5, detail="please wait ...")
+      dat <- datatable(data.frame(meta), escape=FALSE, selection='none',
+      options = list(
+      deferRender = TRUE, scrollY = TRUE, scrollX = TRUE, scroller = TRUE, autoWidth = TRUE, columnDefs = list(list(width = '50%', targets = grep('^description$', colnames(meta)))),
+      fnDrawCallback = htmlwidgets::JS('function(){HTMLWidgets.staticRender()}')
+      )) %>% formatStyle(0, backgroundColor="orange", cursor='pointer') # %>% formatStyle(columns = c(1), width='10%')
+      incProgress(0.4, detail="please wait ...")
+      cat('Done! \n'); dat
+  })
+  })
+
   observeEvent(list(input$selRow), { # Select genes in table.
     gene.dt <- dt.shm(); if (is.null(gene.dt)) return()
     ids$sel <- rownames(gene.dt)[input$dtAll_rows_selected]
     dt.sel$val <- input$dtAll_rows_selected
+
+    lgc.ids <- !check_obj(ids$sel)
+    if (lgc.ids) showModal(modal(msg = 'No genes are selected!')); req(!lgc.ids)
+
+    tabTop <- parent$input$tabTop
+    if ('shmPanelAll' %in% tabTop & check_obj(ids$sel)) {
+      runjs('document.getElementById("tabTop").scrollIntoView()') 
+    }
   })
   observeEvent(list(input$deSel), { # Select genes in table.
     gene.dt <- dt.shm(); if (is.null(gene.dt)) return()
     ids$sel <- NULL; dt.sel$val <- 'none'
   })
+  observeEvent(list(ipt$fileIn, deg.mod.lis$input$eSHMBut, scell.mod.lis$covis.man$match.mod.lis$but.match$val, scell.mod.lis$covis.auto$but.covis), { # Select genes in table.
+    ids$sel <- NULL; dt.sel$val <- 'none'
+  })
+
+  observeEvent(list(parent$input$btnInf), {
+    btnInf <- parent$input$btnInf
+    if (!check_obj(btnInf)) return()
+    if (btnInf > 0) updateTabsetPanel(session, "settNav", selected='over')
+  })
+
   observe({
     ipt$fileIn; ipt$geneInpath; lis.par <- cfg$lis.par; lis.url
-    url.val <- url_val('dat-log', lis.url)
-    updateSelectInput(session, inputId='log', selected=ifelse(url.val!='null', url.val, cfg$lis.par$data.matrix['log.exp', 'default']))
-    url.val <- url_val('dat-scale', lis.url)
-    updateSelectInput(session, 'scl', selected=ifelse(url.val!='null', url.val, cfg$lis.par$data.matrix['scale', 'default']))
+    req(check_obj(list(lis.par, lis.url)))
+    updateSelectInput(session, 'log', selected=url_val('dat-log', lis.url, def=lis.par$data.matrix['log.exp', 'default']))
+    updateSelectInput(session, 'scl', selected=url_val('dat-scale', lis.url, def=lis.par$data.matrix['scale', 'default']))
   })
 
   observe({
     ipt$fileIn; ipt$geneInpath; input$log; lis.url
-    url.val <- url_val('dat-A', lis.url)
-    updateNumericInput(session, inputId="A", value=ifelse(url.val!='null', url.val, as.numeric(cfg$lis.par$data.matrix['A', 'default']))) 
-    url.val <- url_val('dat-P', lis.url)
-    updateNumericInput(session, inputId="P", value=ifelse(url.val!='null', url.val, as.numeric(cfg$lis.par$data.matrix['P', 'default'])), min=0, max=1)
-    url.val <- url_val('dat-CV1', lis.url)
-    updateNumericInput(session, inputId="CV1", value=ifelse(url.val!='null', url.val, as.numeric(cfg$lis.par$data.matrix['CV1', 'default'])))
-    url.val <- url_val('dat-CV2', lis.url)
-    updateNumericInput(session, inputId="CV2", value=ifelse(url.val!='null', url.val, as.numeric(cfg$lis.par$data.matrix['CV2', 'default']))) 
+    lis.par <- cfg$lis.par; req(check_obj(list(lis.par, lis.url)))
+    updateSelectInput(session, 'normDat', selected=url_val('dat-normDat', lis.url, def=lis.par$data.matrix['norm', 'default']))
+    updateNumericInput(session, "A", value=url_val('dat-A', lis.url, def=as.numeric(lis.par$data.matrix['A', 'default'])))  
+    updateNumericInput(session, inputId="P", value=url_val('dat-P', lis.url, def=as.numeric(lis.par$data.matrix['P', 'default'])))
+    updateNumericInput(session, inputId="CV1", value=url_val('dat-CV1', lis.url, def=as.numeric(lis.par$data.matrix['CV1', 'default'])))
+    updateNumericInput(session, inputId="CV2", value=url_val('dat-CV2', lis.url, def=as.numeric(lis.par$data.matrix['CV2', 'default']))) 
   })
 
   observeEvent(scell.mod.lis$covis.man$match.mod.lis$but.match$val, ignoreInit=TRUE, {
@@ -499,7 +603,7 @@ data_server <- function(id, sch, lis.url, ids, upl.mod.lis, deg.mod.lis=NULL, sc
     if (! 'idp' %in% profile | !grepl(na.sgl, fileIn)) con.na$v <- dat$con.na     
   })
   onBookmark(function(state) { state })
-  return(list(sear = sear, ipt.dat = ipt.dat, col.cfm = col.cfm, scaleDat=scl, log = log, A = A, P = P, CV1 = CV1, CV2 = CV2, search.but = search.but, sig.but=sig.but, dat=dat, se.scl=se.scl, se.scl.sel=se.scl.sel, con.na=con.na, con.na.cell=con.na.cell, se.thr=se.thr))
+  return(list(sear = sear, ipt.dat = ipt.dat, col.cfm = col.cfm, scaleDat=scl, log = log, A = A, P = P, CV1 = CV1, CV2 = CV2, search.but = search.but, sig.but=sig.but, dat=dat, se.scl=se.scl, se.scl.sel=se.scl.sel, con.na=con.na, con.na.cell=con.na.cell, se.thr=se.thr, sn=session))
   })
 
 }

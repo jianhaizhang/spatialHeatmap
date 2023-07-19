@@ -21,7 +21,7 @@ df.con$genotype <- sub('absence of a C9orf72 repeat expansion', 'ab.C9orf72', df
 df.con$genotype <- sub('not applicable', 'NA', df.con$genotype)
 
 target.hum <- df.con
-write.table(target.hum, 'target_human.txt', col.names=TRUE, row.names=TRUE, sep='\t')
+# write.table(target.hum, 'target_human.txt', col.names=TRUE, row.names=TRUE, sep='\t')
 
 colData(rse.hum) <- DataFrame(target.hum)
 # Normalise.
@@ -30,25 +30,36 @@ se.nor.hum <- norm_data(data=rse.hum, norm.fun='ESF', log2.trans = FALSE)
 # Filter.
 se.fil.hum <- filter_data(data=se.nor.hum, sam.factor='organism_part', con.factor='disease', pOA=c(0.7, 50), CV=c(0.5, 100)); se.fil.hum
 # Data matrix.
-expr.hum <- as.data.frame(assay(se.fil.hum))
+# expr.hum <- as.data.frame(assay(se.fil.hum))
 
 # Row metadata.
 library(org.Hs.eg.db)
 columns(org.Hs.eg.db); keytypes(org.Hs.eg.db)
-row.met <- select(org.Hs.eg.db, keys=rownames(expr.hum), keytype="ENSEMBL", columns=c('ENSEMBL', 'SYMBOL', 'GENENAME', 'ENTREZID'))
+row.met <- select(org.Hs.eg.db, keys=rownames(se.fil.hum), keytype="ENSEMBL", columns=c('ENSEMBL', 'SYMBOL', 'GENENAME', 'ENTREZID'))
 row.met <- row.met[!duplicated(row.met$ENSEMBL), ]
-ow.met$metadata <- row.met$GENENAME
+row.met$metadata <- row.met$GENENAME
 # Append row metadata to data matrix.
-expr.hum <- expr.hum[row.met$ENSEMBL, ]
-all(row.met$ENSEMBL==rownames(expr.hum))
-expr.hum <- cbind(expr.hum, row.met[, 'metadata', drop = FALSE])
+se.fil.hum <- se.fil.hum[row.met$ENSEMBL, ]
+all(row.met$ENSEMBL==rownames(se.fil.hum))
+rowData(se.fil.hum) <- row.met[, 'metadata', drop = FALSE]
+
 # Convert ENSEMBL ids to Uniprot ids.
-expr.hum <- cvt_id(db='org.Hs.eg.db', data=expr.hum, from.id='ENSEMBL', to.id='SYMBOL')
-expr.hum <- expr.hum[!grepl('^ENSG', rownames(expr.hum)), , drop=FALSE]
-rownames(expr.hum) <- make.names(rownames(expr.hum))
+se.fil.hum <- cvt_id(db='org.Hs.eg.db', data=se.fil.hum, from.id='ENSEMBL', to.id='SYMBOL')
+se.fil.hum <- se.fil.hum[!grepl('^ENSG', rownames(se.fil.hum)), , drop=FALSE]
+rownames(se.fil.hum) <- make.names(rownames(se.fil.hum))
+
+cdat <- colData(se.fil.hum)
+cdat$spFeature <- cdat$organism_part
+cdat$organism_part <- NULL
+cdat$variable <- cdat$disease
+colData(se.fil.hum) <- cdat[, c(6:7, 4, 2, 5)]
+
+df.meta <- data.frame(name=c('assay', 'aSVG file'), link=c('https://www.ebi.ac.uk/biostudies/arrayexpress/studies/E-GEOD-67196', 'https://raw.githubusercontent.com/ebi-gene-expression-group/anatomogram/master/src/svg/homo_sapiens.brain.svg'), species=c('Mus musculus', 'Mus musculus'), technology=c('RNA-seq', 'NA'), database=c('Expression Atlas', 'EBI anatomogram'), id=c('E-GEOD-67196', 'NA'), description=c('Study on extensive alternative splicing (AS) and alternative polyadenylation (APA) defects in the cerebellum of c9ALS cases (8,224 AS, 1,437 APA), including changes in ALS-associated genes (e.g. ATXN2 and FUS), and cases of sporadic ALS (sALS; 2,229 AS, 716 APA)', 'An annotated SVG (aSVG) file.'))
+metadata(se.fil.hum)$df.meta <- df.meta
 
 # colnames(expr.hum) <- gsub("_", ".", colnames(expr.hum))
-write.table(expr.hum, 'expr_human.txt', col.names=TRUE, row.names=TRUE, sep='\t')
+# write.table(expr.hum, 'expr_human.txt', col.names=TRUE, row.names=TRUE, sep='\t')
+saveRDS(se.fil.hum, file='human_brain.rds')
 
 
 ## Make target file/Shiny app data-mouse organ example.
@@ -74,39 +85,46 @@ rse.mus <- subset(rse.mus, select=colData(rse.mus)$organism_part %in% c('brain',
 se.nor.mus <- norm_data(data=rse.mus, norm.fun='ESF', log2.trans = FALSE)
 se.fil.mus <- filter_data(data=se.nor.mus, sam.factor='organism_part', con.factor='strain', pOA=c(0.3, 30), CV=c(1.5, 100)); se.fil.mus
 # Data matrix.
-expr.mus <- as.data.frame(assay(se.fil.mus))
+# expr.mus <- as.data.frame(assay(se.fil.mus))
 
 # Row metadata.
 library(org.Mm.eg.db)
 columns(org.Mm.eg.db); keytypes(org.Mm.eg.db)
-row.met <- select(org.Mm.eg.db, keys=rownames(expr.mus), columns=c('ENSEMBL', 'SYMBOL', 'GENENAME'), keytype="ENSEMBL")
+row.met <- select(org.Mm.eg.db, keys=rownames(se.fil.mus), columns=c('ENSEMBL', 'SYMBOL', 'GENENAME'), keytype="ENSEMBL")
 row.met <- row.met[!duplicated(row.met$ENSEMBL), ]
 row.met$metadata <- row.met$GENENAME
 row.met$GENENAME <- NULL
 # Append row metadata to data matrix.
-expr.mus <- expr.mus[row.met$ENSEMBL, ]
-all(rownames(expr.mus)==row.met$ENSEMBL)
-expr.mus <- cbind(expr.mus, row.met[, 'metadata', drop = FALSE])
+se.fil.mus <- se.fil.mus[row.met$ENSEMBL, ]
+all(rownames(se.fil.mus)==row.met$ENSEMBL)
+rowData(se.fil.mus) <- row.met[, 'metadata', drop = FALSE]
 # Convert ENSEMBL ids to Uniprot ids.
-expr.mus <- cvt_id(db='org.Mm.eg.db', data=expr.mus, from.id='ENSEMBL', to.id='SYMBOL')
-expr.mus <- expr.mus[!grepl('^ENSMUSG', rownames(expr.mus)), , drop=FALSE]
+se.fil.mus <- cvt_id(db='org.Mm.eg.db', data=se.fil.mus, from.id='ENSEMBL', to.id='SYMBOL')
+se.fil.mus <- se.fil.mus[!grepl('^ENSMUSG', rownames(se.fil.mus)), , drop=FALSE]
 
 # Module identification.
-adj.mod.mus <- adj_mod(data=expr.mus)
+adj.mod.mus <- adj_mod(data=se.fil.mus)
 adj.mod.mus[['adj']][1:3, 1:3]
 mod <- adj.mod.mus[['mod']]; mod[1:3, ]
 
 # Place genes assigned a module on top.
 idx.m0 <- mod[, '3']==0; rna.mus <- rownames(mod)
-expr.mus <- expr.mus[c(rna.mus[!idx.m0], rna.mus[idx.m0]), , drop=FALSE]
+se.fil.mus <- se.fil.mus[c(rna.mus[!idx.m0], rna.mus[idx.m0]), , drop=FALSE]
 
 # Network graphs.
-node.mus <- network(ID='Cav2', data=expr.mus, adj.mod=adj.mod.mus, ds='3', adj.min=0.90, vertex.label.cex=0.7, vertex.cex=2, static=TRUE, return.node=TRUE)
+node.mus <- network(ID='Cav2', data=se.fil.mus, adj.mod=adj.mod.mus, ds='3', adj.min=0.90, vertex.label.cex=0.7, vertex.cex=2, static=TRUE, return.node=TRUE)
 node.mus[1:3, , drop=FALSE]
 
 # colnames(expr.mus) <- gsub("_", ".", colnames(expr.mus))
-write.table(expr.mus, 'expr_mouse.txt', col.names=TRUE, row.names=TRUE, sep='\t')
+# write.table(assay(se.fil.mus), 'expr_mouse.txt', col.names=TRUE, row.names=TRUE, sep='\t')
 
+se.fil.mus$spFeature <- se.fil.mus$organism_part 
+se.fil.mus$organism_part <- se.fil.mus$AtlasAssayGroup <- NULL
+se.fil.mus$variable <- se.fil.mus$strain
+colData(se.fil.mus) <- colData(se.fil.mus)[, c(3, 4, 2, 1)]
+df.meta <- data.frame(name=c('assay', 'aSVG file'), link=c('https://www.ebi.ac.uk/biostudies/arrayexpress/studies/E-MTAB-2801', 'https://raw.githubusercontent.com/ebi-gene-expression-group/anatomogram/master/src/svg/mus_musculus.male.svg'), species=c('Mus musculus', 'Mus musculus'), technology=c('RNA-seq', 'NA'), database=c('Expression Atlas', 'EBI anatomogram'), id=c('E-MTAB-2801', 'NA'), description=c('This experiment contains mouse organism part samples and strand-specific RNA-seq data, which aimed at assessing tissue-specific transcriptome variation across mammals, with chicken used as an outgroup in evolutionary analyses. Each organism part (with the exception of heart) was sourced from animals from three different strains: C57BL/6, DBA/2J and CD1. (There is no data for heart from the C57BL/6 strain.)', 'An annotated SVG (aSVG) file.'))
+metadata(se.fil.mus)$df.meta <- df.meta
+saveRDS(se.fil.mus, file='mouse_organ.rds')
 
 ## Make target file/Shiny app data-chicken organ example.
 
@@ -137,16 +155,30 @@ columns(org.Gg.eg.db); keytypes(org.Gg.eg.db)
 # row.met <- select(org.Gg.eg.db, keys=rownames(expr.chk), columns=c('ENSEMBL', 'SYMBOL', 'GENENAME'), keytype="ENSEMBL")
 
 # colnames(expr.chk) <- gsub("_", ".", colnames(expr.chk))
-write.table(expr.chk, 'expr_chicken.txt', col.names=TRUE, row.names=TRUE, sep='\t')
+# write.table(expr.chk, 'expr_chicken.txt', col.names=TRUE, row.names=TRUE, sep='\t')
 
 # Keep replicates.
 colData(rse.chk) <- DataFrame(target.chk)
 se.nor.chk <- norm_data(data=rse.chk, norm.fun='ESF', log2.trans = FALSE)
 se.fil.chk <- filter_data(data=se.nor.chk, sam.factor='organism_part', con.factor='age', pOA=c(0.3, 700), CV=c(0.5, 100)); se.fil.chk
+
+cdat <- colData(se.fil.chk)
+cdat$spFeature <- cdat$organism_part
+cdat$organism_part <- NULL
+cdat$variable <- cdat$age; cdat[1:3, ]
+colData(se.fil.chk) <- cdat[, c(8:9, 6, 2)]
+
+df.meta <- data.frame(name=c('assay', 'aSVG file'), link=c('https://www.ebi.ac.uk/biostudies/arrayexpress/studies/E-MTAB-6769', 'https://raw.githubusercontent.com/ebi-gene-expression-group/anatomogram/master/src/svg/gallus_gallus.svg'), species=c('Gallus gallus', 'Gallus gallus'), technology=c('RNA-seq', 'NA'), database=c('Expression Atlas', 'EBI anatomogram'), id=c('E-MTAB-6769', 'NA'), description=c('This dataset covers the development of 7 organs (brain, cerebellum, heart, kidney, liver, ovary and testis) from day 10 post-conception to day 155 post-hatch.', 'An annotated SVG (aSVG) file.'))
+metadata(se.fil.chk)$df.meta <- df.meta
+
+# colnames(expr.hum) <- gsub("_", ".", colnames(expr.hum))
+# write.table(expr.hum, 'expr_human.txt', col.names=TRUE, row.names=TRUE, sep='\t')
+saveRDS(se.fil.chk, file='chicken_organ.rds')
+
 # Data matrix.
-expr.chk <- assay(se.fil.chk)
+# expr.chk <- assay(se.fil.chk)
 # colnames(expr.chk) <- gsub("_", ".", colnames(expr.chk))
-write.table(expr.chk, 'expr_chicken.txt', col.names=TRUE, row.names=TRUE, sep='\t')
+# write.table(expr.chk, 'expr_chicken.txt', col.names=TRUE, row.names=TRUE, sep='\t')
 
 
 ## Make targets file/Shiny app data for the Arabidopsis shoot example.
@@ -193,7 +225,20 @@ expr.sh <- assay(se.fil.sh)
 # colnames(expr.sh) <- gsub("_", ".", colnames(expr.sh))
 expr.sh <- cbind.data.frame(expr.sh, metadata=rowData(se.fil.sh)[, 'Target.Description'], stringsAsFactors=FALSE)
 # expr.sh <- expr.sh[c(9, 1:8, 10:230), ]
-write.table(expr.sh, 'expr_arab.txt', col.names=TRUE, row.names=TRUE, sep='\t')
+# write.table(expr.sh, 'expr_arab.txt', col.names=TRUE, row.names=TRUE, sep='\t')
+
+rdat.na <- colnames(rowData(se.fil.sh))
+rdat.na[rdat.na %in% 'Target.Description'] <- 'metadata'
+colnames(rowData(se.fil.sh)) <- rdat.na
+
+cdat <- colData(se.fil.sh); cdat[1:3, ]
+colnames(cdat)[1] <- 'assay'
+colData(se.fil.sh) <- cdat[, c(4:5)]
+
+df.meta <- data.frame(name=c('assay', 'aSVG file'), link=c('https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE14502', 'https://github.com/jianhaizhang/spatialHeatmap_aSVG_Repository/tree/master/aSVG_images'), species=c('Arabidopsis thaliana', 'Arabidopsis thaliana'), database=c('GEO', 'EBI anatomogram'), id=c('GSE14502', 'NA'), description=c('Transcription profiling of Arabidopsis roots and shoots in response to hypoxia using immunopurified mRNA-ribosome complexes', 'An annotated SVG (aSVG) file.'))
+metadata(se.fil.sh)$df.meta <- df.meta
+saveRDS(se.fil.sh, file='arab.rds')
+
 
 ## SHM of multiple variables.
 # Data source: https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE163415
@@ -241,6 +286,21 @@ se.mus.vars.fil <- filter_data(data=se.mus.vars, sam.factor='tissue', con.factor
 saveRDS(se.mus.vars.fil, file='mus_brain_vars_se.rds')
 # Example data for Shiny app.
 se.mus.vars.fil <- filter_data(data=se.mus.vars, sam.factor='tissue', con.factor='comVar', pOA=c(0.05, 10), CV=c(1.5, 50)); se.mus.vars.fil
+
+cdat <- colData(se.mus.vars.fil); cdat[1:3, ]
+
+# se.mus.vars.fil <- readRDS('../../inst/extdata/shinyApp/data/mus_brain_vars_se.rds')
+df.meta <- data.frame(name=c('assay', 'aSVG file'), link=c('https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE163415', 'https://raw.githubusercontent.com/ebi-gene-expression-group/anatomogram/master/src/svg/mus_musculus.brain.svg'), species=c('Mus musculus', 'Mus musculus'), database=c('GEO', 'EBI anatomogram'), id=c('GSE163415', 'NA'), description=c('Transcriptomic Analysis of mouse brain after traumatic brain injury reveals that the angiotensin receptor blocker candesartan acts through novel pathways', 'An annotated SVG (aSVG) file.'))
+metadata(se.mus.vars.fil)$df.meta <- df.meta
+se.mus.vars.fil <- se.mus.vars.fil[sort(rownames(se.mus.vars.fil), decreasing=TRUE), ]
+# Vignette.
+saveRDS(se.mus.vars.fil, file='mus_brain_vars_se.rds')
+
+# Shiny app.
+cdat <- colData(se.mus.vars.fil); cdat[1:3, ]
+cdat <- cdat[, c(1, 5)]; colnames(cdat) <- c('spFeature', 'variable'); cdat[1:3, ]
+colData(se.mus.vars.fil) <- cdat
+saveRDS(se.mus.vars.fil, file='mus_brain_vars_se_shiny.rds')
 
 
 ## Toy data in help files.

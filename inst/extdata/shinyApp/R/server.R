@@ -9,6 +9,33 @@ options(list(stringsAsFactors=FALSE, shiny.fullstacktrace=TRUE))
 # enableBookmarking("url")
 server <- function(input, output, session) {
   set.seed(10)
+  observe({ hide(id = "absInf") })
+  observeEvent(input$tabTop, {
+    tabTop <- input$tabTop
+    if (!check_obj(tabTop)) { hide(id = "absInf"); return() }
+    if (tabTop %in% c('ldg', 'about')) { hide(id = "absInf"); return() }
+    showElement(id = "absInf")
+  })
+
+  observeEvent(list(input$btnInf), {
+    btnInf <- input$btnInf
+    if (!check_obj(btnInf)) return()
+    if (btnInf >0) {
+      updateTabsetPanel(session, "tabTop", selected='shmPanelAll')
+      runjs("scrollBott()") 
+    }
+  })
+  observeEvent(input$btnLdg, { 
+    updateTabsetPanel(session, "tabTop", selected='landing')
+  })
+
+  ldg <- reactiveValues(v=0)
+  observeEvent(input$tabTop, { 
+    if (ldg$v <= 2 & 'landing' %in% input$tabTop) { showModal(modal(title = HTML('<center><b>Please wait when the App is in progress!</b><center>'), msg = strong('Getting started (showing 3 times only)!'), img='dataset.jpg', img.w="100%"))
+    if ('landing' %in% input$tabTop) ldg$v <- ldg$v + 1
+    }
+  })
+
   lis.url <- reactiveValues(par=NULL)
   observe({
     # The url on browser is captured only if the url is refreshed or the "Enter" key is pressed, which applies in the cases that shiny app is first launched or users modified parameters in the url. Otherwise the query is null.
@@ -39,13 +66,14 @@ server <- function(input, output, session) {
     
     })
   observe({
+    tabTop <- input$tabTop; if (!check_obj(tabTop)) return()
+    if (tabTop %in% c('ldg', 'about')) return()  
     # validate(need(input$start.but>0, ''))
     withProgress(message="Loading dependencies: ", value=0, {
     incProgress(0.2, detail="in progress ...")
     library(spatialHeatmap); library(SummarizedExperiment); library(shiny); library(shinydashboard); library(shinydashboardPlus); library(grImport); library(rsvg); library(ggplot2); library(DT) 
     incProgress(0.2, detail="in progress ...")
     library(gridExtra); library(ggdendro); library(grid); library(xml2); library(plotly); library(data.table); library(genefilter); library(flashClust); library(visNetwork); 
-    showModal(modal(title = HTML('<center><b>Welcome to spatialHeatmap!</b><center>'), msg = strong('Please wait for the app to set up!')))
     incProgress(0.2, detail="in progress...")
    library(reshape2); library(igraph); library(animation); library(av); library(shinyWidgets); library(yaml); library(HDF5Array); library(sortable); library(shinyBS); library(shinyjs); library(htmltools)
     # DEG
@@ -59,61 +87,111 @@ server <- function(input, output, session) {
 
   # Selected IDs and button in search box.
   ids <- reactiveValues(sel=NULL, but=NULL)
-  mods$upload <- upl.mod.lis <- upload_server('upl', lis.url)
+  mods$upload <- upl.mod.lis <- upload_server('upl', lis.url, prt=session)
   ipt <- upl.mod.lis$ipt; cfg <- upl.mod.lis$cfg 
 
   sch <- reactiveValues()
   observe({ sch$sch <- input$search; sch$but <- input$search.but })
   #ipt0 <- reactiveValues(url.but=NULL, but=NULL)
   # observe({ ipt0$url.but <- input$url.but })
-  mods$data <- dat.mod.lis <- data_server('dat', sch, lis.url, ids, upl.mod.lis, deg.mod.lis=mods$deg, scell.mod.lis=mods$scell, shm.mod=mods$shm)
+  mods$data <- dat.mod.lis <- data_server('dat', sch, lis.url, ids, upl.mod.lis, deg.mod.lis=mods$deg, scell.mod.lis=mods$scell, shm.mod=mods$shm, parent=session)
 
   mods$search <- sch.mod.lis <- search_server('sear', ids, lis.url, url.id, upl.mod.lis, dat.mod.lis)
  
  # Active tab.
- tab <- reactiveValues(); observe({ tab$val <- input$shm.sup })
+ tab <- reactiveValues(); observe({ tab$val <- input$tabTop })
 
 # Variables of "reactiveValues()" are accessible anywhere once created. E.g. created in one module and used instantly in another module without being passed as an argument. So "url.id" can be accessed if not passed as an argument, even in the inner nested modules.
 
-mods$shm <- shm.mod.lis <- shm_server('shmAll', sch, lis.url, url.id, tab, upl.mod.lis, dat.mod.lis, sch.mod.lis, mods$scell, mods$dim, session=session)
+mods$shm <- shm.mod.lis <- shm_server('shmAll', sch, lis.url, url.id, tab, upl.mod.lis, dat.mod.lis, sch.mod.lis, mods$scell, mods$dim, deg.mod=mods$deg, prt=session)
+
+  cnt.ana <- reactiveValues(v=0)
+  observeEvent(input$tabTop, {
+    tabTop <- input$tabTop
+    if (!'ana' %in% tabTop) return()
+    if (length(ids$sel) > 0 & cnt.ana$v <=2) showModal(modal(title=HTML(run.msg), msg='Showing 3 times only!', easyClose=TRUE))
+    if ('ana' %in% tabTop) cnt.ana$v <- cnt.ana$v + 1
+  })
+
+  mods$ana <- ana.mod <- analysis_server('ana', upl.mod.lis, dat.mod.lis, shm.mod.lis, ids)
 
   svgs.upd <- reactive({ 
     if (is.null(mods$shm$svgs)) return(); mods$shm$svgs() 
   })
   observeEvent(svgs.upd(), ignoreInit=FALSE, ignoreNULL=TRUE, {
     svgs <- svgs.upd()
-    if (!is.null(svgs) & (!grepl(na.sgl, mods$upload$ipt$fileIn))) updateTabsetPanel(session, "shm.sup", selected='shmPanelAll')
+    if (!is.null(svgs) & (!grepl(na.sgl, mods$upload$ipt$fileIn)) & ldg$v >=2) updateTabsetPanel(session, "tabTop", selected='shmPanelAll')
   })
 
-  mods$deg <- deg.mod.lis <- deg_server('deg', sch, lis.url, url.id, ids, upl.mod.lis, dat.mod.lis, shm.mod.lis)
-  output$sumar <- renderText({
-    cfg <- upl.mod.lis$cfg; sce.ipt <- scell.mod.lis$input
-    fileIn <- upl.mod.lis$ipt$fileIn
-    if (!check_obj(list(cfg, sce.ipt, fileIn))) return()
+  cnt.shm <- reactiveValues(v=0)
+  observeEvent(input$tabTop, {
+    tabTop <- input$tabTop
+    if (!'shmPanelAll' %in% tabTop) return()
+    lgc <- length(ids$sel)==0 & cnt.shm$v <=2
+    if (lgc) { 
+      showModal(modal(title = 'Quick start!', msg='Showing 3 times only!', img='select.jpg', img.w="70%")) 
+      cnt.shm$v <- cnt.shm$v + 1
+    }
+  })
+
+  mods$deg <- deg.mod.lis <- deg_server('deg', sch, lis.url, url.id, ids, upl.mod.lis, dat.mod.lis, shm.mod.lis, parent=session)
+  output$datInf <- renderUI({
+    cfg <- upl.mod.lis$cfg; fileIn <- upl.mod.lis$ipt$fileIn
+    se.scl <- mods$data$se.scl(); df.meta <- metadata(se.scl)$df.meta
+    if (!check_obj(list(cfg, fileIn, se.scl, df.meta))) return()
     files <- c(cfg$na.cus, cfg$na.def)
     dat <- names(files[files %in% fileIn])
-    sumar <- paste0('Dataset: ', dat)
-    if (grepl('^covis_', fileIn)) {
-      meth <- sce.ipt$methCovis; direc <- sce.ipt$direc
-      meth.sel <- ifelse('man' %in% meth, 'Annoatation labels/Manual assignments', 'Automated co-clustering') 
-      direc.sel <- ifelse('toBulk' %in% direc, 'Cell-to-bulk', 'Bulk-to-cell')
-      sumar <- paste0(sumar, ', Cell group labels: ', meth.sel, ', Mapping direction: ', direc.sel)
+    if (!grepl('^covis_', fileIn)) {
+      df.meta <- subset(df.meta, name=='assay')
+      sumar <- HTML(paste0('<strong>Dataset: ', dat, '</strong><br/>', '&nbsp;&nbsp;&nbsp;', df.meta$species[1], ', ', df.meta$technology[1], ', ', df.meta$id[1]))
+    } else {
+      df.m.blk <- subset(df.meta, grepl('^assayBulk$', name))
+      df.m.cell <- subset(df.meta, grepl('^assayCell$', name))
+      sumar <- HTML(paste0('<strong>Dataset: ', dat, '</strong><br/>', '&nbsp;&nbsp;&nbsp;1. Bulk: ', df.m.blk$species, ', ', df.m.blk$technology, ', ', df.m.blk$id, '<br/>', '&nbsp;&nbsp;&nbsp;2. Cell: ', df.m.cell$species, ', ', df.m.cell$technology, ', ', df.m.cell$id)) 
     }; sumar
   })
-  mods$scell <- scell.mod.lis <- scell_server('scell', tab, upl.mod.lis, shm.mod.lis, session)
+  output$covisInf <- renderUI({
+    fileIn <- upl.mod.lis$ipt$fileIn
+    sce.ipt <- scell.mod.lis$input
+    if (!check_obj(list(sce.ipt, fileIn))) return()
+    sumar <- NULL; if (grepl('^covis_', fileIn)) {
+      meth <- sce.ipt$methCovis; direc <- sce.ipt$direc
+      meth.sel <- ifelse('man' %in% meth, 'Annotation (or similar) labels', 'Co-clustering labels') 
+      direc.sel <- ifelse('toBulk' %in% direc, 'Cell-to-bulk', 'Bulk-to-cell')
+      sumar <- paste0('Cell group labels: ', meth.sel, ', Mapping direction: ', direc.sel)
+    }; sumar
+  })
+  mods$scell <- scell.mod.lis <- scell_server('scell', tab, upl.mod.lis, shm.mod.lis, lis.url=lis.url, parent=session, session)
   observe({
-  # observeEvent(mods$scell$sce.upl$cell, ignoreInit=FALSE, ignoreNULL=FALSE, {
-    ipt <- mods$upload$ipt; fileIn <- ipt$fileIn
+    # observeEvent(mods$scell$sce.upl$cell, ignoreInit=FALSE, ignoreNULL=FALSE, {
+    ipt <- mods$upload$ipt; fileIn <- ipt$fileIn; datpa <- ipt$geneInpath
     svgs <- grepl('\\.svg$', c(ipt$svgInpath1, ipt$svgInpath2))
     lgc.upl <- !is.null(mods$scell$sce.upl$cell) & 'customCovisData' %in% fileIn & sum(svgs)>0
     lgc.def <- grepl(na.sgl.def, fileIn)
-    if (lgc.upl | lgc.def) {
+    cus <- fileIn %in% na.cus
+    cus.upl.no <- is.null(datpa)|sum(svgs)==0 
+    if (cus) { # Custom data.
+      if (cus.upl.no) { message('Select SHM tab ...')
+      disable(selector='a[data-value="shmPanelAll"]')
+      disable(selector='a[data-value="deg"]') 
+      disable(selector='a[data-value="ana"]') 
+      disable(selector='a[data-value="scell"]'); message('Done!')
+      } else enable(selector='a[data-value="shmPanelAll"]')
+    } else enable(selector='a[data-value="shmPanelAll"]')
+    if (lgc.upl | lgc.def) { # covis is active.
+      message('Select covis tab ...') 
       enable(selector='a[data-value="scell"]')
       disable(selector='a[data-value="deg"]') 
-      updateTabsetPanel(session, "shm.sup", selected='scell')
-    } else if (!grepl(na.sgl, fileIn)) { 
+      disable(selector='a[data-value="ana"]') 
+      updateTabsetPanel(session, "tabTop", selected='scell')
+      ft.match <- mods$scell$covis.man$match.mod.lis$ft.reorder$ft.rematch
+      if (length(ft.match)==0 & 'man' %in% scell.mod.lis$input$methCovis) disable(selector='a[data-value="shmPanelAll"]') else enable(selector='a[data-value="shmPanelAll"]'); message('Done!')
+    } else if (('customBulkData' %in% fileIn & !cus.upl.no)|(!cus & !grepl(na.sgl.def, fileIn))) {
+      message('Select enrichment tab ...')
       enable(selector='a[data-value="deg"]')
+      if (check_obj(ids$sel)) enable(selector='a[data-value="ana"]')
       disable(selector='a[data-value="scell"]') 
+      message('Done!')
     }
   })
   
@@ -133,31 +211,28 @@ mods$shm <- shm.mod.lis <- shm_server('shmAll', sch, lis.url, url.id, tab, upl.m
   #observeEvent(list(mods$deg$but.sgl()), ignoreInit=TRUE, {
   #  but.sgl <- mods$deg$but.sgl()
   #  if (is.null(but.sgl)) return(); if (but.sgl==0) return()
-  #  updateTabsetPanel(session, "shm.sup", selected='shmPanelAll')
+  #  updateTabsetPanel(session, "tabTop", selected='shmPanelAll')
   #})
   #observeEvent(mods$deg$but.mul(), ignoreInit=TRUE, {
   #  but.mul <- mods$deg$but.mul()
   #  if (is.null(but.mul)) return(); if (but.mul==0) return()
-  #  updateTabsetPanel(session, "shm.sup", selected='shmPanelAll')
+  #  updateTabsetPanel(session, "tabTop", selected='shmPanelAll')
   #})
-  cnt.deg <- reactiveValues(v=0)
-  observeEvent(input$shm.sup, {
-    if (!'deg' %in% input$shm.sup|cnt.deg$v > 1) return()
-    show_mod(FALSE, 'Click "Run" to see the latest results.')
-    cnt.deg$v <- cnt.deg$v + 1
-  })
 
   observeEvent(mods$deg$input$eSHMBut, ignoreInit=TRUE, {
     but <- mods$deg$input$eSHMBut
     if (is.null(but)) return(); if (but==0) return()
-    updateTabsetPanel(session, "shm.sup", selected='shmPanelAll')
+    updateTabsetPanel(session, "tabTop", selected='shmPanelAll')
   })
 
   observeEvent(mods$scell$covis.man$match.mod.lis$but.match$val, ignoreInit=TRUE, {
-    updateTabsetPanel(session, "shm.sup", selected='shmPanelAll')
+    ft.match <- mods$scell$covis.man$match.mod.lis$ft.reorder$ft.rematch
+    if (length(ft.match)==0) return()
+    # Activates diabled tables.
+    updateTabsetPanel(session, "tabTop", selected='shmPanelAll')
   })
   observeEvent(mods$scell$covis.auto$but.covis, ignoreInit=TRUE, {
-    updateTabsetPanel(session, "shm.sup", selected='shmPanelAll')
+    updateTabsetPanel(session, "tabTop", selected='shmPanelAll')
   })
   tailor.lis.com <- reactive({
     if (is.null(mods$scell)) return()
@@ -170,9 +245,14 @@ mods$shm <- shm.mod.lis <- shm_server('shmAll', sch, lis.url, url.id, tab, upl.m
     list(lis$coclusPlotBut(), lis$selBlkBut(), lis$selBlkCancel())
   })
   observeEvent(tailor.lis.com(), ignoreInit=TRUE, {
-    updateTabsetPanel(session, inputId="shm.sup", selected='shmPanelAll')
+    updateTabsetPanel(session, inputId="tabTop", selected='shmPanelAll')
   })
-  # hideTab(inputId='tabSetCell', target="qcTab")
+  output$about <- renderUI({
+    tags$iframe(seamless="seamless", src= "html/about.html", width='100%', height='100%') 
+  })
+  output$ldg <- renderUI({
+    tags$iframe(seamless="seamless", src= "html/landing.html", width='100%', height='100%') 
+  })
 
   setBookmarkExclude(c("dat-dtSel_rows_all", "dat-dtSel_rows_current", "dat-dtSel_search_columns", "dat-dtAll_rows_all", "dat-dtAll_rows_current", "dat-dtAll_search_columns", "dat-dtAll_state", "cell", "bulk", 'scell-covisMan-rematchCell-matHelp', 'right.bar', 'shmAll-net-dpbMea', 'scell-covisAuto-tailor-selBlkCancel', 'sidebarCollapsed', 'sear-sch.mul.but', 'shmAll-val.lgd', 'scell-covisAuto-tabSetCellAuto', 'dat-dat.all.but', 'scell-covisMan-dimredNav', 'deg-degAll', 'shmAll-shms.in', 'shmAll-col.but', 'sear-sch.mul', 'sear-sch.mode', 'deg-deg-sch.mode', 'dat-dtAll_columns_selected', 'scell-covisAuto-tailor-coclusPlotBut', 'scell-covisAuto-parAutoBut', 'shmAll-rematch-matHelp', 'shmAll-transBut', 'dat-tran.scale.but.sel', 'shmAll-dropdown', 'dat-dtAll_rows_selected', 'upl-tar', 'shmAll-net-gen.sel', 'shmAll-dld.but', 'scell-covisHelp', 'dat-fil.but', 'scell-covisMan-parManBut', 'deg-datDEG-fil.but', 'shmAll-net-col.but.net', 'dat-sig.but', 'dat-tran.scale.but.prof', 'shmAll-net-cpt.nw', 'shmAll-net-mhm.but', 'shmAll-glyBut', 'deg-ssg.update')) 
   observe({

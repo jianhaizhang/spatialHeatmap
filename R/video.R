@@ -36,8 +36,8 @@
 #' @importFrom ggplot2 layer_data margin
 #' @importFrom grid grobTree unit
 
-video <- function(gg, cs.g, lgd, lgd.r=0.4, h=0.7, type='shm', lgd.title=NULL, sub.title.size=10, bar.width=0.12, bar.axis.title.size=5, bar.value.size=4, lgd.key.size=0.02, lgd.text.size=8, lgd.nrow.2nd=2, lgd.key.size.2nd=0.01, lgd.text.size.2nd=5, angle.text.key=NULL, position.text.key=NULL, lgd.row=2, lgd.row.2nd=2, lgd.col=NULL, legend.value.vdo=NULL, label=FALSE, label.size=4, label.angle=0, hjust=0, vjust=0, opacity=1, key=TRUE, dim.lgd.text.size=13, dim.lgd.key.size=4, dim.lgd.nrow=2, dim.lgd.plot.margin=NULL, video.dim='640x480', res=500, interval=1, framerate=1, out.dir) {  
-  # save(gg, cs.g, lgd, lgd.r, h, type, lgd.title, sub.title.size, bar.width, bar.value.size, lgd.key.size, lgd.text.size, lgd.key.size.2nd, lgd.text.size.2nd, angle.text.key, position.text.key, lgd.row, lgd.row.2nd, lgd.col, legend.value.vdo, label, label.size, label.angle, hjust, vjust, opacity, key, dim.lgd.text.size, dim.lgd.key.size, dim.lgd.nrow, video.dim, res, interval, framerate, out.dir, file='video.arg')
+video <- function(gg, cs.g, lgd, gcol.lgd=NULL, lgd.r=0.4, h=0.7, type='shm', lgd.title=NULL, sub.title.size=10, bar.width=0.12, bar.axis.title.size=5, bar.value.size=4, lgd.key.size=0.02, lgd.text.size=8, lgd.nrow.2nd=2, lgd.key.size.2nd=0.01, lgd.text.size.2nd=5, angle.text.key=NULL, position.text.key=NULL, lgd.row=2, lgd.row.2nd=2, lgd.col=NULL, legend.value.vdo=NULL, label=FALSE, label.size=4, label.angle=0, hjust=0, vjust=0, opacity=1, key=TRUE, dim.lgd.text.size=13, dim.lgd.key.size=4, dim.lgd.nrow=2, dim.lgd.plot.margin=NULL, video.dim='640x480', res=500, interval=1, framerate=1, out.dir) {  
+  # save(gg, cs.g, lgd, gcol.lgd, lgd.r, h, type, lgd.title, sub.title.size, bar.width, bar.value.size, lgd.key.size, lgd.text.size, lgd.key.size.2nd, lgd.text.size.2nd, angle.text.key, position.text.key, lgd.row, lgd.row.2nd, lgd.col, legend.value.vdo, label, label.size, label.angle, hjust, vjust, opacity, key, dim.lgd.text.size, dim.lgd.key.size, dim.lgd.nrow, video.dim, res, interval, framerate, out.dir, file='video.arg')
 
   x <- y <- feature <- NULL
   pkg <- check_pkg('av'); if (is(pkg, 'character')) stop(pkg)
@@ -55,7 +55,7 @@ video <- function(gg, cs.g, lgd, lgd.r=0.4, h=0.7, type='shm', lgd.title=NULL, s
   na.dim <- grep('^dim_', na, value=TRUE) 
 
   cat('Video: adjust legend size/rows in SHMs ... \n')
-  gg[na.shm] <- gg_lgd(gg.all=gg[na.shm], size.key=lgd.key.size.2nd, size.text.key=lgd.text.size.2nd, angle.text.key=angle.text.key, position.text.key=position.text.key, legend.value.vdo=legend.value.vdo, label=label, label.size=label.size, label.angle=label.angle, hjust=hjust, vjust=vjust, opacity=opacity, key=key, sub.title.size=sub.title.size, row=lgd.row.2nd, col=lgd.col)
+  gg[na.shm] <- gg_lgd(gg.all=gg[na.shm], gcol.lgd=gcol.lgd, size.key=lgd.key.size.2nd, size.text.key=lgd.text.size.2nd, angle.text.key=angle.text.key, position.text.key=position.text.key, legend.value.vdo=legend.value.vdo, label=label, label.size=label.size, label.angle=label.angle, hjust=hjust, vjust=vjust, opacity=opacity, key=key, sub.title.size=sub.title.size, row=lgd.row.2nd, col=lgd.col)
   
   cat('Saving video... \n')
   res.r=res/144; w.h <- round(as.numeric(strsplit(video.dim, 'x')[[1]])*res.r)
@@ -96,7 +96,7 @@ video <- function(gg, cs.g, lgd, lgd.r=0.4, h=0.7, type='shm', lgd.title=NULL, s
     tr <- lapply(grob.lis, grobTree)
     # SHM in legend.
     na.lgd.shm <- grep('\\.svg$', names(lgd), value=TRUE)
-    lgd[na.lgd.shm] <- gg_lgd(gg.all=lgd[na.lgd.shm], size.key=lgd.key.size, size.text.key=lgd.text.size, angle.text.key=angle.text.key, position.text.key=position.text.key, legend.value.vdo=legend.value.vdo, label=label, label.size=label.size, label.angle=label.angle, hjust=hjust, vjust=vjust, opacity=opacity, key=key, sub.title.size=sub.title.size, row=lgd.row, col=lgd.col, title=lgd.title, lgd.space.x=0.01)
+    lgd[na.lgd.shm] <- gg_lgd(gg.all=lgd[na.lgd.shm], gcol.lgd=gcol.lgd, size.key=lgd.key.size, size.text.key=lgd.text.size, angle.text.key=angle.text.key, position.text.key=position.text.key, legend.value.vdo=legend.value.vdo, label=label, label.size=label.size, label.angle=label.angle, hjust=hjust, vjust=vjust, opacity=opacity, key=key, sub.title.size=sub.title.size, row=lgd.row, col=lgd.col, title=lgd.title, lgd.space.x=0.01)
     na.lgd.dim <- grep('dim\\.lgd$', names(lgd), value=TRUE)
     # Dim in legend.
     g0 <- lgd[[na.lgd.dim]]; lgd.com <- lgd_com(g0)

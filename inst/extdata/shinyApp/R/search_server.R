@@ -26,8 +26,9 @@ search_server <- function(id, ids, lis.url, url.id, upl.mod.lis, dat.mod.lis, se
     pre.id <- reactiveValues(id=NULL)
     observe({ # Pre-selected ids in config file.
       if (is.null(datIn$v)) return()
+      lis.par <- cfg$lis.par; req(check_obj(lis.par))
       rna <- rownames(datIn$v)
-      id <- cfg$lis.par$data.matrix['selected.id', 'default']
+      id <- lis.par$data.matrix['selected.id', 'default']
       if (length(id)==0) { pre.id$id <- rna[1]; return() }
       id <- make.names(strsplit(id, ',')[[1]])
       id <- id[id %in% rna]

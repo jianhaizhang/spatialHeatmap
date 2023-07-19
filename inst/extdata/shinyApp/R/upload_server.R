@@ -1,51 +1,49 @@
 # Module for uploading data.
 
-upload_server <- function(id, lis.url=NULL, session) {
+upload_server <- function(id, lis.url=NULL, prt=NULL) {
   moduleServer(id, function(input, output, session) {
   message('Upload module starts ... ')
+  observeEvent(input$dathelp, {  
+    showModal(modal(title='Quick start!', msg = NULL, img='dataset.jpg', img.w="100%"))
+  })
   output$bulk.sce <- renderUI({
     ns <- session$ns; fileIn <- input$fileIn
     if (fileIn=='customBulkData') {
     list(
-    fluidRow(splitLayout(cellWidths=c('1%', '20%', '1%', '10%'), '', h4(strong("Step 2: upload custom data")), '',
-      actionButton(ns("cusHelp"), "Help", icon = icon('question-circle')))),
-      fluidRow(splitLayout(cellWidths=c('1%', '24%', '1%', '18%', '1%', '25%', '1%', '25%'), '',
-      fileInput(ns("geneInpath"), "2A: upload formatted data matrix", accept=c(".txt", ".csv"), multiple=FALSE), '',
-      radioButtons(inputId=ns('dimName'), label='2B: is column or row gene?', choices=c("None", "Row", "Column"), selected='None', inline=TRUE), '',
+    fluidRow(splitLayout(cellWidths=c('10px', '280px', '1px'), '', h4(strong("Step2: upload custom assay data")), '')),
+      fluidRow(splitLayout(cellWidths=c('10px', '180px', '1px', '200px', '1px', '230px', '1px', '190px', '1px', '210px'), '',
+      tags$div(class='tp', span(class='tpt', 'Accepted files: tabular or ".rds" ("SummarizedExperiment" saved with "saveRDS")'), fileInput(ns("geneInpath"), "2A: formatted assay data", accept=c(".txt", ".csv", '.rds'), multiple=FALSE)), '',
+      selectInput(ns('dimName'), label='2B: genes in column or row?', choices=c("Row", "Column"), selected='Row'), '',
       tags$div(class='tp', span(class='tpt', 'Ensure "columns in the data matrix corresponds with "rows" in the targets file respectively.'),
-      fileInput(ns("target"), "2C (optional): upload targets file for columns", accept=c(".txt", ".csv"), multiple=FALSE)), '',
+      fileInput(ns("target"), "2C (optional): sample targets file", accept=c(".txt", ".csv"), multiple=FALSE)), '',
       tags$div(class='tp', span(class='tpt', 'Ensure "rows" in the data matrix corresponds with "rows" in the row metadata file respectively.'),
-      fileInput(ns("met"), "2D (optional): upload metadata file for rows", accept=c(".txt", ".csv"), multiple=FALSE))
-      ))
+      fileInput(ns("met"), "2D (optional): row metadata", accept=c(".txt", ".csv"), multiple=FALSE)), '',
+
+      tags$div(class='tp', span(class='tpt', 'Assay metadata in a tabular file.'),
+      fileInput(ns("asymet"), "2E (optional): assay metadata", accept=c(".txt", ".csv"), multiple=FALSE)))
+      )
     )
     } else if (fileIn=='customCovisData') {
       list(
-      h4(strong('Step 2: single-cell/bulk data')),
+      h4(strong('Step2: single-cell & bulk data')),
+      div(class='tp', span(class='tpt', 'An ".rds" file (saved with "saveRDS") of "SingleCellExperiment" that combines bulk & single-cell data.'),
       fileInput(ns("sglCell"), "", accept=c(".rds"), multiple=FALSE)
-      )
+      ))
    }
   })
   output$svg.upl <- renderUI({
     ns <- session$ns; fileIn <- input$fileIn
     if (fileIn %in% na.cus) {
     list(
-      h5(strong("Step 3: upload custom aSVG(s)")),
+      h5(strong("Step3: upload custom aSVG(s)")),
       fluidRow(splitLayout(cellWidths=c('1%', '27%', '1%', '28%'), '',
-      tags$div(class='tp', span(class='tpt', 'The data is matched with a single aSVG file.'),
-      fileInput(ns("svgInpath1"), "3A: upload one aSVG file", accept=c('.svg', raster.ext), multiple=TRUE)), '',
-      tags$div(class='tp', span(class='tpt', 'The data is matched with multiple aSVG files (e.g. developmental stages).'),
-      fileInput(ns("svgInpath2"), "3B (optional): upload multiple aSVG files", accept=c('.svg', raster.ext), multiple=TRUE))
+      tags$div(class='tp', span(class='tpt', 'The assay data is matched with a single aSVG file.'),
+      fileInput(ns("svgInpath1"), "3A: one aSVG file", accept=c('.svg', raster.ext), multiple=TRUE)), '',
+      tags$div(class='tp', span(class='tpt', 'The assay data is matched with multiple aSVG files (e.g. developmental stages).'),
+      fileInput(ns("svgInpath2"), "3B (optional): multiple aSVG files", accept=c('.svg', raster.ext), multiple=TRUE))
       ))
     )}
   })
-  observeEvent(input$cusHelp, {
-    showModal(
-    div(id = 'datFormat', modalDialog(title = HTML('<strong><center>Data Formats</center></strong>'),
-      div(style = 'overflow-y:scroll;overflow-x:scroll',
-      HTML('<img src="image/data_format_shiny.jpg">'),
-      tags$a(href="https://bioconductor.org/packages/devel/bioc/vignettes/spatialHeatmap/inst/doc/spatialHeatmap.html", target="_blank", "Package vignette")
-      ))))
-    })
 
   cfg <- reactiveValues(lis.dat=NULL, lis.dld=NULL, lis.par=NULL, na.def=NULL, dat.def=NULL, svg.def=NULL, pa.upl=NULL, pa.dat.upl=NULL, pa.svg.upl=NULL, na.cus=NULL, pa.svg.reg=NULL)
   lis.cfg <- yaml.load_file('config/config.yaml')
@@ -62,7 +60,12 @@ upload_server <- function(id, lis.url=NULL, session) {
   }
   dld.na <- c('download_single', 'download_multiple', 'download_multiple_variables', 'download_batched_data_aSVGs', 'download_covisualization')
   lis.dld <- lis.cfg[grepl(paste0(dld.na, collapse='|'), names(lis.cfg))]
+  cnt.ldg <- reactiveValues(v=0)
   observe({
+    message('Config file ...')
+    tabTop <- prt$input$tabTop; if (!check_obj(tabTop)) return()
+    if (tabTop %in% c('ldg', 'about') & cnt.ldg$v==0) return()
+    cnt.ldg$v <- 1
     if (is.null(input$config)) lis.par <- lis.cfg[!grepl(paste0(c('^dataset\\d+', dld.na), collapse='|'), names(lis.cfg))] else lis.par <- yaml.load_file(input$config$datapath[1])
     upl.size <- toupper(lis.par$max.upload.size)
     num <- as.numeric(gsub('(\\d+)(G|M)', '\\1', upl.size))
@@ -117,11 +120,15 @@ upload_server <- function(id, lis.url=NULL, session) {
     dat.def <- dat.def[unique(names(dat.def))]; svg.def <- svg.def[unique(names(svg.def))]
     cfg$lis.dat <- lis.dat; cfg$lis.dld <- lis.dld; cfg$lis.par <- lis.par; cfg$na.def <- setNames(names(dat.def), dis.def)
     cfg$svg.def <- svg.def; cfg$dat.def <- dat.def; cfg$na.cus <- setNames(na.cus, na.cus.dis)
-    dat.nas <- c(na.cus, names(dat.def)); names(dat.nas) <- c(na.cus.dis, dis.def) 
+    dat.nas <- c(na.cus, names(dat.def)); names(dat.nas) <- c(na.cus.dis, dis.def)
+    cfg$dat.nas <- dat.nas
+  })
+  observeEvent(cfg$dat.nas, {
+    tabTop <- prt$input$tabTop; lis.par <- cfg$lis.par; dat.nas <- cfg$dat.nas
+    req(check_obj(list(tabTop, lis.par, dat.nas)))
+    if (tabTop %in% c('ldg', 'about') & cnt.ldg$v==0) return()
     url.val <- url_val('upl-fileIn', lis.url)
     updateSelectInput(session, 'fileIn', choices=dat.nas, selected=ifelse(url.val=='null', lis.par$default.dataset, url.val))
-    updateRadioButtons(session, inputId='dimName', selected=lis.par$col.row.gene, inline=TRUE)
-
   })
   observe({ # aSVG uploaded in regular files (not tar), used in re-matching.
     if (is.null(input$svgInpath2)) svgIn.df <- input$svgInpath1 else svgIn.df <- input$svgInpath2
@@ -136,7 +143,7 @@ upload_server <- function(id, lis.url=NULL, session) {
           strs <- strs[-length(strs)]
           paste0(c(strs, svg.na[x]), collapse='/')
         }
-      ))); names(pa.svg.reg) <- 'uploaded'
+      ))); names(pa.svg.reg) <- 'uploaded'; #save(pa.svg.reg, file='pa.svg.reg')
     # Original copy used for regular SHMs, the 2nd copy used in rematching.
     file.copy(svg.path, pa.svg.reg[[1]])
     cfg$pa.svg.reg <- pa.svg.reg
@@ -144,7 +151,7 @@ upload_server <- function(id, lis.url=NULL, session) {
   })
   observe({
     input$fileIn; input$geneInpath
-    updateRadioButtons(session, inputId="dimName", selected="None")
+    #updateRadioButtons(session, inputId="dimName", selected="None")
   })
  observe({ 
     dld.exp <- reactiveValues(sgl=NULL, mul=NULL, st=NULL, bat = NULL)
@@ -187,59 +194,62 @@ content=function(file=paste0(tmp.dir, '/batched_data_aSVGs.zip')){ zip(file, c(d
   output$brain.hum <-renderUI({
   tagList(
     p('Human brain', style='font-size:18px'),
-  a(img(width='97%', src="image/brain_hum.png"), href='')
+  a(img(width='97%', src="image/brain_hum.png"))
     )
   })
   output$mouse <-renderUI({
   tagList(
     p('Mouse organ', style='font-size:18px'),
-    a(img(width='97%', src="image/mouse.png"), href='')
+    a(img(width='97%', src="image/mouse.png"))
   )
   })
   output$chicken <-renderUI({
   tagList(
     p('Chicken organ', style='font-size:18px'),
-    a(img(width='97%', src="image/chicken.png"), href='')
+    a(img(width='97%', src="image/chicken.png"))
     )
   })
   output$organ.arab <-renderUI({
   tagList(
     p('Organ', style='font-size:18px'),
-    a(img(width='97%', src="image/organ_arab.png"), href='')
+    a(img(width='97%', src="image/organ_arab.png"))
     )
   })
   output$shoot.arab <-renderUI({
   tagList(
     p('Shoot tissue', style='font-size:18px'),
-    a(img(width='97%', src="image/shoot_arab.png"), href='')
+    a(img(width='97%', src="image/shoot_arab.png"))
   )
   })
   output$root.arab <-renderUI({
   tagList(
     p('Root tissue', style='font-size:18px'),
-    a(img(width='97%', src="image/root_arab.png"), href='')
+    a(img(width='97%', src="image/root_arab.png"))
     )
   })
   output$stage.arab <-renderUI({
   tagList(
     p('Developmental stage', style='font-size:18px'),
-    a(img(width='97%', src="image/stage_arab.png"), href='')
+    a(img(width='97%', src="image/stage_arab.png"))
     )
   })
   output$clp.rice <-renderUI({
   tagList(
     p('Mouse brain multi-variable data', style='font-size:18px'),
-    a(img(width='97%', src="image/mus_multi_dim.png"), href='')
+    a(img(width='97%', src="image/mus_multi_dim.png"))
     )
   })
 
   observe({
     toggleState(id = "geneInpath", condition = input$fileIn %in% cfg$na.cus)
-    toggleState(id = "dimName", condition = input$fileIn %in% cfg$na.cus)
+    #toggleState(id = "dimName", condition = input$fileIn %in% cfg$na.cus)
     toggleState(id = "target", condition = input$fileIn %in% cfg$na.cus)
     toggleState(id = "met", condition = input$fileIn %in% cfg$na.cus)
     toggleState(id = "svgInpath1", condition = input$fileIn %in% cfg$na.cus)
     toggleState(id = "svgInpath2", condition = input$fileIn %in% cfg$na.cus)
+  })
+  output$help <- renderUI({
+    tags$iframe(seamless="seamless", src= "html/shm_shiny_manual.html#1_Datasets", width='100%', height='100%')
   })
   # Switch to avoid files uploaded previously. E.g. 1. upload 'sce.rds' under 'customSingleCell'. 2. select 'brain_Prudencio'. 3. re-select 'customSingleCell', and 'sce.rds' in step 1 is avoided.
   sce.pa <- reactiveValues(val=TRUE)
@@ -259,3 +269,5 @@ content=function(file=paste0(tmp.dir, '/batched_data_aSVGs.zip')){ zip(file, c(d
   onBookmark(function(state) { state })
   return(list(ipt = input, cfg = cfg, sce=sce))
 })}
+
+

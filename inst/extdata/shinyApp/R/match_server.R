@@ -2,12 +2,7 @@
 match_server <- function(id, sam, tab, upl.mod.lis, covis.man=NULL, col.idp=FALSE, session) {
   moduleServer(id, function(input, output, session) {
   observeEvent(input$matHelp, {
-    showModal(
-    div(id = 'matchHel',
-    modalDialog(title = HTML('<strong><center>Matching spatial features</center></strong>'),
-      div(style = 'overflow-y:scroll;overflow-x:scroll',
-      HTML('<img src="image/match.jpg">'),
-    ))))
+    showModal(modal(title='Quick start!', msg = NULL, img='ann_quick.jpg', img.w="100%"))
   })
   ipt <- upl.mod.lis$ipt; cfg <- upl.mod.lis$cfg
   # renderUI: if the tab/page containing uiOutput('svg') is not active/clicked, the input$svg on the server side is NULL. To avoid this, the ui side should have "selectInput".
@@ -15,14 +10,20 @@ match_server <- function(id, sam, tab, upl.mod.lis, covis.man=NULL, col.idp=FALS
     # When customCovisData is selected, matching is disabled in SHM.
     if(id!='rematchCell' & grepl(na.sgl, ipt$fileIn)) return()
     ns <- session$ns; # nas <- c(names(cfg$pa.svg.reg), names(cfg$svg.def))
-    selectInput(ns('svg'), label='Choose an aSVG to match', choices=cfg$na.def, selected=ipt$fileIn)
+    cho <- cfg$na.def; sel <- ipt$fileIn
+    cho <- cho[cho %in% sel]
+    if (any(na.cus %in% ipt$fileIn)) {
+      svg.path <- cfg$pa.svg.reg[[1]]; if (is.null(svg.path)) return()
+      cho <- sel <- setNames('uploaded', paste0(basename(svg.path), ' (uploaded)'))
+    }
+    selectInput(ns('svg'), label='The aSVG file', choices=cho, selected=sel)
   })
 
   output$match.but <- renderUI({
     # When customCovisData is selected, matching is disabled in SHM.
     if(id!='rematchCell' & grepl(na.sgl, ipt$fileIn)) return()
     ns <- session$ns
-    actionButton(ns("match"), 'Run', icon=icon("sync"), style=run.col)
+    actionButton(ns("match"), 'Run', icon=icon("sync"), style=run.top)
   })
   output$match.reset <- renderUI({
     # When customCovisData is selected, matching is disabled in SHM.
@@ -77,7 +78,7 @@ match_server <- function(id, sam, tab, upl.mod.lis, covis.man=NULL, col.idp=FALS
     svgs <- read_svg_m(svg.path=svg.paths)
     validate(need(!is.character(svgs), svgs))
     sf.all <- unique(unlist(lapply(seq_along(svgs), function(x) { svg_separ(svg.all=svgs[x])$tis.path })))
-  })
+    })
   # paths and groups are dropped to bottom. 
   # Matching samples are raised to top.
   pas.idx <- grepl('^path\\d+|^g\\d+', sf.all)

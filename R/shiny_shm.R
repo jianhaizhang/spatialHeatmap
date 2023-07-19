@@ -72,9 +72,11 @@
 #' Peter Langfelder, Steve Horvath (2012). Fast R Functions for Robust Correlations and Hierarchical Clustering. Journal of Statistical Software, 46(11), 1-17. URL http://www.jstatsoft.org/v46/i11/
 #'
 #' Almende B.V., Benoit Thieurmel and Titouan Robert (2017). visNetwork: Network Visualization using 'vis.js' Library. R package version 2.0.1. https://CRAN.R-project.org/package=visNetwork
+#' Zhang L (2023). _spsComps: 'systemPipeShiny' UI and Server Components_. R package version 0.3.3.0, <https://CRAN.R-project.org/package=spsComps>.
 
 #' @export
 #' @importFrom shiny runApp
+#' @importFrom spsComps bsTooltip
 
 shiny_shm <- function() {
   if (any(as.character(match.call()[[1]])=="shiny_all")) warning("'shiny_all()' is deprecated and replaced by 'shiny_shm()'!", call. = FALSE)

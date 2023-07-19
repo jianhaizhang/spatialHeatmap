@@ -1,3 +1,4 @@
+# Default datasets
 dataset1:
   name: customBulkData
   display: customBulkData
@@ -10,154 +11,213 @@ dataset2:
   svg: none
 dataset3:
   name: mouse_Merkin
-  display: Mouse organs (SHM, Merkin)
-  data: data/expr_mouse.txt
+  display: Mouse organs (SHM)
+  data: data/mouse_organ.rds
   svg: data/mus_musculus.male.svg
 dataset4:
   name: covis_Ortiz_Vacher
-  display: Mouse brain (covisualization, Ortiz, Vacher)
+  display: Mouse brain (covisualization)
   data: data/shiny_covis_bulk_cell_mouse_brain.rds
   svg: data/mus_musculus.brain.svg
 dataset5:
   name: brain_Prudencio
-  display: Human brain (SHM, Prudencio)
-  data: data/expr_human.txt
+  display: Human brain (SHM)
+  data: data/human_brain.rds
   svg: data/homo.sapiens_brain.shiny_shm.svg
 dataset6:
   name: chicken_Cardoso.Moreira
-  display: Chicken organs (SHM, Cardoso.Moreira)
-  data: data/expr_chicken.txt
+  display: Chicken organs (SHM)
+  data: data/chicken_organ.rds
   svg: data/gallus_gallus.svg
 dataset7:
   name: shoot_Mustroph
-  display: Arabidopsis shoot (SHM, Mustroph)
-  data: data/expr_arab.txt
+  display: Arabidopsis shoot (SHM)
+  data: data/arab.rds
   svg: data/arabidopsis.thaliana_shoot_shm.svg
 dataset8:
   name: organ_Mustroph
-  display: Arabidopsis organs (SHM, Mustroph)
-  data: data/expr_arab.txt
+  display: Arabidopsis organs (SHM)
+  data: data/arab.rds
   svg: data/arabidopsis.thaliana_organ_shm.svg
 dataset9:
   name: root_Mustroph
-  display: Arabidopsis root (SHM, Mustroph)
-  data: data/expr_arab.txt
+  display: Arabidopsis root (SHM)
+  data: data/arab.rds
   svg: data/arabidopsis.thaliana_root.cross_shm.svg
 dataset10:
   name: shootRoot_Mustroph
-  display: Arabidopsis shoot/root (SHM, Mustroph)
-  data: data/expr_arab.txt
+  display: Arabidopsis shoot/root (SHM)
+  data: data/arab.rds
   svg: data/arabidopsis.thaliana_shoot.root_shm.svg
 dataset11:
   name: rootRootTip_Mustroph
-  display: Arabidopsis root/rootTip (SHM, Mustroph)
-  data: data/expr_arab.txt
+  display: Arabidopsis root/rootTip (SHM)
+  data: data/arab.rds
   svg: data/arabidopsis.thaliana_root.roottip_shm.svg
 dataset12:
-  name: multiVariables_Attilio
-  display: Multiple variables (SHM, Attilio)
-  data: data/mus_brain_vars.txt
-  svg: data/mus_musculus.brain.svg
-dataset13:
   name: growthStage_Mustroph
   display: Multiple aSVGs (SHM, Mustroph)
   data: data/random_data_multiple_aSVGs.txt
   svg:
   - data/arabidopsis.thaliana_organ_shm1.svg
   - data/arabidopsis.thaliana_organ_shm2.svg
-dataset14:
+dataset13:
   name: overlay
-  display: Overlaying (SHM, Bezrutczyk)
+  display: Overlaying (SHM)
   data: data/dat_overlay.txt
   svg:
   - data/maize_leaf_shm1.png
   - data/maize_leaf_shm1.svg
   - data/maize_leaf_shm2.png
   - data/maize_leaf_shm2.svg
-title:
-- title:spatialHeatmap
-- width:350
-max.upload.size: 5G 
-default.dataset: mouse_Merkin
-col.row.gene: None
-separator: None
-# Settings for Data Table on the Spatial Heatmap panel.
-data.matrix:
-- norm:CNF-TMM
-- A:0
-- P:0
-- CV1:-10000
-- CV2:10000
-- log.exp:No
-- scale:No
-- selected.id:Tbx2
-# Settings for spatial heatmaps on the Spatial Heatmap panel.
-shm.img:
-- columns:2
-- display.by:gene
-- scale.plots:1.1
-- title.size:12
-- relative.size:1
-- color:yellow,orange,red
-- color.scale:Selected rows
-- file.type:jpg
-- dpi:300
-- include.legend.plot:Yes
-- legend.plot.size:0.8
-- value.legend.rows:1
-- value.legend.key:0.03
-- value.legend.text:10
-- include.feature:No
-- line.color:grey70
-- line.size:0.1
-shm.anm:
-- show:No
-- transition:2
-- scale.plot:1
-shm.video:
-- show:No
-- transition:1
-- dpi:400
-- key.rows:2
-- key.size:0.04
-- value.legend:No
-- feature.label:No
-- label.size:2
-- dimension:640x480
-- bar.width.video:0.07
-legend:
-- key.row:3
-- key.size:0.04
-- label:No
-- label.size:2.5
-- aspect.ratio:1
-mhm:
-- measure:Correlation
-- cor.absolute:No
-- select.by:p
-- cutoff:0.2
-- scale:No
-network:
-- color:yellow,orange,red
-- net.type:signed
-- min.size:15
-- ds:3
-- max.edges:10
+# Pre-configured datasets for download.
 download_single:
-  data: data/expr_arab.txt
-  svg: data/arabidopsis.thaliana_shoot_shm.svg
+  data: data/expr_mouse.txt
+  svg: data/mus_musculus.male.svg 
 download_multiple:
   data: data/random_data_multiple_aSVGs.txt
   svg:
   - data/arabidopsis.thaliana_organ_shm1.svg
   - data/arabidopsis.thaliana_organ_shm2.svg
 download_multiple_variables:
-  data: data/expr_coleoptile_samTimeCon.txt
-  svg: data/oryza.sativa_coleoptile.ANT_shm.svg
+  data: data/mus_brain_vars_se_shiny.rds
+  svg: data/mus_musculus.brain.svg
 download_covisualization:
-  data:
-  - data/shiny_covis_bulk_cell_mouse_brain.rds
+  data: data/shiny_covis_bulk_cell_mouse_brain.rds
   svg: data/mus_musculus.brain.svg
 download_batched_data_aSVGs:
   data: data/aSVGs_shm.tar
   svg: data/data_shm.tar
+# Max custom dataset size for uploading. 
+max.upload.size: 5G 
+default.dataset: mouse_Merkin
+col.row.gene: None
+separator: None
+# Spatial Heatmap: settings for assay data.
+data.matrix:
+# Normalize
+- norm:CNF-TMM
+- A:0
+- P:0
+- CV1:-10000
+- CV2:10000
+# Log/exp-transform
+- log.exp:No
+# Scale by
+- scale:No
+- selected.id:Tbx2
+# Spatial Heatmap: settings for SHMs in form of static images.
+shm.img:
+# Basic
+- columns:2
+- layout.by:gene
+- scale.plots:1.1
+- title.size:12
+- relative.size:1
+# Color scheme
+- color:yellow,orange,red
+# Color key based on
+- color.scale:Selected rows
+# Donwload
+- file.type:jpg
+- dpi:300
+- include.legend.plot:Yes
+- legend.plot.size:0.8
+# Value legend 
+- value.legend.rows:1
+- value.legend.key:0.03
+- value.legend.text:10
+- include.feature:No
+# Shape outline 
+- line.color:grey70
+- line.size:0.1
+# Spatial Heatmap: SHM in form of interactive html files. 
+shm.anm:
+- transition:2
+- scale.plot:1
+# Spatial Heatmap: SHM in form of videos. 
+shm.video:
+- transition:1
+- dpi:400
+- key.rows:2
+- key.size:0.04
+# Key value
+- value.legend:No
+- feature.label:No
+- label.size:2
+- dimension:640x480
+# Color key width
+- bar.width.video:0.07
+# Spatial Heatmap: SHM legend plot 
+legend:
+- key.row:3
+- key.size:0.04
+- label:No
+- label.size:2.5
+# Data Mining: network analysis 
+network:
+# Color scheme
+- color:yellow,orange,red
+# Module partitioning strigency
+- ds:3
+- max.edges:10
+# Spatial Enrichment: settings
+enrich.set:
+- A:0
+- P:0
+- CV1:-10000
+- CV2:10000
+- log2.fc:1
+- fdr:0.05
+# Co-visualization: settings for co-clustering labels
+coclus.set:
+# Joint mormalization method: computeSumFactors (scran)
+- normCoclus:fct
+# Filtering bulk data
+- P:0.1
+- A:1
+- CV1:0.1
+- CV2:200
+# Filtering single-cell data
+- cutoff:1
+# P in gene
+- filPGen:0.01
+# P in cell
+- filPCell:0.1
+# Joint embedding 
+# Min PCs
+- minRank:14
+# Max PCs
+- maxRank:50
+# Embedding method
+- dimSel:PCA
+# Co-clustering on joint dimensions
+# Building graphs
+- graphMeth:knn
+# Detecting clusters
+- clusMeth:wt
+# Similarity cutoff
+- asgThr:0
+# Co-visualization: settings for annotation labels
+ann.set:
+# Joint mormalization method: computeSumFactors (scran)
+- norm:fct
+# Filtering bulk data
+- P:0.1
+- A:1
+- CV1:0.1
+- CV2:200
+# Filtering single-cell data
+- cutoff:1
+# P in gene
+- filPGen:0.01
+# P in cell
+- filPCell:0.1
+# Joint embedding 
+# Min PCs
+- minRank:14
+# Max PCs
+- maxRank:50
+
+
+

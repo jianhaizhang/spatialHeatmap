@@ -3,7 +3,9 @@ dim_server <- function(id, sce, sce.upl, section='scell', upl.mod.lis, dat.lis=N
   moduleServer(id, function(input, output, session) {
    ns <- session$ns
    observeEvent(input$covisHelp, {
-     showModal(modal(msg=HTML('Click <strong>"Co-visualizing"</strong> to see the co-visualization plot.')))
+     method <- sce.upl$method; if (!check_obj(method)) return()
+     if ('auto' %in% method) img <- 'coclus_quick.jpg' else img <- 'ann_quick.jpg' 
+     showModal(modal(title = HTML('<center><b>Quick start!</b><center>'), msg = NULL, img=img, img.w="100%"))
     })
    if (section!='scell') {
       hideElement('dimCell'); hideElement('coclusPlotBut')
@@ -31,7 +33,9 @@ dim_server <- function(id, sce, sce.upl, section='scell', upl.mod.lis, dat.lis=N
     output$coclus <- renderUI({
       sce <- sce(); method <- sce.upl$method
       if (is.null(sce)| !'auto' %in% method) return()
-      selectInput(ns('coclus'), 'Clusters', c('coclusters', sort(unique(sce$cluster))))
+      others <- sort(unique(sce$cluster))
+      op <- setNames(c('coclusters', others), c('all', others))
+      selectInput(ns('coclus'), 'Clusters to show', op)
     })
     dim.par <- reactiveValues(cocluster.only=FALSE)
     observe({
@@ -73,35 +77,49 @@ dim_server <- function(id, sce, sce.upl, section='scell', upl.mod.lis, dat.lis=N
       # match.lis <- match.mod.lis$val$ft.reorder$ft.rematch
       # covisGrp from dim_server in scell_server. 
       if (section=='scell') covisGrp <- input$covisGrp else covisGrp <- dat.lis()$covisGrp
+      if ('auto' %in% sce.upl$method) cdat <- cdat[, c('cluster', 'bulkCell', 'assignedBulk', 'similarity', 'sample', 'index')]
       cols <- list(list(targets=seq_len(ncol(cdat)), render = DT::JS("$.fn.dataTable.render.ellipsis(40, false)")))
       sel <- list(mode="multiple", target="row", selected='none')
       if (section!='scell') sel <- 'none'
       # The 1st column is "lable" or "cluster".
       # dom='t' overwrites search box.
       tab <- datatable(cdat, selection=sel, escape=FALSE, filter="top", extensions=c('Scroller', 'FixedColumns'), plugins = "ellipsis",
-      options=list(pageLength=20, lengthMenu=c(10, 20, 50, 100), autoWidth=TRUE, scrollCollapse=TRUE, deferRender=TRUE, scrollX=TRUE, scrollY=300, scroller=TRUE, searchHighlight=TRUE, search=list(regex=TRUE, smart=FALSE, caseInsensitive=TRUE), searching=TRUE, columnDefs=cols, fixedColumns = list(leftColumns=2)), 
+      options=list(pageLength=20, lengthMenu=c(10, 20, 50, 100), autoWidth=FALSE, scrollCollapse=TRUE, deferRender=TRUE, scrollX=TRUE, scrollY=300, scroller=TRUE, searchHighlight=TRUE, search=list(regex=TRUE, smart=FALSE, caseInsensitive=TRUE), searching=TRUE, columnDefs=cols, fixedColumns = list(leftColumns=2)), 
       class='cell-border strip hover') %>% formatStyle(0, backgroundColor="white", cursor='pointer')
       cat('Done! \n'); tab
     })
 
   output$dim.ui <- renderUI({
    cat('Manual matching: building ui of colData table ... \n')
+   Sys.sleep(2) # Nested renderUI: if the inner takes longer time than the outer, the outer will not capture the inner output.
    if (!grepl(na.sgl, upl.mod.lis$ipt$fileIn)) return()
    dimMeth <- selectInput(ns('dimMeth'), label='Dimension reduction', choices=c('TSNE', 'UMAP', 'PCA'), selected='TSNE')
    row.but <- actionButton(ns('scellRowBut'), 'Confirm row selection', style='margin-top:24px')
    row.cancel.but <- actionButton(ns('scellRowCancelBut'), 'Deselect rows', style='margin-top:24px')
-   covis.but <- help.but <- NULL
+   covis.but <- NULL; co.lab <- co.but.len <- '0px'
+   help.but <- actionButton(ns("covisHelp"), "Help", icon = icon('question-circle'), style='margin-top:24px')
+   msg.grp <- 'Cell group labels obtained from annotation labels, marker genes, etc.'
+   msg.plot <- 'Embedding plot of the single-cell data.'
+   msg.meta <- as.character(HTML(msg.meta.ann))
    if ('auto' %in% sce.upl$method) { 
-     covis.but <- actionButton(ns('covisBut'), 'Co-visualizing', style="margin-top:24px;color:#fff;background-color:#c685c4;border-color:#ddd")
-     help.but <- actionButton(ns("covisHelp"), "Help", icon = icon('question-circle'), style='margin-top:24px')
+     covis.but <- actionButton(ns('covisBut'), 'Co-visualizing', style=run.top)
+     co.lab <- '110px'; co.but.len <- '111px'
+     msg.grp <- 'Tissue labels assigned to cells as group labels through co-clustering.'
+     msg.plot <- 'Embedding plot of bulk and single-cell data after co-clustering.'
+     msg.meta <- paste0(as.character(HTML(paste0(msg.meta.coclus, "<br/>"))), as.character(a(href='html/shm_shiny_manual.html#coclus', target='blank', 'More.')))
    }
    lis <- list(
-     fluidRow(splitLayout(cellWidths=c('10px', '150px', '1px', '135px', '1px', '160px', '1px', '112px', '1px', '110px', '1px', '111px', '1px', '71px'), '', 
+     fluidRow(splitLayout(cellWidths=c('10px', '150px', '1px', '135px', '1px', '160px', '1px', '112px', '1px', co.lab, '1px', co.but.len, '1px', '71px'), '', 
      dimMeth, '', uiOutput(ns('samGrp')), '', row.but, '', row.cancel.but, '', uiOutput(ns('coclus')), '', covis.but, '', help.but
-     )), # div(style='margin-top:10px'),
+   )), # div(style='margin-top:10px'),
+     bsTooltip(ns('samGrp'), title = msg.grp, placement = "top", trigger = "hover"),
+     bsTooltip(ns('scellRowBut'), title = 'Click this button to visualize selected cells in the table.', placement = "top", trigger = "hover"),
+     bsTooltip(ns('coclus'), title = 'Show all or a certain cluster (may contain only cells or cells and tissues)', placement = "top", trigger = "hover"),
      fluidRow(splitLayout(cellWidths=c('1%', '30%', '1%', '70%'), '',
-     plotOutput(ns('dimPlot')), '', dataTableOutput(ns('scellCdat')) 
-     ))
+     plotOutput(ns('dimPlot')), '', div(dataTableOutput(ns('scellCdat'))) %>% spsComps::bsTooltip(title=msg.meta, placement='left', html=TRUE, click_inside=TRUE)
+     )),
+     bsTooltip(ns('dimPlot'), title = msg.plot, placement = "top", trigger = "hover")
+     # bsTooltip(ns('scellCdat'), title = msg.meta, placement = "left", trigger = "hover")
     ); cat('Done! \n')
    if (section!='scell') dataTableOutput(ns('scellCdat')) else lis 
   })
