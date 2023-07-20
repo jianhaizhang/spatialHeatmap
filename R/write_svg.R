@@ -27,17 +27,21 @@
 #' bar.width=0.1)
 #' # Export each spatial heatmap (under a certain gene and condition) to a separate SVG 
 #' # file in a temporary directory.
-#' color_svg(input=shm.res, out.dir=tempdir(check = TRUE))
+#' write_svg(input=shm.res, out.dir=tempdir(check = TRUE))
 
 #' @author Jianhai Zhang \email{jzhan067@@ucr.edu} \cr Dr. Thomas Girke \email{thomas.girke@@ucr.edu}
+#' @references 
+#' Hadley Wickham, Jim Hester and Jeroen Ooms (2019). xml2: Parse XML. R package version 1.2.2. https://CRAN.R-project.org/package=xml2 
 
 #' @export
+#' @importFrom xml2 write_html xml_unserialize 
 
-color_svg <- function(input, out.dir) {
+write_svg <- function(input, out.dir) {
   ID <- condition <- feature <- index.sub <- NULL
   if (!dir.exists(out.dir)) dir.create(out.dir, recursive=TRUE)
-  svg.path <- svg_pa(svg(input))[[1]] 
-  svg.na <- basename(svg.path)
+  svg.obj.lis <- svg_obj(svg(input))
+  svg.na <- names(svg.obj.lis)[1]
+  svg.obj <- svg.obj.lis[[1]]
   df.att <- attribute(svg(input))[[1]]
   map <- output(input)$mapped_feature
   # Genes and variables.
@@ -58,7 +62,7 @@ color_svg <- function(input, out.dir) {
     # Output SVG file name.
     if (len.var) na <- paste0(i, '_', j, '_', svg.na)
     if (!len.var) na <- paste0(i, '_', svg.na)
-    file.copy(svg.path, file.path(out.dir, na))
+    write_html(xml_unserialize(svg.obj), file=file.path(out.dir, na)) 
     df.new0 <- cbind(colorNew=df0$fill, df.att0, SVG=na)
     # Color output SVG file.
     update_feature(df.new=df.new0, dir=out.dir) 

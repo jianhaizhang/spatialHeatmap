@@ -56,6 +56,7 @@ BiocStyle::markdown(css.files=c('file/custom.css'))
 library(knitr); opts_chunk$set(message=FALSE, warning=FALSE)
 ```
 
+
 # Introduction 
 
 ## Motivation
@@ -582,7 +583,7 @@ ggsave(file="./shm_hum.svg", plot=output(res)$spatial_heatmap, width=10, height=
 The following code exports each SHM (associated with a specific gene and condition) as separate SVG files in `tmp.dir`. In contrast to the original aSVG file, spatial features in the output SVG files are assigned heat colors.    
 
 ```{r eval=FALSE, echo=TRUE, warnings=FALSE, results='hide'}
-color_svg(input=res, out.dir=tmp.dir)
+write_svg(input=res, out.dir=tmp.dir)
 ```
 
 A meta function `plot_meta` is developed as a wraper of individual steps necessary for plotting SHMs. The benefit of this function is creating SHMs with the Linux command line as shown below.  
@@ -721,7 +722,6 @@ color of complex structures.
 
 ```{r, musshm1, eval=TRUE, echo=TRUE, warnings=FALSE, fig.wide=TRUE, fig.cap=("SHM of mouse organs. This is a multiple-layer image where the view onto 'lung' and 'heart' is obstructed by displaying the 'skeletal muscle' tissue."), out.width="100%", fig.show='show', results='hide'}
 gg <- shm(data=dat.mus, ID=c('H19'), legend.text.size=10, sub.title.size=9, ncol=3, legend.ncol=2, line.size=0.1, line.color='grey70')
-ggsave(file="~/manual_plot/shm_trans1.svg", plot=spatialHeatmap::output(gg)$spatial_heatmap, width=10, height=8)
 ```
 
 A third example on real data from Expression Atlas is SHMs of time series across chicken organs. Since the procedures are the same with the examples above, this example is illustrated in the [Supplementary Section](#chk).  
@@ -937,6 +937,8 @@ The expression values of gene `Acnat1` in hippocampus and hypothalamus across th
 dat.mul.dim <- SPHM(svg=svg.mus.brain, bulk=se.mus.vars.aggr)
 shm(data=dat.mul.dim, ID=c('Acnat1'), legend.r=1.5, legend.key.size=0.02, legend.text.size=12, legend.nrow=3)
 ```
+
+
 
 ## Multiple aSVGs {#mul_svg}
 
@@ -1585,23 +1587,6 @@ This project has been funded by NSF awards: [PGRP-1546879](https://www.nsf.gov/a
 <!-- 
 ThG: keep this html comment to number Reference list like any other section in table of content.
 -->
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 

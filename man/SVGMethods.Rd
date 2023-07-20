@@ -9,8 +9,8 @@
 \alias{attribute<-}
 \alias{dimension}
 \alias{dimension<-}
-\alias{svg_pa}
-\alias{svg_pa<-}
+\alias{svg_obj}
+\alias{svg_obj<-}
 \alias{raster_pa}
 \alias{raster_pa<-}
 \alias{cmb}
@@ -27,15 +27,14 @@
 \alias{dimension<-,SVG-method}
 \alias{raster_pa,SVG-method}
 \alias{raster_pa<-,SVG-method}
-\alias{svg_pa,SVG-method}
-\alias{svg_pa<-,SVG-method}
+\alias{svg_obj,SVG-method}
+\alias{svg_obj<-,SVG-method}
 \alias{angle,SVG-method}
 \alias{angle<-,SVG-method}
 \alias{[,SVG,ANY,ANY,ANY-method}
 \alias{[<-,SVG,ANY,ANY,ANY-method}
 \alias{length,SVG-method}
 \alias{names,SVG-method}
-\alias{names<-,SVG,ANY-method}
 \alias{cmb,SVG,SVG-method}
 \alias{sub_sf,SVG-method}
 \title{Methods for S4 class \code{SVG}}
@@ -56,9 +55,9 @@
 
 \S4method{raster_pa}{SVG}(x) <- value
 
-\S4method{svg_pa}{SVG}(x)
+\S4method{svg_obj}{SVG}(x)
 
-\S4method{svg_pa}{SVG}(x) <- value
+\S4method{svg_obj}{SVG}(x) <- value
 
 \S4method{angle}{SVG}(x)
 
@@ -72,7 +71,7 @@
 
 \S4method{names}{SVG}(x)
 
-\S4method{names}{SVG,ANY}(x) <- value
+\S4method{names}{SVG}(x) <- value
 
 \S4method{cmb}{SVG,SVG}(x, y)
 
@@ -140,7 +139,7 @@ svg3[1]
 # Coordinates of the first aSVG instance 
 svg3[, 'coordinate'][1]; coordinate(svg3)[1]
 # Extract slots from "svg3" into a list and create a new "SVG" object.
-lis <- list(cordn=coordinate(svg3), attrb=attribute(svg3), svg=svg_pa(svg3))
+lis <- list(cordn=coordinate(svg3), attrb=attribute(svg3), svg=svg_obj(svg3))
 new.svgs <- SVG(coordinate=lis$cordn, attribute=lis$attrb, svg=lis$svg)
 # Change aSVG instance names.
 names(new.svgs) <- c('aSVG1', 'aSVG2'); names(new.svgs)

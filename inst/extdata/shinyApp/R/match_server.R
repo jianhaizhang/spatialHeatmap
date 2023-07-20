@@ -1,6 +1,9 @@
 # Match spatial features between data and aSVG.
 match_server <- function(id, sam, tab, upl.mod.lis, covis.man=NULL, col.idp=FALSE, session) {
   moduleServer(id, function(input, output, session) {
+  observe({
+    library(sortable)
+  })
   observeEvent(input$matHelp, {
     showModal(modal(title='Quick start!', msg = NULL, img='ann_quick.jpg', img.w="100%"))
   })

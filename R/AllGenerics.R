@@ -59,9 +59,9 @@ setGeneric("dimension", function(x) standardGeneric("dimension"))
 setGeneric("dimension<-", function(x, value) standardGeneric("dimension<-"))
 
 #' @export
-setGeneric("svg_pa", function(x) standardGeneric("svg_pa"))
+setGeneric("svg_obj", function(x) standardGeneric("svg_obj"))
 #' @export
-setGeneric("svg_pa<-", function(x, value) standardGeneric("svg_pa<-"))
+setGeneric("svg_obj<-", function(x, value) standardGeneric("svg_obj<-"))
 #' @export
 setGeneric("raster_pa", function(x) standardGeneric("raster_pa"))
 #' @export

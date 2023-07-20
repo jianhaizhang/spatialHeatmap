@@ -430,7 +430,7 @@ shm_server <- function(id, sch, lis.url, url.id, tab, upl.mod.lis, dat.mod.lis, 
         if (col.idp) gene <- gene[, grep('^bulk$', res$bulkCell), drop=FALSE] 
       }
       }
-      svg.na <- img_pa_na(unlist(svgs[, 'svg']))$na 
+      svg.na <- names(svgs[, 'svg']) 
       # A set of SHMs are made for each SVG, and all sets of SHMs are placed in a list.
       grob.all <- gg.all <- lgd.all <- lgd.grob.all <- gcol.all <- gcol.lgd.all <- grob.gg.all <- NULL
       for (i in seq_along(svgs)) {
@@ -455,9 +455,9 @@ shm_server <- function(id, sch, lis.url, url.id, tab, upl.mod.lis, dat.mod.lis, 
        lgd.all <- c(lgd.all, list(gg.lis$g.lgd))
        gcol.lgd.all <- c(gcol.lgd.all, list(gg.lis$gcol.lgd))
        # Same names with ggs: append suffix '_i' for the SHMs of grob under SVG[i], and store them in a list.
-       grob.lis <- grob_shm(ggs, cores=deter_core(1, svg.path()$svg.path[i])) 
+       grob.lis <- grob_shm(ggs, cores=deter_core(1, svg.obj=svgs[, 'svg'][[i]])) 
        grob.all <- c(grob.all, grob.lis)
-       lgd.grob.lis <- grob_shm(lgd.all, cores=deter_core(1, svg.path()$svg.path[i]), lgd.pos='bottom')
+       lgd.grob.lis <- grob_shm(lgd.all, cores=deter_core(1, svg.obj=svgs[, 'svg'][[i]]), lgd.pos='bottom')
        lgd.grob.all <- c(lgd.grob.all, lgd.grob.lis)
        # All ggplots/grobs are stored in nested lists under each SVG for use in relatice scale. In above, all ggplots/grobs are stored in the same list with suffix '_i' to indicate SVGs.
         lis0 <- list(grob.lis = grob.lis, gg.lis = ggs, lgd.lis = gg.lis$g.lgd, lgd.grob=lgd.grob.lis[[1]], gcol.lis=gcols, gcol.lgd=gg.lis$gcol.lgd)
@@ -525,7 +525,7 @@ shm_server <- function(id, sch, lis.url, url.id, tab, upl.mod.lis, dat.mod.lis, 
         if (col.idp) gene <- gene[, grep('^bulk$', res$bulkCell), drop=FALSE] 
       }
       }
-      svg.na <- img_pa_na(unlist(svgs[, 'svg']))$na 
+      svg.na <- names(svgs[, 'svg'])
       # A set of SHMs are made for each SVG, and all sets of SHMs are placed in a list.
       grob.all <- gg.all <- lgd.all <- lgd.grob.all <- gcol.all <- gcol.lgd.all <- gg.grob.lis <- NULL
       for (i in seq_along(svgs)) { 
@@ -551,9 +551,9 @@ shm_server <- function(id, sch, lis.url, url.id, tab, upl.mod.lis, dat.mod.lis, 
        lgd.all <- c(lgd.all, list(gg.lis$g.lgd))
        gcol.lgd.all <- c(gcol.lgd.all, list(gg.lis$gcol.lgd))
        # Same with ggs: append suffix '_i' for the SHMs of grob under SVG[i], and store them in a list.
-       grob.lis <- grob_shm(ggs, cores=deter_core(1, svg.path()$svg.path[i]))
+       grob.lis <- grob_shm(ggs, cores=deter_core(1, svg.obj=svgs[, 'svg'][[i]]))
        grob.all <- c(grob.all, grob.lis)
-       lgd.grob.lis <- grob_shm(lgd.all, cores=deter_core(1, svg.path()$svg.path[i]), lgd.pos='bottom')
+       lgd.grob.lis <- grob_shm(lgd.all, cores=deter_core(1, svg.obj=svgs[, 'svg'][[i]]), lgd.pos='bottom')
        lgd.grob.all <- c(lgd.grob.all, lgd.grob.lis)
        # All ggplots/grobs are stored in nested lists under each SVG for use in relatice scale.
        lis0 <- list(grob.lis = grob.lis, gg.lis = ggs, lgd.lis = gg.lis$g.lgd, lgd.grob=lgd.grob.lis[[1]], gcol.lis=gcols, gcol.lgd=gg.lis$gcol.lgd)
@@ -622,7 +622,7 @@ shm_server <- function(id, sch, lis.url, url.id, tab, upl.mod.lis, dat.mod.lis, 
         if (col.idp) gene <- gene[, grep('^bulk$', res$bulkCell), drop=FALSE] 
       }
       }
-      svg.na <- img_pa_na(unlist(svgs[, 'svg']))$na 
+      svg.na <- names(svgs[, 'svg'])
       # A set of SHMs are made for each SVG, and all sets of SHMs are placed in a list.
       grob.all <- gg.all <- gcol.all <- lgd.all <- lgd.grob.all <- gcol.lgd.all <- gg.grob.lis <- NULL
       for (i in seq_along(svgs)) {
@@ -652,9 +652,9 @@ shm_server <- function(id, sch, lis.url, url.id, tab, upl.mod.lis, dat.mod.lis, 
        lgd.all <- c(lgd.all, list(gg.lis$g.lgd))
        gcol.lgd.all <- c(gcol.lgd.all, list(gg.lis$gcol.lgd))
        # Same with ggs: append suffix '_i' for the SHMs of grob under SVG[i], and store them in a list.
-       grob.lis <- grob_shm(ggs, cores=deter_core(1, svg.path()$svg.path[i]))
+       grob.lis <- grob_shm(ggs, cores=deter_core(1, svg.obj=svgs[, 'svg'][[i]]))
        grob.all <- c(grob.all, grob.lis)
-       lgd.grob.lis <- grob_shm(lgd.all, cores=deter_core(1, svg.path()$svg.path[i]), lgd.pos='bottom')
+       lgd.grob.lis <- grob_shm(lgd.all, cores=deter_core(1, svg.obj=svgs[, 'svg'][[i]]), lgd.pos='bottom')
        lgd.grob.all <- c(lgd.grob.all, lgd.grob.lis)
        # All ggplots/grobs are stored in nested lists under each SVG for use in relatice scale.
        lis0 <- list(grob.lis = grob.lis, gg.lis = ggs, lgd.lis = gg.lis$g.lgd, lgd.grob=lgd.grob.lis[[1]], gcol.lis=gcols, gcol.lgd=gg.lis$gcol.lgd)
@@ -720,7 +720,8 @@ shm_server <- function(id, sch, lis.url, url.id, tab, upl.mod.lis, dat.mod.lis, 
   observeEvent(list(input$title.size, input$scale.shm, lis.url), {
     cat('Adjust title size ... \n')
     grob.gg.all <- shm$grob.gg.all; title.size <- input$title.size; scale.shm <- input$scale.shm
-    if (!is.list(grob.gg.all) | !is.numeric(title.size) | is.null(svg.path()) | is.null(lay.shm()) | !is.numeric(scale.shm)) return()
+    svgs <- svgs()
+    if (!is.list(grob.gg.all) | !is.numeric(title.size) | is.null(svgs) | is.null(lay.shm()) | !is.numeric(scale.shm)) return()
     if (scale.shm <= 0) return()
     gg.all <- grob.all <- NULL
     for (i in seq_along(grob.gg.all)) {
@@ -729,7 +730,7 @@ shm_server <- function(id, sch, lis.url, url.id, tab, upl.mod.lis, dat.mod.lis, 
       grob.gg.all[[i]]$gg.lis <- gg.lis <- lapply(gg.lis, function(x) { x + theme(plot.title = element_text(hjust = 0.5, size = title.size * scale.shm)) })
     gg.all <- c(gg.all, gg.lis)
     # Also update the central shm$grob.gg.all
-    grob.gg.all[[i]]$grob.lis <- grob.lis <- grob_shm(gg.lis, cores = deter_core(2, svg.path()$svg.path[i]))
+    grob.gg.all[[i]]$grob.lis <- grob.lis <- grob_shm(gg.lis, cores = deter_core(2, svg.obj=svgs[, 'svg'][[i]]))
     grob.all <- c(grob.all, grob.lis) 
     }; shm$grob.all <- grob.all; shm$gg.all <- gg.all
     shm$grob.gg.all <- grob.gg.all
@@ -858,7 +859,7 @@ shm_server <- function(id, sch, lis.url, url.id, tab, upl.mod.lis, dat.mod.lis, 
       grob.gg.all[[i]]$gg.lis <- gg.lis <- rela_size(dimension(svgs[i])[[1]]['height'], w.h.max, relaSize, nrow(lay.shm()), gg.lis)
       gg.all <- c(gg.all, gg.lis)
       # Also update the central shm$grob.gg.all
-      grob.gg.all[[i]]$grob.lis <- grob.lis <- grob_shm(gg.lis, cores = deter_core(2, svg.path()$svg.path[i]))
+      grob.gg.all[[i]]$grob.lis <- grob.lis <- grob_shm(gg.lis, cores = deter_core(2, svg.obj=svgs[, 'svg'][[i]]))
       grob.all <- c(grob.all, grob.lis) 
     }; shm$grob.all <- grob.all; shm$gg.all <- gg.all; shm$grob.gg.all <- grob.gg.all
   })

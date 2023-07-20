@@ -40,7 +40,7 @@
 #' @name SVGMethods
 #' @rdname SVGMethods
 #' @docType methods
-#' @aliases coordinate coordinate<- attribute attribute<- dimension dimension<- svg_pa svg_pa<- raster_pa raster_pa<- cmb names names<-,SVG-method sub_sf angle angle<-
+#' @aliases coordinate coordinate<- attribute attribute<- dimension dimension<- svg_obj svg_obj<- raster_pa raster_pa<- cmb names names<-,SVG-method sub_sf angle angle<-
 #' @examples
 #'
 #' # Create the first aSVG instance. 
@@ -58,7 +58,7 @@
 #' # Coordinates of the first aSVG instance 
 #' svg3[, 'coordinate'][1]; coordinate(svg3)[1]
 #' # Extract slots from "svg3" into a list and create a new "SVG" object.
-#' lis <- list(cordn=coordinate(svg3), attrb=attribute(svg3), svg=svg_pa(svg3))
+#' lis <- list(cordn=coordinate(svg3), attrb=attribute(svg3), svg=svg_obj(svg3))
 #' new.svgs <- SVG(coordinate=lis$cordn, attribute=lis$attrb, svg=lis$svg)
 #' # Change aSVG instance names.
 #' names(new.svgs) <- c('aSVG1', 'aSVG2'); names(new.svgs)
@@ -177,12 +177,12 @@ setReplaceMethod("raster_pa", "SVG", function(x, value) {
 
 #' @rdname SVGMethods
 #' @export
-setMethod("svg_pa", "SVG", function(x) { x@svg })
+setMethod("svg_obj", "SVG", function(x) { x@svg })
 
 #' @rdname SVGMethods
 #' @param value A value for replacement.
 #' @export
-setReplaceMethod("svg_pa", "SVG", function(x, value) {
+setReplaceMethod("svg_obj", "SVG", function(x, value) {
     x@svg <- value; x
 })
 

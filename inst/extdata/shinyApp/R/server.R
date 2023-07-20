@@ -48,23 +48,6 @@ server <- function(input, output, session) {
     # cat('Parameters in URL:', (names(lis.url$par)), '\n')
    })
 
-    #observeEvent(input$show, {
-    observe({
-    lis.cfg <- yaml.load_file('config/config.yaml')
-    lis.cfg <- lis.cfg[!vapply(lis.cfg, is.null, logical(1))]
-    # Separate data sets, download files, and parameters.
-    lis.dat <- lis.cfg[grepl('^dataset\\d+', names(lis.cfg))]
-    lis.dld <- lis.cfg[grepl('download_single|download_multiple|download_multiple_variables|download_batched_data_aSVGs', names(lis.cfg))]
-    lis.par <- lis.cfg[!grepl('^dataset\\d+|download_single|download_multiple|download_multiple_variables|download_batched_data_aSVGs', names(lis.cfg))]
-
-    na.ipt <- NULL; na.ipt <- unlist(lapply(lis.dat, function(x) na.ipt <- c(na.ipt, x$name)))
-    names(na.ipt) <- NULL
-    if (FALSE) showModal(modalDialog(
-        selectInput("fileIn", 'Select a start data set', na.ipt, lis.par$default.dataset),
-        footer=tagList(actionButton("start.but", label='Confirm'))
-    ))
-    
-    })
   observe({
     tabTop <- input$tabTop; if (!check_obj(tabTop)) return()
     if (tabTop %in% c('ldg', 'about')) return()  
@@ -73,11 +56,11 @@ server <- function(input, output, session) {
     incProgress(0.2, detail="in progress ...")
     library(spatialHeatmap); library(SummarizedExperiment); library(shiny); library(shinydashboard); library(shinydashboardPlus); library(grImport); library(rsvg); library(ggplot2); library(DT) 
     incProgress(0.2, detail="in progress ...")
-    library(gridExtra); library(ggdendro); library(grid); library(xml2); library(plotly); library(data.table); library(genefilter); library(flashClust); library(visNetwork); 
+    library(gridExtra); library(ggdendro); library(grid); library(xml2); library(plotly); library(data.table); library(genefilter); 
     incProgress(0.2, detail="in progress...")
-   library(reshape2); library(igraph); library(animation); library(av); library(shinyWidgets); library(yaml); library(HDF5Array); library(sortable); library(shinyBS); library(shinyjs); library(htmltools)
+   library(reshape2); library(igraph); library(animation); library(av); library(shinyWidgets); library(yaml); library(HDF5Array); library(shinyBS); library(shinyjs); library(htmltools)
     # DEG
-    library(gplots); library(UpSetR); library(sparkline)
+    library(gplots); library(UpSetR); library(sparkline); library(spsUtil)
     incProgress(0.2, detail="in progress...")
   })
   })

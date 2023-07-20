@@ -387,10 +387,10 @@ shm_covis <- function(svg, data, assay.na=NULL, sam.factor=NULL, con.factor=NULL
 
     col <- colorRampPalette(col.com)(length(geneV))
     cs.g <- col_bar(geneV=geneV, cols=col, width=1, title=bar.title, bar.title.size=bar.title.size, bar.value.size=bar.value.size)
-
-    svg.pa.na <- img_pa_na(unlist(svgs[, 'svg']))
+    svg.obj.lis <- svgs[, 'svg']
+    svg.pa.na <- img_pa_na(svg.obj=svg.obj.lis)
     # svg.path may not be paths, can be file names, if users provide a SVG class that not includes paths.
-    svg.path <- svg.pa.na$path; svg.na <- svg.pa.na$na
+    svg.na <- svg.pa.na$na
     svg.na.cord <- names(svgs)
     # Get max width/height of multiple SVGs, and dimensions of other SVGs can be set relative to this max width/height.
     w.h.max <- max(unlist(svgs[, 'dimension']))
@@ -408,7 +408,7 @@ shm_covis <- function(svg, data, assay.na=NULL, sam.factor=NULL, con.factor=NULL
       # Append suffix '_i' for the SHMs of ggplot under SVG[i], and store them in a list.
       ggs <- gg.lis$g.lis.all; names(ggs) <- paste0(names(ggs), '_', i)
       gg.all <- c(gg.all, ggs)
-      cores <- deter_core(cores, svg.path[i]); cat('CPU cores:', cores, '\n')
+      cores <- deter_core(cores, svg.obj=svg.obj.lis[[i]]); cat('CPU cores:', cores, '\n')
       # Same names with ggplot: append suffix '_i' for the SHMs of grob under each SVG, and store them in a list. 'i' is equal to SVG.
       grobs <- grob_shm(ggs, cores=cores); grob.all <- c(grob.all, grobs)
 
@@ -448,7 +448,7 @@ shm_covis <- function(svg, data, assay.na=NULL, sam.factor=NULL, con.factor=NULL
         lis0 <- gg.lis.all[[i]]
         ggs <- rela_size(lis0$w.h['height'], w.h.max, relative.scale, nrow(lay.mat), lis0$ggs)
         gg.all <- c(gg.all, ggs)
-        cores <- deter_core(cores, svg.path[i]) # gg.lis.all has the same names with svgs.
+        cores <- deter_core(cores, svg.obj=svg.obj.lis[[i]]) # gg.lis.all has the same names with svgs.
         # Same names with ggplot: append suffix '_i' for the SHMs of grob under each SVG, and store them in a list.
         grobs <- grob_shm(ggs, cores=cores); grob.all <- c(grob.all, grobs) 
       }
@@ -633,9 +633,8 @@ mapping_sum <- function(svg.na.cord, sam.uni, gcol.all, data, ID, con.na, covis.
 #' @keywords Internal
 #' @noRd
 
-img_pa_na <- function(path.na, raster.ext=c('.jpg', '.JPG', '.png', '.PNG')) {
-  str.lis <- strsplit(path.na, '/')
-  na <- vapply(str.lis, function(x) x[[length(x)]], FUN.VALUE=character(1))
+img_pa_na <- function(path.na=NULL, svg.obj=NULL, raster.ext=c('.jpg', '.JPG', '.png', '.PNG')) {
+  if (is(svg.obj, 'list')) na <- names(svg.obj) else if (!is.null(path.na)) na <- basename(path.na)
   ext <- c('.svg', '.SVG', raster.ext); ext <- paste0('(', paste0('\\', ext, collapse='|'), ')')
   pat <- paste0('.*_(shm\\d+)', ext, '$') 
     if (length(na)>1) { 
@@ -649,18 +648,22 @@ img_pa_na <- function(path.na, raster.ext=c('.jpg', '.JPG', '.png', '.PNG')) {
 
 #' Determine the number of CPU cores.
 #' @param cores The input number of cores.
-#' @param svg.path The path of SVG file.
+#' @param svg.obj The path of SVG file.
 #' @keywords Internal
 #' @noRd
 #' @importFrom parallel detectCores
 
-deter_core <- function(cores, svg.path) {
-  if (!file.exists(svg.path)) return(cores)
+deter_core <- function(cores, svg.obj=NULL, svg.pa=NULL, size=3145728) {
+  if (!is.null(svg.obj)) { 
+    if (!is(svg.obj, 'raw')) return(cores) else fil.size <- object.size(svg.obj)
+  }
+  if (is(svg.pa, 'character')) {   
+    if (!file.exists(svg.pa)) return(cores) else fil.size <- file.size(svg.pa)
+  }
   cores <- as.integer(cores)
   n.cor <- detectCores(logical=TRUE)
-  fil.size <- file.size(svg.path)
   if (!is.na(n.cor)) { 
-    if (fil.size >= 3145728 & n.cor > 2 & is.na(cores)) cores <- 2 else if (fil.size < 3145728 & is.na(cores)) cores <- 1 else if (n.cor > 1 & !is.na(cores)) {
+    if (fil.size >= size & n.cor > 2 & is.na(cores)) cores <- 2 else if (fil.size < size & is.na(cores)) cores <- 1 else if (n.cor > 1 & !is.na(cores)) {
       if (cores >= n.cor) cores <- n.cor - 1
     } 
   } else { if (is.na(cores)) cores <- 1 }; return(cores)

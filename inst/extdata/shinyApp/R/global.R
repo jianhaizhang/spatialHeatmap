@@ -4,7 +4,7 @@ if (interactive()) {
   requireNamespace('pROC'); requireNamespace('shinyWidgets'); requireNamespace('shinyjs'); requireNamespace('htmltools');
   requireNamespace('shinyBS'); requireNamespace('sortable'); requireNamespace('org.Hs.eg.db'); requireNamespace('org.Mm.eg.db')
   requireNamespace('org.At.tair.db'); requireNamespace('org.Dr.eg.db'); requireNamespace('org.Dm.eg.db');
-  requireNamespace('AnnotationDbi'); requireNamespace('sparkline'); requireNamespace('spsComps')
+  requireNamespace('AnnotationDbi'); requireNamespace('sparkline'); requireNamespace('spsComps'); requireNamespace('spsUtil')
 }
 
 # Accessing local html files by iframes.
@@ -74,7 +74,7 @@ com_roc <- get('com_roc', envir=asNamespace('spatialHeatmap'), inherits=FALSE)
 qc_cell <- get('qc_cell', envir=asNamespace('spatialHeatmap'), inherits=FALSE)
 check_exp <- get('check_exp', envir=asNamespace('spatialHeatmap'), inherits=FALSE)
 check_obj <- get('check_obj', envir=asNamespace('spatialHeatmap'), inherits=FALSE)
-img_pa_na <- get('img_pa_na', envir=asNamespace('spatialHeatmap'), inherits=FALSE)
+#img_pa_na <- get('img_pa_na', envir=asNamespace('spatialHeatmap'), inherits=FALSE)
 covis_trans <- get('covis_trans', envir=asNamespace('spatialHeatmap'), inherits=FALSE)
 svg_separ <- get('svg_separ', envir=asNamespace('spatialHeatmap'), inherits=FALSE)
 sc_qc_plot <- get('sc_qc_plot', envir=asNamespace('spatialHeatmap'), inherits=FALSE)

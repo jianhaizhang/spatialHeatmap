@@ -2,7 +2,10 @@
 
 net_server <- function(id, submat, ids, gID, ipt.up, ipt.ana, cfg, data, df.net, clus.h=NULL, clus.k=NULL, session) {  
 moduleServer(id, function(input, output, session) {
-  ns <- session$ns 
+  ns <- session$ns
+  observe({
+    library(flashClust); library(visNetwork)
+  })
   # er <- eventReactive(exp, {}). If its reactive value "er()" is called before eventReactive is triggered, the code execution stops where "er()" is called.
   data <- eventReactive(list(ipt.ana$showBut, ipt.ana$showButNet), {
     sub.mat <- submat(); method <- ipt.ana$method; cl <- NULL
