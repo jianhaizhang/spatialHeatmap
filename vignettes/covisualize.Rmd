@@ -54,21 +54,6 @@ library(knitr); opts_chunk$set(message=FALSE, warning=FALSE)
 
 # Introduction 
 
-<span style="color:red">[ThG: I have edited/commented sections 1-4. Overall
-I think you should (1) provide a simple illustration in the introduction that
-summarizes all 3 methods (annot, manual, co-clustring). Figure 5 can then be
-removed since it is hard to follow and contains too much information relating to 
-the supplement which we wanted to remove from this vignette. (2) Further please reduce 
-the number of code chunks to make things easier for the user. For clarity you could 
-use meta functions and summarize in the text what they are doing. Often you include the
-individual steps but then there is no explanation given what they are doning. (3) The
-optimization part needs to be entirely removed from the main part of this
-vignette as there is no context given what its relevance is. (4) Please also
-simplify the Supplement section 5 or remove it from the vignette and perhaps
-include it in a script file that is then just referenced for expert users in
-the text. Once this part 5 has been improved I will fine edit it. (5) 
-In addition, please address my comments given in red font throughout the 
-text.]</span>
 
 ## Overview
 
@@ -426,11 +411,6 @@ tail(attribute(svg.mus.brain)[[1]])[1:3, 1:4] # Partial features are shown.
 
 ### Co-clustering
 
-<p style="color:red">I have tried my best with the co-clustering section, but had to stop since this section is FAR TO LONG and often confusing. Rather than cutting to the chase (here co-cluster and plot co-viz), you bury the interesting parts in too much detail and lengthy descriptions of exceptions. For instance the Tailoring part should be removed or moved to the supplement. After having described how the co-visualization works the co-clustering should be performed in a few lines of code and then the co-viz plot generated. That is all. Despite all of this detail your are currently providing, you are not including the relevant information such as what clustering algorithm is actually used at the end. So please do the following:</p> 
-
-1. <p style="color:red">Revise the entire tutorial section of the co-clustering to 2 short code blocks and another one that plots the co-viz. Importantly, the above pre-processing should be included in the 2 short code blocks!</p>
-2. <p style="color:red">Address my comments and questions I included in the vignette in red.  </p>
-3. <p style="color:red">Currently, the data point (dots) of the bulk data are not shown in the scatter plots after co-clustering. This would be a feature everyone would expect to see for a co-clustering utility that focuses on visualization. One also might want to have a co-clustering stringency filter that allows to show only those cells that are tightly co-clustered with the bulk data points, meaning when the stringency is increased only those cells are shown that are in closer proximity to the bulk.  Thus, showing the bulk in the scatter plot would be extremely useful.</p>
 
 
 The co-clustering process is implemented in the function `cocluster`. In the following, default settings obtained from the optimization are used, where `min.dim`, `dimred`, `graph.meth`, and `cluster` refers to `topDimensions`, `dimensionReduction`, `graphBuilding`, and `clusterDetection` in Table \@ref(tab:optPar) respectively. The results are saved in `coclus.mus`.    
