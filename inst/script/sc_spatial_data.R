@@ -25,6 +25,7 @@ srt.sc <- RunTSNE(srt.sc, assay = "SCT", reduction = "pca", dims = 1:5)
 # Clustering.
 srt.sc <- FindNeighbors(srt.sc, reduction = "pca", dims = 1:30)
 srt.sc <- FindClusters(srt.sc, verbose = FALSE)
+srt.sc$seurat_clusters <- paste0('clus', srt.sc$seurat_clusters)
 saveRDS(srt.sc, file='srt_sc.rds')
 
 

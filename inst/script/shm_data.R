@@ -41,7 +41,9 @@ row.met$metadata <- row.met$GENENAME
 # Append row metadata to data matrix.
 se.fil.hum <- se.fil.hum[row.met$ENSEMBL, ]
 all(row.met$ENSEMBL==rownames(se.fil.hum))
-rowData(se.fil.hum) <- row.met[, 'metadata', drop = FALSE]
+
+row.met$link <- paste0('https://useast.ensembl.org/Homo_sapiens/Gene/Summary?g=', row.met$ENSEMBL)
+rowData(se.fil.hum) <- row.met[, c('metadata', 'link'), drop = FALSE]
 
 # Convert ENSEMBL ids to Uniprot ids.
 se.fil.hum <- cvt_id(db='org.Hs.eg.db', data=se.fil.hum, from.id='ENSEMBL', to.id='SYMBOL')
@@ -76,7 +78,7 @@ df.con$organism_part <- gsub('skeletal muscle tissue', 'skeletal muscle', df.con
 df.con$strain <- make.names(df.con$strain)
 
 target.mus <- df.con
-write.table(target.mus, 'target_mouse.txt', col.names=TRUE, row.names=TRUE, sep='\t')
+# write.table(target.mus, 'target_mouse.txt', col.names=TRUE, row.names=TRUE, sep='\t')
 
 colData(rse.mus) <- DataFrame(target.mus)
 
@@ -97,7 +99,9 @@ row.met$GENENAME <- NULL
 # Append row metadata to data matrix.
 se.fil.mus <- se.fil.mus[row.met$ENSEMBL, ]
 all(rownames(se.fil.mus)==row.met$ENSEMBL)
-rowData(se.fil.mus) <- row.met[, 'metadata', drop = FALSE]
+
+row.met$link <- paste0('https://useast.ensembl.org/Mus_musculus/Gene/Summary?g=', row.met$ENSEMBL)
+rowData(se.fil.mus) <- row.met[, c('metadata', 'link'), drop = FALSE]
 # Convert ENSEMBL ids to Uniprot ids.
 se.fil.mus <- cvt_id(db='org.Mm.eg.db', data=se.fil.mus, from.id='ENSEMBL', to.id='SYMBOL')
 se.fil.mus <- se.fil.mus[!grepl('^ENSMUSG', rownames(se.fil.mus)), , drop=FALSE]
@@ -139,7 +143,7 @@ df.con <- as.data.frame(colData(rse.chk)); df.con[1:3, ]
 df.con$age <- gsub('(.*) (.*)', '\\2\\1', df.con$age)
 
 target.chk <- df.con
-write.table(target.chk, 'target_chicken.txt', col.names=TRUE, row.names=TRUE, sep='\t')
+# write.table(target.chk, 'target_chicken.txt', col.names=TRUE, row.names=TRUE, sep='\t')
 
 colData(rse.chk) <- DataFrame(target.chk)
 se.nor.chk <- norm_data(data=rse.chk, norm.fun='ESF')
@@ -161,6 +165,9 @@ columns(org.Gg.eg.db); keytypes(org.Gg.eg.db)
 colData(rse.chk) <- DataFrame(target.chk)
 se.nor.chk <- norm_data(data=rse.chk, norm.fun='ESF', log2.trans = FALSE)
 se.fil.chk <- filter_data(data=se.nor.chk, sam.factor='organism_part', con.factor='age', pOA=c(0.3, 700), CV=c(0.5, 100)); se.fil.chk
+
+rdat <- data.frame(link=paste0('http://useast.ensembl.org/Gallus_gallus/Gene/Summary?g=', row.names=rownames(se.fil.chk)))
+rowData(se.fil.chk) <- rdat
 
 cdat <- colData(se.fil.chk)
 cdat$spFeature <- cdat$organism_part
@@ -192,6 +199,7 @@ if (is.null(gset)) { # Save downloaded data to cache if it is not cached.
 
 # Assign tissue/condition names.
 se <- as(gset, "SummarizedExperiment")
+se <- subset(se, rowData(se)$AGI!='')
 # Targets file.
 col.name <- colnames(se)
 titles <- make.names(colData(se)$title)
@@ -199,18 +207,19 @@ title.factor <- sub('_rep\\d+$', '', titles)
 sam <- gsub('(root|shoot)(_)(control|hypoxia)(_.*)', '\\1\\4', title.factor) 
 con <- gsub('(root|shoot)(_)(control|hypoxia)(_.*)', '\\3', title.factor) 
 target.geo <- data.frame(col.name=col.name, titles=titles, row.names=2, samples=sam, conditions=con, stringsAsFactors=FALSE) 
-write.table(target.geo, 'target_arab.txt', col.names=TRUE, row.names=TRUE, sep='\t')
+# write.table(target.geo, 'target_arab.txt', col.names=TRUE, row.names=TRUE, sep='\t')
 
 # Annotation in ath1121501.db.
 library(ath1121501.db); library(genefilter)
-ann <- data.frame(SYMBOL=sapply(contents(ath1121501SYMBOL), paste, collapse=";"), DESC=sapply(contents(ath1121501GENENAME), paste, collapse=";"), stringsAsFactors=FALSE)
-ann <- subset(ann, !grepl("AFFX|s_at|a_at|x_at|r_at", rownames(ann)) & !duplicated(SYMBOL) & SYMBOL!="NA")
+ann <- data.frame(Locus=sapply(as.list(ath1121501ACCNUM), paste, collapse=";"), SYMBOL=sapply(as.list(ath1121501SYMBOL), paste, collapse=";"), DESC=sapply(as.list(ath1121501GENENAME), paste, collapse=";"), stringsAsFactors=FALSE)
+ann <- subset(ann, !grepl("AFFX|s_at|a_at|x_at|r_at", rownames(ann)) & !duplicated(SYMBOL) & SYMBOL!="NA" & Locus!='NA')
 
 # Optional: data frame for gene metadata.
 mat <- assay(se); colnames(mat) <- rownames(target.geo)
 int <- intersect(rownames(mat), rownames(ann))
 mat <- mat[int, ]; rdat <- rowData(se)[int, ]
-rownames(mat) <- rownames(rdat) <- make.names(ann[int, 'SYMBOL'])
+rownames(mat) <- rownames(rdat) <- make.names(ann[int, 'Locus'])
+
 se.sh <- SummarizedExperiment(assays=list(expr=mat), rowData=rdat, colData=target.geo)
 # ffun <- filterfun(pOverA(0.03, 6), cv(0.25, 100))
 # filtered <- genefilter(mat, ffun); mat <- mat[filtered, ]
@@ -227,17 +236,47 @@ expr.sh <- cbind.data.frame(expr.sh, metadata=rowData(se.fil.sh)[, 'Target.Descr
 # expr.sh <- expr.sh[c(9, 1:8, 10:230), ]
 # write.table(expr.sh, 'expr_arab.txt', col.names=TRUE, row.names=TRUE, sep='\t')
 
-rdat.na <- colnames(rowData(se.fil.sh))
+rdat <- rowData(se.fil.sh); rdat.na <- colnames(rdat)
 rdat.na[rdat.na %in% 'Target.Description'] <- 'metadata'
-colnames(rowData(se.fil.sh)) <- rdat.na
+colnames(rdat) <- rdat.na
 
+rdat$link <- paste0('https://www.arabidopsis.org/servlets/TairObject?type=locus&name=', rdat$AGI)
+rowData(se.fil.sh) <- rdat
 cdat <- colData(se.fil.sh); cdat[1:3, ]
 colnames(cdat)[1] <- 'assay'
 colData(se.fil.sh) <- cdat[, c(4:5)]
 
-df.meta <- data.frame(name=c('assay', 'aSVG file'), link=c('https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE14502', 'https://github.com/jianhaizhang/spatialHeatmap_aSVG_Repository/tree/master/aSVG_images'), species=c('Arabidopsis thaliana', 'Arabidopsis thaliana'), database=c('GEO', 'EBI anatomogram'), id=c('GSE14502', 'NA'), description=c('Transcription profiling of Arabidopsis roots and shoots in response to hypoxia using immunopurified mRNA-ribosome complexes', 'An annotated SVG (aSVG) file.'))
+df.meta <- data.frame(name=c('assay', 'aSVG file'), link=c('https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE14502', 'https://github.com/jianhaizhang/spatialHeatmap_aSVG_Repository/tree/master/aSVG_images'), species=c('Arabidopsis thaliana', 'Arabidopsis thaliana'), database=c('GEO', 'spatialHeatmap aSVG repo'), id=c('GSE14502', 'NA'), description=c('Transcription profiling of Arabidopsis roots and shoots in response to hypoxia using immunopurified mRNA-ribosome complexes', 'An annotated SVG (aSVG) file.'))
 metadata(se.fil.sh)$df.meta <- df.meta
-saveRDS(se.fil.sh, file='arab.rds')
+
+
+svg.sh <- read_svg(system.file('extdata/shinyApp/data/arabidopsis.thaliana_shoot_shm.svg', package='spatialHeatmap'))
+pat <- paste0('^', unique(svg.sh[, 2][[1]]$feature), collapse='|')
+arab.sh <- subset(se.fil.sh, , grepl(pat, spFeature))
+table(arab.sh$spFeature)
+arab.sh <- subset(arab.sh, , !grepl('^shoot_pSultr2.2$', spFeature))
+saveRDS(arab.sh, file='arab_shoot.rds')
+
+svg.org <- read_svg(system.file('extdata/shinyApp/data/arabidopsis.thaliana_organ_shm.svg', package='spatialHeatmap'))
+pat <- paste0('^', unique(svg.org[, 2][[1]]$feature), collapse='|')
+arab.org <- subset(se.fil.sh, , grepl(pat, spFeature))
+saveRDS(arab.org, file='arab_organ.rds')
+
+svg.rt <- read_svg(system.file('extdata/shinyApp/data/arabidopsis.thaliana_root.cross_shm.svg', package='spatialHeatmap'))
+pat <- paste0('^', unique(svg.rt[, 2][[1]]$feature), collapse='|')
+arab.rt <- subset(se.fil.sh, , grepl(pat, spFeature))
+saveRDS(arab.rt, file='arab_root.rds')
+
+svg.sh.rt <- read_svg(system.file('extdata/shinyApp/data/arabidopsis.thaliana_shoot.root_shm.svg', package='spatialHeatmap'))
+pat <- paste0('^', unique(svg.sh.rt[, 2][[1]]$feature), collapse='|')
+arab.sh.rt <- subset(se.fil.sh, , grepl(pat, spFeature))
+arab.sh.rt <- arab.sh.rt[, rev(seq_len(ncol(arab.sh.rt)))]
+saveRDS(arab.sh.rt, file='arab_shoot_root.rds')
+
+svg.rt.tip <- read_svg(system.file('extdata/shinyApp/data/arabidopsis.thaliana_root.roottip_shm.svg', package='spatialHeatmap'))
+pat <- paste0('^', unique(svg.rt.tip[, 2][[1]]$feature), collapse='|')
+arab.rt.tip <- subset(se.fil.sh, , grepl(pat, spFeature))
+saveRDS(arab.rt.tip, file='arab_root_tip.rds')
 
 
 ## SHM of multiple variables.
@@ -280,6 +319,14 @@ se.mus.vars$tissue[grepl('Hypo', se.mus.vars$tissue)] <- 'hypothalamus'
 se.mus.vars <- subset(se.mus.vars, , tissue!='thalamus')
 colnames(se.mus.vars) <- paste0('assay', seq_len(ncol(se.mus.vars)))
 
+se.mus.vars <- cvt_id(db='org.Mm.eg.db', data=se.mus.vars, from.id='SYMBOL', to.id='ENSEMBL', desc=TRUE)
+rdat <- rowData(se.mus.vars)
+rdat <- subset(rdat, !is.na(SYMBOL) & !is.na(ENSEMBL) & !is.na(GENENAME))
+rdat$link <- paste0('https://useast.ensembl.org/Mus_musculus/Gene/Summary?g=', rdat$ENSEMBL)
+rdat$metadata <- rdat$desc
+rdat$to.id <- rdat$GENENAME <- NULL
+rowData(se.mus.vars) <- rdat; rownames(se.mus.vars) <- rdat$SYMBOL
+
 # Filter raw counts.
 se.mus.vars.fil <- filter_data(data=se.mus.vars, sam.factor='tissue', con.factor=NULL, pOA=c(0.05, 10), CV=c(1.5, 50)); se.mus.vars.fil
 # Example data for vignette.
@@ -290,6 +337,7 @@ se.mus.vars.fil <- filter_data(data=se.mus.vars, sam.factor='tissue', con.factor
 cdat <- colData(se.mus.vars.fil); cdat[1:3, ]
 
 # se.mus.vars.fil <- readRDS('../../inst/extdata/shinyApp/data/mus_brain_vars_se.rds')
+
 df.meta <- data.frame(name=c('assay', 'aSVG file'), link=c('https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE163415', 'https://raw.githubusercontent.com/ebi-gene-expression-group/anatomogram/master/src/svg/mus_musculus.brain.svg'), species=c('Mus musculus', 'Mus musculus'), database=c('GEO', 'EBI anatomogram'), id=c('GSE163415', 'NA'), description=c('Transcriptomic Analysis of mouse brain after traumatic brain injury reveals that the angiotensin receptor blocker candesartan acts through novel pathways', 'An annotated SVG (aSVG) file.'))
 metadata(se.mus.vars.fil)$df.meta <- df.meta
 se.mus.vars.fil <- se.mus.vars.fil[sort(rownames(se.mus.vars.fil), decreasing=TRUE), ]

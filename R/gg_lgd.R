@@ -1,4 +1,4 @@
-#' Adjust Legend Key Size and Rows in Ggplot.
+#' Adjust Legend Key Size and Rows in SHMs.
 #'
 #' @param gg.all A list of spatial heatmaps of ggplot.
 #' @param size.key A numeric of legend key size. If \code{size.text} is NULL, it also applies to legend text size.
@@ -28,9 +28,9 @@
 
 #' @importFrom ggplot2 theme layer_data ggplot_build scale_fill_manual unit element_text guide_legend ggplot_build
 
-gg_lgd <- function(gg.all, gcol.lgd=NULL, size.key=NULL, size.text.key=8, angle.text.key=NULL, position.text.key=NULL, legend.value.vdo=NULL, sub.title.size=NULL, row=NULL, col=NULL, label=FALSE, label.size=3, label.angle=0, hjust=0, vjust=0, opacity=1, key=TRUE, aspect.ratio = NULL, lgd.space.x=NULL, title=NULL) {
-
-  # save(gg.all, gcol.lgd, size.key, size.text.key, angle.text.key, position.text.key, legend.value.vdo, sub.title.size, row, col, label, label.size, label.angle, hjust, vjust, opacity, key, aspect.ratio, lgd.space.x, title, file='gg.lgd.all')
+gg_lgd <- function(gg.all, sam=NULL, covis.type=NULL, gcol.lgd=NULL, size.key=NULL, size.text.key=8, angle.text.key=NULL, position.text.key=NULL, legend.value.vdo=NULL, sub.title.size=NULL, row=NULL, col=NULL, label=FALSE, label.size=3, label.angle=0, hjust=0, vjust=0, opacity=1, key=TRUE, aspect.ratio = NULL, lgd.space.x=NULL, title=NULL, verbose=TRUE) {
+   # save(gg.all, sam, covis.type, gcol.lgd, size.key, size.text.key, angle.text.key, position.text.key, legend.value.vdo, sub.title.size, row, col, label, label.size, label.angle, hjust, vjust, opacity, key, aspect.ratio, lgd.space.x, title, verbose, file='gg.lgd.all')
+  if (verbose==TRUE) message('Adjust legends in ggplots ...')
   feature <- x0 <- y0 <- NULL
   # Function to remove feature labels. 
   rm_label <- function(g) {    
@@ -52,7 +52,7 @@ gg_lgd <- function(gg.all, gcol.lgd=NULL, size.key=NULL, size.text.key=8, angle.
       }
       dat <- g$data; g.col <- lay.dat$fill
       # Single cell dimensionality point plot.
-      if (all(is.na(g.col))|is.null(g.col)) g.col <- lay.dat$colour
+      # if (all(is.na(g.col))|is.null(g.col)) g.col <- lay.dat$colour
       names(g.col) <- dat$feature
       # In videos, heat colors rather than legend colors are used, so the colors should be extracted from ggplots not the "gcol.lgd".
       # g.col <- gcol.lgd[grepl(paste0(nas[i], '$'), names(gcol.lgd))][[1]]
@@ -66,7 +66,9 @@ gg_lgd <- function(gg.all, gcol.lgd=NULL, size.key=NULL, size.text.key=8, angle.
       # ft.legend <- setdiff(ft.legend, ft.trans) 
       # Identify tissues with colours: applies to regular bulk SHM and single cell.
       ft.legend <- unique(sub('__\\d+', '', names(g.col[!is.na(g.col) & !g.col=='NA'])))
-      leg.idx <- !duplicated(tis.path) & (tis.path %in% ft.legend)
+      leg.idx <- !duplicated(tis.path) & (tis.path %in% ft.legend) & tis.path %in% sam
+      # toBulk: sam is from cell data.
+      if ('toBulk' %in% covis.type) leg.idx <- !duplicated(tis.path) & (tis.path %in% ft.legend)
       # df.tar <- df.tis[leg.idx]; lab <- path.tar <- tis.path[leg.idx]; val.tar <- df.val[leg.idx]
       trans <- g.col[g.col %in% 'NA'][1]
       tr.lab <- 'Unmeasured' 
@@ -101,6 +103,7 @@ gg_lgd <- function(gg.all, gcol.lgd=NULL, size.key=NULL, size.text.key=8, angle.
     if (!is.null(aspect.ratio)) if (aspect.ratio > 0) g <- g + theme(aspect.ratio=1/aspect.ratio)
     gg.all[[i]] <- g 
   } # for 
+  if (verbose==TRUE) message('Done!')
   return(gg.all)
 
 }

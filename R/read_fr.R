@@ -21,8 +21,7 @@
 #' @export read_fr
 #' @importFrom data.table fread
 
-read_fr <- function(input, header = TRUE, sep = 'auto', fill = TRUE, check.names = FALSE) {
-      
+read_fr <- function(input, header = TRUE, sep = 'auto', fill = TRUE, check.names = FALSE) {      
   options(stringsAsFactors=FALSE)
   df0 <- tryCatch({
     fread(input=input, header=header, sep=sep, fill=fill, check.names=check.names)

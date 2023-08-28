@@ -17,7 +17,7 @@
 #' Ramnath Vaidyanathan, Yihui Xie, JJ Allaire, Joe Cheng and Kenton Russell (2019). htmlwidgets: HTML Widgets for R. R package version 1.5.1. https://CRAN.R-project.org/package=htmlwidgets
 
 html_ly <- function(gg.all, cs.g, aspr=1, anm.scale=1, selfcontained=FALSE, out.dir) {
-  # save(gg.all, cs.g, anm.scale, selfcontained, out.dir, file ='all.ly')
+  # save(gg.all, cs.g, aspr, anm.scale, selfcontained, out.dir, file ='html.ly.arg')
   pkg <- check_pkg('plotly'); if (is(pkg, 'character')) { warning(pkg); return(pkg) }
   pkg <- check_pkg('htmlwidgets'); if (is(pkg, 'character')) { warning(pkg); return(pkg) }
   
@@ -56,6 +56,7 @@ html_ly <- function(gg.all, cs.g, aspr=1, anm.scale=1, selfcontained=FALSE, out.
     cat('Preparing legend for', paste0("'", na.hl, "'"), '... \n')
 
     ft.show <- unique(dat$feature[grepl('^#', lay.dat$fill)])
+    ft.show <- grep('globalLGD|localLGD', ft.show, value=TRUE, invert=TRUE)
     ft.all <- lapply(g2l$data, function(x) x$name)
     idx.show <- which(!duplicated(sub('__\\d+$', '', ft.all)) & ft.all %in% ft.show)
     for (j in seq_along(g2l$data)) { 

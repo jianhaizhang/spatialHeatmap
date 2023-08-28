@@ -34,9 +34,8 @@ covis_man_ui <- function(id) {
     ),
       tabPanel(span(id=ns('scTab'), "Single-Cell Data"), value='dimred',
       bsTooltip(ns('scTab'), title = "Exploring single-cell data before tissue-cell matching and co-visualization.", placement = "top", trigger = "hover"),
-      navbarPage('', id=ns('dimredNav'), 
-      tabPanel('Plot', dim_ui(ns('dim'))),
-     )), #tabPanel("Dimensionality Reduction", navbarPage
+      tabPanel('Plot', dim_ui(ns('dim'), coclus=FALSE))
+     ), #tabPanel("Dimensionality Reduction", navbarPage
       tabPanel(span(id=ns('matTab'), "Matching Cells and Bulk"), value='manualMatch',
       bsTooltip(ns('matTab'), title = "Matching cells and bulk tissues for co-visualization.", placement = "top", trigger = "hover"),
       #navbarPage('Parameters:',

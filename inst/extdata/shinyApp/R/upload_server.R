@@ -1,8 +1,8 @@
 # Module for uploading data.
 
-upload_server <- function(id, lis.url=NULL, prt=NULL) {
+upload_server <- function(id, lis.url=NULL, prt=NULL, session) {
   moduleServer(id, function(input, output, session) {
-  message('Upload module starts ... ')
+  message('Upload module starts ... '); ns <- session$ns
   observeEvent(input$dathelp, {  
     showModal(modal(title='Quick start!', msg = NULL, img='dataset.jpg', img.w="100%"))
   })
@@ -12,31 +12,40 @@ upload_server <- function(id, lis.url=NULL, prt=NULL) {
     list(
     fluidRow(splitLayout(cellWidths=c('10px', '280px', '1px'), '', h4(strong("Step2: upload custom assay data")), '')),
       fluidRow(splitLayout(cellWidths=c('10px', '180px', '1px', '200px', '1px', '230px', '1px', '190px', '1px', '210px'), '',
-      tags$div(class='tp', span(class='tpt', 'Accepted files: tabular or ".rds" ("SummarizedExperiment" saved with "saveRDS")'), fileInput(ns("geneInpath"), "2A: formatted assay data", accept=c(".txt", ".csv", '.rds'), multiple=FALSE)), '',
+      tags$div(class='tp', span(class='tpt', 'A tabular file or ".rds" file ("SummarizedExperiment" saved with "saveRDS")'), fileInput(ns("geneInpath"), "2A: formatted assay data", accept=c(".txt", ".csv", '.rds'), multiple=FALSE)), '',
       selectInput(ns('dimName'), label='2B: genes in column or row?', choices=c("Row", "Column"), selected='Row'), '',
       tags$div(class='tp', span(class='tpt', 'Ensure "columns in the data matrix corresponds with "rows" in the targets file respectively.'),
       fileInput(ns("target"), "2C (optional): sample targets file", accept=c(".txt", ".csv"), multiple=FALSE)), '',
       tags$div(class='tp', span(class='tpt', 'Ensure "rows" in the data matrix corresponds with "rows" in the row metadata file respectively.'),
       fileInput(ns("met"), "2D (optional): row metadata", accept=c(".txt", ".csv"), multiple=FALSE)), '',
-
       tags$div(class='tp', span(class='tpt', 'Assay metadata in a tabular file.'),
       fileInput(ns("asymet"), "2E (optional): assay metadata", accept=c(".txt", ".csv"), multiple=FALSE)))
       )
     )
     } else if (fileIn=='customCovisData') {
       list(
-      h4(strong('Step2: single-cell & bulk data')),
-      div(class='tp', span(class='tpt', 'An ".rds" file (saved with "saveRDS") of "SingleCellExperiment" that combines bulk & single-cell data.'),
-      fileInput(ns("sglCell"), "", accept=c(".rds"), multiple=FALSE)
-      ))
+      fluidRow(splitLayout(cellWidths=c('10px', '280px', '1px'), '', h4(strong("Step2: upload custom assay data")), '')),
+      fluidRow(splitLayout(cellWidths=c('10px', '300px', '1px', '200px', '1px', '230px', '1px', '190px', '1px', '210px'), '',
+      div(class='tp', span(class='tpt', 'A tabular file or ".rds" file ("SingleCellExperiment" that combines bulk & single-cell data, saved with "saveRDS")'),
+      fileInput(ns("sglCell"), "2A: formatted bulk & single-cell assay data", accept=c(".txt", ".csv", ".rds"), multiple=FALSE)
+      ), '', 
+      selectInput(ns('dimNaCovis'), label='2B: genes in column or row?', choices=c("Row", "Column"), selected='Row'), '',
+      tags$div(class='tp', span(class='tpt', 'Ensure "columns in the data matrix corresponds with "rows" in the targets file, respectively.'),
+      fileInput(ns("tarCovis"), "2C: sample targets file", accept=c(".txt", ".csv"), multiple=FALSE)), '',
+      tags$div(class='tp', span(class='tpt', 'Ensure "rows" in the data matrix corresponds with "rows" in the row metadata file, respectively.'),
+      fileInput(ns("rmetCovis"), "2D (optional): row metadata", accept=c(".txt", ".csv"), multiple=FALSE)), '',
+      tags$div(class='tp', span(class='tpt', 'Assay metadata in a tabular file.'),
+      fileInput(ns("metCovis"), "2E (optional): assay metadata", accept=c(".txt", ".csv"), multiple=FALSE)))
+      )
+   )
    }
   })
   output$svg.upl <- renderUI({
     ns <- session$ns; fileIn <- input$fileIn
     if (fileIn %in% na.cus) {
     list(
-      h5(strong("Step3: upload custom aSVG(s)")),
-      fluidRow(splitLayout(cellWidths=c('1%', '27%', '1%', '28%'), '',
+      h4(strong("Step3: upload custom aSVG(s)")),
+      fluidRow(splitLayout(cellWidths=c('10px', '500px', '1px', '500px'), '',
       tags$div(class='tp', span(class='tpt', 'The assay data is matched with a single aSVG file.'),
       fileInput(ns("svgInpath1"), "3A: one aSVG file", accept=c('.svg', raster.ext), multiple=TRUE)), '',
       tags$div(class='tp', span(class='tpt', 'The assay data is matched with multiple aSVG files (e.g. developmental stages).'),
@@ -82,7 +91,6 @@ upload_server <- function(id, lis.url=NULL, prt=NULL) {
         rownames(df0) <- df0$name; lis.par[[i]] <- df0
       }
     }
-
     # Separate data, svg.
     na.ipt <- dis.ipt <- dat.ipt <- svg.ipt <- NULL; for (i in lis.dat) {  
       na.ipt <- c(na.ipt, i$name); dat.ipt <- c(dat.ipt, i$data)
@@ -120,7 +128,7 @@ upload_server <- function(id, lis.url=NULL, prt=NULL) {
     dat.def <- dat.def[unique(names(dat.def))]; svg.def <- svg.def[unique(names(svg.def))]
     cfg$lis.dat <- lis.dat; cfg$lis.dld <- lis.dld; cfg$lis.par <- lis.par; cfg$na.def <- setNames(names(dat.def), dis.def)
     cfg$svg.def <- svg.def; cfg$dat.def <- dat.def; cfg$na.cus <- setNames(na.cus, na.cus.dis)
-    dat.nas <- c(na.cus, names(dat.def)); names(dat.nas) <- c(na.cus.dis, dis.def)
+    dat.nas <- c(dat.no, na.cus, names(dat.def)); names(dat.nas) <- c(dat.no.dis, na.cus.dis, dis.def)
     cfg$dat.nas <- dat.nas
   })
   observeEvent(cfg$dat.nas, {
@@ -182,7 +190,7 @@ content=function(file=paste0(tmp.dir, '/multiVariables_aSVG_data.zip')){ zip(fil
   )
     output$dld.covis <- downloadHandler(   
       filename=function(){ "covisualization_aSVG_data.zip" },
-content=function(file=paste0(tmp.dir, '/covisualization_aSVG_data.zip')){ zip(file, c(dld.exp$covis$data, dld.exp$covis$svg)) }
+
   )
     output$dld.bat <- downloadHandler(   
       filename=function(){ "batched_data_aSVGs.zip" },
@@ -190,84 +198,110 @@ content=function(file=paste0(tmp.dir, '/batched_data_aSVGs.zip')){ zip(file, c(d
   )
   })
 
-  # URLs on the landing page.
-  output$brain.hum <-renderUI({
-  tagList(
-    p('Human brain', style='font-size:18px'),
-  a(img(width='97%', src="image/brain_hum.png"))
-    )
+  observeEvent(list(input$geneInpath), {
+    pa <- input$geneInpath$datapath; 
+    if (sum(grepl('\\.rds$', pa))==1) { 
+      hide(id='dimName'); hide(id='target')
+      hide(id='met'); hide(id='asymet')
+    } else {
+      shinyjs::show(id='dimName')
+      shinyjs::show(id='target')
+      shinyjs::show(id='met')
+      shinyjs::show(id='asymet')
+    }
   })
-  output$mouse <-renderUI({
-  tagList(
-    p('Mouse organ', style='font-size:18px'),
-    a(img(width='97%', src="image/mouse.png"))
-  )
-  })
-  output$chicken <-renderUI({
-  tagList(
-    p('Chicken organ', style='font-size:18px'),
-    a(img(width='97%', src="image/chicken.png"))
-    )
-  })
-  output$organ.arab <-renderUI({
-  tagList(
-    p('Organ', style='font-size:18px'),
-    a(img(width='97%', src="image/organ_arab.png"))
-    )
-  })
-  output$shoot.arab <-renderUI({
-  tagList(
-    p('Shoot tissue', style='font-size:18px'),
-    a(img(width='97%', src="image/shoot_arab.png"))
-  )
-  })
-  output$root.arab <-renderUI({
-  tagList(
-    p('Root tissue', style='font-size:18px'),
-    a(img(width='97%', src="image/root_arab.png"))
-    )
-  })
-  output$stage.arab <-renderUI({
-  tagList(
-    p('Developmental stage', style='font-size:18px'),
-    a(img(width='97%', src="image/stage_arab.png"))
-    )
-  })
-  output$clp.rice <-renderUI({
-  tagList(
-    p('Mouse brain multi-variable data', style='font-size:18px'),
-    a(img(width='97%', src="image/mus_multi_dim.png"))
-    )
-  })
-
-  observe({
-    toggleState(id = "geneInpath", condition = input$fileIn %in% cfg$na.cus)
-    #toggleState(id = "dimName", condition = input$fileIn %in% cfg$na.cus)
-    toggleState(id = "target", condition = input$fileIn %in% cfg$na.cus)
-    toggleState(id = "met", condition = input$fileIn %in% cfg$na.cus)
-    toggleState(id = "svgInpath1", condition = input$fileIn %in% cfg$na.cus)
-    toggleState(id = "svgInpath2", condition = input$fileIn %in% cfg$na.cus)
+  observeEvent(list(input$sglCell), {
+    pa <- input$sglCell$datapath; 
+    if (sum(grepl('\\.rds$', pa))==1) { 
+      hide(id='dimNaCovis'); hide(id='tarCovis')
+      hide(id='rmetCovis'); hide(id='metCovis')
+    } else {
+      shinyjs::show(id='dimNaCovis')
+      shinyjs::show(id='tarCovis')
+      shinyjs::show(id='rmetCovis')
+      shinyjs::show(id='metCovis')
+    }
   })
   output$help <- renderUI({
     tags$iframe(seamless="seamless", src= "html/shm_shiny_manual.html#1_Datasets", width='100%', height='100%')
   })
-  # Switch to avoid files uploaded previously. E.g. 1. upload 'sce.rds' under 'customSingleCell'. 2. select 'brain_Prudencio'. 3. re-select 'customSingleCell', and 'sce.rds' in step 1 is avoided.
-  sce.pa <- reactiveValues(val=TRUE)
-  observeEvent(list(input$sglCell), { sce.pa$val <- TRUE })
-  observeEvent(list(input$fileIn), { sce.pa$val <- FALSE })
-  # observeEvent(input$fileIn, { })
-  sce <- reactiveValues(); observe({
+  # Switch to avoid files uploaded previously. E.g. 1. upload 'sce.rds' under 'customSingleCell'. 2. select 'human_brain'. 3. re-select 'customSingleCell', and 'sce.rds' in step 1 is avoided.
+  # fileInput cannot be set NULL with Shiny.setInputValue, since the uploaded file is cached.
+  covis.pa <- reactiveValues(val=TRUE)
+  observeEvent(list(input$fileIn), { 
+    sce$val <- NULL
+    covis.pa$dat <- covis.pa$svg1 <- covis.pa$svg2 <- NULL
+  })
+  observeEvent(list(input$sglCell), { covis.pa$dat <- input$sglCell$datapath })
+  observeEvent(list(input$svgInpath1), { covis.pa$svg1 <- input$svgInpath1$datapath })
+  observeEvent(list(input$svgInpath2), { covis.pa$svg2 <- input$svgInpath2$datapath })
+  sce <- reactiveValues()
+  observeEvent(list(covis.pa$dat, input$fileIn, cfg$dat.def, cfg$na.cus, input$sglCell, input$dimNaCovis, input$rmetCovis, input$metCovis, input$svgInpath1, input$svgInpath2), {
   library(SingleCellExperiment)
   library(scater); library(scran); library(BiocSingular)
-  sgl.cell.ipt <- input$sglCell; pa <- NULL
-  # save(sgl.cell.ipt, file='sgl.cell.ipt')
-  if (is.null(sgl.cell.ipt) | sce.pa$val==FALSE) { sce$val <- NULL } else pa <- sgl.cell.ipt$datapath
-  if (!is.null(input$fileIn)) if (grepl(na.sgl.def, input$fileIn)) pa <- cfg$dat.def[input$fileIn] 
-  if (is.null(pa)) return()
-  if (grepl('\\.rds$', pa)) sce$val <- readRDS(pa)
+  fileIn <- input$fileIn; pa <- NULL
+  req(check_obj(list(fileIn, cfg$na.cus, cfg$dat.def))) 
+  # Uploaded data path.
+  if (is.null(covis.pa$dat)) { sce$val <- NULL } else {
+    pa <- covis.pa$dat
+    svgInpa1 <- covis.pa$svg1; svgInpa2 <- covis.pa$svg2
+    req(check_obj(list(pa, !is.null(svgInpa1)|!is.null(svgInpa2))))
+    if (grepl('\\.rds$', pa)) sce$val <- readRDS(pa) else { # Tabular files uploaded.
+      message('Importing covis data from tabular files ... ')
+      if (fileIn %in% na.cus.covis) {
+        withProgress(message="Loading covis data from tabular files: ", value = 0, {
+        dimNa <- input$dimNaCovis; req(check_obj(list(dimNa)))
+        incProgress(0.25, detail="importing data matrix ...")
+        message('Importing covis assay data ... ')
+        dat.cus <- fread_df(read_fr(pa), isRowGene=(dimNa=='Row'), rep.aggr=NULL)
+        tarCovis <- input$tarCovis$datapath; lgc.tar <- is.null(tarCovis)      
+        if (lgc.tar) showModal(modal(msg = 'When uploading tabular files for covisualization, a targets file is required!')); req(!lgc.tar)
+        incProgress(0.3, detail="importing targets file ...")
+        sce.rep <- as(dat.cus$se.rep, "SingleCellExperiment")
+        message('Importing covis targets file ... ')
+        df.tar <- read_fr(tarCovis)
+        lgc.tar <- nrow(df.tar) == ncol(sce.rep)
+        if (!lgc.tar) showModal(modal(msg = 'Ensure "columns" in the assay matrix corresponds with "rows" in the targets file, respectively!')); req(lgc.tar)
+        colData(sce.rep) <- DataFrame(df.tar) 
+        rmetCovis <- input$rmetCovis$datapath
+        if (!is.null(rmetCovis)) { 
+          incProgress(0.3, detail="importing row metadata ...")
+          message('Importing covis row metadata ... ')
+          df.rmet <- read_fr(rmetCovis); lgc.met <- nrow(df.rmet) == nrow(sce.rep)
+          if (!lgc.met) showModal(modal(msg = 'Ensure "rows" in the assay matrix corresponds with "rows" in the row metadata file, respectively!'))
+          req(lgc.met); rowData(sce.rep) <- DataFrame(df.rmet)
+        }
+        metCovis <- input$metCovis$datapath
+        if (!is.null(metCovis)) { 
+          incProgress(0.3, detail="importing assay metadata ...")
+          message('Importing covis metadata ... ')
+          df.meta <- read_fr(metCovis)
+          if (!is.null(df.meta)) {
+            lgc.met <- ncol(data.frame(df.meta))<2
+            if (lgc.met) { 
+              msg <- 'The assay metadata should be a "data.frame" with at least two columns!';  
+              if (lgc.met) showModal(modal(msg = msg)); req(!lgc.met)
+            }; metadata(sce.rep)$df.meta <- df.meta
+          }
+        }; incProgress(0.3, detail="done!")
+          sce$val <- sce.rep; message('Done! \n')
+        })
+      }
+    }
+   }
+  # Default data path of covis data.
+  if (grepl(na.sgl.def, fileIn)) { 
+    pa <- cfg$dat.def[fileIn]; req(check_obj(list(pa)))
+    if (grepl('\\.rds$', pa)) sce$val <- readRDS(pa)
+  }
+  if (!is.null(sce$val)) {
+    lgc.na <- length(assayNames(sce$val))>1
+    if (lgc.na) showModal(modal(msg = 'Only one count matrix is expected in "assay(<SingleCellExperiment>)"!')); req(!lgc.na)
+    assayNames(sce$val) <- 'counts' 
+  }
   })
   onBookmark(function(state) { state })
-  return(list(ipt = input, cfg = cfg, sce=sce))
+  return(list(ipt = input, cfg = cfg, sce=sce, covis.pa=covis.pa))
 })}
 
 

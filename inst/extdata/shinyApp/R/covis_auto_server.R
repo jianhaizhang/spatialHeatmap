@@ -64,7 +64,7 @@ covis_auto_server <- function(id, sce.upl, upl.mod.lis, shm.mod.lis, tab, covis.
     withProgress(message="Filtering: ", value=0, {
     incProgress(0.3, detail="please wait ...")
     blk.aggr <- aggr_rep(data=blk, assay.na='logcounts', sam.factor='sample', aggr='mean')
-    blk.aggr$spFeature <- NULL
+    # blk.aggr$spFeature <- NULL
     blk.fil <- filter_data(data=blk.aggr, pOA=c(filBlkP, filBlkA), CV=c(filBlkCV1, filBlkCV2), verbose=FALSE)
     incProgress(0.3, detail="please wait ...")
     dat.fil <- filter_cell(sce=cell, bulk=blk.fil, gen.rm=NULL, cutoff=cutoff, p.in.cell=filPCell, p.in.gen=filPGen, verbose=FALSE)
@@ -87,9 +87,11 @@ covis_auto_server <- function(id, sce.upl, upl.mod.lis, shm.mod.lis, tab, covis.
     minRank <- input$minRank; maxRank <- input$maxRank
     if (is.null(cell)|is.null(bulk)|is.null(minRank)|is.null(maxRank)) return()
     validate(need(round(minRank)==minRank & round(maxRank)==maxRank & maxRank > minRank, ''))
-    inter <- intersect(rownames(bulk), rownames(cell))
-    blk.kp <- bulk[inter, ]; sc.kp <- cell[inter, ]
-    com.kp <- cbind(blk.kp, sc.kp)
+    # inter <- intersect(rownames(bulk), rownames(cell))
+    # blk.kp <- bulk[inter, ]; sc.kp <- cell[inter, ]
+    com.kp <- cbind_se(bulk, cell)
+    lgc.bd <- is(com.kp, 'character') 
+    if (lgc.bd) showModal(modal(msg = lgc.bd)); req(!lgc.bd)
     com.kp$index <- seq_len(ncol(com.kp))
     com.kp$sample <- colnames(com.kp)
     withProgress(message="Reducing dimensions: ", value=0, {

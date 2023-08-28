@@ -4,7 +4,7 @@
 \alias{cvt_id}
 \title{Converting gene ids using annotation databases}
 \usage{
-cvt_id(db, data, from.id, to.id, desc = FALSE)
+cvt_id(db, data, from.id, to.id, desc = FALSE, other = NULL)
 }
 \arguments{
 \item{db}{A character of the annotation database name such as \code{'org.Hs.eg.db'}.}
@@ -14,6 +14,8 @@ cvt_id(db, data, from.id, to.id, desc = FALSE)
 \item{from.id, to.id}{The type of ids to convert from (\code{'ENSEMBL'}, rownames in \code{data}) and to (\code{'SYMBOL'}) (UniProt) respectively.}
 
 \item{desc}{Logical. If \code{TRUE}, the description of each gene will be included.}
+
+\item{other}{Other information to be added, such as `c('ENZYME', 'PATH')`. See `columns(org.Hs.eg.db)`.}
 }
 \value{
 A \code{data.frame}.

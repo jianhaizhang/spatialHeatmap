@@ -1,5 +1,5 @@
 ## Example data for manual matching.
-library(spatialHeatmap); library(scRNAseq)
+library(spatialHeatmap); library(scRNAseq); library(SummarizedExperiment)
 sce.mus <- MarquesBrainData()
 # Filter cells and genes to obtain example data.
 sce.mus.fil <- filter_cell(sce=sce.mus, cutoff=1, p.in.cell=0.85, p.in.gen=0.5)
@@ -101,10 +101,23 @@ rowData(sce) <- row.met
 
 # sce <- readRDS('../extdata/shinyApp/data/shiny_covis_bulk_cell_mouse_brain.rds')
 
+sce <- cvt_id(db='org.Mm.eg.db', data=sce, from.id='SYMBOL', to.id='ENSEMBL', desc=TRUE)
+rdat <- rowData(sce)
+# rdat <- subset(rdat, !is.na(SYMBOL) & !is.na(ENSEMBL) & !is.na(GENENAME))
+rdat$link <- paste0('https://useast.ensembl.org/Mus_musculus/Gene/Summary?g=', rdat$ENSEMBL)
+rdat$metadata <- rdat$desc
+rdat$to.id <- rdat$GENENAME <- NULL
+rowData(sce) <- rdat; rownames(sce) <- rdat$SYMBOL
+
 df.meta <- data.frame(name=c('assayBulk', 'assayCell', 'aSVG'), link=c('https://www.ncbi.nlm.nih.gov/bioproject/PRJNA725533', 'https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE147747', 'https://raw.githubusercontent.com/ebi-gene-expression-group/anatomogram/master/src/svg/mus_musculus.male.svg'), species=c('Mus musculus', 'Mus musculus', 'Mus musculus'), technology=c('RNA-seq', 'RNA-seq', 'NA'), database=c('BioProject', 'GEO', 'EBI anatomogram'), id=c('PRJNA725533', 'GSE147747', 'NA'), description=c('Long-term impact of placental allopregnanolone insufficiency on the mouse transcriptome of cerebral cortex, hippocampus, hypothalamus and cerebellum', 'Hybridized 75 coronal sections from one brain hemisphere of 3 adult mice with Spatial Transcriptomics and defined a molecular atlas using clustering algorithms.', 'An annotated SVG (aSVG) file.'))
 metadata(sce)$df.meta <- df.meta
 saveRDS(sce, file='shiny_covis_bulk_cell_mouse_brain.rds')
 
+# Tabular files. 
+write.table(assay(sce), 'shiny_covis_bulk_cell_mouse_brain_assay.txt', col.names=TRUE, sep='\t')
+write.table(colData(sce), 'shiny_covis_bulk_cell_mouse_brain_targets.txt', col.names=TRUE, sep='\t')
+write.table(rowData(sce), 'shiny_covis_bulk_cell_mouse_brain_rowdata.txt', col.names=TRUE, sep='\t')
+write.table(metadata(sce)$df.meta, 'shiny_covis_bulk_cell_mouse_brain_metadata.txt', col.names=TRUE, sep='\t')
 
 ## Example data of Arabidopsis thaliana root for coclustering optimization, downloaded at https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE152766. 
 

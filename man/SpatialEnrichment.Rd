@@ -22,6 +22,7 @@ spatial_enrich(
   data,
   method = c("edgeR"),
   norm = "TMM",
+  m.array = FALSE,
   log2.trans.dis = TRUE,
   log2.fc = 1,
   p.adjust = "BH",
@@ -88,6 +89,8 @@ graph_line(
 \item{method}{One of \code{edgeR}, \code{limma}, \code{DESeq2}, \code{distinct}.}
 
 \item{norm}{The normalization method (\code{TMM}, \code{RLE}, \code{upperquartile}, \code{none}) in edgeR. The default is \code{TMM}. Details: https://www.rdocumentation.org/packages/edgeR/versions/3.14.0/topics/calcNormFactors.}
+
+\item{m.array}{Logical. `TRUE` and `FALSE` indicate the input are microarray and count data respectively.}
 
 \item{log2.trans.dis}{Logical, only applicable when \code{method='distinct'}. If \code{TRUE} the count data is transformed to log-2 scale.}
 

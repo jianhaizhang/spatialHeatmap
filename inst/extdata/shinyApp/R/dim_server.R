@@ -11,7 +11,48 @@ dim_server <- function(id, sce, sce.upl, section='scell', upl.mod.lis, dat.lis=N
       hideElement('dimCell'); hideElement('coclusPlotBut')
       hideElement('selBlk'); hideElement('selBlkBut')
       hideElement('selBlkCancel')
-    }  
+    } 
+    grp <- reactiveValues()
+    observeEvent(list(input$grpAuto2cell, input$grpAuto2blk, input$grpAnn, sce(), sce.upl$covis.type), {
+      grpAuto2cell <- input$grpAuto2cell
+      grpAuto2blk <- input$grpAuto2blk; grpAnn <- input$grpAnn
+      req(any(check_obj(grpAuto2cell), check_obj(grpAuto2blk), check_obj(grpAnn))) 
+      sce <- sce(); covis.type <- sce.upl$covis.type
+      req(check_obj(list(sce, covis.type)))
+      cdat.na <- colnames(colData(sce))
+      if (all(c('assignedBulk', 'similarity') %in% cdat.na)) {
+        if ('toCellAuto' %in% covis.type) {
+          grp$v <- input$grpAuto2cell
+        } else if ('toBulkAuto' %in% covis.type) {
+          grp$v <- input$grpAuto2blk
+        }
+      } else grp$v <- input$grpAnn 
+    })
+    observeEvent(list(sce(), sce.upl$covis.type), {
+      sce <- sce(); covis.type <- sce.upl$covis.type
+      req(check_obj(list(sce, covis.type)))
+      cdat.na <- colnames(colData(sce))
+      if (all(c('assignedBulk', 'similarity') %in% cdat.na)) {
+        shinyjs::hide(id = "grpAnnD")
+        # covisGrp: bulk or cell labels for aggregating. 
+        if ('toCellAuto' %in% covis.type) {
+          shinyjs::show(id = "grpAuto2cellD")
+          shinyjs::hide(id = "grpAuto2blkD")
+        } else if ('toBulkAuto' %in% covis.type) {
+          shinyjs::show(id = "grpAuto2blkD")
+          shinyjs::hide(id = "grpAuto2cellD")
+        }
+      } else {
+        lab.na <- grep('^label$|^label\\d+', cdat.na, value=TRUE) 
+        if (length(lab.na)==0) return()
+        shinyjs::show(id = "grpAnnD")
+        shinyjs::hide(id = "grpAuto2cellD")
+        shinyjs::hide(id = "grpAuto2blkD")
+        shinyjs::hide(id = "coclusD")
+        shinyjs::hide(id = "covisBut")
+        updateSelectInput(session, "grpAnn", choices=sort(lab.na))
+      }
+    })
     output$samGrp <- renderUI({
       sce <- sce() 
       covis.type <- sce.upl$covis.type
@@ -30,28 +71,31 @@ dim_server <- function(id, sce, sce.upl, section='scell', upl.mod.lis, dat.lis=N
         selectInput(ns('covisGrp'), 'Cell groups', sort(lab.na))
       }
     })
-    output$coclus <- renderUI({
+    observeEvent(list(sce(), sce.upl$method), {
       sce <- sce(); method <- sce.upl$method
       if (is.null(sce)| !'auto' %in% method) return()
       others <- sort(unique(sce$cluster))
-      op <- setNames(c('coclusters', others), c('all', others))
-      selectInput(ns('coclus'), 'Clusters to show', op)
+      op <- c('all', others)
+      updateSelectInput(session, "coclus", choices=op)
     })
     dim.par <- reactiveValues(cocluster.only=FALSE)
     observe({
       sce <- sce(); method <- sce.upl$method
       input$scellRowCancelBut
-      grp <- input$covisGrp; grp.sel <- input$coclus
+      grp <- grp$v; grp.sel <- input$coclus
       if (is.null(sce)|is.null(method)|is.null(grp)) return()
       if ('auto' %in% method & is.null(grp.sel)) return()
       dim.par$grp <- grp; cdat.na <- colnames(colData(sce))
       if (!grp %in% cdat.na) return(); row.sel$val <- NULL
       if ('auto' %in% method) { 
         dim.par$grp <- 'cluster'
-        if ('coclusters' %in% grp.sel) {
+        if ('all' %in% grp.sel) {
           dim.par$group.sel <- NULL
           dim.par$cocluster.only <- TRUE
         } else dim.par$group.sel <- grp.sel
+      } else { 
+        dim.par$group.sel <- NULL
+        dim.par$cocluster.only <- FALSE
       }
     })
     row.sel <- reactiveValues(val=NULL)
@@ -65,10 +109,21 @@ dim_server <- function(id, sce, sce.upl, section='scell', upl.mod.lis, dat.lis=N
       sce <- sce(); cocluster.only <- dim.par$cocluster.only
       dimMeth <- input$dimMeth
       if (!check_obj(list(sce, grp, dimMeth)) | is.null(cocluster.only)) return()
-      if (!is.null(row.sel$val) & !is.null(grp.sel)) return()  
+      if (!is.null(row.sel$val) & !is.null(grp.sel)) return()
+      req(grp %in% colnames(colData(sce)))
       plot_dim(sce, dim=dimMeth, color.by=grp, group.sel=grp.sel, row.sel=row.sel$val, cocluster.only=cocluster.only, lgd.pos=ifelse(TRUE %in% cocluster.only, 'bottom', 'right'), lgd.l=ifelse(TRUE %in% cocluster.only, -0.07, 0), lgd.r=0.07)
     })
 
+   observeEvent(sce.upl$method, {
+     method <- sce.upl$method; req(check_obj(method))
+     if ('auto' %in% method) {
+       shinyjs::show(id='dtabCo') 
+       shinyjs::hide(id='dtabAnn') 
+     } else {
+       shinyjs::show(id='dtabAnn') 
+       shinyjs::hide(id='dtabCo') 
+     }
+    })
     output$scellCdat <- renderDataTable({
       cat('Single-cell: colData table ... \n')
       sce <- sce(); if (is.null(sce)) return()
@@ -76,8 +131,11 @@ dim_server <- function(id, sce, sce.upl, section='scell', upl.mod.lis, dat.lis=N
       cdat <- as.data.frame(colData(sce))
       # match.lis <- match.mod.lis$val$ft.reorder$ft.rematch
       # covisGrp from dim_server in scell_server. 
-      if (section=='scell') covisGrp <- input$covisGrp else covisGrp <- dat.lis()$covisGrp
-      if ('auto' %in% sce.upl$method) cdat <- cdat[, c('cluster', 'bulkCell', 'assignedBulk', 'similarity', 'sample', 'index')]
+      if (section=='scell') covisGrp <- grp$v else covisGrp <- dat.lis()$covisGrp
+      if ('auto' %in% sce.upl$method) {
+        cna.sel <- c('cluster', 'bulkCell', 'assignedBulk', 'similarity', 'sample', 'index')
+        req(all(cna.sel %in% colnames(cdat))); cdat <- cdat[, cna.sel]
+      }
       cols <- list(list(targets=seq_len(ncol(cdat)), render = DT::JS("$.fn.dataTable.render.ellipsis(40, false)")))
       sel <- list(mode="multiple", target="row", selected='none')
       if (section!='scell') sel <- 'none'
@@ -89,42 +147,8 @@ dim_server <- function(id, sce, sce.upl, section='scell', upl.mod.lis, dat.lis=N
       cat('Done! \n'); tab
     })
 
-  output$dim.ui <- renderUI({
-   cat('Manual matching: building ui of colData table ... \n')
-   Sys.sleep(2) # Nested renderUI: if the inner takes longer time than the outer, the outer will not capture the inner output.
-   if (!grepl(na.sgl, upl.mod.lis$ipt$fileIn)) return()
-   dimMeth <- selectInput(ns('dimMeth'), label='Dimension reduction', choices=c('TSNE', 'UMAP', 'PCA'), selected='TSNE')
-   row.but <- actionButton(ns('scellRowBut'), 'Confirm row selection', style='margin-top:24px')
-   row.cancel.but <- actionButton(ns('scellRowCancelBut'), 'Deselect rows', style='margin-top:24px')
-   covis.but <- NULL; co.lab <- co.but.len <- '0px'
-   help.but <- actionButton(ns("covisHelp"), "Help", icon = icon('question-circle'), style='margin-top:24px')
-   msg.grp <- 'Cell group labels obtained from annotation labels, marker genes, etc.'
-   msg.plot <- 'Embedding plot of the single-cell data.'
-   msg.meta <- as.character(HTML(msg.meta.ann))
-   if ('auto' %in% sce.upl$method) { 
-     covis.but <- actionButton(ns('covisBut'), 'Co-visualizing', style=run.top)
-     co.lab <- '110px'; co.but.len <- '111px'
-     msg.grp <- 'Tissue labels assigned to cells as group labels through co-clustering.'
-     msg.plot <- 'Embedding plot of bulk and single-cell data after co-clustering.'
-     msg.meta <- paste0(as.character(HTML(paste0(msg.meta.coclus, "<br/>"))), as.character(a(href='html/shm_shiny_manual.html#coclus', target='blank', 'More.')))
-   }
-   lis <- list(
-     fluidRow(splitLayout(cellWidths=c('10px', '150px', '1px', '135px', '1px', '160px', '1px', '112px', '1px', co.lab, '1px', co.but.len, '1px', '71px'), '', 
-     dimMeth, '', uiOutput(ns('samGrp')), '', row.but, '', row.cancel.but, '', uiOutput(ns('coclus')), '', covis.but, '', help.but
-   )), # div(style='margin-top:10px'),
-     bsTooltip(ns('samGrp'), title = msg.grp, placement = "top", trigger = "hover"),
-     bsTooltip(ns('scellRowBut'), title = 'Click this button to visualize selected cells in the table.', placement = "top", trigger = "hover"),
-     bsTooltip(ns('coclus'), title = 'Show all or a certain cluster (may contain only cells or cells and tissues)', placement = "top", trigger = "hover"),
-     fluidRow(splitLayout(cellWidths=c('1%', '30%', '1%', '70%'), '',
-     plotOutput(ns('dimPlot')), '', div(dataTableOutput(ns('scellCdat'))) %>% spsComps::bsTooltip(title=msg.meta, placement='left', html=TRUE, click_inside=TRUE)
-     )),
-     bsTooltip(ns('dimPlot'), title = msg.plot, placement = "top", trigger = "hover")
-     # bsTooltip(ns('scellCdat'), title = msg.meta, placement = "left", trigger = "hover")
-    ); cat('Done! \n')
-   if (section!='scell') dataTableOutput(ns('scellCdat')) else lis 
-  })
   sfBy <- reactiveValues(); but.covis <- reactiveValues()
-  observe({ sfBy$val <- input$covisGrp })
+  observe({ sfBy$val <- grp$v })
   observe({ but.covis$v <- input$covisBut })
   onBookmark(function(state) { state })
   return(list(covisGrp=sfBy, but.covis=but.covis))

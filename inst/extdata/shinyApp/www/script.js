@@ -3,12 +3,13 @@ function scrollBott() {
 }
 
 function setipt(id, value) {
-  Shiny.onInputChange(id, value)
+  Shiny.setInputValue(id, value)
+  // Shiny.onInputChange(id, value)
 }
 
 $(function() {
   // Remove left side menu.
-  setTimeout(function(){ $(".content-wrapper").prop('style', 'min-height:862px; overflow-y:auto; margin-left:0px !important') }, 1000)
+  setTimeout(function(){ $(".content-wrapper").prop('style', 'min-height:862px; overflow-y:auto; margin-left:0px !important') }, 2000)
   // Place title on the right of dashboard header. 
   // $("header").find("nav").append('<span class="mainTitle" style="color:black;font-weight:bold;font-size:18px">spatialHeatmap Shiny App</span>')  
   Shiny.addCustomMessageHandler('background-color', function(color) {

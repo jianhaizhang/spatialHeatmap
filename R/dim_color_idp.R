@@ -27,10 +27,10 @@
 #' @importFrom ggplot2 layer_data ggplot geom_point theme_classic theme element_text element_blank labs scale_color_manual scale_shape_manual margin guide_legend element_rect
 #' @importFrom stats setNames
 
-dim_color_idp <- function(sce=NULL, row.sel=NULL, covis.type=NULL, targ=NULL, ID, gene, geneV, cols, profile, tar.cell=NULL, tar.bulk=NULL, con.na.cell, gg.dim, gg.shm.all, grob.shm.all, col.shm.all, gg.lgd.all, col.lgd.all, grob.lgd.all, cell.group, lis.match=NULL, sub.title.size=11, dim.lgd.pos='bottom', dim.lgd.nrow=2, dim.lgd.key.size=4, dim.lgd.text.size=13, dim.axis.font.size=10, alpha.pt=0.8, shape=NULL, lgd.plot.margin=margin(t=0.01, r=0.01, b=0.01, l=0.01, unit="npc")) {
-  # save(sce, row.sel, covis.type, targ, ID, gene, geneV, cols, profile, tar.cell, tar.bulk, con.na.cell, gg.dim, gg.shm.all, grob.shm.all, col.shm.all, gg.lgd.all, col.lgd.all, grob.lgd.all, cell.group, lis.match, sub.title.size, dim.lgd.pos, dim.lgd.nrow, dim.lgd.key.size, dim.lgd.text.size, alpha.pt, shape, dim.axis.font.size, lgd.plot.margin, file='dim.color.idp.arg')
+dim_color_idp <- function(sce=NULL, row.sel=NULL, covis.type=NULL, targ=NULL, ID, gene, geneV, cols, profile, tar.cell=NULL, tar.bulk=NULL, con.na.cell, gg.dim, gg.shm.all, grob.shm.all, col.shm.all, gg.lgd.all, col.lgd.all, grob.lgd.all, cell.group, lis.match=NULL, sub.title.size=11, dim.lgd.pos='bottom', dim.lgd.nrow=2, dim.lgd.key.size=4, dim.lgd.text.size=13, dim.axis.font.size=10, alpha.pt=0.8, shape=NULL) {
+  # save(sce, row.sel, covis.type, targ, ID, gene, geneV, cols, profile, tar.cell, tar.bulk, con.na.cell, gg.dim, gg.shm.all, grob.shm.all, col.shm.all, gg.lgd.all, col.lgd.all, grob.lgd.all, cell.group, lis.match, sub.title.size, dim.lgd.pos, dim.lgd.nrow, dim.lgd.key.size, dim.lgd.text.size, alpha.pt, shape, dim.axis.font.size, file='dim.color.idp.arg')
   x <- y <- fill <- feature <- NULL
-  if (is.null(lgd.plot.margin)) lgd.plot.margin <- margin(t=0.01, r=0.01, b=0.01, l=0.01, unit="npc")
+  # if (is.null(lgd.plot.margin)) lgd.plot.margin <- margin(t=0.01, r=0.01, b=0.01, l=0.01, unit="npc")
   auto <- covis.type %in% c('toBulkAuto', 'toCellAuto')
   if (auto) {
     cdat <- colData(sce)
@@ -54,10 +54,10 @@ dim_color_idp <- function(sce=NULL, row.sel=NULL, covis.type=NULL, targ=NULL, ID
      # Extract data from ggplots.
      gg.dat <- gg_dat(gg.dim0[[1]]); lis <- list(gg.dat=gg.dat)
      # Transfer colors from SHM to dim plots.
-     if (!is.null(tar.bulk)|auto) { 
-       dim.col <- col_dim_tocell(gg.dim0, gcol.all=col.lgd.all, lis.match) 
-     } else if (!is.null(tar.cell)) { 
-       dim.col <- col_dim_toblk(gg.dim0, gcol.all=col.lgd.all, lis.match)
+     if (!is.null(tar.bulk)|auto) {
+       dim.col <- col_dim_tocell(gg.dim=gg.dim0, gcol.all=col.lgd.all, lis.match=lis.match) 
+     } else if (!is.null(tar.cell)) {
+       dim.col <- col_dim_toblk(gg.dim=gg.dim0, gcol.all=col.lgd.all, lis.match=lis.match)
      }
      # Non-target cells have color gray80.
      cell.all <- unique(gg.dat$feature)
@@ -76,7 +76,7 @@ dim_color_idp <- function(sce=NULL, row.sel=NULL, covis.type=NULL, targ=NULL, ID
      if (length(non.tar) > 0) br <- tar.cells else br <- cell.all
      tit <- NULL; if (TRUE %in% con.na.cell) tit <- vars.cell[i] 
      # Re-plot dimensionlaity plot.
-     dim.lgd <- ggplot(gg.dat, aes(x=x, y=y, text=gg.dat$feature)) + geom_point(size=2, alpha=alpha.pt, aes(colour=feature, shape=feature)) + theme_classic() + theme(plot.title=element_text(hjust=0.5, size=sub.title.size), legend.position=dim.lgd.pos, legend.text=element_text(size=dim.lgd.text.size), legend.margin = margin(t=-0.02, l=0.05, r=0.1, unit='npc'), plot.margin = lgd.plot.margin, legend.background = element_rect(fill='transparent'), axis.text = element_blank(), axis.ticks = element_blank(), axis.title=element_text(size=dim.axis.font.size)) + scale_color_manual(values=dim.col.all, breaks=br, guide=guide_legend(title=NULL, nrow=dim.lgd.nrow)) + scale_shape_manual(values=sp, breaks=br, guide=guide_legend(title=NULL, nrow=dim.lgd.nrow, override.aes = list(size=dim.lgd.key.size))) + labs(title=tit, x=gg.dim0[[1]]$labels$x, y=gg.dim0[[1]]$labels$y, colour=cell.group, shape=cell.group) 
+     dim.lgd <- ggplot(gg.dat, aes(x=x, y=y, text=gg.dat$feature)) + geom_point(size=2, alpha=alpha.pt, aes(colour=feature, shape=feature)) + theme_classic() + theme(plot.title=element_text(hjust=0.5, size=sub.title.size), legend.position=dim.lgd.pos, legend.text=element_text(size=dim.lgd.text.size), legend.margin = margin(t=-0.02, l=0.05, r=0.1, unit='npc'), aspect.ratio=1, legend.background = element_rect(fill='transparent'), axis.text = element_blank(), axis.ticks = element_blank(), axis.title=element_text(size=dim.axis.font.size)) + scale_color_manual(values=dim.col.all, breaks=br, guide=guide_legend(title=NULL, nrow=dim.lgd.nrow)) + scale_shape_manual(values=sp, breaks=br, guide=guide_legend(title=NULL, nrow=dim.lgd.nrow, override.aes = list(size=dim.lgd.key.size))) + labs(title=tit, x=gg.dim0[[1]]$labels$x, y=gg.dim0[[1]]$labels$y, colour=cell.group, shape=cell.group) 
      lis <- c(lis, list(sp=sp), list(dim.lgd=dim.lgd)); lis
    }); names(dim.lgd.lis) <- names(gg.dim)
   # Dim plots per ID per variable.
@@ -103,7 +103,7 @@ dim_color_idp <- function(sce=NULL, row.sel=NULL, covis.type=NULL, targ=NULL, ID
       if (length(non.tar) > 0) br <- tar.cells else br <- cell.all
       br  <- unlist(ifelse(length(non.tar) > 0, list(tar.cells), list(cell.all)))
       # Re-plot dimensionlaity plot.
-      gg <- ggplot(gg.dat, aes(x=x, y=y, text=gg.dat$feature)) + geom_point(size=2, alpha=alpha.pt, colour=gg.dat$fill, aes(colour=feature, shape=feature)) + theme_classic() + theme(plot.title=element_text(hjust=0.5, size=sub.title.size), axis.text = element_blank(), axis.ticks = element_blank(), legend.position=dim.lgd.pos, legend.text=element_text(size=dim.lgd.text.size), legend.margin = margin(t=-0.02, l=0.05, r=0.1, unit='npc'), legend.background = element_rect(fill='transparent'), axis.title=element_text(size=dim.axis.font.size)) + labs(title=tit, x=dim.lgd$labels$x, y=dim.lgd$labels$y) + scale_shape_manual(values=sp, breaks=br, guide=guide_legend(title=NULL, nrow=dim.lgd.nrow, override.aes = list(size=dim.lgd.key.size))) + guides(colour="none", shape='none') 
+      gg <- ggplot(gg.dat, aes(x=x, y=y, text=gg.dat$feature)) + geom_point(size=2, alpha=alpha.pt, colour=gg.dat$fill, aes(colour=feature, shape=feature)) + theme_classic() + theme(plot.title=element_text(hjust=0.5, size=sub.title.size), axis.text = element_blank(), axis.ticks = element_blank(), legend.position=dim.lgd.pos, legend.text=element_text(size=dim.lgd.text.size), legend.margin = margin(t=-0.02, l=0.05, r=0.1, unit='npc'), legend.background = element_rect(fill='transparent'), axis.title=element_text(size=dim.axis.font.size), aspect.ratio=1) + labs(title=tit, x=dim.lgd$labels$x, y=dim.lgd$labels$y) + scale_shape_manual(values=sp, breaks=br, guide=guide_legend(title=NULL, nrow=dim.lgd.nrow, override.aes = list(size=dim.lgd.key.size))) + guides(colour="none", shape='none') 
     gg.dim.all <- c(gg.dim.all, setNames(list(gg), paste0('dim_', id, '_', vari, '_1')) )
     } 
   }

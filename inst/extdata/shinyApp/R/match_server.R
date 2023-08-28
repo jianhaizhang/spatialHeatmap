@@ -11,7 +11,8 @@ match_server <- function(id, sam, tab, upl.mod.lis, covis.man=NULL, col.idp=FALS
   # renderUI: if the tab/page containing uiOutput('svg') is not active/clicked, the input$svg on the server side is NULL. To avoid this, the ui side should have "selectInput".
   output$svgs <- renderUI({
     # When customCovisData is selected, matching is disabled in SHM.
-    if(id!='rematchCell' & grepl(na.sgl, ipt$fileIn)) return()
+    fileIn <- ipt$fileIn
+    if(id!='rematchCell' & grepl(na.sgl, fileIn)| dat.no %in% fileIn) return()
     ns <- session$ns; # nas <- c(names(cfg$pa.svg.reg), names(cfg$svg.def))
     cho <- cfg$na.def; sel <- ipt$fileIn
     cho <- cho[cho %in% sel]
@@ -24,13 +25,15 @@ match_server <- function(id, sam, tab, upl.mod.lis, covis.man=NULL, col.idp=FALS
 
   output$match.but <- renderUI({
     # When customCovisData is selected, matching is disabled in SHM.
-    if(id!='rematchCell' & grepl(na.sgl, ipt$fileIn)) return()
+    fileIn <- ipt$fileIn
+    if(id!='rematchCell' & grepl(na.sgl, fileIn)|dat.no %in% fileIn) return()
     ns <- session$ns
     actionButton(ns("match"), 'Run', icon=icon("sync"), style=run.top)
   })
   output$match.reset <- renderUI({
     # When customCovisData is selected, matching is disabled in SHM.
-    if(id!='rematchCell' & grepl(na.sgl, ipt$fileIn)) return()
+    fileIn <- ipt$fileIn
+    if(id!='rematchCell' & grepl(na.sgl, ipt$fileIn)|dat.no %in% fileIn) return()
     ns <- session$ns
     actionButton(ns("matReset"), 'Reset', icon=icon("sync"))
   })
@@ -137,9 +140,9 @@ match_server <- function(id, sam, tab, upl.mod.lis, covis.man=NULL, col.idp=FALS
 
   output$ft.match <- renderUI({
     cat('Re-matching: preparing interface of data/aSVG features ... \n')
-    input$matReset
+    input$matReset; fileIn <- ipt$fileIn
     # When customCovisData is selected, matching is disabled in SHM.
-    if(id!='rematchCell' & grepl(na.sgl, ipt$fileIn)) return()
+    if(id!='rematchCell' & grepl(na.sgl, fileIn)|dat.no %in% fileIn) return()
     ns <- session$ns; to.ft <- ft.reorder$ft.svg
     from.ft <- ft.reorder$ft.dat
     if (is.null(to.ft)|is.null(from.ft)) return()

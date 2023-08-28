@@ -4,14 +4,14 @@
 \alias{save_cache}
 \title{Save R Objects in Cache}
 \usage{
-save_cache(dir = NULL, overwrite = TRUE, ...)
+save_cache(dir = NULL, overwrite = TRUE, obj, na = NULL)
 }
 \arguments{
 \item{dir}{The directory path to save the cached data. Default is NULL and the cached data is stored in \code{~/.cache/shm}.}
 
 \item{overwrite}{Logical, TRUE or FALSE. Default is TRUE and data in the cache with the same name of the object in \code{...} will be overwritten.}
 
-\item{...}{A single R object to be cached.}
+\item{obj, na}{A single R object (`obj`) to be cached into the file named `na`.}
 }
 \value{
 The directory path of the cache.

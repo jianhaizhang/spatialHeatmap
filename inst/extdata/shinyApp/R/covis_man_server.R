@@ -54,7 +54,7 @@ covis_man_server <- function(id, sce.upl, upl.mod.lis, shm.mod.lis, tab, covis.m
     incProgress(0.3, detail="please wait ...")
     if (!is.null(blk)) {
       blk.aggr <- aggr_rep(data=blk, assay.na='logcounts', sam.factor='sample', aggr='mean')
-      blk.aggr$spFeature <- NULL
+      # blk.aggr$spFeature <- NULL
       blk.fil <- filter_data(data=blk.aggr, pOA=c(filBlkP, filBlkA), CV=c(filBlkCV1, filBlkCV2), verbose=FALSE)
     } else blk.fil <- NULL 
     incProgress(0.3, detail="please wait ...")
@@ -82,11 +82,23 @@ covis_man_server <- function(id, sce.upl, upl.mod.lis, shm.mod.lis, tab, covis.m
     validate(need(round(minRank)==minRank & round(maxRank)==maxRank & maxRank > minRank, ''))
     withProgress(message="Reducing dimensions: ", value=0, {
     incProgress(0.3, detail="please wait ...")
-    dimred <- reduce_dim(sce = cell, min.dim = minRank, max.dim = maxRank)
+    dimred <- reduce_dim_m(sce = cell, min.dim = minRank, max.dim = maxRank)
     incProgress(0.3, detail="please wait ...")
     cat('Done! \n'); return(dimred)
     })
-  }); observe({ covis.man$dimred <- dimred() })
+  })
+  observe({ 
+    bulk <- covis.man$bulk; cell <- dimred()
+    # Keep colData columns consistent between bulk and cell.
+    if (!is.null(bulk)) {
+      cdat.b <- colData(bulk); cdat.c <- colData(cell)
+      int <- intersect(colnames(cdat.b), colnames(cdat.c))
+      lgc.na <- length(int) > 0
+      if (!lgc.na) showModal(modal(msg = 'No common column names detected between "colData" slots of bulk and single-cell data!')); req(lgc.na)
+      colData(bulk) <- cdat.b[, int]; colData(cell) <- cdat.c[, int]
+      covis.man$bulk <- bulk; covis.man$dimred <- cell
+    } else covis.man$dimred <- cell 
+  })
  
    observeEvent(covis.man$dimred, ignoreInit=FALSE, {
      updateTabsetPanel(session, inputId="tabSetCell", selected='dimred')

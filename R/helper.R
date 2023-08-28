@@ -1,3 +1,28 @@
+#' Combining two SE or SCE objects.
+#' 
+
+#' @keywords Internal
+#' @noRd
+
+#' @author Jianhai Zhang \email{jzhan07@@ucr.edu} \cr Dr. Thomas Girke \email{thomas.girke@@ucr.edu}
+
+#' @importFrom SummarizedExperiment colData colData<- 
+
+cbind_se <- function(x, y) {
+  intr <- intersect(rownames(x), rownames(y))
+  if (length(intr)==0) {
+    msg <- 'When combining two SE or SCE objects, no common rownames are detected!'
+    return(msg); stop(msg) 
+  }; cdatx <- colData(x); cdaty <- colData(y)
+  int <- intersect(colnames(cdatx), colnames(cdaty))
+  if (length(int)==0) {
+    message('When combining two SE or SCE objects, the "colData" slots do not have common columns!')
+    colData(x) <- colData(y) <- NULL
+  }; colData(x) <- cdatx[, int]; colData(y) <- cdaty[, int]
+  pkg <- check_pkg('BiocGenerics'); if (is(pkg, 'character')) stop(pkg)
+  return(BiocGenerics::cbind(x[intr,], y[intr, ]))
+}
+
 #' Scaling all rows in a data frame as a whole
 #'
 #' @param dat A data frame or matrix of of numeric data. 
@@ -93,7 +118,13 @@ check_obj <- function(x) {
   }
   if (!is(x, 'list')) return(check0(x))
   # As long as one element is one of NA, NULL, FALSE, or length(x)==0, FALSE is return for the whole list.
-  if (is(x, 'list')) all(unlist(lapply(x, function(i) check0(i))))
+  if (is(x, 'list')) {
+    if (length(x)==0) return(FALSE) 
+    all.lis <- unlist(lapply(x, function(i) check0(i)))
+    # all(NULL) is TRUE.
+    if (length(all.lis)==0) return(FALSE)
+    all(all.lis)
+  }
 }
 
 #' Show popup window

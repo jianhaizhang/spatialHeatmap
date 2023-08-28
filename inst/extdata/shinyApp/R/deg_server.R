@@ -13,13 +13,15 @@ deg_server <- function(id, sch, lis.url, url.id, ids, upl.mod.lis, dat.mod.lis, 
     }
   })  
   # dat.deg.mod.lis <- data_server('datDEG', sch, lis.url, ids, deg=TRUE, upl.mod.lis)
+  m.array <- reactiveValues()
   dat <- reactive({
     cat('DEG: SummarizedExperiment, features, variables ... \n')
-    datIn <- datIn(); if (is.null(datIn)|grepl(na.sgl, ipt$fileIn)) return()
+    fileIn <- ipt$fileIn; datIn <- datIn()
+    if (is.null(datIn)|grepl(na.sgl, ipt$fileIn)|dat.no %in% fileIn) return()
     se.rep <- datIn$se.rep; df.rep <- as.matrix(assay(se.rep))
     int <- all(round(df.rep) == df.rep)
-    #show_mod(int, 'Only count matrix is accepted!', title='Spatial Enrichment'); 
-    req(int)
+    if (int) m.array$v <- FALSE else m.array$v <- TRUE
+    #show_mod(int, 'Only count matrix is accepted!', title='Spatial Enrichment'); req(int)
     rows <- nrow(se.rep) >= 50
     show_mod(rows, 'Make sure count matrix includes at least 10 biomolecules!'); req(rows)
     cna <- colnames(se.rep)
@@ -29,6 +31,16 @@ deg_server <- function(id, sch, lis.url, url.id, ids, upl.mod.lis, dat.mod.lis, 
     show_mod(sf.var.lgc, 'At least 2 spatial features and 2 variables are required!!'); req(sf.var.lgc)
     cat('Done! \n')
     return(list(se=se.rep, sams=sams, cons=cons))
+  })
+  observeEvent(m.array$v, {
+    m.array <- m.array$v; req(!is.null(m.array))
+    if (TRUE %in% m.array) { 
+      updateSelectInput(session, 'norMeth', choices=c('None'='none'), selected='none')
+      updateSelectInput(session, 'meth', choices=( 'limma'='limma'), selected=c('limma'))
+    } else if (FALSE %in% m.array) {
+      updateSelectInput(session, 'norMeth', choices=c("CNF-TMM"='TMM', "CNF-TMMwsp"='TMMwsp', "CNF-RLE"='RLE', "CNF-upperquartile"='upperquartile', 'None'='none'), selected='TMM')
+      updateSelectInput(session, 'meth', choices=c('edgeR'='edgeR', 'limma-voom'='limma.voom', 'limma'='limma', 'DESeq2'='DESeq2', 'distinct'='distinct'), selected=c('edgeR'))
+    }
   })
   fil.par <- reactiveValues() 
   observeEvent(list(input$run, dat()), {  
@@ -67,7 +79,8 @@ deg_server <- function(id, sch, lis.url, url.id, ids, upl.mod.lis, dat.mod.lis, 
     cat('DEG: normalizing data ... \n')
     se.fil <- se.fil(); norMeth <- input$norMeth
     if (!check_obj(list(se.fil, norMeth))) req('')
-    if ('none' %in% norMeth) return(se.fil$se)
+    m.array <- m.array$v; req(!is.null(m.array))
+    if ('none' %in% norMeth|TRUE %in% m.array) { message('Done!'); return(se.fil$se) }
     se.nor <- norm_data(data=se.fil$se, norm.fun='CNF', par.list=list(method=norMeth), log2.trans=TRUE)
     cat('Done! \n'); se.nor
   })
@@ -94,7 +107,6 @@ deg_server <- function(id, sch, lis.url, url.id, ids, upl.mod.lis, dat.mod.lis, 
     if ('all' %in% con) con <- unique(se.fil$cons)
     if (comBy=='feature') fct <- 'ft' else if (comBy=='variable') fct <- 'var' else if (comBy=='feature__variable') fct <- 'ft.var'
     se <- se.fil$se
-# save(se, sam, con, fct, file='sscff')
     se.sub <- sf_var(data=se.fil$se, feature='spFeature', ft.sel=sam, variable='variable', var.sel=con, com.by=fct)
     if (is(se.sub, 'character')) return()
     # Replicates >= 2.
@@ -151,11 +163,13 @@ deg_server <- function(id, sch, lis.url, url.id, ids, upl.mod.lis, dat.mod.lis, 
     d.tab <- datatable(vs, selection='none', extensions='Scroller', plugins = "ellipsis", class='cell-border strip hover', options = list(dom = 't', scrollX = TRUE))
     cat('Done! \n'); d.tab
   })
+  # edg() is used in "res <- eventReactive(list(edg(), dsq(), lim(), dis(), se.nor()))", so "return()" should be used rather than "req". The latter can be used only in linear (step-by-step) process. If the blocked step is used in another active process, "req" should be avoided. 
   edg0 <- reactive({
     cat('edgeR all ... \n'); se.sub <- se.sub()
-    norMeth <- input$norMeth
-    if (!check_obj(list(se.sub, norMeth))) return()
-    if ('none' %in% norMeth) req('')
+    norMeth <- input$norMeth; m.array <- m.array$v
+    meth <- input$meth; if (is.null(m.array)) return()
+    if (!check_obj(list(se.sub, norMeth, meth))) return()
+    if ('none' %in% norMeth | !'edgeR' %in% meth| TRUE %in% m.array) return()
     withProgress(message="edgeR: ", value=0, {
       incProgress(0.5, detail="in progress ...")
       edg <- edgeR(se=se.sub, method.norm=norMeth, com.factor='com.by', method.adjust='BH', return.all=TRUE)
@@ -165,7 +179,7 @@ deg_server <- function(id, sch, lis.url, url.id, ids, upl.mod.lis, dat.mod.lis, 
   })
   edg <- eventReactive(input$run, {
     cat('edgeR log2/fc ... \n')
-    if (!'edgeR' %in% input$meth) req('')
+    # if (!'edgeR' %in% input$meth) return()
     se.sub <- se.sub(); fc <- input$ssg.fc; fdr <- input$ssg.fdr
     edg0 <- edg0(); outlier <- input$outlier
     if (!check_obj(list(se.sub, fc, fdr, edg0, outlier))) return()
@@ -176,8 +190,10 @@ deg_server <- function(id, sch, lis.url, url.id, ids, upl.mod.lis, dat.mod.lis, 
 
   dsq0 <- reactive({
     cat('DESeq2 all ... \n'); se.sub <- se.sub()
-    norMeth <- input$norMeth
-    if (!check_obj(list(se.sub, norMeth))) return() 
+    norMeth <- input$norMeth; m.array <- m.array$v
+    meth <- input$meth
+    if (is.null(m.array)) return()
+    if (!check_obj(list(se.sub, norMeth, 'DESeq2' %in% meth, FALSE %in% m.array))) return() 
     withProgress(message="DESeq2: ", value=0, {
     incProgress(0.5, detail="in progress ...")
     dsq <- deseq2(se=se.sub, com.factor='com.by', method.adjust='BH', return.all=TRUE); cat('Done! \n')
@@ -187,7 +203,7 @@ deg_server <- function(id, sch, lis.url, url.id, ids, upl.mod.lis, dat.mod.lis, 
   }) 
   dsq <- eventReactive(input$run, {
     cat('DESeq2 log2/fc ... \n')
-    if (!'DESeq2' %in% input$meth) return()
+    # if (!'DESeq2' %in% input$meth) return()
     se.sub <- se.sub(); fc <- input$ssg.fc; fdr <- input$ssg.fdr
     dsq0 <- dsq0(); outlier <- input$outlier
     if (!check_obj(list(se.sub, fc, fdr, dsq0, outlier))) return()
@@ -198,31 +214,34 @@ deg_server <- function(id, sch, lis.url, url.id, ids, upl.mod.lis, dat.mod.lis, 
 
   lim0 <- reactive({
     cat('limma all ... \n'); se.sub <- se.sub()
-    norMeth <- input$norMeth
-    if (!check_obj(list(se.sub, norMeth))) return() 
-    if ('none' %in% norMeth) req('')
+    norMeth <- input$norMeth; m.array <- m.array$v
+    meth <- input$meth
+    if (!check_obj(list(se.sub, norMeth, meth, !is.null(m.array)))) return() 
+    if (('none' %in% norMeth & FALSE %in% m.array)|(!'none' %in% norMeth & TRUE %in% m.array)|!meth %in% c('limma.voom', 'limma')) return()
     withProgress(message="limma: ", value=0, {
     incProgress(0.5, detail="in progress ...") 
-    lim <- limma(se=se.sub, method.norm=norMeth, m.array=FALSE, com.factor='com.by', method.adjust='BH', return.all=TRUE)
+    lim <- limma(se=se.sub, method.norm=norMeth, m.array=m.array, com.factor='com.by', method.adjust='BH', return.all=TRUE)
     incProgress(0.4, detail="in progress ...")
     cat('Done! \n'); lim
     })
   })
   lim <- eventReactive(input$run, {
     cat('limma log2/fc ... \n')
-    if (!'limma' %in% input$meth) return()
+    meth <- input$meth
     se.sub <- se.sub(); fc <- input$ssg.fc; fdr <- input$ssg.fdr
     lim0 <- lim0(); outlier <- input$outlier
     if (!check_obj(list(se.sub, fc, fdr, lim0, outlier))) return()
+    if (!meth %in% c('limma.voom', 'limma')) return()
     sam.sub <- sort(unique(se.sub$com.by))
-    up.dn <- up_dn(sam.all=sam.sub, df.all=lim0, log.fc=abs(fc), fdr=fdr, log.na='logFC', fdr.na='adj.P.Val', method='limma', outliers=outlier)
+    up.dn <- up_dn(sam.all=sam.sub, df.all=lim0, log.fc=abs(fc), fdr=fdr, log.na='logFC', fdr.na='adj.P.Val', method=meth, outliers=outlier)
     cat('Done! \n'); up.dn
   }); observe({ lim() })
   dis0 <- reactive({
     cat('distinct all ... \n'); se.sub <- se.sub()
-    norMeth <- input$norMeth
-    if (!check_obj(list(se.sub, norMeth))) return()
-    if ('none' %in% norMeth) req('')
+    norMeth <- input$norMeth; m.array <- m.array$v
+    meth <- input$meth
+    if (!check_obj(list(se.sub, norMeth, meth, !is.null(m.array)))) return()
+    if ('none' %in% norMeth | !'distinct' %in% meth | TRUE %in% m.array) return()
     withProgress(message="distinct: ", value=0, {
       incProgress(0.5, detail="this method takes longer time ...")
       dis <- distt(se.sub, norm.fun='CNF', par.list=list(method=norMeth), com.factor='com.by', return.all=TRUE)
@@ -232,10 +251,11 @@ deg_server <- function(id, sch, lis.url, url.id, ids, upl.mod.lis, dat.mod.lis, 
   })
   dis <- eventReactive(input$run, {
     cat('distinct log2/fc ... \n')
-    if (!'distinct' %in% input$meth) return()
+    m.array <- m.array$v
     se.sub <- se.sub(); fc <- input$ssg.fc; fdr <- input$ssg.fdr
     dis0 <- dis0(); outlier <- input$outlier
-    if (!check_obj(list(se.sub, fc, fdr, dis0, outlier))) return()
+    if (!check_obj(list(se.sub, fc, fdr, dis0, outlier, !is.null(m.array)))) return()
+    if (TRUE %in% m.array) return()
     sam.sub <- sort(unique(se.sub$com.by))
     up.dn <- up_dn(sam.all=sam.sub, df.all=dis0, log.fc=abs(fc), fdr=fdr, log.na='log2FC', fdr.na='FDR', method='distinct', outliers=outlier)
     cat('Done! \n'); up.dn
@@ -246,12 +266,12 @@ deg_server <- function(id, sch, lis.url, url.id, ids, upl.mod.lis, dat.mod.lis, 
     if (!check_obj(list(meth))) return()
     if ('edgeR' %in% meth) up.dn <- edg()
     if ('DESeq2' %in% meth) up.dn <- dsq()
-    if ('limma' %in% meth) up.dn <- lim()
+    if (meth %in% c('limma.voom', 'limma')) up.dn <- lim()
     if ('distinct' %in% meth) up.dn <- dis()
     if (!check_obj(list(se.nor, up.dn, se.sub))) return()
     up.dn.all <- sum(unlist(lapply(lapply(up.dn, function(i) do.call('rbind', i)), function(i) nrow(i))))
     if (up.dn.all==0) {
-      msg <- 'No enriched/depleted biomolecules detected!'
+      msg <- 'No enriched/depleted biomolecules detected at the current settings!'
       showModal(modal(msg = msg)); return()
     }
     se.nor.sub <- se.nor[, colnames(se.sub)]
@@ -290,21 +310,26 @@ deg_server <- function(id, sch, lis.url, url.id, ids, upl.mod.lis, dat.mod.lis, 
     }
     ovl_enrich(res, type=enrType, plot='venn')
   })
-  
+  # query.res <- reactive(list(ipt$fileIn), { print(list('res1')); NULL }) 
   query.res <- eventReactive(list(input$query, res()), {
     query <- input$query; meth <- input$meth; res <- res()
     if (!check_obj(list(query, meth, res))) return()
     q.res <- query_enrich(res=res, query=query)
-    if (is.character(q.res)) {
-      showModal(modal(msg = msg)) 
-      validate(need(try(!is.character(q.res))), '')
+    res.lgc <- is.character(q.res)
+    if (res.lgc) {
+      showModal(modal(msg = q.res)); req(!res.lgc)
     }; q.res
   }) 
 
   observeEvent(res(), ignoreInit=FALSE, ignoreNULL=TRUE, {
     if (is.null(res())) return()
-    updateNavbarPage (session, "degAll", selected='ovl')
+    updateTabsetPanel(session, "degAll", selected='ovl')
   })
+  observeEvent(ipt$fileIn, ignoreInit=FALSE, ignoreNULL=TRUE, {
+    fileIn <- ipt$fileIn; req(check_obj(fileIn))
+    updateTabsetPanel(session, "degAll", selected='set')
+  })
+
   dt.deg <- reactive({
     cat('DEG data frame ... \n')
     dat <- dat(); query.res <- query.res()
@@ -317,7 +342,8 @@ deg_server <- function(id, sch, lis.url, url.id, ids, upl.mod.lis, dat.mod.lis, 
     df.fil <- round(assay(se.nor), 2)
     # Switch data sets.
     if (!all(na.deg %in% rownames(df.fil))) req('')
-    if (ncol(df.met) > 0) df.deg <- cbind.data.frame(df.met[na.deg, , drop = FALSE], df.deg, stringsAsFactors=FALSE)
+    cna.met <- colnames(df.met) 
+    if (ncol(df.met) > 0) df.deg <- cbind.data.frame(df.met[na.deg, c(grep('^metadata$', cna.met), grep('^link$', cna.met)), drop = FALSE], df.deg, stringsAsFactors=FALSE)
     df.deg <- cbind.data.frame(df.deg, df.fil[na.deg, colnames(se.sub), drop = FALSE], stringsAsFactors=FALSE)
     cat('Done! \n'); df.deg 
   })
@@ -332,7 +358,7 @@ deg_server <- function(id, sch, lis.url, url.id, ids, upl.mod.lis, dat.mod.lis, 
     col1 <- list(list(targets=c(1), render=DT::JS("$.fn.dataTable.render.ellipsis(40, false)")))
     # In case no metadata column.
     if (colnames(dt.deg)[1]!='metadata') col1 <- NULL
-    d.tab <- datatable(dt.deg, selection=list(mode="multiple", target="row"), escape=FALSE, filter="top", extensions='Scroller', plugins = "ellipsis",
+    d.tab <- datatable(dt.deg, selection='none', escape=FALSE, filter="top", extensions='Scroller', plugins = "ellipsis",
     options=list(pageLength=5, lengthMenu=c(5, 15, 20), autoWidth=FALSE, scrollCollapse=TRUE, deferRender=TRUE, scrollX=TRUE, scrollY=300, scroller=TRUE, searchHighlight=TRUE, search=list(regex=TRUE, smart=FALSE, caseInsensitive=TRUE), searching=TRUE, columnDefs=col1, fixedColumns = list(leftColumns=2)), 
     class='cell-border strip hover') %>% formatStyle(0, backgroundColor="orange", cursor='pointer'); cat('Done! \n')
     d.tab
@@ -359,7 +385,7 @@ deg_server <- function(id, sch, lis.url, url.id, ids, upl.mod.lis, dat.mod.lis, 
   #  if (!check_obj(list(dat, dat.deg))) req('')
   #  deg.rna <- rownames(dat.deg)
   #  dat.mod.lis.deg$se.scl <- reactive({ dat$se[deg.rna, ] })
-  #  sch.mod.lis$val <- search_server('deg', ids, cfg, lis.url, url.id, dat.mod.lis.deg)
+  #  sch.mod.lis$val <- search_server('deg', ids, cfg, lis.url, dat.mod.lis.deg)
   #  cat('Done! \n')
   #})
   #but.sgl <- reactive({ sch.mod.lis$val$ids$but.sgl })

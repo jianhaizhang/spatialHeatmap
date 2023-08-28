@@ -34,7 +34,7 @@
 #' Hadley Wickham, Jim Hester and Jeroen Ooms (2019). xml2: Parse XML. R package version 1.2.2. https://CRAN.R-project.org/package=xml2 
 
 #' @export
-#' @importFrom xml2 write_html xml_unserialize 
+#' @importFrom xml2 write_xml xml_unserialize 
 
 write_svg <- function(input, out.dir) {
   ID <- condition <- feature <- index.sub <- NULL
@@ -62,7 +62,7 @@ write_svg <- function(input, out.dir) {
     # Output SVG file name.
     if (len.var) na <- paste0(i, '_', j, '_', svg.na)
     if (!len.var) na <- paste0(i, '_', svg.na)
-    write_html(xml_unserialize(svg.obj), file=file.path(out.dir, na)) 
+    write_xml(xml_unserialize(svg.obj), file=file.path(out.dir, na)) 
     df.new0 <- cbind(colorNew=df0$fill, df.att0, SVG=na)
     # Color output SVG file.
     update_feature(df.new=df.new0, dir=out.dir) 

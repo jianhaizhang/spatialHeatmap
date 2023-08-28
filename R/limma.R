@@ -96,7 +96,6 @@ limma <- function(se, m.array=FALSE, method.norm='TMM', com.factor, method.adjus
     # To store normalized counts in 'se' and set method.norm='none' is not right, since the 'norm.factors' are essentially used but they are 1 if method.norm='none'.
     y <- calcNormFactors(y, method=method.norm)
     v <- limma::voom(y, design, plot=FALSE); fit <- limma::lmFit(v, design)
-
   } else if (m.array==TRUE) fit <- limma::lmFit(expr, design) # Microarray data.
 
   # Contrast matrix.
@@ -106,10 +105,8 @@ limma <- function(se, m.array=FALSE, method.norm='TMM', com.factor, method.adjus
   fit1 <- limma::contrasts.fit(fit, con.mat); fit2  <- limma::eBayes(fit1)
 
   df.all <- data.frame(rm=rep(NA, nrow(expr))); for (i in seq_along(cna.con)) {
-
     top <- limma::topTable(fit2, coef=cna.con[i], number=Inf, p.value=1, adjust.method="BH", lfc=0, sort.by='none')
     colnames(top) <- paste0(cna.con1[i], '_', colnames(top)); df.all <- cbind(df.all, top)
-
   }; df.all <- df.all[, -1]
   if (return.all==TRUE) return(df.all)
   # Up and down DEGs.

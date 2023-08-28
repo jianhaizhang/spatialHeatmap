@@ -42,6 +42,7 @@ plot_meta(
   ft.trans = NULL,
   tis.trans = ft.trans,
   legend.r = 0,
+  lgd.plots.size = NULL,
   sub.title.size = 11,
   sub.title.vjust = 3,
   legend.plot = "all",
@@ -70,7 +71,6 @@ plot_meta(
   dim.lgd.key.size = 4,
   dim.lgd.text.size = 13,
   dim.axis.font.size = 8,
-  dim.lgd.plot.margin = NULL,
   dim.capt.size = 13,
   size.lab.pt = 5,
   hjust.lab.pt = 0.5,
@@ -86,7 +86,6 @@ plot_meta(
   line.width = 0.2,
   line.color = "grey70",
   relative.scale = NULL,
-  verbose = TRUE,
   out.dir = NULL,
   animation.scale = 1,
   selfcontained = FALSE,
@@ -97,6 +96,7 @@ plot_meta(
   framerate = 1,
   bar.width.vdo = 0.1,
   legend.value.vdo = NULL,
+  verbose = TRUE,
   ...
 )
 }
@@ -169,6 +169,8 @@ plot_meta(
 
 \item{legend.r}{A numeric (-1 to 1) to adjust the legend plot size.}
 
+\item{lgd.plots.size}{A vector of 2 or 3 numeric values that sum up between 0 and 1 (e.g., `c(0.5, 0.4)`), corresponding to the sizes of legend plots in the co-visualization plot. If there are 2 values, the first and second values correspond to the sizes of the SHM and embedding plots, respectively. If there are 3 values, the first, second, and third values correspond to the sizes of the SHM, single-cell SHM, and embedding plots, respectively.}
+
 \item{sub.title.size}{A numeric of the subtitle font size of each individual spatial heatmap. The default is 11.}
 
 \item{sub.title.vjust}{A numeric of vertical adjustment for subtitle. The default is \code{2}.}
@@ -225,8 +227,6 @@ plot_meta(
 
 \item{dim.axis.font.size}{The size of axis font of the embedding plot.}
 
-\item{dim.lgd.plot.margin}{The margin of dimension reduction plot in the legend plot, e.g. `margin(t=0.01, r=0.15, b=0.01, l=0.15, unit="npc")`.}
-
 \item{dim.capt.size}{The size of caption text in the dimension reduction plot in co-clustering (see \code{\link{cocluster}}). The default is \code{13}.}
 
 \item{size.lab.pt}{The size of point labels, applicable when \code{decon=TRUE}.}
@@ -253,8 +253,6 @@ plot_meta(
 
 \item{relative.scale}{A numeric to adjust the relative sizes between multiple aSVGs. Applicable only if multiple aSVGs are provided. Default is \code{NULL} and all aSVGs have the same size.}
 
-\item{verbose}{Logical. If `TRUE`, spatial features in data not colored in SHMs are printed to R console. Default is `TRUE`.}
-
 \item{out.dir}{The directory to save SHMs as interactive HTML files and videos. Default is `NULL`, and the HTML files and videos are not saved.}
 
 \item{animation.scale}{A numeric to scale the SHM size in the HTML files. The default is 1, and the height is 550px and the width is calculated according to the original aspect ratio in the aSVG file.}
@@ -276,6 +274,8 @@ placed in an adjacent directory.}
 \item{bar.width.vdo}{The color bar width (0-1) in videos.}
 
 \item{legend.value.vdo}{Logical. If `TRUE`, numeric values of colored spatial features are added to the video legend. The default is NULL.}
+
+\item{verbose}{Logical. If `TRUE` (default), intermediate messages will be printed.}
 
 \item{...}{additional element specifications not part of base ggplot2. In general,
 these should also be defined in the \verb{element tree} argument.}

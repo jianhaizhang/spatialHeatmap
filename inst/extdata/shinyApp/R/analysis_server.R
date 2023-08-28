@@ -31,7 +31,8 @@ moduleServer(id, function(input, output, session) {
   })
   adj.mods <- eventReactive(adj.mod.par$pars, {
     cat('Adjacency and modules ... \n')
-    if (ipt.up$fileIn %in% cfg$na.cus & is.null(ipt.up$svgInpath1) & is.null(ipt.up$svgInpath2)) return()
+    fileIn <- ipt.up$fileIn; req(!dat.no %in% fileIn)
+    if (fileIn %in% cfg$na.cus & is.null(ipt.up$svgInpath1) & is.null(ipt.up$svgInpath2)) return()
     #gene <- geneIn()[["df.aggr.tran"]]; if (!(input$gen.sel %in% rownames(gene))) return() # Avoid unnecessary computing of 'adj', since 'input$gen.sel' is a cerain true gene id of an irrelevant expression matrix, not 'None', when switching from one defaul example's matrix heatmap to another example.
     sub.mat <- data(); if (is.null(sub.mat)) return()
     withProgress(message="Network modules: ", value = 0, {
@@ -68,8 +69,9 @@ moduleServer(id, function(input, output, session) {
   }); color.net <- reactiveValues(col.net="none")
   len.cs.net <- 350
   observe({
-    lis.par <- cfg$lis.par; req(check_obj(lis.par))
-    if(input$col.but.net==0) color.net$col.net <- colorRampPalette(col_sep(lis.par$network['color', 'default']))(len.cs.net)
+    lis.par <- cfg$lis.par; but <- input$col.but.net
+    req(check_obj(list(lis.par, but)))
+    if(but==0) color.net$col.net <- colorRampPalette(col_sep(lis.par$network['color', 'default']))(len.cs.net)
   })
   observeEvent(input$col.but.net, {
     col.sch <- col.sch.net()
@@ -668,7 +670,8 @@ analysis_server <- function(id, upl.mod.lis, dat.mod.lis, shm.mod.lis, ids, sess
    #  if (tab.mhm$val!='yes') { return() }
   submat.par <- reactiveValues()
   observeEvent(list(input$showBut, cor.dis()), ignoreInit=FALSE, {
-    if (input$query=='None') return()
+    query <- input$query; req(query)
+    if ('None' %in% query) return()
     pars <- list(input$thr, input$mhm.v, cor.dis.par$pars, input$query, cor.dis())
     submat.par$pars <- pars
   })
@@ -723,7 +726,7 @@ analysis_server <- function(id, upl.mod.lis, dat.mod.lis, shm.mod.lis, ids, sess
   net.op.mod <- net_server('netS3', submat=submat, gID=gID, ids=ids, ipt.up=ipt, ipt.ana=input, cfg=cfg, data=data, df.net=df.net, clus.h=h.clus, clus.k=k.lis)
   fun.mod <- fun_enrich_server('goKeg', ipt.ana=input, clus.h=h.clus, clus.k=k.lis, mod=net.mod, mod.op=net.op.mod)
   observe({
-    method <- input$method
+    method <- input$method; cl <- NULL
     if ('hcl' %in% method) cl <- h.clus$hclus()
     if ('net' %in% method) cl <- net.mod$mod()
     if ('kmean' %in% method) cl <- k.lis$lis()$cluster

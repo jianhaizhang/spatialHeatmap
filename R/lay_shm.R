@@ -26,9 +26,9 @@
 #' @importFrom gridExtra arrangeGrob grid.arrange
 #' @importFrom grid grobTree unit
 
-lay_shm <- function(lay.shm, con, ncol, ID.sel, grob.list = NULL, lay.mat = FALSE, scell=FALSE, decon=FALSE, srsc=FALSE, profile=FALSE, h=0.99, shiny = FALSE) {  
+lay_shm <- function(lay.shm, con, ncol, ID.sel, grob.list = NULL, lay.mat = FALSE, scell=FALSE, decon=FALSE, srsc=FALSE, profile=FALSE, h=0.99, shiny = FALSE, verbose=TRUE) {  
   # save(lay.shm, con, ncol, ID.sel, grob.list, lay.mat, scell, decon, srsc, profile, h, shiny, file = 'lay.arg')
-  message('Plot layout ... ')
+  if (verbose==TRUE) message('Plot layout ... ')
   ncol <- as.numeric(ncol); # grob.all.na <- names(grob.list); 
   if (profile==TRUE) {  
     if ((scell==TRUE | decon==TRUE) & srsc==TRUE) { 
@@ -81,5 +81,5 @@ lay_shm <- function(lay.shm, con, ncol, ID.sel, grob.list = NULL, lay.mat = FALS
     g.tr <- lapply(grob.list, grobTree); g.tr <- g.tr[names(grob.list)]
     n.col <- ncol(lay); n.row <- nrow(lay)
     g.arr <- arrangeGrob(grobs=g.tr, layout_matrix=lay, widths=unit(rep(0.99/n.col, n.col), "npc"), heights=unit(rep(h/n.row, n.row), "npc")) 
-  }; message('Done!'); return(g.arr)
+  }; if (verbose==TRUE) message('Done!'); return(g.arr)
 }

@@ -10,7 +10,7 @@
 #' @param dld.mul A `list` of paired data matrix and multiple aSVG files, which would be downloadable example dataset on the App for testing. It is the same as `dld.sgl` except that in the `svg` slot, multiple aSVG file paths are stored, e.g. `list(data='./data_download.txt', svg=c('./root_young_download_shm1.svg', './root_old_download_shm2.svg'))`. 
 #' @param dld.vars A `list` of paired data matrix and single aSVG file, which would be downloadable data.tmp dataset on the App for testing. It is the same as `dld.sgl` except that multiple experimental variables are combined in the data matrix (see package viengettes for details.)
 #' @param data.tmp Logical. If `TRUE` (default), both example data sets in the spatialHeatmap Shiny App and custom data sets in `data` will be included in the custom App.
-#' @param ldg,about The paths of ".html" files that will be used for the landing and about pages in the custom Shiny App respectively. The default is `NULL`, indicating default ".html" files will be used.  
+#' @param ldg,gallery,about The paths of ".html" files that will be used for the landing, gallery, and about pages in the custom Shiny App respectively. The default is `NULL`, indicating default ".html" files will be used.  
 #' @param app.dir The directory to create the Shiny App. Default is current work directory \code{.}.
 
 #' @return If \code{par.tmp==TRUE}, the default paramters in spatialHeatmap Shiny App are returned in a `list`. Otherwise, a customized Shiny App is generated in the path of \code{app.dir}. 
@@ -102,7 +102,7 @@
 #' @export
 #' @importFrom grDevices colors
 
-custom_shiny <- function(data=NULL, db=NULL, lis.par=NULL, par.tmp=FALSE, dld.sgl=NULL, dld.mul=NULL, dld.vars=NULL, data.tmp=TRUE, ldg=NULL, about=NULL, app.dir='.') {
+custom_shiny <- function(data=NULL, db=NULL, lis.par=NULL, par.tmp=FALSE, dld.sgl=NULL, dld.mul=NULL, dld.vars=NULL, data.tmp=TRUE, ldg=NULL, gallery=NULL, about=NULL, app.dir='.') {
   options(stringsAsFactors=FALSE)
   pkg <- check_pkg('yaml'); if (is(pkg, 'character')) { warning(pkg); return(pkg) }
   if (is.null(data) & is.null(db) & par.tmp==FALSE) stop("Both 'data' and 'db' are 'NULL'!")
@@ -130,11 +130,14 @@ custom_shiny <- function(data=NULL, db=NULL, lis.par=NULL, par.tmp=FALSE, dld.sg
     if (!grepl('\\.html$', ldg)) stop('The landing page should be an ".html" file!') 
     file.copy(ldg, file.path(app.dir, 'www/html/landing.html'), overwrite=TRUE)
   }
+  if (!is.null(gallery)) { 
+    if (!grepl('\\.html$', gallery)) stop('The gallery page should be an ".html" file!')
+    file.copy(gallery, file.path(app.dir, 'www/html/gallery.html'), overwrite=TRUE)
+  }
   if (!is.null(about)) { 
     if (!grepl('\\.html$', about)) stop('The About page should be an ".html" file!')
     file.copy(about, file.path(app.dir, 'www/html/about.html'), overwrite=TRUE)
-  }
-  
+  } 
   # Load default parameter list.
   if (is.null(lis.par)) { lis.par <- lis.par.def } else {  
     for (i in seq_along(lis.par)) {

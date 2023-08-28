@@ -1,34 +1,15 @@
 # Module for uploading files.
 upload_ui <- function(id) {
    ns <- NS(id)
-   tabPanel(title="Datasets", value='landing',
+   tabPanel(title="Datasets", value='dataset',
    navbarPage('', selected='datSVG', 
-     tabPanel(title="Gallery", value='gallery',
-      fluidRow(
-        column(4, id='brainHum', style='text-align:center', uiOutput(ns('brain.hum'))),
-        column(4, id='mouse', style='text-align:center', uiOutput(ns('mouse'))),
-        column(4, id='chicken', style='text-align:center', uiOutput(ns('chicken')))
-      ),
-      br(), p(em('Arabidopsis thaliana'), style='font-size:18px'),
-      fluidRow(
-        column(4, id='organArab', style='text-align:center', uiOutput(ns('organ.arab'))),
-        column(4, id='shootArab', style='text-align:center', uiOutput(ns('shoot.arab'))),
-        column(4, id='rootArab', style='text-align:center', uiOutput(ns('root.arab')))
-      ),
-        column(4, id='stageArab', style='text-align:center', uiOutput(ns('stage.arab'))),
-        column(4, style='width:100%'), column(4, style='width:100%'),
-      fluidRow(
-        column(4, id='clpRice', style='text-align:center', uiOutput(ns('clp.rice'))),
-        column(4, ), column(4, )
-      ),
-     ), # tabPanel(title="Gallery",
      tabPanel(title="Data & aSVGs", value='datSVG',
       fluidRow(splitLayout(cellWidths=c('10px', '430px', '1px', '70px'), '', 
       h4(strong("Step1: upload custom or select default datasets")),
       actionButton(ns("dathelp"), 'Help', style=paste0('margin-top:10px;', hp))
       )),
       fluidRow(splitLayout(cellWidths=c('1px', '430px'), '', 
-      selectInput(ns("fileIn"), label=NULL, choices=c('customBulkData'), selected='')
+      selectInput(ns("fileIn"), label=NULL, choices=('Choosing a dataset'='none'), selected='none')
       )),
       uiOutput(ns('bulk.sce')), uiOutput(ns('svg.upl')),
       #fluidRow(splitLayout(cellWidths=c('1%', '20%', '1%', '10%'), '', h4(strong("Step 2: upload custom data")), '', actionButton(ns("cusHelp"), "Help", icon = icon('question-circle')))),

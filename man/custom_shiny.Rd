@@ -14,6 +14,7 @@ custom_shiny(
   dld.vars = NULL,
   data.tmp = TRUE,
   ldg = NULL,
+  gallery = NULL,
   about = NULL,
   app.dir = "."
 )
@@ -35,7 +36,7 @@ custom_shiny(
 
 \item{data.tmp}{Logical. If `TRUE` (default), both example data sets in the spatialHeatmap Shiny App and custom data sets in `data` will be included in the custom App.}
 
-\item{ldg, about}{The paths of ".html" files that will be used for the landing and about pages in the custom Shiny App respectively. The default is `NULL`, indicating default ".html" files will be used.}
+\item{ldg, gallery, about}{The paths of ".html" files that will be used for the landing, gallery, and about pages in the custom Shiny App respectively. The default is `NULL`, indicating default ".html" files will be used.}
 
 \item{app.dir}{The directory to create the Shiny App. Default is current work directory \code{.}.}
 }

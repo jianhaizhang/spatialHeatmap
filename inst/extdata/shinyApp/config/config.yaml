@@ -1,4 +1,10 @@
+# In module servers, when using these default settings, if the parameter name is wrong, the updateSelectInput or similar functions will pause, so will the whole App.
 # Default datasets
+dataset0:
+  name: none
+  display: Choosing a dataset
+  data: none
+  svg: none
 dataset1:
   name: customBulkData
   display: customBulkData
@@ -10,52 +16,52 @@ dataset2:
   data: none
   svg: none
 dataset3:
-  name: mouse_Merkin
+  name: mouse_organs
   display: Mouse organs (SHM)
   data: data/mouse_organ.rds
   svg: data/mus_musculus.male.svg
 dataset4:
-  name: covis_Ortiz_Vacher
+  name: covis_mouse_brain
   display: Mouse brain (covisualization)
   data: data/shiny_covis_bulk_cell_mouse_brain.rds
   svg: data/mus_musculus.brain.svg
 dataset5:
-  name: brain_Prudencio
+  name: human_brain
   display: Human brain (SHM)
   data: data/human_brain.rds
   svg: data/homo.sapiens_brain.shiny_shm.svg
 dataset6:
-  name: chicken_Cardoso.Moreira
+  name: chicken_organs
   display: Chicken organs (SHM)
   data: data/chicken_organ.rds
   svg: data/gallus_gallus.svg
 dataset7:
-  name: shoot_Mustroph
+  name: arab_shoot
   display: Arabidopsis shoot (SHM)
-  data: data/arab.rds
+  data: data/arab_shoot.rds
   svg: data/arabidopsis.thaliana_shoot_shm.svg
 dataset8:
-  name: organ_Mustroph
+  name: arab_organs
   display: Arabidopsis organs (SHM)
-  data: data/arab.rds
+  data: data/arab_organ.rds
   svg: data/arabidopsis.thaliana_organ_shm.svg
 dataset9:
-  name: root_Mustroph
+  name: arab_root
   display: Arabidopsis root (SHM)
-  data: data/arab.rds
+  data: data/arab_root.rds
   svg: data/arabidopsis.thaliana_root.cross_shm.svg
 dataset10:
-  name: shootRoot_Mustroph
+  name: arab_shootRoot
   display: Arabidopsis shoot/root (SHM)
-  data: data/arab.rds
+  data: data/arab_shoot_root.rds
   svg: data/arabidopsis.thaliana_shoot.root_shm.svg
 dataset11:
-  name: rootRootTip_Mustroph
+  name: arab_rootRootTip
   display: Arabidopsis root/rootTip (SHM)
-  data: data/arab.rds
+  data: data/arab_root_tip.rds
   svg: data/arabidopsis.thaliana_root.roottip_shm.svg
 dataset12:
-  name: growthStage_Mustroph
+  name: arab_growthStage
   display: Multiple aSVGs (SHM, Mustroph)
   data: data/random_data_multiple_aSVGs.txt
   svg:
@@ -90,7 +96,7 @@ download_batched_data_aSVGs:
   svg: data/data_shm.tar
 # Max custom dataset size for uploading. 
 max.upload.size: 5G 
-default.dataset: mouse_Merkin
+default.dataset: none
 col.row.gene: None
 separator: None
 # Spatial Heatmap: settings for assay data.
@@ -112,6 +118,7 @@ shm.img:
 - columns:2
 - layout.by:gene
 - scale.plots:1.1
+- overall.height:450
 - title.size:12
 - relative.size:1
 # Color scheme

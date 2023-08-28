@@ -45,7 +45,6 @@
 
 #' @export
 #' @importFrom SummarizedExperiment assays
-#' @importFrom ggdendro dendro_data
 #' @importFrom ggplot2 ggplot geom_segment geom_text position_dodge geom_rect theme theme_minimal geom_tile scale_fill_gradient geom_hline
 #' @importFrom stats hclust order.dendrogram as.dendrogram
 #' @importFrom gplots heatmap.2 
@@ -93,8 +92,8 @@ matrix_hm <- function(ID, data, assay.na=NULL, scale='row', col=c('yellow', 'red
      if (missing(cut.h)) cut.h <- h.max * 0.2
      if (cut.h > h.max) cut.h <- h.max
      clus <- cut_dendro(dd.gen, target=ID, h=cut.h)
-     
-     d.sam <- dendro_data(dd.sam); d.gen <- dendro_data(dd.gen)
+     pkg <- check_pkg('ggdendro'); if (is(pkg, 'character')) stop(pkg) 
+     d.sam <- ggdendro::dendro_data(dd.sam); d.gen <- ggdendro::dendro_data(dd.gen)
      g.dengra <- function(df) {
        ggplot()+geom_segment(data=df, aes(x=x, y=y, xend=xend, yend=yend))+labs(x="", y="")+theme_minimal()+theme(axis.text= element_blank(), axis.ticks=element_blank(), panel.grid=element_blank())
      }

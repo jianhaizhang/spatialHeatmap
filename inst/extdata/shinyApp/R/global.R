@@ -1,21 +1,28 @@
-if (interactive()) {
-  requireNamespace('DESeq2'); requireNamespace('av'); requireNamespace('BiocGenerics'); requireNamespace('distinct') 
-  requireNamespace('dendextend'); requireNamespace('HDF5Array'); requireNamespace('magick'); requireNamespace('DT'); 
+#if (interactive()) {
+  requireNamespace('av'); requireNamespace('BiocGenerics'); requireNamespace('DESeq2'); requireNamespace('distinct') 
+  requireNamespace('dendextend'); requireNamespace('dynamicTreeCut'); requireNamespace('flashClust'); 
+  requireNamespace('ggdendro'); requireNamespace('HDF5Array'); requireNamespace('magick'); requireNamespace('DT'); 
   requireNamespace('pROC'); requireNamespace('shinyWidgets'); requireNamespace('shinyjs'); requireNamespace('htmltools');
   requireNamespace('shinyBS'); requireNamespace('sortable'); requireNamespace('org.Hs.eg.db'); requireNamespace('org.Mm.eg.db')
   requireNamespace('org.At.tair.db'); requireNamespace('org.Dr.eg.db'); requireNamespace('org.Dm.eg.db');
-  requireNamespace('AnnotationDbi'); requireNamespace('sparkline'); requireNamespace('spsComps'); requireNamespace('spsUtil')
-}
+  requireNamespace('AnnotationDbi'); requireNamespace('sparkline'); requireNamespace('spsComps'); requireNamespace('spsUtil'); 
+  requireNamespace('visNetwork'); requireNamespace('WGCNA')
+#}
 
 # Accessing local html files by iframes.
 # addResourcePath("tmpuser", getwd())
 # Application-level cache, max size is 1G.
 shiny::shinyOptions(cache = cachem::cache_disk(dir="./app_cache/cache/", max_size = 1024 * 1024^2))
 
+dat.no <- 'none'; dat.no.dis <- 'Choosing a dataset'
 na.sgl.def <- '^covis_'
 na.cus <- c('customBulkData', 'customCovisData')
+na.cus.covis <- c('customCovisData')
 na.cus.dis <- c('customBulkData', 'customCovisData')
 na.sgl <- c('^covis_|^customCovisData$')
+
+
+met.pat <- '^metadata$|^link$|^type$|^total$|^method$'
 
 # Temporary directory.
 tmp.dir <- normalizePath(tempdir(check=TRUE), winslash="/", mustWork=FALSE)
@@ -32,7 +39,7 @@ run.msg <- 'Always click the <span style="color:white;font-weight:bold;backgroun
 run.col <- "color:white;background-color:#369ef7;border-color:#ddd"
 run.top <- "margin-top:24px;color:white;background-color:#369ef7;border-color:#ddd"
 # Confirm buttons.
-conf.col <- 'margin-top:2px;margin-bottom:-10px;margin-left:20px;padding-top:2px;padding-bottom:2px;color:white;background-color:#369ef7;border-color:#ddd'
+conf.col <- 'margin-top:2px;margin-bottom:5px;margin-left:20px;padding-top:2px;padding-bottom:2px;color:white;background-color:#369ef7;border-color:#ddd'
 # Rectangle.
 rec <- 'border-color:#3c8dbc;border-width:1px;border-style:solid'
 
@@ -40,10 +47,10 @@ rec <- 'border-color:#3c8dbc;border-width:1px;border-style:solid'
 raster.ext <- c('.jpg', '.JPG', '.png', '.PNG')
 
 # Confirm button labels.
-lab.sgl <- 'Search by single gene ID (e.g. Cav2)'
-lab.mul <- 'Search by single or multiple gene IDs (e.g. Cav2,Apoh)'
+lab.sgl <- 'Select gene IDs with auto-completion.'
+lab.mul <- 'Use comma or space to separate gene IDs (e.g. Cav2,Apoh).'
 
-# Search portion of URLs on the landing page.
+# Search portion of URLs on the dataset page.
 
 # Extract parameter values from url.
 url_val <- function(na, lis.url, def=NULL) {
@@ -65,7 +72,7 @@ reduce_dim_m <- memoise::memoise(reduce_dim, cache = getShinyOption("cache"))
 norm_cell <- get('norm_cell', envir=asNamespace('spatialHeatmap'), inherits=FALSE)
 norm_cell_m <- memoise::memoise(norm_cell, cache = getShinyOption("cache"))
 
-
+cbind_se <- get('cbind_se', envir=asNamespace('spatialHeatmap'), inherits=FALSE)
 ovl_dat_db <- get('ovl_dat_db', envir=asNamespace('spatialHeatmap'), inherits=FALSE)
 check_se <- get('check_se', envir=asNamespace('spatialHeatmap'), inherits=FALSE)
 check_sce <- get('check_sce', envir=asNamespace('spatialHeatmap'), inherits=FALSE)
@@ -202,7 +209,10 @@ link_dat <- function(df.met, link.only=TRUE) {
   }
   df.lk <- data.frame(link=link, row.names=rownames(df.met))
   # df.met: 0 or 1 column, return(df.lk)
-  if (link.only==TRUE | ncol(df.met)<=1) return(df.lk) else {
+  if (link.only==TRUE | ncol(df.met)==0) return(df.lk) else if (link.only==FALSE & ncol(df.met)==1) {
+    if (cna!='link') return(cbind(df.met, df.lk)) else return(df.lk)
+  }
+  else {
     cna.other <- setdiff(colnames(df.met), colnames(df.lk))
     df.met <- cbind(df.met[, cna.other[1], drop=FALSE], df.lk, df.met[, cna.other[setdiff(seq_along(cna.other), 1)], drop=FALSE]); return(df.met)
   }

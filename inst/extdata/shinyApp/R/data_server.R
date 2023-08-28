@@ -1,24 +1,31 @@
 # Module for processing data.
 data_server <- function(id, sch, lis.url, ids, upl.mod.lis, deg.mod.lis=NULL, scell.mod.lis=NULL, shm.mod=NULL, session, parent=NULL) {
   moduleServer(id, function(input, output, session) {
-  ns <- session$ns; ipt <- upl.mod.lis$ipt; cfg <- upl.mod.lis$cfg
+  ipt <- upl.mod.lis$ipt; covis.pa <- upl.mod.lis$covis.pa
+  ns <- session$ns; cfg <- upl.mod.lis$cfg
   con.na <- reactiveValues(v=FALSE)
   con.na.cell <- reactiveValues(v=FALSE)
-  met.pat <- '^metadata$|^link$|^type$|^total$|^method$'
   # test <- reactive({ req(''); 1})
   # Error: observe({ print(test()) })
   # "test2" will be suspended: observe({ print('test1'); test(); print('test2') })
-  observeEvent(list(deg.mod.lis$input$eSHMBut, scell.mod.lis$covis.auto$but.covis, scell.mod.lis$covis.man$match.mod.lis$but.match$val), {
-   fileIn <- ipt$fileIn
-   cho <- c("Complete"='all'); sel <- 'all'
+  observeEvent(list(deg.mod.lis$input$eSHMBut), { # Should not be merged with below.
+   fileIn <- ipt$fileIn; req(!dat.no %in% fileIn)
    query.res <- check_exp(check_obj(deg.mod.lis$query.res()))
    if (!is(query.res, 'character') & !is.null(query.res) & !grepl(na.sgl, fileIn)) {
      cho <- c("Complete"='all', 'Spatial enrichment'='enr')
-     sel <- 'enr'
-   } else if (grepl(na.sgl, fileIn)) {
-     cho <- c("Co-visualization"='covis'); sel <- 'covis'
+     sel <- 'enr' 
+     updateSelectInput(session, inputId='datIn', choices=cho, selected=sel)
    }
-   updateSelectInput(session, inputId='datIn', choices=cho, selected=sel)
+  })
+  observeEvent(list(scell.mod.lis$covis.auto$but.covis, scell.mod.lis$covis.man$match.mod.lis$but.match$val), { # Should not be merged with above.
+   fileIn <- ipt$fileIn; req(!dat.no %in% fileIn)
+   if (grepl(na.sgl, fileIn)) {
+     cho <- c("Co-visualization"='covis'); sel <- 'covis'
+     updateSelectInput(session, inputId='datIn', choices=cho, selected=sel)
+   }
+  })
+  observeEvent(list(ipt$fileIn), {
+   updateSelectInput(session, inputId='datIn', choices=c('Complete'='all'), selected='all') 
   })
   observeEvent(list(ipt$fileIn, dat(), input$datIn), {
     dat <- dat(); lis.par <- cfg$lis.par
@@ -33,6 +40,10 @@ data_server <- function(id, sch, lis.url, ids, upl.mod.lis, deg.mod.lis=NULL, sc
     cat('Import data, row metadata, targets files ... \n')
     fileIn <- ipt$fileIn; geneInpath <- ipt$geneInpath; dimName <- ipt$dimName
     svgInpath1 <- ipt$svgInpath1; svgInpath2 <- ipt$svgInpath2
+    req(!dat.no %in% fileIn)
+    if (na.cus.covis %in% fileIn) {
+      if (!check_obj(list(covis.pa$dat, !is.null(covis.pa$svg1)|!is.null(covis.pa$svg2)))) return()
+    }
     # validate/need: Suspend the process and no return, can cause errors, so "if" is choosen.
     if (grepl(na.sgl, fileIn)) {
      sce.res <- scell.mod.lis$sce.res
@@ -159,7 +170,7 @@ data_server <- function(id, sch, lis.url, ids, upl.mod.lis, deg.mod.lis=NULL, sc
   observeEvent(list(input$run, dat(), input$datIn, deg.mod.lis$input$eSHMBut, scell.mod.lis$covis.auto$but.covis, scell.mod.lis$covis.man$match.mod.lis$but.match$val, shm.mod$ipt$profile), {
   run <- input$run; dat <- dat(); datIn <- input$datIn
   fileIn <- ipt$fileIn; profile <- shm.mod$ipt$profile
-  if (!check_obj(list(input$normDat, run, dat, datIn))) return()
+  if (!check_obj(list(input$normDat, run, dat, datIn, !dat.no %in% fileIn))) return()
   pars <- list(input$normDat, dat, datIn)
   query.res <- check_exp(deg.mod.lis$query.res())
   if (!is(query.res, 'character') & !is.null(query.res) & !grepl(na.sgl, fileIn)) {
@@ -185,7 +196,9 @@ data_server <- function(id, sch, lis.url, ids, upl.mod.lis, deg.mod.lis=NULL, sc
          label <- scell.mod.lis$covis.man$covisGrp; bulk <- scell.mod.lis$covis.man$bulk
          if (!check_obj(list(label, bulk))) return()
          cdat.blk <- colData(bulk) 
-         if (!'variable' %in% colnames(cdat.blk)) { bulk$variable <- 'con' } else con.na$v <- TRUE
+         if (!'variable' %in% colnames(cdat.blk)) {
+           bulk$variable <- 'con'; cdat.blk <- colData(bulk)
+         } else con.na$v <- TRUE
          colnames(bulk) <- paste0(cdat.blk[, label], '__', cdat.blk[, 'variable'])
          vars.blk <- unique(colData(bulk)[, 'variable'])
          # Format features and variables in cell.
@@ -205,8 +218,8 @@ data_server <- function(id, sch, lis.url, ids, upl.mod.lis, deg.mod.lis=NULL, sc
          reducedDim(cell, 'PCA') <- reducedDim(cell, 'UMAP') <- reducedDim(cell, 'TSNE') <- NULL
          reducedDim(bulk, 'PCA') <- reducedDim(bulk, 'UMAP') <- reducedDim(bulk, 'TSNE') <- NULL
          # By default, bulk and cell data have the same column names in colData, since they are stored in the same SCE. 
-         req(identical(colnames(colData(bulk)), colnames(colData(cell))))
-         blk.sc <- cbind(bulk, cell)
+         # req(identical(sort(colnames(colData(bulk))), sort(colnames(colData(cell)))))
+         blk.sc <- cbind_se(bulk, cell)
        }
        pars <- list(normDat=input$normDat, blk.sc=blk.sc, datIn=datIn, profile=profile) 
      }
@@ -216,7 +229,7 @@ data_server <- function(id, sch, lis.url, ids, upl.mod.lis, deg.mod.lis=NULL, sc
     message('SHM: normalizing ... ')
     fileIn <- ipt$fileIn; dat <- dat(); normDat <- input$normDat
     datIn <- input$datIn; lis.par <- cfg$lis.par
-    if (!check_obj(list(fileIn, dat, normDat, datIn, lis.par))) req('')
+    req(check_obj(list(fileIn, dat, normDat, datIn, lis.par, !dat.no %in% fileIn)))
     se <- dat$se.rep
     if ('enr' %in% datIn & !grepl(na.sgl, fileIn)) {
       se <- nor.par$pars$query.res
@@ -225,7 +238,7 @@ data_server <- function(id, sch, lis.url, ids, upl.mod.lis, deg.mod.lis=NULL, sc
       if (!check_obj(prof)) return()
       if (! 'idp' %in% prof) se <- nor.par$pars$se.aggr else se <- nor.par$pars$blk.sc
       return(se)
-    }
+    }; req(check_obj(list(se)))
     # Organize rowData.
     rdat <- rowData(se); idx.met <- grep(met.pat, colnames(rdat))
     rdat.sel <- rdat[, idx.met, drop=FALSE]
@@ -238,13 +251,13 @@ data_server <- function(id, sch, lis.url, ids, upl.mod.lis, deg.mod.lis=NULL, sc
     assay <- assay(se); lgc.as <- all(round(assay)==assay)
     # Must be before req(lgc.as).
     if ('None' %in% normDat) {
-      if (!lgc.as) { message('Done!'); return(se) } else normDat <- lis.par$data.matrix['norm', 'default'] 
+      if (!lgc.as) { message('Done!'); return(se) } else normDat <- lis.par$data.matrix['norm', 'default'] # Force to normalize count data. 
     }
     if (!lgc.as) {
       showNotification(HTML('Spatial Heatmap -> Data Table -> Settings: <br> normalization is skipped, since the input data are not count matrix.'), duration=2, closeButton = TRUE) 
       updateSelectInput(session, inputId='normDat', selected='None')
       se.aggr <- aggr_rep(data=se, assay.na=NULL, sam.factor='spFeature', con.factor='variable', aggr='mean')
-      message('Done!'); return(se)
+      message('Done!'); return(se.aggr)
     }; req(lgc.as)
     withProgress(message="Normalizing: ", value = 0, {
       incProgress(0.5, detail="please wait ...")
@@ -314,8 +327,8 @@ data_server <- function(id, sch, lis.url, ids, upl.mod.lis, deg.mod.lis=NULL, sc
      cv.lgc <- (CV1 < CV2)
      show_mod(cv.lgc, 'CV1 should be less than CV2!'); req(cv.lgc)
      se.fil <- filter_data(data=dat.tran, sam.factor=NULL, con.factor=NULL, pOA=c(P, A), CV = c(CV1, CV2), verbose=FALSE)
-     se.lgc <- (nrow(se.fil) >= 5)
-     show_mod(se.lgc, 'Less than 5 rows remain!'); req(se.lgc)
+     # se.lgc <- (nrow(se.fil) >= 5)
+     # show_mod(se.lgc, 'Less than 5 rows remain!'); req(se.lgc)
      message('Done!'); se.fil
    })
   thr.par <- reactiveValues()
@@ -492,8 +505,11 @@ data_server <- function(id, sch, lis.url, ids, upl.mod.lis, deg.mod.lis=NULL, sc
     if (is.null(gene.dt)|!is.numeric(page.h)) return()
     # Decimals.
     # Tooltip on metadata.
-    col1 <- list(list(targets = c(1), render = DT::JS("$.fn.dataTable.render.ellipsis(40, false)")))
-    if (colnames(gene.dt)[1]!='metadata') col1 <- NULL
+    col1 <- NULL; cna <- colnames(gene.dt)
+    idx.met <- which(cna %in% 'metadata')
+    if (length(idx.met)>0) col1 <- idx.met
+    col1 <- list(list(targets = col1, render = DT::JS("$.fn.dataTable.render.ellipsis(40, false)")))
+    # if (colnames(gene.dt)[1]!='metadata') col1 <- NULL
     # dat <- gene.dt[seq(subdat$r1, subdat$r2, 1), seq(subdat$c1, subdat$c2, 1), drop=FALSE]
     colnames(gene.dt) <- sub('__', '_', colnames(gene.dt))
     dtab <- datatable(gene.dt[seq(subdat$r1, subdat$r2, 1), seq(subdat$c1, subdat$c2, 1), drop=FALSE], selection=list(mode="multiple", target="row", selected=dt.sel$val), escape=FALSE, filter="top", extensions=c('Scroller', 'FixedColumns'), plugins = "ellipsis",
@@ -540,15 +556,24 @@ data_server <- function(id, sch, lis.url, ids, upl.mod.lis, deg.mod.lis=NULL, sc
       cat('Done! \n'); dat
   })
   })
-
+  # ids from URL are only used once. 
+  url.id.sel <- reactiveValues(init=TRUE)
+  observeEvent(list(lis.url$par$ids, dt.shm()), {
+    gene.dt <- dt.shm(); # selRow <- input$selRow
+    id.url <- lis.url$par$ids
+    req(check_obj(list(gene.dt, id.url, url.id.sel$init)))
+    rna <- rownames(gene.dt)
+    id.url.no <- setdiff(id.url, rna); lgc.no <- length(id.url.no)==0
+    if (!lgc.no) showModal(modal(msg = paste0('Invalid IDs in the URL: ', paste0(id.url.no, collapse=',')))); req(lgc.no)
+    dt.sel$val <- which(rna %in% id.url); # ids$sel <- id.url
+    url.id.sel$init <- FALSE
+  })
   observeEvent(list(input$selRow), { # Select genes in table.
     gene.dt <- dt.shm(); if (is.null(gene.dt)) return()
     ids$sel <- rownames(gene.dt)[input$dtAll_rows_selected]
     dt.sel$val <- input$dtAll_rows_selected
-
-    lgc.ids <- !check_obj(ids$sel)
-    if (lgc.ids) showModal(modal(msg = 'No genes are selected!')); req(!lgc.ids)
-
+    lgc.ids <- check_obj(ids$sel)
+    if (!lgc.ids) showModal(modal(msg = 'No genes are selected!')); req(lgc.ids)
     tabTop <- parent$input$tabTop
     if ('shmPanelAll' %in% tabTop & check_obj(ids$sel)) {
       runjs('document.getElementById("tabTop").scrollIntoView()') 
@@ -558,10 +583,15 @@ data_server <- function(id, sch, lis.url, ids, upl.mod.lis, deg.mod.lis=NULL, sc
     gene.dt <- dt.shm(); if (is.null(gene.dt)) return()
     ids$sel <- NULL; dt.sel$val <- 'none'
   })
-  observeEvent(list(ipt$fileIn, deg.mod.lis$input$eSHMBut, scell.mod.lis$covis.man$match.mod.lis$but.match$val, scell.mod.lis$covis.auto$but.covis), { # Select genes in table.
+  observeEvent(list(ipt$fileIn, deg.mod.lis$input$eSHMBut, scell.mod.lis$covis.man$match.mod.lis$but.match$val, scell.mod.lis$covis.auto$but.covis, input$datIn), { # Select genes in table.
+    id.url <- lis.url$par$ids; but.sgl <- ids$but.sgl
+    but.mul <- ids$but.mul; selRow <- input$selRow
+    fileIn <- gsub('"', '', lis.url$par$'upl-fileIn')
+    # If bookmarked url, ids$sel is not set NULL by "covis.auto$but.covis".  
+    if (check_obj(id.url) & (is.null(but.sgl)|0 %in% but.sgl) & (is.null(but.mul) | 0 %in% but.mul) & (is.null(selRow) |0 %in% selRow) & ipt$fileIn %in% fileIn) return()
     ids$sel <- NULL; dt.sel$val <- 'none'
+    # print(list('clear', id.url, but.sgl, but.mul, selRow, ids$sel, dt.sel$val))
   })
-
   observeEvent(list(parent$input$btnInf), {
     btnInf <- parent$input$btnInf
     if (!check_obj(btnInf)) return()
@@ -599,7 +629,7 @@ data_server <- function(id, sch, lis.url, ids, upl.mod.lis, deg.mod.lis=NULL, sc
   sig.but <- reactive({ input$sig.but })
   observe({
     dat <- dat(); profile <- shm.mod$ipt$profile; fileIn <- ipt$fileIn
-    if (!check_obj(list(dat, profile, fileIn))) return()
+    if (!check_obj(list(dat, profile, fileIn, !dat.no %in% fileIn))) return()
     if (! 'idp' %in% profile | !grepl(na.sgl, fileIn)) con.na$v <- dat$con.na     
   })
   onBookmark(function(state) { state })
@@ -607,8 +637,6 @@ data_server <- function(id, sch, lis.url, ids, upl.mod.lis, deg.mod.lis=NULL, sc
   })
 
 }
-
-
 
 
 

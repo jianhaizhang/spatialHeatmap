@@ -59,7 +59,11 @@ dat_all_server <- function(id, dat, r2=NULL, c2=NULL) {
     if (is(dat, 'list')) {
       blk <- dat$bulk; cell <- dat$cell
       if (!check_obj(list(cell))) return()
-      if (!check_obj(list(blk))) dat <- cbind(blk, cell) else dat <- cell
+      if (!check_obj(list(blk))) {
+        dat <- cbind_se(blk, cell) 
+        lgc.bd <- is(dat, 'character')
+        if (lgc.bd) showModal(modal(msg = lgc.bd)); req(!lgc.bd)
+      } else dat <- cell
     }
     if (is.null(r2)) r2 <- nrow(dat)
     if (is.null(c2)) c2 <- ncol(dat)
@@ -75,7 +79,11 @@ dat_all_server <- function(id, dat, r2=NULL, c2=NULL) {
     if (is(dat, 'list')) {
       blk <- dat$bulk; cell <- dat$cell
       if (!check_obj(list(cell))) return()
-      if (!check_obj(list(blk))) dat <- cbind(blk, cell) else dat <- cell
+      if (!check_obj(list(blk))) { 
+        dat <- cbind_se(blk, cell) 
+        lgc.bd <- is(dat, 'character')
+        if (lgc.bd) showModal(modal(msg = lgc.bd)); req(!lgc.bd)
+      } else dat <- cell
     }
     if (0 %in% input$subdat) {
       subdat$r2 <- nrow(dat)
@@ -92,7 +100,11 @@ dat_all_server <- function(id, dat, r2=NULL, c2=NULL) {
     if (is(dat, 'list')) {
       blk <- dat$bulk; cell <- dat$cell
       if (!check_obj(list(cell))) return()
-      if (!check_obj(list(blk))) dat <- cbind(blk, cell) else dat <- cell
+      if (!check_obj(list(blk))) { 
+        dat <- cbind_se(blk, cell) 
+        lgc.bd <- is(dat, 'character')
+        if (lgc.bd) showModal(modal(msg = lgc.bd)); req(!lgc.bd)
+      } else dat <- cell
     }
     output$datall <- renderDataTable({
       assay_dat(dat, r1=r1, r2=r2, c1=c1, c2=c2) 
@@ -105,7 +117,11 @@ dat_all_server <- function(id, dat, r2=NULL, c2=NULL) {
     if (is(dat, 'list')) {
       blk <- dat$bulk; cell <- dat$cell
       if (!check_obj(list(cell))) return()
-      if (!check_obj(list(blk))) dat <- cbind(blk, cell) else dat <- cell
+      if (!check_obj(list(blk))) {
+        dat <- cbind_se(blk, cell) 
+        lgc.bd <- is(dat, 'character')
+        if (lgc.bd) showModal(modal(msg = lgc.bd)); req(!lgc.bd) 
+      } else dat <- cell
     }; cdat <- colData(dat)
     withProgress(message="Sample metadata: ", value = 0, {
       incProgress(0.5, detail="please wait ...") 

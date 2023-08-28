@@ -8,6 +8,9 @@ scell_server <- function(id, tab, upl.mod.lis, shm.mod.lis, lis.url, parent, ses
   observeEvent(upl.mod.lis$sce$val, {
     library(Matrix)
     sce.all <- upl.mod.lis$sce$val
+    if (is.null(sce.all)) { # Erase previous datasets to avoid unexpected downstream computation.
+      sce.upl$bulk <- sce.upl$cell <- NULL
+    }
     reducedDim(sce.all, 'PCA') <- reducedDim(sce.all, 'UMAP') <- reducedDim(sce.all, 'TSNE') <- NULL
     rowData(sce.all) <- link_dat(rowData(sce.all), link.only=FALSE) 
     df.meta <- metadata(sce.all)$df.meta 
@@ -22,6 +25,8 @@ scell_server <- function(id, tab, upl.mod.lis, shm.mod.lis, lis.url, parent, ses
     # save(sce.all, file='sce.all')
     if (!is.null(sce.all)) {
       assay.na <- assayNames(sce.all)
+      lgc.ct <- 'counts' %in% assay.na
+      if (!lgc.ct) showModal(modal(msg = '"counts" not detected in "assayNames(<SingleCellExperiment>)"!')); req(lgc.ct)
       if ('logcounts' %in% assay.na) logcounts(sce.all) <- as(logcounts(sce.all), 'dgCMatrix')
       if ('count' %in% assay.na) assays(sce.all)$count <- as(assays(sce.all)$count, 'dgCMatrix') 
       if ('counts' %in% assay.na) assays(sce.all)$counts <- as(assays(sce.all)$counts, 'dgCMatrix') 
@@ -35,6 +40,7 @@ scell_server <- function(id, tab, upl.mod.lis, shm.mod.lis, lis.url, parent, ses
       if ('bulkCell' %in% colnames(cdat)) {
         blk.cell.uni <- unique(cdat$bulkCell)
         if (all(c('bulk', 'cell') %in% blk.cell.uni)) {
+          updateSelectInput(session, 'methCovis', choices=c('Annotation (or other) labels'='man', 'Co-clustering       labels'='auto'), selected='auto')
           cdat.na <- colnames(cdat)
           lab.na <- grep('^label$|^label\\d+', cdat.na, value=TRUE)
           if (length(lab.na)==0) {
@@ -44,12 +50,12 @@ scell_server <- function(id, tab, upl.mod.lis, shm.mod.lis, lis.url, parent, ses
           bulk <- subset(sce.all, , bulkCell=='bulk')
           # Bulk data are aggregated. 
           bulk <- aggr_rep(data=bulk, sam.factor=lab.na[1], aggr='mean')
-          bulk$spFeature <- NULL
+          # bulk$spFeature <- NULL
           assay(bulk) <- round(assay(bulk)); sce.upl$bulk <- bulk
           sce.upl$cell <- subset(sce.all, , bulkCell=='cell')
         }
       } else {
-        updateSelectInput(session, 'methCovis', choices=c('Annotation/Manual'='man'), selected='man')
+        updateSelectInput(session, 'methCovis', choices=c('Annotation (or other) labels'='man'), selected='man')
       }
     }
   })

@@ -41,7 +41,7 @@ covis_auto_ui <- function(id) {
       dat_all_ui(ns('dat'))
     ),  
      tabPanel(span(id=ns('resTab'), "Results"), value='result', 
-     dim_ui(ns('dim')),
+     dim_ui(ns('dim'), coclus=TRUE),
      bsTooltip(ns('resTab'), title = "Exploring co-clustering results before co-visualization.", placement = "top", trigger = "hover")
      ),
      tabPanel("Tailoring Assignments", value='tailor',

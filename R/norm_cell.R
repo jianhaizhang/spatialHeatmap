@@ -50,17 +50,17 @@ norm_cell <- function(sce, bulk=NULL, cpm=FALSE, count.kp=FALSE, quick.clus=list
     cdat.blk <- colData(bulk) 
   
     # Erase input metadata in colData if input bulk and cell data do not have the same colnames in colData.
-    if (ncol(cdat.sc)==0 | ncol(cdat.blk)== 0 | ncol(cdat.sc)!=ncol(cdat.blk)) { 
-      colData(sce) <- colData(bulk) <- NULL
-    }
-    if (ncol(cdat.sc) > 0 & ncol(cdat.blk) > 0 & ncol(cdat.sc)==ncol(cdat.blk)) {
-      if (!all(colnames(cdat.sc)==colnames(cdat.blk))) colData(sce) <- colData(bulk) <- NULL
-    }
+    #if (ncol(cdat.sc)==0 | ncol(cdat.blk)== 0 | ncol(cdat.sc)!=ncol(cdat.blk)) { 
+    #  colData(sce) <- colData(bulk) <- NULL
+    #}
+    #if (ncol(cdat.sc) > 0 & ncol(cdat.blk) > 0 & ncol(cdat.sc)==ncol(cdat.blk)) {
+    #  if (!all(colnames(cdat.sc)==colnames(cdat.blk))) colData(sce) <- colData(bulk) <- NULL
+    #}
     bulk$bulkCell <- 'bulk'; sce$bulkCell <- 'cell'
     bulk$sample <- colnames(bulk); sce$sample <- colnames(sce)
-    int <- intersect(rownames(bulk), rownames(sce))
-    pkg <- check_pkg('BiocGenerics'); if (is(pkg, 'character')) stop(pkg)
-    sce <- BiocGenerics::cbind(bulk[int, ], sce[int, ])
+    # int <- intersect(rownames(bulk), rownames(sce))
+    # pkg <- check_pkg('BiocGenerics'); if (is(pkg, 'character')) stop(pkg)
+    sce <- cbind_se(bulk, sce)
   }
     if (quick.clus$min.size > ncol(sce)) { message('fewer cells than min size in quickCluster!'); return() }
     # Normalization.

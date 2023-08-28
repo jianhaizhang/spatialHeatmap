@@ -12,13 +12,14 @@ data_ui <- function(id, dim.ui=NULL, tailor.ui=NULL) {
       ),
       tabPanel("Assay data", value='dat',
       fluidRow(splitLayout(cellWidths=c('5px', '70px', '1px', '115px', '1px', '80px', '1px', '80px', '1px', '170px'), '',
-      actionButton(ns("selRow"), "Plotting", style=run.top), '',
+      actionButton(ns("selRow"), "Plot", style=run.top), '',
       actionButton(ns("deSel"), "Deselect rows", style='margin-top:24px'), '',
       numericInput(ns('page'), label='Table height', value=300, min=50, max=Inf, step=50, width=150), '',
       selectInput(ns('spk'), label='Sparklines', choices=c('No', 'Yes'), selected='No'), '',
-      selectInput(ns('datIn'), label='Input data', choices=c('Complete'='all'), selected='all') 
+      div(id=ns('datInD'), selectInput(ns('datIn'), label='Input data', choices=c('Complete'='all'), selected='all')) 
       )),
       bsTooltip(id=ns('selRow'), title="Click to plot spatial heatmaps.", placement = "top", trigger = "hover"),
+      bsTooltip(id=ns('datInD'), title="Assay data for plotting spatial heatmaps.", placement = "top", trigger = "hover"),
       fluidRow(splitLayout(cellWidths=c("1%", "98%", "1%"), "", dataTableOutput(ns("dtAll")), ""))
       ), # tabPanel
       tabPanel("Settings", value='sett', 

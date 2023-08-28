@@ -176,9 +176,8 @@ sf_var <- function(data, feature, ft.sel=NULL, variable=NULL, var.sel=NULL, com.
 #' @rdname SpatialEnrichment
 #' @param method One of \code{edgeR}, \code{limma}, \code{DESeq2}, \code{distinct}. 
 #' @param norm The normalization method (\code{TMM}, \code{RLE}, \code{upperquartile}, \code{none}) in edgeR. The default is \code{TMM}. Details: https://www.rdocumentation.org/packages/edgeR/versions/3.14.0/topics/calcNormFactors. 
-
+#' @param m.array Logical. `TRUE` and `FALSE` indicate the input are microarray and count data respectively.  
 #' @param log2.trans.dis Logical, only applicable when \code{method='distinct'}. If \code{TRUE} the count data is transformed to log-2 scale.
-
 #' @param aggr One of \code{mean} (default) or \code{median}. The method to aggregated replicates in the assay data.  
 #' @param log2.trans Logical. If \code{TRUE} (default), the aggregated data (see \code{aggr}) is transformed to log2-scale and will be further used for plotting SHMs. 
 #' @param p.adjust The method (\code{holm}, \code{hochberg}, \code{hommel}, \code{bonferroni}, \code{BH}, \code{BY}, \code{fdr}, or \code{none}) for adjusting p values in multiple hypothesis testing. The default is \code{BH}.
@@ -189,10 +188,10 @@ sf_var <- function(data, feature, ft.sel=NULL, variable=NULL, var.sel=NULL, com.
 #' @export
 #' @importFrom SummarizedExperiment colData
  
-spatial_enrich <- function(data, method=c('edgeR'), norm='TMM', log2.trans.dis=TRUE, log2.fc=1, p.adjust='BH', fdr=0.05, outliers=0, aggr='mean', log2.trans=TRUE) {
-  #save(data, method, norm, log2.trans.dis, log2.fc, p.adjust, fdr, aggr, log2.trans, file='spatial.enrich.arg')
-  if (is(data, 'data.frame')|is(data, 'matrix')|is(data, 'dgCMatrix')|is(data, 'DataFrame')) {                 
-    data <- SummarizedExperiment(assays=list(data=data))                                                           
+spatial_enrich <- function(data, method=c('edgeR'), norm='TMM', m.array=FALSE, log2.trans.dis=TRUE, log2.fc=1, p.adjust='BH', fdr=0.05, outliers=0, aggr='mean', log2.trans=TRUE) {
+  #save(data, method, norm, m.array, log2.trans.dis, log2.fc, p.adjust, fdr, outliers, aggr, log2.trans, file='spatial.enrich.arg')
+  if (is(data, 'data.frame')|is(data, 'matrix')|is(data, 'dgCMatrix')|is(data, 'DataFrame')) {
+    data <- SummarizedExperiment(assays=list(data=data))
   }
   edg <- dsq <- lim <- dis <- NULL
   if ('edgeR' %in% method) { cat('edgeR ... \n')
@@ -200,7 +199,7 @@ spatial_enrich <- function(data, method=c('edgeR'), norm='TMM', log2.trans.dis=T
     cat('Done! \n')
   }
   if ('limma' %in% method) { cat('limma ... \n')
-    lim <- limma(data, m.array=FALSE, method.norm=norm, com.factor='com.by', method.adjust=p.adjust, return.all=FALSE, log2.fc=log2.fc, fdr=fdr, outliers=outliers)
+    lim <- limma(data, m.array=m.array, method.norm=norm, com.factor='com.by', method.adjust=p.adjust, return.all=FALSE, log2.fc=log2.fc, fdr=fdr, outliers=outliers)
     cat('Done! \n') 
   }
   if ('DESeq2' %in% method) { cat('DESeq2 ... \n')
@@ -211,10 +210,9 @@ spatial_enrich <- function(data, method=c('edgeR'), norm='TMM', log2.trans.dis=T
     dis <- distt(data, norm.fun='CNF', par.list=list(method=norm), log2.trans=log2.trans.dis, com.factor='com.by', return.all=FALSE, log2.fc=log2.fc, fdr=fdr, outliers=outliers)
     cat('Done! \n')
   }
-
   lis <- list(edgeR=edg, limma=lim, DESeq2=dsq, distinct=dis)[c('edgeR', 'limma', 'DESeq2', 'distinct') %in% method]
   names(lis) <- 'result'
-  dat.nor <- norm_data(data, norm.fun='CNF', par.list=list(method=norm), log2.trans=log2.trans)
+  if (m.array==FALSE) dat.nor <- norm_data(data, norm.fun='CNF', par.list=list(method=norm), log2.trans=log2.trans) else if (m.array==TRUE) dat.nor <- data
   dat.aggr <- aggr_rep(dat.nor, sam.factor=NULL, con.factor=NULL, aggr=aggr)
   lis$data <- dat.aggr; return(lis)
 }
