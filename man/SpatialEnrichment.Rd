@@ -22,6 +22,7 @@ spatial_enrich(
   data,
   method = c("edgeR"),
   norm = "TMM",
+  m.array = FALSE,
   log2.trans.dis = TRUE,
   log2.fc = 1,
   p.adjust = "BH",
@@ -36,7 +37,7 @@ query_enrich(res, query)
 ovl_enrich(
   res,
   type = "up",
-  plot = "upset",
+  plot = "matrix",
   order.by = "freq",
   nintersects = 40,
   point.size = 3,
@@ -54,7 +55,7 @@ ovl_enrich(
 graph_line(
   data,
   scale = "none",
-  x.title = "Samples/conditions",
+  x.title = "Samples",
   y.title = "Assay values",
   text.size = 15,
   text.angle = 60,
@@ -89,6 +90,8 @@ graph_line(
 
 \item{norm}{The normalization method (\code{TMM}, \code{RLE}, \code{upperquartile}, \code{none}) in edgeR. The default is \code{TMM}. Details: https://www.rdocumentation.org/packages/edgeR/versions/3.14.0/topics/calcNormFactors.}
 
+\item{m.array}{Logical. `TRUE` and `FALSE` indicate the input are microarray and count data respectively.}
+
 \item{log2.trans.dis}{Logical, only applicable when \code{method='distinct'}. If \code{TRUE} the count data is transformed to log-2 scale.}
 
 \item{log2.fc}{The log2-fold change cutoff. The default is 1.}
@@ -109,7 +112,7 @@ graph_line(
 
 \item{type}{One of \code{up} (default) or \code{down}, which refers to up- or down-regulated biomolecules.}
 
-\item{plot}{One of \code{upset} (default), \code{matrix}, or \code{venn}, corresponding to upset plot, overlap matrix, or Venn diagram respectively.}
+\item{plot}{One of \code{upset}, \code{matrix}, or \code{venn}, corresponding to upset plot, overlap matrix, or Venn diagram respectively.}
 
 \item{order.by}{How the intersections in the matrix should be ordered by. Options include frequency (entered as "freq"), degree, or both in any order.}
 
@@ -256,5 +259,5 @@ H. Wickham. ggplot2: Elegant Graphics for Data Analysis. Springer-Verlag New Yor
 Hadley Wickham (2007). Reshaping Data with the reshape Package. Journal of Statistical Software, 21(12), 1-20. URL http://www.jstatsoft.org/v21/i12/.
 }
 \author{
-Jianhai Zhang \email{jianhai.zhang@email.ucr.edu} \cr Dr. Thomas Girke \email{thomas.girke@ucr.edu}
+Jianhai Zhang \email{jzhan067@ucr.edu} \cr Dr. Thomas Girke \email{thomas.girke@ucr.edu}
 }

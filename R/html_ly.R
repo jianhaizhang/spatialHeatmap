@@ -16,52 +16,76 @@
 #' C. Sievert. Interactive Web-Based Data Visualization with R, plotly, and shiny. Chapman and Hall/CRC Florida, 2020.
 #' Ramnath Vaidyanathan, Yihui Xie, JJ Allaire, Joe Cheng and Kenton Russell (2019). htmlwidgets: HTML Widgets for R. R package version 1.5.1. https://CRAN.R-project.org/package=htmlwidgets
 
-#' @importFrom plotly gg2list as_widget subplot 
-#' @importFrom htmlwidgets saveWidget
-
-html_ly <- function(gg, cs.g, ft.trans, sam.uni, anm.width, anm.height, selfcontained=FALSE, out.dir) {
-  # save(gg, cs.g, ft.trans, sam.uni, anm.width, anm.height, selfcontained, out.dir, file ='all.ly')
-
-  cs.g$theme$aspect.ratio <- NULL
-  gg.na <- names(gg); cs.lis <- gg2list(cs.g, tooltip='color_scale')
-  cs.lis$layout$title$text <- NULL 
-  csly <- as_widget(cs.lis, tooltip='color_scale') 
+html_ly <- function(gg.all, cs.g, aspr=1, anm.scale=1, selfcontained=FALSE, out.dir) {
+  # save(gg.all, cs.g, aspr, anm.scale, selfcontained, out.dir, file ='html.ly.arg')
+  pkg <- check_pkg('plotly'); if (is(pkg, 'character')) { warning(pkg); return(pkg) }
+  pkg <- check_pkg('htmlwidgets'); if (is(pkg, 'character')) { warning(pkg); return(pkg) }
+  
   dir <- paste0(normalizePath(out.dir, winslash="/", mustWork=FALSE), '/html_shm')
   if (!dir.exists(dir)) dir.create(dir, recursive=TRUE)
+  lib.fi <- file.path(dir, 'lib')
+  if (dir.exists(lib.fi)) unlink(lib.fi, recursive=TRUE)
+
+  nas <- names(gg.all)
+  gg.na <- grep('^dim_', nas, invert=TRUE, value=TRUE)
+  cs.g$theme$aspect.ratio <- NULL
+  cs.lis <- plotly::gg2list(cs.g, tooltip='color_scale')
+  cs.lis$layout$title$text <- NULL 
+  csly <- plotly::as_widget(cs.lis, tooltip='color_scale') 
+
   rd1 <- '1. Double click the "html" files to display the interactive spatial heatmaps on a web browser.'
   rd2 <- '2. All files in the "lib" folder are required to display the spatial heatmaps, so the "html" files cannot work independently.'
   writeLines(text=c(rd1, rd2), con=paste0(dir, '/README.txt'))
-  for (i in gg.na) {
-    
+  
+  for (i in gg.na) {    
     na.hl <- paste0(i, '.html')
     cat('Preparing', paste0("'", na.hl, "'"), '... \n')
-    g <- gg[[i]]; lay.dat <- layer_data(g)
+    g <- gg.all[[i]]; lay.dat <- layer_data(g)
+
+    anm.height <- 550 * anm.scale; asp <- g$theme$aspect.ratio
+    if (!is.null(asp)) asp <- 1; anm.width <- anm.height / asp
+
     dat <- g$data; tis.path <- dat$Feature
-    # g.col <- lay.dat$fill; names(g.col) <- dat$tissue
-    # g.col <- g.col[!duplicated(names(g.col))] 
-    ft.legend <- intersect(sam.uni, unique(tis.path))
-    ft.legend <- setdiff(ft.legend, ft.trans) 
-    leg.idx <- !duplicated(tis.path) & (tis.path %in% ft.legend)
-    tis.show <- as.vector(dat$Feature)[leg.idx]
-    tis.show1 <- tis.path[leg.idx]
+    # ft.legend <- intersect(sam.uni, unique(tis.path))
+    # ft.legend <- setdiff(ft.legend, ft.trans) 
+    # leg.idx <- !duplicated(tis.path) & (tis.path %in% ft.legend)
+    # tis.show <- as.vector(dat$Feature)[leg.idx]
+    # tis.show1 <- tis.path[leg.idx]
     g$theme$aspect.ratio <- NULL # Aspect ratio is not accepted.
-    g2l <- gg2list(g, tooltip="text")
+    g2l <- plotly::gg2list(g, tooltip="text")
     cat('Preparing legend for', paste0("'", na.hl, "'"), '... \n')
-    for (i in seq_along(g2l$data)) {
-     
-      idx.tis <- tis.show %in% g2l$data[[i]]$name
-      if (any(idx.tis)) g2l$data[[i]]$name <- tis.show1[idx.tis] else g2l$data[[i]]$showlegend <- FALSE
 
-    }; ggly <- as_widget(g2l)
-    subly <- subplot(csly, ggly, nrows=1, shareX=FALSE, shareY=FALSE, margin=0, widths=c(0.05, 0.95))
-    subly$width <- anm.width; subly$height <- anm.height
-    saveWidget(subly, na.hl, selfcontained=selfcontained, libdir="lib")
-    file.rename(na.hl, paste0(dir, '/', na.hl)) 
-  }; unlink(paste0(dir, '/lib'), recursive=TRUE)
-
-  if (dir.exists('lib')) { lib1 <- paste0(dir, '/lib')
-   if (dir.exists(lib1)) unlink(lib1, recursive=TRUE)
-   file.rename('lib', lib1) 
-  }
-
+    ft.show <- unique(dat$feature[grepl('^#', lay.dat$fill)])
+    ft.show <- grep('globalLGD|localLGD', ft.show, value=TRUE, invert=TRUE)
+    ft.all <- lapply(g2l$data, function(x) x$name)
+    idx.show <- which(!duplicated(sub('__\\d+$', '', ft.all)) & ft.all %in% ft.show)
+    for (j in seq_along(g2l$data)) { 
+      na0 <- g2l$data[[j]]$name
+      if (j %in% idx.show) g2l$data[[j]]$name <- sub('__\\d+$', '', na0) else g2l$data[[j]]$showlegend <- FALSE 
+    }; ggly <- plotly::as_widget(g2l)
+    na.dim <- paste0('dim_', i); if (na.dim %in% nas) {
+      g.dim <- gg.all[[na.dim]]
+      lay.dat.dim <- layer_data(g.dim); dat.dim <- g.dim$data
+      cell.show <- unique(dat.dim$feature[grepl('^#', dat.dim$fill)])
+      g.dim$theme$aspect.ratio <- NULL
+      g2l.dim <- plotly::gg2list(g.dim, tooltip="text")
+      for (k in seq_along(g2l.dim$data)) {
+      # if (!g2l.dim$data[[k]]$legendgroup %in% cell.show) g2l.dim$data[[k]]$showlegend <- FALSE
+      # If color cells independently, there are two many legends.
+      g2l.dim$data[[k]]$showlegend <- FALSE
+      }; ggly.dim <- plotly::as_widget(g2l.dim)
+      ggly.dim <- plotly::layout(ggly.dim, legend = list(orientation = "h", xanchor = "center", x = 0.5))
+    }
+    if (na.dim %in% nas) { 
+      subly <- plotly::subplot(csly, ggly.dim, ggly, nrows=1, shareX=TRUE, shareY=FALSE, margin=0, widths=c(0.05, 0.475, 0.475))
+      subly$width <- anm.width*2*aspr; subly$height <- anm.height
+    } else {
+      subly <- plotly::subplot(csly, ggly, nrows=1, shareX=TRUE, shareY=FALSE, margin=0, widths=c(0.05, 0.95))
+      subly$width <- anm.width*aspr; subly$height <- anm.height
+    }
+    htmlwidgets::saveWidget(subly, na.hl, selfcontained=selfcontained, libdir="lib")
+    file.rename(na.hl, file.path(dir, na.hl)) 
+  }; # unlink(paste0(dir, '/lib'), recursive=TRUE)
+  if (dir.exists('lib')) file.rename('lib', lib.fi)
+  return(list(width=subly$width, height=subly$height)) 
 }

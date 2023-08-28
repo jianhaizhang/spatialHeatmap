@@ -40,7 +40,7 @@ gg_2lgd <- function(gg.all, sam.dat, ft.trans, position.2nd='bottom', legend.nro
     if (add.feature.2nd==TRUE) lab <- paste0(path.tar, ' (', val.tar, ')') 
     gde <- guide_legend(title=NULL, nrow=legend.nrow.2nd, ncol=legend.ncol.2nd, label.theme=element_text(angle=angle.text.key.2nd, size=legend.text.size.2nd), label.position=position.text.key.2nd)
     g <- g+scale_fill_manual(values=g.col, breaks=df.tar, labels=lab, guide=gde)+theme(legend.box.margin=margin(-20, 0, 2, 0, unit='pt'))
-    if (!is.null(legend.key.size.2nd)) g <- g+theme(legend.key.size=unit(legend.key.size.2nd, "npc"))
+    if (!is.null(legend.key.size.2nd)) g <- g+theme(legend.key.height=unit(legend.key.size.2nd, "npc"), legend.key.width=unit(legend.key.size.2nd, "npc"),)
     if (position.2nd!='bottom') g <- g+theme(legend.position=position.2nd)
     gg.all[[i]] <- g
  

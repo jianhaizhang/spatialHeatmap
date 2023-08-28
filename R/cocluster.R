@@ -101,6 +101,10 @@ cocluster <- function(bulk, cell, df.match=NULL, min.dim=11, max.dim=50, dimred=
   inter <- intersect(rownames(bulk), rownames(cell))
   blk.kp <- bulk[inter, ]; sc.kp <- cell[inter, ]
   pkg <- check_pkg('BiocGenerics'); if (is(pkg, 'character')) stop(pkg)
+
+  cna.inter <- intersect(colnames(colData(blk.kp)), colnames(colData(sc.kp)))
+  colData(blk.kp) <- colData(blk.kp)[, cna.inter, drop=FALSE]
+  colData(sc.kp) <- colData(sc.kp)[, cna.inter, drop=FALSE]
   com.kp <- BiocGenerics::cbind(blk.kp, sc.kp)
   com.kp$index <- seq_len(ncol(com.kp))
   com.kp$sample <- colnames(com.kp)

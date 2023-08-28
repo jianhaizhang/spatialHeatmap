@@ -44,7 +44,6 @@
 #' @importFrom igraph V E graph_from_data_frame delete_edges delete_vertices as_data_frame layout_in_circle layout_with_fr
 #' @importFrom shiny shinyApp shinyUI selectInput htmlOutput div textInput icon actionButton radioButtons fluidRow splitLayout plotOutput shinyServer reactive reactiveValues observeEvent withProgress incProgress renderPlot renderUI HTML observe updateSelectInput updateRadioButtons numericInput validate need span tags
 #' @importFrom shinydashboard dashboardSidebar dashboardPage dashboardHeader sidebarMenu menuItem menuSubItem dashboardBody tabItems tabItem box
-#' @importFrom visNetwork visNetworkOutput visNetwork visOptions renderVisNetwork visIgraphLayout
 
 network <- function(ID, data, assay.na=NULL, adj.mod, ds="3", adj.min=0, con.min=0, desc=NULL, node.col=c("turquoise", "violet"), edge.col=c("yellow", "blue"), vertex.label.cex=1, vertex.cex=3, edge.cex=10, layout="circle", color.key.lab.size=1.5, color.key.text.size=1, main=NULL, static=TRUE, ...) {
  # save(ID, data, assay.na, adj.mod, ds, adj.min, con.min, node.col, edge.col, vertex.label.cex, vertex.cex, edge.cex, layout, color.key.lab.size, color.key.text.size, main, static, file='network.arg')
@@ -118,6 +117,7 @@ network <- function(ID, data, assay.na=NULL, adj.mod, ds="3", adj.min=0, con.min
   rownames(node.df) <- sub('_target$', '', rownames(node.df))
   node.df <- node.df[, 'connectivity', drop=FALSE]; invisible(node.df)
   } else if (static==FALSE) {
+    pkg <- check_pkg('visNetwork'); if (is(pkg, 'character')) { warning(pkg); return(pkg) }
     ui <- shinyUI(dashboardPage(
       dashboardHeader(title='Interactive Network'),
       dashboardSidebar(
@@ -143,7 +143,7 @@ network <- function(ID, data, assay.na=NULL, adj.mod, ds="3", adj.min=0, con.min
        tabItems(
 
         tabItem(tabName="net", 
-        box(title="Interactive Network", status="primary", solidHeader=TRUE, collapsible=TRUE, fluidRow(splitLayout(cellWidths=c("1%", "6%", "91%", "2%"), "", plotOutput("bar.net"), visNetworkOutput("vis"), "")), width=12)
+        box(title="Interactive Network", status="primary", solidHeader=TRUE, collapsible=TRUE, fluidRow(splitLayout(cellWidths=c("1%", "6%", "91%", "2%"), "", plotOutput("bar.net"), visNetwork::visNetworkOutput("vis"), "")), width=12)
         ),
         tabItem(tabName="ins", 
         box(title=NULL, status="primary", solidHeader=TRUE, collapsible=TRUE, HTML('By default, only top edges are shown, since too many edges might crash the session. To display more edges, the adjcency threshold should be decreased gradually. <br/> <br/> The "Maximun edges" limits the total of shown edges. In case a very low adjacency threshold is choosen and introduces too many edges that exceed the Maximun edges, the app will internally increase the adjacency threshold until the edge total is within the Maximun edges, which is a protection against too many edges. The adjacency threshold of 1 produces no edges, in this case the app wil internally decrease this threshold until the number of edges reaches the Maximun edges. If adjacency threshold of 0.998 is selected and no edge is left, this app will also internally update the edges to 1 or 2.'), width=12),
@@ -258,12 +258,12 @@ network <- function(ID, data, assay.na=NULL, adj.mod, ds="3", adj.min=0, con.min
         col.nod <- NULL; for (i in node$value) {
           ab <- abs(i-v.net); col.nod <- c(col.nod, color.net$col.net[which(ab==min(ab))[1]])
         }; node$color <- col.nod
-        visNetwork(node, visNet()[["link"]], height="300px", width="100%", background="", main=paste0("Network Module Containing ", ID), submain="", footer= "") %>% visIgraphLayout(physics=FALSE, smooth=TRUE) %>%
-        visOptions(highlightNearest=list(enabled=TRUE, hover=TRUE), nodesIdSelection=TRUE)
+        visNetwork::visNetwork(node, visNet()[["link"]], height="300px", width="100%", background="", main=paste0("Network Module Containing ", ID), submain="", footer= "") %>% visNetwork::visIgraphLayout(physics=FALSE, smooth=TRUE) %>%
+        visNetwork::visOptions(highlightNearest=list(enabled=TRUE, hover=TRUE), nodesIdSelection=TRUE)
       })
     })
 
-    output$vis <- renderVisNetwork({
+    output$vis <- visNetwork::renderVisNetwork({
 
       withProgress(message="Network:", value=0.5, {
 

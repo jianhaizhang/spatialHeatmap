@@ -5,7 +5,9 @@
 tmp/
 *.ps$
 *.ps.xml$
+*.arg
 vignette.html
+*_cache/
 rsconnect/
 sub_matrix.txt
 customComputedData/

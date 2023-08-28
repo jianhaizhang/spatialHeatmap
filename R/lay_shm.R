@@ -17,18 +17,18 @@
 #' @author Jianhai Zhang \email{jzhan067@@ucr.edu} \cr Dr. Thomas Girke \email{thomas.girke@@ucr.edu}
 
 #' @references
-#' H. Wickham. ggplot2: Elegant Graphics for Data Analysis. Springer-Verlag New York, 2016. \cr R Core Team (2018). R: A language and environment for statistical computing. R Foundation for Statistical Computing, Vienna, Austria. RL https://www.R-project.org/ \cr Mustroph, Angelika, M Eugenia Zanetti, Charles J H Jang, Hans E Holtan, Peter P Repetti, David W Galbraith, Thomas Girke, and Julia Bailey-Serres. 2009. “Profiling Translatomes of Discrete Cell Populations Resolves Altered Cellular Priorities During Hypoxia in Arabidopsis.” Proc Natl Acad Sci U S A 106 (44): 18843–8
-
-#' Baptiste Auguie (2017). gridExtra: Miscellaneous Functions for "Grid" Graphics. R package version 2.3. https://CRAN.R-project.org/package=gridExtra \cr R Core Team (2018). R: A language and environment for statistical computing. R Foundation for Statistical Computing, Vienna, Austria. RL https://www.R-project.org/ \cr    
+#' H. Wickham. ggplot2: Elegant Graphics for Data Analysis. Springer-Verlag New York, 2016. \cr R Core Team (2018). R: A language and environment for statistical computing. R Foundation for Statistical Computing, Vienna, Austria. RL https://www.R-project.org/ #' Mustroph, Angelika, M Eugenia Zanetti, Charles J H Jang, Hans E Holtan, Peter P Repetti, David W Galbraith, Thomas Girke, and Julia Bailey-Serres. 2009. “Profiling Translatomes of Discrete Cell Populations Resolves Altered Cellular Priorities During Hypoxia in Arabidopsis.” Proc Natl Acad Sci U S A 106 (44): 18843–8
+#' Baptiste Auguie (2017). gridExtra: Miscellaneous Functions for "Grid" Graphics. R package version 2.3. https://CRAN.R-project.org/package=gridExtra
+#' R Core Team (2018). R: A language and environment for statistical computing. R Foundation for Statistical Computing, Vienna, Austria. RL https://www.R-project.org/ 
 #' Mustroph, Angelika, M Eugenia Zanetti, Charles J H Jang, Hans E Holtan, Peter P Repetti, David W Galbraith, Thomas Girke, and Julia Bailey-Serres. 2009. “Profiling Translatomes of Discrete Cell Populations Resolves Altered Cellular Priorities During Hypoxia in Arabidopsis.” Proc Natl Acad Sci U S A 106 (44): 18843–8
 
 #' @importFrom ggplot2 ggplot aes theme element_blank margin element_rect scale_y_continuous scale_x_continuous ggplotGrob geom_polygon scale_fill_manual ggtitle element_text labs 
 #' @importFrom gridExtra arrangeGrob grid.arrange
 #' @importFrom grid grobTree unit
 
-lay_shm <- function(lay.shm, con, ncol, ID.sel, grob.list = NULL, lay.mat = FALSE, scell=FALSE, decon=FALSE, srsc=FALSE, profile=FALSE, h=0.99, shiny = FALSE) {  
+lay_shm <- function(lay.shm, con, ncol, ID.sel, grob.list = NULL, lay.mat = FALSE, scell=FALSE, decon=FALSE, srsc=FALSE, profile=FALSE, h=0.99, shiny = FALSE, verbose=TRUE) {  
   # save(lay.shm, con, ncol, ID.sel, grob.list, lay.mat, scell, decon, srsc, profile, h, shiny, file = 'lay.arg')
-  message('Plot layout ... ')
+  if (verbose==TRUE) message('Plot layout ... ')
   ncol <- as.numeric(ncol); # grob.all.na <- names(grob.list); 
   if (profile==TRUE) {  
     if ((scell==TRUE | decon==TRUE) & srsc==TRUE) { 
@@ -81,5 +81,5 @@ lay_shm <- function(lay.shm, con, ncol, ID.sel, grob.list = NULL, lay.mat = FALS
     g.tr <- lapply(grob.list, grobTree); g.tr <- g.tr[names(grob.list)]
     n.col <- ncol(lay); n.row <- nrow(lay)
     g.arr <- arrangeGrob(grobs=g.tr, layout_matrix=lay, widths=unit(rep(0.99/n.col, n.col), "npc"), heights=unit(rep(h/n.row, n.row), "npc")) 
-  }; message('Done!'); return(g.arr)
+  }; if (verbose==TRUE) message('Done!'); return(g.arr)
 }

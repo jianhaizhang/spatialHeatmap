@@ -1,5 +1,5 @@
 # Module for co-visualization.
-scell_server <- function(id, tab, upl.mod.lis, shm.mod.lis, session) {
+scell_server <- function(id, tab, upl.mod.lis, shm.mod.lis, lis.url, parent, session) {
   moduleServer(id, function(input, output, session) {
   cat('Module scell_server ... \n')
   ns <- session$ns;
@@ -8,10 +8,25 @@ scell_server <- function(id, tab, upl.mod.lis, shm.mod.lis, session) {
   observeEvent(upl.mod.lis$sce$val, {
     library(Matrix)
     sce.all <- upl.mod.lis$sce$val
+    if (is.null(sce.all)) { # Erase previous datasets to avoid unexpected downstream computation.
+      sce.upl$bulk <- sce.upl$cell <- NULL
+    }
     reducedDim(sce.all, 'PCA') <- reducedDim(sce.all, 'UMAP') <- reducedDim(sce.all, 'TSNE') <- NULL
+    rowData(sce.all) <- link_dat(rowData(sce.all), link.only=FALSE) 
+    df.meta <- metadata(sce.all)$df.meta 
+    if (!is.null(df.meta)) { 
+      if (ncol(data.frame(df.meta))<2) {  
+        lgc.mt <- FALSE; msg <- 'The "df.meta" in the "metadata" slot should be a "data.frame" with at least two columns!' 
+        if (!lgc.mt) showModal(modal(msg = msg)); req(!lgc.mt)
+      } else {
+        metadata(sce.all)$df.meta <- link_dat(df.meta, link.only=FALSE)
+      }  
+    }
     # save(sce.all, file='sce.all')
     if (!is.null(sce.all)) {
       assay.na <- assayNames(sce.all)
+      lgc.ct <- 'counts' %in% assay.na
+      if (!lgc.ct) showModal(modal(msg = '"counts" not detected in "assayNames(<SingleCellExperiment>)"!')); req(lgc.ct)
       if ('logcounts' %in% assay.na) logcounts(sce.all) <- as(logcounts(sce.all), 'dgCMatrix')
       if ('count' %in% assay.na) assays(sce.all)$count <- as(assays(sce.all)$count, 'dgCMatrix') 
       if ('counts' %in% assay.na) assays(sce.all)$counts <- as(assays(sce.all)$counts, 'dgCMatrix') 
@@ -25,6 +40,7 @@ scell_server <- function(id, tab, upl.mod.lis, shm.mod.lis, session) {
       if ('bulkCell' %in% colnames(cdat)) {
         blk.cell.uni <- unique(cdat$bulkCell)
         if (all(c('bulk', 'cell') %in% blk.cell.uni)) {
+          updateSelectInput(session, 'methCovis', choices=c('Annotation (or other) labels'='man', 'Co-clustering       labels'='auto'), selected='auto')
           cdat.na <- colnames(cdat)
           lab.na <- grep('^label$|^label\\d+', cdat.na, value=TRUE)
           if (length(lab.na)==0) {
@@ -34,11 +50,12 @@ scell_server <- function(id, tab, upl.mod.lis, shm.mod.lis, session) {
           bulk <- subset(sce.all, , bulkCell=='bulk')
           # Bulk data are aggregated. 
           bulk <- aggr_rep(data=bulk, sam.factor=lab.na[1], aggr='mean')
+          # bulk$spFeature <- NULL
           assay(bulk) <- round(assay(bulk)); sce.upl$bulk <- bulk
           sce.upl$cell <- subset(sce.all, , bulkCell=='cell')
         }
       } else {
-        updateSelectInput(session, 'methCovis', choices=c('Annotation/Manual'='man'), selected='man')
+        updateSelectInput(session, 'methCovis', choices=c('Annotation (or other) labels'='man'), selected='man')
       }
     }
   })
@@ -90,9 +107,9 @@ scell_server <- function(id, tab, upl.mod.lis, shm.mod.lis, session) {
     if (is.null(method)|is.null(cell)) return()
     # 1) if condition then x <- covis_man_server(arg1=reactiveValue1, ...): server is like a function that returns a value, 2) if condition then covis_man_server(arg1=reactiveValue1, ...): the condition is useless, since reactiveValue1 can cause execution on inner code of covis_man_server regardless of the condition. 
     if ('man' %in% method & is.null(covis.man$dimred)) {
-      covis_man_server('covisMan', sce.upl=sce.upl, upl.mod.lis=upl.mod.lis, shm.mod.lis=shm.mod.lis, tab=tab, covis.man=covis.man, session)
+      covis_man_server('covisMan', sce.upl=sce.upl, upl.mod.lis=upl.mod.lis, shm.mod.lis=shm.mod.lis, tab=tab, covis.man=covis.man, lis.url=lis.url, parent=parent, session)
     } else if ('auto' %in% method & is.null(covis.auto$res)) {
-      covis_auto_server('covisAuto', sce.upl=sce.upl, upl.mod.lis=upl.mod.lis, shm.mod.lis=shm.mod.lis, tab=tab, covis.auto=covis.auto, session)
+      covis_auto_server('covisAuto', sce.upl=sce.upl, upl.mod.lis=upl.mod.lis, shm.mod.lis=shm.mod.lis, tab=tab, covis.auto=covis.auto, lis.url=lis.url, parent=parent, session)
     } 
   })
   # Erase value from previous session.

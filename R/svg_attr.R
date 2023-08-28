@@ -83,6 +83,8 @@ svg_attr <- function(doc, feature, br=TRUE) {
     num <- tryCatch({ as.numeric(stro.w[i]) }, error=function(e){ return('error') }, warning=function(w) { return('warning') } )
     stro.w[i] <- ifelse(is.numeric(num), num, 0)
   }
+  # index.all: counting groups of outlines and main shapes together.
+  # index.sub: counting groups of outlines and main shapes independently.
   df.attr <- tibble(feature=title, id=ids, fill=fil.cols, stroke=as.numeric(stro.w), parent=parent, element=nas, index.all=idx, index.sub=idx1)
   df.attr <- filter(df.attr, element!='a')
   # 'fill' is not necessary. In Inkscape, resizing a "group" causes "matrix" in "transform" (relative positions) attribute, and this can lead to related polygons uncolored in the spatial heatmaps. Solution: ungroup and regroup to get rid of transforms and get absolute positions.

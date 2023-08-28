@@ -44,8 +44,8 @@ dim_color <- function(gg.dim, gg.shm.all, grob.shm.all, col.shm.all, gg.lgd.all,
   # Match colors in SHMs to dim plots. Colour order: data -> svg feature -> embedding plot.
   for (i in seq_along(gg.dim.all)) {
     gg.dim <- gg.dim.all[i]
-    if (profile==TRUE) dim.col <- col_dim_toblk(gg.dim, gcol.all=col.shm.all, lis.match)
-    if (profile==FALSE) dim.col <- col_dim_toblk(gg.dim, gcol.all=col.lgd.all, lis.match)
+    if (profile==TRUE) dim.col <- col_dim_toblk(gg.dim=gg.dim, gcol.all=col.shm.all, lis.match=lis.match)
+    if (profile==FALSE) dim.col <- col_dim_toblk(gg.dim=gg.dim, gcol.all=col.lgd.all, lis.match=lis.match)
     # Max shapes: 128.
     # sp <- seq_along(dim.col); names(sp) <- names(dim.col)
     # Merge colour and shape legend: dim.col and sp have the same names.
@@ -82,7 +82,7 @@ dim_color <- function(gg.dim, gg.shm.all, grob.shm.all, col.shm.all, gg.lgd.all,
   sp <- shp(shape, dat.ft.all)
   if (length(non.tar) > 0) br <- tar.cell else br <- dat.ft.all
   # Re-plot dimensionlaity plot.
-  gg <- ggplot(dat.all, aes(x=x, y=y, text=dat.all$feature)) + geom_point(size=2, alpha=alpha.pt, aes(colour=feature, shape=feature)) + theme_classic() + theme(plot.title=element_text(hjust=0.5, size=sub.title.size), legend.position=dim.lgd.pos, legend.text=element_text(size=dim.lgd.text.size), legend.margin = margin(t=-0.02, l=0.05, r=0.1, unit='npc'), legend.background = element_rect(fill='transparent'), axis.text = element_blank(), axis.ticks = element_blank(), axis.title=element_text(size=dim.axis.font.size)) + scale_color_manual(values=dim.col.all, breaks=br, guide=guide_legend(title=NULL, nrow=dim.lgd.nrow)) + scale_shape_manual(values=sp, breaks=br, guide=guide_legend(title=NULL, nrow=dim.lgd.nrow, override.aes = list(size=dim.lgd.key.size))) + labs(title=tit, x=gg.dim0$labels$x, y=gg.dim0$labels$y, colour=cell.group, shape=cell.group) 
+  gg <- ggplot(dat.all, aes(x=x, y=y, text=dat.all$feature)) + geom_point(size=2, alpha=alpha.pt, aes(colour=feature, shape=feature)) + theme_classic() + theme(plot.title=element_text(hjust=0.5, size=sub.title.size), legend.position=dim.lgd.pos, legend.text=element_text(size=dim.lgd.text.size), legend.margin = margin(t=-0.02, l=0.05, r=0.1, unit='npc'), legend.background = element_rect(fill='transparent'), axis.text = element_blank(), axis.ticks = element_blank(), axis.title=element_text(size=dim.axis.font.size), aspect.ratio=1) + scale_color_manual(values=dim.col.all, breaks=br, guide=guide_legend(title=NULL, nrow=dim.lgd.nrow)) + scale_shape_manual(values=sp, breaks=br, guide=guide_legend(title=NULL, nrow=dim.lgd.nrow, override.aes = list(size=dim.lgd.key.size))) + labs(title=tit, x=gg.dim0$labels$x, y=gg.dim0$labels$y, colour=cell.group, shape=cell.group) 
   gg.dim.all[[i]] <- gg
 
   }
@@ -115,8 +115,8 @@ dim_color <- function(gg.dim, gg.shm.all, grob.shm.all, col.shm.all, gg.lgd.all,
 #' @keywords Internal
 #' @noRd 
 
-col_dim_toblk <- function(gg.dim, gcol.all, lis.match) { 
-  na <- sub('^dim_', '', names(gg.dim))
+col_dim_toblk <- function(gg.dim, dim.na=NULL, gcol.all, lis.match) { 
+  if (is.null(dim.na)) na <- sub('^dim_', '', names(gg.dim)) else na <- dim.na
   g.col <- gcol.all[[paste0('col_', na)]]
   dat.ft.na <- names(lis.match)
   # 'gray80' is a reserved color.

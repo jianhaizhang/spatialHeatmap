@@ -45,7 +45,7 @@
 #'    }
 #' }
 
-#' @author Jianhai Zhang \email{jianhai.zhang@@email.ucr.edu} \cr Dr. Thomas Girke \email{thomas.girke@@ucr.edu}
+#' @inherit filter_data author
 #' @name SpatialEnrichment
 #' @rdname SpatialEnrichment
 #' @aliases sf_var spatial_enrich query_enrich ovl_enrich graph_line
@@ -176,9 +176,8 @@ sf_var <- function(data, feature, ft.sel=NULL, variable=NULL, var.sel=NULL, com.
 #' @rdname SpatialEnrichment
 #' @param method One of \code{edgeR}, \code{limma}, \code{DESeq2}, \code{distinct}. 
 #' @param norm The normalization method (\code{TMM}, \code{RLE}, \code{upperquartile}, \code{none}) in edgeR. The default is \code{TMM}. Details: https://www.rdocumentation.org/packages/edgeR/versions/3.14.0/topics/calcNormFactors. 
-
+#' @param m.array Logical. `TRUE` and `FALSE` indicate the input are microarray and count data respectively.  
 #' @param log2.trans.dis Logical, only applicable when \code{method='distinct'}. If \code{TRUE} the count data is transformed to log-2 scale.
-
 #' @param aggr One of \code{mean} (default) or \code{median}. The method to aggregated replicates in the assay data.  
 #' @param log2.trans Logical. If \code{TRUE} (default), the aggregated data (see \code{aggr}) is transformed to log2-scale and will be further used for plotting SHMs. 
 #' @param p.adjust The method (\code{holm}, \code{hochberg}, \code{hommel}, \code{bonferroni}, \code{BH}, \code{BY}, \code{fdr}, or \code{none}) for adjusting p values in multiple hypothesis testing. The default is \code{BH}.
@@ -189,10 +188,10 @@ sf_var <- function(data, feature, ft.sel=NULL, variable=NULL, var.sel=NULL, com.
 #' @export
 #' @importFrom SummarizedExperiment colData
  
-spatial_enrich <- function(data, method=c('edgeR'), norm='TMM', log2.trans.dis=TRUE, log2.fc=1, p.adjust='BH', fdr=0.05, outliers=0, aggr='mean', log2.trans=TRUE) {
-  #save(data, method, norm, log2.trans.dis, log2.fc, p.adjust, fdr, aggr, log2.trans, file='spatial.enrich.arg')
-  if (is(data, 'data.frame')|is(data, 'matrix')|is(data, 'dgCMatrix')|is(data, 'DataFrame')) {                 
-    data <- SummarizedExperiment(assays=list(data=data))                                                           
+spatial_enrich <- function(data, method=c('edgeR'), norm='TMM', m.array=FALSE, log2.trans.dis=TRUE, log2.fc=1, p.adjust='BH', fdr=0.05, outliers=0, aggr='mean', log2.trans=TRUE) {
+  #save(data, method, norm, m.array, log2.trans.dis, log2.fc, p.adjust, fdr, outliers, aggr, log2.trans, file='spatial.enrich.arg')
+  if (is(data, 'data.frame')|is(data, 'matrix')|is(data, 'dgCMatrix')|is(data, 'DataFrame')) {
+    data <- SummarizedExperiment(assays=list(data=data))
   }
   edg <- dsq <- lim <- dis <- NULL
   if ('edgeR' %in% method) { cat('edgeR ... \n')
@@ -200,7 +199,7 @@ spatial_enrich <- function(data, method=c('edgeR'), norm='TMM', log2.trans.dis=T
     cat('Done! \n')
   }
   if ('limma' %in% method) { cat('limma ... \n')
-    lim <- limma(data, m.array=FALSE, method.norm=norm, com.factor='com.by', method.adjust=p.adjust, return.all=FALSE, log2.fc=log2.fc, fdr=fdr, outliers=outliers)
+    lim <- limma(data, m.array=m.array, method.norm=norm, com.factor='com.by', method.adjust=p.adjust, return.all=FALSE, log2.fc=log2.fc, fdr=fdr, outliers=outliers)
     cat('Done! \n') 
   }
   if ('DESeq2' %in% method) { cat('DESeq2 ... \n')
@@ -211,10 +210,9 @@ spatial_enrich <- function(data, method=c('edgeR'), norm='TMM', log2.trans.dis=T
     dis <- distt(data, norm.fun='CNF', par.list=list(method=norm), log2.trans=log2.trans.dis, com.factor='com.by', return.all=FALSE, log2.fc=log2.fc, fdr=fdr, outliers=outliers)
     cat('Done! \n')
   }
-
   lis <- list(edgeR=edg, limma=lim, DESeq2=dsq, distinct=dis)[c('edgeR', 'limma', 'DESeq2', 'distinct') %in% method]
   names(lis) <- 'result'
-  dat.nor <- norm_data(data, norm.fun='CNF', par.list=list(method=norm), log2.trans=log2.trans)
+  if (m.array==FALSE) dat.nor <- norm_data(data, norm.fun='CNF', par.list=list(method=norm), log2.trans=log2.trans) else if (m.array==TRUE) dat.nor <- data
   dat.aggr <- aggr_rep(dat.nor, sam.factor=NULL, con.factor=NULL, aggr=aggr)
   lis$data <- dat.aggr; return(lis)
 }
@@ -252,7 +250,7 @@ query_enrich <- function(res, query) {
 
 #' @rdname SpatialEnrichment
 #' @param type One of \code{up} (default) or \code{down}, which refers to up- or down-regulated biomolecules.
-#' @param plot One of \code{upset} (default), \code{matrix}, or \code{venn}, corresponding to upset plot, overlap matrix, or Venn diagram respectively.
+#' @param plot One of \code{upset}, \code{matrix}, or \code{venn}, corresponding to upset plot, overlap matrix, or Venn diagram respectively.
 #' @inheritParams UpSetR::upset
 #' @param upset.arg A \code{list} of additional arguments passed to \code{\link[UpSetR]{upset}}.
 #' @inheritParams gplots::venn
@@ -264,15 +262,16 @@ query_enrich <- function(res, query) {
 
  
 #' @export
-#' @importFrom UpSetR upset fromList
 
-ovl_enrich <- function(res, type='up', plot='upset', order.by="freq", nintersects=40, point.size=3, line.size=1, mb.ratio=c(0.6, 0.4), text.scale=1.5, upset.arg=list(), show.plot=TRUE, venn.arg=list(), axis.agl=45, font.size=5, cols=c("lightcyan3", "darkorange")) {
+ovl_enrich <- function(res, type='up', plot='matrix', order.by="freq", nintersects=40, point.size=3, line.size=1, mb.ratio=c(0.6, 0.4), text.scale=1.5, upset.arg=list(), show.plot=TRUE, venn.arg=list(), axis.agl=45, font.size=5, cols=c("lightcyan3", "darkorange")) {
   sams <- names(res$result)
   if (type=='up') lis <- lapply(sams, function(x) {rownames(res$result[[x]]$up)} )
   if (type=='down') lis <- lapply(sams, function(x) {rownames(res$result[[x]]$down)} )
   names(lis) <- sams
   if (plot=='upset') {
-    upset.arg <- c(list(data=fromList(lis), order.by=order.by, nintersects=nintersects, point.size=point.size, line.size=line.size, mb.ratio=mb.ratio, text.scale=text.scale), upset.arg)
+    pkg <- check_pkg('UpSetR'); if (is(pkg, 'character')) { warning(pkg); return(pkg) }
+    upset.arg <- c(list(data=UpSetR::fromList(lis), order.by=order.by, nintersects=nintersects, point.size=point.size, line.size=line.size, mb.ratio=mb.ratio, text.scale=text.scale), upset.arg)
+    upset <- UpSetR::upset
     ups <- do.call('upset', upset.arg)
     return(ups)
   } else if (plot=='matrix') {
@@ -325,7 +324,7 @@ deg_ovl_mat <- function(deg.lis, axis.agl, font.size, cols) {
 #' @importFrom reshape2 melt
 #' @importFrom ggplot2 ggplot aes geom_line theme labs element_text element_rect element_line
 
-graph_line <- function(data, scale='none', x.title='Samples/conditions', y.title='Assay values', text.size=15, text.angle=60, lgd.pos='right', lgd.guide=guides(color=guide_legend(nrow=1, byrow=TRUE, title=NULL))) {
+graph_line <- function(data, scale='none', x.title='Samples', y.title='Assay values', text.size=15, text.angle=60, lgd.pos='right', lgd.guide=guides(color=guide_legend(nrow=1, byrow=TRUE, title=NULL))) {
   Samples <- Value <- Genes <- NULL 
   if (all(c('type', 'total', 'method') %in% colnames(data))) { # Data frame of spatial enrichment.
     data <- data[, !colnames(data) %in% c('type', 'total', 'metadata', 'method'), drop=FALSE] }

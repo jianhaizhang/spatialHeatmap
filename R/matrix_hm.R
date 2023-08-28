@@ -45,9 +45,7 @@
 
 #' @export
 #' @importFrom SummarizedExperiment assays
-#' @importFrom ggdendro dendro_data
 #' @importFrom ggplot2 ggplot geom_segment geom_text position_dodge geom_rect theme theme_minimal geom_tile scale_fill_gradient geom_hline
-#' @importFrom plotly layout subplot %>%
 #' @importFrom stats hclust order.dendrogram as.dendrogram
 #' @importFrom gplots heatmap.2 
 #' @importFrom graphics image mtext par plot title
@@ -86,6 +84,7 @@ matrix_hm <- function(ID, data, assay.na=NULL, scale='row', col=c('yellow', 'red
     clus <- cut_dendro(dd.gen, target=ID, h=cut.h)
     res$cluster <- clus; res$cut.h <- cut.h; invisible(res)
   } else if (static==FALSE) {
+     pkg <- check_pkg('plotly'); if (is(pkg, 'character')) { warning(pkg); return(pkg) }
      x <- x1 <- x2 <- y <- y1 <- y2 <- xend <- yend <- value <- NULL 
      dd.sam <- as.dendrogram(hclust(dist(t(mod))))
      # Cutting row dendrograms.
@@ -93,8 +92,8 @@ matrix_hm <- function(ID, data, assay.na=NULL, scale='row', col=c('yellow', 'red
      if (missing(cut.h)) cut.h <- h.max * 0.2
      if (cut.h > h.max) cut.h <- h.max
      clus <- cut_dendro(dd.gen, target=ID, h=cut.h)
-     
-     d.sam <- dendro_data(dd.sam); d.gen <- dendro_data(dd.gen)
+     pkg <- check_pkg('ggdendro'); if (is(pkg, 'character')) stop(pkg) 
+     d.sam <- ggdendro::dendro_data(dd.sam); d.gen <- ggdendro::dendro_data(dd.gen)
      g.dengra <- function(df) {
        ggplot()+geom_segment(data=df, aes(x=x, y=y, xend=xend, yend=yend))+labs(x="", y="")+theme_minimal()+theme(axis.text= element_blank(), axis.ticks=element_blank(), panel.grid=element_blank())
      }
@@ -113,7 +112,8 @@ matrix_hm <- function(ID, data, assay.na=NULL, scale='row', col=c('yellow', 'red
      g.idx <- which(rownames(mod.cl) %in% ID)
      g <- g+geom_hline(yintercept=c(g.idx-0.5, g.idx+0.5), linetype="solid", color=sep.color, linewidth=sep.width*25)
      ft <- list(family = "sans serif", size=title.size, color='black')
-     ply <- subplot(p.sam, ggplot(), g, p.gen, nrows=2, shareX=TRUE, shareY=TRUE, margin=0, heights=c(0.2, 0.8), widths=c(0.8, 0.2)) %>% plotly::layout(title=main, font=ft)
+     ply <- plotly::subplot(p.sam, ggplot(), g, p.gen, nrows=2, shareX=TRUE, shareY=TRUE, margin=0, heights=c(0.2, 0.8), widths=c(0.8, 0.2))
+     ply <- plotly::layout(ply, title=main, font=ft)
      return(list(plot=ply, dendro.row=dd.gen, cluster=clus, cut.h=cut.h))
    }
 }

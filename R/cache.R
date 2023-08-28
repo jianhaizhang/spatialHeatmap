@@ -2,7 +2,7 @@
 #'
 #' @param dir The directory path to save the cached data. Default is NULL and the cached data is stored in \code{~/.cache/shm}.
 #' @param overwrite Logical, TRUE or FALSE. Default is TRUE and data in the cache with the same name of the object in \code{...} will be overwritten.
-#' @param ... A single R object to be cached.
+#' @param obj,na A single R object (`obj`) to be cached into the file named `na`. 
 
 #' @return The directory path of the cache.
 
@@ -17,16 +17,16 @@
 
 #' @export save_cache
 
-save_cache <- function(dir=NULL, overwrite=TRUE, ...) {
+save_cache <- function(dir=NULL, overwrite=TRUE, obj, na=NULL) {
   pkg <- check_pkg('BiocFileCache'); if (is(pkg, 'character')) { warning(pkg); return(pkg) }
   pkg <- check_pkg('rappdirs'); if (is(pkg, 'character')) { warning(pkg); return(pkg) }
   dir.con <- is.na(dir)|is.null(dir) 
   if (length(dir.con)==0|sum(dir.con)==1) {
       bfc <- BiocFileCache::BiocFileCache(rappdirs::user_cache_dir(appname="shm"), ask=FALSE)
   } else bfc <- BiocFileCache::BiocFileCache(dir, ask=FALSE)
-  na <- deparse(substitute(...))
+  if (is.null(na)) na <- deparse(substitute(obj))
   if (overwrite==TRUE) BiocFileCache::bfcremove(bfc, BiocFileCache::bfcquery(bfc, na, exact=TRUE)$rid)
-  path <- BiocFileCache::bfcnew(bfc, na); save(..., file=path)
+  path <- BiocFileCache::bfcnew(bfc, na); save(obj, file=path)
   pa <- BiocFileCache::bfccache(bfc)
   cat('Cache directory:', pa,  '\n'); return(pa)
 }

@@ -192,7 +192,7 @@
 
 \item{relative.scale}{A numeric to adjust the relative sizes between multiple aSVGs. Applicable only if multiple aSVGs are provided. Default is \code{NULL} and all aSVGs have the same size.}
 
-\item{verbose}{Logical. If `TRUE`, spatial features in data not colored in SHMs are printed to R console. Default is `TRUE`.}
+\item{verbose}{Logical. If `TRUE` (default), intermediate messages will be printed.}
 
 \item{out.dir}{The directory to save SHMs as interactive HTML files and videos. Default is `NULL`, and the HTML files and videos are not saved.}
 

@@ -22,7 +22,7 @@ nod_lin <- function(ds, lab, mods, adj, geneID, adj.min) {
   # Should not exclude duplicate rows by "length".
   node.pas <- NULL; for (i in seq_len(nrow(link))) { node.pas <- c(node.pas, paste0(sort(c(link[i, 'from'], link[i, 'to'])), collapse='')) }
   w <- which(duplicated(node.pas)); link <- link[-w, ]
-  link1 <- subset(link, from!=to, stringsAsFactors=FALSE); link1 <- link1[order(-link1$width), ]
+  link1 <- subset(link, from!=to); link1 <- link1[order(-link1$width), ]
   node <- data.frame(label=colnames(adj.m), size=colSums(adj.m), stringsAsFactors=FALSE)
   node <- node[order(-node$size), ]; return(list(node=node, link=link1))
 

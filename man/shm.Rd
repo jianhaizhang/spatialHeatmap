@@ -23,7 +23,7 @@
   bar.width = 0.08,
   bar.title = NULL,
   bar.title.size = 0,
-  scale = NULL,
+  scale = "no",
   ft.trans = NULL,
   tis.trans = ft.trans,
   legend.r = 0.9,
@@ -61,9 +61,9 @@
   line.width = 0.2,
   line.color = "grey70",
   relative.scale = NULL,
-  verbose = TRUE,
   out.dir = NULL,
   animation.scale = 1,
+  aspr = 1,
   selfcontained = FALSE,
   video.dim = "640x480",
   res = 500,
@@ -71,6 +71,7 @@
   framerate = 1,
   bar.width.vdo = 0.1,
   legend.value.vdo = NULL,
+  verbose = TRUE,
   ...
 )
 }
@@ -183,11 +184,11 @@
 
 \item{relative.scale}{A numeric to adjust the relative sizes between multiple aSVGs. Applicable only if multiple aSVGs are provided. Default is \code{NULL} and all aSVGs have the same size.}
 
-\item{verbose}{Logical. If `TRUE`, spatial features in data not colored in SHMs are printed to R console. Default is `TRUE`.}
-
 \item{out.dir}{The directory to save SHMs as interactive HTML files and videos. Default is `NULL`, and the HTML files and videos are not saved.}
 
 \item{animation.scale}{A numeric to scale the SHM size in the HTML files. The default is 1, and the height is 550px and the width is calculated according to the original aspect ratio in the aSVG file.}
+
+\item{aspr}{The aspect ratio (width to height) in the interative HTML files.}
 
 \item{selfcontained}{Whether to save the HTML as a single self-contained file
 (with external resources base64 encoded) or a file with external resources
@@ -204,6 +205,8 @@ placed in an adjacent directory.}
 \item{bar.width.vdo}{The color bar width (0-1) in videos.}
 
 \item{legend.value.vdo}{Logical. If `TRUE`, numeric values of colored spatial features are added to the video legend. The default is NULL.}
+
+\item{verbose}{Logical. If `TRUE` (default), intermediate messages will be printed.}
 
 \item{...}{additional element specifications not part of base ggplot2. In general,
 these should also be defined in the \verb{element tree} argument.}

@@ -40,14 +40,15 @@
 #' @importFrom ggplot2 ggplot aes theme element_blank margin element_rect scale_y_continuous scale_x_continuous expansion ggplotGrob geom_polygon scale_fill_manual ggtitle element_text labs guide_legend alpha coord_fixed annotation_raster theme_void element_rect
 #' @importFrom parallel detectCores mclapply
 
-gg_shm <- function(svg.all, gene, col.idp=FALSE, con.na=TRUE, geneV, charcoal=FALSE, alpha.overlay=1, ID, cols, covis.type=NULL, lis.rematch = NULL, ft.trans=NULL, ft.trans.shm=NULL, sub.title.size, sub.title.vjust=2, ft.legend='identical', legend.ncol=NULL, legend.nrow=NULL, legend.position='bottom', legend.direction=NULL, legend.key.size=0.02, legend.text.size=12, legend.plot.title=NULL, legend.plot.title.size=11, line.width=0.2, line.color='grey70', ...) {
+gg_shm <- function(svg.all, gene, col.idp=FALSE, con.na=TRUE, geneV, tar.bulk=NULL, tar.cell=NULL, charcoal=FALSE, alpha.overlay=1, ID, cols, covis.type=NULL, lis.rematch = NULL, ft.trans=NULL, ft.trans.shm=NULL, sub.title.size, sub.title.vjust=2, ft.legend='identical', legend.ncol=NULL, legend.nrow=NULL, legend.position='bottom', legend.direction=NULL, legend.key.size=0.02, legend.text.size=12, legend.plot.title=NULL, legend.plot.title.size=11, line.width=0.2, line.color='grey70', verbose=TRUE, ...) {
   # svg_separ <- spatialHeatmap:::svg_separ
   # diff_cols <- spatialHeatmap:::diff_cols
   # value2color <- spatialHeatmap:::value2color
-  # save(svg.all, gene, col.idp, con.na, geneV, charcoal, alpha.overlay, ID, cols, covis.type, lis.rematch, ft.trans, ft.trans.shm, sub.title.size, sub.title.vjust, ft.legend, legend.ncol, legend.nrow, legend.position, legend.direction, legend.key.size, legend.text.size, legend.plot.title, legend.plot.title.size, line.width, line.color, file='gg.shm.arg')
+  # save(svg.all, gene, col.idp, con.na, geneV, tar.bulk, tar.cell, charcoal, alpha.overlay, ID, cols, covis.type, lis.rematch, ft.trans, ft.trans.shm, sub.title.size, sub.title.vjust, ft.legend, legend.ncol, legend.nrow, legend.position, legend.direction, legend.key.size, legend.text.size, legend.plot.title, legend.plot.title.size, line.width, line.color, verbose, file='gg.shm.arg')
   # Main function to create SHMs (by conditions) and legend plot.
   g_list <- function(con, lgd=FALSE, ...) {
-    if (is.null(con)) cat('Legend plot ... \n') else cat(con, ' ')
+    if (is.null(con)) { if (verbose==TRUE) cat('Legend plot ... \n') 
+    } else { if (verbose==TRUE) cat(con, ' ') }
     value <- feature <- Feature <- x <- y <- NULL
     tis.df <- as.vector(unique(cordn$feature))
     # Since ggplot2 '3.3.5', 'NA' instead of NA represents transparency.
@@ -113,9 +114,9 @@ gg_shm <- function(svg.all, gene, col.idp=FALSE, con.na=TRUE, geneV, charcoal=FA
       # Covis independent coloring.
       if (TRUE %in% col.idp) {
         if ('toBulk' %in% covis.type) {
-          g.col[!gcol.na.dup %in% unlist(lis.rematch)] <- NA
+          g.col[!gcol.na.dup %in% unlist(lis.rematch[tar.cell])] <- NA
         } else if ('toCell' %in% covis.type) {
-          g.col[!gcol.na.dup %in% names(lis.rematch)] <- NA
+          g.col[!gcol.na.dup %in% tar.bulk] <- NA
         }
       }
     } 
@@ -186,13 +187,13 @@ gg_shm <- function(svg.all, gene, col.idp=FALSE, con.na=TRUE, geneV, charcoal=FA
        # No matter the tissues in coordinate data frame are vector or factor, the coloring are decided by the named color vector (order of colors does not matter as long as names are right) in scale_fill_manual.
        # Since ggplot2 '3.3.5', 'NA' instead of NA represents transparency.
        g.col[is.na(g.col)] <- 'NA'
-       trans <- g.col[g.col %in% 'NA'][1]; tr.lab <- 'Un-meansured'
+       trans <- g.col[g.col %in% 'NA'][1]; tr.lab <- 'Unmeasured'
        if (is.na(trans)) trans <- tr.lab <- NULL
        br <- c(tis.df[leg.idx], names(trans))
        br.lab <- c(tis.path[leg.idx], tr.lab) 
        scl.fil <- scale_fill_manual(values=g.col, breaks=br, labels=br.lab, guide=guide_legend(title=NULL, ncol=legend.ncol, nrow=legend.nrow)) 
     }
-    lgd.par <- theme(legend.position=legend.position, legend.direction=legend.direction, legend.background = element_rect(fill=alpha(NA, 0)), legend.key.size=unit(legend.key.size, "npc"), legend.text=element_text(size=legend.text.size), legend.margin=margin(l=0.1, r=0.1, unit='npc'))
+    lgd.par <- theme(legend.position=legend.position, legend.direction=legend.direction, legend.background = element_rect(fill=alpha(NA, 0)), legend.key.height=unit(legend.key.size, "npc"), legend.key.width=unit(legend.key.size, "npc"), legend.text=element_text(size=legend.text.size), legend.margin=margin(l=0.1, r=0.1, unit='npc'))
     ## Add 'feature' and 'value' to coordinate data frame, since the resulting ggplot object is used in 'ggplotly'. Otherwise, the coordinate data frame is applied to 'ggplot' directly by skipping the following code.
     cordn$gene <- k; cordn$condition <- con; cordn$value <- NA
     cordn$Feature <- sub('__\\d+$', '', cordn$feature)
@@ -210,6 +211,9 @@ gg_shm <- function(svg.all, gene, col.idp=FALSE, con.na=TRUE, geneV, charcoal=FA
       }
     }
     cordn$line.width <- cordn$line.width+line.width
+    # Set the widths of text-similar legends to 0.1. If larger than 0.1, there could be noisy lines.
+    idx.txt.lgd <- grepl('_localLGD$|_localLGD__\\d+$|_globalLGD$|_globalLGD__\\d+$', cordn$feature)
+    cordn$line.width[idx.txt.lgd] <- 0.1
     if (lgd==FALSE) { # Set line size as 0 for local legends. 
       idx.local <- grepl('_localLGD$|_localLGD__\\d+$', cordn$feature)
       cordn$line.width[idx.local] <- 0
@@ -277,7 +281,8 @@ gg_shm <- function(svg.all, gene, col.idp=FALSE, con.na=TRUE, geneV, charcoal=FA
     if (length(cname1)==0) return()
     # Only conditions paired with valid tissues (have matching samples in data) are used. 
     con.vld <- gsub("(.*)(__)(.*)", "\\3", cname1); con.vld.uni <- unique(con.vld)
-    na0 <- paste0(k, "_", con.vld.uni); cat('ggplot: ', k, ', ', sep = ''); g.lis <- lapply(con.vld.uni, g_list, ...); cat('\n')
+    na0 <- paste0(k, "_", con.vld.uni); if (verbose==TRUE) cat('ggplot: ', k, ', ', sep = '')
+    g.lis <- lapply(con.vld.uni, g_list, ...); if (verbose==TRUE) cat('\n')
     # ggplots.
     gg.lis <- lapply(g.lis, function(x) return(x$g))
     names(gg.lis) <- na0; g.lis.all <- c(g.lis.all, gg.lis)
@@ -302,18 +307,24 @@ gg_shm <- function(svg.all, gene, col.idp=FALSE, con.na=TRUE, geneV, charcoal=FA
 
 #' @importFrom parallel detectCores mclapply
 
-grob_shm <- function(gg.lis, cores=1, lgd.pos='none') {
+grob_shm <- function(gg.lis, cores=1, lgd.pos='none', verbose=TRUE) {
+  # save(gg.lis, cores, lgd.pos, file='grob.shm.arg')
   tmp <- normalizePath(tempfile(), winslash='/', mustWork=FALSE)
-  cat('Converting "ggplot" to "grob" ... \n')
+  if (verbose==TRUE) cat('Converting "ggplot" to "grob" ... \n')
   # mclapply does not give speed gain here.
   # Child jobs (on each core) are conducted in different orders, which can be reflected by "cat", but all final jobs are assembled in the original order.
   # Repress popups by saving it to a png file, then delete it.
   nas <- names(gg.lis)
-  png(tmp); grob.lis <- mclapply(seq_along(gg.lis), function(x) {
-    cat(nas[x], ' '); x <- gg.lis[[x]]
+  png(tmp); if (!is.na(cores)) grob.lis <- mclapply(seq_along(gg.lis), function(x) {
+    if (verbose==TRUE) cat(nas[x], ' '); x <- gg.lis[[x]]
     # Remove legends in SHMs.
     if (!is.null(lgd.pos)) x <- x + theme(legend.position=lgd.pos); ggplotGrob(x) 
-  }, mc.cores=cores); dev.off(); cat('\n')
+  }, mc.cores=cores) else { 
+  grob.lis <- lapply(seq_along(gg.lis), function(x) {
+    if (verbose==TRUE) cat(nas[x], ' '); x <- gg.lis[[x]]
+    # Remove legends in SHMs.
+    if (!is.null(lgd.pos)) x <- x + theme(legend.position=lgd.pos); ggplotGrob(x) 
+  }) }; dev.off(); if (verbose==TRUE) cat('\n')
   names(grob.lis) <- nas; return(grob.lis)
 }
 
@@ -329,7 +340,7 @@ grob_shm <- function(gg.lis, cores=1, lgd.pos='none') {
 #' @importFrom grDevices colors
 
 diff_cols <- function(n) {
-  col.all <- grDevices::colors()[grep('honeydew|aliceblue|white|gr(a|e)y|lightsteelblue|lightsteelblue(1|2)', grDevices::colors(), invert=TRUE)]
+  col.all <- grDevices::colors()[grep('lightyellow3|seashell4|honeydew|aliceblue|white|gr(a|e)y|lightsteelblue|lightsteelblue(1|2)', grDevices::colors(), invert=TRUE)]
   col.na <- col.all[seq(from=1, to=length(col.all), by=floor(length(col.all)/n))]; return(col.na)
 }
 

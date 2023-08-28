@@ -22,7 +22,7 @@
 
 #' @importFrom rsvg rsvg_ps 
 #' @importFrom grImport PostScriptTrace 
-#' @importFrom xml2 xml_length xml_children xml_name xml_attr xml_remove xml_text xml_attrs
+#' @importFrom xml2 read_xml xml_length xml_children xml_name xml_attr xml_remove xml_text xml_attrs write_xml xml_serialize
 #' @importFrom parallel detectCores mclapply
 
 svg_df <- function(svg.path, feature=NULL, cores, srsc=FALSE) {
@@ -30,7 +30,7 @@ svg_df <- function(svg.path, feature=NULL, cores, srsc=FALSE) {
   # Make sure the style is correct. If the stroke width is not the same across polygons such as '0.0002px', '0.216px', some stroke outlines cannot be recognised by 'PostScriptTrace'. Then some polygons are missing. Since the ggplot is based on 'stroke' not 'fill'.
   options(stringsAsFactors=FALSE)
   id <- NULL
-  doc <- read_xml(svg.path); spa <- xml_attr(doc, 'space')
+  doc <- read_xml(svg.path); svg.r <- xml_serialize(doc, NULL); spa <- xml_attr(doc, 'space')
   if (!is.na(spa)) if (spa=='preserve') xml_set_attr(doc, 'xml:space', 'default')
   # Even though 'out' and 'ply' are not returned by 'svg_attr', the paths in doc are broken accordingly, since the node in doc are pointed, any change on the node is actually changing the doc. 
   # Paths in 'a' node are recognised in .ps.xml file, so all 'a' nodes in ply and out groups are removed. 
@@ -95,7 +95,9 @@ svg_df <- function(svg.path, feature=NULL, cores, srsc=FALSE) {
   reps <- table(tis.path)[unique(tis.path)]
   df.attr.rep <- df.attr[rep(rownames(df.attr), reps), ]
   df.attr.rep$sub.feature <- sub.feature
-  # Index: match with subfeatures in coordinates.
+  # index.all: counting groups of outlines and main shapes together.
+  # index.sub: counting groups of outlines and main shapes independently.
+  # Index: match with subfeatures in coordinates and count each subfeature together.
   df.attr.rep$index <- seq_along(sub.feature)
   cna.attr.sel <- c('feature', 'id', 'fill', 'stroke', 'sub.feature', 'index', 'element') 
   df.attr.rep <- df.attr.rep[, c(cna.attr.sel, setdiff(colnames(df.attr.rep), cna.attr.sel))]
@@ -184,7 +186,7 @@ svg_df <- function(svg.path, feature=NULL, cores, srsc=FALSE) {
   names(w.h) <- c('width', 'height')
   # tis.path=sub('_\\d+$', '', tit) introduces a potential bug, since the original single-path tissues can have '_\\d+$' pattern. Solution: in upstream append '__1', '__2', ... to the paths in a group.
   # lis <- list(df=df, tis.path=tis.path, fil.cols=fil.cols, w.h = w.h, aspect.r = aspect.r, df.attr=df.attr); return(lis)
-  lis <- list(coordinate=df, attribute=df.attr.rep, dimension = w.h, angle=ovl.agl); return(lis)
+  lis <- list(coordinate=df, attribute=df.attr.rep, dimension = w.h, angle=ovl.agl, svg.obj=svg.r); return(lis)
 }
 
 #' Extract children, id, element name from outline and tissue layer

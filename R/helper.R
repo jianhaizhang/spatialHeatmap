@@ -1,3 +1,28 @@
+#' Combining two SE or SCE objects.
+#' 
+
+#' @keywords Internal
+#' @noRd
+
+#' @author Jianhai Zhang \email{jzhan07@@ucr.edu} \cr Dr. Thomas Girke \email{thomas.girke@@ucr.edu}
+
+#' @importFrom SummarizedExperiment colData colData<- 
+
+cbind_se <- function(x, y) {
+  intr <- intersect(rownames(x), rownames(y))
+  if (length(intr)==0) {
+    msg <- 'When combining two SE or SCE objects, no common rownames are detected!'
+    return(msg); stop(msg) 
+  }; cdatx <- colData(x); cdaty <- colData(y)
+  int <- intersect(colnames(cdatx), colnames(cdaty))
+  if (length(int)==0) {
+    message('When combining two SE or SCE objects, the "colData" slots do not have common columns!')
+    colData(x) <- colData(y) <- NULL
+  }; colData(x) <- cdatx[, int]; colData(y) <- cdaty[, int]
+  pkg <- check_pkg('BiocGenerics'); if (is(pkg, 'character')) stop(pkg)
+  return(BiocGenerics::cbind(x[intr,], y[intr, ]))
+}
+
 #' Scaling all rows in a data frame as a whole
 #'
 #' @param dat A data frame or matrix of of numeric data. 
@@ -81,20 +106,28 @@ check_pkg <- function(x) {
 check_obj <- function(x) {
   check0 <- function(y) {
     if (isS4(y)) return(TRUE)
+    # data.frame can have 0 row.
+    if (is(y, 'data.frame')|is(y, 'DFrame')|is(y, 'matrix')|is(y, 'dgCMatrix')) return(TRUE)
     # Only check one-element vector. 
     if (length(y)>1) return(TRUE); if (length(y)==0) return(FALSE)
     if (is.na(y)) return(FALSE)
     # 0==FALSE is TRUE
-    if (y==FALSE & !is.numeric(y)) return(FALSE)
+    if (is(y, 'logical')) if (y==FALSE) return(FALSE)
     if (y=='') return(FALSE)
     return(TRUE)
   }
   if (!is(x, 'list')) return(check0(x))
   # As long as one element is one of NA, NULL, FALSE, or length(x)==0, FALSE is return for the whole list.
-  if (is(x, 'list')) all(unlist(lapply(x, function(i) check0(i))))
+  if (is(x, 'list')) {
+    if (length(x)==0) return(FALSE) 
+    all.lis <- unlist(lapply(x, function(i) check0(i)))
+    # all(NULL) is TRUE.
+    if (length(all.lis)==0) return(FALSE)
+    all(all.lis)
+  }
 }
 
-#' Shown popup window
+#' Show popup window
 #'
 #' @param msg The main content to show.
 
@@ -102,13 +135,15 @@ check_obj <- function(x) {
 #' @keywords Internal
 #' @noRd
 
-#' @importFrom shiny modalDialog span tagList modalButton
-
-modal <- function(title = NULL, msg, easyClose=FALSE) {
-  modalDialog(title = title, span(msg),
-    footer = tagList(modalButton("Dismiss")), size = c("m"), easyClose=easyClose
-  )
-}
+#' @importFrom shiny modalDialog span HTML div tagList modalButton
+modal <- function(title = NULL, msg=NULL, img=NULL, img.w="70%", easyClose=FALSE) { 
+  modalDialog(title = title, span(msg), 
+    if (!is.null(img)) div(style = 'overflow-y:scroll;overflow-x:scroll;margin-top:20px', 
+      HTML(paste0("<img ", "src='image/", img, "' width='", img.w, "'>")) 
+    ), 
+    footer = tagList(modalButton("Dismiss")), size = c("m"), easyClose=easyClose 
+  ) 
+}  
 
 #' Shown popup window
 #'
@@ -120,8 +155,8 @@ modal <- function(title = NULL, msg, easyClose=FALSE) {
 
 #' @importFrom shiny showModal
 
-show_mod <- function(lgc, msg, title=NULL) {
-  if (!lgc) showModal(modal(title=title, msg = msg))
+show_mod <- function(lgc, msg, img=NULL, title=NULL) {
+  if (!lgc) showModal(modal(title=title, msg = msg, img=img))
 }
 
 

@@ -67,7 +67,6 @@
 #' @param dim.lgd.nrow The number of rows in the embedding plot legends.
 #' @param dim.lgd.key.size,dim.lgd.text.size The key and font size of the embedding plot legends respectively. 
 #' @param dim.axis.font.size The size of axis font of the embedding plot.
-#' @param dim.lgd.plot.margin The margin of dimension reduction plot in the legend plot, e.g. `margin(t=0.01, r=0.15, b=0.01, l=0.15, unit="npc")`. 
 #' @param size.lab.pt The size of point labels, applicable when \code{decon=TRUE}.
 #' @param hjust.lab.pt,vjust.lab.pt Numeric values to adjust the horizontal and vertical positions of point labels respectively, applicable when \code{decon=TRUE}. 
 #' @param col.com A vector of color components used to build the color scale. The default is `c('yellow', 'orange', 'red')`.
@@ -78,14 +77,16 @@
 #' @param bar.width The width of color bar that ranges from 0 to 1. The default is 0.08.
 #' @param legend.plot A vector of suffix(es) of aSVG file name(s) such as \code{c('shm1', 'shm2')}. Only aSVG(s) whose suffix(es) are assigned to this arugment will have a legend plot on the right. The default is \code{all} and each aSVG will have a legend plot. If NULL, no legend plot is shown.
 #' @param legend.r A numeric (-1 to 1) to adjust the legend plot size.
+#' @param lgd.plots.size A vector of 2 or 3 numeric values that sum up between 0 and 1 (e.g., `c(0.5, 0.4)`), corresponding to the sizes of legend plots in the co-visualization plot. If there are 2 values, the first and second values correspond to the sizes of the SHM and embedding plots, respectively. If there are 3 values, the first, second, and third values correspond to the sizes of the SHM, single-cell SHM, and embedding plots, respectively.
 #' @param legend.2nd Logical. If `TRUE`, the secondary legend is added to each SHM, which are the numeric values of each colored spatial features. The default its `FALSE`. Only applies to the static image.
 #' @param lay.shm One of `gene`, `con`, or `none`. If `gene`, SHMs are organized horizontally by each biomolecule (gene, protein, or metabolite, \emph{etc.}) and variables are sorted under each biomolecule. If `con`, SHMs are organized horizontally by each experiment vairable and biomolecules are sorted under each variable. If `none`, SHMs are organized by the biomolecule order in \code{ID} and variables follow the order they appear in \code{data}. 
 #' @param ncol The number of columns to display SHMs, which does not include the legend plot.
 #' @param h The height (0-1) of color key and SHM/co-visualization plots in the middle, not including legend plots.
 #' @param relative.scale A numeric to adjust the relative sizes between multiple aSVGs. Applicable only if multiple aSVGs are provided. Default is \code{NULL} and all aSVGs have the same size. 
-#' @param verbose Logical. If `TRUE`, spatial features in data not colored in SHMs are printed to R console. Default is `TRUE`.
+#' @param verbose Logical. If `TRUE` (default), intermediate messages will be printed.
 #' @param out.dir The directory to save SHMs as interactive HTML files and videos. Default is `NULL`, and the HTML files and videos are not saved.
 #' @param animation.scale A numeric to scale the SHM size in the HTML files. The default is 1, and the height is 550px and the width is calculated according to the original aspect ratio in the aSVG file.
+#' @param aspr The aspect ratio (width to height) in the interative HTML files.
 #' @param video.dim A single character of the dimension of video frame in form of 'widthxheight', such as '1920x1080', '1280x800', '320x568', '1280x1024', '1280x720', '320x480', '480x360', '600x600', '800x600', '640x480' (default). The aspect ratio of SHMs are decided by \code{width} and \code{height}. 
 #' @param interval The time interval (seconds) between SHM frames in the video. Default is 1.
 #' @param framerate An integer of video framerate in frames per seconds. Default is 1. Larger values make the video smoother. 
@@ -144,8 +145,15 @@
 #' covis(data=dat.ann.tocell, ID=c('Cacnb4'), col.idp=TRUE, dimred='TSNE', 
 #' cell.group='label', tar.bulk=names(lis.match.blk), bar.width=0.09, dim.lgd.nrow=2, 
 #' dim.lgd.text.size=10, h=0.6, legend.r=0.1, legend.key.size=0.01, legend.text.size=10,
-#' legend.nrow=2, dim.lgd.plot.margin=margin(t=0.01, r=0.15, b=0.01, l=0.15, unit="npc"))
+#' legend.nrow=2)
 #'
+#' # Save plots to HTML files and videos in the folder "test". 
+#' # covis(data=dat.ann.tocell, ID=c('Cacnb4', 'Apod'), col.idp=TRUE, dimred='UMAP', 
+#' # cell.group='label', tar.bulk=names(lis.match.blk), bar.width=0.12, bar.value.size=4, 
+#' # dim.lgd.nrow=3, dim.lgd.text.size=7, h=0.5, legend.r=1, animation.scale=0.8, aspr=1.1,
+#' # legend.key.size=0.01, legend.text.size=7, legend.nrow=3, legend.nrow.2nd=3, 
+#' # out.dir='test', dim.lgd.key.size=2)
+
 #' # More examples of co-visualization are provided in the package vignette: https://www.bioconductor.org/packages/release/bioc/vignettes/spatialHeatmap/inst/doc/covisualize.html
 #'
 #'
@@ -178,12 +186,59 @@
 
 #' @export
 
-setMethod("covis", c(data="SPHM"), function(data, assay.na=NULL, sam.factor=NULL, con.factor=NULL, ID, var.cell=NULL, dimred='PCA', cell.group=NULL, tar.cell=NULL, tar.bulk=NULL, size.pt=1, alpha.pt=0.8, shape=NULL, col.idp=FALSE, decon=FALSE, profile=TRUE, charcoal=FALSE, alpha.overlay=1, lay.shm="gene", ncol=2, h=0.99, size.r=1, col.com=c('yellow', 'orange', 'red'), col.bar='selected', thr=c(NA, NA), cores=NA, bar.width=0.08, bar.title=NULL, bar.title.size=0, scale='no', ft.trans=NULL, tis.trans=ft.trans, legend.r=0, sub.title.size=11, sub.title.vjust=3, legend.plot='all', ft.legend='identical', bar.value.size=10, legend.plot.title='Legend', legend.plot.title.size=11, legend.ncol=NULL, legend.nrow=NULL, legend.position='bottom', legend.direction=NULL, legend.key.size=0.02, legend.text.size=12, angle.text.key=NULL, position.text.key=NULL, legend.2nd=FALSE, position.2nd='bottom', legend.nrow.2nd=NULL, legend.ncol.2nd=NULL, legend.key.size.2nd=0.03, legend.text.size.2nd=10, angle.text.key.2nd=0, position.text.key.2nd='right', dim.lgd.pos='bottom', dim.lgd.nrow=2, dim.lgd.key.size=4, dim.lgd.text.size=13, dim.axis.font.size=8, dim.lgd.plot.margin=NULL, dim.capt.size=13, size.lab.pt=5, hjust.lab.pt=0.5, vjust.lab.pt=1.5, add.feature.2nd=FALSE, label=FALSE, label.size=4, label.angle=0, hjust=0, vjust=0, opacity=1, key=TRUE, line.width=0.2, line.color='grey70', relative.scale = NULL, verbose=TRUE, out.dir=NULL, animation.scale = 1, selfcontained=FALSE, video.dim='640x480', res=500, interval=1, framerate=1, bar.width.vdo=0.1, legend.value.vdo=NULL, ...) {
+setMethod("covis", c(data="SPHM"), function(data, assay.na=NULL, sam.factor=NULL, con.factor=NULL, ID, var.cell=NULL, dimred='PCA', cell.group=NULL, tar.cell=NULL, tar.bulk=NULL, size.pt=1, alpha.pt=0.8, shape=NULL, col.idp=FALSE, decon=FALSE, profile=TRUE, charcoal=FALSE, alpha.overlay=1, lay.shm="gene", ncol=2, h=0.99, size.r=1, col.com=c('yellow', 'orange', 'red'), col.bar='selected', thr=c(NA, NA), cores=NA, bar.width=0.08, bar.title=NULL, bar.title.size=0, scale='no', ft.trans=NULL, tis.trans=ft.trans, legend.r=0, lgd.plots.size=NULL, sub.title.size=11, sub.title.vjust=3, legend.plot='all', ft.legend='identical', bar.value.size=10, legend.plot.title='Legend', legend.plot.title.size=11, legend.ncol=NULL, legend.nrow=NULL, legend.position='bottom', legend.direction=NULL, legend.key.size=0.02, legend.text.size=12, angle.text.key=NULL, position.text.key=NULL, legend.2nd=FALSE, position.2nd='bottom', legend.nrow.2nd=2, legend.ncol.2nd=NULL, legend.key.size.2nd=0.03, legend.text.size.2nd=10, angle.text.key.2nd=0, position.text.key.2nd='right', dim.lgd.pos='bottom', dim.lgd.nrow=2, dim.lgd.key.size=4, dim.lgd.text.size=13, dim.axis.font.size=8, dim.capt.size=13, size.lab.pt=5, hjust.lab.pt=0.5, vjust.lab.pt=1.5, add.feature.2nd=FALSE, label=FALSE, label.size=4, label.angle=0, hjust=0, vjust=0, opacity=1, key=TRUE, line.width=0.2, line.color='grey70', relative.scale = NULL, out.dir=NULL, animation.scale = 1, selfcontained=FALSE, aspr=1, video.dim='640x480', res=500, interval=1, framerate=1, bar.width.vdo=0.1, legend.value.vdo=NULL, verbose=TRUE, ...) {
   sce.dimred <- data@cell; bulkCell <- NULL
   if (!is(sce.dimred, 'Seurat')) if ('bulkCell' %in% colnames(sce.dimred)) sce.dimred <- subset(sce.dimred, , bulkCell=='cell')
-  res <- shm_covis(svg=data@svg, data=data@bulk, assay.na=assay.na, sam.factor=sam.factor, con.factor=con.factor, ID=ID, var.cell=var.cell, sce.dimred=sce.dimred, dimred=dimred, cell.group=cell.group, tar.cell=tar.cell, tar.bulk=tar.bulk, size.pt=size.pt, alpha.pt=alpha.pt, shape=shape, col.idp=col.idp, decon=decon, profile=profile, charcoal=charcoal, alpha.overlay=alpha.overlay, lay.shm=lay.shm, ncol=ncol, h=h, size.r=size.r, col.com=col.com, col.bar=col.bar, thr=thr, cores=cores, bar.width=bar.width, bar.title=bar.title, bar.title.size=bar.title.size, scale=scale, ft.trans=ft.trans, lis.rematch = data@match, legend.r=legend.r, sub.title.size=sub.title.size, sub.title.vjust=sub.title.vjust, legend.plot=legend.plot, ft.legend=ft.legend, bar.value.size=bar.value.size, legend.plot.title=legend.plot.title, legend.plot.title.size=legend.plot.title.size, legend.ncol=legend.ncol, legend.nrow=legend.nrow, legend.position=legend.position, legend.direction=legend.direction, legend.key.size=legend.key.size, legend.text.size=legend.text.size, angle.text.key=angle.text.key, position.text.key=position.text.key, legend.2nd=legend.2nd, position.2nd=position.2nd, legend.nrow.2nd=legend.nrow.2nd, legend.ncol.2nd=legend.ncol.2nd, legend.key.size.2nd=legend.key.size.2nd, legend.text.size.2nd=legend.text.size.2nd, angle.text.key.2nd=angle.text.key.2nd, position.text.key.2nd=position.text.key.2nd, dim.lgd.pos=dim.lgd.pos, dim.lgd.nrow=dim.lgd.nrow, dim.lgd.key.size=dim.lgd.key.size, dim.lgd.text.size=dim.lgd.text.size, dim.axis.font.size=dim.axis.font.size, dim.lgd.plot.margin=dim.lgd.plot.margin, dim.capt.size=dim.capt.size, size.lab.pt=size.lab.pt, hjust.lab.pt=hjust.lab.pt, vjust.lab.pt=vjust.lab.pt, add.feature.2nd=add.feature.2nd, label=label, label.size=label.size, label.angle=label.angle, hjust=hjust, vjust=vjust, opacity=opacity, key=key, line.width=line.width, line.color=line.color, relative.scale = relative.scale, verbose=verbose, out.dir=out.dir, animation.scale = animation.scale, selfcontained=selfcontained, video.dim=video.dim, res=res, interval=interval, framerate=framerate, bar.width.vdo=bar.width.vdo, legend.value.vdo=legend.value.vdo, ...)
+  res <- shm_covis(svg=data@svg, data=data@bulk, assay.na=assay.na, sam.factor=sam.factor, con.factor=con.factor, ID=ID, var.cell=var.cell, sce.dimred=sce.dimred, dimred=dimred, cell.group=cell.group, tar.cell=tar.cell, tar.bulk=tar.bulk, size.pt=size.pt, alpha.pt=alpha.pt, shape=shape, col.idp=col.idp, decon=decon, profile=profile, charcoal=charcoal, alpha.overlay=alpha.overlay, lay.shm=lay.shm, ncol=ncol, h=h, size.r=size.r, col.com=col.com, col.bar=col.bar, thr=thr, cores=cores, bar.width=bar.width, bar.title=bar.title, bar.title.size=bar.title.size, scale=scale, ft.trans=ft.trans, lis.rematch = data@match, legend.r=legend.r, lgd.plots.size=lgd.plots.size, sub.title.size=sub.title.size, sub.title.vjust=sub.title.vjust, legend.plot=legend.plot, ft.legend=ft.legend, bar.value.size=bar.value.size, legend.plot.title=legend.plot.title, legend.plot.title.size=legend.plot.title.size, legend.ncol=legend.ncol, legend.nrow=legend.nrow, legend.position=legend.position, legend.direction=legend.direction, legend.key.size=legend.key.size, legend.text.size=legend.text.size, angle.text.key=angle.text.key, position.text.key=position.text.key, legend.2nd=legend.2nd, position.2nd=position.2nd, legend.nrow.2nd=legend.nrow.2nd, legend.ncol.2nd=legend.ncol.2nd, legend.key.size.2nd=legend.key.size.2nd, legend.text.size.2nd=legend.text.size.2nd, angle.text.key.2nd=angle.text.key.2nd, position.text.key.2nd=position.text.key.2nd, dim.lgd.pos=dim.lgd.pos, dim.lgd.nrow=dim.lgd.nrow, dim.lgd.key.size=dim.lgd.key.size, dim.lgd.text.size=dim.lgd.text.size, dim.axis.font.size=dim.axis.font.size, dim.capt.size=dim.capt.size, size.lab.pt=size.lab.pt, hjust.lab.pt=hjust.lab.pt, vjust.lab.pt=vjust.lab.pt, add.feature.2nd=add.feature.2nd, label=label, label.size=label.size, label.angle=label.angle, hjust=hjust, vjust=vjust, opacity=opacity, key=key, line.width=line.width, line.color=line.color, relative.scale = relative.scale, out.dir=out.dir, animation.scale = animation.scale, aspr=aspr, selfcontained=selfcontained, video.dim=video.dim, res=res, interval=interval, framerate=framerate, bar.width.vdo=bar.width.vdo, legend.value.vdo=legend.value.vdo, verbose=verbose, ...)
   data@output <- res; invisible(data)
 })
+
+
+#' Meta function for plotting spatial heatmaps or co-visualizing bulk and single cell data
+#'
+#' This is a meta function for plotting spatial heatmaps or co-visualizing bulk and single cell data that takes as input file paths of assay data and aSVG files.
+
+#' @param svg.path File paths of aSVG files.
+#' @param bulk,cell File paths of bulk and single cell data that are saved with \link{saveRDS} respectively.
+#' @param match.lis The file path of matching list that is saved with \link{saveRDS}. See \code{match} in \link{SPHM}. 
+
+#' @inheritParams aggr_rep
+#' @inheritParams covis
+
+#' @return A `SPHM` class.
+
+#' @examples
+#' 
+#' # Path of mouse brain aSVG.
+#' svg.mus.brain.pa <- system.file("extdata/shinyApp/data", "mus_musculus.brain.svg", package="spatialHeatmap")
+#' # Bulk data path.
+#' blk.mus.pa <- system.file("extdata/shinyApp/data", "bulk_mouse_cocluster.rds", package="spatialHeatmap") 
+#' # Plotting spatial heatmaps.
+#' plot_meta(svg.path=svg.mus.brain.pa, bulk=blk.mus.pa, sam.factor='tissue', aggr='mean', ID=c('AI593442', 'Adora1'), ncol=1, bar.width=0.1, legend.nrow=5, h=0.6)
+
+#'
+#' @author Jianhai Zhang \email{jzhan067@@ucr.edu} \cr Dr. Thomas Girke \email{thomas.girke@@ucr.edu}
+
+#' @export
+
+plot_meta <- function(svg.path, bulk, cell=NULL, match.lis=NULL, assay.na=NULL, sam.factor=NULL, con.factor=NULL, aggr='mean', ID, var.cell=NULL, dimred='PCA', cell.group=NULL, tar.cell=NULL, tar.bulk=NULL, size.pt=1, alpha.pt=0.8, shape=NULL, col.idp=FALSE, decon=FALSE, profile=TRUE, charcoal=FALSE, alpha.overlay=1, lay.shm="gene", ncol=2, h=0.99, size.r=1, col.com=c('yellow', 'orange', 'red'), col.bar='selected', thr=c(NA, NA), cores=NA, bar.width=0.08, bar.title=NULL, bar.title.size=0, scale='no', ft.trans=NULL, tis.trans=ft.trans, legend.r=0, lgd.plots.size=NULL, sub.title.size=11, sub.title.vjust=3, legend.plot='all', ft.legend='identical', bar.value.size=10, legend.plot.title='Legend', legend.plot.title.size=11, legend.ncol=NULL, legend.nrow=NULL, legend.position='bottom', legend.direction=NULL, legend.key.size=0.02, legend.text.size=12, angle.text.key=NULL, position.text.key=NULL, legend.2nd=FALSE, position.2nd='bottom', legend.nrow.2nd=2, legend.ncol.2nd=NULL, legend.key.size.2nd=0.03, legend.text.size.2nd=10, angle.text.key.2nd=0, position.text.key.2nd='right', dim.lgd.pos='bottom', dim.lgd.nrow=2, dim.lgd.key.size=4, dim.lgd.text.size=13, dim.axis.font.size=8, dim.capt.size=13, size.lab.pt=5, hjust.lab.pt=0.5, vjust.lab.pt=1.5, add.feature.2nd=FALSE, label=FALSE, label.size=4, label.angle=0, hjust=0, vjust=0, opacity=1, key=TRUE, line.width=0.2, line.color='grey70', relative.scale = NULL, out.dir=NULL, animation.scale = 1, selfcontained=FALSE, aspr=1, video.dim='640x480', res=500, interval=1, framerate=1, bar.width.vdo=0.1, legend.value.vdo=NULL, verbose=TRUE, ...) {
+
+  svg.ob <- read_svg(svg.path)
+  if (!is.null(bulk)) if (is(bulk, 'character') & file.exists(bulk)) { 
+    bulk <- readRDS(bulk) 
+    bulk <- aggr_rep(data=bulk, sam.factor=sam.factor, con.factor=con.factor, assay.na=assay.na, aggr=aggr)
+  } else bulk <- NULL
+  if (!is.null(cell)) if (is(cell, 'character') & file.exists(cell)) cell <- readRDS(cell) else cell <- NULL
+  if (is.null(match.lis)) match.lis <- list() else if (is(match.lis, 'character')) { 
+  if (file.exists(match.lis)) match.lis <- readRDS(match.lis) else match.lis <- list()
+  }
+  data <- SPHM(svg=svg.ob, bulk=bulk, cell=cell, match=match.lis)
+
+  sce.dimred <- data@cell; bulkCell <- NULL
+  if (!is(sce.dimred, 'Seurat')) if ('bulkCell' %in% colnames(sce.dimred)) sce.dimred <- subset(sce.dimred, , bulkCell=='cell')
+  res <- shm_covis(svg=data@svg, data=data@bulk, assay.na=assay.na, sam.factor=sam.factor, con.factor=con.factor, ID=ID, var.cell=var.cell, sce.dimred=sce.dimred, dimred=dimred, cell.group=cell.group, tar.cell=tar.cell, tar.bulk=tar.bulk, size.pt=size.pt, alpha.pt=alpha.pt, shape=shape, col.idp=col.idp, decon=decon, profile=profile, charcoal=charcoal, alpha.overlay=alpha.overlay, lay.shm=lay.shm, ncol=ncol, h=h, size.r=size.r, col.com=col.com, col.bar=col.bar, thr=thr, cores=cores, bar.width=bar.width, bar.title=bar.title, bar.title.size=bar.title.size, scale=scale, ft.trans=ft.trans, lis.rematch = data@match, legend.r=legend.r, lgd.plots.size=lgd.plots.size, sub.title.size=sub.title.size, sub.title.vjust=sub.title.vjust, legend.plot=legend.plot, ft.legend=ft.legend, bar.value.size=bar.value.size, legend.plot.title=legend.plot.title, legend.plot.title.size=legend.plot.title.size, legend.ncol=legend.ncol, legend.nrow=legend.nrow, legend.position=legend.position, legend.direction=legend.direction, legend.key.size=legend.key.size, legend.text.size=legend.text.size, angle.text.key=angle.text.key, position.text.key=position.text.key, legend.2nd=legend.2nd, position.2nd=position.2nd, legend.nrow.2nd=legend.nrow.2nd, legend.ncol.2nd=legend.ncol.2nd, legend.key.size.2nd=legend.key.size.2nd, legend.text.size.2nd=legend.text.size.2nd, angle.text.key.2nd=angle.text.key.2nd, position.text.key.2nd=position.text.key.2nd, dim.lgd.pos=dim.lgd.pos, dim.lgd.nrow=dim.lgd.nrow, dim.lgd.key.size=dim.lgd.key.size, dim.lgd.text.size=dim.lgd.text.size, dim.axis.font.size=dim.axis.font.size, dim.capt.size=dim.capt.size, size.lab.pt=size.lab.pt, hjust.lab.pt=hjust.lab.pt, vjust.lab.pt=vjust.lab.pt, add.feature.2nd=add.feature.2nd, label=label, label.size=label.size, label.angle=label.angle, hjust=hjust, vjust=vjust, opacity=opacity, key=key, line.width=line.width, line.color=line.color, relative.scale = relative.scale, verbose=verbose, out.dir=out.dir, animation.scale = animation.scale, aspr=aspr, selfcontained=selfcontained, video.dim=video.dim, res=res, interval=interval, framerate=framerate, bar.width.vdo=bar.width.vdo, legend.value.vdo=legend.value.vdo, ...)
+  data@output <- res; invisible(data)
+}
 
 
 #' SHM plots and co-visaulization plots 
@@ -216,15 +271,19 @@ setMethod("covis", c(data="SPHM"), function(data, assay.na=NULL, sam.factor=NULL
 #' @importFrom ggplotify as.ggplot
 #' @importFrom SingleCellExperiment reducedDimNames
 
-shm_covis <- function(svg, data, assay.na=NULL, sam.factor=NULL, con.factor=NULL, ID, var.cell=NULL, sce.dimred=NULL, dimred='PCA', cell.group=NULL, tar.cell=NULL, tar.bulk=NULL, size.pt=1, alpha.pt=0.8, shape=NULL, col.idp=FALSE, decon=FALSE, profile=TRUE, charcoal=FALSE, alpha.overlay=1, lay.shm="gene", ncol=2, h=0.99, size.r=1, col.com=c('yellow', 'orange', 'red'), col.bar='selected', thr=c(NA, NA), cores=NA, bar.width=0.08, bar.title=NULL, bar.title.size=0, scale='no', ft.trans=NULL, tis.trans=ft.trans, lis.rematch = NULL, legend.r=0, sub.title.size=11, sub.title.vjust=3, legend.plot='all', ft.legend='identical', bar.value.size=10, legend.plot.title='Legend', legend.plot.title.size=11, legend.ncol=NULL, legend.nrow=NULL, legend.position='bottom', legend.direction=NULL, legend.key.size=0.02, legend.text.size=12, angle.text.key=NULL, position.text.key=NULL, legend.2nd=FALSE, position.2nd='bottom', legend.nrow.2nd=NULL, legend.ncol.2nd=NULL, legend.key.size.2nd=0.03, legend.text.size.2nd=10, angle.text.key.2nd=0, position.text.key.2nd='right', dim.lgd.pos='bottom', dim.lgd.nrow=2, dim.lgd.key.size=4, dim.lgd.text.size=13, dim.axis.font.size=10, dim.lgd.plot.margin=margin(t=0.01, r=0.01, b=0.01, l=0.01, unit="npc"), dim.capt.size=13, size.lab.pt=5, hjust.lab.pt=0.5, vjust.lab.pt=1.5, add.feature.2nd=FALSE, label=FALSE, label.size=4, label.angle=0, hjust=0, vjust=0, opacity=1, key=TRUE, line.width=0.2, line.color='grey70', relative.scale = NULL, verbose=TRUE, out.dir=NULL, animation.scale = 1, selfcontained=FALSE, video.dim='640x480', res=500, interval=1, framerate=1, bar.width.vdo=0.1, legend.value.vdo=NULL, ...) {
+shm_covis <- function(svg, data, assay.na=NULL, sam.factor=NULL, con.factor=NULL, ID, var.cell=NULL, sce.dimred=NULL, dimred='PCA', cell.group=NULL, tar.cell=NULL, tar.bulk=NULL, size.pt=1, alpha.pt=0.8, shape=NULL, col.idp=FALSE, decon=FALSE, profile=TRUE, charcoal=FALSE, alpha.overlay=1, lay.shm="gene", ncol=2, h=0.99, size.r=1, col.com=c('yellow', 'orange', 'red'), col.bar='selected', thr=c(NA, NA), cores=NA, bar.width=0.08, bar.title=NULL, bar.title.size=0, scale='no', ft.trans=NULL, tis.trans=ft.trans, lis.rematch = NULL, legend.r=0, lgd.plots.size=NULL, sub.title.size=11, sub.title.vjust=3, legend.plot='all', ft.legend='identical', bar.value.size=10, legend.plot.title='Legend', legend.plot.title.size=11, legend.ncol=NULL, legend.nrow=NULL, legend.position='bottom', legend.direction=NULL, legend.key.size=0.02, legend.text.size=12, angle.text.key=NULL, position.text.key=NULL, legend.2nd=FALSE, position.2nd='bottom', legend.nrow.2nd=2, legend.ncol.2nd=NULL, legend.key.size.2nd=0.03, legend.text.size.2nd=10, angle.text.key.2nd=0, position.text.key.2nd='right', dim.lgd.pos='bottom', dim.lgd.nrow=2, dim.lgd.key.size=4, dim.lgd.text.size=13, dim.axis.font.size=10, dim.capt.size=13, size.lab.pt=5, hjust.lab.pt=0.5, vjust.lab.pt=1.5, add.feature.2nd=FALSE, label=FALSE, label.size=4, label.angle=0, hjust=0, vjust=0, opacity=1, key=TRUE, line.width=0.2, line.color='grey70', relative.scale = NULL, out.dir=NULL, animation.scale = 1, aspr=1, selfcontained=FALSE, video.dim='640x480', res=500, interval=1, framerate=1, bar.width.vdo=0.1, legend.value.vdo=NULL, verbose=TRUE, ...) {
   
   calls <- names(vapply(match.call(), deparse, character(1))[-1])
   if("tis.trans" %in% calls) warning('"tis.trans" is deprecated and replaced by "ft.trans"! \n')
   if("svg.path" %in% calls) warning('"svg.path" is deprecated and replaced by "svg"! \n')
-  # save(svg, data, assay.na, sam.factor, con.factor, ID, sce.dimred, var.cell, dimred, col.idp, decon, tar.cell, profile, cell.group, tar.bulk, size.pt, alpha.pt, shape, charcoal, alpha.overlay, lay.shm, ncol, h, size.r, col.com, col.bar, thr, cores, bar.width, bar.title, bar.title.size, scale, ft.trans, tis.trans, lis.rematch, legend.r, sub.title.size, sub.title.vjust, legend.plot, ft.legend, bar.value.size, legend.plot.title, legend.plot.title.size, legend.ncol, legend.nrow, legend.position, legend.direction, legend.key.size, legend.text.size, angle.text.key, position.text.key, legend.2nd, position.2nd, legend.nrow.2nd, legend.ncol.2nd, legend.key.size.2nd, legend.text.size.2nd, angle.text.key.2nd, position.text.key.2nd, dim.lgd.pos, dim.lgd.nrow, dim.lgd.key.size, dim.lgd.text.size, dim.axis.font.size, dim.lgd.plot.margin, dim.capt.size, add.feature.2nd, label, label.size, label.angle, hjust, vjust, opacity, key, line.width, line.color, relative.scale, verbose, out.dir, animation.scale, selfcontained, video.dim, res, interval, framerate, bar.width.vdo, legend.value.vdo, file='shm.covis.arg')
+  # save(svg, data, assay.na, sam.factor, con.factor, ID, sce.dimred, var.cell, dimred, col.idp, decon, tar.cell, profile, cell.group, tar.bulk, size.pt, alpha.pt, shape, charcoal, alpha.overlay, lay.shm, ncol, h, size.r, col.com, col.bar, thr, cores, bar.width, bar.title, bar.title.size, scale, ft.trans, tis.trans, lis.rematch, legend.r, lgd.plots.size, sub.title.size, sub.title.vjust, legend.plot, ft.legend, bar.value.size, legend.plot.title, legend.plot.title.size, legend.ncol, legend.nrow, legend.position, legend.direction, legend.key.size, legend.text.size, angle.text.key, position.text.key, legend.2nd, position.2nd, legend.nrow.2nd, legend.ncol.2nd, legend.key.size.2nd, legend.text.size.2nd, angle.text.key.2nd, position.text.key.2nd, dim.lgd.pos, dim.lgd.nrow, dim.lgd.key.size, dim.lgd.text.size, dim.axis.font.size, dim.capt.size, add.feature.2nd, label, label.size, label.angle, hjust, vjust, opacity, key, line.width, line.color, relative.scale, verbose, out.dir, animation.scale, aspr, selfcontained, video.dim, res, interval, framerate, bar.width.vdo, legend.value.vdo, file='shm.covis.arg')
 
   x <- y <- color_scale <- tissue <- bulkCell <- variable <- NULL
   options(stringsAsFactors=FALSE)
+  if (!is.null(lgd.plots.size)) {
+   if (!sum(lgd.plots.size) > 0 & sum(lgd.plots.size) <= 1) stop('lgd.plots.size: the sum of plot sizes in co-visualization must be between 0-1!')
+   if (!length(lgd.plots.size) %in% c(2, 3)) stop('Two or three numeric values are required in "lgd.plots.size"!')
+  }
   # if (!is.null(sub.margin)) if (!is.numeric(sub.margin) | length(sub.margin)!=4 | any(sub.margin >= 1) | any(sub.margin < 0)) stop('"sub.margin" must be a 4-length numeric vector between 0 (inclusive) and 1 (exclusive)!')
   if (!is(svg, 'SVG')) stop('The "svg" should be a "SVG" object!')
   svgs <- svg; if (missing(ID)) ID <- rownames(data)[1]
@@ -254,7 +313,7 @@ shm_covis <- function(svg, data, assay.na=NULL, sam.factor=NULL, con.factor=NULL
   # Extract and filter data.
   if (is.vector(data)) {
     vec.na <- make.names(names(data)); if (is.null(vec.na)) stop("Please provide names for the input data!")
-    if (!identical(vec.na, names(data))) cat('Syntactically valid column names are made! \n')
+    if (!identical(vec.na, names(data))) if (verbose==TRUE) cat('Syntactically valid column names are made! \n')
     if (any(duplicated(vec.na))) stop('Please make sure data names are unique!')
     form <- grepl("__", vec.na); if (sum(form)==0) { vec.na <- paste0(vec.na, '__', 'con'); con.na <- FALSE } else con.na <- TRUE
     data <- tryCatch({ as.numeric(data) }, warning=function(w) { stop("Please make sure input data are numeric!") }, error=function(e) { stop("Please make sure input data are numeric!") })
@@ -291,12 +350,15 @@ shm_covis <- function(svg, data, assay.na=NULL, sam.factor=NULL, con.factor=NULL
       gene <- cbind(as.matrix(gene), as.matrix(assay(sce.dimred)))
     }
     if (srsc) {
-      lis <- check_srsc(cell=sce.dimred, cell.group=cell.group, var.cell=var.cell, bulk=gene, var.bulk=con.uni)
+      lis <- check_srsc(cell=sce.dimred, cell.group=cell.group, var.cell=var.cell, dimred=dimred, bulk=gene, var.bulk=con.uni, tar.cell=tar.cell, tar.bulk=tar.bulk, lis.rematch=lis.rematch.raw, svg.ft.all=svg.ft.all)
       if (is(lis, 'character')) return(lis)
       cell <- lis$cell; var.cell <- lis$var.cell
-      pkg <- check_pkg('Seurat')
+      covis.type <- lis$covis.type; tar.bulk <- lis$tar.bulk
+      tar.cell <- lis$tar.cell
+      lis.rematch <- lis$lis.rematch; pkg <- check_pkg('Seurat')
       if (is(pkg, 'character')) stop(pkg)
-      sce.sp <- srt2sce(cell=cell, assay=Seurat::DefaultAssay(cell), image=1, x='imagerow', y='imagecol', cell.group=cell.group)
+      sce.sp <- srt2sce(cell=cell, assay=Seurat::DefaultAssay(cell), image=1, x='imagerow', y='imagecol', cell.group=cell.group, var.cell=var.cell)
+      vars.cell <- unique(colData(sce.sp)[, var.cell])
       con.na.cell <- lis$con.na.cell; gene <- lis$bulk
       gene <- cbind(as.matrix(gene), as.matrix(assay(sce.sp)))
     }
@@ -312,7 +374,7 @@ shm_covis <- function(svg, data, assay.na=NULL, sam.factor=NULL, con.factor=NULL
     thr <- dat_fun(thr, as.numeric)
     if (length(thr)!=2) stop('The "thr" must be a two-element vecor and contain as least one numeric!')
     # Customized signal threshold.
-    gene <- thr(thr.min=thr[1], thr.max=thr[2], data=gene)
+    gene <- thrsd(thr.min=thr[1], thr.max=thr[2], data=gene)
     if (is(gene, 'character')) stop(gene)
     # Scaling. 
     if ('row' %in% scale) { 
@@ -331,10 +393,10 @@ shm_covis <- function(svg, data, assay.na=NULL, sam.factor=NULL, con.factor=NULL
 
     col <- colorRampPalette(col.com)(length(geneV))
     cs.g <- col_bar(geneV=geneV, cols=col, width=1, title=bar.title, bar.title.size=bar.title.size, bar.value.size=bar.value.size)
-
-    svg.pa.na <- img_pa_na(unlist(svgs[, 'svg']))
+    svg.obj.lis <- svgs[, 'svg']
+    svg.pa.na <- img_pa_na(svg.obj=svg.obj.lis)
     # svg.path may not be paths, can be file names, if users provide a SVG class that not includes paths.
-    svg.path <- svg.pa.na$path; svg.na <- svg.pa.na$na
+    svg.na <- svg.pa.na$na
     svg.na.cord <- names(svgs)
     # Get max width/height of multiple SVGs, and dimensions of other SVGs can be set relative to this max width/height.
     w.h.max <- max(unlist(svgs[, 'dimension']))
@@ -343,18 +405,18 @@ shm_covis <- function(svg, data, assay.na=NULL, sam.factor=NULL, con.factor=NULL
     # The order of ggplot SHMs, grob SHMs, and legends follow the order of SVGs, so all are same.
     gg.lis.all <- gg.all <- grob.all <- lgd.all <- grob.lgd.all <- gcol.lgd.all <- gcol.all <- NULL
     for (i in seq_along(svgs)) {
-      na0 <- svg.na[i]; cat('ggplots/grobs:', na0, '... \n')
+      na0 <- svg.na[i]; if (verbose==TRUE) cat('ggplots/grobs:', na0, '... \n')
       # if (preserve.scale==TRUE & is.null(sub.margin)) sub.margin <- (1-w.h/w.h.max*0.99)/2
       # SHMs/legend of ggplots under one SVG.
-      gg.lis <- gg_shm(svg.all=svgs[i], gene=gene[, seq_len(ncol(se)), drop=FALSE], col.idp=col.idp, con.na=con.na, geneV=geneV, charcoal=charcoal, alpha.overlay=alpha.overlay, ID=ID, cols=col, covis.type=covis.type, lis.rematch = lis.rematch, ft.trans=ft.trans, ft.trans.shm=ft.trans.shm, sub.title.size=sub.title.size, sub.title.vjust=sub.title.vjust, ft.legend=ft.legend, legend.ncol=legend.ncol, legend.nrow=legend.nrow, legend.position=legend.position, legend.direction=legend.direction, legend.key.size=legend.key.size, legend.text.size=legend.text.size, legend.plot.title=legend.plot.title, legend.plot.title.size=legend.plot.title.size, line.width=line.width, line.color=line.color, ...)
+      gg.lis <- gg_shm(svg.all=svgs[i], gene=gene[, seq_len(ncol(se)), drop=FALSE], col.idp=col.idp, con.na=con.na, geneV=geneV, tar.bulk=tar.bulk, tar.cell=tar.cell, charcoal=charcoal, alpha.overlay=alpha.overlay, ID=ID, cols=col, covis.type=covis.type, lis.rematch = lis.rematch, ft.trans=ft.trans, ft.trans.shm=ft.trans.shm, sub.title.size=sub.title.size, sub.title.vjust=sub.title.vjust, ft.legend=ft.legend, legend.ncol=legend.ncol, legend.nrow=legend.nrow, legend.position=legend.position, legend.direction=legend.direction, legend.key.size=legend.key.size, legend.text.size=legend.text.size, legend.plot.title=legend.plot.title, legend.plot.title.size=legend.plot.title.size, line.width=line.width, line.color=line.color, verbose=verbose, ...)
       msg <- paste0(na0, ': no spatial features that have matching sample identifiers in data are detected!'); if (is.null(gg.lis)) stop(msg)
 
       # Append suffix '_i' for the SHMs of ggplot under SVG[i], and store them in a list.
       ggs <- gg.lis$g.lis.all; names(ggs) <- paste0(names(ggs), '_', i)
       gg.all <- c(gg.all, ggs)
-      cores <- deter_core(cores, svg.path[i]); cat('CPU cores:', cores, '\n')
+      cores <- deter_core(cores, svg.obj=svg.obj.lis[[i]]); if (verbose==TRUE) cat('CPU cores:', cores, '\n')
       # Same names with ggplot: append suffix '_i' for the SHMs of grob under each SVG, and store them in a list. 'i' is equal to SVG.
-      grobs <- grob_shm(ggs, cores=cores); grob.all <- c(grob.all, grobs)
+      grobs <- grob_shm(ggs, cores=cores, verbose=verbose); grob.all <- c(grob.all, grobs)
 
       # Store SHM ggplots and w.h under each SVG in separate list for use in relative scale.
       lis0 <- list(list(ggs = ggs, w.h = dimension(svgs)[[1]]))
@@ -365,7 +427,7 @@ shm_covis <- function(svg, data, assay.na=NULL, sam.factor=NULL, con.factor=NULL
       gg.lgd <- gg.lis$g.lgd
       if (profile.no) gg.lgd <- gg.lgd + labs(title=NULL)
       lgd.all <- c(lgd.all, list(gg.lgd))
-      grob.lgd.lis <- grob_shm(lgd.all, cores=cores, lgd.pos='bottom')
+      grob.lgd.lis <- grob_shm(lgd.all, cores=cores, lgd.pos='bottom', verbose=verbose)
       grob.lgd.all <- c(grob.lgd.all, grob.lgd.lis)
       gcol.lgd.all <- c(gcol.lgd.all, list(gg.lis$gcol.lgd))
 
@@ -383,18 +445,18 @@ shm_covis <- function(svg, data, assay.na=NULL, sam.factor=NULL, con.factor=NULL
     # Indexed cons with '_1', '_2', ... at the end.
     con.idxed <- unique(gsub(pat.all, '\\2\\3', names(gg.all)))
     # Layout matrix of SHMs for use in relative scale.
-    lay.mat <- lay_shm(lay.shm=lay.shm, con=con.idxed, ncol=ncol, ID.sel=ID, lay.mat = TRUE, profile=profile) 
+    lay.mat <- lay_shm(lay.shm=lay.shm, con=con.idxed, ncol=ncol, ID.sel=ID, lay.mat = TRUE, profile=profile, verbose=verbose) 
 
     # If relative size in multiple SVGs is required, update all SHM ggplots/grobs under each SVG.
     if (is.numeric(relative.scale) & length(svg.na) > 1) if (relative.scale > 0) {
-      cat('Applying relative image size ... \n')
+      if (verbose==TRUE) cat('Applying relative image size ... \n')
       gg.all <- grob.all <- NULL; for (i in seq_along(gg.lis.all)) {
         lis0 <- gg.lis.all[[i]]
         ggs <- rela_size(lis0$w.h['height'], w.h.max, relative.scale, nrow(lay.mat), lis0$ggs)
         gg.all <- c(gg.all, ggs)
-        cores <- deter_core(cores, svg.path[i]) # gg.lis.all has the same names with svgs.
+        cores <- deter_core(cores, svg.obj=svg.obj.lis[[i]]) # gg.lis.all has the same names with svgs.
         # Same names with ggplot: append suffix '_i' for the SHMs of grob under each SVG, and store them in a list.
-        grobs <- grob_shm(ggs, cores=cores); grob.all <- c(grob.all, grobs) 
+        grobs <- grob_shm(ggs, cores=cores, verbose=verbose); grob.all <- c(grob.all, grobs) 
       }
     }; na.all <- names(grob.all)
 
@@ -404,7 +466,7 @@ shm_covis <- function(svg, data, assay.na=NULL, sam.factor=NULL, con.factor=NULL
     if (file.exists(tmp)) do.call(file.remove, list(tmp))
     if (!is(h, 'numeric')) stop('"h" should be between 0 and 1!')
     if (h > 1) h <- 1 else if (h < 0) h <- 0
-    cs.arr <- arrangeGrob(grobs=list(grobTree(cs.grob)), layout_matrix=cbind(1), widths=unit(1, "npc"), heights=unit(0.7 * h, "npc")) # "mm" is fixed, "npc" is scalable.
+    cs.arr <- arrangeGrob(grobs=list(grobTree(cs.grob)), layout_matrix=cbind(1), widths=unit(1, "npc"), heights=unit(0.8 * h, "npc")) # "mm" is fixed, "npc" is scalable.
     if (legend.2nd==TRUE) {
       gg.all <- gg_2lgd(gg.all=gg.all, sam.dat=sam.uni, ft.trans=ft.trans, position.2nd=position.2nd, legend.nrow.2nd=legend.nrow.2nd, legend.ncol.2nd=legend.ncol.2nd, legend.key.size.2nd=legend.key.size.2nd, add.feature.2nd=add.feature.2nd, legend.text.size.2nd=legend.text.size.2nd, angle.text.key.2nd=angle.text.key.2nd, position.text.key.2nd=position.text.key.2nd)
       grob.all <- lapply(gg.all, ggplotGrob)
@@ -425,7 +487,7 @@ shm_covis <- function(svg, data, assay.na=NULL, sam.factor=NULL, con.factor=NULL
       dimred.pre <- unique(colData(data)$dimred)
       if (!is.null(dimred.pre)) {
         dimred <- dimred.pre
-        cat('The reduced dimensionality in "data" is used:', dimred, '.\n')
+        if (verbose==TRUE) cat('The reduced dimensionality in "data" is used:', dimred, '.\n')
       }
       gg.dim <- plot_dim(sce.dimred, dim=dimred, color.by='assignedBulk')
       if ('toBulkAuto' %in% covis.type) targ <- tar.cell
@@ -442,13 +504,13 @@ shm_covis <- function(svg, data, assay.na=NULL, sam.factor=NULL, con.factor=NULL
       dimred.pre <- unique(colData(data)$dimred)
       if (!is.null(dimred.pre)) {
         dimred <- dimred.pre
-        cat('The reduced dimensionality in "data" is used:', dimred, '.\n')
+        if (verbose==TRUE) cat('The reduced dimensionality in "data" is used:', dimred, '.\n')
       }
       gg.dim <- plot_dim(sce.dimred, dim=dimred, color.by='assignedBulk')
       if ('toBulkAuto' %in% covis.type) targ <- tar.cell
       if ('toCellAuto' %in% covis.type) targ <- tar.bulk
       gg.dim.lis <- list(con=gg.dim)
-      } else {
+      } else { # Dim plots under each cell variable.
       vars.cell <- unique(sce.lis$sce$variable)
       gg.dim.lis <- NULL; for (i in vars.cell) {
         sce.dimred0 <- subset(sce.dimred, , variable==i) 
@@ -456,16 +518,18 @@ shm_covis <- function(svg, data, assay.na=NULL, sam.factor=NULL, con.factor=NULL
         gg.dim.lis <- c(gg.dim.lis, list(gg.dim))
       }; names(gg.dim.lis) <- vars.cell; targ <- NULL
       }
-      dim.shm.lis <- dim_color_idp(sce=sce.dimred, covis.type=covis.type, targ=targ, ID=ID, gene=gene[, setdiff(seq_len(ncol(gene)), seq_len(ncol(se))), drop=FALSE], tar.cell=tar.cell, tar.bulk=tar.bulk, con.na.cell=con.na.cell, geneV=geneV, cols=col, gg.dim=gg.dim.lis, gg.shm.all=gg.all, grob.shm.all=grob.all, col.shm.all=gcol.all, gg.lgd.all=lgd.all, col.lgd.all=gcol.lgd.all, grob.lgd.all=grob.lgd.all, profile=profile, alpha.pt=alpha.pt, cell.group=cell.group, lis.match=lis.rematch.raw, sub.title.size=sub.title.size, dim.lgd.pos=dim.lgd.pos, dim.lgd.nrow=dim.lgd.nrow, dim.lgd.key.size=dim.lgd.key.size, dim.lgd.text.size=dim.lgd.text.size, dim.axis.font.size=dim.axis.font.size, shape=shape, lgd.plot.margin=dim.lgd.plot.margin)
+      dim.shm.lis <- dim_color_idp(sce=sce.dimred, covis.type=covis.type, targ=targ, ID=ID, gene=gene[, setdiff(seq_len(ncol(gene)), seq_len(ncol(se))), drop=FALSE], tar.cell=tar.cell, tar.bulk=tar.bulk, con.na.cell=con.na.cell, geneV=geneV, cols=col, gg.dim=gg.dim.lis, gg.shm.all=gg.all, grob.shm.all=grob.all, col.shm.all=gcol.all, gg.lgd.all=lgd.all, col.lgd.all=gcol.lgd.all, grob.lgd.all=grob.lgd.all, profile=profile, alpha.pt=alpha.pt, cell.group=cell.group, lis.match=lis.rematch.raw, sub.title.size=sub.title.size, dim.lgd.pos=dim.lgd.pos, dim.lgd.nrow=dim.lgd.nrow, dim.lgd.key.size=dim.lgd.key.size, dim.lgd.text.size=dim.lgd.text.size, dim.axis.font.size=dim.axis.font.size, shape=shape)
       }
       grob.all <- dim.shm.lis$dim.shm.grob.lis
       gg.all <- dim.shm.lis$dim.shm.gg.lis
       dim.lgd.lis <- dim.shm.lis$dim.lgd.lis
     }
     if (srsc) {
-      dim.ovl.shm.lis <- dim_srsc(cell=sce.sp, ID=ID, geneV=geneV, cols=col, tar.cell=tar.cell, con.na.cell=con.na.cell, dimred=dimred, size.pt=size.pt, alpha.pt=alpha.pt, svg.all=svgs[1], profile=profile, gg.shm.all=gg.all, grob.shm.all=grob.all, gg.lgd.all=lgd.all, grob.lgd.all=grob.lgd.all, cell.group=cell.group, sub.title.size=sub.title.size, sub.title.vjust=0, dim.lgd.pos=dim.lgd.pos, dim.lgd.nrow=dim.lgd.nrow, dim.lgd.key.size=dim.lgd.key.size, dim.lgd.text.size=dim.lgd.text.size, dim.axis.font.size=dim.axis.font.size, linewidth=line.width, line.color=line.color, dim.lgd.direc=NULL, size.r=size.r, shape=shape)
+      dim.ovl.shm.lis <- dim_srsc(cell=sce.sp, ID=ID, geneV=geneV, cols=col, tar.cell=tar.cell, tar.bulk=tar.bulk, con.na.cell=con.na.cell, dimred=dimred, size.pt=size.pt, alpha.pt=alpha.pt, svg.all=svgs[1], profile=profile, gg.shm.all=gg.all, grob.shm.all=grob.all, gg.lgd.all=lgd.all, col.lgd.all=gcol.lgd.all, grob.lgd.all=grob.lgd.all, cell.group=cell.group, lis.match=lis.rematch.raw, sub.title.size=sub.title.size, sub.title.vjust=0, dim.lgd.pos=dim.lgd.pos, dim.lgd.nrow=dim.lgd.nrow, dim.lgd.key.size=dim.lgd.key.size, dim.lgd.text.size=dim.lgd.text.size, dim.axis.font.size=dim.axis.font.size, linewidth=line.width, line.color=line.color, dim.lgd.direc=NULL, size.r=size.r, shape=shape, verbose=verbose)
       grob.all <- dim.ovl.shm.lis$dim.ovl.shm.grob
       gg.all <- dim.ovl.shm.lis$dim.ovl.shm.gg
+      dim.lgd.lis <- dim.ovl.shm.lis$dim.lgd.lis
+      ovl.lgd.lis <- dim.ovl.shm.lis$ovl.lgd.lis
     }
     if (decon) {
       dim.shm.lis <- dim_decon(sce=sce.dimred, ID=ID, data=gene[, setdiff(seq_len(ncol(gene)), seq_len(ncol(se))), drop=FALSE], geneV=geneV, cols=col, tar.cell=tar.cell, con.na.cell=con.na.cell, dimred=dimred, profile=profile, size.pt=size.pt, alpha.pt=alpha.pt, gg.shm.all=gg.all, grob.shm.all=grob.all, col.shm.all=gcol.all, gg.lgd.all=lgd.all, col.lgd.all=gcol.lgd.all, grob.lgd.all=grob.lgd.all, cell.group=cell.group, sub.title.size=sub.title.size, dim.lgd.pos=dim.lgd.pos, dim.lgd.nrow=dim.lgd.nrow, dim.lgd.key.size=dim.lgd.key.size, dim.lgd.text.size=dim.lgd.text.size, dim.axis.font.size=dim.axis.font.size, size.lab.pt=size.lab.pt, hjust.lab.pt=hjust.lab.pt, vjust.lab.pt=vjust.lab.pt, shape=shape)
@@ -473,18 +537,27 @@ shm_covis <- function(svg, data, assay.na=NULL, sam.factor=NULL, con.factor=NULL
       gg.all <- dim.shm.lis$dim.shm.gg
       dim.lgd.lis <- dim.shm.lis$dim.lgd.lis
     }
-    g.arr <- lay_shm(lay.shm=lay.shm, con=con.idxed, ncol=ncol, ID.sel=ID, grob.list=grob.all, scell=sc, decon=decon, srsc=srsc, profile=profile, h=h, shiny=FALSE)
+    g.arr <- lay_shm(lay.shm=lay.shm, con=con.idxed, ncol=ncol, ID.sel=ID, grob.list=grob.all, scell=sc, decon=decon, srsc=srsc, profile=profile, h=h, shiny=FALSE, verbose=verbose)
     if (profile.no) legend.plot <- NULL
     if (!is.null(legend.plot)) {
+      if (verbose==TRUE) message('Legend plot ... ')
       # Select legend plot to show. 
       if (length(svg.na)>1 & legend.plot!='all') na.lgd <- svg.na[grep(paste0('_(', paste0(legend.plot, collapse='|'), ').svg$'), svg.na)] else na.lgd <- svg.na
       lgd.lis <- lgd.all[na.lgd]
  
       # Add labels to target shapes/adjust keys in legend plots.
-      lgd.lis <- gg_lgd(gg.all=lgd.lis, angle.text.key=angle.text.key, position.text.key=position.text.key, label=label, label.size=label.size, label.angle=label.angle, hjust=hjust, vjust=vjust, opacity=opacity, key=key)
+      lgd.lis <- gg_lgd(gg.all=lgd.lis, sam=sam.uni, covis.type=covis.type, gcol.lgd=gcol.lgd.all, angle.text.key=angle.text.key, position.text.key=position.text.key, label=label, label.size=label.size, label.angle=label.angle, hjust=hjust, vjust=vjust, opacity=opacity, key=key, verbose=verbose)
+      if (verbose==TRUE) message('Integrate SHM and dim legend plots ... ')
       # Include dim plots in legends: covis color by cell.
-      if (!is.null(dim.lgd.lis) & (col.idp==TRUE | decon==TRUE)) {
+      if (!is.null(dim.lgd.lis) & (col.idp==TRUE | decon==TRUE) & srsc==FALSE) {
         for (i in vars.cell) {
+          dim.lgd0 <- dim.lgd.lis[[i]]$dim.lgd
+          lgd.lis <- c(lgd.lis, setNames(list(dim.lgd0), paste0(i, '_dim.lgd')))
+        }
+      } else if (srsc==TRUE) { 
+        for (i in vars.cell) {
+          ovl.lgd0 <- ovl.lgd.lis[[i]]$ovl.lgd
+          lgd.lis <- c(lgd.lis, setNames(list(ovl.lgd0), paste0(i, '_ovl.lgd')))
           dim.lgd0 <- dim.lgd.lis[[i]]$dim.lgd
           lgd.lis <- c(lgd.lis, setNames(list(dim.lgd0), paste0(i, '_dim.lgd')))
         }
@@ -495,8 +568,10 @@ shm_covis <- function(svg, data, assay.na=NULL, sam.factor=NULL, con.factor=NULL
 
       w.lgd <- (1-bar.width)/(ncol+1); shm.w <- 1-bar.width-w.lgd
       # If legend.r = 0, legend plot size is a square.
-      lgd.arr <- arrangeGrob(grobs=lgd.tr, layout_matrix=matrix(seq_along(na.lgd), ncol=1), widths=unit(0.99, "npc"), heights=unit(rep(w.lgd + (0.99 - w.lgd) * legend.r, length(na.lgd)), "npc"))
-
+      h.all  <- rep(w.lgd + (0.99 - w.lgd) * legend.r, length(na.lgd))
+      if (!is.null(lgd.plots.size)) h.all <- lgd.plots.size[seq_along(na.lgd)] 
+      lgd.arr <- arrangeGrob(grobs=lgd.tr, layout_matrix=matrix(seq_along(na.lgd), ncol=1), widths=unit(0.99, "npc"), heights=unit(h.all, "npc"))
+      if (verbose==TRUE) message('Final plots ... ')
       # A plot pops up when 'grid.arrange' runs.
       shm <- grid.arrange(cs.arr, g.arr, lgd.arr, ncol=3, widths=unit(c(bar.width-0.005, shm.w, w.lgd), 'npc'))
     } else { 
@@ -504,17 +579,15 @@ shm_covis <- function(svg, data, assay.na=NULL, sam.factor=NULL, con.factor=NULL
       if (!profile.no) shm <- grid.arrange(cs.arr, g.arr, ncol=2, widths=unit(c(bar.width-0.005, shm.w), 'npc')) else shm <- grid.arrange(g.arr, ncol=1, widths=unit(c(1-0.005), 'npc'))
     }
 
-    if (!is.null(out.dir)) { 
-
-      for (i in names(gg.all)) {
-        g0 <- gg.all[[i]]
-        anm.height <- 550 * animation.scale; anm.width <- anm.height / g0$theme$aspect.ratio
-        html_ly(gg=gg.all[i], cs.g=cs.g, ft.trans=ft.trans, sam.uni=sam.uni, anm.width=anm.width, anm.height=anm.height, out.dir=out.dir)
-      }
-
-      vdo <- video(gg=gg.all, cs.g=cs.g, bar.width=bar.width.vdo, lgd.key.size=legend.key.size.2nd, lgd.text.size=legend.text.size.2nd, angle.text.key=angle.text.key.2nd, position.text.key=position.text.key.2nd, lgd.row=legend.nrow.2nd, lgd.col=legend.ncol.2nd, legend.value.vdo=legend.value.vdo, label=label, label.size=label.size, label.angle=label.angle, hjust=hjust, vjust=vjust, opacity=opacity, key=key, video.dim=video.dim, res=res, interval=interval, framerate=framerate, out.dir=out.dir)
+    if (!is.null(out.dir)) {
+      message('HTML files ... ') 
+      html_ly(gg.all=gg.all, cs.g=cs.g, aspr=aspr, anm.scale=animation.scale, out.dir=out.dir)
+      message('Video ...')
+      if (!sc) type <- 'shm' else {
+        if (FALSE %in% col.idp) type <- 'col.grp' else type <- 'col.idp'
+      } 
+      vdo <- video(gg=gg.all, cs.g=cs.g, sam=sam.uni, covis.type=covis.type, lgd=lgd.lis, lgd.r=legend.r, h=h, type=type, sub.title.size=sub.title.size, bar.width=bar.width, bar.value.size=bar.value.size, lgd.key.size=legend.key.size, lgd.text.size=legend.text.size, lgd.key.size.2nd=legend.key.size.2nd, lgd.text.size.2nd=legend.text.size.2nd, angle.text.key=angle.text.key.2nd, position.text.key=position.text.key.2nd, lgd.row=legend.nrow, lgd.row.2nd=legend.nrow.2nd, lgd.col=legend.ncol.2nd, legend.value.vdo=legend.value.vdo, label=label, label.size=label.size, label.angle=label.angle, hjust=hjust, vjust=vjust, opacity=opacity, key=key, dim.lgd.text.size=dim.lgd.text.size, dim.lgd.key.size=dim.lgd.key.size, dim.lgd.nrow=dim.lgd.nrow, video.dim=video.dim, res=res, interval=interval, framerate=framerate, out.dir=out.dir)
       if (is.null(vdo)) cat("Video is not generated! \n")
-
     }
     lis <- list(spatial_heatmap=as.ggplot(shm), mapped_feature=map.sum); return(lis)
 }
@@ -533,7 +606,7 @@ shm_covis <- function(svg, data, assay.na=NULL, sam.factor=NULL, con.factor=NULL
 #' @noRd
 
 mapping_sum <- function(svg.na.cord, sam.uni, gcol.all, data, ID, con.na, covis.type=NULL, lis.match=NULL, verbose) {
-  # save(svg.na.cord, sam.uni, gcol.all, data, ID, con.na, verbose, file='mapping.sum.arg')
+  # save(svg.na.cord, sam.uni, gcol.all, data, ID, con.na, covis.type, lis.match, verbose, file='mapping.sum.arg')
   map.sum <- data.frame()
   for (j in seq_along(svg.na.cord)) {
     svg.na.cord0 <- svg.na.cord[j] 
@@ -579,9 +652,8 @@ mapping_sum <- function(svg.na.cord, sam.uni, gcol.all, data, ID, con.na, covis.
 #' @keywords Internal
 #' @noRd
 
-img_pa_na <- function(path.na, raster.ext=c('.jpg', '.JPG', '.png', '.PNG')) {
-  str.lis <- strsplit(path.na, '/')
-  na <- vapply(str.lis, function(x) x[[length(x)]], FUN.VALUE=character(1))
+img_pa_na <- function(path.na=NULL, svg.obj=NULL, raster.ext=c('.jpg', '.JPG', '.png', '.PNG')) {
+  if (is(svg.obj, 'list')) na <- names(svg.obj) else if (!is.null(path.na)) na <- basename(path.na)
   ext <- c('.svg', '.SVG', raster.ext); ext <- paste0('(', paste0('\\', ext, collapse='|'), ')')
   pat <- paste0('.*_(shm\\d+)', ext, '$') 
     if (length(na)>1) { 
@@ -595,18 +667,23 @@ img_pa_na <- function(path.na, raster.ext=c('.jpg', '.JPG', '.png', '.PNG')) {
 
 #' Determine the number of CPU cores.
 #' @param cores The input number of cores.
-#' @param svg.path The path of SVG file.
+#' @param svg.obj The path of SVG file.
 #' @keywords Internal
 #' @noRd
+#' @importFrom utils object.size
 #' @importFrom parallel detectCores
 
-deter_core <- function(cores, svg.path) {
-  if (!file.exists(svg.path)) return(cores)
+deter_core <- function(cores, svg.obj=NULL, svg.pa=NULL, size=3145728) {
+  if (!is.null(svg.obj)) { 
+    if (!is(svg.obj, 'raw')) return(cores) else fil.size <- object.size(svg.obj)
+  }
+  if (is(svg.pa, 'character')) {   
+    if (!file.exists(svg.pa)) return(cores) else fil.size <- file.size(svg.pa)
+  }
   cores <- as.integer(cores)
   n.cor <- detectCores(logical=TRUE)
-  fil.size <- file.size(svg.path)
   if (!is.na(n.cor)) { 
-    if (fil.size >= 3145728 & n.cor > 2 & is.na(cores)) cores <- 2 else if (fil.size < 3145728 & is.na(cores)) cores <- 1 else if (n.cor > 1 & !is.na(cores)) {
+    if (fil.size >= size & n.cor > 2 & is.na(cores)) cores <- 2 else if (fil.size < size & is.na(cores)) cores <- 1 else if (n.cor > 1 & !is.na(cores)) {
       if (cores >= n.cor) cores <- n.cor - 1
     } 
   } else { if (is.na(cores)) cores <- 1 }; return(cores)
@@ -657,12 +734,17 @@ check_data_covis <- function(data, dimred, cell.group, sce.dimred, tar.cell, tar
     bulk.all <- unique(data$sample); cell.group <- 'assignedBulk'
     cell.all <- setdiff(unique(sce.dimred$assignedBulk), 'none')
     if (is(data, 'SingleCellExperiment') | is(data, 'SummarizedExperiment')) {
-      if (unique(data$bulkCell)=='bulk') {
-        if (is.null(tar.bulk)) tar.bulk <- bulk.all
-        tar.cell <- NULL; covis.type <- 'toCellAuto'
-      } else if (unique(data$bulkCell)=='cell'){
-        if (is.null(tar.cell)) tar.cell <- cell.all
-        tar.bulk <- NULL; covis.type <- 'toBulkAuto'
+      if (col.idp == TRUE) { # Support both tar.bulk and tar.cell.
+        if (!is.null(tar.bulk)) { tar.cell <- NULL; covis.type <- 'toCellAuto' }
+        if (!is.null(tar.cell)) { tar.bulk <- NULL; covis.type <- 'toBulkAuto' }
+      } else {
+        if (unique(data$bulkCell)=='bulk') {
+          if (is.null(tar.bulk)) tar.bulk <- bulk.all
+          tar.cell <- NULL; covis.type <- 'toCellAuto'
+        } else if (unique(data$bulkCell)=='cell'){
+          if (is.null(tar.cell)) tar.cell <- cell.all
+          tar.bulk <- NULL; covis.type <- 'toBulkAuto'
+        }
       }
     }
   } else if (!is.null(lis.rematch) & !is.null(tar.bulk)) {
@@ -721,7 +803,7 @@ covis_trans <- function(bulk.all, cell.all, ft.all, tar.bulk='all', tar.cell='al
 #' @keywords Internal
 #' @noRd
 
-thr <- function(thr.min, thr.max, data) {
+thrsd <- function(thr.min, thr.max, data) {
   max.v <- max(data); min.v <- min(data) 
   if (is.numeric(thr.min) & !is.na(thr.min)) { 
     lgc.min <- (thr.min < max.v) 
@@ -783,7 +865,8 @@ check_sce <- function(sce, cell.group, var.cell) {
 #' @keywords Internal
 #' @noRd
 
-check_srsc <- function(cell, cell.group, var.cell, bulk, var.bulk) {
+check_srsc <- function(cell, cell.group, var.cell, dimred, bulk, var.bulk, tar.cell, tar.bulk, lis.rematch, svg.ft.all) {
+  if (is(check_exp(cell[[tolower(dimred)]]), 'character')) stop(paste0(dimred, " is not detected!")) 
   pkg <- check_pkg('Seurat'); if (is(pkg, 'character')) stop(pkg)
   cell <- Seurat::RenameCells(cell, new.names = make.names(colnames(cell)))
   lgc.cna <- length(grep('__', colnames(cell)))==0
@@ -816,7 +899,28 @@ check_srsc <- function(cell, cell.group, var.cell, bulk, var.bulk) {
     msg <- 'Variables between bulk and single cell data should be the same!'
     warning(msg); return(msg)
   }
-  return(list(cell=cell, bulk=bulk, con.na.cell=con.na.cell, var.cell=var.cell))
+  cell.grp <- unique(cell[[cell.group]][, 1])
+  check.res <- check_exp(as.numeric(cell.grp))
+  if (!check.res[1] %in% c('w', 'e')) {
+    if (!all(is.na(as.numeric(cell.grp)))) {
+      msg <- 'Cell groups should not be numerics!'
+      warning(msg); return(msg) 
+    }
+  }; covis.type <- NULL
+  if (!is.null(tar.cell) & !is.null(tar.bulk)) stop('Only one of "tar.cell" and "tar.bulk" needs to be specified!') else if (is.null(tar.cell) & !is.null(tar.bulk)) {
+    if (!all(tar.bulk %in% svg.ft.all)) stop('Ensure all entries in "tar.bulk" have common identifiers with spatial features in the aSVG!')
+    if (!all(tar.bulk %in% names(lis.rematch))) stop('When mapping bulk to cells, ensure all entries in "tar.bulk" are in "names(lis.rematch)"!')
+    if (!all(unlist(lis.rematch) %in% cell.grp)) stop('Ensure all cell group labels in "lis.rematch" are correct!')
+    if ('all' %in% tar.bulk) tar.bulk <- names(lis.rematch)
+    covis.type <- 'toCell'; lis.rematch <- NULL
+  } else if (!is.null(tar.cell) & is.null(tar.bulk)) {
+    covis.type <- 'toBulk'
+    if (!all(tar.cell %in% cell.grp)) stop('Ensure all cell group labels in "lis.rematch" are correct!')
+    if (!all(tar.cell %in% names(lis.rematch))) stop('When mapping cells to bulk, ensure all entries in "tar.cell" are in "names(lis.rematch)"!')
+    if (!all(unlist(lis.rematch) %in% svg.ft.all)) stop('Ensure all bulk labels in "lis.rematch" have common identifiers with spatial features in the aSVG!')
+    if ('all' %in% tar.cell) tar.cell <- names(lis.rematch)
+  }
+  return(list(cell=cell, bulk=bulk, tar.bulk=tar.bulk, tar.cell=tar.cell, con.na.cell=con.na.cell, var.cell=var.cell, lis.rematch=lis.rematch, covis.type=covis.type))
 }
 
 
@@ -869,4 +973,5 @@ check_decon <- function(cell, cell.group, tar.cell, var.cell, bulk, var.bulk, sv
   }
   return(list(cell=cell, bulk=bulk, con.na.cell=con.na.cell, var.cell=var.cell, vars.cell=vars.cell))
 }
+
 

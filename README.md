@@ -26,7 +26,7 @@ devtools::install_github("jianhaizhang/spatialHeatmap", build_vignettes=TRUE, de
 
 # Usage
 
-See user vignette [here](https://github.com/jianhaizhang/spatialHeatmap/tree/master/vignettes).
+See user vignettes [here](https://bioconductor.org/packages/devel/bioc/html/spatialHeatmap.html).
 
 
 

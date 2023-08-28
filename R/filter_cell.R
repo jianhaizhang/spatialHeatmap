@@ -44,7 +44,7 @@ filter_cell <- function(sce, bulk=NULL, gen.rm=NULL, cutoff=1, p.in.cell=0.4, p.
     bulk <- bulk[int, ]; res <- res[int, ]
     if (com==TRUE) {  
       bulk$bulkCell <- 'bulk'; res$bulkCell <- 'cell'
-      res <- cbind(bulk, res)
+      res <- cbind_se(bulk, res)
     } else if (com==FALSE) { res <- list(bulk=bulk, cell=res) }
     # for (i in seq_along(lis)) {
     #  lis0 <- lis[[i]]; int <- intersect(rownames(lis0), rownames(bulk))

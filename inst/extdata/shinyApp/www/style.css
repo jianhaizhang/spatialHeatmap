@@ -1,3 +1,77 @@
+/* Adjust secondary tabs (height).
+#shmAll-shmMhNet {
+  padding:0px; height:40px
+}
+#shmAll-shmMhNet > li > a, #scell-covisAuto-tabSetCellAuto > li > a, #scell-covisMan-tabSetCell >li > a{
+  padding:8px
+}
+*/
+
+/* html files in iframe: adjust page height to screen height.*/
+#ldg, #manual { 
+  height: calc(100vh - 145px)
+} 
+
+#gallery, #upl-help, #shmAll-helpStatic, #shmAll-helpInter, #shmAll-helpVdo, #deg-help, #ana-help, #scell-covisMan-help, #scell-covisAuto-help, #about {
+  height: calc(100vh - 145px)
+}
+
+#logo {
+  position: absolute; top:7px; left: 2px;
+  font-size: 25px; font-weight: bold;
+  height: 49px; width: auto;
+  border-radius: 5px;  
+  display: flex; align-items: center; justify-content: center;
+}
+    
+/* #id.subid: dots should be avoided in ids. */
+#tabTop {
+  margin-top: -10px; background-color: #5295dd;
+  display: flex !important;
+  justify-content: center !important;
+}
+
+#tabTop > li > a {
+  padding:15px !important;
+  font-size: 15px !important
+}
+
+/* Remove header and left side bar. */
+.main-header, #sidebarCollapsed {
+  display:none !important
+}
+
+/* Remove left side menu.
+
+@media (min-width: 768px) {
+body  .wrapper .content-wrapper {
+    margin-left: 0px! important;
+  }
+}
+
+.content-wrapper {
+  min-height:862px; overflow-y:auto;
+  margin-left: 0px !important
+}
+*/
+
+
+#shmAll-shmMhNet {
+  margin-top: 5px;
+}
+
+div[data-value='deg'] {
+  margin-top: 5px;margin-left: 2px;
+}
+#scell-covisAuto-tabSetCellAuto, #scell-covisMan-tabSetCell {
+  margin-top: -15px;
+}
+
+/* bsTooltip will not be hidden by other elements.*/
+.tooltip {
+    position: fixed;
+}
+
 /* App busy indicator */
 #loading{
   top: 20px; right: 20px; height: 200px; z-index: 9999;
@@ -70,7 +144,7 @@ label[for='search'] { display: table-cell; text-align: center; vertical-align: m
 /* .tabbable > .nav > li > a[data-value='shm'] {background-color: #2471A3; color:white} */
 .tabbable > .nav > li > a {background-color:#337ab7; color:white}
 
-.tabbable > .nav > li[class=active] > a {background-color:#337ab7; color:white}
+.tabbable > .nav > li[class=active] > a {background-color:#0d63ad; color:white}
 
 .nav-pills>li.active>a, .nav-pills>li.active>a:focus, .nav-pills>li.active>a:hover {border-top-color:red;}
 
@@ -253,6 +327,10 @@ span {
   width: 1400px
 }
 
+.modal-dialog { 
+  width:800px 
+}
+
 #datFormat #shiny-modal, #tailorIns #shiny-modal, #matchHel #shiny-modal {
   display: table
 }
@@ -276,7 +354,7 @@ span {
   overflow: scroll
 }
 
-/*Image gallery in landing page. */
+/*Image gallery in dataset page. */
 
 #brainHum img, #mouse img, #chicken img, #organArab img, #shootArab img, #rootArab img, #stageArab img, #clpRice img {
   transition: transform linear 0.5s; transition-delay: 0.5s;
@@ -304,7 +382,7 @@ span {
 body { text-align: justify }
 
 /*
-button[id='sear-sch.sgl.but'], button[id='sear-sch.mul.but'], button[id='deg-deg-sch.sgl.but'], button[id='deg-deg-sch.mul.but'], button[id='dat-dat.all.but'], a[id='shmAll-dld.shm'], button[id='shmAll-rematch-match'], button[id='shmAll-val.lgd'] {
+button[id='sear-schSglBut'], button[id='sear-schMulBut'], button[id='deg-deg-schSglBut'], button[id='deg-deg-schMulBut'], button[id='dat-dat.all.but'], a[id='shmAll-dld.shm'], button[id='shmAll-rematch-match'], button[id='shmAll-val.lgd'] {
  margin-top:2px;margin-bottom:-10px;margin-left:20px;padding-top:2px;padding-bottom:2px;background-color:#ddd
 }
 */

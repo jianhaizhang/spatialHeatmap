@@ -2,7 +2,10 @@
 
 net_server <- function(id, submat, ids, gID, ipt.up, ipt.ana, cfg, data, df.net, clus.h=NULL, clus.k=NULL, session) {  
 moduleServer(id, function(input, output, session) {
-  ns <- session$ns 
+  ns <- session$ns
+  observe({
+    library(flashClust); library(visNetwork)
+  })
   # er <- eventReactive(exp, {}). If its reactive value "er()" is called before eventReactive is triggered, the code execution stops where "er()" is called.
   data <- eventReactive(list(ipt.ana$showBut, ipt.ana$showButNet), {
     sub.mat <- submat(); method <- ipt.ana$method; cl <- NULL
@@ -28,7 +31,8 @@ moduleServer(id, function(input, output, session) {
   })
   adj.mods <- eventReactive(adj.mod.par$pars, {
     cat('Adjacency and modules ... \n')
-    if (ipt.up$fileIn %in% cfg$na.cus & is.null(ipt.up$svgInpath1) & is.null(ipt.up$svgInpath2)) return()
+    fileIn <- ipt.up$fileIn; req(!dat.no %in% fileIn)
+    if (fileIn %in% cfg$na.cus & is.null(ipt.up$svgInpath1) & is.null(ipt.up$svgInpath2)) return()
     #gene <- geneIn()[["df.aggr.tran"]]; if (!(input$gen.sel %in% rownames(gene))) return() # Avoid unnecessary computing of 'adj', since 'input$gen.sel' is a cerain true gene id of an irrelevant expression matrix, not 'None', when switching from one defaul example's matrix heatmap to another example.
     sub.mat <- data(); if (is.null(sub.mat)) return()
     withProgress(message="Network modules: ", value = 0, {
@@ -48,7 +52,8 @@ moduleServer(id, function(input, output, session) {
   #})
   observe({ 
     ipt.ana$query; # input$measure; input$thr; input$mhm.v
-    updateSelectInput(session, 'ds', choices=3:2, selected=cfg$lis.par$network['ds', 'default'])
+    lis.par <- cfg$lis.par; req(check_obj(lis.par))
+    updateSelectInput(session, 'ds', choices=3:2, selected=lis.par$network['ds', 'default'])
   })
 
   col.sch.net <- reactive({ 
@@ -64,7 +69,9 @@ moduleServer(id, function(input, output, session) {
   }); color.net <- reactiveValues(col.net="none")
   len.cs.net <- 350
   observe({
-    if(input$col.but.net==0) color.net$col.net <- colorRampPalette(col_sep(cfg$lis.par$network['color', 'default']))(len.cs.net)
+    lis.par <- cfg$lis.par; but <- input$col.but.net
+    req(check_obj(list(lis.par, but)))
+    if(but==0) color.net$col.net <- colorRampPalette(col_sep(lis.par$network['color', 'default']))(len.cs.net)
   })
   observeEvent(input$col.but.net, {
     col.sch <- col.sch.net()
@@ -523,7 +530,7 @@ moduleServer(id, function(input, output, session) {
     }; go 
   })
 
-  observeEvent(go(), {
+  observeEvent(list(go(), input$terms), {
     go <- go(); terms <- input$terms
     if (!check_obj(list(go, terms))) return()
     output$go <- renderPlot({
@@ -553,8 +560,8 @@ moduleServer(id, function(input, output, session) {
       showModal(modal(msg = msg))
     }; kk 
   })
-  observeEvent(keg(), {
-    keg <- keg(); terms <- input$terms
+  observeEvent(list(keg(), input$termsKeg), {
+    keg <- keg(); terms <- input$termsKeg
     if (!check_obj(list(keg, terms))) return()
     output$keg <- renderPlot({
       if (nrow(as.data.frame(keg))==0) return()
@@ -578,18 +585,14 @@ moduleServer(id, function(input, output, session) {
     a(href=pa, target='blank', 'Download') 
   })
   })
-
-onBookmark(function(state) { state })
-})
-
-}
+  onBookmark(function(state) { state })
+  return(list(sn=session))
+})}
 
 # Module for large-scale analysis.
-analysis_server <- function(id, upl.mod.lis, dat.mod.lis, shm.mod.lis, sch.mod.lis, session) { 
+analysis_server <- function(id, upl.mod.lis, dat.mod.lis, shm.mod.lis, ids, session) { 
   moduleServer(id, function(input, output, session) {
-    ns <- session$ns
-    ipt <- upl.mod.lis$ipt; cfg <- upl.mod.lis$cfg
-
+  ns <- session$ns; ipt <- upl.mod.lis$ipt; cfg <- upl.mod.lis$cfg
   ipt.dat <- reactiveValues()
   ipt.dat$dat <- dat.mod.lis$ipt.dat; sear <- dat.mod.lis$sear
   col.reorder <- reactiveValues(); col.reorder <- dat.mod.lis$col.reorder
@@ -599,7 +602,6 @@ analysis_server <- function(id, upl.mod.lis, dat.mod.lis, shm.mod.lis, sch.mod.l
   P <- dat.mod.lis$P; CV1 <- dat.mod.lis$CV1
   CV2 <- dat.mod.lis$CV2
   gID <- shm.mod.lis$gID; 
-  ids <- sch.mod.lis$ids
   observe({
     se.thr(); ipt$adj.modInpath; input$A; input$P; input$CV1
     input$CV2; input$min.size; input$net.type
@@ -610,7 +612,6 @@ analysis_server <- function(id, upl.mod.lis, dat.mod.lis, shm.mod.lis, sch.mod.l
   observe({  
     ipt$fileIn; se.thr(); input$adj.modInpath; input$A; input$P; input$CV1; input$CV2; ids$sel
     updateActionButton(session, inputId='showBut', icon=icon("sync"))
-    #updateRadioButtons(session, inputId="showBut", label="Show plot:", choices=c("Yes", "No"), selected=cfg$lis.par$mhm['show', 'default'], inline=TRUE)
   })
   observe({
     if (!check_obj(list(se.thr(), ids$sel))) return()
@@ -632,16 +633,13 @@ analysis_server <- function(id, upl.mod.lis, dat.mod.lis, shm.mod.lis, sch.mod.l
       assay(se.thr) <- log2(assay) 
     }; return(list(se.thr=se.thr))
   })
-  observeEvent(shm.mod.lis$tab.act.lis$shmMhNet, {
-    shm.act <- shm.mod.lis$tab.act.lis$shmMhNet; showBut <- input$showBut
-    if (!check_obj(list(shm.act))) return()
-    if (shm.act=='shmAll-net-clus' & input$showBut <= 3) showModal(modal(msg=HTML('Always click <strong>"Run"</strong> to see the latest results!'), easyClose=TRUE))
-  })
   # Combine all relevant parameters to pars. After all parameters are adjusted, they only are controlled by buttons, which avoids execution after each parameter is adjusted.
   # A series of steps: the first "ignoreInit" needs to be TRUE. Otherwise, the combined pars are not able to trigger the following steps.
   cor.dis.par <- reactiveValues()
   observeEvent(list(input$showBut), ignoreInit=TRUE, {
-    pars <- list(measure=input$measure)
+    measure <- input$measure; se.thr <- df.net()$se.thr
+    req(check_obj(list(measure, se.thr)))
+    pars <- list(measure=measure, se.thr=se.thr)
     cor.dis.par$pars <- pars
   })
   # cor.dis <- reactiveValues(val=NULL)
@@ -672,7 +670,8 @@ analysis_server <- function(id, upl.mod.lis, dat.mod.lis, shm.mod.lis, sch.mod.l
    #  if (tab.mhm$val!='yes') { return() }
   submat.par <- reactiveValues()
   observeEvent(list(input$showBut, cor.dis()), ignoreInit=FALSE, {
-    if (input$query=='None') return()
+    query <- input$query; req(query)
+    if ('None' %in% query) return()
     pars <- list(input$thr, input$mhm.v, cor.dis.par$pars, input$query, cor.dis())
     submat.par$pars <- pars
   })
@@ -680,29 +679,31 @@ analysis_server <- function(id, upl.mod.lis, dat.mod.lis, shm.mod.lis, sch.mod.l
   submat <- eventReactive(list(submat.par$pars), { 
     cat('Subsetting nearest neighbors ... \n')
     corDis <- cor.dis(); query <- input$query
-    se.thr <- df.net()$se.thr 
+    se.thr <- df.net()$se.thr
     if (!check_obj(list(corDis, query, se.thr))) return()
     if (query=='None') return()
     gene <- assay(se.thr)
+    msg <- 'Subsetting nearest neighbors: columns in the assay data are less than 5!'
+    if (ncol(gene)<5) showNotification(msg, duration=2, closeButton = TRUE)
     # mat <- cor.dis$val()
     # Validate filtering parameters in matrix heatmap. 
     measure <- input$measure; mhm.v <- input$mhm.v; thr <- input$thr
-    if (input$thr=='p') {
+    if (thr=='p') {
       validate(need(try(mhm.v>0 & mhm.v<=1), 'Proportion should be between 0 to 1 !'))
-    } else if (input$thr=='n') {
+    } else if (thr=='n') {
       validate(need(try(mhm.v>=1 & as.integer(mhm.v)==mhm.v & !is.na(mhm.v)), 'Number should be a positive integer !'))
-    } else if (input$thr=='v' & measure=='cor') {
+      g.n <- nrow(corDis); if (mhm.v >= g.n) mhm.v <- g.n
+    } else if (thr=='v' & measure=='cor') {
       validate(need(try(mhm.v>-1 & mhm.v <1), 'Correlation value should be between -1 to 1 !'))
-    } else if (input$thr=='v' & measure=='dis') {
+    } else if (thr=='v' & measure=='dis') {
       validate(need(try(mhm.v>=0), 'Distance value should be non-negative !'))
     }
     withProgress(message="Selecting nearest neighbours: ", value = 0, {
       incProgress(0.5, detail="please wait ...")
       arg <- list(p=NULL, n=NULL, v=NULL)
-      arg[names(arg) %in% input$thr] <- input$mhm.v
-      if (input$measure=='dis' & input$thr=='v') arg['v'] <- -arg[['v']]
+      arg[names(arg) %in% thr] <- mhm.v
+      if (input$measure=='dis' & thr=='v') arg['v'] <- -arg[['v']]
       if (!all(query %in% rownames(corDis))) return()    
-      validate(need(try(ncol(gene)>4), 'The "sample__condition" variables in the Data Matrix are less than 5, so no coexpression analysis is applied!'))
       gen.na <- do.call(sub_na, c(mat=list(corDis), ID=list(query), arg))
       if (any(is.na(gen.na))) return()
       if (length(gen.na)==1) { 
@@ -723,7 +724,20 @@ analysis_server <- function(id, upl.mod.lis, dat.mod.lis, shm.mod.lis, sch.mod.l
   k.lis <- kmean_server('kmean', ipt.ana=input, submat=submat)
   net.mod <- net_server('net', submat=submat, gID=gID, ids=ids, ipt.up=ipt, ipt.ana=input, cfg=cfg, data=data, df.net=df.net)
   net.op.mod <- net_server('netS3', submat=submat, gID=gID, ids=ids, ipt.up=ipt, ipt.ana=input, cfg=cfg, data=data, df.net=df.net, clus.h=h.clus, clus.k=k.lis)
-  fun_enrich_server('goKeg', ipt.ana=input, clus.h=h.clus, clus.k=k.lis, mod=net.mod, mod.op=net.op.mod)
+  fun.mod <- fun_enrich_server('goKeg', ipt.ana=input, clus.h=h.clus, clus.k=k.lis, mod=net.mod, mod.op=net.op.mod)
+  observe({
+    method <- input$method; cl <- NULL
+    if ('hcl' %in% method) cl <- h.clus$hclus()
+    if ('net' %in% method) cl <- net.mod$mod()
+    if ('kmean' %in% method) cl <- k.lis$lis()$cluster
+    id <- fun.mod$sn$ns('funEnr')
+    # print(list('id', id, method, cl, fun.mod, fun.mod$sn, fun.mod$sn$ns))
+    if (!check_obj(list(method, cl))) shinyjs::hide(id = id) else shinyjs::showElement(id = id) 
+  })
+
+  output$help <- renderUI({ 
+    tags$iframe(seamless="seamless", src= "html/shm_shiny_manual.html#24_Data_mining", width='100%', height='100%')   
+  })
   observe({
     disable(selector='a[data-value="shmAll-net-netOp"]')
     hclus <- h.clus$hclus; kclus <- k.lis$lis

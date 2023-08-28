@@ -1,3 +1,15 @@
+Changes in version 2.6.1 (2023-08-28)
+ + Updates in the Shiny App:
+    1. Added more pop-up windows (images/text) for quick start and tooltips for settings.
+    2. Preprared a comprehensive user manual.
+    3. Added metadata to the Data Table.
+    4. Custom assay data: support tabular and ".rds" files.
+    5. Refined the UI, added landing/about page, moved Data Mining to the top tabs, and added pre-set color schemes and custom options for SHMs.
+    6. The funtion svg_pa is renamed to svg_obj, and color_svg to write_svg. aSVG files can be exported with heat colors.  
+    7. Translation map is supported in covis of spatially resolved single-cell data.
+    8. Microarray data is supported in spatial enrichment on the Shiny App.
+    9. Tabular files are supported when uploading single-cel and bulk data for covis.
+
 Changes in version 2.5.4 (2023-04-14)
  + Developed the SPHM class for storing aSVG, bulk data, single-cell data, and matching list.
  + Spatial Enrichement: outlier spatial featuers in references are supported.

@@ -46,7 +46,7 @@
 #' @importFrom ggplot2 ggplot scale_fill_manual scale_size_manual geom_point aes theme_classic theme element_text labs scale_x_continuous scale_y_continuous guides guide_legend
 
 plot_dim <- function(sce, dim=NULL, color.by, group.sel=NULL, row.sel=NULL, cocluster.only=TRUE, x.break=NULL, y.break=NULL, panel.grid=FALSE, lgd.title.size=13, lgd.key.size=0.03, lgd.text.size=12, point.size=3, bulk.size=5, alpha=0.7, stroke=0.2, bulk.stroke=1, axis.text.size=10, axis.title.size=11, lgd.pos='right', lgd.ncol=1, lgd.l=0, lgd.r=0.01) {
- # save(sce, dim, color.by, group.sel, row.sel, cocluster.only, x.break, y.break, panel.grid, lgd.title.size, lgd.key.size, lgd.text.size, point.size, bulk.size, alpha, stroke, bulk.stroke, axis.text.size, axis.title.size, lgd.pos, lgd.l, lgd.r, file='plot.dim.arg')
+  # save(sce, dim, color.by, group.sel, row.sel, cocluster.only, x.break, y.break, panel.grid, lgd.title.size, lgd.key.size, lgd.text.size, point.size, bulk.size, alpha, stroke, bulk.stroke, axis.text.size, axis.title.size, lgd.pos, lgd.ncol, lgd.l, lgd.r, file='plot.dim.arg')
   # All scenarios: 1. Only cell, select by row, group, or all. 2. Bulk and cell, select by row, group, or all.
   x <- y <- key <- colour_by <- bulkCell <- NULL
   cdat <- colData(sce); blk.cell <- FALSE
@@ -171,6 +171,8 @@ plot_dim <- function(sce, dim=NULL, color.by, group.sel=NULL, row.sel=NULL, cocl
         rep0 <- table(paste0(df.coclus.blk.sel$colour_by, ': ', df.coclus.blk.sel$sample))
         if (all(rep0==1)) { # No bulk replicates.
          lab.fil.sz <- paste0(group.sel, ': ', df.coclus.blk.sel$sample)
+         # Multiple bulk in the same cluster.
+         if (length(lab.fil.sz)>1) lab.fil.sz <- paste0(lab.fil.sz, collapse='\n') 
         }
         lab <- labs(x=labs[1], y=labs[2], fill=lab.fil.sz, size=lab.fil.sz)
       } else if ('cell' %in% df.sel$bulkCell) {
@@ -193,7 +195,7 @@ plot_dim <- function(sce, dim=NULL, color.by, group.sel=NULL, row.sel=NULL, cocl
     }
   } else { scl.sz <- NULL }
 
-  thm <- theme(plot.title=element_text(hjust=0.5, size=14), legend.title=element_text(size=lgd.title.size), legend.key.size=unit(lgd.key.size, "npc"), legend.text=element_text(size=lgd.text.size), axis.text=element_text(size=axis.text.size), axis.title=element_text(size=axis.title.size, face="plain"), legend.position=lgd.pos, legend.margin=margin(l=lgd.l, r=lgd.r, unit='npc'))
+  thm <- theme(plot.title=element_text(hjust=0.5, size=14), legend.title=element_text(size=lgd.title.size), legend.key.size=unit(lgd.key.size, "npc"), legend.text=element_text(size=lgd.text.size), axis.text=element_text(size=axis.text.size), axis.title=element_text(size=axis.title.size, face="plain"), legend.position=lgd.pos, legend.margin=margin(l=lgd.l, r=lgd.r, unit='npc'), aspect.ratio=1)
   
   # Stroke
   sk <- rep(stroke, nrow(df.all))
@@ -205,18 +207,30 @@ plot_dim <- function(sce, dim=NULL, color.by, group.sel=NULL, row.sel=NULL, cocl
     df1 <- gg$data; df2 <- layer_data(gg)
     int.na <- intersect(colnames(df1), colnames(df2))
     df.all <- cbind(df1[, !colnames(df1) %in% int.na], layer_data(gg))
+    # Bulk data. 
+    df.coclus.blk <- subset(df.all, colour_by %in% coclus & bulkCell=='bulk') 
+    lab.fil <- table(paste0(df.coclus.blk$colour_by, ': ', df.coclus.blk$sample))
+    # Clusters to show.
+    br <- sub(': .*$', '', names(lab.fil)); nas <- names(lab.fil)
+    if (any(duplicated(br))) {
+      # Multiple bulk in the same cluster.
+      br.dup <- unique(br[duplicated(br)])
+      for (i in br.dup) {
+        idx0 <- df.all$colour_by %in% i & df.all$bulkCell=='bulk'
+        df0 <- df.all[idx0, ]
+        # Change the legend text for clusters containing multiple bulk.
+        lab0 <- paste0(df0$colour_by[1], ': ', df0$sample, collapse='\n')
+        nas[br %in% i] <- lab0
+      } 
+    }
     # All default colors.
     df.col <- subset(df.all, !duplicated(colour_by))
     clus.all <- df.col$colour_by
     col.all <- df.col$fill; names(col.all) <- clus.all
     col.all[clus.cell] <- 'gray80'
     scl.col <- scale_fill_manual(values=col.all, breaks=coclus, labels=coclus)
-
-    df.coclus.blk <- subset(df.all, colour_by %in% coclus & bulkCell=='bulk')
-    lab.fil <- table(paste0(df.coclus.blk$colour_by, ': ', df.coclus.blk$sample))
     if (all(lab.fil==1)) { # No bulk replicates.
-      # If multiple bulk are co-clustered in the same cluster, only one bulk is indicated in the legend.
-      scl.col <- scale_fill_manual(values=col.all, breaks=sub(': .*$', '', names(lab.fil)), labels=names(lab.fil))
+      scl.col <- scale_fill_manual(values=col.all, breaks=br, labels=nas)
     }
     # Size
     sz.all <- c(bulk=bulk.size, cell=point.size)
@@ -225,8 +239,7 @@ plot_dim <- function(sce, dim=NULL, color.by, group.sel=NULL, row.sel=NULL, cocl
     lab <- labs(x=labs[1], y=labs[2], fill=color.by, size='sample')
     df.all <- rbind(subset(df.all, colour_by %in% clus.cell), subset(df.all, colour_by %in% coclus))
     df.all <- rbind(subset(df.all, bulkCell=='cell'), subset(df.all, bulkCell=='bulk'))
-
-    gg <- ggplot(df.all, aes(x=x, y=y, key=key)) + geom_point(colour='black', alpha=alpha, stroke=df.all$stroke, shape=21, ae) + thm + lab + scl.col + scl.sz
+    gg <- ggplot(df.all, aes(x=x, y=y, key=key)) + geom_point(colour='black', alpha=alpha, stroke=df.all$stroke, shape=21, ae) + thm + lab + scl.col + scl.sz 
   }
   gg <- gg + guides(fill = guide_legend(override.aes = list(size=point.size), ncol = lgd.ncol, byrow = TRUE), size = guide_legend(ncol = lgd.ncol, byrow = TRUE))
   # Overwrite theme.

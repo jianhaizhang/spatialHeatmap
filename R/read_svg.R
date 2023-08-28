@@ -35,12 +35,15 @@
 #' svgs <- read_svg(svg.path=c(svg.pa1, svg.pa2), raster.path=c(raster.pa1, raster.pa2))
 
 #' @author Jianhai Zhang \email{jzhan067@@ucr.edu} \cr Dr. Thomas Girke \email{thomas.girke@@ucr.edu}
+#' @references
+#' Hadley Wickham, Jim Hester and Jeroen Ooms (2019). xml2: Parse XML. R package version 1.2.2. https://CRAN.R-project.org/package=xml2
 
 #' @export
+#' @importFrom xml2 read_html
 
 read_svg <- function(svg.path, raster.path=NULL, cores=1, srsc=FALSE) {
     # Get SVG/raster names and order their path/name if there are multiple images.
-    svg.pa.na <- img_pa_na(svg.path); svg.path <- svg.pa.na$path; svg.na <- svg.pa.na$na
+    svg.pa.na <- img_pa_na(path.na=svg.path); svg.path <- svg.pa.na$path; svg.na <- svg.pa.na$na
     raster.na <- NULL; if (length(raster.path)==0) raster.path <- NULL
     if (is.character(raster.path)) { 
       raster.pa.na <- img_pa_na(raster.path); raster.pa <- raster.pa.na$path; raster.na <- raster.pa.na$na
@@ -49,10 +52,10 @@ read_svg <- function(svg.path, raster.path=NULL, cores=1, srsc=FALSE) {
       if (!is.null(msg)) stop(msg)
     }
     # Coordinates of each SVG are extracted and placed in a list.
-    cordn <- attrb <- dimen <- svg <- raster <- angle <- NULL
+    cordn <- attrb <- dimen <- svg.l <- raster <- angle <- NULL
     for (i in seq_along(svg.na)) {
       cat('Parsing:', svg.na[i], '...', '\n') # '... \n' renders two new lines.
-      cores <- deter_core(cores, svg.path[i]); cat('CPU cores:', cores, '\n')
+      cores <- deter_core(cores, svg.pa=svg.path[i]); cat('CPU cores:', cores, '\n')
       svg.lis <- svg_df(svg.path=svg.path[i], feature=NULL, cores=cores, srsc=srsc)
       if (is.character(svg.lis)) {
         msg <- paste0(svg.na[i], ': ', svg.lis)
@@ -63,10 +66,10 @@ read_svg <- function(svg.path, raster.path=NULL, cores=1, srsc=FALSE) {
       dimen <- c(dimen, list(svg.lis$dimension))
       raster <- c(raster, list(raster.path[i]))
       angle <- c(angle, list(svg.lis$angle))
-      svg <- c(svg, list(svg.path[i]))
+      svg.l <- c(svg.l, list(svg.lis$svg.obj))
     }
-    names(cordn) <- names(attrb) <- names(dimen) <- names(raster) <- names(svg) <- names(angle) <- svg.na
-    svg.all <- SVG(coordinate=cordn, attribute=attrb, dimension=dimen, svg=svg, raster=raster, angle=angle); svg.all
+    names(cordn) <- names(attrb) <- names(dimen) <- names(raster) <- names(svg.l) <- names(angle) <- svg.na
+    svg.all <- SVG(coordinate=cordn, attribute=attrb, dimension=dimen, svg=svg.l, raster=raster, angle=angle); svg.all
 }
 
 

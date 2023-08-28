@@ -43,6 +43,9 @@ svgs <- read_svg(svg.path=c(svg.pa1, svg.pa2), raster.path=NULL)
 # superimposing raster images with SHM plots.
 svgs <- read_svg(svg.path=c(svg.pa1, svg.pa2), raster.path=c(raster.pa1, raster.pa2))
 }
+\references{
+Hadley Wickham, Jim Hester and Jeroen Ooms (2019). xml2: Parse XML. R package version 1.2.2. https://CRAN.R-project.org/package=xml2
+}
 \seealso{
 \code{\link{SVG}}: the \code{SVG} class.
 }

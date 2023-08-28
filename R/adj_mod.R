@@ -38,15 +38,14 @@
 #' Ravasz, E, A L Somera, D A Mongru, Z N Oltvai, and A L Barabási. 2002. “Hierarchical Organization of Modularity in Metabolic Networks.” Science 297 (5586): 1551–5. 
 
 #' @export
-#' @importFrom WGCNA adjacency TOMsimilarity 
-#' @importFrom flashClust flashClust
 #' @importFrom stats quantile dist as.dist
 #' @importFrom SummarizedExperiment SummarizedExperiment
-#' @importFrom dynamicTreeCut cutreeHybrid
 
 
 adj_mod <- function(data, assay.na=NULL, type='signed', power=if (type=='distance') 1 else 6, arg.adj=list(), TOMType='unsigned', arg.tom=list(), method='complete', ds=0:3, minSize=15, arg.cut=list(), dir=NULL) {
-
+  pkg <- check_pkg('WGCNA'); if (is(pkg, 'character')) stop(pkg)
+  pkg <- check_pkg('flashClust'); if (is(pkg, 'character')) stop(pkg)
+  pkg <- check_pkg('dynamicTreeCut'); if (is(pkg, 'character')) stop(pkg)
   options(stringsAsFactors=FALSE)
   # Get data matrix.
   if (is(data, 'data.frame')|is(data, 'matrix')|is(data, 'DFrame')|is(data, 'dgCMatrix')) {
@@ -64,11 +63,11 @@ adj_mod <- function(data, assay.na=NULL, type='signed', power=if (type=='distanc
   
   # Compute adjacency matrix.
   arg.adj <- c(list(datExpr=data, power=power, type=type), arg.adj)
-  adj <- do.call(adjacency, arg.adj)
+  adj <- do.call(WGCNA::adjacency, arg.adj)
   # Compute TOM and hierarchical clustering.
   arg.tom <- c(list(adjMat=adj, TOMType=TOMType), arg.tom)
-  tom <- do.call(TOMsimilarity, arg.tom)
-  dissTOM <- 1-tom; tree.hclust <- flashClust(d=as.dist(dissTOM), method=method)
+  tom <- do.call(WGCNA::TOMsimilarity, arg.tom)
+  dissTOM <- 1-tom; tree.hclust <- flashClust::flashClust(d=as.dist(dissTOM), method=method)
   # Cut the tree to get modules.
   cutHeight <- quantile(tree.hclust[['height']], probs=seq(0, 1, 0.05))[19]
   arg.cut1 <- list(dendro=tree.hclust, pamStage=FALSE, cutHeight=cutHeight, distM=dissTOM)
@@ -79,7 +78,7 @@ adj_mod <- function(data, assay.na=NULL, type='signed', power=if (type=='distanc
   mcol <- NULL; for (d in ds) {       
     min <- as.numeric(minSize)-3*d; if (min < 5) min <- 5
     arg.cut <- c(list(minClusterSize=min, deepSplit=d), arg.cut1)
-    tree <- do.call(cutreeHybrid, arg.cut)
+    tree <- do.call(dynamicTreeCut::cutreeHybrid, arg.cut)
     mcol <- cbind(mcol, tree$labels); arg.cut <- list()
 
   }; colnames(mcol) <- as.character(ds); rownames(mcol) <- colnames(adj) <- rownames(adj) <- colnames(data)
