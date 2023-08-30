@@ -773,7 +773,7 @@ colData(se.sh)[60:63, 1:2]
 
 In this example, the aSVG image has been generated in Inkscape from 
 the corresponding figure in @Mustroph2009-nu. Detailed instructions for generating custom aSVG images are provided in the 
-[SVG tutorial](https://jianhaizhang.github.io/SVG_tutorial_file/){target="_blank"}. The resulting custom aSVG file 'arabidopsis.thaliana_shoot_shm.svg' is included in the `spatialHeatmap` package and imported as below.    
+[SVG tutorial](https://jianhaizhang.github.io/SVG_tutorial){target="_blank"}. The resulting custom aSVG file 'arabidopsis.thaliana_shoot_shm.svg' is included in the `spatialHeatmap` package and imported as below.    
 
 ```{r eval=TRUE, echo=TRUE, warnings=FALSE, results='hide'}
 svg.sh.pa <- system.file("extdata/shinyApp/data", "arabidopsis.thaliana_shoot_shm.svg", package="spatialHeatmap")
@@ -1394,7 +1394,7 @@ that stores custom aSVG files developed for this project (*e.g.* Figure
 \@ref(fig:shshm)).  
 
 If users cannot find a suitable aSVG image in these two repositories, we have developed 
-a step-by-step [SVG tutorial](https://jianhaizhang.github.io/SVG_tutorial_file/){target="_blank"} for creating
+a step-by-step [SVG tutorial](https://jianhaizhang.github.io/SVG_tutorial){target="_blank"} for creating
 custom aSVGs. For example, by following this tutorial, various anatomical images in the [BAR eFP browser](http://bar.utoronto.ca/){target="_blank"} can be used as templates to create custom aSVGs. In the future, we will expand our repository with more aSVGs, and users are encouraged to contribute their own aSVGs to this repository, allowing them to share their creations with the community.
 
 ### Update aSVG features {#update}
