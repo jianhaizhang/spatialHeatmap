@@ -1,6 +1,6 @@
 ---
 title: "_spatialHeatmap_: Visualizing Spatial Assays in Anatomical Images and Large-Scale Data Extensions"
-author: "Authors: Jianhai Zhang, Jordan Hayes, Le Zhang, Bing Yang, Wolf B. Frommer, Julia Bailey-Serres, and Thomas Girke"
+author: "Authors: Jianhai Zhang and Thomas Girke"
 date: "Last update: `r format(Sys.time(), '%d %B, %Y')`"
 output:
   BiocStyle::html_document:

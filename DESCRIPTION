@@ -1,14 +1,14 @@
 Package: spatialHeatmap
 Type: Package
 Title: spatialHeatmap
-Version: 2.7.8
-Date: 2023-08-30
+Version: 2.7.9
+Date: 2023-10-16
 Authors@R: c(
   person(given="Jianhai", family="Zhang", role=c("aut", "trl", "cre"), email="jzhan067@ucr.edu", comment=""),
-  person(given="Jordan", family="Hayes", role="aut", email="jhayes@ucr.edu", comment=""),
   person(given="Le", family="Zhang", role="aut", email="lzhan140@ucr.edu", comment=""),
-  person(given="Bing", family="Yang", role="aut", email="yangbi@missouri.edu", comment=""),
-  person(given="Wolf", family="Frommer", role="aut", email="frommew@hhu.de", comment=""),
+  person(given="Jordan", family="Hayes", role="aut", email="jhayes@ucr.edu", comment=""),
+  person(given="Brendan", family="Gongol", role="aut", email="brendan.gongol@ucr.edu", comment=""),
+  person(given="Alexander", family="Borowsky", role="aut", email="aboro002@ucr.edu", comment=""),
   person(given="Julia", family="Bailey-Serres", role="aut", email="julia.bailey@ucr.edu", comment=""),
   person(given="Thomas", family="Girke", role="aut", email="thomas.girke@ucr.edu", comment="")
   )
