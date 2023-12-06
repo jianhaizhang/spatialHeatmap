@@ -1,7 +1,7 @@
 #' Extract up and down DEGs from any pair of comparisons in the provided data frame.
 #'
 #' @param sam.all All the samples/spatial features compared with each other.
-#' @param df.all The data frame of of all pairwise comparisons from edgeR, limma, DESeq2, or distinct.
+#' @param df.all The data frame of of all pairwise comparisons from edgeR, limma, or DESeq2.
 #' @param log.fc The cutoff of log fold change.
 #' @param fdr The cutoff of the FDR.
 #' @param log.na The strings in a column name indicating log fold change such as "log2FoldChange".

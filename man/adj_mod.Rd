@@ -41,7 +41,7 @@ will be used for clustering. See \code{\link[WGCNA]{TOMsimilarityFromExpr}} for 
           \code{"complete"}, \code{"average"}, \code{"mcquitty"}, \code{"median"} or
           \code{"centroid"}. }
 
-\item{ds}{One of 0, 1, 2, 4, or 4. The sensitivity of module identification. The smaller, the less modules identified with larger sizes.}
+\item{ds}{One of 0, 1, 2, or 3. The strigency of module identification. The smaller, the less modules with larger sizes.}
 
 \item{minSize}{The expected minimum module size. The default is 15. Refer to \pkg{WGCNA} for more details.}
 

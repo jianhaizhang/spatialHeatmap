@@ -104,10 +104,14 @@ covis_man_server <- function(id, sce.upl, upl.mod.lis, shm.mod.lis, tab, covis.m
      updateTabsetPanel(session, inputId="tabSetCell", selected='dimred')
   })
 
-   cnt.help <- reactiveValues(v=0)
+   cnt.help <- reactiveValues(v=0, notshow=FALSE)
+   observeEvent(input$showman, {
+     showman <- input$showman; if (!check_obj(showman) | TRUE %in% cnt.help$notshow) return()
+     cnt.help$notshow <- showman
+   })
    observeEvent(input$tabSetCell, {
-     if (!'dimred' %in% input$tabSetCell | cnt.help$v >= 3) return()
-      showModal(modal(title='Quick start!', msg = 'Showing 3 times only!', img='ann_quick.jpg', img.w="100%"))
+     if (!'dimred' %in% input$tabSetCell | cnt.help$v >= 3 | TRUE %in% cnt.help$notshow) return()
+      showModal(modal(title='Quick start!', msg = 'Showing 3 times only!', img='ann_quick.jpg', img.w="100%", idshow=ns('showman')))
       cnt.help$v <- cnt.help$v+1
     })
   observeEvent(covis.man$dimred, ignoreInit=FALSE, ignoreNULL=FALSE, {

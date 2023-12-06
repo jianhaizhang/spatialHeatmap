@@ -1,0 +1,73 @@
+---
+title: "Creating Custom Annotated SVGs"
+author: "Authors: Jianhai Zhang"
+date: "Last update: `r format(Sys.time(), '%d %B, %Y')`"
+output:
+  BiocStyle::html_document:
+    css: file/custom.css
+    toc: true
+    toc_float:
+        collapsed: true
+        smooth_scroll: true
+    toc_depth: 4
+    fig_caption: yes
+    code_folding: show
+    number_sections: true
+    self_contained: true
+fontsize: 14pt
+bibliography: bibtex.bib
+package: spatialHeatmap
+vignette: >
+  %\VignetteIndexEntry{(C) Creating Custom Annotated SVGs}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{css, echo=FALSE}
+pre code {
+white-space: pre !important;
+overflow-x: scroll !important;
+word-break: keep-all !important;
+word-wrap: initial !important;
+}
+```
+
+```{r global_options, echo=FALSE, include=TRUE}
+## ThG: chunk added to enable global knitr options. The below turns on
+## caching for faster vignette re-build during text editing.
+knitr::opts_chunk$set(cache=TRUE)
+```
+<!-- 
+
+<style type="text/css">
+ .main-container { max-width: 1800px; margin-left: 5px; margin-right: auto; }
+</style>
+
+<style>body { text-align: justify }</style>  
+
+
+```{r css, echo = FALSE, results = 'asis'}
+BiocStyle::markdown(css.files=c('file/custom.css'))
+```
+
+-->
+
+```{r setup0, eval=TRUE, echo=FALSE, message=FALSE, warning=FALSE}
+library(knitr); opts_chunk$set(message=FALSE, warning=FALSE)
+```
+
+# Summary 
+
+To plot spatial heatmaps (SHMs), a pair of assay data and anatomical image is required. The format of the latter should be annotated Scalable Vector Graphics (aSVG), where spatial features such as cells, tissues, and organs are annotated with unique identifiers. One of the most important features in *spatialHeatmap* is the support of custom aSVGs, in addition to SVGs from public repositories such as [EBI anatomogram](https://github.com/ebi-gene-expression-group/anatomogram/tree/master/src/svg){target='_blank'}. A step-by-step tutorial for creating custom aSVGs is provied [here](https://jianhaizhang.github.io/SHM_SVG){target='_blank'}.
+
+<br/>
+
+# Funding
+
+This project has been funded by NSF awards: [PGRP-1546879](https://www.nsf.gov/awardsearch/showAward?AWD_ID=1546879&HistoricalAwards=false){target="_blank"}, [PGRP-1810468](https://www.nsf.gov/awardsearch/showAward?AWD_ID=1810468){target="_blank"}, [PGRP-1936492](https://www.nsf.gov/awardsearch/showAward?AWD_ID=1936492&HistoricalAwards=false){target="_blank"}.
+
+
+
+
+
+

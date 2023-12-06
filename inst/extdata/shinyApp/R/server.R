@@ -33,12 +33,16 @@ server <- function(input, output, session) {
     updateTabsetPanel(session, "tabTop", selected='dataset')
   })
 
-  ldg <- reactiveValues(v=0)
-  observeEvent(input$tabTop, { 
-    if (ldg$v <= 2 & 'dataset' %in% input$tabTop) { showModal(modal(title = HTML('<center><b>Please wait when the App is in progress!</b><center>'), msg = strong('Getting started (showing 3 times only)!'), img='dataset.jpg', img.w="100%"))
-    if ('dataset' %in% input$tabTop) ldg$v <- ldg$v + 1
-    }
+  ldg <- reactiveValues(v=0, notshow=FALSE)
+  observeEvent(input$showldg, {
+    showldg <- input$showldg; if (!check_obj(showldg) | TRUE %in% ldg$notshow) return()
+    ldg$notshow <- showldg
   })
+  observeEvent(input$tabTop, { 
+    if (ldg$v <= 2 & 'dataset' %in% input$tabTop & FALSE %in% ldg$notshow) { showModal(modal(title = HTML('<center><b>Please wait when the App is in progress!</b><center>'), msg = strong('Getting started (showing 3 times only)!'), img='dataset.jpg', img.w="100%", idshow='showldg'))
+    if ('dataset' %in% input$tabTop) ldg$v <- ldg$v + 1 
+    } 
+  }) 
 
   lis.url <- reactiveValues(par=NULL)
   observeEvent(session$clientData, {
@@ -145,11 +149,15 @@ mods$shm <- shm.mod.lis <- shm_server('shmAll', sch, lis.url, url.id, tab, upl.m
   #  id.url <- lis.url$par$ids
   #  if (check_obj(id.url)) lis.url$par <- NULL
   # })
-  cnt.ana <- reactiveValues(v=0)
+  cnt.ana <- reactiveValues(v=0, notshow=FALSE)
+  observeEvent(input$showana, {
+    showana <- input$showana; if (!check_obj(showana) | TRUE %in% cnt.ana$notshow) return()
+    cnt.ana$notshow <- showana
+  })
   observeEvent(input$tabTop, {
     tabTop <- input$tabTop
     if (!'ana' %in% tabTop) return()
-    if (length(ids$sel) > 0 & cnt.ana$v <=2) showModal(modal(title=HTML(run.msg), msg='Showing 3 times only!', easyClose=TRUE))
+    if (length(ids$sel) > 0 & cnt.ana$v <=2 & FALSE %in% cnt.ana$notshow) showModal(modal(title=HTML(run.msg), msg='Showing 3 times only!', easyClose=TRUE, idshow='showana'))
     if ('ana' %in% tabTop) cnt.ana$v <- cnt.ana$v + 1
   })
 
@@ -162,14 +170,17 @@ mods$shm <- shm.mod.lis <- shm_server('shmAll', sch, lis.url, url.id, tab, upl.m
     svgs <- svgs.upd()
     if (!is.null(svgs) & (!grepl(na.sgl, mods$upload$ipt$fileIn)) & ldg$v >=0) updateTabsetPanel(session, "tabTop", selected='shmPanelAll')
   })
-
-  cnt.shm <- reactiveValues(v=0)
+  cnt.shm <- reactiveValues(v=0, notshow=FALSE)
+  observeEvent(input$showshm, {
+    showshm <- input$showshm; if (!check_obj(showshm) | TRUE %in% cnt.shm$notshow) return()
+    cnt.shm$notshow <- showshm
+  })
   observeEvent(input$tabTop, {
     tabTop <- input$tabTop
     if (!'shmPanelAll' %in% tabTop) return()
-    lgc <- length(ids$sel)==0 & cnt.shm$v <=2
+    lgc <- length(ids$sel)==0 & cnt.shm$v <=2 & FALSE %in% cnt.shm$notshow
     if (lgc) { 
-      showModal(modal(title = 'Quick start!', msg='Showing 3 times only!', img='select.jpg', img.w="70%")) 
+      showModal(modal(title = 'Quick start!', msg='Showing 3 times only!', img='select.jpg', img.w="70%", idshow='showshm')) 
       cnt.shm$v <- cnt.shm$v + 1
     }
   })
@@ -331,7 +342,7 @@ mods$shm <- shm.mod.lis <- shm_server('shmAll', sch, lis.url, url.id, tab, upl.m
     tags$iframe(seamless="seamless", src= "html/shm_shiny_manual.html", width='100%', height='100%') 
   })
 
-  showModal(modal(title = HTML("<p>Please note that the forward/backward buttons in the browser are not supported.</p> <p>Instead, kindly use the <b>App's own buttons</b> located at the left of the header.</p>")))
+  showModal(modal(title = HTML("<p>Please note that the forward/backward buttons in the browser are not supported.</p> <p>Instead, kindly use the <b>App's own buttons</b> located at the left of the header.</p>"), show=FALSE))
   observe({
     setBookmarkExclude(setdiff(names(input), c('upl-fileIn', 'dat-normDat', 'dat-log', 'dat-sig.min', 'dat-sig.max', 'dat-scl', 'dat-A', 'deg-A', 'scell-covisAuto-filBlkA', 'scell-covisMan-filBlkA', 'dat-P', 'deg-P', 'scell-covisAuto-filBlkP', 'scell-covisMan-filBlkP', 'dat-CV2', 'deg-CV1', 'scell-covisAuto-filBlkCV1', 'scell-covisMan-filBlkCV1', 'dat-CV2', 'deg-CV2', 'scell-covisAuto-filBlkCV2', 'scell-covisMan-filBlkCV2', 'shmAll-col.n', 'shmAll-genCon', 'shmAll-scale.shm', 'shmAll-scrollH')))
     # nas <- names(input); save(nas, file='nas')

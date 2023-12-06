@@ -110,7 +110,7 @@ limma <- get('limma', envir=asNamespace('spatialHeatmap'), inherits=FALSE)
 
 deseq2 <- get('deseq2', envir=asNamespace('spatialHeatmap'), inherits=FALSE)
 
-distt <- get('distt', envir=asNamespace('spatialHeatmap'), inherits=FALSE)
+# distt <- get('distt', envir=asNamespace('spatialHeatmap'), inherits=FALSE)
 
 sf_var <- get('sf_var', envir=asNamespace('spatialHeatmap'), inherits=FALSE)
 up_dn <- get('up_dn', envir=asNamespace('spatialHeatmap'), inherits=FALSE)
@@ -411,9 +411,4 @@ vdo_rm <- function() {
     unlink('R/www', recursive=TRUE)
  }
 }
-
-
-
-
-
 

@@ -1455,17 +1455,28 @@ shm_server <- function(id, sch, lis.url, url.id, tab, upl.mod.lis, dat.mod.lis, 
     svg.na <- svg.na[grepl('\\.svg$', svg.na)]
     selectInput(ns('shms.in'), label='Select plots', choices=svg.na, selected=svg.na[1])
   })
+
+  gly <- reactiveValues(notshow=FALSE)
+  observeEvent(input$showgly, { 
+    showgly <- input$showgly; if (!check_obj(showgly) | TRUE %in% gly$notshow) return()
+    gly$notshow <- showgly
+  })
   observe({
     shmMhNet <- input$shmMhNet; interNav <- input$interNav
     if (is.null(shmMhNet)|is.null(interNav)) return()
     tab.inter <- ifelse(shmMhNet=='interTab' & interNav=='interPlot', 'yes', 'no')
-    if (input$glyBut==0 & tab.inter=='yes') showModal(modal(msg=HTML(run.msg), easyClose=TRUE))
+    if (input$glyBut==0 & tab.inter=='yes' & FALSE %in% gly$notshow) showModal(modal(msg=HTML(run.msg), easyClose=TRUE, idshow=ns('showgly')))
+  })
+  vdo <- reactiveValues(notshow=FALSE)
+  observeEvent(input$showvdo, { 
+    showvdo <- input$showvdo; if (!check_obj(showvdo) | TRUE %in% vdo$notshow) return()
+    vdo$notshow <- showvdo
   })
   observe({
     shmMhNet <- input$shmMhNet; vdoNav <- input$vdoNav
     if (is.null(shmMhNet)|is.null(vdoNav)) return()
     tab.vdo <- ifelse(shmMhNet=='vdoTab' & vdoNav=='video', 'yes', 'no')
-    if (input$vdo.but==0 & tab.vdo=='yes') showModal(modal(msg=HTML(run.msg), easyClose=TRUE))
+    if (input$vdo.but==0 & tab.vdo=='yes' & FALSE %in% vdo$notshow) showModal(modal(msg=HTML(run.msg), easyClose=TRUE, idshow=ns('showvdo')))
   })
   # analysis_server('net', upl.mod.lis, dat.mod.lis, shm.mod.lis=list(gID=gID, tab.act.lis=tab.act.lis), sch.mod.lis)
   output$helpStatic <- renderUI({ 

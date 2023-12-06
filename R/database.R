@@ -1,6 +1,6 @@
 #' Creat databases for the Shiny App
 #'
-#' The function \link{write_hdf5} is designed to construct the database backend for the Shiny App (\link{shiny_shm}), while \link{read_hdf5} is designed to query the database. 
+#' The function \link{write_hdf5} is designed to construct the a backend database for the Shiny App (\link{shiny_shm}), while \link{read_hdf5} is designed to query the database. 
 
 #' @name Database
 #' @rdname Database
@@ -14,9 +14,10 @@
 
 #' @references
 #' SummarizedExperiment: SummarizedExperiment container. R package version 1.10.1
+#' Pagès H, Lawrence M, Aboyoun P (2023). _S4Vectors: Foundation of vector-like and list-like containers in Bioconductor_. doi:10.18129/B9.bioc.S4Vectors <https://doi.org/10.18129/B9.bioc.S4Vectors>, R package version 0.38.1, <https://bioconductor.org/packages/S4Vectors>.
 #' R Core Team (2018). R: A language and environment for statistical computing. R Foundation for Statistical Computing, Vienna, Austria. URL https://www.R-project.org/
 #' R Core Team (2018). R: A language and environment for statistical computing. R Foundation for Statistical Computing, Vienna, Austria. URL https://www.R-project.org/
-#' Hervé Pagès (2020). HDF5Array: HDF5 backend for DelayedArray objects. R package version 1.16.1.
+#' Fischer B, Smith M, Pau G (2023). rhdf5: R Interface to HDF5. doi:10.18129/B9.bioc.rhdf5, R package version 2.46.0, https://bioconductor.org/packages/rhdf5
 #' Mustroph, Angelika, M Eugenia Zanetti, Charles J H Jang, Hans E Holtan, Peter P Repetti, David W Galbraith, Thomas Girke, and Julia Bailey-Serres. 2009. “Profiling Translatomes of Discrete Cell Populations Resolves Altered Cellular Priorities During Hypoxia in Arabidopsis.” Proc Natl Acad Sci U S A 106 (44): 18843–8 
 #' Davis, Sean, and Paul Meltzer. 2007. “GEOquery: A Bridge Between the Gene Expression Omnibus (GEO) and BioConductor.” Bioinformatics 14: 1846–7
 #' Gautier, Laurent, Leslie Cope, Benjamin M. Bolstad, and Rafael A. Irizarry. 2004. “Affy—analysis of Affymetrix GeneChip Data at the Probe Level.” Bioinformatics 20 (3). Oxford, UK: Oxford University Press: 307–15. doi:10.1093/bioinformatics/btg405
@@ -126,15 +127,14 @@ NULL
 #' @rdname Database
 #' @param data A nested `list` of each numeric data and aSVG pair. Each pair consists of four slots: `name`, `display`, `data`, and `svg`, e.g. `lis1 <- list(name='mus.brain', display='Mouse brain (SHM)', data='./mus_brain.txt', svg='./mus_brain.svg')`. The `name` contains a syntactically valid entry for R while the `display` contains an entry for display on the user interface. The `data` and `svg` contain paths of numeric data and aSVGs that will be included in the data base respectively. The supported data containers include `data.frame` and `SummarizedExperiment`. See the `data` argument in \link{filter_data} for data formats. After formatted, the data should be saved as ".rds" files with the function \link{saveRDS}, then assign the corresponding paths the `data` slot. By contrast, the `svg` slot contains one or multiple aSVG/raster image file paths. Each numeric data set is first saved in an independent DHF5-based `SummarizedExperiment` (SE) object, then all these saved SE objects and aSVG/raster images are compressed together into a file "data_shm.tar", i.e. the backend database. In addition, the nested `list` assigned to `data` is also included in the database for querying purpose (\link{read_hdf5}). 
 #' @param dir The directory to save the database "data_shm.tar".
-#' @param replace If data set with the same `name` in \code{data} are already saved in \code{dir}, should the \code{dir} be emptied? Default is `FALSE`. If `TRUE`, the existing content in \code{dir} will be lost.
-
-#' @inheritParams HDF5Array::saveHDF5SummarizedExperiment
+#' @param replace If `TRUE`, the existing database with the same name in `dir` will be replaced.
 
 #' @export
-#' @importFrom SummarizedExperiment assay 
+#' @importFrom SummarizedExperiment assay
+#' @importFrom S4Vectors metadata 
 #' @importFrom utils untar tar
 
-write_hdf5 <- function(data, dir='./data_shm', replace=FALSE, chunkdim=NULL, level=NULL, verbose=FALSE) {
+write_hdf5 <- function(data, dir='./data_shm', replace=FALSE) {
   pkg <- check_pkg('HDF5Array'); if (is(pkg, 'character')) stop(pkg)
   options(stringsAsFactors=FALSE)
   dir <- normalizePath(dir, winslash="/", mustWork=FALSE)
@@ -143,45 +143,81 @@ write_hdf5 <- function(data, dir='./data_shm', replace=FALSE, chunkdim=NULL, lev
   if (!is.null(dat.vld)) return(dat.vld)
   cat('Data in progress... \n')
   dir.tmp <- file.path(tempdir(check=TRUE), 'shm_db') 
-  hd.nas <- NULL
-  msg.var <- 'Experimental variables are not detected: '
+  if (!dir.exists(dir.tmp)) dir.create(dir.tmp)
+  msg.var <- 'No experimental variables detected: '
+  db.file <- file.path(dir.tmp, "assays.h5")
+  if (file.exists(db.file)) file.remove(db.file)
+  rhdf5::h5createFile(db.file)
+
   for (i in seq_along(data)) {
-    # Check "sample_condition" format, and stored data in SE.
-    dat.pa <- data[[i]]$data
+    # Check "sample_condition" format, and store data in SE.
+    na0 <- data[[i]]$name; dat.pa <- data[[i]]$data
     if (!file.exists(dat.pa)) {
-      msg <- 'Data do not exist!'; message(msg); return(msg) 
+      msg <- 'Data do not exist!'
+      message(na0, ': ', msg); return(msg) 
     }; dat <- readRDS(dat.pa)
-    if (is(dat, 'data.frame')|is(dat, 'matrix')|is(dat, 'DFrame')|is(dat, 'dgCMatrix')) {# Convert data to SE.
+    if (is(dat, 'data.frame')|is(dat, 'matrix')|is(dat, 'DFrame')|is(dat, 'dgCMatrix')) {# Convert data format to SE.
       form <- grepl('__', colnames(dat))
       if (sum(form)==0) message(msg.var, 'data set ', i)
       dat <- check_data(data=dat)$se
     }
-    # Check "spFeature" and "variable" in colData.
-    if (is(dat, 'SummarizedExperiment')) {
-      dat <- check_se(dat); if (is(dat, 'character')) { message(data[[i]]$name); return(dat) }
-      dat <- dat$se
-      hd.na <- paste0(data[[i]]$name, '_') 
-      hd.nas <- c(hd.na, hd.nas)
-      assay(dat) <- as(assay(dat), 'matrix')
-      HDF5Array::saveHDF5SummarizedExperiment(dat, dir=dir.tmp, prefix=hd.na, replace=replace, chunkdim=chunkdim, level=level, verbose=verbose)
-    } else cat(paste0('Accepted data containers are: data.frame, matrix, DFrame, dgCMatrix, SummarizedExperiment! This data is not saved: ', i), '\n')
+    lgc.sce <- is(dat, 'SingleCellExperiment')
+    lgc.se <- is(dat, 'SummarizedExperiment') & !lgc.sce
+    type <- 'SCE'
+    if (lgc.se | lgc.sce) {
+      # Check "spFeature" and "variable" in colData.
+      if (lgc.se & !lgc.sce) { 
+        type <- 'SE'; dat <- check_se(dat)
+        if (is(dat, 'character')) { message('Warning: ', data[[i]]$name); return(dat) }; dat <- dat$se
+      }
+      rhdf5::h5createGroup(db.file, na0) 
+      rhdf5::h5write(obj=type, file=db.file, name=file.path(na0, 'type'), write.attributes = TRUE)
+      asy.nas <- names(assays(dat)) # Assay names.
+      if (!is.null(asy.nas)) rhdf5::h5write(obj=asy.nas, file=db.file, name=file.path(na0, 'asy.nas'), write.attributes = TRUE)
+      assays(dat) <- lapply(assays(dat), as.matrix)
+      # Dim names are ignore in hdf5, so they are saved separately.
+      dimna0 <- lapply(assays(dat), dimnames)
+      rhdf5::h5write(obj=as.list(assays(dat)), file=db.file, name=file.path(na0, 'assay'), write.attributes = TRUE)
+      rhdf5::h5write(obj=dimna0, file=db.file, name=file.path(na0, 'dimna'), write.attributes = TRUE)
+      cdat <- as.data.frame(colData(dat)) # colData.
+      if (ncol(cdat)>0) rhdf5::h5write(obj=cdat, file=db.file, name=file.path(na0, 'cdat'), write.attributes = TRUE)
+      rdat <- as.data.frame(rowData(dat)) # rowData
+      if (ncol(rdat)>0) rhdf5::h5write(rdat, file=db.file, file.path(na0, 'rdat'), write.attributes = TRUE)
+      meta.na0 <- file.path(na0, 'meta')
+      meta0 <- as.list(metadata(dat)) # Metadata.
+      if (length(meta0)>0) {
+        x <- tryCatch(rhdf5::h5write(meta0, file=db.file, meta.na0, write.attributes = TRUE), warning = function(w){ 'w' }, error = function(e){ 'e' })
+        if ('w' %in% x | 'e' %in% x) {
+          rhdf5::h5closeAll(); rhdf5::h5delete(file = db.file, name = meta.na0)
+          ser <- serialize(meta0, connection = NULL)
+          rhdf5::h5write(ser, db.file, meta.na0) 
+        }
+      }
+      # reducedDimNames is ignored in SCE. 
+    } else cat(paste0('Accepted data formats are: data.frame, matrix, DFrame, dgCMatrix, SummarizedExperiment, SingleCellExperiment! This data is not saved: ', i), '\n')
   }
   file.tar <- file.path(dir.tmp, 'data_shm.tar')
-  # dat.pat <- paste(paste0('^', hd.nas, 'assays.h5$', collapse='|'), paste0('^', hd.nas, 'se.rds$', collapse='|'), sep='|')
-  # hd.all <- list.files(dir, dat.pat, full.names=FALSE)
-  hd.all <- c(paste0(hd.nas, 'assays.h5'), paste0(hd.nas, 'se.rds'))
   svg.all <- unlist(lapply(data, function(x) x$svg))
   # Copy all SVGs to the same directory with data.
-  file.copy(svg.all, dir.tmp, overwrite=TRUE)
-  svg.na <- basename(svg.all)
+  svg.pa <- file.path(dir.tmp, 'images')
+  if (!dir.exists(svg.pa)) dir.create(svg.pa)
+  file.copy(svg.all, svg.pa, overwrite=TRUE)
   mat.na <- 'match.rds'
   saveRDS(data, file=file.path(dir.tmp, mat.na))  
-  file.all <- c(hd.all, svg.na, mat.na)
+  file.all <- c('assays.h5', 'images', mat.na)
   # This step is necessary to avoid recursive paths in tar files.
   wd <- getwd(); setwd(dir.tmp)
   # Data, svg, and matching list in the same tar file.
   tar(file.tar, files=file.all, tar="tar", extra_flags='--absolute-names')
-  file.rename(file.tar, file.path(dir, 'data_shm.tar'))
+  db.final <- file.path(dir, 'data_shm.tar')
+  if (file.exists(db.final)) { 
+    if (TRUE %in% replace) { 
+      file.rename(file.tar, db.final)
+    } else { 
+      msg <- 'A database with the same name already exists!'
+      warning(msg); return(msg)
+    }
+  } else file.rename(file.tar, db.final)
   setwd(wd); unlink(dir.tmp, recursive=TRUE); message('Done!')
 }
 
@@ -237,17 +273,19 @@ check_dat_db <- function(data) {
 
 
 #' @rdname Database
-#' @param file The path of "data_shm.tar" generated by \link{write_hdf5}.
+#' @param file The path of a backend database of Shiny App, which is the file of `data_shm.tar` generated by \link{write_hdf5}.
 #' @param name One or multiple data set names (see the `data` argument in \link{write_hdf5}) in a vector, such as \code{c('test_leaf', 'test_chicken')}. If `match`, the matching `list` between assay data and aSVGs will be returned.   
+#' @param dir The directory for saving assay data and aSVGs in query. 
 
 #' @export
 #' @importFrom utils untar
 
-read_hdf5 <- function(file, name=NULL) {
+read_hdf5 <- function(file, name=NULL, dir) {
   pkg <- check_pkg('HDF5Array'); if (is(pkg, 'character')) stop(pkg)
   options(stringsAsFactors=FALSE)
-  dir <- paste0(tempdir(check=TRUE), '/data_shm')
+  if (missing(dir)) dir <- tempdir(check = TRUE)
   if (!dir.exists(dir)) dir.create(dir)
+  dir <- normalizePath(dir, winslash="/", mustWork=FALSE)
   # Extract matching list.
   untar(file, 'match.rds', exdir=dir, tar='tar')
   mat.lis <- readRDS(file.path(dir, 'match.rds'))
@@ -262,16 +300,48 @@ read_hdf5 <- function(file, name=NULL) {
       msg <- paste0('Data set not found: ', i); warning(msg)
       return(msg)
     }; lis0 <- lis0[[1]]
-    hds <- paste0(i, c('_assays.h5', '_se.rds'))
     svgs <- basename(lis0$svg)
     # Extract a pair of data and svg.
-    untar(file, c(hds, svgs), exdir=dir, tar='tar')
-    # Load data in DHF5.
-    dat0 <- HDF5Array::loadHDF5SummarizedExperiment(dir=dir, prefix=paste0(i, '_'))
-    dat.pa <- file.path(dir, paste0(i, '.rds'))
+    untar(file, c('assays.h5', file.path('images', svgs)), exdir=dir, tar='tar')
+    
+    db.pa <- file.path(dir, 'assays.h5'); db.df <- rhdf5::h5ls(db.pa)
+    # Slots of assay in consideration.
+    df0 <- db.df[grep(paste0('^\\/', i), db.df$group), , drop=FALSE]
+    nas <- df0$name; asy.nas <- cdat <- rdat <- meta <- NULL
+    asy <- rhdf5::h5read(db.pa, file.path(i, 'assay')) # assay
+    dimna <- rhdf5::h5read(db.pa, file.path(i, 'dimna'))
+    asy <- lapply(seq_along(asy), function(x) {
+           dimnames(asy[[x]]) <- setNames(dimna[[x]], NULL)
+           asy[[x]]} )
+    if ('asy.nas' %in% nas) { # assay names.
+      names(asy) <- rhdf5::h5read(db.pa, file.path(i, 'asy.nas'))
+    }
+    if ('cdat' %in% nas) { # colData
+      cdat <- DataFrame(rhdf5::h5read(db.pa, file.path(i, 'cdat')))
+      for (j in seq_len(ncol(cdat))) cdat[, j] <- as(cdat[, j], 'vector')
+      rownames(cdat) <- dimna[[1]][[2]]  
+    }
+    if ('rdat' %in% nas) { # rowData
+        rdat <- rhdf5::h5read(db.pa, file.path(i, 'rdat'))
+        for (j in seq_len(ncol(rdat))) rdat[, j] <- as(rdat[, j], 'vector')
+        rownames(rdat) <- dimna[[1]][[1]]
+    }
+    if ('meta' %in% nas) { # metadata 
+      meta <- rhdf5::h5read(db.pa, file.path(i, 'meta'))
+      if (is(meta, 'array')) meta <- unserialize(meta)
+    }
+    type <- rhdf5::h5read(db.pa, file.path(i, 'type')) # assay
+    if ('SCE' %in% type) { # Complete assay data.
+      dat <- SingleCellExperiment(assays=asy, colData=cdat, rowData=rdat, metadata=meta)
+    } else if ('SE' %in% type) {
+      dat <- SummarizedExperiment(assays=asy, colData=cdat, rowData=rdat, metadata=meta)
+    }
     # Save data as .rds file.
-    saveRDS(dat0, file=dat.pa)
-    lis0$data <- dat.pa; lis0$svg <- file.path(dir, svgs)
+    dat.pa <- file.path(dir, paste0(i, '_assay.rds'))
+    saveRDS(dat, file=dat.pa)
+    lis0$data <- dat.pa; lis0$svg <- file.path(dir, 'images', svgs)
     lis <- c(lis, list(lis0))
-  }; return(lis)
+  } 
+  file.remove(file.path(dir, c('assays.h5', 'match.rds')))
+  return(lis)
 }

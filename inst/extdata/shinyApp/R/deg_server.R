@@ -1,14 +1,19 @@
 # Module for spatial enrichment.
 deg_server <- function(id, sch, lis.url, url.id, ids, upl.mod.lis, dat.mod.lis, shm.mod.lis, parent=NULL, session) {
   moduleServer(id, function(input, output, session) {
+  ns <- session$ns
   ipt <- upl.mod.lis$ipt; cfg <- upl.mod.lis$cfg
   gID <- shm.mod.lis$gID; datIn <- dat.mod.lis$dat
 
-  quick <- reactiveValues(v=0)  
+  quick <- reactiveValues(v=0, notshow=FALSE)
+  observeEvent(input$showdeg, {
+    showdeg <- input$showdeg; if (!check_obj(showdeg) | TRUE %in% quick$notshow) return()
+    quick$notshow <- showdeg 
+  })
   observeEvent(list(parent$input$tabTop, input$degAll), {
     tabTop <- parent$input$tabTop; degAll <- input$degAll
-    if (quick$v <= 3 & 'deg' %in% tabTop & !'help' %in% degAll) { 
-      showModal(modal(title = HTML('<center><b>Quick start!</b><center>'), msg = 'Showing 4 times only!', img='enrich_quick.jpg', img.w="100%"))
+    if (quick$v <= 2 & 'deg' %in% tabTop & !'help' %in% degAll & FALSE %in% quick$notshow) { 
+      showModal(modal(title = HTML('<center><b>Quick start!</b><center>'), msg = 'Showing 4 times only!', img='enrich_quick.jpg', img.w="100%", idshow=ns('showdeg')))
        quick$v <- quick$v + 1
     }
   })  
@@ -39,7 +44,7 @@ deg_server <- function(id, sch, lis.url, url.id, ids, upl.mod.lis, dat.mod.lis, 
       updateSelectInput(session, 'meth', choices=( 'limma'='limma'), selected=c('limma'))
     } else if (FALSE %in% m.array) {
       updateSelectInput(session, 'norMeth', choices=c("CNF-TMM"='TMM', "CNF-TMMwsp"='TMMwsp', "CNF-RLE"='RLE', "CNF-upperquartile"='upperquartile', 'None'='none'), selected='TMM')
-      updateSelectInput(session, 'meth', choices=c('edgeR'='edgeR', 'limma-voom'='limma.voom', 'limma'='limma', 'DESeq2'='DESeq2', 'distinct'='distinct'), selected=c('edgeR'))
+      updateSelectInput(session, 'meth', choices=c('edgeR'='edgeR', 'limma-voom'='limma.voom', 'limma'='limma', 'DESeq2'='DESeq2'), selected=c('edgeR'))
     }
   })
   fil.par <- reactiveValues() 
@@ -86,7 +91,6 @@ deg_server <- function(id, sch, lis.url, url.id, ids, upl.mod.lis, dat.mod.lis, 
   })
 
   output$sam <- renderUI({
-    ns <- session$ns
     dat <- dat(); if (is.null(dat)) return()
     cho <- c('all', unique(dat$sams))
     selectInput(ns('sams'), label='Select spatial features', choices=cho, selected=cho[2:3], multiple=TRUE)

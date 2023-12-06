@@ -374,7 +374,7 @@ shm_covis <- function(svg, data, assay.na=NULL, sam.factor=NULL, con.factor=NULL
     thr <- dat_fun(thr, as.numeric)
     if (length(thr)!=2) stop('The "thr" must be a two-element vecor and contain as least one numeric!')
     # Customized signal threshold.
-    gene <- thrsd(thr.min=thr[1], thr.max=thr[2], data=gene)
+    gene <- thrsd(thr.min=thr[1], thr.max=thr[2], data=round(gene, 2))
     if (is(gene, 'character')) stop(gene)
     # Scaling. 
     if ('row' %in% scale) { 
