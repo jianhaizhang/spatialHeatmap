@@ -135,13 +135,16 @@ check_obj <- function(x) {
 #' @keywords Internal
 #' @noRd
 
-#' @importFrom shiny modalDialog span HTML div tagList modalButton
-modal <- function(title = NULL, msg=NULL, img=NULL, img.w="70%", easyClose=FALSE) { 
+#' @importFrom shiny modalDialog span HTML div tagList modalButton checkboxInput
+
+modal <- function(title = NULL, msg=NULL, img=NULL, img.w="70%", easyClose=FALSE, modbut='Dismiss', show=TRUE, idshow='idshow') { 
   modalDialog(title = title, span(msg), 
     if (!is.null(img)) div(style = 'overflow-y:scroll;overflow-x:scroll;margin-top:20px', 
       HTML(paste0("<img ", "src='image/", img, "' width='", img.w, "'>")) 
     ), 
-    footer = tagList(modalButton("Dismiss")), size = c("m"), easyClose=easyClose 
+    size = c("m"), easyClose=easyClose,
+    footer = if (TRUE %in% show) div(class='shiny-split-layout', style='width:90%', checkboxInput(idshow, label='Do not show again', value = FALSE), modalButton(modbut)) else modalButton(modbut)
+
   ) 
 }  
 

@@ -23,7 +23,6 @@ spatial_enrich(
   method = c("edgeR"),
   norm = "TMM",
   m.array = FALSE,
-  log2.trans.dis = TRUE,
   log2.fc = 1,
   p.adjust = "BH",
   fdr = 0.05,
@@ -86,13 +85,11 @@ graph_line(
 
 \item{com.by}{One of \code{ft}, \code{var}, or \code{ft.var}. If \code{ft}, the enrichment is performed for each spatial feature and the variables are treated as replicates. If \code{var} the enrichment is performed for each variable and spatial features are treated as replicates. If \code{ft.var}, spatial features (tissue1, tissue2) and variables (var1, var2) are combined such as tissue1__var1, tissue1_var2, tissue2__var1, tissue2_var2. The enrichment is performed for each combination.}
 
-\item{method}{One of \code{edgeR}, \code{limma}, \code{DESeq2}, \code{distinct}.}
+\item{method}{One of \code{edgeR}, \code{limma}, and \code{DESeq2}.}
 
 \item{norm}{The normalization method (\code{TMM}, \code{RLE}, \code{upperquartile}, \code{none}) in edgeR. The default is \code{TMM}. Details: https://www.rdocumentation.org/packages/edgeR/versions/3.14.0/topics/calcNormFactors.}
 
 \item{m.array}{Logical. `TRUE` and `FALSE` indicate the input are microarray and count data respectively.}
-
-\item{log2.trans.dis}{Logical, only applicable when \code{method='distinct'}. If \code{TRUE} the count data is transformed to log-2 scale.}
 
 \item{log2.fc}{The log2-fold change cutoff. The default is 1.}
 
@@ -172,7 +169,7 @@ in the following format: c(intersection size title, intersection size tick label
 }
 }
 \description{
-The spatial enrichment (SpEn) is designed to detect spatially enriched or depleted biomolecules (genes, proteins, etc) for chosen spatial features (cellular compartments, tissues, organs, \emph{etc}). It compares each feature with all other reference features. The biomolecules significantly up- or down-regulated in one feature relative to reference features are denoted spatially enriched or depleted respectively. The underlying differential expression analysis methods include edgeR (Robinson et al, 2010), limma (Ritchie et al, 2015), DESeq2 (Love et al, 2014), and distinct (Tiberi et al, 2020). By querying a feature of interest from the enrichment results, the enriched or depleted biomolecules will be returned. \cr In addition, the SpEn is also able to identify biomolecules enriched or depleted in experiment vairables in a similar manner.   
+The spatial enrichment (SpEn) is designed to detect spatially enriched or depleted biomolecules (genes, proteins, etc) for chosen spatial features (cellular compartments, tissues, organs, \emph{etc}). It compares each feature with all other reference features. The biomolecules significantly up- or down-regulated in one feature relative to reference features are denoted spatially enriched or depleted respectively. The underlying differential expression analysis methods include edgeR (Robinson et al, 2010), limma (Ritchie et al, 2015), and DESeq2 (Love et al, 2014). By querying a feature of interest from the enrichment results, the enriched or depleted biomolecules will be returned. \cr In addition, the SpEn is also able to identify biomolecules enriched or depleted in experiment vairables in a similar manner.   
 
 `sf_var()` subsets data according to given spatial features and variables.
 
@@ -253,7 +250,6 @@ Martin Morgan, Valerie Obenchain, Jim Hester and Hervé Pagès (2018). Summarize
 Robinson MD, McCarthy DJ and Smyth GK (2010). edgeR: a Bioconductor package for differential expression analysis of digital gene expression data. Bioinformatics 26, 139-140
 Ritchie, M.E., Phipson, B., Wu, D., Hu, Y., Law, C.W., Shi, W., and Smyth, G.K. (2015). limma powers differential expression analyses for RNA-sequencing and microarray studies. Nucleic Acids Research 43(7), e47.
 Love, M.I., Huber, W., Anders, S. Moderated estimation of fold change and dispersion for RNA-seq data with DESeq2 Genome Biology 15(12):550 (2014)
-Simone Tiberi and Mark D. Robinson. (2020). distinct: distinct: a method for differential analyses via hierarchical permutation tests. R package version 1.2.0. https://github.com/SimoneTiberi/distinct
 Nils Gehlenborg (2019). UpSetR: A More Scalable Alternative to Venn and Euler Diagrams for Visualizing Intersecting Sets. R package version 1.4.0. https://CRAN.R-project.org/package=UpSetR
 H. Wickham. ggplot2: Elegant Graphics for Data Analysis. Springer-Verlag New York, 2016.
 Hadley Wickham (2007). Reshaping Data with the reshape Package. Journal of Statistical Software, 21(12), 1-20. URL http://www.jstatsoft.org/v21/i12/.

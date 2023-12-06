@@ -56,7 +56,6 @@ BiocStyle::markdown(css.files=c('file/custom.css'))
 library(knitr); opts_chunk$set(message=FALSE, warning=FALSE)
 ```
 
-
 # Introduction 
 
 ## Motivation
@@ -207,7 +206,7 @@ plants. In `spatialHeatmap` several import functions are provided to work with
 the expression and [aSVG repository](#svg_repo) from the Expression Atlas
 directly. The aSVG images developed by the `spatialHeatmap` project are
 available in its own repository called [spatialHeatmap aSVG
-Repository](https://github.com/jianhaizhang/spatialHeatmap_aSVG_Repository){target='_blank'},
+Repository](https://github.com/jianhaizhang/SHM_SVG){target='_blank'},
 where users can contribute their aSVG images that are formatted according to
 our guidlines.
 
@@ -342,7 +341,7 @@ colors based on the color key and then
 painted onto the corresponding features in the aSVG. In the given example
 (Figure \@ref(fig:testshm)) only three features ('substantia.nigra', 'putamen', and 'prefrontal.cortex') in the aSVG have matching entries in the data `my_vec`.   
 
-```{r testshm, eval=TRUE, echo=TRUE, warnings=FALSE, fig.wide=TRUE, results='hide', fig.cap=("SHM of human brain with testing data. The plots from the left to the right represent the color key for the numeric data, followed by four SHM plots and the legend of the spatial features. The numeric values provided in `my_vec` are used to color the corresponding features in the SHM plots according to the color key while the legend plot identifies the spatial regions. "), out.width="100%" }
+```{r testshm, eval=TRUE, echo=TRUE, warnings=FALSE, fig.wide=TRUE, results='hide', fig.cap=("SHM of human brain with testing data. The plots from the left to the right represent the color key for the numeric data, followed by four SHM plots and the legend of the spatial features. The numeric values provided in `my_vec` are used to color the corresponding features in the SHM plots according to the color key while the legend plot identifies the spatial regions."), out.width="100%" }
 shm.res <- shm(data=dat.quick, ID='testing', ncol=1, sub.title.size=20, legend.nrow=3)
 ```
 
@@ -355,7 +354,6 @@ spatialHeatmap::output(shm.res)$mapped_feature
 ```
 
 ## Human Brain {#hum} 
-
 
 This subsection introduces how to query and download cell- and tissue-specific assay data in
 the Expression Atlas database using the `ExpressionAtlas` package [@ebi]. After the choosen data is downloaded directly into a user\'s R session, the 
@@ -773,7 +771,7 @@ colData(se.sh)[60:63, 1:2]
 
 In this example, the aSVG image has been generated in Inkscape from 
 the corresponding figure in @Mustroph2009-nu. Detailed instructions for generating custom aSVG images are provided in the 
-[SVG tutorial](https://jianhaizhang.github.io/SVG_tutorial){target="_blank"}. The resulting custom aSVG file 'arabidopsis.thaliana_shoot_shm.svg' is included in the `spatialHeatmap` package and imported as below.    
+[SVG tutorial](https://jianhaizhang.github.io/SHM_SVG){target="_blank"}. The resulting custom aSVG file 'arabidopsis.thaliana_shoot_shm.svg' is included in the `spatialHeatmap` package and imported as below.    
 
 ```{r eval=TRUE, echo=TRUE, warnings=FALSE, results='hide'}
 svg.sh.pa <- system.file("extdata/shinyApp/data", "arabidopsis.thaliana_shoot_shm.svg", package="spatialHeatmap")
@@ -937,8 +935,6 @@ dat.mul.dim <- SPHM(svg=svg.mus.brain, bulk=se.mus.vars.aggr)
 shm(data=dat.mul.dim, ID=c('Acnat1'), legend.r=1.5, legend.key.size=0.02, legend.text.size=12, legend.nrow=3)
 ```
 
-
-
 ## Multiple aSVGs {#mul_svg}
 
 In a spatiotemporal application, different development stages may need to be represented 
@@ -992,7 +988,7 @@ manually. The former is illustrated in the Supplementary Section.
 ## Spatial Enrichment {#se} 
 
 The Spatial Enrichment (SpEn) functionality is an extension of SHMs for identifying groups of biomolecules (*e.g.* RNAs, proteins, metabolites) that are particularly abundant or
-enriched in certain spatial regions, such as tissue-specific transcripts. Given a group of spatial features, SpEn identifies biomolecules significantly up- or down-regulated in each spatial feature relative to all other features (references). These biomolecules are classified as spatially enriched or depleted respectively. Then by querying a feature in the enrichment results, the corresponding enriched and depleted biomolecules will be returned, and their abundance values are subsequently visualized as enrichment SHMs. Similarly, biomolecules enriched or depleted in one experimental variable relative to reference variables can be detected and visualized as well. SpEn utilizes differential expression (DE) analysis methods to detect enriched or depleted biomolecules, including edgeR [@edgeR], limma [@limma], DESeq2 [@deseq2], distinct [@distinct].    
+enriched in certain spatial regions, such as tissue-specific transcripts. Given a group of spatial features, SpEn identifies biomolecules significantly up- or down-regulated in each spatial feature relative to all other features (references). These biomolecules are classified as spatially enriched or depleted respectively. Then by querying a feature in the enrichment results, the corresponding enriched and depleted biomolecules will be returned, and their abundance values are subsequently visualized as enrichment SHMs. Similarly, biomolecules enriched or depleted in one experimental variable relative to reference variables can be detected and visualized as well. SpEn utilizes differential expression (DE) analysis methods to detect enriched or depleted biomolecules, including edgeR [@edgeR], limma [@limma], DESeq2 [@deseq2].    
 
 The application of SpEn is illustrated with the 
 above [mouse organ data](#mus). The function `sf_var` is used to subset spatial features and experiment variables of interest in the assay data. In the following, five features ('brain', 'liver', 'lung', 'colon', and 'kidney') and three experiment variables (mouse strains 'DBA.2J', 'C57BL.6', and 'CD1') are subsetted. The `com.by` argument specifies whether the enrichment will be performed on spatial features (`ft`) or variables (`var`). In the following, `com.by` is set `ft`, so SpEn is performed for spatial features and the variables under each spatial feature are treated as replicates.   
@@ -1240,7 +1236,7 @@ to consult the help file. To maximize flexibility, the default settings are stor
 
 ## Database Backend
 
-To maintain scalability, the Shiny App is designed to work with backend databases that comprise HDF5-based `SummarizedExperiment` objects [@rhdf5; @hdf5array], aSVG files, and the pairing between assay data and aSVGs. This allows users to manage large amounts of assay data and aSVGs in a batch. Both `data.frame` or `SummarizedExperiment` formats are supported data structures to create the backend database. Each assay dataset is saved as an independent HDF5-based `SummarizedExperiment` object in a specified directory [@rhdf5; @hdf5array]. Simultaneously, the corresponding aSVG files and the pairing information (stored as a nested `list`) between the assay data and aSVGs are also saved in the same directory. Finally, the assay data, aSVG files, and pairing `list` are compressed into a '.tar' file to form the database. More details are referred to the help file of `write_hdf5`.    
+To maintain scalability, the Shiny App is designed to work with backend databases that comprise assay datasets, aSVG files, and the pairing between assay data and aSVGs. This allows users to manage large amounts of assay data and aSVGs in a batch. Both `SummarizedExperiment` and `SinleCellExperiment` formats are supported data structures to create the backend database. Assay datasets are saved in the same HDF5 database [@rhdf5]. Then the assay data, aSVG files, and the pairing information (stored as a nested `list`) between assay data and aSVGs are compressed into a '.tar' file as the final database. More details are referred to the help file of `write_hdf5`.    
 
 # Supplementary Section {#sup} 
 
@@ -1389,12 +1385,12 @@ A public aSVG repository, that can be used by `spatialHeatmap` directly, is the 
 It contains annatomical aSVG images from different species. The same aSVG
 images are also used by the web service of the Expression Atlas project. In addition, the
 `spatialHeatmap` has its own repository called [spatialHeatmap aSVG
-Repository](https://github.com/jianhaizhang/spatialHeatmap_aSVG_Repository){target="_blank"},
+Repository](https://github.com/jianhaizhang/SHM_SVG){target="_blank"},
 that stores custom aSVG files developed for this project (*e.g.* Figure
 \@ref(fig:shshm)).  
 
 If users cannot find a suitable aSVG image in these two repositories, we have developed 
-a step-by-step [SVG tutorial](https://jianhaizhang.github.io/SVG_tutorial){target="_blank"} for creating
+a step-by-step [SVG tutorial](https://jianhaizhang.github.io/SHM_SVG){target="_blank"} for creating
 custom aSVGs. For example, by following this tutorial, various anatomical images in the [BAR eFP browser](http://bar.utoronto.ca/){target="_blank"} can be used as templates to create custom aSVGs. In the future, we will expand our repository with more aSVGs, and users are encouraged to contribute their own aSVGs to this repository, allowing them to share their creations with the community.
 
 ### Update aSVG features {#update}

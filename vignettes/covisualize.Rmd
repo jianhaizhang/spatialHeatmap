@@ -1,5 +1,5 @@
 ---
-title: "*spatialHeatmap*: Co-visualization of Bulk and Single-cell Data"
+title: "*spatialHeatmap*: Co-visualizing Bulk and Single-cell Assay Data"
 author: "Authors: Jianhai Zhang and Thomas Girke"
 date: "Last update: `r format(Sys.time(), '%d %B, %Y')`"
 output:
@@ -18,7 +18,7 @@ fontsize: 14pt
 bibliography: bibtex.bib
 package: spatialHeatmap
 vignette: >
-  %\VignetteIndexEntry{(B) Co-visualization of Bulk and Single-cell Data}
+  %\VignetteIndexEntry{(B) Co-visualizing Bulk and Single-cell Assay Data}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
@@ -53,7 +53,6 @@ library(knitr); opts_chunk$set(message=FALSE, warning=FALSE)
 ```
 
 # Introduction 
-
 
 ## Overview
 
@@ -113,7 +112,6 @@ Similar to other functionalities in _spatialHeatmap_, these functionalities are 
 ```{r grpcolor, echo=FALSE, fig.wide=TRUE, out.width="100%", fig.cap=("Cell grouping and coloring. (a) For co-visualizing with SHMs, single cells need to have group labels. Five methods are supported to obtain group labels. (b) In the co-visualization plot, matching between cells and aSVG features is indicated by colors between the two. Four coloring options are summarized in a table. The cell grouping and coloring are schematically illustrated in 1-3.")} 
 include_graphics('img/group_color.jpg')
 ```
-
 
 # Getting Started  
 
@@ -309,7 +307,6 @@ covis(data=dat.ann.tocell, ID=c('Cacnb4'), col.idp=TRUE, dimred='UMAP', cell.gro
 ```
 
 
-
 ## Co-clustering Labels 
 
 If both single cell and bulk gene expression data are available for the same or
@@ -410,8 +407,6 @@ tail(attribute(svg.mus.brain)[[1]])[1:3, 1:4] # Partial features are shown.
 ```
 
 ### Co-clustering
-
-
 
 The co-clustering process is implemented in the function `cocluster`. In the following, default settings obtained from the optimization are used, where `min.dim`, `dimred`, `graph.meth`, and `cluster` refers to `topDimensions`, `dimensionReduction`, `graphBuilding`, and `clusterDetection` in Table \@ref(tab:optPar) respectively. The results are saved in `coclus.mus`.    
 
@@ -532,7 +527,6 @@ The co-visualization module is included in the [spatialHeatmap Shiny App](https:
 ```{r echo=FALSE, fig.wide=TRUE, out.width="100%", fig.cap=('Screenshot of the co-visualization output in Shiny App.')}
 include_graphics('img/shiny_covis.jpg')
 ```
-
 
 To upload single-cell and bulk data to this App for co-visualization, these two data types can be combined column-wise into an `SCE` object or saved as tabular files. When opting for the former, the metadata in the `colData` slot of the `SCE` object should be formatted according to the following rules:
 

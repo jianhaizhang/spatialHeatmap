@@ -1,13 +1,17 @@
 # Module for co-visualization through automatic method.
 covis_auto_server <- function(id, sce.upl, upl.mod.lis, shm.mod.lis, tab, covis.auto, lis.url, parent, session) {
   moduleServer(id, function(input, output, session) {
-   ns <- session$ns; cfg <- upl.mod.lis$cfg 
-   quick <- reactiveValues(v=0)
+   ns <- session$ns; cfg <- upl.mod.lis$cfg
+   quick <- reactiveValues(v=0, notshow=FALSE)
+   observeEvent(input$showauto, {
+     showauto <- input$showauto; if (!check_obj(showauto) | TRUE %in% quick$notshow) return()
+     quick$notshow <- showauto
+   })
    observeEvent(list(parent$input$tabTop, input$tabSetCellAuto), {
      tabTop <- parent$input$tabTop; if (!check_obj(tabTop)) return()
-     if (quick$v <= 2 & 'scell' %in% tabTop & 'result' %in% input$tabSetCellAuto & 'auto' %in% covis.auto$method) {
-         showModal(modal(title = HTML('<b>Quick start!</b>'), msg = 'Showing 3 times only!', img='coclus_quick.jpg', img.w="100%")) 
-         quick$v <- quick$v + 1
+     if (quick$v <= 2 & 'scell' %in% tabTop & 'result' %in% input$tabSetCellAuto & 'auto' %in% covis.auto$method & FALSE %in% quick$notshow) {
+       showModal(modal(title = HTML('<b>Quick start!</b>'), msg = 'Showing 3 times only!', img='coclus_quick.jpg', img.w="100%", idshow=ns('showauto'))) 
+       quick$v <- quick$v + 1
      }
    }) 
    cnt.help <- reactiveValues(v=0)

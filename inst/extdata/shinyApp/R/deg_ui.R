@@ -25,9 +25,9 @@ deg_ui <- function(id) {
         p('Spatial enrichment', style='font-size:18px'),
         fluidRow(splitLayout(cellWidths=c('10px', '350px', '1px', '350px', '1px', '145px', '1px', '70px', '1px', '110px'), '',
         uiOutput(ns('sam')), '', uiOutput(ns('con')), '', 
-        selectInput(ns("comBy"), "Compare across", c('spatial features'='feature', 'variables'='variable'), 'feature') %>% spsComps::bsTooltip(title= paste0(as.character(HTML('Compare across spatial features: variables under the same spatial feature will be treated as replicates. <br/> Compare across variables: spatial featutes under the same variable will be treated as replicates. <br/>')), as.character(a(href='html/shm_shiny_manual.html#3_Spatial_Enrichment',  target='blank', 'More.'))), placement='top', html=TRUE, click_inside=TRUE), '',
+        selectInput(ns("comBy"), "Compare across", c('spatial features'='feature', 'variables'='variable'), 'feature') %>% spsComps::bsTooltip(title= paste0(as.character(HTML('Compare across spatial features: variables under the same spatial feature will be treated as replicates. <br/> Compare across variables: spatial featutes under the same variable will be treated as replicates. <br/>')), as.character(a(href='html/shm_shiny_manual.html#3_Spatial_Enrichment', target='blank', 'More.'))), placement='top', html=TRUE, click_inside=TRUE), '',
         numericInput(ns('outlier'), 'Outliers', 0, min=0, max=Inf, step=1), '',
-        selectInput(ns('meth'), label='Select methods', choices=c('edgeR'='edgeR', 'limma-voom'='limma.voom', 'limma'='limma', 'DESeq2'='DESeq2', 'distinct'='distinct'), selected=c('edgeR'), multiple=FALSE)
+        selectInput(ns('meth'), label='Select methods', choices=c('edgeR'='edgeR', 'limma-voom'='limma.voom', 'limma'='limma', 'DESeq2'='DESeq2'), selected=c('edgeR'), multiple=FALSE)
         )),
         fluidRow(id=ns('fcfdr'), style='width:250px', splitLayout(cellWidths=c('10px', '125px', '1px', '80px'), '',
         numericInput(ns('ssg.fc'), 'Log2-fold change', 1, min=0, max=Inf, step=1), '',

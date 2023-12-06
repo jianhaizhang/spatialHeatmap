@@ -347,46 +347,80 @@ data_server <- function(id, sch, lis.url, ids, upl.mod.lis, deg.mod.lis=NULL, sc
      assay <- assay(se.fil)
      assay <- thrsd(thr.min=sig.min, thr.max=sig.max, data=assay)
      lgc.as <- !is(assay, 'character')
-     if (!lgc.as) msg <- assay else NULL
-     show_mod(lgc.as, msg); req(lgc.as)
-     assay(se.fil) <- assay; message('Done!'); se.fil
+     if (!lgc.as) { msg <- assay; show_mod(lgc.as, msg) }
+     req(lgc.as)
+     assay(se.fil) <- round(assay, 2); message('Done!'); se.fil
    })
+
+   observeEvent(list(ipt$fileIn, se.thr()), {
+    fileIn <- ipt$fileIn; se.thr <- se.thr()
+    if (!check_obj(list(fileIn, se.thr))) return()
+    updateSelectInput(session, 'ref', selected='No')
+    cna <- colnames(colData(se.thr))
+    if (grepl(na.sgl, fileIn) | !'reference' %in% cna) {
+      shinyjs::hide(id='refD'); shinyjs::hide(id='ref')
+    } else if ('reference' %in% cna) {
+      shinyjs::show(id='refD'); shinyjs::show(id='ref')
+    }
+   })
+   ref.par <- reactiveValues()
+   observeEvent(list(input$ref, se.thr()), {
+     pars <- list(input$ref, se.thr())
+     if (!check_obj(pars)) return(); ref.par$pars <- pars
+   })
+   se.ref <- eventReactive(list(ref.par$pars), {
+     message('SHM: relative expressions ... ')
+     ref <- input$ref; se.thr <- se.thr()
+     if (!check_obj(list(ref, se.thr))) return()
+     if (!'Yes' %in% ref | !'reference' %in% colnames(colData(se.thr))) return(se.thr)
+     se <- data_ref(se.thr)
+     lgc.ref <- !is(se, 'character') & 'Yes' %in% ref
+     if (!lgc.ref) { msg <- se; show_mod(lgc.ref, msg)
+     return() }  
+     message('Done!'); se
+   })
+
   scl.par <- reactiveValues()
-  observeEvent(list(input$run, se.thr()), {
-    scl <- input$scl; run <- input$run; se.thr <- se.thr()
-    if (!check_obj(list(scl, run, se.thr))) req('')
-    pars <- list(scl, se.thr)
+  observeEvent(list(input$run, input$ref, se.thr(), se.ref()), {
+    scl <- input$scl; ref <- input$ref
+    run <- input$run; se.thr <- se.thr(); se.ref <- se.ref()
+    if (!check_obj(list(scl, ref, run, se.thr, se.ref))) req('')
+    pars <- list(scl, ref, se.thr, se.ref)
     scl.par$pars <- pars
   })
    se.scl <- eventReactive(list(scl.par$pars), {
      message('SHM: scaling ... ')
-     scl <- input$scl; run <- input$run; se.thr <- se.thr()
-     if (!check_obj(list(scl, run, se.thr))) req('') 
-     assay <- assay(se.thr)
+     scl <- input$scl; ref <- input$ref
+     run <- input$run; se.thr <- se.thr(); se.ref <- se.ref()
+     if (!check_obj(list(scl, ref, run, se.thr, se.ref))) req('') 
+     if ('Yes' %in% ref) se <- se.ref else se <- se.thr
+     assay <- assay(se)
      # Scale by row/column
      if (scl=='Row') { assay <- t(scale(t(assay))) 
      } else if (scl=='All') { assay <- scale_all(assay) }
-     assay(se.thr) <- assay; cna <- colnames(se.thr)
+     assay(se) <- assay; cna <- colnames(se)
      # Co-clustering unlabeled cells.
-     idx <- grepl('^none$|^none__', colnames(se.thr))
-     se.thr <- cbind(se.thr[, !idx], se.thr[, idx])
-     message('Done!'); se.thr
+     idx <- grepl('^none$|^none__', colnames(se))
+     se <- cbind(se[, !idx], se[, idx])
+     message('Done!'); se
    })
   scl.sel.par <- reactiveValues()
-  observeEvent(list(input$run, se.scl(), ids$sel), {
-    scl <- input$scl; run <- input$run; se.scl <- se.scl()
-    if (!check_obj(list(scl, run, se.scl, ids$sel))) return()
-    pars <- list(scl, se.scl, ids$sel)
+  observeEvent(list(input$run, input$ref, se.scl(), ids$sel), {
+    scl <- input$scl; run <- input$run; ref <- input$ref
+    se.scl <- se.scl()
+    if (!check_obj(list(scl, run, ref, se.scl, ids$sel))) return()
+    pars <- list(scl, se.scl, ref, ids$sel)
     scl.sel.par$pars <- pars
   })
    se.scl.sel <- eventReactive(list(scl.sel.par$pars), {
      message('SHM: selected data ... ')
      scl <- input$scl; run <- input$run; se.scl <- se.scl()
-     if (!check_obj(list(scl, run, se.scl, ids$sel))) return()
+     ref <- input$ref
+     if (!check_obj(list(scl, run, se.scl, ref, ids$sel))) return()
      if (!all(ids$sel %in% rownames(se.scl))) return()
      se.scl.sel <- se.scl[ids$sel, ]
      assay.sel <- assay(se.scl.sel)
-     if (scl=='Selected') { assay.sel <- scale_all(assay.sel) }
+     if (scl=='Selected' & !'Yes' %in% ref) { assay.sel <- scale_all(assay.sel) }
      assay(se.scl.sel) <- assay.sel
      message('Done!'); se.scl.sel
    })
@@ -530,6 +564,7 @@ data_server <- function(id, sch, lis.url, ids, upl.mod.lis, deg.mod.lis=NULL, sc
       # Tooltip on metadata.
       col1 <- list(list(targets = seq_len(ncol(cdat)), render = DT::JS("$.fn.dataTable.render.ellipsis(50, false)")))
       rownames(cdat) <- sub('__', '_', rownames(cdat))
+      if ('reference' %in% colnames(cdat)) cdat$reference <- sub('__', '_', cdat$reference)
       dtab <- datatable(data.frame(cdat), selection='none', escape=FALSE, filter="top", extensions=c('Scroller', 'FixedColumns'), plugins = "ellipsis",
    options=list(pageLength=5, lengthMenu=c(5, 15, 20), autoWidth=FALSE, scrollCollapse=TRUE, deferRender=TRUE, scrollX=TRUE, scrollY=300, scroller=TRUE, searchHighlight=TRUE, search=list(regex=TRUE, smart=FALSE, caseInsensitive=TRUE), searching=TRUE, class='cell-border strip hover', columnDefs=col1, fixedColumns =NULL, 
    fnDrawCallback = htmlwidgets::JS('function(){HTMLWidgets.staticRender()}')

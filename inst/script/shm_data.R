@@ -59,6 +59,13 @@ colData(se.fil.hum) <- cdat[, c(6:7, 4, 2, 5)]
 df.meta <- data.frame(name=c('assay', 'aSVG file'), link=c('https://www.ebi.ac.uk/biostudies/arrayexpress/studies/E-GEOD-67196', 'https://raw.githubusercontent.com/ebi-gene-expression-group/anatomogram/master/src/svg/homo_sapiens.brain.svg'), species=c('Mus musculus', 'Mus musculus'), technology=c('RNA-seq', 'NA'), database=c('Expression Atlas', 'EBI anatomogram'), id=c('E-GEOD-67196', 'NA'), description=c('Study on extensive alternative splicing (AS) and alternative polyadenylation (APA) defects in the cerebellum of c9ALS cases (8,224 AS, 1,437 APA), including changes in ALS-associated genes (e.g. ATXN2 and FUS), and cases of sporadic ALS (sALS; 2,229 AS, 716 APA)', 'An annotated SVG (aSVG) file.'))
 metadata(se.fil.hum)$df.meta <- df.meta
 
+# Add references.
+cdat <- colData(se.fil.hum)
+cdat$reference <- 'none'
+cdat$reference[rownames(cdat) %in% 'cerebellum__ALS'] <- 'normal'
+cdat$reference[rownames(cdat) %in% 'frontal.cortex__ALS'] <- 'normal'
+colData(se.fil.hum) <- cdat[, c(1:2, 6, 3:5)]
+
 # colnames(expr.hum) <- gsub("_", ".", colnames(expr.hum))
 # write.table(expr.hum, 'expr_human.txt', col.names=TRUE, row.names=TRUE, sep='\t')
 saveRDS(se.fil.hum, file='human_brain.rds')
@@ -128,6 +135,14 @@ se.fil.mus$variable <- se.fil.mus$strain
 colData(se.fil.mus) <- colData(se.fil.mus)[, c(3, 4, 2, 1)]
 df.meta <- data.frame(name=c('assay', 'aSVG file'), link=c('https://www.ebi.ac.uk/biostudies/arrayexpress/studies/E-MTAB-2801', 'https://raw.githubusercontent.com/ebi-gene-expression-group/anatomogram/master/src/svg/mus_musculus.male.svg'), species=c('Mus musculus', 'Mus musculus'), technology=c('RNA-seq', 'NA'), database=c('Expression Atlas', 'EBI anatomogram'), id=c('E-MTAB-2801', 'NA'), description=c('This experiment contains mouse organism part samples and strand-specific RNA-seq data, which aimed at assessing tissue-specific transcriptome variation across mammals, with chicken used as an outgroup in evolutionary analyses. Each organism part (with the exception of heart) was sourced from animals from three different strains: C57BL/6, DBA/2J and CD1. (There is no data for heart from the C57BL/6 strain.)', 'An annotated SVG (aSVG) file.'))
 metadata(se.fil.mus)$df.meta <- df.meta
+
+# Add references to selected samples.
+cdat <- colData(se.fil.mus); cdat$reference <- 'none'
+cdat$reference[1] <- c('C57BL.6,CD1')
+cdat$reference[2] <- c('C57BL.6,CD1')
+cdat$reference[3] <- c('C57BL.6,CD1')
+colData(se.fil.mus) <- cdat[, c(1:2, 5, 3:4)]
+
 saveRDS(se.fil.mus, file='mouse_organ.rds')
 
 ## Make target file/Shiny app data-chicken organ example.
@@ -246,7 +261,7 @@ cdat <- colData(se.fil.sh); cdat[1:3, ]
 colnames(cdat)[1] <- 'assay'
 colData(se.fil.sh) <- cdat[, c(4:5)]
 
-df.meta <- data.frame(name=c('assay', 'aSVG file'), link=c('https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE14502', 'https://github.com/jianhaizhang/spatialHeatmap_aSVG_Repository/tree/master/aSVG_images'), species=c('Arabidopsis thaliana', 'Arabidopsis thaliana'), database=c('GEO', 'spatialHeatmap aSVG repo'), id=c('GSE14502', 'NA'), description=c('Transcription profiling of Arabidopsis roots and shoots in response to hypoxia using immunopurified mRNA-ribosome complexes', 'An annotated SVG (aSVG) file.'))
+df.meta <- data.frame(name=c('assay', 'aSVG file'), link=c('https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE14502', 'https://github.com/jianhaizhang/SHM_SVG/tree/master/SHM_SVG_repo/UCR'), species=c('Arabidopsis thaliana', 'Arabidopsis thaliana'), database=c('GEO', 'spatialHeatmap aSVG repo'), id=c('GSE14502', 'NA'), description=c('Transcription profiling of Arabidopsis roots and shoots in response to hypoxia using immunopurified mRNA-ribosome complexes', 'An annotated SVG (aSVG) file.'))
 metadata(se.fil.sh)$df.meta <- df.meta
 
 

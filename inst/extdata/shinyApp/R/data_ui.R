@@ -11,13 +11,14 @@ data_ui <- function(id, dim.ui=NULL, tailor.ui=NULL) {
         fluidRow(splitLayout(cellWidths=c("1%", "98%", "1%"), "", dataTableOutput(ns("expDsg")), "")),
       ),
       tabPanel("Assay data", value='dat',
-      fluidRow(splitLayout(cellWidths=c('5px', '70px', '1px', '115px', '1px', '80px', '1px', '80px', '1px', '170px'), '',
-      actionButton(ns("selRow"), "Plot", style=run.top), '',
-      actionButton(ns("deSel"), "Deselect rows", style='margin-top:24px'), '',
-      numericInput(ns('page'), label='Table height', value=300, min=50, max=Inf, step=50, width=150), '',
-      selectInput(ns('spk'), label='Sparklines', choices=c('No', 'Yes'), selected='No'), '',
-      div(id=ns('datInD'), selectInput(ns('datIn'), label='Input data', choices=c('Complete'='all'), selected='all')) 
-      )),
+      div(class='shiny-split-layout',
+        div(id="selRow", actionButton(ns("selRow"), "Plot", style=run.top), style='width:70px'),
+        div(id="deSel", actionButton(ns("deSel"), "Deselect rows", style='margin-top:24px'), style='width:115px'),
+        div(id="page", numericInput(ns('page'), label='Table height', value=300, min=50, max=Inf, step=50), style='width:85px'),
+        div(id="spk", selectInput(ns('spk'), label='Sparklines', choices=c('No', 'Yes'), selected='No'), style='width:80px'),
+        div(id=ns("refD"), selectInput(ns('ref'), label='Reference', choices=c('No', 'Yes'), selected='No') %>% spsComps::bsTooltip(title= paste0(as.character(HTML('Use expression levels relative to references that are defined in Experiment design. ')), as.character(a(href='html/shm_shiny_manual.html#21_Static_image', target='blank', 'More.'))), placement='top', html=TRUE, click_inside=TRUE), style='width:80px'),
+        div(id=ns('datInD'), selectInput(ns('datIn'), label='Input data', choices=c('Complete'='all'), selected='all'), style='width:170px') 
+      ),
       bsTooltip(id=ns('selRow'), title="Click to plot spatial heatmaps.", placement = "top", trigger = "hover"),
       bsTooltip(id=ns('datInD'), title="Assay data for plotting spatial heatmaps.", placement = "top", trigger = "hover"),
       fluidRow(splitLayout(cellWidths=c("1%", "98%", "1%"), "", dataTableOutput(ns("dtAll")), ""))

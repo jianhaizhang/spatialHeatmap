@@ -1,7 +1,7 @@
 #' Identifying spatially enriched or depleted biomolecules 
 #'
 #' @description
-#' The spatial enrichment (SpEn) is designed to detect spatially enriched or depleted biomolecules (genes, proteins, etc) for chosen spatial features (cellular compartments, tissues, organs, \emph{etc}). It compares each feature with all other reference features. The biomolecules significantly up- or down-regulated in one feature relative to reference features are denoted spatially enriched or depleted respectively. The underlying differential expression analysis methods include edgeR (Robinson et al, 2010), limma (Ritchie et al, 2015), DESeq2 (Love et al, 2014), and distinct (Tiberi et al, 2020). By querying a feature of interest from the enrichment results, the enriched or depleted biomolecules will be returned. \cr In addition, the SpEn is also able to identify biomolecules enriched or depleted in experiment vairables in a similar manner.   
+#' The spatial enrichment (SpEn) is designed to detect spatially enriched or depleted biomolecules (genes, proteins, etc) for chosen spatial features (cellular compartments, tissues, organs, \emph{etc}). It compares each feature with all other reference features. The biomolecules significantly up- or down-regulated in one feature relative to reference features are denoted spatially enriched or depleted respectively. The underlying differential expression analysis methods include edgeR (Robinson et al, 2010), limma (Ritchie et al, 2015), and DESeq2 (Love et al, 2014). By querying a feature of interest from the enrichment results, the enriched or depleted biomolecules will be returned. \cr In addition, the SpEn is also able to identify biomolecules enriched or depleted in experiment vairables in a similar manner.   
 #'
 #' `sf_var()` subsets data according to given spatial features and variables.
 #' 
@@ -57,7 +57,6 @@
 #' Robinson MD, McCarthy DJ and Smyth GK (2010). edgeR: a Bioconductor package for differential expression analysis of digital gene expression data. Bioinformatics 26, 139-140
 #' Ritchie, M.E., Phipson, B., Wu, D., Hu, Y., Law, C.W., Shi, W., and Smyth, G.K. (2015). limma powers differential expression analyses for RNA-sequencing and microarray studies. Nucleic Acids Research 43(7), e47.
 #' Love, M.I., Huber, W., Anders, S. Moderated estimation of fold change and dispersion for RNA-seq data with DESeq2 Genome Biology 15(12):550 (2014)
-#' Simone Tiberi and Mark D. Robinson. (2020). distinct: distinct: a method for differential analyses via hierarchical permutation tests. R package version 1.2.0. https://github.com/SimoneTiberi/distinct
 #' Nils Gehlenborg (2019). UpSetR: A More Scalable Alternative to Venn and Euler Diagrams for Visualizing Intersecting Sets. R package version 1.4.0. https://CRAN.R-project.org/package=UpSetR
 #' H. Wickham. ggplot2: Elegant Graphics for Data Analysis. Springer-Verlag New York, 2016.
 #' Hadley Wickham (2007). Reshaping Data with the reshape Package. Journal of Statistical Software, 21(12), 1-20. URL http://www.jstatsoft.org/v21/i12/.
@@ -174,10 +173,9 @@ sf_var <- function(data, feature, ft.sel=NULL, variable=NULL, var.sel=NULL, com.
 }
 
 #' @rdname SpatialEnrichment
-#' @param method One of \code{edgeR}, \code{limma}, \code{DESeq2}, \code{distinct}. 
+#' @param method One of \code{edgeR}, \code{limma}, and \code{DESeq2}. 
 #' @param norm The normalization method (\code{TMM}, \code{RLE}, \code{upperquartile}, \code{none}) in edgeR. The default is \code{TMM}. Details: https://www.rdocumentation.org/packages/edgeR/versions/3.14.0/topics/calcNormFactors. 
 #' @param m.array Logical. `TRUE` and `FALSE` indicate the input are microarray and count data respectively.  
-#' @param log2.trans.dis Logical, only applicable when \code{method='distinct'}. If \code{TRUE} the count data is transformed to log-2 scale.
 #' @param aggr One of \code{mean} (default) or \code{median}. The method to aggregated replicates in the assay data.  
 #' @param log2.trans Logical. If \code{TRUE} (default), the aggregated data (see \code{aggr}) is transformed to log2-scale and will be further used for plotting SHMs. 
 #' @param p.adjust The method (\code{holm}, \code{hochberg}, \code{hommel}, \code{bonferroni}, \code{BH}, \code{BY}, \code{fdr}, or \code{none}) for adjusting p values in multiple hypothesis testing. The default is \code{BH}.
@@ -188,8 +186,8 @@ sf_var <- function(data, feature, ft.sel=NULL, variable=NULL, var.sel=NULL, com.
 #' @export
 #' @importFrom SummarizedExperiment colData
  
-spatial_enrich <- function(data, method=c('edgeR'), norm='TMM', m.array=FALSE, log2.trans.dis=TRUE, log2.fc=1, p.adjust='BH', fdr=0.05, outliers=0, aggr='mean', log2.trans=TRUE) {
-  #save(data, method, norm, m.array, log2.trans.dis, log2.fc, p.adjust, fdr, outliers, aggr, log2.trans, file='spatial.enrich.arg')
+spatial_enrich <- function(data, method=c('edgeR'), norm='TMM', m.array=FALSE, log2.fc=1, p.adjust='BH', fdr=0.05, outliers=0, aggr='mean', log2.trans=TRUE) {
+  #save(data, method, norm, m.array, log2.fc, p.adjust, fdr, outliers, aggr, log2.trans, file='spatial.enrich.arg')
   if (is(data, 'data.frame')|is(data, 'matrix')|is(data, 'dgCMatrix')|is(data, 'DataFrame')) {
     data <- SummarizedExperiment(assays=list(data=data))
   }
@@ -207,7 +205,7 @@ spatial_enrich <- function(data, method=c('edgeR'), norm='TMM', m.array=FALSE, l
     cat('Done! \n')
   }
   if ('distinct' %in% method) { cat('distinct ... \n')
-    dis <- distt(data, norm.fun='CNF', par.list=list(method=norm), log2.trans=log2.trans.dis, com.factor='com.by', return.all=FALSE, log2.fc=log2.fc, fdr=fdr, outliers=outliers)
+    # dis <- distt(data, norm.fun='CNF', par.list=list(method=norm), log2.trans=TRUE, com.factor='com.by', return.all=FALSE, log2.fc=log2.fc, fdr=fdr, outliers=outliers)
     cat('Done! \n')
   }
   lis <- list(edgeR=edg, limma=lim, DESeq2=dsq, distinct=dis)[c('edgeR', 'limma', 'DESeq2', 'distinct') %in% method]

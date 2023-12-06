@@ -9,7 +9,7 @@
 #' @inheritParams WGCNA::TOMsimilarity
 #' @param arg.tom A list of additional arguments passed to \code{\link[WGCNA]{TOMsimilarity}}, \emph{e.g.} \code{list(verbose=1)}. The default is an empty list \code{list()}.
 #' @inheritParams flashClust::flashClust
-#' @param ds One of 0, 1, 2, or 3. The sensitivity of module identification. The smaller, the less modules identified with larger sizes. 
+#' @param ds One of 0, 1, 2, or 3. The strigency of module identification. The smaller, the less modules with larger sizes. 
 #' @param minSize The expected minimum module size. The default is 15. Refer to \pkg{WGCNA} for more details.
 #' @param arg.cut A list of additional arguments passed to \code{\link[dynamicTreeCut]{cutreeHybrid}}, \emph{e.g.} \code{list(verbose=2)}. The default is an empty list \code{list()}.
 
