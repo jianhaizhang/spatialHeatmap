@@ -1,5 +1,5 @@
 #if (interactive()) {
-  requireNamespace('av'); requireNamespace('BiocGenerics'); requireNamespace('DESeq2'); requireNamespace('distinct') 
+  requireNamespace('av'); requireNamespace('BiocGenerics'); requireNamespace('DESeq2'); 
   requireNamespace('dendextend'); requireNamespace('dynamicTreeCut'); requireNamespace('flashClust'); 
   requireNamespace('ggdendro'); requireNamespace('HDF5Array'); requireNamespace('magick'); requireNamespace('DT'); 
   requireNamespace('pROC'); requireNamespace('shinyWidgets'); requireNamespace('shinyjs'); requireNamespace('htmltools');

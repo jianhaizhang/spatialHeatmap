@@ -8,6 +8,12 @@ data_ui <- function(id, dim.ui=NULL, tailor.ui=NULL) {
         fluidRow(splitLayout(cellWidths=c("1%", "98%", "1%"), "", DTOutput(ns("over")), "")),
       ), 
       tabPanel('Experiment design', value='expDsg',
+        div(id=ns('uplRefD'), class='shiny-split-layout',
+          div(id=ns('uplRefile'), fileInput(ns("uplRef"), "Upload references", accept=c(".txt", ".csv"), multiple=FALSE) %>% spsComps::bsTooltip(title= paste0(as.character(HTML(' Upload reference experimental variables in a one-column table. Ensure rownames are the same with the table of experiment design (see the example). ')), as.character(a(href='html/shm_shiny_manual.html#21_Static_image', target='blank', 'More.'))), placement='top', html=TRUE, click_inside=TRUE), style='width:270px'),
+          div(id=ns('refSelD'), checkboxInput(ns('refSel'), 'Use uploaded references', value = TRUE), style='width:190px;margin-top:22px'),
+          div(downloadButton(ns("dldRef"), "Example"), style='width:100px;margin-top:24px')
+        ),
+        bsTooltip(id=ns('refSelD'), title="Use uploaded references or not.", placement = "top", trigger = "hover"),
         fluidRow(splitLayout(cellWidths=c("1%", "98%", "1%"), "", dataTableOutput(ns("expDsg")), "")),
       ),
       tabPanel("Assay data", value='dat',

@@ -313,6 +313,7 @@ deg_ovl_mat <- function(deg.lis, axis.agl, font.size, cols) {
 #' @rdname SpatialEnrichment
 #' @param scale The method to scale the data. If \code{none} (default), no scaling. If \code{row}, each row is scaled independently. If \code{all}, all rows are scaled as a whole.
 #' @param x.title,y.title The title of X-axis and Y-axis respectively.
+#' @param linewidth The line width.
 #' @param text.size The font size of all text.
 #' @param text.angle The angle of axis text.
 #' @param lgd.pos The position of legend. The default is \code{right}.
@@ -322,7 +323,7 @@ deg_ovl_mat <- function(deg.lis, axis.agl, font.size, cols) {
 #' @importFrom reshape2 melt
 #' @importFrom ggplot2 ggplot aes geom_line theme labs element_text element_rect element_line
 
-graph_line <- function(data, scale='none', x.title='Samples', y.title='Assay values', text.size=15, text.angle=60, lgd.pos='right', lgd.guide=guides(color=guide_legend(nrow=1, byrow=TRUE, title=NULL))) {
+graph_line <- function(data, scale='none', x.title='Samples', y.title='Assay values', linewidth=1, text.size=15, text.angle=60, lgd.pos='right', lgd.guide=guides(color=guide_legend(nrow=1, byrow=TRUE, title=NULL))) {
   Samples <- Value <- Genes <- NULL 
   if (all(c('type', 'total', 'method') %in% colnames(data))) { # Data frame of spatial enrichment.
     data <- data[, !colnames(data) %in% c('type', 'total', 'metadata', 'method'), drop=FALSE] }
@@ -335,6 +336,6 @@ graph_line <- function(data, scale='none', x.title='Samples', y.title='Assay val
   # Possible: the colour order (left to right) matches with the row order (top to bottom) in original data frame before melted, but the coloured lined is plotted in the order of levels (left to right) in melted data frame. 
   # if (length(cols)<nrow(data)) cols <- diff_cols(nrow(data)) 
   # Custom colours: scale_color_manual(values=cols) 
-  g <- ggplot(data=df.long, aes(x=Samples, y=Value, colour=Genes, group=Genes))+geom_line()+labs(title="", x=x.title, y=y.title)+theme(legend.position=lgd.pos, axis.text=element_text(size=text.size), axis.title=element_text(size=text.size, face="bold"), axis.text.x=element_text(angle=text.angle, hjust=1), legend.title=element_text(size=text.size-3), legend.text=element_text(size=text.size-3), panel.background = element_rect(fill = "gray95", colour = "gray95", linewidth = 0.5, linetype = "solid"), panel.grid.major = element_line(linewidth= 0.5, linetype = 'solid', colour = "white"), panel.grid.minor = element_line(linewidth = 0.5, linetype = 'solid', colour ="white")) + lgd.guide 
+  g <- ggplot(data=df.long, aes(x=Samples, y=Value, colour=Genes, group=Genes))+geom_line(linewidth=linewidth)+labs(title="", x=x.title, y=y.title)+theme(legend.position=lgd.pos, axis.text=element_text(size=text.size), axis.title=element_text(size=text.size, face="bold"), axis.text.x=element_text(angle=text.angle, hjust=1), legend.title=element_text(size=text.size-3), legend.text=element_text(size=text.size-3), panel.background = element_rect(fill = "gray95", colour = "gray95", linewidth = 0.5, linetype = "solid"), panel.grid.major = element_line(linewidth= 0.5, linetype = 'solid', colour = "white"), panel.grid.minor = element_line(linewidth = 0.5, linetype = 'solid', colour ="white")) + lgd.guide 
   return(g)
 }

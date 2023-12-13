@@ -187,11 +187,10 @@ upload_server <- function(id, lis.url=NULL, prt=NULL, session) {
     output$dld.st <- downloadHandler(   
       filename=function(){ "multiVariables_aSVG_data.zip" },
 content=function(file=paste0(tmp.dir, '/multiVariables_aSVG_data.zip')){ zip(file, c(dld.exp$st$data, dld.exp$st$svg)) }
-  )
+    )
     output$dld.covis <- downloadHandler(   
       filename=function(){ "covisualization_aSVG_data.zip" },
-
-  )
+    )
     output$dld.bat <- downloadHandler(   
       filename=function(){ "batched_data_aSVGs.zip" },
 content=function(file=paste0(tmp.dir, '/batched_data_aSVGs.zip')){ zip(file, c(dld.exp$bat$data, dld.exp$bat$svg)) }

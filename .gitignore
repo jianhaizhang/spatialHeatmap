@@ -11,11 +11,10 @@ vignette.html
 rsconnect/
 sub_matrix.txt
 customComputedData/
-spatialHeatmap.html
+vignettes/*.html
 vignette_files/
 spatialHeatmap_files/
 spatialHeatmap_cache/
-covisualize.html
 covisualize_files/
 covisualize_cache/
 inst/extdata/shinyApp/test*
