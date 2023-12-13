@@ -144,6 +144,10 @@ cdat$reference[3] <- c('C57BL.6,CD1')
 colData(se.fil.mus) <- cdat[, c(1:2, 5, 3:4)]
 
 saveRDS(se.fil.mus, file='mouse_organ.rds')
+cdat$reference[4:5] <- c('C57BL.6,CD1')
+
+# Example reference table.
+write.table(cdat[, 'reference', drop=FALSE], 'mouse_organ_reference.txt', col.names=TRUE, row.names=TRUE, sep='\t')
 
 ## Make target file/Shiny app data-chicken organ example.
 

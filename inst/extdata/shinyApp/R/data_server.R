@@ -351,34 +351,73 @@ data_server <- function(id, sch, lis.url, ids, upl.mod.lis, deg.mod.lis=NULL, sc
      req(lgc.as)
      assay(se.fil) <- round(assay, 2); message('Done!'); se.fil
    })
+   observeEvent(list(ipt$fileIn, se.thr(), input$datIn), {
+    fileIn <- ipt$fileIn; se.thr <- se.thr(); datIn <- input$datIn
+    if (!check_obj(list(fileIn, se.thr, datIn))) return()
+    if (grepl(na.sgl, fileIn) | !'all' %in% datIn) {
+      shinyjs::hide(id='uplRefD') 
+    } else shinyjs::show(id='uplRefD')
+   })
 
-   observeEvent(list(ipt$fileIn, se.thr()), {
-    fileIn <- ipt$fileIn; se.thr <- se.thr()
-    if (!check_obj(list(fileIn, se.thr))) return()
+   observeEvent(list(ipt$fileIn, se.thr(), input$datIn), {
+    fileIn <- ipt$fileIn; se.thr <- se.thr(); datIn <- input$datIn
+    if (!check_obj(list(fileIn, se.thr, datIn))) return()
     updateSelectInput(session, 'ref', selected='No')
     cna <- colnames(colData(se.thr))
-    if (grepl(na.sgl, fileIn) | !'reference' %in% cna) {
+    if (grepl(na.sgl, fileIn) | !'reference' %in% cna | !'all' %in% datIn) {
       shinyjs::hide(id='refD'); shinyjs::hide(id='ref')
-    } else if ('reference' %in% cna) {
+    } else if ('reference' %in% cna & 'all' %in% datIn) {
       shinyjs::show(id='refD'); shinyjs::show(id='ref')
     }
    })
+   uplref <- eventReactive(list(input$uplRef, input$refSel, ipt$fileIn, se.thr(), input$datIn), {
+     message('Importing uploaded references ...')
+     pa <- input$uplRef$datapath; yes <- input$refSel
+     fileIn <- ipt$fileIn; se.thr <- se.thr()
+     datIn <- input$datIn
+     if (!check_obj(list(pa, yes, fileIn, se.thr, datIn))) return()
+     if (grepl(na.sgl, fileIn) | !'all' %in% datIn) return()
+     if (TRUE %in% yes) {
+       ref <- tryCatch({ read_fr(pa) }, warning=function(w) { 'w' }, error=function(e) { 'e' }
+       ); lgc.ref <- is(ref, 'character')
+       if (lgc.ref) {
+         msg <- 'The uploaded table cannot be imported!'
+         show_mod(!lgc.ref, msg)  
+       }; req(!lgc.ref)
+       lgc.idt <- identical(colnames(se.thr), rownames(ref))
+       if (!lgc.idt) {
+         msg <- 'Ensure the rownames are correct!'
+         show_mod(lgc.idt, msg)  
+       }; req(lgc.idt); message('Done!'); ref
+     } else return()
+  })
+
    ref.par <- reactiveValues()
    observeEvent(list(input$ref, se.thr()), {
      pars <- list(input$ref, se.thr())
      if (!check_obj(pars)) return(); ref.par$pars <- pars
    })
-   se.ref <- eventReactive(list(ref.par$pars), {
+   se.ref <- eventReactive(list(ref.par$pars, uplref()), {
      message('SHM: relative expressions ... ')
-     ref <- input$ref; se.thr <- se.thr()
-     if (!check_obj(list(ref, se.thr))) return()
-     if (!'Yes' %in% ref | !'reference' %in% colnames(colData(se.thr))) return(se.thr)
+     ref <- input$ref; se.thr <- se.thr(); datIn <- input$datIn
+     if (!check_obj(list(ref, se.thr, datIn))) return()
+     uplref <- uplref()
+     if (check_obj(uplref)) colData(se.thr)[, 'reference'] <- uplref[, 1] 
+     if (!'Yes' %in% ref | !'reference' %in% colnames(colData(se.thr)) | !'all' %in% datIn) return(se.thr)
      se <- data_ref(se.thr)
      lgc.ref <- !is(se, 'character') & 'Yes' %in% ref
      if (!lgc.ref) { msg <- se; show_mod(lgc.ref, msg)
      return() }  
      message('Done!'); se
    })
+
+  output$dldRef <- downloadHandler(# Download example references 
+    filename=function(){ "mouse_organ_reference.txt" },
+content=function(file=paste0(tmp.dir, '/mouse_organ_reference.txt')){
+    ref <- read_fr('data/mouse_organ_reference.txt')
+    write.table(ref, file, col.names=TRUE, row.names=TRUE, sep='\t')
+  }
+  ) 
 
   scl.par <- reactiveValues()
   observeEvent(list(input$run, input$ref, se.thr(), se.ref()), {
@@ -393,8 +432,8 @@ data_server <- function(id, sch, lis.url, ids, upl.mod.lis, deg.mod.lis=NULL, sc
      scl <- input$scl; ref <- input$ref
      run <- input$run; se.thr <- se.thr(); se.ref <- se.ref()
      if (!check_obj(list(scl, ref, run, se.thr, se.ref))) req('') 
-     if ('Yes' %in% ref) se <- se.ref else se <- se.thr
-     assay <- assay(se)
+     # if ('Yes' %in% ref) se <- se.ref else se <- se.thr
+     se <- se.ref; assay <- assay(se)
      # Scale by row/column
      if (scl=='Row') { assay <- t(scale(t(assay))) 
      } else if (scl=='All') { assay <- scale_all(assay) }

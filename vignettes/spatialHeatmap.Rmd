@@ -173,7 +173,8 @@ features in SHMs, _annotated SVG_ (aSVG) files are used where the
 shapes of interest are labeled according to certain conventions so that they
 can be addressed and colored programmatically. One or multiple aSVG files can be parsed and stored in the `SVG` S4 container with utilities provided by the _spatialHeatmap_ package (Figure \@ref(fig:illus)B). The main slots of `SVG` include `coordinate`, 
 `attribute`, `dimension`, `svg`, and `raster`. They correspond to feature coordinates, styling attributes (color, line width, etc.), width and heigth, original aSVG instances, 
-and raster image paths, respectively. Raster images are required only when including photographic image components in SHMs (Figure \@ref(fig:overCol)), which is optional.  
+and raster image paths, respectively. Raster images are required only when including photographic image components in SHMs (Figure \@ref(fig:overCol)), which is optional. Detailed instruction for creating custom aSVGs is provied in a separate [tutorial](https://jianhaizhang.github.io/SHM_SVG){target='_blank'}.   
+
 
 SVGs and aSVGs of anatomical structures can
 be downloaded from many sources including the repositories described [below](#data_repo).
@@ -1377,21 +1378,17 @@ dat.se <- SPHM(svg=svg.hum, bulk=se.aggr)
 shm(data=dat.se, ID=c('gene1'), ncol=1, legend.r=1.2, sub.title.size=14, ft.trans=c('g4320'), legend.nrow=3)
 ```
 
-## aSVG Files
+## aSVGs files
 
-### aSVG repository {#svg_repo}
+### aSVG repositories {#svg_repo}
 
-A public aSVG repository, that can be used by `spatialHeatmap` directly, is the [EBI anatomogram](https://github.com/ebi-gene-expression-group/anatomogram/tree/master/src/svg){target="_blank"}.
+The aSVG files can be created by following our step-by-step [tutorial](https://jianhaizhang.github.io/SHM_SVG){target="_blank"} or downloaded from public repositories. A public aSVG repository, that can be used by `spatialHeatmap` directly, is the [EBI anatomogram](https://github.com/ebi-gene-expression-group/anatomogram/tree/master/src/svg){target="_blank"}.
 It contains annatomical aSVG images from different species. The same aSVG
-images are also used by the web service of the Expression Atlas project. In addition, the
+images are also used by the web service of the Expression Atlas project. Furthermore, the
 `spatialHeatmap` has its own repository called [spatialHeatmap aSVG
 Repository](https://github.com/jianhaizhang/SHM_SVG){target="_blank"},
-that stores custom aSVG files developed for this project (*e.g.* Figure
-\@ref(fig:shshm)).  
-
-If users cannot find a suitable aSVG image in these two repositories, we have developed 
-a step-by-step [SVG tutorial](https://jianhaizhang.github.io/SHM_SVG){target="_blank"} for creating
-custom aSVGs. For example, by following this tutorial, various anatomical images in the [BAR eFP browser](http://bar.utoronto.ca/){target="_blank"} can be used as templates to create custom aSVGs. In the future, we will expand our repository with more aSVGs, and users are encouraged to contribute their own aSVGs to this repository, allowing them to share their creations with the community.
+which stores custom aSVG files developed for this project (*e.g.* Figure
+\@ref(fig:shshm)). In the future, we will expand our repository with more aSVGs, and users are encouraged to contribute their own aSVGs to this repository, allowing them to share their creations with the community.
 
 ### Update aSVG features {#update}
 

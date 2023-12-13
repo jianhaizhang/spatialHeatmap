@@ -56,6 +56,7 @@ graph_line(
   scale = "none",
   x.title = "Samples",
   y.title = "Assay values",
+  linewidth = 1,
   text.size = 15,
   text.angle = 60,
   lgd.pos = "right",
@@ -140,6 +141,8 @@ in the following format: c(intersection size title, intersection size tick label
 \item{scale}{The method to scale the data. If \code{none} (default), no scaling. If \code{row}, each row is scaled independently. If \code{all}, all rows are scaled as a whole.}
 
 \item{x.title, y.title}{The title of X-axis and Y-axis respectively.}
+
+\item{linewidth}{The line width.}
 
 \item{text.size}{The font size of all text.}
 
