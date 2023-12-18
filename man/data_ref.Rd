@@ -4,10 +4,14 @@
 \alias{data_ref}
 \title{Calculating relative expression values}
 \usage{
-data_ref(se)
+data_ref(se, input.log, output.log = TRUE)
 }
 \arguments{
-\item{se}{A `SummarizedExperiment` object. The `colData` slot contains a minimum of three columns: `spFeature` (spatial feature), `variable` (experiment variable), and `reference` (reference variable). The first two columns are explained in the `data` argument of the \code{\link{filter_data}} function. The `reference` indicates reference experimental variables that are comma-separated strings such as "variable1,variable2" (see the example below). Relative expression values will be computed based on the references.}
+\item{se}{A `SummarizedExperiment` object containing non-log-transformed data. The `colData` slot contains a minimum of three columns: `spFeature` (spatial feature), `variable` (experiment variable), and `reference` (reference variable). The first two columns are explained in the `data` argument of the \code{\link{filter_data}} function. The `reference` indicates reference experimental variables that are comma-separated strings such as "variable1,variable2" (see the example below). Relative expression values will be computed based on the references.}
+
+\item{input.log}{Logical, `TRUE` or `FALSE`, indicating whether the input assay data are log-transformed or not, repectively. If `TRUE` this function will not compute relative expression values, since the log-transformed values significantly reduces real relative expression levels. Users are expected to ensure the input assay data are non-log-transformed and then select `FALSE`.}
+
+\item{output.log}{Logical. If `FALSE`, the output relative expression values are ratios such as treatment/control, while if `TRUE`, it would be log2 fold changes such as log2(treatment/control).}
 }
 \value{
 A `SummarizedExperiment` object that contains relative expression values.
@@ -21,9 +25,10 @@ library(SummarizedExperiment)
 # Access example data. 
 se <- readRDS(system.file('extdata/shinyApp/data/mouse_organ.rds',
 package='spatialHeatmap'))
-colData(se)[1:4, 1:3]
+colData(se)[1:4, 1:3]; assay(se)[1:3, 1:3]
 # Data of relative expression values.
-se.ref <- data_ref(se); colData(se.ref)[, 1:3]
+se.ref <- data_ref(se, input.log=FALSE)
+colData(se.ref)[, 1:3]; assay(se.ref)[1:3, 1:3]
 }
 \references{
 Morgan M, Obenchain V, Hester J, Pagès H (2022). SummarizedExperiment: SummarizedExperiment container. R package version 1.28.0, <https://bioconductor.org/packages/SummarizedExperiment>.

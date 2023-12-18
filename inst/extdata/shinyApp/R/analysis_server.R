@@ -685,7 +685,6 @@ analysis_server <- function(id, upl.mod.lis, dat.mod.lis, shm.mod.lis, ids, sess
     gene <- assay(se.thr)
     msg <- 'Subsetting nearest neighbors: columns in the assay data are less than 5!'
     if (ncol(gene)<5) showNotification(msg, duration=2, closeButton = TRUE)
-    # mat <- cor.dis$val()
     # Validate filtering parameters in matrix heatmap. 
     measure <- input$measure; mhm.v <- input$mhm.v; thr <- input$thr
     if (thr=='p') {

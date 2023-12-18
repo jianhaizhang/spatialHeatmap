@@ -22,9 +22,16 @@ data_ui <- function(id, dim.ui=NULL, tailor.ui=NULL) {
         div(id="deSel", actionButton(ns("deSel"), "Deselect rows", style='margin-top:24px'), style='width:115px'),
         div(id="page", numericInput(ns('page'), label='Table height', value=300, min=50, max=Inf, step=50), style='width:85px'),
         div(id="spk", selectInput(ns('spk'), label='Sparklines', choices=c('No', 'Yes'), selected='No'), style='width:80px'),
-        div(id=ns("refD"), selectInput(ns('ref'), label='Reference', choices=c('No', 'Yes'), selected='No') %>% spsComps::bsTooltip(title= paste0(as.character(HTML('Use expression levels relative to references that are defined in Experiment design. ')), as.character(a(href='html/shm_shiny_manual.html#21_Static_image', target='blank', 'More.'))), placement='top', html=TRUE, click_inside=TRUE), style='width:80px'),
-        div(id=ns('datInD'), selectInput(ns('datIn'), label='Input data', choices=c('Complete'='all'), selected='all'), style='width:170px') 
+        div(id=ns("refD"), style='margin-top:24px', 
+          dropdownButton(inputId=ns('dpdRef'), label='Reference', circle=FALSE, icon=NULL, status='primary', inline=FALSE, 
+          div(selectInput(ns('ref'), label='Use references', choices=c('No', 'Yes'), selected='No'), style='width:105px'), 
+          div(selectInput(ns('refLog'), label='Use log2 scale', choices=c('No', 'Yes'), selected='Yes'), style='width:105px')
+          ),
+        ) %>% spsComps::bsTooltip(title= paste0(as.character(HTML('Use relative expression levels based on references defined in Experiment design. ')), as.character(a(href='html/shm_shiny_manual.html#21_Static_image', target='blank', 'More.'))), placement='top', html=TRUE, click_inside=TRUE),
+        div(id=ns('datInD'), selectInput(ns('datIn'), label='Input data', choices=c('Complete'='all'), selected='all'), style='width:170px')
       ),
+      bsTooltip(id=ns('ref'), title="Use relative expression levels or not.", placement = "right", trigger = "hover"),
+      bsTooltip(id=ns('refLog'), title="Yes: use log2 ratio, e.g. log2(treatment/control). <br/> No: use raw ratio, e.g. treatment/control.", placement = "right", trigger = "hover"),
       bsTooltip(id=ns('selRow'), title="Click to plot spatial heatmaps.", placement = "top", trigger = "hover"),
       bsTooltip(id=ns('datInD'), title="Assay data for plotting spatial heatmaps.", placement = "top", trigger = "hover"),
       fluidRow(splitLayout(cellWidths=c("1%", "98%", "1%"), "", dataTableOutput(ns("dtAll")), ""))

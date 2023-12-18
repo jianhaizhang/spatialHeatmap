@@ -60,9 +60,7 @@ norm_data <- function(data, assay.na=NULL, norm.fun='CNF', par.list=NULL, log2.t
   }
   
   if (min(expr)>=0 & all(round(expr)==expr)) {
-
     if (norm.fun=='CNF') {
-
       na <- names(par.list); if (!('method' %in% na)|is.null(par.list)) {
         par.list <- c(list(method='TMM'), par.list)
       }
@@ -71,23 +69,18 @@ norm_data <- function(data, assay.na=NULL, norm.fun='CNF', par.list=NULL, log2.t
       y <- do.call(calcNormFactors, c(list(object=y), par.list))
       cat('Computing CPM ... \n')
       expr <- cpm(y, normalized.lib.sizes=TRUE, log=(log2.trans==TRUE))
-
     } else {
       pkg <- check_pkg('DESeq2'); if (is(pkg, 'character')) stop(pkg)
       dds <- DESeq2::DESeqDataSetFromMatrix(countData=expr, colData=data.frame(col.dat=colnames(expr)), design=~1) # "design" does not affect "rlog" and "varianceStabilizingTransformation".
     }
-
     if (norm.fun=='ESF') {
-
       na <- names(par.list); if (!('type' %in% na)|is.null(par.list)) { par.list <- c(list(type='ratio'), par.list) }
       cat('Normalising:', norm.fun, '\n'); print(unlist(par.list))
       if (any(c('e', 'w') %in% check_pkg('DESeq2'))) stop('The package "DESeq2" is not detected!')
       dds <- do.call(DESeq2::estimateSizeFactors, c(list(object=dds), par.list))
       expr <- DESeq2::counts(dds, normalized=TRUE)
       if (log2.trans==TRUE) expr <- log2(expr+1)
-
     } else if (norm.fun=='VST') { 
-    
       # Apply A Variance Stabilizing Transformation (VST) To The Count Data.
       if (is.null(par.list)) par.list <- list(fitType='parametric', blind=TRUE)
       na <- names(par.list); if (!('fitType' %in% na)) { par.list <- c(list(fitType='parametric'), par.list) }
@@ -98,9 +91,7 @@ norm_data <- function(data, assay.na=NULL, norm.fun='CNF', par.list=NULL, log2.t
       vsd <- do.call(DESeq2::varianceStabilizingTransformation, c(list(object=dds), par.list))
       expr <- assay(vsd)
       if (log2.trans==FALSE) expr <- 2^expr
-
     } else if (norm.fun=='rlog') { 
-  
       if (is.null(par.list)) par.list <- list(fitType='parametric', blind=TRUE)
       na <- names(par.list); if (!('fitType' %in% na)) { par.list <- c(list(fitType='parametric'), par.list) }
       if (!('blind' %in% na)) { par.list <- c(list(blind=TRUE), par.list) }    
@@ -109,10 +100,8 @@ norm_data <- function(data, assay.na=NULL, norm.fun='CNF', par.list=NULL, log2.t
       # Apply A 'Regularized Log' Transformation. 
       rld <- do.call(DESeq2::rlog, c(list(object=dds), par.list))
       expr <- assay(rld) 
-      if (log2.trans==FALSE) expr <- 2^expr  
-
+      if (log2.trans==FALSE) expr <- 2^expr
     }
-
   } else if (min(expr)<0 | !all(round(expr)==expr)) stop('Nornalization only applies to data matrix of all non-negative integers! \n')
   if (log2.trans == FALSE) expr <- round(expr)
   if (is(data, 'data.frame')|is(data, 'matrix')|is(data, 'DFrame')|is(data, 'dgCMatrix')) { return(cbind(expr, ann)) } else if (is(data, 'SummarizedExperiment') | is(data, 'SingleCellExperiment')) { assays(data)[[assay.na]] <- expr; return(data) }
