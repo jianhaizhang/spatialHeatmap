@@ -291,7 +291,7 @@ data_server <- function(id, sch, lis.url, ids, upl.mod.lis, deg.mod.lis=NULL, sc
     }
     if (!lgc.as & 'log2' %in% log) { 
       showNotification(HTML('Spatial Heatmap -> Data Table -> Settings: <br> exponent transformation is skipped, since the input assay data in this step are integers.'), duration=2, closeButton = TRUE) 
-     message('Done!'); return(dat.nor)
+      message('Done!'); return(dat.nor)
     }
     withProgress(message="Log/exponent transformation: ", value = 0, {
       incProgress(0.2, detail="please wait ...")
@@ -303,7 +303,7 @@ data_server <- function(id, sch, lis.url, ids, upl.mod.lis, deg.mod.lis=NULL, sc
         }
         if (min(assay)==0) assay <- assay +1
         assay(dat.nor) <- log2(assay)
-      } else if ('exp2' %in% log) { assay(dat.nor) <- 2^assay }
+      } else if ('exp2' %in% log) { assay(dat.nor) <- round(2^assay, 0) }
       incProgress(0.2, detail="...")
       message('Done!'); return(dat.nor)
     })
@@ -393,18 +393,23 @@ data_server <- function(id, sch, lis.url, ids, upl.mod.lis, deg.mod.lis=NULL, sc
   })
 
    ref.par <- reactiveValues()
-   observeEvent(list(input$ref, se.thr()), {
-     pars <- list(input$ref, se.thr())
+   observeEvent(list(input$ref, input$refLog, se.thr()), {
+     pars <- list(input$ref, input$refLog, se.thr())
      if (!check_obj(pars)) return(); ref.par$pars <- pars
    })
    se.ref <- eventReactive(list(ref.par$pars, uplref()), {
      message('SHM: relative expressions ... ')
-     ref <- input$ref; se.thr <- se.thr(); datIn <- input$datIn
-     if (!check_obj(list(ref, se.thr, datIn))) return()
+     ref <- input$ref; refLog <- input$refLog
+     se.thr <- se.thr(); datIn <- input$datIn
+     normDat <- input$normDat; lg <- input$log
+     if (!check_obj(list(ref, refLog, se.thr, datIn, normDat, lg))) return()
      uplref <- uplref()
      if (check_obj(uplref)) colData(se.thr)[, 'reference'] <- uplref[, 1] 
      if (!'Yes' %in% ref | !'reference' %in% colnames(colData(se.thr)) | !'all' %in% datIn) return(se.thr)
-     se <- data_ref(se.thr)
+     asy <- assay(se.thr); cnt.asy <- all(asy==round(asy))
+     if (!'None' %in% normDat & !cnt.asy) assay(se.thr) <- 2^asy 
+     if ('None' %in% normDat & !cnt.asy & 'No' %in% lg) showNotification(HTML('Warning: ensure the input data for computing reletive expression values are non-log-transformed!'), duration=2, closeButton = TRUE) 
+     se <- data_ref(se.thr, input.log=FALSE, output.log='Yes' %in% refLog)
      lgc.ref <- !is(se, 'character') & 'Yes' %in% ref
      if (!lgc.ref) { msg <- se; show_mod(lgc.ref, msg)
      return() }  
@@ -427,7 +432,7 @@ content=function(file=paste0(tmp.dir, '/mouse_organ_reference.txt')){
     pars <- list(scl, ref, se.thr, se.ref)
     scl.par$pars <- pars
   })
-   se.scl <- eventReactive(list(scl.par$pars), {
+   se.scl <- eventReactive(list(scl.par$pars), {# Only used for SHMs.
      message('SHM: scaling ... ')
      scl <- input$scl; ref <- input$ref
      run <- input$run; se.thr <- se.thr(); se.ref <- se.ref()
