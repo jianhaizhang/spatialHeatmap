@@ -45,7 +45,8 @@
 #' svg.path2.2 <- system.file('extdata/shinyApp/data/arabidopsis.thaliana_organ_shm2.svg', 
 #' package='spatialHeatmap')
 #' # Save the file paths in a list with name slots of "name", "display", "data", and "svg".
-#' lis.dat2 <- list(name='growthStage', display='Multiple aSVGs (SHM)',data=data.path2, svg=c(svg.path2.1, svg.path2.2))
+#' lis.dat2 <- list(name='growthStage', display='Multiple aSVGs (SHM)',data=data.path2, 
+#' svg=c(svg.path2.1, svg.path2.2))
 #'
 #' # Paths of one data matrix with combined variables and one aSVG.
 #' data.path.vars <- system.file('extdata/shinyApp/data/mus_brain_vars_se_shiny.rds', 
@@ -53,7 +54,8 @@
 #' svg.path.vars <- system.file('extdata/shinyApp/data/mus_musculus.brain.svg', 
 #' package='spatialHeatmap')
 #' # Save the file paths in a list with name slots of "name", "display", "data", and "svg".
-#' lis.dat.vars <- list(name='multiVariables', display='Multiple variables (SHM)', data=data.path.vars, svg=svg.path.vars)
+#' lis.dat.vars <- list(name='multiVariables', display='Multiple variables (SHM)', 
+#' data=data.path.vars, svg=svg.path.vars)
 #'
 #' # Paths of one data matrix and one aSVGs for creating downloadable example data sets.
 #' data.path.dld1 <- system.file('extdata/shinyApp/data/expr_mouse.txt', 
@@ -97,7 +99,7 @@
 
 #' @references
 #' Jeremy Stephens, Kirill Simonov, Yihui Xie, Zhuoer Dong, Hadley Wickham, Jeffrey Horner, reikoch, Will Beasley, Brendan O'Connor and Gregory R. Warnes (2020). yaml: Methods to Convert R Data to YAML and Back. R package version 2.2.1. https://CRAN.R-project.org/package=yaml
-#' Winston Chang, Joe Cheng, JJ Allaire, Yihui Xie and Jonathan McPherson (2017). shiny: Web Application Framework for R. R package version 1.0.3. https://CRAN.R-project.org/package=shiny 
+#' \cr Winston Chang, Joe Cheng, JJ Allaire, Yihui Xie and Jonathan McPherson (2017). shiny: Web Application Framework for R. R package version 1.0.3. https://CRAN.R-project.org/package=shiny 
 
 #' @export
 #' @importFrom grDevices colors
