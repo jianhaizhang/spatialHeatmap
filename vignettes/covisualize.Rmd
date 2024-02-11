@@ -58,8 +58,7 @@ library(knitr); opts_chunk$set(message=FALSE, warning=FALSE)
 
 The primary utility of the _spatialHeatmap_ package is the generation of
 spatial heatmaps (SHMs) for visualizing cell-, tissue- and organ-specific
-abundance patterns of biological molecules (_e.g._ RNAs) in spatial anatomical images
-[@shm]. This is useful for identifying biomolecules with spatially enriched/depleted 
+abundance patterns of biological molecules (_e.g._ RNAs) in spatial anatomical images [@shm]. This is useful for identifying biomolecules with spatially enriched/depleted 
 abundance patterns as well as clusters and/or network modules composed of
 biomolecules sharing similar abundance patterns such as similar gene expression
 patterns. These functionalities are introduced in the [main

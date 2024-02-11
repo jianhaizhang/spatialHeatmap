@@ -14,7 +14,8 @@
 
 #' library(org.Hs.eg.db)
 #' # Human Ensembl gene ids are rownames in the data frame.
-#' data <- data.frame(tissue1=10:12, tissue2=20:22, row.names=c('ENSG00000006047', 'ENSG00000268433', 'ENSG00000268555'))
+#' data <- data.frame(tissue1=10:12, tissue2=20:22, row.names=c('ENSG00000006047', 
+#' 'ENSG00000268433', 'ENSG00000268555'))
 #' data <- cvt_id(db='org.Hs.eg.db', data=data, from.id='ENSEMBL', to.id='SYMBOL', desc=TRUE)
 #' data
 

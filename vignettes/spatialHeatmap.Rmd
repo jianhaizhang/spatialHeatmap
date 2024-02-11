@@ -64,7 +64,7 @@ The _spatialHeatmap_ package provides functionalities for visualizing cell-,
 tissue- and organ-specific data of biological assays by coloring the
 corresponding spatial features defined in anatomical images according to
 quantitative abundance levels of measured biomolecules, such as transcripts, proteins
-or metabolites. A color key is used to represent the quantitative assay values
+or metabolites [@shm]. A color key is used to represent the quantitative assay values
 and can be customized by the user. This core functionality of the package is called
 a _spatial heatmap_ (SHM) plot. Additional important functionalities include
 _Spatial Enrichment_ (SE), _Spatial Co-Expression_ (SCE), and _Single Cell to
