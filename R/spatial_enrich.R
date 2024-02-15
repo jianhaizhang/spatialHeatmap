@@ -219,12 +219,14 @@ spatial_enrich <- function(data, method=c('edgeR'), norm='TMM', m.array=FALSE, l
 #' @rdname SpatialEnrichment
 #' @param res Enrichment results returned by \code{spatial_enrich}.
 #' @param query A spatial feature for query.
+#' @param other Logical (default is `FALSE`). If `TRUE` other genes that are neither enriched or depleted will also be returned.
  
 #' @export
 #' @importFrom SummarizedExperiment rowData rowData<-
 
-query_enrich <- function(res, query) {
+query_enrich <- function(res, query, other=FALSE) {
   up <- res$result[[query]]$up; dn <- res$result[[query]]$down
+  oth <- res$result[[query]]$other
   if (length(intersect(rownames(up), rownames(dn)))>0) {
     msg <- 'Same biomolecules detected as enriched and depleted! Please reduce the outliers.'
     warning(msg); return(msg)
@@ -234,6 +236,7 @@ query_enrich <- function(res, query) {
     msg <- 'No enriched/depleted results are detected!'
     warning(msg); return(msg)
   }
+  if (TRUE %in% other) df.deg <- DataFrame(rbind(df.deg, oth))
   df.deg$total <- as.numeric(df.deg$total)
   na.deg <- rownames(df.deg)
   data <- res$data; data <- data[na.deg, ]

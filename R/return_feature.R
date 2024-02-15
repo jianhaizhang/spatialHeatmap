@@ -91,7 +91,7 @@ return_feature <- function(feature, species, keywords.any=TRUE, remote=NULL, dir
       cat('Appending descriptions... \n')
       df$description <- NA; for (i in seq_len(nrow(df))) {
         ont <- df[i, 'id']; abbr <- tolower(sub('_.*', '', ont))
-        trm <- tryCatch({ rols::term(abbr, ont) }, error=function(e) { return(NA) })
+        trm <- tryCatch({ rols::Term(abbr, ont) }, error=function(e) { return(NA) })
         if (is(trm, 'Term')) { des <- rols::termDesc(trm); if (!is.null(des)) df[i, 'description'] <- rols::termDesc(trm) }
       }
     }; return(df)

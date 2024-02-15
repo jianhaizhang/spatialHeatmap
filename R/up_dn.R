@@ -18,7 +18,7 @@
 #' H. Wickham. ggplot2: Elegant Graphics for Data Analysis. Springer-Verlag New York, 2016.
 
 up_dn <- function(sam.all, df.all, log.fc, fdr, log.na, fdr.na, outliers=0, method=NULL) {
-  # save(sam.all, df.all, log.fc, fdr, log.na, fdr.na, file='up.dn.arg')
+  # save(sam.all, df.all, log.fc, fdr, log.na, fdr.na, outliers, method, file='up.dn.arg')
   total <- NULL
   lis <- NULL; for (i in sam.all) {
     df.up <- df.up1 <- df.down <- df.down1 <- data.frame()
@@ -53,14 +53,14 @@ up_dn <- function(sam.all, df.all, log.fc, fdr, log.na, fdr.na, outliers=0, meth
       up.idx.all <- df.up.idx1; dn.idx.all <- df.down.idx1
     }
     
-    # Subset ups.
+    # Subset ups. Satisfies both logFC and FDR.
     rsum.up <- rowSums(up.idx.all==2)
     w.up <- which(rsum.up >= ncol(up.idx.all)-outliers)
     up <- df.all[w.up, c(w.fc, w.fc1, w.fdr, w.fdr1), drop=FALSE]
     # Include total references that ups are relative to.
     up <- cbind(total=rsum.up[w.up], up)
 
-    # Subset dns.
+    # Subset dns. Satisfies both logFC and FDR.
     rsum.dn <- rowSums(dn.idx.all==2)       
     w.dn <- which(rsum.dn >= ncol(dn.idx.all)-outliers)
     dn <- df.all[w.dn, c(w.fc, w.fc1, w.fdr, w.fdr1), drop=FALSE]
@@ -88,8 +88,21 @@ up_dn <- function(sam.all, df.all, log.fc, fdr, log.na, fdr.na, outliers=0, meth
       dn <- dn[order(dn[, 'FDR_mean']), c(cna.sel.dn, setdiff(cna.dn, cna.sel.dn))]
       dn <- rbind(subset(dn, total==(len-1)), subset(dn, total!=(len-1)))
     }; cat(i, 'up:', nrow(up), ';', 'down:', nrow(dn), '\n')
+    
+    # None DEGs. Useful for plotting volcano plots.
+    id.o <- setdiff(rownames(df.all), c(rownames(up), rownames(dn)))
+    if (length(id.o)>0) {
+      other <- df.all[id.o, c(w.fc, w.fc1, w.fdr, w.fdr1), drop=FALSE]
+      other <- as.data.frame(other); cna.o <- colnames(other)
+      fdr.o <- other[, grep(paste0('_', fdr.na, '$'), cna.o), drop=FALSE]
+      other <- other[, order(cna.o)]
+      other <- cbind(total=0, FDR_mean=10^rowMeans(log10(fdr.o)), type='none', method=method, other)
+      cna.o <- colnames(other) # Necessary.
+      cna.sel.o <- c('type', 'total', 'method', 'FDR_mean') 
+      other <- other[order(other[, 'FDR_mean']), c(cna.sel.dn, setdiff(cna.dn, cna.sel.dn))]
+    } else other <- data.frame()
 
-    lis0 <- list(up=up, down=dn)
+    lis0 <- list(up=up, down=dn, other=other)
     # names(lis0) <- paste0(i, c('_up', '_down'))
     lis1 <- list(lis0); names(lis1) <- i; lis <- c(lis, lis1)
    }; return(lis)
