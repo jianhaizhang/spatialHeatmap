@@ -31,7 +31,7 @@ spatial_enrich(
   log2.trans = TRUE
 )
 
-query_enrich(res, query)
+query_enrich(res, query, other = FALSE)
 
 ovl_enrich(
   res,
@@ -107,6 +107,8 @@ graph_line(
 \item{res}{Enrichment results returned by \code{spatial_enrich}.}
 
 \item{query}{A spatial feature for query.}
+
+\item{other}{Logical (default is `FALSE`). If `TRUE` other genes that are neither enriched or depleted will also be returned.}
 
 \item{type}{One of \code{up} (default) or \code{down}, which refers to up- or down-regulated biomolecules.}
 
