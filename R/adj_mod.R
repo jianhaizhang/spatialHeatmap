@@ -36,13 +36,15 @@
 #' Love, Michael I., Wolfgang Huber, and Simon Anders. 2014. "Moderated Estimation of Fold Change and Dispersion for RNA-Seq Data with DESeq2." Genome Biology 15 (12): 550. doi:10.1186/s13059-014-0550-8
 #' Cardoso-Moreira, Margarida, Jean Halbert, Delphine Valloton, Britta Velten, Chunyan Chen, Yi Shao, Angélica Liechti, et al. 2019. “Gene Expression Across Mammalian Organ Development.” Nature 571 (7766): 505–9
 #' Ravasz, E, A L Somera, D A Mongru, Z N Oltvai, and A L Barabási. 2002. “Hierarchical Organization of Modularity in Metabolic Networks.” Science 297 (5586): 1551–5. 
+#' Dragulescu A, Arendt C (2020). _xlsx: Read, Write, Format Excel 2007 and Excel 97/2000/XP/2003 Files_.
 
 #' @export
 #' @importFrom stats quantile dist as.dist
 #' @importFrom SummarizedExperiment SummarizedExperiment
 
-
-adj_mod <- function(data, assay.na=NULL, type='signed', power=if (type=='distance') 1 else 6, arg.adj=list(), TOMType='unsigned', arg.tom=list(), method='complete', ds=0:3, minSize=15, arg.cut=list(), dir=NULL) {
+adj_mod <- function(data, assay.na=NULL, type='signed', power=if (type=='distance') 1 else 6, 
+                    arg.adj=list(), TOMType='unsigned', arg.tom=list(), method='complete', ds=0:3, 
+                    minSize=15, arg.cut=list(), dir=NULL) {
   pkg <- check_pkg('WGCNA'); if (is(pkg, 'character')) stop(pkg)
   pkg <- check_pkg('flashClust'); if (is(pkg, 'character')) stop(pkg)
   pkg <- check_pkg('dynamicTreeCut'); if (is(pkg, 'character')) stop(pkg)
@@ -80,19 +82,16 @@ adj_mod <- function(data, assay.na=NULL, type='signed', power=if (type=='distanc
     arg.cut <- c(list(minClusterSize=min, deepSplit=d), arg.cut1)
     tree <- do.call(dynamicTreeCut::cutreeHybrid, arg.cut)
     mcol <- cbind(mcol, tree$labels); arg.cut <- list()
-
   }; colnames(mcol) <- as.character(ds); rownames(mcol) <- colnames(adj) <- rownames(adj) <- colnames(data)
-  if (!is.null(dir)) {  
+  if (!is.null(dir)) {
+    pkg <- check_pkg('xlsx'); if (is(pkg, 'character')) stop(pkg)
     dir <- normalizePath(dir, winslash="/", mustWork=FALSE)
     if (!dir.exists(dir)) dir.create(dir)
     write.table(adj, file.path(dir, "adj.txt"), sep="\t", row.names=TRUE, col.names=TRUE)
-    write.table(mcol, file.path(dir, "mod.txt"), sep="\t", row.names=TRUE, col.names=TRUE) 
+    xlsx::write.xlsx(adj, file.path(dir, "adj.xlsx"))
+    write.table(mcol, file.path(dir, "mod.txt"), sep="\t", row.names=TRUE, col.names=TRUE)
+    xlsx::write.xlsx(mcol, file.path(dir, "mod.xlsx"))
   }; return(list(adj=adj, mod=mcol))
 
 }
-
-
-
-
-
 

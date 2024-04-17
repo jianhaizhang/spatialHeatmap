@@ -1157,7 +1157,7 @@ are also indicated by colors (Figure \@ref(fig:inter)). The gene of interest ass
 under `ID` is labeled in the plot with the suffix tag: `*_target`.  
 
 ```{r inter, eval=TRUE, echo=TRUE, warnings=FALSE, fig.cap=("Static network. Node size denotes gene connectivity while edge thickness stands for co-expression similarity.") }
-network(ID="Kif5c", data=sub.mat, adj.mod=adj.mod, adj.min=0, vertex.label.cex=1.2, vertex.cex=3, static=TRUE)
+network(ID="Kif5c", data=sub.mat, adj.mod=adj.mod, adj.min=0, vertex.label.cex=1.2, vertex.cex=3, edge.cex=3, mar.key=c(3, 10, 1, 10), static=TRUE)
 ```   
 
 <a name="inter_net"></a>
