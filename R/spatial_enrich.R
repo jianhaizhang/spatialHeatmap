@@ -156,14 +156,14 @@ sf_var <- function(data, feature, ft.sel=NULL, variable=NULL, var.sel=NULL, com.
   if (! com.by %in% c('ft', 'var', 'ft.var')) stop('"com.by" is one of "ft", "var", or "ft.var"!')
   if (com.by=='ft') {
     cdat$com.by <- cdat[, feature]
-    cdat <- cdat[, c('com.by', feature, variable, setdiff(cdat.na, c(feature, variable)))]
+    cdat <- cbind(cdat[, c('com.by', feature, variable)], feature=cdat[, feature], variable=cdat[, variable], cdat[, setdiff(cdat.na, c(feature, variable)), drop=FALSE])
   } else if (com.by=='var') {
     cdat$com.by <- cdat[, variable]
-    cdat <- cdat[, c('com.by', variable, feature, setdiff(cdat.na, c(feature, variable)))]
+    cdat <- cbind(cdat[, c('com.by', variable, feature), drop=FALSE], variable=cdat[, variable], feature=cdat[, feature], cdat[,  setdiff(cdat.na, c(feature, variable)), drop=FALSE])
   } else if (com.by=='ft.var') { # Combine features and variables.
     ft.fct <- paste0(cdat[, feature], '__', cdat[, variable])
     cdat$com.by <- ft.fct
-    cdat <- cdat[, c('com.by', feature, variable, setdiff(cdat.na, c(feature, variable)))]
+    cdat <- cbind(cdat[, c('com.by', feature, variable)], feature=cdat[, feature], variable=cdat[, variable], cdat[, setdiff(cdat.na, c(feature, variable)), drop=FALSE])
   }
   colData(data) <- cdat
   if (!is.null(variable)) colnames(data) <- paste0(cdat[, feature], '__', cdat[, variable]) else colnames(data) <- cdat[, feature]
@@ -176,43 +176,45 @@ sf_var <- function(data, feature, ft.sel=NULL, variable=NULL, var.sel=NULL, com.
 #' @param method One of \code{edgeR}, \code{limma}, and \code{DESeq2}. 
 #' @param norm The normalization method (\code{TMM}, \code{RLE}, \code{upperquartile}, \code{none}) in edgeR. The default is \code{TMM}. Details: https://www.rdocumentation.org/packages/edgeR/versions/3.14.0/topics/calcNormFactors. 
 #' @param m.array Logical. `TRUE` and `FALSE` indicate the input are microarray and count data respectively.  
+#' @param pairwise Logical. If `TRUE`, pairwise comparisons will be performed starting dispersion estimation. If `FALSE` (default), all samples are fitted into a GLM model together, then pairwise comparisons are performed through contrasts. 
 #' @param aggr One of \code{mean} (default) or \code{median}. The method to aggregated replicates in the assay data.  
 #' @param log2.trans Logical. If \code{TRUE} (default), the aggregated data (see \code{aggr}) is transformed to log2-scale and will be further used for plotting SHMs. 
 #' @param p.adjust The method (\code{holm}, \code{hochberg}, \code{hommel}, \code{bonferroni}, \code{BH}, \code{BY}, \code{fdr}, or \code{none}) for adjusting p values in multiple hypothesis testing. The default is \code{BH}.
 #' @param log2.fc The log2-fold change cutoff. The default is 1.
 #' @param fdr The FDR cutoff. The default is 0.05.
-#' @param outliers The number of outliers allowed in the references. If there are too many references, there might be no enriched/depleted biomolecules in the query feature. To avoid this, set a certain number of outliers.  
+#' @param outliers The number of outliers allowed in the references. If there are too many references, there might be no enriched/depleted biomolecules in the query feature. To avoid this, set a certain number of outliers. 
+#' @param verbose Logical. If `TRUE` (default), intermmediate messages will be printed. 
 
 #' @export
 #' @importFrom SummarizedExperiment colData
  
-spatial_enrich <- function(data, method=c('edgeR'), norm='TMM', m.array=FALSE, log2.fc=1, p.adjust='BH', fdr=0.05, outliers=0, aggr='mean', log2.trans=TRUE) {
+spatial_enrich <- function(data, method=c('edgeR'), norm='TMM', m.array=FALSE, pairwise=FALSE, log2.fc=1, p.adjust='BH', fdr=0.05, outliers=0, aggr='mean', log2.trans=TRUE, verbose=TRUE) {
   #save(data, method, norm, m.array, log2.fc, p.adjust, fdr, outliers, aggr, log2.trans, file='spatial.enrich.arg')
   if (is(data, 'data.frame')|is(data, 'matrix')|is(data, 'dgCMatrix')|is(data, 'DataFrame')) {
     data <- SummarizedExperiment(assays=list(data=data))
   }
   edg <- dsq <- lim <- dis <- NULL
-  if ('edgeR' %in% method) { cat('edgeR ... \n')
-    edg <- edgeR(data, method.norm=norm, com.factor='com.by', method.adjust=p.adjust, return.all=FALSE, log2.fc=log2.fc, fdr=fdr, outliers=outliers)
-    cat('Done! \n')
+  if ('edgeR' %in% method) { if (verbose==TRUE) message('edgeR ...')
+    edg <- edgeR(data, method.norm=norm, com.factor='com.by', pairwise=pairwise, method.adjust=p.adjust, return.all=FALSE, log2.fc=log2.fc, fdr=fdr, outliers=outliers, verbose=verbose)
+    if (verbose==TRUE) message('Done!')
   }
-  if ('limma' %in% method) { cat('limma ... \n')
-    lim <- limma(data, m.array=m.array, method.norm=norm, com.factor='com.by', method.adjust=p.adjust, return.all=FALSE, log2.fc=log2.fc, fdr=fdr, outliers=outliers)
-    cat('Done! \n') 
+  if ('limma' %in% method) { if (verbose==TRUE) message('limma ...')
+    lim <- limma(data, m.array=m.array, method.norm=norm, com.factor='com.by', pairwise=pairwise, method.adjust=p.adjust, return.all=FALSE, log2.fc=log2.fc, fdr=fdr, outliers=outliers, verbose=verbose)
+    if (verbose==TRUE) message('Done!')
   }
-  if ('DESeq2' %in% method) { cat('DESeq2 ... \n')
-    dsq <- deseq2(data, com.factor='com.by', method.adjust=p.adjust, return.all=FALSE, log2.fc=log2.fc, fdr=fdr, outliers=outliers)
-    cat('Done! \n')
+  if ('DESeq2' %in% method) { if (verbose==TRUE) message('DESeq2 ...')
+    dsq <- deseq2(data, com.factor='com.by', pairwise=pairwise, method.adjust=p.adjust, return.all=FALSE, log2.fc=log2.fc, fdr=fdr, outliers=outliers, verbose=verbose)
+    if (verbose==TRUE) message('Done!') 
   }
-  if ('distinct' %in% method) { cat('distinct ... \n')
+  if ('distinct' %in% method) { if (verbose==TRUE) message('distinct ...')
     # dis <- distt(data, norm.fun='CNF', par.list=list(method=norm), log2.trans=TRUE, com.factor='com.by', return.all=FALSE, log2.fc=log2.fc, fdr=fdr, outliers=outliers)
-    cat('Done! \n')
+    if (verbose==TRUE) message('Done!') 
   }
   lis <- list(edgeR=edg, limma=lim, DESeq2=dsq, distinct=dis)[c('edgeR', 'limma', 'DESeq2', 'distinct') %in% method]
   names(lis) <- 'result'
   if (m.array==FALSE) dat.nor <- norm_data(data, norm.fun='CNF', par.list=list(method=norm), log2.trans=log2.trans) else if (m.array==TRUE) dat.nor <- data
   dat.aggr <- aggr_rep(dat.nor, sam.factor=NULL, con.factor=NULL, aggr=aggr)
-  lis$data <- dat.aggr; return(lis)
+  lis$data <- dat.aggr; lis$data.rep <- dat.nor; return(lis)
 }
 
 
@@ -220,11 +222,12 @@ spatial_enrich <- function(data, method=c('edgeR'), norm='TMM', m.array=FALSE, l
 #' @param res Enrichment results returned by \code{spatial_enrich}.
 #' @param query A spatial feature for query.
 #' @param other Logical (default is `FALSE`). If `TRUE` other genes that are neither enriched or depleted will also be returned.
- 
+#' @param data.rep Logical. If `TRUE` normalized data before aggregating replicates will be returned. If `FALSE`, normalized data after aggretating replicates will be returned. 
+
 #' @export
 #' @importFrom SummarizedExperiment rowData rowData<-
 
-query_enrich <- function(res, query, other=FALSE) {
+query_enrich <- function(res, query, other=FALSE, data.rep=FALSE) {
   up <- res$result[[query]]$up; dn <- res$result[[query]]$down
   oth <- res$result[[query]]$other
   if (length(intersect(rownames(up), rownames(dn)))>0) {
@@ -239,13 +242,14 @@ query_enrich <- function(res, query, other=FALSE) {
   if (TRUE %in% other) df.deg <- DataFrame(rbind(df.deg, oth))
   df.deg$total <- as.numeric(df.deg$total)
   na.deg <- rownames(df.deg)
-  data <- res$data; data <- data[na.deg, ]
+  data <- res$data; dat.rep <- res$data.rep 
+  data <- data[na.deg, ]; dat.rep <- dat.rep[na.deg, ]
   rdat <- rowData(data)
-  if (nrow(rdat) > 0) rowData(data) <- cbind(df.deg, rdat)
-  if (nrow(rdat) == 0) rowData(data) <- df.deg
+  if (nrow(rdat) > 0) rdat <- cbind(df.deg, rdat) else rdat <- df.deg
+  rowData(data) <- rowData(dat.rep) <- rdat
   cat('Done! \n')
   # The "feature__factor" columns in df.deg will be extacted in 'spatial_hm'.
-  return(data)
+  if (data.rep==FALSE) return(data) else return(dat.rep)
 }
 
 

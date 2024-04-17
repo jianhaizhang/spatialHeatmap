@@ -5,7 +5,8 @@
 \title{Network graphs}
 \usage{
 network(
-  ID,
+  ID = NULL,
+  mod.lab = NULL,
   data,
   assay.na = NULL,
   adj.mod,
@@ -17,17 +18,22 @@ network(
   edge.col = c("yellow", "blue"),
   vertex.label.cex = 1,
   vertex.cex = 3,
-  edge.cex = 10,
+  edge.cex = 3,
   layout = "circle",
-  color.key.lab.size = 1.5,
-  color.key.text.size = 1,
+  mar.net = c(2, 1, 1, 1),
+  mar.key = c(3, 10, 1, 10),
+  key.lab.size = 1,
+  key.text.size = 1,
   main = NULL,
   static = TRUE,
+  dir = NULL,
   ...
 )
 }
 \arguments{
-\item{ID}{A biomolecule of interest.}
+\item{ID}{A biomolecule of interest. The network module containing this ID will be visualized.}
+
+\item{mod.lab}{A module label (e.g. 1, 2, 3), the module of which will be visualized.}
 
 \item{data}{The subsetted data matrix returned by the function \code{\link{submatrix}}.}
 
@@ -55,11 +61,15 @@ network(
 
 \item{layout}{The layout of the network in static images, either `circle` (default) or `fr`. The `fr` stands for force-directed layout algorithm developed by Fruchterman and Reingold.}
 
-\item{color.key.lab.size, color.key.text.size}{The size of color key label and text respectively.}
+\item{mar.net, mar.key}{A four-component numeric vector corresponding to bottom, left, top, and right margins of the network, and color keys respectively.}
+
+\item{key.lab.size, key.text.size}{The size of color key label and text respectively.}
 
 \item{main}{The title in the static image. Default is NULL.}
 
 \item{static}{Logical. `TRUE` and `FALSE` return a static and interactive network graphs respectively.}
+
+\item{dir}{The directory to save nodes and edges of the module.}
 
 \item{...}{Other arguments passed to the generic function \code{\link[graphics]{plot.default}}, \emph{e.g.}: \code{asp=1}.}
 }
@@ -171,6 +181,7 @@ Almende B.V., Benoit Thieurmel and Titouan Robert (2018). visNetwork: Network Vi
 Keays, Maria. 2019. ExpressionAtlas: Download Datasets from EMBL-EBI Expression Atlas
 Love, Michael I., Wolfgang Huber, and Simon Anders. 2014. "Moderated Estimation of Fold Change and Dispersion for RNA-Seq Data with DESeq2." Genome Biology 15 (12): 550. doi:10.1186/s13059-014-0550-8
 Cardoso-Moreira, Margarida, Jean Halbert, Delphine Valloton, Britta Velten, Chunyan Chen, Yi Shao, Angélica Liechti, et al. 2019. “Gene Expression Across Mammalian Organ Development.” Nature 571 (7766): 505–9
+Dragulescu A, Arendt C (2020). _xlsx: Read, Write, Format Excel 2007 and Excel 97/2000/XP/2003 Files_. R package version 0.6.5, <https://CRAN.R-project.org/package=xlsx>.
 }
 \author{
 Jianhai Zhang \email{jzhan067@ucr.edu} \cr Dr. Thomas Girke \email{thomas.girke@ucr.edu}

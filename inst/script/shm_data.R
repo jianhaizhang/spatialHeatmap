@@ -123,8 +123,8 @@ idx.m0 <- mod[, '3']==0; rna.mus <- rownames(mod)
 se.fil.mus <- se.fil.mus[c(rna.mus[!idx.m0], rna.mus[idx.m0]), , drop=FALSE]
 
 # Network graphs.
-node.mus <- network(ID='Cav2', data=se.fil.mus, adj.mod=adj.mod.mus, ds='3', adj.min=0.90, vertex.label.cex=0.7, vertex.cex=2, static=TRUE, return.node=TRUE)
-node.mus[1:3, , drop=FALSE]
+nod.lin.mus <- network(ID='Cav2', data=se.fil.mus, adj.mod=adj.mod.mus, ds='3', adj.min=0.90, vertex.label.cex=0.7, vertex.cex=2, static=TRUE, return.node=TRUE)
+nod.lin.mus$node[1:3, ]
 
 # colnames(expr.mus) <- gsub("_", ".", colnames(expr.mus))
 # write.table(assay(se.fil.mus), 'expr_mouse.txt', col.names=TRUE, row.names=TRUE, sep='\t')

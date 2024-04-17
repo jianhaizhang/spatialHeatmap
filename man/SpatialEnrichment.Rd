@@ -23,15 +23,17 @@ spatial_enrich(
   method = c("edgeR"),
   norm = "TMM",
   m.array = FALSE,
+  pairwise = FALSE,
   log2.fc = 1,
   p.adjust = "BH",
   fdr = 0.05,
   outliers = 0,
   aggr = "mean",
-  log2.trans = TRUE
+  log2.trans = TRUE,
+  verbose = TRUE
 )
 
-query_enrich(res, query, other = FALSE)
+query_enrich(res, query, other = FALSE, data.rep = FALSE)
 
 ovl_enrich(
   res,
@@ -92,6 +94,8 @@ graph_line(
 
 \item{m.array}{Logical. `TRUE` and `FALSE` indicate the input are microarray and count data respectively.}
 
+\item{pairwise}{Logical. If `TRUE`, pairwise comparisons will be performed starting dispersion estimation. If `FALSE` (default), all samples are fitted into a GLM model together, then pairwise comparisons are performed through contrasts.}
+
 \item{log2.fc}{The log2-fold change cutoff. The default is 1.}
 
 \item{p.adjust}{The method (\code{holm}, \code{hochberg}, \code{hommel}, \code{bonferroni}, \code{BH}, \code{BY}, \code{fdr}, or \code{none}) for adjusting p values in multiple hypothesis testing. The default is \code{BH}.}
@@ -104,11 +108,15 @@ graph_line(
 
 \item{log2.trans}{Logical. If \code{TRUE} (default), the aggregated data (see \code{aggr}) is transformed to log2-scale and will be further used for plotting SHMs.}
 
+\item{verbose}{Logical. If `TRUE` (default), intermmediate messages will be printed.}
+
 \item{res}{Enrichment results returned by \code{spatial_enrich}.}
 
 \item{query}{A spatial feature for query.}
 
 \item{other}{Logical (default is `FALSE`). If `TRUE` other genes that are neither enriched or depleted will also be returned.}
+
+\item{data.rep}{Logical. If `TRUE` normalized data before aggregating replicates will be returned. If `FALSE`, normalized data after aggretating replicates will be returned.}
 
 \item{type}{One of \code{up} (default) or \code{down}, which refers to up- or down-regulated biomolecules.}
 

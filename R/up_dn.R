@@ -17,10 +17,9 @@
 #' @references 
 #' H. Wickham. ggplot2: Elegant Graphics for Data Analysis. Springer-Verlag New York, 2016.
 
-up_dn <- function(sam.all, df.all, log.fc, fdr, log.na, fdr.na, outliers=0, method=NULL) {
-  # save(sam.all, df.all, log.fc, fdr, log.na, fdr.na, outliers, method, file='up.dn.arg')
-  total <- NULL
-  lis <- NULL; for (i in sam.all) {
+up_dn <- function(sam.all, df.all, log.fc, fdr, log.na, fdr.na, outliers=0, method=NULL, verbose=TRUE) {
+  # save(sam.all, df.all, log.fc, fdr, log.na, fdr.na, outliers, method,  verbose, file='up.dn.arg')
+  total <- NULL; lis <- NULL; for (i in sam.all) {
     df.up <- df.up1 <- df.down <- df.down1 <- data.frame()
     w.fc <- grep(paste0('^', i, '_VS_.*_', log.na , '$'), colnames(df.all))
     w.fdr <- grep(paste0('^', i, '_VS_.*_', fdr.na, '$'), colnames(df.all))
@@ -87,7 +86,8 @@ up_dn <- function(sam.all, df.all, log.fc, fdr, log.na, fdr.na, outliers=0, meth
       cna.sel.dn <- c('type', 'total', 'method', 'FDR_mean') 
       dn <- dn[order(dn[, 'FDR_mean']), c(cna.sel.dn, setdiff(cna.dn, cna.sel.dn))]
       dn <- rbind(subset(dn, total==(len-1)), subset(dn, total!=(len-1)))
-    }; cat(i, 'up:', nrow(up), ';', 'down:', nrow(dn), '\n')
+    }
+    if (verbose==TRUE) message(i, ' up: ', nrow(up), '; ', 'down: ', nrow(dn))
     
     # None DEGs. Useful for plotting volcano plots.
     id.o <- setdiff(rownames(df.all), c(rownames(up), rownames(dn)))
@@ -99,7 +99,7 @@ up_dn <- function(sam.all, df.all, log.fc, fdr, log.na, fdr.na, outliers=0, meth
       other <- cbind(total=0, FDR_mean=10^rowMeans(log10(fdr.o)), type='none', method=method, other)
       cna.o <- colnames(other) # Necessary.
       cna.sel.o <- c('type', 'total', 'method', 'FDR_mean') 
-      other <- other[order(other[, 'FDR_mean']), c(cna.sel.dn, setdiff(cna.dn, cna.sel.dn))]
+      other <- other[order(other[, 'FDR_mean']), c(cna.sel.o, setdiff(cna.o, cna.sel.o))]
     } else other <- data.frame()
 
     lis0 <- list(up=up, down=dn, other=other)
