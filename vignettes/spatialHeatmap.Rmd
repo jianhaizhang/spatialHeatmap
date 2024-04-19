@@ -540,11 +540,11 @@ corresponding gene IDs under the `ID` argument as a character vector. The
 each gene in a single composite plot. To facilitate comparisons among expression
 values across genes and/or conditions, the `lay.shm` parameter can be assigned
 `gene` or `con`, respectively. For instance, in Figure \@ref(fig:mul) the
-SHMs of the genes `'OLFM4` and `LOC440742` are organized
+SHMs of the genes `OLFM4` and `PRSS22` are organized
 by condition in a horizontal view. This functionality is particularly useful when comparing associated genes such as gene families.    
  
 ```{r mul, eval=TRUE, echo=TRUE, warnings=FALSE, fig.wide=TRUE, fig.cap=("SHMs of two genes. The subplots are organized by \"condition\". Only cerebellum and frontal cortex are colored, because they are present in both the aSVG and the expression data."), out.width="100%", results='hide'}
-res.hum <- shm(data=dat.hum, ID=c('OLFM4', 'LOC440742'), lay.shm='con', legend.r=1.5, legend.nrow=3, h=0.6)
+res.hum <- shm(data=dat.hum, ID=c('OLFM4', 'PRSS22'), lay.shm='con', legend.r=1.5, legend.nrow=3, h=0.6)
 ```
 
 In the above example, the normalized expression values of chosen genes 
@@ -568,13 +568,13 @@ The following example saves the interactive HTML and video files under the direc
 Code chunk not evaluated to save time building this vignette.
 -->
 ```{r eval=FALSE, echo=TRUE, warnings=FALSE, results='hide'}
-shm(data=dat.hum, ID=c('OLFM4', 'LOC440742'), lay.shm='con', legend.r=1.5, legend.nrow=3, h=0.6, aspr=2.3, animation.scale=0.7, bar.width=0.1, bar.value.size=4, out.dir=tmp.dir)
+shm(data=dat.hum, ID=c('OLFM4', 'PRSS22'), lay.shm='con', legend.r=1.5, legend.nrow=3, h=0.6, aspr=2.3, animation.scale=0.7, bar.width=0.1, bar.value.size=4, out.dir=tmp.dir)
 ```
 
 The following code saves individual SHMs into the same SVG file `shm_hum.svg` with the color scale and legend plot included.  
 
 ```{r eval=FALSE, echo=TRUE, warnings=FALSE, results='hide'}
-res <- shm(data=dat.hum, ID=c('OLFM4', 'LOC440742'), lay.shm='con', legend.r=1.5, legend.nrow=3, h=0.5, aspr=2.3, animation.scale=0.7, bar.width=0.08, bar.value.size=12)
+res <- shm(data=dat.hum, ID=c('OLFM4', 'PRSS22'), lay.shm='con', legend.r=1.5, legend.nrow=3, h=0.5, aspr=2.3, animation.scale=0.7, bar.width=0.08, bar.value.size=12)
 ggsave(file="./shm_hum.svg", plot=output(res)$spatial_heatmap, width=10, height=8) 
 ```
 
