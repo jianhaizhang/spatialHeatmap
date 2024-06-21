@@ -187,9 +187,20 @@ sf_var <- function(data, feature, ft.sel=NULL, variable=NULL, var.sel=NULL, com.
 
 #' @export
 #' @importFrom SummarizedExperiment colData
- 
+
 spatial_enrich <- function(data, method=c('edgeR'), norm='TMM', m.array=FALSE, pairwise=FALSE, log2.fc=1, p.adjust='BH', fdr=0.05, outliers=0, aggr='mean', log2.trans=TRUE, verbose=TRUE) {
-  #save(data, method, norm, m.array, log2.fc, p.adjust, fdr, outliers, aggr, log2.trans, file='spatial.enrich.arg')
+  # save(data, method, norm, m.array, log2.fc, p.adjust, fdr, outliers, aggr, log2.trans, file='spatial.enrich.arg')
+  if (pairwise==TRUE) { # Check pairing.
+    cdat <- colData(data); fts <- data$feature; vars <- data$variable
+    fts.u <- unique(fts); vars.u <- unique(vars)
+    if (all(data$com.by==vars)) {
+      l <- length(unique(unlist(lapply(vars.u, function(i) dim(subset(cdat, variable==i))[1]))))
+      if (l>1) return(wng('Please ensure features are paired between variables!'))
+    } else if (all(data$com.by==vars)) {
+      l <- length(unique(unlist(lapply(fts.u, function(i) dim(subset(cdat, feature==i))[1]))))
+      if (l>1) return(wng('Please ensure variables are paired between features!'))
+    }
+  }
   if (is(data, 'data.frame')|is(data, 'matrix')|is(data, 'dgCMatrix')|is(data, 'DataFrame')) {
     data <- SummarizedExperiment(assays=list(data=data))
   }

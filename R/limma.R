@@ -125,9 +125,11 @@ limma <- function(se, m.array=FALSE, pairwise=FALSE, method.norm='TMM', com.fact
     if (identical(unique(cdat[, com.factor]), unique(cdat[, 'variable']))) {
       ft <- cdat$feature; vari <- cdat$variable 
     }
-    com <- combn(x=unique(vari), m=2) 
+    com <- combn(x=sort(unique(vari)), m=2) 
     for (i in seq_len(ncol(com))) { 
       w0 <- vari %in% com[, i]; vari0 <- vari[w0]; ft0 <- ft[w0]
+      vari0 <- factor(vari0, levels=c(com[1, i], com[2, i]))
+      ft0 <- factor(ft0, levels=unique(ft0))
       y0 <- y[, w0]; design <- model.matrix(~ft0+vari0) 
       colnames(design) <- sub('^ft0|^vari0', '', colnames(design)) 
       rownames(design) <- rownames(cdat)[w0] 
@@ -143,8 +145,5 @@ limma <- function(se, m.array=FALSE, pairwise=FALSE, method.norm='TMM', com.fact
   }; df.all <- df.all[, -1]; if (return.all==TRUE) return(df.all)
   # Up and down DEGs.
   UD <- up_dn(sam.all=sam.all, df.all=df.all, log.fc=abs(log2.fc), fdr=fdr, log.na='logFC', fdr.na='adj.P.Val', method=ifelse(m.array==TRUE, 'limma', 'limma.voom'), outliers=outliers); return(UD)
-
+  
 }
-
-
-
