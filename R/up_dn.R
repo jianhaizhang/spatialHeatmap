@@ -33,7 +33,7 @@ up_dn <- function(sam.all, df.all, log.fc, fdr, log.na, fdr.na, outliers=0, meth
       # Down DEGs
       df.down.idx <- (df.fc <= -abs(log.fc)) + (df.fdr <= fdr)
     } # "else if" runs only if the preceeding "if" is not true (exclusive relationship), so should not be used here.
-
+    
     if (length(w.fc1)>0) {
       df.fc <- df.all[, w.fc1, drop=FALSE]
       df.fdr <- df.all[, w.fdr1, drop=FALSE]
@@ -42,7 +42,7 @@ up_dn <- function(sam.all, df.all, log.fc, fdr, log.na, fdr.na, outliers=0, meth
       # Down DEGs 
       df.down.idx1 <- (df.fc >= abs(log.fc)) + (df.fdr <= fdr)
     }
-
+    
     if (length(w.fc)>0 & length(w.fc1)>0) {
       up.idx.all <- cbind(df.up.idx, df.up.idx1)
       dn.idx.all <- cbind(df.down.idx, df.down.idx1)
@@ -58,7 +58,7 @@ up_dn <- function(sam.all, df.all, log.fc, fdr, log.na, fdr.na, outliers=0, meth
     up <- df.all[w.up, c(w.fc, w.fc1, w.fdr, w.fdr1), drop=FALSE]
     # Include total references that ups are relative to.
     up <- cbind(total=rsum.up[w.up], up)
-
+    
     # Subset dns. Satisfies both logFC and FDR.
     rsum.dn <- rowSums(dn.idx.all==2)       
     w.dn <- which(rsum.dn >= ncol(dn.idx.all)-outliers)
@@ -76,7 +76,7 @@ up_dn <- function(sam.all, df.all, log.fc, fdr, log.na, fdr.na, outliers=0, meth
       up <- up[order(up[, 'FDR_mean']), c(cna.sel.up, setdiff(cna.up, cna.sel.up))]
       up <- rbind(subset(up, total==(len-1)), subset(up, total!=(len-1)))
     }
-
+    
     if (nrow(dn)==0) dn <- data.frame() else {
       dn <- as.data.frame(dn); cna.dn <- colnames(dn)
       fdr.dn <- dn[, grep(paste0('_', fdr.na, '$'), cna.dn), drop=FALSE]
@@ -101,9 +101,9 @@ up_dn <- function(sam.all, df.all, log.fc, fdr, log.na, fdr.na, outliers=0, meth
       cna.sel.o <- c('type', 'total', 'method', 'FDR_mean') 
       other <- other[order(other[, 'FDR_mean']), c(cna.sel.o, setdiff(cna.o, cna.sel.o))]
     } else other <- data.frame()
-
+    
     lis0 <- list(up=up, down=dn, other=other)
     # names(lis0) <- paste0(i, c('_up', '_down'))
     lis1 <- list(lis0); names(lis1) <- i; lis <- c(lis, lis1)
-   }; return(lis)
+  }; return(lis)
 }

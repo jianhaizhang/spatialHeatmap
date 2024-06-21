@@ -91,9 +91,9 @@ edgeR <- function(se, method.norm='TMM', com.factor, pairwise=FALSE, method.adju
   if (verbose==TRUE) message('Normalizing ...') # norm.factors are used in glmFit.
   # To store normalized counts in 'se' and set method.norm='none' is not right, since the 'norm.factors' are essentially used but they are 1 if method.norm='none'.
   y <- calcNormFactors(y, method=method.norm) # Normalized together.
-
+  
   df.all <- data.frame(rm=rep(NA, nrow(df.cnt)))
-  if (pairwise==FALSE) { # Fit all samples tegother.
+  if (pairwise==FALSE) { # Fit all samples together.
     fct <- factor(colData(se)[, com.factor])
     design <- model.matrix(~0+fct)
     colnames(design) <- levels(fct)
@@ -121,9 +121,13 @@ edgeR <- function(se, method.norm='TMM', com.factor, pairwise=FALSE, method.adju
     if (identical(unique(cdat[, com.factor]), unique(cdat[, 'feature'])))  { vari <- cdat$feature; ft <- cdat$variable } 
     # Compare by variable. 
     if (identical(unique(cdat[, com.factor]), unique(cdat[, 'variable']))) { ft <- cdat$feature; vari <- cdat$variable } 
-    com <- combn(x=unique(vari), m=2)
-    for (i in seq_len(ncol(com))) { 
+    com <- combn(x=sort(unique(vari)), m=2)
+    for (i in seq_len(ncol(com))) {
       w0 <- vari %in% com[, i]; vari0 <- vari[w0]; ft0 <- ft[w0]
+      # Regardless of the levels in features and variables, the pairing between features and variables in the resulting design matrix is not affected.
+      # Levels in the feature (~ft0) affects which is in intercept (the first in the levels) while in the variable(vari0) affect which is the baseline (the first in the levels) to compare against.
+      ft0 <- factor(ft0, levels=unique(ft0))
+      vari0 <- factor(vari0, levels=c(com[1, i], com[2, i]))
       design <- model.matrix(~ft0+vari0)
       colnames(design) <- sub('^ft0|^vari0', '', colnames(design))
       rownames(design) <- rownames(cdat)[w0]
@@ -136,7 +140,7 @@ edgeR <- function(se, method.norm='TMM', com.factor, pairwise=FALSE, method.adju
     }; sam.all <- unique(vari) 
   }; df.all <- df.all[, -1]; if (return.all==TRUE) return(df.all)
   UD <- up_dn(sam.all=sam.all, df.all=df.all, log.fc=abs(log2.fc), fdr=fdr, log.na='logFC', fdr.na='FDR', method='edgeR', outliers=outliers, verbose=verbose); return(UD)
-
+  
 }
 
 

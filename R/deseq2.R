@@ -85,7 +85,7 @@ deseq2 <- function(se, com.factor, method.adjust='BH', return.all=FALSE, log2.fc
   fct <- cdat[, com.factor] <- as.factor(cdat[, com.factor])
   # Change the column name of target comparison elements to a uniform name, since user-provided names are different.   
   colnames(cdat)[colnames(cdat)==com.factor] <- 'Factor'
-
+  
   com <- combn(x=levels(fct), m=2)
   df.all <- data.frame(rm=rep(NA, nrow(expr)))
   if (pairwise==FALSE) { 
@@ -93,10 +93,10 @@ deseq2 <- function(se, com.factor, method.adjust='BH', return.all=FALSE, log2.fc
     dds <- DESeq2::DESeqDataSetFromMatrix(countData=expr, colData=cdat, design=~Factor) # "design" does not impact "rlog" and "varianceStabilizingTransformation". Rownames of colData do not need to be identical with countData.
     dds <- DESeq2::DESeq(dds)
     for (i in seq_len(ncol(com))) {
-    contr <- c('Factor', com[2, i], com[1, i])
-    if (verbose==TRUE) message(contr[2], '-', contr[3])
-    df0 <- as.data.frame(DESeq2::results(object=dds, contrast=contr, pAdjustMethod=method.adjust)[, c('log2FoldChange', 'padj')])
-    colnames(df0) <- paste0(contr[2], '_VS_', contr[3], '_', colnames(df0)); df.all <- cbind(df.all, df0)
+      contr <- c('Factor', com[2, i], com[1, i])
+      if (verbose==TRUE) message(contr[2], '-', contr[3])
+      df0 <- as.data.frame(DESeq2::results(object=dds, contrast=contr, pAdjustMethod=method.adjust)[, c('log2FoldChange', 'padj')])
+      colnames(df0) <- paste0(contr[2], '_VS_', contr[3], '_', colnames(df0)); df.all <- cbind(df.all, df0)
     }; sam.all <- levels(fct) 
   } else if (pairwise==TRUE) { 
     if (grepl('__', cdat[, 'Factor'][1])) wng("If compare by 'feature_variable', please use 'pairwise=FALSE'.") 
@@ -106,28 +106,31 @@ deseq2 <- function(se, com.factor, method.adjust='BH', return.all=FALSE, log2.fc
     if (all(unique(cdat[, 'Factor'])==unique(cdat[, 'variable']))) {
       ft <- cdat$feature; vari <- cdat$variable; com.by <- 'variable'
     } # Compare by variable.
-    com <- combn(x=unique(vari), m=2)
-
+    com <- combn(x=sort(unique(vari)), m=2)
+    
     for (i in seq_len(ncol(com))) { # Pairwise comparison.
       w0 <- vari %in% com[, i]; se0 <- se[, w0]
-      se0$feature <- factor(se0$feature)
+      se0$feature <- factor(se0$feature, levels=unique(se0$feature))
       se0$variable <- factor(se0$variable)
       if (com.by=='feature') {
-        # "factor" implies reference level (control), if "contrast" in "results" is not speficied the default comparison is treatment VS reference. Regardless of reference, the compasison can be specified by "contrast" in "results" such as "contrast=c('condition', 'treatment', 'control')" is "treatment VS control" even though reference is "treament".
-        dds0 <- DESeq2::DESeqDataSet(se0, design = ~ variable + feature)
+        # "factor" implies reference level (control), if "contrast" in "results" is not specified
+        # the default comparison is treatment VS reference. Regardless of reference, the comparison 
+        # can be specified by "contrast" in "results" such as "contrast=c('condition', 'treatment', 'control')" 
+        # is "treatment VS control" even though reference is "treatment".
+        dds0 <- DESeqDataSet(se0, design = ~ variable + feature)
         contr <- c('feature', com[2, i], com[1, i])
       }
       if (com.by=='variable') { 
-        dds0 <- DESeq2::DESeqDataSet(se0, design = ~ feature + variable) 
+        dds0 <- DESeqDataSet(se0, design = ~ feature + variable) 
         contr <- c('variable', com[2, i], com[1, i])
       }; if (verbose==TRUE) message(contr[2], '-', contr[3])
-      dds0 <- DESeq2::DESeq(dds0)
+      dds0 <- DESeq(dds0)
       df0 <- as.data.frame(DESeq2::results(object=dds0, contrast=contr, pAdjustMethod=method.adjust)[, c('log2FoldChange', 'padj')])
       colnames(df0) <- paste0(contr[2], '_VS_', contr[3], '_', colnames(df0)); df.all <- cbind(df.all, df0)
-   }; sam.all <- unique(vari)
+    }; sam.all <- unique(vari)
   }; df.all <- df.all[, -1]; if (return.all==TRUE) return(df.all)
   UD <- up_dn(sam.all=sam.all, df.all=df.all, log.fc=abs(log2.fc), fdr=fdr, log.na='log2FoldChange', fdr.na='padj', method='DESeq2', outliers=outliers); return(UD)
-
+  
 }
 
 
