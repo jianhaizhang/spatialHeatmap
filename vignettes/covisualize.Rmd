@@ -206,7 +206,7 @@ dat.quick <- SPHM(svg=svg.mus.brain, bulk=sce.aggr.quick, cell=sce.dimred.quick,
 
 The co-visualization plot is created with gene `Apod` using the function `covis`. In the embedding plot, the `hypothalamus` and `cortex.S1` cells are colored according to their respecitive aggregated expression values of `Apod`. In the SHM plot, aSVG features are assigned the same color as the matching cells defined in `lis.match.quick`. The `cell.group` argument refers to cell group labels in the `colData` slot of `sce.aggr.quick`, `tar.cell` specifies the target cell groups to show, and `dimred` specifies the embeddings.  
 
-```{r , eval=TRUE, echo=TRUE, warnings=FALSE, results='hide', fig.cap=('Co-visualization of "cell-by-group" coloring. The co-visualization is created with gene `Apod`. Single cells in the embedding plot and their matching aSVG features in the SHM are assigned the same colors that are created according to mean expression values of `Apod` within cell groups.')}
+```{r , eval=TRUE, echo=TRUE, warnings=FALSE, results='hide', fig.cap=("Co-visualization of 'cell-by-group' coloring. The co-visualization is created with gene `Apod`. Single cells in the embedding plot and their matching aSVG features in the SHM are assigned the same colors that are created according to mean expression values of `Apod` within cell groups.")}
 shm.res.quick <- covis(data=dat.quick, ID=c('Apod'), dimred='UMAP', cell.group='label', tar.cell=names(lis.match.quick), assay.na='logcounts', bar.width=0.09, dim.lgd.nrow=2, legend.r=1.5, legend.key.size=0.02, legend.text.size=10, legend.nrow=4, h=0.6, verbose=FALSE) 
 ```
 
@@ -452,7 +452,7 @@ coclus.sc <- subset(coclus.mus, , bulkCell=='cell')
 
 The co-visualization of 'cell-by-value' coloring is built on gene 'Atp2b1'. Each cell in the embedding plot and each tissue in SHM are colored independently according to respective expression value of 'Atp2b1'. The matching between cells and tissues are indicated in the legend plot with constant colors.    
 
-```{r , eval=TRUE, echo=TRUE, warnings=FALSE, fig.wide=TRUE, fig.cap=('Co-visualization of "cell-by-value" coloring with the co-clustering method. This plot is created on gene "Atp2b1". Each cell and each tissue are colored independently according to expression values of "Atp2b1".'), out.width="100%", results='hide'}
+```{r , eval=TRUE, echo=TRUE, warnings=FALSE, fig.wide=TRUE, fig.cap=("Co-visualization of 'cell-by-value' coloring with the co-clustering method. This plot is created on gene 'Atp2b1'. Each cell and each tissue are colored independently according to expression values of 'Atp2b1'."), out.width="100%", results='hide'}
 # Store data objects in an SPHM container. 
 dat.auto.idp <- SPHM(svg=svg.mus.brain, bulk=coclus.blk, cell=coclus.sc)
 covis(data=dat.auto.idp, ID=c('Atp2b1'), dimred='TSNE', tar.cell=c('hippocampus', 'hypothalamus', 'cerebellum', 'cerebral.cortex'), col.idp=TRUE, dim.lgd.text.size=10, dim.lgd.nrow=2, bar.width=0.08, legend.nrow=3, h=0.6, legend.key.size=0.01, legend.text.size=10, legend.r=0.27)
@@ -513,7 +513,7 @@ angle(svg.mus.sp)[[1]] <- angle(svg.mus.sp)[[1]] + 90
 
 The co-visualization plot is created with the gene 'Epha4' using 'cell-by-value' coloring. Assigning `FALSE` to `profile` will turn on the 'fixed-group' coloring. The cluster labels are treated as the cell group labels (`cell.group='seurat_clusters'`). The 'cerebral.cortex' tissue anatomically correspond to cell clusters of 'clus1', 'clus2', 'clus3', and 'clus5', and this association is defined by a `list` called `lis.match`. The co-visualization plot consists of an embedding plot on the left, a single-cell SHM (scSHM) in the middle, and a SHM on the right. In the scSHM, spatial spots are positioned in the `overlay` region and superimposed the anatomical structures in the aSVG.    
 
-```{r eval=TRUE, echo=TRUE, warnings=FALSE, fig.wide=TRUE, fig.cap=('Co-visualization of SRSC data with SHM. This plot is created on gene "Epha4". Each spatial spot and each tissue are colored independently according to expression values of "Epha4".'), out.width="100%", fig.show='show', results='hide'}
+```{r eval=TRUE, echo=TRUE, warnings=FALSE, fig.wide=TRUE, fig.cap=("Co-visualization of SRSC data with SHM. This plot is created on gene 'Epha4'. Each spatial spot and each tissue are colored independently according to expression values of 'Epha4'."), out.width="100%", fig.show='show', results='hide'}
 # Association between "cerebral.cortex" and clusters.
 lis.match <- list(cerebral.cortex=c('clus1', 'clus2', 'clus3', 'clus5'))   
 dat.srsc <- SPHM(svg=svg.mus.sp, bulk=blk.sp, cell=srt.sc, match=lis.match)
@@ -637,7 +637,7 @@ colData(sc.aggr.coclus)
 
 The co-visualization plot with 'cell-by-group' coloring is created on gene 'Atp2b1'. Cells in the embedding plot and respective assigned tissues in SHM are colored by mean expression values of 'Atp2b1' in each cell group.  
 
-```{r , eval=TRUE, echo=TRUE, warnings=FALSE, fig.wide=TRUE, fig.cap=('Co-clustering based co-visualization plot with "cell-by-group" coloring.'), out.width="100%", results='hide'}
+```{r , eval=TRUE, echo=TRUE, warnings=FALSE, fig.wide=TRUE, fig.cap=("Co-clustering based co-visualization plot with 'cell-by-group' coloring."), out.width="100%", results='hide'}
 # Store data objects in an SPHM container. 
 dat.auto.tobulk <- SPHM(svg=svg.mus.brain, bulk=sc.aggr.coclus, cell=coclus.sc)
 covis(data=dat.auto.tobulk, ID=c('Atp2b1'), dimred='TSNE', tar.cell=c('hippocampus', 'hypothalamus', 'cerebellum', 'cerebral.cortex'), dim.lgd.text.size=10, dim.lgd.nrow=2, bar.width=0.09, legend.nrow=5, h=0.6, legend.key.size=0.02, legend.text.size=12, legend.r=1.5)
@@ -659,7 +659,7 @@ colnames(coclus.blk) %in% attribute(svg.mus.brain)[[1]]$feature
 
 The co-visualization plot with 'feature-by-group' coloring is created on gene 'Atp2b1'. Cells in the embedding plot and respective assigned tissues in SHM are colored according to mean expression values of 'Atp2b1' across tissue replicates.    
 
-```{r eval=TRUE, echo=TRUE, warnings=FALSE, fig.wide=TRUE, fig.cap=('Co-clustering based co-visualization plot wiht "feature-by-group" coloring.'), out.width="100%", results='hide'}
+```{r eval=TRUE, echo=TRUE, warnings=FALSE, fig.wide=TRUE, fig.cap=("Co-clustering based co-visualization plot wiht 'feature-by-group' coloring."), out.width="100%", results='hide'}
 # Store data objects in an SPHM container. 
 dat.auto.tocell <- SPHM(svg=svg.mus.brain, bulk=coclus.blk, cell=coclus.sc)
 covis(data=dat.auto.tocell, ID=c('Atp2b1'), dimred='TSNE', tar.bulk=colnames(coclus.blk), assay.na='logcounts', legend.nrow=5, dim.lgd.text.size=10, dim.lgd.nrow=2, bar.width=0.08, h=0.6, legend.key.size=0.02, legend.text.size=12, legend.r=1.5)
@@ -669,7 +669,7 @@ covis(data=dat.auto.tocell, ID=c('Atp2b1'), dimred='TSNE', tar.bulk=colnames(coc
 
 By setting `profile=FALSE`, the co-visualization plot is created with 'fixed-by-group' coloring, where the same constant colors between the embedding plot and SHM indicate matching between cells and tissues respectively.    
 
-```{r eval=TRUE, echo=TRUE, warnings=FALSE, fig.wide=TRUE, fig.cap=('Co-clustering based co-visualization plot with "fixed-by-group" coloring.'), out.width="100%", results='hide'}
+```{r eval=TRUE, echo=TRUE, warnings=FALSE, fig.wide=TRUE, fig.cap=("Co-clustering based co-visualization plot with 'fixed-by-group' coloring."), out.width="100%", results='hide'}
 covis(data=dat.auto.tocell, ID=c('Atp2b1'), dimred='TSNE', profile=FALSE, assay.na='logcounts', legend.nrow=4, dim.lgd.text.size=10, dim.lgd.nrow=2, bar.width=0.09)
 ```
 
@@ -701,14 +701,14 @@ coclus.sc.tailor <- subset(coclus.mus.tailor, , bulkCell=='cell')
 
 After the above tailoring steps, the co-visualization plot with 'feature-by-group' coloring is created on gene 'Atp2b1' (Figure \@ref(fig:aftertailor)). To reveal the tailoring, only the tissue `hippocampus` is selected to show (`tar.bulk=c('hippocampus')`). Cells of `hippocampus` in the embedding plot include tailored cells in `df.desired.bulk` and those labeled `hippocampus` in co-clustering. All these cells have the same color as the tissue `hippocampus` in SHM. As a comparison, the hippocampus cells before tailoring is shown in Figure \@ref(fig:beforetailor).   
 
-```{r aftertailor, eval=TRUE, echo=TRUE, warnings=FALSE, fig.wide=TRUE, fig.cap=('Co-visualization plot with "feature-by-group" coloring after tailoring. This plot is created on gene "Atp2b1". Only the tissue and cells of hippocampus are shown to indicate the tailoring.'), out.width="100%", results='hide'}
+```{r aftertailor, eval=TRUE, echo=TRUE, warnings=FALSE, fig.wide=TRUE, fig.cap=("Co-visualization plot with 'feature-by-group' coloring after tailoring. This plot is created on gene 'Atp2b1'. Only the tissue and cells of hippocampus are shown to indicate the tailoring."), out.width="100%", results='hide'}
 # Store data objects in an SPHM container. 
 dat.auto.tocell.tailor <- SPHM(svg=svg.mus.brain, bulk=coclus.blk, cell=coclus.sc.tailor)
 covis(data=dat.auto.tocell.tailor, ID=c('Atp2b1'), dimred='PCA', tar.bulk=c('hippocampus'), assay.na='logcounts', legend.nrow=4, dim.lgd.text.size=10, dim.lgd.nrow=2, bar.width=0.08, legend.r=1.5)
 ```
 
 
-```{r beforetailor, eval=TRUE, echo=TRUE, warnings=FALSE, fig.wide=TRUE, fig.cap=('Co-visualization plot with "feature-by-group" coloring before tailoring. This plot is created on gene "Atp2b1". Only the tissue and cells of hippocampus are shown.'), out.width="100%", results='hide'}
+```{r beforetailor, eval=TRUE, echo=TRUE, warnings=FALSE, fig.wide=TRUE, fig.cap=("Co-visualization plot with 'feature-by-group' coloring before tailoring. This plot is created on gene 'Atp2b1'. Only the tissue and cells of hippocampus are shown."), out.width="100%", results='hide'}
 covis(data=dat.auto.tocell, ID=c('Atp2b1'), dimred='PCA', tar.bulk=c('hippocampus'), assay.na='logcounts', legend.nrow=4, dim.lgd.text.size=10, dim.lgd.nrow=2, bar.width=0.08, legend.r=1.5)
 ```
 
@@ -719,7 +719,7 @@ This section describes the graphical method for [tailoring](#tailor) co-clusteri
 
 Figure \@ref(fig:tailorShiny) is the screenshot of the convenience Shiny App. To use this App, upload the co-clustering result returned by the `cocluster` function (here `coclus.mus`), which should be saved as an '.rds' file using the `saveRDS` function. In the embedding plot on the left, cells are selected using the "Lasso Select" tool. The selected cells and their coordinates are then displayed in a table on the right. From the dropdown list, the desired tissues (aSVG features) are selected, here `hippocampus`. To download the table, simply click on the "Download" button. To refer to more guidance, click on the "Help" button.   
 
-```{r tailorShiny, echo=FALSE, fig.wide=TRUE, out.width="100%", fig.cap=('Screenshot of the Shiny App for selecting desired tissues. On the left is the embedding plot of single cells, where target cells are selected with the "Lasso Select" tool. On the right, desired tissues are assigned for selected cells.')}
+```{r tailorShiny, echo=FALSE, fig.wide=TRUE, out.width="100%", fig.cap=("Screenshot of the Shiny App for selecting desired tissues. On the left is the embedding plot of single cells, where target cells are selected with the 'Lasso Select' tool. On the right, desired tissues are assigned for selected cells.")}
 include_graphics('img/assign_bulk.png')
 ```
 

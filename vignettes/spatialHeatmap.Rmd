@@ -545,7 +545,7 @@ values across genes and/or conditions, the `lay.shm` parameter can be assigned
 SHMs of the genes `OLFM4` and `PRSS22` are organized
 by condition in a horizontal view. This functionality is particularly useful when comparing associated genes such as gene families.    
  
-```{r mul, eval=TRUE, echo=TRUE, warnings=FALSE, fig.wide=TRUE, fig.cap=("SHMs of two genes. The subplots are organized by \"condition\". Only cerebellum and frontal cortex are colored, because they are present in both the aSVG and the expression data."), out.width="100%", results='hide'}
+```{r mul, eval=TRUE, echo=TRUE, warnings=FALSE, fig.wide=TRUE, fig.cap=("SHMs of two genes. The subplots are organized by 'condition'. Only cerebellum and frontal cortex are colored, because they are present in both the aSVG and the expression data."), out.width="100%", results='hide'}
 res.hum <- shm(data=dat.hum, ID=c('OLFM4', 'PRSS22'), lay.shm='con', legend.r=1.5, legend.nrow=3, h=0.6)
 ```
 
@@ -974,7 +974,7 @@ image dimensions can be preserved by assigning `TRUE` to the `preserve.scale` ar
 This image is hidden to meet the 5MB requirement on vignette.
 -->
 
-```{r arabshm, eval=TRUE, echo=TRUE, warnings=FALSE, fig.wide=TRUE, fig.cap=('Spatial heatmap of Arabidopsis at two growth stages. The expression profile of "gene2" under condition1 and condition2 is plotted for two growth stages (top and bottom row).'), out.width="100%", fig.show='show', results='hide'}
+```{r arabshm, eval=TRUE, echo=TRUE, warnings=FALSE, fig.wide=TRUE, fig.cap=("Spatial heatmap of Arabidopsis at two growth stages. The expression profile of 'gene2' under condition1 and condition2 is plotted for two growth stages (top and bottom row)."), out.width="100%", fig.show='show', results='hide'}
 dat.mul.svg <- SPHM(svg=svg.sh.mul, bulk=df.random)
 shm(data=dat.mul.svg, ID=c('gene2'), width=0.7, legend.r=0.2, legend.width=1, preserve.scale=TRUE, bar.width=0.09, line.color='grey50') 
 ```
