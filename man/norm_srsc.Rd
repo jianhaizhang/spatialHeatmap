@@ -2,7 +2,7 @@
 % Please edit documentation in R/norm_srsc.R
 \name{norm_srsc}
 \alias{norm_srsc}
-\title{Jointl normalization of spatially resolved single cell data and bulk data}
+\title{Jointly normalization of spatially resolved single cell data and bulk data}
 \usage{
 norm_srsc(cell, assay, bulk)
 }
@@ -14,7 +14,7 @@ norm_srsc(cell, assay, bulk)
 \item{bulk}{The bulk assay data.}
 }
 \description{
-Jointl normalization of spatially resolved single cell data and bulk data
+Jointly normalization of spatially resolved single cell data and bulk data
 }
 \examples{
 library(Seurat); library(SummarizedExperiment)

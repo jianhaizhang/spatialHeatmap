@@ -125,7 +125,16 @@ dim_srsc <- function(cell, ID, geneV, cols, tar.cell=NULL, tar.bulk=NULL, con.na
   dim.all <- c(dim.all, dim.lis)
   # Show target cells in dim plots.
   for (i in seq_along(dim.all)) {
-    dim.all[[i]] <- dim.all[[i]] + scale_shape_manual(values=sp, labels=br, breaks=br, guide=guide_legend(title=NULL, nrow=dim.lgd.nrow, override.aes = list(size=dim.lgd.key.size))) + labs(x=xlab, y=ylab, colour=grp, shape=grp) + theme_classic() + theme(plot.title=element_text(hjust=0.5, vjust=sub.title.vjust, size=sub.title.size), plot.margin=margin(0.005, 0.005, 0.005, 0.005, "npc"), legend.box.margin=margin(-3, 0, 2, 0, unit='pt'), legend.background=element_rect(color=NA, fill='transparent'), legend.position=dim.lgd.pos, legend.direction=dim.lgd.direc, legend.text=element_text(size=dim.lgd.text.size), legend.margin=margin(l=0.01, r=0.01, unit='npc'), axis.text = element_blank(), axis.ticks = element_blank(), axis.title=element_text(size=dim.axis.font.size), aspect.ratio=1)
+    dim.all[[i]] <- dim.all[[i]] + scale_shape_manual(values=sp, labels=br, breaks=br, 
+                                                      guide=guide_legend(title=NULL, nrow=dim.lgd.nrow, 
+                                                                         override.aes = list(size=dim.lgd.key.size))) + 
+      labs(x=xlab, y=ylab, colour=NULL, shape=NULL) + theme_classic() + 
+      theme(plot.title=element_text(hjust=0.5, vjust=sub.title.vjust, size=sub.title.size), 
+            plot.margin=margin(0.005, 0.005, 0.005, 0.005, "npc"), legend.box.margin=margin(-3, 0, 2, 0, unit='pt'), 
+            legend.background=element_rect(color=NA, fill='transparent'), legend.position=dim.lgd.pos, 
+            legend.direction=dim.lgd.direc, legend.text=element_text(size=dim.lgd.text.size), 
+            legend.margin=margin(l=0.01, r=0.01, unit='npc'), axis.text = element_blank(), axis.ticks = element_blank(), 
+            axis.title=element_text(size=dim.axis.font.size), aspect.ratio=1)
   }
   for (i in seq_along(vars)) dim.lgd.lis[[i]] <- dim.all[i]
   dim.lis <- dim.all[names(dim.lis)]
@@ -137,7 +146,18 @@ dim_srsc <- function(cell, ID, geneV, cols, tar.cell=NULL, tar.bulk=NULL, con.na
   aspect.ratio <- svg_separ(svg.all)$aspect.r
   # Show target cells in scSHM.
   for (i in seq_along(ovl.all)) { 
-    ovl.all[[i]] <- ovl.all[[i]] + scale_shape_manual(values=sp, labels=br, breaks=br, guide=guide_legend(title=NULL, nrow=dim.lgd.nrow, override.aes = list(size=dim.lgd.key.size))) + labs(x='', y='', colour=grp, shape=grp) + geom_polygon(data=cordn, mapping=aes(x=x, y=y, group=feature), fill=NA, color=line.color, linewidth=linewidth, linetype='solid', alpha=1, inherit.aes = FALSE)+ theme_void() + theme(plot.title=element_text(hjust=0.5, vjust=sub.title.vjust+3, size=sub.title.size), plot.margin=margin(0.005, 0.005, 0.005, 0.005, "npc"), legend.box.margin=margin(-3, 0, 2, 0, unit='pt'), legend.background=element_rect(color=NA, fill='transparent'), aspect.ratio = 1/aspect.ratio, legend.position=dim.lgd.pos, legend.direction=dim.lgd.direc, legend.text=element_text(size=dim.lgd.text.size), legend.margin=margin(l=0.01, r=0.01, unit='npc'))+scale_y_continuous(expand=expansion(mult=c(0, 0)))+scale_x_continuous(expand=expansion(mult=c(0, 0)))
+    ovl.all[[i]] <- ovl.all[[i]] + scale_shape_manual(values=sp, labels=br, breaks=br, 
+                                                      guide=guide_legend(title=NULL, nrow=dim.lgd.nrow, 
+                                                                         override.aes = list(size=dim.lgd.key.size))) + 
+      labs(x='', y='', colour=NULL, shape=NULL) + geom_polygon(data=cordn, mapping=aes(x=x, y=y, group=feature), fill=NA, 
+                                                             color=line.color, linewidth=linewidth, linetype='solid', 
+                                                             alpha=1, inherit.aes = FALSE)+ theme_void() + 
+      theme(plot.title=element_text(hjust=0.5, vjust=sub.title.vjust+3, size=sub.title.size), 
+            plot.margin=margin(0.005, 0.005, 0.005, 0.005, "npc"), legend.box.margin=margin(-3, 0, 2, 0, unit='pt'), 
+            legend.background=element_rect(color=NA, fill='transparent'), aspect.ratio = 1/aspect.ratio, 
+            legend.position=dim.lgd.pos, legend.direction=dim.lgd.direc, legend.text=element_text(size=dim.lgd.text.size), 
+            legend.margin=margin(l=0.01, r=0.01, unit='npc'))+scale_y_continuous(expand=expansion(mult=c(0, 0))) + 
+      scale_x_continuous(expand=expansion(mult=c(0, 0)))
   }
   for (i in seq_along(vars)) ovl.lgd.lis[[i]] <- ovl.all[i]
   ovl.lis <- ovl.all[names(ovl.lis)]
@@ -255,9 +275,12 @@ rotate_cord <- function(x, y, angle, type=c("degrees","radial"), method=c("trans
 #' @importFrom SummarizedExperiment colData<- assays<- 
 #' @importFrom S4Vectors DataFrame 
 
-srt2sce <- function(cell, assay, image, x, y, cell.group, var.cell) {
+srt2sce <- function(cell, assay, image=NULL, x, y, cell.group, var.cell) {
+  # save(cell, assay, image, x, y, cell.group, var.cell, file='srt2sce.arg')
   pkg <- check_pkg('Seurat'); if (is(pkg, 'character')) stop(pkg)
-  cord.pt <- cbind(cell@images[[image]]@coordinates, cell@meta.data)
+  cord <- suppressWarnings(cell@images[[image]]@boundaries$centroids@coords)
+  rownames(cord) = colnames(cell)
+  cord.pt <- cbind(cord, cell@meta.data)
   cna <- colnames(cord.pt)
   cna[cna %in% x] <- 'X'; cna[cna %in% y] <- 'Y'
   colnames(cord.pt) <- cna

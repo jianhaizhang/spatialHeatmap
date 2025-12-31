@@ -19,8 +19,10 @@ bibliography: bibtex.bib
 package: spatialHeatmap
 vignette: >
   %\VignetteIndexEntry{(A) Visualizing Spatial Assays in Anatomical Images and Large-Scale Data Extensions}
-  %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
+  %\VignetteEngine{knitr::rmarkdown}
+editor_options:
+  chunk_output_type: console
 ---
 
 ```{css, echo=FALSE}
@@ -32,10 +34,10 @@ word-wrap: initial !important;
 }
 ```
 
-```{r global_options, echo=FALSE, include=TRUE}
+```{r setup0, eval=TRUE, echo=FALSE, message=FALSE, warning=FALSE, include=FALSE}
 ## ThG: chunk added to enable global knitr options. The below turns on
 ## caching for faster vignette re-build during text editing.
-knitr::opts_chunk$set(cache=TRUE)
+library(knitr); opts_chunk$set(cache=TRUE, message=FALSE, warning=FALSE)
 ```
 <!-- 
 
@@ -52,9 +54,6 @@ BiocStyle::markdown(css.files=c('file/custom.css'))
 
 -->
 
-```{r setup0, eval=TRUE, echo=FALSE, message=FALSE, warning=FALSE}
-library(knitr); opts_chunk$set(message=FALSE, warning=FALSE)
-```
 
 # Introduction 
 

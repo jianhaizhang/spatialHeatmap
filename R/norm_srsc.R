@@ -1,5 +1,5 @@
 
-#' Jointl normalization of spatially resolved single cell data and bulk data
+#' Jointly normalization of spatially resolved single cell data and bulk data
 #'
 #' @param cell A \code{Seurat} object.
 #' @param assay The assay to use for normalization in the spatial single-cell data.

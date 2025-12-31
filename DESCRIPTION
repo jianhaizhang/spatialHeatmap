@@ -1,8 +1,8 @@
 Package: spatialHeatmap
 Type: Package
 Title: spatialHeatmap: Visualizing Spatial Assays in Anatomical Images and Large-Scale Data Extensions
-Version: 2.15.1
-Date: 2025-06-19
+Version: 2.16.1
+Date: 2025-12-31
 Authors@R: c(
   person(given="Jianhai", family="Zhang", role=c("aut", "trl", "cre"), email="jzhan067@ucr.edu", comment=""),
   person(given="Le", family="Zhang", role="aut", email="lzhan140@ucr.edu", comment=""),
@@ -20,7 +20,7 @@ biocViews: Spatial, Visualization, Microarray, Sequencing, GeneExpression,
         CellBasedAssays, ATACSeq, DNASeq, TissueMicroarray, SingleCell,
         CellBiology, GeneTarget
 VignetteBuilder: knitr
-Depends: R (>= 3.5.0)
+Depends: R (>= 4.5.0)
 Imports: data.table, dplyr, edgeR, genefilter, ggplot2, grImport, grid, gridExtra,
          igraph, methods, Matrix, rsvg, shiny, grDevices, graphics, ggplotify, parallel, 
          reshape2, stats, SummarizedExperiment, SingleCellExperiment, shinydashboard, 
@@ -32,4 +32,4 @@ Suggests: AnnotationDbi, av, BiocParallel, BiocFileCache, BiocGenerics, BiocStyl
           shinyjs, shinyBS, sortable, Seurat, sparkline, spsUtil, uwot, UpSetR, visNetwork, WGCNA, xlsx, yaml
 BugReports: https://github.com/jianhaizhang/spatialHeatmap/issues
 URL: https://spatialheatmap.org, https://github.com/jianhaizhang/spatialHeatmap
-RoxygenNote: 7.3.2
+RoxygenNote: 7.3.3

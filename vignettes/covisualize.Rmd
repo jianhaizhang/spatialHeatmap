@@ -19,8 +19,10 @@ bibliography: bibtex.bib
 package: spatialHeatmap
 vignette: >
   %\VignetteIndexEntry{(B) Co-visualizing Bulk and Single-cell Assay Data}
-  %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
+  %\VignetteEngine{knitr::rmarkdown}
+editor_options:
+  chunk_output_type: console
 ---
 
 ```{css, echo=FALSE}
@@ -32,10 +34,10 @@ word-wrap: initial !important;
 }
 ```
 
-```{r global_options, include=FALSE}
+```{r setup0, eval=TRUE, echo=FALSE, message=FALSE, warning=FALSE, include=FALSE}
 ## ThG: chunk added to enable global knitr options. The below turns on
 ## caching for faster vignette re-build during text editing.
-knitr::opts_chunk$set(cache=TRUE)
+library(knitr); opts_chunk$set(cache=TRUE, message=FALSE, warning=FALSE)
 ```
 <!-- 
 <style type="text/css">
@@ -48,9 +50,6 @@ BiocStyle::markdown(css.files=c('file/custom.css'))
 ```
 -->
 
-```{r setup0, eval=TRUE, echo=FALSE, message=FALSE, warning=FALSE}
-library(knitr); opts_chunk$set(message=FALSE, warning=FALSE)
-```
 
 # Introduction 
 
@@ -472,7 +471,7 @@ assay(blk.sp)[1:3, ]
 # Importing SRSC data.
 srt.sc <- read_cache(cache.pa, 'srt.sc') 
 if (is.null(srt.sc)) {
-  srt.sc <- readRDS(gzcon(url("https://zenodo.org/record/8240964/files/srt_sc.rds?download=1")))
+  srt.sc <- readRDS(gzcon(url("https://zenodo.org/records/18098376/files/srt_sc.rds?download=1")))
   save_cache(dir=cache.pa, overwrite=TRUE, srt.sc)
 }
 # SRSC assay data are partially shown.
@@ -490,7 +489,7 @@ The coordinates of spatial spots are stored in the `image` slot in the `Seurat` 
 
 ```{r eval=TRUE, echo=TRUE, warnings=FALSE, collapse=TRUE}
 # Coordinates of spatial spots are partially shown.
-srt.sc@images$anterior1@coordinates[1:2, c('imagerow', 'imagecol')]
+srt.sc@images[['anterior1']]@boundaries$centroids@coords[1:3, ]
 ```
 
 The aSVG of mouse brain is included in `spatialHeatmap` and imported into an `SVG` object.  
@@ -515,9 +514,9 @@ The co-visualization plot is created with the gene 'Epha4' using 'cell-by-value'
 
 ```{r eval=TRUE, echo=TRUE, warnings=FALSE, fig.wide=TRUE, fig.cap=("Co-visualization of SRSC data with SHM. This plot is created on gene 'Epha4'. Each spatial spot and each tissue are colored independently according to expression values of 'Epha4'."), out.width="100%", fig.show='show', results='hide'}
 # Association between "cerebral.cortex" and clusters.
-lis.match <- list(cerebral.cortex=c('clus1', 'clus2', 'clus3', 'clus5'))   
+lis.match <- list(cerebral.cortex=c('clus1', 'clus3', 'clus5', 'clus10', 'clus14'))   
 dat.srsc <- SPHM(svg=svg.mus.sp, bulk=blk.sp, cell=srt.sc, match=lis.match)
-covis(data=dat.srsc, ID='Epha4', assay.na='logcounts', dimred='TSNE', cell.group='seurat_clusters', tar.bulk=c('cerebral.cortex'), col.idp=TRUE, bar.width=0.07, dim.lgd.nrow=2, dim.lgd.text.size=8, legend.r=0.1, legend.key.size=0.013, legend.text.size=10, legend.nrow=3, h=0.6, profile=TRUE, ncol=3, vjust=5, dim.lgd.key.size=3, size.r=0.97, dim.axis.font.size=8, size.pt=1.5, lgd.plots.size=c(0.35, 0.25, 0.35), verbose=FALSE)
+covis(data=dat.srsc, ID='Epha4', assay.na='logcounts', dimred='TSNE', cell.group='seurat_clusters', tar.bulk=c('cerebral.cortex'), col.idp=TRUE, image='anterior1', bar.width=0.07, dim.lgd.nrow=2, dim.lgd.text.size=8, legend.r=0.1, legend.key.size=0.013, legend.text.size=10, legend.nrow=3, h=0.6, profile=TRUE, ncol=3, vjust=5, dim.lgd.key.size=3, size.r=0.97, dim.axis.font.size=8, size.pt=1.5, lgd.plots.size=c(0.35, 0.25, 0.35), verbose=FALSE)
 ```
 
 
