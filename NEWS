@@ -1,4 +1,5 @@
-
+Changes in version 2.16.1 (2025-12-31)
+ + Re-created srt_sc.rds to address the error related to "VisiumV1" object. 
 Changes in version 2.13.1 (2024-11-23)
  + Added project wibsite in vignettes.
 Changes in version 2.11.4 (2024-07-28)

@@ -59,6 +59,7 @@
   opacity = 1,
   key = TRUE,
   line.width = 0.2,
+  image = NULL,
   line.color = "grey70",
   relative.scale = NULL,
   out.dir = NULL,
@@ -179,6 +180,8 @@
 \item{key}{Logical. If `TRUE` (default), keys are added in legend plots. If \code{label} is TRUE, the keys could be removed.}
 
 \item{line.width}{The thickness of each shape outline in the aSVG is maintained in spatial heatmaps, \emph{i.e.} the stroke widths in Inkscape. This argument is the extra thickness added to all outlines. Default is 0.2 in case stroke widths in the aSVG are 0.}
+
+\item{image}{Name of SpatialImage object to get coordinates for. If NULL (default), will retrieve coordinates for the default image. See \code{GetTissueCoordinates} in \code{SeuratObject} for details.}
 
 \item{line.color}{A character of the shape outline color. Default is "grey70".}
 

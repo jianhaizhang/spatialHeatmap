@@ -28,6 +28,7 @@
   tis.trans = ft.trans,
   lis.rematch = NULL,
   legend.r = 0.9,
+  image = NULL,
   sub.title.size = 11,
   sub.title.vjust = 2,
   legend.plot = "all",
@@ -123,6 +124,8 @@
 }}
 
 \item{legend.r}{A numeric (-1 to 1) to adjust the legend plot size.}
+
+\item{image}{Name of SpatialImage object to get coordinates for. If NULL (default), will retrieve coordinates for the default image. See \code{GetTissueCoordinates} in \code{SeuratObject} for details.}
 
 \item{sub.title.size}{A numeric of the subtitle font size of each individual spatial heatmap. The default is 11.}
 

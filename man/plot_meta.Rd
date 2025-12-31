@@ -14,6 +14,7 @@ plot_meta(
   con.factor = NULL,
   aggr = "mean",
   ID,
+  image = NULL,
   var.cell = NULL,
   dimred = "PCA",
   cell.group = NULL,
@@ -116,6 +117,8 @@ plot_meta(
 \item{aggr}{Aggregate "sample__condition" replicates by "mean" or "median". The default is "mean". If the \code{data} argument is a \code{SummarizedExperiment}, the "sample__condition" replicates are internally formed by connecting samples and conditions with "__" in \code{colData} slot, and are subsequently replace the original column names in \code{assay} slot. If no condition specified to \code{con.factor}, the data are aggregated by sample replicates. If "none", no aggregation is applied.}
 
 \item{ID}{A character vector of assyed items (\emph{e.g.} genes, proteins) whose abudance values are used to color the aSVG.}
+
+\item{image}{Name of SpatialImage object to get coordinates for. If NULL (default), will retrieve coordinates for the default image. See \code{GetTissueCoordinates} in \code{SeuratObject} for details.}
 
 \item{var.cell}{The column name in the \code{colData} slot of \code{SingleCellExperiment} that indicates the experimental variables. If \code{NULL}, no variables are considered.}
 

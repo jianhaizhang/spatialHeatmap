@@ -23,9 +23,9 @@ srt.sc <- RunPCA(srt.sc, assay = "SCT", verbose = FALSE)
 srt.sc <- RunUMAP(srt.sc, assay = "SCT", dims = 1:5)
 srt.sc <- RunTSNE(srt.sc, assay = "SCT", reduction = "pca", dims = 1:5)
 # Clustering.
-srt.sc <- FindNeighbors(srt.sc, reduction = "pca", dims = 1:30)
+srt.sc <- FindNeighbors(srt.sc, reduction = "pca", dims = 1:10)
 srt.sc <- FindClusters(srt.sc, verbose = FALSE)
 srt.sc$seurat_clusters <- paste0('clus', srt.sc$seurat_clusters)
-saveRDS(srt.sc, file='srt_sc.rds')
+saveRDS(srt.sc, file='~/Downloads/srt_sc.rds')
 
 

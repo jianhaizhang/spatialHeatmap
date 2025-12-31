@@ -28,6 +28,7 @@
   ncol = 2,
   h = 0.99,
   size.r = 1,
+  image = NULL,
   col.com = c("yellow", "orange", "red"),
   col.bar = "selected",
   thr = c(NA, NA),
@@ -139,6 +140,8 @@
 \item{h}{The height (0-1) of color key and SHM/co-visualization plots in the middle, not including legend plots.}
 
 \item{size.r}{The scaling ratio (0-1) of tissue section when visualizing the spatially resolved single-cell data.}
+
+\item{image}{Name of SpatialImage object to get coordinates for. If NULL (default), will retrieve coordinates for the default image. See \code{GetTissueCoordinates} in \code{SeuratObject} for details.}
 
 \item{col.com}{A vector of color components used to build the color scale. The default is `c('yellow', 'orange', 'red')`.}
 
