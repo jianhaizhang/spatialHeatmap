@@ -37,6 +37,7 @@ save_cache <- function(dir=NULL, overwrite=TRUE, obj, na=NULL) {
 #' @param dir The directory path where cached data are located. It should be the path returned by \link{save_cache}.
 #' @param name The name of the object to retrieve, which is one of the entries in the "rname" column returned by setting \code{info=TRUE}.
 #' @param info Logical, TRUE or FALSE. If TRUE (default), the information of all tracked files in cache is returned in a table.
+#' @param day An integer representing cache age in days. If the cache is older than this age, NULL is returned.
 
 #' @return An R object retrieved from the cache.
 
@@ -53,18 +54,26 @@ save_cache <- function(dir=NULL, overwrite=TRUE, obj, na=NULL) {
 
 #' @export read_cache
 
-read_cache <- function(dir, name, info=FALSE) {
+read_cache <- function(dir, name, day=3, info=FALSE) {
   pkg <- check_pkg('BiocFileCache'); if (is(pkg, 'character')) { warning(pkg); return(pkg) }
-  bfc <- tryCatch({ BiocFileCache::BiocFileCache(dir, ask=FALSE) }, error=function(e){ return('error') }, warning=function(w) { return('warning') } )
+  bfc <- tryCatch({ BiocFileCache::BiocFileCache(dir, ask=FALSE) }, error=function(e){ return('error') }, 
+                  warning=function(w) { return('warning') } )
   if (!is(bfc, 'BiocFileCache')) { cat('No valid cache is detected in the provided "dir"! \n'); return() }
-  if (info==TRUE) return(BiocFileCache::bfcinfo(bfc))
+  tbl = BiocFileCache::bfcinfo(bfc)
+  if (info==TRUE) return(tbl)
   rid <- BiocFileCache::bfcquery(bfc, name, exact=TRUE)$rid
+  len = length(rid)
   if (length(rid)==0) { cat('No valid record is detected for', name, '!\n'); return() }
-  if (length(rid)>1) cat('Multiple files matched, the newest one is returned! \n\n')
-  id <- rid[length(rid)]
-  return(get(load(BiocFileCache::bfcrpath(bfc, rids=id))))
+  if (len>1) {cat('Multiple files matched, the newest one is returned! \n\n')
+    rid <- rid[len]
+    file = tbl$rpath[tbl$rid==rid][len]
+  } else if (len==1) file = tbl$rpath[tbl$rid==rid]
+  old = file.info(file)$mtime < Sys.time() - as.difftime(day, units = "days")
+  if (old) {
+    return(NULL)
+    # BiocFileCache::bfcremove(bfc, id); pa <- BiocFileCache::bfccache(bfc)
+  } else {
+    return(get(load(BiocFileCache::bfcrpath(bfc, rids=rid))))
+  }
 }
-
-
-
 

@@ -1,3 +1,6 @@
+Changes in version 2.16.2 (2025-01-15)
+ 1. return_feature: replaced rols::Term with rols::olsTerm
+ 2. read_cache: If the cache is older than a certain number of days, the function returns NULL.
 Changes in version 2.16.1 (2025-12-31)
  + Re-created srt_sc.rds to address the error related to "VisiumV1" object. 
 Changes in version 2.13.1 (2024-11-23)

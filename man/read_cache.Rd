@@ -4,12 +4,14 @@
 \alias{read_cache}
 \title{Read R Objects from Cache}
 \usage{
-read_cache(dir, name, info = FALSE)
+read_cache(dir, name, day = 180, info = FALSE)
 }
 \arguments{
 \item{dir}{The directory path where cached data are located. It should be the path returned by \link{save_cache}.}
 
 \item{name}{The name of the object to retrieve, which is one of the entries in the "rname" column returned by setting \code{info=TRUE}.}
+
+\item{day}{An integer representing cache age in days. If the cache is older than this age, NULL is returned.}
 
 \item{info}{Logical, TRUE or FALSE. If TRUE (default), the information of all tracked files in cache is returned in a table.}
 }
