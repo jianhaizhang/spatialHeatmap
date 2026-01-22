@@ -1,8 +1,8 @@
 Package: spatialHeatmap
 Type: Package
 Title: spatialHeatmap: Visualizing Spatial Assays in Anatomical Images and Large-Scale Data Extensions
-Version: 2.17.2
-Date: 2026-01-15
+Version: 2.17.3
+Date: 2026-01-21
 Authors@R: c(
   person(given="Jianhai", family="Zhang", role=c("aut", "trl", "cre"), email="jzhan067@ucr.edu", comment=""),
   person(given="Le", family="Zhang", role="aut", email="lzhan140@ucr.edu", comment=""),

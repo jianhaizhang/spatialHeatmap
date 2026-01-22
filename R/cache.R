@@ -54,7 +54,7 @@ save_cache <- function(dir=NULL, overwrite=TRUE, obj, na=NULL) {
 
 #' @export read_cache
 
-read_cache <- function(dir, name, day=3, info=FALSE) {
+read_cache <- function(dir, name, day=180, info=FALSE) {
   pkg <- check_pkg('BiocFileCache'); if (is(pkg, 'character')) { warning(pkg); return(pkg) }
   bfc <- tryCatch({ BiocFileCache::BiocFileCache(dir, ask=FALSE) }, error=function(e){ return('error') }, 
                   warning=function(w) { return('warning') } )
