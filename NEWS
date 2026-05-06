@@ -1,4 +1,4 @@
-Changes in version 2.18.1 (2025-05-05)
+Changes in version 2.19.1 (2025-05-05)
  1. Removed the rols package and developed custom internal functions for retrieving tissue ontology. 
  2. Removed the scran and scuttle packages, and related functions are replaced with counterparts in bluster and scrapper respectively.
 Changes in version 2.17.2 (2025-01-15)
