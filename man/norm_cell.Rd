@@ -9,9 +9,8 @@ norm_cell(
   bulk = NULL,
   cpm = FALSE,
   count.kp = FALSE,
-  quick.clus = list(min.size = 100, d = NULL),
-  com.sum.fct = list(max.cluster.size = 3000, min.mean = 1),
-  log.norm = list(),
+  center.sf = list(block = NULL, mode = c("lowest", "per-block")),
+  log.norm = list(assay.type = "counts", log = TRUE, pseudo.count = 1),
   com = FALSE,
   wk.dir = NULL
 )
@@ -21,15 +20,13 @@ norm_cell(
 
 \item{bulk}{Bulk tissue count data in form of \code{SingleCellExperiment}, \code{SummarizedExperiment}, or \code{data.frame}.}
 
-\item{cpm}{Logical. If \code{FALSE} (default), the count data are only normalized by \code{\link[scran]{computeSumFactors}}. If \code{TRUE}, the data are first normalized by \code{\link[scran]{computeSumFactors}} then transformed to counts per million by \code{\link[scuttle]{calculateCPM}}.}
+\item{cpm}{Logical. If \code{FALSE} (default), the count data are only normalized by \code{\link[scrapper]{normalizeRnaCounts.se}}. If \code{TRUE}, the data are further transformed to counts per million.}
 
 \item{count.kp}{Logical. If \code{FALSE} (default), the count data is discarded and only log2-scale data are kept.}
 
-\item{quick.clus}{Arguments in a named list passed to \code{\link[scran]{quickCluster}}, such as \code{quick.clus=list(min.size = 100)}.}
+\item{center.sf}{Arguments in a named list passed to \code{\link[scrapper]{centerSizeFactors}}.}
 
-\item{com.sum.fct}{Arguments in a named list passed to \code{\link[scran]{computeSumFactors}}, such as \code{com.sum.fct=list(max.cluster.size = 3000))}.}
-
-\item{log.norm}{Arguments in a named list passed to \code{\link[scuttle]{logNormCounts}}.}
+\item{log.norm}{Arguments in a named list passed to \code{\link[scrapper]{normalizeRnaCounts.se}}.}
 
 \item{com}{Logical, if \code{TRUE} the returned cell and bulk data are column-wise combined, otherwise they are separated in a \code{list}.}
 
@@ -42,16 +39,26 @@ A \code{SingleCellExperiment} object.
 A meta function for normalizing single-cell RNA-seq data.
 }
 \examples{
-library(scran); library(scuttle); library(SummarizedExperiment) 
-sce <- mockSCE()
-sce.qc <- qc_cell(sce, qc.metric=list(subsets=list(Mt=rowData(sce)$featureType=='mito'), threshold=1))
+library(SingleCellExperiment)
+set.seed(123)  # for reproducibility
+# random counts: 1000 genes × 100 cells
+counts_mat <- matrix(
+  rpois(1000 * 100, lambda = 5), nrow = 1000, ncol = 100,
+  dimnames = list(
+    paste0("Gene", 1:1000),
+    paste0("Cell", 1:100)
+  )
+)
+sce <- SingleCellExperiment(
+  assays = list(counts = counts_mat)
+)
+sce.qc = qc_cell(sce)
 sce.norm <- norm_cell(sce.qc)
 }
 \references{
 Amezquita R, Lun A, Becht E, Carey V, Carpp L, Geistlinger L, Marini F, Rue-Albrecht K, Risso D, Soneson C, Waldron L, Pages H, Smith M, Huber W, Morgan M, Gottardo R, Hicks S (2020). “Orchestrating single-cell analysis with Bioconductor.” Nature Methods, 17, 137–145. https://www.nature.com/articles/s41592-019-0654-x.
-Lun ATL, McCarthy DJ, Marioni JC (2016). “A step-by-step workflow for low-level analysis of single-cell RNA-seq data with Bioconductor.” F1000Res., 5, 2122. doi: 10.12688/f1000research.9501.2.
-McCarthy DJ, Campbell KR, Lun ATL, Willis QF (2017). “Scater: pre-processing, quality control, normalisation and visualisation of single-cell RNA-seq data in R.” Bioinformatics, 33, 1179-1186. doi: 10.1093/bioinformatics/btw777.
 Morgan M, Obenchain V, Hester J, Pagès H (2022). SummarizedExperiment: SummarizedExperiment container. R package version 1.26.1, https://bioconductor.org/packages/SummarizedExperiment
+Lun ATL, Kancherla J (2023). "Powering single-cell analyses in the browser with WebAssembly." _Journal of Open Source Software_, *8*(89), 5603. doi:10.21105/joss.05603 <https://doi.org/10.21105/joss.05603>.
 }
 \author{
 Jianhai Zhang \email{jzhan067@ucr.edu} \cr Dr. Thomas Girke \email{thomas.girke@ucr.edu}

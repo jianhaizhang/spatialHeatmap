@@ -219,7 +219,6 @@ opt_dir <- function(wk.dir, sub.dir, batch.par, multi.core.par) {
 #' @author Jianhai Zhang \email{jzhan067@@ucr.edu} \cr Dr. Thomas Girke \email{thomas.girke@@ucr.edu}
 
 #' @references
-#' McCarthy DJ, Campbell KR, Lun ATL, Willis QF (2017). "Scater: pre-processing, quality control, normalisation and visualisation of single-cell RNA-seq data in R." _Bioinformatics_, *33*, 1179-1186. doi:10.1093/bioinformatics/btw777 <https://doi.org/10.1093/bioinformatics/btw777>.
 #' Amezquita R, Lun A, Becht E, Carey V, Carpp L, Geistlinger L, Marini F, Rue-Albrecht K, Risso D, Soneson C, Waldron L, Pages H, Smith M, Huber W, Morgan M, Gottardo R, Hicks S (2020). "Orchestrating single-cell analysis with Bioconductor." _Nature Methods_, *17*, 137-145. <https://www.nature.com/articles/s41592-019-0654-x>.
 #' SummarizedExperiment: SummarizedExperiment container. R package version 1.10.1 \cr R Core Team (2018). R: A language and environment for statistical computing. R Foundation for Statistical Computing, Vienna, Austria. URL https://www.R-project.org/
 
@@ -227,6 +226,7 @@ opt_dir <- function(wk.dir, sub.dir, batch.par, multi.core.par) {
 #' @importFrom SummarizedExperiment colData colData<-
 
 norm_opt <- function(cell, bulk, norm, com=FALSE) {
+  # save(cell, bulk, norm, com, file='norm_opt.arg')
   bulkCell <- NULL
   if (norm %in% 'FCT') {
     # set.seed(10)
@@ -243,10 +243,8 @@ norm_opt <- function(cell, bulk, norm, com=FALSE) {
     sce <- cbind(bulk[int, ], cell[int, ]) 
     colnames(sce) <- seq_len(ncol(sce))  
     if ('CPM' %in% norm) {
-      pkg <- check_pkg('scuttle'); if (is(pkg, 'character')) { warning(pkg); return(pkg) }
-      cnt.cpm <- scuttle::calculateCPM(sce); nor <- log2(cnt.cpm+1)
-      nor <- SingleCellExperiment(assays=list(logcounts=as.matrix(nor)))
-     colData(nor) <- colData(sce)
+      nor = cal_cpm(sce); assays(nor)$counts <- NULL
+      colData(nor) <- colData(sce)
     } else if ('TMM' %in% norm) {
       nor <- norm_data(data=sce, norm.fun='CNF', par.list=list(method='TMM'))
     } else if ('VST' %in% norm) {
@@ -352,7 +350,7 @@ coclus_fun <- function(i, dat.lis=dat.lis, df.para, split, multi.core.par, coclu
     bulk <- dat.fil$bulk; cell <- dat.fil$cell 
     if (nrow(bulk) <= 4) return(df0)
     # set.seed(10)
-    res <- cocluster(bulk=bulk, cell=cell, min.dim=df0$dims, dimred=df0$dimred, graph.meth=df0$graph, cluster=df0$cluster, df.match=df.match)
+    res <- cocluster(bulk=bulk, cell=cell, dimred=df0$dimred, graph.meth=df0$graph, cluster=df0$cluster, df.match=df.match)
     roc.obj <- res$roc.obj 
     if (!is.null(roc.obj)) {
       pkg <- check_pkg('pROC'); if (is(pkg, 'character')) stop(pkg)

@@ -1,3 +1,6 @@
+Changes in version 2.17.4 (2025-05-05)
+ 1. Removed the rols package and developed custom internal functions for retrieving tissue ontology. 
+ 2. Removed the scran and scuttle packages, and relative functions are replaced with counterparts in bluster and scrapper respectively.
 Changes in version 2.17.2 (2025-01-15)
  1. return_feature: replaced rols::Term with rols::olsTerm
  2. read_cache: If the cache is older than a certain number of days, the function returns NULL.
@@ -15,7 +18,7 @@ Changes in version 2.9.6 (2024-04-16)
  + The option of pairwise comparision is added in spatial enrichment.
  + The layout of static network graph is improved.
 Changes in version 2.9.4 (2024-02-10)
- + Added the formal citation.
+ + Added the formal citation of this pacakge.
 Changes in version 2.5.4 (2023-04-14)
  + Developed the SPHM class for storing aSVG, bulk data, single-cell data, and matching list.
  + Spatial Enrichement: outlier spatial featuers in references are supported.

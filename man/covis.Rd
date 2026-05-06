@@ -303,14 +303,14 @@ assay(blk.mus)[1:3, 1:5]
 cache.pa <- '~/.cache/shm' # Cache path.
 mus.ann.nor <- read_cache(cache.pa, 'mus.ann.nor') 
 if (is.null(mus.ann.nor)) {
-  mus.lis.nor <- norm_cell(sce=sce, bulk=blk.mus, quick.clus=list(min.size = 100, d=15), 
-  com=FALSE); save_cache(dir=cache.pa, overwrite=TRUE, mus.ann.nor)
+  mus.lis.nor <- norm_cell(sce=sce, bulk=blk.mus, com=FALSE)
+  save_cache(dir=cache.pa, overwrite=TRUE, mus.ann.nor)
 }
 # Separate normalized bulk and single cell data.
 blk.mus.nor <- mus.lis.nor$bulk
 cell.mus.nor <- mus.lis.nor$cell; colData(cell.mus.nor) <- colData(sce)
 # Reduce dimensions (PCA, UMAP, TSNE) for single cell data.
-cell.dim <- reduce_dim(cell.mus.nor, min.dim=5)
+cell.dim <- reduce_dim(cell.mus.nor)
 
 # Aggregate tissue replicates in bulk data by mean.
 blk.mus.aggr <- aggr_rep(blk.mus.nor, sam.factor='sample', aggr='mean')

@@ -73,7 +73,8 @@
 return_feature <- function(feature, species, keywords.any=TRUE, remote=NULL, dir=NULL, svg.path=NULL, desc=FALSE, 
                            match.only=TRUE, return.all=FALSE) {
   # save(feature, species, keywords.any, remote, dir, svg.path, desc, match.only, return.all, file='return.feature.arg')
-  # svg_attr = spatialHeatmap::svg_attr; check_pkg = spatialHeatmap::check_pkg
+  # svg_attr = spatialHeatmap:::svg_attr; check_pkg = spatialHeatmap:::check_pkg
+  # svg_zpath = spatialHeatmap:::svg_zpath
   options(stringsAsFactors=FALSE)
   # Parse and return features.
   ftr_return <- function(svgs, desc=desc) {
@@ -90,15 +91,12 @@ return_feature <- function(feature, species, keywords.any=TRUE, remote=NULL, dir
     colnames(df)[colnames(df)=='index.sub'] <- 'order'
 
     if (desc==TRUE) {
-      pkg <- check_pkg('rols'); if (is(pkg, 'character')) stop(pkg)
       cat('Appending descriptions... \n')
       df$description <- NA; for (i in seq_len(nrow(df))) {
-        ont <- df[i, 'id']; abbr <- tolower(sub('_.*', '', ont))
-        trm <- tryCatch({ rols::olsTerm(abbr, ont) }, error=function(e) { return(NA) })
-        if (is(trm, 'olsTerm')) { 
-          des <- rols::termDesc(trm); 
-          if (!is.null(des)) df[i, 'description'] <- rols::termDesc(trm)[1] 
-        }
+        ont = df$id[i]
+        if (is(ont, 'character')) ols = return_ols(ont)
+        des = ols$description
+        if (is(des, 'character')) df$description[i] = des
       }
     }; return(df)
   }

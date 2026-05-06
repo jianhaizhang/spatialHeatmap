@@ -16,7 +16,7 @@
 #' sce.pa <- system.file("extdata/shinyApp/data", "cell_mouse_brain.rds", package="spatialHeatmap")
 #' sce <- readRDS(sce.pa)
 #' # Quality control, normalization, dimensionality reduction on the single cell data.
-#' sce.dimred <- process_cell_meta(sce, qc.metric=list(subsets=list(Mt=rowData(sce)$featureType=='mito'), threshold=1))
+#' sce.dimred <- process_cell_meta(sce)
 #' # Read manual cell group labels.
 #' manual.clus.mus.sc.pa <- system.file("extdata/shinyApp/data", "manual_cluster_mouse_brain.txt", package="spatialHeatmap") 
 #' manual.clus.mus.sc <- read.table(manual.clus.mus.sc.pa, header=TRUE, sep='\t')

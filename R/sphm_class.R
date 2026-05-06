@@ -25,8 +25,7 @@
 #' package="spatialHeatmap")
 #' sce <- readRDS(sce.pa)
 #' # Pre-processing.
-#' sce.dimred.quick <- process_cell_meta(sce, 
-#' qc.metric=list(subsets=list(Mt=rowData(sce)$featureType=='mito'), threshold=1)) 
+#' sce.dimred.quick <- process_cell_meta(sce) 
 #' colData(sce.dimred.quick)[1:3, 1:2] 
 #' sce.aggr.quick <- aggr_rep(sce.dimred.quick, assay.na='logcounts', sam.factor='label', 
 #' aggr='mean')

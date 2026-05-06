@@ -165,7 +165,7 @@ help file. Additional background information on these topics can be found in the
 ```{r , eval=TRUE, echo=TRUE, warnings=FALSE}
 sce.pa <- system.file("extdata/shinyApp/data", "cell_mouse_brain.rds", package="spatialHeatmap")
 sce <- readRDS(sce.pa)
-sce.dimred.quick <- process_cell_meta(sce, qc.metric=list(subsets=list(Mt=rowData(sce)$featureType=='mito'), threshold=1))
+sce.dimred.quick <- process_cell_meta(sce)
 colData(sce.dimred.quick)[1:3, 1:2]
 ```
 
@@ -244,7 +244,7 @@ Bulk and single cell data are jointly normalized and subsequently separated.
 mus.ann.nor <- read_cache(cache.pa, 'mus.ann.nor') 
 if (is.null(mus.ann.nor)) {
   # Joint normalization.
-  mus.lis.nor <- norm_cell(sce=sce, bulk=blk.mus, quick.clus=list(min.size = 100, d=15), com=FALSE)
+  mus.lis.nor <- norm_cell(sce=sce, bulk=blk.mus, com=FALSE)
   save_cache(dir=cache.pa, overwrite=TRUE, mus.ann.nor)
 }
 # Separate bulk and cell data.
@@ -256,7 +256,7 @@ colData(cell.mus.nor) <- colData(sce)
 In normalized single-cell data, dimension reductions are performed with PAC, UMAP, and TSNE methods respectively, then single cells are plotted at the TSNE dimensions, where cells are represented by dots and are colored by the annotation labels (`color.by="label"`).     
 
 ```{r eval=TRUE, echo=TRUE, warnings=FALSE, fig.wide=TRUE, fig.cap=('Embedding plot of single-cell data. The cells (dots) are colored by the grouping information stored in the `colData` slot of the corresponding `SCE` object'), out.width="70%", fig.show='show'}
-cell.dim <- reduce_dim(cell.mus.nor, min.dim=5)
+cell.dim <- reduce_dim(cell.mus.nor)
 plot_dim(cell.dim, color.by="label", dim='UMAP')
 ```
 

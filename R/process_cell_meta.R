@@ -9,15 +9,29 @@
 
 #' @return A \code{SingleCellExperiment} object. 
 #' @details
-#' In the QC, frequently used per-cell metrics are calculated for identifying problematic cells, such as library size, number of detected features above a threshold, mitochodrial gene percentage, etc. Then these metrics are used to determine outlier cells based on median-absolute-deviation (MAD). Refer to \code{perCellQCMetrics} and \code{perCellQCFilters} in the scuttle package for more details. 
-#' In the normalization, a quick-clustering method is applied to divide cells into clusters. Then a scaling normalization method is performed to obtain per-cluster size factors. Next, the size factor in each cluster is decomposed into per-cell size factors by a deconvolution strategy. Finally, all cells are normalized by per-cell size factors. See more details in \code{quickCluster}, \code{computeSumFactors} from the scran package, and \code{logNormCounts} from the scuttle package.   
-#' In dimensionality reduction, the high-dimensional gene expression data are embedded into a 2-3 dimensional space using PCA, tSNE and UMAP. All three embedding result sets are stored in a \code{SingleCellExperiment} object. Details are seen in \code{denoisePCA} from scran, and \code{runUMAP}, \code{runTSNE} from scater. 
+#' In the QC, compute per-cell QC metrics from an initialized matrix of RNA counts, and use the metrics to suggest filter thresholds to retain high-quality cells. Refer to \code{filterRnaQcMetrics} in the `scrapper` package for more details. 
+#' In the normalization, compute log-normalized expression values after performing scaling normalization of an RNA count matrix. See more details in \code{normalizeRnaCounts.se} from the scrapper package.
+#' In dimensionality reduction, the high-dimensional gene expression data are embedded into a low dimensional space using PCA, tSNE and UMAP. All three embedding result sets are stored in a \code{SingleCellExperiment} object. Details are seen in \code{runPca.se}, \code{runUmap.se}, and \code{runTsne.se} from `scrapper`. 
 
 #' @examples
 
-#' library(scran); library(scuttle); library(SummarizedExperiment) 
-#' sce <- mockSCE()
-#' sce.dimred <- process_cell_meta(sce, qc.metric=list(subsets=list(Mt=rowData(sce)$featureType=='mito'), threshold=1))
+#' library(SingleCellExperiment)
+#' set.seed(123)  # for reproducibility
+
+#' # random counts: 1000 genes × 100 cells
+#' counts_mat <- matrix(
+#'   rpois(1000 * 100, lambda = 5), nrow = 1000, ncol = 100,
+#'   dimnames = list(
+#'     paste0("Gene", 1:1000),
+#'     paste0("Cell", 1:100)
+#'   )
+#' )
+
+#' sce <- SingleCellExperiment(
+#'   assays = list(counts = counts_mat)
+#' )
+
+#' sce.dimred <- process_cell_meta(sce)
 
 #' @author Jianhai Zhang \email{jzhan067@@ucr.edu} \cr Dr. Thomas Girke \email{thomas.girke@@ucr.edu}
 
@@ -28,12 +42,24 @@
 
 #' @export process_cell_meta 
 
-process_cell_meta <- function(sce, qc.metric=list(threshold=1), qc.filter=list(nmads=3), quick.clus=list(min.size = 100), com.sum.fct=list(max.cluster.size = 3000), log.norm=list(), prop=0.1, min.dim=13, max.dim=50, model.var=list(), top.hvg=list(n = 3000), de.pca=list(assay.type ="logcounts"), pca=FALSE, tsne=list(dimred="PCA", ncomponents=2), umap=list(dimred="PCA")) {
+process_cell_meta <- function(sce, qc.metric=list(assay.type = "counts", subsets=list(), altexp.proportions=NULL, block = NULL), 
+                              center.sf=list(block = NULL, mode = c("lowest", "per-block")),
+                              log.norm=list(assay.type = "counts", log = TRUE, pseudo.count = 1),
+                              choose.hvg=list(assay.type = "logcounts", block = NULL,
+                                              more.var.args=list(transform = TRUE),
+                                              top = 4000, more.choose.args=list(keep.ties = TRUE)),
+                              min.dim=5, max.dim=25,
+                              pca.arg = list(assay.type = "logcounts", number = 25, block = NULL),
+                              umap.arg = list(num.dim = 2, reddim.type = "PCA"),
+                              tsne.arg = list(perplexity = 30, reddim.type = "PCA", output.name = "TSNE"),
+                              pca=FALSE
+                              ) {
+  # save(sce, qc.metric, center.sf, log.norm, choose.hvg, min.dim, max.dim, pca.arg, umap.arg, tsne.arg, pca, file='process_cell_meta.arg')
   # Quality control.
-  sce.qc <- qc_cell(sce=sce, qc.metric=qc.metric, qc.filter=qc.filter)
+  sce.qc <- qc_cell(sce=sce, qc.metric=qc.metric)
   # Normalization.
-  sce.norm <- norm_cell(sce=sce.qc, quick.clus=quick.clus, com.sum.fct=com.sum.fct, log.norm=log.norm, com=TRUE)
+  sce.norm <- norm_cell(sce=sce.qc, center.sf=center.sf, log.norm=log.norm, com=TRUE)
   # Dimensionality reduction.
-  sce.dimred <- reduce_dim(sce=sce.norm, prop=prop, min.dim=min.dim, max.dim=max.dim, model.var=model.var, top.hvg=top.hvg, de.pca=de.pca, pca=pca, tsne=tsne, umap=umap)
+  sce.dimred <- reduce_dim(sce=sce.norm, choose.hvg=choose.hvg, min.dim=min.dim, max.dim=max.dim, pca.arg=pca.arg, umap.arg=umap.arg, tsne.arg=tsne.arg, pca=pca)
   return(sce.dimred)
 }

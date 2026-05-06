@@ -6,50 +6,40 @@
 \usage{
 process_cell_meta(
   sce,
-  qc.metric = list(threshold = 1),
-  qc.filter = list(nmads = 3),
-  quick.clus = list(min.size = 100),
-  com.sum.fct = list(max.cluster.size = 3000),
-  log.norm = list(),
-  prop = 0.1,
-  min.dim = 13,
-  max.dim = 50,
-  model.var = list(),
-  top.hvg = list(n = 3000),
-  de.pca = list(assay.type = "logcounts"),
-  pca = FALSE,
-  tsne = list(dimred = "PCA", ncomponents = 2),
-  umap = list(dimred = "PCA")
+  qc.metric = list(assay.type = "counts", subsets = list(), altexp.proportions = NULL,
+    block = NULL),
+  center.sf = list(block = NULL, mode = c("lowest", "per-block")),
+  log.norm = list(assay.type = "counts", log = TRUE, pseudo.count = 1),
+  choose.hvg = list(assay.type = "logcounts", block = NULL, more.var.args =
+    list(transform = TRUE), top = 4000, more.choose.args = list(keep.ties = TRUE)),
+  min.dim = 5,
+  max.dim = 25,
+  pca.arg = list(assay.type = "logcounts", number = 25, block = NULL),
+  umap.arg = list(num.dim = 2, reddim.type = "PCA"),
+  tsne.arg = list(perplexity = 30, reddim.type = "PCA", output.name = "TSNE"),
+  pca = FALSE
 )
 }
 \arguments{
 \item{sce}{Single cell RNA-seq count data in \code{SingleCellExperiment}.}
 
-\item{qc.metric}{Quality control arguments in a named list passed to \code{\link[scuttle]{perCellQCMetrics}}, such as \code{qc.metric=list(threshold=1)}.}
+\item{qc.metric}{Quality control arguments in a named list passed to \code{\link[scrapper]{quickRnaQc.se}}. Eg: `list(assay.type = "counts", subsets=list(mito=grepl("^mt", rownames(sce))), altexp.proportions="ERCC")`.}
 
-\item{qc.filter}{Quality control filtering arguments in a named list passed to \code{\link[scuttle]{perCellQCFilters}}, such as \code{qc.filter=list(nmads=3)}.}
+\item{center.sf}{Arguments in a named list passed to \code{\link[scrapper]{centerSizeFactors}}.}
 
-\item{quick.clus}{Arguments in a named list passed to \code{\link[scran]{quickCluster}}, such as \code{quick.clus=list(min.size = 100)}.}
+\item{log.norm}{Arguments in a named list passed to \code{\link[scrapper]{normalizeRnaCounts.se}}.}
 
-\item{com.sum.fct}{Arguments in a named list passed to \code{\link[scran]{computeSumFactors}}, such as \code{com.sum.fct=list(max.cluster.size = 3000))}.}
+\item{choose.hvg}{Arguments in a named list passed to \code{\link[scrapper]{chooseRnaHvgs.se}}.}
 
-\item{log.norm}{Arguments in a named list passed to \code{\link[scuttle]{logNormCounts}}.}
+\item{min.dim, max.dim}{Integer scalars specifying the minimum (\code{min.dim}) and maximum (\code{max.dim}) number of (principle components) PCs to retain respectively in \code{\link[scrapper]{runPca.se}}.}
 
-\item{prop}{Numeric scalar specifying the proportion of genes to report as highly variable genes (HVGs) in \code{\link[scran]{getTopHVGs}}. The default is \code{0.1}.}
+\item{pca.arg}{Arguments in a named list passed to \code{\link[scrapper]{runPca.se}}.}
 
-\item{min.dim, max.dim}{Integer scalars specifying the minimum (\code{min.dim}) and maximum (\code{max.dim}) number of (principle components) PCs to retain respectively in \code{\link[scran]{denoisePCA}}. The default is \code{min.dim=11}, \code{max. dim=50}.}
+\item{umap.arg}{Arguments in a named list passed to \code{\link[scrapper]{runUmap.se}}.}
 
-\item{model.var}{Additional arguments in a named list passed to \code{\link[scran]{modelGeneVar}}.}
+\item{tsne.arg}{Arguments in a named list passed to \code{\link[scrapper]{runTsne.se}}.}
 
-\item{top.hvg}{Additional arguments in a named list passed to \code{\link[scran]{getTopHVGs}}, such as \code{top.hvg=list(n =   3000)}.}
-
-\item{de.pca}{Additional arguments in a named list passed to \code{\link[scran]{denoisePCA}}, such as \code{de.pca=list(assay.  type = "logcounts")}.}
-
-\item{pca}{Logical, if \code{TRUE} only the data with reduced dimentionality by PCA is returned and no clustering is performed. The default is \code{FALSE} and clustering is performed after dimensionality reduction.}
-
-\item{tsne}{Additional arguments in a named list passed to \code{\link[scater]{runTSNE}}, such as \code{tsne=list(dimred="PCA", ncomponents=2)}.}
-
-\item{umap}{Additional arguments in a named list passed to \code{\link[scater]{runUMAP}}, such as \code{umap=list(dimred="PCA")}.}
+\item{pca}{Logical, if \code{TRUE} only the data with reduced dimentionality of PCA is returned. The default is \code{FALSE}, and UMAP and TSNE are also returned.}
 }
 \value{
 A \code{SingleCellExperiment} object.
@@ -58,14 +48,25 @@ A \code{SingleCellExperiment} object.
 A meta function for processing single cell RNA-seq count data, including quality control, normalization, dimensionality reduction.
 }
 \details{
-In the QC, frequently used per-cell metrics are calculated for identifying problematic cells, such as library size, number of detected features above a threshold, mitochodrial gene percentage, etc. Then these metrics are used to determine outlier cells based on median-absolute-deviation (MAD). Refer to \code{perCellQCMetrics} and \code{perCellQCFilters} in the scuttle package for more details. 
-In the normalization, a quick-clustering method is applied to divide cells into clusters. Then a scaling normalization method is performed to obtain per-cluster size factors. Next, the size factor in each cluster is decomposed into per-cell size factors by a deconvolution strategy. Finally, all cells are normalized by per-cell size factors. See more details in \code{quickCluster}, \code{computeSumFactors} from the scran package, and \code{logNormCounts} from the scuttle package.   
-In dimensionality reduction, the high-dimensional gene expression data are embedded into a 2-3 dimensional space using PCA, tSNE and UMAP. All three embedding result sets are stored in a \code{SingleCellExperiment} object. Details are seen in \code{denoisePCA} from scran, and \code{runUMAP}, \code{runTSNE} from scater.
+In the QC, compute per-cell QC metrics from an initialized matrix of RNA counts, and use the metrics to suggest filter thresholds to retain high-quality cells. Refer to \code{filterRnaQcMetrics} in the `scrapper` package for more details. 
+In the normalization, compute log-normalized expression values after performing scaling normalization of an RNA count matrix. See more details in \code{normalizeRnaCounts.se} from the scrapper package.
+In dimensionality reduction, the high-dimensional gene expression data are embedded into a low dimensional space using PCA, tSNE and UMAP. All three embedding result sets are stored in a \code{SingleCellExperiment} object. Details are seen in \code{runPca.se}, \code{runUmap.se}, and \code{runTsne.se} from `scrapper`.
 }
 \examples{
-library(scran); library(scuttle); library(SummarizedExperiment) 
-sce <- mockSCE()
-sce.dimred <- process_cell_meta(sce, qc.metric=list(subsets=list(Mt=rowData(sce)$featureType=='mito'), threshold=1))
+library(SingleCellExperiment)
+set.seed(123)  # for reproducibility
+# random counts: 1000 genes × 100 cells
+counts_mat <- matrix(
+  rpois(1000 * 100, lambda = 5), nrow = 1000, ncol = 100,
+  dimnames = list(
+    paste0("Gene", 1:1000),
+    paste0("Cell", 1:100)
+  )
+)
+sce <- SingleCellExperiment(
+  assays = list(counts = counts_mat)
+)
+sce.dimred <- process_cell_meta(sce)
 }
 \references{
 Amezquita R, Lun A, Becht E, Carey V, Carpp L, Geistlinger L, Marini F, Rue-Albrecht K, Risso D, Soneson C, Waldron L, Pages H, Smith M, Huber W, Morgan M, Gottardo R, Hicks S (2020). “Orchestrating single-cell analysis with Bioconductor.” Nature Methods,    17, 137–145. https://www.nature.com/articles/s41592-019-0654-x.

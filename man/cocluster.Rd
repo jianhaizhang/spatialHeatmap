@@ -52,15 +52,15 @@ refine_asg(sce.all, df.desired.bulk = NULL)
 
 \item{df.match}{A \code{data.frame} specifying ground-truth matching between cells and bulk, applicable in co-clustering optimization.}
 
-\item{min.dim, max.dim}{Integer scalars specifying the minimum (\code{min.dim}) and maximum (\code{max.dim}) number of (principle components) PCs to retain respectively in \code{\link[scran]{denoisePCA}}. The default is \code{min.dim=11}, \code{max. dim=50}.}
+\item{min.dim, max.dim}{Integer scalars specifying the minimum (\code{min.dim}) and maximum (\code{max.dim}) number of (principle components) PCs to retain respectively in \code{\link[scrapper]{runPca.se}}.}
 
 \item{dimred}{A string of \code{PCA} (default) or \code{UMAP} specifying which reduced dimensions to use for creating a nearest neighbor graph.}
 
-\item{graph.meth}{Method to build a nearest-neighbor graph, \code{snn} (see \code{\link[scran]{buildSNNGraph}}) or \code{knn} (default, see \code{\link[scran]{buildKNNGraph}}). The clusters are detected by first creating a nearest neighbor graph using \code{snn} or \code{knn} then partitioning the graph.}
+\item{graph.meth}{Method to build a nearest-neighbor graph, \code{snn} (see \code{\link[bluster]{makeSNNGraph}}) or \code{knn} (default, see \code{\link[bluster]{makeKNNGraph}}). The clusters are detected by first creating a nearest neighbor graph using \code{snn} or \code{knn} then partitioning the graph.}
 
-\item{knn.gr}{Additional arguments in a named list passed to \code{\link[scran]{buildKNNGraph}}.}
+\item{knn.gr}{Additional arguments in a named list passed to \code{\link[bluster]{makeKNNGraph}}.}
 
-\item{snn.gr}{Additional arguments in a named list passed to \code{\link[scran]{buildSNNGraph}}.}
+\item{snn.gr}{Additional arguments in a named list passed to \code{\link[bluster]{makeSNNGraph}}.}
 
 \item{cluster}{The clustering method. One of \code{wt} (\code{\link[igraph]{cluster_walktrap}}, default), \code{fg} (\code{\link[igraph]{cluster_fast_greedy}}), \code{le} (\code{\link[igraph]{cluster_leading_eigen}}), \code{sl} (\code{\link[igraph]{cluster_fast_greedy}}), \code{eb} (\code{\link[igraph]{cluster_edge_betweenness}}).}
 
