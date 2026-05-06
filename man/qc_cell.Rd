@@ -4,14 +4,16 @@
 \alias{qc_cell}
 \title{Quality control in single cell data}
 \usage{
-qc_cell(sce, qc.metric = list(threshold = 1), qc.filter = list(nmads = 3))
+qc_cell(
+  sce,
+  qc.metric = list(assay.type = "counts", subsets = list(), altexp.proportions = NULL,
+    block = NULL)
+)
 }
 \arguments{
 \item{sce}{Raw single cell count data in form of \code{SingleCellExperiment}.}
 
-\item{qc.metric}{Quality control arguments in a named list passed to \code{\link[scuttle]{perCellQCMetrics}}, such as \code{qc.metric=list(threshold=1)}.}
-
-\item{qc.filter}{Quality control filtering arguments in a named list passed to \code{\link[scuttle]{perCellQCFilters}}, such as \code{qc.filter=list(nmads=3)}.}
+\item{qc.metric}{Quality control arguments in a named list passed to \code{\link[scrapper]{quickRnaQc.se}}. Eg: `list(assay.type = "counts", subsets=list(mito=grepl("^mt", rownames(sce))), altexp.proportions="ERCC")`.}
 }
 \value{
 A \code{SingleCellExperiment} object.
@@ -20,13 +22,25 @@ A \code{SingleCellExperiment} object.
 A meta function for quality control in single-cell RNA-seq data.
 }
 \examples{
-library(scran); library(scuttle) 
-sce <- mockSCE()
-qc_cell(sce, qc.metric=list(subsets=list(Mt=rowData(sce)$featureType=='mito'), threshold=1))
+library(SingleCellExperiment)
+set.seed(123)  # for reproducibility
+# random counts: 1000 genes × 100 cells
+counts_mat <- matrix(
+  rpois(1000 * 100, lambda = 5), nrow = 1000, ncol = 100,
+  dimnames = list(
+    paste0("Gene", 1:1000),
+    paste0("Cell", 1:100)
+  )
+)
+sce <- SingleCellExperiment(
+  assays = list(counts = counts_mat)
+)
+sce.qc = qc_cell(sce)
 }
 \references{
 Amezquita R, Lun A, Becht E, Carey V, Carpp L, Geistlinger L, Marini F, Rue-Albrecht K, Risso D, Soneson C, Waldron L, Pages H, Smith M, Huber W, Morgan M, Gottardo R, Hicks S (2020). “Orchestrating single-cell analysis with Bioconductor.” Nature Methods, 17, 137–145. https://www.nature.com/articles/s41592-019-0654-x.
 McCarthy DJ, Campbell KR, Lun ATL, Willis QF (2017). “Scater: pre-processing, quality control, normalisation and visualisation of single-cell RNA-seq data in R.” Bioinformatics, 33, 1179-1186. doi: 10.1093/bioinformatics/btw777.
+Lun ATL, Kancherla J (2023). "Powering single-cell analyses in the browser with WebAssembly." _Journal of Open Source Software_, *8*(89), 5603. doi:10.21105/joss.05603 <https://doi.org/10.21105/joss.05603>.
 }
 \author{
 Jianhai Zhang \email{jzhan067@ucr.edu} \cr Dr. Thomas Girke \email{thomas.girke@ucr.edu}

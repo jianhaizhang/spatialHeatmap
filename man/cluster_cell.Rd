@@ -8,8 +8,10 @@ cluster_cell(
   sce,
   graph.meth = "knn",
   dimred = "PCA",
-  knn.gr = list(),
-  snn.gr = list(),
+  dims = 50,
+  assay.type = NULL,
+  knn.gr = list(k = 10, directed = FALSE),
+  snn.gr = list(k = 10),
   cluster = "wt",
   wt.arg = list(steps = 4),
   fg.arg = list(),
@@ -21,13 +23,17 @@ cluster_cell(
 \arguments{
 \item{sce}{The single cell data or combination of single cell and bulk data at log2 scale after dimensionality reduction in form of \code{SingleCellExperiment}.}
 
-\item{graph.meth}{Method to build a nearest-neighbor graph, \code{snn} (see \code{\link[scran]{buildSNNGraph}}) or \code{knn} (default, see \code{\link[scran]{buildKNNGraph}}). The clusters are detected by first creating a nearest neighbor graph using \code{snn} or \code{knn} then partitioning the graph.}
+\item{graph.meth}{Method to build a nearest-neighbor graph, \code{snn} (see \code{\link[bluster]{makeSNNGraph}}) or \code{knn} (default, see \code{\link[bluster]{makeKNNGraph}}). The clusters are detected by first creating a nearest neighbor graph using \code{snn} or \code{knn} then partitioning the graph.}
 
 \item{dimred}{A string of \code{PCA} (default) or \code{UMAP} specifying which reduced dimensions to use for creating a nearest neighbor graph.}
 
-\item{knn.gr}{Additional arguments in a named list passed to \code{\link[scran]{buildKNNGraph}}.}
+\item{dims}{The number of dimensions in `dimred` to use.}
 
-\item{snn.gr}{Additional arguments in a named list passed to \code{\link[scran]{buildSNNGraph}}.}
+\item{assay.type}{If `dimred=NULL`, the assay in `assayNames(sce)` to use.}
+
+\item{knn.gr}{Additional arguments in a named list passed to \code{\link[bluster]{makeKNNGraph}}.}
+
+\item{snn.gr}{Additional arguments in a named list passed to \code{\link[bluster]{makeSNNGraph}}.}
 
 \item{cluster}{The clustering method. One of \code{wt} (\code{\link[igraph]{cluster_walktrap}}, default), \code{fg} (\code{\link[igraph]{cluster_fast_greedy}}), \code{le} (\code{\link[igraph]{cluster_leading_eigen}}), \code{sl} (\code{\link[igraph]{cluster_fast_greedy}}), \code{eb} (\code{\link[igraph]{cluster_edge_betweenness}}).}
 
@@ -40,15 +46,26 @@ A \code{SingleCellExperiment} object.
 Cluster only single cell data or combination of single cell and bulk data. Clusters are created by first building a graph, where nodes are cells and edges represent connections between nearest neighbors, then partitioning the graph. The cluster labels are stored in the \code{cluster} column of \code{colData} slot of \code{SingleCellExperiment}.
 }
 \examples{
-library(scran); library(scuttle) 
-sce <- mockSCE(); sce <- logNormCounts(sce)
-# Modelling the variance.
-var.stats <- modelGeneVar(sce)
-sce.dimred <- denoisePCA(sce, technical=var.stats, subset.row=rownames(var.stats)) 
+library(SingleCellExperiment)
+set.seed(123)  # for reproducibility
+# random counts: 1000 genes × 100 cells
+counts_mat <- matrix(
+  rpois(1000 * 100, lambda = 5), nrow = 1000, ncol = 100,
+  dimnames = list(
+    paste0("Gene", 1:1000),
+    paste0("Cell", 1:100)
+  )
+)
+sce <- SingleCellExperiment(
+  assays = list(counts = counts_mat)
+)
+sce.qc = qc_cell(sce)
+sce.norm <- norm_cell(sce.qc)
+sce.dimred <- reduce_dim(sce.norm)
 \donttest{
 sce.clus <- cluster_cell(sce=sce.dimred, graph.meth='snn', dimred='PCA')
 # Clusters.
-table(colData(sce.clus)$label)
+table(colData(sce.clus)$cluster)
 
 }
 # See details in function "coclus_meta" by running "?coclus_meta".
@@ -56,8 +73,8 @@ table(colData(sce.clus)$label)
 \references{
 Morgan M, Obenchain V, Hester J, Pagès H (2021). SummarizedExperiment: SummarizedExperiment container. R package version 1.24.0, https://bioconductor.org/packages/SummarizedExperiment.
 Amezquita R, Lun A, Becht E, Carey V, Carpp L, Geistlinger L, Marini F, Rue-Albrecht K, Risso D, Soneson C, Waldron L, Pages H, Smith M, Huber W, Morgan M, Gottardo R, Hicks S (2020). “Orchestrating single-cell analysis with Bioconductor.” Nature Methods, 17, 137–145. https://www.nature.com/articles/s41592-019-0654-x.
-Lun ATL, McCarthy DJ, Marioni JC (2016). “A step-by-step workflow for low-level analysis of single-cell RNA-seq data with Bioconductor.” F1000Res., 5, 2122. doi: 10.12688/f1000research.9501.2.
 Csardi G, Nepusz T: The igraph software package for complex network research, InterJournal, Complex Systems 1695. 2006. https://igraph.org
+Lun A (2026). _bluster: Clustering Algorithms for Bioconductor_. doi:10.18129/B9.bioc.bluster <https://doi.org/10.18129/B9.bioc.bluster>. R package version 1.22.0, <https://bioconductor.org/packages/bluster>.
 }
 \author{
 Jianhai Zhang \email{jzhan067@ucr.edu} \cr Dr. Thomas Girke \email{thomas.girke@ucr.edu}

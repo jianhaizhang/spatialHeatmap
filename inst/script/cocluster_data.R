@@ -21,7 +21,7 @@ sce.mus.fil <- subset(sce.mus.fil, , variable=='control')
 saveRDS(sce.mus.fil, file='./cell_mouse_brain.rds')
 
 # Quality control, normalization, dimensionality reduction.
-sce.dimred <- process_cell_meta(sce.mus.fil, qc.metric=list(subsets=list(Mt=rowData(sce.mus.fil)$featureType=='mito'), threshold=1)) 
+sce.dimred <- process_cell_meta(sce.mus.fil) 
 # Clustering.
 sce.clus <- cluster_cell(sce=sce.dimred, graph.meth='knn', dimred='PCA') 
 # Manual cluster labels.

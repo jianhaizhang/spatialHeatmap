@@ -35,7 +35,6 @@
 \alias{[<-,SVG,ANY,ANY,ANY-method}
 \alias{length,SVG-method}
 \alias{names,SVG-method}
-\alias{names<-,SVG,ANY-method}
 \alias{cmb,SVG,SVG-method}
 \alias{sub_sf,SVG-method}
 \title{Methods for S4 class \code{SVG}}
@@ -72,7 +71,7 @@
 
 \S4method{names}{SVG}(x)
 
-\S4method{names}{SVG,ANY}(x) <- value
+\S4method{names}{SVG}(x) <- value
 
 \S4method{cmb}{SVG,SVG}(x, y)
 

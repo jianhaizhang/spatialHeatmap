@@ -6,35 +6,30 @@
 \usage{
 reduce_dim(
   sce,
-  prop = 0.1,
-  min.dim = 13,
+  choose.hvg = list(assay.type = "logcounts", block = NULL, more.var.args =
+    list(transform = TRUE), top = 4000, more.choose.args = list(keep.ties = TRUE)),
+  min.dim = 11,
   max.dim = 50,
-  model.var = list(assay.type = "logcounts"),
-  top.hvg = list(),
-  de.pca = list(assay.type = "logcounts"),
-  pca = FALSE,
-  tsne = list(dimred = "PCA", ncomponents = 2),
-  umap = list(dimred = "PCA")
+  pca.arg = list(assay.type = "logcounts", block = NULL),
+  umap.arg = list(num.dim = 2, reddim.type = "PCA"),
+  tsne.arg = list(perplexity = 30, reddim.type = "PCA", output.name = "TSNE"),
+  pca = FALSE
 )
 }
 \arguments{
 \item{sce}{Normalized single cell data in \code{SingleCellExperiment} returned by \code{norm_cell}. Alternative forms include \code{dgCMatrix}, \code{matrix}, \code{data.frame}.}
 
-\item{prop}{Numeric scalar specifying the proportion of genes to report as highly variable genes (HVGs) in \code{\link[scran]{getTopHVGs}}. The default is \code{0.1}.}
+\item{choose.hvg}{Arguments in a named list passed to \code{\link[scrapper]{chooseRnaHvgs.se}}.}
 
-\item{min.dim, max.dim}{Integer scalars specifying the minimum (\code{min.dim}) and maximum (\code{max.dim}) number of (principle components) PCs to retain respectively in \code{\link[scran]{denoisePCA}}. The default is \code{min.dim=11}, \code{max. dim=50}.}
+\item{min.dim, max.dim}{Integer scalars specifying the minimum (\code{min.dim}) and maximum (\code{max.dim}) number of (principle components) PCs to retain respectively in \code{\link[scrapper]{runPca.se}}.}
 
-\item{model.var}{Additional arguments in a named list passed to \code{\link[scran]{modelGeneVar}}.}
+\item{pca.arg}{Arguments in a named list passed to \code{\link[scrapper]{runPca.se}}.}
 
-\item{top.hvg}{Additional arguments in a named list passed to \code{\link[scran]{getTopHVGs}}, such as \code{top.hvg=list(n =   3000)}.}
+\item{umap.arg}{Arguments in a named list passed to \code{\link[scrapper]{runUmap.se}}.}
 
-\item{de.pca}{Additional arguments in a named list passed to \code{\link[scran]{denoisePCA}}, such as \code{de.pca=list(assay.  type = "logcounts")}.}
+\item{tsne.arg}{Arguments in a named list passed to \code{\link[scrapper]{runTsne.se}}.}
 
-\item{pca}{Logical, if \code{TRUE} only the data with reduced dimentionality by PCA is returned and no clustering is performed. The default is \code{FALSE} and clustering is performed after dimensionality reduction.}
-
-\item{tsne}{Additional arguments in a named list passed to \code{\link[scater]{runTSNE}}, such as \code{tsne=list(dimred="PCA", ncomponents=2)}.}
-
-\item{umap}{Additional arguments in a named list passed to \code{\link[scater]{runUMAP}}, such as \code{umap=list(dimred="PCA")}.}
+\item{pca}{Logical, if \code{TRUE} only the data with reduced dimentionality of PCA is returned. The default is \code{FALSE}, and UMAP and TSNE are also returned.}
 }
 \value{
 A \code{SingleCellExperiment} object.
@@ -43,16 +38,26 @@ A \code{SingleCellExperiment} object.
 A meta function for reducing dimensionality in count data.
 }
 \examples{
-library(scran); library(scuttle) 
-sce <- mockSCE()
-sce.qc <- qc_cell(sce, qc.metric=list(subsets=list(Mt=rowData(sce)$featureType=='mito'), threshold=1))
+library(SingleCellExperiment)
+set.seed(123)  # for reproducibility
+# random counts: 1000 genes × 100 cells
+counts_mat <- matrix(
+  rpois(1000 * 100, lambda = 5), nrow = 1000, ncol = 100,
+  dimnames = list(
+    paste0("Gene", 1:1000),
+    paste0("Cell", 1:100)
+  )
+)
+sce <- SingleCellExperiment(
+  assays = list(counts = counts_mat)
+)
+sce.qc = qc_cell(sce)
 sce.norm <- norm_cell(sce.qc)
 sce.dimred <- reduce_dim(sce.norm)
 }
 \references{
 Amezquita R, Lun A, Becht E, Carey V, Carpp L, Geistlinger L, Marini F, Rue-Albrecht K, Risso D, Soneson C, Waldron L, Pages H, Smith M, Huber W, Morgan M, Gottardo R, Hicks S (2020). “Orchestrating single-cell analysis with Bioconductor.” Nature Methods,    17, 137–145. https://www.nature.com/articles/s41592-019-0654-x.
-Lun ATL, McCarthy DJ, Marioni JC (2016). “A step-by-step workflow for low-level analysis of single-cell RNA-seq data with Bioconductor.” F1000Res., 5, 2122. doi: 10.12688/f1000research.9501.2.
-McCarthy DJ, Campbell KR, Lun ATL, Willis QF (2017). “Scater: pre-processing, quality control, normalisation and visualisation  of single-cell RNA-seq data in R.” Bioinformatics, 33, 1179-1186. doi: 10.1093/bioinformatics/btw777.
+Lun ATL, Kancherla J (2023). "Powering single-cell analyses in the browser with WebAssembly." _Journal of Open Source Software_, *8*(89), 5603. doi:10.21105/joss.05603 <https://doi.org/10.21105/joss.05603>.
 }
 \author{
 Jianhai Zhang \email{jzhan067@ucr.edu} \cr Dr. Thomas Girke \email{thomas.girke@ucr.edu}
