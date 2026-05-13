@@ -4,7 +4,13 @@
 #' @param cell A \code{Seurat} object.
 #' @param assay The assay to use for normalization in the spatial single-cell data.
 #' @param bulk The bulk assay data. 
-
+#'
+#' @return A list with two elements:
+#'   \describe{
+#'     \item{cell}{The normalized cell data in Seurat object.}
+#'     \item{bulk}{The normalized bulk data in SingleCellExperiment.}
+#'   }
+#'
 #' @author Jianhai Zhang \email{jzhan067@@ucr.edu} \cr Dr. Thomas Girke \email{thomas.girke@@ucr.edu}
 #' @examples
 

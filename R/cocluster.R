@@ -78,6 +78,7 @@
 #' Ortiz, Cantin, Jose Fernandez Navarro, Aleksandra Jurek, Antje Märtin, Joakim Lundeberg, and Konstantinos Meletis. 2020. “Molecular Atlas of the Adult Mouse Brain.” Science Advances 6 (26): eabb3446.
 #' SummarizedExperiment: SummarizedExperiment container. R package version 1.10.1 \cr R Core Team (2018). R: A language and        environment for statistical computing. R Foundation for Statistical Computing, Vienna, Austria. URL https://www.R-project.org/
 #' Amezquita R, Lun A, Becht E, Carey V, Carpp L, Geistlinger L, Marini F, Rue-Albrecht K, Risso D, Soneson C, Waldron L, Pages H, Smith M, Huber W, Morgan M, Gottardo R, Hicks S (2020). “Orchestrating single-cell analysis with Bioconductor.” Nature Methods, 17, 137–145. https://www.nature.com/articles/s41592-019-0654-x.
+#' Pagès H (2026). _DelayedArray: A unified framework for working transparently with on-disk and in-memory array-like datasets_. doi:10.18129/B9.bioc.DelayedArray <https://doi.org/10.18129/B9.bioc.DelayedArray>. R package version 0.39.1, <https://bioconductor.org/packages/DelayedArray>.
 
 #' @export
 #' @importFrom SummarizedExperiment colData colData<-
@@ -105,6 +106,12 @@ cocluster <- function(bulk, cell, df.match=NULL, min.dim=11, max.dim=50, dimred=
   cna.inter <- intersect(colnames(colData(blk.kp)), colnames(colData(sc.kp)))
   colData(blk.kp) <- colData(blk.kp)[, cna.inter, drop=FALSE]
   colData(sc.kp) <- colData(sc.kp)[, cna.inter, drop=FALSE]
+  
+  pkg <- check_pkg('DelayedArray'); if (is(pkg, 'character')) { warning(pkg); return(pkg) }
+  if(!is(logcounts(blk.kp), 'DelayedArray'))  {
+    logcounts(blk.kp) <- DelayedArray::DelayedArray(logcounts(blk.kp))
+  }
+  
   com.kp <- BiocGenerics::cbind(blk.kp, sc.kp)
   com.kp$index <- seq_len(ncol(com.kp))
   com.kp$sample <- colnames(com.kp)

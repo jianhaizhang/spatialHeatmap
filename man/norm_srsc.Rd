@@ -13,6 +13,13 @@ norm_srsc(cell, assay, bulk)
 
 \item{bulk}{The bulk assay data.}
 }
+\value{
+A list with two elements:
+  \describe{
+    \item{cell}{The normalized cell data in Seurat object.}
+    \item{bulk}{The normalized bulk data in SingleCellExperiment.}
+  }
+}
 \description{
 Jointly normalization of spatially resolved single cell data and bulk data
 }
