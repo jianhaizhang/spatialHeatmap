@@ -34,7 +34,7 @@ norm_data(
 
 \item{assay.na}{The name of target assay to use when \code{data} is \code{SummarizedExperiment}.}
 
-\item{norm.fun}{Normalizing functions, one of "CNF", "ESF", "VST", "rlog", "none". Specifically, "CNF" stands for \code{\link[edgeR]{calcNormFactors}} from edgeR (McCarthy et al. 2012), and "EST", "VST", and "rlog" is equivalent to \code{\link[DESeq2]{estimateSizeFactors}}, \cr \code{\link[DESeq2]{varianceStabilizingTransformation}}, and \code{\link[DESeq2]{rlog}} from DESeq2 respectively (Love, Huber, and Anders 2014). If "none", no normalization is applied. The default is "CNF" and the output data is processed by \code{\link[edgeR]{cpm}} (Counts Per Million). The parameters of each normalization function are provided through \code{par.list}.}
+\item{norm.fun}{Normalizing functions, one of "CNF", "ESF", "VST", "rlog", "none". Specifically, "CNF" stands for \code{\link[edgeR]{calcNormFactors}} from edgeR (McCarthy et al. 2012), and "EST", "VST", and "rlog" is equivalent to \code{\link[DESeq2:estimateSizeFactorsForMatrix]{estimateSizeFactors}}, \cr \code{\link[DESeq2:varianceStabilizingTransformation]{varianceStabilizingTransformation}}, and \code{\link[DESeq2:rlog]{rlog}} from DESeq2 respectively (Love, Huber, and Anders 2014). If "none", no normalization is applied. The default is "CNF" and the output data is processed by \code{\link[edgeR]{cpm}} (Counts Per Million). The parameters of each normalization function are provided through \code{par.list}.}
 
 \item{par.list}{A list of parameters for each normalizing function assigned in \code{norm.fun}. The default is NULL and \code{list(method='TMM')}, \code{list(type='ratio')}, \cr \code{list(fitType='parametric', blind=TRUE)}, \cr \code{list(fitType='parametric', blind=TRUE)} is internally set for "CNF", "ESF", "VST", "rlog" respectively. Note the slot name of each element in the \code{list} is required, \emph{e.g.} \code{list(method='TMM')} rather than \code{list('TMM')}. \cr Complete parameters of "CNF": https://www.rdocumentation.org/packages/edgeR/ \cr versions/3.14.0/topics/calcNormFactors \cr Complete parameters of "ESF": https://www.rdocumentation.org/packages/ \cr DESeq2/versions/1.12.3/topics/estimateSizeFactors \cr Complete parameters of "VST": https://www.rdocumentation.org/packages/ \cr DESeq2/versions/1.12.3/topics/varianceStabilizingTransformation \cr Complete parameters of "rlog": https://www.rdocumentation.org/packages/ \cr DESeq2/versions/1.12.3/topics/rlog}
 
@@ -117,7 +117,7 @@ McCarthy, Davis J., Chen, Yunshun, Smyth, and Gordon K. 2012. "Differential Expr
 Cardoso-Moreira, Margarida, Jean Halbert, Delphine Valloton, Britta Velten, Chunyan Chen, Yi Shao, Angélica Liechti, et al. 2019. “Gene Expression Across Mammalian Organ Development.” Nature 571 (7766): 505–9
 }
 \seealso{
-\code{\link[edgeR]{calcNormFactors}} in edgeR, and \code{\link[DESeq2]{estimateSizeFactors}}, \code{\link[DESeq2]{varianceStabilizingTransformation}}, \code{\link[DESeq2]{rlog}} in DESeq2.
+\code{\link[edgeR]{calcNormFactors}} in edgeR, and \code{\link[DESeq2:estimateSizeFactorsForMatrix]{estimateSizeFactors}}, \code{\link[DESeq2:varianceStabilizingTransformation]{varianceStabilizingTransformation}}, \code{\link[DESeq2:rlog]{rlog}} in DESeq2.
 }
 \author{
 Jianhai Zhang \email{jzhan067@ucr.edu} \cr Dr. Thomas Girke \email{thomas.girke@ucr.edu}
