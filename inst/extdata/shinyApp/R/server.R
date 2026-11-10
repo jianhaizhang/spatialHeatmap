@@ -82,7 +82,7 @@ server <- function(input, output, session) {
     # validate(need(input$start.but>0, ''))
     withProgress(message="Loading dependencies: ", value=0, {
     incProgress(0.2, detail="in progress ...")
-    library(spatialHeatmap); library(SummarizedExperiment); library(shiny); library(shinydashboard); library(shinydashboardPlus); library(grImport); library(rsvg); library(ggplot2); library(DT) 
+    library(spatialHeatmap); library(SummarizedExperiment); library(shiny); library(shinydashboard); library(shinydashboardPlus); library(rsvg); library(ggplot2); library(DT) 
     incProgress(0.2, detail="in progress ...")
     library(gridExtra); library(ggdendro); library(grid); library(xml2); library(plotly); library(data.table); library(genefilter); 
     incProgress(0.2, detail="in progress...")

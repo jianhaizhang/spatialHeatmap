@@ -20,8 +20,6 @@
 #' R Core Team (2018). R: A language and environment for statistical computing. R Foundation for Statistical Computing, Vienna, Austria. RL https://www.R-project.org/
 #' Wickham H, François R, Henry L, Müller K (2022). _dplyr: A Grammar of Data Manipulation_. R package version 1.0.9, <https://CRAN.R-project.org/package=dplyr> 
 
-#' @importFrom rsvg rsvg_ps 
-#' @importFrom grImport PostScriptTrace 
 #' @importFrom xml2 read_xml xml_length xml_children xml_name xml_attr xml_remove xml_text xml_attrs write_xml xml_serialize
 #' @importFrom parallel detectCores mclapply
 
@@ -115,8 +113,8 @@ svg_df <- function(svg.path, feature=NULL, cores, srsc=FALSE) {
   
   # SVG file conversion.
   # In Inkscape, the path of letter "U" is combined by a long and short path: "M -145.74174, ..., 182.19339 Z M -141.22026,175.30862 Z". After broken apart, the short path "M -141.22026,175.30862 Z" still exists, but disappears after "rsvg_ps" and also "PostScriptTrace". As a result, the corresponding coordinates are gone. Since the short path introduces an id, the colors are shifted in SHM. Thus letters/text should be not be broken apart by "path_br".
-  rsvg_ps(svg.inter, file=sub("svg$", "ps", svg.inter)) # Only the paths inside canvas of SVG are valid.
-  p1 <- sub("svg$", "ps", svg.inter); p2 <- paste0(sub("svg$", "ps", svg.inter), ".xml"); PostScriptTrace(p1, p2) 
+  # Only the paths inside canvas of SVG are valid.
+  p2 <- paste0(sub("svg$", "ps", svg.inter), ".xml"); svg_trace(svg.inter, p2)
   chdn1 <- xml_children(read_xml(p2)) # Use internal svg to get coordinates.
   # Detect groups that use relative coordinates ("transform", "matrix" in Inkscape.), which leads to some plygons missing in ".ps.xml" file.
   # EBI SVG, if the outline shapes and tissue shapes are separate, they must be in two layers NOT two groups. Otherwise, 'fill' and 'stroke' in '.ps.xml' can be  messy.
@@ -238,14 +236,12 @@ xy <- function(doc, parent, node, tis, use=FALSE, stroke.w, cores) {
   # SVG file containing a single path.
   tmp <- normalizePath(tempdir(check=TRUE), winslash="/", mustWork=FALSE);
   svg.inter <- paste0(tmp, '/shm.svg')
-  ps.inter <- paste0(tmp, '/shm.ps')
   xml.inter <- paste0(tmp, '/shm.ps.xml')
   # xml.inter <- paste0(tmp, '/', tis, '_shm.ps.xml')
   if (use==FALSE) {xml_set_attr(node, 'style', style); xml_add_child(parent, node) } 
   write_xml(doc, svg.inter)
   # Extract coordindates.
-  rsvg_ps(svg.inter, ps.inter); # cat(xml.inter, '\n')
-  PostScriptTrace(ps.inter, xml.inter)
+  svg_trace(svg.inter, xml.inter)
   cld <- xml_children(read_xml(xml.inter))
   cnt <- as.numeric(xml_attr(cld[length(cld)], 'count'))
   if (use==TRUE) {
