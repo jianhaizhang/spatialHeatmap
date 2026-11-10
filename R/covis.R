@@ -303,8 +303,6 @@ plot_meta <- function(svg.path, bulk, cell=NULL, match.lis=NULL, assay.na=NULL, 
 
 #' @importFrom SummarizedExperiment assay colData
 #' @importFrom ggplot2 ggplot geom_bar aes theme element_blank margin element_rect coord_flip scale_y_continuous scale_x_continuous ggplotGrob geom_polygon scale_fill_manual ggtitle element_text labs
-#' @importFrom rsvg rsvg_ps 
-#' @importFrom grImport PostScriptTrace 
 #' @importFrom gridExtra arrangeGrob grid.arrange
 #' @importFrom grid grobTree unit
 #' @importFrom grDevices colorRampPalette

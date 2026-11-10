@@ -21,7 +21,7 @@ biocViews: Spatial, Visualization, Microarray, Sequencing, GeneExpression,
         CellBiology, GeneTarget
 VignetteBuilder: knitr
 Depends: R (>= 4.1.0)
-Imports: data.table, dplyr, edgeR, genefilter, ggplot2, grImport, grid, gridExtra,
+Imports: data.table, dplyr, edgeR, genefilter, ggplot2, grid, gridExtra,
          igraph, methods, Matrix, rsvg, shiny, grDevices, graphics, ggplotify, parallel, 
          reshape2, stats, SummarizedExperiment, SingleCellExperiment, shinydashboard, 
          S4Vectors, spsComps (>= 0.3.3.0), tibble, utils, xml2
